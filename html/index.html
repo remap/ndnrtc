@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<center><b><font size=+2>NDN WebRTC sample</font></b>
+
+<p>
+<a href="mailto:arielb@rice.edu">Peter Gusev &lt;gpeetonn@gmail.com&gt;</a>
+<br>
+Last modified 
+<script>
+document.write(document.lastModified);
+</script>
+</center>
+
+<p>This is the sample app for NDN WebRTC. It'll get updates during development.
+
+<p>Check XPconnect to add-on
+
+<script>
+/* to use nsSample.js version, use "@mozilla.org/jssample;1" */
+//const {Cc,Ci,Cu} = require("chrome");
+
+function check()
+{
+	console.debug("checking...");	
+	
+	const {Cc,Ci,Cu} = require("chrome");
+	var rtc = Components.classes["@named-data.net/ndnrtc;1"].createInstance();
+	rtc = rtc.QueryInterface(Ci.ndINrtc);	
+	
+//	const {Cc,Ci,Cu} = require("chrome");
+//	var cmgr = Components.classes["@mozilla.org/cookiemanager;1"].getService();
+//	cmgr = cmgr.QueryInterface(Ci.nsICookieManager);	
+//	netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+//	var sample = Components.classes["@named-data.net/ndnrtc;1"].createInstance();
+//	var sample = Components.classes["@mozilla.org/cookiemanager;1"].createInstance();	
+//	sample = sample.QueryInterface(Components.interfaces.ndNrtc);
+	console.debug("rtc: "+rtc);
+}
+</script>
+
+<br/><button onclick=check()>Check</button>

@@ -1,0 +1,4 @@
+component {86ad66e9-b3f7-4e6a-beee-802b1d9ff442} components/ndnrtc.dylib
+contract @named-data.net/ndnrtc;1 {86ad66e9-b3f7-4e6a-beee-802b1d9ff442}
+interfaces components/ndINrtc.xpt
+binary-component components/ndnrtc.dylib abi=Darwin_x86_64-gcc3
