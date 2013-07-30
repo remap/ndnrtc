@@ -88,6 +88,7 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 	$(XPIDL_XPT) $(GECKO_INCLUDES) $< -o $(BIN_PATH)/$@
 
 %.o: $(SRC_PATH)/%.cpp Makefile
+	mkdir -p $(OBJ_PATH)
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $< -o $(OBJ_PATH)/$@
 
 $(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
