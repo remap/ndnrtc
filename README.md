@@ -3,6 +3,31 @@ ndnrtc
 
 NDN WebRTC Conferencing Project
 
+Structure
+----
+App code is divided into to main parts - C++ code of add-on and Javascript code of web app.
+C++ code provides all basic operations for establishing NDN-connections to other peers and transmitting/receiving encoded media. It also exposes it's interface to the web-page Javascript through Javascript wrapper object attached to DOM's window object of a page.
+
+Javascript code of web app provides all th UI and peer discovery/authentication logic of the NDN-RTC application.
+
+The directory structure is as follows:
+
+* **/root**
+    * **ccp/** *-- c++ code*
+        * **addon/** *-- Firefox-specific files for add-on installation*
+            * **components/** *-- Javascript wrapper code*
+        * **bin/** *-- compiled files, dynamic library of c++ add-on, .xpt component interface file for Firefox*
+            * **ndnrtc/** *-- upacked add-on*
+            * **ndnrtc.xpi** *-- compiled add-on package*
+        * **content/** *-- add-on resources and helper Javascript files*
+        * **idl/** *-- add-on's idl interface files*
+        * **src/** *-- .h and .cpp files of c++ component*
+    * **html/** *-- web app directory*
+        * **js/** *-- Javascript for web app*
+        * **index.html** *-- main page for web app*
+    * **LICENSE**
+    * **README.md**
+
 Build prerequisites
 ----
 1. XULRunner SDK (or Gecko SDK). Check the latest version [here](http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-trunk/). Current code was compiled with SDK version 25.0a1 (Nightly).
