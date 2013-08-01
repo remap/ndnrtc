@@ -1,3 +1,11 @@
+//
+//  ndNrtcModule.cpp
+//  ndnrtc
+//
+//  Created by Peter Gusev on 7/29/13.
+//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//
+
 #include "mozilla/ModuleUtils.h"
 #include "nsIClassInfoImpl.h"
 
@@ -52,4 +60,4 @@ NSMODULE_DEFN(ndNrtcModule) = &kNrtcModule;
 // for compatibility with mozilla 1.9.2. You should only use this
 // if you need a binary which is backwards-compatible and if you use
 // interfaces carefully across multiple versions.
-NS_IMPL_MOZILLA192_NSGETMODULE(&kNrtcModule)
+//NS_IMPL_MOZILLA192_NSGETMODULE(&kNrtcModule)

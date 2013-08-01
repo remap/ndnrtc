@@ -5,7 +5,7 @@ NDN WebRTC Conferencing Project
 
 Build prerequisites
 ----
-1. XULRunner SDK (or Gecko SDK). Check the latest version [here](https://developer.mozilla.org/en-US/docs/Gecko_SDK). Current code was compiled with SDK version 25.0a1 (Nightly).
+1. XULRunner SDK (or Gecko SDK). Check the latest version [here](http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-trunk/). Current code was compiled with SDK version 25.0a1 (Nightly).
 
 How to build
 ----

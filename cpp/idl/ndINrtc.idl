@@ -3,5 +3,6 @@
 [scriptable, uuid(86AD66E9-B3F7-4E6A-BEEE-802B1D9FF442)]
 interface INrtc : nsISupports
 {
-  long Add(in long a, in long b);
+  long Test(in long a, in long b);
 };
+

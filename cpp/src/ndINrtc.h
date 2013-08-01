@@ -1,5 +1,5 @@
 /*
- * DO NOT EDIT.  THIS FILE IS GENERATED FROM idl/ndINrtc.idl
+ * DO NOT EDIT.  THIS FILE IS GENERATED FROM /Users/gpeetonn/Documents/code/CCN/ndnrtc/cpp/idl/ndINrtc.idl
  */
 
 #ifndef __gen_ndINrtc_h__
@@ -27,8 +27,8 @@ class NS_NO_VTABLE INrtc : public nsISupports {
 
   NS_DECLARE_STATIC_IID_ACCESSOR(INRTC_IID)
 
-  /* long Add (in long a, in long b); */
-  NS_IMETHOD Add(int32_t a, int32_t b, int32_t *_retval) = 0;
+  /* long Test (in long a, in long b); */
+  NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) = 0;
 
 };
 
@@ -36,15 +36,15 @@ class NS_NO_VTABLE INrtc : public nsISupports {
 
 /* Use this macro when declaring classes that implement this interface. */
 #define NS_DECL_INRTC \
-  NS_IMETHOD Add(int32_t a, int32_t b, int32_t *_retval); 
+  NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval); 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object. */
 #define NS_FORWARD_INRTC(_to) \
-  NS_IMETHOD Add(int32_t a, int32_t b, int32_t *_retval) { return _to Add(a, b, _retval); } 
+  NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return _to Test(a, b, _retval); } 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_INRTC(_to) \
-  NS_IMETHOD Add(int32_t a, int32_t b, int32_t *_retval) { return !_to ? NS_ERROR_NULL_POINTER : _to->Add(a, b, _retval); } 
+  NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return !_to ? NS_ERROR_NULL_POINTER : _to->Test(a, b, _retval); } 
 
 #if 0
 /* Use the code below as a template for the implementation class for this interface. */
@@ -78,8 +78,8 @@ _MYCLASS_::~_MYCLASS_()
   /* destructor code */
 }
 
-/* long Add (in long a, in long b); */
-NS_IMETHODIMP _MYCLASS_::Add(int32_t a, int32_t b, int32_t *_retval)
+/* long Test (in long a, in long b); */
+NS_IMETHODIMP _MYCLASS_::Test(int32_t a, int32_t b, int32_t *_retval)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

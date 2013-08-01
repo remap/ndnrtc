@@ -1,12 +1,14 @@
 MODULE		= libndnrtc
 NAME 		= ndnrtc
 
-IDL_PATH 	= idl
-SRC_PATH	= src
-BIN_PATH	= bin
-OBJ_PATH	= obj
+CURRENT     = $(shell pwd)
+IDL_PATH 	= $(CURRENT)/idl
+SRC_PATH	= $(CURRENT)/src
+BIN_PATH	= $(CURRENT)/bin
+OBJ_PATH	= $(CURRENT)/obj
+ADDON_SRC_PATH = $(CURRENT)/addon
 ADDON_PATH	= $(BIN_PATH)/$(NAME)
-ADDON_SRC_PATH = addon
+CONTENT_PATH = $(CURRENT)/content
 
 # dir for storing add-on chrome resources
 ADDON_CHROME_DIR = $(ADDON_PATH)/chrome
@@ -71,7 +73,8 @@ addon: $(MODULE).dylib
 	mkdir -p $(ADDON_CHROME_CONTENT_DIR)
 	mkdir -p $(ADDON_COMPONENTS_DIR)
 	cp $(BIN_PATH)/*.* $(ADDON_COMPONENTS_DIR)
-	cp $(ADDON_SRC_PATH)/* $(ADDON_PATH) 
+	cp $(CONTENT_PATH)/* $(ADDON_CHROME_CONTENT_DIR) 2>/dev/null || :
+	cp -r $(ADDON_SRC_PATH)/* $(ADDON_PATH) 
 	cd $(ADDON_PATH) && zip -X -r ../$(NAME).xpi * && cd ../..
 
 # generates header files from .idl
@@ -98,4 +101,4 @@ $(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp
 
 clean:
 	rm -Rf $(wildcard $(BIN_PATH))
-	rm -f $(wildcard $(OBJ_PATH)/%.o)
+	rm -Rf $(wildcard $(OBJ_PATH))

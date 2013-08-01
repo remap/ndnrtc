@@ -1,3 +1,11 @@
+//
+//  ndNrtc.cpp
+//  ndnrtc
+//
+//  Created by Peter Gusev on 7/29/13.
+//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//
+
 #include "ndNrtc.h"
 
 
@@ -14,7 +22,7 @@ ndNrtc::~ndNrtc()
 }
 
 /* long Add (in long a, in long b); */
-NS_IMETHODIMP ndNrtc::Add(int32_t a, int32_t b, int32_t *_retval)
+NS_IMETHODIMP ndNrtc::Test(int32_t a, int32_t b, int32_t *_retval)
 {
 	*_retval = a+b;
     return NS_OK;
