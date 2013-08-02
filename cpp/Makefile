@@ -10,8 +10,18 @@ ADDON_SRC_PATH = $(CURRENT)/addon
 ADDON_PATH	= $(BIN_PATH)/$(NAME)
 CONTENT_PATH = $(CURRENT)/content
 THIRDPARTY_PATH = $(CURRENT)/thirdparty
-NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/ndn-cpp
-WEBRTCLIB_PATH = $(THIRDPARTY_PATH)/libjingle
+
+# third party
+NDNC = ndn-c
+NDNCPP = ndn-cpp
+WEBRTC = jingle
+
+NDNCPPLIB = lib$(NDNCPP).a
+NDNCLIB = lib$(NDNC).a
+
+LIBBIN_PATH = $(THIRDPARTY_PATH)/bin/
+NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/$(NDNCPP)
+WEBRTCLIB_PATH = $(THIRDPARTY_PATH)/$(WEBRTC)
 
 # dir for storing add-on chrome resources
 ADDON_CHROME_DIR = $(ADDON_PATH)/chrome
@@ -68,8 +78,15 @@ all: addon
 
 build: $(MODULE).dylib
 
-buildlib:
-	cd $(NDNCPPLIB_PATH) && ./configure && make
+libclean:
+	cd $(NDNCPPLIB_PATH) && make clean && cd $(CURRENT)
+
+libbuild:
+	cd $(NDNCPPLIB_PATH) && ./autogen.sh && ./configure && make && cd $(CURRENT)
+	mkdir -p $(LIBBIN_PATH)/$(NDNCPP)/include
+	cp $(NDNCPPLIB_PATH)/$(NDNCLIB) $(LIBBIN_PATH)/$(NDNCPP)
+	cp $(NDNCPPLIB_PATH)/$(NDNCPPLIB) $(LIBBIN_PATH)/$(NDNCPP)
+	find $(LIBBIN_PATH)/$(NDNCPP)/include/ -name '*.[co]*' | xargs rm
 
 # creates a package for add-on in $(BIN_PATH)
 addon: $(MODULE).dylib
@@ -100,11 +117,12 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 	mkdir -p $(OBJ_PATH)
 	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $< -o $(OBJ_PATH)/$@
 
-$(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
+$(MODULE).dylib: libbuild $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
 	mkdir -p $(BIN_PATH)
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(GECKO_LDFLAGS)
 	chmod +x $(BIN_PATH)/$@
 
-clean:
+clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))
 	rm -Rf $(wildcard $(OBJ_PATH))
+	rm -Rf $(wildcard $(LIBBIN_PATH))
