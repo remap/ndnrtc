@@ -9,6 +9,9 @@ OBJ_PATH	= $(CURRENT)/obj
 ADDON_SRC_PATH = $(CURRENT)/addon
 ADDON_PATH	= $(BIN_PATH)/$(NAME)
 CONTENT_PATH = $(CURRENT)/content
+THIRDPARTY_PATH = $(CURRENT)/thirdparty
+NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/ndn-cpp
+WEBRTCLIB_PATH = $(THIRDPARTY_PATH)/libjingle
 
 # dir for storing add-on chrome resources
 ADDON_CHROME_DIR = $(ADDON_PATH)/chrome
@@ -22,9 +25,9 @@ GECKO_SDK_PATH ?= $(XULSDK)#../../mozilla/obj-xulrunner/dist
 PYTHON 			= python
 
 
-XPIDL_H	       ?= $(PYTHON) $(GECKO_SDK_PATH)/sdk/bin/header.py
-XPIDL_XPT	       ?= $(PYTHON) $(GECKO_SDK_PATH)/sdk/bin/typelib.py
-CXX	       		?= g++
+XPIDL_H	    = $(PYTHON) $(GECKO_SDK_PATH)/sdk/bin/header.py
+XPIDL_XPT	= $(PYTHON) $(GECKO_SDK_PATH)/sdk/bin/typelib.py
+CXX	       	= clang++
 
 XPIDLSRCS	= $(patsubst $(IDL_PATH)/%.idl,%.idl,$(wildcard $(IDL_PATH)/*.idl))
 CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
@@ -64,6 +67,9 @@ GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 all: addon
 
 build: $(MODULE).dylib
+
+buildlib:
+	cd $(NDNCPPLIB_PATH) && ./configure && make
 
 # creates a package for add-on in $(BIN_PATH)
 addon: $(MODULE).dylib
