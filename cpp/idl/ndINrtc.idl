@@ -1,8 +1,14 @@
 #include "nsISupports.idl"
 
+[scriptable, function, uuid(E891B9DB-9D68-422C-B153-E0960CAC580F)]
+interface INrtcDataCallback : nsISupports
+{
+    void OnNewData(in long size, in string data);
+};
+
 [scriptable, uuid(86AD66E9-B3F7-4E6A-BEEE-802B1D9FF442)]
 interface INrtc : nsISupports
 {
   long Test(in long a, in long b);
+  void ExpressInterest(in string interest, in INrtcDataCallback onDataCallback);
 };
-

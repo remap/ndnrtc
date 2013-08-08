@@ -14,7 +14,10 @@ let Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-function NDNWebRTC() {}
+function NDNWebRTC() {
+    dump("wrapper constructor called\n");
+    this.ndnrtc = Cc["@named-data.net/ndnrtc;1"].createInstance().QueryInterface(Ci.INrtc);
+}
 
 NDNWebRTC.prototype = {
     
@@ -22,24 +25,29 @@ classID: Components.ID("{81BAE33D-C6B4-4BAC-A612-996C8BCC26C3}"),
     
 QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer]),
     
+    
 init: function(aWindow) {
     let self = this;
     let api = {
     Test: self.Test.bind(self),
+    ExpressInterest: self.ExpressInterest.bind(self),
 		
     __exposedProps__: {
-        Test: "r"
-        }
+        Test: "r",
+        ExpressInterest: "r"
+    }
     };
     return api;
 },
-	
+
+ExpressInterest: function(interest, onData){
+    dump("wrapper express interest");
+    return this.ndnrtc.ExpressInterest(interest, onData);
+},
+    
 Test: function(a, b){
-    var ndnrtc = ndnrtc = Cc["@named-data.net/ndnrtc;1"].createInstance();
-    
-    ndnrtc = ndnrtc.QueryInterface(Ci.INrtc);
-    
-    return ndnrtc.Test(a,b);
+    dump("wrapper test called\n");
+    return this.ndnrtc.Test(a,b);
 }
 };
 

@@ -1,25 +1,52 @@
-<center><b><font size=+2>NDN WebRTC sample</font></b>
-
-<p>
-<a href="mailto:gpeetonn@gmail.com">Peter Gusev &lt;gpeetonn@gmail.com&gt;</a>
-<br>
-Last modified 
-<script>
-    document.write(document.lastModified);
-</script>
-</center>
-
-<p>This is the sample app for NDN WebRTC. It'll get updates during development.
-
-
-<br/>
-<p id="msgbox">Add-on status: </p>
-
-<script type="application/javascript;version=1.8">
-    let msg = document.getElementById("msgbox");
-    
-    if (!window.nrtcObject || window.nrtcObject.Test(1,2) != 3)
-    msg.innerHTML += "Something went wrong...";
-    else
-    msg.innerHTML += "It works! =)";
-</script>
+<html>
+    <head>
+        
+        <script type="text/javascript">
+            
+            function check(){
+                var msg = document.getElementById("msgbox");
+                
+                if (window.nrtcObject.Test(1,2) != 3)
+                msg.innerHTML = "Something went wrong...";
+                else
+                msg.innerHTML = "It works! =)";
+            }
+            
+            function fetch(){
+                var interest = document.getElementById('interest').value;
+                
+                window.nrtcObject.ExpressInterest(interest, function(dataSize, data){
+                                                  document.getElementById('content').innerHTML = "<p>Data size: " + dataSize + "</p>";
+                                                  document.getElementById('content').innerHTML += data;
+                                                  });
+            }
+            
+            </script>
+        
+    </head>
+    <body onload="check()">
+        
+        <center><b><font size=+2>NDN WebRTC sample</font></b>
+            
+            <p>
+            <a href="mailto:gpeetonn@gmail.com">Peter Gusev &lt;gpeetonn@gmail.com&gt;</a>
+            <br>
+            Last modified <script>document.write(document.lastModified); </script>
+        </center>
+        
+        <p>This is the sample app for NDN WebRTC. It'll get updates during development.
+        
+        
+        <br/>
+        <button type=button onclick="check()">Check add-on</button>
+        <p>Add-on status: </p><div id="msgbox"></div>
+        
+        <h3>Express interest</h1>
+        <form>
+            Please Enter an Interest:<br />
+            <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/ndn-js-test/hello.txt/level2/%FD%05%0B%16%7D%95%0E" /> <br/>
+        </form>
+        <button id="testBtn" onclick="fetch()">Fetch Content</button>
+        <p id="content"><br/></p>
+    </body>
+</html>

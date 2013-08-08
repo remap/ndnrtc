@@ -19,7 +19,7 @@ WEBRTC = jingle
 NDNCPPLIB = lib$(NDNCPP).a
 NDNCLIB = lib$(NDNC).a
 
-LIBBIN_PATH = $(THIRDPARTY_PATH)/bin/
+LIBBIN_PATH = $(THIRDPARTY_PATH)/bin
 NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/$(NDNCPP)
 WEBRTCLIB_PATH = $(THIRDPARTY_PATH)/$(WEBRTC)
 
@@ -43,12 +43,15 @@ XPIDLSRCS	= $(patsubst $(IDL_PATH)/%.idl,%.idl,$(wildcard $(IDL_PATH)/*.idl))
 CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
 
 CPPFLAGS +=     -fno-rtti		\
-                -fno-exceptions		\
                 -fshort-wchar		\
 		-fPIC			\
+        --std=c++0x \
 		$(NULL)
 		
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
+
+LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC)
+LIB_INCLUDES = -I$(LIBBIN_PATH)/include
 
 # GCC only define which allows us to not have to #include mozilla-config
 # in every .cpp file.  If your not using GCC remove this line and add
@@ -66,8 +69,8 @@ GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
 GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
 		 -lxpcomglue_s	\
-                 -lnspr4	\
-                 -lplds4	\
+#                 -lnspr4	\
+#                 -lplds4	\
 #		 -lxul		\
 		 -shared	\
 		 $(NULL)
@@ -81,12 +84,18 @@ build: $(MODULE).dylib
 libclean:
 	cd $(NDNCPPLIB_PATH) && make clean && cd $(CURRENT)
 
+configlib:
+	cd $(NDNCPPLIB_PATH) && ./configure && cd $(CURRENT)
+
 libbuild:
-	cd $(NDNCPPLIB_PATH) && ./autogen.sh && ./configure && make && cd $(CURRENT)
-	mkdir -p $(LIBBIN_PATH)/$(NDNCPP)/include
-	cp $(NDNCPPLIB_PATH)/$(NDNCLIB) $(LIBBIN_PATH)/$(NDNCPP)
-	cp $(NDNCPPLIB_PATH)/$(NDNCPPLIB) $(LIBBIN_PATH)/$(NDNCPP)
-	find $(LIBBIN_PATH)/$(NDNCPP)/include/ -name '*.[co]*' | xargs rm
+	cd $(NDNCPPLIB_PATH) && make  && cd $(CURRENT)
+	mkdir -p $(LIBBIN_PATH)/include/$(NDNCPP)
+	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCLIB) $(LIBBIN_PATH)
+	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCPPLIB) $(LIBBIN_PATH)
+	cp -Rf $(NDNCPPLIB_PATH)/$(NDNCPP) $(LIBBIN_PATH)/include/
+	find $(LIBBIN_PATH)/include/$(NDNCPP)/ -name '*.[co]*' | xargs rm
+	cp $(NDNCPPLIB_PATH)/config.h $(LIBBIN_PATH)/include/    
+	cp -Rf $(NDNCPPLIB_PATH)/ndnboost $(LIBBIN_PATH)/include/
 
 # creates a package for add-on in $(BIN_PATH)
 addon: $(MODULE).dylib
@@ -115,11 +124,11 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 
 %.o: $(SRC_PATH)/%.cpp Makefile
 	mkdir -p $(OBJ_PATH)
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $< -o $(OBJ_PATH)/$@
+	$(CXX) -c $(CPPFLAGS) $(OTHER_CFLAGS) $(CXXFLAGS) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
 
 $(MODULE).dylib: libbuild $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
 	mkdir -p $(BIN_PATH)
-	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(GECKO_LDFLAGS)
+	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(GECKO_LDFLAGS)
 	chmod +x $(BIN_PATH)/$@
 
 clean: libclean

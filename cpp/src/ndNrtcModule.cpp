@@ -60,4 +60,4 @@ NSMODULE_DEFN(ndNrtcModule) = &kNrtcModule;
 // for compatibility with mozilla 1.9.2. You should only use this
 // if you need a binary which is backwards-compatible and if you use
 // interfaces carefully across multiple versions.
-//NS_IMPL_MOZILLA192_NSGETMODULE(&kNrtcModule)
+NS_IMPL_MOZILLA192_NSGETMODULE(&kNrtcModule)
