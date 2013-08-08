@@ -15,17 +15,17 @@ NS_IMETHODIMP NdnWorkerSpinTask::Run()
 {
     while (!currentWorker_->gotContent_)
     {
-        cout << "fetching" << endl;
+        TRACE("fetching");
         currentWorker_->getTransport()->tempReceive();
     }
-    cout << "got something" << endl;
+    TRACE("got something");
     
     return NS_OK;
 }
 
 NS_IMETHODIMP NdnWorkerDispatchDataTask::Run()
 {
-    cout << "calling delegate" << endl;
+    TRACE("calling delegate");
     delegate_->onDataReceived(data_);
     
     return NS_OK;

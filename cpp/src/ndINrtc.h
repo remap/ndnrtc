@@ -106,6 +106,9 @@ class NS_NO_VTABLE INrtc : public nsISupports {
   /* void ExpressInterest (in string interest, in INrtcDataCallback onDataCallback); */
   NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) = 0;
 
+  /* void PublishData (in string prefix, in string data); */
+  NS_IMETHOD PublishData(const char * prefix, const char * data) = 0;
+
 };
 
   NS_DEFINE_STATIC_IID_ACCESSOR(INrtc, INRTC_IID)
@@ -113,17 +116,20 @@ class NS_NO_VTABLE INrtc : public nsISupports {
 /* Use this macro when declaring classes that implement this interface. */
 #define NS_DECL_INRTC \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval); \
-  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback); 
+  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback); \
+  NS_IMETHOD PublishData(const char * prefix, const char * data); 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object. */
 #define NS_FORWARD_INRTC(_to) \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return _to Test(a, b, _retval); } \
-  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return _to ExpressInterest(interest, onDataCallback); } 
+  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return _to ExpressInterest(interest, onDataCallback); } \
+  NS_IMETHOD PublishData(const char * prefix, const char * data) { return _to PublishData(prefix, data); } 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_INRTC(_to) \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return !_to ? NS_ERROR_NULL_POINTER : _to->Test(a, b, _retval); } \
-  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return !_to ? NS_ERROR_NULL_POINTER : _to->ExpressInterest(interest, onDataCallback); } 
+  NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return !_to ? NS_ERROR_NULL_POINTER : _to->ExpressInterest(interest, onDataCallback); } \
+  NS_IMETHOD PublishData(const char * prefix, const char * data) { return !_to ? NS_ERROR_NULL_POINTER : _to->PublishData(prefix, data); } 
 
 #if 0
 /* Use the code below as a template for the implementation class for this interface. */
@@ -165,6 +171,12 @@ NS_IMETHODIMP _MYCLASS_::Test(int32_t a, int32_t b, int32_t *_retval)
 
 /* void ExpressInterest (in string interest, in INrtcDataCallback onDataCallback); */
 NS_IMETHODIMP _MYCLASS_::ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+/* void PublishData (in string prefix, in string data); */
+NS_IMETHODIMP _MYCLASS_::PublishData(const char * prefix, const char * data)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

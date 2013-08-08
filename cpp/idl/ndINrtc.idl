@@ -11,4 +11,5 @@ interface INrtc : nsISupports
 {
   long Test(in long a, in long b);
   void ExpressInterest(in string interest, in INrtcDataCallback onDataCallback);
+  void PublishData(in string prefix, in string data);
 };

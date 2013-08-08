@@ -41,7 +41,7 @@ init: function(aWindow) {
 },
 
 ExpressInterest: function(interest, onData){
-    dump("wrapper express interest");
+    dump("wrapper express interest\n");
     return this.ndnrtc.ExpressInterest(interest, onData);
 },
     

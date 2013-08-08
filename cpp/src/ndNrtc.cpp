@@ -28,24 +28,26 @@ static void initializer(int argc, char** argv, char** envp) {
     static int initialized = 0;
     if (!initialized) {
         initialized = 1;
-        cout << "module loaded" << endl;        
+        INFO("module loaded");
     }
 }
 
 __attribute__((destructor))
 static void destructor(){
-    cout << "module unloaded" << endl;
+    INFO("module unloaded");
 }
 
 //********************************************************************************
 #pragma mark - creation
 ndNrtc::ndNrtc()
 {
-    std::cout<<"Nrtc: constructor called"<<std::endl;
+    INFO("constructor called");
     currentWorker_ = shared_ptr<NdnWorker>(new NdnWorker("E.hub.ndn.ucla.edu", 9695, this));
+    // connect to local ndnd
+//    currentWorker_ = shared_ptr<NdnWorker>(new NdnWorker("localhost", 9695, this));
 };
 ndNrtc::~ndNrtc(){
-    std::cout<<"Nrtc: destructor called"<<std::endl;
+    INFO("destructor called");
 };
 
 //********************************************************************************
@@ -61,14 +63,21 @@ NS_IMETHODIMP ndNrtc::ExpressInterest(const char *interest, INrtcDataCallback *o
     dataCallback_ = onDataCallback;
     
     try {
-        cout<<"calling expressInterestAsync"<<endl;
+        TRACE("calling expressInterestAsync");
         currentWorker_->expressInterestAsync(interest);
     }
     catch (std::exception &e)
     {
-        cout << "exception: " << e.what() << endl;
+        ERROR("exception: %s", e.what());
     }
     
+    return NS_OK;
+}
+
+NS_IMETHODIMP ndNrtc::PublishData(const char * prefix, const char * data)
+{
+    // construct data object
+//    Data *data =
     return NS_OK;
 }
 
@@ -76,7 +85,7 @@ NS_IMETHODIMP ndNrtc::ExpressInterest(const char *interest, INrtcDataCallback *o
 #pragma mark - private
 void ndNrtc::onDataReceived(shared_ptr<Data> &data)
 {
-    cout << "got content with name " << data->getName().to_uri() << endl;
+    TRACE("got content with name %s", data->getName().to_uri().c_str());
     
     if (dataCallback_)
         dataCallback_->OnNewData(data->getContent().size(), (const char*)&data->getContent()[0]);

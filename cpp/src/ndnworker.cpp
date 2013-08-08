@@ -32,7 +32,7 @@ void NdnWorker::expressInterestAsync(const char *interest)
     
     gotContent_ = false;
     // provide shared_ptr self as a closure
-    cout<<"expressing interest"<<endl;
+    TRACE("expressing interest");
     face_->expressInterest(Name(interest), this);
     
     nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);
@@ -47,12 +47,12 @@ void NdnWorker::expressInterestAsync(const char *interest)
         spinThread_->Dispatch(spinTask, nsIThread::DISPATCH_NORMAL);
     }
     else
-        NS_WARNING("Cleanup thread creation failed");
+        ERROR("spin thread creation failed");
 }
 
 void NdnWorker::dispatchData(shared_ptr<Data> &data)
 {
-    cout<<"should dispatch callback on main thread here"<<endl;
+    TRACE("should dispatch callback on main thread here");
     
     NS_DispatchToMainThread(new NdnWorkerDispatchDataTask(delegate_,data));
     
