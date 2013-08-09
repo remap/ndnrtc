@@ -26,26 +26,27 @@ namespace ndnrtc
     class NdnWorker : public DataClosure, public ptr_lib::enable_shared_from_this<NdnWorker>
     {
     public:
+        // construction/desctruction
         NdnWorker(const char *hub, const int port, INdnWorkerDelegate *delegate);
         ~NdnWorker();
         
+        // public methods go here
         void expressInterestAsync(const char *interest);
-        
-        Transport*  getTransport() const{
-            return face_->getTransport().get();
-        }
+        void publishData(const char *prefix, const unsigned char *data, unsigned int datalen);
+        void connect();
+        bool isConnected(){ return isConnected_; }
+        Transport*  getTransport() const{ return face_->getTransport().get(); }
 
     private:
-        void dispatchData(shared_ptr<Data> &data);
-        
-        shared_ptr<NdnWorker> sharedThis()
-        {
-            return shared_from_this();
-        }
-        
+        // private attributes go here
         Face *face_;
         INdnWorkerDelegate *delegate_;
         nsCOMPtr<nsIThread> spinThread_;
+        bool isConnected_;
+        
+        // private methods go here
+        void dispatchData(shared_ptr<Data> &data);
+        shared_ptr<NdnWorker> sharedThis(){ return shared_from_this(); }
     };
     
     class INdnWorkerDelegate {

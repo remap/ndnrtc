@@ -13,9 +13,11 @@ let Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://ndnrtc/log.js");
+
 
 function NDNWebRTC() {
-    dump("wrapper constructor called\n");
+    info("constructor called");
     this.ndnrtc = Cc["@named-data.net/ndnrtc;1"].createInstance().QueryInterface(Ci.INrtc);
 }
 
@@ -29,24 +31,32 @@ QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer]),
 init: function(aWindow) {
     let self = this;
     let api = {
+        
     Test: self.Test.bind(self),
     ExpressInterest: self.ExpressInterest.bind(self),
+    PublishData: self.PublishData.bind(self),
 		
     __exposedProps__: {
         Test: "r",
-        ExpressInterest: "r"
+        ExpressInterest: "r",
+        PublishData: "r"
     }
     };
     return api;
 },
 
 ExpressInterest: function(interest, onData){
-    dump("wrapper express interest\n");
+    trace("forwarding expressInterest call to ndnrtc");
     return this.ndnrtc.ExpressInterest(interest, onData);
+},
+
+PublishData: function(prefix, data){
+    trace("publish");
+    this.ndnrtc.PublishData(prefix,data);
 },
     
 Test: function(a, b){
-    dump("wrapper test called\n");
+    trace("test called");
     return this.ndnrtc.Test(a,b);
 }
 };

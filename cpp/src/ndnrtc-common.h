@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
+#include <string.h>
 
 #include "nsCOMptr.h"
 

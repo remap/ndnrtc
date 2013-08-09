@@ -87,7 +87,7 @@ void NdnLogger::log(const char *str)
     
     gettimeofday(&tv,NULL);
     
-    sprintf(timestamp, "%ld:%d : ", tv.tv_sec, tv.tv_usec);
+    sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
     
     std::cout<<timestamp<<str<<std::endl;
 }

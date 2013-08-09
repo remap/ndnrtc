@@ -21,6 +21,13 @@
                                                   });
             }
             
+            function publish() {
+                var dataName = document.getElementById('contentname').value;
+                var data = document.getElementById('content-pub').value;
+                
+                window.nrtcObject.PublishData(dataName,data);
+            }
+            
             </script>
         
     </head>
@@ -42,11 +49,30 @@
         <p>Add-on status: </p><div id="msgbox"></div>
         
         <h3>Express interest</h1>
-        <form>
-            Please Enter an Interest:<br />
-            <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/ndn-js-test/hello.txt/level2/%FD%05%0B%16%7D%95%0E" /> <br/>
-        </form>
-        <button id="testBtn" onclick="fetch()">Fetch Content</button>
-        <p id="content"><br/></p>
+            <form>
+                Please Enter an Interest:<br />
+                <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/ndn-js-test/hello.txt/level2/%FD%05%0B%16%7D%95%0E" /> <br/>
+            </form>
+            <button id="testBtn" onclick="fetch()">Fetch Content</button>
+            <p id="content"><br/></p>
+            
+            
+            <h3>Publish data</h3>
+            <form>
+                <div>
+                    <p>Please provide an URI:</p>
+                    
+                    <input id="contentname" type="text" name="CONTENTNAME" size="50" value="/ndn/ucla.edu/apps/peter-test/rtc" />
+                    
+                    <p>Please provide a data:</p>
+                    
+                    <textarea id="content-pub" cols="40" rows="5" name="CONTENT" >Hello RTC!</textarea>
+                    <br />
+                </div>
+            </form>
+            <div>
+                <button id="testBtn" onclick="publish()">Publish Content</button>
+            </div>
+    
     </body>
 </html>
