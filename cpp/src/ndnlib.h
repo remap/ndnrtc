@@ -13,5 +13,6 @@
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/transport/udp-transport.hpp>
 #include <ndn-cpp/face.hpp>
+#include <ndn-cpp/key-chain.hpp>
 
 #endif

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <iostream>
 #include <string.h>
+#include <time.h>
 
 #include "nsCOMptr.h"
 

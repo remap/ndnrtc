@@ -63,9 +63,12 @@ void NdnWorker::publishData(const char *prefix, const unsigned char *data, unsig
     Data ndnData(name);
     
     ndnData.setContent(data, datalen);
+    ndnData.getSignedInfo().setTimestampMilliseconds(time(NULL) * 1000.0);
+    
+    KeyChain::defaultSign(ndnData);
     shared_ptr<vector<unsigned char>> encodedData = ndnData.wireEncode();
     
-    face_->getTransport()->send(&encodedData->front(), encodedData->size());
+    getTransport()->send(&encodedData->front(), encodedData->size());
 }
 void NdnWorker::connect()
 {
