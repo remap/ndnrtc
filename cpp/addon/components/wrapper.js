@@ -19,6 +19,7 @@ Cu.import("resource://ndnrtc/log.js");
 function NDNWebRTC() {
     info("constructor called");
     this.ndnrtc = Cc["@named-data.net/ndnrtc;1"].createInstance().QueryInterface(Ci.INrtc);
+    this.window = null;
 }
 
 NDNWebRTC.prototype = {
@@ -29,17 +30,22 @@ QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer]),
     
     
 init: function(aWindow) {
+    info("initalizing ndnrtc wrapper");
+    
+    this.window = aWindow;
     let self = this;
     let api = {
         
     Test: self.Test.bind(self),
     ExpressInterest: self.ExpressInterest.bind(self),
     PublishData: self.PublishData.bind(self),
-		
+    AddUserMedia: self.AddUserMedia.bind(self),
+        
     __exposedProps__: {
         Test: "r",
         ExpressInterest: "r",
-        PublishData: "r"
+        PublishData: "r",
+        AddUserMedia: "r"
     }
     };
     return api;
@@ -54,7 +60,17 @@ PublishData: function(prefix, data){
     trace("publish");
     this.ndnrtc.PublishData(prefix,data);
 },
-    
+
+AddUserMedia: function(stream){
+    trace("adding media");
+    try {
+        this.ndnrtc.AddUserMedia(stream);
+    }
+    catch(e){
+        console.log("exception: "+e);
+    }
+},
+
 Test: function(a, b){
     trace("test called");
     return this.ndnrtc.Test(a,b);

@@ -1,0 +1,80 @@
+digraph ndneye { 
+	graph [dir=none, layout=dot, nodesep=0.2, margin=0, ranksep=0.3];
+	node [label="\N", shape=box];
+	edge [dir=none];
+		
+"/<root>/ndneye/vchat@middle-earth/"	-> video;
+"/<root>/ndneye/vchat@middle-earth/"	-> audio;
+
+video	->	info;
+video -> segments;
+
+/*
+codec1 [label="vp8-1024" color=red];
+codec2 [label="vp8-640" color=red];
+codec3 [label="vp8-370" color=red];
+
+
+video -> codec1 [color=red];
+video -> codec2 [color=red];
+video -> codec3 [color=red];
+
+codec2 -> info [color=red];
+codec2 -> segments [color=red];
+//codec2 -> index [color=red];
+*/
+
+
+tsV1 [label="00:00:00:00" ];//color=blue];
+tsV2 [label="00:00:02:00"];// color=blue;
+tsV3 [label="..."];// color=blue];
+index [label="index"];// color=blue];
+
+video -> index;// [color=red];
+//codec2 -> index [color=blue];
+index -> tsV1;// [color=blue];
+index -> tsV2;// [color=blue];
+index -> tsV3;// [color=blue]; 
+
+
+segments->00;
+segments->01;
+segments->"...";
+
+
+segmentsA [label="segments"];
+infoA [label="info"];
+s1 [label="00"];
+s2 [label="01"];
+s3 [label="..."];
+
+tsA1 [label="00:00:00:00" ];//color=blue];
+tsA2 [label="00:00:02:00"];// color=blue;
+tsA3 [label="..."];// color=blue];
+indexA [label="index"];// color=blue];
+
+audio->infoA;
+audio->segmentsA;
+audio->indexA;
+indexA -> tsA1;// [color=blue];
+indexA -> tsA2;// [color=blue];
+indexA -> tsA3;// [color=blue]; 
+
+/*
+acodec1 [label="aac-128" color=red];
+acodec2 [label="mp3-198" color=red];
+
+audio -> acodec1 [color=red];
+audio -> acodec2 [color=red];
+
+acodec2 -> infoA [color=red];
+acodec2 -> segmentsA [color=red];
+//codec2 -> index [color=red];
+*/
+
+segmentsA->s1;
+segmentsA->s2;
+segmentsA->s3;
+
+
+}

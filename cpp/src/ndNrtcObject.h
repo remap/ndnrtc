@@ -1,14 +1,18 @@
+//  Copyright (C) 2013 Regents of the University of California
+//  Author(s): Peter Gusev <gpeetonn@gmail.com>
+//  See the LICENSE file for licensing information.
 //
-//  ndNrtc.h
-//  ndnrtc
-//
-//  Created by Peter Gusev on 7/29/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
-//
+
+// Created: 7/29/2013
+// Last updated: 7/29/2013
 
 #include "ndINrtc.h"
 
 #include "ndnrtc-common.h"
+#include "nsIDOMMediaStream.h"
+#include "jsapi.h"
+#include "jsdbgapi.h"
+
 #include "data-closure.h"
 #include "ndnworker.h"
 
@@ -37,8 +41,12 @@ private:
     // emable_shared_from_this internally
     shared_ptr<ndnrtc::NdnWorker> currentWorker_;
     nsCOMPtr<INrtcDataCallback> dataCallback_;
+    nsIDOMMediaStream *localMediaStream_;
+    
+    webrtc::VideoEngine *videoEngine_;
 
     void onDataReceived(shared_ptr<ndn::Data> &data);
+    int testWebRTC();
     
 protected:
   /* additional members */

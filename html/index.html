@@ -1,6 +1,6 @@
 <html>
     <head>
-        
+        <script src="js/ndnrtc.js"></script>        
         <script type="text/javascript">
             
             function check(){
@@ -27,11 +27,11 @@
                 
                 window.nrtcObject.PublishData(dataName,data);
             }
-            
             </script>
         
     </head>
-    <body onload="check()">
+    
+    <body onload="initialize()">
         
         <center><b><font size=+2>NDN WebRTC sample</font></b>
             
@@ -51,7 +51,7 @@
         <h3>Express interest</h1>
             <form>
                 Please Enter an Interest:<br />
-                <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/ndn-js-test/hello.txt/level2/%FD%05%0B%16%7D%95%0E" /> <br/>
+                <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/peter-test/rtc" /> <br/>
             </form>
             <button id="testBtn" onclick="fetch()">Fetch Content</button>
             <p id="content"><br/></p>
@@ -73,6 +73,22 @@
             <div>
                 <button id="testBtn" onclick="publish()">Publish Content</button>
             </div>
-    
+            
+            
+        <h3>Media check</h3>
+            <div id="container" ondblclick="">
+                <div id="card">
+                    <div id="local">
+                        <video id="localVideo" autoplay="autoplay" muted="true"/>
+                    </div>
+                    <div id="remote">
+                        <video id="remoteVideo" autoplay="autoplay">
+                        </video>
+                        <div id="mini">
+                            <video id="miniVideo" autoplay="autoplay" muted="true"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </body>
 </html>

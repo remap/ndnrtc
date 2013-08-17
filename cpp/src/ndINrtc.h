@@ -10,6 +10,10 @@
 #include "nsISupports.h"
 #endif
 
+#ifndef __gen_nsIDOMMediaStream_h__
+#include "nsIDOMMediaStream.h"
+#endif
+
 /* For IDL files that don't want to include root IDL files. */
 #ifndef NS_NO_VTABLE
 #define NS_NO_VTABLE
@@ -109,6 +113,9 @@ class NS_NO_VTABLE INrtc : public nsISupports {
   /* void PublishData (in string prefix, in string data); */
   NS_IMETHOD PublishData(const char * prefix, const char * data) = 0;
 
+  /* void AddUserMedia (in nsIDOMMediaStream localMedia); */
+  NS_IMETHOD AddUserMedia(nsIDOMMediaStream *localMedia) = 0;
+
 };
 
   NS_DEFINE_STATIC_IID_ACCESSOR(INrtc, INRTC_IID)
@@ -117,19 +124,22 @@ class NS_NO_VTABLE INrtc : public nsISupports {
 #define NS_DECL_INRTC \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval); \
   NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback); \
-  NS_IMETHOD PublishData(const char * prefix, const char * data); 
+  NS_IMETHOD PublishData(const char * prefix, const char * data); \
+  NS_IMETHOD AddUserMedia(nsIDOMMediaStream *localMedia); 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object. */
 #define NS_FORWARD_INRTC(_to) \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return _to Test(a, b, _retval); } \
   NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return _to ExpressInterest(interest, onDataCallback); } \
-  NS_IMETHOD PublishData(const char * prefix, const char * data) { return _to PublishData(prefix, data); } 
+  NS_IMETHOD PublishData(const char * prefix, const char * data) { return _to PublishData(prefix, data); } \
+  NS_IMETHOD AddUserMedia(nsIDOMMediaStream *localMedia) { return _to AddUserMedia(localMedia); } 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_INRTC(_to) \
   NS_IMETHOD Test(int32_t a, int32_t b, int32_t *_retval) { return !_to ? NS_ERROR_NULL_POINTER : _to->Test(a, b, _retval); } \
   NS_IMETHOD ExpressInterest(const char * interest, INrtcDataCallback *onDataCallback) { return !_to ? NS_ERROR_NULL_POINTER : _to->ExpressInterest(interest, onDataCallback); } \
-  NS_IMETHOD PublishData(const char * prefix, const char * data) { return !_to ? NS_ERROR_NULL_POINTER : _to->PublishData(prefix, data); } 
+  NS_IMETHOD PublishData(const char * prefix, const char * data) { return !_to ? NS_ERROR_NULL_POINTER : _to->PublishData(prefix, data); } \
+  NS_IMETHOD AddUserMedia(nsIDOMMediaStream *localMedia) { return !_to ? NS_ERROR_NULL_POINTER : _to->AddUserMedia(localMedia); } 
 
 #if 0
 /* Use the code below as a template for the implementation class for this interface. */
@@ -177,6 +187,12 @@ NS_IMETHODIMP _MYCLASS_::ExpressInterest(const char * interest, INrtcDataCallbac
 
 /* void PublishData (in string prefix, in string data); */
 NS_IMETHODIMP _MYCLASS_::PublishData(const char * prefix, const char * data)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+/* void AddUserMedia (in nsIDOMMediaStream localMedia); */
+NS_IMETHODIMP _MYCLASS_::AddUserMedia(nsIDOMMediaStream *localMedia)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

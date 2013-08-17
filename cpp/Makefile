@@ -14,14 +14,13 @@ THIRDPARTY_PATH = $(CURRENT)/thirdparty
 # third party
 NDNC = ndn-c
 NDNCPP = ndn-cpp
-WEBRTC = jingle
+WEBRTC = webrtc
 
 NDNCPPLIB = lib$(NDNCPP).a
 NDNCLIB = lib$(NDNC).a
 
 LIBBIN_PATH = $(THIRDPARTY_PATH)/bin
 NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/$(NDNCPP)
-WEBRTCLIB_PATH = $(THIRDPARTY_PATH)/$(WEBRTC)
 
 # dir for storing add-on chrome resources
 ADDON_CHROME_DIR = $(ADDON_PATH)/chrome
@@ -50,8 +49,96 @@ CPPFLAGS +=     -fno-rtti		\
 		
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
-LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC)
-LIB_INCLUDES = -I$(LIBBIN_PATH)/include
+WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
+WEBRTC_SRCPATH = $(WEBRTC_TRUNK)/webrtc
+
+# change it for your WebRTC build directory
+WEBRTC_LIBPATH = $(WEBRTC_TRUNK)/xcodebuild/Debug # change to Release for releasing
+WEBRTC_INCLUDES = -I$(WEBRTC_SRCPATH) -I$(WEBRTC_TRUNK)
+
+# add necessary libs from WebRTC
+WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
+	-laudio_coding_module \
+	-laudio_conference_mixer \
+	-laudio_device \
+	-laudio_processing \
+	-laudio_processing_sse2 \
+	-laudioproc_debug_proto \
+	-laudioproc_unittest_proto \
+	-lbitrate_controller \
+	-lchannel_transport \
+	-lCNG \
+	-lcommand_line_parser \
+	-lcommon_audio \
+	-lcommon_audio_sse2 \
+	-lcommon_video \
+	-ldesktop_capture \
+	-ldesktop_capture_differ_sse2 \
+	-lframe_editing_lib \
+	-lG711 \
+	-lG722 \
+	-lgenperf_libs \
+	-lgmock \
+	-lgoogle-gflags \
+	-lgtest \
+	-liLBC \
+	-liSAC \
+	-liSACFix \
+	-ljpeg_turbo \
+	-lmedia_file \
+	-lmetrics \
+	-lNetEq \
+	-lNetEq4 \
+	-lNetEq4TestTools \
+	-lneteq_unittest_tools \
+	-lNetEqTestTools \
+	-lopus \
+	-lpaced_sender \
+	-lPCM16B \
+	-lprotobuf_full_do_not_use \
+	-lprotobuf_lite \
+	-lrbe_components \
+	-lrbe_components_unittests \
+	-lremote_bitrate_estimator \
+	-lrtp_rtcp \
+	-lsystem_wrappers \
+	-ltest \
+	-ltest_framework \
+	-ltest_support \
+	-ltest_support_main \
+	-ltest_support_main_threaded_mac \
+	-lvideo_capture_module \
+	-lvideo_codecs_test_framework \
+	-lvideo_coding_utility \
+	-lvideo_engine_core \
+	-lvideo_processing \
+	-lvideo_processing_sse2 \
+	-lvideo_quality_analysis \
+	-lvideo_render_module \
+	-lvideo_tests_common \
+	-lvietest \
+	-lvoice_engine \
+	-lvpx \
+	-lvpx_asm_offsets_vp8 \
+	-lvpx_intrinsics_mmx \
+	-lvpx_intrinsics_sse2 \
+	-lvpx_intrinsics_ssse3 \
+	-lwebrtc_i420 \
+	-lwebrtc_opus \
+	-lwebrtc_utility \
+	-lwebrtc_video_coding \
+	-lwebrtc_vp8 \
+	-lyuv
+#                    -lwebrtc
+#-lvideo_engine_core \
+#                    -lsystem_wrappers \
+#                    -lrbe_components \
+#                    -lwebrtc_utility \
+#                    -lbitrate_controller \
+#                    -lremote_bitrate_estimator
+
+LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS)
+LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 
 # GCC only define which allows us to not have to #include mozilla-config
 # in every .cpp file.  If your not using GCC remove this line and add
@@ -87,7 +174,13 @@ libclean:
 configlib:
 	cd $(NDNCPPLIB_PATH) && ./configure && cd $(CURRENT)
 
-libbuild:
+libbuild: ndnbuild webrtcbuild
+
+webrtcbuild:
+	export GYP_GENERATORS=make
+	cd $(WEBRTC_TRUNK) && gclient sync && make BUILDTYPE=Release
+
+ndnbuild:
 	cd $(NDNCPPLIB_PATH) && make  && cd $(CURRENT)
 	mkdir -p $(LIBBIN_PATH)/include/$(NDNCPP)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCLIB) $(LIBBIN_PATH)
@@ -124,9 +217,9 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 
 %.o: $(SRC_PATH)/%.cpp Makefile
 	mkdir -p $(OBJ_PATH)
-	$(CXX) -c $(CPPFLAGS) $(OTHER_CFLAGS) $(CXXFLAGS) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
+	$(CXX) -c $(CPPFLAGS) $(OTHER_CFLAGS) $(CXXFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
 
-$(MODULE).dylib: libbuild $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
+$(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
 	mkdir -p $(BIN_PATH)
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(GECKO_LDFLAGS)
 	chmod +x $(BIN_PATH)/$@

@@ -1,10 +1,10 @@
+//  Copyright (C) 2013 Regents of the University of California
+//  Author(s): Peter Gusev <gpeetonn@gmail.com>
+//  See the LICENSE file for licensing information.
 //
-//  ndnworker.cpp
-//  ndnrtc
-//
-//  Created by Peter Gusev on 8/6/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
-//
+
+// Created: 8/6/2013
+// Last updated: 7/29/2013
 
 #include "ndnworker.h"
 
@@ -23,7 +23,10 @@ NdnWorker::NdnWorker(const char *hub, const int port, INdnWorkerDelegate *delega
 }
 NdnWorker::~NdnWorker()
 {
+    TRACE("shutting down spin thread");
     spinThread_->Shutdown();
+    spinThread_ = NULL;
+    delete face_;
 }
 //********************************************************************************
 #pragma mark - public

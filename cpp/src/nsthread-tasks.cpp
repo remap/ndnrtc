@@ -17,7 +17,7 @@ NS_IMETHODIMP NdnWorkerSpinTask::Run()
     {
         try {
             TRACE("fetching");
-            currentWorker_->getTransport()->tempReceive();
+            currentWorker_->getFace()->processEvents();
         }
         catch (std::exception &e)
         {
