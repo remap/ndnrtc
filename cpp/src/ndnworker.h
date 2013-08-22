@@ -37,6 +37,7 @@ namespace ndnrtc
         bool isConnected(){ return isConnected_; }
         Transport*  getTransport() const{ return face_->getTransport().get(); }
         Face* getFace() const {return face_; }
+        void tempReceive();
 
     private:
         // private attributes go here

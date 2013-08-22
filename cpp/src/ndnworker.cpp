@@ -7,10 +7,11 @@
 // Last updated: 7/29/2013
 
 #include "ndnworker.h"
+#include "nsthread-tasks.h"
 
+// xpcom
 #include "nsXPCOMCIDInternal.h"
 #include "nsServiceManagerUtils.h"
-#include "nsthread-tasks.h"
 
 using namespace ndnrtc;
 
@@ -83,7 +84,6 @@ void NdnWorker::connect()
     isConnected_ = true;
     INFO("connected to %s",face_->getHost());
 }
-
 //********************************************************************************
 #pragma mark - overriden
 void NdnWorker::dispatchData(shared_ptr<Data> &data)

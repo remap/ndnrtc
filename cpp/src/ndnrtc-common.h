@@ -10,7 +10,7 @@
 #define ndnrtc_ndnrtc_common_h
 
 //#define DEBUG
-#define NDN_LOGGING
+//#define NDN_LOGGING
 //#define NDN_DETAILED
 #define NDN_TRACE
 #define NDN_INFO
@@ -24,12 +24,15 @@
 #include <iostream>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
+#include <vector>
 
 #include "nsCOMptr.h"
 
 #include "ndnlib.h"
 #include "webrtc.h"
 #include "simple-log.h"
+#include "ndnrtc-object.h"
 
 using namespace std;
 using namespace ndn;

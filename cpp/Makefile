@@ -4,6 +4,7 @@ NAME 		= ndnrtc
 CURRENT     = $(shell pwd)
 IDL_PATH 	= $(CURRENT)/idl
 SRC_PATH	= $(CURRENT)/src
+OBJSRC_PATH	= $(SRC_PATH)/objc
 BIN_PATH	= $(CURRENT)/bin
 OBJ_PATH	= $(CURRENT)/obj
 ADDON_SRC_PATH = $(CURRENT)/addon
@@ -40,13 +41,14 @@ CXX	       	= clang++
 
 XPIDLSRCS	= $(patsubst $(IDL_PATH)/%.idl,%.idl,$(wildcard $(IDL_PATH)/*.idl))
 CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
+OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
 CPPFLAGS +=     -fno-rtti		\
                 -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
 		$(NULL)
-		
+OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework QTKit
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
@@ -129,13 +131,6 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lwebrtc_video_coding \
 	-lwebrtc_vp8 \
 	-lyuv
-#                    -lwebrtc
-#-lvideo_engine_core \
-#                    -lsystem_wrappers \
-#                    -lrbe_components \
-#                    -lwebrtc_utility \
-#                    -lbitrate_controller \
-#                    -lremote_bitrate_estimator
 
 LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS)
 LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
@@ -163,7 +158,7 @@ GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 $(NULL)
 
 .PHONY: build addon all
-
+    
 all: addon
 
 build: $(MODULE).dylib
@@ -174,7 +169,7 @@ libclean:
 configlib:
 	cd $(NDNCPPLIB_PATH) && ./configure && cd $(CURRENT)
 
-libbuild: ndnbuild webrtcbuild
+libbuild: ndnbuild #webrtcbuild
 
 webrtcbuild:
 	export GYP_GENERATORS=make
@@ -217,11 +212,18 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 
 %.o: $(SRC_PATH)/%.cpp Makefile
 	mkdir -p $(OBJ_PATH)
-	$(CXX) -c $(CPPFLAGS) $(OTHER_CFLAGS) $(CXXFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
 
-$(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o)
+%.om: $(OBJSRC_PATH)/%.mm Makefile
+	mkdir -p $(OBJ_PATH)
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
+
+#foo: $(OBJCSRCS:%.mm=%.om)
+#	echo $(OBJCSRCS)
+
+$(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)
 	mkdir -p $(BIN_PATH)
-	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(GECKO_LDFLAGS)
+	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om) $(GECKO_LDFLAGS)
 	chmod +x $(BIN_PATH)/$@
 
 clean: libclean

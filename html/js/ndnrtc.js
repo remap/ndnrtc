@@ -37,6 +37,8 @@ function initialize()
     miniVideo = document.getElementById('miniVideo');
     remoteVideo = document.getElementById('remoteVideo');
     
+    ndnrtc.SetLocalRenderingCanvas(document.getElementById('localVideo'));
+    
 //    doGetUserMedia();
 }
 

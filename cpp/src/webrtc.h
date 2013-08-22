@@ -10,6 +10,11 @@
 #define ndnrtc_webrtc_h
 
 #include <video_engine/vie_impl.h>
-#include <video_capture/video_capture_defines.h>
+
+// video capturing
+#include <modules/video_capture/include/video_capture_defines.h>
+#include <modules/video_capture/include/video_capture.h>
+#include <modules/video_capture/include/video_capture_factory.h>
+#include <common_video/libyuv/include/webrtc_libyuv.h>
 
 #endif

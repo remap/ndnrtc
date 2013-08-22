@@ -9,12 +9,11 @@
 #include "ndINrtc.h"
 
 #include "ndnrtc-common.h"
-#include "nsIDOMMediaStream.h"
-#include "jsapi.h"
-#include "jsdbgapi.h"
 
 #include "data-closure.h"
 #include "ndnworker.h"
+#include "camera-capturer.h"
+#include "renderer.h"
 
 // These macros are used in ndnNrtModule.cpp
 #define NRTC_CLASSNAME 	"NDN WebRTC Main Class"
@@ -24,10 +23,12 @@
   {0xcd232e0f, 0xa777, 0x41a3, \
     { 0xbb, 0x19, 0xcf, 0x41, 0x5b, 0x98, 0x08, 0x8e }}
 
+using namespace ndnrtc;
+
 /** 
  * Class description goes here
  */
-class ndNrtc : public INrtc, public ndnrtc::INdnWorkerDelegate
+class ndNrtc : public INrtc
 {
 public:
   NS_DECL_ISUPPORTS
@@ -39,14 +40,10 @@ public:
 private:
     // should be shared_ptr, cause it's implementing
     // emable_shared_from_this internally
-    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
-    nsCOMPtr<INrtcDataCallback> dataCallback_;
-    nsIDOMMediaStream *localMediaStream_;
+//    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
     
-    webrtc::VideoEngine *videoEngine_;
-
-    void onDataReceived(shared_ptr<ndn::Data> &data);
-    int testWebRTC();
+    CameraCapturer *cameraCapturer_;
+    NdnRenderer *localRenderer_, *remoteRenderer_;
     
 protected:
   /* additional members */

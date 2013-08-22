@@ -1,17 +1,19 @@
 #include "nsISupports.idl"
 #include "nsIDOMMediaStream.idl"
+#include "nsIDOMCanvasRenderingContext2D.idl"
+#include "nsrootidl.idl"
+#include "nsIPropertyBag2.idl"
 
-[scriptable, function, uuid(E891B9DB-9D68-422C-B153-E0960CAC580F)]
-interface INrtcDataCallback : nsISupports
+[scriptable, function, uuid(03E963EC-423E-474A-B346-00CAC8E6D124)]
+interface INrtcObserver : nsISupports
 {
-    void OnNewData(in long size, in string data);
+    void onStateChanged(in string state, in string args);
 };
 
 [scriptable, uuid(86AD66E9-B3F7-4E6A-BEEE-802B1D9FF442)]
 interface INrtc : nsISupports
 {
-  long Test(in long a, in long b);
-  void ExpressInterest(in string interest, in INrtcDataCallback onDataCallback);
-  void PublishData(in string prefix, in string data);
-  void AddUserMedia(in nsIDOMMediaStream localMedia);
+  void startConference(in nsIPropertyBag2 prop, in INrtcObserver observer);
+  void joinConference(in string conferencePrefix, in INrtcObserver observer);
+  void leaveConference(in string conferencePrefix, in INrtcObserver observer);  
 };
