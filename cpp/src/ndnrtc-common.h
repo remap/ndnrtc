@@ -26,13 +26,13 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
+#include <cstring>
 
 #include "nsCOMptr.h"
 
 #include "ndnlib.h"
 #include "webrtc.h"
 #include "simple-log.h"
-#include "ndnrtc-object.h"
 
 using namespace std;
 using namespace ndn;

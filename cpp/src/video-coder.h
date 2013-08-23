@@ -15,14 +15,16 @@
 namespace ndnrtc {
     class IEncodedFrameConsumer;
     
-    class NdnVideoCoderParams : public NdnParams {
+    class NdnVideoCoderParams : public NdnParams
+    {
     public:
         // construction/desctruction
         NdnVideoCoderParams(){};
         ~NdnVideoCoderParams(){};
-    }
+    };
     
-    class NdnVideoCoder : public NdnRtcObject, public IRawFrameConsumer {
+    class NdnVideoCoder : public NdnRtcObject, public IRawFrameConsumer
+    {
     public:
         // construction/desctruction
         NdnVideoCoder(NdnVideoCoderParams *params);
@@ -30,18 +32,21 @@ namespace ndnrtc {
         
         // public methods go here
         
+        // interface conformance - ndnrtc::
+        void onDeliverFrame(webrtc::I420VideoFrame &frame);
     private:
         // private attributes go here
         IEncodedFrameConsumer *frameConsumer_;
         
         // private methods go here
         NdnVideoCoderParams *getParams() { return static_cast<NdnVideoCoderParams*>(params_); };
-    }
+    };
     
-    class IEncodedFrameConsumer : public INdnRtcObjectObserver {
+    class IEncodedFrameConsumer : public INdnRtcObjectObserver
+    {
     public:
-        void onEncodedFrameDelivered() = 0;
-    }
+       virtual void onEncodedFrameDelivered() = 0;
+    };
 }
 
 #endif /* defined(__ndnrtc__video_coder__) */

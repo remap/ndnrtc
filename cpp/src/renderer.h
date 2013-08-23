@@ -31,7 +31,7 @@ namespace ndnrtc {
         // public methods go here
         unsigned int getRenderAreaWidth() { return 640; };
         unsigned int getRenderAreaHeight() { return 480; };
-    }
+    };
     
     class NdnRenderer : public NdnRtcObject, public IRawFrameConsumer
     {

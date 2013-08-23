@@ -17,8 +17,7 @@ using namespace ndnrtc;
 #pragma mark - public
 void NdnVideoSender::registerConference(ndnrtc::VideoSenderParams &params)
 {
-#warning override "="
-    params_ = params;
+    params_.resetParams(params);
     TRACE("");
 }
 

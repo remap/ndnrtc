@@ -14,7 +14,7 @@
 namespace ndnrtc {
     class NdnVideoDecoder {
         
-    }
+    };
 }
 
 #endif /* defined(__ndnrtc__video_decoder__) */

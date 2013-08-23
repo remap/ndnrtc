@@ -8,6 +8,7 @@
 
 #include "camera-capturer.h"
 #include <system_wrappers/interface/tick_util.h>
+#include "ndnrtc-object.h"
 
 #include "nsXPCOMCIDInternal.h"
 #include "nsServiceManagerUtils.h"
@@ -20,25 +21,40 @@ using namespace webrtc;
 static unsigned char *frameBuffer = NULL;
 
 //********************************************************************************
+//********************************************************************************
+static const std::string ParamNameDeviceId = "deviceId";
+static const std::string ParamNameWidth = "width";
+static const std::string ParamNameHeight = "height";
+static const std::string ParamNameFPS = "fps";
+
+#pragma mark - public
+//********************************************************************************
 #pragma mark - construction/destruction
-void CameraCapturer::CameraCapturer(CameraCapturerParams *params) : NdnRtcObject(params)
+CameraCapturer::CameraCapturer(CameraCapturerParams *params) : NdnRtcObject(params)
 {
     TRACE("");
 }
+CameraCapturer::~CameraCapturer()
+{
+};
 
 //********************************************************************************
 #pragma mark - public
 int CameraCapturer::init()
 {
     if (!hasParams())
-        return notifyNoParams();
+        return notifyErrorNoParams();
     
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
     
     if (!devInfo)
-        return notifyError(-1, "can't get deivce info")
+        return notifyError(-1, "can't get deivce info");
     
-    unsigned int deviceID = getParams()->getDeviceID();
+    int deviceID;
+    
+    if (getParams()->getDeviceId(&deviceID) < 0)
+        return notifyErrorBadArg(ParamNameDeviceId);
+    
     char deviceName [256];
     char deviceUniqueName [256];
     
@@ -50,10 +66,14 @@ int CameraCapturer::init()
     
     if (!vcm_)
         return notifyError(-1,"can't get video capture module");
-        
-    capability_.width = getParams()->getWidth();
-    capability_.height = getParams()->getHeight();
-    capability_.maxFPS = getParams()->getFPS();
+    
+    if (getParams()->getWidth((int*)&capability_.width) < 0)
+        return notifyErrorBadArg(ParamNameWidth);
+    if (getParams()->getHeight((int*)&capability_.height) < 0)
+        return notifyErrorBadArg(ParamNameHeight);
+    if (getParams()->getFPS((int*)&capability_.maxFPS) < 0)
+        return notifyErrorBadArg(ParamNameFPS);
+
     capability_.rawType = webrtc::kVideoI420; //webrtc::kVideoUnknown;
     
     vcm_->RegisterCaptureDataCallback(*this);

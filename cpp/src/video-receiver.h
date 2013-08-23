@@ -15,7 +15,7 @@ namespace ndnrtc
 {
     class NdnVideoReceiver {
         
-    }
+    };
 }
 
 #endif /* defined(__ndnrtc__video_receiver__) */

@@ -11,7 +11,9 @@
 
 #include "webrtc.h"
 #include "ndnrtc-common.h"
+#include "ndnrtc-object.h"
 
+// xpcom
 #include "nsThreadUtils.h"
 
 namespace ndnrtc {
@@ -21,13 +23,33 @@ namespace ndnrtc {
     {
     public:
         // construction/desctruction
+        CameraCapturerParams():NdnParams(){};
         
-        // public methods go here
-        unsigned int getDeviceID() { return 0; }
-        unsigned int getWidth() { return 640; };
-        unsigned int getHeight() { return 480; };
-        unsigned int getFPS() { return 30; };
-    }
+        // static public
+        static CameraCapturerParams* defaultParams()
+        {
+            CameraCapturerParams *p = new CameraCapturerParams();
+            
+            p->setIntParam(CameraCapturerParams::ParamNameDeviceId, 0);
+            p->setIntParam(CameraCapturerParams::ParamNameWidth, 640);
+            p->setIntParam(CameraCapturerParams::ParamNameHeight, 480);
+            p->setIntParam(CameraCapturerParams::ParamNameFPS, 30);
+            
+            return p;
+        };
+        
+        // possible parameter names
+        static const std::string ParamNameDeviceId;
+        static const std::string ParamNameWidth;
+        static const std::string ParamNameHeight;
+        static const std::string ParamNameFPS;
+        
+        // public methods
+        int getDeviceId(int *did) { return getParamAsInt(ParamNameDeviceId, did); };
+        int getWidth(int *width) { return getParamAsInt(ParamNameWidth, width); };
+        int getHeight(int *height) { return getParamAsInt(ParamNameHeight, height); };
+        int getFPS(int *fps) { return getParamAsInt(ParamNameFPS, fps); };
+    };
     
     class CameraCapturer : public NdnRtcObject, public webrtc::VideoCaptureDataCallback
     {
@@ -49,12 +71,11 @@ namespace ndnrtc {
         int startCapture();
         int stopCapture();
         
-        // interface conformance
+        // interface conformance - webrtc::VideoCaptureDataCallback
         void OnIncomingCapturedFrame(const int32_t id,
                                      webrtc::I420VideoFrame& videoFrame);
         void OnCaptureDelayChanged(const int32_t id,
                                    const int32_t delay);
-//        void startCatpturing();
         
     private:
 //        class CameraCapturerTask : public nsRunnable

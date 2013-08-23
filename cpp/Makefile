@@ -151,11 +151,12 @@ GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
 GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
 		 -lxpcomglue_s	\
-#                 -lnspr4	\
-#                 -lplds4	\
-#		 -lxul		\
 		 -shared	\
 		 $(NULL)
+
+ALL_CFLAGS = $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(GECKO_DEFINES) $(OBJCFLAGS)
+ALL_LDFLAGS = $(LDFLAGS) $(LDLIBFLAGS) $(GECKO_LFDFLAGS)
+ALL_INCLUDES = $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_INCLUDES) $(LIB_INCLUDES)
 
 .PHONY: build addon all
     
@@ -224,6 +225,55 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 $(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)
 	mkdir -p $(BIN_PATH)
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om) $(GECKO_LDFLAGS)
+	chmod +x $(BIN_PATH)/$@
+
+##########################################################################################
+### TESTING WITH GTEST FRAMEWORK
+##########################################################################################
+TEST_PATH = $(CURRENT)/test
+GTEST_DIR = $(THIRDPARTY_PATH)/gtest
+USER_DIR = $(SRC_PATH)
+
+GT_CPPFLAGS += -isystem $(GTEST_DIR)/include
+GT_CXXFLAGS += -g -Wall -Wextra -pthread -I$(SRC_PATH)
+GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
+		 -L$(GECKO_SDK_PATH)/lib \
+		 -lxpcomglue_s	\
+		 $(NULL)
+
+TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
+
+GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+                $(GTEST_DIR)/include/gtest/internal/*.h
+
+testall : $(TESTS)
+	cd $(TEST_PATH)
+
+cleantest :
+	rm -f $(TEST_PATH)/$(TESTS) $(TEST_PATH)/gtest.a $(TEST_PATH)/gtest_main.a $(TEST_PATH)/*.o
+
+# Builds gtest.a and gtest_main.a.
+
+# Usually you shouldn't tweak such internal variables, indicated by a
+# trailing _.
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+
+gtest-all.o : $(GTEST_SRCS_)
+	$(CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest-all.cc -o $(OBJ_PATH)/$@
+
+test_main.o : $(GTEST_SRCS_)
+	$(CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(TEST_PATH)/test_main.cc -o $(OBJ_PATH)/$@
+
+test_main.a : gtest-all.o test_main.o
+	$(AR) $(ARFLAGS) $(OBJ_PATH)/$@ $(addprefix $(OBJ_PATH)/,$^)
+
+%-test.o : $(TEST_PATH)/%-test.cc $(USER_DIR)/%.h $(GTEST_HEADERS)
+	$(CXX) $(GT_CPPFLAGS) $(GT_CXXFLAGS) $(USER_DIR) $(GTEST_HEADERS) -c $< -o $(OBJ_PATH)/$@
+
+%-test : $(BIN_PATH)/$(MODULE).dylib test_main.a 
+	$(CXX) $(GT_CPPFLAGS) $(GT_CXXFLAGS) -lpthread $(addprefix $(OBJ_PATH)/,test_main.a) -o $(BIN_PATH)/$@
 	chmod +x $(BIN_PATH)/$@
 
 clean: libclean

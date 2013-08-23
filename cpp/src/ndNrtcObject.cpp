@@ -44,18 +44,7 @@ static void destructor(){
 #pragma mark - creation
 ndNrtc::ndNrtc(): localRenderer_(NULL), remoteRenderer_(NULL), cameraCapturer_(NULL)
 {
-    INFO("constructor called");
-    // connect to local ndnd
-//    currentWorker_ = shared_ptr<NdnWorker>(new NdnWorker("localhost", 9695, this));
-
-    // setup connections b/w caera capturing and renderer
-    cameraCapturer_ = new CameraCapturer();
-    localRenderer_ = new NdnRenderer();
-    remoteRenderer_ = new NdnRenderer();
-    
-    cameraCapturer_->init();
-    cameraCapturer_->setDelegate(localRenderer_);
-    
+    INFO("constructor called");    
 };
 ndNrtc::~ndNrtc(){
     INFO("destructor called");
@@ -66,6 +55,17 @@ ndNrtc::~ndNrtc(){
 #pragma mark - idl interface implementation
 NS_IMETHODIMP ndNrtc::StartConference(nsIPropertyBag2 *prop, INrtcObserver *observer)
 {
+    CameraCapturerParams params = *CameraCapturerParams::defaultParams();
+    
+    
+//
+//    cameraCapturer_ = new CameraCapturer(params);
+//    localRenderer_ = new NdnRenderer();
+//    remoteRenderer_ = new NdnRenderer();
+//    
+//    cameraCapturer_->init();
+//    cameraCapturer_->setFrameConsumer(localRenderer_);
+
     return NS_OK;
 }
 
