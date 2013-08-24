@@ -2,8 +2,11 @@
 //  video-decoder.h
 //  ndnrtc
 //
-//  Created by Peter Gusev on 8/21/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev 
+//  Created: 8/21/13
 //
 
 #ifndef __ndnrtc__video_decoder__

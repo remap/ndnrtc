@@ -2,9 +2,13 @@
 //  cocoa-renderer.mm
 //  ndnrtc
 //
-//  Created by Peter Gusev on 8/20/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
 //
+//  Author:  Peter Gusev 
+//  Created: 8/20/13
+//
+
 
 #import "cocoa-renderer.h"
 #include "../webrtc.h"

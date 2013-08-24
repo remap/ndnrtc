@@ -1,10 +1,13 @@
-//  Copyright (C) 2013 Regents of the University of California
-//  Author(s): Peter Gusev <gpeetonn@gmail.com>
-//  See the LICENSE file for licensing information.
 //
-
-// Created: 7/29/2013
-// Last updated: 7/29/2013
+//  ndNrtcModule.cpp
+//  ndnrtc
+//
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev 
+//  Created: 7/29/13
+//
 
 #include "mozilla/ModuleUtils.h"
 #include "nsIClassInfoImpl.h"

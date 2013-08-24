@@ -2,6 +2,14 @@ ndnrtc
 ======
 
 NDN WebRTC Conferencing Project
+http://named-data.net/
+
+For license information see LICENSE.
+
+Description
+----
+
+This project is developing an NDN-based videoconferencing tool based on the WebRTC implementation in Firefox.
 
 Structure
 ----

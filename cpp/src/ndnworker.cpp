@@ -1,10 +1,10 @@
-//  Copyright (C) 2013 Regents of the University of California
-//  Author(s): Peter Gusev <gpeetonn@gmail.com>
-//  See the LICENSE file for licensing information.
-//
 
-// Created: 8/6/2013
-// Last updated: 7/29/2013
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev 
+//  Created: 8/6/13
+//
 
 #include "ndnworker.h"
 #include "nsthread-tasks.h"
