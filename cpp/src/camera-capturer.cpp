@@ -22,10 +22,10 @@ static unsigned char *frameBuffer = NULL;
 
 //********************************************************************************
 //********************************************************************************
-static const std::string ParamNameDeviceId = "deviceId";
-static const std::string ParamNameWidth = "width";
-static const std::string ParamNameHeight = "height";
-static const std::string ParamNameFPS = "fps";
+const std::string CameraCapturerParams::ParamNameDeviceId = "deviceId";
+const std::string CameraCapturerParams::ParamNameWidth = "width";
+const std::string CameraCapturerParams::ParamNameHeight = "height";
+const std::string CameraCapturerParams::ParamNameFPS = "fps";
 
 #pragma mark - public
 //********************************************************************************
@@ -53,7 +53,7 @@ int CameraCapturer::init()
     int deviceID;
     
     if (getParams()->getDeviceId(&deviceID) < 0)
-        return notifyErrorBadArg(ParamNameDeviceId);
+        return notifyErrorBadArg(CameraCapturerParams::ParamNameDeviceId);
     
     char deviceName [256];
     char deviceUniqueName [256];
@@ -68,11 +68,13 @@ int CameraCapturer::init()
         return notifyError(-1,"can't get video capture module");
     
     if (getParams()->getWidth((int*)&capability_.width) < 0)
-        return notifyErrorBadArg(ParamNameWidth);
+        return notifyErrorBadArg(CameraCapturerParams::ParamNameWidth);
+    
     if (getParams()->getHeight((int*)&capability_.height) < 0)
-        return notifyErrorBadArg(ParamNameHeight);
+        return notifyErrorBadArg(CameraCapturerParams::ParamNameHeight);
+    
     if (getParams()->getFPS((int*)&capability_.maxFPS) < 0)
-        return notifyErrorBadArg(ParamNameFPS);
+        return notifyErrorBadArg(CameraCapturerParams::ParamNameFPS);
 
     capability_.rawType = webrtc::kVideoI420; //webrtc::kVideoUnknown;
     

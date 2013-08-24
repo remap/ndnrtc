@@ -15,7 +15,7 @@ THIRDPARTY_PATH = $(CURRENT)/thirdparty
 # third party
 NDNC = ndn-c
 NDNCPP = ndn-cpp
-WEBRTC = webrtc
+WEBRTC = ndn-webrtc
 
 NDNCPPLIB = lib$(NDNCPP).a
 NDNCLIB = lib$(NDNC).a
@@ -231,50 +231,45 @@ $(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp
 ### TESTING WITH GTEST FRAMEWORK
 ##########################################################################################
 TEST_PATH = $(CURRENT)/test
-GTEST_DIR = $(THIRDPARTY_PATH)/gtest
-USER_DIR = $(SRC_PATH)
+GTEST_DIR = $(THIRDPARTY_PATH)/ndn-gtest
 
-GT_CPPFLAGS += -isystem $(GTEST_DIR)/include
-GT_CXXFLAGS += -g -Wall -Wextra -pthread -I$(SRC_PATH)
-GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
-		 -L$(GECKO_SDK_PATH)/lib \
-		 -lxpcomglue_s	\
-		 $(NULL)
+GT_CXX = $(CXX)
+GT_CPPFLAGS += $(CPPFLAGS)
+GT_CXXFLAGS += -g -Wall -Wextra -pthread -Wno-missing-field-initializers
+GT_GECKO_DEFINES = $(GECKO_DEFINES) -DMOZ_NO_MOZALLOC
+GT_LDFLAGS += -lpthread # $(GT_GECKO_LDFLAGS)
 
 TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
 
-GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
-                $(GTEST_DIR)/include/gtest/internal/*.h
+#GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
+#                $(GTEST_DIR)/include/gtest/internal/*.h
 
-testall : $(TESTS)
-	cd $(TEST_PATH)
+testall : $(TESTS:%=build-%)
 
-cleantest :
-	rm -f $(TEST_PATH)/$(TESTS) $(TEST_PATH)/gtest.a $(TEST_PATH)/gtest_main.a $(TEST_PATH)/*.o
+${TESTS} : ; cd $(BIN_PATH) && $(BIN_PATH)/$@ && cd $(CURRENT)
 
+testrun : ${TESTS}
+	
+	
 # Builds gtest.a and gtest_main.a.
 
 # Usually you shouldn't tweak such internal variables, indicated by a
 # trailing _.
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
-gtest-all.o : $(GTEST_SRCS_)
-	$(CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc -o $(OBJ_PATH)/$@
+gtest-all.a : $(GTEST_SRCS_)
+	$(GT_CXX) -I$(GTEST_DIR)/include -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest-all.cc -static -o $(OBJ_PATH)/lib$@
+            
+test-main.a : $(GTEST_SRCS_)
+	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
+            $(TEST_PATH)/test-main.cc -static -o $(OBJ_PATH)/lib$@
 
-test_main.o : $(GTEST_SRCS_)
-	$(CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(TEST_PATH)/test_main.cc -o $(OBJ_PATH)/$@
+%-test.o : $(TEST_PATH)/%-test.cc
+	$(GT_CXX) --std=c++0x -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) -c $< -o $(OBJ_PATH)/$@
 
-test_main.a : gtest-all.o test_main.o
-	$(AR) $(ARFLAGS) $(OBJ_PATH)/$@ $(addprefix $(OBJ_PATH)/,$^)
-
-%-test.o : $(TEST_PATH)/%-test.cc $(USER_DIR)/%.h $(GTEST_HEADERS)
-	$(CXX) $(GT_CPPFLAGS) $(GT_CXXFLAGS) $(USER_DIR) $(GTEST_HEADERS) -c $< -o $(OBJ_PATH)/$@
-
-%-test : $(BIN_PATH)/$(MODULE).dylib test_main.a 
-	$(CXX) $(GT_CPPFLAGS) $(GT_CXXFLAGS) -lpthread $(addprefix $(OBJ_PATH)/,test_main.a) -o $(BIN_PATH)/$@
-	chmod +x $(BIN_PATH)/$@
+build-%-test : $(BIN_PATH)/$(MODULE).dylib %-test.o gtest-all.a test-main.a 
+	$(GT_CXX) $(GT_LDFLAGS) -L$(OBJ_PATH) $(addprefix -l,gtest-all test-main) $(OBJ_PATH)/$(patsubst build-%-test,%-test,$@).o -o $(BIN_PATH)/$@
 
 clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))

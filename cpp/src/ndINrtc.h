@@ -1,5 +1,5 @@
 /*
- * DO NOT EDIT.  THIS FILE IS GENERATED FROM /Users/gpeetonn/Documents/code/CCN/ndnrtc/cpp/idl/ndINrtc.idl
+ * DO NOT EDIT.  THIS FILE IS GENERATED FROM idl/ndINrtc.idl
  */
 
 #ifndef __gen_ndINrtc_h__
