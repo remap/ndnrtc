@@ -16,24 +16,30 @@
 
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
-#include "ndINrtc.h"
-
-#include "jsapi.h"
-#include "jsdbgapi.h"
-
-// XPCOM-related
-#include "nsThreadUtils.h"
-#include "nsIDOMCanvasRenderingContext2D.h"
-
 
 namespace ndnrtc {
     
     class NdnRendererParams : public NdnParams
     {
     public:
-        // public methods go here
-        unsigned int getRenderAreaWidth() { return 640; };
-        unsigned int getRenderAreaHeight() { return 480; };
+        // static public
+        static NdnRendererParams* defaultParams()
+        {
+            NdnRendererParams *p = new NdnRendererParams();
+            
+            p->setIntParam(ParamNameWindowWidth, 640);
+            p->setIntParam(ParamNameWindowHeight, 480);
+            
+            return p;
+        }
+        
+        // parameters names
+        static const std::string ParamNameWindowWidth;
+        static const std::string ParamNameWindowHeight;
+        
+        // public methods
+        int getWindowWidth(int *width) { return getParamAsInt(ParamNameWindowWidth, width); };
+        int getWindowHeight(int *height) { return getParamAsInt(ParamNameWindowHeight, height); };
     };
     
     class NdnRenderer : public NdnRtcObject, public IRawFrameConsumer
@@ -43,15 +49,17 @@ namespace ndnrtc {
         NdnRenderer(int rendererId, NdnRendererParams *params_);
         ~NdnRenderer();
         
+        int startRendering();
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
     private:
         // private static attributes go here
         // private attributes go here
         int rendererId_;
+        bool initialized_ = false;
 #warning make static in long run
         webrtc::VideoRender *render_ = NULL;        
-        webrtc::VideoRenderCallback *frameSink_;
+        webrtc::VideoRenderCallback *frameSink_ = NULL;
         
         // private methods go here
         NdnRendererParams *getParams(){ return static_cast<NdnRendererParams*>(params_); };

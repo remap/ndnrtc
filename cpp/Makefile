@@ -32,8 +32,9 @@ ADDON_CHROME_CONTENT_DIR = $(ADDON_CHROME_DIR)/content
 ADDON_COMPONENTS_DIR = $(ADDON_PATH)/components
 
 # Change this to point at your Gecko SDK directory or setup XULDSDK variable
-GECKO_SDK_PATH ?= $(XULSDK)#../../mozilla/obj-xulrunner/dist
+GECKO_SDK_PATH ?= ../../mozilla/obj-xulrunner/dist
 PYTHON 			= python
+export PYTHONPATH=$(GECKO_SDK_PATH)/sdk/bin
 
 
 XPIDL_H	    = $(PYTHON) $(GECKO_SDK_PATH)/sdk/bin/header.py
@@ -49,7 +50,7 @@ CPPFLAGS +=     -fno-rtti		\
 		-fPIC			\
         --std=c++0x \
 		$(NULL)
-OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework QTKit
+OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework QTKit -framework CoreVideo
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
@@ -237,8 +238,13 @@ GTEST_DIR = $(THIRDPARTY_PATH)/ndn-gtest
 GT_CXX = $(CXX)
 GT_CPPFLAGS += $(CPPFLAGS)
 GT_CXXFLAGS += -g -Wall -Wextra -pthread -Wno-missing-field-initializers
-GT_GECKO_DEFINES = $(GECKO_DEFINES) -DMOZ_NO_MOZALLOC
-GT_LDFLAGS += -lpthread # $(GT_GECKO_LDFLAGS)
+GT_GECKO_DEFINES = $(GECKO_DEFINES) -DMOZ_NO_MOZALLOC 
+GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
+		 -L$(GECKO_SDK_PATH)/lib \
+		 -lxpcomglue_s	\
+		 $(NULL)
+         
+GT_LDFLAGS += -lpthread -Wl, -undefined suppress -flat_namespace# $(GT_GECKO_LDFLAGS)
 
 TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
 
@@ -267,10 +273,19 @@ test-main.a : $(GTEST_SRCS_)
             $(TEST_PATH)/test-main.cc -static -o $(OBJ_PATH)/lib$@
 
 %-test.o : $(TEST_PATH)/%-test.cc
-	$(GT_CXX) --std=c++0x -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) -c $< -o $(OBJ_PATH)/$@
+	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) -c $< -o $(OBJ_PATH)/$@
 
-build-%-test : $(BIN_PATH)/$(MODULE).dylib %-test.o gtest-all.a test-main.a 
-	$(GT_CXX) $(GT_LDFLAGS) -L$(OBJ_PATH) $(addprefix -l,gtest-all test-main) $(OBJ_PATH)/$(patsubst build-%-test,%-test,$@).o -o $(BIN_PATH)/$@
+#build-%-test : $(BIN_PATH)/$(MODULE).dylib %-test.o gtest-all.a test-main.a $(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)
+#	$(GT_CXX) $(GT_LDFLAGS) -L$(OBJ_PATH) $(addprefix -l,gtest-all test-main) $(OBJ_PATH)/$(patsubst build-%-test,%-test,$@).o \
+#        $(LDLIBFLAGS) $(OBJCFLAGS) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) $(GT_GECKO_LDFLAGS) \
+#        $(addprefix $(OBJ_PATH)/,$(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)) \
+#        -o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
+build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o gtest-all.a test-main.a camera-capturer.o simple-log.o
+	$(GT_CXX) --std=c++0x\
+	$(addprefix $(OBJ_PATH)/, camera-capturer.o camera-capturer-test.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/camera-capturer-test
 
 clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))

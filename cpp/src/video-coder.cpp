@@ -26,7 +26,7 @@ NdnVideoCoder::NdnVideoCoder(NdnVideoCoderParams *params) : NdnRtcObject(params)
 #pragma mark - intefaces realization - IRawFrameConsumer
 void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
-    TRACE("");
+    TRACE("coder");
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered();

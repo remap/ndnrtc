@@ -11,22 +11,6 @@
                 else
                 msg.innerHTML = "It works! =)";
             }
-            
-            function fetch(){
-                var interest = document.getElementById('interest').value;
-                
-                window.nrtcObject.ExpressInterest(interest, function(dataSize, data){
-                                                  document.getElementById('content').innerHTML = "<p>Data size: " + dataSize + "</p>";
-                                                  document.getElementById('content').innerHTML += data;
-                                                  });
-            }
-            
-            function publish() {
-                var dataName = document.getElementById('contentname').value;
-                var data = document.getElementById('content-pub').value;
-                
-                window.nrtcObject.PublishData(dataName,data);
-            }
             </script>
         
     </head>
@@ -47,33 +31,6 @@
         <br/>
         <button type=button onclick="check()">Check add-on</button>
         <p>Add-on status: </p><div id="msgbox"></div>
-        
-        <h3>Express interest</h1>
-            <form>
-                Please Enter an Interest:<br />
-                <input id="interest" type="text" name="INTEREST" size="100" value="/ndn/ucla.edu/apps/peter-test/rtc" /> <br/>
-            </form>
-            <button id="testBtn" onclick="fetch()">Fetch Content</button>
-            <p id="content"><br/></p>
-            
-            
-            <h3>Publish data</h3>
-            <form>
-                <div>
-                    <p>Please provide an URI:</p>
-                    
-                    <input id="contentname" type="text" name="CONTENTNAME" size="50" value="/ndn/ucla.edu/apps/peter-test/rtc" />
-                    
-                    <p>Please provide a data:</p>
-                    
-                    <textarea id="content-pub" cols="40" rows="5" name="CONTENT" >Hello RTC!</textarea>
-                    <br />
-                </div>
-            </form>
-            <div>
-                <button id="testBtn" onclick="publish()">Publish Content</button>
-            </div>
-            
             
         <h3>Media check</h3>
             <div id="container" ondblclick="">

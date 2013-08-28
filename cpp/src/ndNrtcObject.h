@@ -45,8 +45,18 @@ private:
     // emable_shared_from_this internally
 //    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
     
+    // private attributes
     CameraCapturer *cameraCapturer_;
     NdnRenderer *localRenderer_, *remoteRenderer_;
+    
+    // temoorary paramteres for dispatching event back to JS
+    INrtcObserver *tempObserver_;
+    char *args_, *state_;
+    
+    // private methods
+    nsresult notifyObserverError(INrtcObserver *obs, const char *format, ...);
+    void notifyObserver(INrtcObserver *obs, const char *state, const char *args);
+    void processEvent(); // nsRunnable method - for dispatching events on main thread to the observer
     
 protected:
   /* additional members */

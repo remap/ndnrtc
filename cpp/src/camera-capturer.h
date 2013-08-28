@@ -16,9 +16,6 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 
-// xpcom
-#include "nsThreadUtils.h"
-
 namespace ndnrtc {
     class IRawFrameConsumer;
     
@@ -29,7 +26,7 @@ namespace ndnrtc {
         CameraCapturerParams():NdnParams(){};
         
         // static public
-        static CameraCapturerParams* defaultParams()
+        static CameraCapturerParams *defaultParams()
         {
             CameraCapturerParams *p = new CameraCapturerParams();
             
@@ -41,7 +38,7 @@ namespace ndnrtc {
             return p;
         };
         
-        // possible parameter names
+        // parameters names
         static const std::string ParamNameDeviceId;
         static const std::string ParamNameWidth;
         static const std::string ParamNameHeight;

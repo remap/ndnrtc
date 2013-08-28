@@ -21,12 +21,12 @@ using namespace ndnrtc;
 void NdnVideoSender::registerConference(ndnrtc::VideoSenderParams &params)
 {
     params_.resetParams(params);
-    TRACE("");
+    TRACE("register conference");
 }
 
 void NdnVideoSender::fetchParticipantsList()
 {
-    TRACE("");
+    TRACE("fetch participants");
 }
 
 //********************************************************************************

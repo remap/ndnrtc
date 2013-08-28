@@ -54,9 +54,9 @@
 #endif
 
 #ifdef NDN_ERROR
-#define ERROR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+#define ERR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 #else
-#define ERROR(fmt, ...)
+#define ERR(fmt, ...)
 #endif
 
 namespace ndnlog {

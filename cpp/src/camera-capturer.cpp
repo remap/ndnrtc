@@ -13,9 +13,6 @@
 #include <system_wrappers/interface/tick_util.h>
 #include "ndnrtc-object.h"
 
-#include "nsXPCOMCIDInternal.h"
-#include "nsServiceManagerUtils.h"
-
 #define USE_I420
 
 using namespace ndnrtc;
@@ -35,7 +32,7 @@ const std::string CameraCapturerParams::ParamNameFPS = "fps";
 #pragma mark - construction/destruction
 CameraCapturer::CameraCapturer(CameraCapturerParams *params) : NdnRtcObject(params)
 {
-    TRACE("");
+    TRACE("cam capturer");
 }
 CameraCapturer::~CameraCapturer()
 {
@@ -123,13 +120,13 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& v
     
     if (!frameBuffer)
     {
-        TRACE ("creating frame buffer of size %d", bufSize);
+        TRACE("creating frame buffer of size %d", bufSize);
         frameBuffer = (unsigned char*)malloc(bufSize);
     }
     
     if (ConvertFromI420(videoFrame, kARGB, 0, frameBuffer) < 0)
     {
-        ERROR("can't convert from I420 to RGB");
+        ERR("can't convert from I420 to RGB");
         return;
     }
     

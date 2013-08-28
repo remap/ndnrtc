@@ -31,8 +31,6 @@
 #include <vector>
 #include <cstring>
 
-#include "nsCOMptr.h"
-
 #include "ndnlib.h"
 #include "webrtc.h"
 #include "simple-log.h"

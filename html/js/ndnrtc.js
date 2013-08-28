@@ -37,7 +37,9 @@ function initialize()
     miniVideo = document.getElementById('miniVideo');
     remoteVideo = document.getElementById('remoteVideo');
     
-    ndnrtc.SetLocalRenderingCanvas(document.getElementById('localVideo'));
+    ndnrtc.StartConference({"width":640, "height":480, "windowWidth":640, "windowWidth":480},function (state, args){
+                           console.log("got response "+state+" with args: "+args);
+                           });
     
 //    doGetUserMedia();
 }

@@ -24,22 +24,35 @@ namespace ndnrtc {
     class NdnParams {
     public:
         enum ParameterType {
-            ParameterTypeString = 0,
-            ParameterTypeInt = 1,
-            ParameterTypeBool = 2
+            ParameterTypeUndefined = 0,
+            ParameterTypeString = 1,
+            ParameterTypeInt = 2,
+            ParameterTypeBool = 3
         };
         
         class Parameter
         {
+            friend class NdnParams;
         public:
-            Parameter() {};
-            Parameter(ParameterType type, void *value);
-//            Parameter(Parameter *p) : Parameter(p->type_, p->value_) {};
-//            Parameter(Parameter &p) : Parameter(p.type_, p.value_) {};
-            ~Parameter(){ free(value_); };
+            Parameter():type_(ParameterTypeUndefined){ value_ = NULL; TRACE("default");};
+            Parameter(const ParameterType type, const void *value);
+            Parameter(const Parameter &p) : Parameter(p.type_, p.value_) { TRACE("copy 1"); };
+            Parameter(Parameter &p) : Parameter(p.type_, p.value_) { TRACE("copy 2"); };
+            ~Parameter(){ if (value_ != NULL) free(value_); TRACE("dtor"); };
+            
             // public attributes
+            void setTypeAndValue(const ParameterType type, const void *value);
+            ParameterType getType() const { return type_; };
+            void* getValue() const { return value_; };
+            
+        private:
+            // static methods
+            static void *copiedValue(const ParameterType type, const void *value);
+            static int valueByteSize(const ParameterType type, const void *value);
+            
+            // attributes
             ParameterType type_;
-            void *value_;
+            void *value_;            
         };
         
         // construction/desctruction
@@ -53,21 +66,27 @@ namespace ndnrtc {
         };
         
         // public methods go here
-        std::map<std::string, Parameter> map() { return propertiesMap_; };
-        void addParams(NdnParams &params);
-        void resetParams(NdnParams &params);
-        void setIntParam(const std::string &name, int value) { setParam(name, Parameter(ParameterTypeInt, &value)); };
-        void setBoolParam(const std::string &name, bool value) { setParam(name, Parameter(ParameterTypeBool, &value)); };
-        void setStringParam(const std::string &name, std::string &value) { setParam(name, Parameter(ParameterTypeBool, (char*)value.c_str())); };
+        int size(){ return propertiesMap_.size(); };
+        void addParams(const ndnrtc::NdnParams& params);
+        void resetParams(const NdnParams &params);
+        void setIntParam(const std::string &name, const int value) { setParam(name, Parameter(ParameterTypeInt, &value)); };
+        void setBoolParam(const std::string &name, const bool value) { setParam(name, Parameter(ParameterTypeBool, &value)); };
+        void setStringParam(const std::string &name, const std::string &value) { setParam(name, Parameter(ParameterTypeString, (char*)value.c_str())); };
+
     protected:
         // protected methods go here
-        void setParam(const std::string &name, const Parameter &param) { propertiesMap_[name] = param; };
+        const std::map<std::string, Parameter>& map() const { return propertiesMap_; };
+        void setParam(const std::string &name, const Parameter &param);
         int getParamAsInt(const std::string &paramName, int *param);
         int getParamAsBool(const std::string &paramName, bool *param);
         int getParamAsString(const std::string &paramName, char** param);
         
     private:
+        // attributes
         std::map<std::string, Parameter> propertiesMap_;
+        
+        // methods
+        NdnParams::Parameter *getParam(const std::string &name);
     };
     
     class NdnRtcObject : public INdnRtcObjectObserver {

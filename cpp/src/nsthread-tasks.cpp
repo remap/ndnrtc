@@ -24,7 +24,7 @@ NS_IMETHODIMP NdnWorkerSpinTask::Run()
         }
         catch (std::exception &e)
         {
-            ERROR("exception: %s", e.what());
+            ERR("exception: %s", e.what());
         }
     }
     TRACE("got something");

@@ -58,17 +58,35 @@ ndNrtc::~ndNrtc(){
 #pragma mark - idl interface implementation
 NS_IMETHODIMP ndNrtc::StartConference(nsIPropertyBag2 *prop, INrtcObserver *observer)
 {
-    CameraCapturerParams params = *CameraCapturerParams::defaultParams();
+    CameraCapturerParams *params = CameraCapturerParams::defaultParams();
+    NdnRendererParams *rendererParams = NdnRendererParams::defaultParams();
     
-    
-//
-//    cameraCapturer_ = new CameraCapturer(params);
-//    localRenderer_ = new NdnRenderer();
-//    remoteRenderer_ = new NdnRenderer();
-//    
-//    cameraCapturer_->init();
-//    cameraCapturer_->setFrameConsumer(localRenderer_);
+    cameraCapturer_ = new CameraCapturer(params);
+    localRenderer_ = new NdnRenderer(0, rendererParams);
 
+    if (cameraCapturer_->init() < 0)
+    {
+#warning cleanup???
+        return notifyObserverError(observer, "can't initialize media capturing");
+    }
+    
+    cameraCapturer_->setFrameConsumer(localRenderer_);
+    
+    if (cameraCapturer_->startCapture() < 0)
+    {
+#warning cleanup???        
+        return notifyObserverError(observer, "can't start video capturing");
+    }
+    
+    if (localRenderer_->startRendering() < 0)
+    {
+#warning cleanup???        
+        return notifyObserverError(observer, "can't initialize renderer");
+    }
+
+    delete params;
+    delete rendererParams;
+    
     return NS_OK;
 }
 
@@ -240,3 +258,45 @@ int testWebRTC()
 //    
 //    cout << endl;
 //}
+nsresult ndNrtc::notifyObserverError(INrtcObserver *obs, const char *format, ...)
+{
+    TRACE("notify observer error");
+    
+    va_list args;
+    
+    static char emsg[256];
+    
+    va_start(args, format);
+    vsprintf(emsg, format, args);
+    va_end(args);
+    
+    notifyObserver(obs, "error", emsg);
+
+    return NS_OK;
+}
+void ndNrtc::notifyObserver(INrtcObserver *obs, const char *state, const char *args)
+{
+    TRACE("notify observer");
+    
+    state_ = (char*)malloc(strlen(state)+1);
+    args_ = (char*)malloc(strlen(args)+1);
+    
+    strcpy(state_, state);
+    strcpy(args_,args);
+    tempObserver_ = obs;
+    
+    nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this, &ndNrtc::processEvent);
+    NS_DispatchToMainThread(event);
+}
+void ndNrtc::processEvent()
+{
+    TRACE("processing event to JS: %s %s", state_, args_);
+    
+    tempObserver_->OnStateChanged(state_, args_);
+    
+    tempObserver_ = NULL;
+    free(state_);
+    free(args_);
+    state_ = 0;
+    args_ = 0;
+}

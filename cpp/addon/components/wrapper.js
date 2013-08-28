@@ -39,34 +39,63 @@ init: function(aWindow) {
     let self = this;
     let api = {
         
-    Test: self.Test.bind(self),
-    ExpressInterest: self.ExpressInterest.bind(self),
-    PublishData: self.PublishData.bind(self),
+    StartConference: self.StartConference.bind(self),
+    JoinConference: self.JoinConference.bind(self),
+    LeaveConference: self.LeaveConference.bind(self),
         
     __exposedProps__: {
-        Test: "r",
-        ExpressInterest: "r",
-        PublishData: "r",
-        AddUserMedia: "r"
+        StartConference: "r",
+        JoinConference: "r",
+        LeaveConference: "r"
     }
     };
     
     return api;
 },
 
-ExpressInterest: function(interest, onData){
-    trace("forwarding expressInterest call to ndnrtc");
-    return this.ndnrtc.ExpressInterest(interest, onData);
-},
-
-PublishData: function(prefix, data){
-    trace("publish");
-    this.ndnrtc.PublishData(prefix,data);
+makePropertyBag_: function(prop) {
+    let sP = [];
+    let iP = ["width", "height", "windowWidth", "windowHeight"];
+    let bP = [];
+    
+    let bag = Cc["@mozilla.org/hash-property-bag;1"].
+    createInstance(Ci.nsIWritablePropertyBag2);
+    
+    iP.forEach(function(p) {
+               if (p in prop)
+               bag.setPropertyAsInt32(p, prop[p]);
+//               bag.setPropertyAsAString(p, prop[p]);
+               });
+    bP.forEach(function(p) {
+               if (p in prop)
+               bag.setPropertyAsBool(p, prop[p]);
+               });
+    
+    return bag;
 },
     
-Test: function(a, b){
+StartConference: function(properties, onStateChanged){
+    trace("forwarding StartConference call to ndnrtc");
+
+    try {
+        let bag = this.makePropertyBag_(properties);
+        return this.ndnrtc.startConference(bag, onStateChanged);
+    }
+    catch (e)
+    {
+        error("exception caught: "+e);        
+        error("exception caught: "+e.message());
+    }
+},
+
+JoinConference: function(prefix, onStateChanged){
+    trace("publish");
+    this.ndnrtc.JoinConference(prefix, onStateChanged);
+},
+    
+LeaveConference: function(prefix, onStateChanged){
     trace("test called");
-    return this.ndnrtc.Test(a,b);
+    return this.ndnrtc.LeaveConference(prefix, onStateChanged);
 }
 };
 

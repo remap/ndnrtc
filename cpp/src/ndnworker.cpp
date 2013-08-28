@@ -56,7 +56,7 @@ void NdnWorker::expressInterestAsync(const char *interest)
         spinThread_->Dispatch(spinTask, nsIThread::DISPATCH_NORMAL);
     }
     else
-        ERROR("spin thread creation failed");
+        ERR("spin thread creation failed");
 }
 void NdnWorker::publishData(const char *prefix, const unsigned char *data, unsigned int datalen)
 {
