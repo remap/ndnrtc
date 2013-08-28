@@ -264,13 +264,13 @@ testrun : ${TESTS}
 # trailing _.
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
-gtest-all.a : $(GTEST_SRCS_)
+$(OBJ_PATH)/libgtest-all.a : $(GTEST_SRCS_)
 	$(GT_CXX) -I$(GTEST_DIR)/include -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc -static -o $(OBJ_PATH)/lib$@
+            $(GTEST_DIR)/src/gtest-all.cc -static -o $@
             
-test-main.a : $(GTEST_SRCS_)
+$(OBJ_PATH)/libtest-main.a : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
-            $(TEST_PATH)/test-main.cc -static -o $(OBJ_PATH)/lib$@
+            $(TEST_PATH)/test-main.cc -static -o $@
 
 %-test.o : $(TEST_PATH)/%-test.cc
 	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) -c $< -o $(OBJ_PATH)/$@
@@ -281,7 +281,13 @@ test-main.a : $(GTEST_SRCS_)
 #        $(addprefix $(OBJ_PATH)/,$(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)) \
 #        -o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o gtest-all.a test-main.a camera-capturer.o simple-log.o
+build-ndnrtc-object-test: ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a simple-log.o
+	$(GT_CXX) --std=c++0x\
+	$(addprefix $(OBJ_PATH)/, ndnrtc-object.o ndnrtc-object-test.o simple-log.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/ndnrtc-object-test
+
+build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a camera-capturer.o simple-log.o
 	$(GT_CXX) --std=c++0x\
 	$(addprefix $(OBJ_PATH)/, camera-capturer.o camera-capturer-test.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \

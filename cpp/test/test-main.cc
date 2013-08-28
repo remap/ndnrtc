@@ -1,5 +1,5 @@
 //
-//  camera-capturer-test.h
+//  test-main.cc
 //  ndnrtc
 //
 //  Copyright 2013 Regents of the University of California
