@@ -26,7 +26,7 @@ NdnWorker::~NdnWorker()
 {
     TRACE("shutting down spin thread");
     spinThread_->Shutdown();
-    spinThread_ = NULL;
+    spinThread_ = nullptr;
     delete face_;
 }
 //********************************************************************************

@@ -25,6 +25,12 @@ namespace ndnrtc {
         // construction/desctruction
         CameraCapturerParams():NdnParams(){};
         
+        // parameters names
+        static const std::string ParamNameDeviceId;
+        static const std::string ParamNameWidth;
+        static const std::string ParamNameHeight;
+        static const std::string ParamNameFPS;
+        
         // static public
         static CameraCapturerParams *defaultParams()
         {
@@ -38,38 +44,29 @@ namespace ndnrtc {
             return p;
         };
         
-        // parameters names
-        static const std::string ParamNameDeviceId;
-        static const std::string ParamNameWidth;
-        static const std::string ParamNameHeight;
-        static const std::string ParamNameFPS;
-        
         // public methods
-        int getDeviceId(int *did) { return getParamAsInt(ParamNameDeviceId, did); };
-        int getWidth(int *width) { return getParamAsInt(ParamNameWidth, width); };
-        int getHeight(int *height) { return getParamAsInt(ParamNameHeight, height); };
-        int getFPS(int *fps) { return getParamAsInt(ParamNameFPS, fps); };
+        int getDeviceId(int *did) const { return getParamAsInt(ParamNameDeviceId, did); };
+        int getWidth(int *width) const { return getParamAsInt(ParamNameWidth, width); };
+        int getHeight(int *height) const { return getParamAsInt(ParamNameHeight, height); };
+        int getFPS(int *fps) const { return getParamAsInt(ParamNameFPS, fps); };
     };
     
     class CameraCapturer : public NdnRtcObject, public webrtc::VideoCaptureDataCallback
     {
     public:
         // construction/desctruction
-        CameraCapturer(CameraCapturerParams *params);
-//        CameraCapturer(IRawFrameConsumer *delegate):delegate_(delegate){};
+        CameraCapturer(const NdnParams *params);
         ~CameraCapturer();
         
-        // public static attributes go here
-        
-        // <#public static methods go here#>
-        
-        // <#public attributes go here#>
-        
         // public methods go here
-        void setFrameConsumer(IRawFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; };
+        void setFrameConsumer(IRawFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; }
+        bool isCapturing() { return (vcm_)?vcm_->CaptureStarted():false; }         
         int init();
         int startCapture();
         int stopCapture();
+        int numberOfCaptureDevices();
+        vector<std::string>* availableCaptureDevices();
+        void printCapturingInfo();
         
         // interface conformance - webrtc::VideoCaptureDataCallback
         void OnIncomingCapturedFrame(const int32_t id,
@@ -78,45 +75,14 @@ namespace ndnrtc {
                                    const int32_t delay);
         
     private:
-//        class CameraCapturerTask : public nsRunnable
-//        {
-//        public:
-//            CameraCapturerTask(webrtc::VideoCaptureCapability capability, webrtc::VideoCaptureModule *vcm) : capability_(capability), vcm_(vcm){}
-//            ~CameraCapturerTask() { TRACE("task desctroyed"); }
-//            
-//            NS_IMETHOD Run() {
-//                vcm_->StartCapture(capability_);
-//                
-//                if (!vcm_->CaptureStarted())
-//                {
-//                    ERROR("capture failed to start");
-//                    return NS_OK;
-//                }
-//                
-//                INFO("started camera capture");
-//                
-//                return NS_OK;
-//            }
-//            
-//        private:
-//            webrtc::VideoCaptureModule *vcm_;
-//            webrtc::VideoCaptureCapability capability_;            
-//        };
         
         // private attributes go here
         webrtc::VideoCaptureCapability capability_;
-        webrtc::VideoCaptureModule *vcm_;
-        IRawFrameConsumer *frameConsumer_;
-//        nsCOMPtr<nsIThread> capturingThread_;
+        webrtc::VideoCaptureModule* vcm_ = nullptr;
+        IRawFrameConsumer *frameConsumer_ = nullptr;
         
-        
-        // private methods go here
-        CameraCapturerParams *getParams() { return static_cast<CameraCapturerParams*>(params_); };
-//        void startBackgroundCapturingThread();
-//        void stopBackgroundCapturingThread() {
-//            if (capturingThread_)
-//                capturingThread_->Shutdown();
-//                };
+        // private methods
+        const CameraCapturerParams *getParams() const { return static_cast<const CameraCapturerParams*>(params_); };
     };
     
     class IRawFrameConsumer

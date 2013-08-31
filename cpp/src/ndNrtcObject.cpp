@@ -45,48 +45,40 @@ static void destructor(){
 
 //********************************************************************************
 #pragma mark - creation
-ndNrtc::ndNrtc(): localRenderer_(NULL), remoteRenderer_(NULL), cameraCapturer_(NULL)
+ndNrtc::ndNrtc(): senderChannel_(nullptr)
 {
     INFO("constructor called");    
 };
 ndNrtc::~ndNrtc(){
     INFO("destructor called");
-//    currentWorker_ = nullptr;
+    
+    if (senderChannel_->isTransmitting())
+        senderChannel_->stopTransmission();
 };
+
+//********************************************************************************
+#pragma mark - public
+void ndNrtc::onErrorOccurred(const char *errorMessage)
+{
+    TRACE("error occurred: %s", errorMessage);
+}
 
 //********************************************************************************
 #pragma mark - idl interface implementation
 NS_IMETHODIMP ndNrtc::StartConference(nsIPropertyBag2 *prop, INrtcObserver *observer)
 {
-    CameraCapturerParams *params = CameraCapturerParams::defaultParams();
-    NdnRendererParams *rendererParams = NdnRendererParams::defaultParams();
-    
-    cameraCapturer_ = new CameraCapturer(params);
-    localRenderer_ = new NdnRenderer(0, rendererParams);
+    shared_ptr<NdnParams> params(NdnSenderChannel::defaultParams());
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params.get()));
 
-    if (cameraCapturer_->init() < 0)
-    {
-#warning cleanup???
-        return notifyObserverError(observer, "can't initialize media capturing");
-    }
+    sc->setObserver(this);
     
-    cameraCapturer_->setFrameConsumer(localRenderer_);
-    
-    if (cameraCapturer_->startCapture() < 0)
-    {
-#warning cleanup???        
-        return notifyObserverError(observer, "can't start video capturing");
-    }
-    
-    if (localRenderer_->startRendering() < 0)
-    {
-#warning cleanup???        
-        return notifyObserverError(observer, "can't initialize renderer");
-    }
+    if (sc->init() < 0)
+        return notifyObserverError(observer, "can't initialize sender channel");
 
-    delete params;
-    delete rendererParams;
+    if (sc->startTransmission() < 0)
+        return notifyObserverError(observer, "can't start transmission");
     
+    senderChannel_ = sc;
     return NS_OK;
 }
 
@@ -294,7 +286,7 @@ void ndNrtc::processEvent()
     
     tempObserver_->OnStateChanged(state_, args_);
     
-    tempObserver_ = NULL;
+    tempObserver_ = nullptr;
     free(state_);
     free(args_);
     state_ = 0;

@@ -23,18 +23,21 @@ const std::string NdnRendererParams::ParamNameWindowHeight = "windowHeight";
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnRenderer::NdnRenderer(int rendererId, NdnRendererParams *params) : NdnRtcObject(params), rendererId_(rendererId)
+NdnRenderer::NdnRenderer(int rendererId, NdnParams *params) : NdnRtcObject(params), rendererId_(rendererId)
 {
     TRACE("construction");
 }
 NdnRenderer::~NdnRenderer()
 {
     TRACE("destruction");
-    render_->StopRender(rendererId_);
+
+    if (render_)
+        render_->StopRender(rendererId_);
+    VideoRender::DestroyVideoRender(render_);
 }
 //********************************************************************************
 #pragma mark - public
-int NdnRenderer::startRendering()
+int NdnRenderer::init()
 {
     int width, height;
     
@@ -45,11 +48,15 @@ int NdnRenderer::startRendering()
     
     render_ = VideoRender::CreateVideoRender(rendererId_, createCocoaRenderWindow(rendererId_, width, height), false, kRenderCocoa);
     
-    if (render_ == NULL)
+    if (render_ == nullptr)
         return notifyError(-1, "can't initialize renderer");
     
     frameSink_ = render_->AddIncomingRenderStream(rendererId_, 0, 0.f, 0.f, 1.f, 1.f);
     
+    return 0;
+}
+int NdnRenderer::startRendering()
+{
     if (render_->StartRender(rendererId_) < 0)
         return notifyError(-1, "can't start rendering");
     

@@ -178,11 +178,11 @@ TEST(ParamsTest, SetParams) {
         
         p->setStringParam("p5", "value5");
         ASSERT_EQ(p->getStringParam("p5",&res), 0);
-        EXPECT_EQ(strcmp(res,"value5"), 0);
+        EXPECT_STREQ("value5",res);
         
         p->setStringParam("p6", "");
         ASSERT_EQ(p->getStringParam("p6",&res), 0);
-        EXPECT_EQ(strcmp(res,""), 0);
+        EXPECT_STREQ("",res);
     }
     
     delete p;
@@ -239,17 +239,17 @@ TEST(ParamsTest, OverwriteParams)
         
         p->setStringParam("p5", "value5");
         ASSERT_EQ(p->getStringParam("p5",&res), 0);
-        EXPECT_EQ(strcmp(res,"value5"), 0);
+        EXPECT_STREQ("value5",res);
         
         int oldSize = p->size();
         
         p->setStringParam("p5", "");
         ASSERT_EQ(p->getStringParam("p5",&res), 0);
-        EXPECT_EQ(strcmp(res,""), 0);
+        EXPECT_STREQ("",res);
         
         p->setStringParam("p5", "new value5");
         ASSERT_EQ(p->getStringParam("p5",&res), 0);
-        EXPECT_EQ(strcmp(res,"new value5"), 0);
+        EXPECT_STREQ("new value5", res);
         
         EXPECT_EQ(p->size(),oldSize);
     }
@@ -281,14 +281,14 @@ TEST(ParamsTest, AddParams)
     EXPECT_TRUE(bres);
     
     EXPECT_EQ(p1->getStringParam("p2",&cres), 0);
-    EXPECT_EQ(strcmp("hello",cres),0);
+    EXPECT_STREQ(cres,"hello");
     
     EXPECT_EQ(p1->getIntParam("p3",&ires), 0);
     EXPECT_EQ(123,ires);
     
     free(cres);
     EXPECT_EQ(p1->getStringParam("p4",&cres), 0);
-    EXPECT_EQ(strcmp("world",cres),0);
+    EXPECT_STREQ(cres,"world");
     
     
     delete p1;
@@ -317,6 +317,109 @@ TEST(ParamsTest, ResetParams)
     
     free(cres);
     EXPECT_EQ(p1->getStringParam("p4",&cres), 0);
-    EXPECT_EQ(strcmp("world",cres),0);
+    EXPECT_STREQ(cres,"world");
     free(cres);
+}
+
+//********************************************************************************
+/**
+ * @name NdnrtcObject class tests
+ */
+
+class NdnRtcObjectTester : public NdnRtcObject
+{
+public:
+    int postError(int code, char *msg) {
+        return notifyError(code, msg);
+    };
+    int postErrorNoParams(){
+        return notifyErrorNoParams();
+    };
+    int postErrorBadArg(const char *pname){
+        return notifyErrorBadArg(pname);
+    };
+    bool isObserved() { return hasObserver(); };
+    bool isParametrized() {return hasParams(); };
+};
+
+class NdnRtcObjectTest : public ::testing::Test, public INdnRtcObjectObserver
+{
+public:
+    void onErrorOccurred(const char *errorMessage){
+        errorOccurred_ = true;
+        errorMessage_ = (char*)errorMessage;
+    };
+    
+protected:
+    bool errorOccurred_ = false;
+    char *errorMessage_ = NULL;
+};
+
+TEST_F(NdnRtcObjectTest, CreateDelete)
+{
+    NdnRtcObject *obj = new NdnRtcObject();
+    delete obj;
+}
+TEST_F(NdnRtcObjectTest, CreateDeleteNoParams)
+{
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject();
+    
+    EXPECT_FALSE(obj->isParametrized());
+    
+    delete obj;
+}
+TEST_F(NdnRtcObjectTest, CreateDeleteWithParams)
+{
+    shared_ptr<NdnParams> paramsSPtr(new NdnParams());
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get());
+    
+    EXPECT_TRUE(obj->isParametrized());
+    
+    delete obj;
+}
+TEST_F(NdnRtcObjectTest, CreateDeleteWithObserver)
+{
+    shared_ptr<NdnParams> paramsSPtr(new NdnParams());
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get(), this);
+    
+    EXPECT_TRUE(obj->isParametrized());
+    EXPECT_TRUE(obj->isObserved());
+    
+    delete obj;
+}
+TEST_F(NdnRtcObjectTest, SetObserver)
+{
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject();
+    
+    EXPECT_FALSE(obj->isObserved());
+    obj->setObserver(this);
+    EXPECT_TRUE(obj->isObserved());
+    
+    delete obj;
+}
+TEST_F(NdnRtcObjectTest, ErrorNotifies)
+{
+    shared_ptr<NdnParams> paramsSPtr(new NdnParams());    
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get(), this);
+    
+    EXPECT_FALSE(errorOccurred_);
+    obj->postError(-1, "error msg");
+    EXPECT_TRUE(errorOccurred_);
+    EXPECT_STREQ("error msg", errorMessage_);
+
+    errorOccurred_ = false;
+    obj->postError(-1, "");
+    EXPECT_TRUE(errorOccurred_);
+    EXPECT_STREQ("", errorMessage_);
+    
+    errorOccurred_ = false;
+    obj->postErrorNoParams();
+    EXPECT_TRUE(errorOccurred_);
+
+    errorOccurred_ = false;
+    obj->postErrorBadArg("value1");
+    EXPECT_TRUE(errorOccurred_);
+    EXPECT_NE(nullptr, strstr(errorMessage_, "value1"));    
+    
+    delete obj;
 }

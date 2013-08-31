@@ -28,7 +28,7 @@ void NdnParams::Parameter::setTypeAndValue(const ParameterType type, const void 
 {
     type_ = type;
     
-    if (value_ != NULL)
+    if (value_ != nullptr)
         free(value_);
     
     value_ = NdnParams::Parameter::copiedValue(type_, value);
@@ -38,7 +38,7 @@ void NdnParams::Parameter::setTypeAndValue(const ParameterType type, const void 
 void* NdnParams::Parameter::copiedValue(const ParameterType type, const void *value)
 {
     int valueSize = NdnParams::Parameter::valueByteSize(type, value);
-    void *newValue = NULL;
+    void *newValue = nullptr;
     
     if (valueSize)
     {
@@ -98,12 +98,12 @@ void NdnParams::resetParams(const NdnParams &params)
 #pragma mark - protected
 void NdnParams::setParam(const std::string &name, const ndnrtc::NdnParams::Parameter &param)
 {
-    Parameter *newP = NULL;
+    Parameter *newP = nullptr;
     
     newP = &propertiesMap_[name]; // returns existing or new
     newP->setTypeAndValue(param.getType(), param.getValue());
 }
-int NdnParams::getParamAsInt(const std::string &paramName, int *param)
+int NdnParams::getParamAsInt(const std::string &paramName, int *param) const
 {
     Parameter *p = getParam(paramName);
     
@@ -115,7 +115,7 @@ int NdnParams::getParamAsInt(const std::string &paramName, int *param)
     
     return -1;
 }
-int NdnParams::getParamAsBool(const std::string &paramName, bool *param)
+int NdnParams::getParamAsBool(const std::string &paramName, bool *param) const
 {
     Parameter *p = getParam(paramName);
     
@@ -127,7 +127,7 @@ int NdnParams::getParamAsBool(const std::string &paramName, bool *param)
     
     return -1;
 }
-int NdnParams::getParamAsString(const std::string &paramName, char **param)
+int NdnParams::getParamAsString(const std::string &paramName, char **param) const
 {
     Parameter *p = getParam(paramName);
     
@@ -141,30 +141,30 @@ int NdnParams::getParamAsString(const std::string &paramName, char **param)
 }
 //********************************************************************************
 #pragma mark - private
-NdnParams::Parameter* NdnParams::getParam(const std::string &name)
+NdnParams::Parameter* NdnParams::getParam(const std::string &name) const
 {
-    std::map<std::string, NdnParams::Parameter>::iterator it;
+    std::map<std::string, NdnParams::Parameter>::const_iterator it;
     
     it = propertiesMap_.find(name);
     
     if (it != propertiesMap_.end())
-        return &it->second;
+        return (NdnParams::Parameter*)&it->second;
     
-    return NULL;
+    return nullptr;
 }
 //********************************************************************************
 /**
  * @name NdnRtcObject class
  */
 #pragma mark - construction/destruction
-NdnRtcObject::NdnRtcObject() : observer_(NULL), params_(NULL)
+NdnRtcObject::NdnRtcObject() : observer_(nullptr), params_(nullptr)
 {
 }
-NdnRtcObject::NdnRtcObject(NdnParams *params) : NdnRtcObject()
+NdnRtcObject::NdnRtcObject(const NdnParams *params) : observer_(nullptr)
 {
     params_ = new NdnParams(*params);
 }
-NdnRtcObject::NdnRtcObject(NdnParams *params, INdnRtcObjectObserver *observer) : NdnRtcObject(params)
+NdnRtcObject::NdnRtcObject(const NdnParams *params, INdnRtcObjectObserver *observer) : NdnRtcObject(params)
 {
     observer_ = observer;
 }
@@ -180,7 +180,10 @@ NdnRtcObject::~NdnRtcObject()
 #pragma mark - intefaces realization - INdnRtcObjectObserver
 void NdnRtcObject::onErrorOccurred(const char *errorMessage)
 {
-    ERR("error occurred: %s", errorMessage);
+    if (hasObserver())
+        observer_->onErrorOccurred(errorMessage);
+    else
+        ERR("error occurred: %s", errorMessage);
 }
 
 //********************************************************************************

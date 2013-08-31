@@ -34,11 +34,11 @@ namespace ndnrtc {
         {
             friend class NdnParams;
         public:
-            Parameter():type_(ParameterTypeUndefined){ value_ = NULL; TRACE("default");};
+            Parameter():type_(ParameterTypeUndefined){ value_ = nullptr; };
             Parameter(const ParameterType type, const void *value);
-            Parameter(const Parameter &p) : Parameter(p.type_, p.value_) { TRACE("copy 1"); };
-            Parameter(Parameter &p) : Parameter(p.type_, p.value_) { TRACE("copy 2"); };
-            ~Parameter(){ if (value_ != NULL) free(value_); TRACE("dtor"); };
+            Parameter(const Parameter &p) : Parameter(p.type_, p.value_) {  };
+            Parameter(Parameter &p) : Parameter(p.type_, p.value_) {  };
+            ~Parameter(){ if (value_ != nullptr) free(value_); };
             
             // public attributes
             void setTypeAndValue(const ParameterType type, const void *value);
@@ -57,8 +57,8 @@ namespace ndnrtc {
         
         // construction/desctruction
         NdnParams() {};
-        NdnParams(NdnParams &params) { addParams(params); };
-        ~NdnParams() {};
+        NdnParams(const NdnParams &params) { addParams(params); };
+        virtual ~NdnParams() {};
         
         // public static goes here
         static NdnParams* defaultParams(){
@@ -66,7 +66,7 @@ namespace ndnrtc {
         };
         
         // public methods go here
-        int size(){ return propertiesMap_.size(); };
+        virtual int size(){ return propertiesMap_.size(); };
         void addParams(const ndnrtc::NdnParams& params);
         void resetParams(const NdnParams &params);
         void setIntParam(const std::string &name, const int value) { setParam(name, Parameter(ParameterTypeInt, &value)); };
@@ -77,25 +77,25 @@ namespace ndnrtc {
         // protected methods go here
         const std::map<std::string, Parameter>& map() const { return propertiesMap_; };
         void setParam(const std::string &name, const Parameter &param);
-        int getParamAsInt(const std::string &paramName, int *param);
-        int getParamAsBool(const std::string &paramName, bool *param);
-        int getParamAsString(const std::string &paramName, char** param);
+        int getParamAsInt(const std::string &paramName, int *param) const;
+        int getParamAsBool(const std::string &paramName, bool *param) const;
+        int getParamAsString(const std::string &paramName, char** param) const;
         
     private:
         // attributes
         std::map<std::string, Parameter> propertiesMap_;
         
         // methods
-        NdnParams::Parameter *getParam(const std::string &name);
+        NdnParams::Parameter *getParam(const std::string &name) const;
     };
     
     class NdnRtcObject : public INdnRtcObjectObserver {
     public:
         // construction/desctruction
         NdnRtcObject();
-        NdnRtcObject(NdnParams *params);
-        NdnRtcObject(NdnParams *params, INdnRtcObjectObserver *observer);
-        ~NdnRtcObject();
+        NdnRtcObject(const NdnParams *params);
+        NdnRtcObject(const NdnParams *params, INdnRtcObjectObserver *observer);
+        virtual ~NdnRtcObject();
         
         // public methods go here
         void setObserver(INdnRtcObjectObserver *observer) { observer_ = observer; }
@@ -103,15 +103,15 @@ namespace ndnrtc {
         
     protected:
         // protected attributes go here
-        INdnRtcObjectObserver *observer_;
-        NdnParams *params_;
+        INdnRtcObjectObserver *observer_ = nullptr;
+        NdnParams *params_ = nullptr;
         
         // protected methods go here
         int notifyError(const int ecode, const char *format, ...);
         int notifyErrorNoParams();
         int notifyErrorBadArg(const std::string &paramName);
-        bool hasObserver() { return observer_ != NULL; };
-        bool hasParams() { return params_ != NULL; };
+        bool hasObserver() { return observer_ != nullptr; };
+        bool hasParams() { return params_ != nullptr; }; // && params_->size() != 0; };
     };
 }
 

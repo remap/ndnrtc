@@ -60,7 +60,17 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, int winNum, int width, i
 void *createCocoaRenderWindow(int winNum, int width, int height)
 {
     CocoaRenderView* window;
-    WebRtcCreateWindow(window, winNum, width, height);
+    
+    try{
+        WebRtcCreateWindow(window, winNum, width, height);
+    }
+    catch(NSException *e)
+//    catch(std::exception &e)
+    {
+//        printf("exception %s", e.what());
+        printf("ndnrtc exception: %s - %s", [e.name cStringUsingEncoding:NSUTF8StringEncoding], [e.reason cStringUsingEncoding:NSUTF8StringEncoding]);
+        return NULL;
+    }
     
     return (void*)window;
 }

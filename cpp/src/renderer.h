@@ -46,9 +46,10 @@ namespace ndnrtc {
     {
     public:
         // construction/desctruction
-        NdnRenderer(int rendererId, NdnRendererParams *params_);
+        NdnRenderer(int rendererId, NdnParams *params_);
         ~NdnRenderer();
         
+        int init();
         int startRendering();
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
@@ -58,8 +59,8 @@ namespace ndnrtc {
         int rendererId_;
         bool initialized_ = false;
 #warning make static in long run
-        webrtc::VideoRender *render_ = NULL;        
-        webrtc::VideoRenderCallback *frameSink_ = NULL;
+        webrtc::VideoRender *render_ = nullptr;        
+        webrtc::VideoRenderCallback *frameSink_ = nullptr;
         
         // private methods go here
         NdnRendererParams *getParams(){ return static_cast<NdnRendererParams*>(params_); };

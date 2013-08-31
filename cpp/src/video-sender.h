@@ -21,19 +21,25 @@ namespace ndnrtc
     
     class VideoSenderParams : public NdnParams {
     public:
+        // static
+        static VideoSenderParams* defaultParams() { return new VideoSenderParams(); }
+        
         // public methods go here
-        std::string getConferencePrefix() { return "/ndn/ucla.edu/ndnrtc/test"; };
+        std::string getConferencePrefix() { return "/ndn/ucla.edu/ndnrtc/test"; }
     };
 
     class NdnVideoSender : public NdnRtcObject, public IEncodedFrameConsumer {
     public:
         // construction/desctruction
-        NdnVideoSender(){};
+        NdnVideoSender(const NdnParams * params):NdnRtcObject(params){}
         ~NdnVideoSender(){};
         
         // public methods go here
         void registerConference(VideoSenderParams &params);
         void fetchParticipantsList();
+        
+        // interface conformance
+        void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage) { TRACE("got encoded frame"); }
         
     private:        
         // private attributes go here

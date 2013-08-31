@@ -15,8 +15,7 @@
 
 #include "data-closure.h"
 #include "ndnworker.h"
-#include "camera-capturer.h"
-#include "renderer.h"
+#include "sender-channel.h"
 
 // These macros are used in ndnNrtModule.cpp
 #define NRTC_CLASSNAME 	"NDN WebRTC Main Class"
@@ -31,7 +30,7 @@ using namespace ndnrtc;
 /** 
  * Class description goes here
  */
-class ndNrtc : public INrtc
+class ndNrtc : public INrtc, public INdnRtcObjectObserver
 {
 public:
   NS_DECL_ISUPPORTS
@@ -40,14 +39,15 @@ public:
     ndNrtc();
     ~ndNrtc();
 
+    void onErrorOccurred(const char *errorMessage);
+    
 private:
     // should be shared_ptr, cause it's implementing
     // emable_shared_from_this internally
 //    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
     
     // private attributes
-    CameraCapturer *cameraCapturer_;
-    NdnRenderer *localRenderer_, *remoteRenderer_;
+    shared_ptr<NdnSenderChannel> senderChannel_;
     
     // temoorary paramteres for dispatching event back to JS
     INrtcObserver *tempObserver_;

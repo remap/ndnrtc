@@ -18,24 +18,34 @@
 using namespace ndnrtc;
 using namespace webrtc;
 
-static unsigned char *frameBuffer = NULL;
+static unsigned char *frameBuffer = nullptr;
 
 //********************************************************************************
 //********************************************************************************
 const std::string CameraCapturerParams::ParamNameDeviceId = "deviceId";
-const std::string CameraCapturerParams::ParamNameWidth = "width";
-const std::string CameraCapturerParams::ParamNameHeight = "height";
+const std::string CameraCapturerParams::ParamNameWidth = "captureWidth";
+const std::string CameraCapturerParams::ParamNameHeight = "captureHeight";
 const std::string CameraCapturerParams::ParamNameFPS = "fps";
 
 #pragma mark - public
 //********************************************************************************
 #pragma mark - construction/destruction
-CameraCapturer::CameraCapturer(CameraCapturerParams *params) : NdnRtcObject(params)
+CameraCapturer::CameraCapturer(const NdnParams *params) :
+NdnRtcObject(params),
+vcm_(nullptr),
+frameConsumer_(nullptr)
 {
     TRACE("cam capturer");
 }
 CameraCapturer::~CameraCapturer()
 {
+    if (vcm_)
+    {
+        if (vcm_->CaptureStarted())
+            vcm_->StopCapture();
+        
+        vcm_->Release();
+    }
 };
 
 //********************************************************************************
@@ -64,7 +74,7 @@ int CameraCapturer::init()
     
     vcm_ = VideoCaptureFactory::Create(deviceID, deviceUniqueName);
     
-    if (!vcm_)
+    if (vcm_ == NULL)
         return notifyError(-1,"can't get video capture module");
     
     if (getParams()->getWidth((int*)&capability_.width) < 0)
@@ -84,7 +94,10 @@ int CameraCapturer::init()
 }
 int CameraCapturer::startCapture()
 {
-    vcm_->StartCapture(capability_);
+    if (vcm_->StartCapture(capability_) < 0)
+    {
+        return notifyError(-1, "capture failed to start");
+    }
     
     if (!vcm_->CaptureStarted())
     {
@@ -101,12 +114,75 @@ int CameraCapturer::stopCapture()
     
     return 0;
 }
+int CameraCapturer::numberOfCaptureDevices()
+{
+    VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
+    
+    if (!devInfo)
+        return notifyError(-1, "can't get deivce info");
+    
+    return devInfo->NumberOfDevices();
+}
+vector<std::string>* CameraCapturer::availableCaptureDevices()
+{
+    VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
+    
+    if (!devInfo)
+    {
+        notifyError(-1, "can't get deivce info");
+        return nullptr;
+    }
+    
+    vector<std::string> *devices = new vector<std::string>();
+    
+    static char deviceName[256];
+    static char uniqueId[256];
+    int numberOfDevices = numberOfCaptureDevices();
+    
+    for (int deviceIdx = 0; deviceIdx < numberOfDevices; deviceIdx++)
+    {
+        memset(deviceName, 0, 256);
+        memset(uniqueId, 0, 256);
+        
+        if (devInfo->GetDeviceName(deviceIdx, deviceName, 256, uniqueId, 256) < 0)
+        {
+            notifyError(-1, "can't get info for deivce %d", deviceIdx);
+            break;
+        }
+        
+        devices->push_back(deviceName);
+    }
+    
+    return devices;
+}
+void CameraCapturer::printCapturingInfo()
+{
+    cout << "*** Capturing info: " << endl;
+    cout << "\tNumber of capture devices: " << numberOfCaptureDevices() << endl;
+    cout << "\tCapture devices: " << endl;
+    
+    vector<std::string> *devices = availableCaptureDevices();
+    
+    if (devices)
+    {
+        vector<std::string>::iterator it;
+        int idx = 0;
+        
+        for (it = devices->begin(); it != devices->end(); ++it)
+        {
+            cout << "\t\t"<< idx << ". " << *it << endl;
+        }
+        delete devices;
+    }
+    else
+        cout << "\t\t <no capture devices>" << endl;
+}
 
 //********************************************************************************
 #pragma mark - overriden - webrtc::VideoCaptureDataCallback
 void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& videoFrame)
 {
-    TRACE("captured new frame %ld",videoFrame.render_time_ms());
+//    TRACE("captured new frame %ld",videoFrame.render_time_ms());
     
     if (videoFrame.render_time_ms() >= TickTime::MillisecondTimestamp()-30 &&
         videoFrame.render_time_ms() <= TickTime::MillisecondTimestamp())
