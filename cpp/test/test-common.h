@@ -33,6 +33,12 @@ res = (ex); \
 } \
 } while (0);\
 
+#define WAIT(timeout) \
+do { \
+bool b = false; \
+WAIT_(false, timeout, b); \
+} while (0); \
+
 #define EXPECT_TRUE_WAIT(ex, timeout) \
 do { \
 bool res; \
@@ -79,11 +85,12 @@ protected:
 
 class CocoaTestEnvironment : public ::testing::Environment
 {
+public:
     void SetUp();
     void TearDown();
     
 protected:
-    void *pool;
+    void *pool_;
 };
 
 #endif

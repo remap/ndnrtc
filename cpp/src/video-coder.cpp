@@ -51,20 +51,26 @@ int NdnVideoCoder::init()
         return notifyErrorBadArg(NdnVideoCoderParams::ParamNameHeight);
 
 #warning what is this parameter?
+    strncpy(codec_.plName, "VP8", 31);
+    codec_.plType = 126;
     codec_.qpMax = 56;
+    codec_.codecType = kVideoCodecVP8;
     codec_.codecSpecific.VP8.denoisingOn = true;
-    
+    codec_.codecSpecific.VP8.complexity = kComplexityNormal;
+    codec_.codecSpecific.VP8.numberOfTemporalLayers = 1;
+
     encoder_.reset(VP8Encoder::Create());
+//    encoder_ = VP8Encoder::Create();
     
     if (!encoder_.get())
         return notifyError(-1, "can't create VP8 encoder");
     
-    encoder_.get()->RegisterEncodeCompleteCallback(this);
+    encoder_->RegisterEncodeCompleteCallback(this);
     
-#warning hoe payload can be changed?
+#warning how payload can be changed?
     int maxPayload = 3900;
     
-    if (encoder_.get()->InitEncode(&codec_, 2, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
+    if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
         return notifyError(-1, "can't initialize VP8 encoder");
     
     return 0;
@@ -75,7 +81,7 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
                 const webrtc::CodecSpecificInfo* codecSpecificInfo,
                 const webrtc::RTPFragmentationHeader* fragmentation)
 {
-//    TRACE("got encoded frame: length - %d, size - %d, completed - %d", encodedImage._length, encodedImage._size, encodedImage._completeFrame);
+    TRACE("got encoded");
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage);
@@ -87,7 +93,11 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 #pragma mark - intefaces realization - IRawFrameConsumer
 void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
-    encoder_.get()->Encode(frame, NULL, NULL);
+    TRACE("encoding...");
+    int err = encoder_->Encode(frame, NULL, NULL);
+    
+    if (err != WEBRTC_VIDEO_CODEC_OK)
+        notifyError(-1, "can't encode frame due to error %d",err);
 }
 
 //********************************************************************************

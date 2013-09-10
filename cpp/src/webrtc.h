@@ -14,6 +14,11 @@
 
 #include <video_engine/vie_impl.h>
 
+// other
+#include <system_wrappers/interface/event_wrapper.h>
+#include <system_wrappers/interface/thread_wrapper.h>
+#include <system_wrappers/interface/critical_section_wrapper.h>
+
 // video capturing
 #include <modules/video_capture/include/video_capture_defines.h>
 #include <modules/video_capture/include/video_capture.h>
@@ -23,5 +28,8 @@
 
 // codecs
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
+#include <modules/video_coding/main/interface/video_coding_defines.h>
+#include <modules/video_coding/main/source/codec_database.h>
+#include <modules/video_coding/main/source/internal_defines.h>
 
 #endif

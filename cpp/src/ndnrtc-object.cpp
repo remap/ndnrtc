@@ -199,7 +199,10 @@ int NdnRtcObject::notifyError(const int ecode, const char *format, ...)
     va_end(args);
     
     if (hasObserver())
+    {
+        TRACE("error occurred: %s",emsg);
         observer_->onErrorOccurred(emsg);
+    }
     else
         ERR("%s", emsg);
     

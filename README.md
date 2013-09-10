@@ -40,6 +40,9 @@ The directory structure is as follows:
 Build prerequisites
 ----
 1. XULRunner SDK (or Gecko SDK). Check the latest version [here](http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-trunk/). Current code was compiled with SDK version 25.0a1 (Nightly).
+2. WebRTC libraries (check http://www.webrtc.org/reference/getting-started).
+3. Gtests framework (check https://code.google.com/p/googletest/source/checkout).
+4. NDN-CPP library (check the latest commit from https://github.com/named-data/ndn-cpp.git).
 
 How to build
 ----
@@ -53,10 +56,20 @@ How to build
     $ export PYTHONPATH=$(PYTHONPATH):$(XULSDK)/sdk/bin
 </pre>
 
+3. Checkout latest commit of WebRTC into **thirdparty** directory under **ndn-webrtc** name and build it for x64 architecture.
+
+4. In order to run tests, checkout Gtests library into **thirdparty/ndn-gtest**.
+
+4. Initialize git submodules (for NDN-CPP):
+<pre>
+    $ git submodule init
+    & git submodue update
+</pre>
+
 3. Perform make:
 <pre>
     $ cd cpp
-    $ make
+    $ make addon
 </pre>
 
 How to use

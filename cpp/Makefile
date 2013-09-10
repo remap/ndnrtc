@@ -140,7 +140,7 @@ LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 # #include "mozilla-config.h" to each of your .cpp files.
 GECKO_CONFIG_INCLUDE = -include mozilla-config.h
 
-GECKO_DEFINES  = -DMOZILLA_STRICT_API -DXP_UNIX -DXP_MACOSX
+GECKO_DEFINES  = -DMOZILLA_STRICT_API -DXP_UNIX -DXP_MACOSX -DMOZ_NO_MOZALLOC
 
 GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
                  -I$(GECKO_SDK_PATH)/idl                \
@@ -150,9 +150,11 @@ GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
                  
 GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
-		 -lxpcomglue_s	\
+		 -lxpcomglue_s_nomozalloc \
 		 -shared	\
 		 $(NULL)
+
+#		 -lxpcomglue_s	\
 
 ALL_CFLAGS = $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(GECKO_DEFINES) $(OBJCFLAGS)
 ALL_LDFLAGS = $(LDFLAGS) $(LDLIBFLAGS) $(GECKO_LFDFLAGS)
@@ -235,13 +237,13 @@ GTEST_DIR = $(THIRDPARTY_PATH)/ndn-gtest
 
 GT_CXX = $(CXX)
 GT_CPPFLAGS += $(CPPFLAGS)
-GT_CXXFLAGS += -g -Wall -Wextra -pthread -Wno-missing-field-initializers
+GT_DEFINES = -DDEBUG -DNDN_LOGGING -DNDN_DETAILED -DNDN_TRACE -DNDN_INFO -DWEBRTC_LOGGING
+GT_CXXFLAGS += -g -Wall -Wextra -pthread -Wno-missing-field-initializers $(GT_DEFINES)
 GT_GECKO_DEFINES = $(GECKO_DEFINES) -DMOZ_NO_MOZALLOC 
 GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
 		 -lxpcomglue_s	\
 		 $(NULL)
-GT_DEFINES = -DDEBUG -DNDN_LOGGING -DNDN_DETAILED -DNDN_TRACE -DNDN_INFO -DWEBRTC_LOGGING
 GT_LDFLAGS += -lpthread -Wl, -undefined suppress -flat_namespace# $(GT_GECKO_LDFLAGS)
 
 TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
@@ -269,6 +271,10 @@ $(OBJ_PATH)/libgtest-all.a : $(GTEST_SRCS_)
 $(OBJ_PATH)/libtest-main.a : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
             $(TEST_PATH)/test-main.cc -static -o $@
+            
+$(OBJ_PATH)/libtest-main-mac.a : $(GTEST_SRCS_)
+	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) -c \
+            $(TEST_PATH)/test-main-mac.mm -static -o $@
 
 test-common.o : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) $(OTHER_CFLAGS) -Wno-unused-parameter -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) -c \
@@ -300,10 +306,10 @@ build-ndnrtc-object-test: ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgt
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a camera-capturer.o simple-log.o test-common.o
+build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a camera-capturer.o simple-log.o test-common.o
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o camera-capturer-test.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
-	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
 build-video-coder-test: video-coder-test.o video-coder.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a camera-capturer.o simple-log.o test-common.o ndnrtc-object.o
@@ -318,10 +324,10 @@ build-renderer-test: renderer-test.o renderer.o camera-capturer.o simple-log.o t
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-sender-channel-test: sender-channel-test.o sender-channel.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o video-coder.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a
+build-sender-channel-test: sender-channel-test.o sender-channel.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o video-coder.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o sender-channel-test.o sender-channel.o renderer.o video-coder.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
-	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
 clean: libclean

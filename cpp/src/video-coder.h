@@ -59,7 +59,7 @@ namespace ndnrtc {
     public:
         // construction/desctruction
         NdnVideoCoder(const NdnParams *params);
-        ~NdnVideoCoder() {};
+        ~NdnVideoCoder() { TRACE("coder"); };
         
         // public methods go here
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; };
@@ -77,6 +77,7 @@ namespace ndnrtc {
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;
         shared_ptr<webrtc::VideoEncoder> encoder_;
+//        webrtc::VideoEncoder* encoder_;
         
         // private methods go here
         NdnVideoCoderParams *getParams() { return static_cast<NdnVideoCoderParams*>(params_); };

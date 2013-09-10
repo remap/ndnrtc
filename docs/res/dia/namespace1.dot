@@ -1,4 +1,4 @@
-digraph ndneye { 
+digraph ndnrtc { 
 	graph [dir=none, layout=dot, nodesep=0.2, margin=0, ranksep=0.3];
 	node [label="\N", shape=box];
 	edge [dir=none];

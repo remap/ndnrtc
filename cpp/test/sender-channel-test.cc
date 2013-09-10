@@ -11,7 +11,7 @@
 #include "test-common.h"
 #include "sender-channel.h"
 
-#undef NDN_LOGGING
+//#undef NDN_LOGGING
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
@@ -106,12 +106,16 @@ TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_);
     
+    sc->setObserver(this);
     sc->init();
     
-    EXPECT_EQ(0, sc->startTransmission());
-    EXPECT_FALSE(obtainedError_);
-    
-    EXPECT_EQ(0, sc->stopTransmission());
+    EXPECT_NO_THROW({
+        EXPECT_EQ(0, sc->startTransmission());
+        EXPECT_FALSE(obtainedError_);
+        WAIT(5000);
+        EXPECT_EQ(0, sc->stopTransmission());
+        EXPECT_FALSE(obtainedError_);
+    });
     
     delete sc;
     

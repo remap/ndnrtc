@@ -15,7 +15,8 @@
 #include "ndnrtc-common.h"
 #include "nsThreadUtils.h"
 #include "ndnworker.h"
-
+#include "nsXPCOMCIDInternal.h"
+#include "nsServiceManagerUtils.h"
 
 namespace ndnrtc
 {

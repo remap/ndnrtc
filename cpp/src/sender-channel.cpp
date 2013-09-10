@@ -35,10 +35,22 @@ sender_(new NdnVideoSender(params))
 };
 //********************************************************************************
 #pragma mark - intefaces realization: IRawFrameConsumer
+static int32_t timestamp = 0;
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
+//    timestamp += 90000/30.;
+//
+//    webrtc::I420VideoFrame *frame_copy = new webrtc::I420VideoFrame();
+//    frame_copy->CopyFrame(frame);
+//    frame_copy->set_timestamp(timestamp);
+    
     // pass frame for rendering and encoding
     localRender_->onDeliverFrame(frame);
+    
+//    nsCOMPtr<nsRunnable> encoderTask = new MozEncodingTask(frame, coder_.get());
+//    NS_DispatchToMainThread(encoderTask);
+//    encodingThread_->Dispatch(encoderTask, nsIThread::DISPATCH_NORMAL);
+    
     coder_->onDeliverFrame(frame);
 };
 
@@ -62,19 +74,48 @@ NdnParams* NdnSenderChannel::defaultParams()
 }
 int NdnSenderChannel::init()
 {
-    if (cc_->init() < 0)
-        return notifyError(-1, "can't intialize camera capturer");
+//    nsresult rv;
+//    nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);    
+//    
+//    if (!encodingThread_)
+//    {        
+//        if (rv != NS_OK)
+//            return notifyError(-1, "can't access mozilla thread manager");
+//        
+//        rv = tm->NewThread(0, 0, getter_AddRefs(encodingThread_));
+//        
+//        if (rv != NS_OK)
+//            return notifyError(-1, "can't create encdoing thread");
+//    }
     
-    if (localRender_->init() < 0)
-        return notifyError(-1, "can't intialize renderer");
+//    nsCOMPtr<nsIThread> initThread;
+//    rv = tm->NewThread(0, 0, getter_AddRefs(initThread));
+//    
+//    if (rv != NS_OK)
+//        return notifyError(-1, "can't create init thread");
+
     
-    if (coder_->init() < 0)
-        return notifyError(-1, "can't intialize video encoder");
-    
-//    if (sender_->init() < 0)
-//        return notifyError(-1, "can't intialize camera capturer");
+//    nsCOMPtr<nsRunnable> initEvent = new MozInitTask(this);
+//    encodingThread_->Dispatch(initEvent, nsIThread::DISPATCH_NORMAL);
+
+    initTest();
     
     return 0;
+}
+void NdnSenderChannel::initTest()
+{
+    if (cc_->init() < 0)
+        notifyError(-1, "can't intialize camera capturer");
+    
+    if (localRender_->init() < 0)
+        notifyError(-1, "can't intialize renderer");
+    
+    if (coder_->init() < 0)
+        notifyError(-1, "can't intialize video encoder");
+    
+//    startTransmission();
+    //    if (sender_->init() < 0)
+    //        return notifyError(-1, "can't intialize camera capturer");
 }
 int NdnSenderChannel::startTransmission()
 {

@@ -30,11 +30,11 @@ int64_t millisecondTimestamp()
 //********************************************************************************
 void CocoaTestEnvironment::SetUp(){
     printf("[setting up cocoa environment]\n");
-    pool = (void*)[[NSAutoreleasePool alloc] init];
+    pool_ = (void*)[[NSAutoreleasePool alloc] init];
     [NSApplication sharedApplication];
 };
 
 void CocoaTestEnvironment::TearDown(){
-    [(NSAutoreleasePool*)pool release];
+    [(NSAutoreleasePool*)pool_ release];
     printf("[tear down cocoa environment]\n");
 };

@@ -157,6 +157,63 @@ TEST_F(NdnVideoCoderTest, TestEncode)
     vc->onDeliverFrame(*sampleFrame_);
     EXPECT_TRUE_WAIT(obtainedFrame_, 1000.);
     
+    EXPECT_EQ(sampleFrame_->width(),receivedEncodedFrame_->_encodedWidth);
+    EXPECT_EQ(sampleFrame_->height(),receivedEncodedFrame_->_encodedHeight);
+    
     delete sampleFrame_;
     delete vc;
+}
+TEST(TestCodec, TestEncodeSampleFrame)
+{
+    int width = 352, height = 288;    
+    FILE *f = fopen("resources/foreman_cif.yuv", "rb");
+    
+    int32_t frameSize = webrtc::CalcBufferSize(webrtc::kI420, width, height);
+    unsigned char* frameData = new unsigned char[frameSize];
+    
+    fread(frameData, 1, frameSize, f);
+    
+    int size_y = width * height;
+    int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
+    webrtc::I420VideoFrame *sampleFrame_ = new webrtc::I420VideoFrame();
+    
+    sampleFrame_->CreateFrame(size_y, frameData,
+                              size_uv,frameData + size_y,
+                              size_uv, frameData + size_y + size_uv,
+                              width, height,
+                              width,
+                              (width + 1) / 2, (width + 1) / 2);
+
+    webrtc::VideoCodec codec_;
+    webrtc::VideoEncoder *encoder_;
+    
+    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
+    {
+        TRACE("can't get deafult params");
+        strncpy(codec_.plName, "VP8", 31);
+        codec_.maxFramerate = 30;
+        codec_.startBitrate  = 300;
+        codec_.maxBitrate = 4000;
+        codec_.width = width;
+        codec_.height = height;
+        codec_.plType = VCM_VP8_PAYLOAD_TYPE;
+        codec_.qpMax = 56;
+        codec_.codecType = webrtc::kVideoCodecVP8;
+        codec_.codecSpecific.VP8.denoisingOn = true;
+        codec_.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
+        codec_.codecSpecific.VP8.numberOfTemporalLayers = 1;
+    }
+    
+    encoder_ = webrtc::VP8Encoder::Create();
+
+    if (!encoder_)
+        ASSERT_TRUE(false);
+    
+    int maxPayload = 3900;
+    
+    if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
+        ASSERT_TRUE(false);
+    
+    encoder_->Encode(*sampleFrame_, NULL, NULL);
+    
 }

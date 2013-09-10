@@ -67,6 +67,113 @@ void ndNrtc::onErrorOccurred(const char *errorMessage)
 #pragma mark - idl interface implementation
 NS_IMETHODIMP ndNrtc::StartConference(nsIPropertyBag2 *prop, INrtcObserver *observer)
 {
+#if 1
+    int width = 352, height = 288;
+    FILE *f = fopen("resources/foreman_cif.yuv", "rb");
+    
+    int32_t frameSize = webrtc::CalcBufferSize(webrtc::kI420, width, height);
+    unsigned char* frameData = new unsigned char[frameSize];
+    
+    fread(frameData, 1, frameSize, f);
+    
+    int size_y = width * height;
+    int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
+    webrtc::I420VideoFrame *sampleFrame_ = new webrtc::I420VideoFrame();
+    
+    sampleFrame_->CreateFrame(size_y, frameData,
+                              size_uv,frameData + size_y,
+                              size_uv, frameData + size_y + size_uv,
+                              width, height,
+                              width,
+                              (width + 1) / 2, (width + 1) / 2);
+    
+    webrtc::VideoCodec codec_;
+    webrtc::VideoEncoder *encoder_;
+    
+    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
+    {
+        TRACE("can't get deafult params");
+        strncpy(codec_.plName, "VP8", 31);
+        codec_.maxFramerate = 30;
+        codec_.startBitrate  = 300;
+        codec_.maxBitrate = 4000;
+        codec_.width = width;
+        codec_.height = height;
+        codec_.plType = VCM_VP8_PAYLOAD_TYPE;
+        codec_.qpMax = 56;
+        codec_.codecType = webrtc::kVideoCodecVP8;
+        codec_.codecSpecific.VP8.denoisingOn = true;
+        codec_.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
+        codec_.codecSpecific.VP8.numberOfTemporalLayers = 1;
+    }
+    
+    encoder_ = webrtc::VP8Encoder::Create();
+    
+    NdnVideoCoderParams *coderParams_ = NdnVideoCoderParams::defaultParams();
+    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    
+    
+    if (!encoder_)
+        return NS_OK;
+    
+    int maxPayload = 3900;
+    
+    if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
+        return NS_OK;
+    
+    encoder_->RegisterEncodeCompleteCallback(vc);
+    
+    int err = encoder_->Encode(*sampleFrame_, NULL, NULL);
+    if (err != WEBRTC_VIDEO_CODEC_OK)
+    {
+        TRACE("encode error %d",err);
+        return NS_OK;
+    }
+    else
+        TRACE("encoded!!1");        
+    
+    return NS_OK;
+#endif
+    
+#if 0
+    NdnVideoCoderParams *coderParams_ = NdnVideoCoderParams::defaultParams();
+    
+    int width = 352, height = 288;
+    // change frame size according to the data in resource file file
+    coderParams_->setIntParam(NdnVideoCoderParams::ParamNameWidth, width);
+    coderParams_->setIntParam(NdnVideoCoderParams::ParamNameHeight, height);
+    
+    FILE *f = fopen("resources/foreman_cif.yuv", "rb");
+    
+    int32_t frameSize = webrtc::CalcBufferSize(webrtc::kI420, width, height);
+    unsigned char* frameData = new unsigned char[frameSize];
+    
+    fread(frameData, 1, frameSize, f);
+    
+    int size_y = width * height;
+    int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
+    webrtc::I420VideoFrame *sampleFrame_ = new webrtc::I420VideoFrame();
+    
+    sampleFrame_->CreateFrame(size_y, frameData,
+                                        size_uv,frameData + size_y,
+                                        size_uv, frameData + size_y + size_uv,
+                                        width, height,
+                                        width,
+                                        (width + 1) / 2, (width + 1) / 2);
+    
+    fclose(f);
+    delete [] frameData;
+
+    
+    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    
+    vc->init();
+    
+    vc->onDeliverFrame(*sampleFrame_);
+    
+    return NS_OK;
+#endif
+    
     shared_ptr<NdnParams> params(NdnSenderChannel::defaultParams());
     shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params.get()));
 

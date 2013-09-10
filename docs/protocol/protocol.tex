@@ -8,7 +8,7 @@
 \usepackage{hyperref}   % use for hypertext links, including those to external documents and URLs
 
 \author{P.~Gusev}
-\title{NdnRTC app design and protocol specification (DRAFT v0.1)}
+\title{NDN-RTC app design and protocol specification (DRAFT v0.1)}
 
 \begin{document}
 
@@ -29,8 +29,11 @@
 \item Qiuhan Ding
 \end{itemize}
 
+\subsection{Motivation}
+The video conferencing tool is one of those apps which is needed first of all for internal use and experimenting with real-time communication over NDN. As we are interested in increasing NDN popularity among non-research peers as well, we are trying to provide easy-to-setup NDN apps by employing web browser APIs.
+
 \subsection{Description}
-The video conferencing tool is one of those apps which is needed first of all for internal use and experimenting with real-time communication over NDN. As we are interested in increasing NDN popularity among non-research peers as well, we are trying to provide easy-to-setup NDN apps by employing web browser APIs. NDN-WebRTC is a JavaScript application which utilizes the WebRTC engine for media encoding/decoding and C++ NDN library for the transport layer. The proposed initial app design contains two main modules: 
+NDN-RTC is a JavaScript application which utilizes the WebRTC engine for media encoding/decoding and C++ NDN library for the transport layer. The proposed initial app design contains two main modules: 
 \begin{enumerate}
 \item \textbf{Browser add-on} \\
 Contains the NDN media-specific transport layer implementation, the encoding/decoding engine (WebRTC) and provides a JavaScript API for access from browser apps;
@@ -58,29 +61,20 @@ The main goal of fetching media is to minimize the delay of receiving the latest
 
 Since no synchronization problems need to be solved in such a "consumer" approach, we hope that NDN-WebRTC can show better results in scalability for many-to-many scenarios.
 
-\subsection{Next steps}
-\begin{itemize}
-\item Provide user authentication in video conferences
-\item Implement secure media transfer
-\item Scalable video encoding
-\end{itemize}
-
 \section{Protocol specification}
-\subsection{Intro}
-
 \subsection{Discovery}
 \textit{TBD}
 
-\subsection{Negotiating}
+\subsection{Real time communication}
 \begin{enumerate}
 \item Upon successful discovery of a video producer URI, the consumer issues an interest in the index namespace and gets data about the media stream's parameters ($FrameRate$ and codecs).
-\item The consumer issues $Index_{0}$ with the \textit{RigthMostChild=\textbf{true}} selector in the namespace for the frames like this: \textit{/root/mediadata} and waits until the first segment is received.
+\item The consumer issues $Interest_{0}$ with the \textit{RigthMostChild=\textbf{true}} selector in the namespace for the frames like this: \textit{/root/mediadata} and waits until the first segment is received.
 \item The consumer switches to \textbf{"Chase Mode"}
 \end{enumerate}
 
 \textbf{Chase Mode}
 \begin{enumerate}
-\item THe consumer extracts the frame number - $FN$ from the obtained $DataObject$ and pipelines interests at a rate of $2*FrameRate$ (twice the producer data rate) with \textit{RightMostChild=\textbf{true}} in the namespace for segments like this: \textit{/root/mediadata/FN/0}. i.e. the pipeline contains interests $Index_{FN}$, $Index_{FN+1}$, $Index_{FN+2}$,...
+\item THe consumer extracts the frame number - $FN$ from the obtained $DataObject$ and pipelines interests at a rate of $2*FrameRate$ (twice the producer data rate) with \textit{RightMostChild=\textbf{true}} in the namespace for segments like this: \textit{/root/mediadata/FN/0}. i.e. the pipeline contains interests $Interest_{FN}$, $Interest_{FN+1}$, $Interest_{FN+2}$,...
 
 \item The consumer watches two parameters: $DeliveryRate$ of frames, $RoundTripTime$ for interests:
 \begin{itemize}
@@ -122,7 +116,10 @@ The number of segments per frame ($NumSegs$) is indicated using the \textit{Fina
 
 \end{enumerate}
 
+\subsection{Security concerns}
+
 \section{App design}
+\subsection{Overview}
 Figure \ref{fig:uc} represents common use cases for the add-on. Currently, use case \textit{Discover conferences} is left for future development.
 \begin{figure}
 \centering
@@ -130,7 +127,6 @@ Figure \ref{fig:uc} represents common use cases for the add-on. Currently, use c
 \caption{Add-on Use-Cases}
 \label{fig:uc}
 \end{figure}
-
 
 Top-view architecture of the add-on is presented on Figure \ref{fig:arch}.
 \begin{figure}
@@ -140,7 +136,7 @@ Top-view architecture of the add-on is presented on Figure \ref{fig:arch}.
 \label{fig:arch}
 \end{figure}
 
-\subsection{C++ XPCOM add-on}
+\subsection{C++ Firefox add-on}
 This sections describes the internal architectural approach for the C++ part of the add-on.
 
 One can start learning how the add-on works by looking at the sequence diagrams of the main use-cases: Starting a conference (Figure \ref{fig:start}), Joining an existing conference (Figure \ref{fig:join}) and Leaving a conference (Figure \ref{fig:leave}).
@@ -168,6 +164,15 @@ One can start learning how the add-on works by looking at the sequence diagrams 
 
 
 \subsection{Javascript Web application}
+\subsubsection{Overview}
+\subsubsection{UI design}
+
+\section{Next steps}
+\begin{itemize}
+\item Provide user authentication in video conferences
+\item Implement secure media transfer
+\item Scalable video encoding
+\end{itemize}
 
 \section{References} \cite{videoTR}, \cite{ChronosTR}
 %************************************************

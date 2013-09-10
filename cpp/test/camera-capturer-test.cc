@@ -13,7 +13,7 @@
 
 using namespace ndnrtc;
 
-::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
+//::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 
 //********************************************************************************
 /**

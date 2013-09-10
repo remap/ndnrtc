@@ -15,6 +15,8 @@
 
 #define USE_I420
 
+#undef NDN_LOGGING
+#undef NDN_TRACE
 using namespace ndnrtc;
 using namespace webrtc;
 
@@ -33,16 +35,24 @@ const std::string CameraCapturerParams::ParamNameFPS = "fps";
 CameraCapturer::CameraCapturer(const NdnParams *params) :
 NdnRtcObject(params),
 vcm_(nullptr),
-frameConsumer_(nullptr)
+frameConsumer_(nullptr),
+capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
+deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
+captureEvent_(*EventWrapper::Create()),
+captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPriority))
 {
-    TRACE("cam capturer");
 }
 CameraCapturer::~CameraCapturer()
 {
+    TRACE("");
     if (vcm_)
     {
-        if (vcm_->CaptureStarted())
-            vcm_->StopCapture();
+        TRACE("release vcm");
+        if (isCapturing())
+        {
+            TRACE("stop capture");
+            stopCapture();
+        }
         
         vcm_->Release();
     }
@@ -90,19 +100,22 @@ int CameraCapturer::init()
     
     vcm_->RegisterCaptureDataCallback(*this);
     
+    loadFrame();
+    
     return 0;
 }
 int CameraCapturer::startCapture()
 {
+    unsigned int tid = 0;
+    
+    if (!captureThread_.Start(tid))
+        return notifyError(-1, "can't start capturing thread");
+    
     if (vcm_->StartCapture(capability_) < 0)
-    {
         return notifyError(-1, "capture failed to start");
-    }
     
     if (!vcm_->CaptureStarted())
-    {
         return notifyError(-1, "capture failed to start");
-    }
     
     INFO("started camera capture");
     
@@ -110,7 +123,13 @@ int CameraCapturer::startCapture()
 }
 int CameraCapturer::stopCapture()
 {
+    TRACE("");
     vcm_->StopCapture();
+    captureThread_.SetNotAlive();
+    captureEvent_.Set();
+    
+    if (!captureThread_.Stop())
+        return notifyError(-1, "can't stop capturing thread");
     
     return 0;
 }
@@ -183,14 +202,16 @@ void CameraCapturer::printCapturingInfo()
 void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& videoFrame)
 {
 //    TRACE("captured new frame %ld",videoFrame.render_time_ms());
-    
     if (videoFrame.render_time_ms() >= TickTime::MillisecondTimestamp()-30 &&
         videoFrame.render_time_ms() <= TickTime::MillisecondTimestamp())
         TRACE("..delayed");
     
 #ifdef USE_I420
-    if (frameConsumer_)
-        frameConsumer_->onDeliverFrame(videoFrame);
+    capturedFrame_.SwapFrame(&videoFrame);
+//    capturedFrame_.CopyFrame(videoFrame);
+    captureEvent_.Set();
+//    if (frameConsumer_)
+//        frameConsumer_->onDeliverFrame(videoFrame);
 #else
     int bufSize = CalcBufferSize(kARGB, videoFrame.width(), videoFrame.height());
     
@@ -222,38 +243,24 @@ void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay
 
 //********************************************************************************
 #pragma mark - private
-//void CameraCapturer::startBackgroundCapturingThread()
-//{
-//#if 0
-//    vcm_->StartCapture(capability_);
-//    
-//    if (!vcm_->CaptureStarted())
-//    {
-//        ERROR("capture failed to start");
-//        return;
-//    }
-//    
-//    INFO("started camera capture");
-////    nsCOMPtr<nsRunnable> captureTask = new CameraCapturerTask(capability_,vcm_);
-////    captureTask->Run();
-//#else
-//#warning clarify the neccessity of capturing thread
-//    nsresult rv;
-//    nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);
-//    
-//    if (!capturingThread_)
-//    {
-//        INFO("creating new capture thread");
-//        rv = tm->NewThread(0, 0, getter_AddRefs(capturingThread_));
-//    }
-//
-//    if (NS_SUCCEEDED(rv))
-//    {
-//        nsCOMPtr<nsRunnable> captureTask = new CameraCapturerTask(capability_,vcm_);
-//        capturingThread_->Dispatch(captureTask, nsIThread::DISPATCH_NORMAL);
-//    }
-//    else
-//        ERROR("spin thread creation failed");
-//#endif
-//    
-//}
+bool CameraCapturer::process()
+{
+    TRACE("");
+    if (captureEvent_.Wait(100) == kEventSignaled) {
+        deliver_cs_->Enter();
+        if (!capturedFrame_.IsZeroSize()) {
+            // New I420 frame.
+            capture_cs_->Enter();
+            deliverFrame_.SwapFrame(&capturedFrame_);
+            capturedFrame_.ResetSize();
+            capture_cs_->Leave();
+            
+            TRACE("delivering frame");
+            if (frameConsumer_)
+                frameConsumer_->onDeliverFrame(deliverFrame_);
+        }
+        deliver_cs_->Leave();
+    }
+    // We're done!
+    return true;    
+}
