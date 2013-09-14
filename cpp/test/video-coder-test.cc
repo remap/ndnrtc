@@ -13,7 +13,7 @@
 #include "video-coder.h"
 
 using namespace ndnrtc;
-
+#if 0
 //********************************************************************************
 /**
  * @name NdnVideoCoderParams class tests
@@ -163,6 +163,8 @@ TEST_F(NdnVideoCoderTest, TestEncode)
     delete sampleFrame_;
     delete vc;
 }
+#endif
+
 TEST(TestCodec, TestEncodeSampleFrame)
 {
     int width = 352, height = 288;    
@@ -206,6 +208,9 @@ TEST(TestCodec, TestEncodeSampleFrame)
     
     encoder_ = webrtc::VP8Encoder::Create();
 
+    NdnVideoCoderParams *coderParams_ = NdnVideoCoderParams::defaultParams();
+    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    
     if (!encoder_)
         ASSERT_TRUE(false);
     
@@ -214,6 +219,8 @@ TEST(TestCodec, TestEncodeSampleFrame)
     if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
         ASSERT_TRUE(false);
     
-    encoder_->Encode(*sampleFrame_, NULL, NULL);
-    
+    encoder_->RegisterEncodeCompleteCallback(vc);
+    EXPECT_EQ(WEBRTC_VIDEO_CODEC_OK, encoder_->Encode(*sampleFrame_, NULL, NULL));
+    WAIT(1000.);
+
 }

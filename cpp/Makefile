@@ -49,7 +49,7 @@ CPPFLAGS += -fno-rtti -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
 		$(NULL)
-OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework QTKit -framework CoreVideo
+OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
@@ -140,7 +140,7 @@ LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 # #include "mozilla-config.h" to each of your .cpp files.
 GECKO_CONFIG_INCLUDE = -include mozilla-config.h
 
-GECKO_DEFINES  = -DMOZILLA_STRICT_API -DXP_UNIX -DXP_MACOSX -DMOZ_NO_MOZALLOC
+GECKO_DEFINES  = -DMOZILLA_STRICT_API -DXP_UNIX -DXP_MACOSX # -DMOZ_NO_MOZALLOC
 
 GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
                  -I$(GECKO_SDK_PATH)/idl                \
@@ -150,11 +150,11 @@ GECKO_INCLUDES = -I$(GECKO_SDK_PATH)                    \
                  
 GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
-		 -lxpcomglue_s_nomozalloc \
+		 -lxpcomglue_s	\
 		 -shared	\
 		 $(NULL)
 
-#		 -lxpcomglue_s	\
+#		 -lxpcomglue_s_nomozalloc \
 
 ALL_CFLAGS = $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(GECKO_DEFINES) $(OBJCFLAGS)
 ALL_LDFLAGS = $(LDFLAGS) $(LDLIBFLAGS) $(GECKO_LFDFLAGS)
