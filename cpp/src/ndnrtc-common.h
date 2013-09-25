@@ -14,11 +14,11 @@
 
 #define NDN_LOGGING
 #define NDN_DETAILED
-#define NDN_TRACE
+//#define NDN_TRACE
 #define NDN_INFO
 #define NDN_WARN
 #define NDN_ERROR
-#define NDN_DEBUG
+//#define NDN_DEBUG
 
 #include <stdexcept>
 #include <cstdlib>
@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <vector>
 #include <cstring>
+#include <memory>
+#include <math.h>
 
 #include "ndnlib.h"
 #include "webrtc.h"

@@ -139,6 +139,46 @@ int NdnParams::getParamAsString(const std::string &paramName, char **param) cons
     
     return -1;    
 }
+
+std::string NdnParams::getParamAsString(const std::string &paramName) const
+{
+    Parameter *p = getParam(paramName);
+    char *param = NULL;
+    
+    if (p && p->getType() == NdnParams::ParameterTypeString)
+    {
+        param = (char*)NdnParams::Parameter::copiedValue(p->getType(), p->getValue());
+    }
+    
+    std::string paramStr("");
+    
+    if (param)
+    {
+        paramStr = (const char*)param;
+        free(param);
+    }
+    
+    return paramStr;
+}
+
+int NdnParams::getParamAsInt(const std::string &paramName) const
+{
+    int param = -INT_MAX;
+    
+    getParamAsInt(paramName, &param);
+    
+    return param;
+}
+
+bool NdnParams::getParamAsBool(const std::string &paramName) const
+{
+    bool param = false;
+    
+    getParamAsBool(paramName, &param);
+    
+    return param;
+}
+
 //********************************************************************************
 #pragma mark - private
 NdnParams::Parameter* NdnParams::getParam(const std::string &name) const

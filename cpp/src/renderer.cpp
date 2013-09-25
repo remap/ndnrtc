@@ -12,7 +12,6 @@
 #include "renderer.h"
 #import "objc/cocoa-renderer.h"
 
-#undef NDN_LOGGING
 using namespace ndnrtc;
 using namespace webrtc;
 

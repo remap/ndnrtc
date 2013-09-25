@@ -141,6 +141,10 @@ public:
     int getBoolParam(const std::string &name, bool *p) { return getParamAsBool(name, p); };
     int getIntParam(const std::string &name, int *p) { return getParamAsInt(name, p); };
     int getStringParam(const std::string &name, char **p) { return getParamAsString(name, p); };
+    
+    bool getBoolParam(const std::string &name) { return getParamAsBool(name); };
+    std::string getStringParam(const std::string &name) { return getParamAsString(name); };
+    int getIntParam(const std::string &name) { return getParamAsInt(name); };
 };
 
 
@@ -187,6 +191,43 @@ TEST(ParamsTest, SetParams) {
     
     delete p;
 }
+TEST(ParamsTest, ParamsObjectMethods) {
+    NdnParamsTester *p = (NdnParamsTester*) NdnParams::defaultParams();
+    
+    {
+        p->setBoolParam("p1", true);
+        bool res;
+        
+        EXPECT_TRUE(p->getBoolParam("p1"));
+        
+        p->setBoolParam("p2", false);
+        EXPECT_FALSE(p->getBoolParam("p2"));
+        
+        EXPECT_FALSE(p->getBoolParam("p2 "));
+    }
+    {
+        int res;
+        p->setIntParam("p3", 123);
+        EXPECT_EQ(123, p->getIntParam("p3"));
+        
+        p->setIntParam("p4", -123);
+        EXPECT_EQ(-123, p->getIntParam("p4"));
+        
+        EXPECT_EQ(-INT_MAX, p->getIntParam("p4 "));
+    }
+    {
+        p->setStringParam("p5", "value5");
+        EXPECT_STREQ("value5", p->getStringParam("p5").c_str());
+        
+        p->setStringParam("p6", "");
+        EXPECT_STREQ("", p->getStringParam("p6").c_str());
+        
+        EXPECT_STREQ("", p->getStringParam("p6 ").c_str());
+    }
+    
+    delete p;
+}
+
 TEST(ParamsTest, NonExistentParams)
 {
     NdnParamsTester *p = (NdnParamsTester*) NdnParams::defaultParams();

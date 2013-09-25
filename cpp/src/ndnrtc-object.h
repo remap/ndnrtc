@@ -81,6 +81,10 @@ namespace ndnrtc {
         int getParamAsBool(const std::string &paramName, bool *param) const;
         int getParamAsString(const std::string &paramName, char** param) const;
         
+        std::string getParamAsString(const std::string &paramName) const;
+        int getParamAsInt(const std::string &paramName) const;
+        bool getParamAsBool(const std::string &paramName) const;
+        
     private:
         // attributes
         std::map<std::string, Parameter> propertiesMap_;

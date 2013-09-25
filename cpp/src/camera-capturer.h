@@ -74,34 +74,7 @@ namespace ndnrtc {
         void OnCaptureDelayChanged(const int32_t id,
                                    const int32_t delay);
         
-    private:
-        webrtc::I420VideoFrame *sampleFrame_;
-        void loadFrame()
-        {
-            int width = 352, height = 288;
-            
-            FILE *f = fopen("resources/foreman_cif.yuv", "rb");
-            
-            int32_t frameSize = webrtc::CalcBufferSize(webrtc::kI420, width, height);
-            unsigned char* frameData = new unsigned char[frameSize];
-            
-            fread(frameData, 1, frameSize, f);
-            
-            int size_y = width * height;
-            int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
-            sampleFrame_ = new webrtc::I420VideoFrame();
-            
-            sampleFrame_->CreateFrame(size_y, frameData,
-                                                size_uv,frameData + size_y,
-                                                size_uv, frameData + size_y + size_uv,
-                                                width, height,
-                                                width,
-                                                (width + 1) / 2, (width + 1) / 2);
-            
-            fclose(f);
-            delete [] frameData;
-        }
-        
+    private:        
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &captureThread_;

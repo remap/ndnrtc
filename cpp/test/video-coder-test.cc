@@ -13,7 +13,7 @@
 #include "video-coder.h"
 
 using namespace ndnrtc;
-#if 0
+
 //********************************************************************************
 /**
  * @name NdnVideoCoderParams class tests
@@ -163,8 +163,8 @@ TEST_F(NdnVideoCoderTest, TestEncode)
     delete sampleFrame_;
     delete vc;
 }
-#endif
 
+#if 0
 TEST(TestCodec, TestEncodeSampleFrame)
 {
     int width = 352, height = 288;    
@@ -224,3 +224,4 @@ TEST(TestCodec, TestEncodeSampleFrame)
     WAIT(1000.);
 
 }
+#endif

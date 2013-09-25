@@ -10,9 +10,9 @@
 #include "nsthread-tasks.h"
 
 // xpcom
-#include "nsXPCOMCIDInternal.h"
-#include "nsServiceManagerUtils.h"
-
+//#include "nsXPCOMCIDInternal.h"
+//#include "nsServiceManagerUtils.h"
+#if 0
 using namespace ndnrtc;
 
 //********************************************************************************
@@ -25,38 +25,38 @@ NdnWorker::NdnWorker(const char *hub, const int port, INdnWorkerDelegate *delega
 NdnWorker::~NdnWorker()
 {
     TRACE("shutting down spin thread");
-    spinThread_->Shutdown();
-    spinThread_ = nullptr;
+//    spinThread_->Shutdown();
+//    spinThread_ = nullptr;
     delete face_;
 }
 //********************************************************************************
 #pragma mark - public
 void NdnWorker::expressInterestAsync(const char *interest)
 {
-    nsresult rv;
-    
-    gotContent_ = false;
-    // provide shared_ptr self as a closure
-    TRACE("expressing interest");
-    face_->expressInterest(Name(interest), this);
-    isConnected_ = true;
-    
-    nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);
-    
-    if (!spinThread_)
-    {
-        INFO("creating new spin thread");
-        rv = tm->NewThread(0, 0, getter_AddRefs(spinThread_));
-    }
-    
-    
-    if (NS_SUCCEEDED(rv))
-    {
-        nsCOMPtr<nsIRunnable> spinTask = new NdnWorkerSpinTask(*this);
-        spinThread_->Dispatch(spinTask, nsIThread::DISPATCH_NORMAL);
-    }
-    else
-        ERR("spin thread creation failed");
+//    nsresult rv;
+//    
+//    gotContent_ = false;
+//    // provide shared_ptr self as a closure
+//    TRACE("expressing interest");
+//    face_->expressInterest(Name(interest), this);
+//    isConnected_ = true;
+//    
+////    nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);
+//    
+//    if (!spinThread_)
+//    {
+//        INFO("creating new spin thread");
+//        rv = tm->NewThread(0, 0, getter_AddRefs(spinThread_));
+//    }
+//    
+//    
+//    if (NS_SUCCEEDED(rv))
+//    {
+//        nsCOMPtr<nsIRunnable> spinTask = new NdnWorkerSpinTask(*this);
+//        spinThread_->Dispatch(spinTask, nsIThread::DISPATCH_NORMAL);
+//    }
+//    else
+//        ERR("spin thread creation failed");
 }
 void NdnWorker::publishData(const char *prefix, const unsigned char *data, unsigned int datalen)
 {
@@ -90,7 +90,8 @@ void NdnWorker::dispatchData(shared_ptr<Data> &data)
 {
     TRACE("should dispatch callback on main thread here");
     
-    NS_DispatchToMainThread(new NdnWorkerDispatchDataTask(delegate_,data));
+//    NS_DispatchToMainThread(new NdnWorkerDispatchDataTask(delegate_,data));
     
 }
 
+#endif

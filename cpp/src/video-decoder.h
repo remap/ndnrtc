@@ -13,10 +13,29 @@
 #define __ndnrtc__video_decoder__
 
 #include "ndnrtc-common.h"
+#include "webrtc.h"
+#include "camera-capturer.h"
+#include "video-coder.h"
 
 namespace ndnrtc {
-    class NdnVideoDecoder {
+    class NdnVideoDecoder : public NdnRtcObject, public IEncodedFrameConsumer, public webrtc::DecodedImageCallback {
+    public:
+        // construction/destruction
+        NdnVideoDecoder();
+        ~NdnVideoDecoder() { TRACE("decoder"); }
         
+        void setFrameConsumer(IRawFrameConsumer *frameConsumer) { frameConsumer_ = frameConsumer; };
+        int init(webrtc::VideoCodec &codecParams);
+        
+        // interface conformance - webrtc::DecodedImageCallback
+        int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
+        // interface conformance - IEncodedFrameConsumer
+        void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
+
+    private:
+        IRawFrameConsumer *frameConsumer_;
+        webrtc::VideoCodec codec_;
+        shared_ptr<webrtc::VideoDecoder> decoder_;
     };
 }
 

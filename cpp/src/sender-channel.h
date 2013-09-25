@@ -18,8 +18,6 @@
 #include "renderer.h"
 #include "video-sender.h"
 
-//#include "nsthread-tasks.h"
-
 namespace ndnrtc
 {
     
@@ -28,7 +26,7 @@ namespace ndnrtc
     public:
         // construction/desctruction
         NdnSenderChannel(NdnParams *params);
-        virtual ~NdnSenderChannel() { };
+        virtual ~NdnSenderChannel() { TRACE(""); };
         
         // static
         static NdnParams* defaultParams();
@@ -43,42 +41,22 @@ namespace ndnrtc
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
     private:
-//        class MozEncodingTask : public nsRunnable
-//        {
-//        public:
-//            MozEncodingTask(webrtc::I420VideoFrame &videoFrame, NdnVideoCoder *encoder) : encoder_(encoder){ frame_.CopyFrame(videoFrame); }
-//            ~MozEncodingTask() { TRACE("task destroyed"); }
-//
-//            NS_IMETHOD Run() {
-//                encoder_->onDeliverFrame(frame_);
-//                return NS_OK;
-//            }
-//
-//        private:
-//            webrtc::I420VideoFrame frame_;
-//            NdnVideoCoder *encoder_;
-//        };
-//        class MozInitTask : public nsRunnable
-//        {
-//        public:
-//            MozInitTask(NdnSenderChannel *channel) : channel_(channel) {}
-//            ~MozInitTask() { TRACE("init task destroyed"); }
-//            
-//            NS_IMETHOD Run() {
-//                channel_->initTest();
-//                return NS_OK;
-//            }            
-//        private:
-//            NdnSenderChannel *channel_;
-//        };
-//                nsCOMPtr<nsIThread> encodingThread_;
-        
-        void initTest();
         bool isTransmitting_;
         shared_ptr<CameraCapturer> cc_;
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
+        
+        webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
+        webrtc::ThreadWrapper &processThread_;
+        webrtc::EventWrapper &deliverEvent_;
+        webrtc::I420VideoFrame deliverFrame_;
+        
+        // static methods
+        static bool processDeliveredFrame(void *obj) { return ((NdnSenderChannel*)obj)->process(); }
+        
+        // private methods
+        bool process();
     };
     
 }

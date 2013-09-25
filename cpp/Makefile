@@ -1,5 +1,7 @@
-
+# Mozilla-specific add-on library
 MODULE		= libndnrtc
+# stand-alone library (not Mozilla-specific)
+MODULE_SA	= libndnrtc-sa
 NAME 		= ndnrtc
 
 CURRENT     = $(shell pwd)
@@ -43,13 +45,14 @@ CXX	       	= clang++
 
 XPIDLSRCS	= $(patsubst $(IDL_PATH)/%.idl,%.idl,$(wildcard $(IDL_PATH)/*.idl))
 CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
+CPPSRCS_SA	= $(filter-out ndNrtc%,$(CPPSRCS))
 OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
 CPPFLAGS += -fno-rtti -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
 		$(NULL)
-OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo
+OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
@@ -100,7 +103,6 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lprotobuf_full_do_not_use \
 	-lprotobuf_lite \
 	-lrbe_components \
-	-lrbe_components_unittests \
 	-lremote_bitrate_estimator \
 	-lrtp_rtcp \
 	-lsystem_wrappers \
@@ -132,7 +134,7 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lwebrtc_vp8 \
 	-lyuv
 
-LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS)
+LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto
 LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 
 # GCC only define which allows us to not have to #include mozilla-config
@@ -229,6 +231,21 @@ $(MODULE).dylib: $(XPIDLSRCS:%.idl=%.h) $(XPIDLSRCS:%.idl=%.xpt) $(CPPSRCS:%.cpp
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om) $(GECKO_LDFLAGS)
 	chmod +x $(BIN_PATH)/$@
 
+# creating stand-alone NDN-RTC library (not Mozilla-specific add-on library)
+undef:
+	echo "removing mozilla-specific build flags"
+	$(eval GECKO_CONFIG_INCLUDE=)
+	$(eval GECKO_DEFINES=)
+	$(eval GECKO_INCLUDES=)
+
+$(MODULE_SA).dylib: $(CPPSRCS_SA:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)
+	mkdir -p $(BIN_PATH)
+	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS_SA:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om)
+	chmod +x $(BIN_PATH)/$@
+
+libndnrtc: undef $(MODULE_SA).dylib
+
+
 ##########################################################################################
 ### TESTING WITH GTEST FRAMEWORK
 ##########################################################################################
@@ -247,7 +264,7 @@ GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 GT_LDFLAGS += -lpthread -Wl, -undefined suppress -flat_namespace# $(GT_GECKO_LDFLAGS)
 
 TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
-
+CPPSRCS_TEST = $(CPPSRCS_SA)
 #GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 #                $(GTEST_DIR)/include/gtest/internal/*.h
 
@@ -273,60 +290,73 @@ $(OBJ_PATH)/libtest-main.a : $(GTEST_SRCS_)
             $(TEST_PATH)/test-main.cc -static -o $@
             
 $(OBJ_PATH)/libtest-main-mac.a : $(GTEST_SRCS_)
-	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) -c \
+	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) -c \
             $(TEST_PATH)/test-main-mac.mm -static -o $@
 
 test-common.o : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) $(OTHER_CFLAGS) -Wno-unused-parameter -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) -c \
 		$(TEST_PATH)/test-common.mm -o $(OBJ_PATH)/$@
             
-#$(OBJ_PATH)/libtest-main.a : $(GTEST_SRCS_) $(OBJ_PATH)/test-main.o $(OBJ_PATH)/test-common.o
-#	$(GT_CXX) -v -I$(GTEST_DIR)/include -I$(GTEST_DIR) \
-#            $(addprefix $(OBJ_PATH)/,test-main.o test-common.o) -static -o $@
-            
 %-test.o : $(TEST_PATH)/%-test.cc
-	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) -c $< -o $(OBJ_PATH)/$@
+	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $(OBJ_PATH)/$@
 
 %-test.om : $(TEST_PATH)/%-test.mm
-	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@
-	
-#build-%-test : $(BIN_PATH)/$(MODULE).dylib %-test.o gtest-all.a test-main.a $(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)
-#	$(GT_CXX) $(GT_LDFLAGS) -L$(OBJ_PATH) $(addprefix -l,gtest-all test-main) $(OBJ_PATH)/$(patsubst build-%-test,%-test,$@).o \
-#        $(LDLIBFLAGS) $(OBJCFLAGS) $(GT_GECKO_DEFINES) $(GECKO_INCLUDES) $(GT_GECKO_LDFLAGS) \
-#        $(addprefix $(OBJ_PATH)/,$(CPPSRCS:%.cpp=%.o) $(OBJCSRCS:%.mm=%.om)) \
-#        -o $(BIN_PATH)/$(patsubst build-%,%,$@)
-
+	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@
 
 ###
 # TESTS should have automatic targets (not target-per-test scheme)
 ###
-build-ndnrtc-object-test: ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a simple-log.o test-common.o
+build-ndnrtc-object-test: undef ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a simple-log.o test-common.o
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o ndnrtc-object.o ndnrtc-object-test.o simple-log.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-camera-capturer-test: camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a camera-capturer.o simple-log.o test-common.o
+build-camera-capturer-test: undef camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a camera-capturer.o simple-log.o test-common.o
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o camera-capturer-test.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-video-coder-test: video-coder-test.o video-coder.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a camera-capturer.o simple-log.o test-common.o ndnrtc-object.o
+build-video-coder-test: undef video-coder-test.o video-coder.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a camera-capturer.o simple-log.o test-common.o ndnrtc-object.o
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o video-coder-test.o video-coder.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-renderer-test: renderer-test.o renderer.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a cocoa-renderer.om $(OBJ_PATH)/libtest-main.a
+build-renderer-test: undef renderer-test.o renderer.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o cocoa-renderer.om $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,renderer-test.o renderer.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o cocoa-renderer.om) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-sender-channel-test: sender-channel-test.o sender-channel.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o video-coder.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-sender-channel-test: undef sender-channel-test.o sender-channel.o ndnrtc-namespace.o ndnrtc-utils.o camera-capturer.o simple-log.o test-common.o ndnrtc-object.o video-sender.o video-coder.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,test-common.o sender-channel-test.o sender-channel.o renderer.o video-coder.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
+	$(addprefix $(OBJ_PATH)/,test-common.o sender-channel-test.o sender-channel.o ndnrtc-namespace.o ndnrtc-utils.o renderer.o video-sender.o video-coder.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+	
+build-ndnrtc-namespace-test: undef ndnrtc-namespace-test.o ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,ndnrtc-namespace-test.o ndnrtc-namespace.o simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
+build-video-sender-test: undef video-sender-test.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
+build-video-decoder-test: undef video-decoder-test.o video-decoder.o ndnrtc-object.o video-coder.o renderer.o camera-capturer.o cocoa-renderer.om ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,video-decoder-test.o video-decoder.o ndnrtc-object.o video-coder.o renderer.o camera-capturer.o cocoa-renderer.om ndnrtc-namespace.o simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
+build-ndnrtc-utils-test:  undef ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 

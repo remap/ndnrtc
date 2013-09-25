@@ -9,14 +9,13 @@
 //  Created: 8/16/13
 //
 
+//#define NDN_TRACE
+
 #include "camera-capturer.h"
-#include <system_wrappers/interface/tick_util.h>
 #include "ndnrtc-object.h"
 
 #define USE_I420
 
-#undef NDN_LOGGING
-#undef NDN_TRACE
 using namespace ndnrtc;
 using namespace webrtc;
 
@@ -99,8 +98,6 @@ int CameraCapturer::init()
     capability_.rawType = webrtc::kVideoI420; //webrtc::kVideoUnknown;
     
     vcm_->RegisterCaptureDataCallback(*this);
-    
-    loadFrame();
     
     return 0;
 }
@@ -207,11 +204,11 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& v
         TRACE("..delayed");
     
 #ifdef USE_I420
+    capture_cs_->Enter();
     capturedFrame_.SwapFrame(&videoFrame);
-//    capturedFrame_.CopyFrame(videoFrame);
+    capture_cs_->Leave();
+    
     captureEvent_.Set();
-//    if (frameConsumer_)
-//        frameConsumer_->onDeliverFrame(videoFrame);
 #else
     int bufSize = CalcBufferSize(kARGB, videoFrame.width(), videoFrame.height());
     

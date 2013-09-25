@@ -9,6 +9,7 @@
 #include "sender-channel.h"
 
 using namespace ndnrtc;
+using namespace webrtc;
 
 //********************************************************************************
 /**
@@ -20,7 +21,11 @@ NdnSenderChannel::NdnSenderChannel(NdnParams* params):NdnRtcObject(params),
 cc_(new CameraCapturer(params)),
 localRender_(new NdnRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
-sender_(new NdnVideoSender(params))
+sender_(new NdnVideoSender(params)),
+deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
+deliverEvent_(*EventWrapper::Create()),
+processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,  kHighPriority))
+
 {
     cc_->setObserver(this);
     localRender_->setObserver(this);
@@ -38,6 +43,12 @@ sender_(new NdnVideoSender(params))
 static int32_t timestamp = 0;
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
+    deliver_cs_->Enter();
+    deliverFrame_.SwapFrame(&frame);
+    deliver_cs_->Leave();
+    
+    deliverEvent_.Set();
+    
 //    timestamp += 90000/30.;
 //
 //    webrtc::I420VideoFrame *frame_copy = new webrtc::I420VideoFrame();
@@ -45,17 +56,16 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 //    frame_copy->set_timestamp(timestamp);
     
     // pass frame for rendering and encoding
-    localRender_->onDeliverFrame(frame);
+
     
 //    nsCOMPtr<nsRunnable> encoderTask = new MozEncodingTask(frame, coder_.get());
 //    NS_DispatchToMainThread(encoderTask);
 //    encodingThread_->Dispatch(encoderTask, nsIThread::DISPATCH_NORMAL);
     
-    coder_->onDeliverFrame(frame);
 };
 
 //********************************************************************************
-#pragma mark - public
+#pragma mark - all static
 NdnParams* NdnSenderChannel::defaultParams()
 {
     NdnParams *p = new NdnParams();
@@ -72,37 +82,10 @@ NdnParams* NdnSenderChannel::defaultParams()
     
     return p;
 }
+
+//********************************************************************************
+#pragma mark - public
 int NdnSenderChannel::init()
-{
-//    nsresult rv;
-//    nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID, &rv);    
-//    
-//    if (!encodingThread_)
-//    {        
-//        if (rv != NS_OK)
-//            return notifyError(-1, "can't access mozilla thread manager");
-//        
-//        rv = tm->NewThread(0, 0, getter_AddRefs(encodingThread_));
-//        
-//        if (rv != NS_OK)
-//            return notifyError(-1, "can't create encdoing thread");
-//    }
-    
-//    nsCOMPtr<nsIThread> initThread;
-//    rv = tm->NewThread(0, 0, getter_AddRefs(initThread));
-//    
-//    if (rv != NS_OK)
-//        return notifyError(-1, "can't create init thread");
-
-    
-//    nsCOMPtr<nsRunnable> initEvent = new MozInitTask(this);
-//    encodingThread_->Dispatch(initEvent, nsIThread::DISPATCH_NORMAL);
-
-    initTest();
-    
-    return 0;
-}
-void NdnSenderChannel::initTest()
 {
     if (cc_->init() < 0)
         notifyError(-1, "can't intialize camera capturer");
@@ -113,12 +96,16 @@ void NdnSenderChannel::initTest()
     if (coder_->init() < 0)
         notifyError(-1, "can't intialize video encoder");
     
-//    startTransmission();
     //    if (sender_->init() < 0)
     //        return notifyError(-1, "can't intialize camera capturer");
 }
 int NdnSenderChannel::startTransmission()
 {
+    unsigned int tid = 1;
+    
+    if (!processThread_.Start(tid))
+        return notifyError(-1, "can't start processing thread");
+    
     if (localRender_->startRendering() < 0)
         return notifyError(-1, "can't start render");
     
@@ -133,6 +120,30 @@ int NdnSenderChannel::stopTransmission()
     if (cc_->isCapturing())
         cc_->stopCapture();
     
+    processThread_.SetNotAlive();
+    deliverEvent_.Set();
+
     isTransmitting_ = false;
+    
+    if (!processThread_.Stop())
+        return notifyError(-1, "can't stop processing thread");
+
     return 0;
+}
+
+//********************************************************************************
+#pragma mark - private
+bool NdnSenderChannel::process()
+{
+    if (deliverEvent_.Wait(100) == kEventSignaled) {
+        deliver_cs_->Enter();
+        if (!deliverFrame_.IsZeroSize()) {
+            TRACE("delivering frame");
+            localRender_->onDeliverFrame(deliverFrame_);
+            coder_->onDeliverFrame(deliverFrame_);
+        }
+        deliver_cs_->Leave();
+    }
+    // We're done!
+    return true;
 }

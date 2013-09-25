@@ -54,7 +54,7 @@ public:
         flushFlags();
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
-#endif
+#endif,,,
     }
     virtual void TearDown()
     {
@@ -79,7 +79,7 @@ protected:
     void setupWebRTCLogging(){
         webrtc::Trace::CreateTrace();
         webrtc::Trace::SetTraceFile("bin/webrtc.txt");
-        webrtc::Trace::SetLevelFilter(webrtc::kTraceAll);
+//        webrtc::Trace::SetLevelFilter(webrtc::kTraceAll);
     }
 };
 

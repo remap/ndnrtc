@@ -77,7 +77,6 @@ namespace ndnrtc {
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;
         shared_ptr<webrtc::VideoEncoder> encoder_;
-//        webrtc::VideoEncoder* encoder_;
         
         // private methods go here
         NdnVideoCoderParams *getParams() { return static_cast<NdnVideoCoderParams*>(params_); };
