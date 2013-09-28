@@ -348,6 +348,12 @@ build-video-sender-test: undef video-sender-test.o video-sender.o ndnrtc-object.
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
+build-video-receiver-test: undef video-receiver-test.o video-receiver.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,video-receiver-test.o video-receiver.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
 build-video-decoder-test: undef video-decoder-test.o video-decoder.o ndnrtc-object.o video-coder.o renderer.o camera-capturer.o cocoa-renderer.om ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,video-decoder-test.o video-decoder.o ndnrtc-object.o video-coder.o renderer.o camera-capturer.o cocoa-renderer.om ndnrtc-namespace.o simple-log.o test-common.o) \

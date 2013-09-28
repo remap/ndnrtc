@@ -6,7 +6,6 @@
 //  For licensing details see the LICENSE file.
 //
 //  Author:  Peter Gusev
-//  Created: 9/23/13
 //
 
 #include "test-common.h"

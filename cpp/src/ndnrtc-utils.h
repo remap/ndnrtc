@@ -13,6 +13,8 @@
 
 #include "ndnrtc-common.h"
 
+#define STR(exp) (#exp)
+
 namespace ndnrtc{
     class NdnRtcUtils {
     public:
@@ -21,6 +23,9 @@ namespace ndnrtc{
         static double timestamp() {
             return time(NULL) * 1000.0;
         }
+        
+        static int64_t millisecondTimestamp();
+        static int64_t microsecondTimestamp();
         
         static unsigned int segmentNumber(const Name::Component &segmentComponent);
     };

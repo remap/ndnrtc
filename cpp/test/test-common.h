@@ -54,7 +54,7 @@ public:
         flushFlags();
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
-#endif,,,
+#endif
     }
     virtual void TearDown()
     {
@@ -64,6 +64,58 @@ public:
     {
         obtainedError_ = true;
         obtainedEmsg_ = (char*)errorMessage;
+    }
+    
+    static webrtc::EncodedImage *loadEncodedFrame()
+    {
+        int width = 640, height = 480;
+        // change frame size according to the data in resource file file
+        
+        FILE *f = fopen("resources/vp8_640x480.frame", "rb");
+//        ASSERT_TRUE(f);
+        if (!f)
+            return NULL;
+        
+        int32_t size, length;
+        if (!fread(&size, sizeof(size), 1, f))
+            return NULL;
+        
+        if (!fread(&length, sizeof(length), 1, f))
+            return NULL;
+        
+        // don't delete frameData = it is used (but not owned!) by the
+        // frame when it is created
+        unsigned char* frameData = new unsigned char[size];
+        
+        if (!fread(frameData, 1, length, f))
+            return NULL;
+        
+        webrtc::EncodedImage *sampleFrame;
+        sampleFrame = new webrtc::EncodedImage(frameData, length, size);
+        sampleFrame->_encodedWidth = width;
+        sampleFrame->_encodedHeight = height;
+        
+        fclose(f);
+        
+        return sampleFrame;
+    }
+    
+    static void checkFrames(webrtc::EncodedImage *f1, webrtc::EncodedImage *f2)
+    {
+        EXPECT_EQ(f1->_size, f2->_size);
+        EXPECT_EQ(f1->_length, f2->_length);
+        EXPECT_EQ(f1->_encodedWidth, f2->_encodedWidth);
+        EXPECT_EQ(f1->_encodedHeight, f2->_encodedHeight);
+        EXPECT_EQ(f1->_frameType, f2->_frameType);
+        EXPECT_EQ(f1->_completeFrame, f2->_completeFrame);
+        
+        for (unsigned int i = 0; i < f1->_length; i++)
+            EXPECT_EQ(f1->_buffer[i], f2->_buffer[i]);
+    }
+    
+    static int randomInt(int min, int max)
+    {
+        return rand() % (max-min)+min;
     }
     
 protected:

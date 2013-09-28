@@ -33,3 +33,23 @@ unsigned int NdnRtcUtils::segmentNumber(const Name::Component &segmentComponent)
     }
     return (unsigned int)result;
 }
+
+int64_t NdnRtcUtils::millisecondTimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+    
+    return ticks;
+};
+
+int64_t NdnRtcUtils::microsecondTimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec);
+    
+    return ticks;
+};

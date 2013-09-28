@@ -130,6 +130,8 @@ public:
     }
     void TearDown()
     {
+        NdnRtcObjectTestHelper::TearDown();
+        
         if (sampleFrame_)
         {
             delete sampleFrame_->_buffer;
@@ -240,10 +242,8 @@ TEST_F(VideoSenderTester, TestFrameData)
     ASSERT_EQ(0, NdnFrameData::unpackFrame(length, buf, &frame));
 
     ASSERT_NE(nullptr, frame);
-    EXPECT_EQ(sampleFrame_->_encodedWidth, frame->_encodedWidth);
-    EXPECT_EQ(sampleFrame_->_encodedHeight, frame->_encodedHeight);
-    EXPECT_EQ(sampleFrame_->_frameType, frame->_frameType);
-    EXPECT_EQ(sampleFrame_->_completeFrame, frame->_completeFrame);
+    
+    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
 }
 
 TEST_F(VideoSenderTester, TestInit)
