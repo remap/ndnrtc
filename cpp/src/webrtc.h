@@ -19,6 +19,7 @@
 #include <system_wrappers/interface/thread_wrapper.h>
 #include <system_wrappers/interface/critical_section_wrapper.h>
 #include <system_wrappers/interface/tick_util.h>
+#include <system_wrappers/interface/rw_lock_wrapper.h>
 
 // video capturing
 #include <modules/video_capture/include/video_capture_defines.h>

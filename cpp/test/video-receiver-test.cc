@@ -14,7 +14,7 @@
 #define NDN_INFO
 #define NDN_WARN
 #define NDN_ERROR
-#define NDN_TRACE
+//#define NDN_TRACE
 
 #include "test-common.h"
 #include "video-receiver.h"
@@ -291,6 +291,7 @@ class FrameBufferTester : public NdnRtcObjectTestHelper
         NdnRtcObjectTestHelper::SetUp();
         
         encodedFrame_ = NdnRtcObjectTestHelper::loadEncodedFrame();
+        bookingCs_ = webrtc::CriticalSectionWrapper::CreateCriticalSection();
     }
     void TearDown()
     {
@@ -298,10 +299,12 @@ class FrameBufferTester : public NdnRtcObjectTestHelper
         
         delete encodedFrame_->_buffer;
         delete encodedFrame_;
+        delete bookingCs_;
     }
     
 protected:    
     bool finishedWaiting_, fullyBooked_;
+    unsigned int waitingCycles_;
     webrtc::EncodedImage *encodedFrame_;
     
     // test thread functions
@@ -313,7 +316,7 @@ protected:
     static bool waitBufferEvent(void *obj) { return ((FrameBufferTester*)obj)->waitBuffer(); }
     bool waitBuffer()
     {
-//        finishedWaiting_ = false;
+        waitingCycles_++;
         receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
         finishedWaiting_ = true;
         
@@ -327,7 +330,10 @@ protected:
         receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
         finishedWaiting_ = true;
         
+//        INFO("got event %d", receivedEvent_.type_);
+//        if (!fullyBooked_)
         {
+//            TRACE("booking %d", bookingNo_);
             EXPECT_EQ(FrameBuffer::CallResultNew, buffer_->bookSlot(bookingNo_++));
         }
 
@@ -342,9 +348,11 @@ protected:
     
     
     // booker thread mimics ndn-rtc real-app thread which pipelines interests for the segments and frames
+    webrtc::CriticalSectionWrapper *bookingCs_;
     vector<int> bookedFrames_;
     map<int, int> interestsPerFrame_;
-    unsigned int lastBooked_, bookingLimit_, bookerCycleCount_, bookerWaitingEvents_;
+    unsigned int lastBooked_, bookingLimit_, bookerCycleCount_;
+    int bookerWaitingEvents_;
     bool bookerGotEvent_, bookerFilledBuffer_;
     vector<FrameBuffer::Event> bookerEvents_;
     
@@ -357,20 +365,27 @@ protected:
         
         bookerEvents_.push_back(ev);
         
-        FrameBuffer::CallResultNew res;
+        FrameBuffer::CallResult res;
         
         switch (ev.type_) {
             case FrameBuffer::Event::EventTypeFreeSlot:
+                TRACE("free slot. booking %d", lastBooked_);
                 bookerFilledBuffer_ = false;
-                res = buffer_->bookSlot(lastBooked_++);
+                res = buffer_->bookSlot(lastBooked_);
+                bookingCs_->Enter();
+                interestsPerFrame_[lastBooked_++] = 1;
+                bookingCs_->Leave();
                 break;
             case FrameBuffer::Event::EventTypeTimeout:
                 // in real app, re-issue interest here (if needed): "new interest(ev.frameNo_, ev.segmentNo_)"
                 break;
             case FrameBuffer::Event::EventTypeFirstSegment:
+                TRACE("first segment. pipelining for %d", ev.frameNo_);
                 // in real app, interest pipelining should be established here
                 // should check ev.slot_->totalSegmentsNumber() and ev.segmentNo_
-                interestsPerFrame_[ev.frameNo_] = ev.slot_->totalSegmentsNumber() - 1;
+                bookingCs_->Enter();
+                interestsPerFrame_[ev.frameNo_] += (ev.slot_->totalSegmentsNumber() - 1);
+                bookingCs_->Leave();
                 break;
             default:
                 break;
@@ -399,15 +414,59 @@ protected:
     static bool processAssemblingThread(void *obj) { return ((FrameBufferTester*)obj)->processAssembling(); }
     bool processAssembling()
     {
-        
+        return true;
     }
     
     // in real app, frame provider thread (or playout thread) is not waiting on buffer events,
     // instead - it asks buffer for specific frames with constant frequency
+    unsigned int providerCycleCount_;
+    int providerWaitingEvents_;
+    bool providerGotEvent_;
     static bool processProviderThread(void *obj) { return ((FrameBufferTester*)obj)->processProvider(); }
     bool processProvider()
     {
+        providerCycleCount_++;
         
+        FrameBuffer::Event ev = buffer_->waitForEvents(providerWaitingEvents_);
+        providerGotEvent_ = true;
+        
+        
+        FrameBuffer::CallResult res;
+        
+        switch (ev.type_) {
+            case FrameBuffer::Event::EventTypeReady:
+            {
+                TRACE("%d frame %d is ready. unpacking",providerCycleCount_, ev.frameNo_);
+                
+                buffer_->lockSlot(ev.frameNo_);
+                
+                shared_ptr<webrtc::EncodedImage> frame = ev.slot_->getFrame();
+                
+                EXPECT_FALSE(frame.get() == nullptr);
+                
+                if (frame.get() != nullptr)
+                    NdnRtcObjectTestHelper::checkFrames(encodedFrame_, frame.get());
+
+//                WAIT(rand()%50);
+                buffer_->unlockSlot(ev.frameNo_);
+                buffer_->markSlotFree(ev.frameNo_);
+                TRACE("frame checked");
+            }
+            break;
+                
+            default:
+                TRACE("got unexpected event %d", ev.type_);
+                break;
+                
+        }
+        
+        return true;
+    }
+    void setupProvider()
+    {
+        providerCycleCount_ = 0;
+        providerGotEvent_ = false;
+        providerWaitingEvents_ = FrameBuffer::Event::EventTypeReady;
     }
     
     virtual void flushFlags()
@@ -416,6 +475,7 @@ protected:
         finishedWaiting_ = false;
         fullyBooked_ = false;
         bookingNo_ = 0;
+        waitingCycles_ = 0;
     }
 };
 
@@ -587,7 +647,7 @@ TEST_F(FrameBufferTester, FreeSlotEvent)
     { // check free event
         buffer_ = new FrameBuffer();
         
-        unsigned int buffSize = 60;
+        unsigned int buffSize = 2;
         unsigned int slotSize = 8000;
         
         buffer_->init(buffSize, slotSize);
@@ -599,12 +659,14 @@ TEST_F(FrameBufferTester, FreeSlotEvent)
         unsigned int tid = 1;
         waitingThread.Start(tid);
         
-        EXPECT_TRUE_WAIT(finishedWaiting_, 100);
+        EXPECT_TRUE_WAIT(finishedWaiting_, 1000);
         
+//        buffer_->flush();
         waitingThread.SetNotAlive();
-        waitingThread.Stop();
+//        waitingThread.Stop();
         
         EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
+        EXPECT_EQ(buffSize+1, waitingCycles_);
         
         delete buffer_;
     }
@@ -726,6 +788,7 @@ TEST_F(FrameBufferTester, TestEventFirstSegment)
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, TestEventReady)
 {
     { // 1 segment
@@ -746,6 +809,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         unsigned int tid = 1;
         waitingThread.Start(tid);
+        WAIT(100); // wait for watiing thread to be blocked after first freeframe event
         
         unsigned char segment[100];
         
@@ -783,6 +847,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         unsigned int tid = 1;
         waitingThread.Start(tid);
+        WAIT(100); // wait for watiing thread to be blocked after first freeframe event
         
         unsigned char segment[100];
         
@@ -806,6 +871,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, TestEventTimeout)
 {
     {
@@ -840,6 +906,7 @@ TEST_F(FrameBufferTester, TestEventTimeout)
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, TestRandomBufferEvents)
 {
     {
@@ -860,6 +927,8 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
         
         unsigned int tid = 1;
         waitingThread.Start(tid);
+        
+        WAIT(100); // wait for watiing thread to be blocked after first freeframe event
         
         { // timeout
             flushFlags();
@@ -906,22 +975,123 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, TestFull)
 {
-    // there is going to be 3 threads:
+    // there are going to be 3 threads:
     // - booking thread (books slots in a buffer, listens to events: FirstSegment, FreeSlot, Timeout)
-    // - assembling thread (appends segments)
+    // - assembling thread - appends segments (current main thread)
     // - frame provider thread (supplies full assembled frames by locking them for random small
     //      amount of time, listens to events: Ready)
     // buffer will be smaller than the ammount of frames needed to be delivered
     
+    NdnFrameData frameData(*encodedFrame_);
+    
+    unsigned int payloadSize = frameData.getLength();
     unsigned int framesNumber = 15;
     unsigned int bufferSize = 5;
+    unsigned int slotSize = 4000;
+    unsigned int fullSegmentsNumber = 7;
+    unsigned int segmentSize = payloadSize/fullSegmentsNumber;
+    unsigned int totalSegmentNumber = (payloadSize - segmentSize*fullSegmentsNumber !=0)?fullSegmentsNumber+1:fullSegmentsNumber;
+    map<unsigned int, unsigned char*> frameSegments;
+    map<unsigned int, vector<unsigned int>> remainingSegments;
     
-    webrtc::ThreadWrapper &bookingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
-    webrtc::ThreadWrapper &assemblingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
-    webrtc::ThreadWrapper &providerThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
+    buffer_ = new FrameBuffer();
+    buffer_->init(bufferSize, slotSize);
+    
+    for (unsigned int i = 0; i < totalSegmentNumber; i++)
+        frameSegments[i] = frameData.getData()+i*segmentSize;
+    
+    for (unsigned int i = 0; i < framesNumber; i++)
+    {
+        vector<unsigned int> currentFrameSegments;
+        for (int j = 0; j < totalSegmentNumber; j++)
+            currentFrameSegments.push_back(j);
+        
+        random_shuffle(currentFrameSegments.begin(), currentFrameSegments.end());
+        remainingSegments[i] = currentFrameSegments;
+    }
+    
+    webrtc::ThreadWrapper &bookingThread(*webrtc::ThreadWrapper::CreateThread(processBookingThread, this));
+//    webrtc::ThreadWrapper &assemblingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
+    webrtc::ThreadWrapper &providerThread(*webrtc::ThreadWrapper::CreateThread(processProviderThread, this));
+    
+    setupBooker();
+    setupProvider();
+    
+    unsigned int tid = 1;
+    bookingThread.Start(tid);
+    tid++;
+    providerThread.Start(tid);
+    
+    // append data unless we have interests to reply
+    bool stop = false;
+    unsigned int sentFrames = 0;
+    
+    while (!stop)
+    {
+        bool fetchedInterest;
+        bookingCs_->Enter();
+        // check number of sent interests per frame
+        unsigned int frameNo;
+        unsigned int interestNumber;
+        bool gotPendingInterests = false;
+
+        for (map<int, int>::iterator it = interestsPerFrame_.begin(); it != interestsPerFrame_.end(); ++it)
+        {
+            frameNo = it->first;
+            interestNumber = it->second;
+            interestsPerFrame_.erase(it);
+            gotPendingInterests = true;
+            
+            break;
+        }
+        bookingCs_->Leave();
+        
+        // number of interests should be equal to the number of segments per frame or 1 (when first segment arrived)
+//        EXPECT_TRUE(totalSegmentNumber == interestNumber || 1 == interestNumber);
+        // append segment for each interest in random order
+        if (gotPendingInterests && frameNo < framesNumber)
+        {
+            TRACE("got %d interests for frame %d", interestNumber, frameNo);            
+            for (unsigned int i = 0; i < interestNumber; i++)
+            {
+                unsigned int segmentNo = remainingSegments[frameNo].front();
+                unsigned int currentSegmentSize = (segmentNo == totalSegmentNumber-1) ? payloadSize - segmentSize*fullSegmentsNumber : segmentSize;
+                
+                remainingSegments[frameNo].erase(remainingSegments[frameNo].begin());
+                
+                TRACE("appending frameno %d segno %d", frameNo, segmentNo);
+                // check if it's a frist segment
+                if (buffer_->getState(frameNo) == FrameBuffer::Slot::StateNew)
+                {
+                    buffer_->markSlotAssembling(frameNo, totalSegmentNumber, segmentSize);
+                }
+                buffer_->appendSegment(frameNo, segmentNo, currentSegmentSize, frameSegments[segmentNo]);
+                
+                if (remainingSegments[frameNo].size() == 0)
+                    remainingSegments.erase(remainingSegments.find(frameNo));
+            }
+        }
+        
+        stop = (remainingSegments.size() == 0);
+//        WAIT(10);
+    }
+    
+    EXPECT_TRUE_WAIT((providerCycleCount_ == framesNumber || providerCycleCount_ == framesNumber+1), 5000);
+    
+    bookingThread.SetNotAlive();
+    providerThread.SetNotAlive();
+    bookingThread.Stop();
+    providerThread.Stop();
+    
+    delete buffer_;
 }
+#if 0
+#endif
+
+#if 0
 //********************************************************************************
 // VideoReceiver tests
 class NdnReceiverTester : public NdnRtcObjectTestHelper
@@ -946,3 +1116,4 @@ TEST_F(NdnReceiverTester, CreateDelete)
     delete receiver;
 }
 
+#endif

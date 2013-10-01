@@ -86,6 +86,9 @@ namespace ndnrtc
                 frameNumber_ = frameNumber;
                 state_ = StateNew;
                 assembledDataSize_ = 0;
+                storedSegments_ = 0;
+                segmentsNum_ = 0;
+                segmentSize_ = 0;
             }
             void markLocked() {
                 stashedState_ = state_;
@@ -138,6 +141,7 @@ namespace ndnrtc
         ~FrameBuffer();
         
         int init(unsigned int bufferSize, unsigned int slotSize);
+//        int flush(); // flushes buffer (except locked frames)
         
         /**
          * *Blocking call.* Calling thread is blocked on this call unless any type of the
@@ -179,7 +183,8 @@ namespace ndnrtc
         void unlockSlot(unsigned int frameNumber);
         
         /**
-         * Marks slot as being assembled - when first segment arrived
+         * Marks slot as being assembled - when first segment arrived (in order to initialize slot 
+         * buffer properly)
          */
         void markSlotAssembling(unsigned int frameNumber, unsigned int totalSegments, unsigned int segmentSize);
         
@@ -196,18 +201,25 @@ namespace ndnrtc
          */
         void notifySegmentTimeout(unsigned int frameNumber, unsigned int segmentNumber);
         
+        Slot::State getState(unsigned int frameNo);
+        
         unsigned int getBufferSize() { return bufferSize_; }
         
     private:
-        unsigned int bufferSize_;
-        unsigned int slotSize_;
+        unsigned int bufferSize_, slotSize_;
         std::vector<shared_ptr<Slot>> freeSlots_;
-        std::map<int, shared_ptr<Slot>> frameSlotMapping_;
+        std::map<unsigned int, shared_ptr<Slot>> frameSlotMapping_;
+//        std::map<int, shared_ptr<Slot>> readySlots_;
+//        std::map<Event::EventType, vector<Event>> pendingEvents_;
         
         Event currentEvent_;
         
         webrtc::CriticalSectionWrapper &syncCs_;
         webrtc::EventWrapper &bufferEvent_;
+        
+        // lock for pending buffer events
+        std::list<Event> pendingEvents_;
+        webrtc::RWLockWrapper &bufferEventsRWLock_;
         
         void notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo, FrameBuffer::Event::EventType eType, Slot *slot);
         CallResult getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot, bool remove = false);

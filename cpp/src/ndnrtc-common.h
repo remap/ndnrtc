@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cstring>
+#include <list>
 #include <memory>
 #include <math.h>
 

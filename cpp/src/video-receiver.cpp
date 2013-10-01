@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 8/21/13
 //
 
@@ -70,10 +70,11 @@ shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
 {
     EncodedImage *frame = nullptr;
     
-    if (state_ == StateReady &&
+    if ((state_ == StateReady ||
+         (state_ == StateLocked && stashedState_ == StateReady)) &&
         NdnFrameData::unpackFrame(assembledDataSize_, data_, &frame) < 0)
         ERR("error unpacking frame");
-        
+    
     return shared_ptr<EncodedImage>(frame);
 }
 
@@ -104,17 +105,18 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
 // FrameBuffer
 //********************************************************************************
 const int FrameBuffer::Event::AllEventsMask =   FrameBuffer::Event::EventTypeReady|
-                            FrameBuffer::Event::EventTypeFirstSegment|
-                            FrameBuffer::Event::EventTypeFreeSlot|
-                            FrameBuffer::Event::EventTypeTimeout|
-                            FrameBuffer::Event::EventTypeError;
+FrameBuffer::Event::EventTypeFirstSegment|
+FrameBuffer::Event::EventTypeFreeSlot|
+FrameBuffer::Event::EventTypeTimeout|
+FrameBuffer::Event::EventTypeError;
 
 #pragma mark - construction/destruction
 FrameBuffer::FrameBuffer():
 bufferSize_(0),
 slotSize_(0),
 bufferEvent_(*EventWrapper::Create()),
-syncCs_(*CriticalSectionWrapper::CreateCriticalSection())
+syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
+bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
 {
     
 }
@@ -141,43 +143,34 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
     // create slots
     for (int i = 0; i < bufferSize_; i++)
     {
-        freeSlots_.push_back(shared_ptr<Slot>(new Slot(slotSize_)));
+        shared_ptr<Slot> slot(new Slot(slotSize_));
+        
+        freeSlots_.push_back(slot);
+        notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
     }
     
     return 0;
 }
-
-FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int timeout)
-{
-#warning should be blocking call to Wait(...)
-    bool stop = false;
-    
-    // check for free slot event first
-    if (Event::EventTypeFreeSlot & eventsMask &&
-        freeSlots_.size())
-        currentEvent_.type_  = Event::EventTypeFreeSlot;
-    else
-    {
-        // wait for events to occure
-        while (!stop)
-        {
-            if (bufferEvent_.Wait((timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout) == kEventSignaled)
-            {
-                syncCs_.Enter();
-                stop = (currentEvent_.type_ & eventsMask);
-                syncCs_.Leave();
-            }
-        }
-    }
-    
-//    Event e;
-//    e.type_ = EventTypeError;
-//    e.segmentNo_ = 0;
-//    e.frameNo_ = 0;
-//    e.slot_ = nullptr;
-    
-    return currentEvent_;
-}
+//int FrameBuffer::flush()
+//{
+//    bufferEvent_.Set();
+//    bufferEvent_.Reset();
+//    
+//    syncCs_.Enter();
+//    for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
+//    {
+//        shared_ptr<Slot> slot = it->second;
+//        if (slot->getState() != Slot::StateLocked)
+//        {
+//            freeSlots_.push_back(slot);
+//            slot->markFree();
+//            frameSlotMapping_.erase(it);
+//        }
+//    }
+//    syncCs_.Leave();
+//    
+//    return 0;
+//}
 
 FrameBuffer::CallResult FrameBuffer::bookSlot(unsigned int frameNumber)
 {
@@ -211,6 +204,11 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
         slot->getState() != Slot::StateLocked)
     {
         syncCs_.Enter();
+        
+        // remove slot from ready slots array
+        //        if (slot->getState() == Slot::StateReady)
+        //            readySlots_.erase(readySlots_.find(frameNumber));
+        
         slot->markFree();
         freeSlots_.push_back(slot);
         frameSlotMapping_.erase(frameNumber);
@@ -261,7 +259,7 @@ void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int tota
 }
 
 FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, unsigned int segmentNumber,
-                                      unsigned int dataLength, unsigned char *data)
+                                                   unsigned int dataLength, unsigned char *data)
 {
     shared_ptr<Slot> slot;
     CallResult res = CallResultError;
@@ -283,6 +281,7 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
                         notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeFirstSegment, slot.get());
                     break;
                 case Slot::StateReady: // slot ready event
+                    //                    readySlots_[frameNumber] = slot; // save slot in ready slots array
                     notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeReady, slot.get());
                     break;
                 default:
@@ -290,6 +289,10 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
                     res = (slotState == Slot::StateLocked)?CallResultLocked:CallResultError;
                     break;
             }
+        }
+        else
+        {
+            WARN("slot was booked but not marked assembling");
         }
     }
     else
@@ -312,27 +315,84 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     }
 }
 
+FrameBuffer::Slot::State FrameBuffer::getState(unsigned int frameNo)
+{
+    Slot::State state;
+    shared_ptr<Slot> slot;
+    
+    if (getFrameSlot(frameNo, &slot) == CallResultOk)
+        return slot->getState();
+    
+    return Slot::StateFree;
+}
+
+FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int timeout)
+{
+    unsigned int wbrtcTimeout = (timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout;
+    bool stop = false;
+    Event poppedEvent;
+    
+    memset(&poppedEvent, 0, sizeof(poppedEvent));
+    poppedEvent.type_ = Event::EventTypeError;
+    
+    while (!stop)
+    {
+        bufferEventsRWLock_.AcquireLockShared();
+        
+        list<Event>::iterator it = pendingEvents_.begin();
+        
+        // iterate through pending events
+        while (!(stop || it == pendingEvents_.end()))
+        {
+            if ((*it).type_ & eventsMask) // questioned event type found in pending events
+            {
+                poppedEvent = *it;
+                stop = true;
+            }
+            else
+                it++;
+        }
+        
+        bufferEventsRWLock_.ReleaseLockShared();
+        
+        if (stop)
+        {
+            bufferEventsRWLock_.AcquireLockExclusive();
+            pendingEvents_.erase(it);
+            bufferEventsRWLock_.ReleaseLockExclusive();
+        }
+        else
+            // if couldn't find event we are looking for - wait for the event to occur
+            stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
+    }
+    
+    return poppedEvent;
+}
+
 //********************************************************************************
 #pragma mark - private
 void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo,
                                             Event::EventType eType, Slot *slot)
 {
-    syncCs_.Enter();
-    currentEvent_.type_ = eType;
-    currentEvent_.segmentNo_ = segmentNo;
-    currentEvent_.frameNo_ = frameNo;
-    currentEvent_.slot_ = slot;
-    syncCs_.Leave();
+    Event ev;
+    ev.type_ = eType;
+    ev.segmentNo_ = segmentNo;
+    ev.frameNo_ = frameNo;
+    ev.slot_ = slot;
+    
+    bufferEventsRWLock_.AcquireLockExclusive();
+    pendingEvents_.push_back(ev);
+    bufferEventsRWLock_.ReleaseLockExclusive();
+    
     // notify about event
     bufferEvent_.Set();
-    
 }
 
 FrameBuffer::CallResult FrameBuffer::getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot, bool remove)
 {
     CallResult res = CallResultNotFound;
-    map<int, shared_ptr<Slot>>::iterator it;
-
+    map<unsigned int, shared_ptr<Slot>>::iterator it;
+    
     syncCs_.Enter();
     it = frameSlotMapping_.find(frameNo);
     
@@ -363,7 +423,7 @@ playoutSleepIntervalUSec_(33333),
 face_(nullptr),
 frameConsumer_(nullptr)
 {
-
+    
 }
 
 NdnVideoReceiver::~NdnVideoReceiver()
@@ -387,7 +447,7 @@ int NdnVideoReceiver::startFetching()
     // setup and start playout thread
     unsigned int tid = getParams()->getReceiverId()<<1+1;
     playoutSleepIntervalUSec_ = 1000000/getParams()->getProducerRate();
-
+    
     if (!playoutThread_.Start(tid))
         return notifyError(-1, "can't start playout thread");
     
@@ -445,7 +505,7 @@ bool NdnVideoReceiver::processPlayout()
         FrameBuffer::Slot *frameSlot = nullptr;
         
         FrameBuffer::CallResult res =  frameBuffer_.getFrame(playoutFrameNo_, frameSlot);
-
+        
         if (res == FrameBuffer::CallResultOk ||
             res == FrameBuffer::CallResultOtherFrame)
         {
@@ -465,7 +525,7 @@ bool NdnVideoReceiver::processPlayout()
         {
             WARN("couldn't get frame with number %d (cause: %d)", playoutFrameNo_, res);
         }
-
+        
         // mark slot as free
         frameBuffer_.markFree(playoutFrameNo_);
         playoutFrameNo_++;
@@ -487,5 +547,5 @@ bool NdnVideoReceiver::processInterests()
 
 bool NdnVideoReceiver::processAssembling()
 {
-    return true;    
+    return true;
 }

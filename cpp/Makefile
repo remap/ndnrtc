@@ -215,9 +215,9 @@ gen_xpt: $(XPIDLSRCS:%.idl=%.xpt)
 	mkdir -p $(BIN_PATH)
 	$(XPIDL_XPT) $(GECKO_INCLUDES) $< -o $(BIN_PATH)/$@
 
-%.o: $(SRC_PATH)/%.cpp Makefile
+$(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp Makefile
 	mkdir -p $(OBJ_PATH)
-	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $(OBJ_PATH)/$@
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $(OTHER_CFLAGS) $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_DEFINES) $(GECKO_INCLUDES) $(LIB_INCLUDES) $< -o $@
 
 %.om: $(OBJSRC_PATH)/%.mm Makefile
 	mkdir -p $(OBJ_PATH)
@@ -293,12 +293,12 @@ $(OBJ_PATH)/libtest-main-mac.a : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) -c \
             $(TEST_PATH)/test-main-mac.mm -static -o $@
 
-test-common.o : $(GTEST_SRCS_)
+$(OBJ_PATH)/test-common.o : $(GTEST_SRCS_)
 	$(GT_CXX) $(GT_CPPFLAGS) $(OTHER_CFLAGS) -Wno-unused-parameter -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) -c \
-		$(TEST_PATH)/test-common.mm -o $(OBJ_PATH)/$@
+		$(TEST_PATH)/test-common.mm -o $@
             
-%-test.o : $(TEST_PATH)/%-test.cc
-	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $(OBJ_PATH)/$@
+$(OBJ_PATH)/%-test.o : $(TEST_PATH)/%-test.cc
+	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $@
 
 %-test.om : $(TEST_PATH)/%-test.mm
 	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@
@@ -306,13 +306,13 @@ test-common.o : $(GTEST_SRCS_)
 ###
 # TESTS should have automatic targets (not target-per-test scheme)
 ###
-build-ndnrtc-object-test: undef ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a simple-log.o test-common.o
+build-ndnrtc-object-test: undef ndnrtc-object-test.o ndnrtc-object.o $(OBJ_PATH)/libgtest-all.a $(addprefix $(OBJ_PATH)/,libtest-main.a simple-log.o test-common.o)
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o ndnrtc-object.o ndnrtc-object-test.o simple-log.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-camera-capturer-test: undef camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a camera-capturer.o simple-log.o test-common.o
+build-camera-capturer-test: undef camera-capturer-test.o ndnrtc-object.o  $(OBJ_PATH)/libgtest-all.a  $(addprefix $(OBJ_PATH)/,libtest-main-mac.a camera-capturer.o simple-log.o test-common.o)
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,test-common.o camera-capturer-test.o camera-capturer.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
@@ -348,10 +348,10 @@ build-video-sender-test: undef video-sender-test.o video-sender.o ndnrtc-object.
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-video-receiver-test: undef video-receiver-test.o video-receiver.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-video-receiver-test: undef $(addprefix $(OBJ_PATH)/,video-receiver-test.o video-receiver.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,video-receiver-test.o video-receiver.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) \
-	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
 build-video-decoder-test: undef video-decoder-test.o video-decoder.o ndnrtc-object.o video-coder.o renderer.o camera-capturer.o cocoa-renderer.om ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
