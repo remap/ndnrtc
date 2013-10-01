@@ -456,6 +456,8 @@ protected:
                 
                 buffer_->lockSlot(ev.frameNo_);
                 
+                EXPECT_EQ(interestsPerFrame_[ev.frameNo_], ev.slot_->totalSegmentsNumber());
+                
                 shared_ptr<webrtc::EncodedImage> frame = ev.slot_->getFrame();
                 
                 EXPECT_FALSE(frame.get() == nullptr);
