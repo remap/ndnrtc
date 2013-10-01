@@ -141,7 +141,11 @@ namespace ndnrtc
         ~FrameBuffer();
         
         int init(unsigned int bufferSize, unsigned int slotSize);
-//        int flush(); // flushes buffer (except locked frames)
+        int flush(); // flushes buffer (except locked frames)
+        /**
+         * Releases currently locked waiting threads
+         */
+        void release();
         
         /**
          * *Blocking call.* Calling thread is blocked on this call unless any type of the
@@ -206,6 +210,7 @@ namespace ndnrtc
         unsigned int getBufferSize() { return bufferSize_; }
         
     private:
+        bool forcedRelease_;
         unsigned int bufferSize_, slotSize_;
         std::vector<shared_ptr<Slot>> freeSlots_;
         std::map<unsigned int, shared_ptr<Slot>> frameSlotMapping_;

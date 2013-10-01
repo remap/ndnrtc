@@ -303,7 +303,7 @@ class FrameBufferTester : public NdnRtcObjectTestHelper
     }
     
 protected:    
-    bool finishedWaiting_, fullyBooked_;
+    bool stopWaiting_, finishedWaiting_, fullyBooked_;
     unsigned int waitingCycles_;
     webrtc::EncodedImage *encodedFrame_;
     
@@ -316,31 +316,38 @@ protected:
     static bool waitBufferEvent(void *obj) { return ((FrameBufferTester*)obj)->waitBuffer(); }
     bool waitBuffer()
     {
-        waitingCycles_++;
-        receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
-        finishedWaiting_ = true;
-        
+        if (!stopWaiting_)
+        {
+            waitingCycles_++;
+            receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
+            finishedWaiting_ = true;
+            
+            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::EventTypeError);
+        }
         return true;
     }
     
     static bool waitBufferEventAndBookSlot(void *obj) { return ((FrameBufferTester*)obj)->waitBufferAndBook(); }
     bool waitBufferAndBook()
     {
-//        finishedWaiting_ = false;
-        receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
-        finishedWaiting_ = true;
-        
-//        INFO("got event %d", receivedEvent_.type_);
-//        if (!fullyBooked_)
+        if (!stopWaiting_)
         {
-//            TRACE("booking %d", bookingNo_);
-            EXPECT_EQ(FrameBuffer::CallResultNew, buffer_->bookSlot(bookingNo_++));
-        }
-
-        if (bookingNo_ == buffer_->getBufferSize())
-        {
-            EXPECT_EQ(FrameBuffer::CallResultFull, buffer_->bookSlot(bookingNo_));
-            fullyBooked_ = true;
+            receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
+            finishedWaiting_ = true;
+            
+            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::EventTypeError);
+            
+            if (!stopWaiting_)
+            {
+                EXPECT_EQ(FrameBuffer::CallResultNew, buffer_->bookSlot(bookingNo_++));
+                
+                
+                if (bookingNo_ == buffer_->getBufferSize())
+                {
+                    EXPECT_EQ(FrameBuffer::CallResultFull, buffer_->bookSlot(bookingNo_));
+                    fullyBooked_ = true;
+                }
+            }
         }
         
         return true; //!fullyBooked_;
@@ -359,6 +366,9 @@ protected:
     static bool processBookingThread(void *obj) { return ((FrameBufferTester*)obj)->processBooking(); }
     bool processBooking()
     {
+        if (stopWaiting_)
+            return true;
+            
         bookerCycleCount_++;
         FrameBuffer::Event ev = buffer_->waitForEvents(bookerWaitingEvents_);
         bookerGotEvent_ = true;
@@ -386,6 +396,9 @@ protected:
                 bookingCs_->Enter();
                 interestsPerFrame_[ev.frameNo_] += (ev.slot_->totalSegmentsNumber() - 1);
                 bookingCs_->Leave();
+                break;
+            case FrameBuffer::Event::EventTypeError:
+                stopWaiting_ = true;
                 break;
             default:
                 break;
@@ -425,6 +438,9 @@ protected:
     static bool processProviderThread(void *obj) { return ((FrameBufferTester*)obj)->processProvider(); }
     bool processProvider()
     {
+        if (stopWaiting_)
+            return;
+        
         providerCycleCount_++;
         
         FrameBuffer::Event ev = buffer_->waitForEvents(providerWaitingEvents_);
@@ -453,7 +469,9 @@ protected:
                 TRACE("frame checked");
             }
             break;
-                
+            case FrameBuffer::Event::EventTypeError:
+                stopWaiting_ = true;
+                break;
             default:
                 TRACE("got unexpected event %d", ev.type_);
                 break;
@@ -476,6 +494,7 @@ protected:
         fullyBooked_ = false;
         bookingNo_ = 0;
         waitingCycles_ = 0;
+        stopWaiting_ = false;
     }
 };
 
@@ -661,16 +680,20 @@ TEST_F(FrameBufferTester, FreeSlotEvent)
         
         EXPECT_TRUE_WAIT(finishedWaiting_, 1000);
         
+        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
+        
+        // don't know for sure
+        EXPECT_TRUE(buffSize+1 == waitingCycles_ || buffSize == waitingCycles_);
+        
 //        buffer_->flush();
         waitingThread.SetNotAlive();
-//        waitingThread.Stop();
-        
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
-        EXPECT_EQ(buffSize+1, waitingCycles_);
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, BookOnFreeEvent)
 {
     {
@@ -697,15 +720,17 @@ TEST_F(FrameBufferTester, BookOnFreeEvent)
         buffer_->markSlotFree(7);
         
         EXPECT_TRUE_WAIT(bookingNo_ == buffSize+1, 1000);
-        waitingThread.SetNotAlive();
-//        waitingThread.Stop();
-
         EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
         EXPECT_EQ(7, receivedEvent_.frameNo_);
+        
+        waitingThread.SetNotAlive();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, MarkFreeTwice)
 {
     {
@@ -747,7 +772,8 @@ TEST_F(FrameBufferTester, MarkFreeTwice)
         EXPECT_EQ(0, receivedEvent_.frameNo_);
 
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -783,7 +809,8 @@ TEST_F(FrameBufferTester, TestEventFirstSegment)
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
         
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -822,7 +849,8 @@ TEST_F(FrameBufferTester, TestEventReady)
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
         
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -866,7 +894,8 @@ TEST_F(FrameBufferTester, TestEventReady)
         EXPECT_EQ(lastSegmentNo, receivedEvent_.segmentNo_);
         
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -901,7 +930,8 @@ TEST_F(FrameBufferTester, TestEventTimeout)
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
         
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -970,7 +1000,8 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
         }
         
         waitingThread.SetNotAlive();
-        //        waitingThread.Stop();
+        buffer_->release();
+        waitingThread.Stop();
         
         delete buffer_;
     }
@@ -1083,13 +1114,14 @@ TEST_F(FrameBufferTester, TestFull)
     
     bookingThread.SetNotAlive();
     providerThread.SetNotAlive();
+    
+    buffer_->release();
+    
     bookingThread.Stop();
     providerThread.Stop();
     
     delete buffer_;
 }
-#if 0
-#endif
 
 #if 0
 //********************************************************************************

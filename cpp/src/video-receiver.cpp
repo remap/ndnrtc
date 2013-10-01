@@ -151,26 +151,32 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
     
     return 0;
 }
-//int FrameBuffer::flush()
-//{
-//    bufferEvent_.Set();
-//    bufferEvent_.Reset();
-//    
-//    syncCs_.Enter();
-//    for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
-//    {
-//        shared_ptr<Slot> slot = it->second;
-//        if (slot->getState() != Slot::StateLocked)
-//        {
-//            freeSlots_.push_back(slot);
-//            slot->markFree();
-//            frameSlotMapping_.erase(it);
-//        }
-//    }
-//    syncCs_.Leave();
-//    
-//    return 0;
-//}
+int FrameBuffer::flush()
+{
+    bufferEvent_.Set();
+    bufferEvent_.Reset();
+    
+    syncCs_.Enter();
+    for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
+    {
+        shared_ptr<Slot> slot = it->second;
+        if (slot->getState() != Slot::StateLocked)
+        {
+            freeSlots_.push_back(slot);
+            slot->markFree();
+            frameSlotMapping_.erase(it);
+            notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
+        }
+    }
+    syncCs_.Leave();
+    
+    return 0;
+}
+void FrameBuffer::release()
+{
+    forcedRelease_ = true;
+    bufferEvent_.Set();
+}
 
 FrameBuffer::CallResult FrameBuffer::bookSlot(unsigned int frameNumber)
 {
@@ -334,8 +340,9 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
     poppedEvent.type_ = Event::EventTypeError;
+    forcedRelease_ = false;
     
-    while (!stop)
+    while (!(stop || forcedRelease_))
     {
         bufferEventsRWLock_.AcquireLockShared();
         
