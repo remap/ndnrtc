@@ -32,6 +32,7 @@
 #include <list>
 #include <memory>
 #include <math.h>
+#include <queue>
 
 #include "ndnlib.h"
 #include "webrtc.h"
@@ -42,5 +43,9 @@ using namespace ndn;
 using namespace ptr_lib;
 using namespace ndnlog;
 
+#define PROVIDER_THREAD_ID 1
+#define PIPELINER_THREAD_ID 2
+#define PLAYOUT_THREAD_ID 3
+#define ASSEMBLING_THREAD_ID 4
 
 #endif
