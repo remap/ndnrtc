@@ -94,6 +94,8 @@ public:
         sampleFrame = new webrtc::EncodedImage(frameData, length, size);
         sampleFrame->_encodedWidth = width;
         sampleFrame->_encodedHeight = height;
+        sampleFrame->_timeStamp = millisecondTimestamp();
+        sampleFrame->capture_time_ms_ = millisecondTimestamp();
         
         fclose(f);
         
@@ -106,6 +108,8 @@ public:
         EXPECT_EQ(f1->_length, f2->_length);
         EXPECT_EQ(f1->_encodedWidth, f2->_encodedWidth);
         EXPECT_EQ(f1->_encodedHeight, f2->_encodedHeight);
+        EXPECT_EQ(f1->_timeStamp, f2->_timeStamp);
+        EXPECT_EQ(f1->capture_time_ms_, f2->capture_time_ms_);
         EXPECT_EQ(f1->_frameType, f2->_frameType);
         EXPECT_EQ(f1->_completeFrame, f2->_completeFrame);
         

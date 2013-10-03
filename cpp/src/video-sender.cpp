@@ -69,8 +69,6 @@ string VideoSenderParams::getStreamKeyPrefix() const
     string prefix  = getStreamPrefix();
     shared_ptr<string> accessPrefix = NdnRtcNamespace::buildPath(false, &prefix, &NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey, NULL);
     
-//    accessPrefix->copy(*streamAccessPrefix, accessPrefix->length(), 0);
-    
     return *accessPrefix;
 }
 
@@ -78,11 +76,9 @@ string VideoSenderParams::getStreamFramePrefix() const
 {
     string prefix  = getStreamPrefix();
     
-#warning temporarily
+#warning temporarily set stream thread
     string streamThread = "vp8-640";
     shared_ptr<string> framesPrefix = NdnRtcNamespace::buildPath(false, &prefix, &streamThread, &NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames, NULL);
-    
-//    framesPrefix->copy(*streamFramePrefix, framesPrefix->length(), 0);
     
     return *framesPrefix;
 }
@@ -105,6 +101,8 @@ NdnFrameData::NdnFrameData(EncodedImage &frame)
     ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
     ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
     ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
+    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
+    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
     ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
     ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
     ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
@@ -131,6 +129,8 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, w
     *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize_]), length_-headerSize_, size);
     (*frame)->_encodedWidth = header.encodedWidth_;
     (*frame)->_encodedHeight = header.encodedHeight_;
+    (*frame)->_timeStamp = header.timeStamp_;
+    (*frame)->capture_time_ms_ = header.capture_time_ms_;
     (*frame)->_frameType = header.frameType_;
     (*frame)->_completeFrame = header.completeFrame_;
 

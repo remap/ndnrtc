@@ -27,25 +27,26 @@ namespace ndnrtc
             VideoReceiverParams *p = static_cast<VideoReceiverParams*>(VideoSenderParams::defaultParams());
             
             p->setIntParam(ParamNameProducerRate, 30);
-            
+            p->setIntParam(ParamNameInterestTimeout, 4);
+            p->setIntParam(ParamNameFrameBufferSize, 120);
+            p->setIntParam(ParamNameFrameSlotSize, 16000);
             return p;
         }
         
         // parameters names
         static const std::string ParamNameProducerRate;
         static const std::string ParamNameReceiverId;
+        static const std::string ParamNameInterestTimeout;
+        static const std::string ParamNameFrameBufferSize;
+        static const std::string ParamNameFrameSlotSize;
         
         // public methods go here
         int getProducerRate() const { return getParamAsInt(ParamNameProducerRate); }
-        int getReceiverId() const { return getParamAsInt(ParamNameReceiverId); }
+//        int getReceiverId() const { return getParamAsInt(ParamNameReceiverId); }
+        int getDefaultTimeout() const {return getParamAsInt(ParamNameInterestTimeout); }
+        int getFrameBufferSize() const { return getParamAsInt(ParamNameFrameBufferSize); }
+        int getFrameSlotSize() const { return getParamAsInt(ParamNameFrameSlotSize); }
     };
-    
-    // used by decoder to notify frame provider that frame decodin has finished and
-    // it can release frame buffer, cleanup, etc.
-//    class IEncodedFrameProvider {
-//    public:
-//        void onFrameProcessed(Encoded) = 0;
-//    }
     
     class NdnVideoReceiver : public NdnRtcObject {
     public:
@@ -60,6 +61,7 @@ namespace ndnrtc
         enum ReceiverMode {
             ReceiverModeCreated,
             ReceiverModeInit,
+            ReceiverModeStarted,
             ReceiverModeWaitingFirstSegment,
             ReceiverModeFetch,
             ReceiverModeChase
@@ -69,21 +71,24 @@ namespace ndnrtc
         
         bool playout_;
         long playoutSleepIntervalUSec_; // 30 fps
-        long playoutFrameNo_;
-        
+        long playoutFrameNo_, pipelinerFrameNo_;
+        int pipelinerEventsMask_, interestTimeout_;
+        unsigned int producerSegmentSize_;
+        Name framesPrefix_;
         shared_ptr<Face> face_;
+        
         FrameBuffer frameBuffer_;
         PlayoutBuffer playoutBuffer_;
         IEncodedFrameConsumer *frameConsumer_;
         
         webrtc::ThreadWrapper &playoutThread_, &pipelineThread_, &assemblingThread_;
         
-        // static routines for threads to
+        // static routines for threads
         static bool playoutThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processPlayout(); }
         static bool pipelineThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processInterests(); }
         static bool assemblingThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processAssembling(); }
         
-        // thread main functions (called iteratively)
+        // thread main functions (called iteratively by static routines)
         bool processPlayout();
         bool processInterests();
         bool processAssembling();
@@ -94,6 +99,16 @@ namespace ndnrtc
         
         VideoReceiverParams *getParams() { return static_cast<VideoReceiverParams*>(params_); }
         
+        void switchToMode(ReceiverMode mode);
+        
+        void requestInitialSegment();
+        void pipelineInterests(FrameBuffer::Event &event);
+        void requestSegment(unsigned int frameNo, unsigned int segmentNo);
+        bool isStreamInterest(Name prefix);
+        unsigned int getFrameNumber(Name prefix);
+        unsigned int getSegmentNumber(Name prefix);
+        void expressInterest(Name &prefix);
+        void expressInterest(Interest &i);
     };
 }
 

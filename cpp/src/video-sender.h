@@ -62,6 +62,7 @@ namespace ndnrtc
         int getSegmentSize(int *segmentSize) const { return getParamAsInt(ParamNameSegmentSize, segmentSize); }
         int getFreshnessInterval(int *freshness) const {return getParamAsInt(ParamNameFrameFreshnessInterval, freshness); }
         
+        int getSegmentSize() const { return getParamAsInt(ParamNameSegmentSize); }
         std::string getStreamPrefix() const;
         std::string getStreamKeyPrefix() const;
         std::string getStreamFramePrefix() const;
@@ -86,8 +87,8 @@ namespace ndnrtc
             uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
             uint32_t                    encodedWidth_;
             uint32_t                    encodedHeight_;
-//            uint32_t                    _timeStamp;
-//            int64_t                      capture_time_ms_;
+            uint32_t                    timeStamp_;
+            int64_t                     capture_time_ms_;
             webrtc::VideoFrameType      frameType_;
 //            uint8_t*                    _buffer;
 //            uint32_t                    _length;

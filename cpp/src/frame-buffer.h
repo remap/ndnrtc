@@ -120,7 +120,7 @@ namespace ndnrtc
              * @details dataLength should normally be equal to segmentSize, except,
              *          probably, for the last segment
              */
-            State appendSegment(unsigned int segmentNo, unsigned int dataLength, unsigned char *data);
+            State appendSegment(unsigned int segmentNo, unsigned int dataLength, const unsigned char *data);
             
             static shared_ptr<string> stateToString(FrameBuffer::Slot::State state);
             
@@ -215,7 +215,7 @@ namespace ndnrtc
          * @param segmentNumber Number of the frame's segment
          */
         CallResult appendSegment(unsigned int frameNumber, unsigned int segmentNumber,
-                                 unsigned int dataLength, unsigned char *data);
+                                 unsigned int dataLength, const unsigned char *data);
         
         /**
          * Notifies awaiting thread that the arriaval of a segment of the booked slot was timeouted
@@ -233,6 +233,11 @@ namespace ndnrtc
          * @param frameNo Frame number
          */
         shared_ptr<webrtc::EncodedImage> getEncodedImage(unsigned int frameNo);
+        
+        /**
+         * Sets new frame number for booked slot
+         */
+        void renameSlot(unsigned int oldFrameNo, unsigned int newFrameNo);
         
         /**
          * Buffer size

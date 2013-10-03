@@ -27,7 +27,8 @@ namespace ndnrtc{
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();
         
-        static unsigned int segmentNumber(const Name::Component &segmentComponent);
+        static int frameNumber(const Name::Component &segmentComponent);        
+        static int segmentNumber(const Name::Component &segmentComponent);
     };
 }
 

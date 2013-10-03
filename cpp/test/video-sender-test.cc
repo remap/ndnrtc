@@ -158,11 +158,6 @@ public:
     void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
         INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
-#if 0
-        for (unsigned int i = 0; i < data->getContent().size(); ++i)
-            printf("%2x ",(*data->getContent())[i]);
-        cout << endl;
-#endif
         dataInbox_.push_back(data);
         
         dataReceived_ = true;
@@ -213,6 +208,8 @@ protected:
         sampleFrame_ = new webrtc::EncodedImage(frameData, length, size);
         sampleFrame_->_encodedWidth = width;
         sampleFrame_->_encodedHeight = height;
+        sampleFrame_->_timeStamp = NdnRtcUtils::millisecondTimestamp();
+        sampleFrame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
         
         fclose(f);
     }

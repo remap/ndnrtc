@@ -19,6 +19,9 @@ using namespace ndnrtc;
 //********************************************************************************
 const string VideoReceiverParams::ParamNameProducerRate = "producer-rate";
 const string VideoReceiverParams::ParamNameReceiverId = "receiver-id";
+const string VideoReceiverParams::ParamNameInterestTimeout = "interest-timeout";
+const string VideoReceiverParams::ParamNameFrameBufferSize = "buffer-size";
+const string VideoReceiverParams::ParamNameFrameSlotSize = "slot-size";
 
 //********************************************************************************
 //********************************************************************************
@@ -39,6 +42,7 @@ frameConsumer_(nullptr)
 
 NdnVideoReceiver::~NdnVideoReceiver()
 {
+    TRACE("");
     stopFetching();
 }
 
@@ -46,46 +50,97 @@ NdnVideoReceiver::~NdnVideoReceiver()
 #pragma mark - public
 int NdnVideoReceiver::init(shared_ptr<Face> face)
 {
-    mode_ = ReceiverModeInit;
+    switchToMode(ReceiverModeInit);
+    
+    string initialPrefix = getParams()->getStreamFramePrefix();
+    
+    if (initialPrefix == "")
+        return notifyError(-1, "producer frames prefix was not provided");
+    
+    int bufSz = getParams()->getFrameBufferSize();
+    int slotSz = getParams()->getFrameSlotSize();
+    
+    interestTimeout_ = getParams()->getDefaultTimeout();
+    
+    if (frameBuffer_.init(bufSz, slotSz) < 0)
+        return notifyError(-1, "could not initialize frame buffer");
+    else
+        playoutBuffer_.init(&frameBuffer_);
+    
+    framesPrefix_ = Name(initialPrefix.c_str());
+    producerSegmentSize_ = getParams()->getSegmentSize();
+    face_ = face;
+    
     return 0;
 }
 
 int NdnVideoReceiver::startFetching()
 {
     if (mode_ != ReceiverModeInit)
-        return notifyError(-1, "receiver is not initialized or already started");
+        return notifyError(-1, "receiver is not initialized or has been already started");
     
     // setup and start playout thread
-    unsigned int tid = getParams()->getReceiverId()<<1+1;
-    playoutSleepIntervalUSec_ = 1000000/getParams()->getProducerRate();
+    unsigned int tid = PLAYOUT_THREAD_ID;
+    int res;
+    
+    switchToMode(ReceiverModeStarted);
     
     if (!playoutThread_.Start(tid))
-        return notifyError(-1, "can't start playout thread");
-    
-    playout_ = true;
+    {
+        notifyError(-1, "can't start playout thread");
+        res = -1;
+    }
     
     // setup and start assembling thread
+    tid = ASSEMBLING_THREAD_ID;
+    if (!assemblingThread_.Start(tid))
+    {
+        notifyError(-1, "can't start assembling thread");
+        res = -1;
+    }
     
     // setup and start pipeline thread
+    tid = PIPELINER_THREAD_ID;
+    if (!pipelineThread_.Start(tid))
+    {
+        notifyError(-1, "can't start playout thread");
+        res = -1;
+    }
     
-    mode_ = ReceiverModeWaitingFirstSegment;
+    if (res < 0)
+    {
+        stopFetching();
+        switchToMode(ReceiverModeInit);
+    }
     
-    return 0;
+    return res;
 }
 
 int NdnVideoReceiver::stopFetching()
 {
-    if (mode_ == ReceiverModeCreated || mode_ == ReceiverModeInit)
-        return 0; // notifyError(-1, "fetching was not started");
+    TRACE("stop fetching");
     
-    // stop playout thread
-    playoutThread_.SetNotAlive();
+    if (mode_ == ReceiverModeCreated)
+        return 0;
+    
+    if (mode_ == ReceiverModeInit)
+    {
+        TRACE("return on init");
+        frameBuffer_.release();
+        return 0;
+    }
+    
     playout_ = false;
+    playoutThread_.SetNotAlive();
+    assemblingThread_.SetNotAlive();
+    pipelineThread_.SetNotAlive();
+    TRACE("release buf");
+    frameBuffer_.release();
+
+    assemblingThread_.Stop();
+    pipelineThread_.Stop();
     playoutThread_.Stop();
-    
-    // stop assembling thread
-    
-    // stop pipeline thread
+    TRACE("stopped threads");
     
     mode_ = ReceiverModeInit;
     
@@ -96,12 +151,63 @@ int NdnVideoReceiver::stopFetching()
 #pragma mark - intefaces realization - ndn-cpp callbacks
 void NdnVideoReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    TRACE("interest timeout: %s", interest.toUri().c_str());
+    Name prefix = interest->getName();
+    
+    if (isStreamInterest(prefix))
+    {
+        unsigned int frameNo = 0, segmentNo = 0;
+        
+        // check is it's a first segment
+        if (prefix.getComponentCount() > framesPrefix_.getComponentCount())
+        {
+            unsigned int nComponents = prefix.getComponentCount();
+            
+            frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(nComponents-2)),
+            segmentNo = NdnRtcUtils::segmentNumber(prefix.getComponent(nComponents-1));
+        }
+        
+        TRACE("timeout: notify slot %d", frameNo);
+        frameBuffer_.notifySegmentTimeout(frameNo, segmentNo);
+    }
 }
 
 void NdnVideoReceiver::onSegmentData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
 {
-    TRACE("got data for interest: %s", interest.toUri().c_str());
+    TRACE("got data for the interest: %s", interest->getName().toUri().c_str());
+    Name prefix = interest->getName();
+    
+    if (isStreamInterest(prefix))
+    {
+        unsigned int nComponents = prefix.getComponentCount();
+        unsigned int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(nComponents-2)),
+                        segmentNo = NdnRtcUtils::segmentNumber(prefix.getComponent(nComponents-1));
+        
+        // check if its a very first segment
+        if (mode_ == ReceiverModeWaitingFirstSegment)
+        {
+            for (size_t i = 0; i < data->getContent().size(); ++i)
+                printf("[%c]",(*data->getContent())[i]);
+            
+            Name::Component c(data->getContent().buf(), data->getContent().size());
+            
+            int nn = NdnRtcUtils::frameNumber(c);
+            frameBuffer_.renameSlot(pipelinerFrameNo_, frameNo);
+        }
+        
+        // check if it's a first segment
+        if (frameBuffer_.getState(frameNo) == FrameBuffer::Slot::StateNew)
+        {
+            // get total number of segments
+            Name::Component finalBlockID = data->getMetaInfo().getFinalBlockID();
+            unsigned int segmentsNum = NdnRtcUtils::segmentNumber(finalBlockID);
+            
+            frameBuffer_.markSlotAssembling(frameNo, segmentsNum, producerSegmentSize_);
+        }
+        
+        // finally, append data to the buffer
+        frameBuffer_.appendSegment(frameNo, segmentNo,
+                                   data->getContent().size(), (unsigned char*)data->getContent().buf());
+    }
 }
 
 //********************************************************************************
@@ -123,7 +229,7 @@ bool NdnVideoReceiver::processPlayout()
         }
         else
         {
-            WARN("couldn't get frame with number %d", playoutBuffer_.framePointer());
+//            WARN("couldn't get frame with number %d", playoutBuffer_.framePointer());
         }
 
         playoutBuffer_.releaseAcquiredFrame();
@@ -139,10 +245,201 @@ bool NdnVideoReceiver::processPlayout()
 
 bool NdnVideoReceiver::processInterests()
 {
-    return true;
+    bool res = true;
+    FrameBuffer::Event ev = frameBuffer_.waitForEvents(pipelinerEventsMask_);
+    TRACE("pipeliner got event %d", ev.type_);
+    
+    switch (ev.type_)
+    {
+        case FrameBuffer::Event::EventTypeFreeSlot:
+        {
+            frameBuffer_.bookSlot(pipelinerFrameNo_);
+            
+            // need to check - whether we are just started and need to request first segment
+            // if so, should not ask for booking more slots in buffer unless first segment is received
+            if (mode_ == ReceiverModeStarted)
+            {
+                switchToMode(ReceiverModeWaitingFirstSegment);
+                requestInitialSegment();
+            }
+            else
+            {
+                // we've already in a fetching mode - request next frame
+                requestSegment(pipelinerFrameNo_, 0);
+                pipelinerFrameNo_++;
+            }
+        }
+            break;
+        case FrameBuffer::Event::EventTypeFirstSegment:
+        {
+            // check if it is a segment for the first frame
+            if (mode_ == ReceiverModeWaitingFirstSegment)
+            {
+                // switch to fetching mode
+                switchToMode(ReceiverModeFetch);
+                pipelinerFrameNo_ = ev.frameNo_+1;
+            }
+            // pipeline interests for individual segments
+            pipelineInterests(ev);
+        }
+            break;
+        case FrameBuffer::Event::EventTypeTimeout:
+        {
+            WARN("got timeout for the frame %d (segment %d). re-issuing", ev.frameNo_, ev.segmentNo_);
+            if (mode_ == ReceiverModeWaitingFirstSegment)
+                requestInitialSegment();
+            else
+                requestSegment(ev.frameNo_,ev.segmentNo_);
+        }
+            break;
+        case FrameBuffer::Event::EventTypeError:
+        {
+            ERR("got error event on frame buffer");
+            res = false; // stop pipelining
+        }
+            break;
+        default:
+            ERR("got unexpected event: %d. ignoring", ev.type_);
+            break;
+    }
+    
+    return res;
 }
 
 bool NdnVideoReceiver::processAssembling()
 {
+    // check if the first interest has been sent out
+    // if not - skip processing events
+    if (!(mode_ == ReceiverModeInit || mode_ == ReceiverModeCreated || mode_ == ReceiverModeStarted))
+    {
+        face_->processEvents();
+    }
+
+    usleep(10000);
+        
     return true;
+}
+
+void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
+{
+    bool check = true;
+    
+    switch (mode) {
+        case ReceiverModeCreated:
+        {
+            INFO("switched to mode: Created");
+        }
+            break;
+        case ReceiverModeInit:
+        {
+            // setup pipeliner thread params
+            pipelinerFrameNo_ = 0;
+            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
+            
+            // setup playout thread params
+            playoutSleepIntervalUSec_ = 1000000/getParams()->getProducerRate();
+            playout_ = true;
+            INFO("switched to mode: Init");
+        }
+            break;
+        case ReceiverModeWaitingFirstSegment:
+        {
+            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment | FrameBuffer::Event::EventTypeTimeout;
+            INFO("switched to mode: WaitingFirstSegment");
+        }
+            break;
+        case ReceiverModeFetch:
+        {
+            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot | FrameBuffer::Event::EventTypeFirstSegment | FrameBuffer::Event::EventTypeTimeout;
+            INFO("switched to mode: Fetch");
+        }
+            break;
+        case ReceiverModeStarted:
+        {
+            INFO("switched to mode: Started");
+        }
+            break;
+        case ReceiverModeChase:
+            WARN("chase mode currently disabled");
+            break;
+        default:
+            check = false;
+            WARN("unable to switch to unknown mode %d", mode);
+            break;
+    }
+    
+    if (check)
+        mode_ = mode;
+}
+
+void NdnVideoReceiver::requestInitialSegment()
+{
+    Interest i(framesPrefix_, getParams()->getDefaultTimeout());
+
+    i.setChildSelector(1); // seek for right most child
+    expressInterest(i);
+}
+
+void NdnVideoReceiver::pipelineInterests(FrameBuffer::Event &event)
+{
+    TRACE("pipeline for the frame %d", event.frameNo_);
+    
+    // 1. get number of interests to be send out
+    int interestsNum = event.slot_->totalSegmentsNumber() - 1;
+    
+    // 2. setup frame prefix
+    Name framePrefix = framesPrefix_;
+    stringstream ss;
+
+    ss << event.frameNo_;
+    std::string frameNoStr = ss.str();
+    
+    framePrefix.addComponent((const unsigned char*)frameNoStr.c_str(), frameNoStr.size());
+    
+    // 3. iteratively compute interst prefix and send out interest
+    for (int i = 0; i < event.slot_->totalSegmentsNumber(); i++)
+        if (i != event.segmentNo_) // send out only for segments we don't have yet
+        {
+            Name segmentPrefix = framePrefix;
+            
+            segmentPrefix.appendSegment(i);
+            expressInterest(segmentPrefix);
+        }
+}
+
+void NdnVideoReceiver::requestSegment(unsigned int frameNo, unsigned int segmentNo)
+{
+    TRACE("");
+    Name segmentPrefix = framesPrefix_;
+    stringstream ss;
+    
+    ss << frameNo;
+    std::string frameNoStr = ss.str();
+    
+    segmentPrefix.addComponent((const unsigned char*)frameNoStr.c_str(), frameNoStr.size());
+    segmentPrefix.appendSegment(segmentNo);
+    
+    expressInterest(segmentPrefix);
+}
+
+bool NdnVideoReceiver::isStreamInterest(Name prefix)
+{
+    return framesPrefix_.match(prefix);
+}
+
+void NdnVideoReceiver::expressInterest(Name &prefix)
+{
+    Interest i(prefix, interestTimeout_);
+    
+    TRACE("expressing interest %s", i.getName().toUri().c_str());
+    face_->expressInterest(i,
+                           bind(&NdnVideoReceiver::onSegmentData, this, _1, _2),
+                           bind(&NdnVideoReceiver::onTimeout, this, _1));
+}
+void NdnVideoReceiver::expressInterest(Interest &i)
+{
+    TRACE("expressing interest %s", i.getName().toUri().c_str());
+    face_->expressInterest(i,
+                           bind(&NdnVideoReceiver::onSegmentData, this, _1, _2),
+                           bind(&NdnVideoReceiver::onTimeout, this, _1));
 }

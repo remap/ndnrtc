@@ -31,7 +31,6 @@ segmentsNum_(0),
 assembledDataSize_(0),
 frameNumber_(-1)
 {
-    TRACE("");
     data_ = new unsigned char[slotSize];
 }
 
@@ -74,7 +73,7 @@ shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
     return shared_ptr<EncodedImage>(frame);
 }
 
-FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo, unsigned int dataLength, unsigned char *data)
+FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo, unsigned int dataLength, const unsigned char *data)
 {
     if (!(state_ == StateAssembling))
     {
@@ -262,7 +261,7 @@ void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int tota
 }
 
 FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, unsigned int segmentNumber,
-                                                   unsigned int dataLength, unsigned char *data)
+                                                   unsigned int dataLength, const unsigned char *data)
 {
     shared_ptr<Slot> slot;
     CallResult res = CallResultError;
@@ -314,7 +313,7 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
         notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeTimeout, slot.get());
     else
     {
-        WARN("can't unlock slot - it was not found");
+        WARN("can't notify slot - it was not found");
     }
 }
 
@@ -339,6 +338,17 @@ shared_ptr<EncodedImage> FrameBuffer::getEncodedImage(unsigned int frameNo)
         return  slot->getFrame();
     
     return shared_ptr<EncodedImage>(nullptr);
+}
+
+void FrameBuffer::renameSlot(unsigned int oldFrameNo, unsigned int newFrameNo)
+{
+    EncodedImage encodedImage;
+    shared_ptr<Slot> slot;
+    
+    if (getFrameSlot(oldFrameNo, &slot, true) == CallResultOk)
+        frameSlotMapping_[newFrameNo] = slot;
+    
+    return;
 }
 
 FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int timeout)
