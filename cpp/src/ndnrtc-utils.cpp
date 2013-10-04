@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#undef NDN_LOGGING
+
 #include "ndnrtc-utils.h"
 
 using namespace ndnrtc;
@@ -36,7 +38,7 @@ int NdnRtcUtils::segmentNumber(const Name::Component &segmentComponent)
 
 int NdnRtcUtils::frameNumber(const Name::Component &segmentComponent)
 {
-    unsigned int result = -1;
+    unsigned int result = 0;
     int valueLength = segmentComponent.getValue().size();
     std::vector<unsigned char> value = *segmentComponent.getValue();
     

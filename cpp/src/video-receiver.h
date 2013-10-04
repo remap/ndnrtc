@@ -56,6 +56,7 @@ namespace ndnrtc
         int init(shared_ptr<Face> face);
         int startFetching();
         int stopFetching();
+        void setFrameConsumer(IEncodedFrameConsumer *consumer) { frameConsumer_ = consumer; }
         
     private:
         enum ReceiverMode {

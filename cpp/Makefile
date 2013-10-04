@@ -337,10 +337,10 @@ build-sender-channel-test: undef sender-channel-test.o sender-channel.o ndnrtc-n
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-ndnrtc-namespace-test: undef ndnrtc-namespace-test.o ndnrtc-namespace.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-ndnrtc-namespace-test: undef $(addprefix $(OBJ_PATH)/,ndnrtc-namespace-test.o ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,ndnrtc-namespace-test.o ndnrtc-namespace.o simple-log.o test-common.o) \
-	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
 build-video-sender-test: undef $(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
@@ -361,7 +361,7 @@ build-video-decoder-test: undef video-decoder-test.o video-decoder.o ndnrtc-obje
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-ndnrtc-utils-test:  undef ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-ndnrtc-utils-test:  undef $(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \

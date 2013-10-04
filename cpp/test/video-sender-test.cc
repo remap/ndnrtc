@@ -120,10 +120,8 @@ public:
                                 bind(&VideoSenderTester::onInterest, this, _1, _2, _3),
                                 bind(&VideoSenderTester::onRegisterFailed, this, _1));
         
-        shared_ptr<PrivateKeyStorage> privateKeyStorage(new PrivateKeyStorage());
-        shared_ptr<IdentityManager> identityManager(new IdentityManager(privateKeyStorage));
 
-        ndnKeyChain_.reset(new KeyChain(identityManager));
+        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
         ndnKeyChain_->setFace(ndnFace_.get());
         
         sampleFrame_ = NULL;

@@ -13,7 +13,7 @@
 
 using namespace ndnrtc;
 
-TEST(NdnRtcUtilsTets, TestSegmentsNumber)
+TEST(NdnRtcUtilsTests, TestSegmentsNumber)
 {
     {
         int segmentSize = 3800;
@@ -63,6 +63,17 @@ TEST(NdnRtcUtilsTets, TestSegmentsNumber)
         int expectedSegmentsNum = 2;
         
         EXPECT_EQ(expectedSegmentsNum, NdnRtcUtils::getSegmentsNumber(segmentSize, dataSize));
+    }
+}
+
+TEST(NdnRtcUtilsTests, TestFrameNumber)
+{
+    {
+        char *prefixStr = "/ndn/ndnrtc/user/testuser/streams/video0/vp8-640/frames/1";
+        Name prefix(prefixStr);
+        unsigned int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(prefix.getComponentCount()-1));
+        
+        EXPECT_EQ(1, frameNo);
     }
 }
 

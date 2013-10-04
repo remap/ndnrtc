@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#undef DEBUG
+
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
 #include "video-receiver.h"
@@ -36,7 +38,6 @@ frameNumber_(-1)
 
 FrameBuffer::Slot::~Slot()
 {
-    TRACE("");
     delete data_;
 }
 

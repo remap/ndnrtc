@@ -9,6 +9,7 @@
 //
 
 #define DEBUG
+#undef NDN_DETAILED
 
 #define NDN_LOGGING
 #define NDN_INFO
@@ -32,7 +33,7 @@ public :
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost"));
+        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 9695));
         
         params_.reset(VideoReceiverParams::defaultParams());
         ndnTransport_.reset(new TcpTransport());
@@ -43,11 +44,8 @@ public :
                                  bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
                                  bind(&NdnReceiverTester::onRegisterFailed, this, _1));
         
-        shared_ptr<PrivateKeyStorage> privateKeyStorage(new PrivateKeyStorage());
-        shared_ptr<IdentityManager> identityManager(new IdentityManager(privateKeyStorage));
-        
-        ndnKeyChain_.reset(new KeyChain(identityManager));
-        ndnKeyChain_->setFace(ndnFace_.get());
+        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
+        certName_ = NdnRtcNamespace::certificateNameForUser(params_->getUserPrefix());
     }
     void TearDown()
     {
@@ -71,6 +69,7 @@ public :
     
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     {
+        TRACE("fetched encoded frame");
         receivedFrames_.push_back(encodedImage._timeStamp);
     }
     
@@ -79,6 +78,7 @@ protected:
     shared_ptr<Transport> ndnTransport_;
     shared_ptr<Face> ndnFace_;
     shared_ptr<KeyChain> ndnKeyChain_;
+    shared_ptr<Name> certName_;
     
     std::vector<webrtc::EncodedImage*> fetchedFrames_;
     std::vector<uint32_t> sentFrames_;
@@ -110,10 +110,10 @@ protected:
         {
             unsigned int segmentIdx = segmentsSendOrder[i];
             unsigned char *segmentData = payload.getData()+segmentIdx*segmentSize;
-            unsigned int segmentSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:segmentSize;
-            shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(totalSegmentsNum-1);
+            unsigned int dataSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:segmentSize;
+            shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(totalSegmentsNum);
             
-            if (segmentSize > 0)
+            if (dataSize > 0)
             {
                 Name segmentPrefix = prefix;
                 segmentPrefix.appendSegment(segmentIdx);
@@ -123,9 +123,11 @@ protected:
                 data.getMetaInfo().setFreshnessSeconds(freshness);
                 data.getMetaInfo().setFinalBlockID(*finalBlockIDValue);
                 data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
-                data.setContent(segmentData, segmentSize);
+                data.setContent(segmentData, dataSize);
                 
-                ndnKeyChain_->signData(data);
+//                TRACE("data size: %d", data.getContent().size());
+                
+                ndnKeyChain_->sign(data, *certName_);
                 
                 ASSERT_TRUE(ndnTransport_->getIsConnected());
                 
@@ -187,6 +189,7 @@ TEST_F(NdnReceiverTester, EmptyFetching30FPS)
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
     
+    receiver->setFrameConsumer(this);
     receiver->setObserver(this);
     
     EXPECT_EQ(0, receiver->init(ndnFace_));
@@ -203,7 +206,7 @@ TEST_F(NdnReceiverTester, EmptyFetching30FPS)
     for (int i = 0; i < framesNum; i++)
     {
         TRACE("publishing frame %d",i);
-        publishFrame(i, segmentSize, 100);
+        publishFrame(i, segmentSize);
         WAIT(1000/producerFrameRate);
     }
 

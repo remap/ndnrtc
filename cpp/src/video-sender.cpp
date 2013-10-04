@@ -83,6 +83,14 @@ string VideoSenderParams::getStreamFramePrefix() const
     return *framesPrefix;
 }
 
+string VideoSenderParams::getUserPrefix() const
+{
+    const std::string hub = getParamAsString(ParamNameNdnHub);
+    const std::string producerId = getParamAsString(ParamNameProducerId);
+    
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getProducerPrefix(hub, producerId);
+    return *userPrefix;
+}
 
 //********************************************************************************
 //********************************************************************************
@@ -207,7 +215,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
             data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
             data.setContent((const unsigned char *)&frameData.getData()[segmentNo*segmentSize_], bytesToSend);
             
-            ndnKeyChain_->signData(data);
+            ndnKeyChain_->sign(data, *certificateName_);
             
             Blob encodedData = data.wireEncode();
             ndnTransport_->send(*encodedData);
@@ -229,6 +237,8 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 #pragma mark - public
 int NdnVideoSender::init(const shared_ptr<ndn::Transport> transport, const shared_ptr<KeyChain> keyChain)
 {
+    certificateName_ = NdnRtcNamespace::certificateNameForUser(((VideoSenderParams*)params_)->getUserPrefix());
+    
     string framesPrefix = ((VideoSenderParams*)params_)->getStreamFramePrefix();
     framePrefix_.reset(new Name(framesPrefix.c_str()));
 

@@ -63,6 +63,7 @@ namespace ndnrtc
         int getFreshnessInterval(int *freshness) const {return getParamAsInt(ParamNameFrameFreshnessInterval, freshness); }
         
         int getSegmentSize() const { return getParamAsInt(ParamNameSegmentSize); }
+        std::string getUserPrefix() const;
         std::string getStreamPrefix() const;
         std::string getStreamKeyPrefix() const;
         std::string getStreamFramePrefix() const;
@@ -122,6 +123,7 @@ namespace ndnrtc
         shared_ptr<Transport> ndnTransport_;
         shared_ptr<KeyChain> ndnKeyChain_;
         shared_ptr<Name> framePrefix_;
+        shared_ptr<Name> certificateName_;
         
         long long int frameNo_; // sequential frame number
         int segmentSize_, freshnessInterval_;

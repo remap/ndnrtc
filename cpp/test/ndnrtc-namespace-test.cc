@@ -6,6 +6,14 @@
 //  Copyright (c) 2013 Peter Gusev. All rights reserved.
 //
 
+#define DEBUG
+
+#define NDN_LOGGING
+#define NDN_INFO
+#define NDN_WARN
+#define NDN_ERROR
+#define NDN_TRACE
+
 #include "test-common.h"
 #include "ndnrtc-namespace.h"
 
@@ -84,5 +92,53 @@ TEST(NdnRtcNamespace, TestStreamPath)
                 stream.c_str());
         
         EXPECT_EQ(str,*(path.get()));
+    }
+}
+
+TEST(NdnRtcNamespace, TestKeyPath)
+{
+    std::string producerId = "producer1";
+    std::string hub = "ndn.ucla.edu";
+    std::string stream = "video0";
+    
+    {
+        shared_ptr<std::string> producerPref = NdnRtcNamespace::getProducerPrefix(hub, producerId);
+        shared_ptr<Name> keyPrefix = NdnRtcNamespace::keyPrefixForUser(*producerPref);
+        char str[256];
+        
+        memset(str, 0, 256);
+        
+        sprintf(str, "/%s/%s/%s/%s/%s/%s",hub.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                producerId.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str());
+        TRACE("%s",keyPrefix->toUri().c_str());
+        EXPECT_STREQ(str,keyPrefix->toUri().c_str());
+    }
+}
+
+TEST(NdnRtcNamespace, TestCertPath)
+{
+    std::string producerId = "producer1";
+    std::string hub = "ndn.ucla.edu";
+    std::string stream = "video0";
+    
+    {
+        shared_ptr<Name> keyPrefix = NdnRtcNamespace::certificateNameForUser(*NdnRtcNamespace::getProducerPrefix(hub, producerId));
+        char str[256];
+        
+        memset(str, 0, 256);
+        
+        sprintf(str, "/%s/%s/%s/%s/%s/%s/%s",hub.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                producerId.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str(),
+                NdnRtcNamespace::NdnRtcNamespaceCertificateComponent.c_str());
+        TRACE("%s",keyPrefix->toUri().c_str());
+        EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
 }
