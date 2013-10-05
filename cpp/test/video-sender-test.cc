@@ -245,7 +245,7 @@ TEST_F(VideoSenderTester, TestInit)
 {
     loadFrame();
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_, ndnKeyChain_));
+    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
 }
 
 TEST_F(VideoSenderTester, TestSend)
@@ -255,7 +255,7 @@ TEST_F(VideoSenderTester, TestSend)
     
     loadFrame();
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_, ndnKeyChain_));
+    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
 
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
@@ -314,7 +314,7 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
     
     loadFrame();
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_, ndnKeyChain_));
+    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
     
     // send frame
     int framesNum = 3;
@@ -394,7 +394,7 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     videoSender_.reset(new NdnVideoSender(params_.get()));
     videoSender_->setObserver(this);
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_, ndnKeyChain_));
+    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
     
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);

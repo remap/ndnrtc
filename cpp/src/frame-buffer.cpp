@@ -110,6 +110,7 @@ FrameBuffer::Event::EventTypeError;
 FrameBuffer::FrameBuffer():
 bufferSize_(0),
 slotSize_(0),
+nTimeouts_(0),
 bufferEvent_(*EventWrapper::Create()),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
@@ -144,6 +145,8 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
         notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
     }
     
+    updateStat(Slot::StateFree, bufferSize_);
+    
     return 0;
 }
 
@@ -158,10 +161,14 @@ int FrameBuffer::flush()
         shared_ptr<Slot> slot = it->second;
         if (slot->getState() != Slot::StateLocked)
         {
+            updateStat(slot->getState(), -1);
+            
             freeSlots_.push_back(slot);
             slot->markFree();
             frameSlotMapping_.erase(it);
             notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
+            
+            updateStat(slot->getState(), 1);
         }
     }
     syncCs_.Leave();
@@ -196,6 +203,9 @@ FrameBuffer::CallResult FrameBuffer::bookSlot(unsigned int frameNumber)
     
     syncCs_.Leave();
     
+    updateStat(Slot::StateFree, -1);
+    updateStat(freeSlot->getState(), 1);
+    
     return CallResultNew;
 }
 
@@ -206,16 +216,15 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
     if (getFrameSlot(frameNumber, &slot) == CallResultOk &&
         slot->getState() != Slot::StateLocked)
     {
+        updateStat(slot->getState(), -1);
         syncCs_.Enter();
-        
-        // remove slot from ready slots array
-        //        if (slot->getState() == Slot::StateReady)
-        //            readySlots_.erase(readySlots_.find(frameNumber));
         
         slot->markFree();
         freeSlots_.push_back(slot);
         frameSlotMapping_.erase(frameNumber);
+        
         syncCs_.Leave();
+        updateStat(slot->getState(), 1);
         
         notifyBufferEventOccurred(frameNumber, 0, Event::EventTypeFreeSlot, slot.get());
     }
@@ -230,7 +239,11 @@ void FrameBuffer::lockSlot(unsigned int frameNumber)
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
+    {
+        updateStat(slot->getState(), -1);
         slot->markLocked();
+        updateStat(slot->getState(), 1);
+    }
     else
     {
         WARN("can't lock slot - it was not found");
@@ -242,7 +255,11 @@ void FrameBuffer::unlockSlot(unsigned int frameNumber)
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
+    {
+        updateStat(slot->getState(), -1);
         slot->markUnlocked();
+        updateStat(slot->getState(), 1);
+    }
     else
     {
         WARN("can't unlock slot - it was not found");
@@ -254,7 +271,11 @@ void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int tota
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
+    {
+        updateStat(slot->getState(), -1);
         slot->markAssembling(totalSegments, segmentSize);
+        updateStat(slot->getState(), 1);
+    }
     else
     {
         WARN("can't unlock slot - it was not found");
@@ -272,16 +293,20 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
         if (slot->getState() == Slot::StateAssembling)
         {
             res = CallResultAssembling;
+            updateStat(slot->getState(), -1);
             
             syncCs_.Enter();
             Slot::State slotState = slot->appendSegment(segmentNumber, dataLength, data);
             syncCs_.Leave();
             
+            updateStat(slotState, 1);
+            // if we got 1st segment - notify regardless of other events
+            if (slot->assembledSegmentsNumber() == 1)
+                notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeFirstSegment, slot.get());
+            
             switch (slotState)
             {
                 case Slot::StateAssembling:
-                    if (slot->assembledSegmentsNumber() == 1) // first segment event
-                        notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeFirstSegment, slot.get());
                     break;
                 case Slot::StateReady: // slot ready event
                     //                    readySlots_[frameNumber] = slot; // save slot in ready slots array
@@ -311,7 +336,10 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
+    {
+        nTimeouts_++;
         notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeTimeout, slot.get());
+    }
     else
     {
         WARN("can't notify slot - it was not found");
@@ -396,6 +424,13 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     return poppedEvent;
 }
 
+unsigned int FrameBuffer::getStat(Slot::State state)
+{
+    if (statistics_.find(state) == statistics_.end())
+        statistics_[state] = 0;
+    
+    return statistics_[state];
+}
 //********************************************************************************
 #pragma mark - private
 void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo,
@@ -435,3 +470,12 @@ FrameBuffer::CallResult FrameBuffer::getFrameSlot(unsigned int frameNo, shared_p
     
     return res;
 }
+
+void FrameBuffer::updateStat(Slot::State state, int change)
+{
+    if (statistics_.find(state) == statistics_.end())
+        statistics_[state] = 0;
+    
+    statistics_[state] += change;
+}
+

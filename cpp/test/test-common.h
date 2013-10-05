@@ -74,21 +74,29 @@ public:
         FILE *f = fopen("resources/vp8_640x480.frame", "rb");
 //        ASSERT_TRUE(f);
         if (!f)
+        {
             return NULL;
+        }
         
         int32_t size, length;
         if (!fread(&size, sizeof(size), 1, f))
+        {
             return NULL;
+        }
         
         if (!fread(&length, sizeof(length), 1, f))
+        {
             return NULL;
+        }
         
         // don't delete frameData = it is used (but not owned!) by the
         // frame when it is created
         unsigned char* frameData = new unsigned char[size];
         
         if (!fread(frameData, 1, length, f))
+        {
             return NULL;
+        }
         
         webrtc::EncodedImage *sampleFrame;
         sampleFrame = new webrtc::EncodedImage(frameData, length, size);

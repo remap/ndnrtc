@@ -9,7 +9,7 @@
 //  Created: 8/21/13
 //
 
-//#define NDN_TRACE
+#undef DEBUG
 
 #include "video-coder.h"
 
@@ -39,6 +39,35 @@ char* plotCodec(webrtc::VideoCodec codec)
     return msg;
 }
 
+VideoCodec NdnVideoCoderParams::getCodec()
+{
+    VideoCodec codec;
+    // setup default params first
+    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
+    {
+        TRACE("can't get deafult params");
+        strncpy(codec.plName, "VP8", 31);
+        codec.maxFramerate = 30;
+        codec.startBitrate  = 300;
+        codec.maxBitrate = 4000;
+        codec.width = 640;
+        codec.height = 480;
+        codec.plType = VCM_VP8_PAYLOAD_TYPE;
+        codec.qpMax = 56;
+        codec.codecType = webrtc::kVideoCodecVP8;
+        codec.codecSpecific.VP8.denoisingOn = true;
+        codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
+        codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
+    }
+    // customize parameteres if possible
+    getFrameRate((int*)&codec.maxFramerate);
+    getStartBitRate((int*)&codec.startBitrate);
+    getMaxBitRate((int*)&codec.maxBitrate);
+    getWidth((int*)&codec.width);
+    getHeight((int*)&codec.height);
+    
+    return codec;
+}
 
 //********************************************************************************
 #pragma mark - construction/destruction
@@ -53,39 +82,7 @@ int NdnVideoCoder::init()
     if (!hasParams())
         notifyErrorNoParams();
 
-    // setup default params first
-    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
-    {
-        TRACE("can't get deafult params");
-        strncpy(codec_.plName, "VP8", 31);
-        codec_.maxFramerate = 30;
-        codec_.startBitrate  = 300;
-        codec_.maxBitrate = 4000;
-        codec_.width = 640;
-        codec_.height = 480;
-        codec_.plType = VCM_VP8_PAYLOAD_TYPE;
-        codec_.qpMax = 56;
-        codec_.codecType = webrtc::kVideoCodecVP8;
-        codec_.codecSpecific.VP8.denoisingOn = true;
-        codec_.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
-        codec_.codecSpecific.VP8.numberOfTemporalLayers = 1;
-    }
-    // customize parameteres if possible
-    if (getParams()->getFrameRate((int*)&codec_.maxFramerate) < 0)
-        notifyErrorBadArg(NdnVideoCoderParams::ParamNameFrameRate);
-    
-    if (getParams()->getStartBitRate((int*)&codec_.startBitrate) < 0)
-        notifyErrorBadArg(NdnVideoCoderParams::ParamNameStartBitRate);
-    
-    if (getParams()->getMaxBitRate((int*)&codec_.maxBitrate) < 0)
-        notifyErrorBadArg(NdnVideoCoderParams::ParamNameMaxBitRate);
-    
-    if (getParams()->getWidth((int*)&codec_.width) < 0)
-        notifyErrorBadArg(NdnVideoCoderParams::ParamNameWidth);
-    
-    if (getParams()->getHeight((int*)&codec_.height) < 0)
-        notifyErrorBadArg(NdnVideoCoderParams::ParamNameHeight);
-
+    codec_ = getParams()->getCodec();
     encoder_.reset(VP8Encoder::Create());
     
     if (!encoder_.get())
@@ -113,7 +110,7 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage);
-    
+
 #warning need to handle return value
     return 0;
 }

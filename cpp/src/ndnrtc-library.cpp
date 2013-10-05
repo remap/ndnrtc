@@ -2,8 +2,10 @@
 //  ndnrtc-library.cpp
 //  ndnrtc
 //
-//  Created by Peter Gusev on 9/18/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev
 //
 
 #include "ndnrtc-library.h"
@@ -58,7 +60,7 @@ int NdnRtcLibrary::startConference(NdnParams &params)
     if (sc->startTransmission() < 0)
         return notifyObserverWithError("can't start transmission");
     
-    senderChannel = sc;
+    senderChannel_ = sc;
     return 0;
 }
 
@@ -71,6 +73,10 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
 int NdnRtcLibrary::leaveConference(const char *conferencePrefix)
 {
     TRACE("leaving conference with prefix: %s", conferencePrefix);
+    if (senderChannel_.get())
+        sc->stopTransmission();
+    
+    
     return 0;
 }
 

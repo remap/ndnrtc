@@ -20,6 +20,40 @@
 
 namespace ndnrtc
 {
+    class SenderChannelParams : public NdnParams {
+    public:
+        
+        static SenderChannelParams* defaultParams()
+        {
+            SenderChannelParams *p = new SenderChannelParams();
+
+            char *host =  (char*)"localhost";
+            int portnum = 9695;
+            
+            p->setStringParam(ParamNameConnectHost, host);
+            p->setIntParam(ParamNameConnectPort, portnum);
+            
+            // add params for internal classes
+            shared_ptr<CameraCapturerParams> cc_sp(CameraCapturerParams::defaultParams());
+            shared_ptr<NdnRendererParams> rr_sp(NdnRendererParams::defaultParams());
+            shared_ptr<NdnVideoCoderParams> vc_sp(NdnVideoCoderParams::defaultParams());
+            shared_ptr<VideoSenderParams> vs_sp(VideoSenderParams::defaultParams());
+            
+            p->addParams(*cc_sp.get());
+            p->addParams(*rr_sp.get());
+            p->addParams(*vc_sp.get());
+            p->addParams(*vs_sp.get());
+            
+            return p;
+        }
+        
+        // parameters names
+        static const std::string ParamNameConnectHost;
+        static const std::string ParamNameConnectPort;
+        
+        int getConnectPort() { return getParamAsInt(ParamNameConnectPort); }
+        std::string getConnectHost() { return getParamAsString(ParamNameConnectHost); }
+    };
     
     class NdnSenderChannel : public NdnRtcObject, public IRawFrameConsumer
     {
@@ -27,9 +61,6 @@ namespace ndnrtc
         // construction/desctruction
         NdnSenderChannel(NdnParams *params);
         virtual ~NdnSenderChannel() { TRACE(""); };
-        
-        // static
-        static NdnParams* defaultParams();
         
         // public methods
         bool isTransmitting(){ return isTransmitting_; }
@@ -40,8 +71,14 @@ namespace ndnrtc
         // interface conformance - IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
+        // ndnlib callbacks
+        void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport);
+        void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+        
     private:
         bool isTransmitting_;
+        shared_ptr<ndn::Transport> ndnTransport_;
+        shared_ptr<Face> ndnFace_;
         shared_ptr<CameraCapturer> cc_;
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
@@ -57,6 +94,7 @@ namespace ndnrtc
         
         // private methods
         bool process();
+        SenderChannelParams *getParams() { return static_cast<SenderChannelParams*>(params_); }
     };
     
 }

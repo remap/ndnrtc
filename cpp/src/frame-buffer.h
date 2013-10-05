@@ -244,12 +244,25 @@ namespace ndnrtc
          */
         unsigned int getBufferSize() { return bufferSize_; }
         
+        /**
+         * Returns number of slots in specified state
+         */
+        unsigned int getStat(Slot::State state);
+        
+        /**
+         * Returns number of timeouts occurred since last flush
+         */
+        unsigned int getTimeoutsNumber() { return nTimeouts_; }
+        
     private:
         bool forcedRelease_;
         unsigned int bufferSize_, slotSize_;
         std::vector<shared_ptr<Slot>> freeSlots_;
         std::map<unsigned int, shared_ptr<Slot>> frameSlotMapping_;
-        //        std::map<int, shared_ptr<Slot>> readySlots_;
+
+        // statistics
+        std::map<Slot::State, unsigned int> statistics_; // stores number of frames in each state
+        unsigned int nTimeouts_;
         
         webrtc::CriticalSectionWrapper &syncCs_;
         webrtc::EventWrapper &bufferEvent_;
@@ -260,6 +273,8 @@ namespace ndnrtc
         
         void notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo, FrameBuffer::Event::EventType eType, Slot *slot);
         CallResult getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot, bool remove = false);
+        
+        void updateStat(Slot::State state, int change);
     };
 }
 

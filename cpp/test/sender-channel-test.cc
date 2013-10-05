@@ -22,12 +22,12 @@ using namespace ndnrtc;
  */
 TEST(NdnSenderChannelParams, CreateDeleteParams)
 {
-    NdnParams *p = NdnSenderChannel::defaultParams();
+    NdnParams *p = SenderChannelParams::defaultParams();
     delete p;
 }
 TEST(NdnSenderChannelParams, TestParams)
 {
-    NdnParams *p = NdnSenderChannel::defaultParams();
+    NdnParams *p = SenderChannelParams::defaultParams();
     
     {
         // check camera capturer params
@@ -77,8 +77,9 @@ TEST(NdnSenderChannelParams, TestParams)
 class NdnSenderChannelTest : public NdnRtcObjectTestHelper
 {
     void SetUp(){
+        TRACE("");
         NdnRtcObjectTestHelper::SetUp();
-        p_ = NdnSenderChannel::defaultParams();
+        p_ = SenderChannelParams::defaultParams();
     }
     void TearDown(){
         NdnRtcObjectTestHelper::TearDown();
@@ -96,12 +97,17 @@ TEST_F(NdnSenderChannelTest, CreateDelete)
 TEST_F(NdnSenderChannelTest, TestInit)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_);
+    sc->setObserver(this);
     
     EXPECT_EQ(0,sc->init());
     EXPECT_FALSE(obtainedError_);
     
+    if (obtainedError_)
+        TRACE("got error %s", obtainedEMsg_);
+    
     delete sc;
 }
+
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_);

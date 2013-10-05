@@ -9,6 +9,8 @@
 //  Created: 8/19/13
 //
 
+#undef DEBUG
+
 #include "renderer.h"
 #import "objc/cocoa-renderer.h"
 

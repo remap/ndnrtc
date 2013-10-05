@@ -36,19 +36,19 @@ namespace ndnrtc
             char *hub = (char*)"ndn";
             char *user = (char*)"testuser";
             char *stream = (char*)"video0";
-            
+
             p->setStringParam(ParamNameNdnHub, hub);
             p->setStringParam(ParamNameStreamName, stream);
             p->setStringParam(ParamNameProducerId, user);
             p->setIntParam(ParamNameSegmentSize, 3800);
-            p->setIntParam(ParamNameFrameFreshnessInterval, 1);
+            p->setIntParam(ParamNameFrameFreshnessInterval, 5);
 //            p->setStringParam(ParamNameStreamPrefix, *NdnRtcNamespace::getStreamPath(hub, user, stream).get());
             
             return p;
         }
         
         // parameters names
-        static const std::string ParamNameStreamName;        
+        static const std::string ParamNameStreamName;
         static const std::string ParamNameStreamPrefix;
         static const std::string ParamNameNdnHub;
         static const std::string ParamNameProducerId;
@@ -109,10 +109,10 @@ namespace ndnrtc
     public:
         // construction/desctruction
         NdnVideoSender(const NdnParams * params):NdnRtcObject(params), frameNo_(0) {}
-        ~NdnVideoSender(){};
+        ~NdnVideoSender(){ TRACE("sender is dead"); };
         
         // public methods go here
-        int init(const shared_ptr<Transport> transport, const shared_ptr<KeyChain> ndnKeyChain);
+        int init(const shared_ptr<Transport> transport);
         void registerConference(VideoSenderParams &params);
         
         // interface conformance

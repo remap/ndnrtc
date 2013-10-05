@@ -69,7 +69,7 @@ shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame()
         frame = slot->getFrame();
         framePointer_ = slot->getFrameNumber();
         
-        TRACE("frame %d was acquired for playback");
+        INFO("frame %d was acquired for playback");
     }
     
     return frame;
@@ -103,11 +103,11 @@ bool PlayoutBuffer::processFrameProvider()
     switch (ev.type_) {
         case FrameBuffer::Event::EventTypeReady:
         {
-            TRACE("pushing new frame %d", ev.frameNo_);
             playoutCs_.Enter();
             playoutFrames_.push(ev.slot_);
             frameBuffer_->lockSlot(ev.frameNo_);
             playoutCs_.Leave();
+            INFO("pushed new frame %d", ev.frameNo_);
         }
             break;
         default: // error

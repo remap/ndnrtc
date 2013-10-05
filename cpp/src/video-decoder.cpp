@@ -16,16 +16,16 @@ using namespace webrtc;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoDecoder::NdnVideoDecoder() : NdnRtcObject(), frameConsumer_(NULL)
+NdnVideoDecoder::NdnVideoDecoder(const NdnParams *params) : NdnRtcObject(params), frameConsumer_(NULL)
 {
     memset(&codec_, 0, sizeof(codec_));
 }
 
 //********************************************************************************
 #pragma mark - public
-int NdnVideoDecoder::init(VideoCodec &codecParams)
+int NdnVideoDecoder::init()
 {
-    codec_ = codecParams;
+    codec_ = ((NdnVideoCoderParams*)params_)->getCodec();
     
     decoder_.reset(VP8Decoder::Create());
     
@@ -58,4 +58,6 @@ void NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage
 {
     if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't decode frame");
+    else
+        INFO("decoded");
 }

@@ -111,14 +111,14 @@ protected:
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     EXPECT_NO_THROW(
-                    NdnVideoDecoder *decoder = new NdnVideoDecoder();
+                    NdnVideoDecoder *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
                     delete decoder;
                     );
 }
 TEST_F(NdnVideoCoderTest, TestInit)
 {
-    NdnVideoDecoder  *decoder = new NdnVideoDecoder();
-    EXPECT_EQ(0, decoder->init(codec_));
+    NdnVideoDecoder  *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
+    EXPECT_EQ(0, decoder->init());
     delete decoder;
 }
 //TEST_F(NdnVideoCoderTest, TestDecode)
@@ -144,12 +144,12 @@ TEST_F(NdnVideoCoderTest, CaptureEncodeDecodeAndRender)
 {
     CameraCapturer *cc = new CameraCapturer(CameraCapturerParams::defaultParams());
     NdnVideoCoder *coder = new NdnVideoCoder(NdnVideoCoderParams::defaultParams());
-    NdnVideoDecoder  *decoder = new NdnVideoDecoder();
+    NdnVideoDecoder  *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
     NdnRenderer *renderer = new NdnRenderer(1, NdnRendererParams::defaultParams());
     
     EXPECT_EQ(0, cc->init());
     EXPECT_EQ(0, coder->init());
-    EXPECT_EQ(0, decoder->init(codec_));
+    EXPECT_EQ(0, decoder->init());
     EXPECT_EQ(0, renderer->init());
     
     cc->setFrameConsumer(coder);

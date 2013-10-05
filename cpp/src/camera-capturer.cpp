@@ -9,7 +9,7 @@
 //  Created: 8/16/13
 //
 
-//#define NDN_TRACE
+#undef DEBUG
 
 #include "camera-capturer.h"
 #include "ndnrtc-object.h"
@@ -186,7 +186,7 @@ void CameraCapturer::printCapturingInfo()
         
         for (it = devices->begin(); it != devices->end(); ++it)
         {
-            cout << "\t\t"<< idx << ". " << *it << endl;
+            cout << "\t\t"<< idx++ << ". " << *it << endl;
         }
         delete devices;
     }

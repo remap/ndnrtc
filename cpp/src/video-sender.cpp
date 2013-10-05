@@ -210,7 +210,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
             bytesToSend = (payloadSize < segmentSize_)? payloadSize : segmentSize_;
             payloadSize -= segmentSize_;
             
-            data.getMetaInfo().setFreshnessSeconds(1);
+            data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
             data.getMetaInfo().setFinalBlockID(*finalBlockIDValue);
             data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
             data.setContent((const unsigned char *)&frameData.getData()[segmentNo*segmentSize_], bytesToSend);
@@ -235,7 +235,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 
 //********************************************************************************
 #pragma mark - public
-int NdnVideoSender::init(const shared_ptr<ndn::Transport> transport, const shared_ptr<KeyChain> keyChain)
+int NdnVideoSender::init(const shared_ptr<ndn::Transport> transport)
 {
     certificateName_ = NdnRtcNamespace::certificateNameForUser(((VideoSenderParams*)params_)->getUserPrefix());
     
@@ -243,7 +243,7 @@ int NdnVideoSender::init(const shared_ptr<ndn::Transport> transport, const share
     framePrefix_.reset(new Name(framesPrefix.c_str()));
 
     ndnTransport_ = transport;
-    ndnKeyChain_ = keyChain;
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(((VideoSenderParams*)params_)->getUserPrefix());
     
     if (((VideoSenderParams*)params_)->getSegmentSize(&segmentSize_) < 0)
         segmentSize_ = 3800;

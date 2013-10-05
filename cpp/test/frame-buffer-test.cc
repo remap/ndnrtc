@@ -8,10 +8,22 @@
 //  Author:  Peter Gusev
 //
 
+
+
 #include "test-common.h"
 #include "frame-buffer.h"
 #include "playout-buffer.h"
 #include "video-receiver.h"
+
+#define DEBUG
+#undef NDN_DETAILED
+
+#define NDN_LOGGING
+#define NDN_INFO
+#define NDN_WARN
+#define NDN_ERROR
+#define NDN_TRACE
+
 
 using namespace ndnrtc;
 
@@ -25,13 +37,17 @@ class FrameSlotTester : public NdnRtcObjectTestHelper
         NdnRtcObjectTestHelper::SetUp();
         
         encodedFrame_ = NdnRtcObjectTestHelper::loadEncodedFrame();
+        ASSERT_NE((webrtc::EncodedImage*)NULL, encodedFrame_);
     }
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
         
-        delete encodedFrame_->_buffer;
-        delete encodedFrame_;
+        if (encodedFrame_)
+        {
+            delete encodedFrame_->_buffer;
+            delete encodedFrame_;
+        }
     }
     
 protected:
@@ -293,14 +309,22 @@ class FrameBufferTester : public NdnRtcObjectTestHelper
         
         encodedFrame_ = NdnRtcObjectTestHelper::loadEncodedFrame();
         bookingCs_ = webrtc::CriticalSectionWrapper::CreateCriticalSection();
+        receivedEventsStack_.clear();
+        
+        ASSERT_NE((webrtc::EncodedImage*)NULL, encodedFrame_);
     }
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
         
-        delete encodedFrame_->_buffer;
-        delete encodedFrame_;
-        delete bookingCs_;
+        if (encodedFrame_)
+        {
+            delete encodedFrame_->_buffer;
+            delete encodedFrame_;
+        }
+        
+        if (bookingCs_)
+            delete bookingCs_;
     }
     
     virtual void flushFlags()
@@ -311,6 +335,7 @@ class FrameBufferTester : public NdnRtcObjectTestHelper
         bookingNo_ = 0;
         waitingCycles_ = 0;
         stopWaiting_ = false;
+        receivedEventsStack_.clear();
     }
     
 protected:
@@ -323,6 +348,7 @@ protected:
     int expectedBufferEvents_;
     FrameBuffer::Event receivedEvent_;
     FrameBuffer *buffer_;
+    vector<FrameBuffer::Event> receivedEventsStack_;
     
     static bool waitBufferEvent(void *obj) { return ((FrameBufferTester*)obj)->waitBuffer(); }
     bool waitBuffer()
@@ -331,6 +357,7 @@ protected:
         {
             waitingCycles_++;
             receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
+            receivedEventsStack_.push_back(receivedEvent_);
             finishedWaiting_ = true;
             
             stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::EventTypeError);
@@ -566,6 +593,12 @@ TEST_F(FrameBufferTester, BufferInit)
     
     EXPECT_EQ(0, buffer->init(buffSize, slotSize));
     EXPECT_EQ(60, buffer->getBufferSize());
+    EXPECT_EQ(buffSize, buffer->getStat(FrameBuffer::Slot::StateFree));
+    EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+    EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateAssembling));
+    EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateLocked));
+    EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateReady));
+    EXPECT_EQ(0, buffer->getTimeoutsNumber());
     
     delete buffer;
 }
@@ -578,7 +611,11 @@ TEST_F(FrameBufferTester, BookSlot)
         unsigned int slotSize = 8000;
         
         buffer->init(buffSize, slotSize);
+        
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
+        
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
         
         delete buffer;
     }
@@ -597,6 +634,9 @@ TEST_F(FrameBufferTester, BookSlot)
         
         EXPECT_EQ(FrameBuffer::CallResultFull, buffer->bookSlot(buffSize));
         
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(buffSize, buffer->getStat(FrameBuffer::Slot::StateNew));
+        
         delete buffer;
     }
     
@@ -607,8 +647,12 @@ TEST_F(FrameBufferTester, BookSlot)
         unsigned int slotSize = 8000;
         
         buffer->init(buffSize, slotSize);
+        
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
         EXPECT_EQ(FrameBuffer::CallResultBooked, buffer->bookSlot(32));
+        
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
         
         delete buffer;
     }
@@ -624,9 +668,16 @@ TEST_F(FrameBufferTester, FreeSlot)
         buffer->init(buffSize, slotSize);
         
         buffer->bookSlot(10);
-        buffer->markSlotFree(32);
-        EXPECT_EQ(FrameBuffer::CallResultFull, buffer->bookSlot(11));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
         
+        buffer->markSlotFree(32);
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateFree));
+        
+        EXPECT_EQ(FrameBuffer::CallResultFull, buffer->bookSlot(11));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateFree));
+
         delete buffer;
     }
 }
@@ -641,11 +692,20 @@ TEST_F(FrameBufferTester, BookAndFreeSimple)
         buffer->init(buffSize, slotSize);
         
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
-        EXPECT_EQ(FrameBuffer::CallResultBooked, buffer->bookSlot(32));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
         
+        EXPECT_EQ(FrameBuffer::CallResultBooked, buffer->bookSlot(32));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+
         buffer->markSlotFree(32);
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize, buffer->getStat(FrameBuffer::Slot::StateFree));
         
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
         
         delete buffer;
     }
@@ -661,12 +721,24 @@ TEST_F(FrameBufferTester, LockUnlockFree)
         buffer->init(buffSize, slotSize);
         
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
         
         buffer->lockSlot(32);
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateLocked));
+        
         // shouldn't be freed
         buffer->markSlotFree(32);
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateLocked));
         
         EXPECT_EQ(FrameBuffer::CallResultBooked, buffer->bookSlot(32));
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateLocked));
         
         delete buffer;
     }
@@ -682,11 +754,22 @@ TEST_F(FrameBufferTester, LockUnlockFree)
         buffer->init(buffSize, slotSize);
         
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
         
         buffer->lockSlot(32);
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateLocked));
+        
         buffer->unlockSlot(32);
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateLocked));
         
         buffer->markSlotFree(32);
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize, buffer->getStat(FrameBuffer::Slot::StateFree));
         
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
         
@@ -705,6 +788,10 @@ TEST_F(FrameBufferTester, LockUnlockFree)
         EXPECT_EQ(FrameBuffer::CallResultNew, buffer->bookSlot(32));
         
         buffer->lockSlot(33);
+        EXPECT_EQ(1, buffer->getStat(FrameBuffer::Slot::StateNew));
+        EXPECT_EQ(buffSize-1, buffer->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateLocked));
+        
         buffer->unlockSlot(34);
         
         buffer->markSlotFree(32);
@@ -775,6 +862,8 @@ TEST_F(FrameBufferTester, BookOnFreeEvent)
         EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
         EXPECT_EQ(7, receivedEvent_.frameNo_);
         
+        EXPECT_EQ(buffSize, buffer_->getStat(FrameBuffer::Slot::StateNew));
+        
         waitingThread.SetNotAlive();
         buffer_->release();
         waitingThread.Stop();
@@ -806,7 +895,6 @@ TEST_F(FrameBufferTester, MarkFreeTwice)
         
         // now mark slot as free so other thread can recevie event
         buffer_->markSlotFree(7);
-        
         
         EXPECT_TRUE_WAIT(bookingNo_ == buffSize+1, 1000);
         EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
@@ -881,7 +969,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
         
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeReady;
+        expectedBufferEvents_ = FrameBuffer::Event::EventTypeReady | FrameBuffer::Event::EventTypeFirstSegment;
         buffer_->bookSlot(frameNo);
         
         unsigned int tid = 1;
@@ -893,10 +981,16 @@ TEST_F(FrameBufferTester, TestEventReady)
         buffer_->markSlotAssembling(frameNo, segmentsNum, 100);
         EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
         
-        EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEvent_.type_);
+        // should get 2 events - ready and first segment
+        EXPECT_TRUE_WAIT(2 == receivedEventsStack_.size(), 1000);
+        ASSERT_EQ(2, receivedEventsStack_.size());
+        EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEventsStack_[0].type_);
+        EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEventsStack_[1].type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
+        
+        EXPECT_EQ(buffSize-1, buffer_->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer_->getStat(FrameBuffer::Slot::StateReady));
         
         waitingThread.SetNotAlive();
         buffer_->release();
@@ -943,6 +1037,9 @@ TEST_F(FrameBufferTester, TestEventReady)
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(lastSegmentNo, receivedEvent_.segmentNo_);
         
+        EXPECT_EQ(buffSize-1, buffer_->getStat(FrameBuffer::Slot::StateFree));
+        EXPECT_EQ(1, buffer_->getStat(FrameBuffer::Slot::StateReady));
+        
         waitingThread.SetNotAlive();
         buffer_->release();
         waitingThread.Stop();
@@ -977,6 +1074,8 @@ TEST_F(FrameBufferTester, TestEventTimeout)
         EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
+        
+        EXPECT_EQ(1, buffer_->getTimeoutsNumber());
         
         waitingThread.SetNotAlive();
         buffer_->release();
@@ -1016,6 +1115,8 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
+            
+            EXPECT_EQ(1, buffer_->getTimeoutsNumber());
         }
         
         { // first segment
@@ -1029,6 +1130,8 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
+            
+            EXPECT_EQ(1, buffer_->getStat(FrameBuffer::Slot::StateAssembling));
         }
         
         { // ready
@@ -1045,6 +1148,8 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentsNum-1, receivedEvent_.segmentNo_);
+            
+            EXPECT_EQ(1, buffer_->getStat(FrameBuffer::Slot::StateReady));
         }
         
         waitingThread.SetNotAlive();
@@ -1054,6 +1159,7 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
         delete buffer_;
     }
 }
+
 TEST_F(FrameBufferTester, TestFull)
 {
     // there are going to be 3 threads:
@@ -1289,7 +1395,6 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
     delete buffer_;
 }
 
-
 //********************************************************************************
 // PlayoutBuffer tests
 class PlayoutBufferTester : public NdnRtcObjectTestHelper
@@ -1342,6 +1447,8 @@ TEST_F(PlayoutBufferTester, AcquireFrame)
     playoutBuffer->init(frameBuffer);
     
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
+    ASSERT_NE((webrtc::EncodedImage*)NULL, frame);
+    
     NdnFrameData frameData(*frame);
     
     shared_ptr<webrtc::EncodedImage> assembledFrame = playoutBuffer->acquireNextFrame();

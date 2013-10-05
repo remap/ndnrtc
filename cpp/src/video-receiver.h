@@ -42,7 +42,6 @@ namespace ndnrtc
         
         // public methods go here
         int getProducerRate() const { return getParamAsInt(ParamNameProducerRate); }
-//        int getReceiverId() const { return getParamAsInt(ParamNameReceiverId); }
         int getDefaultTimeout() const {return getParamAsInt(ParamNameInterestTimeout); }
         int getFrameBufferSize() const { return getParamAsInt(ParamNameFrameBufferSize); }
         int getFrameSlotSize() const { return getParamAsInt(ParamNameFrameSlotSize); }
@@ -58,6 +57,10 @@ namespace ndnrtc
         int stopFetching();
         void setFrameConsumer(IEncodedFrameConsumer *consumer) { frameConsumer_ = consumer; }
         
+        unsigned int getPlaybackSkipped() { return playbackSkipped_; }
+        unsigned int getPipelinerOverhead() { return pipelinerOverhead_; }
+        unsigned int getStat(FrameBuffer::Slot::State state) { return frameBuffer_.getStat(state); }
+        
     private:
         enum ReceiverMode {
             ReceiverModeCreated,
@@ -69,6 +72,12 @@ namespace ndnrtc
         };
         
         ReceiverMode mode_;
+        
+        // statistics variables
+        unsigned int playbackSkipped_;  // number of packets that were skipped due to late delivery,
+                                        // i.e. playout thread requests frames at fixed rate, if a frame
+                                        // has not arrived yet (not in playout buffer) - it is skipped
+        unsigned int pipelinerOverhead_;   // number of outstanding frames pipeliner has requested already
         
         bool playout_;
         long playoutSleepIntervalUSec_; // 30 fps
@@ -82,6 +91,7 @@ namespace ndnrtc
         PlayoutBuffer playoutBuffer_;
         IEncodedFrameConsumer *frameConsumer_;
         
+        webrtc::CriticalSectionWrapper &faceCs_; // needed to synmchrnous access to the NDN face object
         webrtc::ThreadWrapper &playoutThread_, &pipelineThread_, &assemblingThread_;
         
         // static routines for threads

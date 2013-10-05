@@ -21,11 +21,11 @@ namespace ndnrtc {
     class NdnVideoDecoder : public NdnRtcObject, public IEncodedFrameConsumer, public webrtc::DecodedImageCallback {
     public:
         // construction/destruction
-        NdnVideoDecoder();
+        NdnVideoDecoder(const NdnParams *coderParams);
         ~NdnVideoDecoder() { TRACE("decoder"); }
         
         void setFrameConsumer(IRawFrameConsumer *frameConsumer) { frameConsumer_ = frameConsumer; };
-        int init(webrtc::VideoCodec &codecParams);
+        int init();
         
         // interface conformance - webrtc::DecodedImageCallback
         int32_t Decoded(webrtc::I420VideoFrame& decodedImage);

@@ -23,7 +23,7 @@ namespace ndnrtc {
     public:
         // construction/desctruction
         NdnVideoCoderParams(){};
-        ~NdnVideoCoderParams(){};
+        ~NdnVideoCoderParams(){ };
         
         // parameters names
         static const std::string ParamNameFrameRate;
@@ -52,6 +52,7 @@ namespace ndnrtc {
         int getMaxBitRate(int *maxBitRate) const { return getParamAsInt(ParamNameMaxBitRate, maxBitRate); };
         int getWidth(int *width) const { return getParamAsInt(ParamNameWidth, width); };
         int getHeight(int *height) const { return getParamAsInt(ParamNameHeight, height); };
+        webrtc::VideoCodec getCodec();
     };
     
     class NdnVideoCoder : public NdnRtcObject, public IRawFrameConsumer, public webrtc::EncodedImageCallback 
@@ -59,7 +60,7 @@ namespace ndnrtc {
     public:
         // construction/desctruction
         NdnVideoCoder(const NdnParams *params);
-        ~NdnVideoCoder() { TRACE("coder"); };
+        ~NdnVideoCoder() { };
         
         // public methods go here
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; };

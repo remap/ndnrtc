@@ -30,6 +30,7 @@ NdnVideoReceiver::NdnVideoReceiver(NdnParams *params) : NdnRtcObject(params),
 playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this)),
 pipelineThread_(*ThreadWrapper::CreateThread(pipelineThreadRoutine, this)),
 assemblingThread_(*ThreadWrapper::CreateThread(assemblingThreadRoutine, this)),
+faceCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 mode_(ReceiverModeCreated),
 playout_(false),
 playoutFrameNo_(0),
@@ -37,7 +38,7 @@ playoutSleepIntervalUSec_(33333),
 face_(nullptr),
 frameConsumer_(nullptr)
 {
-    
+    TRACE("");
 }
 
 NdnVideoReceiver::~NdnVideoReceiver()
@@ -81,7 +82,7 @@ int NdnVideoReceiver::startFetching()
     
     // setup and start playout thread
     unsigned int tid = PLAYOUT_THREAD_ID;
-    int res;
+    int res = 0;
     
     switchToMode(ReceiverModeStarted);
     
@@ -197,7 +198,8 @@ void NdnVideoReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                 TRACE("mark assembling");
                 // get total number of segments
                 Name::Component finalBlockID = data->getMetaInfo().getFinalBlockID();
-                unsigned int segmentsNum = NdnRtcUtils::segmentNumber(finalBlockID);
+                // final block id stores number of last segment, so the number of all segments is greater by 1
+                unsigned int segmentsNum = NdnRtcUtils::segmentNumber(finalBlockID)+1;
                 
                 frameBuffer_.markSlotAssembling(frameNo, segmentsNum, producerSegmentSize_);
             }
@@ -241,10 +243,12 @@ bool NdnVideoReceiver::processPlayout()
         processingDelay = NdnRtcUtils::microsecondTimestamp()-processingDelay;
         
         // sleep if needed
-        if (playoutSleepIntervalUSec_-processingDelay)
+        if (playoutSleepIntervalUSec_-processingDelay > 0)
+        {
             usleep(playoutSleepIntervalUSec_-processingDelay);
+        }
     }
-
+    
     return playout_;
 }
 
@@ -253,6 +257,7 @@ bool NdnVideoReceiver::processInterests()
     bool res = true;
     FrameBuffer::Event ev = frameBuffer_.waitForEvents(pipelinerEventsMask_);
 //    TRACE("pipeliner got event %d", ev.type_);
+    bool lateFrame = ev.frameNo_ < playoutBuffer_.framePointer();
     
     switch (ev.type_)
     {
@@ -279,7 +284,7 @@ bool NdnVideoReceiver::processInterests()
         case FrameBuffer::Event::EventTypeFirstSegment:
         {
             // check if it is a segment for the first frame
-            if (mode_ == ReceiverModeWaitingFirstSegment)
+            if (mode_ == ReceiverModeWaitingFirstSegment)// && !lateFrame)
             {
                 // switch to fetching mode
                 switchToMode(ReceiverModeFetch);
@@ -292,7 +297,7 @@ bool NdnVideoReceiver::processInterests()
         case FrameBuffer::Event::EventTypeTimeout:
         {
             // check wether we need to re-issue interest
-            if (ev.frameNo_ >= playoutBuffer_.framePointer())
+            if (!lateFrame)
             {
 //                WARN("got timeout for the frame %d (segment %d). re-issuing", ev.frameNo_, ev.segmentNo_);
                 if (mode_ == ReceiverModeWaitingFirstSegment)
@@ -318,6 +323,11 @@ bool NdnVideoReceiver::processInterests()
             break;
     }
     
+//    if (lateFrame)
+//    {
+//        frameBuffer_.markSlotFree(ev.frameNo_);
+//    }
+    
     return res;
 }
 
@@ -327,7 +337,15 @@ bool NdnVideoReceiver::processAssembling()
     // if not - skip processing events
     if (!(mode_ == ReceiverModeInit || mode_ == ReceiverModeCreated || mode_ == ReceiverModeStarted))
     {
-        face_->processEvents();
+        faceCs_.Enter();
+        try {
+            face_->processEvents();
+        }
+        catch(std::exception &e)
+        {
+            ERR("got exception from ndn-library while processing events: %s", e.what());
+        }
+        faceCs_.Leave();
     }
 
     usleep(10000);
@@ -403,6 +421,9 @@ void NdnVideoReceiver::pipelineInterests(FrameBuffer::Event &event)
     // 1. get number of interests to be send out
     int interestsNum = event.slot_->totalSegmentsNumber() - 1;
     
+    if (!interestsNum)
+        return ;
+    
     // 2. setup frame prefix
     Name framePrefix = framesPrefix_;
     stringstream ss;
@@ -447,14 +468,30 @@ void NdnVideoReceiver::expressInterest(Name &prefix)
     Interest i(prefix, interestTimeout_);
     
 //    TRACE("expressing interest %s", i.getName().toUri().c_str());
+    faceCs_.Enter();
+    try{
     face_->expressInterest(i,
                            bind(&NdnVideoReceiver::onSegmentData, this, _1, _2),
                            bind(&NdnVideoReceiver::onTimeout, this, _1));
+    }
+    catch(std::exception &e)
+    {
+        ERR("got exception from ndn-library: %s (while expressing interest: %s)", e.what(),i.getName().toUri().c_str());
+    }
+    faceCs_.Leave();
 }
 void NdnVideoReceiver::expressInterest(Interest &i)
 {
 //    TRACE("expressing interest %s", i.getName().toUri().c_str());
-    face_->expressInterest(i,
-                           bind(&NdnVideoReceiver::onSegmentData, this, _1, _2),
-                           bind(&NdnVideoReceiver::onTimeout, this, _1));
+    faceCs_.Enter();
+    try {
+        face_->expressInterest(i,
+                               bind(&NdnVideoReceiver::onSegmentData, this, _1, _2),
+                               bind(&NdnVideoReceiver::onTimeout, this, _1));
+    }
+    catch(std::exception &e)
+    {
+        ERR("got exception from ndn-library: %s (while expressing interest: %s)", e.what(),i.getName().toUri().c_str());
+    }
+    faceCs_.Leave();
 }
