@@ -12,7 +12,7 @@
 #ifndef ndnrtc_ndnrtc_common_h
 #define ndnrtc_ndnrtc_common_h
 
-#define NDN_LOGGING
+//#define NDN_LOGGING
 #define NDN_DETAILED
 //#define NDN_TRACE
 #define NDN_INFO

@@ -60,8 +60,9 @@ namespace ndnrtc {
         // public methods go here
         virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
         virtual void* getLibraryHandle(){ return libraryHandle_; };
-        
-        virtual int startConference(ndnrtc::NdnParams &params);
+
+        virtual int startConference(const char *username);
+//        virtual int startConference(ndnrtc::NdnParams &params);
         virtual int joinConference(const char *conferencePrefix);
         virtual int leaveConference(const char *conferencePrefix);
         virtual void onErrorOccurred(const char *errorMessage);
@@ -72,6 +73,7 @@ namespace ndnrtc {
         
         // private methods go here
         int notifyObserverWithError(const char *format, ...);
+        int notifyObserverWithState(const char *stateName, const char *format, ...);
         void notifyObserver(const char *state, const char *args);
     };
 }
