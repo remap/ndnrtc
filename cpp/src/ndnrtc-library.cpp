@@ -82,36 +82,35 @@ void NdnRtcLibrary::configure(NdnLibParams &params)
     NdnLogger::initialize(params.logFile, params.loggingLevel);
     
     // capture settings
-    CHECK_AND_SET_INT(libParams_, CameraCapturerParams::ParamNameDeviceId, params.captureDeviceId)
-    CHECK_AND_SET_INT(libParams_, CameraCapturerParams::ParamNameWidth, params.captureWidth)
-    CHECK_AND_SET_INT(libParams_, CameraCapturerParams::ParamNameHeight, params.captureHeight)
-    CHECK_AND_SET_INT(libParams_, CameraCapturerParams::ParamNameFPS, params.captureFramerate)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameDeviceId, params.captureDeviceId)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameWidth, params.captureWidth)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameHeight, params.captureHeight)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFPS, params.captureFramerate)
     
     // render
-    CHECK_AND_SET_INT(libParams_, NdnRendererParams::ParamNameWindowWidth, params.renderWidth)
-    CHECK_AND_SET_INT(libParams_, NdnRendererParams::ParamNameWindowHeight, params.renderHeight)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameWindowWidth, params.renderWidth)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameWindowHeight, params.renderHeight)
     
     // codec
-    CHECK_AND_SET_INT(libParams_, NdnVideoCoderParams::ParamNameFrameRate, params.codecFrameRate)
-    CHECK_AND_SET_INT(libParams_, NdnVideoCoderParams::ParamNameStartBitRate, params.startBitrate)
-    CHECK_AND_SET_INT(libParams_, NdnVideoCoderParams::ParamNameMaxBitRate, params.maxBitrate)
-    CHECK_AND_SET_INT(libParams_, NdnVideoCoderParams::ParamNameWidth, params.encodeWidth)
-    CHECK_AND_SET_INT(libParams_, NdnVideoCoderParams::ParamNameHeight, params.encodeHeight)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFrameRate, params.codecFrameRate)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameStartBitRate, params.startBitrate)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameMaxBitRate, params.maxBitrate)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameWidth, params.encodeWidth)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameHeight, params.encodeHeight)
     
     // network
-    CHECK_AND_SET_STR(libParams_, SenderChannelParams::ParamNameConnectHost, params.host)
-    
-    CHECK_AND_SET_INT(libParams_, SenderChannelParams::ParamNameConnectPort, params.portNum)
+    CHECK_AND_SET_STR(libParams_, NdnParams::ParamNameConnectHost, params.host)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameConnectPort, params.portNum)
     
     // ndn producer
-    CHECK_AND_SET_INT(libParams_, VideoSenderParams::ParamNameSegmentSize, params.segmentSize)
-    CHECK_AND_SET_INT(libParams_, VideoSenderParams::ParamNameFrameFreshnessInterval, params.freshness)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameSegmentSize, params.segmentSize)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFrameFreshnessInterval, params.freshness)
     
     // ndn consumer
-    CHECK_AND_SET_INT(libParams_, VideoReceiverParams::ParamNameProducerRate, params.playbackRate)
-    CHECK_AND_SET_INT(libParams_, VideoReceiverParams::ParamNameInterestTimeout, params.interestTimeout)
-    CHECK_AND_SET_INT(libParams_, VideoReceiverParams::ParamNameFrameBufferSize, params.bufferSize)
-    CHECK_AND_SET_INT(libParams_, VideoReceiverParams::ParamNameFrameSlotSize, params.slotSize)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameProducerRate, params.playbackRate)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameInterestTimeout, params.interestTimeout)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFrameBufferSize, params.bufferSize)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFrameSlotSize, params.slotSize)
     
     notifyObserverWithState("init", "initialized with parameters: %s", libParams_.description().c_str());
 }
@@ -129,11 +128,13 @@ NdnLibParams NdnRtcLibrary::getDefaultParams() const
     return defaultParams;
 }
 
-int NdnRtcLibrary::startConference(const char *username)
+int NdnRtcLibrary::startPublishing(const char *username)
 //int NdnRtcLibrary::startConference(NdnParams &params)
 {
+    NdnParams params(libParams_);
+    
     if (username)
-        libParams_.setStringParam(VideoSenderParams::ParamNameProducerId, username);
+        params.setStringParam(VideoSenderParams::ParamNameProducerId, username);
     
     shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(&libParams_));
     
@@ -149,9 +150,20 @@ int NdnRtcLibrary::startConference(const char *username)
     
     return notifyObserverWithState("transmitting",
                                    "started video translation under the user prefix: %s, video stream prefix: %s",
-                                   static_cast<VideoSenderParams*>(&libParams_)->getUserPrefix().c_str(),
+                                   static_cast<VideoSenderParams*>(&params)->getUserPrefix().c_str(),
 //                                   ((VideoSenderParams)libParams_).getUserPrefix().c_str(),
-                                   static_cast<VideoSenderParams*>(&libParams_)->getStreamFramePrefix().c_str());
+                                   static_cast<VideoSenderParams*>(&params)->getStreamFramePrefix().c_str());
+}
+
+int NdnRtcLibrary::stopPublishing()
+{
+    if (SenderChannel.get())
+    {
+        SenderChannel->stopTransmission();
+        SenderChannel.reset();
+    }
+    
+    return notifyObserverWithState("publishing stopped", "stopped publishing media");
 }
 
 int NdnRtcLibrary::joinConference(const char *conferencePrefix)
@@ -162,7 +174,9 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
         return notifyObserverWithError("already joined conference");
 
     // setup params
-    libParams_.setStringParam(VideoSenderParams::ParamNameProducerId, conferencePrefix);
+    NdnParams params(libParams_);
+    
+    params.setStringParam(VideoSenderParams::ParamNameProducerId, conferencePrefix);
     
     shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(&libParams_));
     
@@ -178,17 +192,12 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
     
     return notifyObserverWithState("fetching",
                                    "fetching video from the prefix %s",
-                                   static_cast<VideoSenderParams*>(&libParams_)->getStreamFramePrefix().c_str());
+                                   static_cast<VideoSenderParams*>(&params)->getStreamFramePrefix().c_str());
 }
 
 int NdnRtcLibrary::leaveConference(const char *conferencePrefix)
 {
     TRACE("leaving conference with prefix: %s", conferencePrefix);
-//    if (SenderChannel.get())
-//    {
-//        SenderChannel->stopTransmission();
-//        SenderChannel.reset();
-//    }
     
     if (Producers.find(string(conferencePrefix)) == Producers.end())
         return notifyObserverWithError("didn't find a conference to leave. did you join?");

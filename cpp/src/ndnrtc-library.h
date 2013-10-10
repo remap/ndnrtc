@@ -94,10 +94,12 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
         virtual NdnLibParams getDefaultParams() const;
         
-        virtual int startConference(const char *username);
-//        virtual int startConference(ndnrtc::NdnParams &params);
+        virtual int startPublishing(const char *username);
+        virtual int stopPublishing();
+
         virtual int joinConference(const char *conferencePrefix);
         virtual int leaveConference(const char *conferencePrefix);
+        
         virtual void onErrorOccurred(const char *errorMessage);
         
     private:

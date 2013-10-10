@@ -15,10 +15,6 @@ using namespace webrtc;
 using namespace std;
 
 //********************************************************************************
-const string ReceiverChannelParams::ParamNameConnectHost = "connect_host";
-const string ReceiverChannelParams::ParamNameConnectPort = "connect_4port";
-
-//********************************************************************************
 #pragma mark - construction/destruction
 NdnReceiverChannel::NdnReceiverChannel(NdnParams *params) : NdnRtcObject(params),
 localRender_(new NdnRenderer(1,params)),

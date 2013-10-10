@@ -49,7 +49,7 @@ CPPSRCS_SA	= $(filter-out ndNrtc%,$(CPPSRCS))
 OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
 DEBUGFLAGS = -DDEBUG -DNDN_TRACE
-LOGFLAGS = -DNDN_LOGGING -DNDN_DETAILED -DNDN_INFO -DWEBRTC_LOGGING
+LOGFLAGS = -DNDN_LOGGING -DNDN_INFO -DWEBRTC_LOGGING #-DNDN_DETAILED
 CPPFLAGS += -fno-rtti -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
