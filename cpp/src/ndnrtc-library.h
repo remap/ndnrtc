@@ -16,6 +16,37 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 
+typedef struct _NdnLibParams {
+    NdnLoggerDetailLevel loggingLevel;
+    const char *logFile;
+    
+    // capture settings
+    int captureDeviceId;
+    unsigned int captureWidth, captureHeight;
+    unsigned int captureFramerate;
+    
+    // render
+    unsigned int renderWidth, renderHeight;
+    
+    // codec
+    unsigned int codecFrameRate;
+    unsigned int startBitrate, maxBitrate;
+    unsigned int encodeWidth, encodeHeight;
+    
+    // network parameters
+    const char *host;
+    unsigned int portNum;
+    
+    // ndn producer
+    unsigned int segmentSize, freshness;
+    
+    // ndn consumer
+    unsigned int playbackRate;
+    unsigned int interestTimeout;
+    unsigned int bufferSize, slotSize;
+    
+} NdnLibParams;
+
 namespace ndnrtc {
     class INdnRtcLibraryObserver {
     public:
@@ -25,7 +56,7 @@ namespace ndnrtc {
     class NdnRtcLibrary : public INdnRtcObjectObserver {
     public:
         // construction/desctruction
-        NdnRtcLibrary(void *libHandle):observer_(NULL), libraryHandle_(libHandle){}
+        NdnRtcLibrary(void *libHandle);
         ~NdnRtcLibrary(){}
         
         // public static methods go here
@@ -58,9 +89,11 @@ namespace ndnrtc {
         // <#public attributes go here#>
         
         // public methods go here
+        virtual void configure(NdnLibParams &params);
         virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
         virtual void* getLibraryHandle(){ return libraryHandle_; };
-
+        virtual NdnLibParams getDefaultParams() const;
+        
         virtual int startConference(const char *username);
 //        virtual int startConference(ndnrtc::NdnParams &params);
         virtual int joinConference(const char *conferencePrefix);
@@ -69,6 +102,7 @@ namespace ndnrtc {
         
     private:
         void *libraryHandle_;
+        NdnParams libParams_;
         INdnRtcLibraryObserver *observer_;
         
         // private methods go here

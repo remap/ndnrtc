@@ -25,12 +25,6 @@ namespace ndnrtc {
         // construction/desctruction
         CameraCapturerParams():NdnParams(){};
         
-        // parameters names
-        static const std::string ParamNameDeviceId;
-        static const std::string ParamNameWidth;
-        static const std::string ParamNameHeight;
-        static const std::string ParamNameFPS;
-        
         // static public
         static CameraCapturerParams *defaultParams()
         {

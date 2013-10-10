@@ -75,7 +75,7 @@ TEST(LoopbackTests, Transmission)
     SenderChannelParams *sp = SenderChannelParams::defaultParams();
     ReceiverChannelParams *rp = ReceiverChannelParams::defaultParams();
     
-    sp->setIntParam(CameraCapturerParams::ParamNameDeviceId, 1);
+//    sp->setIntParam(CameraCapturerParams::ParamNameDeviceId, 1);
     sp->setIntParam(VideoSenderParams::ParamNameFrameFreshnessInterval, 10);
     
     NdnSenderChannel *sc = new NdnSenderChannel(sp);

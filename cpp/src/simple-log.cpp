@@ -22,18 +22,37 @@ static NdnLogger *sharedLogger = 0;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnLogger::NdnLogger()
+NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
+loggingDetailLevel_(logDetailLevel),
+outLogStream_(NULL),
+logMutex_(PTHREAD_MUTEX_INITIALIZER)
 {
-    buf = (char*)malloc(MAX_BUF_SIZE);
-    flushBuffer(buf);
+    buf_ = (char*)malloc(MAX_BUF_SIZE);
+    flushBuffer(buf_);
+
+    if (logFile)
+        outLogStream_ = fopen(logFile, "w");
+
+    if (!logFile || outLogStream_ < 0)
+        outLogStream_ = stdout;
+    
 }
 NdnLogger::~NdnLogger()
 {
-    free(buf);
+    free(buf_);
+    pthread_mutex_destroy(&logMutex_);
 }
 
 //********************************************************************************
 #pragma mark - all static
+void NdnLogger::initialize(const char *logFile, NdnLoggerDetailLevel logDetailLevel)
+{
+    if (sharedLogger)
+        delete sharedLogger;
+    
+    sharedLogger = new NdnLogger(logFile, logDetailLevel);
+}
+
 NdnLogger* NdnLogger::getInstance()
 {
     if (!sharedLogger)
@@ -66,23 +85,37 @@ void NdnLogger::flushBuffer(char *buffer)
 void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format, ...)
 {
     NdnLogger *sharedInstance = NdnLogger::getInstance();
-    va_list args;
     
-    va_start(args, format);
-    sharedInstance->flushBuffer(tempBuf);
-    vsprintf(tempBuf, format, args);
-    va_end(args);
-    
-    char *buf = sharedInstance->getBuffer();
-    
-    sharedInstance->flushBuffer(buf);
-    sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level), fName, tempBuf);
-    
-    sharedInstance->log(buf);
+    if (level >= (NdnLoggerLevel)sharedInstance->getLoggingDetailLevel())
+    {
+        va_list args;
+        
+        va_start(args, format);
+        sharedInstance->flushBuffer(tempBuf);
+        vsprintf(tempBuf, format, args);
+        va_end(args);
+        
+        char *buf = sharedInstance->getBuffer();
+        
+        sharedInstance->flushBuffer(buf);
+        sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level), fName, tempBuf);
+        
+        sharedInstance->log(buf);
+    }
 }
 
 //********************************************************************************
 #pragma mark - private
+int64_t NdnLogger::millisecondTimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+    
+    return ticks;
+}
+
 void NdnLogger::log(const char *str)
 {
     struct timeval tv;
@@ -92,5 +125,12 @@ void NdnLogger::log(const char *str)
     
     sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
     
-    std::cout<<timestamp<<str<<std::endl;
+    // make exlusive by semaphores
+    pthread_mutex_lock(&logMutex_);
+    fprintf(outLogStream_, "%lld: %s\n", millisecondTimestamp(), str);
+
+    if (outLogStream_ != stdout)
+        fflush(outLogStream_);
+    
+    pthread_mutex_unlock(&logMutex_);
 }

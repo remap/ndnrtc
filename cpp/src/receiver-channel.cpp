@@ -15,8 +15,8 @@ using namespace webrtc;
 using namespace std;
 
 //********************************************************************************
-const string ReceiverChannelParams::ParamNameConnectHost = "connect-host";
-const string ReceiverChannelParams::ParamNameConnectPort = "connect-port";
+const string ReceiverChannelParams::ParamNameConnectHost = "connect_host";
+const string ReceiverChannelParams::ParamNameConnectPort = "connect_4port";
 
 //********************************************************************************
 #pragma mark - construction/destruction
@@ -46,6 +46,7 @@ void NdnReceiverChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
 int NdnReceiverChannel::init()
 {
     // connect to ndn
+    try
     {
         std::string host = getParams()->getConnectHost();
         int port = getParams()->getConnectPort();
@@ -64,6 +65,10 @@ int NdnReceiverChannel::init()
         }
         else
             return notifyError(-1, "malformed parameters for host/port");
+    }
+    catch (std::exception &e)
+    {
+        return notifyError(-1, "got error form ndn library: %s", e.what());
     }
     
     if (localRender_->init() < 0)

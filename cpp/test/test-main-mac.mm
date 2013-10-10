@@ -10,6 +10,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "test-common.h"
+#include "simple-log.h"
 
 int runTests(int argc, char * argv[]);
 
@@ -84,6 +85,8 @@ int main(int argc, char * argv[]) {
     NSRunLoop* main_run_loop = [NSRunLoop mainRunLoop];
     NSDate *loop_until = [NSDate dateWithTimeIntervalSinceNow:0.1];
     bool runloop_ok = true;
+    NdnLogger::initialize("bin/ndnrtc.log", NdnLoggerDetailLevelAll);
+    
     while (![tests done] && runloop_ok) {
         runloop_ok = [main_run_loop runMode:NSDefaultRunLoopMode
                                  beforeDate:loop_until];

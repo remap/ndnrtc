@@ -25,13 +25,6 @@ namespace ndnrtc {
         NdnVideoCoderParams(){};
         ~NdnVideoCoderParams(){ };
         
-        // parameters names
-        static const std::string ParamNameFrameRate;
-        static const std::string ParamNameStartBitRate;
-        static const std::string ParamNameMaxBitRate;
-        static const std::string ParamNameWidth;
-        static const std::string ParamNameHeight;
-        
         // static public
         static NdnVideoCoderParams *defaultParams()
         {
@@ -40,8 +33,8 @@ namespace ndnrtc {
             p->setIntParam(ParamNameFrameRate, 30);
             p->setIntParam(ParamNameStartBitRate, 300);
             p->setIntParam(ParamNameMaxBitRate, 4000);
-            p->setIntParam(ParamNameWidth, 640);
-            p->setIntParam(ParamNameHeight, 480);
+            p->setIntParam(ParamNameEncodeWidth, 640);
+            p->setIntParam(ParamNameEncodeHeight, 480);
             
             return p;
         }
@@ -50,8 +43,8 @@ namespace ndnrtc {
         int getFrameRate(int *frameRate) const { return getParamAsInt(ParamNameFrameRate, frameRate); };
         int getStartBitRate(int *startBitRate) const { return getParamAsInt(ParamNameStartBitRate, startBitRate); };
         int getMaxBitRate(int *maxBitRate) const { return getParamAsInt(ParamNameMaxBitRate, maxBitRate); };
-        int getWidth(int *width) const { return getParamAsInt(ParamNameWidth, width); };
-        int getHeight(int *height) const { return getParamAsInt(ParamNameHeight, height); };
+        int getWidth(int *width) const { return getParamAsInt(ParamNameEncodeWidth, width); };
+        int getHeight(int *height) const { return getParamAsInt(ParamNameEncodeHeight, height); };
         webrtc::VideoCodec getCodec();
     };
     
@@ -74,6 +67,9 @@ namespace ndnrtc {
         // interface conformance - ndnrtc::IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
     private:
+        int keyFrameCounter_ = 0;
+        int currentFrameRate_;
+        std::vector<webrtc::VideoFrameType> keyFrameType_;
         // private attributes go here
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;

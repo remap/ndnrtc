@@ -28,7 +28,7 @@ namespace ndnrtc
             SenderChannelParams *p = new SenderChannelParams();
 
             char *host =  (char*)"localhost";
-            int portnum = 9695;
+            int portnum = 6363;
             
             p->setStringParam(ParamNameConnectHost, host);
             p->setIntParam(ParamNameConnectPort, portnum);
@@ -46,10 +46,6 @@ namespace ndnrtc
             
             return p;
         }
-        
-        // parameters names
-        static const std::string ParamNameConnectHost;
-        static const std::string ParamNameConnectPort;
         
         int getConnectPort() { return getParamAsInt(ParamNameConnectPort); }
         std::string getConnectHost() { return getParamAsString(ParamNameConnectHost); }

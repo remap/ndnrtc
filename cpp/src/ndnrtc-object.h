@@ -38,12 +38,12 @@ namespace ndnrtc {
             Parameter(const ParameterType type, const void *value);
             Parameter(const Parameter &p) : Parameter(p.type_, p.value_) {  };
             Parameter(Parameter &p) : Parameter(p.type_, p.value_) {  };
-            ~Parameter(){ if (value_ != nullptr) free(value_); };
+            virtual ~Parameter(){ if (value_ != nullptr) free(value_); };
             
             // public attributes
-            void setTypeAndValue(const ParameterType type, const void *value);
-            ParameterType getType() const { return type_; };
-            void* getValue() const { return value_; };
+            virtual void setTypeAndValue(const ParameterType type, const void *value);
+            virtual ParameterType getType() const { return type_; };
+            virtual void* getValue() const { return value_; };
             
         private:
             // static methods
@@ -60,6 +60,43 @@ namespace ndnrtc {
         NdnParams(const NdnParams &params) { addParams(params); };
         virtual ~NdnParams() {};
         
+        // static attributes
+        // capturer param names
+        static const std::string ParamNameDeviceId;
+        static const std::string ParamNameWidth;
+        static const std::string ParamNameHeight;
+        static const std::string ParamNameFPS;
+        
+        // renderer param names
+        static const std::string ParamNameWindowWidth;
+        static const std::string ParamNameWindowHeight;
+        
+        // encoder parameters names
+        static const std::string ParamNameFrameRate;
+        static const std::string ParamNameStartBitRate;
+        static const std::string ParamNameMaxBitRate;
+        static const std::string ParamNameEncodeWidth;
+        static const std::string ParamNameEncodeHeight;
+        
+        // producer parameters names
+        static const std::string ParamNameStreamName;
+        static const std::string ParamNameStreamPrefix;
+        static const std::string ParamNameNdnHub;
+        static const std::string ParamNameProducerId;
+        static const std::string ParamNameSegmentSize;
+        static const std::string ParamNameFrameFreshnessInterval;
+        
+        // consumer parameters names
+        static const std::string ParamNameProducerRate;
+        static const std::string ParamNameReceiverId;
+        static const std::string ParamNameInterestTimeout;
+        static const std::string ParamNameFrameBufferSize;
+        static const std::string ParamNameFrameSlotSize;
+        
+        // network parameters names
+        static const std::string ParamNameConnectHost;
+        static const std::string ParamNameConnectPort;
+        
         // public static goes here
         static NdnParams* defaultParams(){
             return new NdnParams();
@@ -67,23 +104,26 @@ namespace ndnrtc {
         
         // public methods go here
         virtual int size(){ return propertiesMap_.size(); };
-        void addParams(const ndnrtc::NdnParams& params);
-        void resetParams(const NdnParams &params);
-        void setIntParam(const std::string &name, const int value) { setParam(name, Parameter(ParameterTypeInt, &value)); };
-        void setBoolParam(const std::string &name, const bool value) { setParam(name, Parameter(ParameterTypeBool, &value)); };
-        void setStringParam(const std::string &name, const std::string &value) { setParam(name, Parameter(ParameterTypeString, (char*)value.c_str())); };
-
+        virtual void addParams(const ndnrtc::NdnParams& params);
+        virtual void resetParams(const NdnParams &params);
+        virtual void setIntParam(const std::string &name, const int value) { setParam(name, Parameter(ParameterTypeInt, &value)); };
+        virtual void setBoolParam(const std::string &name, const bool value) { setParam(name, Parameter(ParameterTypeBool, &value)); };
+        virtual void setStringParam(const std::string &name, const std::string &value) { setParam(name, Parameter(ParameterTypeString, (char*)value.c_str())); };
+        
+        // prints out all the current params into a string
+        virtual std::string description() const;
+        
     protected:
         // protected methods go here
-        const std::map<std::string, Parameter>& map() const { return propertiesMap_; };
-        void setParam(const std::string &name, const Parameter &param);
-        int getParamAsInt(const std::string &paramName, int *param) const;
-        int getParamAsBool(const std::string &paramName, bool *param) const;
-        int getParamAsString(const std::string &paramName, char** param) const;
+        virtual const std::map<std::string, Parameter>& map() const { return propertiesMap_; };
+        virtual void setParam(const std::string &name, const Parameter &param);
+        virtual int getParamAsInt(const std::string &paramName, int *param) const;
+        virtual int getParamAsBool(const std::string &paramName, bool *param) const;
+        virtual int getParamAsString(const std::string &paramName, char** param) const;
         
-        std::string getParamAsString(const std::string &paramName) const;
-        int getParamAsInt(const std::string &paramName) const;
-        bool getParamAsBool(const std::string &paramName) const;
+        virtual std::string getParamAsString(const std::string &paramName) const;
+        virtual int getParamAsInt(const std::string &paramName) const;
+        virtual bool getParamAsBool(const std::string &paramName) const;
         
     private:
         // attributes

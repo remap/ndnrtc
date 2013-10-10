@@ -13,6 +13,7 @@
 #define __ndnrtc__simple__
 
 #include <iostream>
+#include <pthread.h>
 
 #if !defined(NDN_LOGGING)
 #undef NDN_TRACE
@@ -68,6 +69,13 @@ namespace ndnlog {
         NdnLoggerLevelError = 4
     } NdnLoggerLevel;
     
+    typedef enum _NdnLoggerDetailLevel {
+        NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
+        NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
+        NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
+        NdnLoggerDetailLevelAll = 0
+    } NdnLoggerDetailLevel;
+    
     /**
      * Simple logger class to stdout (for now)
      */
@@ -75,12 +83,13 @@ namespace ndnlog {
     {
     public:
         // construction/desctruction
-        NdnLogger();
+        NdnLogger(const char *logFile = NULL, NdnLoggerDetailLevel logDetailLevel = NdnLoggerDetailLevelDefault);
         ~NdnLogger();
         
         // public static attributes go here
         
         // public static methods go here
+        static void initialize(const char *logFile, NdnLoggerDetailLevel logDetailLevel);
         static void log(const char *fName, NdnLoggerLevel level, const char *format, ...);
         
         // public attributes go here
@@ -94,12 +103,18 @@ namespace ndnlog {
         static const char* stingify(NdnLoggerLevel lvl);
         
         // private attributes go here
-        char *buf;
+        FILE *outLogStream_;
+        char *buf_;
+        NdnLoggerDetailLevel loggingDetailLevel_;
+        
+        pthread_mutex_t logMutex_;
         
         // private methods go here
         void log(const char *str);
         void flushBuffer(char *buf);
-        char* getBuffer(){ return buf; }
+        char* getBuffer(){ return buf_; }
+        NdnLoggerDetailLevel getLoggingDetailLevel() { return loggingDetailLevel_; }
+        int64_t millisecondTimestamp();
     };
 }
 

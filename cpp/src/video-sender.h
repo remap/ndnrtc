@@ -47,14 +47,6 @@ namespace ndnrtc
             return p;
         }
         
-        // parameters names
-        static const std::string ParamNameStreamName;
-        static const std::string ParamNameStreamPrefix;
-        static const std::string ParamNameNdnHub;
-        static const std::string ParamNameProducerId;
-        static const std::string ParamNameSegmentSize;
-        static const std::string ParamNameFrameFreshnessInterval;
-        
         // public methods go here
         int getHub(char **hub) const { return getParamAsString(ParamNameNdnHub, hub); }
         int getProducerId(char **producerId) const { return getParamAsString(ParamNameProducerId, producerId); }

@@ -33,10 +33,6 @@ namespace ndnrtc {
             return p;
         }
         
-        // parameters names
-        static const std::string ParamNameWindowWidth;
-        static const std::string ParamNameWindowHeight;
-        
         // public methods
         int getWindowWidth(int *width) { return getParamAsInt(ParamNameWindowWidth, width); };
         int getWindowHeight(int *height) { return getParamAsInt(ParamNameWindowHeight, height); };

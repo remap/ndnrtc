@@ -28,13 +28,6 @@ using namespace webrtc;
 
 //********************************************************************************
 //********************************************************************************
-const string VideoSenderParams::ParamNameStreamPrefix = "stream-prefix";
-const string VideoSenderParams::ParamNameNdnHub = "ndn-hub";
-const string VideoSenderParams::ParamNameProducerId = "producer-id";
-const string VideoSenderParams::ParamNameStreamName = "stream-name";
-const string VideoSenderParams::ParamNameSegmentSize = "segment-size";
-const string VideoSenderParams::ParamNameFrameFreshnessInterval = "freshness";
-
 //********************************************************************************
 #pragma mark - public
 

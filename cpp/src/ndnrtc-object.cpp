@@ -12,7 +12,7 @@
 #include "ndnrtc-object.h"
 
 using namespace ndnrtc;
-
+using namespace std;
 //********************************************************************************
 /**
  * @name Paramter class
@@ -75,6 +75,38 @@ int NdnParams::Parameter::valueByteSize(const ParameterType type, const void *va
  * @name NdnParams class
  */
 //********************************************************************************
+//********************************************************************************
+#pragma mark - all static
+const string NdnParams::ParamNameDeviceId = "device_id";
+const string NdnParams::ParamNameWidth = "capture_width";
+const string NdnParams::ParamNameHeight = "capture_height";
+const string NdnParams::ParamNameFPS = "fps";
+
+const string NdnParams::ParamNameWindowWidth = "render_width";
+const string NdnParams::ParamNameWindowHeight = "render_height";
+
+const string NdnParams::ParamNameFrameRate = "frame_rate";
+const string NdnParams::ParamNameStartBitRate = "start_bitrate";
+const string NdnParams::ParamNameMaxBitRate = "max_bitrate";
+const string NdnParams::ParamNameEncodeWidth = "encode_width";
+const string NdnParams::ParamNameEncodeHeight = "encode_height";
+
+const string NdnParams::ParamNameStreamPrefix = "stream_prefix";
+const string NdnParams::ParamNameNdnHub = "ndn_hub";
+const string NdnParams::ParamNameProducerId = "producer_id";
+const string NdnParams::ParamNameStreamName = "stream_name";
+const string NdnParams::ParamNameSegmentSize = "segment_size";
+const string NdnParams::ParamNameFrameFreshnessInterval = "freshness";
+
+const string NdnParams::ParamNameProducerRate = "playback_rate";
+const string NdnParams::ParamNameReceiverId = "receiver_id";
+const string NdnParams::ParamNameInterestTimeout = "interest_timeout";
+const string NdnParams::ParamNameFrameBufferSize = "buffer_size";
+const string NdnParams::ParamNameFrameSlotSize = "slot_size";
+// parameters names
+const string NdnParams::ParamNameConnectHost = "connect_host";
+const string NdnParams::ParamNameConnectPort = "connect_port";
+
 #pragma mark - public
 void NdnParams::addParams(const ndnrtc::NdnParams& params)
 {
@@ -215,6 +247,49 @@ NdnRtcObject::~NdnRtcObject()
 
 //********************************************************************************
 #pragma mark - public
+string NdnParams::description() const
+{
+    stringstream desc;
+    
+    std::map<std::string, NdnParams::Parameter>::const_iterator it;
+    
+    it = propertiesMap_.begin();
+    
+    while (it != propertiesMap_.end())
+    {
+        desc << it->first << ": ";
+        
+        const Parameter &p = it->second;
+        
+        switch (p.type_) {
+            case ParameterTypeBool:
+            {
+                if (*((bool*)p.getValue()))
+                    desc << "true";
+                else
+                    desc << "false";
+            }
+                break;
+            case ParameterTypeInt:
+            {
+                desc << *((int*)p.getValue());
+            }
+                break;
+            case ParameterTypeString:
+            {
+                desc << ((char*)p.getValue());
+            }
+                break;
+            default:
+                break;
+        }
+        
+        desc << endl;
+        it++;
+    }
+    
+    return desc.str();
+}
 
 //********************************************************************************
 #pragma mark - intefaces realization - INdnRtcObjectObserver

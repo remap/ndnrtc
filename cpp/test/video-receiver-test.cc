@@ -35,7 +35,7 @@ public :
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 9695));
+        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
         
         params_.reset(VideoReceiverParams::defaultParams());
         ndnTransport_.reset(new TcpTransport());

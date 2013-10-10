@@ -19,8 +19,6 @@ using namespace webrtc;
 
 //********************************************************************************
 //********************************************************************************
-const std::string NdnRendererParams::ParamNameWindowWidth = "windowWidth";
-const std::string NdnRendererParams::ParamNameWindowHeight = "windowHeight";
 
 //********************************************************************************
 #pragma mark - construction/destruction

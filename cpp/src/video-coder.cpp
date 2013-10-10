@@ -18,12 +18,6 @@ using namespace webrtc;
 
 //********************************************************************************
 //********************************************************************************
-const std::string NdnVideoCoderParams::ParamNameFrameRate = "frameRate";
-const std::string NdnVideoCoderParams::ParamNameStartBitRate = "startBitRate";
-const std::string NdnVideoCoderParams::ParamNameMaxBitRate = "maxBitRate";
-const std::string NdnVideoCoderParams::ParamNameWidth = "encodeWidth";
-const std::string NdnVideoCoderParams::ParamNameHeight = "encodeHeight";
-
 char* plotCodec(webrtc::VideoCodec codec)
 {
     static char msg[256];
@@ -85,6 +79,10 @@ int NdnVideoCoder::init()
     codec_ = getParams()->getCodec();
     encoder_.reset(VP8Encoder::Create());
     
+    currentFrameRate_ = codec_.maxFramerate;
+    keyFrameType_.clear();
+    keyFrameType_.push_back(webrtc::kKeyFrame);
+    
     if (!encoder_.get())
         return notifyError(-1, "can't create VP8 encoder");
     
@@ -119,7 +117,15 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
     TRACE("encoding...");
-    int err = encoder_->Encode(frame, NULL, NULL);
+    
+    int err;
+    
+    if (!keyFrameCounter_%(2*currentFrameRate_))
+        err = encoder_->Encode(frame, NULL, &keyFrameType_);
+    else
+        err = encoder_->Encode(frame, NULL, NULL);
+
+    keyFrameCounter_ = (keyFrameCounter_+1)%(2*currentFrameRate_);
     
     if (err != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't encode frame due to error %d",err);

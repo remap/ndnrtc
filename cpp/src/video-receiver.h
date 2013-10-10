@@ -33,13 +33,6 @@ namespace ndnrtc
             return p;
         }
         
-        // parameters names
-        static const std::string ParamNameProducerRate;
-        static const std::string ParamNameReceiverId;
-        static const std::string ParamNameInterestTimeout;
-        static const std::string ParamNameFrameBufferSize;
-        static const std::string ParamNameFrameSlotSize;
-        
         // public methods go here
         int getProducerRate() const { return getParamAsInt(ParamNameProducerRate); }
         int getDefaultTimeout() const {return getParamAsInt(ParamNameInterestTimeout); }

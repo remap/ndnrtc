@@ -11,6 +11,7 @@
 
 #include "test-common.h"
 #include <sys/time.h>
+#include "simple-log.h"
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>

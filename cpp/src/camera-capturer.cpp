@@ -23,10 +23,6 @@ static unsigned char *frameBuffer = nullptr;
 
 //********************************************************************************
 //********************************************************************************
-const std::string CameraCapturerParams::ParamNameDeviceId = "deviceId";
-const std::string CameraCapturerParams::ParamNameWidth = "captureWidth";
-const std::string CameraCapturerParams::ParamNameHeight = "captureHeight";
-const std::string CameraCapturerParams::ParamNameFPS = "fps";
 
 #pragma mark - public
 //********************************************************************************
@@ -43,15 +39,10 @@ captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPr
 }
 CameraCapturer::~CameraCapturer()
 {
-    TRACE("");
     if (vcm_)
     {
-        TRACE("release vcm");
         if (isCapturing())
-        {
-            TRACE("stop capture");
             stopCapture();
-        }
         
         vcm_->Release();
     }

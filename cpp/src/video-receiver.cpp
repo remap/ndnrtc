@@ -17,14 +17,6 @@ using namespace ndnrtc;
 
 //********************************************************************************
 //********************************************************************************
-const string VideoReceiverParams::ParamNameProducerRate = "producer-rate";
-const string VideoReceiverParams::ParamNameReceiverId = "receiver-id";
-const string VideoReceiverParams::ParamNameInterestTimeout = "interest-timeout";
-const string VideoReceiverParams::ParamNameFrameBufferSize = "buffer-size";
-const string VideoReceiverParams::ParamNameFrameSlotSize = "slot-size";
-
-//********************************************************************************
-//********************************************************************************
 #pragma mark - construction/destruction
 NdnVideoReceiver::NdnVideoReceiver(NdnParams *params) : NdnRtcObject(params),
 playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this)),
