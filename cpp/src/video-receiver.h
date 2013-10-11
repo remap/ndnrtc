@@ -51,7 +51,8 @@ namespace ndnrtc
         void setFrameConsumer(IEncodedFrameConsumer *consumer) { frameConsumer_ = consumer; }
         
         unsigned int getPlaybackSkipped() { return playbackSkipped_; }
-        unsigned int getPipelinerOverhead() { return pipelinerOverhead_; }
+        unsigned int getNPipelined() { return pipelinerFrameNo_; }
+        unsigned int getNPlayout() { return playoutFrameNo_; }
         unsigned int getStat(FrameBuffer::Slot::State state) { return frameBuffer_.getStat(state); }
         
     private:

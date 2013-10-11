@@ -106,6 +106,7 @@ namespace ndnrtc
         // public methods go here
         int init(const shared_ptr<Transport> transport);
         void registerConference(VideoSenderParams &params);
+        unsigned long int getFrameNo() { return frameNo_; };
         
         // interface conformance
         void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
@@ -117,7 +118,7 @@ namespace ndnrtc
         shared_ptr<Name> framePrefix_;
         shared_ptr<Name> certificateName_;
         
-        long long int frameNo_; // sequential frame number
+        unsigned long int frameNo_; // sequential frame number
         int segmentSize_, freshnessInterval_;
         
         // private methods go here        

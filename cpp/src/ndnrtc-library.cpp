@@ -128,6 +128,37 @@ NdnLibParams NdnRtcLibrary::getDefaultParams() const
     return defaultParams;
 }
 
+int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const
+{
+    if (!conferencePrefix || Producers.find(string(conferencePrefix)) == Producers.end())
+        return notifyObserverWithError("producer was not found");
+    
+    if (SenderChannel.get())
+        stat.sentNo_ = SenderChannel->sentFramesNum();
+    
+    shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
+    
+    stat.producerId_ = conferencePrefix;
+    
+    ReceiverChannelStatistics receiver_stat;
+    producer->getStat(receiver_stat);
+    
+    stat.nPlayback_ = receiver_stat.nPlayback_;
+    stat.nPipeline_ = receiver_stat.nPipeline_;
+    stat.nFetched_ = receiver_stat.nFetched_;
+    stat.nTimeouts_ = receiver_stat.nTimeouts_;
+    stat.nTotalTimeouts_ = receiver_stat.nTotalTimeouts_;
+    stat.nSkipped_ = receiver_stat.nSkipped_;
+    stat.nFree_ = receiver_stat.nFree_;
+    stat.nLocked_ = receiver_stat.nLocked_;
+    stat.nAssembling_ = receiver_stat.nAssembling_;
+    stat.nNew_ = receiver_stat.nNew_;
+    
+//    stat.sentNo_ =
+    
+    return 0;
+}
+
 int NdnRtcLibrary::startPublishing(const char *username)
 //int NdnRtcLibrary::startConference(NdnParams &params)
 {
@@ -220,7 +251,7 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 
 //********************************************************************************
 #pragma mark - private
-int NdnRtcLibrary::notifyObserverWithError(const char *format, ...)
+int NdnRtcLibrary::notifyObserverWithError(const char *format, ...) const
 {
     va_list args;
     
@@ -234,7 +265,7 @@ int NdnRtcLibrary::notifyObserverWithError(const char *format, ...)
     
     return -1;
 }
-int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *format, ...)
+int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *format, ...) const
 {
     va_list args;
     
@@ -248,7 +279,7 @@ int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *fo
     
     return 0;
 }
-void NdnRtcLibrary::notifyObserver(const char *state, const char *args)
+void NdnRtcLibrary::notifyObserver(const char *state, const char *args) const
 {
     if (observer_)
         observer_->onStateChanged(state, args);

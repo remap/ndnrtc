@@ -16,38 +16,56 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 
-typedef struct _NdnLibParams {
-    NdnLoggerDetailLevel loggingLevel;
-    const char *logFile;
-    
-    // capture settings
-    int captureDeviceId;
-    unsigned int captureWidth, captureHeight;
-    unsigned int captureFramerate;
-    
-    // render
-    unsigned int renderWidth, renderHeight;
-    
-    // codec
-    unsigned int codecFrameRate;
-    unsigned int startBitrate, maxBitrate;
-    unsigned int encodeWidth, encodeHeight;
-    
-    // network parameters
-    const char *host;
-    unsigned int portNum;
-    
-    // ndn producer
-    unsigned int segmentSize, freshness;
-    
-    // ndn consumer
-    unsigned int playbackRate;
-    unsigned int interestTimeout;
-    unsigned int bufferSize, slotSize;
-    
-} NdnLibParams;
-
 namespace ndnrtc {
+    typedef struct _NdnLibParams {
+        NdnLoggerDetailLevel loggingLevel;
+        const char *logFile;
+        
+        // capture settings
+        int captureDeviceId;
+        unsigned int captureWidth, captureHeight;
+        unsigned int captureFramerate;
+        
+        // render
+        unsigned int renderWidth, renderHeight;
+        
+        // codec
+        unsigned int codecFrameRate;
+        unsigned int startBitrate, maxBitrate;
+        unsigned int encodeWidth, encodeHeight;
+        
+        // network parameters
+        const char *host;
+        unsigned int portNum;
+        
+        // ndn producer
+        unsigned int segmentSize, freshness;
+        
+        // ndn consumer
+        unsigned int playbackRate;
+        unsigned int interestTimeout;
+        unsigned int bufferSize, slotSize;
+        
+    } NdnLibParams;
+    
+    typedef struct _NdnLibStatistics {
+        // consume statistics:
+        // current producer index (as we fetch video seamlessly)
+        const char *producerId_;
+        
+        // recent frame numbers:
+        unsigned int nPlayback_, nPipeline_, nFetched_;
+        
+        // errors - number of total skipped frames and timeouts
+        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
+        
+        // frame buffer info
+        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
+        
+        // produce statistics
+        unsigned int sentNo_; // latest sent frame number
+    } NdnLibStatistics;
+    
     class INdnRtcLibraryObserver {
     public:
         virtual void onStateChanged(const char *state, const char *args) = 0;
@@ -86,13 +104,12 @@ namespace ndnrtc {
             destroy_ndnrtc(libObject);
         }
         
-        // <#public attributes go here#>
-        
         // public methods go here
         virtual void configure(NdnLibParams &params);
         virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
         virtual void* getLibraryHandle(){ return libraryHandle_; };
         virtual NdnLibParams getDefaultParams() const;
+        virtual int getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const;
         
         virtual int startPublishing(const char *username);
         virtual int stopPublishing();
@@ -108,9 +125,9 @@ namespace ndnrtc {
         INdnRtcLibraryObserver *observer_;
         
         // private methods go here
-        int notifyObserverWithError(const char *format, ...);
-        int notifyObserverWithState(const char *stateName, const char *format, ...);
-        void notifyObserver(const char *state, const char *args);
+        int notifyObserverWithError(const char *format, ...) const;
+        int notifyObserverWithState(const char *stateName, const char *format, ...) const;
+        void notifyObserver(const char *state, const char *args) const;
     };
 }
 

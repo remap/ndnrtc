@@ -68,7 +68,7 @@ namespace ndnrtc
                 StateAssembling = 3,    // slot is being used for assembling and already has some
                 // some data segments arrived
                 StateReady = 4, // slot assembled all the data and is ready for decoding a frame
-                StateLocked = 5 // slot is being used for decoding
+                StateLocked = 5 // slot is locked for decoding
             };
             
             Slot(unsigned int slotSize);

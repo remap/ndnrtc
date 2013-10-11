@@ -113,8 +113,6 @@ int NdnSenderChannel::init()
     if (cc_->init() < 0)
         notifyError(-1, "can't intialize camera capturer");
     
-    cc_->printCapturingInfo();
-    
     if (localRender_->init() < 0)
         notifyError(-1, "can't intialize renderer");
     
@@ -158,6 +156,10 @@ int NdnSenderChannel::stopTransmission()
         return notifyError(-1, "can't stop processing thread");
 
     return 0;
+}
+unsigned int NdnSenderChannel::sentFramesNum()
+{
+    return sender_->getFrameNo();
 }
 
 //********************************************************************************

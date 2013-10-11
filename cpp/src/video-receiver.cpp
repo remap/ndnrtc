@@ -229,9 +229,11 @@ bool NdnVideoReceiver::processPlayout()
         else
         {
             WARN("couldn't get frame with number %d", playoutBuffer_.framePointer());
+            playbackSkipped_++;
         }
-
+        
         playoutBuffer_.releaseAcquiredFrame();
+        playoutFrameNo_ = playoutBuffer_.framePointer();
         processingDelay = NdnRtcUtils::microsecondTimestamp()-processingDelay;
         
         // sleep if needed

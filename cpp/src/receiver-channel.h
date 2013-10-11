@@ -18,6 +18,17 @@
 
 namespace ndnrtc
 {
+    typedef struct _ReceiverChannelStatistics {
+        // recent frame numbers:
+        unsigned int nPlayback_, nPipeline_, nFetched_;
+        
+        // errors - number of total skipped frames and timeouts
+        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
+        
+        // frame buffer info
+        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
+    } ReceiverChannelStatistics;
+    
     class ReceiverChannelParams : public NdnParams {
     public:
         
@@ -56,6 +67,8 @@ namespace ndnrtc
         int init();
         int startFetching();
         int stopFetching();
+        
+        void getStat(ReceiverChannelStatistics &stat) const;
         
         // ndnlib callbacks
         void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport);

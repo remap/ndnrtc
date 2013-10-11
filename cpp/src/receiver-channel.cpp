@@ -102,3 +102,20 @@ int NdnReceiverChannel::stopFetching()
     
     return 0;
 }
+void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
+{
+    memset(&stat,0,sizeof(stat));
+    
+    stat.nPipeline_ = receiver_->getNPipelined();
+    stat.nPlayback_ = receiver_->getNPlayout();
+//    stat.nFetched_ = receiver_->getLatest(FrameBuffer::Slot::StateReady);
+    
+    stat.nSkipped_ = receiver_->getPlaybackSkipped();
+//    stat.nTotalTimeouts_ = receiver_
+//    stat.nTimeouts_ = receiver_
+    
+    stat.nFree_ = receiver_->getStat(FrameBuffer::Slot::StateFree);
+    stat.nLocked_ = receiver_->getStat(FrameBuffer::Slot::StateLocked);
+    stat.nAssembling_ = receiver_->getStat(FrameBuffer::Slot::StateAssembling);
+    stat.nNew_ = receiver_->getStat(FrameBuffer::Slot::StateAssembling);
+}

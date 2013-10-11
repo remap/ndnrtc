@@ -63,6 +63,9 @@ namespace ndnrtc
         int init();
         int startTransmission();
         int stopTransmission();
+
+        // number of already sent frames
+        unsigned int sentFramesNum();
         
         // interface conformance - IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
