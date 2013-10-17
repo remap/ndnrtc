@@ -20,13 +20,16 @@ namespace ndnrtc
 {
     typedef struct _ReceiverChannelStatistics {
         // recent frame numbers:
-        unsigned int nPlayback_, nPipeline_, nFetched_;
+        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
         
         // errors - number of total skipped frames and timeouts
         unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
         
         // frame buffer info
         unsigned int nFree_, nLocked_, nAssembling_, nNew_;
+        
+        //
+        double playoutFreq_, inDataFreq_, inFramesFreq_;
     } ReceiverChannelStatistics;
     
     class ReceiverChannelParams : public NdnParams {
@@ -74,7 +77,8 @@ namespace ndnrtc
         void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport);
         void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
 
-    private:
+//    private:
+    protected:
         bool isTransmitting_;
         shared_ptr<ndn::Transport> ndnTransport_;
         shared_ptr<Face> ndnFace_;

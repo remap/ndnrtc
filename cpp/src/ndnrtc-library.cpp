@@ -134,7 +134,11 @@ int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics 
         return notifyObserverWithError("producer was not found");
     
     if (SenderChannel.get())
-        stat.sentNo_ = SenderChannel->sentFramesNum();
+    {
+        stat.sentNo_ = SenderChannel->getSentFramesNum();
+        stat.sendingFramesFreq_ = SenderChannel->getNInputFramesPerSec();
+        stat.capturingFreq_ = SenderChannel->getCurrentCapturingFreq();
+    }
     
     shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
     
@@ -146,6 +150,7 @@ int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics 
     stat.nPlayback_ = receiver_stat.nPlayback_;
     stat.nPipeline_ = receiver_stat.nPipeline_;
     stat.nFetched_ = receiver_stat.nFetched_;
+    stat.nLate_ = receiver_stat.nLate_;
     stat.nTimeouts_ = receiver_stat.nTimeouts_;
     stat.nTotalTimeouts_ = receiver_stat.nTotalTimeouts_;
     stat.nSkipped_ = receiver_stat.nSkipped_;
@@ -154,7 +159,9 @@ int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics 
     stat.nAssembling_ = receiver_stat.nAssembling_;
     stat.nNew_ = receiver_stat.nNew_;
     
-//    stat.sentNo_ =
+    stat.inFramesFreq_ = receiver_stat.inFramesFreq_;
+    stat.inDataFreq_ = receiver_stat.inDataFreq_;
+    stat.playoutFreq_ = receiver_stat.playoutFreq_;
     
     return 0;
 }

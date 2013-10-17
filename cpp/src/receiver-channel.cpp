@@ -109,13 +109,18 @@ void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
     stat.nPipeline_ = receiver_->getNPipelined();
     stat.nPlayback_ = receiver_->getNPlayout();
 //    stat.nFetched_ = receiver_->getLatest(FrameBuffer::Slot::StateReady);
+    stat.nLate_ = receiver_->getNLateFrames();
     
     stat.nSkipped_ = receiver_->getPlaybackSkipped();
 //    stat.nTotalTimeouts_ = receiver_
 //    stat.nTimeouts_ = receiver_
     
-    stat.nFree_ = receiver_->getStat(FrameBuffer::Slot::StateFree);
-    stat.nLocked_ = receiver_->getStat(FrameBuffer::Slot::StateLocked);
-    stat.nAssembling_ = receiver_->getStat(FrameBuffer::Slot::StateAssembling);
-    stat.nNew_ = receiver_->getStat(FrameBuffer::Slot::StateAssembling);
+    stat.nFree_ = receiver_->getBufferStat(FrameBuffer::Slot::StateFree);
+    stat.nLocked_ = receiver_->getBufferStat(FrameBuffer::Slot::StateLocked);
+    stat.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+    stat.nNew_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+    
+    stat.playoutFreq_  = receiver_->getPlayoutFreq();
+    stat.inDataFreq_ = receiver_->getIncomeDataFreq();
+    stat.inFramesFreq_ = receiver_->getIncomeFramesFreq();
 }

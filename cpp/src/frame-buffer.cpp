@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#undef DEBUG
+//#undef DEBUG
 
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
@@ -230,7 +230,7 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
     }
     else
     {
-        WARN("can't free slot - it was not found or locked");
+        WARN("can't free slot %d - it was not found or locked", frameNumber);
     }
 }
 
@@ -309,8 +309,8 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
                 case Slot::StateAssembling:
                     break;
                 case Slot::StateReady: // slot ready event
-                    //                    readySlots_[frameNumber] = slot; // save slot in ready slots array
                     notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeReady, slot.get());
+                    res = CallResultReady;
                     break;
                 default:
                     WARN("trying to append segment to non-writeable slot. slot state: %s", Slot::stateToString(slotState)->c_str());

@@ -27,7 +27,7 @@ namespace ndnrtc
         /**
          * Returns next frame to be played
          */
-        shared_ptr<webrtc::EncodedImage> acquireNextFrame();
+        shared_ptr<webrtc::EncodedImage> acquireNextFrame(bool incCounter = false);
         void releaseAcquiredFrame();
         
         //        shared_ptr<webrtc::EncodedImage> popFrame();

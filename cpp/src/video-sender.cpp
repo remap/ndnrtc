@@ -30,7 +30,6 @@ using namespace webrtc;
 //********************************************************************************
 //********************************************************************************
 #pragma mark - public
-
 string VideoSenderParams::getStreamPrefix() const
 {
     
@@ -188,9 +187,6 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     
     if (segmentsNum > 0)
     {
-        // 3. get finalBlockID component
-        shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(segmentsNum-1);
-        
         // 4. split frame into segments
         // 5. publish segments under <root>/frameNo/segmentNo URI
         while (payloadSize > 0)
@@ -204,7 +200,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
             payloadSize -= segmentSize_;
             
             data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
-            data.getMetaInfo().setFinalBlockID(*finalBlockIDValue);
+            data.getMetaInfo().setFinalBlockID(Name().appendSegment(segmentsNum-1).get(0).getValue());
             data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
             data.setContent((const unsigned char *)&frameData.getData()[segmentNo*segmentSize_], bytesToSend);
             

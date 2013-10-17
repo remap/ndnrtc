@@ -17,6 +17,7 @@
 #include "video-coder.h"
 #include "renderer.h"
 #include "video-sender.h"
+#include "ndnrtc-utils.h"
 
 namespace ndnrtc
 {
@@ -63,9 +64,6 @@ namespace ndnrtc
         int init();
         int startTransmission();
         int stopTransmission();
-
-        // number of already sent frames
-        unsigned int sentFramesNum();
         
         // interface conformance - IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
@@ -74,7 +72,15 @@ namespace ndnrtc
         void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport);
         void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
         
+        // statistics
+        double getNInputFramesPerSec() { return NdnRtcUtils::currentFrequencyMeterValue(meterId_); } // frequency of incoming raw frames
+        double getCurrentCapturingFreq() { return cc_->getCapturingFrequency(); }
+        unsigned int getSentFramesNum();         // number of already sent frames
+        
     private:
+        // statistics
+        unsigned int meterId_; // frequency meter id
+        
         bool isTransmitting_;
         shared_ptr<ndn::Transport> ndnTransport_;
         shared_ptr<Face> ndnFace_;

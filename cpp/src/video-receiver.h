@@ -16,6 +16,7 @@
 #include "video-sender.h"
 #include "frame-buffer.h"
 #include "playout-buffer.h"
+#include "ndnrtc-utils.h"
 
 namespace ndnrtc
 {
@@ -53,7 +54,11 @@ namespace ndnrtc
         unsigned int getPlaybackSkipped() { return playbackSkipped_; }
         unsigned int getNPipelined() { return pipelinerFrameNo_; }
         unsigned int getNPlayout() { return playoutFrameNo_; }
-        unsigned int getStat(FrameBuffer::Slot::State state) { return frameBuffer_.getStat(state); }
+        unsigned int getNLateFrames() { return nLateFrames_; }
+        unsigned int getBufferStat(FrameBuffer::Slot::State state) { return frameBuffer_.getStat(state); }
+        double getPlayoutFreq () { return NdnRtcUtils::currentFrequencyMeterValue(playoutMeterId_); }
+        double getIncomeFramesFreq() { return NdnRtcUtils::currentFrequencyMeterValue(incomeFramesMeterId_); }
+        double getIncomeDataFreq() { return NdnRtcUtils::currentFrequencyMeterValue(assemblerMeterId_); }
         
     private:
         enum ReceiverMode {
@@ -68,15 +73,17 @@ namespace ndnrtc
         ReceiverMode mode_;
         
         // statistics variables
-        unsigned int playbackSkipped_;  // number of packets that were skipped due to late delivery,
+        unsigned int playoutMeterId_, assemblerMeterId_, incomeFramesMeterId_;
+        unsigned int playbackSkipped_ = 0;  // number of packets that were skipped due to late delivery,
                                         // i.e. playout thread requests frames at fixed rate, if a frame
                                         // has not arrived yet (not in playout buffer) - it is skipped
-        unsigned int pipelinerOverhead_;   // number of outstanding frames pipeliner has requested already
+        unsigned int pipelinerOverhead_ = 0;   // number of outstanding frames pipeliner has requested already
+        unsigned int nLateFrames_ = 0;      // number of late frames (arrived after their playback time)
         
         bool playout_;
         long playoutSleepIntervalUSec_; // 30 fps
         long playoutFrameNo_, pipelinerFrameNo_;
-        int pipelinerEventsMask_, interestTimeout_;
+        int pipelinerEventsMask_, interestTimeoutMs_;
         unsigned int producerSegmentSize_;
         Name framesPrefix_;
         shared_ptr<Face> face_;
@@ -114,6 +121,7 @@ namespace ndnrtc
         unsigned int getSegmentNumber(Name prefix);
         void expressInterest(Name &prefix);
         void expressInterest(Interest &i);
+        bool isLate(unsigned int frameNo);
     };
 }
 

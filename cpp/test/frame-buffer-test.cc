@@ -577,7 +577,6 @@ protected:
         playoutBuffer_->init(buffer_);
     }
 };
-
 TEST_F(FrameBufferTester, BufferCreateDelete)
 {
     FrameBuffer *buffer = new FrameBuffer();
@@ -1159,7 +1158,6 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
         delete buffer_;
     }
 }
-
 TEST_F(FrameBufferTester, TestFull)
 {
     // there are going to be 3 threads:
@@ -1378,9 +1376,6 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
     }
     
     EXPECT_TRUE_WAIT((playoutProcessed_ == framesNumber), 1000);
-    // playout buffer pointer should point to the latest expected frame number (which is equal to framesNumber)
-    EXPECT_EQ(framesNumber, playoutBuffer_->framePointer());
-    
     
     playoutShouldStop_ = true;
     
@@ -1442,6 +1437,7 @@ TEST_F(PlayoutBufferTester, AcquireFrame)
 {
     FrameBuffer *frameBuffer = new FrameBuffer();
     PlayoutBuffer *playoutBuffer = new PlayoutBuffer();
+    unsigned int frameNo = 1;
     
     frameBuffer->init(1, 8000);
     playoutBuffer->init(frameBuffer);
@@ -1456,9 +1452,9 @@ TEST_F(PlayoutBufferTester, AcquireFrame)
     EXPECT_TRUE(assembledFrame.get() == nullptr);
     
     // append new frame
-    frameBuffer->bookSlot(1);
-    frameBuffer->markSlotAssembling(1, 1, frameData.getLength());
-    frameBuffer->appendSegment(1, 0, frameData.getLength(), frameData.getData());
+    frameBuffer->bookSlot(frameNo);
+    frameBuffer->markSlotAssembling(frameNo, 1, frameData.getLength());
+    frameBuffer->appendSegment(frameNo, 0, frameData.getLength(), frameData.getData());
     
     unsigned int timeout = 1000;
     while (assembledFrame.get() == nullptr && timeout > 0)
@@ -1468,7 +1464,7 @@ TEST_F(PlayoutBufferTester, AcquireFrame)
         timeout -= 10;
     }
     
-    ASSERT_FALSE(assembledFrame.get() == nullptr);
+    ASSERT_NE(nullptr, assembledFrame.get());
     
     NdnRtcObjectTestHelper::checkFrames(frame, assembledFrame.get());
     

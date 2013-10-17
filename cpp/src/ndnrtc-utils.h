@@ -27,6 +27,11 @@ namespace ndnrtc{
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();
         
+        static unsigned int setupFrequencyMeter();
+        static void frequencyMeterTick(unsigned int meterId);
+        static double currentFrequencyMeterValue(unsigned int meterId);
+        static void releaseFrequencyMeter(unsigned int meterId);
+        
         static int frameNumber(const Name::Component &segmentComponent);        
         static int segmentNumber(const Name::Component &segmentComponent);
     };

@@ -18,7 +18,7 @@
 using namespace ndnlog;
 
 static char tempBuf[MAX_BUF_SIZE];
-static NdnLogger *sharedLogger = 0;
+static NdnLogger *sharedLogger = NULL;
 
 //********************************************************************************
 #pragma mark - construction/destruction
@@ -33,9 +33,8 @@ logMutex_(PTHREAD_MUTEX_INITIALIZER)
     if (logFile)
         outLogStream_ = fopen(logFile, "w");
 
-    if (!logFile || outLogStream_ < 0)
+    if (!logFile || outLogStream_ <= 0)
         outLogStream_ = stdout;
-    
 }
 NdnLogger::~NdnLogger()
 {

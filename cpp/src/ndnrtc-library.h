@@ -54,7 +54,7 @@ namespace ndnrtc {
         const char *producerId_;
         
         // recent frame numbers:
-        unsigned int nPlayback_, nPipeline_, nFetched_;
+        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
         
         // errors - number of total skipped frames and timeouts
         unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
@@ -63,7 +63,10 @@ namespace ndnrtc {
         unsigned int nFree_, nLocked_, nAssembling_, nNew_;
         
         // produce statistics
-        unsigned int sentNo_; // latest sent frame number
+        unsigned int sentNo_;
+        double sendingFramesFreq_, capturingFreq_; // latest sent frame number
+
+        double inFramesFreq_, inDataFreq_, playoutFreq_;
     } NdnLibStatistics;
     
     class INdnRtcLibraryObserver {

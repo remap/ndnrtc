@@ -51,7 +51,7 @@ int PlayoutBuffer::init(ndnrtc::FrameBuffer *buffer)
     return 0;
 }
 
-shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame()
+shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame(bool incCounter)
 {
     shared_ptr<EncodedImage> frame(nullptr);
     
@@ -66,10 +66,21 @@ shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame()
         FrameBuffer::Slot *slot = nullptr;
         
         slot =  playoutFrames_.top();
-        frame = slot->getFrame();
-        framePointer_ = slot->getFrameNumber();
         
-        INFO("frame %d was acquired for playback");
+        frame = slot->getFrame();
+        
+        if (framePointer_ > slot->getFrameNumber())
+            TRACE(">>>>>LATE FRAMES");
+        
+        framePointer_ = slot->getFrameNumber();
+
+        TRACE("frame %d acquired for playback", framePointer_);
+    }
+    else
+    {
+        TRACE("no frames for playout");
+        if (incCounter)
+            framePointer_++;
     }
     
     return frame;

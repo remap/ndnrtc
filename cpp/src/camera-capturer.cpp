@@ -90,6 +90,8 @@ int CameraCapturer::init()
     
     vcm_->RegisterCaptureDataCallback(*this);
     
+    meterId_ = NdnRtcUtils::setupFrequencyMeter();
+    
     return 0;
 }
 int CameraCapturer::startCapture()
@@ -195,6 +197,8 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& v
         TRACE("..delayed");
     
 #ifdef USE_I420
+    NdnRtcUtils::frequencyMeterTick(meterId_);
+    
     capture_cs_->Enter();
     capturedFrame_.SwapFrame(&videoFrame);
     capture_cs_->Leave();

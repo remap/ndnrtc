@@ -12,6 +12,7 @@
 #undef DEBUG
 
 #include "video-coder.h"
+#include "ndnrtc-utils.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -105,6 +106,8 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
                 const webrtc::RTPFragmentationHeader* fragmentation)
 {
     TRACE("got encoded byte length: %d", encodedImage._length);
+    encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
+    encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage);

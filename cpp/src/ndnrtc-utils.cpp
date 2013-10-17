@@ -14,8 +14,15 @@
 
 using namespace ndnrtc;
 
+typedef struct _FrequencyMeter {
+    unsigned int nCyclesPerSec_;
+    double callsPerSecond_;
+    int64_t lastCheckTime_;
+} FrequencyMeter;
+
 //********************************************************************************
 #pragma mark - all static
+static std::vector<FrequencyMeter> freqMeters_;
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
@@ -74,3 +81,48 @@ int64_t NdnRtcUtils::microsecondTimestamp()
     
     return ticks;
 };
+
+unsigned int NdnRtcUtils::setupFrequencyMeter()
+{
+    FrequencyMeter meter = {0, 0., 0};
+    
+    freqMeters_.push_back(meter);
+    
+    return freqMeters_.size()-1;
+}
+
+void NdnRtcUtils::frequencyMeterTick(unsigned int meterId)
+{
+    if (meterId >= freqMeters_.size())
+        return;
+    
+    FrequencyMeter &meter = freqMeters_[meterId];
+    int64_t now = millisecondTimestamp();
+    
+    meter.nCyclesPerSec_++;
+    
+    if (now - meter.lastCheckTime_ >= 1000)
+    {
+        meter.callsPerSecond_ = (double)meter.nCyclesPerSec_/(double)(now-meter.lastCheckTime_)*1000.;
+        meter.lastCheckTime_ = now;
+        meter.nCyclesPerSec_ = 0;
+    }
+}
+
+double NdnRtcUtils::currentFrequencyMeterValue(unsigned int meterId)
+{
+    if (meterId >= freqMeters_.size())
+        return 0.;
+    
+    FrequencyMeter &meter = freqMeters_[meterId];
+    
+    return meter.callsPerSecond_;
+}
+
+void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
+{
+    if (meterId >= freqMeters_.size())
+        return;
+    
+    // do nothing
+}

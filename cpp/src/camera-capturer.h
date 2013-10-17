@@ -15,6 +15,7 @@
 #include "webrtc.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
+#include "ndnrtc-utils.h"
 
 namespace ndnrtc {
     class IRawFrameConsumer;
@@ -68,6 +69,9 @@ namespace ndnrtc {
         void OnCaptureDelayChanged(const int32_t id,
                                    const int32_t delay);
         
+        // statistics
+        double getCapturingFrequency() { return NdnRtcUtils::currentFrequencyMeterValue(meterId_); }
+        
     private:        
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
@@ -78,6 +82,9 @@ namespace ndnrtc {
         webrtc::VideoCaptureCapability capability_;
         webrtc::VideoCaptureModule* vcm_ = nullptr;
         IRawFrameConsumer *frameConsumer_ = nullptr;
+        
+        // statistics
+        unsigned int meterId_;
         
         // private static
         static bool deliverCapturedFrame(void *obj) { return ((CameraCapturer*)obj)->process(); }

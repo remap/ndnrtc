@@ -107,25 +107,6 @@ const string NdnParams::ParamNameFrameSlotSize = "slot_size";
 const string NdnParams::ParamNameConnectHost = "connect_host";
 const string NdnParams::ParamNameConnectPort = "connect_port";
 
-#pragma mark - public
-void NdnParams::addParams(const ndnrtc::NdnParams& params)
-{
-    const std::map<std::string, Parameter> &map = params.map();
-    std::map<std::string, Parameter>::const_iterator it;
-    
-    for (it = map.begin(); it != map.end(); ++it)
-    {
-        std::string name = it->first;
-        const Parameter *p = &it->second;
-        
-        setParam(name, Parameter(p->getType(), p->getValue()));
-    }
-}
-void NdnParams::resetParams(const NdnParams &params)
-{
-    propertiesMap_.clear();
-    addParams(params);
-}
 //********************************************************************************
 #pragma mark - protected
 void NdnParams::setParam(const std::string &name, const ndnrtc::NdnParams::Parameter &param)
@@ -247,6 +228,24 @@ NdnRtcObject::~NdnRtcObject()
 
 //********************************************************************************
 #pragma mark - public
+void NdnParams::addParams(const ndnrtc::NdnParams& params)
+{
+    const std::map<std::string, Parameter> &map = params.map();
+    std::map<std::string, Parameter>::const_iterator it;
+    
+    for (it = map.begin(); it != map.end(); ++it)
+    {
+        std::string name = it->first;
+        const Parameter *p = &it->second;
+        
+        setParam(name, Parameter(p->getType(), p->getValue()));
+    }
+}
+void NdnParams::resetParams(const NdnParams &params)
+{
+    propertiesMap_.clear();
+    addParams(params);
+}
 string NdnParams::description() const
 {
     stringstream desc;

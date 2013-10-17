@@ -23,9 +23,6 @@ namespace ndnrtc
 {
     class INdnVideoSenderDelegate;
     
-    /**
-     * <#description#>
-     */
     class VideoSenderParams : public NdnParams {
     public:
         // static
@@ -33,7 +30,7 @@ namespace ndnrtc
         {
             VideoSenderParams * p = new VideoSenderParams();
             
-            char *hub = (char*)"ndn";
+            char *hub = (char*)"ndn/ucla.edu/apps";
             char *user = (char*)"testuser";
             char *stream = (char*)"video0";
 

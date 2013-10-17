@@ -12,7 +12,7 @@
 #ifndef __ndnrtc__ndnworker__
 #define __ndnrtc__ndnworker__
 
-#include <boost/enable_shared_from_this.hpp>
+//#include <boost/enable_shared_from_this.hpp>
 #include "ndnrtc-common.h"
 
 //using namespace ndn;

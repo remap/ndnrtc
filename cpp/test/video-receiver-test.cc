@@ -8,16 +8,16 @@
 //  Author:  Peter Gusev
 //
 
-#undef DEBUG
-#undef NDN_LOGGING
-//#define DEBUG
+//#undef DEBUG
+//#undef NDN_LOGGING
+#define DEBUG
 //#undef NDN_DETAILED
 
-//#define NDN_LOGGING
-//#define NDN_INFO
-//#define NDN_WARN
-//#define NDN_ERROR
-//#define NDN_TRACE
+#define NDN_LOGGING
+#define NDN_INFO
+#define NDN_WARN
+#define NDN_ERROR
+#define NDN_TRACE
 
 #include "test-common.h"
 #include "frame-buffer.h"
@@ -41,10 +41,19 @@ public :
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
+//        shared_ptr<Transport::ConnectionInfo> connInfoUdp(new UdpTransport::ConnectionInfo("localhost", 6363));
+//        ndnReceiverFace_.reset(new Face(shared_ptr<Transport>(new UdpTransport()), connInfoUdp));
+        ndnReceiverFace_ = ndnFace_;
+        
         std::string streamAccessPrefix = params_.get()->getStreamKeyPrefix();
         ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                  bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
                                  bind(&NdnReceiverTester::onRegisterFailed, this, _1));
+        
+        streamAccessPrefix += "/receiver";
+        ndnReceiverFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
+                                         bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
+                                         bind(&NdnReceiverTester::onRegisterFailed, this, _1));
         
         ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
         certName_ = NdnRtcNamespace::certificateNameForUser(params_->getUserPrefix());
@@ -69,34 +78,40 @@ public :
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
     {
-        FAIL();
+        ERR("Register prefix failed");
+//        FAIL();
     }
     
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     {
-        receivedFrames_.push_back(encodedImage._timeStamp);
+        receivedFrames_.push_back(encodedImage.capture_time_ms_);
         TRACE("fetched encoded frame. size %d", receivedFrames_.size());
     }
     
 protected:
     shared_ptr<VideoReceiverParams> params_;
     shared_ptr<Transport> ndnTransport_;
-    shared_ptr<Face> ndnFace_;
+    shared_ptr<Face> ndnFace_ /* tcp */, ndnReceiverFace_ /* udp */;
     shared_ptr<KeyChain> ndnKeyChain_;
     shared_ptr<Name> certName_;
     
     std::vector<webrtc::EncodedImage*> fetchedFrames_;
-    std::vector<uint32_t> sentFrames_;
-    std::vector<uint32_t> receivedFrames_;
+    std::vector<uint64_t> sentFrames_;
+    std::vector<uint64_t> receivedFrames_;
     webrtc::EncodedImage *frame;
     NdnFrameData *payload;
     
     void publishFrame(unsigned int frameNo, unsigned int segmentSize, int freshness = 3, bool mixedSendOrder = true)
     {
+        // setup timestamp
+        frame->capture_time_ms_ = millisecondTimestamp();
+        payload = new NdnFrameData(*frame);
+        
         unsigned int fullSegmentsNum = payload->getLength()/segmentSize;
         unsigned int totalSegmentsNum = (payload->getLength() - fullSegmentsNum*segmentSize)?fullSegmentsNum+1:fullSegmentsNum;
         unsigned int lastSegmentSize = payload->getLength() - fullSegmentsNum*segmentSize;
         vector<int> segmentsSendOrder;
+        
         
         Name prefix(params_->getStreamFramePrefix().c_str());
         shared_ptr<const vector<unsigned char>> frameNumberComponent = NdnRtcNamespace::getFrameNumberComponent(frameNo);
@@ -115,7 +130,7 @@ protected:
             unsigned int segmentIdx = segmentsSendOrder[i];
             unsigned char *segmentData = payload->getData()+segmentIdx*segmentSize;
             unsigned int dataSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:segmentSize;
-            shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(totalSegmentsNum-1);
+//            shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(totalSegmentsNum-1);
             
             if (dataSize > 0)
             {
@@ -125,7 +140,7 @@ protected:
                 Data data(segmentPrefix);
                 
                 data.getMetaInfo().setFreshnessSeconds(freshness);
-                data.getMetaInfo().setFinalBlockID(*finalBlockIDValue);
+                data.getMetaInfo().setFinalBlockID(Name().appendSegment(totalSegmentsNum-1).get(0).getValue());
                 data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
                 data.setContent(segmentData, dataSize);
                 
@@ -142,11 +157,11 @@ protected:
             } // if
         } // for
         
-        sentFrames_.push_back(frame->_timeStamp);
-        
+        sentFrames_.push_back(frame->capture_time_ms_);
+        delete payload;
     } // publishFrame
 };
-
+#if 0
 TEST_F(NdnReceiverTester, CreateDelete)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(VideoSenderParams::defaultParams());
@@ -157,7 +172,7 @@ TEST_F(NdnReceiverTester, Init)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
     
-    EXPECT_EQ(0, receiver->init(ndnFace_));
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     
     delete receiver;
 }
@@ -168,7 +183,7 @@ TEST_F(NdnReceiverTester, EmptyFetching)
     
     receiver->setObserver(this);
     
-    EXPECT_EQ(0, receiver->init(ndnFace_));
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
     EXPECT_EQ(0,receiver->startFetching());
@@ -179,6 +194,7 @@ TEST_F(NdnReceiverTester, EmptyFetching)
     
     delete receiver;
 }
+#endif
 
 TEST_F(NdnReceiverTester, Fetching30FPS)
 {
@@ -187,16 +203,16 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     unsigned int bufferSize = 10;
     unsigned int producerFrameRate = 30;
     
-    params_->setIntParam(VideoReceiverParams::ParamNameFrameBufferSize, bufferSize);
-    params_->setIntParam(VideoSenderParams::ParamNameSegmentSize, segmentSize);
-    params_->setIntParam(VideoReceiverParams::ParamNameProducerRate, producerFrameRate);
+    params_->setIntParam(NdnParams::ParamNameFrameBufferSize, bufferSize);
+    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
+    params_->setIntParam(NdnParams::ParamNameProducerRate, producerFrameRate);
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
     
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);
     
-    EXPECT_EQ(0, receiver->init(ndnFace_));
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
     TRACE("start fetching");
@@ -209,8 +225,8 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     
     for (int i = 0; i < framesNum; i++)
     {
-        TRACE("publishing frame %d",i);
-        publishFrame(i, segmentSize);
+        publishFrame(i, segmentSize, 10);
+        TRACE("published frame %d",i);
         WAIT(1000/producerFrameRate);
     }
     
@@ -230,23 +246,26 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     delete receiver;
 }
 
+#if 0
 TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
 {
+    WAIT(5000); // wait for results from previous test expire (on the ndn network)
+    
     unsigned int framesNum = 30;
     unsigned int segmentSize = 1000;
     unsigned int bufferSize = 10;
     unsigned int producerFrameRate = 30;
     
-    params_->setIntParam(VideoReceiverParams::ParamNameFrameBufferSize, bufferSize);
-    params_->setIntParam(VideoSenderParams::ParamNameSegmentSize, segmentSize);
-    params_->setIntParam(VideoReceiverParams::ParamNameProducerRate, producerFrameRate);
+    params_->setIntParam(NdnParams::ParamNameFrameBufferSize, bufferSize);
+    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
+    params_->setIntParam(NdnParams::ParamNameProducerRate, producerFrameRate);
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
     
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);
     
-    EXPECT_EQ(0, receiver->init(ndnFace_));
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
     TRACE("start fetching");
@@ -256,16 +275,15 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     // by issuing interest with RightMostChild selector
     WAIT(100);
     
-    
     for (int i = 0; i < framesNum; i++)
     {
-        TRACE("publishing frame %d",i);
         publishFrame(i, segmentSize);
+        TRACE("published frame %d",i);        
         WAIT(1000/producerFrameRate);
     }
     
     
-    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 2000);
+    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 1000);
     ASSERT_EQ(framesNum, receivedFrames_.size());
     
     for (int i = 0; i < framesNum; i++)
@@ -275,3 +293,4 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     
     delete receiver;
 }
+#endif

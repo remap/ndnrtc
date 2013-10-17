@@ -143,6 +143,8 @@ namespace ndnrtc
                 bool inverted_;
             };
             
+            unsigned char *getdata() { return data_; }
+            
         private:
             unsigned int frameNumber_;
             unsigned int dataLength_;

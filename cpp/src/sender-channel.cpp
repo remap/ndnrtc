@@ -39,6 +39,8 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,  kHighP
     
     // set direct connection coder->sender
     coder_->setFrameConsumer(sender_.get());
+    
+    meterId_ = NdnRtcUtils::setupFrequencyMeter();
 };
 //********************************************************************************
 #pragma mark - intefaces realization: IRawFrameConsumer
@@ -49,20 +51,6 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
     deliver_cs_->Leave();
     
     deliverEvent_.Set();
-    
-//    timestamp += 90000/30.;
-//
-//    webrtc::I420VideoFrame *frame_copy = new webrtc::I420VideoFrame();
-//    frame_copy->CopyFrame(frame);
-//    frame_copy->set_timestamp(timestamp);
-    
-    // pass frame for rendering and encoding
-
-    
-//    nsCOMPtr<nsRunnable> encoderTask = new MozEncodingTask(frame, coder_.get());
-//    NS_DispatchToMainThread(encoderTask);
-//    encodingThread_->Dispatch(encoderTask, nsIThread::DISPATCH_NORMAL);
-    
 };
 
 //********************************************************************************
@@ -157,7 +145,7 @@ int NdnSenderChannel::stopTransmission()
 
     return 0;
 }
-unsigned int NdnSenderChannel::sentFramesNum()
+unsigned int NdnSenderChannel::getSentFramesNum()
 {
     return sender_->getFrameNo();
 }
@@ -167,6 +155,8 @@ unsigned int NdnSenderChannel::sentFramesNum()
 bool NdnSenderChannel::process()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled) {
+        NdnRtcUtils::frequencyMeterTick(meterId_);
+        
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
             TRACE("delivering frame");

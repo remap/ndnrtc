@@ -70,6 +70,41 @@ TEST(ReceiverChannelParams, TestParams)
     delete p;
 }
 
+class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
+{
+public:
+    TestReceiverChannel(NdnParams *p):
+    NdnReceiverChannel(p)
+    {
+        localRender_->setObserver(this);
+        decoder_->setObserver(this);
+        receiver_->setObserver(this);
+        
+        receiver_->setFrameConsumer(this);
+        decoder_->setFrameConsumer(localRender_.get());
+    }
+    
+    void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+    {
+        // check timestamp with the last one receiveed
+        if (lastTimeStamp_)
+        {
+            EXPECT_LE(lastTimeStamp_, encodedImage.capture_time_ms_);
+            
+            if (lastTimeStamp_ >  encodedImage.capture_time_ms_)
+                nMisordered_++;
+        }
+        else
+            lastTimeStamp_ = encodedImage.capture_time_ms_;
+        
+        // pass frame further
+        decoder_->onEncodedFrameDelivered(encodedImage);
+    }
+    
+    uint64_t lastTimeStamp_ = 0;
+    unsigned int nMisordered_ = 0;
+};
+
 TEST(LoopbackTests, Transmission)
 {
     SenderChannelParams *sp = SenderChannelParams::defaultParams();
@@ -79,7 +114,8 @@ TEST(LoopbackTests, Transmission)
     sp->setIntParam(VideoSenderParams::ParamNameFrameFreshnessInterval, 10);
     
     NdnSenderChannel *sc = new NdnSenderChannel(sp);
-    NdnReceiverChannel *rc = new NdnReceiverChannel(rp);
+//    NdnReceiverChannel *rc = new NdnReceiverChannel(rp);
+    TestReceiverChannel *rc = new TestReceiverChannel(rp);
     
     EXPECT_EQ(0, sc->init());
     EXPECT_EQ(0, rc->init());
@@ -89,11 +125,13 @@ TEST(LoopbackTests, Transmission)
     rc->startFetching();
     
     bool f=  false;
-    EXPECT_TRUE_WAIT(f, 1000000);
-    
+//    EXPECT_TRUE_WAIT(f, 10000);
+    WAIT(50000);
     
     sc->stopTransmission();
-//    rc->stopFetching();
+    rc->stopFetching();
+    
+    EXPECT_EQ(0,rc->nMisordered_);
     
     delete sc;
     delete rc;

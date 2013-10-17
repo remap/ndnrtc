@@ -85,7 +85,7 @@ int main(int argc, char * argv[]) {
     NSRunLoop* main_run_loop = [NSRunLoop mainRunLoop];
     NSDate *loop_until = [NSDate dateWithTimeIntervalSinceNow:0.1];
     bool runloop_ok = true;
-    NdnLogger::initialize("bin/ndnrtc.log", NdnLoggerDetailLevelAll);
+    NdnLogger::initialize(NULL, NdnLoggerDetailLevelAll);
     
     while (![tests done] && runloop_ok) {
         runloop_ok = [main_run_loop runMode:NSDefaultRunLoopMode
