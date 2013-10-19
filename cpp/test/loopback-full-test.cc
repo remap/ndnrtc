@@ -20,6 +20,8 @@
 
 using namespace ndnrtc;
 
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+
 TEST(ReceiverChannelParams, CreateDelete)
 {
     NdnParams *p = ReceiverChannelParams::defaultParams();
@@ -126,7 +128,7 @@ TEST(LoopbackTests, Transmission)
     
     bool f=  false;
 //    EXPECT_TRUE_WAIT(f, 10000);
-    WAIT(50000);
+    WAIT(5000);
     
     sc->stopTransmission();
     rc->stopFetching();

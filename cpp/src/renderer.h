@@ -34,8 +34,8 @@ namespace ndnrtc {
         }
         
         // public methods
-        int getWindowWidth(int *width) { return getParamAsInt(ParamNameWindowWidth, width); };
-        int getWindowHeight(int *height) { return getParamAsInt(ParamNameWindowHeight, height); };
+        int getWindowWidth(unsigned int *width) { return getParamAsInt(ParamNameWindowWidth, (int*)width); };
+        int getWindowHeight(unsigned int *height) { return getParamAsInt(ParamNameWindowHeight, (int*)height); };
     };
     
     class NdnRenderer : public NdnRtcObject, public IRawFrameConsumer

@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <pthread.h>
+#include <string>
 
 #if !defined(NDN_LOGGING)
 #undef NDN_TRACE
@@ -91,6 +92,8 @@ namespace ndnlog {
         // public static methods go here
         static void initialize(const char *logFile, NdnLoggerDetailLevel logDetailLevel);
         static void log(const char *fName, NdnLoggerLevel level, const char *format, ...);
+        static std::string currentLogFile(); // returns "" if log to stdout
+        static NdnLoggerDetailLevel currentLogLevel();
         
         // public attributes go here
         
@@ -106,6 +109,7 @@ namespace ndnlog {
         FILE *outLogStream_;
         char *buf_;
         NdnLoggerDetailLevel loggingDetailLevel_;
+        std::string logFile_;
         
         pthread_mutex_t logMutex_;
         

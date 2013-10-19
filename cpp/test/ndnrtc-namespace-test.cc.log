@@ -1,0 +1,4 @@
+1382137530121: [INFO] SetUp: test suite started. log is here: /Users/peetonn/Documents/Work/CCN/ndnrtc/cpp/test/ndnrtc-namespace-test.cc.log
+1382137530121: [TRACE] TestBody: /ndn.ucla.edu/ndnrtc/user/producer1/key/DSK-1408
+1382137530121: [TRACE] TestBody: /ndn.ucla.edu/ndnrtc/user/producer1/key/DSK-1408/ID-CERT/0
+1382137530121: [INFO] TearDown: test suite finished

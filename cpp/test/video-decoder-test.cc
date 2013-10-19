@@ -17,6 +17,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
+::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
 //********************************************************************************
 class NdnVideoCoderTest : public NdnRtcObjectTestHelper, public IRawFrameConsumer
@@ -168,8 +169,8 @@ TEST_F(NdnVideoCoderTest, CaptureEncodeDecodeAndRender)
     
     EXPECT_EQ(false, obtainedError_);
     
-    EXPECT_TRUE_WAIT(obtainedError_, 50000);
-//    WAIT(5000);
+//    EXPECT_TRUE_WAIT(obtainedError_, 5000);
+    WAIT(5000);
     
     if (obtainedError_)
         INFO("got error %s", obtainedEmsg_);

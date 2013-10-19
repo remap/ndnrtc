@@ -69,7 +69,7 @@ string VideoSenderParams::getStreamFramePrefix() const
     string prefix  = getStreamPrefix();
     
 #warning temporarily set stream thread
-    string streamThread = "vp8-640";
+    string streamThread = "vp8";
     shared_ptr<string> framesPrefix = NdnRtcNamespace::buildPath(false, &prefix, &streamThread, &NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames, NULL);
     
     return *framesPrefix;
@@ -143,11 +143,11 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, w
 
 //********************************************************************************
 #pragma mark - public
-void NdnVideoSender::registerConference(ndnrtc::VideoSenderParams &params)
-{
+//void NdnVideoSender::registerConference(ndnrtc::VideoSenderParams &params)
+//{
 //    params_.resetParams(params);
 //    TRACE("register conference");
-}
+//}
 
 //void NdnVideoSender::fetchParticipantsList()
 //{
@@ -185,40 +185,47 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     // calculate total number of segments for current frame
     segmentsNum = NdnRtcUtils::getSegmentsNumber(segmentSize_, payloadSize);
     
-    if (segmentsNum > 0)
-    {
-        // 4. split frame into segments
-        // 5. publish segments under <root>/frameNo/segmentNo URI
-        while (payloadSize > 0)
+    try {
+        if (segmentsNum > 0)
         {
-            Name segmentPrefix = prefix;
-            segmentPrefix.appendSegment(segmentNo);
-            
-            Data data(segmentPrefix);
-            
-            bytesToSend = (payloadSize < segmentSize_)? payloadSize : segmentSize_;
-            payloadSize -= segmentSize_;
-            
-            data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
-            data.getMetaInfo().setFinalBlockID(Name().appendSegment(segmentsNum-1).get(0).getValue());
-            data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
-            data.setContent((const unsigned char *)&frameData.getData()[segmentNo*segmentSize_], bytesToSend);
-            
-            ndnKeyChain_->sign(data, *certificateName_);
-            
-            Blob encodedData = data.wireEncode();
-            ndnTransport_->send(*encodedData);
-            
-            segmentNo++;
+            // 4. split frame into segments
+            // 5. publish segments under <root>/frameNo/segmentNo URI
+            while (payloadSize > 0)
+            {
+                Name segmentPrefix = prefix;
+                segmentPrefix.appendSegment(segmentNo);
+                
+                Data data(segmentPrefix);
+                
+                bytesToSend = (payloadSize < segmentSize_)? payloadSize : segmentSize_;
+                payloadSize -= segmentSize_;
+                
+                data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
+                data.getMetaInfo().setFinalBlockID(Name().appendSegment(segmentsNum-1).get(0).getValue());
+                data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
+                data.setContent((const unsigned char *)&frameData.getData()[segmentNo*segmentSize_], bytesToSend);
+                
+                ndnKeyChain_->sign(data, *certificateName_);
+                
+                Blob encodedData = data.wireEncode();
+                ndnTransport_->send(*encodedData);
+                
+                segmentNo++;
 #if 0
-            for (unsigned int i = 0; i < data.getContent().size(); ++i)
-                printf("%2x ",(*data.getContent())[i]);
-            cout << endl;
+                for (unsigned int i = 0; i < data.getContent().size(); ++i)
+                    printf("%2x ",(*data.getContent())[i]);
+                cout << endl;
 #endif
-            
-//            TRACE("sent segment %s, size: %d, encoded: %d", segmentPrefix.toUri().c_str(), data.getContent().size(), encodedData.size());
+            }
         }
+        
     }
+    catch (std::exception &e)
+    {
+        notifyError(-1, "got error from ndn library: %s", e.what());
+        return;
+    }
+    
     frameNo_++;
 }
 

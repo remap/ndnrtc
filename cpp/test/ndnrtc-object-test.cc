@@ -21,8 +21,11 @@
 #include "gtest/gtest.h"
 #include "simple-log.h"
 #include "ndnrtc-object.h"
+#include "test-common.h"
 
 using namespace ndnrtc;
+
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
 //********************************************************************************
 /**

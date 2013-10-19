@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#define USE_RECEIVER_FACE
+
 //#undef DEBUG
 //#undef NDN_LOGGING
 #define DEBUG
@@ -26,6 +28,8 @@
 
 using namespace ndnrtc;
 
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+
 //********************************************************************************
 // VideoReceiver tests
 class NdnReceiverTester : public NdnRtcObjectTestHelper, public IEncodedFrameConsumer
@@ -41,20 +45,22 @@ public :
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
-//        shared_ptr<Transport::ConnectionInfo> connInfoUdp(new UdpTransport::ConnectionInfo("localhost", 6363));
-//        ndnReceiverFace_.reset(new Face(shared_ptr<Transport>(new UdpTransport()), connInfoUdp));
-        ndnReceiverFace_ = ndnFace_;
-        
         std::string streamAccessPrefix = params_.get()->getStreamKeyPrefix();
         ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                  bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
                                  bind(&NdnReceiverTester::onRegisterFailed, this, _1));
         
+#ifdef USE_RECEIVER_FACE
+        shared_ptr<Transport::ConnectionInfo> connInfoTcp(new TcpTransport::ConnectionInfo("localhost", 6363));
+        ndnReceiverFace_.reset(new Face(shared_ptr<Transport>(new TcpTransport()), connInfoTcp));
+        
         streamAccessPrefix += "/receiver";
         ndnReceiverFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                          bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
                                          bind(&NdnReceiverTester::onRegisterFailed, this, _1));
-        
+#else
+                ndnReceiverFace_ = ndnFace_;
+#endif
         ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
         certName_ = NdnRtcNamespace::certificateNameForUser(params_->getUserPrefix());
         
@@ -161,7 +167,7 @@ protected:
         delete payload;
     } // publishFrame
 };
-#if 0
+
 TEST_F(NdnReceiverTester, CreateDelete)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(VideoSenderParams::defaultParams());
@@ -194,7 +200,6 @@ TEST_F(NdnReceiverTester, EmptyFetching)
     
     delete receiver;
 }
-#endif
 
 TEST_F(NdnReceiverTester, Fetching30FPS)
 {
@@ -216,29 +221,30 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     EXPECT_FALSE(obtainedError_);
     
     TRACE("start fetching");
-    receiver->startFetching();
+    EXPECT_EQ(0, receiver->startFetching());
     
     // we should start publishing frames later, so that receiver will get first frame
     // by issuing interest with RightMostChild selector
-    WAIT(100);
-    
+    WAIT(1000);
     
     for (int i = 0; i < framesNum; i++)
     {
-        publishFrame(i, segmentSize, 10);
+        publishFrame(i, segmentSize, 5);
         TRACE("published frame %d",i);
         WAIT(1000/producerFrameRate);
     }
     
-    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 2000);
-    ASSERT_EQ(framesNum, receivedFrames_.size());
-    
-    for (int i = 0; i < framesNum; i++)
+    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 5000);
+
+    if (framesNum == receivedFrames_.size())
     {
-        EXPECT_EQ(sentFrames_[i], receivedFrames_[i]);
-        
-        if (i != framesNum-1)
-            EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
+        for (int i = 0; i < framesNum; i++)
+        {
+            EXPECT_EQ(sentFrames_[i], receivedFrames_[i]);
+            
+            if (i != framesNum-1)
+                EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
+        }
     }
     
     receiver->stopFetching();
@@ -246,10 +252,10 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     delete receiver;
 }
 
-#if 0
+
 TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
 {
-    WAIT(5000); // wait for results from previous test expire (on the ndn network)
+    WAIT(5200); // wait for results from previous test expire (on the ndn network)
     
     unsigned int framesNum = 30;
     unsigned int segmentSize = 1000;
@@ -278,19 +284,19 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     for (int i = 0; i < framesNum; i++)
     {
         publishFrame(i, segmentSize);
-        TRACE("published frame %d",i);        
+        TRACE("published frame %d",i,5);
         WAIT(1000/producerFrameRate);
     }
     
-    
-    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 1000);
-    ASSERT_EQ(framesNum, receivedFrames_.size());
-    
-    for (int i = 0; i < framesNum; i++)
-        EXPECT_EQ(sentFrames_[i], receivedFrames_[i]);
+    EXPECT_TRUE_WAIT(receivedFrames_.size() == framesNum, 5000);
+
+    if (framesNum == receivedFrames_.size())
+    {
+        for (int i = 0; i < framesNum; i++)
+            EXPECT_EQ(sentFrames_[i], receivedFrames_[i]);
+    }
     
     receiver->stopFetching();
     
     delete receiver;
 }
-#endif

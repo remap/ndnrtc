@@ -48,7 +48,7 @@ namespace ndnrtc
             return p;
         }
         
-        int getConnectPort() { return getParamAsInt(ParamNameConnectPort); }
+        unsigned int getConnectPort() { return (unsigned int)getParamAsInt(ParamNameConnectPort); }
         std::string getConnectHost() { return getParamAsString(ParamNameConnectHost); }
     };
     

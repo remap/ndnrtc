@@ -48,8 +48,8 @@ namespace ndnrtc
         int getHub(char **hub) const { return getParamAsString(ParamNameNdnHub, hub); }
         int getProducerId(char **producerId) const { return getParamAsString(ParamNameProducerId, producerId); }
         int getStreamName(char **streamName) const { return getParamAsString(ParamNameStreamName, streamName); }
-        int getSegmentSize(int *segmentSize) const { return getParamAsInt(ParamNameSegmentSize, segmentSize); }
-        int getFreshnessInterval(int *freshness) const {return getParamAsInt(ParamNameFrameFreshnessInterval, freshness); }
+        int getSegmentSize(unsigned int *segmentSize) const { return getParamAsInt(ParamNameSegmentSize, (int*)segmentSize); }
+        int getFreshnessInterval(unsigned int *freshness) const {return getParamAsInt(ParamNameFrameFreshnessInterval, (int*)freshness); }
         
         int getSegmentSize() const { return getParamAsInt(ParamNameSegmentSize); }
         std::string getUserPrefix() const;
@@ -102,7 +102,7 @@ namespace ndnrtc
         
         // public methods go here
         int init(const shared_ptr<Transport> transport);
-        void registerConference(VideoSenderParams &params);
+//        void registerConference(VideoSenderParams &params);
         unsigned long int getFrameNo() { return frameNo_; };
         
         // interface conformance

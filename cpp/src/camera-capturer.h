@@ -40,10 +40,10 @@ namespace ndnrtc {
         };
         
         // public methods
-        int getDeviceId(int *did) const { return getParamAsInt(ParamNameDeviceId, did); };
-        int getWidth(int *width) const { return getParamAsInt(ParamNameWidth, width); };
-        int getHeight(int *height) const { return getParamAsInt(ParamNameHeight, height); };
-        int getFPS(int *fps) const { return getParamAsInt(ParamNameFPS, fps); };
+        int getDeviceId(unsigned int *did) const { return getParamAsInt(ParamNameDeviceId, (int*)did); };
+        int getWidth(unsigned int *width) const { return getParamAsInt(ParamNameWidth, (int*)width); };
+        int getHeight(unsigned int *height) const { return getParamAsInt(ParamNameHeight, (int*)height); };
+        int getFPS(unsigned int *fps) const { return getParamAsInt(ParamNameFPS, (int*)fps); };
     };
     
     class CameraCapturer : public NdnRtcObject, public webrtc::VideoCaptureDataCallback

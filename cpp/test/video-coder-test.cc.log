@@ -1,0 +1,12 @@
+1382137536634: [INFO] int ndnrtc::NdnVideoCoder::init(): Initialized encoder with max payload 3900 and parameters: 
+		Max Framerate:	30
+          	Start Bitrate:	300
+          	Max Bitrate:	4000
+          	Width:	640
+          	Height:	480         
+1382137536638: [INFO] int ndnrtc::NdnVideoCoder::init(): Initialized encoder with max payload 3900 and parameters: 
+		Max Framerate:	30
+          	Start Bitrate:	300
+          	Max Bitrate:	4000
+          	Width:	640
+          	Height:	480         

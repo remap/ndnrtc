@@ -12,6 +12,8 @@
 #ifndef ndnrtc_test_common_h
 #define ndnrtc_test_common_h
 
+#define ENV_NAME std::string(__FILE__)
+
 #include <unistd.h>
 #include <stdint.h>
 
@@ -52,12 +54,22 @@ public:
     virtual void SetUp()
     {
         flushFlags();
+
+        const ::testing::TestInfo* const test_info =
+        ::testing::UnitTest::GetInstance()->current_test_info();
+        INFO("***");
+        INFO("***[GTESTS]: entering test %s:%s", test_info->test_case_name(),test_info->name());
+        
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
 #endif
     }
     virtual void TearDown()
     {
+        const ::testing::TestInfo* const test_info =
+        ::testing::UnitTest::GetInstance()->current_test_info();
+        INFO("***[GTESTS]: leaving test %s:%s", test_info->test_case_name(),test_info->name());
+        INFO("***");
     }
 
     virtual void onErrorOccurred(const char *errorMessage)
@@ -145,6 +157,28 @@ protected:
         webrtc::Trace::SetTraceFile("bin/webrtc.txt");
 //        webrtc::Trace::SetLevelFilter(webrtc::kTraceAll);
     }
+};
+
+class NdnRtcTestEnvironment : public ::testing::Environment
+{
+public:
+    NdnRtcTestEnvironment(const std::string &name):Environment()
+    {
+        name_ = name;
+        name_ += ".log";
+    }
+    void SetUp()
+    {
+        NdnLogger::initialize(name_.c_str(), NdnLoggerDetailLevelAll);
+        INFO("test suite started. log is here: %s", name_.c_str());
+    }
+    void TearDown()
+    {
+        INFO("test suite finished");
+    }
+    
+protected:
+    std::string name_;
 };
 
 class CocoaTestEnvironment : public ::testing::Environment

@@ -47,7 +47,12 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
     decodedImage.set_render_time_ms(TickTime::MillisecondTimestamp());
     
     if (frameConsumer_)
+    {
+        TRACE("pushing decoded frame further");
         frameConsumer_->onDeliverFrame(decodedImage);
+    }
+    else
+        WARN("frame was decoded but never used");	
     
     return 0;
 }
@@ -59,5 +64,5 @@ void NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage
     if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't decode frame");
     else
-        INFO("decoded");
+        TRACE("decoded");
 }

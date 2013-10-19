@@ -147,6 +147,8 @@ void NdnVideoReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 {
     Name prefix = interest->getName();
     
+    TRACE("got timeout for the interest: %s", prefix.toUri().c_str());
+    
     if (isStreamInterest(prefix))
     {
         unsigned int frameNo = 0, segmentNo = 0;
@@ -168,6 +170,8 @@ void NdnVideoReceiver::onTimeout(const shared_ptr<const Interest>& interest)
         else
             frameBuffer_.notifySegmentTimeout(frameNo, segmentNo);
     }
+    else
+        WARN("got timeout for unexpected prefix");
 }
 
 void NdnVideoReceiver::onSegmentData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
@@ -225,6 +229,8 @@ void NdnVideoReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
             WARN("got bad frame/segment numbers: %d (%d)", frameNo, segmentNo);
         }
     }
+    else
+        WARN("got data with unexpected prefix");
 }
 
 //********************************************************************************
@@ -421,6 +427,7 @@ void NdnVideoReceiver::requestInitialSegment()
     i.setMinSuffixComponents(2);
     expressInterest(i);
 }
+
 void NdnVideoReceiver::pipelineInterests(FrameBuffer::Event &event)
 {
     TRACE("pipeline for the frame %d", event.frameNo_);
@@ -450,6 +457,7 @@ void NdnVideoReceiver::pipelineInterests(FrameBuffer::Event &event)
             expressInterest(segmentPrefix);
         }
 }
+
 void NdnVideoReceiver::requestSegment(unsigned int frameNo, unsigned int segmentNo)
 {
     Name segmentPrefix = framesPrefix_;
@@ -463,10 +471,12 @@ void NdnVideoReceiver::requestSegment(unsigned int frameNo, unsigned int segment
     
     expressInterest(segmentPrefix);
 }
+
 bool NdnVideoReceiver::isStreamInterest(Name prefix)
 {
     return framesPrefix_.match(prefix);
 }
+
 void NdnVideoReceiver::expressInterest(Name &prefix)
 {
     Interest i(prefix, interestTimeoutMs_);
@@ -484,6 +494,7 @@ void NdnVideoReceiver::expressInterest(Name &prefix)
     }
     faceCs_.Leave();
 }
+
 void NdnVideoReceiver::expressInterest(Interest &i)
 {
     TRACE("2 expressing interest %s", i.getName().toUri().c_str());
@@ -499,6 +510,7 @@ void NdnVideoReceiver::expressInterest(Interest &i)
     }
     faceCs_.Leave();
 }
+
 bool NdnVideoReceiver::isLate(unsigned int frameNo)
 {
     if (mode_ == ReceiverModeFetch &&

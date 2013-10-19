@@ -1,0 +1,85 @@
+1382137537323: [INFO] int ndnrtc::NdnVideoCoder::init(): Initialized encoder with max payload 3900 and parameters: 
+		Max Framerate:	30
+          	Start Bitrate:	300
+          	Max Bitrate:	4000
+          	Width:	640
+          	Height:	480         
+1382137537359: [INFO] int ndnrtc::CameraCapturer::startCapture(): started camera capture
+1382137539835: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137539835: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137539879: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137539879: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137539947: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137539947: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540013: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540013: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540078: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540078: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540146: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540146: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540214: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540214: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540280: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540280: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540337: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540337: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540405: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540405: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540472: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540472: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540539: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540539: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540607: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540607: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540675: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540675: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540774: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540774: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540831: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540831: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540897: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540897: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137540965: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137540965: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541032: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541032: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541099: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541099: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541166: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541166: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541233: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541233: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541301: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541302: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541368: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541368: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541436: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541436: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541493: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541493: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541556: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541556: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541626: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541626: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541696: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541696: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541756: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541756: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541822: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541822: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541895: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541895: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137541961: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137541961: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542027: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542027: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542083: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542083: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542150: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542150: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542224: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542224: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542295: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542295: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded
+1382137542353: [TRACE] virtual int32_t ndnrtc::NdnVideoDecoder::Decoded(webrtc::I420VideoFrame &): pushing decoded frame further
+1382137542353: [TRACE] virtual void ndnrtc::NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &): decoded

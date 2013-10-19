@@ -22,7 +22,7 @@ namespace ndnrtc {
     public:
         // construction/destruction
         NdnVideoDecoder(const NdnParams *coderParams);
-        ~NdnVideoDecoder() { TRACE("decoder"); }
+        ~NdnVideoDecoder() { }
         
         void setFrameConsumer(IRawFrameConsumer *frameConsumer) { frameConsumer_ = frameConsumer; };
         int init();

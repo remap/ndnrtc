@@ -14,6 +14,9 @@
 
 using namespace ndnrtc;
 
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+
+
 //********************************************************************************
 /**
  * @name NdnVideoCoderParams class tests

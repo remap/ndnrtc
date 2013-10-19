@@ -1,0 +1,45 @@
+1382137520969: [ERROR] shared_ptr<webrtc::EncodedImage> ndnrtc::FrameBuffer::Slot::getFrame(): error unpacking frame
+1382137520970: [WARN] void ndnrtc::FrameBuffer::markSlotFree(unsigned int): can't free slot 32 - it was not found or locked
+1382137520970: [WARN] void ndnrtc::FrameBuffer::markSlotFree(unsigned int): can't free slot 32 - it was not found or locked
+1382137520970: [WARN] void ndnrtc::FrameBuffer::lockSlot(unsigned int): can't lock slot - it was not found
+1382137520970: [WARN] void ndnrtc::FrameBuffer::unlockSlot(unsigned int): can't unlock slot - it was not found
+1382137521398: [WARN] void ndnrtc::FrameBuffer::markSlotFree(unsigned int): can't free slot 7 - it was not found or locked
+1382137522590: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): no frames for playout
+1382137522590: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 0
+1382137522591: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 1
+1382137522591: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 2
+1382137522591: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 3
+1382137522591: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 4
+1382137522614: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 0 acquired for playback
+1382137522627: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 5
+1382137522650: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 1 acquired for playback
+1382137522662: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 6
+1382137522685: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 2 acquired for playback
+1382137522694: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 7
+1382137522720: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 3 acquired for playback
+1382137522748: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 8
+1382137522755: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 4 acquired for playback
+1382137522768: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 9
+1382137522791: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 5 acquired for playback
+1382137522817: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 10
+1382137522826: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 6 acquired for playback
+1382137522862: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 7 acquired for playback
+1382137522862: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 11
+1382137522881: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 12
+1382137522897: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 8 acquired for playback
+1382137522944: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 9 acquired for playback
+1382137522944: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 13
+1382137522971: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 14
+1382137522979: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 10 acquired for playback
+1382137523015: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 11 acquired for playback
+1382137523055: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 12 acquired for playback
+1382137523090: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 13 acquired for playback
+1382137523125: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 14 acquired for playback
+1382137523161: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): no frames for playout
+1382137523173: [TRACE] bool ndnrtc::PlayoutBuffer::processFrameProvider(): got event 0. returning false
+1382137523196: [TRACE] bool ndnrtc::PlayoutBuffer::processFrameProvider(): got event 0. returning false
+1382137523297: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): no frames for playout
+1382137523297: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): no frames for playout
+1382137523297: [INFO] bool ndnrtc::PlayoutBuffer::processFrameProvider(): pushed new frame 1
+1382137523398: [TRACE] shared_ptr<webrtc::EncodedImage> ndnrtc::PlayoutBuffer::acquireNextFrame(bool): frame 1 acquired for playback
+1382137523500: [TRACE] bool ndnrtc::PlayoutBuffer::processFrameProvider(): got event 0. returning false

@@ -25,19 +25,31 @@ static NdnLogger *sharedLogger = NULL;
 NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
 loggingDetailLevel_(logDetailLevel),
 outLogStream_(NULL),
-logMutex_(PTHREAD_MUTEX_INITIALIZER)
+logMutex_(PTHREAD_MUTEX_INITIALIZER),
+logFile_("")
 {
     buf_ = (char*)malloc(MAX_BUF_SIZE);
     flushBuffer(buf_);
 
     if (logFile)
+    {
         outLogStream_ = fopen(logFile, "w");
+        logFile_ = std::string(logFile);
+    }
 
     if (!logFile || outLogStream_ <= 0)
+    {
         outLogStream_ = stdout;
+        logFile_ = "";
+    }
 }
 NdnLogger::~NdnLogger()
 {
+    INFO("shutting down log session");
+    
+    if (outLogStream_ != stdout)
+        fclose(outLogStream_);
+    
     free(buf_);
     pthread_mutex_destroy(&logMutex_);
 }
@@ -59,6 +71,7 @@ NdnLogger* NdnLogger::getInstance()
     
     return sharedLogger;
 }
+
 const char* NdnLogger::stingify(NdnLoggerLevel lvl)
 {
     switch (lvl) {
@@ -77,10 +90,12 @@ const char* NdnLogger::stingify(NdnLoggerLevel lvl)
     }
     return 0;
 }
+
 void NdnLogger::flushBuffer(char *buffer)
 {
     memset(buffer, 0, MAX_BUF_SIZE);    
 }
+
 void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format, ...)
 {
     NdnLogger *sharedInstance = NdnLogger::getInstance();
@@ -102,6 +117,17 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
         sharedInstance->log(buf);
     }
 }
+
+std::string NdnLogger::currentLogFile()
+{
+    return sharedLogger->logFile_;
+}
+
+NdnLoggerDetailLevel NdnLogger::currentLogLevel()
+{
+    return sharedLogger->loggingDetailLevel_;
+}
+
 
 //********************************************************************************
 #pragma mark - private

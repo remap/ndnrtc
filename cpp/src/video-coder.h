@@ -40,11 +40,12 @@ namespace ndnrtc {
         }
         
         // public methods
-        int getFrameRate(int *frameRate) const { return getParamAsInt(ParamNameFrameRate, frameRate); };
-        int getStartBitRate(int *startBitRate) const { return getParamAsInt(ParamNameStartBitRate, startBitRate); };
-        int getMaxBitRate(int *maxBitRate) const { return getParamAsInt(ParamNameMaxBitRate, maxBitRate); };
-        int getWidth(int *width) const { return getParamAsInt(ParamNameEncodeWidth, width); };
-        int getHeight(int *height) const { return getParamAsInt(ParamNameEncodeHeight, height); };
+        int getFrameRate(unsigned int *frameRate) const { return getParamAsInt(ParamNameFrameRate, (int*)frameRate); };
+        int getStartBitRate(unsigned int *startBitRate) const { return getParamAsInt(ParamNameStartBitRate, (int*)startBitRate); };
+        int getMaxBitRate(unsigned int *maxBitRate) const { return getParamAsInt(ParamNameMaxBitRate, (int*)maxBitRate); };
+        int getWidth(unsigned int *width) const { return getParamAsInt(ParamNameEncodeWidth, (int*)width); };
+        int getHeight(unsigned int *height) const { return getParamAsInt(ParamNameEncodeHeight, (int*)height); };
+        
         webrtc::VideoCodec getCodec();
     };
     

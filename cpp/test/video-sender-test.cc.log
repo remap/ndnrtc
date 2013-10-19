@@ -1,0 +1,59 @@
+1382137555705: [INFO] SetUp: test suite started. log is here: /Users/peetonn/Documents/Work/CCN/ndnrtc/cpp/test/video-sender-test.cc.log
+1382137555705: [INFO] SetUp: ***
+1382137555705: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestFrameData
+1382137555706: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137555706: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestFrameData
+1382137555706: [INFO] TearDown: ***
+1382137555706: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137555706: [INFO] SetUp: ***
+1382137555706: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestInit
+1382137555707: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137555707: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137555707: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestInit
+1382137555707: [INFO] TearDown: ***
+1382137555707: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137555707: [INFO] SetUp: ***
+1382137555707: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestSend
+1382137555707: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137556716: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137556716: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000000
+1382137556730: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00, size: 606
+1382137556742: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestSend
+1382137556742: [INFO] TearDown: ***
+1382137556742: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137556742: [INFO] SetUp: ***
+1382137556742: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestSendSeveralFrames
+1382137556742: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137557951: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137557951: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000000
+1382137557953: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000001
+1382137557953: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000002
+1382137557967: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00, size: 606
+1382137557967: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/1/%00, size: 606
+1382137557967: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/2/%00, size: 606
+1382137557977: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestSendSeveralFrames
+1382137557977: [INFO] TearDown: ***
+1382137557977: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137557978: [INFO] SetUp: ***
+1382137557978: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestSendBySegments
+1382137557978: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137559188: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137559188: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137559188: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000000
+1382137559205: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00, size: 188
+1382137559205: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00%01, size: 188
+1382137559205: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00%02, size: 188
+1382137559205: [INFO] onData: Got data packet with name /ndn/ucla.edu/apps/ndnrtc/user/testuser/streams/video0/vp8/frames/0/%00%03, size: 42
+1382137559216: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestSendBySegments
+1382137559216: [INFO] TearDown: ***
+1382137559216: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137559216: [INFO] SetUp: ***
+1382137559216: [INFO] SetUp: ***[GTESTS]: entering test VideoSenderTester:TestSendWithLibException
+1382137559216: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137560224: [TRACE] static shared_ptr<ndn::KeyChain> ndnrtc::NdnRtcNamespace::keyChainForUser(const std::string &): store key name: /ndn/ucla.edu/apps/ndnrtc/user/testuser/key/DSK-1408
+1382137560225: [TRACE] virtual void ndnrtc::NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &): sending frame #0000000000
+1382137560226: [TRACE] int ndnrtc::NdnRtcObject::notifyError(const int, const char *, ...): error occurred: got error from ndn library: SocketTransport socket is not open
+1382137560226: [INFO] TearDown: ***[GTESTS]: leaving test VideoSenderTester:TestSendWithLibException
+1382137560226: [INFO] TearDown: ***
+1382137560226: [TRACE] virtual ndnrtc::NdnVideoSender::~NdnVideoSender(): sender is dead
+1382137560226: [INFO] TearDown: test suite finished

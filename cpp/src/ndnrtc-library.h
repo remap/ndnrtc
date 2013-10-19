@@ -22,7 +22,7 @@ namespace ndnrtc {
         const char *logFile;
         
         // capture settings
-        int captureDeviceId;
+        unsigned int captureDeviceId;
         unsigned int captureWidth, captureHeight;
         unsigned int captureFramerate;
         
@@ -107,10 +107,14 @@ namespace ndnrtc {
             destroy_ndnrtc(libObject);
         }
         
+        static NdnLibParams createParamsStruct();
+        static void releaseParamsStruct(NdnLibParams &params);
+        
         // public methods go here
         virtual void configure(NdnLibParams &params);
+        virtual NdnLibParams currentParams();
+        
         virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
-        virtual void* getLibraryHandle(){ return libraryHandle_; };
         virtual NdnLibParams getDefaultParams() const;
         virtual int getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const;
         
@@ -121,7 +125,7 @@ namespace ndnrtc {
         virtual int leaveConference(const char *conferencePrefix);
         
         virtual void onErrorOccurred(const char *errorMessage);
-        
+        virtual void* getLibraryHandle(){ return libraryHandle_; };
     private:
         void *libraryHandle_;
         NdnParams libParams_;

@@ -12,6 +12,8 @@
 #include "sender-channel.h"
 #include "receiver-channel.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <memory>
 
 #define CHECK_AND_SET_INT(paramSet, paramName, paramValue){ \
@@ -61,6 +63,23 @@ extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
 #pragma mark - all static
 static const char *DefaultLogFile = NULL;
 
+NdnLibParams NdnRtcLibrary::createParamsStruct()
+{
+    NdnLibParams paramsStruct;
+    memset(&paramsStruct, 0, sizeof(NdnLibParams));
+    return paramsStruct;
+}
+
+void NdnRtcLibrary::releaseParamsStruct(NdnLibParams &params)
+{
+    if (params.logFile)
+        free((void*)params.logFile);
+    
+    if (params.host)
+        free((void*)params.host);
+}
+
+
 //********************************************************************************
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
@@ -95,8 +114,8 @@ void NdnRtcLibrary::configure(NdnLibParams &params)
     CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameFrameRate, params.codecFrameRate)
     CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameStartBitRate, params.startBitrate)
     CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameMaxBitRate, params.maxBitrate)
-    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameWidth, params.encodeWidth)
-    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameHeight, params.encodeHeight)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameEncodeWidth, params.encodeWidth)
+    CHECK_AND_SET_INT(libParams_, NdnParams::ParamNameEncodeHeight, params.encodeHeight)
     
     // network
     CHECK_AND_SET_STR(libParams_, NdnParams::ParamNameConnectHost, params.host)
@@ -114,6 +133,67 @@ void NdnRtcLibrary::configure(NdnLibParams &params)
     
     notifyObserverWithState("init", "initialized with parameters: %s", libParams_.description().c_str());
 }
+NdnLibParams NdnRtcLibrary::currentParams()
+{
+    NdnLibParams paramsStruct;
+    
+    memset(&paramsStruct, 0, sizeof(NdnLibParams));
+    
+    std::string logFName = NdnLogger::currentLogFile();
+    
+    if (logFName != "")
+    {
+        paramsStruct.logFile = (char*)malloc(256);
+        memset(&paramsStruct.logFile, 0, 256);
+        
+        logFName.copy((char*)paramsStruct.logFile, logFName.size());
+    }
+
+    paramsStruct.loggingLevel = NdnLogger::currentLogLevel();
+    
+    // capture settings
+    static_cast<CameraCapturerParams*>(&libParams_)->getDeviceId(&paramsStruct.captureDeviceId);
+    static_cast<CameraCapturerParams*>(&libParams_)->getWidth(&paramsStruct.captureWidth);
+    static_cast<CameraCapturerParams*>(&libParams_)->getHeight(&paramsStruct.captureHeight);
+    static_cast<CameraCapturerParams*>(&libParams_)->getFPS(&paramsStruct.captureFramerate);
+    
+    // render
+    static_cast<NdnRendererParams*>(&libParams_)->getWindowHeight(&paramsStruct.renderWidth);
+    static_cast<NdnRendererParams*>(&libParams_)->getWindowHeight(&paramsStruct.renderHeight);
+    
+    // codec
+    static_cast<NdnVideoCoderParams*>(&libParams_)->getFrameRate(&paramsStruct.codecFrameRate);
+    static_cast<NdnVideoCoderParams*>(&libParams_)->getStartBitRate(&paramsStruct.startBitrate);
+    static_cast<NdnVideoCoderParams*>(&libParams_)->getMaxBitRate(&paramsStruct.maxBitrate);
+    static_cast<NdnVideoCoderParams*>(&libParams_)->getWidth(&paramsStruct.encodeWidth);
+    static_cast<NdnVideoCoderParams*>(&libParams_)->getHeight(&paramsStruct.encodeHeight);
+    
+    // network
+    std::string host = static_cast<SenderChannelParams*>(&libParams_)->getConnectHost();
+    
+    if (host != "")
+    {
+        paramsStruct.host = (char*)malloc(256);
+        memset((void*)paramsStruct.host, 0, 256);
+        
+        host.copy((char*)paramsStruct.host, host.size());
+    }
+    
+    paramsStruct.portNum = static_cast<SenderChannelParams*>(&libParams_)->getConnectPort();
+    
+    // ndn producer
+    static_cast<VideoSenderParams*>(&libParams_)->getFreshnessInterval(&paramsStruct.freshness);
+    static_cast<VideoSenderParams*>(&libParams_)->getSegmentSize(&paramsStruct.segmentSize);
+
+    
+    // ndn consumer
+    paramsStruct.playbackRate = static_cast<VideoReceiverParams*>(&libParams_)->getProducerRate();
+    paramsStruct.interestTimeout = static_cast<VideoReceiverParams*>(&libParams_)->getDefaultTimeout();
+    paramsStruct.bufferSize = static_cast<VideoReceiverParams*>(&libParams_)->getFrameBufferSize();
+    paramsStruct.slotSize = static_cast<VideoReceiverParams*>(&libParams_)->getFrameSlotSize();
+
+    return paramsStruct;
+}
 
 NdnLibParams NdnRtcLibrary::getDefaultParams() const
 {
@@ -130,15 +210,15 @@ NdnLibParams NdnRtcLibrary::getDefaultParams() const
 
 int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const
 {
-    if (!conferencePrefix || Producers.find(string(conferencePrefix)) == Producers.end())
-        return notifyObserverWithError("producer was not found");
-    
     if (SenderChannel.get())
     {
         stat.sentNo_ = SenderChannel->getSentFramesNum();
         stat.sendingFramesFreq_ = SenderChannel->getNInputFramesPerSec();
         stat.capturingFreq_ = SenderChannel->getCurrentCapturingFreq();
     }
+    
+    if (!conferencePrefix || Producers.find(string(conferencePrefix)) == Producers.end())
+        return -1; //notifyObserverWithError("producer was not found");
     
     shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
     
@@ -174,7 +254,7 @@ int NdnRtcLibrary::startPublishing(const char *username)
     if (username)
         params.setStringParam(VideoSenderParams::ParamNameProducerId, username);
     
-    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(&libParams_));
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(&params));
     
     sc->setObserver(this);
     
@@ -216,7 +296,7 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
     
     params.setStringParam(VideoSenderParams::ParamNameProducerId, conferencePrefix);
     
-    shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(&libParams_));
+    shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(&params));
     
     producer->setObserver(this);
     

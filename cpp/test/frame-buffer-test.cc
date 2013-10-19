@@ -24,8 +24,10 @@
 #define NDN_ERROR
 #define NDN_TRACE
 
-
 using namespace ndnrtc;
+
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+
 
 //********************************************************************************
 // Slot tests
@@ -978,7 +980,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         unsigned char segment[100];
         
         buffer_->markSlotAssembling(frameNo, segmentsNum, 100);
-        EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
+        EXPECT_EQ(FrameBuffer::CallResultReady, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
         
         // should get 2 events - ready and first segment
         EXPECT_TRUE_WAIT(2 == receivedEventsStack_.size(), 1000);
@@ -1026,7 +1028,13 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         for (int i = 0; i < segmentsNum; i++)
         {
-            EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, i, 100, segment));
+            FrameBuffer::CallResult res = buffer_->appendSegment(frameNo, i, 100, segment);
+            
+            if (i < segmentsNum-1)
+                EXPECT_EQ(FrameBuffer::CallResultAssembling, res);
+            else
+                EXPECT_EQ(FrameBuffer::CallResultReady, res);
+                
             EXPECT_FALSE(finishedWaiting_);
         }
         
@@ -1139,7 +1147,12 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             
             for (int i = 1; i < segmentsNum; i++)
             {
-                EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, i, 100, segment));
+                FrameBuffer::CallResult res = buffer_->appendSegment(frameNo, i, 100, segment);
+                if (i < segmentsNum -1)
+                    EXPECT_EQ(FrameBuffer::CallResultAssembling, res);
+                else
+                    EXPECT_EQ(FrameBuffer::CallResultReady, res);
+                
                 EXPECT_FALSE(finishedWaiting_);
             }
             
