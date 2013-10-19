@@ -1,3 +1,8 @@
 cpp/bin
 cpp/obj
 cpp/thirdparty
+.DS_Store
+*.log
+*.aux
+*.toc
+*.out
