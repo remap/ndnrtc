@@ -1,6 +1,0 @@
-1382137530255: [INFO] virtual void NdnRtcTestEnvironment::SetUp(): test suite started. log is here: /Users/peetonn/Documents/Work/CCN/ndnrtc/cpp/test/ndnrtc-object-test.cc.log
-1382137530255: [TRACE] int ndnrtc::NdnRtcObject::notifyError(const int, const char *, ...): error occurred: error msg
-1382137530255: [TRACE] int ndnrtc::NdnRtcObject::notifyError(const int, const char *, ...): error occurred: 
-1382137530255: [TRACE] int ndnrtc::NdnRtcObject::notifyError(const int, const char *, ...): error occurred: no parameters provided
-1382137530255: [TRACE] int ndnrtc::NdnRtcObject::notifyError(const int, const char *, ...): error occurred: bad or non-existent argument: value1
-1382137530255: [INFO] virtual void NdnRtcTestEnvironment::TearDown(): test suite finished
