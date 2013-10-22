@@ -80,6 +80,7 @@ namespace ndnrtc {
         
         // producer parameters names
         static const std::string ParamNameStreamName;
+        static const std::string ParamNameStreamThreadName;
         static const std::string ParamNameStreamPrefix;
         static const std::string ParamNameNdnHub;
         static const std::string ParamNameProducerId;

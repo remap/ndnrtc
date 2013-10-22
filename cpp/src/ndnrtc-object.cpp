@@ -95,6 +95,7 @@ const string NdnParams::ParamNameStreamPrefix = "stream_prefix";
 const string NdnParams::ParamNameNdnHub = "ndn_hub";
 const string NdnParams::ParamNameProducerId = "producer_id";
 const string NdnParams::ParamNameStreamName = "stream_name";
+const string NdnParams::ParamNameStreamThreadName = "stream_thread";
 const string NdnParams::ParamNameSegmentSize = "segment_size";
 const string NdnParams::ParamNameFrameFreshnessInterval = "freshness";
 

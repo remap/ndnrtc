@@ -48,14 +48,14 @@ CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
 CPPSRCS_SA	= $(filter-out ndNrtc%,$(CPPSRCS))
 OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
-DEBUGFLAGS = -DDEBUG -DNDN_TRACE
+DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE
 LOGFLAGS = -DNDN_LOGGING -DNDN_INFO -DWEBRTC_LOGGING #-DNDN_DETAILED
 CPPFLAGS += -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
         $(DEBUGFLAGS) $(LOGFLAGS) \
 		$(NULL)
-OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit
+OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
@@ -66,7 +66,10 @@ WEBRTC_LIBPATH = $(WEBRTC_TRUNK)/xcodebuild/Debug # change to Release for releas
 WEBRTC_INCLUDES = -I$(WEBRTC_SRCPATH) -I$(WEBRTC_TRUNK)
 
 # add necessary libs from WebRTC
+# use this command inside WEBRTC_LIBPATH directory to extract the list of the libraries:
+# find . -name '*.a' | cut -c6- | cut -d'.' -f1 | awk '{print "\t-l"$0}' | awk '{print $0" \\"}'
 WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
+	-lacm2 \
 	-laudio_coding_module \
 	-laudio_conference_mixer \
 	-laudio_device \
@@ -84,9 +87,11 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-ldesktop_capture \
 	-ldesktop_capture_differ_sse2 \
 	-lframe_editing_lib \
+	-lframe_generator \
 	-lG711 \
 	-lG722 \
 	-lgenperf_libs \
+	-lgflags \
 	-lgmock \
 	-lgtest \
 	-liLBC \
@@ -135,7 +140,7 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lwebrtc_utility \
 	-lwebrtc_video_coding \
 	-lwebrtc_vp8 \
-	-lyuv
+	-lyuv 
 
 LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto
 LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
@@ -345,9 +350,9 @@ build-ndnrtc-namespace-test: undef $(addprefix $(OBJ_PATH)/,ndnrtc-namespace-tes
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-video-sender-test: undef $(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
-	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) \
+build-video-sender-test: undef $(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o frame-buffer.o media-sender.o ndnrtc-object.o ndnrtc-utils.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x $(DEBUGFLAGS) \
+	$(addprefix $(OBJ_PATH)/,video-sender-test.o video-sender.o ndnrtc-object.o media-sender.o ndnrtc-utils.o frame-buffer.o video-coder.o  ndnrtc-namespace.o simple-log.o test-common.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
@@ -384,6 +389,12 @@ build-loopback-full-test: undef $(addprefix $(OBJ_PATH)/,loopback-full-test.o co
 build-ndnrtc-library-test: undef libndnrtc $(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
 	$(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o  simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+	
+build-ndnaudio-transport-test: undef $(addprefix $(OBJ_PATH)/,ndnaudio-transport-test.o ndnaudio-transport.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,ndnaudio-transport-test.o ndnaudio-transport.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 

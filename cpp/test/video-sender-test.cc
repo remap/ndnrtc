@@ -21,6 +21,7 @@
 #include "test-common.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
+#include "frame-buffer.h"
 #include <string.h>
 
 using namespace ndnrtc;
@@ -29,13 +30,12 @@ using namespace ndnrtc;
 
 TEST(VideoSenderParamsTest, CreateDelete)
 {
-    VideoSenderParams *p = VideoSenderParams::defaultParams();
-    delete p;
+    shared_ptr<MediaSenderParams> p = MediaSenderParams::defaultParams();
 }
 
 TEST(VideoSenderParamsTest, CheckDefaults)
 {
-    VideoSenderParams *p = VideoSenderParams::defaultParams();
+    shared_ptr<MediaSenderParams> p = NdnVideoSender::defaultParams();
     
     char *hubEx = "ndn/ucla.edu/apps";
     char *userEx = "testuser";
@@ -68,13 +68,11 @@ TEST(VideoSenderParamsTest, CheckDefaults)
     free(hub);
     free(user);
     free(stream);
-    
-    delete p;
 }
 
 TEST(VideoSenderParamsTest, CheckPrefixes)
 {
-    VideoSenderParams *p = VideoSenderParams::defaultParams();
+    shared_ptr<MediaSenderParams> p = NdnVideoSender::defaultParams();
     
     const char *hubEx = "ndn/ucla.edu/apps";
     char *userEx = "testuser";
@@ -94,8 +92,6 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
         
         EXPECT_STREQ(prefix, p->getStreamFramePrefix().c_str());
     }
-    
-    delete p;
 }
 
 class VideoSenderTester : public NdnRtcObjectTestHelper
@@ -109,7 +105,7 @@ public:
         
         shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
         
-        params_.reset(VideoSenderParams::defaultParams());
+        params_ = MediaSenderParams::defaultParams();
         params_->setIntParam(NdnParams::ParamNameFrameFreshnessInterval, 1);
         
         videoSender_.reset(new NdnVideoSender(params_.get()));
@@ -180,7 +176,7 @@ protected:
     
     shared_ptr<TcpTransport> ndnTransport_;
     shared_ptr<Face> ndnFace_;
-    shared_ptr<VideoSenderParams> params_;
+    shared_ptr<MediaSenderParams> params_;
     shared_ptr<NdnVideoSender> videoSender_;
     shared_ptr<KeyChain> ndnKeyChain_;
     
@@ -387,7 +383,7 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     int segmentSize = sampleFrame_->_length/3;
     int segmentNum = (sampleFrame_->_length-3*segmentSize)?4:3;
     
-    params_->setIntParam(VideoSenderParams::ParamNameSegmentSize, segmentSize);
+    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
     
     videoSender_.reset(new NdnVideoSender(params_.get()));
     videoSender_->setObserver(this);

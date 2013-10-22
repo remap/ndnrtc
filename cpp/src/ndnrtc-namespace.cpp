@@ -74,19 +74,34 @@ const std::string NdnRtcNamespace::NdnRtcNamespaceComponentStreamInfo = "info";
 const std::string NdnRtcNamespace::NdnRtcNamespaceKeyComponent = "DSK-1408";
 const std::string NdnRtcNamespace::NdnRtcNamespaceCertificateComponent = "ID-CERT/0";
 
-shared_ptr<std::string> NdnRtcNamespace::getProducerPrefix(const std::string &hub, const std::string &producerId)
+shared_ptr<std::string>
+NdnRtcNamespace::getProducerPrefix(const std::string &hub,
+                                   const std::string &producerId)
 {
-    return buildPath(true, &hub, &NdnRtcNamespaceComponentApp, &NdnRtcNamespaceComponentUser, &producerId, NULL);
+    return buildPath(true,
+                     &hub,
+                     &NdnRtcNamespaceComponentApp,
+                     &NdnRtcNamespaceComponentUser,
+                     &producerId,
+                     NULL);
 }
 
-shared_ptr<std::string> NdnRtcNamespace::getStreamPath(const std::string &hub, const std::string &producerId, const std::string streamName)
+shared_ptr<std::string>
+NdnRtcNamespace::getStreamPath(const std::string &hub,
+                               const std::string &producerId,
+                               const std::string streamName)
 {
     shared_ptr<std::string> producerPrefix = getProducerPrefix(hub, producerId);
     
-    return buildPath(false, producerPrefix.get(), &NdnRtcNamespaceComponentUserStreams, &streamName, NULL);
+    return buildPath(false,
+                     producerPrefix.get(),
+                     &NdnRtcNamespaceComponentUserStreams,
+                     &streamName,
+                     NULL);
 }
 
-shared_ptr<std::string> NdnRtcNamespace::buildPath(bool precede, const std::string *component1, ...)
+shared_ptr<std::string>
+NdnRtcNamespace::buildPath(bool precede, const std::string *component1, ...)
 {
     shared_ptr<std::string> path(new std::string(""));
     va_list ap;
@@ -117,7 +132,8 @@ shared_ptr<std::string> NdnRtcNamespace::buildPath(bool precede, const std::stri
 
 //#define MLC
 
-shared_ptr<const std::vector<unsigned char>> NdnRtcNamespace::getFrameNumberComponent(long long frameNo)
+shared_ptr<const std::vector<unsigned char>>
+NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
 {
     char value[10];
     
@@ -125,12 +141,15 @@ shared_ptr<const std::vector<unsigned char>> NdnRtcNamespace::getFrameNumberComp
     sprintf(value, "%lld", frameNo);
     
     unsigned int valueLength = strlen(value);
-    shared_ptr<vector<unsigned char>> component(new vector<unsigned char>(value, value + valueLength));
+    shared_ptr<vector<unsigned char>> component(
+                                                new vector<unsigned char>
+                                                (value, value + valueLength));
     
     return component;
 }
 
-shared_ptr<Name> NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix)
+shared_ptr<Name>
+NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix)
 {
     shared_ptr<string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NdnRtcNamespaceComponentStreamKey, &NdnRtcNamespaceKeyComponent, NULL);
     shared_ptr<Name> keyName(new Name(path->c_str()));
@@ -138,26 +157,37 @@ shared_ptr<Name> NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix
     return keyName;
 }
 
-shared_ptr<Name> NdnRtcNamespace::certificateNameForUser(const std::string &userPrefix)
+shared_ptr<Name>
+NdnRtcNamespace::certificateNameForUser(const std::string &userPrefix)
 {
-    shared_ptr<Name> certificateName = NdnRtcNamespace::keyPrefixForUser(userPrefix);
+    shared_ptr<Name> certificateName =
+            NdnRtcNamespace::keyPrefixForUser(userPrefix);
     certificateName->append(Name(NdnRtcNamespaceCertificateComponent));
     
     return certificateName;
 }
 
-shared_ptr<KeyChain> NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
+shared_ptr<KeyChain>
+NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
 {
-    shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(new MemoryPrivateKeyStorage());
-    shared_ptr<KeyChain> keyChain(new KeyChain(make_shared<IdentityManager>(make_shared<MemoryIdentityStorage>(),
-                                                               privateKeyStorage),
-                                  make_shared<NoVerifyPolicyManager>()));
+    shared_ptr<MemoryPrivateKeyStorage>
+            privateKeyStorage(new MemoryPrivateKeyStorage());
+    
+    shared_ptr<KeyChain> keyChain(new KeyChain(
+                                    make_shared<IdentityManager>(
+                                            make_shared<MemoryIdentityStorage>(),
+                                            privateKeyStorage),
+                                    make_shared<NoVerifyPolicyManager>()));
     
     // Initialize the storage.
     Name keyName = *NdnRtcNamespace::keyPrefixForUser(userPrefix);
 
     TRACE("store key name: %s", keyName.toUri().c_str());
-    privateKeyStorage->setKeyPairForKeyName(keyName, DEFAULT_PUBLIC_KEY_DER, sizeof(DEFAULT_PUBLIC_KEY_DER), DEFAULT_PRIVATE_KEY_DER, sizeof(DEFAULT_PRIVATE_KEY_DER));
+    privateKeyStorage->setKeyPairForKeyName(keyName,
+                                            DEFAULT_PUBLIC_KEY_DER,
+                                            sizeof(DEFAULT_PUBLIC_KEY_DER),
+                                            DEFAULT_PRIVATE_KEY_DER,
+                                            sizeof(DEFAULT_PRIVATE_KEY_DER));
     
     return keyChain;
 }

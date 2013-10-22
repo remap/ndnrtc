@@ -15,6 +15,7 @@
 #include <video_engine/vie_impl.h>
 
 // other
+#include <common_types.h>
 #include <system_wrappers/interface/event_wrapper.h>
 #include <system_wrappers/interface/thread_wrapper.h>
 #include <system_wrappers/interface/critical_section_wrapper.h>
@@ -33,5 +34,10 @@
 #include <modules/video_coding/main/interface/video_coding_defines.h>
 #include <modules/video_coding/main/source/codec_database.h>
 #include <modules/video_coding/main/source/internal_defines.h>
+
+// audio
+#include <voice_engine/include/voe_base.h>
+#include <voice_engine/include/voe_network.h>
+#include <modules/audio_coding/main/interface/audio_coding_module.h>
 
 #endif

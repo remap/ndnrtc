@@ -23,9 +23,9 @@ namespace ndnrtc
     class VideoReceiverParams : public VideoSenderParams {
     public:
         // static
-        static VideoReceiverParams* defaultParams()
+        static shared_ptr<VideoReceiverParams> defaultParams()
         {
-            VideoReceiverParams *p = static_cast<VideoReceiverParams*>(VideoSenderParams::defaultParams());
+            shared_ptr<VideoReceiverParams> p(static_cast<VideoReceiverParams*>(VideoSenderParams::defaultParams().get()));
             
             p->setIntParam(ParamNameProducerRate, 30);
             p->setIntParam(ParamNameInterestTimeout, 4);

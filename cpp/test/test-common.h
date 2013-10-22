@@ -154,7 +154,7 @@ protected:
 
     void setupWebRTCLogging(){
         webrtc::Trace::CreateTrace();
-        webrtc::Trace::SetTraceFile("bin/webrtc.txt");
+        webrtc::Trace::SetTraceFile("bin/webrtc.log");
 //        webrtc::Trace::SetLevelFilter(webrtc::kTraceAll);
     }
 };

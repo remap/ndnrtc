@@ -13,8 +13,44 @@
 
 #include "ndnrtc-common.h"
 
+#define NDNRTC_FRAMEHDR_MRKR 0xf4d4
+#define NDNRTC_FRAMEBODY_MRKR 0xfb0d
+
 namespace ndnrtc
 {
+    /**
+     * Class is used for packaging encoded frame metadata and actual data in a buffer.
+     * It has also methods for unarchiving this data into an encoded frame.
+     */
+    class NdnFrameData
+    {
+    public:
+        NdnFrameData(webrtc::EncodedImage &frame);
+        ~NdnFrameData();
+        
+        static int unpackFrame(unsigned int length_, const unsigned char *data, webrtc::EncodedImage **frame);
+        int getLength() { return length_; }
+        unsigned char* getData() { return data_; }
+        
+    private:
+        struct FrameDataHeader {
+            uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+            uint32_t                    encodedWidth_;
+            uint32_t                    encodedHeight_;
+            uint32_t                    timeStamp_;
+            int64_t                     capture_time_ms_;
+            webrtc::VideoFrameType      frameType_;
+            //            uint8_t*                    _buffer;
+            //            uint32_t                    _length;
+            //            uint32_t                    _size;
+            bool                        completeFrame_;
+            uint32_t                    bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+        };
+        
+        unsigned int length_;
+        unsigned char *data_;
+    };
+    
     class FrameBuffer
     {
     public:

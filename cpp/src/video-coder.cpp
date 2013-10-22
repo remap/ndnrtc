@@ -55,11 +55,11 @@ VideoCodec NdnVideoCoderParams::getCodec()
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
     }
     // customize parameteres if possible
-    getFrameRate((int*)&codec.maxFramerate);
-    getStartBitRate((int*)&codec.startBitrate);
-    getMaxBitRate((int*)&codec.maxBitrate);
-    getWidth((int*)&codec.width);
-    getHeight((int*)&codec.height);
+    getFrameRate((unsigned int*)&codec.maxFramerate);
+    getStartBitRate(&codec.startBitrate);
+    getMaxBitRate(&codec.maxBitrate);
+    getWidth((unsigned int*)&codec.width);
+    getHeight((unsigned int*)&codec.height);
     
     return codec;
 }

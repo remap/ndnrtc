@@ -32,10 +32,20 @@ namespace ndnrtc {
         static const std::string NdnRtcNamespaceCertificateComponent;
         
         // composing URI based on provided components
-        static shared_ptr<std::string> getProducerPrefix(const std::string &hub, const std::string &producerId);
-        static shared_ptr<std::string> getStreamPath(const std::string &hub, const std::string &producerId, const std::string streamName);
-        static shared_ptr<std::string> buildPath(bool precede, const std::string *component1, ...);
-        static shared_ptr<const std::vector<unsigned char>> getFrameNumberComponent(long long frameNo);
+        static shared_ptr<std::string>
+            getProducerPrefix(const std::string &hub,
+                              const std::string &producerId);
+        
+        static shared_ptr<std::string>
+            getStreamPath(const std::string &hub,
+                          const std::string &producerId,
+                          const std::string streamName);
+        
+        static shared_ptr<std::string>
+            buildPath(bool precede, const std::string *component1, ...);
+        
+        static shared_ptr<const std::vector<unsigned char>>
+            getNumberComponent(long unsigned int frameNo);
         
         static shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);

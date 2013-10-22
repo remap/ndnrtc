@@ -15,8 +15,8 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
-//********************************************************************************
-//********************************************************************************
+//******************************************************************************
+//******************************************************************************
 #pragma mark - construction/destruction
 NdnVideoReceiver::NdnVideoReceiver(NdnParams *params) : NdnRtcObject(params),
 playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this)),//, kRealtimePriority)),
@@ -40,7 +40,7 @@ NdnVideoReceiver::~NdnVideoReceiver()
     stopFetching();
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - public
 int NdnVideoReceiver::init(shared_ptr<Face> face)
 {
@@ -141,7 +141,7 @@ int NdnVideoReceiver::stopFetching()
     return 0;
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - intefaces realization - ndn-cpp callbacks
 void NdnVideoReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 {
@@ -233,7 +233,7 @@ void NdnVideoReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
         WARN("got data with unexpected prefix");
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - private
 bool NdnVideoReceiver::processPlayout()
 {

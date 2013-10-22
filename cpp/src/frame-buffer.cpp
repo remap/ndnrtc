@@ -18,11 +18,62 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
+//******************************************************************************
+//******************************************************************************
+#pragma mark - construction/destruction
+NdnFrameData::NdnFrameData(EncodedImage &frame)
+{
+    unsigned int headerSize_ = sizeof(FrameDataHeader);
+    
+    length_ = frame._length+headerSize_;
+    data_ = (unsigned char*)malloc(length_);
+    
+    // copy frame data with offset of header
+    memcpy(data_+headerSize_, frame._buffer, frame._length);
+    
+    // setup header
+    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
+    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
+    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
+    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
+    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
+    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
+    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+}
+NdnFrameData::~NdnFrameData()
+{
+    free(data_);
+}
 
-//********************************************************************************
+//******************************************************************************
+#pragma mark - public
+int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, webrtc::EncodedImage **frame)
+{
+    unsigned int headerSize_ = sizeof(FrameDataHeader);
+    FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
+    
+    // check markers
+    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+        return -1;
+    
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_, header.encodedHeight_);
+    
+    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize_]), length_-headerSize_, size);
+    (*frame)->_encodedWidth = header.encodedWidth_;
+    (*frame)->_encodedHeight = header.encodedHeight_;
+    (*frame)->_timeStamp = header.timeStamp_;
+    (*frame)->capture_time_ms_ = header.capture_time_ms_;
+    (*frame)->_frameType = header.frameType_;
+    (*frame)->_completeFrame = header.completeFrame_;
+    
+    return 0;
+}
+
+//******************************************************************************
 // FrameBuffer::Slot
-//********************************************************************************
-//********************************************************************************
+//******************************************************************************
 #pragma mark - construction/destruction
 FrameBuffer::Slot::Slot(unsigned int slotSize) :
 dataLength_(slotSize),
@@ -41,7 +92,7 @@ FrameBuffer::Slot::~Slot()
     delete data_;
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - all static
 shared_ptr<string> FrameBuffer::Slot::stateToString(FrameBuffer::Slot::State state)
 {
@@ -60,7 +111,7 @@ shared_ptr<string> FrameBuffer::Slot::stateToString(FrameBuffer::Slot::State sta
     }
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - public
 shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
 {
@@ -97,9 +148,9 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
     return state_;
 }
 
-//********************************************************************************
+//******************************************************************************
 // FrameBuffer
-//********************************************************************************
+//******************************************************************************
 const int FrameBuffer::Event::AllEventsMask =   FrameBuffer::Event::EventTypeReady|
 FrameBuffer::Event::EventTypeFirstSegment|
 FrameBuffer::Event::EventTypeFreeSlot|
@@ -123,7 +174,7 @@ FrameBuffer::~FrameBuffer()
     
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - public
 int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
 {
@@ -431,7 +482,7 @@ unsigned int FrameBuffer::getStat(Slot::State state)
     
     return statistics_[state];
 }
-//********************************************************************************
+//******************************************************************************
 #pragma mark - private
 void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo,
                                             Event::EventType eType, Slot *slot)
