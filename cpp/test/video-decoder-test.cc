@@ -20,7 +20,7 @@ using namespace ndnrtc;
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
 //********************************************************************************
-class NdnVideoCoderTest : public NdnRtcObjectTestHelper, public IRawFrameConsumer
+class NdnVideoDecoderTest : public NdnRtcObjectTestHelper, public IRawFrameConsumer
 {
 public:
     void SetUp()
@@ -109,20 +109,20 @@ protected:
     }
 };
 
-TEST_F(NdnVideoCoderTest, CreateDelete)
+TEST_F(NdnVideoDecoderTest, CreateDelete)
 {
     EXPECT_NO_THROW(
-                    NdnVideoDecoder *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
+                    NdnVideoDecoder *decoder = new NdnVideoDecoder(DefaultParams);
                     delete decoder;
                     );
 }
-TEST_F(NdnVideoCoderTest, TestInit)
+TEST_F(NdnVideoDecoderTest, TestInit)
 {
-    NdnVideoDecoder  *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
+    NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);
     EXPECT_EQ(0, decoder->init());
     delete decoder;
 }
-//TEST_F(NdnVideoCoderTest, TestDecode)
+//TEST_F(NdnVideoDecoderTest, TestDecode)
 //{
 //    loadFrame();
 //    
@@ -141,12 +141,12 @@ TEST_F(NdnVideoCoderTest, TestInit)
 //    
 //    delete decoder;
 //}
-TEST_F(NdnVideoCoderTest, CaptureEncodeDecodeAndRender)
+TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
 {
-    CameraCapturer *cc = new CameraCapturer(CameraCapturerParams::defaultParams());
-    NdnVideoCoder *coder = new NdnVideoCoder(NdnVideoCoderParams::defaultParams());
-    NdnVideoDecoder  *decoder = new NdnVideoDecoder(NdnVideoCoderParams::defaultParams());
-    NdnRenderer *renderer = new NdnRenderer(1, NdnRendererParams::defaultParams());
+    CameraCapturer *cc = new CameraCapturer(DefaultParams);
+    NdnVideoCoder *coder = new NdnVideoCoder(DefaultParams);
+    NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);
+    NdnRenderer *renderer = new NdnRenderer(1, DefaultParams);
     
     EXPECT_EQ(0, cc->init());
     EXPECT_EQ(0, coder->init());

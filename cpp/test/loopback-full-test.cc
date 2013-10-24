@@ -21,7 +21,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(ReceiverChannelParams, CreateDelete)
 {
     NdnParams *p = ReceiverChannelParams::defaultParams();
@@ -71,11 +71,11 @@ TEST(ReceiverChannelParams, TestParams)
     
     delete p;
 }
-
+#endif
 class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
 {
 public:
-    TestReceiverChannel(NdnParams *p):
+    TestReceiverChannel(const ParamsStruct &p):
     NdnReceiverChannel(p)
     {
         localRender_->setObserver(this);
@@ -109,15 +109,17 @@ public:
 
 TEST(LoopbackTests, Transmission)
 {
-    SenderChannelParams *sp = SenderChannelParams::defaultParams();
-    ReceiverChannelParams *rp = ReceiverChannelParams::defaultParams();
+    ParamsStruct p = DefaultParams;
+//    SenderChannelParams *sp = SenderChannelParams::defaultParams();
+//    ReceiverChannelParams *rp = ReceiverChannelParams::defaultParams();
     
 //    sp->setIntParam(CameraCapturerParams::ParamNameDeviceId, 1);
-    sp->setIntParam(VideoSenderParams::ParamNameFrameFreshnessInterval, 10);
+//    sp->setIntParam(VideoSenderParams::ParamNameFrameFreshnessInterval, 10);
+    p.freshness = 5;
     
-    NdnSenderChannel *sc = new NdnSenderChannel(sp);
+    NdnSenderChannel *sc = new NdnSenderChannel(p);
 //    NdnReceiverChannel *rc = new NdnReceiverChannel(rp);
-    TestReceiverChannel *rc = new TestReceiverChannel(rp);
+    TestReceiverChannel *rc = new TestReceiverChannel(p);
     
     EXPECT_EQ(0, sc->init());
     EXPECT_EQ(0, rc->init());
@@ -137,7 +139,4 @@ TEST(LoopbackTests, Transmission)
     
     delete sc;
     delete rc;
-    
-    delete sp;
-    delete rp;
 }

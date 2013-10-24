@@ -18,46 +18,22 @@
 namespace ndnrtc {
     class IEncodedFrameConsumer;
     
-    class NdnVideoCoderParams : public NdnParams
+    /**
+     * This class is a main wrapper for VP8 WebRTC encoder. It consumes raw 
+     * frames, encodes them using VP8 encoder, configured for specified 
+     * parameters and passes encoded frames to its' frame consumer class.
+     */
+    class NdnVideoCoder : public NdnRtcObject, public IRawFrameConsumer,
+    public webrtc::EncodedImageCallback
     {
     public:
-        // construction/desctruction
-        NdnVideoCoderParams(){};
-        ~NdnVideoCoderParams(){ };
-        
-        // static public
-        static NdnVideoCoderParams *defaultParams()
-        {
-            NdnVideoCoderParams *p = new NdnVideoCoderParams();
-            
-            p->setIntParam(ParamNameFrameRate, 30);
-            p->setIntParam(ParamNameStartBitRate, 300);
-            p->setIntParam(ParamNameMaxBitRate, 4000);
-            p->setIntParam(ParamNameEncodeWidth, 640);
-            p->setIntParam(ParamNameEncodeHeight, 480);
-            
-            return p;
-        }
-        
-        // public methods
-        int getFrameRate(unsigned int *frameRate) const { return getParamAsInt(ParamNameFrameRate, (int*)frameRate); };
-        int getStartBitRate(unsigned int *startBitRate) const { return getParamAsInt(ParamNameStartBitRate, (int*)startBitRate); };
-        int getMaxBitRate(unsigned int *maxBitRate) const { return getParamAsInt(ParamNameMaxBitRate, (int*)maxBitRate); };
-        int getWidth(unsigned int *width) const { return getParamAsInt(ParamNameEncodeWidth, (int*)width); };
-        int getHeight(unsigned int *height) const { return getParamAsInt(ParamNameEncodeHeight, (int*)height); };
-        
-        webrtc::VideoCodec getCodec();
-    };
-    
-    class NdnVideoCoder : public NdnRtcObject, public IRawFrameConsumer, public webrtc::EncodedImageCallback 
-    {
-    public:
-        // construction/desctruction
-        NdnVideoCoder(const NdnParams *params);
+        NdnVideoCoder(const ParamsStruct &params);
         ~NdnVideoCoder() { };
         
-        // public methods go here
-        void setFrameConsumer(IEncodedFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; };
+        void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
+            frameConsumer_ = frameConsumer;
+        }
+        
         int init();
         
         // interface conformance - webrtc::EncodedImageCallback
@@ -67,6 +43,8 @@ namespace ndnrtc {
         
         // interface conformance - ndnrtc::IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
+        
+        static int getCodec(const ParamsStruct &params, webrtc::VideoCodec &codec);
     private:
         int keyFrameCounter_ = 0;
         int currentFrameRate_;
@@ -75,9 +53,6 @@ namespace ndnrtc {
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;
         shared_ptr<webrtc::VideoEncoder> encoder_;
-        
-        // private methods go here
-        NdnVideoCoderParams *getParams() { return static_cast<NdnVideoCoderParams*>(params_); };
     };
     
     class IEncodedFrameConsumer

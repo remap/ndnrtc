@@ -20,8 +20,7 @@
 namespace ndnrtc {
     class NdnVideoDecoder : public NdnRtcObject, public IEncodedFrameConsumer, public webrtc::DecodedImageCallback {
     public:
-        // construction/destruction
-        NdnVideoDecoder(const NdnParams *coderParams);
+        NdnVideoDecoder(const ParamsStruct &coderParams);
         ~NdnVideoDecoder() { }
         
         void setFrameConsumer(IRawFrameConsumer *frameConsumer) { frameConsumer_ = frameConsumer; };

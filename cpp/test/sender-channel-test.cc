@@ -22,6 +22,7 @@ using namespace ndnrtc;
 /**
  * @name NdnSenderChannel class tests
  */
+#if 0
 TEST(NdnSenderChannelParams, CreateDeleteParams)
 {
     NdnParams *p = SenderChannelParams::defaultParams();
@@ -71,6 +72,7 @@ TEST(NdnSenderChannelParams, TestParams)
     
     delete p;
 }
+#endif
 
 //********************************************************************************
 /**
@@ -81,14 +83,13 @@ class NdnSenderChannelTest : public NdnRtcObjectTestHelper
     void SetUp(){
         TRACE("");
         NdnRtcObjectTestHelper::SetUp();
-        p_ = SenderChannelParams::defaultParams();
+        p_ = DefaultParams;
     }
     void TearDown(){
         NdnRtcObjectTestHelper::TearDown();
-        delete p_;
     }
 protected:
-    NdnParams *p_;
+    ParamsStruct p_;
 };
 
 TEST_F(NdnSenderChannelTest, CreateDelete)
@@ -101,7 +102,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
     NdnSenderChannel *sc = new NdnSenderChannel(p_);
     sc->setObserver(this);
     
-    EXPECT_EQ(0,sc->init());
+    EXPECT_EQ(RESULT_OK,sc->init());
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
@@ -115,7 +116,7 @@ TEST_F(NdnSenderChannelTest, TestTransmission)
     NdnSenderChannel *sc = new NdnSenderChannel(p_);
     
     sc->setObserver(this);
-    sc->init();
+    ASSERT_EQ(RESULT_OK, sc->init());
     
     EXPECT_NO_THROW({
         EXPECT_EQ(0, sc->startTransmission());

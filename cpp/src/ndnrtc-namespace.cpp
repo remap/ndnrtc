@@ -130,8 +130,6 @@ NdnRtcNamespace::buildPath(bool precede, const std::string *component1, ...)
     return path;
 }
 
-//#define MLC
-
 shared_ptr<const std::vector<unsigned char>>
 NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
 {

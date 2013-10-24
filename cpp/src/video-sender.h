@@ -22,29 +22,16 @@ namespace ndnrtc
     class INdnVideoSenderDelegate;
     
     /**
-     *
+     * This class is a sink for encoded frames and it publishes them on ndn 
+     * network under the prefix, determined by the parameters.
      */
     class NdnVideoSender : public MediaSender, public IEncodedFrameConsumer
     {
     public:
-        static shared_ptr<MediaSenderParams> defaultParams()
-        {
-            shared_ptr<MediaSenderParams> p = MediaSenderParams::defaultParams();
-            
-            p->setStringParam(NdnParams::ParamNameStreamName,
-                              string("video0"));
-            p->setStringParam(NdnParams::ParamNameStreamThreadName,
-                              string("vp8"));
-            
-            return p;
-        }
-        
-        // construction/desctruction
-        NdnVideoSender(const NdnParams * params):MediaSender(params){}
+        NdnVideoSender(const ParamsStruct &params):MediaSender(params){}
         ~NdnVideoSender(){};
         
-        // public methods go here
-        unsigned long int getFrameNo() { return getPacketNo(); };
+        unsigned long int getFrameNo() { return getPacketNo(); }
         
         // interface conformance
         void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);

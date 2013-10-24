@@ -22,28 +22,28 @@ using namespace webrtc;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnRenderer::NdnRenderer(int rendererId, NdnParams *params) : NdnRtcObject(params), rendererId_(rendererId)
+NdnRenderer::NdnRenderer(int rendererId, const ParamsStruct &params) :
+NdnRtcObject(params),
+rendererId_(rendererId)
 {
-    TRACE("construction");
 }
 NdnRenderer::~NdnRenderer()
 {
-    TRACE("destruction");
-
     if (render_)
         render_->StopRender(rendererId_);
+    
     VideoRender::DestroyVideoRender(render_);
 }
 //********************************************************************************
 #pragma mark - public
 int NdnRenderer::init()
 {
-    int width, height;
+    int res = RESULT_OK;
     
-    if (getParams()->getWindowWidth(&width) < 0)
-        return notifyErrorBadArg(NdnRendererParams::ParamNameWindowWidth);
-    if (getParams()->getWindowHeight(&height) < 0)
-        return notifyErrorBadArg(NdnRendererParams::ParamNameWindowHeight);
+    unsigned int width = ParamsStruct::validateLE(params_.renderWidth, MaxWidth,
+                                               res, DefaultParams.renderWidth);
+    unsigned int height = ParamsStruct::validateLE(params_.renderHeight, MaxHeight,
+                                                res, DefaultParams.renderHeight);
     
     render_ = VideoRender::CreateVideoRender(rendererId_, createCocoaRenderWindow(rendererId_, width, height), false, kRenderCocoa);
     
@@ -52,12 +52,16 @@ int NdnRenderer::init()
     
     frameSink_ = render_->AddIncomingRenderStream(rendererId_, 0, 0.f, 0.f, 1.f, 1.f);
     
-    return 0;
+    if (res)
+        notifyError(RESULT_WARN, "renderer params were not verified. \
+                    using these instead: width %d, height %d", width, height);
+    
+    return res;
 }
 int NdnRenderer::startRendering()
 {
     if (render_->StartRender(rendererId_) < 0)
-        return notifyError(-1, "can't start rendering");
+        return notifyError(RESULT_ERR, "can't start rendering");
     
     initialized_ = true;
     
@@ -67,11 +71,10 @@ int NdnRenderer::startRendering()
 #pragma mark - intefaces realization - IRawFrameConsumer
 void NdnRenderer::onDeliverFrame(I420VideoFrame &frame)
 {
-    TRACE("rendering frame");
     if (initialized_)
         frameSink_->RenderFrame(rendererId_, frame);
     else
-        notifyError(-1, "render not initiazlized");
+        notifyError(RESULT_ERR, "render not initiazlized");
 }
 
 //********************************************************************************

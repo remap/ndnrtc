@@ -32,40 +32,11 @@ namespace ndnrtc
         double playoutFreq_, inDataFreq_, inFramesFreq_;
     } ReceiverChannelStatistics;
     
-    class ReceiverChannelParams : public NdnParams {
-    public:
-        
-        static ReceiverChannelParams* defaultParams()
-        {
-            ReceiverChannelParams *p = new ReceiverChannelParams();
-            
-            char *host =  (char*)"localhost";
-            int portnum = 6363;
-            
-            p->setStringParam(ParamNameConnectHost, host);
-            p->setIntParam(ParamNameConnectPort, portnum);
-            
-            // add params for internal classes
-            shared_ptr<VideoReceiverParams> vr_sp(VideoReceiverParams::defaultParams());
-            shared_ptr<NdnRendererParams> rr_sp(NdnRendererParams::defaultParams());
-            shared_ptr<NdnVideoCoderParams> vc_sp(NdnVideoCoderParams::defaultParams());
-            
-            p->addParams(*vr_sp.get());
-            p->addParams(*rr_sp.get());
-            p->addParams(*vc_sp.get());
-            
-            return p;
-        }
-        
-        int getConnectPort() { return getParamAsInt(ParamNameConnectPort); }
-        std::string getConnectHost() { return getParamAsString(ParamNameConnectHost); }
-    };
-    
     class NdnReceiverChannel : public NdnRtcObject
     {
     public:
-        NdnReceiverChannel(NdnParams *params);
-        virtual ~NdnReceiverChannel() { TRACE(""); }
+        NdnReceiverChannel(const ParamsStruct &params);
+        virtual ~NdnReceiverChannel() { }
         
         int init();
         int startFetching();
@@ -74,10 +45,11 @@ namespace ndnrtc
         void getStat(ReceiverChannelStatistics &stat) const;
         
         // ndnlib callbacks
-        void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport);
+        void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
         void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
 
-//    private:
     protected:
         bool isTransmitting_;
         shared_ptr<ndn::Transport> ndnTransport_;
@@ -85,8 +57,6 @@ namespace ndnrtc
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoDecoder> decoder_;
         shared_ptr<NdnVideoReceiver> receiver_;
-        
-        ReceiverChannelParams *getParams() { return static_cast<ReceiverChannelParams*>(params_); }
     };
 }
 

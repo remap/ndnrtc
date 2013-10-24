@@ -27,16 +27,20 @@ char* plotCodec(webrtc::VideoCodec codec)
          \tStart Bitrate:\t%d\n \
          \tMax Bitrate:\t%d\n \
          \tWidth:\t%d\n \
-         \tHeight:\t%d\
-         \0", codec.maxFramerate, codec.startBitrate, codec.maxBitrate,
-         codec.width, codec.height);
+         \tHeight:\t%d",
+            codec.maxFramerate,
+            codec.startBitrate,
+            codec.maxBitrate,
+            codec.width,
+            codec.height);
     
     return msg;
 }
 
-VideoCodec NdnVideoCoderParams::getCodec()
+//******************************************************************************
+#pragma mark - static
+int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
 {
-    VideoCodec codec;
     // setup default params first
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
     {
@@ -54,19 +58,31 @@ VideoCodec NdnVideoCoderParams::getCodec()
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
     }
-    // customize parameteres if possible
-    getFrameRate((unsigned int*)&codec.maxFramerate);
-    getStartBitRate(&codec.startBitrate);
-    getMaxBitRate(&codec.maxBitrate);
-    getWidth((unsigned int*)&codec.width);
-    getHeight((unsigned int*)&codec.height);
     
-    return codec;
+    // customize parameteres if possible
+    int res = RESULT_OK;
+    codec.maxFramerate = ParamsStruct::validateLE(params.codecFrameRate,
+                                                  120, res,
+                                                  DefaultParams.codecFrameRate);
+    codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
+                                                  MaxStartBitrate, res,
+                                                  DefaultParams.startBitrate);
+    codec.maxBitrate = ParamsStruct::validateLE(params.maxBitrate,
+                                                MaxBitrate, res,
+                                                DefaultParams.maxBitrate);
+    codec.width = ParamsStruct::validateLE(params.encodeWidth,
+                                           MaxWidth, res,
+                                           DefaultParams.encodeWidth);
+    codec.height = ParamsStruct::validateLE(params.encodeHeight,
+                                            MaxHeight, res,
+                                            DefaultParams.encodeHeight);
+    
+    return res;
 }
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoCoder::NdnVideoCoder(const NdnParams *params) : NdnRtcObject(params), frameConsumer_(nullptr)
+NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params), frameConsumer_(nullptr)
 {
     memset(&codec_, 0, sizeof(codec_));
 }
@@ -74,10 +90,10 @@ NdnVideoCoder::NdnVideoCoder(const NdnParams *params) : NdnRtcObject(params), fr
 #pragma mark - public
 int NdnVideoCoder::init()
 {
-    if (!hasParams())
-        notifyErrorNoParams();
+    if (RESULT_FAIL(NdnVideoCoder::getCodec(params_, codec_)))
+        notifyError(-1, "some codec parameters were out of bounds. \
+                    actual parameters: %s", plotCodec(codec_));
 
-    codec_ = getParams()->getCodec();
     encoder_.reset(VP8Encoder::Create());
     
     currentFrameRate_ = codec_.maxFramerate;
@@ -133,7 +149,3 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
     if (err != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't encode frame due to error %d",err);
 }
-
-//********************************************************************************
-#pragma mark - private
-

@@ -13,9 +13,10 @@
 
 using namespace ndnrtc;
 using namespace std;
+
 //********************************************************************************
 /**
- * @name Paramter class
+ * @name Parameter class
  */
 //********************************************************************************
 #pragma mark - construction/destruction
@@ -91,7 +92,6 @@ const string NdnParams::ParamNameMaxBitRate = "max_bitrate";
 const string NdnParams::ParamNameEncodeWidth = "encode_width";
 const string NdnParams::ParamNameEncodeHeight = "encode_height";
 
-const string NdnParams::ParamNameStreamPrefix = "stream_prefix";
 const string NdnParams::ParamNameNdnHub = "ndn_hub";
 const string NdnParams::ParamNameProducerId = "producer_id";
 const string NdnParams::ParamNameStreamName = "stream_name";
@@ -107,6 +107,11 @@ const string NdnParams::ParamNameFrameSlotSize = "slot_size";
 // parameters names
 const string NdnParams::ParamNameConnectHost = "connect_host";
 const string NdnParams::ParamNameConnectPort = "connect_port";
+
+shared_ptr<NdnParams> NdnParams::defaultParams()
+{
+    
+}
 
 //********************************************************************************
 #pragma mark - protected
@@ -211,20 +216,21 @@ NdnParams::Parameter* NdnParams::getParam(const std::string &name) const
  * @name NdnRtcObject class
  */
 #pragma mark - construction/destruction
-NdnRtcObject::NdnRtcObject() : observer_(nullptr), params_(nullptr)
+NdnRtcObject::NdnRtcObject(const ParamsStruct &params):
+params_(params)
 {
+    
 }
-NdnRtcObject::NdnRtcObject(const NdnParams *params) : observer_(nullptr)
-{
-    params_ = new NdnParams(*params);
-}
-NdnRtcObject::NdnRtcObject(const NdnParams *params, INdnRtcObjectObserver *observer) : NdnRtcObject(params)
+
+NdnRtcObject::NdnRtcObject(const ParamsStruct &params,
+                           INdnRtcObjectObserver *observer):
+NdnRtcObject(params)
 {
     observer_ = observer;
 }
+
 NdnRtcObject::~NdnRtcObject()
 {
-    delete params_;
 }
 
 //********************************************************************************

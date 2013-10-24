@@ -20,30 +20,14 @@ using namespace ndnrtc;
 /**
  * @name CameraCaptureParams class tests
  */
-TEST(CameraCapturerParamsTest, CreateDelete)
-{
-    CameraCapturerParams *p = CameraCapturerParams::defaultParams();
-    delete p;
-}
 TEST(CameraCapturerParamsTest, CheckDefaults)
 {
-    CameraCapturerParams *p = CameraCapturerParams::defaultParams();
+    ParamsStruct p = DefaultParams;
     
-    int width, height, deviceid, fps;
-    
-    EXPECT_EQ(p->getDeviceId(&deviceid),0);
-    EXPECT_EQ(0, deviceid);
-    
-    EXPECT_EQ(p->getWidth(&width),0);
-    EXPECT_EQ(640, width);
-    
-    EXPECT_EQ(p->getHeight(&height),0);
-    EXPECT_EQ(480, height);
-    
-    EXPECT_EQ(p->getFPS(&fps),0);
-    EXPECT_EQ(30, fps);
-    
-    delete p;
+    EXPECT_EQ(0, p.captureDeviceId);
+    EXPECT_EQ(640, p.captureWidth);
+    EXPECT_EQ(480, p.captureHeight);
+    EXPECT_EQ(30, p.captureFramerate);
 }
 
 //********************************************************************************
@@ -56,13 +40,11 @@ public:
     void SetUp() {
         NdnRtcObjectTestHelper::SetUp();
         
-        cameraParams_ = CameraCapturerParams::defaultParams();
+        cameraParams_ = DefaultParams;
         obtainedFramesCount_ = 0;
     }
     void TearDown(){
         NdnRtcObjectTestHelper::TearDown();
-        
-        delete cameraParams_;
     }
     
     void onDeliverFrame(webrtc::I420VideoFrame &frame)
@@ -74,7 +56,7 @@ public:
 protected:
     int obtainedFramesCount_ = 0;
     bool obtainedFrame_ = false;
-    CameraCapturerParams *cameraParams_;
+    ParamsStruct cameraParams_;
 };
 
 TEST_F(CameraCapturerTest, CreateDelete)

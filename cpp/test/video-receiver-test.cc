@@ -25,6 +25,7 @@
 #include "frame-buffer.h"
 #include "playout-buffer.h"
 #include "video-receiver.h"
+#include "ndnrtc-namespace.h"
 
 using namespace ndnrtc;
 
@@ -41,11 +42,13 @@ public :
         
         shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
         
-        params_.reset(VideoReceiverParams::defaultParams());
+        params_ = DefaultParams;
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
-        std::string streamAccessPrefix = params_.get()->getStreamKeyPrefix();
+        std::string streamAccessPrefix;
+        ASSERT_EQ(RESULT_OK, MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix));
+
         ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                  bind(&NdnReceiverTester::onInterest, this, _1, _2, _3),
                                  bind(&NdnReceiverTester::onRegisterFailed, this, _1));
@@ -61,8 +64,11 @@ public :
 #else
                 ndnReceiverFace_ = ndnFace_;
 #endif
-        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
-        certName_ = NdnRtcNamespace::certificateNameForUser(params_->getUserPrefix());
+        string userPrefix;
+        ASSERT_EQ(RESULT_OK,MediaSender::getUserPrefix(params_, userPrefix));
+        
+        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
+        certName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
         
         frame = NdnRtcObjectTestHelper::loadEncodedFrame();
         payload = new NdnFrameData(*frame);
@@ -73,7 +79,6 @@ public :
         
         ndnFace_.reset();
         ndnTransport_.reset();
-        params_.reset();
         ndnKeyChain_.reset();
     }
     
@@ -95,7 +100,7 @@ public :
     }
     
 protected:
-    shared_ptr<VideoReceiverParams> params_;
+    ParamsStruct params_;
     shared_ptr<Transport> ndnTransport_;
     shared_ptr<Face> ndnFace_ /* tcp */, ndnReceiverFace_ /* udp */;
     shared_ptr<KeyChain> ndnKeyChain_;
@@ -118,9 +123,12 @@ protected:
         unsigned int lastSegmentSize = payload->getLength() - fullSegmentsNum*segmentSize;
         vector<int> segmentsSendOrder;
         
+        string framePrefix;
+        EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, framePrefix));
         
-        Name prefix(params_->getStreamFramePrefix().c_str());
-        shared_ptr<const vector<unsigned char>> frameNumberComponent = NdnRtcNamespace::getFrameNumberComponent(frameNo);
+
+        Name prefix(framePrefix.c_str());
+        shared_ptr<const vector<unsigned char>> frameNumberComponent = NdnRtcNamespace::getNumberComponent(frameNo);
         
         prefix.addComponent(*frameNumberComponent);
         
@@ -136,7 +144,6 @@ protected:
             unsigned int segmentIdx = segmentsSendOrder[i];
             unsigned char *segmentData = payload->getData()+segmentIdx*segmentSize;
             unsigned int dataSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:segmentSize;
-//            shared_ptr<const vector<unsigned char>> finalBlockIDValue = Name::Component::makeSegment(totalSegmentsNum-1);
             
             if (dataSize > 0)
             {
@@ -158,7 +165,7 @@ protected:
                 
                 Blob encodedData = data.wireEncode();
                 ndnTransport_->send(*encodedData);
-//                TRACE("published data %s", segmentPrefix.toUri().c_str());
+                TRACE("published data %s", segmentPrefix.toUri().c_str());
 
             } // if
         } // for
@@ -170,13 +177,13 @@ protected:
 
 TEST_F(NdnReceiverTester, CreateDelete)
 {
-    NdnVideoReceiver *receiver = new NdnVideoReceiver(VideoSenderParams::defaultParams());
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(DefaultParams);
     delete receiver;
 }
 
 TEST_F(NdnReceiverTester, Init)
 {
-    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
     EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     
@@ -185,7 +192,7 @@ TEST_F(NdnReceiverTester, Init)
 
 TEST_F(NdnReceiverTester, EmptyFetching)
 {
-    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
     receiver->setObserver(this);
     
@@ -208,11 +215,11 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     unsigned int bufferSize = 10;
     unsigned int producerFrameRate = 30;
     
-    params_->setIntParam(NdnParams::ParamNameFrameBufferSize, bufferSize);
-    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
-    params_->setIntParam(NdnParams::ParamNameProducerRate, producerFrameRate);
+    params_.bufferSize = bufferSize;
+    params_.segmentSize = segmentSize;
+    params_.producerRate = producerFrameRate;
     
-    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);
@@ -252,7 +259,6 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     delete receiver;
 }
 
-
 TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
 {
     WAIT(5200); // wait for results from previous test expire (on the ndn network)
@@ -262,11 +268,11 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     unsigned int bufferSize = 10;
     unsigned int producerFrameRate = 30;
     
-    params_->setIntParam(NdnParams::ParamNameFrameBufferSize, bufferSize);
-    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
-    params_->setIntParam(NdnParams::ParamNameProducerRate, producerFrameRate);
+    params_.bufferSize = bufferSize;
+    params_.segmentSize = segmentSize;
+    params_.producerRate = producerFrameRate;
     
-    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_.get());
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);

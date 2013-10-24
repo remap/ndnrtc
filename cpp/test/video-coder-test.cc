@@ -21,38 +21,15 @@ using namespace ndnrtc;
 /**
  * @name NdnVideoCoderParams class tests
  */
-TEST(VideoCoderParamsTest, CreateDelete)
-{
-    NdnVideoCoderParams *p = NdnVideoCoderParams::defaultParams();
-    delete p;
-}
 TEST(VideoCoderParamsTest, CheckDefaults)
 {
-    NdnVideoCoderParams *p = NdnVideoCoderParams::defaultParams();
+    ParamsStruct p = DefaultParams;
     
-    int width, height, framerate, maxbitrate, startbitrate;
-    
-    EXPECT_EQ(p->getFrameRate(&framerate),0);
-    EXPECT_EQ(30, framerate);
-    
-//    EXPECT_EQ(p->getMinBitRate(&minbitrate),0);
-//    EXPECT_EQ(framerate, 300);
-    
-    EXPECT_EQ(p->getMaxBitRate(&maxbitrate),0);
-    EXPECT_EQ(4000, maxbitrate);
-    
-    EXPECT_EQ(p->getStartBitRate(&startbitrate),0);
-    EXPECT_EQ(300, startbitrate);
-    
-    EXPECT_EQ(p->getWidth(&width),0);
-    EXPECT_EQ(640, width);
-    
-    EXPECT_EQ(p->getHeight(&height),0);
-    EXPECT_EQ(480, height);
-    
-    
-    
-    delete p;
+    EXPECT_EQ(30, p.codecFrameRate);
+    EXPECT_EQ(4000, p.maxBitrate);
+    EXPECT_EQ(300, p.startBitrate);
+    EXPECT_EQ(640, p.encodeWidth);
+    EXPECT_EQ(480, p.encodeHeight);
 }
 
 //********************************************************************************
@@ -66,14 +43,11 @@ public:
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        coderParams_ = NdnVideoCoderParams::defaultParams();
         obtainedFramesCount_= 0;
     }
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
-        
-        delete coderParams_;
     }
     
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
@@ -88,15 +62,15 @@ protected:
     webrtc::EncodedImage *receivedEncodedFrame_;
     int obtainedFramesCount_ = 0;
     bool obtainedFrame_ = false;
-    NdnVideoCoderParams *coderParams_ = NULL;
+    ParamsStruct coderParams_ = DefaultParams;
     webrtc::I420VideoFrame *sampleFrame_;
     
     void loadFrame()
     {
         int width = 352, height = 288;
         // change frame size according to the data in resource file file
-        coderParams_->setIntParam(NdnVideoCoderParams::ParamNameWidth, width);
-        coderParams_->setIntParam(NdnVideoCoderParams::ParamNameHeight, height);
+        coderParams_.encodeWidth = width;
+        coderParams_.encodeHeight = height;
         
         FILE *f = fopen("resources/foreman_cif.yuv", "rb");
         ASSERT_TRUE(f);
@@ -167,7 +141,6 @@ TEST_F(NdnVideoCoderTest, TestEncode)
     delete vc;
 }
 
-#if 0
 TEST(TestCodec, TestEncodeSampleFrame)
 {
     int width = 352, height = 288;    
@@ -211,8 +184,7 @@ TEST(TestCodec, TestEncodeSampleFrame)
     
     encoder_ = webrtc::VP8Encoder::Create();
 
-    NdnVideoCoderParams *coderParams_ = NdnVideoCoderParams::defaultParams();
-    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    NdnVideoCoder *vc = new NdnVideoCoder(DefaultParams);
     
     if (!encoder_)
         ASSERT_TRUE(false);
@@ -227,4 +199,3 @@ TEST(TestCodec, TestEncodeSampleFrame)
     WAIT(1000.);
 
 }
-#endif

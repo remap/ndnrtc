@@ -20,37 +20,11 @@
 namespace ndnrtc {
     class IRawFrameConsumer;
     
-    class CameraCapturerParams : public NdnParams
-    {
-    public:
-        // construction/desctruction
-        CameraCapturerParams():NdnParams(){};
-        
-        // static public
-        static CameraCapturerParams *defaultParams()
-        {
-            CameraCapturerParams *p = new CameraCapturerParams();
-            
-            p->setIntParam(CameraCapturerParams::ParamNameDeviceId, 0);
-            p->setIntParam(CameraCapturerParams::ParamNameWidth, 640);
-            p->setIntParam(CameraCapturerParams::ParamNameHeight, 480);
-            p->setIntParam(CameraCapturerParams::ParamNameFPS, 30);
-            
-            return p;
-        };
-        
-        // public methods
-        int getDeviceId(unsigned int *did) const { return getParamAsInt(ParamNameDeviceId, (int*)did); };
-        int getWidth(unsigned int *width) const { return getParamAsInt(ParamNameWidth, (int*)width); };
-        int getHeight(unsigned int *height) const { return getParamAsInt(ParamNameHeight, (int*)height); };
-        int getFPS(unsigned int *fps) const { return getParamAsInt(ParamNameFPS, (int*)fps); };
-    };
-    
     class CameraCapturer : public NdnRtcObject, public webrtc::VideoCaptureDataCallback
     {
     public:
         // construction/desctruction
-        CameraCapturer(const NdnParams *params);
+        CameraCapturer(const ParamsStruct &params);
         ~CameraCapturer();
         
         // public methods go here
@@ -86,11 +60,8 @@ namespace ndnrtc {
         // statistics
         unsigned int meterId_;
         
-        // private static
         static bool deliverCapturedFrame(void *obj) { return ((CameraCapturer*)obj)->process(); }
-        
-        // private methods
-        const CameraCapturerParams *getParams() const { return static_cast<const CameraCapturerParams*>(params_); }
+
         bool process();
     };
     

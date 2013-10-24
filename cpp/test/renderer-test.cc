@@ -18,30 +18,6 @@ using namespace ndnrtc;
 
 //********************************************************************************
 /**
- * @name NdnRendererParams class tests
- */
-TEST(VideoRendererParams, CreateDelete)
-{
-    NdnRendererParams *p = NdnRendererParams::defaultParams();
-    delete p;
-}
-TEST(VideoRendererParams, TestDfaults)
-{
-    NdnRendererParams *p = NdnRendererParams::defaultParams();
-    
-    int width, height;
-    
-    EXPECT_EQ(0, p->getWindowWidth(&width));
-    EXPECT_EQ(640, width);
-    
-    EXPECT_EQ(0, p->getWindowHeight(&height));
-    EXPECT_EQ(480, height);
-    
-    delete p;
-}
-
-//********************************************************************************
-/**
  * @name NdnRenderer class tests
  */
 class NdnRendererTester : public NdnRtcObjectTestHelper
@@ -49,34 +25,67 @@ class NdnRendererTester : public NdnRtcObjectTestHelper
     void SetUp()
     {
         NdnRtcObjectTestHelper::SetUp();
-        p = NdnRendererParams::defaultParams();
+        p_ = DefaultParams;
     }
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
-        delete p;
     }
     
 protected:
-    NdnRendererParams *p;
+    ParamsStruct p_;
 };
 
 TEST_F(NdnRendererTester, CreateDelete)
 {
-    NdnRenderer *nr = new NdnRenderer(0,p);
+    NdnRenderer *nr = new NdnRenderer(0,p_);
     delete nr;
 }
 
 TEST_F(NdnRendererTester, TestInit)
 {
-    NdnRenderer *nr = new NdnRenderer(0,p);
+    NdnRenderer *nr = new NdnRenderer(0, p_);
     
     nr->setObserver(this);
     flushFlags();
     
     EXPECT_EQ(0, nr->init());
     EXPECT_FALSE(obtainedError_);
+
     delete nr;
 }
 
-
+TEST_F(NdnRendererTester, TestBadInit)
+{
+    { // test bad width
+        p_.renderWidth = -1;
+        
+        NdnRenderer *nr = new NdnRenderer(0, p_);
+        
+        nr->setObserver(this);
+        flushFlags();
+        
+        int res = nr->init();
+        
+        EXPECT_EQ(RESULT_WARN, res);
+        EXPECT_TRUE(RESULT_NOT_OK(res));
+        EXPECT_TRUE(obtainedError_);
+        
+        delete nr;
+    }
+    { // test bad height
+        p_.renderHeight = -1;
+        NdnRenderer *nr = new NdnRenderer(0, p_);
+        
+        nr->setObserver(this);
+        flushFlags();
+        
+        int res = nr->init();
+        
+        EXPECT_EQ(RESULT_WARN, res);
+        EXPECT_TRUE(RESULT_NOT_OK(res));
+        EXPECT_TRUE(obtainedError_);
+        
+        delete nr;
+    }
+}

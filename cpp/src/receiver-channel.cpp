@@ -9,6 +9,7 @@
 //
 
 #include "receiver-channel.h"
+#include "sender-channel.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -16,7 +17,7 @@ using namespace std;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnReceiverChannel::NdnReceiverChannel(NdnParams *params) : NdnRtcObject(params),
+NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params) : NdnRtcObject(params),
 localRender_(new NdnRenderer(1,params)),
 decoder_(new NdnVideoDecoder(params)),
 receiver_(new NdnVideoReceiver(params))
@@ -29,52 +30,64 @@ receiver_(new NdnVideoReceiver(params))
     decoder_->setFrameConsumer(localRender_.get());
 }
 
-void NdnReceiverChannel::onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport)
+void NdnReceiverChannel::onInterest(const shared_ptr<const Name>& prefix,
+                                    const shared_ptr<const Interest>& interest,
+                                    ndn::Transport& transport)
 {
     INFO("got interest: %s", interest->getName().toUri().c_str());
 }
 
-void NdnReceiverChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+void NdnReceiverChannel::
+onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 {
     ERR("failed to register prefix %s", prefix->toUri().c_str());
 }
 
 int NdnReceiverChannel::init()
 {
+    int res = RESULT_OK;
+    
     // connect to ndn
     try
     {
-        std::string host = getParams()->getConnectHost();
-        int port = getParams()->getConnectPort();
+        std::string host;
+        int port = ParamsStruct::validateLE(params_.portNum, MaxPortNum,
+                                            res, DefaultParams.portNum);
+        res = NdnSenderChannel::getConnectHost(params_, host);
         
-        if (host != "" && port > 0)
+        if (RESULT_GOOD(res))
         {
-            shared_ptr<ndn::Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
+            shared_ptr<ndn::Transport::ConnectionInfo>
+            connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
             
             ndnTransport_.reset(new TcpTransport());
             ndnFace_.reset(new Face(ndnTransport_, connInfo));
             
-            std::string streamAccessPrefix = ((VideoReceiverParams*)getParams())->getStreamKeyPrefix();
-            ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                     bind(&NdnReceiverChannel::onInterest, this, _1, _2, _3),
-                                     bind(&NdnReceiverChannel::onRegisterFailed, this, _1));
+            std::string streamAccessPrefix;
+            
+            res = MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
+            
+            if (RESULT_GOOD(res))
+                ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
+                                         bind(&NdnReceiverChannel::onInterest, this, _1, _2, _3),
+                                         bind(&NdnReceiverChannel::onRegisterFailed, this, _1));
         }
         else
-            return notifyError(-1, "malformed parameters for host/port");
+            return notifyError(RESULT_ERR, "malformed parameters for host/port");
     }
     catch (std::exception &e)
     {
-        return notifyError(-1, "got error form ndn library: %s", e.what());
+        return notifyError(RESULT_ERR, "got error form ndn library: %s", e.what());
     }
     
     if (localRender_->init() < 0)
-        notifyError(-1, "can't intialize renderer");
+        notifyError(RESULT_ERR, "can't intialize renderer");
     
     if (decoder_->init() < 0)
-        notifyError(-1, "can't intialize video encoder");
+        notifyError(RESULT_ERR, "can't intialize video encoder");
     
     if (receiver_->init(ndnFace_) < 0)
-        return notifyError(-1, "can't intialize video sender");
+        return notifyError(RESULT_ERR, "can't intialize video sender");
     
     return 0;
 }
@@ -85,13 +98,13 @@ int NdnReceiverChannel::startFetching()
     unsigned int tid = 1;
     
     if (localRender_->startRendering() < 0)
-        return notifyError(-1, "can't start render");
+        return notifyError(RESULT_ERR, "can't start render");
     
     if (receiver_->startFetching() < 0)
-        return notifyError(-1, "can't start fetching frames");
+        return notifyError(RESULT_ERR, "can't start fetching frames");
     
     isTransmitting_ = true;
-    return 0;
+    return RESULT_OK;
 }
 int NdnReceiverChannel::stopFetching()
 {
@@ -100,7 +113,7 @@ int NdnReceiverChannel::stopFetching()
     
     isTransmitting_ = false;
     
-    return 0;
+    return RESULT_OK;
 }
 void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
 {

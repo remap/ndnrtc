@@ -18,104 +18,107 @@ using namespace std;
 
 //******************************************************************************
 //******************************************************************************
-#pragma mark - public
-string MediaSenderParams::getUserPrefix() const
+#pragma mark - static
+int MediaSender::getUserPrefix(const ParamsStruct &params, string &prefix)
 {
-    const std::string hub = getParamAsString(ParamNameNdnHub);
-    const std::string producerId = getParamAsString(ParamNameProducerId);
+    int res = RESULT_OK;
     
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getProducerPrefix(hub, producerId);
-    return *userPrefix;
+    res = (params.ndnHub && params.producerId) ? RESULT_OK : RESULT_ERR;
+    
+    prefix = *NdnRtcNamespace::
+    getProducerPrefix((params.ndnHub)?params.ndnHub:DefaultParams.ndnHub,
+                      (params.producerId)?params.producerId:
+                      DefaultParams.producerId);
+    
+    return res;
 }
 
-string MediaSenderParams::getStreamPrefix() const
+int MediaSender::getStreamPrefix(const ParamsStruct &params, string &prefix)
 {
+    string userPrefix;
+    int res = MediaSender::getUserPrefix(params, userPrefix);
     
-    char *hub = (char*)malloc(256);
-    char *user = (char*)malloc(256);
-    char *stream = (char*)malloc(256);
+    res = (params.streamName) ? res : RESULT_ERR;
     
-    memset(hub,0,256);
-    memset(user,0,256);
-    memset(stream,0,256);
+    const string streamName = string((!res)?params.streamName:
+                                     DefaultParams.streamName);
     
-    getHub(&hub);
-    getProducerId(&user);
-    getStreamName(&stream);
+    prefix = *NdnRtcNamespace::buildPath(false,
+                                        &userPrefix,
+                                        &NdnRtcNamespace::NdnRtcNamespaceComponentUserStreams,
+                                        &streamName,
+                                        NULL);
     
-    shared_ptr<string> prefix(NULL);
-    
-    // check if stream name was supplied
-    if (strlen(stream) > 0)
-        prefix = NdnRtcNamespace::getStreamPath(hub, user, stream);
-    
-    free(hub);
-    free(user);
-    free(stream);
-    
-    return (prefix.get())? *prefix : "";
+    return res;
 }
 
-string MediaSenderParams::getStreamKeyPrefix() const
+int MediaSender::getStreamFramePrefix(const ParamsStruct &params, string &prefix)
 {
-    string prefix  = getStreamPrefix();
+    string streamPrefix;
+    int res = MediaSender::getStreamPrefix(params, streamPrefix);
     
-    if (prefix == "")
-        return "";
+    res = (params.streamThread) ? res : RESULT_ERR;
     
-    shared_ptr<string> accessPrefix =
-    NdnRtcNamespace::buildPath(false, &prefix,
-                               &NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey, NULL);
+    string streamThread = string((!res)?params.streamThread:DefaultParams.streamThread);
     
-    return *accessPrefix;
+    prefix = *NdnRtcNamespace::buildPath(false,
+                                        &streamPrefix,
+                                        &streamThread,
+                                        &NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames,
+                                        NULL);
+    
+    return res;
 }
 
-string MediaSenderParams::getStreamFramePrefix() const
+int MediaSender::getStreamKeyPrefix(const ParamsStruct &params, string &prefix)
 {
-    string prefix  = getStreamPrefix();
-    string streamThread = getParamAsString(ParamNameStreamThreadName);
+    string streamPrefix;
+    int res = MediaSender::getStreamPrefix(params, streamPrefix);
     
-    shared_ptr<string> framesPrefix =
-    NdnRtcNamespace::buildPath(false,
-                               &prefix,
-                               &streamThread,
-                               &NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames,
-                               NULL);
+    prefix = *NdnRtcNamespace::buildPath(false,
+                                        &streamPrefix,
+                                        &NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey,
+                                        NULL);
     
-    return *framesPrefix;
+    return res;
 }
 
-//******************************************************************************
 //******************************************************************************
 #pragma mark - public
 int MediaSender::init(const shared_ptr<ndn::Transport> transport)
 {
-    certificateName_ = NdnRtcNamespace::certificateNameForUser(getParams()->
-                                                               getUserPrefix());
+    string userPrefix;
     
-    string framesPrefix = getParams()->getStreamFramePrefix();
-    packetPrefix_.reset(new Name(framesPrefix.c_str()));
+    if (RESULT_FAIL(MediaSender::getStreamPrefix(params_, userPrefix)))
+        notifyError(-1, "user prefix differs from specified (check params): %s",
+                          userPrefix.c_str());
+    
+    certificateName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
+
+    string packetPrefix;
+    
+    if (RESULT_FAIL(MediaSender::getStreamFramePrefix(params_, packetPrefix)))
+        notifyError(-1, "frame prefix differ from specified (check params): %s",
+                    packetPrefix.c_str());
+
+    packetPrefix_.reset(new Name(packetPrefix.c_str()));
     
     ndnTransport_ = transport;
-    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(getParams()->
-                                                    getUserPrefix());
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
+    segmentSize_ = params_.segmentSize;
+    freshnessInterval_ = params_.freshness;
     
-    if (getParams()->getSegmentSize(&segmentSize_) < 0)
-        segmentSize_ = 1100;
-    
-    if (getParams()->getFreshnessInterval(&freshnessInterval_) < 0)
-        freshnessInterval_ = 1;
+    packetNo_ = 0;
     
     return 0;
 }
 
 //******************************************************************************
-#pragma mark - intefaces realization - <#interface#>
-
-//******************************************************************************
 #pragma mark - private
 int MediaSender::publishPacket(unsigned int len,
-                                     const unsigned char *packetData)
+                               const unsigned char *packetData,
+                               shared_ptr<Name> packetPrefix,
+                               unsigned int packetNo)
 {
     if (!ndnTransport_->getIsConnected())
         return notifyError(-1, "can't send packet - no connection");
@@ -124,8 +127,8 @@ int MediaSender::publishPacket(unsigned int len,
     TRACE("sending packet #%010lld", packetNo_);
     
     // 1. set packet number prefix
-    Name prefix = *packetPrefix_;
-    shared_ptr<const vector<unsigned char>> packetNumberComponent = NdnRtcNamespace::getNumberComponent(packetNo_);
+    Name prefix = *packetPrefix;
+    shared_ptr<const vector<unsigned char>> packetNumberComponent = NdnRtcNamespace::getNumberComponent(packetNo);
     
     prefix.addComponent(*packetNumberComponent);
     
@@ -185,7 +188,6 @@ int MediaSender::publishPacket(unsigned int len,
                     "got error from ndn library while sending data: %s",
                     e.what());
     }
-    
-    packetNo_++;
-    
+
+    return segmentsNum;
 }

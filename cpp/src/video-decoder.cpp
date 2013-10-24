@@ -16,7 +16,8 @@ using namespace webrtc;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoDecoder::NdnVideoDecoder(const NdnParams *params) : NdnRtcObject(params), frameConsumer_(NULL)
+NdnVideoDecoder::NdnVideoDecoder(const ParamsStruct &params) :
+NdnRtcObject(params), frameConsumer_(NULL)
 {
     memset(&codec_, 0, sizeof(codec_));
 }
@@ -25,17 +26,22 @@ NdnVideoDecoder::NdnVideoDecoder(const NdnParams *params) : NdnRtcObject(params)
 #pragma mark - public
 int NdnVideoDecoder::init()
 {
-    codec_ = ((NdnVideoCoderParams*)params_)->getCodec();
+    int res = RESULT_OK;
     
-    decoder_.reset(VP8Decoder::Create());
+    res = NdnVideoCoder::getCodec(params_, codec_);
     
-    if (!decoder_.get())
-        return notifyError(-1, "can't create VP8 decoder");
-    
-    decoder_->RegisterDecodeCompleteCallback(this);
-    
-    if (decoder_->InitDecode(&codec_, 1) != WEBRTC_VIDEO_CODEC_OK)
-        return notifyError(-1, "can't initialize VP8 decoder");
+    if (RESULT_GOOD(res))
+    {
+        decoder_.reset(VP8Decoder::Create());
+        
+        if (!decoder_.get())
+            return notifyError(RESULT_ERR, "can't create VP8 decoder");
+        
+        decoder_->RegisterDecodeCompleteCallback(this);
+        
+        if (decoder_->InitDecode(&codec_, 1) != WEBRTC_VIDEO_CODEC_OK)
+            return notifyError(RESULT_ERR, "can't initialize VP8 decoder");
+    }
     
     return 0;
 }

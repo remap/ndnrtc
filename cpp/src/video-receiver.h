@@ -12,38 +12,15 @@
 #ifndef __ndnrtc__video_receiver__
 #define __ndnrtc__video_receiver__
 
-#include "ndnrtc-common.h"
+#include "media-receiver.h"
 #include "video-sender.h"
-#include "frame-buffer.h"
 #include "playout-buffer.h"
-#include "ndnrtc-utils.h"
 
 namespace ndnrtc
 {
-    class VideoReceiverParams : public VideoSenderParams {
+    class NdnVideoReceiver : public NdnMediaReceiver {
     public:
-        // static
-        static shared_ptr<VideoReceiverParams> defaultParams()
-        {
-            shared_ptr<VideoReceiverParams> p(static_cast<VideoReceiverParams*>(VideoSenderParams::defaultParams().get()));
-            
-            p->setIntParam(ParamNameProducerRate, 30);
-            p->setIntParam(ParamNameInterestTimeout, 4);
-            p->setIntParam(ParamNameFrameBufferSize, 120);
-            p->setIntParam(ParamNameFrameSlotSize, 16000);
-            return p;
-        }
-        
-        // public methods go here
-        int getProducerRate() const { return getParamAsInt(ParamNameProducerRate); }
-        int getDefaultTimeout() const {return getParamAsInt(ParamNameInterestTimeout); }
-        int getFrameBufferSize() const { return getParamAsInt(ParamNameFrameBufferSize); }
-        int getFrameSlotSize() const { return getParamAsInt(ParamNameFrameSlotSize); }
-    };
-    
-    class NdnVideoReceiver : public NdnRtcObject {
-    public:
-        NdnVideoReceiver(NdnParams *params);
+        NdnVideoReceiver(const ParamsStruct &params);
         ~NdnVideoReceiver();
         
         int init(shared_ptr<Face> face);
@@ -61,16 +38,6 @@ namespace ndnrtc
         double getIncomeDataFreq() { return NdnRtcUtils::currentFrequencyMeterValue(assemblerMeterId_); }
         
     private:
-        enum ReceiverMode {
-            ReceiverModeCreated,
-            ReceiverModeInit,
-            ReceiverModeStarted,
-            ReceiverModeWaitingFirstSegment,
-            ReceiverModeFetch,
-            ReceiverModeChase
-        };
-        
-        ReceiverMode mode_;
         
         // statistics variables
         unsigned int playoutMeterId_, assemblerMeterId_, incomeFramesMeterId_;
@@ -82,45 +49,23 @@ namespace ndnrtc
         
         bool playout_;
         long playoutSleepIntervalUSec_; // 30 fps
-        long playoutFrameNo_, pipelinerFrameNo_;
-        int pipelinerEventsMask_, interestTimeoutMs_;
-        unsigned int producerSegmentSize_;
-        Name framesPrefix_;
-        shared_ptr<Face> face_;
+        long playoutFrameNo_;
         
-        FrameBuffer frameBuffer_;
         PlayoutBuffer playoutBuffer_;
         IEncodedFrameConsumer *frameConsumer_;
         
-        webrtc::CriticalSectionWrapper &faceCs_; // needed to synmchrnous access to the NDN face object
-        webrtc::ThreadWrapper &playoutThread_, &pipelineThread_, &assemblingThread_;
+        webrtc::ThreadWrapper &playoutThread_;
         
         // static routines for threads
-        static bool playoutThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processPlayout(); }
-        static bool pipelineThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processInterests(); }
-        static bool assemblingThreadRoutine(void *obj) { return ((NdnVideoReceiver*)obj)->processAssembling(); }
+        static bool playoutThreadRoutine(void *obj) {
+            return ((NdnVideoReceiver*)obj)->processPlayout();
+        }
         
         // thread main functions (called iteratively by static routines)
         bool processPlayout();
-        bool processInterests();
-        bool processAssembling();
         
-        // ndn-lib callbacks
-        void onTimeout(const shared_ptr<const Interest>& interest);
-        void onSegmentData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data);
-        
-        VideoReceiverParams *getParams() { return static_cast<VideoReceiverParams*>(params_); }
-        
-        void switchToMode(ReceiverMode mode);
-        
-        void requestInitialSegment();
-        void pipelineInterests(FrameBuffer::Event &event);
-        void requestSegment(unsigned int frameNo, unsigned int segmentNo);
-        bool isStreamInterest(Name prefix);
-        unsigned int getFrameNumber(Name prefix);
-        unsigned int getSegmentNumber(Name prefix);
-        void expressInterest(Name &prefix);
-        void expressInterest(Interest &i);
+        // overriden
+        void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
     };
 }

@@ -17,32 +17,17 @@
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
 
-namespace ndnrtc {
-    
-    class NdnRendererParams : public NdnParams
-    {
-    public:
-        // static public
-        static NdnRendererParams* defaultParams()
-        {
-            NdnRendererParams *p = new NdnRendererParams();
-            
-            p->setIntParam(ParamNameWindowWidth, 640);
-            p->setIntParam(ParamNameWindowHeight, 480);
-            
-            return p;
-        }
-        
-        // public methods
-        int getWindowWidth(unsigned int *width) { return getParamAsInt(ParamNameWindowWidth, (int*)width); };
-        int getWindowHeight(unsigned int *height) { return getParamAsInt(ParamNameWindowHeight, (int*)height); };
-    };
-    
+namespace ndnrtc
+{
+    /**
+     * This class is used for rendering incoming video frames in default 
+     * rendering (cocoa) window. Incoming frames are of type I420VideoFrame 
+     * (WebRTC-specific) and represent graphical data int YUV format.
+     */
     class NdnRenderer : public NdnRtcObject, public IRawFrameConsumer
     {
     public:
-        // construction/desctruction
-        NdnRenderer(int rendererId, NdnParams *params_);
+        NdnRenderer(int rendererId, const ParamsStruct &params);
         ~NdnRenderer();
         
         int init();
@@ -50,16 +35,11 @@ namespace ndnrtc {
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
     private:
-        // private static attributes go here
-        // private attributes go here
         int rendererId_;
         bool initialized_ = false;
 #warning make static in long run
         webrtc::VideoRender *render_ = nullptr;        
         webrtc::VideoRenderCallback *frameSink_ = nullptr;
-        
-        // private methods go here
-        NdnRendererParams *getParams(){ return static_cast<NdnRendererParams*>(params_); };
     };
 }
 

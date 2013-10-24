@@ -138,6 +138,7 @@ TEST(ParametersTest, PtrParameters) {
 /**
  * @name NdnParams class tests
  */
+#if 0
 class NdnParamsTester : public NdnParams
 {
 public:
@@ -152,11 +153,10 @@ public:
 
 
 TEST(ParamsTest, DefaultParams) {
-    NdnParams *p = NdnParams::defaultParams();
-    delete p;
+    shared_ptr<NdnParams> p = NdnParams::defaultParams();
 }
 TEST(ParamsTest, SetParams) {
-    NdnParamsTester *p = (NdnParamsTester*) NdnParams::defaultParams();
+    shared_ptr<NdnParamsTester> p(new NdnParamsTester(NdnParams::defaultParams().get));
     
     {
         p->setBoolParam("p1", true);
@@ -195,7 +195,7 @@ TEST(ParamsTest, SetParams) {
     delete p;
 }
 TEST(ParamsTest, ParamsObjectMethods) {
-    NdnParamsTester *p = (NdnParamsTester*) NdnParams::defaultParams();
+    shared_ptr<NdnParamsTester> p  = NdnParams::defaultParams();
     
     {
         p->setBoolParam("p1", true);
@@ -364,7 +364,7 @@ TEST(ParamsTest, ResetParams)
     EXPECT_STREQ(cres,"world");
     free(cres);
 }
-
+#endif
 //********************************************************************************
 /**
  * @name NdnrtcObject class tests
@@ -383,7 +383,6 @@ public:
         return notifyErrorBadArg(pname);
     };
     bool isObserved() { return hasObserver(); };
-    bool isParametrized() {return hasParams(); };
 };
 
 class NdnRtcObjectTest : public ::testing::Test, public INdnRtcObjectObserver
@@ -408,25 +407,20 @@ TEST_F(NdnRtcObjectTest, CreateDeleteNoParams)
 {
     NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject();
     
-    EXPECT_FALSE(obj->isParametrized());
-    
     delete obj;
 }
 TEST_F(NdnRtcObjectTest, CreateDeleteWithParams)
 {
     shared_ptr<NdnParams> paramsSPtr(new NdnParams());
-    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get());
-    
-    EXPECT_TRUE(obj->isParametrized());
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams);
     
     delete obj;
 }
 TEST_F(NdnRtcObjectTest, CreateDeleteWithObserver)
 {
     shared_ptr<NdnParams> paramsSPtr(new NdnParams());
-    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get(), this);
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
     
-    EXPECT_TRUE(obj->isParametrized());
     EXPECT_TRUE(obj->isObserved());
     
     delete obj;
@@ -444,7 +438,7 @@ TEST_F(NdnRtcObjectTest, SetObserver)
 TEST_F(NdnRtcObjectTest, ErrorNotifies)
 {
     shared_ptr<NdnParams> paramsSPtr(new NdnParams());    
-    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(paramsSPtr.get(), this);
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
     
     EXPECT_FALSE(errorOccurred_);
     obj->postError(-1, "error msg");

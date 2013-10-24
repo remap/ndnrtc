@@ -5,8 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
-//  Created: 8/21/13
+//  Author:  Peter Gusev
 //
 
 //#define NDN_LOGGING
@@ -38,5 +37,5 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     NdnFrameData frameData(encodedImage);
     publishPacket(frameData.getLength(),
                   const_cast<unsigned char*>(frameData.getData()));
-    
+    packetNo_++;
 }

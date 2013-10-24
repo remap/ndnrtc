@@ -27,7 +27,7 @@ static unsigned char *frameBuffer = nullptr;
 #pragma mark - public
 //********************************************************************************
 #pragma mark - construction/destruction
-CameraCapturer::CameraCapturer(const NdnParams *params) :
+CameraCapturer::CameraCapturer(const ParamsStruct &params) :
 NdnRtcObject(params),
 vcm_(nullptr),
 frameConsumer_(nullptr),
@@ -52,18 +52,12 @@ CameraCapturer::~CameraCapturer()
 #pragma mark - public
 int CameraCapturer::init()
 {
-    if (!hasParams())
-        return notifyErrorNoParams();
-    
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
     
     if (!devInfo)
         return notifyError(-1, "can't get deivce info");
     
-    int deviceID;
-    
-    if (getParams()->getDeviceId(&deviceID) < 0)
-        return notifyErrorBadArg(CameraCapturerParams::ParamNameDeviceId);
+    int deviceID = params_.captureDeviceId;
     
     char deviceName [256];
     char deviceUniqueName [256];
@@ -77,15 +71,11 @@ int CameraCapturer::init()
     if (vcm_ == NULL)
         return notifyError(-1,"can't get video capture module");
     
-    if (getParams()->getWidth((int*)&capability_.width) < 0)
-        return notifyErrorBadArg(CameraCapturerParams::ParamNameWidth);
+    int res = RESULT_OK;
     
-    if (getParams()->getHeight((int*)&capability_.height) < 0)
-        return notifyErrorBadArg(CameraCapturerParams::ParamNameHeight);
-    
-    if (getParams()->getFPS((int*)&capability_.maxFPS) < 0)
-        return notifyErrorBadArg(CameraCapturerParams::ParamNameFPS);
-
+    capability_.width = params_.captureWidth;
+    capability_.height = params_.captureHeight;
+    capability_.maxFPS = params_.captureFramerate;
     capability_.rawType = webrtc::kVideoI420; //webrtc::kVideoUnknown;
     
     vcm_->RegisterCaptureDataCallback(*this);
@@ -191,7 +181,6 @@ void CameraCapturer::printCapturingInfo()
 #pragma mark - overriden - webrtc::VideoCaptureDataCallback
 void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& videoFrame)
 {
-//    TRACE("captured new frame %ld",videoFrame.render_time_ms());
     if (videoFrame.render_time_ms() >= TickTime::MillisecondTimestamp()-30 &&
         videoFrame.render_time_ms() <= TickTime::MillisecondTimestamp())
         TRACE("..delayed");

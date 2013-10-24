@@ -13,6 +13,7 @@
 #define __ndnrtc__ndnrtc_object__
 
 #include "ndnrtc-common.h"
+#include "params.h"
 
 namespace ndnrtc {
     class INdnRtcObjectObserver {
@@ -81,7 +82,6 @@ namespace ndnrtc {
         // producer parameters names
         static const std::string ParamNameStreamName;
         static const std::string ParamNameStreamThreadName;
-        static const std::string ParamNameStreamPrefix;
         static const std::string ParamNameNdnHub;
         static const std::string ParamNameProducerId;
         static const std::string ParamNameSegmentSize;
@@ -99,9 +99,7 @@ namespace ndnrtc {
         static const std::string ParamNameConnectPort;
         
         // public static goes here
-        static NdnParams* defaultParams(){
-            return new NdnParams();
-        };
+        static shared_ptr<NdnParams> defaultParams();
         
         // public methods go here
         virtual int size(){ return propertiesMap_.size(); };
@@ -137,9 +135,8 @@ namespace ndnrtc {
     class NdnRtcObject : public INdnRtcObjectObserver {
     public:
         // construction/desctruction
-        NdnRtcObject();
-        NdnRtcObject(const NdnParams *params);
-        NdnRtcObject(const NdnParams *params, INdnRtcObjectObserver *observer);
+        NdnRtcObject(const ParamsStruct &params = DefaultParams);
+        NdnRtcObject(const ParamsStruct &params, INdnRtcObjectObserver *observer);
         virtual ~NdnRtcObject();
         
         // public methods go here
@@ -149,14 +146,13 @@ namespace ndnrtc {
     protected:
         // protected attributes go here
         INdnRtcObjectObserver *observer_ = nullptr;
-        NdnParams *params_ = nullptr;
+        ParamsStruct params_;
         
         // protected methods go here
         int notifyError(const int ecode, const char *format, ...);
         int notifyErrorNoParams();
         int notifyErrorBadArg(const std::string &paramName);
         bool hasObserver() { return observer_ != nullptr; };
-        bool hasParams() { return params_ != nullptr; }; // && params_->size() != 0; };
     };
 }
 

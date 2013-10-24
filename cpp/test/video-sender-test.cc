@@ -28,14 +28,9 @@ using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
-TEST(VideoSenderParamsTest, CreateDelete)
-{
-    shared_ptr<MediaSenderParams> p = MediaSenderParams::defaultParams();
-}
-
 TEST(VideoSenderParamsTest, CheckDefaults)
 {
-    shared_ptr<MediaSenderParams> p = NdnVideoSender::defaultParams();
+    ParamsStruct p = DefaultParams;
     
     char *hubEx = "ndn/ucla.edu/apps";
     char *userEx = "testuser";
@@ -51,19 +46,17 @@ TEST(VideoSenderParamsTest, CheckDefaults)
     memset(user, 0, 256);
     memset(stream, 0, 256);
     
-    EXPECT_EQ(0, p->getHub((char**)&hub));
-    EXPECT_STREQ(hubEx, hub);
-    
-    EXPECT_EQ(0, p->getProducerId((char**)&user));
-    EXPECT_STREQ(userEx, user);
-    
-    EXPECT_EQ(0, p->getStreamName((char**)&stream));
-    EXPECT_STREQ(streamEx, stream);
+    EXPECT_STREQ(hubEx, p.ndnHub);
+    EXPECT_STREQ(userEx, p.producerId);
+    EXPECT_STREQ(streamEx, p.streamName);
     
     char prefix[256];
     sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s", hubEx, userEx, streamEx);
     
-    EXPECT_STREQ(prefix, p->getStreamPrefix().c_str());
+    string streamPrefix;
+    
+    EXPECT_EQ(0, MediaSender::getStreamPrefix(p, streamPrefix));
+    EXPECT_STREQ(prefix, streamPrefix.c_str());
     
     free(hub);
     free(user);
@@ -72,7 +65,7 @@ TEST(VideoSenderParamsTest, CheckDefaults)
 
 TEST(VideoSenderParamsTest, CheckPrefixes)
 {
-    shared_ptr<MediaSenderParams> p = NdnVideoSender::defaultParams();
+    ParamsStruct p = DefaultParams;
     
     const char *hubEx = "ndn/ucla.edu/apps";
     char *userEx = "testuser";
@@ -81,16 +74,30 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
     {
         char prefix[256];
         memset(prefix, 0, 256);
+        sprintf(prefix, "/%s/ndnrtc/user/%s", hubEx, userEx);
+        
+        string uprefix;
+        
+        EXPECT_EQ(0,MediaSender::getUserPrefix(p, uprefix));
+        EXPECT_STREQ(prefix, uprefix.c_str());
+    }
+    {
+        char prefix[256];
+        memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/key", hubEx, userEx, streamEx);
         
-        EXPECT_STREQ(prefix, p->getStreamKeyPrefix().c_str());
+        string keyprefix;
+        EXPECT_EQ(0, MediaSender::getStreamKeyPrefix(p, keyprefix));
+        EXPECT_STREQ(prefix, keyprefix.c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames", hubEx, userEx, streamEx);
         
-        EXPECT_STREQ(prefix, p->getStreamFramePrefix().c_str());
+        string frprefix;
+        EXPECT_EQ(0, MediaSender::getStreamFramePrefix(p, frprefix));
+        EXPECT_STREQ(prefix, frprefix.c_str());
     }
 }
 
@@ -105,26 +112,31 @@ public:
         
         shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
         
-        params_ = MediaSenderParams::defaultParams();
-        params_->setIntParam(NdnParams::ParamNameFrameFreshnessInterval, 1);
+        params_ = DefaultParams;
+        params_.freshness = 1;
         
-        videoSender_.reset(new NdnVideoSender(params_.get()));
+        videoSender_.reset(new NdnVideoSender(params_));
         videoSender_->setObserver(this);
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
-        std::string streamAccessPrefix = params_.get()->getStreamKeyPrefix();
+        std::string streamAccessPrefix;
         
+        MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
         ASSERT_NO_THROW(
                         ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                                  bind(&VideoSenderTester::onInterest, this, _1, _2, _3),
                                                  bind(&VideoSenderTester::onRegisterFailed, this, _1));
                         );
         
-        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(params_->getUserPrefix());
+        std::string userPrefix;
+        MediaSender::getUserPrefix(params_, userPrefix);
+        
+        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
         ndnKeyChain_->setFace(ndnFace_.get());
         sampleFrame_ = NULL;
     }
+    
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
@@ -137,7 +149,6 @@ public:
         
         ndnFace_.reset();
         ndnTransport_.reset();
-        params_.reset();
         videoSender_.reset();
         ndnKeyChain_.reset();
     }
@@ -176,7 +187,7 @@ protected:
     
     shared_ptr<TcpTransport> ndnTransport_;
     shared_ptr<Face> ndnFace_;
-    shared_ptr<MediaSenderParams> params_;
+    ParamsStruct params_;
     shared_ptr<NdnVideoSender> videoSender_;
     shared_ptr<KeyChain> ndnKeyChain_;
     
@@ -221,7 +232,6 @@ protected:
     }
 };
 
-
 TEST_F(VideoSenderTester, TestFrameData)
 {
     loadFrame();
@@ -243,8 +253,6 @@ TEST_F(VideoSenderTester, TestFrameData)
 
 TEST_F(VideoSenderTester, TestInit)
 {
-    loadFrame();
-    
     EXPECT_EQ(0,videoSender_->init(ndnTransport_));
 }
 
@@ -265,7 +273,9 @@ TEST_F(VideoSenderTester, TestSend)
     //    WAIT(1000);
     
     // get frame prefix
-    std::string prefixStr = params_->getStreamFramePrefix();
+    std::string prefixStr;
+    MediaSender::getStreamFramePrefix(params_, prefixStr);
+    
     Name framePrefix(prefixStr.c_str());
     
     framePrefix.addComponent((const unsigned char *)"0", 1);
@@ -291,13 +301,6 @@ TEST_F(VideoSenderTester, TestSend)
     
     ASSERT_EQ(0,NdnFrameData::unpackFrame(dataObject->getContent().size(), dataObject->getContent().buf(), &frame));
     ASSERT_NE(nullptr, frame);
-    
-#if 0
-    if (sampleFrame_->_encodedWidth != frame->_encodedWidth)
-    {
-        INFO("wrong");
-    }
-#endif
     
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
     
@@ -325,7 +328,9 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
     //    WAIT(1000);
     
     // get frame prefix
-    std::string prefixStr = params_->getStreamFramePrefix();
+    std::string prefixStr;
+    MediaSender::getStreamFramePrefix(params_, prefixStr);
+    
     Name framesPrefix(prefixStr.c_str());
     
     for (int i = 0; i < framesNum; i++)
@@ -360,13 +365,7 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
         
         ASSERT_EQ(0, NdnFrameData::unpackFrame(dataObject->getContent().size(), dataObject->getContent().buf(), &frame));
         ASSERT_NE(nullptr, frame);
-        
-#if 0
-        if (sampleFrame_->_encodedWidth != frame->_encodedWidth)
-        {
-            INFO("wrong");
-        }
-#endif
+
         NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
 
         delete frame;
@@ -383,9 +382,9 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     int segmentSize = sampleFrame_->_length/3;
     int segmentNum = (sampleFrame_->_length-3*segmentSize)?4:3;
     
-    params_->setIntParam(NdnParams::ParamNameSegmentSize, segmentSize);
+    params_.segmentSize = segmentSize;
     
-    videoSender_.reset(new NdnVideoSender(params_.get()));
+    videoSender_.reset(new NdnVideoSender(params_));
     videoSender_->setObserver(this);
     
     EXPECT_EQ(0,videoSender_->init(ndnTransport_));
@@ -395,7 +394,9 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     EXPECT_EQ(false, obtainedError_);
     
     // get frame prefix
-    std::string prefixStr = params_->getStreamFramePrefix();
+    std::string prefixStr;
+    MediaSender::getStreamFramePrefix(params_, prefixStr);
+    
     Name framePrefix(prefixStr.c_str());
     
     framePrefix.addComponent((const unsigned char *)"0", 1);
@@ -453,13 +454,6 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     
     ASSERT_EQ(0,NdnFrameData::unpackFrame(pos-&frameBuf[0], &frameBuf[0], &frame));
     ASSERT_NE(nullptr, frame);
-    
-#if 0
-    if (sampleFrame_->_encodedWidth != frame->_encodedWidth)
-    {
-        INFO("wrong");
-    }
-#endif
 
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
     

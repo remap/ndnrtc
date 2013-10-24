@@ -15,39 +15,9 @@
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
+#include "params.h"
 
 namespace ndnrtc {
-    typedef struct _NdnLibParams {
-        NdnLoggerDetailLevel loggingLevel;
-        const char *logFile;
-        
-        // capture settings
-        unsigned int captureDeviceId;
-        unsigned int captureWidth, captureHeight;
-        unsigned int captureFramerate;
-        
-        // render
-        unsigned int renderWidth, renderHeight;
-        
-        // codec
-        unsigned int codecFrameRate;
-        unsigned int startBitrate, maxBitrate;
-        unsigned int encodeWidth, encodeHeight;
-        
-        // network parameters
-        const char *host;
-        unsigned int portNum;
-        
-        // ndn producer
-        unsigned int segmentSize, freshness;
-        
-        // ndn consumer
-        unsigned int playbackRate;
-        unsigned int interestTimeout;
-        unsigned int bufferSize, slotSize;
-        
-    } NdnLibParams;
-    
     typedef struct _NdnLibStatistics {
         // consume statistics:
         // current producer index (as we fetch video seamlessly)
@@ -107,15 +77,15 @@ namespace ndnrtc {
             destroy_ndnrtc(libObject);
         }
         
-        static NdnLibParams createParamsStruct();
-        static void releaseParamsStruct(NdnLibParams &params);
+        static ParamsStruct createParamsStruct();
+        static void releaseParamsStruct(ParamsStruct &params);
         
         // public methods go here
-        virtual void configure(NdnLibParams &params);
-        virtual NdnLibParams currentParams();
+        virtual void configure(ParamsStruct &params);
+        virtual ParamsStruct currentParams();
         
         virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
-        virtual NdnLibParams getDefaultParams() const;
+        virtual ParamsStruct getDefaultParams() const;
         virtual int getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const;
         
         virtual int startPublishing(const char *username);
@@ -128,7 +98,7 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
     private:
         void *libraryHandle_;
-        NdnParams libParams_;
+        ParamsStruct libParams_;
         INdnRtcLibraryObserver *observer_;
         
         // private methods go here

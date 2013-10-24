@@ -17,7 +17,7 @@
 #include "test-common.h"
 #include "ndnrtc-library.h"
 
-#define LIB_FNAME "libndnrtc-sa.dylib"
+#define LIB_FNAME "bin/libndnrtc-sa.dylib"
 
 using namespace ndnrtc;
 using namespace std;
@@ -75,5 +75,5 @@ protected:
 
 TEST_F(NdnRtcLibraryTester, TestConfigure)
 {
-    NdnLibParams params ;
+//    NdnLibParams params ;
 }
