@@ -17,6 +17,7 @@
 
 #include "test-common.h"
 #include "audio-sender.h"
+#include "frame-buffer.h"
 #include <string.h>
 
 using namespace ndnrtc;
@@ -61,6 +62,96 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
         string prefixS;
         NdnAudioSender::getStreamControlPrefix(p, prefixS);
         EXPECT_STREQ(prefix, prefixS.c_str());
+    }
+}
+
+TEST(AudioData, TestCreateDelete)
+{
+    {
+        unsigned int dataSz = 170;
+        unsigned char *dummyData = (unsigned char*)malloc(dataSz);
+        
+        for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
+        
+        bool isRTCP = false;
+    
+        NdnAudioData::AudioPacket p = {isRTCP, dataSz, dummyData};
+        ASSERT_NO_THROW(
+                        NdnAudioData data(p);
+                        );
+        
+        NdnAudioData data(p);
+        
+        EXPECT_LT(dataSz, data.getLength());
+        
+        unsigned char *packetData = data.getData();
+        EXPECT_TRUE(NULL != packetData);
+    }
+}
+TEST(AudioData, TestPackUnpack)
+{
+    {
+        unsigned int dataSz = 170;
+        unsigned char *dummyData = (unsigned char*)malloc(dataSz);
+        
+        for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
+        
+        bool isRTCP_exp = false;
+        
+        NdnAudioData::AudioPacket p = {isRTCP_exp, dataSz, dummyData};
+        NdnAudioData data(p);
+        
+        NdnAudioData::AudioPacket resP;
+        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
+                                                       data.getData(), resP));
+        
+        EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
+        EXPECT_EQ(dataSz, resP.length_);
+        EXPECT_FALSE(NULL == resP.data_);
+        
+        for (int i = 0; i < resP.length_; i++)
+            EXPECT_EQ(dummyData[i], resP.data_[i]);
+
+    }
+    {
+        unsigned int dataSz = 170;
+        unsigned char *dummyData = (unsigned char*)malloc(dataSz);
+        
+        for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
+        
+        bool isRTCP_exp = true;
+        
+        NdnAudioData::AudioPacket p = {isRTCP_exp, dataSz, dummyData};
+        NdnAudioData data(p);
+
+        NdnAudioData::AudioPacket resP;
+        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
+                                                       data.getData(), resP));
+        
+        EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
+        EXPECT_EQ(dataSz, resP.length_);
+        EXPECT_FALSE(NULL == resP.data_);
+        
+        for (int i = 0; i < resP.length_; i++)
+            EXPECT_EQ(dummyData[i], resP.data_[i]);
+    }
+}
+TEST(AudioData, TestUnpackError)
+{
+    {
+        unsigned int dataSz = 170;
+        unsigned char *dummyData = (unsigned char*)malloc(dataSz);
+        
+        for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
+        
+        
+        unsigned int dataLength = 0;
+        bool isRTCP;
+        unsigned char *packetData = NULL;
+        
+        NdnAudioData::AudioPacket resP;
+        ASSERT_EQ(RESULT_ERR, NdnAudioData::unpackAudio(dataSz,
+                                                       dummyData, resP));
     }
 }
 
@@ -116,13 +207,19 @@ public:
     
     int SendPacket(int channel, const void *data, int len)
     {
+        INFO("publish rtp packet %d", rtcpSent_);
         rtpSent_++;
         sender_->publishRTPAudioPacket(len, (unsigned char*)data);
+        
+        return len;
     }
     int SendRTCPPacket(int channel, const void *data, int len)
     {
+        INFO("publish rtcp packet %d", rtcpSent_);
         rtcpSent_++;
         sender_->publishRTCPAudioPacket(len, (unsigned char*)data);
+
+        return len;
     }
     
     void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport)
@@ -135,6 +232,7 @@ public:
         FAIL();
     }
     
+#if 0
     void onRTPData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
         INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
@@ -147,6 +245,22 @@ public:
         INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
         
         rtcpDataFetched_++;
+    }
+#endif
+    
+    void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
+    {
+        unsigned char *rawAudioData = (unsigned char*)data->getContent().buf();
+        
+        NdnAudioData::AudioPacket packet;
+        
+        EXPECT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data->getContent().size(),
+                                                       rawAudioData, packet));
+        
+        if (packet.isRTCP_)
+            rtcpDataFetched_++;
+        else
+            rtpDataFetched_++;
     }
     
     void onTimeout(const shared_ptr<const Interest>& interest)
@@ -224,7 +338,21 @@ TEST_F(AudioSenderTester, TestSend)
     Name rtpPacketPrefix(rtpPrefix);
     Name rtcpPacketPrefix(rtcpPrefix);
     
-    // still have rtp to fetch
+    for (int i = 0; i < rtpSent_+rtcpSent_; i++)
+    {
+        Name prefix = rtpPacketPrefix;
+        
+        char frameNoStr[3];
+        memset(&frameNoStr[0], 0, 3);
+        sprintf(&frameNoStr[0], "%d", i);
+        
+        prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
+        
+        INFO("expressing %s", prefix.toUri().c_str());
+        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
+                                  bind(&AudioSenderTester::onTimeout, this, _1));
+    }
+#if 0
     for (int i = 0; i < rtpSent_; i++)
     {
         Name prefix = rtpPacketPrefix;
@@ -236,7 +364,8 @@ TEST_F(AudioSenderTester, TestSend)
         prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
         
         INFO("expressing %s", prefix.toUri().c_str());
-        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTPData, this, _1, _2), bind(&AudioSenderTester::onTimeout, this, _1));
+        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTPData, this, _1, _2),
+                                  bind(&AudioSenderTester::onTimeout, this, _1));
     }
     
     for (int j = 0; j < rtcpSent_; j++)
@@ -250,8 +379,10 @@ TEST_F(AudioSenderTester, TestSend)
         prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
         
         INFO("expressing %s", prefix.toUri().c_str());
-        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTCPData, this, _1, _2), bind(&AudioSenderTester::onTimeout, this, _1));
+        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTCPData, this, _1, _2),
+                                  bind(&AudioSenderTester::onTimeout, this, _1));
     }
+#endif
     
     EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ && rtcpDataFetched_ == rtcpSent_, 5000);
     
@@ -262,4 +393,3 @@ TEST_F(AudioSenderTester, TestSend)
     EXPECT_EQ(rtpSent_, rtpDataFetched_);
     EXPECT_EQ(rtcpSent_, rtcpDataFetched_);
 }
-

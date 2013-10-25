@@ -12,6 +12,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
+#include "playout-buffer.h"
 #include "media-sender.h"
 
 namespace ndnrtc
@@ -44,6 +45,7 @@ namespace ndnrtc
         shared_ptr<Face> face_;
         
         FrameBuffer frameBuffer_;
+        PlayoutBuffer playoutBuffer_;
         
         webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchrnous
                                                     // access to the NDN face

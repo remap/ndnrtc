@@ -6,6 +6,9 @@
 //  Copyright (c) 2013 Peter Gusev. All rights reserved.
 //
 
+//#undef NDN_LOGGING
+#undef NDN_DETAILED
+
 #include "media-receiver.h"
 #include "ndnrtc-utils.h"
 
@@ -49,8 +52,11 @@ int NdnMediaReceiver::init(shared_ptr<Face> face)
     
     interestTimeoutMs_ = params_.interestTimeout*1000;
     
-    if (frameBuffer_.init(bufSz, slotSz) < 0)
+    if (RESULT_FAIL(frameBuffer_.init(bufSz, slotSz)))
         return notifyError(RESULT_ERR, "could not initialize frame buffer");
+    
+    if (RESULT_FAIL(playoutBuffer_.init(&frameBuffer_)))
+        return notifyError(RESULT_ERR, "could not initialize playout buffer");
     
     framesPrefix_ = Name(initialPrefix.c_str());
     producerSegmentSize_ = params_.segmentSize;
@@ -129,7 +135,7 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 {
     Name prefix = interest->getName();
     
-    TRACE("got timeout for the interest: %s", prefix.toUri().c_str());
+//    TRACE("got timeout for the interest: %s", prefix.toUri().c_str());
     
     if (isStreamInterest(prefix))
     {
@@ -138,21 +144,26 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
         // check if it's a first segment
         if (prefix.getComponentCount() > framesPrefix_.getComponentCount())
         {
-            unsigned int nComponents = prefix.getComponentCount(),
-            frameNo =
-            NdnRtcUtils::frameNumber(prefix.getComponent(nComponents-2)),
+            unsigned int nComponents = prefix.getComponentCount();
             
+            frameNo =
+            NdnRtcUtils::frameNumber(prefix.getComponent(nComponents-2));
             segmentNo =
             NdnRtcUtils::segmentNumber(prefix.getComponent(nComponents-1));
         }
+        else
+            TRACE("timeout for first interest");
         
         if (isLate(frameNo))
         {
-            TRACE("got timeout for late frame %d-%d", frameNo, segmentNo);
+//            TRACE("got timeout for late frame %d-%d", frameNo, segmentNo);
             frameBuffer_.markSlotFree(frameNo);
         }
         else
+        {
+//            TRACE("notifying slot %d (%d)", frameNo, segmentNo);
             frameBuffer_.notifySegmentTimeout(frameNo, segmentNo);
+        }
     }
     else
         WARN("got timeout for unexpected prefix");
@@ -162,7 +173,7 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                                      const shared_ptr<Data>& data)
 {
     Name prefix = data->getName();
-    TRACE("got data for the interest: %s", prefix.toUri().c_str());
+    TRACE("got data for the interest: %s (%d)", prefix.toUri().c_str(), data->getContent().size());
     
     if (isStreamInterest(prefix))
     {
@@ -199,7 +210,7 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                 if (frameBuffer_.getState(frameNo) ==
                     FrameBuffer::Slot::StateNew)
                 {
-                    TRACE("mark assembling");
+//                    TRACE("mark assembling");
                     // get total number of segments
                     Name::Component finalBlockID =
                     data->getMetaInfo().getFinalBlockID();
@@ -208,6 +219,7 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                     // number of all segments is greater by 1
                     unsigned int segmentsNum =
                     NdnRtcUtils::segmentNumber(finalBlockID)+1;
+
                     
                     frameBuffer_.markSlotAssembling(frameNo, segmentsNum, producerSegmentSize_);
                 }
@@ -244,7 +256,7 @@ bool NdnMediaReceiver::processInterests()
         {
             case FrameBuffer::Event::EventTypeFreeSlot:
             {
-                TRACE("book slot for frame %d", pipelinerFrameNo_);
+//                TRACE("book slot for frame %d", pipelinerFrameNo_);
                 frameBuffer_.bookSlot(pipelinerFrameNo_);
                 
                 // need to check - whether we are just started and need to
@@ -284,12 +296,12 @@ bool NdnMediaReceiver::processInterests()
                 // check wether we need to re-issue interest
                 if (mode_ == ReceiverModeWaitingFirstSegment)
                 {
-                    TRACE("got timeout for initial interest");
+//                    TRACE("got timeout for initial interest");
                     requestInitialSegment();
                 }
                 else
                 {
-                    TRACE("framebuffer timeout - reissuing");
+//                    TRACE("framebuffer timeout - reissuing");
                     requestSegment(ev.frameNo_,ev.segmentNo_);
                 }
             }

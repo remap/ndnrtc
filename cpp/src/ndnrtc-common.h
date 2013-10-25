@@ -47,6 +47,7 @@ using namespace ndnlog;
 #define PIPELINER_THREAD_ID 2
 #define PLAYOUT_THREAD_ID 3
 #define ASSEMBLING_THREAD_ID 4
+#define AUDIO_THREAD_ID 5
 
 #define DEPRECATED __attribute__ ((deprecated))
 

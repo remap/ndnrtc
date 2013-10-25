@@ -38,6 +38,7 @@
 // audio
 #include <voice_engine/include/voe_base.h>
 #include <voice_engine/include/voe_network.h>
+#include <voice_engine/include/voe_audio_processing.h>
 #include <modules/audio_coding/main/interface/audio_coding_module.h>
 
 #endif

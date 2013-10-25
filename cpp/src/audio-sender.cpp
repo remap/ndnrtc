@@ -9,6 +9,7 @@
 //
 
 #include "audio-sender.h"
+#include "frame-buffer.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -28,8 +29,12 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
     string streamThread = ParamsStruct::validate(params.streamThread,
                                                  DefaultParams.streamThread,
                                                  res);
+    // RTP and RTCP are published under the same prefix
+#if 0
     string rtcpSuffix = "control";
-    
+#else
+    string rtcpSuffix = NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames;
+#endif
     prefix = *NdnRtcNamespace::buildPath(false,
                                         &streamPrefix,
                                         &streamThread,
@@ -62,7 +67,10 @@ int NdnAudioSender::init(const shared_ptr<ndn::Transport> transport)
 
 int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
-    publishPacket(len, data);
+    NdnAudioData::AudioPacket packet {false, len, data};
+    NdnAudioData adata(packet);
+    
+    publishPacket(adata.getLength(), adata.getData());
     packetNo_++;
     
     return 0;
@@ -70,8 +78,14 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 
 int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-    publishPacket(len, data, rtcpPacketPrefix_, rtcpPacketNo_);
-    rtcpPacketNo_++;
+    NdnAudioData::AudioPacket packet {true, len, data};
+    NdnAudioData adata(packet);
+    
+    publishPacket(adata.getLength(), adata.getData());
+    packetNo_++;
+    
+//    publishPacket(len, data, rtcpPacketPrefix_, rtcpPacketNo_);
+//    rtcpPacketNo_++;
     
     return 0;
 }

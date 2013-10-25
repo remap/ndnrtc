@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#undef NDN_LOGGING
+//#undef NDN_LOGGING
 
 #include "ndnrtc-utils.h"
 

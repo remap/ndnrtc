@@ -112,7 +112,8 @@ protected:
     webrtc::EncodedImage *frame;
     NdnFrameData *payload;
     
-    void publishFrame(unsigned int frameNo, unsigned int segmentSize, int freshness = 3, bool mixedSendOrder = true)
+    void publishFrame(unsigned int frameNo, unsigned int segmentSize,
+                      int freshness = 3, bool mixedSendOrder = true)
     {
         // setup timestamp
         frame->capture_time_ms_ = millisecondTimestamp();

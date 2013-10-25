@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 //
 
+#undef NDN_LOGGING
 //#undef DEBUG
 
 #include "frame-buffer.h"
@@ -41,14 +42,11 @@ NdnFrameData::NdnFrameData(EncodedImage &frame)
     ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
     ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
 }
-NdnFrameData::~NdnFrameData()
-{
-    free(data_);
-}
 
 //******************************************************************************
 #pragma mark - public
-int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, webrtc::EncodedImage **frame)
+int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data,
+                              webrtc::EncodedImage **frame)
 {
     unsigned int headerSize_ = sizeof(FrameDataHeader);
     FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
@@ -56,11 +54,13 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, w
     // check markers
     if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
         header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
-        return -1;
+        return RESULT_ERR;
     
-    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_, header.encodedHeight_);
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,
+                                          header.encodedHeight_);
     
-    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize_]), length_-headerSize_, size);
+    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize_]),
+                                      length_-headerSize_, size);
     (*frame)->_encodedWidth = header.encodedWidth_;
     (*frame)->_encodedHeight = header.encodedHeight_;
     (*frame)->_timeStamp = header.timeStamp_;
@@ -68,7 +68,43 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data, w
     (*frame)->_frameType = header.frameType_;
     (*frame)->_completeFrame = header.completeFrame_;
     
-    return 0;
+    return RESULT_OK;
+}
+
+//******************************************************************************
+//******************************************************************************
+#pragma mark - construction/destruction
+NdnAudioData::NdnAudioData(AudioPacket &packet)
+{
+    unsigned int headerSize = sizeof(AudioDataHeader);
+    
+    length_ = packet.length_+headerSize;
+    data_ = (unsigned char*)malloc(length_);
+    
+    memcpy(data_+headerSize, packet.data_, packet.length_);
+    
+    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
+    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+}
+
+//******************************************************************************
+#pragma mark - public
+int NdnAudioData::unpackAudio(unsigned int len, const unsigned char *data,
+                              AudioPacket &packet)
+{
+    unsigned int headerSize = sizeof(AudioDataHeader);
+    AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
+    
+    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+        return RESULT_ERR;
+    
+    packet.isRTCP_ = header.isRTCP_;
+    packet.length_ = len-headerSize;
+    packet.data_ = (unsigned char*)data+headerSize;
+    
+    return RESULT_OK;
 }
 
 //******************************************************************************
@@ -125,7 +161,27 @@ shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
     return shared_ptr<EncodedImage>(frame);
 }
 
-FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo, unsigned int dataLength, const unsigned char *data)
+NdnAudioData::AudioPacket FrameBuffer::Slot::getAudioFrame()
+{
+    NdnAudioData::AudioPacket packet = {false, 0, 0};
+        
+    if ((state_ == StateReady ||
+         (state_ == StateLocked && stashedState_ == StateReady)))
+    {
+        if (RESULT_FAIL(NdnAudioData::unpackAudio(assembledDataSize_, data_,
+                                                  packet)))
+            WARN("error unpacking audio");
+    }
+    else
+        ERR("frame is not ready. state: %d", state_);
+    
+    return packet;
+}
+
+
+FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo,
+                                                          unsigned int dataLength,
+                                                          const unsigned char *data)
 {
     if (!(state_ == StateAssembling))
     {
@@ -393,7 +449,8 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     }
     else
     {
-        WARN("can't notify slot - it was not found");
+        WARN("can't notify slot %d - it was not found. current size: %d", frameNumber,
+             frameSlotMapping_.size());
     }
 }
 
@@ -426,7 +483,10 @@ void FrameBuffer::renameSlot(unsigned int oldFrameNo, unsigned int newFrameNo)
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(oldFrameNo, &slot, true) == CallResultOk)
+    {
+        slot->rename(newFrameNo);
         frameSlotMapping_[newFrameNo] = slot;
+    }
     
     return;
 }

@@ -18,19 +18,35 @@
 
 namespace ndnrtc
 {
+    // base class for storing media data for publishing in ndn
+    class PacketData
+    {
+    public:
+        PacketData(){}
+        virtual ~PacketData() {
+            if (data_)
+                free(data_);
+        }
+        
+        int getLength() { return length_; }
+        unsigned char* getData() { return data_; }
+        
+    protected:
+        unsigned int length_;
+        unsigned char *data_ = NULL;
+    };
+    
     /**
      * Class is used for packaging encoded frame metadata and actual data in a buffer.
      * It has also methods for unarchiving this data into an encoded frame.
      */
-    class NdnFrameData
+    class NdnFrameData : public PacketData
     {
     public:
         NdnFrameData(webrtc::EncodedImage &frame);
-        ~NdnFrameData();
+        ~NdnFrameData(){}
         
         static int unpackFrame(unsigned int length_, const unsigned char *data, webrtc::EncodedImage **frame);
-        int getLength() { return length_; }
-        unsigned char* getData() { return data_; }
         
     private:
         struct FrameDataHeader {
@@ -46,9 +62,28 @@ namespace ndnrtc
             bool                        completeFrame_;
             uint32_t                    bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
         };
+    };
+    
+    class NdnAudioData : public PacketData
+    {
+    public:
+        typedef struct _AudioPacket {
+            bool isRTCP_;
+            unsigned int length_;
+            unsigned char *data_;
+        } AudioPacket;
         
-        unsigned int length_;
-        unsigned char *data_;
+        NdnAudioData(AudioPacket &packet);
+        ~NdnAudioData(){}
+        
+        static int unpackAudio(unsigned int len, const unsigned char *data,
+                               AudioPacket &packet);
+    private:
+        struct AudioDataHeader {
+            unsigned int headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+            bool isRTCP_;
+            unsigned int bodyMarker_  = NDNRTC_FRAMEBODY_MRKR;
+        };
     };
     
     class FrameBuffer
@@ -141,6 +176,7 @@ namespace ndnrtc
                     data_ = (unsigned char*)realloc(data_, dataLength_);
                 }
             }
+            void rename(unsigned int newFrameNumber) { frameNumber_ = newFrameNumber; }
             
             /**
              * Unpacks encoded frame from received data
@@ -148,6 +184,12 @@ namespace ndnrtc
              *          owned by slot.
              */
             shared_ptr<webrtc::EncodedImage> getFrame();
+
+            /**
+             * Unpacks audio frame from received data
+             */
+            NdnAudioData::AudioPacket getAudioFrame();
+            
             /**
              * Appends segment to the frame data
              * @param segmentNo Segment number

@@ -28,9 +28,8 @@ namespace ndnrtc
          * Returns next frame to be played
          */
         shared_ptr<webrtc::EncodedImage> acquireNextFrame(bool incCounter = false);
+        FrameBuffer::Slot *acquireNextSlot(bool incCounter = false);
         void releaseAcquiredFrame();
-        
-        //        shared_ptr<webrtc::EncodedImage> popFrame();
         
         /**
          * Moves frame pointer forward and frees skipped frames to be re-used by frame buffer
@@ -40,7 +39,6 @@ namespace ndnrtc
          *          in this case, skipping is done till the latest frame.
          */
         int skipTo(unsigned int frameNo);
-        //        int skipToTheLatest();
         
         unsigned int framePointer() { return framePointer_; }
         
@@ -53,7 +51,9 @@ namespace ndnrtc
         webrtc::CriticalSectionWrapper &playoutCs_;
         webrtc::ThreadWrapper &providerThread_;
         
-        static bool frameProviderThreadRoutine(void *obj) { return ((PlayoutBuffer*)obj)->processFrameProvider(); }
+        static bool frameProviderThreadRoutine(void *obj) {
+            return ((PlayoutBuffer*)obj)->processFrameProvider();
+        }
         bool processFrameProvider();
         
         FrameBuffer::Slot *popEarliest();

@@ -7,6 +7,7 @@
 //
 //  Author:  Peter Gusev
 
+//#undef NDN_LOGGING
 
 #include "playout-buffer.h"
 
@@ -54,37 +55,49 @@ int PlayoutBuffer::init(ndnrtc::FrameBuffer *buffer)
 shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame(bool incCounter)
 {
     shared_ptr<EncodedImage> frame(nullptr);
+    FrameBuffer::Slot *slot = acquireNextSlot(incCounter);
+    
+    if (slot)
+    {
+        frame = slot->getFrame();
+        framePointer_ = slot->getFrameNumber();
+    }
+    
+    return frame;
+}
+FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
+{
+    FrameBuffer::Slot *slot = nullptr;
     
     if (!frameBuffer_)
     {
         ERR("playout buffer was not initialized");
-        return frame;
+        return slot;
     }
     
+    playoutCs_.Enter();
     if (playoutFrames_.size())
     {
-        FrameBuffer::Slot *slot = nullptr;
-        
-        slot =  playoutFrames_.top();
-        
-        frame = slot->getFrame();
+        slot = playoutFrames_.top();
         
         if (framePointer_ > slot->getFrameNumber())
             TRACE(">>>>>LATE FRAMES");
         
         framePointer_ = slot->getFrameNumber();
-
+        
         TRACE("frame %d acquired for playback", framePointer_);
     }
     else
     {
-        TRACE("no frames for playout");
+//        TRACE("no frames for playout");
         if (incCounter)
             framePointer_++;
     }
+    playoutCs_.Leave();
     
-    return frame;
+    return slot;
 }
+
 void PlayoutBuffer::releaseAcquiredFrame()
 {
     if (playoutFrames_.size())
@@ -114,11 +127,12 @@ bool PlayoutBuffer::processFrameProvider()
     switch (ev.type_) {
         case FrameBuffer::Event::EventTypeReady:
         {
+            TRACE("slot %d is ready", ev.frameNo_);
             playoutCs_.Enter();
             playoutFrames_.push(ev.slot_);
             frameBuffer_->lockSlot(ev.frameNo_);
             playoutCs_.Leave();
-            INFO("pushed new frame %d", ev.frameNo_);
+//            TRACE("pushed new frame %d", ev.frameNo_);
         }
             break;
         default: // error

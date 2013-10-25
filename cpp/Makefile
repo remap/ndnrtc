@@ -404,6 +404,12 @@ build-audio-sender-test: undef $(addprefix $(OBJ_PATH)/, audio-sender-test.o aud
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
+build-audio-receiver-test: undef $(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+	$(GT_CXX) --std=c++0x \
+	$(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+
 clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))
 	rm -Rf $(wildcard $(OBJ_PATH))

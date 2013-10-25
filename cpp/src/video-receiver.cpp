@@ -44,17 +44,12 @@ int NdnVideoReceiver::init(shared_ptr<Face> face)
     
     if (RESULT_GOOD(res))
     {
-        res = playoutBuffer_.init(&frameBuffer_);
+        playoutSleepIntervalUSec_ =  1000000/ParamsStruct::validate(params_.producerRate, 1, MaxFrameRate, res, DefaultParams.producerRate);
         
-        if (RESULT_GOOD(res))
-        {
-            playoutSleepIntervalUSec_ =  1000000/ParamsStruct::validate(params_.producerRate, 1, MaxFrameRate, res, DefaultParams.producerRate);
-
-            if (RESULT_NOT_OK(res))
-                notifyError(RESULT_WARN, "bad producer rate value %d. using\
-                            default instead - %d", params_.producerRate,
-                            DefaultParams.producerRate);
-        }
+        if (RESULT_NOT_OK(res))
+            notifyError(RESULT_WARN, "bad producer rate value %d. using\
+                        default instead - %d", params_.producerRate,
+                        DefaultParams.producerRate);
     }
     
     return res;
