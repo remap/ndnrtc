@@ -48,6 +48,7 @@ WAIT_(ex, timeout, res); \
 if (!res) EXPECT_TRUE(ex); \
 } while (0);
 
+//******************************************************************************
 class NdnRtcObjectTestHelper : public ::testing::Test, public ndnrtc::INdnRtcObjectObserver
 {
 public:
@@ -159,6 +160,7 @@ protected:
     }
 };
 
+//******************************************************************************
 class NdnRtcTestEnvironment : public ::testing::Environment
 {
 public:
@@ -181,6 +183,7 @@ protected:
     std::string name_;
 };
 
+//******************************************************************************
 class CocoaTestEnvironment : public ::testing::Environment
 {
 public:
@@ -189,6 +192,55 @@ public:
     
 protected:
     void *pool_;
+};
+
+//******************************************************************************
+class UnitTestHelperNdnNetwork
+{
+public:
+    virtual void NdnSetUp(string &streamAccessPrefix, string &userPrefix);
+    virtual void NdnTearDown();
+    
+    virtual void onInterest(const shared_ptr<const Name>& prefix,
+                            const shared_ptr<const Interest>& interest,
+                            ndn::Transport& transport);
+    virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+    
+    virtual void onData(const shared_ptr<const Interest>& interest,
+                        const shared_ptr<Data>& data);
+    virtual void onTimeout(const shared_ptr<const Interest>& interest);
+    
+protected:
+    bool isFetching_;
+    webrtc::ThreadWrapper *fetchingThread_;
+    unsigned int nReceivedInterests_, nReceivedData_, nReceivedTimeout_;
+    
+    ndnrtc::ParamsStruct params_;
+    shared_ptr<ndn::Transport> ndnTransport_;
+    shared_ptr<Face> ndnFace_, ndnReceiverFace_;
+    shared_ptr<KeyChain> ndnKeyChain_;
+    shared_ptr<Name> certName_;
+
+    // publishes audio or video data packet under the specified prefix by
+    // splitting it into a segments and appending
+    //  <frame_number>/<segment_number> to the prefix
+    void publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
+                            unsigned int frameNo, unsigned int segmentSize,
+                            const string &framePrefix, int freshness,
+                            bool mixedSendOrder = false);
+    
+    // publishes data under the prefix
+    void publishData(unsigned int dataLen, unsigned char *dataPacket,
+                     const string &prefix, int freshness,
+                     const Blob& finalBlockId);
+    
+    void startProcessingNdn();
+    void stopProcessingNdn();
+    
+    static bool fetchThreadFunc(void *obj){
+        return ((UnitTestHelperNdnNetwork*)obj)->fetchData();
+    }
+    bool fetchData();
 };
 
 #endif

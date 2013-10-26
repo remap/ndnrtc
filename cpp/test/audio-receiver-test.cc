@@ -34,45 +34,24 @@ TEST(AudioReceiverParamsTest, CheckPrefixes)
 
 class AudioReceiverTester : public NdnRtcObjectTestHelper,
 public IAudioPacketConsumer,
-public webrtc::Transport
+public webrtc::Transport,
+public UnitTestHelperNdnNetwork
 {
 public:
     void SetUp()
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        shared_ptr<ndn::Transport::ConnectionInfo> connInfo(new ndn::TcpTransport::ConnectionInfo("localhost", 6363));
-        ndnTransport_.reset(new TcpTransport());
-        ndnFace_.reset(new Face(ndnTransport_, connInfo));
         params_ = DefaultParams;
         
         std::string streamAccessPrefix;
-        MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
-        
-        ASSERT_NO_THROW(
-                        ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                                 bind(&AudioReceiverTester::onInterest, this, _1, _2, _3),
-                                                 bind(&AudioReceiverTester::onRegisterFailed, this, _1));
-                        );
-        
-        
-#ifdef USE_RECEIVER_FACE
-        shared_ptr<ndn::Transport::ConnectionInfo> connInfoTcp(new TcpTransport::ConnectionInfo("localhost", 6363));
-        ndnReceiverFace_.reset(new Face(shared_ptr<ndn::Transport>(new ndn::TcpTransport()), connInfoTcp));
-        
-        streamAccessPrefix += "/receiver";
-        ndnReceiverFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                         bind(&AudioReceiverTester::onInterest, this, _1, _2, _3),
-                                         bind(&AudioReceiverTester::onRegisterFailed, this, _1));
-#else
-        ndnReceiverFace_ = ndnFace_;
-#endif
-        
         string userPrefix;
-        ASSERT_EQ(RESULT_OK,MediaSender::getUserPrefix(params_, userPrefix));
         
-        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
-        certName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
+        ASSERT_EQ(RESULT_OK, MediaSender::getStreamKeyPrefix(params_,
+                                                             streamAccessPrefix));
+        ASSERT_EQ(RESULT_OK, MediaSender::getUserPrefix(params_, userPrefix));
+        
+        UnitTestHelperNdnNetwork::NdnSetUp(streamAccessPrefix, userPrefix);
         
         config_.Set<webrtc::AudioCodingModuleFactory>(new webrtc::NewAudioCodingModuleFactory());
         voiceEngine_ = webrtc::VoiceEngine::Create(config_);
@@ -89,6 +68,7 @@ public:
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
+        UnitTestHelperNdnNetwork::NdnTearDown();
         
         if (voiceEngine_ != NULL)
         {
@@ -96,6 +76,7 @@ public:
             voe_network_->Release();
             webrtc::VoiceEngine::Delete(voiceEngine_);
         }
+        
         delete sendCS_;
     }
     int SendPacket(int channel, const void *data, int len)
@@ -106,8 +87,9 @@ public:
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
         sendCS_->Enter();
-        publishData(currentRTPFrame_++, params_.segmentSize,
-                    adata.getLength(), adata.getData(), rtpPrefix, params_.freshness);
+        publishMediaPacket(adata.getLength(), adata.getData(),
+                           currentRTPFrame_++, params_.segmentSize,
+                           rtpPrefix, params_.freshness);
         sendCS_->Leave();
         
         nSent_++;
@@ -126,11 +108,13 @@ public:
         sendCS_->Enter();
 #if 0
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
-        publishData(currentRTCPFrame_++, params_.segmentSize,
-                    adata.getLength(), adata.getData(), rtcpPrefix, params_.freshness);
+        publishMediaPacket(adata.getLength(), adata.getData(),
+                           currentRTCPFrame_++, params_.segmentSize,
+                           rtcpPrefix, params_.freshness);
 #else
-        publishData(currentRTPFrame_++, params_.segmentSize,
-                    adata.getLength(), adata.getData(), rtcpPrefix, params_.freshness);
+        publishMediaPacket(adata.getLength(), adata.getData(),
+                           currentRTPFrame_++, params_.segmentSize,
+                           rtcpPrefix, params_.freshness);
 #endif
         sendCS_->Leave();
         
@@ -173,12 +157,6 @@ public:
     }
     
 protected:
-    ParamsStruct params_;
-    shared_ptr<ndn::Transport> ndnTransport_;
-    shared_ptr<Face> ndnFace_, ndnReceiverFace_;
-    shared_ptr<KeyChain> ndnKeyChain_;
-    shared_ptr<Name> certName_;
-    
     unsigned int nReceived_, nSent_,
                 nRTCPSent_, nRTCPReceived_,
                 currentRTPFrame_, currentRTCPFrame_;
@@ -190,63 +168,6 @@ protected:
     webrtc::Config config_;
     webrtc::VoEAudioProcessing *voe_processing_;
     webrtc::CriticalSectionWrapper *sendCS_;
-    
-    void publishData(unsigned int frameNo,
-                     unsigned int segmentSize,
-                     unsigned int dataLen,
-                     unsigned char *dataPacket,
-                     string &framePrefix,
-                     int freshness = DefaultParams.freshness,
-                     bool mixedSendOrder = false)
-    {
-        unsigned int fullSegmentsNum = dataLen/segmentSize;
-        unsigned int totalSegmentsNum = (dataLen - fullSegmentsNum*segmentSize)?
-        fullSegmentsNum+1:fullSegmentsNum;
-        
-        unsigned int lastSegmentSize = dataLen - fullSegmentsNum*segmentSize;
-        vector<int> segmentsSendOrder;
-        
-        Name prefix(framePrefix.c_str());
-        shared_ptr<const vector<unsigned char>> frameNumberComponent =
-        NdnRtcNamespace::getNumberComponent(frameNo);
-        
-        prefix.addComponent(*frameNumberComponent);
-        
-        // setup send order for segments
-        for (int i = 0; i < totalSegmentsNum; i++)
-            segmentsSendOrder.push_back(i);
-        
-        if (mixedSendOrder)
-            random_shuffle(segmentsSendOrder.begin(), segmentsSendOrder.end());
-        
-        for (int i = 0; i < totalSegmentsNum; i++)
-        {
-            unsigned int segmentIdx = segmentsSendOrder[i];
-            unsigned char *segmentData = dataPacket+segmentIdx*segmentSize;
-            unsigned int dataSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:segmentSize;
-            
-            if (dataSize > 0)
-            {
-                Name segmentPrefix = prefix;
-                segmentPrefix.appendSegment(segmentIdx);
-                
-                Data data(segmentPrefix);
-                
-                data.getMetaInfo().setFreshnessSeconds(freshness);
-                data.getMetaInfo().setFinalBlockID(Name().appendSegment(totalSegmentsNum-1).get(0).getValue());
-                data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
-                data.setContent(segmentData, dataSize);
-                
-                ndnKeyChain_->sign(data, *certName_);
-                
-                ASSERT_TRUE(ndnTransport_->getIsConnected());
-                
-                Blob encodedData = data.wireEncode();
-                ndnTransport_->send(*encodedData);
-            } // if
-            
-        } // for
-    }
 };
 
 TEST_F(AudioReceiverTester, TestFetch)

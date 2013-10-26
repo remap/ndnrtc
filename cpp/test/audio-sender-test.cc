@@ -54,6 +54,7 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
         NdnAudioSender::getStreamFramePrefix(p, prefixS);
         EXPECT_STREQ(prefix, prefixS.c_str());
     }
+    if (0) // remove this check for now - RTP prefix equals RTCP
     {
         char prefix[256];
         memset(prefix, 0, 256);
@@ -155,29 +156,24 @@ TEST(AudioData, TestUnpackError)
     }
 }
 
-class AudioSenderTester : public webrtc::Transport, public NdnRtcObjectTestHelper
+class AudioSenderTester : public webrtc::Transport,
+public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {
 public:
     void SetUp()
     {
+        NdnRtcObjectTestHelper::SetUp();
+        
         setupWebRTCLogging();
         
-        shared_ptr<ndn::Transport::ConnectionInfo> connInfo(new ndn::TcpTransport::ConnectionInfo("localhost", 6363));
-        ndnTransport_.reset(new TcpTransport());
-        ndnFace_.reset(new Face(ndnTransport_, connInfo));
         params_ = DefaultParams;
         params_.freshness = 10;
         
-        std::string streamAccessPrefix;
+        std::string streamAccessPrefix, userPrefix = "whatever";
         MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
         
-        ASSERT_NO_THROW(
-                        ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                                 bind(&AudioSenderTester::onInterest, this, _1, _2, _3),
-                                                 bind(&AudioSenderTester::onRegisterFailed, this, _1));
-                        );
+        UnitTestHelperNdnNetwork::NdnSetUp(streamAccessPrefix, userPrefix);
         
-        NdnRtcObjectTestHelper::SetUp();
         config_.Set<webrtc::AudioCodingModuleFactory>(new webrtc::NewAudioCodingModuleFactory());
         voiceEngine_ = webrtc::VoiceEngine::Create(config_);
         
@@ -193,6 +189,7 @@ public:
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
+        UnitTestHelperNdnNetwork::NdnTearDown();
         
         if (voiceEngine_ != NULL)
         {
@@ -222,34 +219,10 @@ public:
         return len;
     }
     
-    void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport)
-    {
-        INFO("got interest: %s", interest->getName().toUri().c_str());
-    }
-    
-    void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
-    {
-        FAIL();
-    }
-    
-#if 0
-    void onRTPData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
-    {
-        INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
-        
-        rtpDataFetched_++;
-    }
-
-    void onRTCPData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
-    {
-        INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
-        
-        rtcpDataFetched_++;
-    }
-#endif
-    
     void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
+        UnitTestHelperNdnNetwork::onData(interest, data);
+        
         unsigned char *rawAudioData = (unsigned char*)data->getContent().buf();
         
         NdnAudioData::AudioPacket packet;
@@ -265,40 +238,24 @@ public:
     
     void onTimeout(const shared_ptr<const Interest>& interest)
     {
+        UnitTestHelperNdnNetwork::onTimeout(interest);
+        
         timeoutReceived_ = true;
         INFO("Time out for interest %s", interest->getName().toUri().c_str());
     }
     
-    static bool fetchThreadFunc(void *obj){
-        return ((AudioSenderTester*)obj)->fetchData();
-    }
-    bool fetchData()
-    {
-        ndnFace_->processEvents();
-        WAIT(10);
-        
-        return alive_;
-    }
-    
-    
 protected:
-    bool timeoutReceived_ = false, alive_ = true;
+    bool timeoutReceived_ = false;
     unsigned int rtpDataFetched_ = 0, rtcpDataFetched_ = 0;
     unsigned int rtpSent_ = 0;
     unsigned int rtcpSent_ = 0;
     NdnAudioSender *sender_ = NULL;
-    ParamsStruct params_;
     
     int channel_;
     webrtc::VoiceEngine *voiceEngine_;
     webrtc::VoEBase *voe_base_;
     webrtc::VoENetwork *voe_network_;
-    webrtc::Config config_;
-    
-    shared_ptr<TcpTransport> ndnTransport_;
-    shared_ptr<Face> ndnFace_;
-//    shared_ptr<KeyChain> ndnKeyChain_;
-};
+    webrtc::Config config_;};
 
 TEST_F(AudioSenderTester, TestSend)
 {
@@ -324,9 +281,8 @@ TEST_F(AudioSenderTester, TestSend)
     
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
     
-    webrtc::ThreadWrapper *fetchThread = webrtc::ThreadWrapper::CreateThread(fetchThreadFunc, this);
-    unsigned int tid = 1;
-    ASSERT_NE(0,fetchThread->Start(tid));
+    
+    UnitTestHelperNdnNetwork::startProcessingNdn();
     
     // now check what we have on the network
     string rtpPrefix, rtcpPrefix;
@@ -352,43 +308,10 @@ TEST_F(AudioSenderTester, TestSend)
         ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }
-#if 0
-    for (int i = 0; i < rtpSent_; i++)
-    {
-        Name prefix = rtpPacketPrefix;
-        
-        char frameNoStr[3];
-        memset(&frameNoStr[0], 0, 3);
-        sprintf(&frameNoStr[0], "%d", i);
-        
-        prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
-        
-        INFO("expressing %s", prefix.toUri().c_str());
-        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTPData, this, _1, _2),
-                                  bind(&AudioSenderTester::onTimeout, this, _1));
-    }
-    
-    for (int j = 0; j < rtcpSent_; j++)
-    {
-        Name prefix = rtcpPacketPrefix;
-        
-        char frameNoStr[3];
-        memset(&frameNoStr[0], 0, 3);
-        sprintf(&frameNoStr[0], "%d", j);
-        
-        prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
-        
-        INFO("expressing %s", prefix.toUri().c_str());
-        ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onRTCPData, this, _1, _2),
-                                  bind(&AudioSenderTester::onTimeout, this, _1));
-    }
-#endif
     
     EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ && rtcpDataFetched_ == rtcpSent_, 5000);
     
-    alive_ = false;
-    fetchThread->SetNotAlive();
-    fetchThread->Stop();
+    UnitTestHelperNdnNetwork::stopProcessingNdn();
     
     EXPECT_EQ(rtpSent_, rtpDataFetched_);
     EXPECT_EQ(rtcpSent_, rtcpDataFetched_);

@@ -124,7 +124,6 @@ int MediaSender::publishPacket(unsigned int len,
         return notifyError(-1, "can't send packet - no connection");
     
     // send packet over NDN
-    TRACE("sending packet #%010lld", packetNo_);
     
     // 1. set packet number prefix
     Name prefix = *packetPrefix;
@@ -150,6 +149,9 @@ int MediaSender::publishPacket(unsigned int len,
             {
                 Name segmentPrefix = prefix;
                 segmentPrefix.appendSegment(segmentNo);
+                
+                TRACE("sending packet #%010lld. prefix: %s", packetNo_,
+                      segmentPrefix.toUri().c_str());
                 
                 Data data(segmentPrefix);
                 

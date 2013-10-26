@@ -392,9 +392,9 @@ build-ndnrtc-library-test: undef libndnrtc $(addprefix $(OBJ_PATH)/,ndnrtc-libra
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-ndnaudio-transport-test: undef $(addprefix $(OBJ_PATH)/,ndnaudio-transport-test.o ndnaudio-transport.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-audio-channel-test: undef $(addprefix $(OBJ_PATH)/,audio-channel-test.o audio-channel.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,ndnaudio-transport-test.o ndnaudio-transport.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) \
+	$(addprefix $(OBJ_PATH)/,audio-channel-test.o audio-channel.o ndnrtc-object.o ndnrtc-utils.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 

@@ -12,11 +12,15 @@
 #include "test-common.h"
 #include <sys/time.h>
 #include "simple-log.h"
+#include "ndnrtc-namespace.h"
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import <AppKit/AppKit.h>
 
+using namespace ndnrtc;
+
+//******************************************************************************
 int64_t millisecondTimestamp()
 {
     struct timeval tv;
@@ -27,8 +31,7 @@ int64_t millisecondTimestamp()
     return ticks;
 };
 
-
-//********************************************************************************
+//******************************************************************************
 void CocoaTestEnvironment::SetUp(){
     printf("[setting up cocoa environment]\n");
     pool_ = (void*)[[NSAutoreleasePool alloc] init];
@@ -39,3 +42,165 @@ void CocoaTestEnvironment::TearDown(){
     [(NSAutoreleasePool*)pool_ release];
     printf("[tear down cocoa environment]\n");
 };
+
+//******************************************************************************
+void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &userPrefix)
+{
+    nReceivedInterests_ = 0;
+    nReceivedData_ = 0;
+    nReceivedTimeout_ = 0;
+
+    shared_ptr<ndn::Transport::ConnectionInfo>
+        connInfo(new ndn::TcpTransport::ConnectionInfo(params_.host,
+                                                       params_.portNum));
+    
+    ndnTransport_.reset(new TcpTransport());
+    ndnFace_.reset(new Face(ndnTransport_, connInfo));
+
+    ASSERT_NO_THROW(
+                    ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
+                                             bind(&UnitTestHelperNdnNetwork::onInterest, this, _1, _2, _3),
+                                             bind(&UnitTestHelperNdnNetwork::onRegisterFailed, this, _1));
+                    );
+
+    shared_ptr<ndn::Transport::ConnectionInfo>
+    connInfo2(new TcpTransport::ConnectionInfo(params_.host, params_.portNum));
+    
+    shared_ptr<ndn::Transport> t2(new ndn::TcpTransport());
+
+    ndnReceiverFace_.reset(new Face(t2, connInfo2));
+
+    ASSERT_NO_THROW(
+    ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/receiver").c_str()),
+                                     bind(&UnitTestHelperNdnNetwork::onInterest,
+                                          this, _1, _2, _3),
+                                     bind(&UnitTestHelperNdnNetwork::onRegisterFailed,
+                                          this, _1));
+                    );
+
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
+    certName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
+
+}
+
+void UnitTestHelperNdnNetwork::NdnTearDown()
+{
+    
+}
+
+void UnitTestHelperNdnNetwork::onInterest(const shared_ptr<const Name>& prefix,
+                                          const shared_ptr<const Interest>& interest,
+                                          ndn::Transport& transport)
+{
+    nReceivedInterests_++;
+}
+
+void UnitTestHelperNdnNetwork::
+onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+{
+    FAIL();
+}
+
+void UnitTestHelperNdnNetwork::onData(const shared_ptr<const Interest>& interest,
+                                      const shared_ptr<Data>& data)
+{
+    nReceivedData_++;
+}
+
+void UnitTestHelperNdnNetwork::
+onTimeout(const shared_ptr<const Interest>& interest)
+{
+    nReceivedTimeout_++;
+}
+
+void UnitTestHelperNdnNetwork::
+publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
+                   unsigned int frameNo, unsigned int segmentSize,
+                   const string &framePrefix, int freshness,
+                   bool mixedSendOrder)
+{
+    unsigned int fullSegmentsNum = dataLen/segmentSize;
+    unsigned int totalSegmentsNum = (dataLen - fullSegmentsNum*segmentSize)?
+        fullSegmentsNum+1:fullSegmentsNum;
+    
+    unsigned int lastSegmentSize = dataLen - fullSegmentsNum*segmentSize;
+    vector<int> segmentsSendOrder;
+    
+    Name prefix(framePrefix.c_str());
+    shared_ptr<const vector<unsigned char>> frameNumberComponent =
+        NdnRtcNamespace::getNumberComponent(frameNo);
+    
+    prefix.addComponent(*frameNumberComponent);
+    
+    // setup send order for segments
+    for (int i = 0; i < totalSegmentsNum; i++)
+        segmentsSendOrder.push_back(i);
+    
+    if (mixedSendOrder)
+        random_shuffle(segmentsSendOrder.begin(), segmentsSendOrder.end());
+    
+    for (int i = 0; i < totalSegmentsNum; i++)
+    {
+        unsigned int segmentIdx = segmentsSendOrder[i];
+        unsigned char *segmentData = dataPacket+segmentIdx*segmentSize;
+        unsigned int
+        dataSize = (segmentIdx == totalSegmentsNum -1)?lastSegmentSize:
+                                                        segmentSize;
+        
+        if (dataSize > 0)
+        {
+            Name segmentPrefix = prefix;
+            segmentPrefix.appendSegment(segmentIdx);
+            
+           publishData(dataSize, segmentData,
+                       segmentPrefix.toUri(), freshness,
+                       Name().appendSegment(totalSegmentsNum-1).
+                        get(0).getValue());
+        } // if
+    } // for
+    
+}
+void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
+                                           unsigned char *dataPacket,
+                                           const string &prefix, int freshness,
+                                           const Blob& finalBlockId)
+{
+    Data data(prefix);
+    
+    data.getMetaInfo().setFreshnessSeconds(freshness);
+    data.getMetaInfo().setFinalBlockID(finalBlockId);
+    data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
+    data.setContent(dataPacket, dataLen);
+    
+    ndnKeyChain_->sign(data, *certName_);
+    
+    ASSERT_TRUE(ndnTransport_->getIsConnected());
+    
+    Blob encodedData = data.wireEncode();
+    ndnTransport_->send(*encodedData);
+}
+
+void UnitTestHelperNdnNetwork::startProcessingNdn()
+{
+    fetchingThread_ = webrtc::ThreadWrapper::CreateThread(fetchThreadFunc, this);
+
+    unsigned int tid = 1;
+    ASSERT_NE(0,fetchingThread_->Start(tid));
+    isFetching_ = true;
+}
+void UnitTestHelperNdnNetwork::stopProcessingNdn()
+{
+    isFetching_ = false;
+    fetchingThread_->SetNotAlive();
+    fetchingThread_->Stop();
+    
+    delete fetchingThread_;
+}
+
+bool UnitTestHelperNdnNetwork::fetchData()
+{
+    ndnFace_->processEvents();
+    WAIT(10);
+    
+    return isFetching_;
+}
