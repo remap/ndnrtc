@@ -70,6 +70,20 @@ int NdnAudioChannel::stop()
 }
 
 //******************************************************************************
+#pragma mark - intefaces realization - webrtc::Transport callbacks
+int NdnAudioChannel::SendPacket(int channel, const void *data, int len)
+{
+    TRACE("sending RTP is not supposed to be called");
+    return len;
+}
+
+int NdnAudioChannel::SendRTCPPacket(int channel, const void *data, int len)
+{
+    TRACE("sending RTCP is not supposed to be called");
+    return len;
+}
+
+//******************************************************************************
 //******************************************************************************
 #pragma mark - public
 int NdnAudioReceiveChannel::init(const ParamsStruct &params,
@@ -100,6 +114,14 @@ int NdnAudioReceiveChannel::start()
     if (RESULT_FAIL(res))
         return res;
     
+    // register external transport in order to playback. however, we are not
+    // going to set this channel for sending and should not be getting callback
+    // on webrtc::Transport callbacks
+    if (voe_network_->RegisterExternalTransport(channel_, *this) < 0)
+        return notifyError(RESULT_ERR, "can't register external transport for \
+                           WebRTC due to error (code %d)",
+                           voe_base_->LastError());
+
     if (voe_base_->StartReceive(channel_) < 0)
         return notifyError(RESULT_ERR, "can't start receiving channel due to \
                            error (code %d)", voe_base_->LastError());
@@ -109,10 +131,12 @@ int NdnAudioReceiveChannel::start()
                            (code %d)", voe_base_->LastError());
     
     if (audioReceiver_)
-        return audioReceiver_->startFetching();
+         res = audioReceiver_->startFetching();
     
-    started_ = true;
-    return notifyError(RESULT_ERR, "audio receiver was not initialized");
+    started_ = RESULT_GOOD(res);
+
+    return (started_)?RESULT_OK :
+        notifyError(RESULT_ERR, "audio receiver was not initialized");
 }
 
 int NdnAudioReceiveChannel::stop()
@@ -123,6 +147,7 @@ int NdnAudioReceiveChannel::stop()
     audioReceiver_->stopFetching();
     voe_base_->StopPlayout(channel_);
     voe_base_->StopReceive(channel_);
+    voe_network_->DeRegisterExternalTransport(channel_);
     channel_ = -1;
     
     started_ = false;
@@ -134,13 +159,17 @@ int NdnAudioReceiveChannel::stop()
 void NdnAudioReceiveChannel::onRTPPacketReceived(unsigned int len,
                                                  unsigned char *data)
 {
-    voe_network_->ReceivedRTPPacket(channel_, data, len);
+    if (voe_network_->ReceivedRTPPacket(channel_, data, len) < 0)
+        notifyError(RESULT_WARN, "can't playback packet due to WebRTC \
+                    (code %d)", voe_base_->LastError());
 }
 
 void NdnAudioReceiveChannel::onRTCPPacketReceived(unsigned int len,
                                                   unsigned char *data)
 {
-    voe_network_->ReceivedRTCPPacket(channel_, data, len);
+    if (voe_network_->ReceivedRTCPPacket(channel_, data, len) < 0)
+        notifyError(RESULT_WARN, "can't playback packet due to WebRTC \
+                    (code %d)", voe_base_->LastError());
 }
 
 //******************************************************************************

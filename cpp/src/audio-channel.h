@@ -18,7 +18,8 @@
 #include "audio-sender.h"
 
 namespace ndnrtc {
-    class NdnAudioChannel : public NdnRtcObject
+    class NdnAudioChannel : public NdnRtcObject,
+    public webrtc::Transport
     {
     public:
         NdnAudioChannel(webrtc::VoiceEngine *voiceEngine);
@@ -31,13 +32,17 @@ namespace ndnrtc {
     protected:
         int channel_;
         bool started_ = false, initialized_ = false;
-//        webrtc::VoiceEngine *voiceEngine_;
         webrtc::VoEBase *voe_base_;
         webrtc::VoENetwork *voe_network_;
+        
+        // webrtc::Transport interface
+        virtual int SendPacket(int channel, const void *data, int len);
+        virtual int SendRTCPPacket(int channel, const void *data, int len);
     };
     
     class NdnAudioReceiveChannel : public NdnAudioChannel,
-    public IAudioPacketConsumer
+    public IAudioPacketConsumer,
+    public webrtc::Transport
     {
     public:
         NdnAudioReceiveChannel(webrtc::VoiceEngine *voiceEngine):
@@ -47,6 +52,7 @@ namespace ndnrtc {
         int start();
         int stop();
         
+    protected:
         // audio packet consumer
         void onRTPPacketReceived(unsigned int len, unsigned char *data);
         void onRTCPPacketReceived(unsigned int len, unsigned char *data);
@@ -55,8 +61,7 @@ namespace ndnrtc {
         NdnAudioReceiver *audioReceiver_ = NULL;
     };
     
-    class NdnAudioSendChannel : public NdnAudioChannel,
-    public webrtc::Transport
+    class NdnAudioSendChannel : public NdnAudioChannel
     {
     public:
         NdnAudioSendChannel(webrtc::VoiceEngine *voiceEngine):
@@ -67,6 +72,7 @@ namespace ndnrtc {
         int start();
         int stop();
         
+    protected:
         // webrtc::Transport interface
         int SendPacket(int channel, const void *data, int len);
         int SendRTCPPacket(int channel, const void *data, int len);

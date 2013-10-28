@@ -66,9 +66,8 @@ void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &user
     shared_ptr<ndn::Transport::ConnectionInfo>
     connInfo2(new TcpTransport::ConnectionInfo(params_.host, params_.portNum));
     
-    shared_ptr<ndn::Transport> t2(new ndn::TcpTransport());
-
-    ndnReceiverFace_.reset(new Face(t2, connInfo2));
+    ndnReceiverTransport_.reset(new ndn::TcpTransport());
+    ndnReceiverFace_.reset(new Face(ndnReceiverTransport_, connInfo2));
 
     ASSERT_NO_THROW(
     ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/receiver").c_str()),

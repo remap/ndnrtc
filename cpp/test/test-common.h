@@ -30,7 +30,7 @@ do { \
 res = (ex); \
 int64_t start = millisecondTimestamp(); \
 while (!res && millisecondTimestamp() < start + timeout) { \
-usleep(100000); \
+usleep(1000); \
 res = (ex); \
 } \
 } while (0);\
@@ -216,7 +216,7 @@ protected:
     unsigned int nReceivedInterests_, nReceivedData_, nReceivedTimeout_;
     
     ndnrtc::ParamsStruct params_;
-    shared_ptr<ndn::Transport> ndnTransport_;
+    shared_ptr<ndn::Transport> ndnTransport_, ndnReceiverTransport_;
     shared_ptr<Face> ndnFace_, ndnReceiverFace_;
     shared_ptr<KeyChain> ndnKeyChain_;
     shared_ptr<Name> certName_;
