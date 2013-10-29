@@ -17,10 +17,13 @@ using namespace std;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params) : NdnRtcObject(params),
+NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params,
+                                       const ParamsStruct &audioParams) :
+NdnRtcObject(params),
 localRender_(new NdnRenderer(1,params)),
 decoder_(new NdnVideoDecoder(params)),
-receiver_(new NdnVideoReceiver(params))
+receiver_(new NdnVideoReceiver(params)),
+audioParams_(audioParams)
 {
     localRender_->setObserver(this);
     decoder_->setObserver(this);

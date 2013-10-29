@@ -27,7 +27,7 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
     MediaSender::getStreamPrefix(params, streamPrefix);
     
     string streamThread = ParamsStruct::validate(params.streamThread,
-                                                 DefaultParams.streamThread,
+                                                 DefaultParamsAudio.streamThread,
                                                  res);
     // RTP and RTCP are published under the same prefix
 #if 0

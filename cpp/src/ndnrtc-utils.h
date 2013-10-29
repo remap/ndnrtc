@@ -12,6 +12,7 @@
 #define __ndnrtc__ndnrtc_utils__
 
 #include "ndnrtc-common.h"
+#include "webrtc.h"
 
 #define STR(exp) (#exp)
 
@@ -34,6 +35,9 @@ namespace ndnrtc{
         
         static int frameNumber(const Name::Component &segmentComponent);        
         static int segmentNumber(const Name::Component &segmentComponent);
+        
+        static webrtc::VoiceEngine *sharedVoiceEngine();
+        static void releaseVoiceEngine();
     };
 }
 

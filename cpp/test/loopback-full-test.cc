@@ -22,6 +22,7 @@ using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
+#if 0
 class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
 {
 public:
@@ -84,3 +85,4 @@ TEST(LoopbackTests, Transmission)
     delete sc;
     delete rc;
 }
+#endif

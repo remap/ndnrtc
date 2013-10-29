@@ -18,13 +18,40 @@
 #include "renderer.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
+#include "audio-channel.h"
 
 namespace ndnrtc
 {
-    class NdnSenderChannel : public NdnRtcObject, public IRawFrameConsumer
+    class NdnMediaChannel : public NdnRtcObject
     {
     public:
-        NdnSenderChannel(const ParamsStruct &params);
+        NdnMediaChannel(const ParamsStruct &params):NdnRtcObject(params){}
+        ~NdnMediaChannel(){}
+        
+    protected:
+        shared_ptr<ndn::Transport> ndnTransport_, ndnAudioTransport_;
+        shared_ptr<Face> ndnFace_, ndnAudioFace_;
+        
+        static int setupNdnNetwork(const ParamsStruct &params,
+                                   const ParamsStruct &defaultParams,
+                                   NdnMediaChannel *callbackListener,
+                                   shared_ptr<Face> &face,
+                                   shared_ptr<ndn::Transport> &transport);
+        
+        // ndn-cpp callbacks
+        virtual void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
+        
+        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+                                      prefix);
+    };
+    
+    class NdnSenderChannel : public NdnMediaChannel, public IRawFrameConsumer
+    {
+    public:
+        NdnSenderChannel(const ParamsStruct &params,
+                         const ParamsStruct &audioParams);
         virtual ~NdnSenderChannel() {};
         
         static unsigned int getConnectHost(const ParamsStruct &params,
@@ -39,12 +66,6 @@ namespace ndnrtc
         // interface conformance - IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
-        // ndnlib callbacks
-        void onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
-                        ndn::Transport& transport);
-        void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
-        
         // statistics
         double getNInputFramesPerSec() {
             return NdnRtcUtils::currentFrequencyMeterValue(meterId_);
@@ -55,16 +76,17 @@ namespace ndnrtc
         unsigned int getSentFramesNum(); // number of already sent frames
         
     private:
+        ParamsStruct audioParams_;
+        
         // statistics
         unsigned int meterId_; // frequency meter id
         
         bool isTransmitting_;
-        shared_ptr<ndn::Transport> ndnTransport_;
-        shared_ptr<Face> ndnFace_;
         shared_ptr<CameraCapturer> cc_;
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
+        shared_ptr<NdnAudioSendChannel> audioSendChannel_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;

@@ -80,15 +80,20 @@ void NdnRtcLibrary::releaseParamsStruct(ParamsStruct &params)
 }
 
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
 observer_(NULL),
 libraryHandle_(libHandle),
 libParams_(DefaultParams)
 {
+    NdnRtcUtils::sharedVoiceEngine();
 }
-//********************************************************************************
+NdnRtcLibrary::~NdnRtcLibrary()
+{
+    NdnRtcUtils::releaseVoiceEngine();
+}
+//******************************************************************************
 #pragma mark - public
 void NdnRtcLibrary::configure(ParamsStruct &params)
 {

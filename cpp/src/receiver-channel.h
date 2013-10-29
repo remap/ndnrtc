@@ -35,7 +35,8 @@ namespace ndnrtc
     class NdnReceiverChannel : public NdnRtcObject
     {
     public:
-        NdnReceiverChannel(const ParamsStruct &params);
+        NdnReceiverChannel(const ParamsStruct &params,
+                           const ParamsStruct &audioParams);
         virtual ~NdnReceiverChannel() { }
         
         int init();
@@ -51,6 +52,7 @@ namespace ndnrtc
         void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
 
     protected:
+        ParamsStruct audioParams_;
         bool isTransmitting_;
         shared_ptr<ndn::Transport> ndnTransport_;
         shared_ptr<Face> ndnFace_;

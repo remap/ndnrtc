@@ -134,6 +134,42 @@ namespace ndnrtc
         60,     // incoming framebuffer size
         16000  // frame buffer slot size
     };
+    
+    static ParamsStruct DefaultParamsAudio = {
+        NdnLoggerDetailLevelDefault,    // log level
+        "ndnrtc.log",                   // log file
+        
+        0,      // capture device id
+        0,    // capture width
+        0,    // capture height
+        0,     // capture framerate
+        
+        0,    // render width
+        0,    // render height
+        
+        0,     // codec framerate
+        0,    // codec start bitrate
+        0,   // codec max bitrate
+        0,    // codec encoding width
+        0,    // codec encoding height
+        
+        "localhost",    // network ndnd remote host
+        6363,           // default ndnd port number
+        
+        "testuser",     // producer id
+        "audio0",       // stream name
+        "pcmu2",          // stream thread name
+        "ndn/ucla.edu/apps",     // ndn hub
+        1100,   // segment size for media frame
+        3,      // data freshness (seconds) value
+        30,     // producer rate (currently equal to playback rate)
+        
+        30,     // playback rate of local consumer
+        5,      // interest timeout
+        10,     // incoming framebuffer size
+        1000  // frame buffer slot size
+    };
+
 }
 
 #endif

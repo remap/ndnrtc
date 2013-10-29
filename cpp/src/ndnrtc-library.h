@@ -48,7 +48,7 @@ namespace ndnrtc {
     public:
         // construction/desctruction
         NdnRtcLibrary(void *libHandle);
-        ~NdnRtcLibrary(){}
+        ~NdnRtcLibrary();
         
         // public static methods go here
         static NdnRtcLibrary *instantiateLibraryObject(const char *libPath)

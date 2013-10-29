@@ -166,10 +166,9 @@ public:
         
         setupWebRTCLogging();
         
-        params_ = DefaultParams;
+        params_ = DefaultParamsAudio;
         params_.freshness = 5;
-        params_.streamName = "audio0";
-        params_.streamThread = "pcmu2";
+        params_.streamName = "audio-sender-test";
         
         std::string streamAccessPrefix, userPrefix = "whatever";
         MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
@@ -206,7 +205,7 @@ public:
     
     int SendPacket(int channel, const void *data, int len)
     {
-        INFO("publish rtp packet %d", rtcpSent_);
+        cout << "publish rtp packet " << len << endl;
         rtpSent_++;
         sender_->publishRTPAudioPacket(len, (unsigned char*)data);
         
@@ -214,7 +213,7 @@ public:
     }
     int SendRTCPPacket(int channel, const void *data, int len)
     {
-        INFO("publish rtcp packet %d", rtcpSent_);
+        cout << "publish rtcp packet " << len << endl;
         rtcpSent_++;
         sender_->publishRTCPAudioPacket(len, (unsigned char*)data);
 
@@ -275,14 +274,13 @@ TEST_F(AudioSenderTester, TestSend)
     EXPECT_EQ(0, voe_base_->StartSend(channel_));
     EXPECT_EQ(0, voe_base_->StartPlayout(channel_));
     
-    EXPECT_TRUE_WAIT(rtpSent_ >= nPackets, 5000);
+    EXPECT_TRUE_WAIT(rtpSent_+rtcpSent_ >= nPackets, 20*nPackets);
     
     EXPECT_EQ(0, voe_base_->StopSend(channel_));
     EXPECT_EQ(0, voe_base_->StopPlayout(channel_));
     EXPECT_EQ(0, voe_base_->StopReceive(channel_));
     
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
-    
     
     UnitTestHelperNdnNetwork::startProcessingNdn();
     
@@ -311,7 +309,7 @@ TEST_F(AudioSenderTester, TestSend)
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }
     
-    EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ && rtcpDataFetched_ == rtcpSent_, 5000);
+    EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ && rtcpDataFetched_ == rtcpSent_, 20*nPackets);
     
     UnitTestHelperNdnNetwork::stopProcessingNdn();
     

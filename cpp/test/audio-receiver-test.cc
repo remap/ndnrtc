@@ -9,6 +9,7 @@
 #include "test-common.h"
 #include "audio-receiver.h"
 #include "audio-sender.h"
+#include "ndnrtc-utils.h"
 #include <iostream.h>
 
 #define NDN_LOGGING
@@ -86,6 +87,7 @@ public:
         NdnAudioData adata(p);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
+        cout << "publish RTP  " << currentRTPFrame_ << " " << len << endl;
         sendCS_->Enter();
         publishMediaPacket(adata.getLength(), adata.getData(),
                            currentRTPFrame_++, params_.segmentSize,
@@ -104,6 +106,7 @@ public:
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
         
+        cout << "publish RTCP " << currentRTPFrame_ << " " << len << endl;
         // using RTP frames counter!!!
         sendCS_->Enter();
 #if 0
@@ -172,7 +175,8 @@ protected:
 
 TEST_F(AudioReceiverTester, TestFetch)
 {
-    params_.freshness = 1;
+    unsigned int publishPacketsNum = 100;
+    params_.freshness = 20*publishPacketsNum/1000;
     params_.streamName = "audio0";
     params_.streamThread = "pcmu2";
     params_.bufferSize = 5;
@@ -196,16 +200,19 @@ TEST_F(AudioReceiverTester, TestFetch)
     EXPECT_EQ(0, voe_base_->StartSend(channel_));
     EXPECT_EQ(0, voe_base_->StartPlayout(channel_));
     
-    unsigned int publishPacketsNum = 50;
-    EXPECT_TRUE_WAIT(nSent_ >= publishPacketsNum, 10000);
-    
-    EXPECT_TRUE_WAIT(nReceived_ == nSent_, 10000);
-    EXPECT_EQ(nRTCPSent_, nRTCPReceived_);
+    EXPECT_TRUE_WAIT(nSent_ + nRTCPSent_ >= publishPacketsNum, publishPacketsNum*20);
     
     EXPECT_EQ(0, voe_base_->StopSend(channel_));
     EXPECT_EQ(0, voe_base_->StopPlayout(channel_));
     EXPECT_EQ(0, voe_base_->StopReceive(channel_));
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
 
+    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, publishPacketsNum*20);
+    EXPECT_EQ(nRTCPSent_, nRTCPReceived_);
+    EXPECT_EQ(nSent_, nReceived_);
+    
+    cout << "Published: RTP (" << nSent_ << "), RTCP (" << nRTCPSent_ << ") "<< endl;
+    cout << "Fetched:   RTP (" << nReceived_ << "), RTCP (" << nRTCPReceived_ << ") "<< endl;
+    
     EXPECT_EQ(RESULT_OK, receiver.stopFetching());
 }

@@ -17,63 +17,6 @@ using namespace ndnrtc;
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
-
-//********************************************************************************
-/**
- * @name NdnSenderChannel class tests
- */
-#if 0
-TEST(NdnSenderChannelParams, CreateDeleteParams)
-{
-    NdnParams *p = SenderChannelParams::defaultParams();
-    delete p;
-}
-TEST(NdnSenderChannelParams, TestParams)
-{
-    NdnParams *p = SenderChannelParams::defaultParams();
-    
-    {
-        // check camera capturer params
-        int width, height, fps, deviceId;        
-        CameraCapturerParams *ccp = static_cast<CameraCapturerParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        EXPECT_EQ(0, ccp->getDeviceId(&deviceId));
-        EXPECT_EQ(0, ccp->getWidth(&width));
-        EXPECT_EQ(0, ccp->getHeight(&height));
-        EXPECT_EQ(0, ccp->getFPS(&fps));
-    }
- 
-    { // check renrerer params
-        int width, height;
-        NdnRendererParams *ccp = static_cast<NdnRendererParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        EXPECT_EQ(0, ccp->getWindowWidth(&width));
-        EXPECT_EQ(0, ccp->getWindowHeight(&height));
-    }
-    
-    {// check video coder params
-        int width, height, maxBitRate, startBitRate, frameRate;
-        NdnVideoCoderParams *ccp = static_cast<NdnVideoCoderParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        EXPECT_EQ(0, ccp->getFrameRate(&frameRate));
-        EXPECT_EQ(0, ccp->getMaxBitRate(&maxBitRate));
-        EXPECT_EQ(0, ccp->getStartBitRate(&startBitRate));
-        EXPECT_EQ(0, ccp->getWidth(&width));
-        EXPECT_EQ(0, ccp->getHeight(&height));
-    }
-    
-    {// check video sender params
-        VideoSenderParams *ccp = static_cast<VideoSenderParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-    }
-    
-    delete p;
-}
-#endif
-
 //********************************************************************************
 /**
  * @name NdnSenderChannel class tests
@@ -84,22 +27,24 @@ class NdnSenderChannelTest : public NdnRtcObjectTestHelper
         TRACE("");
         NdnRtcObjectTestHelper::SetUp();
         p_ = DefaultParams;
+        audioP_ = DefaultParamsAudio;
     }
     void TearDown(){
         NdnRtcObjectTestHelper::TearDown();
     }
 protected:
-    ParamsStruct p_;
+    ParamsStruct p_, audioP_;
 };
 
 TEST_F(NdnSenderChannelTest, CreateDelete)
 {
-    NdnSenderChannel *sc = new NdnSenderChannel(p_);
+    NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
     delete sc;
 }
+
 TEST_F(NdnSenderChannelTest, TestInit)
 {
-    NdnSenderChannel *sc = new NdnSenderChannel(p_);
+    NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
     sc->setObserver(this);
     
     EXPECT_EQ(RESULT_OK,sc->init());
@@ -113,7 +58,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
 
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
-    NdnSenderChannel *sc = new NdnSenderChannel(p_);
+    NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
     
     sc->setObserver(this);
     ASSERT_EQ(RESULT_OK, sc->init());
