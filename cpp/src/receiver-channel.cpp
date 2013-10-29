@@ -19,103 +19,75 @@ using namespace std;
 #pragma mark - construction/destruction
 NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params,
                                        const ParamsStruct &audioParams) :
-NdnRtcObject(params),
+NdnMediaChannel(params, audioParams),
 localRender_(new NdnRenderer(1,params)),
 decoder_(new NdnVideoDecoder(params)),
 receiver_(new NdnVideoReceiver(params)),
-audioParams_(audioParams)
+audioReceiveChannel_(new NdnAudioReceiveChannel(NdnRtcUtils::sharedVoiceEngine()))
 {
     localRender_->setObserver(this);
     decoder_->setObserver(this);
     receiver_->setObserver(this);
+    audioReceiveChannel_->setObserver(this);
     
     receiver_->setFrameConsumer(decoder_.get());
     decoder_->setFrameConsumer(localRender_.get());
 }
 
-void NdnReceiverChannel::onInterest(const shared_ptr<const Name>& prefix,
-                                    const shared_ptr<const Interest>& interest,
-                                    ndn::Transport& transport)
-{
-    INFO("got interest: %s", interest->getName().toUri().c_str());
-}
-
-void NdnReceiverChannel::
-onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
-{
-    ERR("failed to register prefix %s", prefix->toUri().c_str());
-}
-
 int NdnReceiverChannel::init()
 {
-    int res = RESULT_OK;
+    int res = NdnMediaChannel::init();
     
-    // connect to ndn
-    try
-    {
-        std::string host;
-        int port = ParamsStruct::validateLE(params_.portNum, MaxPortNum,
-                                            res, DefaultParams.portNum);
-        res = NdnSenderChannel::getConnectHost(params_, host);
-        
-        if (RESULT_GOOD(res))
-        {
-            shared_ptr<ndn::Transport::ConnectionInfo>
-            connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
-            
-            ndnTransport_.reset(new TcpTransport());
-            ndnFace_.reset(new Face(ndnTransport_, connInfo));
-            
-            std::string streamAccessPrefix;
-            
-            res = MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
-            
-            if (RESULT_GOOD(res))
-                ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                         bind(&NdnReceiverChannel::onInterest, this, _1, _2, _3),
-                                         bind(&NdnReceiverChannel::onRegisterFailed, this, _1));
-        }
-        else
-            return notifyError(RESULT_ERR, "malformed parameters for host/port");
-    }
-    catch (std::exception &e)
-    {
-        return notifyError(RESULT_ERR, "got error form ndn library: %s", e.what());
-    }
+    if (RESULT_FAIL(res))
+        return res;
     
-    if (localRender_->init() < 0)
+    if (RESULT_FAIL(localRender_->init()))
         notifyError(RESULT_ERR, "can't intialize renderer");
     
-    if (decoder_->init() < 0)
-        notifyError(RESULT_ERR, "can't intialize video encoder");
+    if (RESULT_FAIL(decoder_->init()))
+        notifyError(RESULT_ERR, "can't intialize video decoder");
     
-    if (receiver_->init(ndnFace_) < 0)
-        return notifyError(RESULT_ERR, "can't intialize video sender");
+    if (RESULT_FAIL(receiver_->init(ndnFace_)))
+        return notifyError(RESULT_ERR, "can't intialize video receiver");
     
+    if (RESULT_FAIL(audioReceiveChannel_->init(audioParams_, ndnAudioFace_)))
+        return notifyError(RESULT_ERR, "can't initialize audio receive channel");
+    
+    isInitialized_ = true;
     return 0;
 }
-int NdnReceiverChannel::startFetching()
+int NdnReceiverChannel::startTransmission()
 {
-    TRACE("stopping transmission");
+    int res = NdnMediaChannel::startTransmission();
+    
+    if (RESULT_FAIL(res))
+        return res;
     
     unsigned int tid = 1;
     
-    if (localRender_->startRendering() < 0)
+    if (RESULT_FAIL(localRender_->startRendering()))
         return notifyError(RESULT_ERR, "can't start render");
     
-    if (receiver_->startFetching() < 0)
+    if (RESULT_FAIL(receiver_->startFetching()))
         return notifyError(RESULT_ERR, "can't start fetching frames");
+    
+    if (RESULT_FAIL(audioReceiveChannel_->start()))
+        return notifyError(RESULT_ERR, "can't start audio receive channel");
     
     isTransmitting_ = true;
     return RESULT_OK;
 }
-int NdnReceiverChannel::stopFetching()
+int NdnReceiverChannel::stopTransmission()
 {
-
+    int res = NdnMediaChannel::stopTransmission();
+    
+    if (RESULT_FAIL(res))
+        return res;
+    
     receiver_->stopFetching();
+    audioReceiveChannel_->stop();
     
     isTransmitting_ = false;
-    
     return RESULT_OK;
 }
 void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const

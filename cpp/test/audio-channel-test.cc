@@ -267,7 +267,7 @@ TEST_F(NdnAudioChannelTester, TestSendChannel)
     // wait unless data will become stale
     WAIT(params_.freshness*1000);
 }
-
+#if 0
 class AudioReceiverChannelTester : public NdnAudioReceiveChannel
 {
 public:
@@ -362,3 +362,4 @@ TEST_F(NdnAudioChannelTester, TestSendReceive)
     }
     WAIT(params_.freshness*1000);
 }
+#endif

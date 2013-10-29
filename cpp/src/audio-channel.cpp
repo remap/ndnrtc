@@ -23,8 +23,6 @@ NdnRtcObject()
 {
     voe_network_ = VoENetwork::GetInterface(voiceEngine);
     voe_base_ = VoEBase::GetInterface(voiceEngine);
-    
-    cout << voe_base_ << endl;
 }
 NdnAudioChannel::~NdnAudioChannel()
 {

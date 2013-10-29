@@ -14,7 +14,62 @@ using namespace ndnrtc;
 using namespace webrtc;
 
 //******************************************************************************
-// NdnMediaChannel
+//******************************************************************************
+#pragma mark - construction/destruction
+NdnMediaChannel::NdnMediaChannel(const ParamsStruct &params,
+                                 const ParamsStruct &audioParams):
+NdnRtcObject(params),
+audioParams_(audioParams)
+{
+    
+}
+
+//******************************************************************************
+#pragma mark - static
+int NdnMediaChannel::getConnectHost(const ParamsStruct &params,
+                                              std::string &host)
+{
+    int res = RESULT_OK;
+    
+    host = ParamsStruct::validate(params.host, DefaultParams.host, res);
+    
+    return res;
+}
+
+//******************************************************************************
+#pragma mark - public
+int NdnMediaChannel::init()
+{
+    int res = RESULT_OK;
+    
+    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(params_, DefaultParams, this,
+                                                     ndnFace_, ndnTransport_)))
+        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
+                           video publishing");
+    
+    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(audioParams_, DefaultParamsAudio, this,
+                                                     ndnAudioFace_, ndnAudioTransport_)))
+        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
+                           audio publishing");
+
+    return res;
+}
+int NdnMediaChannel::startTransmission()
+{
+    if (!isInitialized_)
+        return notifyError(RESULT_ERR, "sender channel was initalized");
+    
+    return RESULT_OK;
+}
+int NdnMediaChannel::stopTransmission()
+{
+    if (!isTransmitting_)
+        return notifyError(RESULT_ERR, "sender channel was not transmitting data");
+    
+    return RESULT_OK;
+}
+//******************************************************************************
+#pragma mark - private
 int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
                                      const ParamsStruct &defaultParams,
                                      NdnMediaChannel *callbackListener,
@@ -80,23 +135,11 @@ NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 }
 
 //******************************************************************************
-// NdnSenderChannel
-#pragma mark - static
-unsigned int NdnSenderChannel::getConnectHost(const ParamsStruct &params,
-                                              std::string &host)
-{
-    int res = RESULT_OK;
-    
-    host = ParamsStruct::validate(params.host, DefaultParams.host, res);
-    
-    return res;
-}
-
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    const ParamsStruct &audioParams):
-NdnMediaChannel(params),
+NdnMediaChannel(params, audioParams),
 cc_(new CameraCapturer(params)),
 localRender_(new NdnRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
@@ -105,8 +148,7 @@ audioSendChannel_(new NdnAudioSendChannel(NdnRtcUtils::sharedVoiceEngine())),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
-                                            kHighPriority)),
-audioParams_(audioParams)
+                                            kHighPriority))
 {
     cc_->setObserver(this);
     localRender_->setObserver(this);
@@ -140,59 +182,10 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 #pragma mark - public
 int NdnSenderChannel::init()
 {
-    int res = RESULT_OK;
-    
-    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(params_, DefaultParams, this,
-                                     ndnFace_, ndnTransport_)))
-        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
-                           video publishing");
-    
-    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(audioParams_, DefaultParamsAudio, this,
-                                     ndnAudioFace_, ndnAudioTransport_)))
-        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
-                           audio publishing");
-    // connect to ndn
-#if 0
-    try
-    {
-        std::string host;
-        int port = ParamsStruct::validateLE(params_.portNum, MaxPortNum,
-                                            res, DefaultParams.portNum);
-        res = NdnSenderChannel::getConnectHost(params_, host);
-        
-        if (RESULT_GOOD(res))
-        {
-            
-            shared_ptr<ndn::Transport::ConnectionInfo>
-            connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
-            
-            ndnTransport_.reset(new TcpTransport());
-            ndnFace_.reset(new Face(ndnTransport_, connInfo));
-            
-            std::string streamAccessPrefix;
-            res = MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
-            
-            if (RESULT_GOOD(res))
-                ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                         bind(&NdnSenderChannel::onInterest,
-                                              this, _1, _2, _3),
-                                         bind(&NdnSenderChannel::onRegisterFailed,
-                                              this, _1));
-            else
-                notifyError(RESULT_WARN, "can't get prefix for registering: %s",
-                            streamAccessPrefix.c_str());
-            
-        }
-        else
-            return notifyError(RESULT_ERR, "malformed parameters for\
-                               host/port: %s, %d",
-                               params_.host, params_.portNum);
-    }
-    catch (std::exception &e)
-    {
-        return notifyError(-1, "got error from ndn library: %s", e.what());
-    }
-#endif
+    int res = NdnMediaChannel::init();
+ 
+    if (RESULT_FAIL(res))
+        return res;
     
     if (RESULT_FAIL((res = cc_->init())))
         notifyError(res, "can't intialize camera capturer");
@@ -210,37 +203,52 @@ int NdnSenderChannel::init()
                                                    ndnAudioTransport_))))
         return notifyError(res, "can't initialize audio send channel");
     
+    isInitialized_ = true;
     return res;
 }
 int NdnSenderChannel::startTransmission()
 {
+    int res = NdnMediaChannel::startTransmission();
+    
+    if (RESULT_FAIL(res))
+        return res;
+    
     unsigned int tid = 1;
     
     if (!processThread_.Start(tid))
         return notifyError(RESULT_ERR, "can't start processing thread");
     
-    if (localRender_->startRendering() < 0)
+    if (RESULT_FAIL(localRender_->startRendering()))
         return notifyError(RESULT_ERR, "can't start render");
     
-    if (cc_->startCapture() < 0)
+    if (RESULT_FAIL(cc_->startCapture()))
         return notifyError(RESULT_ERR, "can't start camera capturer");
+    
+    if (RESULT_FAIL(audioSendChannel_->start()))
+        return notifyError(RESULT_ERR, "can't start audio send channel");
     
     isTransmitting_ = true;
     return RESULT_OK;
 }
 int NdnSenderChannel::stopTransmission()
 {
+    int res = NdnMediaChannel::stopTransmission();
+    
+    if (RESULT_FAIL(res))
+        return res;
+    
     if (cc_->isCapturing())
         cc_->stopCapture();
     
     processThread_.SetNotAlive();
     deliverEvent_.Set();
-
-    isTransmitting_ = false;
     
     if (!processThread_.Stop())
         return notifyError(RESULT_ERR, "can't stop processing thread");
-
+    
+    audioSendChannel_->stop();
+    
+    isTransmitting_ = false;
     return RESULT_OK;
 }
 unsigned int NdnSenderChannel::getSentFramesNum()

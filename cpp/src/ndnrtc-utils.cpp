@@ -24,7 +24,8 @@ typedef struct _FrequencyMeter {
 //********************************************************************************
 #pragma mark - all static
 static std::vector<FrequencyMeter> freqMeters_;
-static webrtc::VoiceEngine *VoiceEngineInstance = NULL;
+static VoiceEngine *VoiceEngineInstance = NULL;
+static Config AudioConfig;
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
@@ -131,29 +132,25 @@ void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
 
 webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
-    return NULL;
-    
-    if (!VoiceEngineInstance)
-    {
-        Config config;
-        
-        config.Set<AudioCodingModuleFactory>(new NewAudioCodingModuleFactory());
-        VoiceEngineInstance = VoiceEngine::Create(config);
-        
-        VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
-        
-        int res = voe_base->Init();
-        
-        voe_base->Release();
-
-        if (res < 0)
-            return NULL;
-    }
+//    if (!VoiceEngineInstance)
+//    {
+//        AudioConfig.Set<AudioCodingModuleFactory>(new NewAudioCodingModuleFactory());
+//        VoiceEngineInstance = VoiceEngine::Create(AudioConfig);
+//        
+//        VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
+//        
+//        int res = voe_base->Init();
+//        
+//        voe_base->Release();
+//
+//        if (res < 0)
+//            return NULL;
+//    }
     
     return VoiceEngineInstance;
 }
 
 void NdnRtcUtils::releaseVoiceEngine()
 {
-    VoiceEngine::Delete(VoiceEngineInstance);
+//    VoiceEngine::Delete(VoiceEngineInstance);
 }

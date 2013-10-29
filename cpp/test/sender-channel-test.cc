@@ -1,4 +1,4 @@
-//
+ //
 //  sender-channel-test.cc
 //  ndnrtc
 //
@@ -64,10 +64,10 @@ TEST_F(NdnSenderChannelTest, TestTransmission)
     ASSERT_EQ(RESULT_OK, sc->init());
     
     EXPECT_NO_THROW({
-        EXPECT_EQ(0, sc->startTransmission());
+        EXPECT_EQ(RESULT_OK, sc->startTransmission());
         EXPECT_FALSE(obtainedError_);
         WAIT(5000);
-        EXPECT_EQ(0, sc->stopTransmission());
+        EXPECT_EQ(RESULT_OK, sc->stopTransmission());
         EXPECT_FALSE(obtainedError_);
     });
     

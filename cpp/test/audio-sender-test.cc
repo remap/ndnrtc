@@ -24,7 +24,7 @@ using namespace ndnrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(AudioSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
@@ -155,7 +155,7 @@ TEST(AudioData, TestUnpackError)
                                                        dummyData, resP));
     }
 }
-
+#endif
 class AudioSenderTester : public webrtc::Transport,
 public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {
@@ -197,6 +197,7 @@ public:
             voe_base_->Release();
             voe_network_->Release();
             webrtc::VoiceEngine::Delete(voiceEngine_);
+            voiceEngine_ = NULL;
             
             if (sender_)
                 delete sender_;
@@ -205,7 +206,7 @@ public:
     
     int SendPacket(int channel, const void *data, int len)
     {
-        cout << "publish rtp packet " << len << endl;
+        cout << "publish rtp packet " << len endl;
         rtpSent_++;
         sender_->publishRTPAudioPacket(len, (unsigned char*)data);
         
@@ -260,12 +261,10 @@ protected:
 
 TEST_F(AudioSenderTester, TestSend)
 {
-    int nPackets = 100;
+    int nPackets = 500;
     
     sender_->init(ndnTransport_);
     channel_ = voe_base_->CreateChannel();
-    
-    TRACE("channel id %d", channel_);
     
     ASSERT_LE(0, channel_);
     EXPECT_EQ(0, voe_network_->RegisterExternalTransport(channel_, *this));
@@ -302,18 +301,21 @@ TEST_F(AudioSenderTester, TestSend)
         memset(&frameNoStr[0], 0, 3);
         sprintf(&frameNoStr[0], "%d", i);
         
-        prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
+        prefix.addComponent((const unsigned char*)&frameNoStr[0],
+                            strlen(frameNoStr));
         
         INFO("expressing %s", prefix.toUri().c_str());
         ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }
     
-    EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ && rtcpDataFetched_ == rtcpSent_, 20*nPackets);
+    EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ &&
+                     rtcpDataFetched_ == rtcpSent_, 20*nPackets);
     
     UnitTestHelperNdnNetwork::stopProcessingNdn();
     
     EXPECT_EQ(rtpSent_, rtpDataFetched_);
     EXPECT_EQ(rtcpSent_, rtcpDataFetched_);
+    EXPECT_LT(rtcpSent_, rtpSent_);
     WAIT(params_.freshness*1000);
 }

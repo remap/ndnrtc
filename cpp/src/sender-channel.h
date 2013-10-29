@@ -25,10 +25,20 @@ namespace ndnrtc
     class NdnMediaChannel : public NdnRtcObject
     {
     public:
-        NdnMediaChannel(const ParamsStruct &params):NdnRtcObject(params){}
-        ~NdnMediaChannel(){}
+        NdnMediaChannel(const ParamsStruct &params,
+                        const ParamsStruct &audioParams);
+        virtual ~NdnMediaChannel(){}
+        
+        // public methods
+        virtual int init();
+        virtual int startTransmission();
+        virtual int stopTransmission();
+        
+        bool isTransmitting(){ return isTransmitting_; }
         
     protected:
+        ParamsStruct audioParams_;
+        bool isInitialized_ = false, isTransmitting_ = false;
         shared_ptr<ndn::Transport> ndnTransport_, ndnAudioTransport_;
         shared_ptr<Face> ndnFace_, ndnAudioFace_;
         
@@ -37,6 +47,9 @@ namespace ndnrtc
                                    NdnMediaChannel *callbackListener,
                                    shared_ptr<Face> &face,
                                    shared_ptr<ndn::Transport> &transport);
+        static int getConnectHost(const ParamsStruct &params,
+                                  std::string &host);
+        
         
         // ndn-cpp callbacks
         virtual void onInterest(const shared_ptr<const Name>& prefix,
@@ -54,11 +67,7 @@ namespace ndnrtc
                          const ParamsStruct &audioParams);
         virtual ~NdnSenderChannel() {};
         
-        static unsigned int getConnectHost(const ParamsStruct &params,
-                                           std::string &host);
-        
         // public methods
-        bool isTransmitting(){ return isTransmitting_; }
         int init();
         int startTransmission();
         int stopTransmission();
@@ -76,12 +85,10 @@ namespace ndnrtc
         unsigned int getSentFramesNum(); // number of already sent frames
         
     private:
-        ParamsStruct audioParams_;
         
         // statistics
         unsigned int meterId_; // frequency meter id
         
-        bool isTransmitting_;
         shared_ptr<CameraCapturer> cc_;
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;

@@ -15,6 +15,8 @@
 #include "video-receiver.h"
 #include "video-decoder.h"
 #include "renderer.h"
+#include "sender-channel.h"
+#include "audio-channel.h"
 
 namespace ndnrtc
 {
@@ -32,7 +34,7 @@ namespace ndnrtc
         double playoutFreq_, inDataFreq_, inFramesFreq_;
     } ReceiverChannelStatistics;
     
-    class NdnReceiverChannel : public NdnRtcObject
+    class NdnReceiverChannel : public NdnMediaChannel
     {
     public:
         NdnReceiverChannel(const ParamsStruct &params,
@@ -40,25 +42,16 @@ namespace ndnrtc
         virtual ~NdnReceiverChannel() { }
         
         int init();
-        int startFetching();
-        int stopFetching();
+        int startTransmission();
+        int stopTransmission();
         
         void getStat(ReceiverChannelStatistics &stat) const;
-        
-        // ndnlib callbacks
-        void onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
-                        ndn::Transport& transport);
-        void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
 
     protected:
-        ParamsStruct audioParams_;
-        bool isTransmitting_;
-        shared_ptr<ndn::Transport> ndnTransport_;
-        shared_ptr<Face> ndnFace_;
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoDecoder> decoder_;
         shared_ptr<NdnVideoReceiver> receiver_;
+        shared_ptr<NdnAudioReceiveChannel> audioReceiveChannel_;
     };
 }
 

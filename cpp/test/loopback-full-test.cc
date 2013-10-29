@@ -22,12 +22,12 @@ using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
-#if 0
+
 class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
 {
 public:
-    TestReceiverChannel(const ParamsStruct &p):
-    NdnReceiverChannel(p)
+    TestReceiverChannel(const ParamsStruct &p, const ParamsStruct &ap):
+    NdnReceiverChannel(p, ap)
     {
         localRender_->setObserver(this);
         decoder_->setObserver(this);
@@ -61,28 +61,27 @@ public:
 TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
-    p.freshness = 5;
+    ParamsStruct audioP = DefaultParamsAudio;
     
-    NdnSenderChannel *sc = new NdnSenderChannel(p);
-    TestReceiverChannel *rc = new TestReceiverChannel(p);
+    NdnSenderChannel *sc = new NdnSenderChannel(p, audioP);
+    TestReceiverChannel *rc = new TestReceiverChannel(p, audioP);
     
     EXPECT_EQ(0, sc->init());
     EXPECT_EQ(0, rc->init());
     
-    sc->startTransmission();
+    EXPECT_EQ(0, sc->startTransmission());
     WAIT(200);
-    rc->startFetching();
+    EXPECT_EQ(RESULT_OK, rc->startTransmission());
     
     bool f=  false;
 //    EXPECT_TRUE_WAIT(f, 10000);
-    WAIT(5000);
+    WAIT(10000);
     
-    sc->stopTransmission();
-    rc->stopFetching();
+    EXPECT_EQ(0, sc->stopTransmission());
+    EXPECT_EQ(RESULT_OK,rc->stopTransmission());
     
     EXPECT_EQ(0,rc->nMisordered_);
     
     delete sc;
     delete rc;
 }
-#endif
