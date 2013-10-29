@@ -258,11 +258,12 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     receiver->stopFetching();
     
     delete receiver;
+    WAIT(params_.freshness*1000);
 }
 
 TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
 {
-    WAIT(5200); // wait for results from previous test expire (on the ndn network)
+    WAIT(5200);
     
     unsigned int framesNum = 30;
     unsigned int segmentSize = 1000;
@@ -306,4 +307,5 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     receiver->stopFetching();
     
     delete receiver;
+    WAIT(params_.freshness*1000);
 }

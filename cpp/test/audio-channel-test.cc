@@ -178,7 +178,7 @@ protected:
     Config config_;
     webrtc::CriticalSectionWrapper *sendCS_;
 };
-#if 0
+
 TEST_F(NdnAudioChannelTester, TestSendChannelCreateDelete)
 {
     ASSERT_NO_THROW(
@@ -187,11 +187,12 @@ TEST_F(NdnAudioChannelTester, TestSendChannelCreateDelete)
     );
 }
 
-TEST_F(NdnAudioChannelTester, TestReceiveChannel)
+TEST_F(NdnAudioChannelTester, TestSendChannel)
 {
     // based on the observations: 50 packets ~ 1 second of recording
     int nPackets = 100;
-    int64_t publishTime = nPackets*20;
+    int overhead = 500;
+    int64_t publishTime = nPackets*20+overhead;
  
     // make sure packets will not be dropped
     params_.freshness = (publishTime*2/1000 < 1.)? 1 : publishTime*2/1000;
@@ -262,8 +263,10 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     EXPECT_LE(0.80*nPackets, rtpDataFetched_);
     EXPECT_LE(0.01*nPackets, rtcpDataFetched_);
     EXPECT_LE(nPackets, rtpDataFetched_+rtcpDataFetched_);
+    
+    // wait unless data will become stale
+    WAIT(params_.freshness*1000);
 }
-#endif
 
 class AudioReceiverChannelTester : public NdnAudioReceiveChannel
 {
@@ -305,7 +308,7 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     EXPECT_EQ(RESULT_OK, receiverTester.start());
     EXPECT_EQ(0, voe_base_->StartSend(channel));
     
-    uint64_t overhead = 500;
+    uint64_t overhead = 200;
     unsigned int publishPacketsNum = 500;
     EXPECT_TRUE_WAIT((nRTPSent_+nRTCPSent_) >= publishPacketsNum,
                      publishPacketsNum*20+overhead);
@@ -331,4 +334,31 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
         EXPECT_GE(nRTPSent_, receiverTester.nRTPReceived_);
         EXPECT_GE(nRTCPSent_, receiverTester.nRTCPReceived_);
     }
+    WAIT(params_.freshness*1000);
+}
+
+TEST_F(NdnAudioChannelTester, TestSendReceive)
+{
+    int nPackets = 500;
+    int overhead = 500;
+    int recordingTime = nPackets*20+overhead;
+    
+    params_.freshness = (recordingTime/1000.)<1.?1.:recordingTime/1000.;
+    
+    { // send datda
+        NdnAudioReceiveChannel recevier(voiceEngine_);
+        NdnAudioSendChannel sender(voiceEngine_);
+        
+        EXPECT_EQ(RESULT_OK, recevier.init(params_, ndnReceiverFace_));
+        EXPECT_EQ(RESULT_OK, sender.init(params_, ndnTransport_));
+        
+        EXPECT_EQ(RESULT_OK, recevier.start());
+        EXPECT_EQ(RESULT_OK, sender.start());
+        
+        WAIT(recordingTime);
+        
+        EXPECT_EQ(RESULT_OK, recevier.stop());
+        EXPECT_EQ(RESULT_OK, sender.stop());
+    }
+    WAIT(params_.freshness*1000);
 }

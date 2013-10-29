@@ -280,7 +280,7 @@ testall : $(TESTS:%=build-%)
 
 ${TESTS} : ; $(BIN_PATH)/$@
 
-testrun : ${TESTS}
+testrun : testall ${TESTS}
 	
 	
 # Builds gtest.a and gtest_main.a.
@@ -314,27 +314,27 @@ $(OBJ_PATH)/%-test.o : $(TEST_PATH)/%-test.cc
 ###
 # TESTS should have automatic targets (not target-per-test scheme)
 ###
-build-ndnrtc-object-test: undef $(addprefix $(OBJ_PATH)/,ndnrtc-object-test.o ndnrtc-object.o libgtest-all.a libtest-main.a simple-log.o test-common.o)
+build-ndnrtc-object-test: undef $(addprefix $(OBJ_PATH)/,ndnrtc-object-test.o ndnrtc-object.o libgtest-all.a libtest-main.a simple-log.o test-common.o ndnrtc-namespace.o)
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,test-common.o ndnrtc-object.o ndnrtc-object-test.o simple-log.o) \
+	$(addprefix $(OBJ_PATH)/,test-common.o ndnrtc-object.o ndnrtc-object-test.o simple-log.o ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
 build-camera-capturer-test: undef $(addprefix $(OBJ_PATH)/,camera-capturer-test.o ndnrtc-object.o ndnrtc-utils.o libgtest-all.a libtest-main-mac.a camera-capturer.o simple-log.o test-common.o cocoa-renderer.om)
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,test-common.o camera-capturer-test.o camera-capturer.o ndnrtc-utils.o ndnrtc-object.o simple-log.o cocoa-renderer.om) \
+	$(addprefix $(OBJ_PATH)/,test-common.o camera-capturer-test.o camera-capturer.o ndnrtc-utils.o ndnrtc-object.o simple-log.o cocoa-renderer.om ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-video-coder-test: undef $(addprefix $(OBJ_PATH)/,video-coder-test.o video-coder.o camera-capturer.o simple-log.o ndnrtc-utils.o test-common.o ndnrtc-object.o)  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a 
+build-video-coder-test: undef $(addprefix $(OBJ_PATH)/,video-coder-test.o video-coder.o camera-capturer.o simple-log.o ndnrtc-utils.o test-common.o ndnrtc-object.o cocoa-renderer.om ndnrtc-namespace.o)  $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main.a 
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,test-common.o video-coder-test.o video-coder.o camera-capturer.o ndnrtc-object.o ndnrtc-utils.o simple-log.o cocoa-renderer.om) \
+	$(addprefix $(OBJ_PATH)/,test-common.o video-coder-test.o video-coder.o camera-capturer.o ndnrtc-object.o ndnrtc-utils.o simple-log.o cocoa-renderer.om ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
-build-renderer-test: undef $(addprefix $(OBJ_PATH)/,renderer-test.o renderer.o camera-capturer.o ndnrtc-utils.o simple-log.o test-common.o ndnrtc-object.o cocoa-renderer.om) $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a
+build-renderer-test: undef $(addprefix $(OBJ_PATH)/,renderer-test.o renderer.o camera-capturer.o ndnrtc-utils.o simple-log.o test-common.o ndnrtc-object.o cocoa-renderer.om ndnrtc-namespace.o) $(OBJ_PATH)/libgtest-all.a $(OBJ_PATH)/libtest-main.a
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,renderer-test.o renderer.o camera-capturer.o simple-log.o test-common.o ndnrtc-utils.o ndnrtc-object.o cocoa-renderer.om) \
+	$(addprefix $(OBJ_PATH)/,renderer-test.o renderer.o camera-capturer.o simple-log.o test-common.o ndnrtc-utils.o ndnrtc-object.o cocoa-renderer.om ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
@@ -368,9 +368,9 @@ build-video-decoder-test: undef $(addprefix $(OBJ_PATH)/,video-decoder-test.o vi
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-ndnrtc-utils-test:  undef $(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-ndnrtc-utils-test:  undef $(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o ndnrtc-namespace.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o) \
+	$(addprefix $(OBJ_PATH)/,ndnrtc-utils-test.o ndnrtc-utils.o ndnrtc-object.o simple-log.o test-common.o ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	
@@ -386,9 +386,9 @@ build-loopback-full-test: undef $(addprefix $(OBJ_PATH)/,loopback-full-test.o co
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-build-ndnrtc-library-test: undef libndnrtc $(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o simple-log.o test-common.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+build-ndnrtc-library-test: undef libndnrtc $(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o simple-log.o test-common.o ndnrtc-namespace.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
 	$(GT_CXX) --std=c++0x \
-	$(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o  simple-log.o test-common.o) \
+	$(addprefix $(OBJ_PATH)/,ndnrtc-library-test.o  simple-log.o test-common.o ndnrtc-namespace.o) \
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 	

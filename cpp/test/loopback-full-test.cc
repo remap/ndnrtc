@@ -21,57 +21,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
-TEST(ReceiverChannelParams, CreateDelete)
-{
-    NdnParams *p = ReceiverChannelParams::defaultParams();
-    delete p;
-}
-TEST(ReceiverChannelParams, TestParams)
-{
-    NdnParams *p = ReceiverChannelParams::defaultParams();
-    
-    
-    { // check renrerer params
-        int width, height;
-        NdnRendererParams *ccp = static_cast<NdnRendererParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        EXPECT_EQ(0, ccp->getWindowWidth(&width));
-        EXPECT_EQ(0, ccp->getWindowHeight(&height));
-    }
-    
-    {// check video decoder params
-        int width, height, maxBitRate, startBitRate, frameRate;
-        NdnVideoCoderParams *ccp = static_cast<NdnVideoCoderParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        EXPECT_EQ(0, ccp->getFrameRate(&frameRate));
-        EXPECT_EQ(0, ccp->getMaxBitRate(&maxBitRate));
-        EXPECT_EQ(0, ccp->getStartBitRate(&startBitRate));
-        EXPECT_EQ(0, ccp->getWidth(&width));
-        EXPECT_EQ(0, ccp->getHeight(&height));
-    }
-    
-    {// check video sender params
-        VideoSenderParams *ccp = static_cast<VideoSenderParams*>(p);
-        ASSERT_NE(ccp, nullptr);
-        
-        int a;
-        char *str = (char*)malloc(256);
-        
-        EXPECT_EQ(0, ccp->getHub(&str));
-        EXPECT_EQ(0, ccp->getProducerId(&str));
-        EXPECT_EQ(0, ccp->getStreamName(&str));
-        EXPECT_EQ(0, ccp->getSegmentSize(&a));
-        EXPECT_EQ(0, ccp->getFreshnessInterval(&a));
-        
-        free(str);
-    }
-    
-    delete p;
-}
-#endif
+
 class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
 {
 public:
@@ -110,15 +60,9 @@ public:
 TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
-//    SenderChannelParams *sp = SenderChannelParams::defaultParams();
-//    ReceiverChannelParams *rp = ReceiverChannelParams::defaultParams();
-    
-//    sp->setIntParam(CameraCapturerParams::ParamNameDeviceId, 1);
-//    sp->setIntParam(VideoSenderParams::ParamNameFrameFreshnessInterval, 10);
     p.freshness = 5;
     
     NdnSenderChannel *sc = new NdnSenderChannel(p);
-//    NdnReceiverChannel *rc = new NdnReceiverChannel(rp);
     TestReceiverChannel *rc = new TestReceiverChannel(p);
     
     EXPECT_EQ(0, sc->init());

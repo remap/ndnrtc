@@ -167,7 +167,9 @@ public:
         setupWebRTCLogging();
         
         params_ = DefaultParams;
-        params_.freshness = 10;
+        params_.freshness = 5;
+        params_.streamName = "audio0";
+        params_.streamThread = "pcmu2";
         
         std::string streamAccessPrefix, userPrefix = "whatever";
         MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
@@ -315,4 +317,5 @@ TEST_F(AudioSenderTester, TestSend)
     
     EXPECT_EQ(rtpSent_, rtpDataFetched_);
     EXPECT_EQ(rtcpSent_, rtcpDataFetched_);
+    WAIT(params_.freshness*1000);
 }

@@ -114,7 +114,7 @@ int NdnSenderChannel::init()
                                          bind(&NdnSenderChannel::onRegisterFailed,
                                               this, _1));
             else
-                notifyError(RESULT_ERR, "can't get prefix for registering: %s",
+                notifyError(RESULT_WARN, "can't get prefix for registering: %s",
                             streamAccessPrefix.c_str());
         }
         else

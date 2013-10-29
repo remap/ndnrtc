@@ -41,8 +41,7 @@ namespace ndnrtc {
     };
     
     class NdnAudioReceiveChannel : public NdnAudioChannel,
-    public IAudioPacketConsumer,
-    public webrtc::Transport
+    public IAudioPacketConsumer
     {
     public:
         NdnAudioReceiveChannel(webrtc::VoiceEngine *voiceEngine):
@@ -53,9 +52,8 @@ namespace ndnrtc {
         int stop();
         
     protected:
-        // audio packet consumer
-        void onRTPPacketReceived(unsigned int len, unsigned char *data);
-        void onRTCPPacketReceived(unsigned int len, unsigned char *data);
+        virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);
+        virtual void onRTCPPacketReceived(unsigned int len, unsigned char *data);
         
     private:
         NdnAudioReceiver *audioReceiver_ = NULL;
