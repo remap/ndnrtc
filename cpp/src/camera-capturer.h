@@ -26,23 +26,24 @@ namespace ndnrtc {
         // construction/desctruction
         CameraCapturer(const ParamsStruct &params);
         ~CameraCapturer();
-        
+
         // public methods go here
         void setFrameConsumer(IRawFrameConsumer *frameConsumer){ frameConsumer_ = frameConsumer; }
-        bool isCapturing() { return (vcm_)?vcm_->CaptureStarted():false; }         
+        bool isCapturing() { return (vcm_)?vcm_->CaptureStarted():false; }
+
         int init();
         int startCapture();
         int stopCapture();
         int numberOfCaptureDevices();
         vector<std::string>* availableCaptureDevices();
         void printCapturingInfo();
-        
+
         // interface conformance - webrtc::VideoCaptureDataCallback
         void OnIncomingCapturedFrame(const int32_t id,
                                      webrtc::I420VideoFrame& videoFrame);
         void OnCaptureDelayChanged(const int32_t id,
                                    const int32_t delay);
-        
+
         // statistics
         double getCapturingFrequency() { return NdnRtcUtils::currentFrequencyMeterValue(meterId_); }
         

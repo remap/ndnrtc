@@ -180,7 +180,7 @@ TEST_F(AudioReceiverTester, TestFetch)
     params_.streamName = "audio0";
     params_.streamThread = "pcmu2";
     params_.bufferSize = 5;
-    params_.slotSize = 1000;
+    params_.slotSize = 50;
     
     NdnAudioReceiver receiver(params_);
     
@@ -207,7 +207,7 @@ TEST_F(AudioReceiverTester, TestFetch)
     EXPECT_EQ(0, voe_base_->StopReceive(channel_));
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
 
-    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, publishPacketsNum*20);
+    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, publishPacketsNum*20+500);
     EXPECT_EQ(nRTCPSent_, nRTCPReceived_);
     EXPECT_EQ(nSent_, nReceived_);
     

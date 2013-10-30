@@ -85,7 +85,8 @@ void NdnRtcLibrary::releaseParamsStruct(ParamsStruct &params)
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
 observer_(NULL),
 libraryHandle_(libHandle),
-libParams_(DefaultParams)
+libParams_(DefaultParams),
+libAudioParams_(DefaultParamsAudio)
 {
     NdnRtcUtils::sharedVoiceEngine();
 }
@@ -95,11 +96,13 @@ NdnRtcLibrary::~NdnRtcLibrary()
 }
 //******************************************************************************
 #pragma mark - public
-void NdnRtcLibrary::configure(ParamsStruct &params)
+void NdnRtcLibrary::configure(const ParamsStruct &params,
+                       const ParamsStruct &audioParams)
 {
     NdnLogger::initialize(params.logFile, params.loggingLevel);
     
     libParams_ = params;
+    libAudioParams_ = audioParams;
     notifyObserverWithState("init", "initialized with new parameters");
 }
 ParamsStruct NdnRtcLibrary::currentParams()
@@ -107,9 +110,11 @@ ParamsStruct NdnRtcLibrary::currentParams()
     return libParams_;
 }
 
-ParamsStruct NdnRtcLibrary::getDefaultParams() const
+void NdnRtcLibrary::getDefaultParams(ParamsStruct &videoParams,
+                                             ParamsStruct &audioParams) const
 {
-    return DefaultParams;
+    videoParams = DefaultParams;
+    audioParams = DefaultParamsAudio;
 }
 
 int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const
@@ -153,11 +158,15 @@ int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics 
 int NdnRtcLibrary::startPublishing(const char *username)
 {
     ParamsStruct params = libParams_;
+    ParamsStruct audioParams = libAudioParams_;
     
     if (username)
+    {
         params.producerId = username;
+        audioParams.producerId = username;
+    }
     
-    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params));
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams));
     
     sc->setObserver(this);
     
@@ -200,17 +209,20 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
 
     // setup params
     ParamsStruct params = libParams_;
+    ParamsStruct audioParams = libAudioParams_;
     
     params.producerId = conferencePrefix;
+    audioParams.producerId = conferencePrefix;
     
-    shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(params));
+    shared_ptr<NdnReceiverChannel> producer(new
+                                    NdnReceiverChannel(params, audioParams));
     
     producer->setObserver(this);
     
     if (producer->init() < 0)
         return -1;
     
-    if (producer->startFetching() < 0)
+    if (producer->startTransmission() < 0)
         return -1;
     
     Producers[string(conferencePrefix)] = producer;
@@ -232,7 +244,7 @@ int NdnRtcLibrary::leaveConference(const char *conferencePrefix)
     
     shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
     
-    if (producer->stopFetching() < 0)
+    if (producer->stopTransmission() < 0)
         notifyObserverWithError("can't leave the conference");
     
     Producers.erase(string(conferencePrefix));

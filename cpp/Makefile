@@ -316,7 +316,7 @@ $(OBJ_PATH)/%-test.o : $(TEST_PATH)/%-test.cc
 ###
 TESTOBJ = $(addprefix $(OBJ_PATH)/,$(filter-out nsthread-tasks.o ndNrtcModule.o ndNrtcObject.o ndnrtc-library.o ndnworker.o,$(CPPSRCS:%.cpp=%.o)))
 test1: 
-	echo $(TESTS)
+	echo $(TESTOBJ)
 
 build-%: undef $(OBJ_PATH)/%.o $(TESTOBJ) $(addprefix $(OBJ_PATH)/,test-common.o cocoa-renderer.om libgtest-all.a libtest-main-mac.a)
 	mkdir -p $(BIN_PATH)
@@ -327,6 +327,12 @@ build-%: undef $(OBJ_PATH)/%.o $(TESTOBJ) $(addprefix $(OBJ_PATH)/,test-common.o
 	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
+#build-audio-receiver-test: undef $(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o camera-capturer.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
+#	$(GT_CXX) --std=c++0x \
+#	$(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o camera-capturer.o) \
+#	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+#	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
+ 	
 clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))
 	rm -Rf $(wildcard $(OBJ_PATH))

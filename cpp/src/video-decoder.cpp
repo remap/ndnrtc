@@ -10,6 +10,7 @@
 //
 
 #include "video-decoder.h"
+#include "ndnrtc-utils.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -50,7 +51,7 @@ int NdnVideoDecoder::init()
 #pragma mark - intefaces realization webrtc::DecodedImageCallback
 int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 {
-    decodedImage.set_render_time_ms(TickTime::MillisecondTimestamp());
+    decodedImage.set_render_time_ms(NdnRtcUtils::millisecondTimestamp());
     
     if (frameConsumer_)
     {

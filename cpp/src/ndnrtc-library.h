@@ -62,7 +62,8 @@ namespace ndnrtc {
             }
             
             NdnRtcLibrary* (*create_ndnrtc)(void *);
-            create_ndnrtc = (NdnRtcLibrary* (*)(void*))dlsym(libHandle, "create_ndnrtc");
+            create_ndnrtc = (NdnRtcLibrary* (*)(void*))
+                    dlsym(libHandle, "create_ndnrtc");
             
             NdnRtcLibrary *libObject = create_ndnrtc(libHandle);
             
@@ -72,7 +73,8 @@ namespace ndnrtc {
         static void destroyLibraryObject(NdnRtcLibrary *libObject)
         {
             void (*destroy_ndnrtc)(NdnRtcLibrary*);
-            destroy_ndnrtc = (void (*)(NdnRtcLibrary*))dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
+            destroy_ndnrtc = (void (*)(NdnRtcLibrary*))
+                    dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
             
             destroy_ndnrtc(libObject);
         }
@@ -81,12 +83,17 @@ namespace ndnrtc {
         static void releaseParamsStruct(ParamsStruct &params);
         
         // public methods go here
-        virtual void configure(ParamsStruct &params);
+        virtual void configure(const ParamsStruct &params,
+                               const ParamsStruct &audioParams);
         virtual ParamsStruct currentParams();
         
-        virtual void setObserver(INdnRtcLibraryObserver *observer) { observer_ = observer; }
-        virtual ParamsStruct getDefaultParams() const;
-        virtual int getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const;
+        virtual void setObserver(INdnRtcLibraryObserver *observer) {
+            observer_ = observer;
+        }
+        virtual void getDefaultParams(ParamsStruct &videoParams,
+                              ParamsStruct &audioParams) const;
+        virtual int getStatistics(const char *conferencePrefix,
+                                  NdnLibStatistics &stat) const;
         
         virtual int startPublishing(const char *username);
         virtual int stopPublishing();
@@ -98,12 +105,13 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
     private:
         void *libraryHandle_;
-        ParamsStruct libParams_;
+        ParamsStruct libParams_, libAudioParams_;
         INdnRtcLibraryObserver *observer_;
         
         // private methods go here
         int notifyObserverWithError(const char *format, ...) const;
-        int notifyObserverWithState(const char *stateName, const char *format, ...) const;
+        int notifyObserverWithState(const char *stateName,
+                                    const char *format, ...) const;
         void notifyObserver(const char *state, const char *args) const;
     };
 }

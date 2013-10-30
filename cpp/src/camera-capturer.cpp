@@ -9,10 +9,11 @@
 //  Created: 8/16/13
 //
 
-#undef DEBUG
+//#undef DEBUG
 
 #include "camera-capturer.h"
 #include "ndnrtc-object.h"
+#include "ndnrtc-utils.h"
 
 #define USE_I420
 
@@ -36,6 +37,7 @@ deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),
 captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPriority))
 {
+    TRACE("");
 }
 CameraCapturer::~CameraCapturer()
 {
@@ -179,13 +181,15 @@ void CameraCapturer::printCapturingInfo()
 
 //********************************************************************************
 #pragma mark - overriden - webrtc::VideoCaptureDataCallback
-void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& videoFrame)
+void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
+                                             I420VideoFrame& videoFrame)
 {
-    if (videoFrame.render_time_ms() >= TickTime::MillisecondTimestamp()-30 &&
-        videoFrame.render_time_ms() <= TickTime::MillisecondTimestamp())
+    if (videoFrame.render_time_ms() >= NdnRtcUtils::millisecondTimestamp()-30 &&
+        videoFrame.render_time_ms() <= NdnRtcUtils::millisecondTimestamp())
         TRACE("..delayed");
     
 #ifdef USE_I420
+
     NdnRtcUtils::frequencyMeterTick(meterId_);
     
     capture_cs_->Enter();
@@ -215,6 +219,7 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id, I420VideoFrame& v
     else
         TRACE("..skipping");
 #endif
+
 }
 
 void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay)
