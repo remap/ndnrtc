@@ -20,57 +20,83 @@
 #include <sys/time.h>
 #import <modules/video_render/mac/cocoa_render_view.h>
 
-//#include "common_types.h"
-//#import "webrtc/modules/video_render//mac/cocoa_render_view.h"
-//#include "module_common_types.h"
-//#include "process_thread.h"
-//#include "tick_util.h"
-//#include "trace.h"
-//#include "video_render_defines.h"
-
-//#include "video_render.h"
+static int TotalWindows = 0;
 
 using namespace webrtc;
 
-int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, int winNum, int width, int height)
+int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int width, int height)
 {
     // In Cocoa, rendering is not done directly to a window like in Windows and Linux.
     // It is rendererd to a Subclass of NSOpenGLView
     
     // create cocoa container window
-    NSRect outWindowFrame = NSMakeRect(200, 800, width + 20, height + 20);
+    NSRect outWindowFrame = NSMakeRect(0+TotalWindows*40, 0+TotalWindows*30, width , height );
     NSWindow* outWindow = [[NSWindow alloc] initWithContentRect:outWindowFrame
-                                                      styleMask:NSTitledWindowMask
+                                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
                                                         backing:NSBackingStoreBuffered
                                                           defer:NO];
-    [outWindow orderOut:nil];
-    [outWindow setTitle:@"Cocoa Renderer"];
-    [outWindow setBackgroundColor:[NSColor blueColor]];
+    [outWindow setTitle:[NSString stringWithCString:winName encoding:NSUTF8StringEncoding]];
+    [outWindow setBackgroundColor:[NSColor blackColor]];
+    [outWindow setReleasedWhenClosed:YES];
+//    [outWindow setLevel:NSModalPanelWindowLevel];
     
     // create renderer and attach to window
-    NSRect cocoaRendererFrame = NSMakeRect(10, 10, width, height);
+    NSRect cocoaRendererFrame = NSMakeRect(0, 0, width, height);
     cocoaRenderer = [[CocoaRenderView alloc] initWithFrame:cocoaRendererFrame];
     [[outWindow contentView] addSubview:(NSView*)cocoaRenderer];
-    
+
+    [outWindow setIsVisible:YES];
+    [outWindow makeMainWindow];
     [outWindow makeKeyAndOrderFront:NSApp];
-    
+
+    TotalWindows++;
     return 0;
 }
 
-void *createCocoaRenderWindow(int winNum, int width, int height)
+void createDefaultCocoaMenu()
+{
+    NSApplication* app = [NSApplication sharedApplication];
+    NSMenu* appMenu = [[NSMenu alloc] initWithTitle:@"My App"];
+    
+    [app setMainMenu:appMenu];
+    [NSApp activateIgnoringOtherApps:YES];
+}
+
+void *createCocoaRenderWindow(const char *winName, int width, int height)
 {
     CocoaRenderView* window;
     
     try{
-        WebRtcCreateWindow(window, winNum, width, height);
+        WebRtcCreateWindow(window, winName, width, height);
     }
     catch(NSException *e)
-//    catch(std::exception &e)
     {
-//        printf("exception %s", e.what());
-        printf("ndnrtc exception: %s - %s", [e.name cStringUsingEncoding:NSUTF8StringEncoding], [e.reason cStringUsingEncoding:NSUTF8StringEncoding]);
+        printf("ndnrtc exception: %s - %s",
+               [e.name cStringUsingEncoding:NSUTF8StringEncoding],
+               [e.reason cStringUsingEncoding:NSUTF8StringEncoding]);
         return NULL;
     }
     
     return (void*)window;
+}
+
+void destroyCocoaRenderWindow(void *window)
+{
+    CocoaRenderView *cocoaView = (CocoaRenderView*)window;
+    
+    // get view's window and destroy
+    NSWindow *mainWin = cocoaView.window;
+    
+    [mainWin close];
+    TotalWindows--;
+}
+
+void setWindowTitle(const char *title, void *window)
+{
+    CocoaRenderView *cocoaView = (CocoaRenderView*)window;
+    
+    // get view's window and destroy
+    NSWindow *mainWin = cocoaView.window;
+
+    [mainWin setTitle:[NSString stringWithCString:title encoding:NSUTF8StringEncoding]];
 }

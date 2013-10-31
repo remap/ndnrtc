@@ -14,6 +14,9 @@
 
 #include "../ndnrtc-common.h"
 
-void *createCocoaRenderWindow(int winNum, int width, int height);
+void createDefaultCocoaMenu();
+void *createCocoaRenderWindow(const char *winName, int width, int height);
+void setWindowTitle(const char *title, void *window);
+void destroyCocoaRenderWindow(void *window);
 
 #endif /* defined(__ndnrtc__cocoa_renderer__) */

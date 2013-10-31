@@ -112,10 +112,6 @@ void PlayoutBuffer::releaseAcquiredFrame()
         framePointer_++;
     }
 }
-int PlayoutBuffer::skipTo(unsigned int frameNo)
-{
-    return -1;
-}
 
 //********************************************************************************
 #pragma mark - private

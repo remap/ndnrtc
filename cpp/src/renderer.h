@@ -31,12 +31,14 @@ namespace ndnrtc
         ~NdnRenderer();
         
         int init();
-        int startRendering();
+        int startRendering(const std::string &windowName = "Renderer");
+        int stopRendering();
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
     private:
         int rendererId_;
         bool initialized_ = false;
+        void *renderWindow_ = NULL;
 #warning make static in long run
         webrtc::VideoRender *render_ = nullptr;        
         webrtc::VideoRenderCallback *frameSink_ = nullptr;

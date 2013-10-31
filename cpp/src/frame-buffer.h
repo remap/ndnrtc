@@ -16,6 +16,8 @@
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
 #define NDNRTC_FRAMEBODY_MRKR 0xfb0d
 
+#define FULL_TIMEOUT_CASE_THRESHOLD 2
+
 namespace ndnrtc
 {
     // base class for storing media data for publishing in ndn
@@ -37,7 +39,8 @@ namespace ndnrtc
     };
     
     /**
-     * Class is used for packaging encoded frame metadata and actual data in a buffer.
+     * Class is used for packaging encoded frame metadata and actual data in a 
+     * buffer.
      * It has also methods for unarchiving this data into an encoded frame.
      */
     class NdnFrameData : public PacketData
@@ -46,7 +49,8 @@ namespace ndnrtc
         NdnFrameData(webrtc::EncodedImage &frame);
         ~NdnFrameData(){}
         
-        static int unpackFrame(unsigned int length_, const unsigned char *data, webrtc::EncodedImage **frame);
+        static int unpackFrame(unsigned int length_, const unsigned char *data,
+                               webrtc::EncodedImage **frame);
         
     private:
         struct FrameDataHeader {
@@ -95,7 +99,8 @@ namespace ndnrtc
             CallResultError = 0,        // error occurred
             CallResultOk = 1,           // everything went well
             CallResultNew = 2,          // first segment
-            CallResultAssembling = 3,   // frame needs more segments to complete assembling
+            CallResultAssembling = 3,   // frame needs more segments to complete
+                                        // assembling
             CallResultReady = 4,        // frame is ready for decoding
             CallResultLocked = 5,       // slot is locked
             CallResultFull = 6,         // buffer is full
@@ -107,24 +112,31 @@ namespace ndnrtc
         struct Event
         {
             enum EventType {
-                EventTypeReady          = 1<<0, // frame is ready for decoding (has been assembled)
-                EventTypeFirstSegment   = 1<<1, // first segment arrived for new slot, usually this
+                EventTypeReady          = 1<<0, // frame is ready for decoding
+                                                // (has been assembled)
+                EventTypeFirstSegment   = 1<<1, // first segment arrived for new
+                                                // slot, usually this
                 // means that segment interest pipelining can start
-                EventTypeFreeSlot       = 1<<2, // new slot free for frame assembling
-                EventTypeTimeout        = 1<<3, // triggered when timeout happens for any segment interest
-                EventTypeError          = 0
+                EventTypeFreeSlot       = 1<<2, // new slot free for frame
+                                                // assembling
+                EventTypeTimeout        = 1<<3, // triggered when timeout
+                                                // happens for any segment
+                                                // interest
+                EventTypeError          = 1<<4  // general error event
             };
             
             static const int AllEventsMask;
             
             EventType type_;            // type of the event occurred
-            unsigned int segmentNo_,    // segment number which triggered the event
+            unsigned int segmentNo_,    // segment number which triggered the
+                                        // event
             frameNo_;   // frame number
             Slot *slot_;     // corresponding slot pointer
         };
         
         /**
-         * Elementary element of a buffer - buffer slot used for assembling frames
+         * Elementary element of a buffer - buffer slot used for assembling 
+         * frames
          */
         class Slot
         {
@@ -134,11 +146,12 @@ namespace ndnrtc
              */
             enum State {
                 StateFree = 1,  // slot is free for being used
-                StateNew = 2,   // slot is being used for assembling, but has not recevied
-                // any data segments yet
-                StateAssembling = 3,    // slot is being used for assembling and already has some
-                // some data segments arrived
-                StateReady = 4, // slot assembled all the data and is ready for decoding a frame
+                StateNew = 2,   // slot is being used for assembling, but has
+                                // not recevied any data segments yet
+                StateAssembling = 3,    // slot is being used for assembling and
+                                        // already has some data segments arrived
+                StateReady = 4, // slot assembled all the data and is ready for
+                                // decoding a frame
                 StateLocked = 5 // slot is locked for decoding
             };
             
@@ -164,7 +177,8 @@ namespace ndnrtc
                 state_ = StateLocked;
             }
             void markUnlocked() { state_ = stashedState_; }
-            void markAssembling(unsigned int segmentsNum, unsigned int segmentSize) {
+            void markAssembling(unsigned int segmentsNum,
+                                unsigned int segmentSize) {
                 state_ = StateAssembling;
                 segmentSize_ = segmentSize;
                 segmentsNum_ = segmentsNum;
@@ -180,8 +194,8 @@ namespace ndnrtc
             
             /**
              * Unpacks encoded frame from received data
-             * @return  shared pointer to the encoded frame; frame buffer is still
-             *          owned by slot.
+             * @return  shared pointer to the encoded frame; frame buffer is 
+             *          still owned by slot.
              */
             shared_ptr<webrtc::EncodedImage> getFrame();
 
@@ -195,12 +209,14 @@ namespace ndnrtc
              * @param segmentNo Segment number
              * @param dataLength Length of segment data
              * @param data Segment data
-             * @details dataLength should normally be equal to segmentSize, except,
-             *          probably, for the last segment
+             * @details dataLength should normally be equal to segmentSize, 
+             *          except, probably, for the last segment
              */
-            State appendSegment(unsigned int segmentNo, unsigned int dataLength, const unsigned char *data);
+            State appendSegment(unsigned int segmentNo, unsigned int dataLength,
+                                const unsigned char *data);
             
-            static shared_ptr<string> stateToString(FrameBuffer::Slot::State state);
+            static shared_ptr<string>
+                stateToString(FrameBuffer::Slot::State state);
             
             class SlotComparator
             {
@@ -238,7 +254,7 @@ namespace ndnrtc
         ~FrameBuffer();
         
         int init(unsigned int bufferSize, unsigned int slotSize);
-        int flush(); // flushes buffer (except locked frames)
+        void flush(); // flushes buffer (except locked frames)
         /**
          * Releases currently locked waiting threads
          */
@@ -252,7 +268,8 @@ namespace ndnrtc
          *                  call is blocking unles new event received.
          * @return Occurred event instance
          */
-        Event waitForEvents(int &eventsMask, unsigned int timeout = 0xffffffff);
+        Event waitForEvents(int &eventsMask,
+                            unsigned int timeout = 0xffffffff);
         
         /**
          * Books slot for assembling a frame. Buffer books slot only if there is at
@@ -287,20 +304,25 @@ namespace ndnrtc
          * Marks slot as being assembled - when first segment arrived (in order to initialize slot
          * buffer properly)
          */
-        void markSlotAssembling(unsigned int frameNumber, unsigned int totalSegments, unsigned int segmentSize);
+        void markSlotAssembling(unsigned int frameNumber,
+                                unsigned int totalSegments,
+                                unsigned int segmentSize);
         
         /**
          * Appends segment to the slot. Triggers defferent events according to situation
          * @param frameNumber Number of the frame
          * @param segmentNumber Number of the frame's segment
          */
-        CallResult appendSegment(unsigned int frameNumber, unsigned int segmentNumber,
-                                 unsigned int dataLength, const unsigned char *data);
+        CallResult appendSegment(unsigned int frameNumber,
+                                 unsigned int segmentNumber,
+                                 unsigned int dataLength,
+                                 const unsigned char *data);
         
         /**
-         * Notifies awaiting thread that the arriaval of a segment of the booked slot was timeouted
+         * Notifies awaiting thread that the arrival of a segment of the booked slot was timeouted
          */
-        void notifySegmentTimeout(unsigned int frameNumber, unsigned int segmentNumber);
+        void notifySegmentTimeout(unsigned int frameNumber,
+                                  unsigned int segmentNumber);
         
         /**
          * Returns state of slot for the specified frame number
@@ -332,17 +354,34 @@ namespace ndnrtc
         /**
          * Returns number of timeouts occurred since last flush
          */
-        unsigned int getTimeoutsNumber() { return nTimeouts_; }
+        unsigned int getTimeoutsNumber() { return timeoutSegments_.size(); }
         
     private:
-        bool forcedRelease_;
+        bool forcedRelease_,
+        shouldCheckFullBufferTimeout_; // this flag indicates state when all
+                                       // the slots are started to timeout. this
+                                       // can happen when suddenly producer
+                                       // becomes unavailable. in case when full
+                                       // buffer timeout event occurs, frame
+                                       // buffer generates EventTypeTimeout
+                                       // event with frame number equals -1
         unsigned int bufferSize_, slotSize_;
+        unsigned int lastTimeoutFrameNo_, fullTimeoutCase_ = 0;
         std::vector<shared_ptr<Slot>> freeSlots_;
         std::map<unsigned int, shared_ptr<Slot>> frameSlotMapping_;
+        std::map<Slot*, unsigned int> timeoutSlots_ DEPRECATED; // keeps track of currently
+                                                     // timeouted slots and number
+                                                     // of timeout events occurred
+                                                     // to them
 
         // statistics
         std::map<Slot::State, unsigned int> statistics_; // stores number of frames in each state
-        unsigned int nTimeouts_;
+        unsigned int nTimeouts_ DEPRECATED;
+        // stores number of timeouts for specific segment. index of this map is
+        // made by concatenating frame number and segment number together
+        // (assuming that segment number can't be longer than 3-digit number).
+        // i.e. map_index = (uint64_t)frame_no * 1000 + segment_no
+        std::map<uint64_t, unsigned int> timeoutSegments_;
         
         webrtc::CriticalSectionWrapper &syncCs_;
         webrtc::EventWrapper &bufferEvent_;
@@ -351,8 +390,12 @@ namespace ndnrtc
         std::list<Event> pendingEvents_;
         webrtc::RWLockWrapper &bufferEventsRWLock_;
         
-        void notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo, FrameBuffer::Event::EventType eType, Slot *slot);
-        CallResult getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot, bool remove = false);
+        void notifyBufferEventOccurred(unsigned int frameNo,
+                                       unsigned int segmentNo,
+                                       FrameBuffer::Event::EventType eType,
+                                       Slot *slot);
+        CallResult getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot,
+                                bool remove = false);
         
         void updateStat(Slot::State state, int change);
     };

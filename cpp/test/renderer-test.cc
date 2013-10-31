@@ -10,12 +10,73 @@
 
 #include "test-common.h"
 #include "renderer.h"
+#import "objc/cocoa-renderer.h"
 
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
+TEST(CocoaRenderWindow, TestCreateDestroy)
+{
+    void *win = createCocoaRenderWindow("NoName", 640, 480);
+    
+    cout << "you should be able to see black window on your screen" << endl;
+
+    WAIT(2000);
+    destroyCocoaRenderWindow(win);
+}
+
+TEST(CocoaRenderWindow, TestDestroyTwice)
+{
+    void *win = createCocoaRenderWindow("NoName", 640, 480);
+    
+    WAIT(200);
+    destroyCocoaRenderWindow(win);
+    destroyCocoaRenderWindow(win);
+}
+
+TEST(CocoaRenderWindow, TestChangeTitle)
+{
+    void *win = createCocoaRenderWindow("NoName", 640, 480);
+    
+    cout << "you should be able to see black window with changing titles" << endl;
+    
+    WAIT(500);
+    setWindowTitle("Title 1", win);
+    WAIT(500);
+    setWindowTitle("Title 2", win);
+    WAIT(500);
+    setWindowTitle("Title 3", win);
+    WAIT(500);
+    setWindowTitle("Title 4", win);
+    WAIT(500);
+    setWindowTitle("Title 5", win);
+
+    destroyCocoaRenderWindow(win);
+}
+
+TEST(CocoaRenderWindow, TestCreateSeveral)
+{
+    int n = 10;
+    void *wins[n];
+    
+    cout << "creating 10 window..." << endl;
+    
+    for (int i = 0; i < n; i++)
+    {
+        wins[i] = createCocoaRenderWindow("Window", 640, 480);
+        WAIT(200);
+    }
+
+    WAIT(1000);
+    
+    for (int i = 0; i < n; i++)
+    {
+        destroyCocoaRenderWindow(wins[i]);
+        WAIT(200);
+    }
+}
 //********************************************************************************
 /**
  * @name NdnRenderer class tests
@@ -88,4 +149,17 @@ TEST_F(NdnRendererTester, TestBadInit)
         
         delete nr;
     }
+}
+
+TEST_F(NdnRendererTester, TestInitAndStart)
+{
+    NdnRenderer r(0,p_);
+    
+    r.init();
+    WAIT(1000);
+    
+    r.startRendering("Hello");
+    WAIT(1000);
+    
+    r.stopRendering();
 }

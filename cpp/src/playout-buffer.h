@@ -31,15 +31,7 @@ namespace ndnrtc
         FrameBuffer::Slot *acquireNextSlot(bool incCounter = false);
         void releaseAcquiredFrame();
         
-        /**
-         * Moves frame pointer forward and frees skipped frames to be re-used by frame buffer
-         * @param   frameNo Frame number to wich skipping is done. Frame can be retrieved by calling
-         *          popFrame() after this call.
-         * @return  0 if everything is ok, negative value if can't skip to the specified frame number
-         *          in this case, skipping is done till the latest frame.
-         */
-        int skipTo(unsigned int frameNo);
-        
+        int moveTo(unsigned int frameNo){ return framePointer_ = frameNo; }
         unsigned int framePointer() { return framePointer_; }
         
     private:

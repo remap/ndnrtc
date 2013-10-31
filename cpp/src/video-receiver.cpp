@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#undef NDN_TRACE
+
 #include "video-receiver.h"
 #include "ndnrtc-utils.h"
 
@@ -33,7 +35,6 @@ frameConsumer_(nullptr)
 
 NdnVideoReceiver::~NdnVideoReceiver()
 {
-    stopFetching();
 }
 
 //******************************************************************************
@@ -77,7 +78,9 @@ int NdnVideoReceiver::stopFetching()
 {
     TRACE("stop fetching");
   
-    NdnMediaReceiver::stopFetching();
+    if (RESULT_FAIL(NdnMediaReceiver::stopFetching()))
+        return RESULT_ERR;
+        
     
     playout_ = false;
     playoutThread_.SetNotAlive();

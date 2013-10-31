@@ -28,13 +28,14 @@ TEST(NdnRtcLibraryTest, CreateDelete)
 {
     NdnRtcLibrary *libObject = NdnRtcLibrary::instantiateLibraryObject(LIB_FNAME);
     
-    EXPECT_NE(NULL, (int64_t)libObject);
+    EXPECT_FALSE(NULL == libObject);
     
     if (libObject)
         NdnRtcLibrary::destroyLibraryObject(libObject);
 }
 
 class NdnRtcLibraryTester : public INdnRtcLibraryObserver,
+public UnitTestHelperNdnNetwork,
 public ::testing::Test
 {
 public:
@@ -56,6 +57,7 @@ public:
         receivedArgs_ = "";
         
         library_ = NdnRtcLibrary::instantiateLibraryObject(LIB_FNAME);
+        library_->setObserver(this);
         
         ASSERT_NE(nullptr, library_);
     }
@@ -75,5 +77,36 @@ protected:
 
 TEST_F(NdnRtcLibraryTester, TestConfigure)
 {
-//    NdnLibParams params ;
+}
+#if 0
+TEST_F(NdnRtcLibraryTester, TestStartPublishingTwice)
+{
+    ASSERT_NO_THROW(
+                    library_->startPublishing("testuser");
+                    WAIT(3000);
+                    library_->startPublishing("testuser");
+                    WAIT(3000);
+                    library_->startPublishing("testuser2");
+                    WAIT(3000);
+                    library_->stopPublishing();
+    );
+}
+
+TEST_F(NdnRtcLibraryTester, TestStartStop)
+{
+    ASSERT_NO_THROW(
+                    library_->startPublishing("testuser");
+                    library_->stopPublishing();
+                    );
+}
+#endif
+TEST_F(NdnRtcLibraryTester, TestEmptyUsername)
+{
+    EXPECT_EQ(RESULT_ERR, library_->startPublishing(""));
+    EXPECT_STREQ("error", receivedState_.c_str());
+    
+    receivedState_ = "";
+    
+    EXPECT_EQ(RESULT_ERR, library_->joinConference(""));
+    EXPECT_STREQ("error", receivedState_.c_str());
 }

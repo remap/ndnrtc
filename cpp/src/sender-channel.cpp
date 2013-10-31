@@ -218,7 +218,7 @@ int NdnSenderChannel::startTransmission()
     if (!processThread_.Start(tid))
         return notifyError(RESULT_ERR, "can't start processing thread");
     
-    if (RESULT_FAIL(localRender_->startRendering()))
+    if (RESULT_FAIL(localRender_->startRendering("Local render")))
         return notifyError(RESULT_ERR, "can't start render");
     
     if (RESULT_FAIL(cc_->startCapture()))
@@ -245,7 +245,8 @@ int NdnSenderChannel::stopTransmission()
     
     if (!processThread_.Stop())
         return notifyError(RESULT_ERR, "can't stop processing thread");
-    
+
+    localRender_->stopRendering();
     audioSendChannel_->stop();
     
     isTransmitting_ = false;

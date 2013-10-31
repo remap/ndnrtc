@@ -65,7 +65,7 @@ int NdnReceiverChannel::startTransmission()
     
     unsigned int tid = 1;
     
-    if (RESULT_FAIL(localRender_->startRendering()))
+    if (RESULT_FAIL(localRender_->startRendering(string(params_.producerId))))
         return notifyError(RESULT_ERR, "can't start render");
     
     if (RESULT_FAIL(receiver_->startFetching()))
@@ -84,6 +84,7 @@ int NdnReceiverChannel::stopTransmission()
     if (RESULT_FAIL(res))
         return res;
     
+    localRender_->stopRendering();
     receiver_->stopFetching();
     audioReceiveChannel_->stop();
     

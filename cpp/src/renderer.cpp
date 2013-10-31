@@ -29,10 +29,7 @@ rendererId_(rendererId)
 }
 NdnRenderer::~NdnRenderer()
 {
-    if (render_)
-        render_->StopRender(rendererId_);
-    
-    VideoRender::DestroyVideoRender(render_);
+    stopRendering();
 }
 //********************************************************************************
 #pragma mark - public
@@ -45,7 +42,8 @@ int NdnRenderer::init()
     unsigned int height = ParamsStruct::validateLE(params_.renderHeight, MaxHeight,
                                                 res, DefaultParams.renderHeight);
     
-    render_ = VideoRender::CreateVideoRender(rendererId_, createCocoaRenderWindow(rendererId_, width, height), false, kRenderCocoa);
+    renderWindow_ = createCocoaRenderWindow("", width, height);
+    render_ = VideoRender::CreateVideoRender(rendererId_, renderWindow_, false, kRenderCocoa);
     
     if (render_ == nullptr)
         return notifyError(-1, "can't initialize renderer");
@@ -58,14 +56,31 @@ int NdnRenderer::init()
     
     return res;
 }
-int NdnRenderer::startRendering()
+int NdnRenderer::startRendering(const string &windowName)
 {
+    setWindowTitle(windowName.c_str(), renderWindow_);
+    
     if (render_->StartRender(rendererId_) < 0)
         return notifyError(RESULT_ERR, "can't start rendering");
     
     initialized_ = true;
     
     return 0;
+}
+int NdnRenderer::stopRendering()
+{
+    if (render_)
+    {
+        render_->StopRender(rendererId_);
+        VideoRender::DestroyVideoRender(render_);
+        render_ = NULL;
+    }
+    
+    if (renderWindow_)
+    {
+        destroyCocoaRenderWindow(renderWindow_);
+        renderWindow_ = NULL;
+    }
 }
 //********************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer

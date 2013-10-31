@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#undef NDN_LOGGING
+//#undef NDN_LOGGING
 //#undef DEBUG
 
 #include "frame-buffer.h"
@@ -257,10 +257,10 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
     return 0;
 }
 
-int FrameBuffer::flush()
+void FrameBuffer::flush()
 {
-    bufferEvent_.Set();
-    bufferEvent_.Reset();
+//    bufferEvent_.Set();
+//    bufferEvent_.Reset();
     
     syncCs_.Enter();
     for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
@@ -272,15 +272,16 @@ int FrameBuffer::flush()
             
             freeSlots_.push_back(slot);
             slot->markFree();
-            frameSlotMapping_.erase(it);
+//            frameSlotMapping_.erase(it);
             notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
             
             updateStat(slot->getState(), 1);
         }
     }
+    fullTimeoutCase_ = 0;
+    timeoutSegments_.clear();
+    frameSlotMapping_.clear();
     syncCs_.Leave();
-    
-    return 0;
 }
 
 void FrameBuffer::release()
@@ -399,6 +400,11 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
     {
         if (slot->getState() == Slot::StateAssembling)
         {
+            uint64_t segmentId = (uint64_t)frameNumber*1000+segmentNumber;
+            
+            timeoutSegments_.erase(segmentId);
+            fullTimeoutCase_ = 0;
+            
             res = CallResultAssembling;
             updateStat(slot->getState(), -1);
             
@@ -444,7 +450,35 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
     {
+        uint64_t segmentId = (uint64_t)frameNumber*1000+segmentNumber;
+        
+        if (timeoutSegments_.find(segmentId) == timeoutSegments_.end())
+            timeoutSegments_[segmentId] = 0;
+
+        timeoutSegments_[segmentId]++;
         nTimeouts_++;
+        
+        // if the number of timeouted slots equals buffer size - setup full
+        // buffer checking
+        if (abs((long)lastTimeoutFrameNo_-(long)frameNumber+1) == bufferSize_)
+        {
+            fullTimeoutCase_++;
+            TRACE("full timeout case %d", fullTimeoutCase_);
+        }
+        
+        TRACE("timeout frame %d", frameNumber);
+        lastTimeoutFrameNo_ = frameNumber;
+        
+        // we encoutered full timeout event critical number of times -
+        // generate full timeout event (by setting -1 to framenumber and
+        // segment number)
+        if (fullTimeoutCase_ >= FULL_TIMEOUT_CASE_THRESHOLD)
+        {
+            frameNumber = (unsigned int)-1;
+            segmentNumber = (unsigned)-1;
+            TRACE("full timeout %d %d", frameNumber, segmentNumber);
+        }
+        
         notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeTimeout, slot.get());
     }
     else

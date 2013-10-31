@@ -29,7 +29,7 @@ paramSet.setStringParam(paramName, string(paramValue));\
 using namespace ndnrtc;
 using namespace std;
 
-static shared_ptr<NdnSenderChannel> SenderChannel;
+static shared_ptr<NdnSenderChannel> SenderChannel(nullptr);
 static map<string, shared_ptr<NdnReceiverChannel>> Producers;
 
 //********************************************************************************
@@ -162,9 +162,15 @@ int NdnRtcLibrary::startPublishing(const char *username)
     
     if (username)
     {
+        if (strcmp(username, "") == 0)
+            return notifyObserverWithError("username cannot be empty string");
+        
         params.producerId = username;
         audioParams.producerId = username;
     }
+    
+    if (SenderChannel.get())
+        stopPublishing();
     
     shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams));
     
@@ -183,8 +189,7 @@ int NdnRtcLibrary::startPublishing(const char *username)
     MediaSender::getStreamFramePrefix(params, framePrefix);
     
     return notifyObserverWithState("transmitting",
-                                   "started video translation under the user \
-                                   prefix: %s, video stream prefix: %s",
+                                   "started video translation under the user prefix: %s, video stream prefix: %s",
                                    producerPrefix.c_str(),
                                    framePrefix.c_str());
 }
@@ -202,11 +207,14 @@ int NdnRtcLibrary::stopPublishing()
 
 int NdnRtcLibrary::joinConference(const char *conferencePrefix)
 {
+    if (strcmp(conferencePrefix, "") == 0)
+        return notifyObserverWithError("username cannot be empty string");
+ 
     TRACE("join conference with prefix %s", conferencePrefix);
     
     if (Producers.find(string(conferencePrefix)) != Producers.end())
         return notifyObserverWithError("already joined conference");
-
+    
     // setup params
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
@@ -272,7 +280,7 @@ int NdnRtcLibrary::notifyObserverWithError(const char *format, ...) const
     
     notifyObserver("error", emsg);
     
-    return -1;
+    return RESULT_ERR;
 }
 int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *format, ...) const
 {
@@ -286,7 +294,7 @@ int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *fo
     
     notifyObserver(stateName, msg);
     
-    return 0;
+    return RESULT_OK;
 }
 void NdnRtcLibrary::notifyObserver(const char *state, const char *args) const
 {

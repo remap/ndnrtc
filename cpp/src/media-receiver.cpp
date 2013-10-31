@@ -31,7 +31,8 @@ face_(nullptr)
 
 NdnMediaReceiver::~NdnMediaReceiver()
 {
-    stopFetching();
+    if (mode_ != ReceiverModeCreated && mode_ != ReceiverModeInit)
+        stopFetching();
 }
 
 //******************************************************************************
@@ -106,13 +107,13 @@ int NdnMediaReceiver::stopFetching()
     TRACE("stop fetching");
     
     if (mode_ == ReceiverModeCreated)
-        return 0;
+        return notifyError(RESULT_ERR, "media receiver was not initialized");
     
     if (mode_ == ReceiverModeInit)
     {
         TRACE("return on init");
         frameBuffer_.release();
-        return 0;
+        return notifyError(RESULT_ERR, "media receiver was not started");
     }
     
     assemblingThread_.SetNotAlive();
@@ -126,7 +127,7 @@ int NdnMediaReceiver::stopFetching()
     
     mode_ = ReceiverModeInit;
     
-    return 0;
+    return RESULT_OK;
 }
 
 //******************************************************************************
@@ -156,12 +157,12 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
         
         if (isLate(frameNo))
         {
-//            TRACE("got timeout for late frame %d-%d", frameNo, segmentNo);
+            TRACE("got timeout for late frame %d-%d", frameNo, segmentNo);
             frameBuffer_.markSlotFree(frameNo);
         }
         else
         {
-//            TRACE("notifying slot %d (%d)", frameNo, segmentNo);
+            TRACE("notifying slot %d (%d)", frameNo, segmentNo);
             frameBuffer_.notifySegmentTimeout(frameNo, segmentNo);
         }
     }
@@ -301,8 +302,20 @@ bool NdnMediaReceiver::processInterests()
                 }
                 else
                 {
+                    if (mode_ == ReceiverModeFetch)
+                    {
+                        // check for full timeout event
+                        if (ev.frameNo_ == (unsigned int)-1 &&
+                            ev.segmentNo_ == (unsigned int)-1)
+                        {
+                            WARN("full timeout event occured. switching back to chasing mode");
+                            frameBuffer_.flush();
+                            switchToMode(ReceiverModeStarted);
+                        }
+                        else
 //                    TRACE("framebuffer timeout - reissuing");
-                    requestSegment(ev.frameNo_,ev.segmentNo_);
+                            requestSegment(ev.frameNo_,ev.segmentNo_);
+                    }
                 }
             }
                 break;
@@ -359,7 +372,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeInit:
         {
             // setup pipeliner thread params
-            pipelinerFrameNo_ = 0;
             pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
         }
             break;
@@ -381,6 +393,8 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeStarted:
         {
             INFO("switched to mode: Started");
+            pipelinerFrameNo_ = 0;
+            playoutBuffer_.moveTo(pipelinerFrameNo_);
         }
             break;
         case ReceiverModeChase:
