@@ -46,7 +46,7 @@ int PlayoutBuffer::init(ndnrtc::FrameBuffer *buffer)
     }
     else
     {
-        ERR("can't initialize playout buffer without frame buffer");
+        NDNERROR("can't initialize playout buffer without frame buffer");
         return -1;
     }
     return 0;
@@ -71,7 +71,7 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
     
     if (!frameBuffer_)
     {
-        ERR("playout buffer was not initialized");
+        NDNERROR("playout buffer was not initialized");
         return slot;
     }
     

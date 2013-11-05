@@ -144,7 +144,8 @@ namespace ndnrtc {
         virtual void onErrorOccurred(const char *errorMessage);
         
     protected:
-        // protected attributes go here
+        // critical section for observer's callbacks
+        webrtc::CriticalSectionWrapper &callbackSync_;
         INdnRtcObjectObserver *observer_ = nullptr;
         ParamsStruct params_;
         

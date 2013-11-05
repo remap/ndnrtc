@@ -13,9 +13,9 @@
 //#define NDN_WARN
 //#define NDN_ERROR
 
-#define NDN_DETAILED
-#define NDN_TRACE
-#define NDN_DEBUG
+//#define NDN_DETAILED
+//#define NDN_TRACE
+//#define NDN_DEBUG
 
 #include "video-sender.h"
 #include "ndnlib.h"

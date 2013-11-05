@@ -41,6 +41,7 @@ captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPr
 }
 CameraCapturer::~CameraCapturer()
 {
+    TRACE("");
     if (vcm_)
     {
         if (isCapturing())
@@ -84,6 +85,8 @@ int CameraCapturer::init()
     
     meterId_ = NdnRtcUtils::setupFrequencyMeter();
     
+    INFO("capturing initialized with device: %s", deviceUniqueName);
+    
     return 0;
 }
 int CameraCapturer::startCapture()
@@ -99,19 +102,22 @@ int CameraCapturer::startCapture()
     if (!vcm_->CaptureStarted())
         return notifyError(-1, "capture failed to start");
     
-    INFO("started camera capture");
+    INFO("started capturing");
     
     return 0;
 }
 int CameraCapturer::stopCapture()
 {
-    TRACE("");
+    DBG("Stopping capture");
+    vcm_->DeRegisterCaptureDataCallback();
     vcm_->StopCapture();
     captureThread_.SetNotAlive();
     captureEvent_.Set();
     
     if (!captureThread_.Stop())
         return notifyError(-1, "can't stop capturing thread");
+    
+    INFO("capturing stopped");
     
     return 0;
 }
@@ -208,7 +214,7 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
     
     if (ConvertFromI420(videoFrame, kARGB, 0, frameBuffer) < 0)
     {
-        ERR("can't convert from I420 to RGB");
+        NDNERROR("can't convert from I420 to RGB");
         return;
     }
     
@@ -224,7 +230,7 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
 
 void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay)
 {
-    TRACE("capture delay changed: %d", delay);
+    DBG("capture delay changed: %d", delay);
 }
 
 //********************************************************************************
@@ -232,6 +238,7 @@ void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay
 bool CameraCapturer::process()
 {
     TRACE("");
+    
     if (captureEvent_.Wait(100) == kEventSignaled) {
         deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize()) {
@@ -241,7 +248,6 @@ bool CameraCapturer::process()
             capturedFrame_.ResetSize();
             capture_cs_->Leave();
             
-            TRACE("delivering frame");
             if (frameConsumer_)
                 frameConsumer_->onDeliverFrame(deliverFrame_);
         }

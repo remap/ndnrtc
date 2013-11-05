@@ -11,6 +11,7 @@
 
 #include "ndnrtc-object.h"
 
+using namespace webrtc;
 using namespace ndnrtc;
 using namespace std;
 
@@ -217,7 +218,8 @@ NdnParams::Parameter* NdnParams::getParam(const std::string &name) const
  */
 #pragma mark - construction/destruction
 NdnRtcObject::NdnRtcObject(const ParamsStruct &params):
-params_(params)
+params_(params),
+callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 {
     
 }
@@ -301,10 +303,12 @@ string NdnParams::description() const
 #pragma mark - intefaces realization - INdnRtcObjectObserver
 void NdnRtcObject::onErrorOccurred(const char *errorMessage)
 {
+    callbackSync_.Enter();
     if (hasObserver())
         observer_->onErrorOccurred(errorMessage);
     else
-        ERR("error occurred: %s", errorMessage);
+        NDNERROR("error occurred: %s", errorMessage);
+    callbackSync_.Leave();
 }
 
 //********************************************************************************
@@ -325,7 +329,7 @@ int NdnRtcObject::notifyError(const int ecode, const char *format, ...)
         observer_->onErrorOccurred(emsg);
     }
     else
-        ERR("%s", emsg);
+        NDNERROR("%s", emsg);
     
     return ecode;
 }

@@ -39,7 +39,7 @@ static void initializer(int argc, char** argv, char** envp) {
     static int initialized = 0;
     if (!initialized) {
         initialized = 1;
-        NdnLogger::initialize("ndnrtc.log", NdnLoggerDetailLevelAll);
+        NdnLogger::initialize(DefaultParams.logFile, DefaultParams.loggingLevel);
         INFO("module loaded");
     }
 }
@@ -88,10 +88,12 @@ libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
+    TRACE("");    
     NdnRtcUtils::sharedVoiceEngine();
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
+    TRACE("");
     NdnRtcUtils::releaseVoiceEngine();
 }
 //******************************************************************************
@@ -99,15 +101,44 @@ NdnRtcLibrary::~NdnRtcLibrary()
 void NdnRtcLibrary::configure(const ParamsStruct &params,
                        const ParamsStruct &audioParams)
 {
-    NdnLogger::initialize(params.logFile, params.loggingLevel);
+    ParamsStruct validatedVideoParams, validatedAudioParams;
     
-    libParams_ = params;
-    libAudioParams_ = audioParams;
-    notifyObserverWithState("init", "initialized with new parameters");
+    bool wasModified = false;
+    int res = ParamsStruct::validateVideoParams(params, validatedVideoParams);
+    
+    if (RESULT_FAIL(res))
+    {
+        notifyObserverWithError("error", "bad video parameteres");
+        return;
+    }
+    
+    wasModified = RESULT_WARNING(res);
+    res = ParamsStruct::validateAudioParams(audioParams, validatedAudioParams);
+    
+    if (RESULT_FAIL(res))
+    {
+        notifyObserverWithError("bad audio parameters");
+        return;
+    }
+    
+    wasModified |= RESULT_WARNING(res);
+    
+    NdnLogger::initialize(validatedVideoParams.logFile, validatedVideoParams.loggingLevel);
+    
+    libParams_ = validatedVideoParams;
+    libAudioParams_ = validatedAudioParams;
+    
+    if (wasModified)
+        notifyObserverWithState("warn", "some parameters were malformed. using default"
+                                " instead");
+    else
+        notifyObserverWithState("init", "initialized with new parameters");
 }
-ParamsStruct NdnRtcLibrary::currentParams()
+void NdnRtcLibrary::currentParams(ParamsStruct &params,
+                                  ParamsStruct &audioParams)
 {
-    return libParams_;
+    params = libParams_;
+    audioParams = libAudioParams_;
 }
 
 void NdnRtcLibrary::getDefaultParams(ParamsStruct &videoParams,
@@ -176,10 +207,10 @@ int NdnRtcLibrary::startPublishing(const char *username)
     
     sc->setObserver(this);
     
-    if (sc->init() < 0)
+    if (RESULT_FAIL(sc->init()))
         return -1;
     
-    if (sc->startTransmission() < 0)
+    if (RESULT_FAIL(sc->startTransmission()))
         return -1;
     
     SenderChannel = sc;
@@ -189,9 +220,8 @@ int NdnRtcLibrary::startPublishing(const char *username)
     MediaSender::getStreamFramePrefix(params, framePrefix);
     
     return notifyObserverWithState("transmitting",
-                                   "started video translation under the user prefix: %s, video stream prefix: %s",
-                                   producerPrefix.c_str(),
-                                   framePrefix.c_str());
+                                   "started publishing under the user prefix: %s",
+                                   producerPrefix.c_str());
 }
 
 int NdnRtcLibrary::stopPublishing()
@@ -227,19 +257,19 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
     
     producer->setObserver(this);
     
-    if (producer->init() < 0)
+    if (RESULT_FAIL(producer->init()))
         return -1;
     
-    if (producer->startTransmission() < 0)
+    if (RESULT_FAIL(producer->startTransmission()))
         return -1;
     
     Producers[string(conferencePrefix)] = producer;
     
     string producerPrefix;
-    MediaSender::getStreamFramePrefix(params, producerPrefix);
+    MediaSender::getUserPrefix(params, producerPrefix);
     
     return notifyObserverWithState("fetching",
-                                   "fetching video from the prefix %s",
+                                   "fetching from the user %s",
                                    producerPrefix.c_str());
 }
 
@@ -262,7 +292,6 @@ int NdnRtcLibrary::leaveConference(const char *conferencePrefix)
 
 void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 {
-    TRACE("error occurred");
     notifyObserverWithError(errorMessage);
 }
 

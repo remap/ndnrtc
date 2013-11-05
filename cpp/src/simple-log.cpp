@@ -112,7 +112,8 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
         char *buf = sharedInstance->getBuffer();
         
         sharedInstance->flushBuffer(buf);
-        sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level), fName, tempBuf);
+        sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level),
+                (level <= NdnLoggerLevelDebug)? fName: "" , tempBuf);
         
         sharedInstance->log(buf);
     }
@@ -153,7 +154,7 @@ void NdnLogger::log(const char *str)
     // make exlusive by semaphores
     pthread_mutex_lock(&logMutex_);
     fprintf(outLogStream_, "%lld: %s\n", millisecondTimestamp(), str);
-
+    
     if (outLogStream_ != stdout)
         fflush(outLogStream_);
     

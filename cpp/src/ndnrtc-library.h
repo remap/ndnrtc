@@ -57,7 +57,7 @@ namespace ndnrtc {
             
             if (libHandle == NULL)
             {
-                ERR("error while loading NdnRTC library: %s", dlerror());
+                NDNERROR("error while loading NdnRTC library: %s", dlerror());
                 return NULL;
             }
             
@@ -85,7 +85,8 @@ namespace ndnrtc {
         // public methods go here
         virtual void configure(const ParamsStruct &params,
                                const ParamsStruct &audioParams);
-        virtual ParamsStruct currentParams();
+        virtual void currentParams(ParamsStruct &params,
+                                   ParamsStruct &audioParams);
         
         virtual void setObserver(INdnRtcLibraryObserver *observer) {
             observer_ = observer;

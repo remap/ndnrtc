@@ -167,7 +167,6 @@ public:
         setupWebRTCLogging();
         
         params_ = DefaultParamsAudio;
-        params_.freshness = 5;
         params_.streamName = "audio-sender-test";
         
         std::string streamAccessPrefix, userPrefix = "whatever";
@@ -206,7 +205,7 @@ public:
     
     int SendPacket(int channel, const void *data, int len)
     {
-        cout << "publish rtp packet " << len endl;
+//        cout << "publish rtp packet " << len << endl;
         rtpSent_++;
         sender_->publishRTPAudioPacket(len, (unsigned char*)data);
         
@@ -214,7 +213,7 @@ public:
     }
     int SendRTCPPacket(int channel, const void *data, int len)
     {
-        cout << "publish rtcp packet " << len << endl;
+//        cout << "publish rtcp packet " << len << endl;
         rtcpSent_++;
         sender_->publishRTCPAudioPacket(len, (unsigned char*)data);
 
@@ -261,7 +260,9 @@ protected:
 
 TEST_F(AudioSenderTester, TestSend)
 {
-    int nPackets = 500;
+    int nPackets = 100;
+    
+    params_.freshness =  (int)(((double)20*(double)nPackets*2)/1000.);
     
     sender_->init(ndnTransport_);
     channel_ = voe_base_->CreateChannel();
@@ -310,7 +311,7 @@ TEST_F(AudioSenderTester, TestSend)
     }
     
     EXPECT_TRUE_WAIT(rtpDataFetched_ == rtpSent_ &&
-                     rtcpDataFetched_ == rtcpSent_, 20*nPackets);
+                     rtcpDataFetched_ == rtcpSent_, 2*20*nPackets);
     
     UnitTestHelperNdnNetwork::stopProcessingNdn();
     

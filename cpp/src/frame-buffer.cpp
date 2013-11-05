@@ -156,7 +156,7 @@ shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
     if ((state_ == StateReady ||
          (state_ == StateLocked && stashedState_ == StateReady)) &&
         NdnFrameData::unpackFrame(assembledDataSize_, data_, &frame) < 0)
-        ERR("error unpacking frame");
+        NDNERROR("error unpacking frame");
     
     return shared_ptr<EncodedImage>(frame);
 }
@@ -173,7 +173,7 @@ NdnAudioData::AudioPacket FrameBuffer::Slot::getAudioFrame()
             WARN("error unpacking audio");
     }
     else
-        ERR("frame is not ready. state: %d", state_);
+        NDNERROR("frame is not ready. state: %d", state_);
     
     return packet;
 }
@@ -185,7 +185,7 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
 {
     if (!(state_ == StateAssembling))
     {
-        ERR("slot is not in a writeable state - %s", Slot::stateToString(state_)->c_str());
+        NDNERROR("slot is not in a writeable state - %s", Slot::stateToString(state_)->c_str());
         return state_;
     }
     
@@ -236,7 +236,7 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
 {
     if (!bufferSize || !slotSize)
     {
-        ERR("bad arguments");
+        NDNERROR("bad arguments");
         return -1;
     }
     

@@ -221,7 +221,6 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                     unsigned int segmentsNum =
                     NdnRtcUtils::segmentNumber(finalBlockID)+1;
 
-                    
                     frameBuffer_.markSlotAssembling(frameNo, segmentsNum, producerSegmentSize_);
                 }
                 
@@ -321,12 +320,12 @@ bool NdnMediaReceiver::processInterests()
                 break;
             case FrameBuffer::Event::EventTypeError:
             {
-                ERR("got error event on frame buffer");
+                NDNERROR("got error event on frame buffer");
                 res = false; // stop pipelining
             }
                 break;
             default:
-                ERR("got unexpected event: %d. ignoring", ev.type_);
+                NDNERROR("got unexpected event: %d. ignoring", ev.type_);
                 break;
         } // switch
     }
@@ -348,7 +347,7 @@ bool NdnMediaReceiver::processAssembling()
         }
         catch(std::exception &e)
         {
-            ERR("got exception from ndn-library while processing events: %s",
+            NDNERROR("got exception from ndn-library while processing events: %s",
                 e.what());
         }
         faceCs_.Leave();
@@ -484,7 +483,7 @@ void NdnMediaReceiver::expressInterest(Name &prefix)
     }
     catch(std::exception &e)
     {
-        ERR("got exception from ndn-library: %s \
+        NDNERROR("got exception from ndn-library: %s \
             (while expressing interest: %s)",
             e.what(),i.getName().toUri().c_str());
     }
@@ -502,7 +501,7 @@ void NdnMediaReceiver::expressInterest(Interest &i)
     }
     catch(std::exception &e)
     {
-        ERR("got exception from ndn-library: %s \
+        NDNERROR("got exception from ndn-library: %s \
             (while expressing interest: %s)",
             e.what(),i.getName().toUri().c_str());
     }

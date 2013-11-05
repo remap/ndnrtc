@@ -35,9 +35,13 @@ namespace ndnrtc
         virtual int stopTransmission();
         
         bool isTransmitting(){ return isTransmitting_; }
+        bool isTransmittingAudio() { return isTransmitting_ && audioInitialized_; }
+        bool isTransmittingVideo() { return isTransmitting_ && videoInitialized_; }
         
     protected:
         ParamsStruct audioParams_;
+        bool videoInitialized_ = false, audioInitialized_ = false;
+        bool videoTransmitting_ = false, audioTransmitting_ = false;
         bool isInitialized_ = false, isTransmitting_ = false;
         shared_ptr<ndn::Transport> ndnTransport_, ndnAudioTransport_;
         shared_ptr<Face> ndnFace_, ndnAudioFace_;
@@ -47,9 +51,6 @@ namespace ndnrtc
                                    NdnMediaChannel *callbackListener,
                                    shared_ptr<Face> &face,
                                    shared_ptr<ndn::Transport> &transport);
-        static int getConnectHost(const ParamsStruct &params,
-                                  std::string &host);
-        
         
         // ndn-cpp callbacks
         virtual void onInterest(const shared_ptr<const Name>& prefix,

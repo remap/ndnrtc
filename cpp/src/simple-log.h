@@ -24,20 +24,20 @@
 #undef NDN_DEBUG
 #endif
 
-// if defieed detailed logging - print whole signature of the function.
-#if defined(NDN_DETAILED)
+// if defined detailed logging - print whole signature of the function.
+//#if defined(NDN_DETAILED)
 #define __NDN_FNAME__ __PRETTY_FUNCTION__
-#else
-#define __NDN_FNAME__ __func__
-#endif
+//#else
+//#define __NDN_FNAME__ __func__
+//#endif
 
-#if defined (NDN_TRACE) && defined(DEBUG)
+#if defined (NDN_TRACE) //&& defined(DEBUG)
 #define TRACE(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
 #else
 #define TRACE(fmt, ...)
 #endif
 
-#if defined(NDN_DEBUG) && defined(DEBUG)
+#if defined(NDN_DEBUG) //&& defined(DEBUG)
 #define DBG(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 #else
 #define DBG(fmt, ...)
@@ -56,9 +56,9 @@
 #endif
 
 #ifdef NDN_ERROR
-#define ERR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+#define NDNERROR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 #else
-#define ERR(fmt, ...)
+#define NDNERROR(fmt, ...)
 #endif
 
 namespace ndnlog {
@@ -74,7 +74,7 @@ namespace ndnlog {
         NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
         NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
         NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
-        NdnLoggerDetailLevelAll = 0
+        NdnLoggerDetailLevelAll = NdnLoggerLevelTrace
     } NdnLoggerDetailLevel;
     
     /**
@@ -94,7 +94,7 @@ namespace ndnlog {
         static void log(const char *fName, NdnLoggerLevel level, const char *format, ...);
         static std::string currentLogFile(); // returns "" if log to stdout
         static NdnLoggerDetailLevel currentLogLevel();
-        
+
         // public attributes go here
         
         // public methods go here

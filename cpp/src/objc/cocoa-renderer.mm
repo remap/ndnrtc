@@ -32,7 +32,8 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
     // create cocoa container window
     NSRect outWindowFrame = NSMakeRect(0+TotalWindows*40, 0+TotalWindows*30, width , height );
     NSWindow* outWindow = [[NSWindow alloc] initWithContentRect:outWindowFrame
-                                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
+                                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|
+                                                                NSMiniaturizableWindowMask|NSResizableWindowMask
                                                         backing:NSBackingStoreBuffered
                                                           defer:NO];
     [outWindow setTitle:[NSString stringWithCString:winName encoding:NSUTF8StringEncoding]];

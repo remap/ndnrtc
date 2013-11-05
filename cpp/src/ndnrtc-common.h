@@ -13,11 +13,11 @@
 #define ndnrtc_ndnrtc_common_h
 
 //#define NDN_LOGGING
-#define NDN_DETAILED
+//#define NDN_DETAILED
 //#define NDN_TRACE
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
+//#define NDN_INFO
+//#define NDN_WARN
+//#define NDN_ERROR
 //#define NDN_DEBUG
 
 #include <stdexcept>
@@ -54,6 +54,7 @@ using namespace ndnlog;
 #define RESULT_GOOD(res) (res >= RESULT_OK)
 #define RESULT_NOT_OK(res) (res < RESULT_OK)
 #define RESULT_FAIL(res) (res <= RESULT_ERR)
+#define RESULT_NOT_FAIL(res) (res > RESULT_ERR)
 #define RESULT_WARNING(res) (res <= RESULT_WARN && res > RESULT_ERR)
 
 #define RESULT_OK 0

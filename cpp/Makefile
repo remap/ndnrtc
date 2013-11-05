@@ -49,11 +49,12 @@ CPPSRCS_SA	= $(filter-out ndNrtc%,$(CPPSRCS))
 OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
 DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE -O0
-LOGFLAGS = -DNDN_LOGGING -DNDN_INFO -DWEBRTC_LOGGING #-DNDN_DETAILED
+LOGFLAGS = -DWEBRTC_LOGGING -DNDN_LOGGING -DNDN_TRACE -DNDN_DEBUG -DNDN_INFO -DNDN_WARN -DNDN_ERROR 
 CPPFLAGS += -fshort-wchar		\
 		-fPIC			\
         --std=c++0x \
         $(DEBUGFLAGS) $(LOGFLAGS) \
+		-mmacosx-version-min=10.7 \
 		$(NULL)
 OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
@@ -246,6 +247,9 @@ undef:
 	$(eval GECKO_DEFINES=)
 	$(eval GECKO_INCLUDES=)
 
+undefdebug:
+	$(eval DEBUGFLAGS=)
+
 $(MODULE_SA).dylib: $(addprefix $(OBJ_PATH)/,$(CPPSRCS_SA:%.cpp=%.o)) $(addprefix $(OBJ_PATH)/,$(OBJCSRCS:%.mm=%.om))
 	mkdir -p $(BIN_PATH)
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS_SA:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om)
@@ -306,7 +310,7 @@ $(OBJ_PATH)/test-common.o : $(GTEST_SRCS_)
 		$(TEST_PATH)/test-common.mm -o $@
             
 $(OBJ_PATH)/%-test.o : $(TEST_PATH)/%-test.cc
-	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $@
+	$(GT_CXX) --std=c++0x $(CPPFLAGS) $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $@
 
 %-test.om : $(TEST_PATH)/%-test.mm
 	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@

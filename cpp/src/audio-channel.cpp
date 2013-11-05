@@ -102,7 +102,10 @@ int NdnAudioReceiveChannel::init(const ParamsStruct &params,
     }
     
     if (RESULT_GOOD((res = audioReceiver_->init(face))))
+    {
         initialized_ = true;
+        DBG("audio receive channel initialized");
+    }
     
     return res;
 }
@@ -118,23 +121,26 @@ int NdnAudioReceiveChannel::start()
     // going to set this channel for sending and should not be getting callback
     // on webrtc::Transport callbacks
     if (voe_network_->RegisterExternalTransport(channel_, *this) < 0)
-        return notifyError(RESULT_ERR, "can't register external transport for \
-                           WebRTC due to error (code %d)",
+        return notifyError(RESULT_ERR, "can't register external transport for "
+                           "WebRTC due to error (code %d)",
                            voe_base_->LastError());
 
     if (voe_base_->StartReceive(channel_) < 0)
-        return notifyError(RESULT_ERR, "can't start receiving channel due to \
-                           error (code %d)", voe_base_->LastError());
+        return notifyError(RESULT_ERR, "can't start receiving channel due to "
+                           "WebRTC error (code %d)", voe_base_->LastError());
     
     if (voe_base_->StartPlayout(channel_) < 0)
-        return notifyError(RESULT_ERR, "can't start playout audio due to error \
-                           (code %d)", voe_base_->LastError());
+        return notifyError(RESULT_ERR, "can't start playout audio due to WebRTC "
+                           "error (code %d)", voe_base_->LastError());
     
     if (audioReceiver_)
          res = audioReceiver_->startFetching();
     
     started_ = RESULT_GOOD(res);
-
+    
+    if (started_)
+        DBG("audio receive channel started");
+    
     return (started_)?RESULT_OK :
         notifyError(RESULT_ERR, "audio receiver was not initialized");
 }
@@ -151,6 +157,7 @@ int NdnAudioReceiveChannel::stop()
     channel_ = -1;
     
     started_ = false;
+    DBG("audio receive channel stopped");
     return RESULT_OK;
 }
 
@@ -160,16 +167,16 @@ void NdnAudioReceiveChannel::onRTPPacketReceived(unsigned int len,
                                                  unsigned char *data)
 {
     if (voe_network_->ReceivedRTPPacket(channel_, data, len) < 0)
-        notifyError(RESULT_WARN, "can't playback packet due to WebRTC \
-                    (code %d)", voe_base_->LastError());
+        notifyError(RESULT_WARN, "can't playback packet due to WebRTC error "
+                    "(code %d)", voe_base_->LastError());
 }
 
 void NdnAudioReceiveChannel::onRTCPPacketReceived(unsigned int len,
                                                   unsigned char *data)
 {
     if (voe_network_->ReceivedRTCPPacket(channel_, data, len) < 0)
-        notifyError(RESULT_WARN, "can't playback packet due to WebRTC \
-                    (code %d)", voe_base_->LastError());
+        notifyError(RESULT_WARN, "can't playback packet due to WebRTC error "
+                    "(code %d)", voe_base_->LastError());
 }
 
 //******************************************************************************
@@ -193,6 +200,7 @@ int NdnAudioSendChannel::init(const ParamsStruct &params,
     if (RESULT_GOOD((res = audioSender_->init(transport))))
         initialized_ = true;
     
+    DBG("initialized audio send channel");
     return res;
 }
 
@@ -206,15 +214,16 @@ int NdnAudioSendChannel::start()
     res = voe_network_->RegisterExternalTransport(channel_, *this);
     
     if (res < 0)
-        return notifyError(RESULT_ERR, "can't register external transport for \
-                           WebRTC due to error (code %d)",
+        return notifyError(RESULT_ERR, "can't register external transport for "
+                           "WebRTC due to error (code %d)",
                            voe_base_->LastError());
     
     if (voe_base_->StartSend(channel_) < 0)
-        return notifyError(RESULT_ERR, "can't start receiving channel due to \
-                           error (code %d)", voe_base_->LastError());
+        return notifyError(RESULT_ERR, "can't start send channel due to "
+                           "WebRTC error (code %d)", voe_base_->LastError());
 
     started_ = true;
+    DBG("started audio send channel");
     return RESULT_OK;
 }
 
@@ -227,6 +236,7 @@ int NdnAudioSendChannel::stop()
     voe_network_->DeRegisterExternalTransport(channel_);
     channel_ = -1;
     
+    DBG("stopped audio send channel");
     return RESULT_OK;
 }
 

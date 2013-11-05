@@ -26,38 +26,30 @@ audioParams_(audioParams)
 
 //******************************************************************************
 #pragma mark - static
-int NdnMediaChannel::getConnectHost(const ParamsStruct &params,
-                                              std::string &host)
-{
-    int res = RESULT_OK;
-    
-    host = ParamsStruct::validate(params.host, DefaultParams.host, res);
-    
-    return res;
-}
-
 //******************************************************************************
 #pragma mark - public
 int NdnMediaChannel::init()
 {
-    int res = RESULT_OK;
+    if (!(videoInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(params_,
+                                                                           DefaultParams, this,
+                                                     ndnFace_, ndnTransport_))))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for video channel");
     
-    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(params_, DefaultParams, this,
-                                                     ndnFace_, ndnTransport_)))
-        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
-                           video publishing");
+    if (!(audioInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(audioParams_,
+                                                                           DefaultParamsAudio,
+                                                                           this, ndnAudioFace_,
+                                                                           ndnAudioTransport_))))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for audio channel");
     
-    if (RESULT_FAIL(NdnMediaChannel::setupNdnNetwork(audioParams_, DefaultParamsAudio, this,
-                                                     ndnAudioFace_, ndnAudioTransport_)))
-        return notifyError(RESULT_ERR, "can't initialize NDN networking for \
-                           audio publishing");
+    if (!(videoInitialized_ || audioInitialized_))
+        return notifyError(RESULT_ERR, "audio and video can not be initialized. aborting.");
 
-    return res;
+    return RESULT_OK;
 }
 int NdnMediaChannel::startTransmission()
 {
     if (!isInitialized_)
-        return notifyError(RESULT_ERR, "sender channel was initalized");
+        return notifyError(RESULT_ERR, "sender channel was not initalized");
     
     return RESULT_OK;
 }
@@ -80,10 +72,9 @@ int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
     
     try
     {
-        std::string host;
+        std::string host = (params.host)?string(params.host):string(defaultParams.host);
         int port = ParamsStruct::validateLE(params.portNum, MaxPortNum,
                                             res, defaultParams.portNum);
-        res = NdnSenderChannel::getConnectHost(params, host);
         
         if (RESULT_GOOD(res))
         {
@@ -105,14 +96,14 @@ int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
         }
         else
         {
-            ERR("malformed parameters for host/port: %s, %d", params.host,
+            NDNERROR("malformed parameters for host/port: %s, %d", params.host,
                 params.portNum);
             return RESULT_ERR;
         }
     }
     catch (std::exception &e)
     {
-        ERR("got error from ndn library: %s", e.what());
+        NDNERROR("got error from ndn library: %s", e.what());
         return RESULT_ERR;
     }
     
@@ -131,7 +122,7 @@ void NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
 void
 NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 {
-    ERR("failed to register prefix %s", prefix->toUri().c_str());
+    NDNERROR("failed to register prefix %s", prefix->toUri().c_str());
 }
 
 //******************************************************************************
@@ -187,24 +178,42 @@ int NdnSenderChannel::init()
     if (RESULT_FAIL(res))
         return res;
     
-    if (RESULT_FAIL((res = cc_->init())))
-        notifyError(res, "can't intialize camera capturer");
+    { // initialize video
+        videoInitialized_ = RESULT_NOT_FAIL(cc_->init());
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't intialize camera capturer");
+        
+        videoInitialized_ &= RESULT_NOT_FAIL(localRender_->init());
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't intialize renderer");
+
+        videoInitialized_ &= RESULT_NOT_FAIL(coder_->init());
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't intialize video encoder");
+        
+        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(ndnTransport_));
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't intialize video sender");
+    }
     
-    if (RESULT_FAIL((res = localRender_->init())))
-        notifyError(res, "can't intialize renderer");
+    { // initialize audio
+        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(audioParams_,
+                                                                    ndnAudioTransport_));
+        if (!audioInitialized_)
+            notifyError(RESULT_WARN, "can't initialize audio send channel");
+    }
     
-    if (RESULT_FAIL((res = coder_->init())))
-        notifyError(res, "can't intialize video encoder");
+    isInitialized_ = audioInitialized_||videoInitialized_;
+
+    if (!isInitialized_)
+        return notifyError(RESULT_ERR, "audio and video can not be initialized."
+                           " aborting.");
     
-    if (RESULT_FAIL((res = sender_->init(ndnTransport_))))
-        return notifyError(res, "can't intialize video sender");
+    INFO("publishing initialized with video: %s, audio: %s",
+         (videoInitialized_)?"yes":"no",
+         (audioInitialized_)?"yes":"no");
     
-    if (RESULT_FAIL((res = audioSendChannel_->init(audioParams_,
-                                                   ndnAudioTransport_))))
-        return notifyError(res, "can't initialize audio send channel");
-    
-    isInitialized_ = true;
-    return res;
+    return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
 int NdnSenderChannel::startTransmission()
 {
@@ -215,20 +224,39 @@ int NdnSenderChannel::startTransmission()
     
     unsigned int tid = 1;
     
-    if (!processThread_.Start(tid))
-        return notifyError(RESULT_ERR, "can't start processing thread");
+    if (videoInitialized_)
+    {
+        videoTransmitting_ = (processThread_.Start(tid) != 0);
+        if (!videoTransmitting_)
+            notifyError(RESULT_WARN, "can't start processing thread");
+        
+        videoTransmitting_ &= RESULT_NOT_FAIL(localRender_->startRendering("Local render"));
+        if (!videoTransmitting_)
+            notifyError(RESULT_WARN, "can't start render");
+        
+        videoTransmitting_ &= RESULT_NOT_FAIL(cc_->startCapture());
+        if (!videoTransmitting_)
+            notifyError(RESULT_WARN, "can't start camera capturer");
+    }
     
-    if (RESULT_FAIL(localRender_->startRendering("Local render")))
-        return notifyError(RESULT_ERR, "can't start render");
+    if (audioInitialized_)
+    {
+        audioTransmitting_ = RESULT_NOT_FAIL(audioSendChannel_->start());
+        if (!audioTransmitting_)
+            notifyError(RESULT_WARN, "can't start audio send channel");
+    }
     
-    if (RESULT_FAIL(cc_->startCapture()))
-        return notifyError(RESULT_ERR, "can't start camera capturer");
+    isTransmitting_ = audioTransmitting_ || videoTransmitting_;
     
-    if (RESULT_FAIL(audioSendChannel_->start()))
-        return notifyError(RESULT_ERR, "can't start audio send channel");
+    if (!isTransmitting_)
+        return notifyError(RESULT_ERR, "both audio and video can not be started."
+                           " aborting.");
     
-    isTransmitting_ = true;
-    return RESULT_OK;
+    INFO("publishing started with video: %s, audio: %s",
+         (videoInitialized_)?"yes":"no",
+         (audioInitialized_)?"yes":"no");
+    
+    return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
 int NdnSenderChannel::stopTransmission()
 {
@@ -237,17 +265,29 @@ int NdnSenderChannel::stopTransmission()
     if (RESULT_FAIL(res))
         return res;
     
-    if (cc_->isCapturing())
-        cc_->stopCapture();
+    if (videoTransmitting_)
+    {
+        videoTransmitting_ = false;
+        
+        if (cc_->isCapturing())
+            cc_->stopCapture();
+        
+        processThread_.SetNotAlive();
+        deliverEvent_.Set();
+        
+        if (!processThread_.Stop())
+            notifyError(RESULT_WARN, "can't stop processing thread");
+        
+        localRender_->stopRendering();
+    }
     
-    processThread_.SetNotAlive();
-    deliverEvent_.Set();
+    if (audioTransmitting_)
+    {
+        audioTransmitting_ = false;
+        audioSendChannel_->stop();
+    }
     
-    if (!processThread_.Stop())
-        return notifyError(RESULT_ERR, "can't stop processing thread");
-
-    localRender_->stopRendering();
-    audioSendChannel_->stop();
+    INFO("publishing stopped");
     
     isTransmitting_ = false;
     return RESULT_OK;

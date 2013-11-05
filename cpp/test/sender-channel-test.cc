@@ -51,7 +51,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
-        TRACE("got error %s", obtainedEMsg_);
+        TRACE("got error %s", obtainedEmsg_);
     
     delete sc;
 }

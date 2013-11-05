@@ -47,7 +47,7 @@ namespace ndnrtc
         FrameBuffer frameBuffer_;
         PlayoutBuffer playoutBuffer_;
         
-        webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchrnous
+        webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchronous
                                                     // access to the NDN face
                                                     // object
         webrtc::ThreadWrapper &pipelineThread_, &assemblingThread_;

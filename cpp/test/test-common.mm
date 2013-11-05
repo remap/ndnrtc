@@ -150,7 +150,6 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
         {
             Name segmentPrefix = prefix;
             segmentPrefix.appendSegment(segmentIdx);
-            
            publishData(dataSize, segmentData,
                        segmentPrefix.toUri(), freshness,
                        Name().appendSegment(totalSegmentsNum-1).

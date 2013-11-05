@@ -41,20 +41,41 @@ int NdnReceiverChannel::init()
     if (RESULT_FAIL(res))
         return res;
     
-    if (RESULT_FAIL(localRender_->init()))
-        notifyError(RESULT_ERR, "can't intialize renderer");
+    { // initialize video
+        videoInitialized_ = RESULT_NOT_FAIL(localRender_->init());
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't initialize local renderer for "
+                        "incoming video");
+        
+        videoInitialized_ &= RESULT_NOT_FAIL(decoder_->init());
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't initialize decoder for incoming "
+                        "video");
+        
+        videoInitialized_ &= RESULT_NOT_FAIL(receiver_->init(ndnFace_));
+        if (!videoInitialized_)
+            notifyError(RESULT_WARN, "can't initialize ndn fetching for "
+                        "incoming video");
+    }
     
-    if (RESULT_FAIL(decoder_->init()))
-        notifyError(RESULT_ERR, "can't intialize video decoder");
+    { // initialize audio
+        audioInitialized_ = RESULT_NOT_FAIL(audioReceiveChannel_->init(audioParams_,
+                                                                       ndnAudioFace_));
+        if (!audioInitialized_)
+            notifyError(RESULT_WARN, "can't initialize audio receive channel");
+        
+    }
     
-    if (RESULT_FAIL(receiver_->init(ndnFace_)))
-        return notifyError(RESULT_ERR, "can't intialize video receiver");
+    isInitialized_ = audioInitialized_||videoInitialized_;
     
-    if (RESULT_FAIL(audioReceiveChannel_->init(audioParams_, ndnAudioFace_)))
-        return notifyError(RESULT_ERR, "can't initialize audio receive channel");
+    if (!isInitialized_)
+        return notifyError(RESULT_ERR, "both audio and video can not be initialized. aborting.");
     
-    isInitialized_ = true;
-    return 0;
+    INFO("fetching initialized with video: %s, audio: %s",
+         (videoInitialized_)?"yes":"no",
+         (audioInitialized_)?"yes":"no");
+    
+    return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
 int NdnReceiverChannel::startTransmission()
 {
@@ -65,17 +86,35 @@ int NdnReceiverChannel::startTransmission()
     
     unsigned int tid = 1;
     
-    if (RESULT_FAIL(localRender_->startRendering(string(params_.producerId))))
-        return notifyError(RESULT_ERR, "can't start render");
+    if (videoInitialized_)
+    {
+        videoTransmitting_ = RESULT_NOT_FAIL(localRender_->startRendering(string(params_.producerId)));
+        if (!videoTransmitting_)
+            notifyError(RESULT_WARN, "can't start render");
+        
+        videoTransmitting_ &= RESULT_NOT_FAIL(receiver_->startFetching());
+        if (!videoTransmitting_)
+            notifyError(RESULT_WARN, "can't start fetching frames from ndn");
+    }
     
-    if (RESULT_FAIL(receiver_->startFetching()))
-        return notifyError(RESULT_ERR, "can't start fetching frames");
+    if (audioInitialized_)
+    {
+        audioTransmitting_ = RESULT_NOT_FAIL(audioReceiveChannel_->start());
+        if (!audioTransmitting_)
+            notifyError(RESULT_WARN, "can't start audio receive channel");
+    }
     
-    if (RESULT_FAIL(audioReceiveChannel_->start()))
-        return notifyError(RESULT_ERR, "can't start audio receive channel");
+    isTransmitting_ = audioTransmitting_ || videoTransmitting_;
     
-    isTransmitting_ = true;
-    return RESULT_OK;
+    if (!isTransmitting_)
+        return notifyError(RESULT_ERR, "both audio and video fetching can not "
+                           "be started. aborting");
+    
+    INFO("fetching started with video: %s, audio: %s",
+         (videoInitialized_)?"yes":"no",
+         (audioInitialized_)?"yes":"no");
+    
+    return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
 int NdnReceiverChannel::stopTransmission()
 {
@@ -84,9 +123,21 @@ int NdnReceiverChannel::stopTransmission()
     if (RESULT_FAIL(res))
         return res;
     
-    localRender_->stopRendering();
-    receiver_->stopFetching();
-    audioReceiveChannel_->stop();
+    if (videoTransmitting_)
+    {
+        videoTransmitting_ = false;
+        
+        localRender_->stopRendering();
+        receiver_->stopFetching();
+    }
+    
+    if (audioTransmitting_)
+    {
+        audioTransmitting_ = false;
+        audioReceiveChannel_->stop();
+    }
+    
+    INFO("fetching stopped");
     
     isTransmitting_ = false;
     return RESULT_OK;

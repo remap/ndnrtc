@@ -24,7 +24,7 @@ using namespace ndnrtc;
 //        }
 //        catch (std::exception &e)
 //        {
-//            ERR("exception: %s", e.what());
+//            NDNERROR("exception: %s", e.what());
 //        }
 //    }
 //    TRACE("got something");

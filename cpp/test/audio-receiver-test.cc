@@ -87,7 +87,7 @@ public:
         NdnAudioData adata(p);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
-        cout << "publish RTP  " << currentRTPFrame_ << " " << len << endl;
+//        cout << "publish RTP  " << currentRTPFrame_ << " " << len << endl;
         sendCS_->Enter();
         publishMediaPacket(adata.getLength(), adata.getData(),
                            currentRTPFrame_++, params_.segmentSize,
@@ -106,7 +106,7 @@ public:
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
         
-        cout << "publish RTCP " << currentRTPFrame_ << " " << len << endl;
+//        cout << "publish RTCP " << currentRTPFrame_ << " " << len << endl;
         // using RTP frames counter!!!
         sendCS_->Enter();
 #if 0
@@ -176,8 +176,8 @@ protected:
 TEST_F(AudioReceiverTester, TestFetch)
 {
     unsigned int publishPacketsNum = 100;
-    params_.freshness = 20*publishPacketsNum/1000;
-    params_.streamName = "audio0";
+    params_.freshness = (int)(((double)20*(double)publishPacketsNum*2)/1000.);
+    params_.streamName = "audio-receiver-test";
     params_.streamThread = "pcmu2";
     params_.bufferSize = 5;
     params_.slotSize = 50;
@@ -207,7 +207,7 @@ TEST_F(AudioReceiverTester, TestFetch)
     EXPECT_EQ(0, voe_base_->StopReceive(channel_));
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
 
-    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, publishPacketsNum*20+500);
+    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, 2*publishPacketsNum*20);
     EXPECT_EQ(nRTCPSent_, nRTCPReceived_);
     EXPECT_EQ(nSent_, nReceived_);
     
@@ -215,4 +215,5 @@ TEST_F(AudioReceiverTester, TestFetch)
     cout << "Fetched:   RTP (" << nReceived_ << "), RTCP (" << nRTCPReceived_ << ") "<< endl;
     
     EXPECT_EQ(RESULT_OK, receiver.stopFetching());
+    WAIT(params_.freshness*1000);
 }

@@ -40,9 +40,10 @@ public :
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
-        
         params_ = DefaultParams;
+        
+        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo(params_.host, params_.portNum));
+        
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
@@ -54,7 +55,7 @@ public :
                                  bind(&NdnReceiverTester::onRegisterFailed, this, _1));
         
 #ifdef USE_RECEIVER_FACE
-        shared_ptr<Transport::ConnectionInfo> connInfoTcp(new TcpTransport::ConnectionInfo("localhost", 6363));
+        shared_ptr<Transport::ConnectionInfo> connInfoTcp(new TcpTransport::ConnectionInfo(params_.host, params_.portNum));
         ndnReceiverFace_.reset(new Face(shared_ptr<Transport>(new TcpTransport()), connInfoTcp));
         
         streamAccessPrefix += "/receiver";
@@ -89,7 +90,7 @@ public :
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
     {
-        ERR("Register prefix failed");
+        NDNERROR("Register prefix failed");
 //        FAIL();
     }
     
