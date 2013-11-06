@@ -21,7 +21,7 @@ namespace ndnrtc {
         // public methods go here
         virtual void onErrorOccurred(const char *errorMessage) = 0;
     };
-    
+#ifdef USE_DEPRECATED
     class NdnParams {
     public:
         enum ParameterType {
@@ -131,6 +131,7 @@ namespace ndnrtc {
         // methods
         NdnParams::Parameter *getParam(const std::string &name) const;
     };
+#endif
     
     class NdnRtcObject : public INdnRtcObjectObserver {
     public:

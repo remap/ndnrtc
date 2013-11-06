@@ -6,14 +6,6 @@
 //  Copyright (c) 2013 Peter Gusev. All rights reserved.
 //
 
-#define DEBUG
-
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-#define NDN_TRACE
-
 #include "test-common.h"
 #include "ndnrtc-namespace.h"
 

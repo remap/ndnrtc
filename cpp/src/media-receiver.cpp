@@ -142,7 +142,7 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
     {
         unsigned int frameNo = 0, segmentNo = 0;
         
-        // check if it's a first segment
+        // check if it's not a first segment
         if (prefix.getComponentCount() > framesPrefix_.getComponentCount())
         {
             unsigned int nComponents = prefix.getComponentCount();
@@ -296,7 +296,7 @@ bool NdnMediaReceiver::processInterests()
                 // check wether we need to re-issue interest
                 if (mode_ == ReceiverModeWaitingFirstSegment)
                 {
-//                    TRACE("got timeout for initial interest");
+                    TRACE("got timeout for initial interest");
                     requestInitialSegment();
                 }
                 else
@@ -420,13 +420,13 @@ void NdnMediaReceiver::requestInitialSegment()
 
 void NdnMediaReceiver::pipelineInterests(FrameBuffer::Event &event)
 {
-    TRACE("pipeline for the frame %d", event.frameNo_);
-    
     // 1. get number of interests to be send out
     int interestsNum = event.slot_->totalSegmentsNumber() - 1;
     
     if (!interestsNum)
         return ;
+
+    TRACE("pipeline for the frame %d", event.frameNo_);
     
     // 2. setup frame prefix
     Name framePrefix = framesPrefix_;

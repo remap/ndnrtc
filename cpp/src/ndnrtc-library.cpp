@@ -51,6 +51,7 @@ static void destructor(){
 
 extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
 {
+    signal(SIGPIPE, SIG_IGN);
     return new NdnRtcLibrary(libHandle);
 }
 

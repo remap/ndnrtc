@@ -37,7 +37,7 @@
 #define TRACE(fmt, ...)
 #endif
 
-#if defined(NDN_DEBUG) //&& defined(DEBUG)
+#if defined (NDN_DEBUG) //&& defined(DEBUG)
 #define DBG(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 #else
 #define DBG(fmt, ...)
@@ -49,13 +49,13 @@
 #define INFO(fmt, ...)
 #endif
 
-#ifdef NDN_WARN
+#if defined (NDN_WARN)
 #define WARN(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
 #else
 #define WARN(fmt, ...)
 #endif
 
-#ifdef NDN_ERROR
+#if defined (NDN_ERROR)
 #define NDNERROR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 #else
 #define NDNERROR(fmt, ...)
@@ -98,6 +98,7 @@ namespace ndnlog {
         // public attributes go here
         
         // public methods go here
+        void logString(const char *str);
     private:
         // private static attributes go here
         
@@ -111,7 +112,7 @@ namespace ndnlog {
         NdnLoggerDetailLevel loggingDetailLevel_;
         std::string logFile_;
         
-        pthread_mutex_t logMutex_;
+        static pthread_mutex_t logMutex_;
         
         // private methods go here
         void log(const char *str);

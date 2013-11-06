@@ -39,7 +39,7 @@ namespace ndnrtc
         int rendererId_;
         bool initialized_ = false;
         void *renderWindow_ = NULL;
-#warning make static in long run
+
         webrtc::VideoRender *render_ = nullptr;        
         webrtc::VideoRenderCallback *frameSink_ = nullptr;
     };

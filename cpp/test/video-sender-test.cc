@@ -9,15 +9,6 @@
 //  Created: 9/20/13
 //
 
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-
-//#define NDN_DETAILED
-//#define NDN_TRACE
-//#define NDN_DEBUG
-
 #include "test-common.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
@@ -32,9 +23,9 @@ TEST(VideoSenderParamsTest, CheckDefaults)
 {
     ParamsStruct p = DefaultParams;
     
-    char *hubEx = "ndn/ucla.edu/apps";
-    char *userEx = "testuser";
-    char *streamEx = "video0";
+    char *hubEx = (char*)"ndn/ucla.edu/apps";
+    char *userEx = (char*)"testuser";
+    char *streamEx = (char*)"video0";
     
     char *hub, *user, *stream;
     
@@ -68,8 +59,8 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
     ParamsStruct p = DefaultParams;
     
     const char *hubEx = "ndn/ucla.edu/apps";
-    char *userEx = "testuser";
-    char *streamEx = "video0";
+    char *userEx = (char*)"testuser";
+    char *streamEx = (char*)"video0";
     
     {
         char prefix[256];
@@ -212,7 +203,6 @@ protected:
         
         ASSERT_TRUE(fread(frameData, 1, length, f));
         
-#warning - temp hack (size instead of length)
         sampleFrame_ = new webrtc::EncodedImage(frameData, length, size);
         sampleFrame_->_encodedWidth = width;
         sampleFrame_->_encodedHeight = height;

@@ -38,6 +38,10 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
         strcmp(params.streamThread, "") == 0)
         return RESULT_ERR;
     
+    if (params.ndnHub == NULL ||
+        strcmp(params.ndnHub, "") == 0)
+        return RESULT_ERR;
+    
     int res = RESULT_OK;
     ParamsStruct validated = DefaultParams;
     

@@ -113,7 +113,7 @@ bool NdnVideoReceiver::processPlayout()
         }
         else
         {
-            WARN("couldn't get frame with number %d", playoutFrameNo_);//playoutBuffer_.framePointer());
+            TRACE("couldn't get frame with number %d", playoutFrameNo_);//playoutBuffer_.framePointer());
             playbackSkipped_++;
         }
         

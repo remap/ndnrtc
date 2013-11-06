@@ -171,7 +171,7 @@ int MediaSender::publishPacket(unsigned int len,
                 
                 ndnKeyChain_->sign(data, *certificateName_);
                 
-                Blob encodedData = data.wireEncode();
+                SignedBlob encodedData = data.wireEncode();
                 ndnTransport_->send(*encodedData);
                 
                 segmentNo++;

@@ -12,14 +12,6 @@
 #ifndef ndnrtc_ndnrtc_common_h
 #define ndnrtc_ndnrtc_common_h
 
-//#define NDN_LOGGING
-//#define NDN_DETAILED
-//#define NDN_TRACE
-//#define NDN_INFO
-//#define NDN_WARN
-//#define NDN_ERROR
-//#define NDN_DEBUG
-
 #include <stdexcept>
 #include <cstdlib>
 #include <sstream>
@@ -60,5 +52,8 @@ using namespace ndnlog;
 #define RESULT_OK 0
 #define RESULT_ERR -100
 #define RESULT_WARN -1
+
+// ndn library error
+#define ERR_NDNLIB  -101
 
 #endif

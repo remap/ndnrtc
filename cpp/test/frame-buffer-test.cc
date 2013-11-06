@@ -15,14 +15,6 @@
 #include "playout-buffer.h"
 #include "video-receiver.h"
 
-#undef NDN_DETAILED
-
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-#define NDN_TRACE
-
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
@@ -552,7 +544,7 @@ protected:
             else
             {
                 playoutLoss_++;
-                WARN("couldn't get frame with number %d", playoutBuffer_->framePointer());
+                DBG("couldn't get frame with number %d", playoutBuffer_->framePointer());
             }
             
             playoutBuffer_->releaseAcquiredFrame();

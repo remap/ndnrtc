@@ -128,7 +128,7 @@ bool PlayoutBuffer::processFrameProvider()
             playoutFrames_.push(ev.slot_);
             frameBuffer_->lockSlot(ev.frameNo_);
             playoutCs_.Leave();
-//            TRACE("pushed new frame %d", ev.frameNo_);
+            TRACE("pushed new frame %d", ev.frameNo_);
         }
             break;
         default: // error

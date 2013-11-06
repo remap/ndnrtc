@@ -136,7 +136,7 @@ NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
     char value[10];
     
     memset(&value[0],0,10);
-    sprintf(value, "%lld", frameNo);
+    sprintf(value, "%lu", frameNo);
     
     unsigned int valueLength = strlen(value);
     shared_ptr<vector<unsigned char>> component(

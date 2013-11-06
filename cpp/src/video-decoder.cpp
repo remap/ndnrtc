@@ -68,6 +68,9 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 #pragma mark - intefaces realization IEncodedFrameConsumer
 void NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 {
+    TRACE("trying to decode frame of size %d (type: %s)", encodedImage._length,
+          NdnRtcUtils::stringFromFrameType(encodedImage._frameType).c_str());
+    
     if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't decode frame");
     else

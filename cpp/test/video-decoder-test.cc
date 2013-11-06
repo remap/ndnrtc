@@ -89,7 +89,6 @@ protected:
         
         ASSERT_TRUE(fread(frameData, size, 1, f));
         
-//#warning - temp hack (size instead of length)
         sampleFrame_ = new webrtc::EncodedImage(frameData, length, size);
         sampleFrame_->_encodedWidth = width;
         sampleFrame_->_encodedHeight = height;
@@ -122,25 +121,7 @@ TEST_F(NdnVideoDecoderTest, TestInit)
     EXPECT_EQ(0, decoder->init());
     delete decoder;
 }
-//TEST_F(NdnVideoDecoderTest, TestDecode)
-//{
-//    loadFrame();
-//    
-//    NdnVideoDecoder  *decoder = new NdnVideoDecoder();
-//
-//    decoder->setObserver(this);
-//    decoder->setFrameConsumer(this);
-//    
-//    decoder->init(codec_);
-//    EXPECT_EQ(false, obtainedError_);
-//    
-//    decoder->onEncodedFrameDelivered(*sampleFrame_);
-//    EXPECT_EQ(false, obtainedError_);
-//    
-//    EXPECT_TRUE_WAIT(obtainedFrame_, 5000);
-//    
-//    delete decoder;
-//}
+
 TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
 {
     CameraCapturer *cc = new CameraCapturer(DefaultParams);
@@ -169,7 +150,6 @@ TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
     
     EXPECT_EQ(false, obtainedError_);
     
-//    EXPECT_TRUE_WAIT(obtainedError_, 5000);
     WAIT(5000);
     
     if (obtainedError_)

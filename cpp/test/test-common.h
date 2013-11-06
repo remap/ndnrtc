@@ -85,7 +85,7 @@ public:
         // change frame size according to the data in resource file file
         
         FILE *f = fopen("resources/vp8_640x480.frame", "rb");
-//        ASSERT_TRUE(f);
+
         if (!f)
         {
             return NULL;
@@ -156,7 +156,6 @@ protected:
     void setupWebRTCLogging(){
         webrtc::Trace::CreateTrace();
         webrtc::Trace::SetTraceFile("bin/webrtc.log");
-//        webrtc::Trace::SetLevelFilter(webrtc::kTraceAll);
     }
 };
 
@@ -222,7 +221,7 @@ protected:
     shared_ptr<Name> certName_;
 
     // publishes audio or video data packet under the specified prefix by
-    // splitting it into a segments and appending
+    // splitting data into a segments and appending
     //  <frame_number>/<segment_number> to the prefix
     void publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
                             unsigned int frameNo, unsigned int segmentSize,

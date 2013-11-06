@@ -8,14 +8,6 @@
 //  Author:  Peter Gusev
 //
 
-//#define NDN_LOGGING
-//#define NDN_INFO
-//#define NDN_WARN
-//#define NDN_ERROR
-//#define NDN_DEBUG
-//#define NDN_TRACE
-//#define NDN_DETAILED
-
 #include "test-common.h"
 #include "ndnrtc-library.h"
 

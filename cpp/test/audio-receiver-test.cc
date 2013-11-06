@@ -12,26 +12,12 @@
 #include "ndnrtc-utils.h"
 #include <iostream.h>
 
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-
-#define NDN_DETAILED
-#define NDN_TRACE
-#define NDN_DEBUG
-
 using namespace ndnrtc;
 using namespace webrtc;
 
 #define USE_RECEIVER_FACE
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
-TEST(AudioReceiverParamsTest, CheckPrefixes)
-{
-    
-}
 
 class AudioReceiverTester : public NdnRtcObjectTestHelper,
 public IAudioPacketConsumer,
@@ -66,6 +52,7 @@ public:
         
         sendCS_ = webrtc::CriticalSectionWrapper::CreateCriticalSection();
     }
+    
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
@@ -80,6 +67,7 @@ public:
         
         delete sendCS_;
     }
+    
     int SendPacket(int channel, const void *data, int len)
     {
         string rtpPrefix;
@@ -138,7 +126,9 @@ public:
         currentRTCPFrame_ = 0;
     }
     
-    void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, ndn::Transport& transport)
+    void onInterest(const shared_ptr<const Name>& prefix,
+                    const shared_ptr<const Interest>& interest,
+                    ndn::Transport& transport)
     {
         INFO("got interest: %s", interest->getName().toUri().c_str());
     }
@@ -153,6 +143,7 @@ public:
         nReceived_++;
         voe_network_->ReceivedRTPPacket(channel_, data, len);
     }
+    
     void onRTCPPacketReceived(unsigned int len, unsigned char *data)
     {
         nRTCPReceived_++;

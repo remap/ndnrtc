@@ -72,7 +72,7 @@ TEST(NdnRtcUtilsTests, TestSegmentsNumber)
 TEST(NdnRtcUtilsTests, TestFrameNumber)
 {
     {
-        char *prefixStr = "/ndn/ndnrtc/user/testuser/streams/video0/vp8-640/frames/1";
+        char *prefixStr = (char*)"/ndn/ndnrtc/user/testuser/streams/video0/vp8-640/frames/1";
         Name prefix(prefixStr);
         unsigned int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(prefix.getComponentCount()-1));
         

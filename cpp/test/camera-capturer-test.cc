@@ -78,9 +78,6 @@ TEST_F(CameraCapturerTest, TestCapture)
     
     cc->setObserver(this);
     
-//    cc->printCapturingInfo();
-//    WAIT(20000);
-    
     EXPECT_EQ(cc->init(),0);
     EXPECT_FALSE(obtainedError_);
     

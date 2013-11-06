@@ -203,3 +203,21 @@ void NdnRtcUtils::releaseVoiceEngine()
 {
     VoiceEngine::Delete(VoiceEngineInstance);
 }
+
+string NdnRtcUtils::stringFromFrameType(webrtc::VideoFrameType &frameType)
+{
+    switch (frameType) {
+        case webrtc::kDeltaFrame:
+            return "DELTA";
+        case webrtc::kKeyFrame:
+            return "KEY";
+        case webrtc::kAltRefFrame:
+            return "ALT-REF";
+        case webrtc::kGoldenFrame:
+            return "GOLDEN";
+        case webrtc::kSkipFrame:
+            return "SKIP";
+        default:
+            return "UNKNOWN";
+    }
+}

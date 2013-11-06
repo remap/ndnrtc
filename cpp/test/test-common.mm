@@ -53,22 +53,17 @@ void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &user
     shared_ptr<ndn::Transport::ConnectionInfo>
         connInfo(new ndn::TcpTransport::ConnectionInfo(params_.host,
                                                        params_.portNum));
-    
     ndnTransport_.reset(new TcpTransport());
     ndnFace_.reset(new Face(ndnTransport_, connInfo));
-
     ASSERT_NO_THROW(
                     ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
                                              bind(&UnitTestHelperNdnNetwork::onInterest, this, _1, _2, _3),
                                              bind(&UnitTestHelperNdnNetwork::onRegisterFailed, this, _1));
                     );
-
     shared_ptr<ndn::Transport::ConnectionInfo>
     connInfo2(new TcpTransport::ConnectionInfo(params_.host, params_.portNum));
-    
     ndnReceiverTransport_.reset(new ndn::TcpTransport());
     ndnReceiverFace_.reset(new Face(ndnReceiverTransport_, connInfo2));
-
     ASSERT_NO_THROW(
     ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/receiver").c_str()),
                                      bind(&UnitTestHelperNdnNetwork::onInterest,
@@ -76,10 +71,8 @@ void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &user
                                      bind(&UnitTestHelperNdnNetwork::onRegisterFailed,
                                           this, _1));
                     );
-
     ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
     certName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
-
 }
 
 void UnitTestHelperNdnNetwork::NdnTearDown()
@@ -109,6 +102,7 @@ void UnitTestHelperNdnNetwork::onData(const shared_ptr<const Interest>& interest
 void UnitTestHelperNdnNetwork::
 onTimeout(const shared_ptr<const Interest>& interest)
 {
+    TRACE("got timeout for interest: %s", interest->getName().toUri().c_str());
     nReceivedTimeout_++;
 }
 
@@ -132,13 +126,13 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
     prefix.addComponent(*frameNumberComponent);
     
     // setup send order for segments
-    for (int i = 0; i < totalSegmentsNum; i++)
+    for (int i = 0; i < (int)totalSegmentsNum; i++)
         segmentsSendOrder.push_back(i);
     
     if (mixedSendOrder)
         random_shuffle(segmentsSendOrder.begin(), segmentsSendOrder.end());
     
-    for (int i = 0; i < totalSegmentsNum; i++)
+    for (int i = 0; i < (int)totalSegmentsNum; i++)
     {
         unsigned int segmentIdx = segmentsSendOrder[i];
         unsigned char *segmentData = dataPacket+segmentIdx*segmentSize;
@@ -174,7 +168,7 @@ void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
     
     ASSERT_TRUE(ndnTransport_->getIsConnected());
     
-    Blob encodedData = data.wireEncode();
+    SignedBlob encodedData = data.wireEncode();
     ndnTransport_->send(*encodedData);
 }
 

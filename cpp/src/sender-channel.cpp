@@ -42,7 +42,7 @@ int NdnMediaChannel::init()
         notifyError(RESULT_WARN, "can't initialize NDN networking for audio channel");
     
     if (!(videoInitialized_ || audioInitialized_))
-        return notifyError(RESULT_ERR, "audio and video can not be initialized. aborting.");
+        return notifyError(RESULT_ERR, "audio and video can not be initialized (ndn errors). aborting.");
 
     return RESULT_OK;
 }

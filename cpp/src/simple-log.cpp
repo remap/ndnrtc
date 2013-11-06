@@ -20,12 +20,13 @@ using namespace ndnlog;
 static char tempBuf[MAX_BUF_SIZE];
 static NdnLogger *sharedLogger = NULL;
 
+pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
+
 //********************************************************************************
 #pragma mark - construction/destruction
 NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
 loggingDetailLevel_(logDetailLevel),
 outLogStream_(NULL),
-logMutex_(PTHREAD_MUTEX_INITIALIZER),
 logFile_("")
 {
     buf_ = (char*)malloc(MAX_BUF_SIZE);
@@ -102,6 +103,7 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
     
     if (level >= (NdnLoggerLevel)sharedInstance->getLoggingDetailLevel())
     {
+        pthread_mutex_lock(&logMutex_);
         va_list args;
         
         va_start(args, format);
@@ -116,6 +118,7 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
                 (level <= NdnLoggerLevelDebug)? fName: "" , tempBuf);
         
         sharedInstance->log(buf);
+        pthread_mutex_unlock(&logMutex_);        
     }
 }
 
@@ -129,7 +132,12 @@ NdnLoggerDetailLevel NdnLogger::currentLogLevel()
     return sharedLogger->loggingDetailLevel_;
 }
 
-
+//******************************************************************************
+#pragma mark - public
+void NdnLogger::logString(const char *str)
+{
+    log(str);
+}
 //********************************************************************************
 #pragma mark - private
 int64_t NdnLogger::millisecondTimestamp()
@@ -152,11 +160,9 @@ void NdnLogger::log(const char *str)
     sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
     
     // make exlusive by semaphores
-    pthread_mutex_lock(&logMutex_);
+
     fprintf(outLogStream_, "%lld: %s\n", millisecondTimestamp(), str);
     
     if (outLogStream_ != stdout)
         fflush(outLogStream_);
-    
-    pthread_mutex_unlock(&logMutex_);
 }

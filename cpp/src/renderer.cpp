@@ -81,6 +81,8 @@ int NdnRenderer::stopRendering()
         destroyCocoaRenderWindow(renderWindow_);
         renderWindow_ = NULL;
     }
+    
+    return RESULT_OK;
 }
 //********************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer

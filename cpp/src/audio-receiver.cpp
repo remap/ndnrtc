@@ -94,7 +94,8 @@ bool NdnAudioReceiver::collectAudioPackets()
                 WARN("got bad audio packet");
         }
         else
-            WARN("can't obtain next audio slot");
+//            DBG("can't obtain next audio slot");
+            ;
         
         playoutBuffer_.releaseAcquiredFrame();
     }

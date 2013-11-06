@@ -8,15 +8,6 @@
 //  Author:  Peter Gusev
 //
 
-//#define DEBUG
-#define NDN_LOGGING
-#define NDN_TRACE
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-#define NDN_DEBUG
-#define NDN_DETAILED
-
 #include "gtest/gtest.h"
 #include "simple-log.h"
 #include "ndnrtc-object.h"
@@ -76,6 +67,15 @@ TEST(ParamsTest, TestValidateVideoParams)
             p.streamThread = "";
             EXPECT_EQ(RESULT_ERR, ParamsStruct::validateVideoParams(p, p));
             p.streamThread = "test";
+            EXPECT_EQ(RESULT_OK, ParamsStruct::validateVideoParams(p, p));
+        }
+        { // ndnhub
+            ParamsStruct p = DefaultParams;
+            p.ndnHub = NULL;
+            EXPECT_EQ(RESULT_ERR, ParamsStruct::validateVideoParams(p, p));
+            p.ndnHub = "";
+            EXPECT_EQ(RESULT_ERR, ParamsStruct::validateVideoParams(p, p));
+            p.ndnHub = "test";
             EXPECT_EQ(RESULT_OK, ParamsStruct::validateVideoParams(p, p));
         }
     }
@@ -263,7 +263,7 @@ TEST(ParamsTest, TestValidateAudioParams)
         }
     }
 }
-#if 0
+#ifdef USE_DEPRECATED
 //********************************************************************************
 /**
  * @name Parameter class tests
@@ -649,14 +649,12 @@ TEST_F(NdnRtcObjectTest, CreateDeleteNoParams)
 }
 TEST_F(NdnRtcObjectTest, CreateDeleteWithParams)
 {
-    shared_ptr<NdnParams> paramsSPtr(new NdnParams());
     NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams);
     
     delete obj;
 }
 TEST_F(NdnRtcObjectTest, CreateDeleteWithObserver)
 {
-    shared_ptr<NdnParams> paramsSPtr(new NdnParams());
     NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
     
     EXPECT_TRUE(obj->isObserved());
@@ -675,16 +673,15 @@ TEST_F(NdnRtcObjectTest, SetObserver)
 }
 TEST_F(NdnRtcObjectTest, ErrorNotifies)
 {
-    shared_ptr<NdnParams> paramsSPtr(new NdnParams());    
     NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
     
     EXPECT_FALSE(errorOccurred_);
-    obj->postError(-1, "error msg");
+    obj->postError(-1, (char*)"error msg");
     EXPECT_TRUE(errorOccurred_);
     EXPECT_STREQ("error msg", errorMessage_);
 
     errorOccurred_ = false;
-    obj->postError(-1, "");
+    obj->postError(-1, (char*)"");
     EXPECT_TRUE(errorOccurred_);
     EXPECT_STREQ("", errorMessage_);
     

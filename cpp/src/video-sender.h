@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
+//#define USE_FRAME_LOGGER
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
 #include "video-coder.h"
@@ -28,8 +30,18 @@ namespace ndnrtc
     class NdnVideoSender : public MediaSender, public IEncodedFrameConsumer
     {
     public:
-        NdnVideoSender(const ParamsStruct &params):MediaSender(params){}
-        ~NdnVideoSender(){};
+        NdnVideoSender(const ParamsStruct &params):MediaSender(params)
+        {
+#ifdef USE_FRAME_LOGGER
+            frameLogger_ = new NdnLogger("frames.log", NdnLoggerDetailLevelDefault);
+#endif
+        }
+        ~NdnVideoSender()
+        {
+#ifdef USE_FRAME_LOGGER
+            delete frameLogger_;
+#endif
+        };
         
         unsigned long int getFrameNo() { return getPacketNo(); }
         
@@ -37,6 +49,9 @@ namespace ndnrtc
         void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
         
     private:
+#ifdef USE_FRAME_LOGGER
+        NdnLogger *frameLogger_;
+#endif
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

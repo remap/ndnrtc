@@ -8,15 +8,6 @@
 //  Author:  Peter Gusev
 //
 
-//#define NDN_LOGGING
-//#define NDN_INFO
-//#define NDN_WARN
-//#define NDN_ERROR
-
-//#define NDN_DETAILED
-//#define NDN_TRACE
-//#define NDN_DEBUG
-
 #include "video-sender.h"
 #include "ndnlib.h"
 #include "ndnrtc-utils.h"
@@ -30,12 +21,18 @@ using namespace webrtc;
 #pragma mark - intefaces realization
 void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 {
+    string frameType = NdnRtcUtils::stringFromFrameType(encodedImage._frameType);
+    
     // send frame over NDN
-    TRACE("sending frame #%010lld", getFrameNo());
+    TRACE("sending frame #%010lld (%s)", getFrameNo(),
+          frameType.c_str());
+#ifdef USE_FRAME_LOGGER
+    frameLogger_->logString(frameType.c_str());
+#endif
     
     // 0. copy frame into transport data object
     NdnFrameData frameData(encodedImage);
-    publishPacket(frameData.getLength(),
-                  const_cast<unsigned char*>(frameData.getData()));
-    packetNo_++;
+    if (RESULT_GOOD(publishPacket(frameData.getLength(),
+                  const_cast<unsigned char*>(frameData.getData()))))
+        packetNo_++;
 }

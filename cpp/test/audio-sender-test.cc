@@ -6,15 +6,6 @@
 //  Copyright (c) 2013 Peter Gusev. All rights reserved.
 //
 
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-
-#define NDN_DETAILED
-#define NDN_TRACE
-#define NDN_DEBUG
-
 #include "test-common.h"
 #include "audio-sender.h"
 #include "frame-buffer.h"
@@ -24,7 +15,7 @@ using namespace ndnrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(AudioSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
@@ -33,8 +24,8 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
     p.streamThread = "pcmu2";
     
     const char *hubEx = "ndn/ucla.edu/apps";
-    char *userEx = "testuser";
-    char *streamEx = "audio0";
+    char *userEx = (char*)"testuser";
+    char *streamEx = (char*)"audio0";
     
     {
         char prefix[256];
@@ -155,7 +146,7 @@ TEST(AudioData, TestUnpackError)
                                                        dummyData, resP));
     }
 }
-#endif
+
 class AudioSenderTester : public webrtc::Transport,
 public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {

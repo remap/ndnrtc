@@ -167,7 +167,7 @@ void NdnAudioReceiveChannel::onRTPPacketReceived(unsigned int len,
                                                  unsigned char *data)
 {
     if (voe_network_->ReceivedRTPPacket(channel_, data, len) < 0)
-        notifyError(RESULT_WARN, "can't playback packet due to WebRTC error "
+        notifyError(RESULT_WARN, "can't playback audio packet (RTP) due to WebRTC error "
                     "(code %d)", voe_base_->LastError());
 }
 
@@ -175,7 +175,7 @@ void NdnAudioReceiveChannel::onRTCPPacketReceived(unsigned int len,
                                                   unsigned char *data)
 {
     if (voe_network_->ReceivedRTCPPacket(channel_, data, len) < 0)
-        notifyError(RESULT_WARN, "can't playback packet due to WebRTC error "
+        notifyError(RESULT_WARN, "can't playback audio packet (RTCP) due to WebRTC error "
                     "(code %d)", voe_base_->LastError());
 }
 

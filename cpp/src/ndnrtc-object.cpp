@@ -20,6 +20,7 @@ using namespace std;
  * @name Parameter class
  */
 //********************************************************************************
+#ifdef USE_DEPRECATED
 #pragma mark - construction/destruction
 NdnParams::Parameter::Parameter(const ParameterType type, const void *value): type_(type)
 {
@@ -112,6 +113,70 @@ const string NdnParams::ParamNameConnectPort = "connect_port";
 shared_ptr<NdnParams> NdnParams::defaultParams()
 {
     
+}
+
+//********************************************************************************
+#pragma mark - public
+void NdnParams::addParams(const ndnrtc::NdnParams& params)
+{
+    const std::map<std::string, Parameter> &map = params.map();
+    std::map<std::string, Parameter>::const_iterator it;
+    
+    for (it = map.begin(); it != map.end(); ++it)
+    {
+        std::string name = it->first;
+        const Parameter *p = &it->second;
+        
+        setParam(name, Parameter(p->getType(), p->getValue()));
+    }
+}
+void NdnParams::resetParams(const NdnParams &params)
+{
+    propertiesMap_.clear();
+    addParams(params);
+}
+string NdnParams::description() const
+{
+    stringstream desc;
+    
+    std::map<std::string, NdnParams::Parameter>::const_iterator it;
+    
+    it = propertiesMap_.begin();
+    
+    while (it != propertiesMap_.end())
+    {
+        desc << it->first << ": ";
+        
+        const Parameter &p = it->second;
+        
+        switch (p.type_) {
+            case ParameterTypeBool:
+            {
+                if (*((bool*)p.getValue()))
+                    desc << "true";
+                else
+                    desc << "false";
+            }
+                break;
+            case ParameterTypeInt:
+            {
+                desc << *((int*)p.getValue());
+            }
+                break;
+            case ParameterTypeString:
+            {
+                desc << ((char*)p.getValue());
+            }
+                break;
+            default:
+                break;
+        }
+        
+        desc << endl;
+        it++;
+    }
+    
+    return desc.str();
 }
 
 //********************************************************************************
@@ -212,6 +277,8 @@ NdnParams::Parameter* NdnParams::getParam(const std::string &name) const
     
     return nullptr;
 }
+#endif
+
 //********************************************************************************
 /**
  * @name NdnRtcObject class
@@ -233,70 +300,6 @@ NdnRtcObject(params)
 
 NdnRtcObject::~NdnRtcObject()
 {
-}
-
-//********************************************************************************
-#pragma mark - public
-void NdnParams::addParams(const ndnrtc::NdnParams& params)
-{
-    const std::map<std::string, Parameter> &map = params.map();
-    std::map<std::string, Parameter>::const_iterator it;
-    
-    for (it = map.begin(); it != map.end(); ++it)
-    {
-        std::string name = it->first;
-        const Parameter *p = &it->second;
-        
-        setParam(name, Parameter(p->getType(), p->getValue()));
-    }
-}
-void NdnParams::resetParams(const NdnParams &params)
-{
-    propertiesMap_.clear();
-    addParams(params);
-}
-string NdnParams::description() const
-{
-    stringstream desc;
-    
-    std::map<std::string, NdnParams::Parameter>::const_iterator it;
-    
-    it = propertiesMap_.begin();
-    
-    while (it != propertiesMap_.end())
-    {
-        desc << it->first << ": ";
-        
-        const Parameter &p = it->second;
-        
-        switch (p.type_) {
-            case ParameterTypeBool:
-            {
-                if (*((bool*)p.getValue()))
-                    desc << "true";
-                else
-                    desc << "false";
-            }
-                break;
-            case ParameterTypeInt:
-            {
-                desc << *((int*)p.getValue());
-            }
-                break;
-            case ParameterTypeString:
-            {
-                desc << ((char*)p.getValue());
-            }
-                break;
-            default:
-                break;
-        }
-        
-        desc << endl;
-        it++;
-    }
-    
-    return desc.str();
 }
 
 //********************************************************************************

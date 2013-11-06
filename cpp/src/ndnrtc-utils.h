@@ -38,6 +38,8 @@ namespace ndnrtc{
         
         static webrtc::VoiceEngine *sharedVoiceEngine();
         static void releaseVoiceEngine();
+        
+        static std::string stringFromFrameType(webrtc::VideoFrameType &frameType);
     };
 }
 

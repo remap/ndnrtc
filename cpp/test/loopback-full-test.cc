@@ -8,12 +8,6 @@
 //  Author:  Peter Gusev
 //
 
-#define NDN_LOGGING
-#define NDN_INFO
-#define NDN_WARN
-#define NDN_ERROR
-#define NDN_TRACE
-
 #include "test-common.h"
 #include "sender-channel.h"
 #include "receiver-channel.h"
@@ -85,3 +79,4 @@ TEST(LoopbackTests, Transmission)
     delete sc;
     delete rc;
 }
+
