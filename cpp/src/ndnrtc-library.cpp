@@ -57,6 +57,20 @@ extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
 
 extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
 {
+    if (SenderChannel.get())
+        object->stopPublishing();
+    
+    if (Producers.size())
+    {
+        map<string, shared_ptr<NdnReceiverChannel>>::iterator it;
+        
+        for (it = Producers.begin(); it != Producers.end(); it++)
+        {
+            shared_ptr<NdnReceiverChannel> producer = it->second;
+            producer->stopTransmission();
+        }
+    }
+    
     delete object;
 }
 

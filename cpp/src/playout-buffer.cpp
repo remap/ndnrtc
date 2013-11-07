@@ -84,7 +84,6 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
             TRACE(">>>>>LATE FRAMES");
         
         framePointer_ = slot->getFrameNumber();
-        
         TRACE("frame %d acquired for playback", framePointer_);
     }
     else
