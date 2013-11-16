@@ -1,6 +1,9 @@
 cpp/bin
 cpp/obj
-cpp/thirdparty
+cpp/thirdparty/ndn-webrtc
+cpp/thirdparty/ndn-ncurses
+cpp/thirdparty/ndn-config
+cpp/thirdparty/ndn-gtest
 .DS_Store
 *.log
 *.aux
