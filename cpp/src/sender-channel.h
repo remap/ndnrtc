@@ -19,6 +19,7 @@
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
 #include "audio-channel.h"
+#include "statistics.h"
 
 namespace ndnrtc
 {
@@ -27,7 +28,7 @@ namespace ndnrtc
     public:
         NdnMediaChannel(const ParamsStruct &params,
                         const ParamsStruct &audioParams);
-        virtual ~NdnMediaChannel(){}
+        virtual ~NdnMediaChannel();
         
         // public methods
         virtual int init();
@@ -39,6 +40,9 @@ namespace ndnrtc
         bool isTransmittingVideo() { return isTransmitting_ && videoInitialized_; }
         
     protected:
+#warning remove in release
+        NdnLogger *channelLogger_;
+        
         ParamsStruct audioParams_;
         bool videoInitialized_ = false, audioInitialized_ = false;
         bool videoTransmitting_ = false, audioTransmitting_ = false;
@@ -66,7 +70,7 @@ namespace ndnrtc
     public:
         NdnSenderChannel(const ParamsStruct &params,
                          const ParamsStruct &audioParams);
-        virtual ~NdnSenderChannel() {};
+        virtual ~NdnSenderChannel();
         
         // public methods
         int init();
@@ -76,19 +80,10 @@ namespace ndnrtc
         // interface conformance - IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
-        // statistics
-        double getNInputFramesPerSec() {
-            return NdnRtcUtils::currentFrequencyMeterValue(meterId_);
-        } // frequency of incoming raw frames
-        double getCurrentCapturingFreq() {
-            return cc_->getCapturingFrequency();
-        }
-        unsigned int getSentFramesNum(); // number of already sent frames
-        
+        void getChannelStatistics(SenderChannelStatistics &stat);
     private:
-        
-        // statistics
-        unsigned int meterId_; // frequency meter id
+        uint64_t lastFrameStamp_ = 0;
+        unsigned int frameFreqMeter_;
         
         shared_ptr<CameraCapturer> cc_;
         shared_ptr<NdnRenderer> localRender_;

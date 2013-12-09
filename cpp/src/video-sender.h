@@ -11,7 +11,7 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
-//#define USE_FRAME_LOGGER
+#define USE_FRAME_LOGGER
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
@@ -33,7 +33,7 @@ namespace ndnrtc
         NdnVideoSender(const ParamsStruct &params):MediaSender(params)
         {
 #ifdef USE_FRAME_LOGGER
-            frameLogger_ = new NdnLogger("frames.log", NdnLoggerDetailLevelDefault);
+            frameLogger_ = new NdnLogger("published.log", NdnLoggerDetailLevelDefault);
 #endif
         }
         ~NdnVideoSender()

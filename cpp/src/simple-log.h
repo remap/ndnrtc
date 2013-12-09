@@ -97,8 +97,9 @@ namespace ndnlog {
 
         // public attributes go here
         
-        // public methods go here
+        // public methods go here 
         void logString(const char *str);
+        void log(NdnLoggerLevel level, const char *format, ...);        
     private:
         // private static attributes go here
         
@@ -113,6 +114,7 @@ namespace ndnlog {
         std::string logFile_;
         
         static pthread_mutex_t logMutex_;
+        pthread_mutex_t instanceMutex_;
         
         // private methods go here
         void log(const char *str);

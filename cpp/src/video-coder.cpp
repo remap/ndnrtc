@@ -57,12 +57,13 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
         codec.codecSpecific.VP8.denoisingOn = true;
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
+        codec.codecSpecific.VP8.keyFrameInterval = 2000;
     }
     
     // customize parameteres if possible
     int res = RESULT_OK;
     codec.maxFramerate = ParamsStruct::validateLE(params.codecFrameRate,
-                                                  120, res,
+                                                  MaxFrameRate, res,
                                                   DefaultParams.codecFrameRate);
     codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
                                                   MaxStartBitrate, res,
@@ -85,6 +86,7 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
 NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params), frameConsumer_(nullptr)
 {
     memset(&codec_, 0, sizeof(codec_));
+    encodeLogger_ = new NdnLogger("encoder.log", NdnLoggerDetailLevelDefault);
 }
 //********************************************************************************
 #pragma mark - public
@@ -106,7 +108,7 @@ int NdnVideoCoder::init()
     encoder_->RegisterEncodeCompleteCallback(this);
     
 #warning how payload can be changed?
-    int maxPayload = 3900;
+    int maxPayload = 1100;
     
     if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
         return notifyError(-1, "can't initialize VP8 encoder");
@@ -121,9 +123,30 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
                 const webrtc::CodecSpecificInfo* codecSpecificInfo,
                 const webrtc::RTPFragmentationHeader* fragmentation)
 {
-    TRACE("got encoded byte length: %d", encodedImage._length);
+    counter_++;
+    
+    TRACE("got encoded byte length: %d\n"
+          "info: \thasReceivedSLI: %d\n\tpictureIdSLI: %d\n\thasReceivedRPSI: %d\n\t"
+          "pictureIdRPSI: %ld\n\tpictureId:%d\n\tnonReference:%d\n\tsimulcastIdx:%d\n\t"
+          "temporalIdx: %d\n\tlayerSync:%d\n\ttl0PicIdx:%d\n\tkeyIdx:%d\n",
+          encodedImage._length,
+          codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI,
+          codecSpecificInfo->codecSpecific.VP8.pictureIdSLI,
+          codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI,
+          codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI,
+          codecSpecificInfo->codecSpecific.VP8.pictureId,
+          codecSpecificInfo->codecSpecific.VP8.nonReference,
+          codecSpecificInfo->codecSpecific.VP8.simulcastIdx,
+          codecSpecificInfo->codecSpecific.VP8.temporalIdx,
+          codecSpecificInfo->codecSpecific.VP8.layerSync,
+          codecSpecificInfo->codecSpecific.VP8.tl0PicIdx,
+          codecSpecificInfo->codecSpecific.VP8.keyIdx);
+    
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+    
+    encodeTime_ = NdnRtcUtils::microsecondTimestamp()-encodeTime_;
+    encodeLogger_->log(NdnLoggerLevelInfo,"\tENCODED: \t%ld", encodeTime_);
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage);
@@ -136,6 +159,15 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
     TRACE("encoding...");
+    if (counter_ %2 == 0)
+    {
+        TRACE("counter should be odd in Encoder start!");
+        counter_++;
+    }
+    
+    counter_++;
+    
+    encodeTime_ = NdnRtcUtils::microsecondTimestamp();
     
     int err;
     
@@ -145,6 +177,8 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
         err = encoder_->Encode(frame, NULL, NULL);
 
     keyFrameCounter_ = (keyFrameCounter_+1)%(2*currentFrameRate_);
+    
+    TRACE("ENCODING RESULT: %d", err);
     
     if (err != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't encode frame due to error %d",err);

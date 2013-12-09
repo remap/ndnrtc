@@ -30,6 +30,7 @@ namespace ndnrtc
         NdnAudioReceiver(const ParamsStruct &params);
         ~NdnAudioReceiver();
         
+        int init(shared_ptr<Face> face);
         int startFetching();
         int stopFetching();
         
@@ -53,6 +54,8 @@ namespace ndnrtc
         
         // overriden
         bool isLate(unsigned int frameNo);
+        
+        unsigned int getNextKeyFrameNo(unsigned int frameNo);
     };
 }
 

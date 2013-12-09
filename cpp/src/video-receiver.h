@@ -18,7 +18,8 @@
 
 namespace ndnrtc
 {
-    class NdnVideoReceiver : public NdnMediaReceiver {
+    class NdnVideoReceiver : public NdnMediaReceiver,
+    public IPlayoutBufferCallback {
     public:
         NdnVideoReceiver(const ParamsStruct &params);
         ~NdnVideoReceiver();
@@ -34,23 +35,25 @@ namespace ndnrtc
         unsigned int getNPipelined() { return pipelinerFrameNo_; }
         unsigned int getNPlayout() { return playoutFrameNo_; }
         unsigned int getNLateFrames() { return nLateFrames_; }
+        unsigned int getJitterOccupancy() { return playoutBuffer_.getJitterSize(); }        
         unsigned int getBufferStat(FrameBuffer::Slot::State state) {
             return frameBuffer_.getStat(state);
         }
-        double getPlayoutFreq () {
-            return NdnRtcUtils::currentFrequencyMeterValue(playoutMeterId_);
-        }
-        double getIncomeFramesFreq() {
-            return NdnRtcUtils::currentFrequencyMeterValue(incomeFramesMeterId_);
-        }
-        double getIncomeDataFreq() {
-            return NdnRtcUtils::currentFrequencyMeterValue(assemblerMeterId_);
-        }
+        
+        // IPlayoutBufferCallback interface
+        void onFrameAddedToJitter(FrameBuffer::Slot *slot);
+        void onBufferStateChanged(PlayoutBuffer::State newState);
+        void onMissedFrame(unsigned int frameNo);
+        void onPlayheadMoved(unsigned int nextPlaybackFrame);
         
     private:
+        uint64_t playoutLastUpdate_ = 0;
+        uint64_t lastFrameTimeMs_ = 0;
+        double publisherRate_ = 0;
+        int averageProcessingTimeUsec_ = 0;
         
+        unsigned int emptyJitterCounter_ DEPRECATED = 0;
         // statistics variables
-        unsigned int playoutMeterId_, assemblerMeterId_, incomeFramesMeterId_;
         unsigned int playbackSkipped_ = 0;  // number of packets that were
                                             // skipped due to late delivery,
                                             // i.e. playout thread requests
@@ -62,12 +65,12 @@ namespace ndnrtc
         unsigned int nLateFrames_ = 0;      // number of late frames (arrived
                                             // after their playback time)
         
-        bool playout_;
+        bool playout_ DEPRECATED;
         long playoutSleepIntervalUSec_;     // 30 fps
-        long playoutFrameNo_;
+        long playoutFrameNo_ DEPRECATED;
         
         IEncodedFrameConsumer *frameConsumer_;
-        
+        webrtc::EventWrapper &playoutTimer_;
         webrtc::ThreadWrapper &playoutThread_;
         
         // static routines for threads
@@ -81,6 +84,8 @@ namespace ndnrtc
         // overriden
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
+        
+        unsigned int getNextKeyFrameNo(unsigned int frameNo);
     };
 }
 

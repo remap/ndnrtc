@@ -17,6 +17,20 @@ using namespace webrtc;
 using namespace std;
 
 //******************************************************************************
+#pragma mark - construction/destruction
+MediaSender::MediaSender(const ParamsStruct &params) :
+NdnRtcObject(params),
+packetNo_(0)
+{
+    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
+}
+
+MediaSender::~MediaSender()
+{
+    NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
+}
+
+//******************************************************************************
 //******************************************************************************
 #pragma mark - static
 int MediaSender::getUserPrefix(const ParamsStruct &params, string &prefix)
@@ -136,13 +150,15 @@ int MediaSender::publishPacket(unsigned int len,
     double timeStampMS = NdnRtcUtils::timestamp();
     
     // 2. prepare variables for computing segment prefix
-    unsigned long segmentNo = 0,
+    unsigned long segmentNo = 0;
     // calculate total number of segments for current frame
-    segmentsNum = NdnRtcUtils::getSegmentsNumber(segmentSize_, payloadSize);
+    unsigned long segmentsNum = NdnRtcUtils::getSegmentsNumber(segmentSize_, payloadSize);
     
     try {
         if (segmentsNum > 0)
         {
+//            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_, payloadSize_);
+            
             // 4. split frame into segments
             // 5. publish segments under <root>/packetNo/segmentNo URI
             while (payloadSize > 0)
@@ -175,6 +191,8 @@ int MediaSender::publishPacket(unsigned int len,
                 ndnTransport_->send(*encodedData);
                 
                 segmentNo++;
+                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                                   data.getContent().size());
 #if 0
                 for (unsigned int i = 0; i < data.getContent().size(); ++i)
                     printf("%2x ",(*data.getContent())[i]);
@@ -182,7 +200,12 @@ int MediaSender::publishPacket(unsigned int len,
 #endif
             }
         }
-        
+        else
+            TRACE("\tNO PUBLISH: \t%d \t%d \%d",
+                              segmentsNum,
+                              segmentSize_,
+                              payloadSize);
+            
     }
     catch (std::exception &e)
     {

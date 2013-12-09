@@ -27,7 +27,8 @@ pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
 loggingDetailLevel_(logDetailLevel),
 outLogStream_(NULL),
-logFile_("")
+logFile_(""),
+instanceMutex_(PTHREAD_MUTEX_INITIALIZER)
 {
     buf_ = (char*)malloc(MAX_BUF_SIZE);
     flushBuffer(buf_);
@@ -47,7 +48,7 @@ logFile_("")
 NdnLogger::~NdnLogger()
 {
     INFO("shutting down log session");
-    
+
     if (outLogStream_ != stdout)
         fclose(outLogStream_);
     
@@ -115,7 +116,7 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
         
         sharedInstance->flushBuffer(buf);
         sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level),
-                (level <= NdnLoggerLevelDebug)? fName: "" , tempBuf);
+                (level < NdnLoggerLevelTrace)? fName: "" , tempBuf);
         
         sharedInstance->log(buf);
         pthread_mutex_unlock(&logMutex_);        
@@ -138,6 +139,24 @@ void NdnLogger::logString(const char *str)
 {
     log(str);
 }
+
+void NdnLogger::log(NdnLoggerLevel level, const char *format, ...)
+{
+    if (level >= (NdnLoggerLevel)getLoggingDetailLevel())
+    {
+        pthread_mutex_lock(&instanceMutex_);
+        va_list args;
+        
+        va_start(args, format);
+        flushBuffer(buf_);
+        vsprintf(buf_, format, args);
+        va_end(args);
+        
+        log(buf_);
+        pthread_mutex_unlock(&instanceMutex_);
+    }
+    
+}
 //********************************************************************************
 #pragma mark - private
 int64_t NdnLogger::millisecondTimestamp()
@@ -152,16 +171,16 @@ int64_t NdnLogger::millisecondTimestamp()
 
 void NdnLogger::log(const char *str)
 {
-    struct timeval tv;
-    static char timestamp[100];
+//    struct timeval tv;
+//    static char timestamp[100];
     
-    gettimeofday(&tv,NULL);
+//    gettimeofday(&tv,NULL);
     
-    sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
+//    sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
     
     // make exlusive by semaphores
 
-    fprintf(outLogStream_, "%lld: %s\n", millisecondTimestamp(), str);
+    fprintf(outLogStream_, "%lld\t%s\n", millisecondTimestamp(), str);
     
     if (outLogStream_ != stdout)
         fflush(outLogStream_);

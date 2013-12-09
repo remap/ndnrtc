@@ -14,7 +14,7 @@
 
 using namespace ndnrtc;
 
-::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME, NdnLoggerDetailLevelAll));
 
 
 class TestReceiverChannel : public NdnReceiverChannel, public IEncodedFrameConsumer
@@ -51,7 +51,7 @@ public:
     uint64_t lastTimeStamp_ = 0;
     unsigned int nMisordered_ = 0;
 };
-
+#if 0
 TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
@@ -77,6 +77,42 @@ TEST(LoopbackTests, Transmission)
     EXPECT_EQ(0,rc->nMisordered_);
     
     delete sc;
+    delete rc;
+}
+#endif
+TEST(LoopbackTests, Transmission)
+{
+    ParamsStruct p = DefaultParams;
+    ParamsStruct audioP = DefaultParamsAudio;
+    
+    p.loggingLevel = NdnLoggerDetailLevelDebug;
+#if 0
+    p.producerId = "lioncub";
+    p.ndnHub = "ndn/caida.org";
+#else
+    p.producerId = "nibbler";
+    p.ndnHub = "ndn/ucla.edu/apps";
+#endif
+    p.encodeWidth = 640;
+    p.encodeHeight = 480;
+    p.renderWidth = 640;
+    p.renderHeight = 480;
+    audioP.producerId = p.producerId;
+    audioP.ndnHub = p.ndnHub;
+    
+    TestReceiverChannel *rc = new TestReceiverChannel(p, audioP);
+    
+    EXPECT_EQ(0, rc->init());
+    
+    EXPECT_EQ(RESULT_OK, rc->startTransmission());
+    
+    bool f=  false;
+    //    EXPECT_TRUE_WAIT(f, 10000);
+    WAIT(100000);
+    
+    EXPECT_EQ(RESULT_OK,rc->stopTransmission());
+    EXPECT_EQ(0,rc->nMisordered_);
+    
     delete rc;
 }
 

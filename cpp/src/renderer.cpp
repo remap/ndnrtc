@@ -17,10 +17,8 @@
 using namespace ndnrtc;
 using namespace webrtc;
 
-//********************************************************************************
-//********************************************************************************
-
-//********************************************************************************
+//******************************************************************************
+//******************************************************************************
 #pragma mark - construction/destruction
 NdnRenderer::NdnRenderer(int rendererId, const ParamsStruct &params) :
 NdnRtcObject(params),
@@ -30,8 +28,20 @@ rendererId_(rendererId)
 NdnRenderer::~NdnRenderer()
 {
     stopRendering();
+    
+    if (renderWindow_)
+    {
+        destroyCocoaRenderWindow(renderWindow_);
+        renderWindow_ = NULL;
+    }
+    
+    if (render_)
+    {
+        VideoRender::DestroyVideoRender(render_);
+        render_ = NULL;
+    }
 }
-//********************************************************************************
+//******************************************************************************
 #pragma mark - public
 int NdnRenderer::init()
 {
@@ -63,7 +73,7 @@ int NdnRenderer::startRendering(const string &windowName)
     if (render_->StartRender(rendererId_) < 0)
         return notifyError(RESULT_ERR, "can't start rendering");
     
-    initialized_ = true;
+    isRendering_ = true;
     
     return 0;
 }
@@ -72,27 +82,20 @@ int NdnRenderer::stopRendering()
     if (render_)
     {
         render_->StopRender(rendererId_);
-        VideoRender::DestroyVideoRender(render_);
-        render_ = NULL;
     }
     
-    if (renderWindow_)
-    {
-        destroyCocoaRenderWindow(renderWindow_);
-        renderWindow_ = NULL;
-    }
-    
+    isRendering_ = false;
     return RESULT_OK;
 }
-//********************************************************************************
+//******************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
 void NdnRenderer::onDeliverFrame(I420VideoFrame &frame)
 {
-    if (initialized_)
+    if (isRendering_)
         frameSink_->RenderFrame(rendererId_, frame);
     else
-        notifyError(RESULT_ERR, "render not initiazlized");
+        notifyError(RESULT_ERR, "render not started");
 }
 
-//********************************************************************************
+//******************************************************************************
 #pragma mark - private

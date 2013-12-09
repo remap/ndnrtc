@@ -13,9 +13,10 @@
 
 using namespace ndnrtc;
 using namespace webrtc;
+using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(NdnRtcUtilsTests, TestSegmentsNumber)
 {
     {
@@ -163,19 +164,29 @@ TEST(NdnRTcUtilsTests, TestVoiceEngineInstance)
     
     NdnRtcUtils::releaseVoiceEngine();
 }
-
-#if 0
+#endif
+//#if 0
 TEST(NdnRTcUtilsTests, TestTimestamps)
 {
     { // test microseconds timestamps
         int sleepUS = 100000;
+        
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        
+        int64_t ticks = 1000000LL * static_cast<int64_t>(tv.tv_sec) +
+        static_cast<int64_t>(tv.tv_usec);
+        
         
         int64_t a = NdnRtcUtils::microsecondTimestamp();
         usleep(sleepUS);
         int64_t b = NdnRtcUtils::microsecondTimestamp();
         
         EXPECT_LE(a,b);
-        EXPECT_EQ(sleepUS, b-a);
+        int64_t lb = (b-a)-(int64_t)(0.1*(double)sleepUS),
+                rb = (b-a)+(int64_t)(0.1*(double)sleepUS);
+        EXPECT_GE(sleepUS, lb);
+        EXPECT_LE(sleepUS, rb);
     }
 }
-#endif
+//#endif

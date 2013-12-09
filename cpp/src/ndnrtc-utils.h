@@ -27,19 +27,33 @@ namespace ndnrtc{
         
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();
+        static int64_t nanosecondTimestamp();
         
-        static unsigned int setupFrequencyMeter();
+        static unsigned int setupFrequencyMeter(unsigned int granularity = 1);
         static void frequencyMeterTick(unsigned int meterId);
         static double currentFrequencyMeterValue(unsigned int meterId);
         static void releaseFrequencyMeter(unsigned int meterId);
+
+        static unsigned int setupDataRateMeter(unsigned int granularity = 1);
+        static void dataRateMeterMoreData(unsigned int meterId,
+                                          unsigned int dataSize);
+        static double currentDataRateMeterValue(unsigned int meterId);
+        static void releaseDataRateMeter(unsigned int meterId);
         
         static int frameNumber(const Name::Component &segmentComponent);        
         static int segmentNumber(const Name::Component &segmentComponent);
+        
+        static Name::Component componentFromInt(unsigned int number);
         
         static webrtc::VoiceEngine *sharedVoiceEngine();
         static void releaseVoiceEngine();
         
         static std::string stringFromFrameType(webrtc::VideoFrameType &frameType);
+        
+        static unsigned int toFrames(unsigned int intervalMs,
+                                     double fps);
+        static unsigned int toTimeMs(unsigned int frames,
+                                     double fps);
     };
 }
 

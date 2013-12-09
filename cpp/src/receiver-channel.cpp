@@ -63,7 +63,9 @@ int NdnReceiverChannel::init()
                                                                        ndnAudioFace_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio receive channel");
-        
+
+#warning FOR TESTING ONLY! REMOVE THIS IN RELEASE VERSION!
+        audioInitialized_ = false;
     }
     
     isInitialized_ = audioInitialized_||videoInitialized_;
@@ -142,25 +144,52 @@ int NdnReceiverChannel::stopTransmission()
     isTransmitting_ = false;
     return RESULT_OK;
 }
-void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
+
+//void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
+//{
+//    memset(&stat,0,sizeof(stat));
+//    
+//    stat.nPipeline_ = receiver_->getNPipelined();
+//    stat.nPlayback_ = receiver_->getNPlayout();
+////    stat.nFetched_ = receiver_->getLatest(FrameBuffer::Slot::StateReady);
+//    stat.nLate_ = receiver_->getNLateFrames();
+//    
+//    stat.nSkipped_ = receiver_->getPlaybackSkipped();
+////    stat.nTotalTimeouts_ = receiver_
+////    stat.nTimeouts_ = receiver_
+//    
+//    stat.nFree_ = receiver_->getBufferStat(FrameBuffer::Slot::StateFree);
+//    stat.nLocked_ = receiver_->getBufferStat(FrameBuffer::Slot::StateLocked);
+//    stat.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+//    stat.nNew_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+//    
+//    stat.playoutFreq_  = receiver_->getPlayoutFreq();
+//    stat.inDataFreq_ = receiver_->getIncomeDataFreq();
+//    stat.inFramesFreq_ = receiver_->getIncomeFramesFreq();
+//}
+
+void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
 {
-    memset(&stat,0,sizeof(stat));
+    stat.videoStat_.nBytesPerSec_ = receiver_->getDataRate();
+    stat.videoStat_.interestFrequency_ = receiver_->getInterestFrequency();
+    stat.videoStat_.segmentsFrequency_ = receiver_->getSegmentFrequency();
     
-    stat.nPipeline_ = receiver_->getNPipelined();
-    stat.nPlayback_ = receiver_->getNPlayout();
-//    stat.nFetched_ = receiver_->getLatest(FrameBuffer::Slot::StateReady);
-    stat.nLate_ = receiver_->getNLateFrames();
+    stat.videoStat_.rtt_ = receiver_->getLastRtt();
+    stat.videoStat_.srtt_ = receiver_->getSrtt();
     
-    stat.nSkipped_ = receiver_->getPlaybackSkipped();
-//    stat.nTotalTimeouts_ = receiver_
-//    stat.nTimeouts_ = receiver_
+    stat.videoStat_.nPlayed_ = receiver_->getNPlayed();
+    stat.videoStat_.nMissed_ = receiver_->getNMissed();
+    stat.videoStat_.nLost_ = receiver_->getNLost();
+    stat.videoStat_.nReceived_ = receiver_->getNReceived();
     
-    stat.nFree_ = receiver_->getBufferStat(FrameBuffer::Slot::StateFree);
-    stat.nLocked_ = receiver_->getBufferStat(FrameBuffer::Slot::StateLocked);
-    stat.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
-    stat.nNew_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+    stat.videoStat_.jitterSize_ = receiver_->getJitterOccupancy();
+    stat.videoStat_.rebufferingEvents_ = receiver_->getRebufferingEvents();
+    stat.videoStat_.frameFrequency_ = receiver_->getFrameFrequency();
     
-    stat.playoutFreq_  = receiver_->getPlayoutFreq();
-    stat.inDataFreq_ = receiver_->getIncomeDataFreq();
-    stat.inFramesFreq_ = receiver_->getIncomeFramesFreq();
+    stat.videoStat_.nSent_ = receiver_->getBufferStat(FrameBuffer::Slot::StateNew);
+    stat.videoStat_.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+    
+//    stat.audioStat_.dataRate_ =
+//    stat.audioStat_.interestFrequency_ =
+//    stat.audioStat_.segmentsFrequency_ = 
 }

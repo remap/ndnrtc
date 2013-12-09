@@ -1,0 +1,77 @@
+//
+//  statistics.h
+//  ndnrtc
+//
+//  Created by Peter Gusev on 11/15/13.
+//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//
+
+#ifndef ndnrtc_statistics_h
+#define ndnrtc_statistics_h
+
+namespace ndnrtc {
+    
+    // sending channel statistics
+    typedef struct _SenderChannelPerformance {
+        double nBytesPerSec_;
+        double nFramesPerSec_;
+        unsigned int lastFrameNo_;
+    } SenderChannelPerformance;
+    
+    typedef struct SenderChannelStatistics {
+        SenderChannelPerformance videoStat_, audioStat_;
+    } SenderChannelStatistics;
+    
+    // receiving channel statistics
+    typedef struct _ReceiverChannelPerformance {
+        double nBytesPerSec_, interestFrequency_, segmentsFrequency_;
+
+        // RTT values for packets
+        double srtt_;
+        unsigned int rtt_;
+        
+        // buffers
+        unsigned int jitterSize_, rebufferingEvents_;
+        double frameFrequency_;
+        
+        // buffer stat
+        unsigned int nSent_, nAssembling_;
+        
+        // frames
+        unsigned int nPlayed_, nMissed_, nLost_, nReceived_;
+        
+    } ReceiverChannelPerformance;
+    
+    typedef struct _ReceiverChannelStatistics {
+        ReceiverChannelPerformance videoStat_, audioStat_;
+    } ReceiverChannelStatistics;
+    
+    // library statistics
+    typedef struct _NdnLibStatistics {
+        // consume statistics:
+        // current producer index (as we fetch video seamlessly)
+        const char *producerId_;
+#if 0
+        // recent frame numbers:
+        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
+        
+        // errors - number of total skipped frames and timeouts
+        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
+        
+        // frame buffer info
+        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
+        
+        // produce statistics
+        unsigned int sentNo_;
+        double sendingFramesFreq_, capturingFreq_; // latest sent frame number
+        
+        double inFramesFreq_, inDataFreq_, playoutFreq_;
+#endif
+        SenderChannelStatistics sendStat_;
+        ReceiverChannelStatistics receiveStat_;
+        
+    } NdnLibStatistics;
+    
+}
+
+#endif

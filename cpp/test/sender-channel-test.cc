@@ -55,7 +55,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
     
     delete sc;
 }
-
+#if 0
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
@@ -74,3 +74,4 @@ TEST_F(NdnSenderChannelTest, TestTransmission)
     delete sc;
     
 }
+#endif
