@@ -72,7 +72,7 @@ namespace ndnrtc
         unsigned int producerSegmentSize_;
         bool hasKeyFrameForGop_ DEPRECATED = true;
         unsigned int gopKeyFrameNo_ DEPRECATED = 0;
-        unsigned int fetchAhead_ DEPRECATED = 0;
+        unsigned int fetchAhead_ = 0;
         Name framesPrefix_;
         shared_ptr<Face> face_;
         double currentProducerRate_;
@@ -96,7 +96,7 @@ namespace ndnrtc
         PitMapUri pendingInterestsUri_ DEPRECATED;
         
         FrameBuffer frameBuffer_;
-        PlayoutBuffer playoutBuffer_;
+        PlayoutBuffer *playoutBuffer_;
         
         webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchronous
                                                     // access to the NDN face

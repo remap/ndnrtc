@@ -60,10 +60,10 @@ int CameraCapturer::init()
     TRACE("trying to get device with ID %d", deviceID);
     
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(deviceID);
-    TRACE("TESTSETSET");
+
     if (!devInfo)
         return notifyError(-1, "can't get deivce info");
-       TRACE("TESTSETSET");
+
     char deviceName [256];
     char deviceUniqueName [256];
     
@@ -240,8 +240,6 @@ void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay
 #pragma mark - private
 bool CameraCapturer::process()
 {
-    TRACE("process");
-    
     if (captureEvent_.Wait(100) == kEventSignaled) {
         deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize()) {

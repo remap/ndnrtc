@@ -14,7 +14,7 @@
 
 #include "media-receiver.h"
 #include "video-sender.h"
-#include "playout-buffer.h"
+#include "video-playout-buffer.h"
 
 namespace ndnrtc
 {
@@ -35,7 +35,7 @@ namespace ndnrtc
         unsigned int getNPipelined() { return pipelinerFrameNo_; }
         unsigned int getNPlayout() { return playoutFrameNo_; }
         unsigned int getNLateFrames() { return nLateFrames_; }
-        unsigned int getJitterOccupancy() { return playoutBuffer_.getJitterSize(); }        
+        unsigned int getJitterOccupancy() { return playoutBuffer_->getJitterSize(); }
         unsigned int getBufferStat(FrameBuffer::Slot::State state) {
             return frameBuffer_.getStat(state);
         }
@@ -45,11 +45,11 @@ namespace ndnrtc
         void onBufferStateChanged(PlayoutBuffer::State newState);
         void onMissedFrame(unsigned int frameNo);
         void onPlayheadMoved(unsigned int nextPlaybackFrame);
+        void onJitterBufferUnderrun();
         
     private:
         uint64_t playoutLastUpdate_ = 0;
-        uint64_t lastFrameTimeMs_ = 0;
-        double publisherRate_ = 0;
+        double publisherRate_ DEPRECATED = 0;
         int averageProcessingTimeUsec_ = 0;
         
         unsigned int emptyJitterCounter_ DEPRECATED = 0;
@@ -60,13 +60,14 @@ namespace ndnrtc
                                             // frames at fixed rate, if a frame
                                             // has not arrived yet (not in
                                             // playout buffer) - it is skipped
-        unsigned int pipelinerOverhead_ = 0;// number of outstanding frames
+        unsigned int pipelinerOverhead_ DEPRECATED = 0;// number of outstanding frames
                                             // pipeliner has requested already
-        unsigned int nLateFrames_ = 0;      // number of late frames (arrived
+        unsigned int nLateFrames_ DEPRECATED = 0;      // number of late frames (arrived
                                             // after their playback time)
         
         bool playout_ DEPRECATED;
-        long playoutSleepIntervalUSec_;     // 30 fps
+        int playoutSleepIntervalMs_ = 0;     // 30 fps
+        int playoutTimeRemainder_ = 0;
         long playoutFrameNo_ DEPRECATED;
         
         IEncodedFrameConsumer *frameConsumer_;
@@ -80,6 +81,7 @@ namespace ndnrtc
         
         // thread main functions (called iteratively by static routines)
         bool processPlayout();
+        void playbackFrame();
         
         // overriden
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);

@@ -36,10 +36,8 @@ PlayoutBuffer::~PlayoutBuffer()
 //******************************************************************************
 #pragma mark - public
 int PlayoutBuffer::init(ndnrtc::FrameBuffer *buffer,
-                        unsigned int gop,
                         unsigned int jitterSize)
 {
-    gopSize_ = gop;
     minJitterSize_ = jitterSize;
     frameBuffer_ = buffer;
 
@@ -71,20 +69,8 @@ void PlayoutBuffer::flush()
     switchToState(StateClear);
 }
 
-shared_ptr<EncodedImage> PlayoutBuffer::acquireNextFrame(bool incCounter)
-{
-    shared_ptr<EncodedImage> frame(nullptr);
-    FrameBuffer::Slot *slot = acquireNextSlot(incCounter);
-    
-    if (slot)
-        frame = slot->getFrame();
-    
-    return frame;
-}
-
 FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
 {
-    bool needFlush = false;
     FrameBuffer::Slot *slot = nullptr;
     
     if (!frameBuffer_)
@@ -94,6 +80,8 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
     }
     
     playoutCs_.Enter();
+    bufferUnderrun_ = false;
+    missingFrame_ = false;
     
     switch (state_) {
         case StateBuffering: // do nothing
@@ -105,22 +93,17 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
             break;
         case StatePlayback:
         {
-            if (!jitterBuffer_.size())
+            bufferUnderrun_ = jitterBuffer_.size() == 0;
+            missingFrame_ = (playheadPointer_ != framePointer_) && !bufferUnderrun_;
+            
+            if (!bufferUnderrun_ && !missingFrame_)
             {
-                needFlush = true;
-                DBG("[PLAYOUT] ACQUIRE - moving forward");
-            }
-            else
-            {
-                if (playheadPointer_ == framePointer_)
-                {
-                    slot = jitterBuffer_.top();
-                    DBG("[PLAYOUT] ACQUIRE - playhead %d, top %d (diff: %d), jitter %d",
-                          playheadPointer_, framePointer_, framePointer_-playheadPointer_,
-                          jitterBuffer_.size());
-                }
-                else
-                    DBG("[PLAYOUT] ACQUIRE - MISSING frame %d", playheadPointer_);
+                slot = jitterBuffer_.top();
+                DBG("[PLAYOUT] ACQUIRE - playhead %d, top %d (diff: %d), jitter %d",
+                    playheadPointer_,
+                    framePointer_,
+                    framePointer_-playheadPointer_,
+                    jitterBuffer_.size());
             }
         }
             break;
@@ -131,16 +114,19 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
     
     playoutCs_.Leave();
     
-    if (needFlush && callback_)
+    if (missingFrame_ && callback_)
         callback_->onMissedFrame(playheadPointer_);
+    
+    if (bufferUnderrun_ && callback_)
+        callback_->onJitterBufferUnderrun();
     
     return slot;
 }
 
-void PlayoutBuffer::releaseAcquiredFrame()
+int PlayoutBuffer::releaseAcquiredFrame()
 {
     if (state_ != StatePlayback)
-        return;
+        return -1;
     
     bool moveHead = false;
     
@@ -150,8 +136,8 @@ void PlayoutBuffer::releaseAcquiredFrame()
         webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
         FrameBuffer::Slot *slot = jitterBuffer_.top();
         
-        if (slot->isKeyFrame())
-            nKeyFramesInJitter_--;
+//        if (slot->isKeyFrame())
+//            nKeyFramesInJitter_--;
         
         jitterBuffer_.pop();
         frameBuffer_->unlockSlot(slot->getFrameNumber());
@@ -177,6 +163,8 @@ void PlayoutBuffer::releaseAcquiredFrame()
         DBG("[PLAYOUT] bufferring??? waiting for %d frame", playheadPointer_);
 //      switchToState(PlayoutBuffer::StateBuffering);
     }
+    
+    return 0;
 }
 
 //******************************************************************************
@@ -192,11 +180,11 @@ bool PlayoutBuffer::processFrameProvider()
             {
                 CriticalSectionScoped scopedCs(&playoutCs_);
                 
-                if (ev.slot_->isKeyFrame())
-                {
-                    lastKeyFrameNo_ = ev.frameNo_;
-                    nKeyFramesInJitter_++;
-                }
+//                if (ev.slot_->isKeyFrame())
+//                {
+//                    lastKeyFrameNo_ = ev.frameNo_;
+//                    nKeyFramesInJitter_++;
+//                }
                 
                 jitterBuffer_.push(ev.slot_);
             }
@@ -252,9 +240,9 @@ void PlayoutBuffer::switchToState(State state)
             playoutCs_.Enter();
             
             jitterBuffer_ = FrameJitterBuffer(FrameBuffer::Slot::SlotComparator(true));
-            lastKeyFrameNo_ = -1;
-            nKeyFramesInJitter_ = 0;
-            isPlaybackStarted_ = false;
+//            lastKeyFrameNo_ = -1;
+//            nKeyFramesInJitter_ = 0;
+//            isPlaybackStarted_ = false;
             framePointer_ = 0;
             playheadPointer_ = 0;
             

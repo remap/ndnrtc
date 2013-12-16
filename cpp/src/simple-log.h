@@ -112,6 +112,7 @@ namespace ndnlog {
         char *buf_;
         NdnLoggerDetailLevel loggingDetailLevel_;
         std::string logFile_;
+        int64_t lastFileFlush_;
         
         static pthread_mutex_t logMutex_;
         pthread_mutex_t instanceMutex_;

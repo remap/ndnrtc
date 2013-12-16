@@ -22,12 +22,13 @@ NdnAudioReceiver::NdnAudioReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params),
 collectingThread_(*ThreadWrapper::CreateThread(collectingThreadRoutine, this))
 {
-    
+    playoutBuffer_ = new PlayoutBuffer();
 }
 
 NdnAudioReceiver::~NdnAudioReceiver()
 {
     stopFetching();
+    delete playoutBuffer_;
 }
 //******************************************************************************
 #pragma mark - public
@@ -35,8 +36,7 @@ int NdnAudioReceiver::init(shared_ptr<Face> face)
 {
     int res = NdnMediaReceiver::init(face);
     
-    if (RESULT_FAIL(playoutBuffer_.init(&frameBuffer_,
-                                        DefaultParamsAudio.gop,
+    if (RESULT_FAIL(playoutBuffer_->init(&frameBuffer_,
                                         DefaultParamsAudio.jitterSize)))
         return notifyError(RESULT_ERR, "could not initialize playout buffer");
     
@@ -81,7 +81,7 @@ bool NdnAudioReceiver::collectAudioPackets()
 {
     if (isCollecting_ && packetConsumer_)
     {
-        FrameBuffer::Slot *slot = playoutBuffer_.acquireNextSlot();
+        FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
         
         if (slot)
         {
@@ -110,12 +110,12 @@ bool NdnAudioReceiver::collectAudioPackets()
             ;
         TRACE("[AUDIO] playout buffer state: jitter size (%d), key frames (%d) "
               "last keyframe no (%d), top frame no (%d), diff (%d)",
-              playoutBuffer_.getJitterSize(), playoutBuffer_.getNKeyFrames(),
-              playoutBuffer_.getLastKeyFrameNo(), playoutBuffer_.getTopFrameNo(),
-              playoutBuffer_.getTopFrameNo() - playoutBuffer_.getLastKeyFrameNo()
+              playoutBuffer_->getJitterSize(), playoutBuffer_->getNKeyFrames(),
+              playoutBuffer_->getLastKeyFrameNo(), playoutBuffer_->getTopFrameNo(),
+              playoutBuffer_->getTopFrameNo() - playoutBuffer_->getLastKeyFrameNo()
               );
         
-        playoutBuffer_.releaseAcquiredFrame();
+        playoutBuffer_->releaseAcquiredFrame();
     }
     
     usleep(10000);
@@ -125,7 +125,7 @@ bool NdnAudioReceiver::collectAudioPackets()
 bool NdnAudioReceiver::isLate(unsigned int frameNo)
 {
     if (mode_ == ReceiverModeFetch &&
-        frameNo < playoutBuffer_.framePointer())
+        frameNo < playoutBuffer_->framePointer())
         return true;
 
     return false;

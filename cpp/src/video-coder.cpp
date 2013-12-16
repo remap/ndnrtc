@@ -58,6 +58,7 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
         codec.codecSpecific.VP8.keyFrameInterval = 2000;
+//        codec.codecSpecific.VP8.frameDroppingOn = false;
     }
     
     // customize parameteres if possible
@@ -125,22 +126,22 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 {
     counter_++;
     
-    TRACE("got encoded byte length: %d\n"
-          "info: \thasReceivedSLI: %d\n\tpictureIdSLI: %d\n\thasReceivedRPSI: %d\n\t"
-          "pictureIdRPSI: %ld\n\tpictureId:%d\n\tnonReference:%d\n\tsimulcastIdx:%d\n\t"
-          "temporalIdx: %d\n\tlayerSync:%d\n\ttl0PicIdx:%d\n\tkeyIdx:%d\n",
-          encodedImage._length,
-          codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI,
-          codecSpecificInfo->codecSpecific.VP8.pictureIdSLI,
-          codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI,
-          codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI,
-          codecSpecificInfo->codecSpecific.VP8.pictureId,
-          codecSpecificInfo->codecSpecific.VP8.nonReference,
-          codecSpecificInfo->codecSpecific.VP8.simulcastIdx,
-          codecSpecificInfo->codecSpecific.VP8.temporalIdx,
-          codecSpecificInfo->codecSpecific.VP8.layerSync,
-          codecSpecificInfo->codecSpecific.VP8.tl0PicIdx,
-          codecSpecificInfo->codecSpecific.VP8.keyIdx);
+//    TRACE("got encoded byte length: %d\n"
+//          "info: \thasReceivedSLI: %d\n\tpictureIdSLI: %d\n\thasReceivedRPSI: %d\n\t"
+//          "pictureIdRPSI: %ld\n\tpictureId:%d\n\tnonReference:%d\n\tsimulcastIdx:%d\n\t"
+//          "temporalIdx: %d\n\tlayerSync:%d\n\ttl0PicIdx:%d\n\tkeyIdx:%d\n",
+//          encodedImage._length,
+//          codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI,
+//          codecSpecificInfo->codecSpecific.VP8.pictureIdSLI,
+//          codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI,
+//          codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI,
+//          codecSpecificInfo->codecSpecific.VP8.pictureId,
+//          codecSpecificInfo->codecSpecific.VP8.nonReference,
+//          codecSpecificInfo->codecSpecific.VP8.simulcastIdx,
+//          codecSpecificInfo->codecSpecific.VP8.temporalIdx,
+//          codecSpecificInfo->codecSpecific.VP8.layerSync,
+//          codecSpecificInfo->codecSpecific.VP8.tl0PicIdx,
+//          codecSpecificInfo->codecSpecific.VP8.keyIdx);
     
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();

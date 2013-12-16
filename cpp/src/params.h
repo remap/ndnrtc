@@ -157,7 +157,7 @@ namespace ndnrtc
         
         30,     // playback rate of local consumer
         5,      // interest timeout
-        50,     // incoming framebuffer size
+        30,     // incoming framebuffer size
         16000,  // frame buffer slot size
         20       // jitter size
     };
@@ -196,7 +196,7 @@ namespace ndnrtc
         
         30,     // playback rate of local consumer
         2,      // interest timeout
-        60,     // incoming framebuffer size
+        20,     // incoming framebuffer size
         1000,  // frame buffer slot size
         33      // jitter size
     };

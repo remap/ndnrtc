@@ -338,6 +338,7 @@ void FrameBuffer::flush()
 
 void FrameBuffer::release()
 {
+    TRACE("[BUFFER] RELEASE");
     forcedRelease_ = true;
     bufferEvent_.Set();
 }
@@ -635,8 +636,10 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
             bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
+        {
             // if couldn't find event we are looking for - wait for the event to occur
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
+        }
     }
     
     return poppedEvent;

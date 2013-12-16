@@ -44,6 +44,9 @@ instanceMutex_(PTHREAD_MUTEX_INITIALIZER)
         outLogStream_ = stdout;
         logFile_ = "";
     }
+    else
+        lastFileFlush_ = millisecondTimestamp();
+    
 }
 NdnLogger::~NdnLogger()
 {
@@ -61,8 +64,16 @@ NdnLogger::~NdnLogger()
 void NdnLogger::initialize(const char *logFile, NdnLoggerDetailLevel logDetailLevel)
 {
     if (sharedLogger)
+    {
+        // wait for unlocking
+        pthread_mutex_lock(&logMutex_);
+        pthread_mutex_unlock(&logMutex_);
+        pthread_mutex_destroy(&logMutex_);
+        
         delete sharedLogger;
-    
+    }
+
+    pthread_mutex_init(&logMutex_, NULL);    
     sharedLogger = new NdnLogger(logFile, logDetailLevel);
 }
 
@@ -100,11 +111,12 @@ void NdnLogger::flushBuffer(char *buffer)
 
 void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format, ...)
 {
+    int res = pthread_mutex_lock(&logMutex_);
+    
     NdnLogger *sharedInstance = NdnLogger::getInstance();
     
     if (level >= (NdnLoggerLevel)sharedInstance->getLoggingDetailLevel())
     {
-        pthread_mutex_lock(&logMutex_);
         va_list args;
         
         va_start(args, format);
@@ -119,8 +131,9 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
                 (level < NdnLoggerLevelTrace)? fName: "" , tempBuf);
         
         sharedInstance->log(buf);
-        pthread_mutex_unlock(&logMutex_);        
     }
+
+    pthread_mutex_unlock(&logMutex_);
 }
 
 std::string NdnLogger::currentLogFile()
@@ -171,17 +184,16 @@ int64_t NdnLogger::millisecondTimestamp()
 
 void NdnLogger::log(const char *str)
 {
-//    struct timeval tv;
-//    static char timestamp[100];
-    
-//    gettimeofday(&tv,NULL);
-    
-//    sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
-    
     // make exlusive by semaphores
 
-    fprintf(outLogStream_, "%lld\t%s\n", millisecondTimestamp(), str);
+    pthread_t pid = pthread_self();
+    
+    fprintf(outLogStream_, "%lld\t%d\t%s\n", millisecondTimestamp(), pid, str);
     
     if (outLogStream_ != stdout)
-        fflush(outLogStream_);
+    {
+        // do not flush too fast
+        if (millisecondTimestamp() - lastFileFlush_ >= 100)
+            fflush(outLogStream_);
+    }
 }

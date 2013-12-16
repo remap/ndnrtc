@@ -24,18 +24,19 @@ unsigned int RebufferThreshold = 100000; // if N seconds were no frames - rebuff
 #pragma mark - construction/destruction
 NdnVideoReceiver::NdnVideoReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params),
-playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this)),//, kRealtimePriority)),
+playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this, kRealtimePriority)),
 playoutTimer_(*EventWrapper::Create()),
 playout_(false),
 playoutFrameNo_(0),
-playoutSleepIntervalUSec_(33333),
 frameConsumer_(nullptr)
 {
     fetchAhead_ = 9; // fetch segments ahead
+    playoutBuffer_ = new VideoPlayoutBuffer();
 }
 
 NdnVideoReceiver::~NdnVideoReceiver()
 {
+    delete playoutBuffer_;
 }
 
 //******************************************************************************
@@ -46,14 +47,18 @@ int NdnVideoReceiver::init(shared_ptr<Face> face)
     
     if (RESULT_GOOD(res))
     {
-        if (RESULT_FAIL(playoutBuffer_.init(&frameBuffer_,
-                                            DefaultParams.gop,
-                                            DefaultParams.jitterSize)))
+        publisherRate_ = ParamsStruct::validate(params_.producerRate, 1,
+                                                MaxFrameRate, res,
+                                                DefaultParams.producerRate);
+        
+        if (RESULT_FAIL(((VideoPlayoutBuffer*)playoutBuffer_)->init(&frameBuffer_,
+                                             DefaultParams.jitterSize,
+                                             publisherRate_)))
             return notifyError(RESULT_ERR, "could not initialize playout buffer");
         
-        playoutBuffer_.registerBufferCallback(this);
+        playoutBuffer_->registerBufferCallback(this);
         
-        playoutSleepIntervalUSec_ =  1000000/ParamsStruct::validate(params_.producerRate, 1, MaxFrameRate, res, DefaultParams.producerRate);
+        playoutSleepIntervalMs_ =  1000/publisherRate_;
         
         if (RESULT_NOT_OK(res))
             notifyError(RESULT_WARN, "bad producer rate value %d. using\
@@ -70,8 +75,6 @@ int NdnVideoReceiver::startFetching()
     
     if (RESULT_GOOD(res))
     {
-        publisherRate_ = params_.producerRate;
-        
         unsigned int tid = PLAYOUT_THREAD_ID;
         
         if (!playoutThread_.Start(tid))
@@ -111,39 +114,21 @@ void NdnVideoReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     webrtc::VideoFrameType type = slot->getFrameType();
     NdnFrameData::FrameMetadata metadata;
     
-    if (RESULT_GOOD(slot->getFrameMetadata(metadata)))
-    {
-        TRACE("updating parameters from received metadata: packetRate: %f",
-              metadata.packetRate_);
-        
-        // we allow only slight deviations from originally provided rate
-        if (metadata.packetRate_ != 0 &&
-            metadata.packetRate_ >= params_.producerRate*(1-RateDeviation) &&
-            metadata.packetRate_ <= params_.producerRate*(1+RateDeviation))
-        {
-            playoutSleepIntervalUSec_ = lround(1000000./metadata.packetRate_);
-        }
-        else
-            playoutSleepIntervalUSec_ = lround(1000000./params_.producerRate);
-        
-        TRACE("[RECEIVER] new playout sleep interval: %ld", playoutSleepIntervalUSec_);
-    }
-    
     playoutLastUpdate_ = NdnRtcUtils::millisecondTimestamp();
     
     DBG("[VIDEO RECEVIER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
-        playoutBuffer_.getJitterSize());
+        playoutBuffer_->getJitterSize());
     
     nReceived_++;
     NdnRtcUtils::frequencyMeterTick(frameFrequencyMeter_);
     
-    frameLogger_->log(NdnLoggerLevelInfo,"\tADDED: \t%d \t \t \t \t%d",
+    frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d",
                       frameNo,
                       // empty
                       // empty
                       // empty
-                      playoutBuffer_.getJitterSize());
+                      playoutBuffer_->getJitterSize());
 }
 void NdnVideoReceiver::onBufferStateChanged(PlayoutBuffer::State newState)
 {
@@ -151,11 +136,7 @@ void NdnVideoReceiver::onBufferStateChanged(PlayoutBuffer::State newState)
 }
 void NdnVideoReceiver::onMissedFrame(unsigned int frameNo)
 {
-    TRACE("VIDEO RECEIVER: playout missed frame %d. empty jitter occurence %d",
-          frameNo, emptyJitterCounter_+1);
-    
-    if (!playoutBuffer_.getJitterSize())
-        emptyJitterCounter_++;
+    TRACE("[PLAYOUT] missed %d", frameNo);
     
     if (lastMissedFrameNo_ != frameNo)
     {
@@ -163,19 +144,26 @@ void NdnVideoReceiver::onMissedFrame(unsigned int frameNo)
         nMissed_++;
     }
     
-    frameLogger_->log(NdnLoggerLevelInfo,"\tMISSED: \t%d \t \t \t \t%d",
+    frameLogger_->log(NdnLoggerLevelInfo,"MISSED: \t%d \t \t \t \t%d",
                       frameNo,
                       // empty
                       // empty
                       // empty
-                      playoutBuffer_.getJitterSize());
+                      playoutBuffer_->getJitterSize());
 }
 void NdnVideoReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
 {
-    TRACE("playhead moved. next playback frame is %d", nextPlaybackFrame);
+    TRACE("[PLAYOUT] next frame %d", nextPlaybackFrame);
 
     // should free all previous frames
     frameBuffer_.markSlotFree(nextPlaybackFrame-1);
+}
+void NdnVideoReceiver::onJitterBufferUnderrun()
+{
+    TRACE("[PLAYOUT] UNDERRUN %d",
+          emptyJitterCounter_+1);
+    
+    emptyJitterCounter_++;
 }
 //******************************************************************************
 #pragma mark - private
@@ -183,75 +171,91 @@ bool NdnVideoReceiver::processPlayout()
 {
     if (mode_ == ReceiverModeFetch)
     {
-        if (NdnRtcUtils::millisecondTimestamp() - playoutLastUpdate_ >= RebufferThreshold)
+        uint64_t now = NdnRtcUtils::millisecondTimestamp();
+        
+        if (now - playoutLastUpdate_ >= RebufferThreshold)
             rebuffer();
-        else
-        {
-            uint64_t now = NdnRtcUtils::microsecondTimestamp();
-            
-            FrameBuffer::Slot* slot = playoutBuffer_.acquireNextSlot();
-            
-            if (slot && frameConsumer_)
-            {
-                shared_ptr<EncodedImage> encodedFrame = slot->getFrame();
-                NdnFrameData::FrameMetadata metadata;
-                
-                slot->getFrameMetadata(metadata);
-
-                publisherRate_ = publisherRate_ + (metadata.packetRate_-publisherRate_)*RateFilterAlpha;
-
-//                if (lastFrameTimeMs_ != 0)
-//                {
-//                    double rate = 1000/(encodedFrame->capture_time_ms_ - lastFrameTimeMs_);
-//                    publisherRate_ = publisherRate_ + (rate-publisherRate_)*RateFilterAlpha;
-//                }
-                
-//                lastFrameTimeMs_ = encodedFrame->capture_time_ms_;
-                
-                nPlayedOut_++;
-                frameLogger_->log(NdnLoggerLevelInfo, "\tPLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld",
-                                  slot->getFrameNumber(),
-                                  slot->assembledSegmentsNumber(),
-                                  slot->totalSegmentsNumber(),
-                                  slot->isKeyFrame(),
-                                  playoutBuffer_.getJitterSize(),
-                                  slot->getAssemblingTimeUsec());
-                
-                TRACE("push fetched frame to consumer. type %d",
-                      encodedFrame->_frameType);
-                frameConsumer_->onEncodedFrameDelivered(*encodedFrame);
-            }
-            
-            playoutBuffer_.releaseAcquiredFrame();
-            
-            if (averageProcessingTimeUsec_ == 0)
-                averageProcessingTimeUsec_ = NdnRtcUtils::microsecondTimestamp() - now;
-            
-            int waitTimeMs = (int)floor((1000000./publisherRate_-averageProcessingTimeUsec_)/1000.);
-            
-            TRACE("[PLAYOUT] processing %d, publisher rate: %f, timer for %d",
-                  averageProcessingTimeUsec_, publisherRate_, waitTimeMs);
-            
-            if (waitTimeMs > 0)
-            {
-                uint64_t t = NdnRtcUtils::microsecondTimestamp();
-                
-                playoutTimer_.StartTimer(false, waitTimeMs);
-                playout_ = (playoutTimer_.Wait(WEBRTC_EVENT_INFINITE) == webrtc::kEventSignaled);
-                
-                t = NdnRtcUtils::microsecondTimestamp() - t;
-                TRACE("[PLAYOUT] waited on timer %ld usec. should - %d", t, waitTimeMs);
-            }
-            
-            int fullProcessingTime = NdnRtcUtils::microsecondTimestamp()-now - waitTimeMs*1000;
-            TRACE("full processing %ld", fullProcessingTime);
-            
-            averageProcessingTimeUsec_ = averageProcessingTimeUsec_ + (fullProcessingTime-averageProcessingTimeUsec_)*RateFilterAlpha;
-            TRACE("new processing time %ld", averageProcessingTimeUsec_);
-        }
+        else if (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)
+            playbackFrame();
     }
     
     return true; //playout_;
+}
+
+void NdnVideoReceiver::playbackFrame()
+{
+    int64_t processingStart = NdnRtcUtils::microsecondTimestamp();
+    TRACE("PROCESSING START: %ld", processingStart);
+    
+    int frameno = -1;
+    FrameBuffer::Slot* slot;
+    shared_ptr<EncodedImage> frame = ((VideoPlayoutBuffer*)playoutBuffer_)->acquireNextFrame(&slot);
+    
+    if (frame.get() && frameConsumer_)
+    {
+        frameno = slot->getFrameNumber();
+        nPlayedOut_++;
+        frameLogger_->log(NdnLoggerLevelInfo,
+                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld",
+                          slot->getFrameNumber(),
+                          slot->assembledSegmentsNumber(),
+                          slot->totalSegmentsNumber(),
+                          slot->isKeyFrame(),
+                          playoutBuffer_->getJitterSize(),
+                          slot->getAssemblingTimeUsec());
+        
+        frameConsumer_->onEncodedFrameDelivered(*frame.get());
+    }
+    
+    playoutSleepIntervalMs_ = playoutBuffer_->releaseAcquiredFrame();
+    TRACE("producer playout time %ld", playoutSleepIntervalMs_);
+    
+    if (averageProcessingTimeUsec_ == 0)
+        averageProcessingTimeUsec_ = NdnRtcUtils::microsecondTimestamp() -
+        processingStart;
+    
+    int sleepTimeUsec = playoutSleepIntervalMs_*1000 - averageProcessingTimeUsec_;
+    if (sleepTimeUsec < 0) sleepTimeUsec = 0;
+    int sleepTimeMs = sleepTimeUsec/1000.;
+    
+    playoutTimeRemainder_ += (sleepTimeUsec-(sleepTimeUsec/1000)*1000);
+    if (playoutTimeRemainder_ > 1000)
+    {
+        TRACE("[PLAYOUT] use remainder %d", playoutTimeRemainder_);
+        sleepTimeMs += 1;
+        playoutTimeRemainder_ -= 1000;
+    }
+    
+    TRACE("[PLAYOUT] play frame %d for %d ms (%ld, %d)",
+          frameno, sleepTimeMs,
+          averageProcessingTimeUsec_, playoutTimeRemainder_);
+    
+    assert(sleepTimeUsec >= 0);
+    if (sleepTimeUsec >0)
+    {
+#if 0
+        TRACE("SLEEP %d", sleepTimeUsec);
+        usleep(sleepTimeUsec);
+        TRACE("SLEEP WAKE");
+#else
+        // set timer, not periodic
+        TRACE("TIMER WAIT %d", sleepTimeMs);
+        playoutTimer_.StartTimer(false, sleepTimeMs);
+        playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
+        TRACE("TIMER DONE");
+#endif
+    }
+    else
+        TRACE("playout time zero - skipping frame");
+    
+    int64_t processing = NdnRtcUtils::microsecondTimestamp()-processingStart;
+    TRACE("full processing %ld", processing);
+    
+    processing -= sleepTimeMs*1000;
+    averageProcessingTimeUsec_ += (processing-averageProcessingTimeUsec_)*1.; //RateFilterAlpha;
+    
+    TRACE("processing time %ld, filtered: %ld",
+          processing, averageProcessingTimeUsec_);
 }
 
 void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
@@ -274,7 +278,7 @@ void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
 
 bool NdnVideoReceiver::isLate(unsigned int frameNo)
 {
-    return (frameNo < playoutBuffer_.getPlayheadPointer());
+    return (frameNo < playoutBuffer_->getPlayheadPointer());
 }
 
 unsigned int NdnVideoReceiver::getNextKeyFrameNo(unsigned int frameNo)
