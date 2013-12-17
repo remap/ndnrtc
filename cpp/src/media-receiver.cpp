@@ -573,9 +573,6 @@ void NdnMediaReceiver::rebuffer()
 // frame buffer events for pipeliner
 bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
 {
-//    TRACE("on free slot - request next frame %d (free slots: %d)",
-//          pipelinerFrameNo_, frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
-    
     bool stop = false;
     
     switch (mode_)
@@ -599,20 +596,11 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             int issuedInterestsMs = NdnRtcUtils::toTimeMs(framesInProgress,
                                                           currentProducerRate_);
             
-//            TRACE("jitter size ms: %d, in progress ms: %d",
-//                  jitterSizeMs, issuedInterestsMs);
-            
             // if current jitter buffer size + number of awaiting frames
             // is bigger than preferred size, skip pipelining
             if (jitterSizeMs + issuedInterestsMs >= outstandingMs_)
             {
-//                TRACE("not pipelining too far (jitter - %d ms, ph - %d, pp -%d, ff - %d. srtt: %f)",
-//                    jitterSizeMs,
-//                    playoutBuffer_->getPlayheadPointer(), pipelinerFrameNo_,
-//                    firstFrame_, srtt_);
-                
                 frameBuffer_.reuseEvent(event);
-//                stop = (pipelineTimer_.Wait(WEBRTC_EVENT_INFINITE) != webrtc::kEventSignaled);                
             }
             else
             {
@@ -635,13 +623,10 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                 for (int i = 0; i <= fetchAhead_; i++)
                 {
                     requestSegment(pipelinerFrameNo_, i);
-//                    usleep(currentProducerRate_/(fetchAhead_));
                 }
                 
                 pipelinerFrameNo_++;
             }
-
-//            stop = (pipelineTimer_.Wait(WEBRTC_EVENT_INFINITE) != webrtc::kEventSignaled);
         }
             break;
         default:

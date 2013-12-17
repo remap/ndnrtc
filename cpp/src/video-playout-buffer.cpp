@@ -15,6 +15,109 @@ using namespace webrtc;
 using namespace ndnrtc;
 
 //******************************************************************************
+#pragma mark - construction/destruction
+VideoJitterTiming::VideoJitterTiming():
+playoutTimer_(*EventWrapper::Create())
+{
+    
+}
+
+//******************************************************************************
+#pragma mark - public
+void VideoJitterTiming::init()
+{
+    // empty
+}
+void VideoJitterTiming::stop()
+{
+    playoutTimer_.StopTimer();
+    playoutTimer_.Set();
+}
+
+int64_t VideoJitterTiming::startFramePlayout()
+{
+    int64_t processingStart = NdnRtcUtils::microsecondTimestamp();
+    TRACE("PROCESSING START: %ld", processingStart);
+    
+    if (playoutTimestampUsec_ == 0)
+        playoutTimestampUsec_ = NdnRtcUtils::microsecondTimestamp();
+    else
+    { // calculate processing delay from the previous iteration
+        int64_t prevIterationProcTimeUsec = processingStart -
+                                                playoutTimestampUsec_;
+        
+        TRACE("[PLAYOUT] prev iteration time %ld", prevIterationProcTimeUsec);
+        
+        // substract frame playout delay
+        if (prevIterationProcTimeUsec >= framePlayoutTimeMs_*1000)
+            prevIterationProcTimeUsec -= framePlayoutTimeMs_*1000;
+        else
+            // should not occur!
+            assert(0);
+        
+        TRACE("[PLAYOU] prev iter proc time %ld", prevIterationProcTimeUsec);
+        
+        // add this time to the average processing time
+        processingTimeUsec_ += prevIterationProcTimeUsec;
+        TRACE("[PLAYOU] proc time %ld", prevIterationProcTimeUsec);
+        
+        playoutTimestampUsec_ = processingStart;
+    }
+    
+    return playoutTimestampUsec_;
+}
+
+void VideoJitterTiming::updatePlayoutTime(int framePlayoutTime)
+{
+    TRACE("producer playout time %ld", framePlayoutTime);
+    
+    int playoutTimeUsec = framePlayoutTime*1000;
+    if (playoutTimeUsec < 0) playoutTimeUsec = 0;
+    
+    if (processingTimeUsec_ >= 1000)
+    {
+        TRACE("[PLAYOUT] accomodate processing time %ld",
+              processingTimeUsec_);
+        
+        int processingUsec = (processingTimeUsec_/1000)*1000;
+        
+        TRACE("[PLAYOUT] processing %d", processingUsec);
+        
+        if (processingUsec > playoutTimeUsec)
+        {
+            TRACE("[PLAYOUT] skipping frame. processing %d, playout %d",
+                  processingUsec, playoutTimeUsec);
+            
+            processingUsec = playoutTimeUsec;
+            playoutTimeUsec = 0;
+        }
+        else
+            playoutTimeUsec -= processingUsec;
+        
+        processingTimeUsec_ = processingTimeUsec_ - processingUsec;
+        TRACE("[PLAYOUT] playout usec %d, processing %ld",
+              playoutTimeUsec, processingTimeUsec_);
+    }
+
+    framePlayoutTimeMs_ = playoutTimeUsec/1000;
+}
+
+void VideoJitterTiming::runPlayoutTimer()
+{
+    assert(framePlayoutTimeMs_ >= 0);
+    if (framePlayoutTimeMs_ > 0)
+    {
+        TRACE("TIMER WAIT %d", framePlayoutTimeMs_);
+        playoutTimer_.StartTimer(false, framePlayoutTimeMs_);
+        playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
+        TRACE("TIMER DONE");
+    }
+    else
+        TRACE("playout time zero - skipping frame");
+}
+
+//******************************************************************************
+//******************************************************************************
 #pragma mark - public
 int VideoPlayoutBuffer::init(FrameBuffer *buffer,
                              unsigned int jitterSize,

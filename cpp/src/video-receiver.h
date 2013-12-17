@@ -31,10 +31,7 @@ namespace ndnrtc
             frameConsumer_ = consumer;
         }
         
-        unsigned int getPlaybackSkipped() { return playbackSkipped_; }
         unsigned int getNPipelined() { return pipelinerFrameNo_; }
-        unsigned int getNPlayout() { return playoutFrameNo_; }
-        unsigned int getNLateFrames() { return nLateFrames_; }
         unsigned int getJitterOccupancy() { return playoutBuffer_->getJitterSize(); }
         unsigned int getBufferStat(FrameBuffer::Slot::State state) {
             return frameBuffer_.getStat(state);
@@ -49,30 +46,12 @@ namespace ndnrtc
         
     private:
         uint64_t playoutLastUpdate_ = 0;
-        double publisherRate_ DEPRECATED = 0;
-        int averageProcessingTimeUsec_ = 0;
-        
-        unsigned int emptyJitterCounter_ DEPRECATED = 0;
-        // statistics variables
-        unsigned int playbackSkipped_ = 0;  // number of packets that were
-                                            // skipped due to late delivery,
-                                            // i.e. playout thread requests
-                                            // frames at fixed rate, if a frame
-                                            // has not arrived yet (not in
-                                            // playout buffer) - it is skipped
-        unsigned int pipelinerOverhead_ DEPRECATED = 0;// number of outstanding frames
-                                            // pipeliner has requested already
-        unsigned int nLateFrames_ DEPRECATED = 0;      // number of late frames (arrived
-                                            // after their playback time)
-        
-        bool playout_ DEPRECATED;
-        int playoutSleepIntervalMs_ = 0;     // 30 fps
-        int playoutTimeRemainder_ = 0;
-        long playoutFrameNo_ DEPRECATED;
+        double publisherRate_ = 0;
+        unsigned int emptyJitterCounter_ = 0;
         
         IEncodedFrameConsumer *frameConsumer_;
-        webrtc::EventWrapper &playoutTimer_;
         webrtc::ThreadWrapper &playoutThread_;
+        VideoJitterTiming jitterTiming_;
         
         // static routines for threads
         static bool playoutThreadRoutine(void *obj) {
@@ -87,7 +66,7 @@ namespace ndnrtc
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
         
-        unsigned int getNextKeyFrameNo(unsigned int frameNo);
+        unsigned int getNextKeyFrameNo(unsigned int frameNo) DEPRECATED;
     };
 }
 

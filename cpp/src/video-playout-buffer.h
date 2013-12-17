@@ -19,6 +19,56 @@ namespace ndnrtc
     const double PlayoutJitterRatio = 1/3;
     const double ExtraTimePerFrame = 0.3;
     
+    /**
+     * Video jitter buffer timing class
+     * Provides interface for managing playout timing in separate playout thread
+     * Playout thread itratively calls function which extracts frames from the 
+     * jitter buffer, renders them and sets a timer for the frame playout delay,
+     * which is calculated from the timestamps, provided by producer and 
+     * adjusted by this class in order to accomodate processing delays 
+     * (extracting frame from the jitter buffer, rendering frame on the canvas,
+     * etc.).
+     */
+    class VideoJitterTiming
+    {
+    public:
+        VideoJitterTiming();
+        ~VideoJitterTiming(){}
+        
+        void init();
+        void stop();
+        
+        /**
+         * Should be called in the beginning of the each playout iteration
+         * @return current time in microseconds
+         */
+        int64_t startFramePlayout();
+        
+        /**
+         * Should be called whenever playout time (as provided by producer) is 
+         * known by the consumer. Usually, jitter buffer provides this value as 
+         * a result of releaseAcqiuredFrame call.
+         * @param framePlayoutTime Playout time meant by producer (difference 
+         *                         between conqequent frame's timestamps)
+         */
+        void updatePlayoutTime(int framePlayoutTime);
+        
+        /**
+         * Schedules and runs playout timer for current calculated playout time
+         */
+        void runPlayoutTimer();
+        
+    private:
+        webrtc::EventWrapper &playoutTimer_;
+        
+        int framePlayoutTimeMs_ = 0;
+        int processingTimeUsec_ = 0;
+        int64_t playoutTimestampUsec_ = 0;
+    };
+    
+    /**
+     * Video jitter buffer class
+     */
     class VideoPlayoutBuffer : public PlayoutBuffer
     {
     public:

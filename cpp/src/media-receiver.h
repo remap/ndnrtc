@@ -70,8 +70,6 @@ namespace ndnrtc
         unsigned int excludeFilter_ = 0; // used for rebufferings
         int pipelinerEventsMask_, interestTimeoutMs_, nTimeoutsKeyFrame_ = 0;
         unsigned int producerSegmentSize_;
-        bool hasKeyFrameForGop_ DEPRECATED = true;
-        unsigned int gopKeyFrameNo_ DEPRECATED = 0;
         unsigned int fetchAhead_ = 0;
         Name framesPrefix_;
         shared_ptr<Face> face_;
@@ -93,7 +91,7 @@ namespace ndnrtc
         typedef std::map<unsigned int, string> PitMapUri;
         
         PitMap pendingInterests_;
-        PitMapUri pendingInterestsUri_ DEPRECATED;
+        PitMapUri pendingInterestsUri_;
         
         FrameBuffer frameBuffer_;
         PlayoutBuffer *playoutBuffer_;
