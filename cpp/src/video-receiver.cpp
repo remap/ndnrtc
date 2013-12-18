@@ -53,7 +53,7 @@ int NdnVideoReceiver::init(shared_ptr<Face> face)
                                              publisherRate_)))
             return notifyError(RESULT_ERR, "could not initialize playout buffer");
         
-        jitterTiming_.init();
+        jitterTiming_.flush();
         playoutBuffer_->registerBufferCallback(this);
         
         if (RESULT_NOT_OK(res))
@@ -106,17 +106,34 @@ void NdnVideoReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
 {
     unsigned int frameNo = slot->getFrameNumber();
     webrtc::VideoFrameType type = slot->getFrameType();
+    
+    // extract current producer rate
     NdnFrameData::FrameMetadata metadata;
     
+    if (RESULT_GOOD(slot->getFrameMetadata(metadata)))
+    {
+        if (metadata.packetRate_ != 0 &&
+            currentProducerRate_ != metadata.packetRate_)
+        {
+            currentProducerRate_ = metadata.packetRate_;
+            
+            int newJitterSize = NdnRtcUtils::toFrames(MinJitterSizeMs,
+                                                      currentProducerRate_);
+//            int jitterSize = (newJitterSize >= MinJitterSize)? newJitterSize : MinJitterSize;
+            
+            playoutBuffer_->setMinJitterSize(newJitterSize);
+            DBG("[VIDEO RECEIVER] got updated producer rate %f. jitter size %d",
+                currentProducerRate_, playoutBuffer_->getMinJitterSize());
+        }
+    }
+    
     playoutLastUpdate_ = NdnRtcUtils::millisecondTimestamp();
+    nReceived_++;
+    emptyJitterCounter_ = 0;
     
     DBG("[VIDEO RECEVIER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
         playoutBuffer_->getJitterSize());
-    
-    nReceived_++;
-    NdnRtcUtils::frequencyMeterTick(frameFrequencyMeter_);
-    
     frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d",
                       frameNo,
                       // empty
@@ -147,8 +164,6 @@ void NdnVideoReceiver::onMissedFrame(unsigned int frameNo)
 }
 void NdnVideoReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
 {
-    TRACE("[PLAYOUT] next frame %d", nextPlaybackFrame);
-
     // should free all previous frames
     frameBuffer_.markSlotFree(nextPlaybackFrame-1);
 }
@@ -158,9 +173,20 @@ void NdnVideoReceiver::onJitterBufferUnderrun()
           emptyJitterCounter_+1);
     
     emptyJitterCounter_++;
+    
+    if (emptyJitterCounter_ >= MaxUnderrunNum)
+    {
+        emptyJitterCounter_ = 0;
+        rebuffer();
+    }
 }
 //******************************************************************************
 #pragma mark - private
+void NdnVideoReceiver::rebuffer()
+{
+    jitterTiming_.flush();
+    NdnMediaReceiver::rebuffer();
+}
 bool NdnVideoReceiver::processPlayout()
 {
     if (mode_ == ReceiverModeFetch)
@@ -212,18 +238,8 @@ void NdnVideoReceiver::playbackFrame()
 void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
 {
     NdnMediaReceiver::switchToMode(mode);
-    
-    // check if we actually switched to another state
-    if (mode == mode_)
-        switch (mode_) {
-            case ReceiverModeInit:
-            {
-                // start playout
-            }
-                break;
-            default:
-                break;
-        }
+
+    // empty
 }
 
 bool NdnVideoReceiver::isLate(unsigned int frameNo)

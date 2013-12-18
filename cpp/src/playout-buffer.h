@@ -20,6 +20,9 @@ namespace ndnrtc
     typedef std::priority_queue<FrameBuffer::Slot*,
     std::vector<FrameBuffer::Slot*>,
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
+
+    const int MinJitterSizeMs = 300;
+    const int MaxUnderrunNum = 10;
     
     class IPlayoutBufferCallback;
     
@@ -61,22 +64,19 @@ namespace ndnrtc
          */
         virtual int releaseAcquiredFrame();
         
-        int moveTo(unsigned int frameNo){ return 0; }//framePointer_ = frameNo; }
+        int moveTo(unsigned int frameNo){ return 0; }
         unsigned int framePointer() DEPRECATED { return framePointer_; }
-//        unsigned int getCurrentPointer() DEPRECATED { return framePointer_; }
         unsigned int getPlayheadPointer() {
             webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
             return playheadPointer_;
         }
         
         unsigned int getJitterSize() { return jitterBuffer_.size(); };
-        void setJitterSize(unsigned int minJitterSize) {
+        void setMinJitterSize(unsigned int minJitterSize) {
             webrtc::CriticalSectionScoped scopedCs(&syncCs_);
             minJitterSize_ = minJitterSize;
         };
         unsigned int getMinJitterSize() { return minJitterSize_; }
-//        unsigned int getNKeyFrames() { return nKeyFramesInJitter_; }
-//        unsigned int getLastKeyFrameNo() { return lastKeyFrameNo_; }
         int getTopFrameNo() {
             return (jitterBuffer_.size())?
                 jitterBuffer_.top()->getFrameNumber():-1;

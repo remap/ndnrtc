@@ -23,11 +23,13 @@ NdnRtcObject(params),
 packetNo_(0)
 {
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
+    packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter();
 }
 
 MediaSender::~MediaSender()
 {
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
+    NdnRtcUtils::releaseFrequencyMeter(packetRateMeter_);
 }
 
 //******************************************************************************

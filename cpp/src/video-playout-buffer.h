@@ -35,7 +35,7 @@ namespace ndnrtc
         VideoJitterTiming();
         ~VideoJitterTiming(){}
         
-        void init();
+        void flush();
         void stop();
         
         /**

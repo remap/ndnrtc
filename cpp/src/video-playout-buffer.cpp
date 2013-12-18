@@ -24,9 +24,12 @@ playoutTimer_(*EventWrapper::Create())
 
 //******************************************************************************
 #pragma mark - public
-void VideoJitterTiming::init()
+void VideoJitterTiming::flush()
 {
-    // empty
+    framePlayoutTimeMs_ = 0;
+    processingTimeUsec_ = 0;
+    playoutTimestampUsec_ = 0;
+//    stop();    
 }
 void VideoJitterTiming::stop()
 {
@@ -174,19 +177,29 @@ int VideoPlayoutBuffer::releaseAcquiredFrame()
                                   playheadPointer_)))
         {
             uint64_t nextSlotTimestamp = nextSlot->getFrame()->capture_time_ms_;
+            TRACE("[PLAYOUT] next frame %d, %ld",
+                  nextSlot->getFrameNumber(), nextSlotTimestamp);
+            
             currentPlayoutTimeMs_ = (int)((int64_t)nextSlotTimestamp-
                                           (int64_t)lastFrameTimestampMs_);
+            
+            TRACE("[PLAYOUT] got playout for %d - %d",
+                  playheadPointer_-1, currentPlayoutTimeMs_);
             
             if (currentPlayoutTimeMs_ < 0)
                 currentPlayoutTimeMs_ = 0;
         }
         else
-            TRACE("[PLAYOUT] next frame is missing. infer playout time");
+            TRACE("[PLAYOUT] next frame is missing. infer playout time %d",
+                  adaptedPlayoutTimeMs_);
     }
+    else
+        TRACE("[PLAYOUT] nothing to release - %d", adaptedPlayoutTimeMs_);
     
     // adjust playout time
     adaptedPlayoutTimeMs_ = getAdaptedPlayoutTime(currentPlayoutTimeMs_,
                                                 jitterBuffer_.size());
+    TRACE("[PLAYOUT] adapted time %d", adaptedPlayoutTimeMs_);
     assert(adaptedPlayoutTimeMs_>=0);
     return adaptedPlayoutTimeMs_;
 }

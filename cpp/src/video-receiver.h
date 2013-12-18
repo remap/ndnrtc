@@ -65,6 +65,7 @@ namespace ndnrtc
         // overriden
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
+        void rebuffer();
         
         unsigned int getNextKeyFrameNo(unsigned int frameNo) DEPRECATED;
     };

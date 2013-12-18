@@ -20,6 +20,9 @@ using namespace webrtc;
 #pragma mark - intefaces realization
 void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 {
+    // update packet rate meter
+    NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+    
     // send frame over NDN
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
@@ -27,7 +30,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
           encodedImage._frameType == kKeyFrame);
     
     // 0. copy frame into transport data object
-    NdnFrameData::FrameMetadata metadata = {packetRate_};
+    NdnFrameData::FrameMetadata metadata = {getCurrentPacketRate()};
     NdnFrameData frameData(encodedImage, metadata);
     
     if (RESULT_GOOD(publishPacket(frameData.getLength(),
@@ -36,7 +39,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 #ifdef USE_FRAME_LOGGER
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
         
-        frameLogger_->log(NdnLoggerLevelInfo, "\tPUBLISHED: \t%d \t%d \t%ld \t%d \t%ld",
+        frameLogger_->log(NdnLoggerLevelInfo, "PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld",
                           getFrameNo(),
                           (encodedImage._frameType == webrtc::kKeyFrame),
                           publishingTime,

@@ -58,8 +58,10 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
         codec.codecSpecific.VP8.keyFrameInterval = 2000;
-//        codec.codecSpecific.VP8.frameDroppingOn = false;
     }
+    
+    // dropping frames
+    codec.codecSpecific.VP8.frameDroppingOn = false;
     
     // customize parameteres if possible
     int res = RESULT_OK;
@@ -163,6 +165,7 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
     if (counter_ %2 == 0)
     {
         TRACE("counter should be odd in Encoder start!");
+        nDroppedByEncoder_++;
         counter_++;
     }
     

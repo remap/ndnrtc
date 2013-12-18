@@ -41,8 +41,8 @@ namespace ndnrtc
         double getDataRate(){
             return  NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
         }
-        double getFrameFrequency() {
-            return NdnRtcUtils::currentFrequencyMeterValue(frameFrequencyMeter_);
+        double getActualProducerRate() {
+            return currentProducerRate_;
         }
         
         uint64_t getLastRtt() { return rtt_; }
@@ -77,10 +77,10 @@ namespace ndnrtc
         
         double srtt_ = StartSRTT;
         uint64_t rtt_ = 0;
-        double outstandingMs_;
+        double outstandingMs_ DEPRECATED;
         unsigned int rebufferingEvent_ = 0;
         unsigned int nReceived_ = 0, nLost_ = 0, nPlayedOut_ = 0, nMissed_ = 0;
-        unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_,frameFrequencyMeter_;
+        unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_;
         unsigned int firstFrame_ = 0, lastMissedFrameNo_ = 0;
         
         typedef struct _PendingInterestStruct {
@@ -132,7 +132,7 @@ namespace ndnrtc
         unsigned int getSegmentNumber(Name prefix);
         void expressInterest(Name &prefix);
         void expressInterest(Interest &i);
-        void rebuffer();
+        virtual void rebuffer();
         
         // derived classes should determine whether a frame with frameNo number
         // is late or not

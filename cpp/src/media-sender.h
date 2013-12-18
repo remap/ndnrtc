@@ -46,8 +46,10 @@ namespace ndnrtc
         virtual int init(const shared_ptr<Transport> transport);
         unsigned long int getPacketNo() { return packetNo_; }
         
-        void setCurrentPacketRate(double packetRate) { packetRate_ = packetRate; }
-        double getCurrentPacketRate() { return packetRate_; }
+        // encoded packets/second
+        double getCurrentPacketRate() {
+            return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
+        }
         
         // bytes/second
         double getDataRate() {
@@ -61,8 +63,8 @@ namespace ndnrtc
         shared_ptr<Name> certificateName_;
         
         unsigned long int packetNo_ = 0; // sequential packet number
-        unsigned int segmentSize_, freshnessInterval_, dataRateMeter_;
-        double packetRate_ = 0;
+        unsigned int segmentSize_, freshnessInterval_;
+        unsigned int dataRateMeter_, packetRateMeter_;
 
         /**
          * Publishes specified data in the ndn network under specified prefix by

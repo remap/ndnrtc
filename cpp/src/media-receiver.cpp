@@ -38,7 +38,6 @@ pipelineTimer_(*EventWrapper::Create())
     interestFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     segmentFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
-    frameFrequencyMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     frameLogger_ = new NdnLogger("frames.log", NdnLoggerDetailLevelDefault);
 }
 
@@ -50,7 +49,6 @@ NdnMediaReceiver::~NdnMediaReceiver()
     NdnRtcUtils::releaseFrequencyMeter(interestFreqMeter_);
     NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeter_);
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
-    NdnRtcUtils::releaseFrequencyMeter(frameFrequencyMeter_);
     delete frameLogger_;
 }
 
@@ -199,7 +197,6 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
     {
         rtt_ = NdnRtcUtils::millisecondTimestamp()- pis.emissionTimestamp_;
         srtt_ = srtt_ + (rtt_-srtt_)*RttFilterAlpha;
-        outstandingMs_ = 500; //srtt_;
     }
     
     
@@ -382,11 +379,11 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
             FrameBuffer::Event::EventTypeFirstSegment |
             FrameBuffer::Event::EventTypeTimeout;
             
-            playoutBuffer_->setJitterSize(NdnRtcUtils::
-                                         toFrames(outstandingMs_, params_.producerRate));
+            playoutBuffer_->setMinJitterSize(NdnRtcUtils::
+                                         toFrames(MinJitterSizeMs, currentProducerRate_));
             
             TRACE("set initial jitter size for %d frames",
-                  playoutBuffer_->getJitterSize());
+                  playoutBuffer_->getMinJitterSize());
             INFO("switched to mode: Fetch");
         }
             break;
@@ -441,10 +438,10 @@ void NdnMediaReceiver::requestInitialSegment()
     {
         DBG("issuing initial interest with exclusion: [*,%d]",
             excludeFilter_);
-        // seek for LEFTMOST child with exclude wildcard [*,lastFrame]
+        // seek for RIGHTMOST child with exclude wildcard [*,lastFrame]
         i.getExclude().appendAny();
         i.getExclude().appendComponent(NdnRtcUtils::componentFromInt(excludeFilter_).getValue());
-        i.setChildSelector(0);
+        i.setChildSelector(1);
     }
     else
     {
@@ -589,16 +586,19 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
         case ReceiverModeFetch:
         {
             // we should not pipeline farther than outstandingMs frames
-            int framesInProgress = frameBuffer_.getStat(FrameBuffer::Slot::StateNew)+frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
+            int framesInProgress = frameBuffer_.getStat(FrameBuffer::Slot::StateNew)+
+                                    frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
             
             int jitterSizeMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
                                                      currentProducerRate_);
             int issuedInterestsMs = NdnRtcUtils::toTimeMs(framesInProgress,
                                                           currentProducerRate_);
+//            int minJitterSizeMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getMinJitterSize(),
+//                                                        currentProducerRate_);
             
             // if current jitter buffer size + number of awaiting frames
             // is bigger than preferred size, skip pipelining
-            if (jitterSizeMs + issuedInterestsMs >= outstandingMs_)
+            if (jitterSizeMs + issuedInterestsMs >= MinJitterSizeMs)
             {
                 frameBuffer_.reuseEvent(event);
             }
@@ -663,8 +663,8 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
                 playoutBuffer_->flush();
                 frameBuffer_.flush();
                 
-                pipelinerFrameNo_ = event.frameNo_+
-                    NdnRtcUtils::toFrames(outstandingMs_/2., params_.producerRate);
+                pipelinerFrameNo_ = event.frameNo_+1;
+//                    NdnRtcUtils::toFrames(outstandingMs_/2., params_.producerRate);
                 firstFrame_ = pipelinerFrameNo_;
                 
                 DBG("[PIPELINER] start fetching from %d...", pipelinerFrameNo_);

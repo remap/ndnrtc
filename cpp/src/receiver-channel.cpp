@@ -145,29 +145,6 @@ int NdnReceiverChannel::stopTransmission()
     return RESULT_OK;
 }
 
-//void NdnReceiverChannel::getStat(ReceiverChannelStatistics &stat) const
-//{
-//    memset(&stat,0,sizeof(stat));
-//    
-//    stat.nPipeline_ = receiver_->getNPipelined();
-//    stat.nPlayback_ = receiver_->getNPlayout();
-////    stat.nFetched_ = receiver_->getLatest(FrameBuffer::Slot::StateReady);
-//    stat.nLate_ = receiver_->getNLateFrames();
-//    
-//    stat.nSkipped_ = receiver_->getPlaybackSkipped();
-////    stat.nTotalTimeouts_ = receiver_
-////    stat.nTimeouts_ = receiver_
-//    
-//    stat.nFree_ = receiver_->getBufferStat(FrameBuffer::Slot::StateFree);
-//    stat.nLocked_ = receiver_->getBufferStat(FrameBuffer::Slot::StateLocked);
-//    stat.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
-//    stat.nNew_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
-//    
-//    stat.playoutFreq_  = receiver_->getPlayoutFreq();
-//    stat.inDataFreq_ = receiver_->getIncomeDataFreq();
-//    stat.inFramesFreq_ = receiver_->getIncomeFramesFreq();
-//}
-
 void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
 {
     stat.videoStat_.nBytesPerSec_ = receiver_->getDataRate();
@@ -184,7 +161,7 @@ void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     
     stat.videoStat_.jitterSize_ = receiver_->getJitterOccupancy();
     stat.videoStat_.rebufferingEvents_ = receiver_->getRebufferingEvents();
-    stat.videoStat_.frameFrequency_ = receiver_->getFrameFrequency();
+    stat.videoStat_.actualProducerRate_ = receiver_->getActualProducerRate();
     
     stat.videoStat_.nSent_ = receiver_->getBufferStat(FrameBuffer::Slot::StateNew);
     stat.videoStat_.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);

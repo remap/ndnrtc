@@ -14,8 +14,8 @@ namespace ndnrtc {
     // sending channel statistics
     typedef struct _SenderChannelPerformance {
         double nBytesPerSec_;
-        double nFramesPerSec_;
-        unsigned int lastFrameNo_;
+        double nFramesPerSec_, encodingRate_;
+        unsigned int lastFrameNo_, nDroppedByEncoder_;
     } SenderChannelPerformance;
     
     typedef struct SenderChannelStatistics {
@@ -32,7 +32,7 @@ namespace ndnrtc {
         
         // buffers
         unsigned int jitterSize_, rebufferingEvents_;
-        double frameFrequency_;
+        double actualProducerRate_;
         
         // buffer stat
         unsigned int nSent_, nAssembling_;

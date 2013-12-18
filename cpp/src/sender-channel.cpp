@@ -320,6 +320,8 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
     stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
+    stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
+    stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
     
 //    stat.audioStat_.nBytesPerSec_ =
 //    stat.audioStat_.nFramesPerSec_ =
@@ -357,7 +359,7 @@ bool NdnSenderChannel::process()
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
             channelLogger_->log(NdnLoggerLevelInfo,"\tGRAB: \t%ld", sender_->getPacketNo());
-            sender_->setCurrentPacketRate(frameRate);
+
             //(NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_));
             
             uint64_t t = NdnRtcUtils::microsecondTimestamp();
