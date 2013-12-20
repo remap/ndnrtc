@@ -10,3 +10,4 @@ cpp/thirdparty/ndn-gtest
 *.toc
 *.out
 cpp/resources
+cpp/thirdparty
