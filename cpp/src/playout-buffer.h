@@ -23,6 +23,7 @@ namespace ndnrtc
 
     const int MinJitterSizeMs = 300;
     const int MaxUnderrunNum = 10;
+    const int MaxOutstandingInterests = 1;
     
     class IPlayoutBufferCallback;
     

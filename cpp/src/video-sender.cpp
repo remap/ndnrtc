@@ -39,12 +39,13 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 #ifdef USE_FRAME_LOGGER
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
         
-        frameLogger_->log(NdnLoggerLevelInfo, "PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld",
+        frameLogger_->log(NdnLoggerLevelInfo, "PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
                           getFrameNo(),
                           (encodedImage._frameType == webrtc::kKeyFrame),
                           publishingTime,
                           frameData.getLength(),
-                          encodedImage.capture_time_ms_);
+                          encodedImage.capture_time_ms_,
+                          getCurrentPacketRate());
 #endif
         packetNo_++;
     }

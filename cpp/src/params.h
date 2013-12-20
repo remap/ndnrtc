@@ -52,6 +52,7 @@ namespace ndnrtc
         unsigned int codecFrameRate, gop;
         unsigned int startBitrate, maxBitrate;
         unsigned int encodeWidth, encodeHeight;
+        bool dropFramesOn;
         
         // network parameters
         const char *host;
@@ -139,10 +140,12 @@ namespace ndnrtc
         
         30,     // codec framerate
         60,     // gop
-        300,    // codec start bitrate
-        4000,   // codec max bitrate
+        100,    // codec start bitrate
+        1000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
+        0,      // instruct encoder to drop frames if cannot keep up with the
+                // maximum bitrate
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
@@ -182,6 +185,7 @@ namespace ndnrtc
         0,   // codec max bitrate
         0,    // codec encoding width
         0,    // codec encoding height
+        0,      // drop frames
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number

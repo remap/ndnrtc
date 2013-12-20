@@ -6,3 +6,4 @@ cpp/thirdparty
 *.aux
 *.toc
 *.out
+cpp/resources

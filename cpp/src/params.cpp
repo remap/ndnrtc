@@ -82,6 +82,7 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.encodeHeight = ParamsStruct::validate(params.encodeHeight,
                                                     MinHeight, MaxHeight, res,
                                                     DefaultParams.encodeHeight);
+    validated.dropFramesOn = params.dropFramesOn;
     
     validated.host = params.host;
     validated.portNum = ParamsStruct::validateLE(params.portNum, MaxPortNum, res,

@@ -10,6 +10,7 @@
 //
 
 #include <sys/time.h>
+#include <mach/mach_time.h>
 
 #include "simple-log.h"
 
@@ -174,10 +175,38 @@ void NdnLogger::log(NdnLoggerLevel level, const char *format, ...)
 #pragma mark - private
 int64_t NdnLogger::millisecondTimestamp()
 {
+#if 0
     struct timeval tv;
     gettimeofday(&tv, NULL);
     
     int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+    
+    return ticks;
+#endif
+    
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 0;
+    
+#if 0
+    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+#else
+    static mach_timebase_info_data_t timebase;
+    if (timebase.denom == 0) {
+        // Get the timebase if this is the first time we run.
+        // Recommended by Apple's QA1398.
+        kern_return_t retval = mach_timebase_info(&timebase);
+        if (retval != KERN_SUCCESS) {
+            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
+            // Then replace this with a CHECK(retval == KERN_SUCCESS);
+            asm("int3");
+        }
+    }
+    // Use timebase to convert absolute time tick units into nanoseconds.
+    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
+    ticks /= 1000000LL;
+#endif
     
     return ticks;
 }

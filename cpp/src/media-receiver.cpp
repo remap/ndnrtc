@@ -562,7 +562,9 @@ void NdnMediaReceiver::clearPITs()
 void NdnMediaReceiver::rebuffer()
 {
     DBG("*** REBUFFERING *** [#%d]", ++rebufferingEvent_);
-    excludeFilter_ = playoutBuffer_->getPlayheadPointer();
+    rtt_ = 0;
+    srtt_ = StartSRTT;
+    excludeFilter_ = pipelinerFrameNo_;
     switchToMode(ReceiverModeFlushed);
 }
 
@@ -585,31 +587,31 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             
         case ReceiverModeFetch:
         {
-            // we should not pipeline farther than outstandingMs frames
-            int framesInProgress = frameBuffer_.getStat(FrameBuffer::Slot::StateNew)+
-                                    frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
-            
-            int jitterSizeMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
+            int framesAssembling = frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
+            int framesPending = frameBuffer_.getStat(FrameBuffer::Slot::StateNew);
+
+            int framesInJitterMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
                                                      currentProducerRate_);
-            int issuedInterestsMs = NdnRtcUtils::toTimeMs(framesInProgress,
-                                                          currentProducerRate_);
-//            int minJitterSizeMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getMinJitterSize(),
-//                                                        currentProducerRate_);
+            int framesPendingMs = NdnRtcUtils::toTimeMs(framesPending,
+                                                        currentProducerRate_);
+
+            bool jitterFull = framesInJitterMs >= MinJitterSizeMs;
+            bool hasEnoughPending = framesPendingMs >= MinJitterSizeMs;
             
             // if current jitter buffer size + number of awaiting frames
             // is bigger than preferred size, skip pipelining
-            if (jitterSizeMs + issuedInterestsMs >= MinJitterSizeMs)
+            if (jitterFull && hasEnoughPending)
             {
                 frameBuffer_.reuseEvent(event);
             }
             else
             {
-                DBG("[PIPELININIG] issue for %d (%d frames ahead), jitter size ms: %d, in progress ms: %d",
+                DBG("[PIPELININIG] issue for %d (%d frames ahead), jitter size ms: %d, in progress: %d",
                     pipelinerFrameNo_,
                     (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)?
                     pipelinerFrameNo_ - playoutBuffer_->getPlayheadPointer() :
                     pipelinerFrameNo_ - firstFrame_,
-                    jitterSizeMs, issuedInterestsMs);
+                    framesInJitterMs, framesPending + framesAssembling);
                 
                 frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t \t%d",
                                   pipelinerFrameNo_,
@@ -663,8 +665,7 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
                 playoutBuffer_->flush();
                 frameBuffer_.flush();
                 
-                pipelinerFrameNo_ = event.frameNo_+1;
-//                    NdnRtcUtils::toFrames(outstandingMs_/2., params_.producerRate);
+                pipelinerFrameNo_ = event.frameNo_+ NdnRtcUtils::toFrames(rtt_/2., params_.producerRate);
                 firstFrame_ = pipelinerFrameNo_;
                 
                 DBG("[PIPELINER] start fetching from %d...", pipelinerFrameNo_);

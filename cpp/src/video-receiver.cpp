@@ -17,7 +17,7 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
-unsigned int RebufferThreshold = 100000; // if N seconds were no frames - rebuffer
+unsigned int RebufferThreshold = 3000; // if N seconds were no frames - rebuffer
 
 //******************************************************************************
 //******************************************************************************
@@ -119,7 +119,6 @@ void NdnVideoReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
             
             int newJitterSize = NdnRtcUtils::toFrames(MinJitterSizeMs,
                                                       currentProducerRate_);
-//            int jitterSize = (newJitterSize >= MinJitterSize)? newJitterSize : MinJitterSize;
             
             playoutBuffer_->setMinJitterSize(newJitterSize);
             DBG("[VIDEO RECEIVER] got updated producer rate %f. jitter size %d",
@@ -216,13 +215,15 @@ void NdnVideoReceiver::playbackFrame()
         frameno = slot->getFrameNumber();
         nPlayedOut_++;
         frameLogger_->log(NdnLoggerLevelInfo,
-                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld",
+                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
                           slot->getFrameNumber(),
                           slot->assembledSegmentsNumber(),
                           slot->totalSegmentsNumber(),
                           slot->isKeyFrame(),
                           playoutBuffer_->getJitterSize(),
-                          slot->getAssemblingTimeUsec());
+                          slot->getAssemblingTimeUsec(),
+                          frame->capture_time_ms_,
+                          currentProducerRate_);
 
         frameConsumer_->onEncodedFrameDelivered(*frame.get());
     }

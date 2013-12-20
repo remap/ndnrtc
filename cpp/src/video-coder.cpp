@@ -61,7 +61,7 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
     }
     
     // dropping frames
-    codec.codecSpecific.VP8.frameDroppingOn = false;
+    codec.codecSpecific.VP8.frameDroppingOn = params.dropFramesOn;
     
     // customize parameteres if possible
     int res = RESULT_OK;
