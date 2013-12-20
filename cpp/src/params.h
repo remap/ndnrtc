@@ -32,7 +32,7 @@ namespace ndnrtc
         MinSegmentSize = 10,
         MaxSlotSize = 20000,
         MinSlotSize = 10,
-        MaxBufferSize = 120,
+        MaxBufferSize = 5*120,
         MinBufferSize = 1;
     
 
@@ -49,9 +49,10 @@ namespace ndnrtc
         unsigned int renderWidth, renderHeight;
         
         // codec
-        unsigned int codecFrameRate;
+        unsigned int codecFrameRate, gop;
         unsigned int startBitrate, maxBitrate;
         unsigned int encodeWidth, encodeHeight;
+        bool dropFramesOn;
         
         // network parameters
         const char *host;
@@ -68,6 +69,7 @@ namespace ndnrtc
         unsigned int playbackRate;
         unsigned int interestTimeout;
         unsigned int bufferSize, slotSize;
+        unsigned int jitterSize;
         
         /**
          * Validates video parameters
@@ -125,7 +127,7 @@ namespace ndnrtc
     } ParamsStruct;
     
     static ParamsStruct DefaultParams = {
-        NdnLoggerDetailLevelAll,    // log level
+        NdnLoggerDetailLevelDebug,    // log level
         "ndnrtc.log",                   // log file
         
         0,      // capture device id
@@ -137,10 +139,13 @@ namespace ndnrtc
         480,    // render height
         
         30,     // codec framerate
-        300,    // codec start bitrate
-        4000,   // codec max bitrate
+        60,     // gop
+        100,    // codec start bitrate
+        1000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
+        0,      // instruct encoder to drop frames if cannot keep up with the
+                // maximum bitrate
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
@@ -150,13 +155,14 @@ namespace ndnrtc
         "vp8",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
         1100,   // segment size for media frame
-        3,      // data freshness (seconds) value
+        5,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         
         30,     // playback rate of local consumer
         5,      // interest timeout
-        60,     // incoming framebuffer size
-        16000  // frame buffer slot size
+        30,     // incoming framebuffer size
+        16000,  // frame buffer slot size
+        20       // jitter size
     };
     
     // only some parameters are used for audio configuration (those that are
@@ -174,10 +180,12 @@ namespace ndnrtc
         0,    // render height
         
         0,     // codec framerate
+        INT_MAX,      // gop
         0,    // codec start bitrate
         0,   // codec max bitrate
         0,    // codec encoding width
         0,    // codec encoding height
+        0,      // drop frames
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
@@ -187,13 +195,14 @@ namespace ndnrtc
         "pcmu2",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
         1000,   // segment size for media frame
-        3,      // data freshness (seconds) value
+        5,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         
         30,     // playback rate of local consumer
-        5,      // interest timeout
-        10,     // incoming framebuffer size
-        1000  // frame buffer slot size
+        2,      // interest timeout
+        20,     // incoming framebuffer size
+        1000,  // frame buffer slot size
+        33      // jitter size
     };
 
 }

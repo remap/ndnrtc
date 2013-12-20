@@ -28,7 +28,9 @@ namespace ndnrtc {
     {
     public:
         NdnVideoCoder(const ParamsStruct &params);
-        ~NdnVideoCoder() { };
+        ~NdnVideoCoder() {
+            delete encodeLogger_;
+        };
         
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
             frameConsumer_ = frameConsumer;
@@ -44,8 +46,16 @@ namespace ndnrtc {
         // interface conformance - ndnrtc::IRawFrameConsumer
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
+        unsigned int getDroppedFramesNum() { return nDroppedByEncoder_; };
         static int getCodec(const ParamsStruct &params, webrtc::VideoCodec &codec);
+    
     private:
+#warning remove this in release
+        uint64_t encodeTime_;
+        NdnLogger *encodeLogger_;
+        unsigned int counter_ = 1;
+        unsigned int nDroppedByEncoder_ = 0;
+        
         int keyFrameCounter_ = 0;
         int currentFrameRate_;
         std::vector<webrtc::VideoFrameType> keyFrameType_;

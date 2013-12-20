@@ -30,7 +30,7 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
     // It is rendererd to a Subclass of NSOpenGLView
     
     // create cocoa container window
-    NSRect outWindowFrame = NSMakeRect(0+TotalWindows*40, 0+TotalWindows*30, width , height );
+    NSRect outWindowFrame = NSMakeRect(0/*+TotalWindows*40*/, 2000+TotalWindows*80, width , height );
     NSWindow* outWindow = [[NSWindow alloc] initWithContentRect:outWindowFrame
                                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|
                                                                 NSMiniaturizableWindowMask|NSResizableWindowMask

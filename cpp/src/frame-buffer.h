@@ -12,9 +12,12 @@
 #define __ndnrtc__frame_buffer__
 
 #include "ndnrtc-common.h"
+#include "ndnrtc-utils.h"
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
 #define NDNRTC_FRAMEBODY_MRKR 0xfb0d
+#define NDNRTC_AUDIOHDR_MRKR 0xa4d4
+#define NDNRTC_AUDIOBODY_MRKR 0xab0d
 
 #define FULL_TIMEOUT_CASE_THRESHOLD 2
 
@@ -46,12 +49,20 @@ namespace ndnrtc
     class NdnFrameData : public PacketData
     {
     public:
+        struct FrameMetadata {
+            double packetRate_;
+        };
+        
         NdnFrameData(webrtc::EncodedImage &frame);
+        NdnFrameData(webrtc::EncodedImage &frame, FrameMetadata &metadata);
         ~NdnFrameData(){}
         
         static int unpackFrame(unsigned int length_, const unsigned char *data,
                                webrtc::EncodedImage **frame);
-        
+        static int unpackMetadata(unsigned int length_, const unsigned char *data,
+                                  FrameMetadata &metadata);
+        static webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
+                                            const unsigned char *headerSegment);
     private:
         struct FrameDataHeader {
             uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
@@ -64,6 +75,7 @@ namespace ndnrtc
             //            uint32_t                    _length;
             //            uint32_t                    _size;
             bool                        completeFrame_;
+            FrameMetadata               metadata_;
             uint32_t                    bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
         };
     };
@@ -84,9 +96,9 @@ namespace ndnrtc
                                AudioPacket &packet);
     private:
         struct AudioDataHeader {
-            unsigned int headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+            unsigned int headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
             bool isRTCP_;
-            unsigned int bodyMarker_  = NDNRTC_FRAMEBODY_MRKR;
+            unsigned int bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
         };
     };
     
@@ -182,6 +194,7 @@ namespace ndnrtc
                 state_ = StateAssembling;
                 segmentSize_ = segmentSize;
                 segmentsNum_ = segmentsNum;
+                startAssemblingTs_ = NdnRtcUtils::microsecondTimestamp();
                 
                 if (dataLength_ < segmentsNum_*segmentSize_)
                 {
@@ -190,7 +203,9 @@ namespace ndnrtc
                     data_ = (unsigned char*)realloc(data_, dataLength_);
                 }
             }
-            void rename(unsigned int newFrameNumber) { frameNumber_ = newFrameNumber; }
+            void rename(unsigned int newFrameNumber) {
+                frameNumber_ = newFrameNumber;
+            }
             
             /**
              * Unpacks encoded frame from received data
@@ -198,6 +213,7 @@ namespace ndnrtc
              *          still owned by slot.
              */
             shared_ptr<webrtc::EncodedImage> getFrame();
+            int getFrameMetadata(NdnFrameData::FrameMetadata &metadata);
 
             /**
              * Unpacks audio frame from received data
@@ -238,14 +254,29 @@ namespace ndnrtc
             };
             
             unsigned char *getdata() { return data_; }
-            
+            // indicates, whether slot contains key frame. returns always true
+            // for audio frames
+            bool isKeyFrame() { return isKeyFrame_; };
+            webrtc::VideoFrameType getFrameType() {
+                return NdnFrameData::getFrameTypeFromHeader(segmentSize_, data_);
+            };
+            uint64_t getAssemblingTimeUsec() {
+                return assemblingTime_;
+            }
         private:
+            bool isKeyFrame_;
             unsigned int frameNumber_;
             unsigned int dataLength_;
             unsigned int assembledDataSize_, storedSegments_, segmentsNum_;
             unsigned int segmentSize_;
+            uint64_t startAssemblingTs_;
+            uint64_t assemblingTime_;
             unsigned char *data_;
             Slot::State state_, stashedState_;
+            
+            // storage of issued interests (as a strings) for current slot
+            // establishes mapping interest_uri -> pending_interest_id
+//            std::map<std::string, unsigned int> interestIds_;
             
             void flushData() { memset(data_, 0, dataLength_); }
         };
@@ -356,8 +387,16 @@ namespace ndnrtc
          */
         unsigned int getTimeoutsNumber() { return timeoutSegments_.size(); }
         
+        /**
+         * As buffer provides events-per-caller, once they emmited, they can not 
+         * be re-issued anymore. In case when calledr does not want to dispatch 
+         * buffer event, it should call this method so event can be re-emmited 
+         * by buffer.
+         */
+        void reuseEvent(Event &event);
+        
     private:
-        bool forcedRelease_,
+        bool forcedRelease_, isTrackingFullTimeoutState_ = false,
         shouldCheckFullBufferTimeout_; // this flag indicates state when all
                                        // the slots are started to timeout. this
                                        // can happen when suddenly producer
@@ -376,7 +415,7 @@ namespace ndnrtc
 
         // statistics
         std::map<Slot::State, unsigned int> statistics_; // stores number of frames in each state
-        unsigned int nTimeouts_ DEPRECATED;
+        unsigned int nTimeouts_;
         // stores number of timeouts for specific segment. index of this map is
         // made by concatenating frame number and segment number together
         // (assuming that segment number can't be longer than 3-digit number).

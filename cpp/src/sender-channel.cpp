@@ -9,6 +9,10 @@
 //
 
 #include "sender-channel.h"
+#include "video-receiver.h"
+
+#define AUDIO_ID 0
+#define VIDEO_ID 1
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -21,7 +25,12 @@ NdnMediaChannel::NdnMediaChannel(const ParamsStruct &params,
 NdnRtcObject(params),
 audioParams_(audioParams)
 {
-    
+    channelLogger_ = new NdnLogger("channel.log", NdnLoggerDetailLevelDefault);
+}
+
+NdnMediaChannel::~NdnMediaChannel()
+{
+    delete channelLogger_;
 }
 
 //******************************************************************************
@@ -153,12 +162,20 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
     // set direct connection coder->sender
     coder_->setFrameConsumer(sender_.get());
     
-    meterId_ = NdnRtcUtils::setupFrequencyMeter();
-};
+    frameFreqMeter_ = NdnRtcUtils::setupFrequencyMeter();
+}
+
+NdnSenderChannel::~NdnSenderChannel()
+{
+    NdnRtcUtils::releaseFrequencyMeter(frameFreqMeter_);
+}
+
 //******************************************************************************
 #pragma mark - intefaces realization: IRawFrameConsumer
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
+    channelLogger_->log(NdnLoggerLevelInfo,"\tCAPTURED: \t%ld", sender_->getPacketNo());
+    
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
     deliver_cs_->Leave();
@@ -201,6 +218,9 @@ int NdnSenderChannel::init()
                                                                     ndnAudioTransport_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
+        
+#warning FOR TESTING ONLY! REMOVE THIS IN RELEASE VERSION!        
+        audioInitialized_ = false;
     }
     
     isInitialized_ = audioInitialized_||videoInitialized_;
@@ -215,6 +235,7 @@ int NdnSenderChannel::init()
     
     return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
+
 int NdnSenderChannel::startTransmission()
 {
     int res = NdnMediaChannel::startTransmission();
@@ -258,6 +279,7 @@ int NdnSenderChannel::startTransmission()
     
     return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
+
 int NdnSenderChannel::stopTransmission()
 {
     int res = NdnMediaChannel::stopTransmission();
@@ -292,9 +314,18 @@ int NdnSenderChannel::stopTransmission()
     isTransmitting_ = false;
     return RESULT_OK;
 }
-unsigned int NdnSenderChannel::getSentFramesNum()
+
+void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-    return sender_->getFrameNo();
+    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
+    stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
+    stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
+    stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
+    stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
+    
+//    stat.audioStat_.nBytesPerSec_ =
+//    stat.audioStat_.nFramesPerSec_ =
+//    stat.audioStat_.lastFrameNo_ = 
 }
 
 //******************************************************************************
@@ -302,13 +333,47 @@ unsigned int NdnSenderChannel::getSentFramesNum()
 bool NdnSenderChannel::process()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled) {
-        NdnRtcUtils::frequencyMeterTick(meterId_);
+        NdnRtcUtils::frequencyMeterTick(frameFreqMeter_);
+        
+        double frameRate = params_.captureFramerate;
+        uint64_t now = NdnRtcUtils::millisecondTimestamp();
+        
+        if (lastFrameStamp_ != 0)
+        {
+            double currentRate = sender_->getCurrentPacketRate();
+            double rate = 1000./(now-lastFrameStamp_);
+            
+            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
+            
+//            // check if frameRate does not differ a lot
+//            if (fabs(frameRate - sender_->getCurrentPacketRate())/frameRate > RateDeviation)
+//            {
+//                TRACE("frame rate stays untouched");
+//                frameRate = sender_->getCurrentPacketRate();
+//            }
+        }
+        TRACE("[SENDER] current frame rate: %f", frameRate);
+        
+        lastFrameStamp_ = now;
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
-            TRACE("delivering frame");
+            channelLogger_->log(NdnLoggerLevelInfo,"\tGRAB: \t%ld", sender_->getPacketNo());
+
+            //(NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_));
+            
+            uint64_t t = NdnRtcUtils::microsecondTimestamp();
+            
             localRender_->onDeliverFrame(deliverFrame_);
+            
+            uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
+            
+            channelLogger_->log(NdnLoggerLevelInfo,"\tRENDERED: \t%ld \t%ld",
+                                sender_->getPacketNo(), t2 - t);
             coder_->onDeliverFrame(deliverFrame_);
+            channelLogger_->log(NdnLoggerLevelInfo,"\tPUBLISHED: \t%ld \t%ld",
+                                sender_->getFrameNo()-1,
+                                NdnRtcUtils::microsecondTimestamp()-t2);
         }
         deliver_cs_->Leave();
     }

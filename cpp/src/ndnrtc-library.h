@@ -16,29 +16,10 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "params.h"
+#include "statistics.h"
 
 namespace ndnrtc {
-    typedef struct _NdnLibStatistics {
-        // consume statistics:
-        // current producer index (as we fetch video seamlessly)
-        const char *producerId_;
-        
-        // recent frame numbers:
-        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
-        
-        // errors - number of total skipped frames and timeouts
-        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
-        
-        // frame buffer info
-        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
-        
-        // produce statistics
-        unsigned int sentNo_;
-        double sendingFramesFreq_, capturingFreq_; // latest sent frame number
 
-        double inFramesFreq_, inDataFreq_, playoutFreq_;
-    } NdnLibStatistics;
-    
     class INdnRtcLibraryObserver {
     public:
         virtual void onStateChanged(const char *state, const char *args) = 0;

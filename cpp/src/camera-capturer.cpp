@@ -37,11 +37,11 @@ deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),
 captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPriority))
 {
-    TRACE("");
+    TRACE("capturer create");
 }
 CameraCapturer::~CameraCapturer()
 {
-    TRACE("");
+    TRACE("capturer destroy");
     if (vcm_)
     {
         if (isCapturing())
@@ -55,15 +55,18 @@ CameraCapturer::~CameraCapturer()
 #pragma mark - public
 int CameraCapturer::init()
 {
-    VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
-    
-    if (!devInfo)
-        return notifyError(-1, "can't get deivce info");
-    
     int deviceID = params_.captureDeviceId;
     
+    TRACE("trying to get device with ID %d", deviceID);
+    
+    VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(deviceID);
+
+    if (!devInfo)
+        return notifyError(-1, "can't get deivce info");
+
     char deviceName [256];
     char deviceUniqueName [256];
+    
     
     devInfo->GetDeviceName(deviceID, deviceName, 256, deviceUniqueName, 256);
     
@@ -237,8 +240,6 @@ void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay
 #pragma mark - private
 bool CameraCapturer::process()
 {
-    TRACE("");
-    
     if (captureEvent_.Wait(100) == kEventSignaled) {
         deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize()) {

@@ -37,7 +37,7 @@ namespace ndnrtc
         
     private:
         int rendererId_;
-        bool initialized_ = false;
+        bool isRendering_ = false;
         void *renderWindow_ = NULL;
 
         webrtc::VideoRender *render_ = nullptr;        

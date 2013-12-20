@@ -163,22 +163,27 @@ void NdnRtcLibrary::getDefaultParams(ParamsStruct &videoParams,
     audioParams = DefaultParamsAudio;
 }
 
-int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics &stat) const
+int NdnRtcLibrary::getStatistics(const char *conferencePrefix,
+                                 NdnLibStatistics &stat) const
 {
     if (SenderChannel.get())
     {
+        SenderChannel->getChannelStatistics(stat.sendStat_);
+#if 0
         stat.sentNo_ = SenderChannel->getSentFramesNum();
         stat.sendingFramesFreq_ = SenderChannel->getNInputFramesPerSec();
         stat.capturingFreq_ = SenderChannel->getCurrentCapturingFreq();
+#endif
     }
     
     if (!conferencePrefix || Producers.find(string(conferencePrefix)) == Producers.end())
         return -1; //notifyObserverWithError("producer was not found");
     
     shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
-    
+
     stat.producerId_ = conferencePrefix;
-    
+    producer->getChannelStatistics(stat.receiveStat_);
+#if 0
     ReceiverChannelStatistics receiver_stat;
     producer->getStat(receiver_stat);
     
@@ -197,7 +202,7 @@ int NdnRtcLibrary::getStatistics(const char *conferencePrefix, NdnLibStatistics 
     stat.inFramesFreq_ = receiver_stat.inFramesFreq_;
     stat.inDataFreq_ = receiver_stat.inDataFreq_;
     stat.playoutFreq_ = receiver_stat.playoutFreq_;
-    
+#endif
     return 0;
 }
 

@@ -13,6 +13,7 @@
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
+#include "ndnrtc-utils.h"
 
 namespace ndnrtc
 {
@@ -32,11 +33,8 @@ namespace ndnrtc
     {
     public:
         MediaSender(){}
-        MediaSender(const ParamsStruct &params) :
-        NdnRtcObject(params),
-        packetNo_(0)
-        {}
-        ~MediaSender(){};
+        MediaSender(const ParamsStruct &params);
+        ~MediaSender();
         
         static int getUserPrefix(const ParamsStruct &params, string &prefix);
         static int getStreamPrefix(const ParamsStruct &params, string &prefix);
@@ -48,6 +46,15 @@ namespace ndnrtc
         virtual int init(const shared_ptr<Transport> transport);
         unsigned long int getPacketNo() { return packetNo_; }
         
+        // encoded packets/second
+        double getCurrentPacketRate() {
+            return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
+        }
+        
+        // bytes/second
+        double getDataRate() {
+            return NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
+        }
     protected:
         // private attributes go here
         shared_ptr<Transport> ndnTransport_;
@@ -57,6 +64,7 @@ namespace ndnrtc
         
         unsigned long int packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
+        unsigned int dataRateMeter_, packetRateMeter_;
 
         /**
          * Publishes specified data in the ndn network under specified prefix by

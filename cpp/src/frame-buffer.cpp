@@ -43,6 +43,12 @@ NdnFrameData::NdnFrameData(EncodedImage &frame)
     ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
 }
 
+NdnFrameData::NdnFrameData(EncodedImage &frame, FrameMetadata &metadata):
+NdnFrameData(frame)
+{
+    ((FrameDataHeader*)(&data_[0]))->metadata_.packetRate_ = metadata.packetRate_;
+}
+
 //******************************************************************************
 #pragma mark - public
 int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data,
@@ -71,6 +77,37 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data,
     return RESULT_OK;
 }
 
+int NdnFrameData::unpackMetadata(unsigned int length_,
+                                 const unsigned char *data, ndnrtc::
+                                 NdnFrameData::FrameMetadata &metadata)
+{
+    unsigned int headerSize_ = sizeof(FrameDataHeader);
+    FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
+    
+    // check markers
+    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+        return RESULT_ERR;
+
+    metadata.packetRate_ = header.metadata_.packetRate_;
+    
+    return RESULT_OK;
+}
+
+webrtc::VideoFrameType NdnFrameData::getFrameTypeFromHeader(unsigned int size,
+                                                       const unsigned char *headerSegment)
+{
+    unsigned int headerSize_ = sizeof(FrameDataHeader);
+    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
+    
+    // check markers if it's not video frame data - return key frame type always
+    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+        return webrtc::kKeyFrame;
+    
+    return header.frameType_;
+}
+
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -83,9 +120,9 @@ NdnAudioData::NdnAudioData(AudioPacket &packet)
     
     memcpy(data_+headerSize, packet.data_, packet.length_);
     
-    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
     ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
-    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
 }
 
 //******************************************************************************
@@ -96,8 +133,8 @@ int NdnAudioData::unpackAudio(unsigned int len, const unsigned char *data,
     unsigned int headerSize = sizeof(AudioDataHeader);
     AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
     
-    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+    if (header.headerMarker_ != NDNRTC_AUDIOHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
         return RESULT_ERR;
     
     packet.isRTCP_ = header.isRTCP_;
@@ -161,6 +198,11 @@ shared_ptr<EncodedImage> FrameBuffer::Slot::getFrame()
     return shared_ptr<EncodedImage>(frame);
 }
 
+int FrameBuffer::Slot::getFrameMetadata(NdnFrameData::FrameMetadata &metadata)
+{
+    return NdnFrameData::unpackMetadata(assembledDataSize_, data_, metadata);
+}
+
 NdnAudioData::AudioPacket FrameBuffer::Slot::getAudioFrame()
 {
     NdnAudioData::AudioPacket packet = {false, 0, 0};
@@ -189,6 +231,11 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
         return state_;
     }
     
+    // set keyFrame flag
+    if (segmentNo == 0)
+        isKeyFrame_ = (NdnFrameData::getFrameTypeFromHeader(dataLength, data) ==
+                       webrtc::kKeyFrame);
+    
     unsigned char *pos = (data_ + segmentNo * segmentSize_);
     
     memcpy(pos, data, dataLength);
@@ -197,7 +244,10 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
     
     // check if we've collected all segments
     if (storedSegments_ == segmentsNum_)
+    {
+        assemblingTime_ = NdnRtcUtils::microsecondTimestamp()-startAssemblingTs_;
         state_ = StateReady;
+    }
     else
         state_ = StateAssembling;
     
@@ -249,7 +299,7 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
         shared_ptr<Slot> slot(new Slot(slotSize_));
         
         freeSlots_.push_back(slot);
-        notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
+        notifyBufferEventOccurred(-1, -1, Event::EventTypeFreeSlot, slot.get());
     }
     
     updateStat(Slot::StateFree, bufferSize_);
@@ -261,31 +311,34 @@ void FrameBuffer::flush()
 {
 //    bufferEvent_.Set();
 //    bufferEvent_.Reset();
-    
-    syncCs_.Enter();
-    for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
     {
-        shared_ptr<Slot> slot = it->second;
-        if (slot->getState() != Slot::StateLocked)
+        CriticalSectionScoped scopedCs(&syncCs_);
+        
+        for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
         {
-            updateStat(slot->getState(), -1);
-            
-            freeSlots_.push_back(slot);
-            slot->markFree();
-//            frameSlotMapping_.erase(it);
-            notifyBufferEventOccurred(0, 0, Event::EventTypeFreeSlot, slot.get());
-            
-            updateStat(slot->getState(), 1);
+            shared_ptr<Slot> slot = it->second;
+            if (slot->getState() != Slot::StateLocked)
+            {
+                updateStat(slot->getState(), -1);
+                
+                freeSlots_.push_back(slot);
+                slot->markFree();
+                notifyBufferEventOccurred(-1, -1, Event::EventTypeFreeSlot, slot.get());
+                
+                updateStat(slot->getState(), 1);
+            }
         }
+        fullTimeoutCase_ = 0;
+        timeoutSegments_.clear();
+        frameSlotMapping_.clear();
     }
-    fullTimeoutCase_ = 0;
-    timeoutSegments_.clear();
-    frameSlotMapping_.clear();
-    syncCs_.Leave();
+    
+    TRACE("flushed. pending events %d", pendingEvents_.size());
 }
 
 void FrameBuffer::release()
 {
+    TRACE("[BUFFER] RELEASE");
     forcedRelease_ = true;
     bufferEvent_.Set();
 }
@@ -338,7 +391,7 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
     }
     else
     {
-        WARN("can't free slot %d - it was not found or locked", frameNumber);
+        TRACE("can't free slot %d - it was not found or locked", frameNumber);
     }
 }
 
@@ -354,7 +407,7 @@ void FrameBuffer::lockSlot(unsigned int frameNumber)
     }
     else
     {
-        WARN("can't lock slot - it was not found");
+        TRACE("can't lock slot - it was not found");
     }
 }
 
@@ -370,7 +423,7 @@ void FrameBuffer::unlockSlot(unsigned int frameNumber)
     }
     else
     {
-        WARN("can't unlock slot - it was not found");
+        TRACE("can't unlock slot - it was not found");
     }
 }
 
@@ -386,7 +439,7 @@ void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int tota
     }
     else
     {
-        WARN("can't unlock slot - it was not found");
+        TRACE("can't unlock slot - it was not found");
     }
 }
 
@@ -404,6 +457,7 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
             
             timeoutSegments_.erase(segmentId);
             fullTimeoutCase_ = 0;
+            isTrackingFullTimeoutState_ = false;
             
             res = CallResultAssembling;
             updateStat(slot->getState(), -1);
@@ -433,12 +487,12 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
         }
         else
         {
-            WARN("slot was booked but not marked assembling");
+            TRACE("slot was booked but not marked assembling");
         }
     }
     else
     {
-        WARN("trying to append segment to non-booked slot");
+        TRACE("trying to append segment to non-booked slot");
     }
     
     return res;
@@ -451,39 +505,59 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
     {
         uint64_t segmentId = (uint64_t)frameNumber*1000+segmentNumber;
+        bool isLastSegment;
         
-        if (timeoutSegments_.find(segmentId) == timeoutSegments_.end())
+        if ((isLastSegment = (timeoutSegments_.find(segmentId) == timeoutSegments_.end())))
             timeoutSegments_[segmentId] = 0;
 
-        timeoutSegments_[segmentId]++;
-        nTimeouts_++;
-        
-        // if the number of timeouted slots equals buffer size - setup full
-        // buffer checking
-        if (abs((long)lastTimeoutFrameNo_-(long)frameNumber+1) == bufferSize_)
+        if (slot->getState() == FrameBuffer::Slot::StateNew)
         {
-            fullTimeoutCase_++;
-            TRACE("full timeout case %d", fullTimeoutCase_);
+            timeoutSegments_[segmentId]++;
+            nTimeouts_++;
+            
+            // if the number of timeouted slots equals free buffer size - setup full
+            // buffer checking
+            // (note: we should check not-locked slots, as jitter buffer may be
+            // holding frames)
+            if (timeoutSegments_.size() == bufferSize_-getStat(Slot::StateLocked) &&
+                !isTrackingFullTimeoutState_)
+            {
+                isTrackingFullTimeoutState_ = true;
+                nTimeouts_ = 1;
+            }
+            
+            if (isTrackingFullTimeoutState_ &&
+                nTimeouts_%timeoutSegments_.size() == 0)
+            {
+                fullTimeoutCase_++;
+                TRACE("full timeout case %d", fullTimeoutCase_);
+            }
+            
+//            TRACE("timeout frame %d, locked frames: %d, last %d, last-current: %d, "
+//                  "timeout segments size: %d, nTimeouts %d",
+//                  frameNumber, getStat(Slot::StateLocked), lastTimeoutFrameNo_,
+//                  abs((long)lastTimeoutFrameNo_-(long)frameNumber+1),
+//                  timeoutSegments_.size(), nTimeouts_);
+            
+            lastTimeoutFrameNo_ = frameNumber;
+            
+            // we encoutered full timeout event critical number of times -
+            // generate full timeout event (by setting -1 to framenumber and
+            // segment number)
+            if (fullTimeoutCase_ >= FULL_TIMEOUT_CASE_THRESHOLD)
+            {
+                frameNumber = (unsigned int)-1;
+                segmentNumber = (unsigned)-1;
+                TRACE("full timeout %d %d", frameNumber, segmentNumber);
+                isTrackingFullTimeoutState_ = false;
+                fullTimeoutCase_ = 0;
+            }
         }
-        
-        TRACE("timeout frame %d", frameNumber);
-        lastTimeoutFrameNo_ = frameNumber;
-        
-        // we encoutered full timeout event critical number of times -
-        // generate full timeout event (by setting -1 to framenumber and
-        // segment number)
-        if (fullTimeoutCase_ >= FULL_TIMEOUT_CASE_THRESHOLD)
-        {
-            frameNumber = (unsigned int)-1;
-            segmentNumber = (unsigned)-1;
-            TRACE("full timeout %d %d", frameNumber, segmentNumber);
-        }
-        
         notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeTimeout, slot.get());
     }
     else
     {
-        WARN("can't notify slot %d - it was not found. current size: %d", frameNumber,
+        TRACE("can't notify slot %d - it was not found. current size: %d", frameNumber,
              frameSlotMapping_.size());
     }
 }
@@ -562,8 +636,10 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
             bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
+        {
             // if couldn't find event we are looking for - wait for the event to occur
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
+        }
     }
     
     return poppedEvent;
@@ -576,6 +652,13 @@ unsigned int FrameBuffer::getStat(Slot::State state)
     
     return statistics_[state];
 }
+
+void FrameBuffer::reuseEvent(FrameBuffer::Event &event)
+{
+    notifyBufferEventOccurred(event.frameNo_, event.segmentNo_,
+                              event.type_, event.slot_);
+}
+
 //******************************************************************************
 #pragma mark - private
 void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo,

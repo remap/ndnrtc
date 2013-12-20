@@ -20,20 +20,6 @@
 
 namespace ndnrtc
 {
-    typedef struct _ReceiverChannelStatistics {
-        // recent frame numbers:
-        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
-        
-        // errors - number of total skipped frames and timeouts
-        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
-        
-        // frame buffer info
-        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
-        
-        //
-        double playoutFreq_, inDataFreq_, inFramesFreq_;
-    } ReceiverChannelStatistics;
-    
     class NdnReceiverChannel : public NdnMediaChannel
     {
     public:
@@ -44,8 +30,8 @@ namespace ndnrtc
         int init();
         int startTransmission();
         int stopTransmission();
-        
-        void getStat(ReceiverChannelStatistics &stat) const;
+
+        void getChannelStatistics(ReceiverChannelStatistics &stat);
 
     protected:
         shared_ptr<NdnRenderer> localRender_;

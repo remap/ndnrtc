@@ -104,7 +104,7 @@ protected:
     }
     
 };
-
+#if 0
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
@@ -198,4 +198,45 @@ TEST(TestCodec, TestEncodeSampleFrame)
     EXPECT_EQ(WEBRTC_VIDEO_CODEC_OK, encoder_->Encode(*sampleFrame_, NULL, NULL));
     WAIT(1000.);
 
+}
+#endif
+
+TEST_F(NdnVideoCoderTest, TestEncode)
+{
+    FrameReader fr("resources/sample_futurama.yuv");
+    
+    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    
+    vc->setObserver(this);
+    vc->setFrameConsumer(this);
+    vc->init();
+    
+    flushFlags();
+    webrtc::I420VideoFrame frame;
+    int nFrames = 0, delayedFrames = 0;
+    uint64_t lostTime = 0;
+    
+    while (fr.readFrame(frame))
+    {
+        TRACE("*******");
+        nFrames++;
+        obtainedFrame_ = false;
+        vc->onDeliverFrame(frame);
+        usleep(30000);
+
+        EXPECT_TRUE(obtainedFrame_);
+        
+        if (!obtainedFrame_)
+        {
+            lostTime += 30;
+            delayedFrames++;
+        }
+        
+        TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
+    }
+    
+    EXPECT_EQ(nFrames, obtainedFramesCount_);
+    TRACE("lost time - %d ms, delay: %d", lostTime, delayedFrames);
+    
+    delete vc;
 }

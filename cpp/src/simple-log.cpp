@@ -10,6 +10,7 @@
 //
 
 #include <sys/time.h>
+#include <mach/mach_time.h>
 
 #include "simple-log.h"
 
@@ -27,7 +28,8 @@ pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
 loggingDetailLevel_(logDetailLevel),
 outLogStream_(NULL),
-logFile_("")
+logFile_(""),
+instanceMutex_(PTHREAD_MUTEX_INITIALIZER)
 {
     buf_ = (char*)malloc(MAX_BUF_SIZE);
     flushBuffer(buf_);
@@ -43,11 +45,14 @@ logFile_("")
         outLogStream_ = stdout;
         logFile_ = "";
     }
+    else
+        lastFileFlush_ = millisecondTimestamp();
+    
 }
 NdnLogger::~NdnLogger()
 {
     INFO("shutting down log session");
-    
+
     if (outLogStream_ != stdout)
         fclose(outLogStream_);
     
@@ -60,8 +65,16 @@ NdnLogger::~NdnLogger()
 void NdnLogger::initialize(const char *logFile, NdnLoggerDetailLevel logDetailLevel)
 {
     if (sharedLogger)
+    {
+        // wait for unlocking
+        pthread_mutex_lock(&logMutex_);
+        pthread_mutex_unlock(&logMutex_);
+        pthread_mutex_destroy(&logMutex_);
+        
         delete sharedLogger;
-    
+    }
+
+    pthread_mutex_init(&logMutex_, NULL);    
     sharedLogger = new NdnLogger(logFile, logDetailLevel);
 }
 
@@ -99,11 +112,12 @@ void NdnLogger::flushBuffer(char *buffer)
 
 void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format, ...)
 {
+    int res = pthread_mutex_lock(&logMutex_);
+    
     NdnLogger *sharedInstance = NdnLogger::getInstance();
     
     if (level >= (NdnLoggerLevel)sharedInstance->getLoggingDetailLevel())
     {
-        pthread_mutex_lock(&logMutex_);
         va_list args;
         
         va_start(args, format);
@@ -115,11 +129,12 @@ void NdnLogger::log(const char *fName, NdnLoggerLevel level, const char *format,
         
         sharedInstance->flushBuffer(buf);
         sprintf(buf, "[%s] %s: %s", NdnLogger::stingify(level),
-                (level <= NdnLoggerLevelDebug)? fName: "" , tempBuf);
+                (level < NdnLoggerLevelTrace)? fName: "" , tempBuf);
         
         sharedInstance->log(buf);
-        pthread_mutex_unlock(&logMutex_);        
     }
+
+    pthread_mutex_unlock(&logMutex_);
 }
 
 std::string NdnLogger::currentLogFile()
@@ -138,31 +153,76 @@ void NdnLogger::logString(const char *str)
 {
     log(str);
 }
+
+void NdnLogger::log(NdnLoggerLevel level, const char *format, ...)
+{
+    if (level >= (NdnLoggerLevel)getLoggingDetailLevel())
+    {
+        pthread_mutex_lock(&instanceMutex_);
+        va_list args;
+        
+        va_start(args, format);
+        flushBuffer(buf_);
+        vsprintf(buf_, format, args);
+        va_end(args);
+        
+        log(buf_);
+        pthread_mutex_unlock(&instanceMutex_);
+    }
+    
+}
 //********************************************************************************
 #pragma mark - private
 int64_t NdnLogger::millisecondTimestamp()
 {
+#if 0
     struct timeval tv;
     gettimeofday(&tv, NULL);
     
     int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
     
     return ticks;
+#endif
+    
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 0;
+    
+#if 0
+    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+#else
+    static mach_timebase_info_data_t timebase;
+    if (timebase.denom == 0) {
+        // Get the timebase if this is the first time we run.
+        // Recommended by Apple's QA1398.
+        kern_return_t retval = mach_timebase_info(&timebase);
+        if (retval != KERN_SUCCESS) {
+            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
+            // Then replace this with a CHECK(retval == KERN_SUCCESS);
+            asm("int3");
+        }
+    }
+    // Use timebase to convert absolute time tick units into nanoseconds.
+    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
+    ticks /= 1000000LL;
+#endif
+    
+    return ticks;
 }
 
 void NdnLogger::log(const char *str)
 {
-    struct timeval tv;
-    static char timestamp[100];
-    
-    gettimeofday(&tv,NULL);
-    
-    sprintf(timestamp, "%ld.%-6d : ", tv.tv_sec, tv.tv_usec);
-    
     // make exlusive by semaphores
 
-    fprintf(outLogStream_, "%lld: %s\n", millisecondTimestamp(), str);
+    pthread_t pid = pthread_self();
+    
+    fprintf(outLogStream_, "%lld\t%d\t%s\n", millisecondTimestamp(), pid, str);
     
     if (outLogStream_ != stdout)
-        fflush(outLogStream_);
+    {
+        // do not flush too fast
+        if (millisecondTimestamp() - lastFileFlush_ >= 100)
+            fflush(outLogStream_);
+    }
 }

@@ -15,8 +15,14 @@
 #include "playout-buffer.h"
 #include "media-sender.h"
 
+const double StartSRTT = 20.; // default SRTT value to start from
+
 namespace ndnrtc
 {
+    extern const double RttFilterAlpha; // SRTT(i+1) = SRTT(i) + alpha*(RTT(i+1) - SRTT(i))
+    extern const double RateFilterAlpha;
+    extern const double RateDeviation;
+    
     class NdnMediaReceiver : public NdnRtcObject {
     public:
         NdnMediaReceiver(const ParamsStruct &params);
@@ -26,31 +32,76 @@ namespace ndnrtc
         virtual int startFetching();
         virtual int stopFetching();
         
+        double getInterestFrequency() {
+            return NdnRtcUtils::currentFrequencyMeterValue(interestFreqMeter_);
+        }
+        double getSegmentFrequency() {
+            return NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeter_);
+        }
+        double getDataRate(){
+            return  NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
+        }
+        double getActualProducerRate() {
+            return currentProducerRate_;
+        }
+        
+        uint64_t getLastRtt() { return rtt_; }
+        double getSrtt() { return srtt_; }
+        
+        unsigned int getNReceived() { return nReceived_; }
+        unsigned int getNLost() { return nLost_; }
+        unsigned int getNMissed() { return nMissed_; }
+        unsigned int getNPlayed() { return nPlayedOut_; }
+        unsigned int getRebufferingEvents() { return rebufferingEvent_; }
+        
     protected:
         enum ReceiverMode {
-            ReceiverModeCreated,
-            ReceiverModeInit,
-            ReceiverModeStarted,
-            ReceiverModeWaitingFirstSegment,
-            ReceiverModeFetch,
-            ReceiverModeChase
+            ReceiverModeCreated = 0,
+            ReceiverModeInit = 1,
+            ReceiverModeFlushed = 2,
+            ReceiverModeChase = 3,
+            ReceiverModeFetch = 4
         };
         
         ReceiverMode mode_;
 
+        NdnLogger *frameLogger_;
         long pipelinerFrameNo_;
-        int pipelinerEventsMask_, interestTimeoutMs_;
+        unsigned int excludeFilter_ = 0; // used for rebufferings
+        int pipelinerEventsMask_, interestTimeoutMs_, nTimeoutsKeyFrame_ = 0;
         unsigned int producerSegmentSize_;
+        unsigned int fetchAhead_ = 0;
         Name framesPrefix_;
         shared_ptr<Face> face_;
+        double currentProducerRate_;
+        
+        double srtt_ = StartSRTT;
+        uint64_t rtt_ = 0;
+        double outstandingMs_ DEPRECATED;
+        unsigned int rebufferingEvent_ = 0;
+        unsigned int nReceived_ = 0, nLost_ = 0, nPlayedOut_ = 0, nMissed_ = 0;
+        unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_;
+        unsigned int firstFrame_ = 0, lastMissedFrameNo_ = 0;
+        
+        typedef struct _PendingInterestStruct {
+            unsigned int interestID_;
+            uint64_t emissionTimestamp_;
+        } PendingInterestStruct;
+        typedef std::map<const string, PendingInterestStruct> PitMap;
+        typedef std::map<unsigned int, string> PitMapUri;
+        
+        PitMap pendingInterests_;
+        PitMapUri pendingInterestsUri_;
         
         FrameBuffer frameBuffer_;
-        PlayoutBuffer playoutBuffer_;
+        PlayoutBuffer *playoutBuffer_;
         
         webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchronous
                                                     // access to the NDN face
                                                     // object
+        webrtc::CriticalSectionWrapper &pitCs_;     // PIT table synchronization
         webrtc::ThreadWrapper &pipelineThread_, &assemblingThread_;
+        webrtc::EventWrapper &pipelineTimer_;
         
         // static routines for threads
         static bool pipelineThreadRoutine(void *obj)
@@ -81,15 +132,28 @@ namespace ndnrtc
         unsigned int getSegmentNumber(Name prefix);
         void expressInterest(Name &prefix);
         void expressInterest(Interest &i);
+        virtual void rebuffer();
         
         // derived classes should determine whether a frame with frameNo number
         // is late or not
         virtual bool isLate(unsigned int frameNo);
+        void cleanupLateFrame(unsigned int frameNo);
         
         unsigned int getTimeout() const;
         unsigned int getFrameBufferSize() const;
         unsigned int getFrameSlotSize() const;
         
+        virtual unsigned int getNextKeyFrameNo(unsigned int frameNo) = 0;
+        
+        // frame buffer events handlers for pipeliner
+        virtual bool onFirstSegmentReceived(FrameBuffer::Event &event);
+        virtual bool onSegmentTimeout(FrameBuffer::Event &event);
+        virtual bool onFreeSlot(FrameBuffer::Event &event);
+        virtual bool onError(FrameBuffer::Event &event);
+        
+        PendingInterestStruct getPisForInterest(const string &iuri,
+                                                bool removeFromPITs = false);
+        void clearPITs();
     };
 }
 

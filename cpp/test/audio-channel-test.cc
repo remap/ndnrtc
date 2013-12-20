@@ -277,7 +277,7 @@ public:
         nRTCPReceived_++;
     }
 };
-
+#if 0
 TEST_F(NdnAudioChannelTester, TestReceiveChannel)
 {
     params_.bufferSize = 5;
@@ -326,6 +326,7 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     }
     WAIT(params_.freshness*1000);
 }
+#endif
 
 TEST_F(NdnAudioChannelTester, TestSendReceive)
 {
