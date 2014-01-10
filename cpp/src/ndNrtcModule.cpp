@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 7/29/13
 //
 
@@ -26,8 +26,8 @@ NS_DEFINE_NAMED_CID(NRTC_CID);
 // each entry has the form { CID, service, factoryproc, constructorproc }
 // where factoryproc is usually NULL.
 static const mozilla::Module::CIDEntry kNrtcCIDs[] = {
-    { &kNRTC_CID, false, NULL, ndNrtcConstructor},
-    { NULL }
+  { &kNRTC_CID, false, NULL, ndNrtcConstructor},
+  { NULL }
 };
 
 // Build a table which maps contract IDs to CIDs.
@@ -35,8 +35,8 @@ static const mozilla::Module::CIDEntry kNrtcCIDs[] = {
 // cases an extension component may override the contract ID of a builtin gecko component
 // to modify or extend functionality.
 static const mozilla::Module::ContractIDEntry kNrtcContracts[] = {
-    { NRTC_CONTRACTID, &kNRTC_CID },
-    { NULL }
+  { NRTC_CONTRACTID, &kNRTC_CID },
+  { NULL }
 };
 
 // Category entries are category/key/value triples which can be used
@@ -45,14 +45,14 @@ static const mozilla::Module::ContractIDEntry kNrtcContracts[] = {
 // entries: this is just a sample of how you'd do it.
 // @see nsICategoryManager for information on retrieving category data.
 static const mozilla::Module::CategoryEntry kNrtcCategories[] = {
-    { NULL }
+  { NULL }
 };
 
 static const mozilla::Module kNrtcModule = {
-    mozilla::Module::kVersion,
-    kNrtcCIDs,
-    kNrtcContracts,
-    kNrtcCategories
+  mozilla::Module::kVersion,
+  kNrtcCIDs,
+  kNrtcContracts,
+  kNrtcCategories
 };
 
 // The following line implements the one-and-only "NSModule" symbol exported from this

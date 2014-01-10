@@ -19,83 +19,83 @@
 #include "statistics.h"
 
 namespace ndnrtc {
-
-    class INdnRtcLibraryObserver {
-    public:
-        virtual void onStateChanged(const char *state, const char *args) = 0;
-    };
+  
+  class INdnRtcLibraryObserver {
+  public:
+    virtual void onStateChanged(const char *state, const char *args) = 0;
+  };
+  
+  class NdnRtcLibrary : public INdnRtcObjectObserver {
+  public:
+    // construction/desctruction
+    NdnRtcLibrary(void *libHandle);
+    ~NdnRtcLibrary();
     
-    class NdnRtcLibrary : public INdnRtcObjectObserver {
-    public:
-        // construction/desctruction
-        NdnRtcLibrary(void *libHandle);
-        ~NdnRtcLibrary();
-        
-        // public static methods go here
-        static NdnRtcLibrary *instantiateLibraryObject(const char *libPath)
-        {
-            void *libHandle = dlopen(libPath, RTLD_LAZY);
-            
-            if (libHandle == NULL)
-            {
-                NDNERROR("error while loading NdnRTC library: %s", dlerror());
-                return NULL;
-            }
-            
-            NdnRtcLibrary* (*create_ndnrtc)(void *);
-            create_ndnrtc = (NdnRtcLibrary* (*)(void*))
-                    dlsym(libHandle, "create_ndnrtc");
-            
-            NdnRtcLibrary *libObject = create_ndnrtc(libHandle);
-            
-            return libObject;
-        }
-        
-        static void destroyLibraryObject(NdnRtcLibrary *libObject)
-        {
-            void (*destroy_ndnrtc)(NdnRtcLibrary*);
-            destroy_ndnrtc = (void (*)(NdnRtcLibrary*))
-                    dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
-            
-            destroy_ndnrtc(libObject);
-        }
-        
-        static ParamsStruct createParamsStruct();
-        static void releaseParamsStruct(ParamsStruct &params);
-        
-        // public methods go here
-        virtual void configure(const ParamsStruct &params,
-                               const ParamsStruct &audioParams);
-        virtual void currentParams(ParamsStruct &params,
-                                   ParamsStruct &audioParams);
-        
-        virtual void setObserver(INdnRtcLibraryObserver *observer) {
-            observer_ = observer;
-        }
-        virtual void getDefaultParams(ParamsStruct &videoParams,
-                              ParamsStruct &audioParams) const;
-        virtual int getStatistics(const char *conferencePrefix,
-                                  NdnLibStatistics &stat) const;
-        
-        virtual int startPublishing(const char *username);
-        virtual int stopPublishing();
-
-        virtual int joinConference(const char *conferencePrefix);
-        virtual int leaveConference(const char *conferencePrefix);
-        
-        virtual void onErrorOccurred(const char *errorMessage);
-        virtual void* getLibraryHandle(){ return libraryHandle_; };
-    private:
-        void *libraryHandle_;
-        ParamsStruct libParams_, libAudioParams_;
-        INdnRtcLibraryObserver *observer_;
-        
-        // private methods go here
-        int notifyObserverWithError(const char *format, ...) const;
-        int notifyObserverWithState(const char *stateName,
-                                    const char *format, ...) const;
-        void notifyObserver(const char *state, const char *args) const;
-    };
+    // public static methods go here
+    static NdnRtcLibrary *instantiateLibraryObject(const char *libPath)
+    {
+      void *libHandle = dlopen(libPath, RTLD_LAZY);
+      
+      if (libHandle == NULL)
+      {
+        NDNERROR("error while loading NdnRTC library: %s", dlerror());
+        return NULL;
+      }
+      
+      NdnRtcLibrary* (*create_ndnrtc)(void *);
+      create_ndnrtc = (NdnRtcLibrary* (*)(void*))
+      dlsym(libHandle, "create_ndnrtc");
+      
+      NdnRtcLibrary *libObject = create_ndnrtc(libHandle);
+      
+      return libObject;
+    }
+    
+    static void destroyLibraryObject(NdnRtcLibrary *libObject)
+    {
+      void (*destroy_ndnrtc)(NdnRtcLibrary*);
+      destroy_ndnrtc = (void (*)(NdnRtcLibrary*))
+      dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
+      
+      destroy_ndnrtc(libObject);
+    }
+    
+    static ParamsStruct createParamsStruct();
+    static void releaseParamsStruct(ParamsStruct &params);
+    
+    // public methods go here
+    virtual void configure(const ParamsStruct &params,
+                           const ParamsStruct &audioParams);
+    virtual void currentParams(ParamsStruct &params,
+                               ParamsStruct &audioParams);
+    
+    virtual void setObserver(INdnRtcLibraryObserver *observer) {
+      observer_ = observer;
+    }
+    virtual void getDefaultParams(ParamsStruct &videoParams,
+                                  ParamsStruct &audioParams) const;
+    virtual int getStatistics(const char *conferencePrefix,
+                              NdnLibStatistics &stat) const;
+    
+    virtual int startPublishing(const char *username);
+    virtual int stopPublishing();
+    
+    virtual int joinConference(const char *conferencePrefix);
+    virtual int leaveConference(const char *conferencePrefix);
+    
+    virtual void onErrorOccurred(const char *errorMessage);
+    virtual void* getLibraryHandle(){ return libraryHandle_; };
+  private:
+    void *libraryHandle_;
+    ParamsStruct libParams_, libAudioParams_;
+    INdnRtcLibraryObserver *observer_;
+    
+    // private methods go here
+    int notifyObserverWithError(const char *format, ...) const;
+    int notifyObserverWithState(const char *stateName,
+                                const char *format, ...) const;
+    void notifyObserver(const char *state, const char *args) const;
+  };
 }
 
 
