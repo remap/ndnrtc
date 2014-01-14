@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 7/29/13
 //
 
@@ -22,12 +22,12 @@
 #define NRTC_CONTRACTID "@named-data.net/ndnrtc;1"
 // "CD232E0F-A777-41A3-BB19-CF415B98088E"
 #define NRTC_CID \
-  {0xcd232e0f, 0xa777, 0x41a3, \
-    { 0xbb, 0x19, 0xcf, 0x41, 0x5b, 0x98, 0x08, 0x8e }}
+{0xcd232e0f, 0xa777, 0x41a3, \
+{ 0xbb, 0x19, 0xcf, 0x41, 0x5b, 0x98, 0x08, 0x8e }}
 
 using namespace ndnrtc;
 
-/** 
+/**
  * Class description goes here
  */
 class ndNrtc : public INrtc, public INdnRtcObjectObserver
@@ -35,29 +35,29 @@ class ndNrtc : public INrtc, public INdnRtcObjectObserver
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_INRTC
-
-    ndNrtc();
-    ~ndNrtc();
-
-    void onErrorOccurred(const char *errorMessage);
-    
+  
+  ndNrtc();
+  ~ndNrtc();
+  
+  void onErrorOccurred(const char *errorMessage);
+  
 private:
-    // should be shared_ptr, cause it's implementing
-    // emable_shared_from_this internally
-//    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
-    
-    // private attributes
-    shared_ptr<NdnSenderChannel> senderChannel_;
-    
-    // temoorary paramteres for dispatching event back to JS
-    INrtcObserver *tempObserver_;
-    char *args_, *state_;
-    
-    // private methods
-    nsresult notifyObserverError(INrtcObserver *obs, const char *format, ...);
-    void notifyObserver(INrtcObserver *obs, const char *state, const char *args);
-    void processEvent(); // nsRunnable method - for dispatching events on main thread to the observer
-    
+  // should be shared_ptr, cause it's implementing
+  // emable_shared_from_this internally
+  //    shared_ptr<ndnrtc::NdnWorker> currentWorker_;
+  
+  // private attributes
+  shared_ptr<NdnSenderChannel> senderChannel_;
+  
+  // temoorary paramteres for dispatching event back to JS
+  INrtcObserver *tempObserver_;
+  char *args_, *state_;
+  
+  // private methods
+  nsresult notifyObserverError(INrtcObserver *obs, const char *format, ...);
+  void notifyObserver(INrtcObserver *obs, const char *state, const char *args);
+  void processEvent(); // nsRunnable method - for dispatching events on main thread to the observer
+  
 protected:
   /* additional members */
 };

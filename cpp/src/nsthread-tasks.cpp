@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 8/7/13
 //
 
@@ -28,7 +28,7 @@ using namespace ndnrtc;
 //        }
 //    }
 //    TRACE("got something");
-//    
+//
 //    return NS_OK;
 //}
 //
@@ -36,6 +36,6 @@ using namespace ndnrtc;
 //{
 //    TRACE("calling delegate");
 //    delegate_->onDataReceived(data_);
-//    
+//
 //    return NS_OK;
 //b}

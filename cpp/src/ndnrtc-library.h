@@ -19,7 +19,7 @@
 #include "statistics.h"
 
 namespace ndnrtc {
-
+    
     class INdnRtcLibraryObserver {
     public:
         virtual void onStateChanged(const char *state, const char *args) = 0;
@@ -44,7 +44,7 @@ namespace ndnrtc {
             
             NdnRtcLibrary* (*create_ndnrtc)(void *);
             create_ndnrtc = (NdnRtcLibrary* (*)(void*))
-                    dlsym(libHandle, "create_ndnrtc");
+            dlsym(libHandle, "create_ndnrtc");
             
             NdnRtcLibrary *libObject = create_ndnrtc(libHandle);
             
@@ -55,7 +55,7 @@ namespace ndnrtc {
         {
             void (*destroy_ndnrtc)(NdnRtcLibrary*);
             destroy_ndnrtc = (void (*)(NdnRtcLibrary*))
-                    dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
+            dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
             
             destroy_ndnrtc(libObject);
         }
@@ -73,20 +73,24 @@ namespace ndnrtc {
             observer_ = observer;
         }
         virtual void getDefaultParams(ParamsStruct &videoParams,
-                              ParamsStruct &audioParams) const;
-        virtual int getStatistics(const char *conferencePrefix,
+                                      ParamsStruct &audioParams) const;
+        virtual int getStatistics(const char *producerId,
                                   NdnLibStatistics &stat) const;
         
-        virtual int startPublishing(const char *username);
+        virtual int startPublishing(const char* username);
         virtual int stopPublishing();
-
-        virtual int joinConference(const char *conferencePrefix);
-        virtual int leaveConference(const char *conferencePrefix);
+        virtual void getPublisherPrefix(const char** userPrefix);
+        
+        virtual int startFetching(const char* producerId);
+        virtual int stopFetching(const char* producerId);
+        virtual void getProducerPrefix(const char* producerId,
+                                       const char** producerPrefx);
         
         virtual void onErrorOccurred(const char *errorMessage);
         virtual void* getLibraryHandle(){ return libraryHandle_; };
     private:
         void *libraryHandle_;
+        char *publisherId_ = 0;
         ParamsStruct libParams_, libAudioParams_;
         INdnRtcLibraryObserver *observer_;
         

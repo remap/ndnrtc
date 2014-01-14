@@ -69,7 +69,7 @@ namespace ndnrtc
         unsigned int playbackRate;
         unsigned int interestTimeout;
         unsigned int bufferSize, slotSize;
-        unsigned int jitterSize;
+        unsigned int jitterSize DEPRECATED;
         
         /**
          * Validates video parameters

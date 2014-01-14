@@ -103,7 +103,7 @@ libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
-    TRACE("");    
+    TRACE("");
     NdnRtcUtils::sharedVoiceEngine();
 }
 NdnRtcLibrary::~NdnRtcLibrary()
@@ -114,7 +114,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
 //******************************************************************************
 #pragma mark - public
 void NdnRtcLibrary::configure(const ParamsStruct &params,
-                       const ParamsStruct &audioParams)
+                              const ParamsStruct &audioParams)
 {
     ParamsStruct validatedVideoParams, validatedAudioParams;
     
@@ -157,52 +157,30 @@ void NdnRtcLibrary::currentParams(ParamsStruct &params,
 }
 
 void NdnRtcLibrary::getDefaultParams(ParamsStruct &videoParams,
-                                             ParamsStruct &audioParams) const
+                                     ParamsStruct &audioParams) const
 {
     videoParams = DefaultParams;
     audioParams = DefaultParamsAudio;
 }
 
-int NdnRtcLibrary::getStatistics(const char *conferencePrefix,
+int NdnRtcLibrary::getStatistics(const char *producerId,
                                  NdnLibStatistics &stat) const
 {
+    memset((void*)&stat, 0, sizeof(NdnLibStatistics));
+    
     if (SenderChannel.get())
     {
         SenderChannel->getChannelStatistics(stat.sendStat_);
-#if 0
-        stat.sentNo_ = SenderChannel->getSentFramesNum();
-        stat.sendingFramesFreq_ = SenderChannel->getNInputFramesPerSec();
-        stat.capturingFreq_ = SenderChannel->getCurrentCapturingFreq();
-#endif
     }
     
-    if (!conferencePrefix || Producers.find(string(conferencePrefix)) == Producers.end())
+    if (!producerId || Producers.find(string(producerId)) == Producers.end())
         return -1; //notifyObserverWithError("producer was not found");
     
-    shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
-
-    stat.producerId_ = conferencePrefix;
+    shared_ptr<NdnReceiverChannel> producer = Producers[string(producerId)];
+    
+    stat.producerId_ = producerId;
     producer->getChannelStatistics(stat.receiveStat_);
-#if 0
-    ReceiverChannelStatistics receiver_stat;
-    producer->getStat(receiver_stat);
     
-    stat.nPlayback_ = receiver_stat.nPlayback_;
-    stat.nPipeline_ = receiver_stat.nPipeline_;
-    stat.nFetched_ = receiver_stat.nFetched_;
-    stat.nLate_ = receiver_stat.nLate_;
-    stat.nTimeouts_ = receiver_stat.nTimeouts_;
-    stat.nTotalTimeouts_ = receiver_stat.nTotalTimeouts_;
-    stat.nSkipped_ = receiver_stat.nSkipped_;
-    stat.nFree_ = receiver_stat.nFree_;
-    stat.nLocked_ = receiver_stat.nLocked_;
-    stat.nAssembling_ = receiver_stat.nAssembling_;
-    stat.nNew_ = receiver_stat.nNew_;
-    
-    stat.inFramesFreq_ = receiver_stat.inFramesFreq_;
-    stat.inDataFreq_ = receiver_stat.inDataFreq_;
-    stat.playoutFreq_ = receiver_stat.playoutFreq_;
-#endif
     return 0;
 }
 
@@ -215,6 +193,13 @@ int NdnRtcLibrary::startPublishing(const char *username)
     {
         if (strcmp(username, "") == 0)
             return notifyObserverWithError("username cannot be empty string");
+
+        if (publisherId_)
+            free(publisherId_);
+
+        publisherId_ = (char*)malloc(strlen(username)+1);
+        memset((void*)publisherId_, 0, strlen(username)+1);
+        memcpy((void*)publisherId_, username, strlen(username));
         
         params.producerId = username;
         audioParams.producerId = username;
@@ -252,28 +237,51 @@ int NdnRtcLibrary::stopPublishing()
         SenderChannel.reset();
     }
     
-    return notifyObserverWithState("publishing stopped", "stopped publishing media");
+    return notifyObserverWithState("stopped", "stopped publishing media");
 }
 
-int NdnRtcLibrary::joinConference(const char *conferencePrefix)
+void NdnRtcLibrary::getPublisherPrefix(const char** userPrefix)
 {
-    if (strcmp(conferencePrefix, "") == 0)
-        return notifyObserverWithError("username cannot be empty string");
- 
-    TRACE("join conference with prefix %s", conferencePrefix);
+    string prefix;
+    ParamsStruct p = libParams_;
+    p.producerId = publisherId_;
     
-    if (Producers.find(string(conferencePrefix)) != Producers.end())
-        return notifyObserverWithError("already joined conference");
+    MediaSender::getUserPrefix(p, prefix);
+    
+    memcpy((void*)*userPrefix, (void*)(prefix.c_str()), prefix.size());
+}
+
+void NdnRtcLibrary::getProducerPrefix(const char* producerId,
+                                      const char** producerPrefx)
+{
+    ParamsStruct p  = libParams_;
+    p.producerId = producerId;
+    
+    string prefix;
+    MediaSender::getUserPrefix(p, prefix);
+    
+    memcpy((void*)*producerPrefx, prefix.c_str(), prefix.size());
+}
+
+int NdnRtcLibrary::startFetching(const char *producerId)
+{
+    if (strcmp(producerId, "") == 0)
+        return notifyObserverWithError("username cannot be empty string");
+    
+    TRACE("fetching from %s", producerId);
+    
+    if (Producers.find(string(producerId)) != Producers.end())
+        return notifyObserverWithError("already fetching");
     
     // setup params
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
     
-    params.producerId = conferencePrefix;
-    audioParams.producerId = conferencePrefix;
+    params.producerId = producerId;
+    audioParams.producerId = producerId;
     
-    shared_ptr<NdnReceiverChannel> producer(new
-                                    NdnReceiverChannel(params, audioParams));
+    shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(params,
+                                                                   audioParams));
     
     producer->setObserver(this);
     
@@ -283,7 +291,7 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
     if (RESULT_FAIL(producer->startTransmission()))
         return -1;
     
-    Producers[string(conferencePrefix)] = producer;
+    Producers[string(producerId)] = producer;
     
     string producerPrefix;
     MediaSender::getUserPrefix(params, producerPrefix);
@@ -293,21 +301,24 @@ int NdnRtcLibrary::joinConference(const char *conferencePrefix)
                                    producerPrefix.c_str());
 }
 
-int NdnRtcLibrary::leaveConference(const char *conferencePrefix)
+int NdnRtcLibrary::stopFetching(const char *producerId)
 {
-    TRACE("leaving conference with prefix: %s", conferencePrefix);
+    TRACE("stop fetching from prefix: %s", producerId);
     
-    if (Producers.find(string(conferencePrefix)) == Producers.end())
-        return notifyObserverWithError("didn't find a conference to leave. did you join?");
+    if (Producers.find(string(producerId)) == Producers.end())
+        return notifyObserverWithError("fetching from user was not started");
     
-    shared_ptr<NdnReceiverChannel> producer = Producers[string(conferencePrefix)];
+    shared_ptr<NdnReceiverChannel> producer = Producers[string(producerId)];
     
     if (producer->stopTransmission() < 0)
-        notifyObserverWithError("can't leave the conference");
+        notifyObserverWithError("can't stop fetching");
     
-    Producers.erase(string(conferencePrefix));
+    string producerKey = string(producerId);
     
-    return notifyObserverWithState("leave", "left producer %s", conferencePrefix);
+    Producers.erase(producerKey);
+    
+    return notifyObserverWithState("leave", "stopped fetching from %s",
+                                   producerId);
 }
 
 void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)

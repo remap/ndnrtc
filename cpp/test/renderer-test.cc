@@ -136,7 +136,7 @@ protected:
         return true;
     }
 };
-#if 0
+//#if 0
 TEST_F(NdnRendererTester, CreateDelete)
 {
     NdnRenderer *nr = new NdnRenderer(0,p_);
@@ -203,7 +203,8 @@ TEST_F(NdnRendererTester, TestInitAndStart)
     
     r.stopRendering();
 }
-#endif
+//#endif
+#if 0
 TEST_F(NdnRendererTester, TestStartStopStart)
 {
     FrameReader fr("resources/sample_futurama.yuv");
@@ -251,7 +252,7 @@ TEST_F(NdnRendererTester, TestStartStopStart)
     r_->stopRendering();
     delete r_;
 }
-#if 0
+//#if 0
 TEST_F(NdnRendererTester, TestRender)
 {
     FrameReader fr("resources/sample_futurama.yuv");
