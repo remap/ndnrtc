@@ -59,7 +59,8 @@ int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data,
   
   // check markers
   if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-      header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+      header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR &&
+      length_ < headerSize_)
     return RESULT_ERR;
   
   int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,

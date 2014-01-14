@@ -23,7 +23,7 @@ namespace ndnrtc
   
   const int MinJitterSizeMs = 300;
   const int MaxUnderrunNum = 10;
-  const int MaxOutstandingInterests = 1 DEPRECATED;
+  const int MaxOutstandingInterests DEPRECATED = 1;
   
   class IPlayoutBufferCallback;
   
@@ -66,6 +66,7 @@ namespace ndnrtc
     virtual int releaseAcquiredFrame();
     
     int moveTo(unsigned int frameNo){ return 0; }
+    unsigned int framePointer() DEPRECATED { return framePointer_; }
     unsigned int getPlayheadPointer() {
       webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
       return playheadPointer_;
