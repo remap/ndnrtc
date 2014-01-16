@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#undef NDN_LOGGING
+//#undef NDN_LOGGING
 
 #include "audio-receiver.h"
 
@@ -19,57 +19,30 @@ using namespace std;
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnAudioReceiver::NdnAudioReceiver(const ParamsStruct &params) :
-NdnMediaReceiver(params),
-collectingThread_(*ThreadWrapper::CreateThread(collectingThreadRoutine, this))
+NdnMediaReceiver(params)
 {
-  playoutBuffer_ = new PlayoutBuffer();
+    playoutBuffer_ = new PlayoutBuffer();
 }
 
 NdnAudioReceiver::~NdnAudioReceiver()
 {
-  stopFetching();
-  delete playoutBuffer_;
+    stopFetching();
 }
 //******************************************************************************
 #pragma mark - public
 int NdnAudioReceiver::init(shared_ptr<Face> face)
 {
-  int res = NdnMediaReceiver::init(face);
-  
-  if (RESULT_FAIL(playoutBuffer_->init(&frameBuffer_,
-                                       DefaultParamsAudio.jitterSize)))
-    return notifyError(RESULT_ERR, "could not initialize playout buffer");
-  
-  return res;
+    return NdnMediaReceiver::init(face);
 }
 
 int NdnAudioReceiver::startFetching()
 {
-  if (RESULT_GOOD(NdnMediaReceiver::startFetching()))
-  {
-    unsigned int tid = AUDIO_THREAD_ID;
-    
-    isCollecting_ = true;
-    
-    if (!collectingThread_.Start(tid))
-      return notifyError(RESULT_ERR, "can't start audio collecting thread");
-  }
-  else
-    return RESULT_ERR;
-  
-  return RESULT_OK;
+    return NdnMediaReceiver::startFetching();
 }
 
 int NdnAudioReceiver::stopFetching()
 {
-  NdnMediaReceiver::stopFetching();
-  
-  isCollecting_ = false;
-  
-  collectingThread_.SetNotAlive();
-  collectingThread_.Stop();
-  
-  return RESULT_OK;
+    return NdnMediaReceiver::stopFetching();
 }
 
 //******************************************************************************
@@ -77,61 +50,49 @@ int NdnAudioReceiver::stopFetching()
 
 //******************************************************************************
 #pragma mark - private
-bool NdnAudioReceiver::collectAudioPackets()
+void NdnAudioReceiver::playbackPacket()
 {
-  if (isCollecting_ && packetConsumer_)
-  {
-    FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
-    
-    if (slot)
+    if (packetConsumer_)
     {
-      NdnAudioData::AudioPacket packet = slot->getAudioFrame();
-      
-      if (packet.length_ && packet.data_)
-      {
-        if (packet.isRTCP_)
+        FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
+        
+        if (slot)
         {
-          TRACE("pushing RTCP packet");
-          packetConsumer_->onRTCPPacketReceived(packet.length_,
-                                                packet.data_);
+            NdnAudioData::AudioPacket packet = slot->getAudioFrame();
+            
+            if (packet.length_ && packet.data_)
+            {
+                jitterTiming_.startFramePlayout();
+                
+                if (packet.isRTCP_)
+                    packetConsumer_->onRTCPPacketReceived(packet.length_,
+                                                          packet.data_);
+                else
+                    packetConsumer_->onRTPPacketReceived(packet.length_,
+                                                         packet.data_);
+                
+                // get playout time (delay) for the rendered frame
+                int framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
+                
+                jitterTiming_.updatePlayoutTime(packet.isRTCP_?0:framePlayoutTime);
+                
+                // setup and run playout timer for calculated playout interval
+                jitterTiming_.runPlayoutTimer();
+                
+            }
+            else
+                WARN("got bad audio packet");
         }
         else
-        {
-          TRACE("pushing RTP packet");
-          packetConsumer_->onRTPPacketReceived(packet.length_,
-                                               packet.data_);
-        }
-      }
-      else
-        WARN("got bad audio packet");
+            DBG("can't obtain next audio slot");
     }
-    else
-      //            DBG("can't obtain next audio slot");
-      ;
-    TRACE("[AUDIO] playout buffer state: jitter size (%d), key frames (%d) "
-          "last keyframe no (%d), top frame no (%d), diff (%d)",
-          playoutBuffer_->getJitterSize(), playoutBuffer_->getNKeyFrames(),
-          playoutBuffer_->getLastKeyFrameNo(), playoutBuffer_->getTopFrameNo(),
-          playoutBuffer_->getTopFrameNo() - playoutBuffer_->getLastKeyFrameNo()
-          );
-    
-    playoutBuffer_->releaseAcquiredFrame();
-  }
-  
-  usleep(10000);
-  return isCollecting_;
 }
 
 bool NdnAudioReceiver::isLate(unsigned int frameNo)
 {
-  if (mode_ == ReceiverModeFetch &&
-      frameNo < playoutBuffer_->framePointer())
-    return true;
-  
-  return false;
-}
-
-unsigned int NdnAudioReceiver::getNextKeyFrameNo(unsigned int frameNo)
-{
-  return frameNo;
+    if (mode_ == ReceiverModeFetch &&
+        frameNo < playoutBuffer_->framePointer())
+        return true;
+    
+    return false;
 }

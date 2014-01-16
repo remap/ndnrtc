@@ -47,7 +47,9 @@ TEST_F(NdnSenderChannelTest, TestInit)
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
     sc->setObserver(this);
     
-    EXPECT_EQ(RESULT_OK,sc->init());
+    int res = sc->init();
+    
+    EXPECT_EQ(RESULT_OK,res);
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
@@ -55,7 +57,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
     
     delete sc;
 }
-#if 0
+
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
@@ -74,4 +76,3 @@ TEST_F(NdnSenderChannelTest, TestTransmission)
     delete sc;
     
 }
-#endif

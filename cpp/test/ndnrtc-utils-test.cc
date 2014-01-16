@@ -16,7 +16,7 @@ using namespace webrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(NdnRtcUtilsTests, TestSegmentsNumber)
 {
     {
@@ -75,9 +75,17 @@ TEST(NdnRtcUtilsTests, TestFrameNumber)
     {
         char *prefixStr = (char*)"/ndn/ndnrtc/user/testuser/streams/video0/vp8-640/frames/1";
         Name prefix(prefixStr);
-        unsigned int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(prefix.getComponentCount()-1));
+        int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(prefix.getComponentCount()-1));
         
         EXPECT_EQ(1, frameNo);
+    }
+    
+    { // check error
+        char *prefixStr = (char*)"/ndn/ndnrtc/user/testuser/streams/video0/vp8-640/frames";
+        Name prefix(prefixStr);
+        int frameNo = NdnRtcUtils::frameNumber(prefix.getComponent(prefix.getComponentCount()-1));
+        
+        EXPECT_EQ(-1, frameNo);
     }
 }
 
@@ -164,8 +172,7 @@ TEST(NdnRTcUtilsTests, TestVoiceEngineInstance)
     
     NdnRtcUtils::releaseVoiceEngine();
 }
-#endif
-//#if 0
+
 TEST(NdnRTcUtilsTests, TestTimestamps)
 {
     { // test microseconds timestamps
@@ -189,4 +196,3 @@ TEST(NdnRTcUtilsTests, TestTimestamps)
         EXPECT_LE(sleepUS, rb);
     }
 }
-//#endif

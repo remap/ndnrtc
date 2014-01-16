@@ -17,7 +17,7 @@ using namespace webrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(CocoaRenderWindow, TestCreateDestroy)
 {
     void *win = createCocoaRenderWindow("NoName", 640, 480);
@@ -78,7 +78,7 @@ TEST(CocoaRenderWindow, TestCreateSeveral)
         WAIT(200);
     }
 }
-#endif
+
 //********************************************************************************
 /**
  * @name NdnRenderer class tests
@@ -136,7 +136,7 @@ protected:
         return true;
     }
 };
-//#if 0
+
 TEST_F(NdnRendererTester, CreateDelete)
 {
     NdnRenderer *nr = new NdnRenderer(0,p_);
@@ -203,8 +203,7 @@ TEST_F(NdnRendererTester, TestInitAndStart)
     
     r.stopRendering();
 }
-//#endif
-#if 0
+
 TEST_F(NdnRendererTester, TestStartStopStart)
 {
     FrameReader fr("resources/sample_futurama.yuv");
@@ -252,7 +251,7 @@ TEST_F(NdnRendererTester, TestStartStopStart)
     r_->stopRendering();
     delete r_;
 }
-//#if 0
+#if 0
 TEST_F(NdnRendererTester, TestRender)
 {
     FrameReader fr("resources/sample_futurama.yuv");
@@ -266,13 +265,14 @@ TEST_F(NdnRendererTester, TestRender)
     r.startRendering("sample");
     WAIT(1000);
     
-    webrtc::I420VideoFrame frame;
+    webrtc::I420VideoFrame frame, deliveredFrame;
     unsigned int nFrames = 0;
     
     while (fr.readFrame(frame))
     {
+        deliveredFrame.CopyFrame(frame);
         nFrames++;
-        r.onDeliverFrame(frame);
+        r.onDeliverFrame(deliveredFrame);
         usleep(30000);
     }
     
@@ -281,6 +281,6 @@ TEST_F(NdnRendererTester, TestRender)
     r.stopRendering();
     processThread_.SetNotAlive();
     deliverEvent_.Set();
-    processThread.Stop();
+    processThread_.Stop();
 }
 #endif

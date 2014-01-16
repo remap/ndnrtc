@@ -219,8 +219,9 @@ int NdnSenderChannel::init()
     if (!audioInitialized_)
       notifyError(RESULT_WARN, "can't initialize audio send channel");
     
-#warning FOR TESTING ONLY! REMOVE THIS IN RELEASE VERSION!
+#ifdef AUDIO_OFF
     audioInitialized_ = false;
+#endif
   }
   
   isInitialized_ = audioInitialized_||videoInitialized_;

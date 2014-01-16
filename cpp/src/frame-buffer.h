@@ -16,8 +16,8 @@
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
 #define NDNRTC_FRAMEBODY_MRKR 0xfb0d
-#define NDNRTC_AUDIOHDR_MRKR 0xa4d4
-#define NDNRTC_AUDIOBODY_MRKR 0xab0d
+#define NDNRTC_AUDIOHDR_MRKR 0xa4a4
+#define NDNRTC_AUDIOBODY_MRKR 0xabad
 
 #define FULL_TIMEOUT_CASE_THRESHOLD 2
 
@@ -27,6 +27,10 @@ namespace ndnrtc
     class PacketData
     {
     public:
+        struct PacketMetadata {
+            double packetRate_;
+        };
+        
         PacketData(){}
         virtual ~PacketData() {
             if (data_)
@@ -49,18 +53,15 @@ namespace ndnrtc
     class NdnFrameData : public PacketData
     {
     public:
-        struct FrameMetadata {
-            double packetRate_;
-        };
         
         NdnFrameData(webrtc::EncodedImage &frame);
-        NdnFrameData(webrtc::EncodedImage &frame, FrameMetadata &metadata);
+        NdnFrameData(webrtc::EncodedImage &frame, PacketMetadata &metadata);
         ~NdnFrameData(){}
         
         static int unpackFrame(unsigned int length_, const unsigned char *data,
                                webrtc::EncodedImage **frame);
         static int unpackMetadata(unsigned int length_, const unsigned char *data,
-                                  FrameMetadata &metadata);
+                                  PacketMetadata &metadata);
         static webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
                                             const unsigned char *headerSegment);
     private:
@@ -75,7 +76,7 @@ namespace ndnrtc
             //            uint32_t                    _length;
             //            uint32_t                    _size;
             bool                        completeFrame_;
-            FrameMetadata               metadata_;
+            PacketMetadata               metadata_;
             uint32_t                    bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
         };
     };
@@ -85,20 +86,26 @@ namespace ndnrtc
     public:
         typedef struct _AudioPacket {
             bool isRTCP_;
+            int64_t timestamp_;
             unsigned int length_;
             unsigned char *data_;
         } AudioPacket;
         
         NdnAudioData(AudioPacket &packet);
+        NdnAudioData(AudioPacket &packet, PacketMetadata &metadata);
         ~NdnAudioData(){}
         
         static int unpackAudio(unsigned int len, const unsigned char *data,
                                AudioPacket &packet);
+        static int unpackMetadata(unsigned int len, const unsigned char *data,
+                               PacketMetadata &metadata);
     private:
         struct AudioDataHeader {
-            unsigned int headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-            bool isRTCP_;
-            unsigned int bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
+            unsigned int        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
+            bool                isRTCP_;
+            PacketMetadata      metadata_;
+            int64_t             timestamp_;
+            unsigned int        bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
         };
     };
     
@@ -198,7 +205,8 @@ namespace ndnrtc
                 
                 if (dataLength_ < segmentsNum_*segmentSize_)
                 {
-                    WARN("slot size is smaller than expected amount of data. enlarging buffer...");
+                    WARN("slot size is smaller than expected amount of data. "
+                         "enlarging buffer...");
                     dataLength_ = 2*segmentsNum_*segmentSize_;
                     data_ = (unsigned char*)realloc(data_, dataLength_);
                 }
@@ -213,12 +221,24 @@ namespace ndnrtc
              *          still owned by slot.
              */
             shared_ptr<webrtc::EncodedImage> getFrame();
-            int getFrameMetadata(NdnFrameData::FrameMetadata &metadata);
 
             /**
              * Unpacks audio frame from received data
              */
             NdnAudioData::AudioPacket getAudioFrame();
+            
+            /**
+             * Retrieves packet metadata
+             * @return  RESULT_OK if metadata can be retrieved and RESULT_ERR
+             *          upon error
+             */
+            int getPacketMetadata(PacketData::PacketMetadata &metadata);
+            
+            /**
+             * Returns packet timestamp
+             * @return video or audio packet timestamp or RESULT_ERR upon error
+             */
+            int64_t getPacketTimestamp();
             
             /**
              * Appends segment to the frame data
@@ -253,7 +273,6 @@ namespace ndnrtc
                 bool inverted_;
             };
             
-            unsigned char *getdata() { return data_; }
             // indicates, whether slot contains key frame. returns always true
             // for audio frames
             bool isKeyFrame() { return isKeyFrame_; };
@@ -273,10 +292,6 @@ namespace ndnrtc
             uint64_t assemblingTime_;
             unsigned char *data_;
             Slot::State state_, stashedState_;
-            
-            // storage of issued interests (as a strings) for current slot
-            // establishes mapping interest_uri -> pending_interest_id
-//            std::map<std::string, unsigned int> interestIds_;
             
             void flushData() { memset(data_, 0, dataLength_); }
         };

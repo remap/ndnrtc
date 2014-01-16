@@ -194,7 +194,7 @@ TEST_F(FrameSlotTester, WrongAssemble)
     
     NdnFrameData frameData(*encodedFrame_);
     
-    unsigned int slotSize = 4000; // big enough to store encoded frame?
+    unsigned int slotSize = 2*encodedFrame_->_length; // big enough to store encoded frame?
     unsigned int segmentsNum = 3;
     unsigned int segmentSize = encodedFrame_->_length / segmentsNum;
     
@@ -223,7 +223,8 @@ TEST_F(FrameSlotTester, WrongAssemble)
             unsigned int size = (i == actualSegmentsNum-1)?lastSegmentSize:segmentSize;
             
             // segment number in next call is wrong - so that frame segment will be written in a wrong places
-            FrameBuffer::Slot::State state = slot->appendSegment(actualSegmentsNum-i, size, segments[i]);
+            int incorrectSegmentIdx = actualSegmentsNum-i;
+            FrameBuffer::Slot::State state = slot->appendSegment(incorrectSegmentIdx, size, segments[i]);
             
             if (i == actualSegmentsNum-1)
                 EXPECT_EQ(FrameBuffer::Slot::StateReady, state);
@@ -233,11 +234,6 @@ TEST_F(FrameSlotTester, WrongAssemble)
         
         // check frame consistency
         shared_ptr<webrtc::EncodedImage> frame = slot->getFrame();
-        
-        if (frame.get())
-        {
-            TRACE("");
-        }
         
         EXPECT_EQ(nullptr, frame.get());
         
@@ -405,7 +401,7 @@ protected:
     bool processBooking()
     {
         if (stopWaiting_)
-            return true;
+            return false;
         
         bookerCycleCount_++;
         FrameBuffer::Event ev = buffer_->waitForEvents(bookerWaitingEvents_);
@@ -428,7 +424,6 @@ protected:
                 // in real app, re-issue interest here (if needed): "new interest(ev.frameNo_, ev.segmentNo_)"
                 break;
             case FrameBuffer::Event::EventTypeFirstSegment:
-                //                TRACE("first segment. pipelining for %d", ev.frameNo_);
                 // in real app, interest pipelining should be established here
                 // should check ev.slot_->totalSegmentsNumber() and ev.segmentNo_
                 bookingCs_->Enter();
@@ -467,7 +462,7 @@ protected:
     bool processProvider()
     {
         if (stopWaiting_)
-            return;
+            return false;
         
         providerCycleCount_++;
         
@@ -530,10 +525,12 @@ protected:
         {
             int64_t processingDelay = rand()%50;
             
-            shared_ptr<webrtc::EncodedImage> encodedFrame = playoutBuffer_->acquireNextFrame();
+            FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
             
-            if (encodedFrame.get())
+            if (slot)
             {
+                shared_ptr<webrtc::EncodedImage> encodedFrame = slot->getFrame();
+                
                 // perform decoding
                 TRACE("process frame %d for %ld", playoutBuffer_->framePointer(), processingDelay*1000);
                 NdnRtcObjectTestHelper::checkFrames(encodedFrame_, encodedFrame.get());
@@ -547,7 +544,7 @@ protected:
                 DBG("couldn't get frame with number %d", playoutBuffer_->framePointer());
             }
             
-            playoutBuffer_->releaseAcquiredFrame();
+            playoutBuffer_->releaseAcquiredSlot();
             
             // sleep if needed
             if (playoutSleepIntervalUSec_-processingDelay*1000 > 0)
@@ -574,7 +571,7 @@ protected:
         playoutProcessed_ = 0;
         playoutSleepIntervalUSec_ = 1000000/frameRate_;
         
-        playoutBuffer_->init(buffer_);
+        playoutBuffer_->init(buffer_, frameRate_);
     }
 };
 
@@ -1101,208 +1098,6 @@ TEST_F(FrameBufferTester, TestEventTimeout)
     }
 }
 
-TEST_F(FrameBufferTester, TestFullTimeoutEvent)
-{
-    {
-        buffer_ = new FrameBuffer();
-        
-        unsigned int buffSize = 5;
-        unsigned int slotSize = 8000;
-        unsigned int segmentsNum = 8;
-        
-        buffer_->init(buffSize, slotSize);
-        
-        webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
-        
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeTimeout;
-        
-        
-        for (int i = 0; i < buffSize; i++)
-            buffer_->bookSlot(i);
-        
-        unsigned int tid = 1;
-        waitingThread.Start(tid);
-        
-        for (int k = 0; k < FULL_TIMEOUT_CASE_THRESHOLD; k++)
-            for (int i = 0; i < buffSize; i++)
-                buffer_->notifySegmentTimeout(i, 0);
-
-        buffer_->notifySegmentTimeout(0, 0);
-        WAIT(500);
-        
-        EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
-        
-        unsigned int fno = (unsigned int)-1, sno = (unsigned int)-1;
-        
-        EXPECT_EQ(fno, receivedEvent_.frameNo_);
-        EXPECT_EQ(sno, receivedEvent_.segmentNo_);
-        
-        EXPECT_LE(buffSize, buffer_->getTimeoutsNumber());
-
-        waitingThread.SetNotAlive();
-        buffer_->release();
-        waitingThread.Stop();
-        
-        delete buffer_;
-    }
-}
-
-TEST_F(FrameBufferTester, TestFullTimeoutEventAndFlush)
-{
-    {
-        buffer_ = new FrameBuffer();
-        
-        unsigned int buffSize = 5;
-        unsigned int slotSize = 8000;
-        unsigned int segmentsNum = 8;
-        
-        buffer_->init(buffSize, slotSize);
-        
-        webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
-        
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeTimeout|FrameBuffer::Event::EventTypeFreeSlot;
-        
-        int mask = FrameBuffer::Event::AllEventsMask;
-        
-        for (int i = 0; i < buffSize; i++)
-        {
-            // fetch first free events from buffer events queue
-            FrameBuffer::Event ev = buffer_->waitForEvents(mask);
-            EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot, ev.type_);
-            EXPECT_EQ(FrameBuffer::CallResultNew, buffer_->bookSlot(i));
-        }
-        
-        unsigned int tid = 1;
-        waitingThread.Start(tid);
-        
-        for (int k = 0; k < FULL_TIMEOUT_CASE_THRESHOLD; k++)
-            for (int i = 0; i < buffSize; i++)
-                buffer_->notifySegmentTimeout(i, 0);
-        
-        buffer_->notifySegmentTimeout(0, 0);
-        WAIT(500);
-        
-        {
-            EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
-            
-            unsigned int fno = (unsigned int)-1, sno = (unsigned int)-1;
-            
-            EXPECT_EQ(fno, receivedEvent_.frameNo_);
-            EXPECT_EQ(sno, receivedEvent_.segmentNo_);
-            
-            EXPECT_LE(buffSize, buffer_->getTimeoutsNumber());
-        }
-        
-        flushFlags();
-        // now flush buffer and check
-        buffer_->flush();
-        WAIT(500);
-        EXPECT_EQ(buffSize, buffer_->getStat(FrameBuffer::Slot::StateFree));
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot, receivedEvent_.type_);
-        
-        waitingThread.SetNotAlive();
-        buffer_->release();
-        waitingThread.Stop();
-        
-        delete buffer_;
-    }
-}
-
-TEST_F(FrameBufferTester, TestRecoveryAfterFullTimeout)
-{
-    {
-        buffer_ = new FrameBuffer();
-        
-        unsigned int buffSize = 5;
-        unsigned int slotSize = 8000;
-        unsigned int segmentsNum = 8;
-        
-        buffer_->init(buffSize, slotSize);
-        
-        webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
-        
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeTimeout|FrameBuffer::Event::EventTypeFirstSegment;
-        
-        for (int i = 0; i < buffSize; i++)
-            buffer_->bookSlot(i);
-        
-        unsigned int tid = 1;
-        waitingThread.Start(tid);
-        
-        for (int k = 0; k < FULL_TIMEOUT_CASE_THRESHOLD; k++)
-            for (int i = 0; i < buffSize; i++)
-                buffer_->notifySegmentTimeout(i, 0);
-        
-        buffer_->notifySegmentTimeout(0, 0);
-        WAIT(500);
-        
-        {
-            EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
-            
-            unsigned int fno = (unsigned int)-1, sno = (unsigned int)-1;
-            
-            EXPECT_EQ(fno, receivedEvent_.frameNo_);
-            EXPECT_EQ(sno, receivedEvent_.segmentNo_);
-            
-            EXPECT_EQ(buffSize, buffer_->getTimeoutsNumber());
-        }
-        
-        {// now any new timeout should generate full timeout event:
-            buffer_->notifySegmentTimeout(buffSize/2, 0);
-            WAIT(500);
-            
-            EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
-            
-            unsigned int fno = (unsigned int)-1, sno = (unsigned int)-1;
-            
-            EXPECT_EQ(fno, receivedEvent_.frameNo_);
-            EXPECT_EQ(sno, receivedEvent_.segmentNo_);
-        }
-        
-        {// now any new segment should recover frame buffer
-            unsigned char segment[100];
-            unsigned int frameNo = 3, segmentNo = 3;
-            
-            buffer_->markSlotAssembling(frameNo, 2, 100);
-            EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
-            
-            WAIT(500);
-            EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEvent_.type_);
-            EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
-            EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
-            
-            // and now express timeouts again
-            for (int k = 0; k < FULL_TIMEOUT_CASE_THRESHOLD; k++)
-                for (int i = 0; i < buffSize; i++)
-                {
-                    buffer_->notifySegmentTimeout(i, 0);
-                    WAIT(100);
-                    EXPECT_EQ(i, receivedEvent_.frameNo_);
-                    EXPECT_EQ(0, receivedEvent_.segmentNo_);
-                }
-            buffer_->notifySegmentTimeout(0, 0);
-            WAIT(200);
-        }
-        
-        {
-            EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
-            
-            unsigned int fno = (unsigned int)-1, sno = (unsigned int)-1;
-            
-            EXPECT_EQ(fno, receivedEvent_.frameNo_);
-            EXPECT_EQ(sno, receivedEvent_.segmentNo_);
-            
-            EXPECT_EQ(buffSize, buffer_->getTimeoutsNumber());
-        }
-        
-        waitingThread.SetNotAlive();
-        buffer_->release();
-        waitingThread.Stop();
-        
-        delete buffer_;
-    }
-}
-
 TEST_F(FrameBufferTester, TestRandomBufferEvents)
 {
     {
@@ -1502,11 +1297,11 @@ TEST_F(FrameBufferTester, TestFull)
 
 TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
 {
-    // there are going to be 3 threads:
+    // there are 3 threads:
     // - booking thread (books slots in a buffer, listens to events: FirstSegment, FreeSlot, Timeout)
     // - assembling thread - appends segments (current main thread)
     // - frame playout thread (creates playout buffer based on current frame buffer and is invoked every 1/fps second)
-    // buffer will be smaller than the ammount of frames needed to be delivered
+    // buffer is smaller than the amount of frames needed to be delivered
     
     NdnFrameData frameData(*encodedFrame_);
     
@@ -1546,9 +1341,6 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
     
     unsigned int tid = 1;
     bookingThread.Start(tid);
-    tid++;
-    //    providerThread.Start(tid);
-    tid++;
     playoutThread.Start(tid);
     
     // append data unless we have interests to reply
@@ -1575,6 +1367,8 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
         }
         bookingCs_->Leave();
         
+        TRACE("");
+        
         // append segment for each interest in random order
         if (gotPendingInterests && frameNo < framesNumber)
         {
@@ -1589,9 +1383,10 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
                 //                TRACE("appending frameno %d segno %d", frameNo, segmentNo);
                 // check if it's a frist segment
                 if (buffer_->getState(frameNo) == FrameBuffer::Slot::StateNew)
-                {
-                    buffer_->markSlotAssembling(frameNo, totalSegmentNumber, segmentSize);
-                }
+                    buffer_->markSlotAssembling(frameNo,
+                                                totalSegmentNumber,
+                                                segmentSize);
+                
                 buffer_->appendSegment(frameNo, segmentNo, currentSegmentSize, frameSegments[segmentNo]);
                 
                 if (remainingSegments[frameNo].size() == 0)
@@ -1653,8 +1448,8 @@ TEST_F(PlayoutBufferTester, Init)
     
     frameBuffer->init(1, 8000);
     
-    EXPECT_EQ(0, playoutBuffer->init(frameBuffer));
-    
+    EXPECT_EQ(0, playoutBuffer->init(frameBuffer, 30));
+    WAIT(100);
     frameBuffer->release();
     WAIT(100);
     
@@ -1669,26 +1464,31 @@ TEST_F(PlayoutBufferTester, AcquireFrame)
     unsigned int frameNo = 1;
     
     frameBuffer->init(1, 8000);
-    playoutBuffer->init(frameBuffer);
+    playoutBuffer->init(frameBuffer, 30);
     
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
     ASSERT_NE((webrtc::EncodedImage*)NULL, frame);
     
     NdnFrameData frameData(*frame);
     
-    shared_ptr<webrtc::EncodedImage> assembledFrame = playoutBuffer->acquireNextFrame();
-    
-    EXPECT_TRUE(assembledFrame.get() == nullptr);
+    FrameBuffer::Slot *slot = playoutBuffer->acquireNextSlot();
+    ASSERT_EQ(nullptr, slot);
     
     // append new frame
     frameBuffer->bookSlot(frameNo);
     frameBuffer->markSlotAssembling(frameNo, 1, frameData.getLength());
     frameBuffer->appendSegment(frameNo, 0, frameData.getLength(), frameData.getData());
     
+    shared_ptr<webrtc::EncodedImage> assembledFrame(nullptr);
+    
     unsigned int timeout = 1000;
-    while (assembledFrame.get() == nullptr && timeout > 0)
+    while (slot == nullptr && timeout > 0)
     {
-        assembledFrame = playoutBuffer->acquireNextFrame();
+        slot = playoutBuffer->acquireNextSlot();
+        
+        if (slot)
+            assembledFrame = slot->getFrame();
+        
         WAIT(10);
         timeout -= 10;
     }

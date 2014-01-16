@@ -28,7 +28,7 @@ public:
     {
         setupWebRTCLogging();
         
-        params_ = DefaultParams;
+        params_ = DefaultParamsAudio;
         params_.streamName = "audio0";
         params_.streamThread = "pcmu2";
         params_.freshness = 5;
@@ -49,7 +49,7 @@ public:
         
         VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(voiceEngine_);
         
-        voe_proc->SetEcStatus(true);
+        voe_proc->SetEcStatus(true, kEcConference);
         voe_proc->Release();
         
         voe_base_ = VoEBase::GetInterface(voiceEngine_);
@@ -100,7 +100,8 @@ public:
     int SendPacket(int channel, const void *data, int len)
     {
         string rtpPrefix;
-        NdnAudioData::AudioPacket p = {false, (unsigned int)len, (unsigned char*)data};
+        NdnAudioData::AudioPacket p = {false, NdnRtcUtils::millisecondTimestamp(),
+            (unsigned int)len, (unsigned char*)data};
         NdnAudioData adata(p);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
@@ -117,7 +118,8 @@ public:
     int SendRTCPPacket(int channel, const void *data, int len)
     {
         string rtcpPrefix;
-        NdnAudioData::AudioPacket p = {true, (unsigned int)len, (unsigned char*)data};
+        NdnAudioData::AudioPacket p = {true, NdnRtcUtils::millisecondTimestamp(),
+            (unsigned int)len, (unsigned char*)data};
         NdnAudioData adata(p);
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
@@ -236,7 +238,7 @@ TEST_F(NdnAudioChannelTester, TestSendChannel)
         EXPECT_EQ(RESULT_OK,sendChannel.stop());
     }
     
-    // make some oberhead for waiting data to be fetched
+    // make some overhead for waiting data to be fetched
     int fetchTime = publishTime;
     
     EXPECT_TRUE_WAIT(((rtpDataFetched_ + rtcpDataFetched_) == nPackets),
@@ -277,10 +279,10 @@ public:
         nRTCPReceived_++;
     }
 };
-#if 0
+
 TEST_F(NdnAudioChannelTester, TestReceiveChannel)
 {
-    params_.bufferSize = 5;
+    params_.bufferSize = 33;
     params_.slotSize = 1500;
     
     AudioReceiverChannelTester receiverTester(voiceEngine_);
@@ -299,9 +301,14 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     EXPECT_EQ(0, voe_base_->StartSend(channel));
     
     uint64_t overhead = 200;
-    unsigned int publishPacketsNum = 500;
+    unsigned int publishPacketsNum = 700;
+    // we are expecting to receive less than we've published
+    unsigned int expectedFetchedPacketsNum = 0.7*publishPacketsNum;
+    
     EXPECT_TRUE_WAIT((nRTPSent_+nRTCPSent_) >= publishPacketsNum,
                      publishPacketsNum*20+overhead);
+    
+    cout << "Published RTP: " << nRTPSent_ << ", RTCP: " << nRTCPSent_ << endl;
     
     sendCS_->Enter();
     { // stop publishing
@@ -316,8 +323,10 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
         voe_network->Release();
     }
     sendCS_->Leave();
-
-    EXPECT_TRUE_WAIT((receiverTester.nRTPReceived_+receiverTester.nRTCPReceived_) >= publishPacketsNum, publishPacketsNum*20);
+    
+    EXPECT_TRUE_WAIT((receiverTester.nRTPReceived_+receiverTester.nRTCPReceived_) >= expectedFetchedPacketsNum, publishPacketsNum*20+overhead);
+    
+    cout << "Fetched RTP: " << receiverTester.nRTPReceived_ << ", RTCP: " << receiverTester.nRTCPReceived_ << endl;
     
     { // stop fetching
         EXPECT_EQ(RESULT_OK, receiverTester.stop());
@@ -326,7 +335,6 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     }
     WAIT(params_.freshness*1000);
 }
-#endif
 
 TEST_F(NdnAudioChannelTester, TestSendReceive)
 {

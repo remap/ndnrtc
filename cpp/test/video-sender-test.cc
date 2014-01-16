@@ -18,7 +18,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(VideoSenderParamsTest, CheckDefaults)
 {
     ParamsStruct p = DefaultParams;
@@ -91,7 +91,7 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
         EXPECT_STREQ(prefix, frprefix.c_str());
     }
 }
-#endif
+
 class VideoSenderTester : public NdnRtcObjectTestHelper
 {
 public:
@@ -244,7 +244,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
 {
     loadFrame();
     
-    NdnFrameData::FrameMetadata metadata = {0.}, resMetadata = {0.};
+    PacketData::PacketMetadata metadata = {0.}, resMetadata = {0.};
     metadata.packetRate_ = 23.6;
     
     NdnFrameData data(*sampleFrame_, metadata);
@@ -262,7 +262,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
     EXPECT_EQ(metadata.packetRate_, resMetadata.packetRate_);
 }
-#if 0
+
 TEST_F(VideoSenderTester, TestInit)
 {
     EXPECT_EQ(0,videoSender_->init(ndnTransport_));
@@ -489,4 +489,3 @@ TEST_F(VideoSenderTester, TestSendWithLibException)
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(true, obtainedError_);
 }
-#endif

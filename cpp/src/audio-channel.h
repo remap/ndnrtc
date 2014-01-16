@@ -17,6 +17,8 @@
 #include "audio-receiver.h"
 #include "audio-sender.h"
 
+//#define AUDIO_OFF // disable audio channel
+
 namespace ndnrtc {
     class NdnAudioChannel : public NdnRtcObject,
     public webrtc::Transport

@@ -67,7 +67,8 @@ int NdnAudioSender::init(const shared_ptr<ndn::Transport> transport)
 
 int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
-  NdnAudioData::AudioPacket packet {false, len, data};
+    NdnAudioData::AudioPacket packet {false, NdnRtcUtils::millisecondTimestamp(),
+        len, data};
   NdnAudioData adata(packet);
   
   publishPacket(adata.getLength(), adata.getData());
@@ -78,14 +79,12 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 
 int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-  NdnAudioData::AudioPacket packet {true, len, data};
+  NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
+      len, data};
   NdnAudioData adata(packet);
   
   publishPacket(adata.getLength(), adata.getData());
   packetNo_++;
-  
-  //    publishPacket(len, data, rtcpPacketPrefix_, rtcpPacketNo_);
-  //    rtcpPacketNo_++;
   
   return 0;
 }

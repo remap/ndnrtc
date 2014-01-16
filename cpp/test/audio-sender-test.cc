@@ -66,8 +66,9 @@ TEST(AudioData, TestCreateDelete)
         for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
         
         bool isRTCP = false;
+        int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
     
-        NdnAudioData::AudioPacket p = {isRTCP, dataSz, dummyData};
+        NdnAudioData::AudioPacket p = {isRTCP, timestamp_exp, dataSz, dummyData};
         ASSERT_NO_THROW(
                         NdnAudioData data(p);
                         );
@@ -89,8 +90,10 @@ TEST(AudioData, TestPackUnpack)
         for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
         
         bool isRTCP_exp = false;
+        int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, dataSz, dummyData};
+        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+            dataSz, dummyData};
         NdnAudioData data(p);
         
         NdnAudioData::AudioPacket resP;
@@ -98,6 +101,7 @@ TEST(AudioData, TestPackUnpack)
                                                        data.getData(), resP));
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
+        EXPECT_EQ(timestamp_exp, resP.timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         
@@ -112,8 +116,10 @@ TEST(AudioData, TestPackUnpack)
         for (int i = 0; i < dataSz; i++) dummyData[i] = (char)i;
         
         bool isRTCP_exp = true;
+        int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, dataSz, dummyData};
+        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+            dataSz, dummyData};
         NdnAudioData data(p);
 
         NdnAudioData::AudioPacket resP;
@@ -121,6 +127,7 @@ TEST(AudioData, TestPackUnpack)
                                                        data.getData(), resP));
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
+        EXPECT_EQ(timestamp_exp, resP.timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         

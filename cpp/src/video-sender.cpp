@@ -30,7 +30,7 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
         encodedImage._frameType == kKeyFrame);
   
   // 0. copy frame into transport data object
-  NdnFrameData::FrameMetadata metadata = {getCurrentPacketRate()};
+  PacketData::PacketMetadata metadata = {getCurrentPacketRate()};
   NdnFrameData frameData(encodedImage, metadata);
   
   if (RESULT_GOOD(publishPacket(frameData.getLength(),

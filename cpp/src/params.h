@@ -196,9 +196,9 @@ namespace ndnrtc
         "ndn/ucla.edu/apps",     // ndn hub
         1000,   // segment size for media frame
         5,      // data freshness (seconds) value
-        30,     // producer rate (currently equal to playback rate)
+        50,     // producer rate (currently equal to playback rate)
         
-        30,     // playback rate of local consumer
+        50,     // playback rate of local consumer
         2,      // interest timeout
         20,     // incoming framebuffer size
         1000,  // frame buffer slot size

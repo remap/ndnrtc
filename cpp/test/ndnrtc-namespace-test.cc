@@ -9,6 +9,8 @@
 #include "test-common.h"
 #include "ndnrtc-namespace.h"
 
+#define NDN_COMMON_HUB "ndn/edu/ucla"
+
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
@@ -16,7 +18,7 @@ using namespace ndnrtc;
 TEST(NdnRtcNamespace, TestBuildPathComponents)
 {
     std::string producerId = "producer1";
-    std::string hub = "ndn.ucla.edu";
+    std::string hub = NDN_COMMON_HUB;
     std::string stream = "video0";
     
     {
@@ -51,14 +53,16 @@ TEST(NdnRtcNamespace, TestBuildPathComponents)
 TEST(NdnRtcNamespace, TestUserPrefix)
 {
     std::string producerId = "producer1";
-    std::string hub = "ndn.ucla.edu";
+    std::string hub = NDN_COMMON_HUB;
     std::string stream = "video0";
+    
     {
         shared_ptr<std::string> path = NdnRtcNamespace::getProducerPrefix(hub, producerId);
         char str[256];
         
         memset(str, 0, 256);
-        sprintf(str, "/%s/%s/%s/%s",hub.c_str(),
+        sprintf(str, "/%s/%s/%s/%s",
+                hub.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
                 producerId.c_str());
@@ -70,7 +74,7 @@ TEST(NdnRtcNamespace, TestUserPrefix)
 TEST(NdnRtcNamespace, TestStreamPath)
 {
     std::string producerId = "producer1";
-    std::string hub = "ndn.ucla.edu";
+    std::string hub = NDN_COMMON_HUB;
     std::string stream = "video0";
     
     {
@@ -92,7 +96,7 @@ TEST(NdnRtcNamespace, TestStreamPath)
 TEST(NdnRtcNamespace, TestKeyPath)
 {
     std::string producerId = "producer1";
-    std::string hub = "ndn.ucla.edu";
+    std::string hub = NDN_COMMON_HUB;
     std::string stream = "video0";
     
     {
@@ -116,7 +120,7 @@ TEST(NdnRtcNamespace, TestKeyPath)
 TEST(NdnRtcNamespace, TestCertPath)
 {
     std::string producerId = "producer1";
-    std::string hub = "ndn.ucla.edu";
+    std::string hub = NDN_COMMON_HUB;
     std::string stream = "video0";
     
     {
@@ -134,5 +138,45 @@ TEST(NdnRtcNamespace, TestCertPath)
                 NdnRtcNamespace::NdnRtcNamespaceCertificateComponent.c_str());
         TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
+    }
+}
+
+TEST(NdnRtcNamespace, TestNumberComponent)
+{
+    {
+        char *number = "10";
+        long unsigned int num = atoi(number);
+        
+        shared_ptr<const std::vector<unsigned char>> comp = NdnRtcNamespace::getNumberComponent(num);
+        
+        for (int i = 0; i < strlen(number); i++)
+            EXPECT_EQ(number[i], (*comp)[i]);
+    }
+    {
+        char *number = "0";
+        long unsigned int num = atoi(number);
+        
+        shared_ptr<const std::vector<unsigned char>> comp = NdnRtcNamespace::getNumberComponent(num);
+        
+        for (int i = 0; i < strlen(number); i++)
+            EXPECT_EQ(number[i], (*comp)[i]);
+    }
+    {
+        char *number = "1000000";
+        long unsigned int num = atoi(number);
+        
+        shared_ptr<const std::vector<unsigned char>> comp = NdnRtcNamespace::getNumberComponent(num);
+        
+        for (int i = 0; i < strlen(number); i++)
+            EXPECT_EQ(number[i], (*comp)[i]);
+    }
+    { // check max
+        char *number = "18446744073709551615";
+        long unsigned int num = (unsigned long)-1;
+        
+        shared_ptr<const std::vector<unsigned char>> comp = NdnRtcNamespace::getNumberComponent(num);
+        
+        for (int i = 0; i < strlen(number); i++)
+            EXPECT_EQ(number[i], (*comp)[i]);
     }
 }
