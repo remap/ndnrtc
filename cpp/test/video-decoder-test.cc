@@ -115,6 +115,7 @@ TEST_F(NdnVideoDecoderTest, CreateDelete)
                     delete decoder;
                     );
 }
+
 TEST_F(NdnVideoDecoderTest, TestInit)
 {
     NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);

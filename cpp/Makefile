@@ -172,7 +172,8 @@ ALL_LDFLAGS = $(LDFLAGS) $(LDLIBFLAGS) $(GECKO_LFDFLAGS)
 ALL_INCLUDES = $(WEBRTC_INCLUDES) $(GECKO_CONFIG_INCLUDE) $(GECKO_INCLUDES) $(LIB_INCLUDES)
 
 .PHONY: build addon all
-    
+.PRECIOUS: $(OBJ_PATH)/%.o $(OBJ_PATH)/%-test.o
+
 all: addon
 
 build: $(MODULE).dylib
@@ -273,7 +274,7 @@ GT_GECKO_LDFLAGS =  -L$(GECKO_SDK_PATH)/bin \
 		 -L$(GECKO_SDK_PATH)/lib \
 		 -lxpcomglue_s	\
 		 $(NULL)
-GT_LDFLAGS += -lpthread -Wl, -undefined suppress -flat_namespace# $(GT_GECKO_LDFLAGS)
+GT_LDFLAGS += -lpthread -Wl, -flat_namespace -undefined suppress # $(GT_GECKO_LDFLAGS)
 
 TESTS = $(patsubst $(TEST_PATH)/%-test.cc,%-test,$(wildcard $(TEST_PATH)/*-test.cc))
 CPPSRCS_TEST = $(CPPSRCS_SA)
@@ -294,49 +295,41 @@ testrun : libndnrtc testall ${TESTS}
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
 $(OBJ_PATH)/libgtest-all.a : $(GTEST_SRCS_)
-	$(GT_CXX) -I$(GTEST_DIR)/include -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
+	$(GT_CXX) -I$(GTEST_DIR)/include -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) $(GT_LDFLAGS) -c \
             $(GTEST_DIR)/src/gtest-all.cc -static -o $@
             
 $(OBJ_PATH)/libtest-main.a : $(GTEST_SRCS_)
-	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) -c \
+	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) $(GT_CXXFLAGS) $(GT_LDFLAGS) -c \
             $(TEST_PATH)/test-main.cc -static -o $@
             
 $(OBJ_PATH)/libtest-main-mac.a : $(GTEST_SRCS_) $(TEST_PATH)/test-main-mac.mm
-	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) -c \
+	$(GT_CXX) $(GT_CPPFLAGS) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) $(OBJCFLAGS) $(GT_LDFLAGS) -c \
             $(TEST_PATH)/test-main-mac.mm -static -o $@
 
 $(OBJ_PATH)/test-common.o : $(GTEST_SRCS_)
-	$(GT_CXX) $(GT_CPPFLAGS) $(OTHER_CFLAGS) -Wno-unused-parameter -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) -c \
+	$(GT_CXX) $(GT_CPPFLAGS) $(OTHER_CFLAGS) $(GT_LDFLAGS) -Wno-unused-parameter -I$(GTEST_DIR)/include -I$(GTEST_DIR) -I$(SRC_PATH) $(LIB_INCLUDES) $(GT_CXXFLAGS) -c \
 		$(TEST_PATH)/test-common.mm -o $@
             
 $(OBJ_PATH)/%-test.o : $(TEST_PATH)/%-test.cc
-	$(GT_CXX) --std=c++0x $(CPPFLAGS) $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $@
+	$(GT_CXX) --std=c++0x $(CPPFLAGS) $(OTHER_CFLAGS) $(GT_LDFLAGS) -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) -c $< -o $@
 
 %-test.om : $(TEST_PATH)/%-test.mm
-	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@
+	$(GT_CXX) --std=c++0x $(OTHER_CFLAGS) $(GT_LDFLAGS) -Wno-return-type -I$(GTEST_DIR)/include -I$(SRC_PATH) $(LIB_INCLUDES) $(OBJCFLAGS) -c $< -o $(OBJ_PATH)/$@
 
 ###
-# TESTS have automatic targets
+# TESTS have automatic targets starting with build-...
 ###
 TESTOBJ = $(addprefix $(OBJ_PATH)/,$(filter-out nsthread-tasks.o ndNrtcModule.o ndNrtcObject.o ndnrtc-library.o ndnworker.o,$(CPPSRCS:%.cpp=%.o)))
-test1: 
-	echo $(TESTOBJ)
 
 build-%: undef $(OBJ_PATH)/%.o $(TESTOBJ) $(addprefix $(OBJ_PATH)/,test-common.o cocoa-renderer.om libgtest-all.a libtest-main-mac.a)
 	mkdir -p $(BIN_PATH)
-	$(GT_CXX) -v --std=c++0x \
-	$(OBJ_PATH)/$(patsubst build-%,%.o,$@) \
+	$(GT_CXX) -g --std=c++0x \
 	$(TESTOBJ) \
+	$(OBJ_PATH)/$(patsubst build-%,%.o,$@) \
 	$(addprefix $(OBJ_PATH)/,test-common.o cocoa-renderer.om) \
-	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
+	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) $(GT_LDFLAGS)\
 	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
 
-#build-audio-receiver-test: undef $(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o camera-capturer.o) $(OBJ_PATH)/libgtest-all.a  $(OBJ_PATH)/libtest-main-mac.a
-#	$(GT_CXX) --std=c++0x \
-#	$(addprefix $(OBJ_PATH)/,audio-receiver-test.o audio-receiver.o audio-sender.o media-sender.o media-receiver.o ndnrtc-object.o ndnrtc-utils.o frame-buffer.o playout-buffer.o ndnrtc-namespace.o simple-log.o test-common.o camera-capturer.o) \
-#	-L$(OBJ_PATH) -lgtest-all -ltest-main-mac $(LDLIBFLAGS) $(OBJCFLAGS) \
-#	-o $(BIN_PATH)/$(patsubst build-%,%,$@)
- 	
 clean: libclean
 	rm -Rf $(wildcard $(BIN_PATH))
 	rm -Rf $(wildcard $(OBJ_PATH))

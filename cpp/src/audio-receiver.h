@@ -41,21 +41,9 @@ namespace ndnrtc
     private:
         IAudioPacketConsumer *packetConsumer_;
         
-        // thread for collecting assembled
-        bool isCollecting_;
-        webrtc::ThreadWrapper &collectingThread_;
-        
-        // static routine for thread
-        static bool collectingThreadRoutine(void *obj) {
-            return ((NdnAudioReceiver*)obj)->collectAudioPackets();
-        }
-        
-        bool collectAudioPackets();
-        
         // overriden
+        void playbackPacket();        
         bool isLate(unsigned int frameNo);
-        
-        unsigned int getNextKeyFrameNo(unsigned int frameNo);
     };
 }
 

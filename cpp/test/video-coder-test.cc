@@ -26,8 +26,8 @@ TEST(VideoCoderParamsTest, CheckDefaults)
     ParamsStruct p = DefaultParams;
     
     EXPECT_EQ(30, p.codecFrameRate);
-    EXPECT_EQ(4000, p.maxBitrate);
-    EXPECT_EQ(300, p.startBitrate);
+    EXPECT_EQ(1000, p.maxBitrate);
+    EXPECT_EQ(100, p.startBitrate);
     EXPECT_EQ(640, p.encodeWidth);
     EXPECT_EQ(480, p.encodeHeight);
 }
@@ -104,12 +104,13 @@ protected:
     }
     
 };
-#if 0
+
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
     delete vc;
 }
+
 TEST_F(NdnVideoCoderTest, TestInit)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
@@ -120,6 +121,7 @@ TEST_F(NdnVideoCoderTest, TestInit)
     
     delete vc;
 }
+
 TEST_F(NdnVideoCoderTest, TestEncode)
 {
     loadFrame();
@@ -199,9 +201,8 @@ TEST(TestCodec, TestEncodeSampleFrame)
     WAIT(1000.);
 
 }
-#endif
 
-TEST_F(NdnVideoCoderTest, TestEncode)
+TEST_F(NdnVideoCoderTest, TestEncodeSequence)
 {
     FrameReader fr("resources/sample_futurama.yuv");
     
@@ -218,7 +219,6 @@ TEST_F(NdnVideoCoderTest, TestEncode)
     
     while (fr.readFrame(frame))
     {
-        TRACE("*******");
         nFrames++;
         obtainedFrame_ = false;
         vc->onDeliverFrame(frame);

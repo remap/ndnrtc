@@ -168,10 +168,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             100,    // render height
             
             15,     // codec framerate
+            60,     // gop
             400,    // codec start bitrate
             2000,   // codec max bitrate
             320,    // codec encoding width
             240,    // codec encoding height
+            0,      // drop frames
             
             "borges.metwi.ucla.edu",    // network ndnd remote host
             9695,           // default ndnd port number
@@ -203,10 +205,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0,    // render height
             
             0,     // codec framerate
+            0,      // gop
             0,    // codec start bitrate
             0,   // codec max bitrate
             0,    // codec encoding width
             0,    // codec encoding height
+            0,      // drop frames
             
             "ndn",    // network ndnd remote host
             0,           // default ndnd port number
@@ -252,10 +256,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             100,    // render height
             
             15,     // codec framerate
+            30,      // gop
             400,    // codec start bitrate
             2000,   // codec max bitrate
             320,    // codec encoding width
             240,    // codec encoding height
+            0,      // drop frames
             
             "ndn",    // network ndnd remote host
             9695,           // default ndnd port number
@@ -287,10 +293,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0,    // render height
             
             0,     // codec framerate
+            0,      // gop
             0,    // codec start bitrate
             0,   // codec max bitrate
             0,    // codec encoding width
             0,    // codec encoding height
+            0,      // drop rames
             
             "ndn",    // network ndnd remote host
             0,           // default ndnd port number
@@ -326,10 +334,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             100,    // render height
             
             15,     // codec framerate
+            0,      // gop
             400,    // codec start bitrate
             2000,   // codec max bitrate
             320,    // codec encoding width
             240,    // codec encoding height
+            0,      // drop frames
             
             "",    // network ndnd remote host
             9695,           // default ndnd port number
@@ -361,10 +371,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0,    // render height
             
             0,     // codec framerate
+            0,      // gop
             0,    // codec start bitrate
             0,   // codec max bitrate
             0,    // codec encoding width
             0,    // codec encoding height
+            0,      // drop frames
             
             "",    // network ndnd remote host
             0,           // default ndnd port number
@@ -426,7 +438,7 @@ TEST_F(NdnRtcLibraryTester, TestEmptyUsername)
     
     receivedState_ = "";
     
-    EXPECT_EQ(RESULT_ERR, library_->joinConference(""));
+    EXPECT_EQ(RESULT_ERR, library_->startFetching(""));
     EXPECT_STREQ("error", receivedState_.c_str());
 }
 

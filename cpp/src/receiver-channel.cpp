@@ -65,7 +65,9 @@ int NdnReceiverChannel::init()
       notifyError(RESULT_WARN, "can't initialize audio receive channel");
     
 #warning FOR TESTING ONLY! REMOVE THIS IN RELEASE VERSION!
+#ifdef AUDIO_OFF
     audioInitialized_ = false;
+#endif
   }
   
   isInitialized_ = audioInitialized_||videoInitialized_;

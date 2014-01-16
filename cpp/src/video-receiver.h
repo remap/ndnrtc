@@ -18,15 +18,13 @@
 
 namespace ndnrtc
 {
-    class NdnVideoReceiver : public NdnMediaReceiver,
-    public IPlayoutBufferCallback {
+    class NdnVideoReceiver :    public NdnMediaReceiver
+    {
     public:
         NdnVideoReceiver(const ParamsStruct &params);
         ~NdnVideoReceiver();
         
-        int init(shared_ptr<Face> face);
         int startFetching();
-        int stopFetching();
         void setFrameConsumer(IEncodedFrameConsumer *consumer) {
             frameConsumer_ = consumer;
         }
@@ -37,37 +35,13 @@ namespace ndnrtc
             return frameBuffer_.getStat(state);
         }
         
-        // IPlayoutBufferCallback interface
-        void onFrameAddedToJitter(FrameBuffer::Slot *slot);
-        void onBufferStateChanged(PlayoutBuffer::State newState);
-        void onMissedFrame(unsigned int frameNo);
-        void onPlayheadMoved(unsigned int nextPlaybackFrame);
-        void onJitterBufferUnderrun();
-        
     private:
-        uint64_t playoutLastUpdate_ = 0;
-        double publisherRate_ = 0;
-        unsigned int emptyJitterCounter_ = 0;
-        
         IEncodedFrameConsumer *frameConsumer_;
-        webrtc::ThreadWrapper &playoutThread_;
-        VideoJitterTiming jitterTiming_;
-        
-        // static routines for threads
-        static bool playoutThreadRoutine(void *obj) {
-            return ((NdnVideoReceiver*)obj)->processPlayout();
-        }
-        
-        // thread main functions (called iteratively by static routines)
-        bool processPlayout();
-        void playbackFrame();
-        
+    
         // overriden
+        void playbackPacket();
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
-        void rebuffer();
-        
-        unsigned int getNextKeyFrameNo(unsigned int frameNo) DEPRECATED;
     };
 }
 

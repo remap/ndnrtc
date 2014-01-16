@@ -51,7 +51,7 @@ public:
     uint64_t lastTimeStamp_ = 0;
     unsigned int nMisordered_ = 0;
 };
-#if 0
+
 TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
@@ -79,7 +79,7 @@ TEST(LoopbackTests, Transmission)
     delete sc;
     delete rc;
 }
-#endif
+#if 0
 TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
@@ -115,4 +115,4 @@ TEST(LoopbackTests, Transmission)
     
     delete rc;
 }
-
+#endif

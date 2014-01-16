@@ -71,7 +71,8 @@ public:
     int SendPacket(int channel, const void *data, int len)
     {
         string rtpPrefix;
-        NdnAudioData::AudioPacket p = {false, (unsigned int)len, (unsigned char*)data};
+        NdnAudioData::AudioPacket p = {false, NdnRtcUtils::millisecondTimestamp(),
+            (unsigned int)len, (unsigned char*)data};
         NdnAudioData adata(p);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
@@ -89,7 +90,8 @@ public:
     int SendRTCPPacket(int channel, const void *data, int len)
     {
         string rtcpPrefix;
-        NdnAudioData::AudioPacket p = {true, (unsigned int)len, (unsigned char*)data};
+        NdnAudioData::AudioPacket p = {true, NdnRtcUtils::millisecondTimestamp(),
+            (unsigned int)len, (unsigned char*)data};
         NdnAudioData adata(p);
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
@@ -166,12 +168,10 @@ protected:
 
 TEST_F(AudioReceiverTester, TestFetch)
 {
-    unsigned int publishPacketsNum = 100;
-    params_.freshness = (int)(((double)20*(double)publishPacketsNum*2)/1000.);
+    unsigned int expectedFetchedPacketsNum = 100;
+    unsigned int publishPacketsNum = 1.5*100;
     params_.streamName = "audio-receiver-test";
     params_.streamThread = "pcmu2";
-    params_.bufferSize = 5;
-    params_.slotSize = 50;
     
     NdnAudioReceiver receiver(params_);
     
@@ -198,9 +198,7 @@ TEST_F(AudioReceiverTester, TestFetch)
     EXPECT_EQ(0, voe_base_->StopReceive(channel_));
     EXPECT_EQ(0, voe_network_->DeRegisterExternalTransport(channel_));
 
-    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= nSent_+nRTCPSent_, 2*publishPacketsNum*20);
-    EXPECT_EQ(nRTCPSent_, nRTCPReceived_);
-    EXPECT_EQ(nSent_, nReceived_);
+    EXPECT_TRUE_WAIT(nReceived_+nRTCPReceived_ >= expectedFetchedPacketsNum, 2*publishPacketsNum*20);
     
     cout << "Published: RTP (" << nSent_ << "), RTCP (" << nRTCPSent_ << ") "<< endl;
     cout << "Fetched:   RTP (" << nReceived_ << "), RTCP (" << nRTCPReceived_ << ") "<< endl;

@@ -133,9 +133,9 @@ NdnRtcNamespace::buildPath(bool precede, const std::string *component1, ...)
 shared_ptr<const std::vector<unsigned char>>
 NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
 {
-  char value[10];
+  char value[256];
   
-  memset(&value[0],0,10);
+  memset(&value[0],0,256);
   sprintf(value, "%lu", frameNo);
   
   unsigned int valueLength = strlen(value);
