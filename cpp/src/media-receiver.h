@@ -58,6 +58,9 @@ namespace ndnrtc
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
         
+        // overriden from LoggerObject
+        void setLogger(NdnLogger *logger);
+        
         // IPlayoutBufferCallback interface
         void onFrameAddedToJitter(FrameBuffer::Slot *slot);
         void onBufferStateChanged(PlayoutBuffer::State newState);

@@ -169,7 +169,7 @@ TEST(TestCodec, TestEncodeSampleFrame)
     
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
     {
-        TRACE("can't get deafult params");
+        LOG_TRACE("can't get deafult params");
         strncpy(codec_.plName, "VP8", 31);
         codec_.maxFramerate = 30;
         codec_.startBitrate  = 300;
@@ -232,11 +232,11 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequence)
             delayedFrames++;
         }
         
-        TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
+        LOG_TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
     }
     
     EXPECT_EQ(nFrames, obtainedFramesCount_);
-    TRACE("lost time - %d ms, delay: %d", lostTime, delayedFrames);
+    LOG_TRACE("lost time - %d ms, delay: %d", lostTime, delayedFrames);
     
     delete vc;
 }

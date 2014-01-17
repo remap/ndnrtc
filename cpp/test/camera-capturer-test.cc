@@ -34,7 +34,7 @@ public:
         deliver_cs_->Enter();
         obtainedFramesCount_++;
         deliverFrame_.SwapFrame(&frame);
-        TRACE("captured frame %d %ld %dx%d", frame.timestamp(),
+        LOG_TRACE("captured frame %d %ld %dx%d", frame.timestamp(),
               frame.render_time_ms(), frame.width(), frame.height());
         deliver_cs_->Leave();
         
@@ -146,7 +146,7 @@ protected:
                 
                 int savedSize = sizeof(uint64_t)+8*sizeof(int)+size_y+size_u+size_v;
                 byteCounter_ += savedSize;
-                TRACE("saved frame %ld %dx%d (%d bytes. %d total)",
+                LOG_TRACE("saved frame %ld %dx%d (%d bytes. %d total)",
                       deliverFrame_.render_time_ms(),
                       deliverFrame_.width(), deliverFrame_.height(),
                       savedSize, byteCounter_);
@@ -198,7 +198,7 @@ public:
     {
         obtainedFrame_ = true;
         obtainedFramesCount_++;
-        TRACE("got frame %d %ld %dx%d", obtainedFramesCount_,
+        LOG_TRACE("got frame %d %ld %dx%d", obtainedFramesCount_,
               frame.render_time_ms(), frame.width(), frame.height());
     }
     
@@ -243,7 +243,7 @@ TEST_F(CameraCapturerTest, TestCapture)
     unsigned int sec = 3;
     
     EXPECT_TRUE_WAIT(obtainedFramesCount_ >= sec*cameraParams_.captureFramerate, 5000.);
-    TRACE("captured frames - %d", obtainedFramesCount_);
+    LOG_TRACE("captured frames - %d", obtainedFramesCount_);
     EXPECT_TRUE(obtainedFrame_);
     
     EXPECT_EQ(cc->stopCapture(),0);

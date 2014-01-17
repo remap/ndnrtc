@@ -44,7 +44,6 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
   // setup default params first
   if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
   {
-    TRACE("can't get deafult params");
     strncpy(codec.plName, "VP8", 31);
     codec.maxFramerate = 30;
     codec.startBitrate  = 300;
@@ -89,7 +88,8 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
 NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params), frameConsumer_(nullptr)
 {
   memset(&codec_, 0, sizeof(codec_));
-  encodeLogger_ = new NdnLogger("encoder.log", NdnLoggerDetailLevelDefault);
+  encodeLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
+                                "publish-venc-%s.log", params.producerId);
 }
 //********************************************************************************
 #pragma mark - public

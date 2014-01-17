@@ -132,7 +132,7 @@ public:
                     const shared_ptr<const Interest>& interest,
                     ndn::Transport& transport)
     {
-        INFO("got interest: %s", interest->getName().toUri().c_str());
+        LOG_INFO("got interest: %s", interest->getName().toUri().c_str());
     }
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)

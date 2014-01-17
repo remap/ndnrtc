@@ -31,7 +31,7 @@ namespace ndnrtc
     
     class IPlayoutBufferCallback;
     
-    class PlayoutBuffer
+    class PlayoutBuffer : public LoggerObject
     {
     public:
         enum State {
@@ -155,7 +155,7 @@ namespace ndnrtc
      * (extracting frame from the jitter buffer, rendering frame on the canvas,
      * etc.).
      */
-    class JitterTiming
+    class JitterTiming : public LoggerObject
     {
     public:
         JitterTiming();

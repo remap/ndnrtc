@@ -40,9 +40,6 @@ namespace ndnrtc
         bool isTransmittingVideo() { return isTransmitting_ && videoInitialized_; }
         
     protected:
-#warning remove in release
-        NdnLogger *channelLogger_;
-        
         ParamsStruct audioParams_;
         bool videoInitialized_ = false, audioInitialized_ = false;
         bool videoTransmitting_ = false, audioTransmitting_ = false;

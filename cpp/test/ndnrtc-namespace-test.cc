@@ -112,7 +112,7 @@ TEST(NdnRtcNamespace, TestKeyPath)
                 producerId.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str());
-        TRACE("%s",keyPrefix->toUri().c_str());
+        LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
 }
@@ -136,7 +136,7 @@ TEST(NdnRtcNamespace, TestCertPath)
                 NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str(),
                 NdnRtcNamespace::NdnRtcNamespaceCertificateComponent.c_str());
-        TRACE("%s",keyPrefix->toUri().c_str());
+        LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
 }

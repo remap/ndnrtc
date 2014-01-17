@@ -102,7 +102,7 @@ void UnitTestHelperNdnNetwork::onData(const shared_ptr<const Interest>& interest
 void UnitTestHelperNdnNetwork::
 onTimeout(const shared_ptr<const Interest>& interest)
 {
-    TRACE("got timeout for interest: %s", interest->getName().toUri().c_str());
+    LOG_TRACE("got timeout for interest: %s", interest->getName().toUri().c_str());
     nReceivedTimeout_++;
 }
 

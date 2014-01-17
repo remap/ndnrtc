@@ -413,7 +413,7 @@ protected:
         
         switch (ev.type_) {
             case FrameBuffer::Event::EventTypeFreeSlot:
-                TRACE("free slot. booking %d", lastBooked_);
+                LOG_TRACE("free slot. booking %d", lastBooked_);
                 bookerFilledBuffer_ = false;
                 res = buffer_->bookSlot(lastBooked_);
                 bookingCs_->Enter();
@@ -475,7 +475,7 @@ protected:
         switch (ev.type_) {
             case FrameBuffer::Event::EventTypeReady:
             {
-                TRACE("%d frame %d is ready. unpacking",providerCycleCount_, ev.frameNo_);
+                LOG_TRACE("%d frame %d is ready. unpacking",providerCycleCount_, ev.frameNo_);
                 
                 buffer_->lockSlot(ev.frameNo_);
                 
@@ -489,14 +489,14 @@ protected:
                 //                WAIT(rand()%50);
                 buffer_->unlockSlot(ev.frameNo_);
                 buffer_->markSlotFree(ev.frameNo_);
-                TRACE("frame checked");
+                LOG_TRACE("frame checked");
             }
                 break;
             case FrameBuffer::Event::EventTypeError:
                 stopWaiting_ = true;
                 break;
             default:
-                TRACE("got unexpected event %d", ev.type_);
+                LOG_TRACE("got unexpected event %d", ev.type_);
                 break;
                 
         }
@@ -520,7 +520,7 @@ protected:
     static bool processPlayoutThread(void *obj) { return ((FrameBufferTester*)obj)->processPlayout(); }
     bool processPlayout()
     {
-        TRACE("playout cycle %d", playoutCycleCount_++);
+        LOG_TRACE("playout cycle %d", playoutCycleCount_++);
         if (!playoutShouldStop_)
         {
             int64_t processingDelay = rand()%50;
@@ -532,7 +532,7 @@ protected:
                 shared_ptr<webrtc::EncodedImage> encodedFrame = slot->getFrame();
                 
                 // perform decoding
-                TRACE("process frame %d for %ld", playoutBuffer_->framePointer(), processingDelay*1000);
+                LOG_TRACE("process frame %d for %ld", playoutBuffer_->framePointer(), processingDelay*1000);
                 NdnRtcObjectTestHelper::checkFrames(encodedFrame_, encodedFrame.get());
                 
                 usleep(processingDelay*1000);
@@ -541,7 +541,7 @@ protected:
             else
             {
                 playoutLoss_++;
-                DBG("couldn't get frame with number %d", playoutBuffer_->framePointer());
+                LOG_DBG("couldn't get frame with number %d", playoutBuffer_->framePointer());
             }
             
             playoutBuffer_->releaseAcquiredSlot();
@@ -554,7 +554,7 @@ protected:
         }
         else
         {
-            TRACE("playout stopped");
+            LOG_TRACE("playout stopped");
             playoutStopped_ = true;
         }
         
@@ -1257,7 +1257,7 @@ TEST_F(FrameBufferTester, TestFull)
         // append segment for each interest in random order
         if (gotPendingInterests && frameNo < framesNumber)
         {
-            TRACE("got %d interests for frame %d", interestNumber, frameNo);
+            LOG_TRACE("got %d interests for frame %d", interestNumber, frameNo);
             for (unsigned int i = 0; i < interestNumber; i++)
             {
                 unsigned int segmentNo = remainingSegments[frameNo].front();
@@ -1265,7 +1265,7 @@ TEST_F(FrameBufferTester, TestFull)
                 
                 remainingSegments[frameNo].erase(remainingSegments[frameNo].begin());
                 
-                TRACE("appending frameno %d segno %d", frameNo, segmentNo);
+                LOG_TRACE("appending frameno %d segno %d", frameNo, segmentNo);
                 // check if it's a frist segment
                 if (buffer_->getState(frameNo) == FrameBuffer::Slot::StateNew)
                 {
@@ -1367,12 +1367,10 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
         }
         bookingCs_->Leave();
         
-        TRACE("");
-        
         // append segment for each interest in random order
         if (gotPendingInterests && frameNo < framesNumber)
         {
-            TRACE("got %d interests for frame %d", interestNumber, frameNo);
+            LOG_TRACE("got %d interests for frame %d", interestNumber, frameNo);
             for (unsigned int i = 0; i < interestNumber; i++)
             {
                 unsigned int segmentNo = remainingSegments[frameNo].front();

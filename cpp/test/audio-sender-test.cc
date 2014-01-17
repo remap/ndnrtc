@@ -240,7 +240,7 @@ public:
         UnitTestHelperNdnNetwork::onTimeout(interest);
         
         timeoutReceived_ = true;
-        INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
     }
     
 protected:
@@ -303,7 +303,7 @@ TEST_F(AudioSenderTester, TestSend)
         prefix.addComponent((const unsigned char*)&frameNoStr[0],
                             strlen(frameNoStr));
         
-        INFO("expressing %s", prefix.toUri().c_str());
+        LOG_INFO("expressing %s", prefix.toUri().c_str());
         ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }

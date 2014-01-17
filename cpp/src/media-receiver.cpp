@@ -40,7 +40,6 @@ pipelineTimer_(*EventWrapper::Create())
     interestFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     segmentFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
-    frameLogger_ = new NdnLogger("frames.log", NdnLoggerDetailLevelDefault);
 }
 
 NdnMediaReceiver::~NdnMediaReceiver()
@@ -51,7 +50,6 @@ NdnMediaReceiver::~NdnMediaReceiver()
     NdnRtcUtils::releaseFrequencyMeter(interestFreqMeter_);
     NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeter_);
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
-    delete frameLogger_;
     delete playoutBuffer_;
 }
 
@@ -169,6 +167,14 @@ int NdnMediaReceiver::stopFetching()
     
     switchToMode(ReceiverModeInit);
     return RESULT_OK;
+}
+
+void NdnMediaReceiver::setLogger(NdnLogger *logger)
+{
+    logger_ = logger;
+    
+    frameBuffer_.setLogger(logger);
+    playoutBuffer_->setLogger(logger);
 }
 
 //******************************************************************************

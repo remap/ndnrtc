@@ -58,8 +58,8 @@ public:
 
         const ::testing::TestInfo* const test_info =
         ::testing::UnitTest::GetInstance()->current_test_info();
-        INFO("***");
-        INFO("***[GTESTS]: entering test %s:%s", test_info->test_case_name(),test_info->name());
+        LOG_INFO("***");
+        LOG_INFO("***[GTESTS]: entering test %s:%s", test_info->test_case_name(),test_info->name());
         
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
@@ -69,8 +69,8 @@ public:
     {
         const ::testing::TestInfo* const test_info =
         ::testing::UnitTest::GetInstance()->current_test_info();
-        INFO("***[GTESTS]: leaving test %s:%s", test_info->test_case_name(),test_info->name());
-        INFO("***");
+        LOG_INFO("***[GTESTS]: leaving test %s:%s", test_info->test_case_name(),test_info->name());
+        LOG_INFO("***");
     }
 
     virtual void onErrorOccurred(const char *errorMessage)
@@ -173,11 +173,11 @@ public:
     void SetUp()
     {
         NdnLogger::initialize(name_.c_str(), logLevel_);
-        INFO("test suite started. log is here: %s", name_.c_str());
+        LOG_INFO("test suite started. log is here: %s", name_.c_str());
     }
     void TearDown()
     {
-        INFO("test suite finished");
+        LOG_INFO("test suite finished");
     }
     
     void setLogLevel(NdnLoggerDetailLevel lvl)
@@ -318,7 +318,7 @@ public:
             fread(buffer_v, sizeof(uint8_t), size_v, f_);
             
             int readSize = sizeof(uint64_t)+8*sizeof(int)+size_y+size_u+size_v;
-            TRACE("read frame %ld %dx%d (%d bytes)",
+            LOG_TRACE("read frame %ld %dx%d (%d bytes)",
                   renderTime,
                   width, height,
                   readSize);
@@ -328,7 +328,7 @@ public:
                                         size_v, buffer_v,
                                         width, height,
                                         stride_y, stride_u, stride_v))
-                NDNERROR("couldn't create frame");
+                LOG_NDNERROR("couldn't create frame");
             
             frame.set_render_time_ms(renderTime);
             frame.set_timestamp(renderTime);

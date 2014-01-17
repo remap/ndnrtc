@@ -24,10 +24,10 @@ namespace ndnrtc {
     public webrtc::Transport
     {
     public:
-        NdnAudioChannel(webrtc::VoiceEngine *voiceEngine);
+        NdnAudioChannel(const ParamsStruct &params, webrtc::VoiceEngine *voiceEngine);
         virtual ~NdnAudioChannel();
         
-        virtual int init(const ParamsStruct &params, shared_ptr<Face> &face);
+        virtual int init(shared_ptr<Face> &face);
         virtual int start(); // starts transfering data (in/out)
         virtual int stop(); // stops transfering data (in/out)
         
@@ -46,10 +46,16 @@ namespace ndnrtc {
     public IAudioPacketConsumer
     {
     public:
-        NdnAudioReceiveChannel(webrtc::VoiceEngine *voiceEngine):
-            NdnAudioChannel(voiceEngine){};
+        NdnAudioReceiveChannel(const ParamsStruct &params, webrtc::VoiceEngine *voiceEngine):
+        NdnAudioChannel(params, voiceEngine)
+        {
+            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                          "fetch-achannel-%s.log",
+                                          params.producerId));
+            isLoggerCreated_ = true;
+        }
         
-        int init(const ParamsStruct &params, shared_ptr<Face> &face);
+        int init(shared_ptr<Face> &face);
         int start();
         int stop();
         
@@ -64,11 +70,17 @@ namespace ndnrtc {
     class NdnAudioSendChannel : public NdnAudioChannel
     {
     public:
-        NdnAudioSendChannel(webrtc::VoiceEngine *voiceEngine):
-            NdnAudioChannel(voiceEngine){};
+        NdnAudioSendChannel(const ParamsStruct &params,
+                            webrtc::VoiceEngine *voiceEngine):
+            NdnAudioChannel(params, voiceEngine)
+        {
+            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                          "publish-achannel-%s.log",
+                                          params.producerId));
+            isLoggerCreated_ = true;
+        }
         
-        int init(const ParamsStruct &params,
-                 shared_ptr<ndn::Transport> &transport);
+        int init(shared_ptr<ndn::Transport> &transport);
         int start();
         int stop();
         

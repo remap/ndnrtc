@@ -11,7 +11,7 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
-#define USE_FRAME_LOGGER
+//#define USE_FRAME_LOGGER
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
@@ -32,16 +32,14 @@ namespace ndnrtc
     public:
         NdnVideoSender(const ParamsStruct &params):MediaSender(params)
         {
-#ifdef USE_FRAME_LOGGER
-            frameLogger_ = new NdnLogger("published.log", NdnLoggerDetailLevelDefault);
-#endif
+            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                          "publish-vchannel-%s.log",
+                                          params.producerId));
+            isLoggerCreated_ = true;
         }
         ~NdnVideoSender()
         {
-#ifdef USE_FRAME_LOGGER
-            delete frameLogger_;
-#endif
-        };
+        }
         
         unsigned long int getFrameNo() { return getPacketNo(); }
         
@@ -49,9 +47,6 @@ namespace ndnrtc
         void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
         
     private:
-#ifdef USE_FRAME_LOGGER
-        NdnLogger *frameLogger_;
-#endif
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {
