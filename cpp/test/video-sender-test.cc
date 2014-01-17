@@ -146,7 +146,7 @@ public:
     
     void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, Transport& transport)
     {
-        INFO("got interest: %s", interest->getName().toUri().c_str());
+        LOG_INFO("got interest: %s", interest->getName().toUri().c_str());
     }
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
@@ -156,7 +156,7 @@ public:
     
     void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
-        INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
+        LOG_INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
         dataInbox_.push_back(data);
         
         dataReceived_ = true;
@@ -167,7 +167,7 @@ public:
     {
         timeoutReceived_ = true;
         ++callbackCount_;
-        INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
     }
     
 protected:

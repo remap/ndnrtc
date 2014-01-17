@@ -109,7 +109,7 @@ namespace ndnrtc
         };
     };
     
-    class FrameBuffer
+    class FrameBuffer : public LoggerObject
     {
     public:
         class Slot;
@@ -205,7 +205,7 @@ namespace ndnrtc
                 
                 if (dataLength_ < segmentsNum_*segmentSize_)
                 {
-                    WARN("slot size is smaller than expected amount of data. "
+                    LOG_WARN("slot size is smaller than expected amount of data. "
                          "enlarging buffer...");
                     dataLength_ = 2*segmentsNum_*segmentSize_;
                     data_ = (unsigned char*)realloc(data_, dataLength_);

@@ -26,10 +26,17 @@ frameConsumer_(nullptr)
 {
     fetchAhead_ = 9; // fetch segments ahead
     playoutBuffer_ = new VideoPlayoutBuffer();
+    frameLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
+                                 "fetch-vstat-%s.log", params.producerId);
+    
+    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                  "fetch-vchannel-%s.log", params.producerId));
+    isLoggerCreated_ = true;
 }
 
 NdnVideoReceiver::~NdnVideoReceiver()
 {
+    delete frameLogger_;    
 }
 
 //******************************************************************************

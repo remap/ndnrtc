@@ -90,7 +90,6 @@ public:
     deliverEvent_(*EventWrapper::Create()),
     processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                                 kHighPriority)){
-        TRACE("CREATE");
     }
     
     void SetUp()

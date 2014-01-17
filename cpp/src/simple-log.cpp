@@ -25,6 +25,31 @@ pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 
 //********************************************************************************
 #pragma mark - construction/destruction
+NdnLogger::NdnLogger(NdnLoggerDetailLevel logDetailLevel, const char *logFileFmt, ...):
+loggingDetailLevel_(logDetailLevel),
+outLogStream_(NULL),
+logFile_(""),
+instanceMutex_(PTHREAD_MUTEX_INITIALIZER)
+{
+    char *logFile = (char*)malloc(256);
+    memset((void*)logFile, 0, 256);
+    
+    va_list args;
+    
+    va_start(args, logFileFmt);
+    vsprintf(logFile, logFileFmt, args);
+    va_end(args);
+    
+    buf_ = (char*)malloc(MAX_BUF_SIZE);
+    flushBuffer(buf_);
+    
+    outLogStream_ = fopen(logFile, "w");
+    logFile_ = std::string(logFile);
+    lastFileFlush_ = millisecondTimestamp();
+
+    free(logFile);
+}
+
 NdnLogger::NdnLogger(const char *logFile, NdnLoggerDetailLevel logDetailLevel):
 loggingDetailLevel_(logDetailLevel),
 outLogStream_(NULL),
@@ -51,7 +76,7 @@ instanceMutex_(PTHREAD_MUTEX_INITIALIZER)
 }
 NdnLogger::~NdnLogger()
 {
-  INFO("shutting down log session");
+  LOG_INFO("shutting down log session");
   
   if (outLogStream_ != stdout)
     fclose(outLogStream_);
@@ -224,3 +249,25 @@ void NdnLogger::log(const char *str)
       fflush(outLogStream_);
   }
 }
+
+//******************************************************************************
+//******************************************************************************
+// LoggerObject
+//void LoggerObject::initializeLogger(const char *format, ...)
+//{
+//    char *logFile = (char*)malloc(256);
+//    memset((void*)logFile, 0, 256);
+//    
+//    va_list args;
+//    
+//    va_start(args, format);
+//    vsprintf(logFile, format, args);
+//    va_end(args);
+//    
+//    this->setLogger(new NdnLogger(logFile, NdnLoggerDetailLevelAll));
+//    this->isLoggerCreated_ = true;
+//    
+//    free(logFile);
+//}
+
+

@@ -418,14 +418,18 @@ TEST_F(NdnRtcLibraryTester, TestStartStop)
     {
         ASSERT_NO_THROW(
                         library_->startPublishing("testuser");
+                        WAIT(100);
                         library_->stopPublishing();
                         );
     }
     {
         ASSERT_NO_THROW(
                         library_->startPublishing("testuser");
+                        WAIT(100);
                         library_->stopPublishing();
+                        WAIT(100);                        
                         library_->startPublishing("testuser");
+                        WAIT(100);
                         library_->stopPublishing();                        
                         );
     }

@@ -268,7 +268,6 @@ TEST(ParamsTest, TestValidateAudioParams)
 /**
  * @name NdnrtcObject class tests
  */
-
 class NdnRtcObjectTester : public NdnRtcObject
 {
 public:
@@ -316,7 +315,7 @@ TEST_F(NdnRtcObjectTest, CreateDeleteWithParams)
 }
 TEST_F(NdnRtcObjectTest, CreateDeleteWithObserver)
 {
-    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, nullptr, this);
     
     EXPECT_TRUE(obj->isObserved());
     
@@ -334,7 +333,7 @@ TEST_F(NdnRtcObjectTest, SetObserver)
 }
 TEST_F(NdnRtcObjectTest, ErrorNotifies)
 {
-    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, this);
+    NdnRtcObjectTester *obj = ( NdnRtcObjectTester *) new NdnRtcObject(DefaultParams, nullptr, this);
     
     EXPECT_FALSE(errorOccurred_);
     obj->postError(-1, (char*)"error msg");
@@ -356,4 +355,141 @@ TEST_F(NdnRtcObjectTest, ErrorNotifies)
     EXPECT_NE(nullptr, strstr(errorMessage_, "value1"));    
     
     delete obj;
+}
+
+//********************************************************************************
+/**
+ * @name LoggerObject class tests
+ */
+class LoggerObjectTester : public LoggerObject
+{
+public:
+    LoggerObjectTester(){}
+    LoggerObjectTester(const char *logFile) : LoggerObject(logFile) {}
+    LoggerObjectTester(NdnLogger *logger) : LoggerObject(logger) {}
+    
+    bool getIsLoggerCreated() {
+        return isLoggerCreated_;
+    }
+    void logSomething(const char *something) {
+        if (logger_)
+            logger_->log(NdnLoggerLevelInfo, "%s", something);
+    }
+};
+
+TEST(LoggerObjectTests, CreateWithFile)
+{
+    const char * logFile = "test.log";
+
+    { // remove log if it exists
+        FILE *f = fopen(logFile, "r");
+        
+        if (f)
+        {
+            fclose(f);
+            remove(logFile);
+        }
+    }
+    {
+        LoggerObjectTester loggerObject(logFile);
+        EXPECT_TRUE(loggerObject.getIsLoggerCreated());
+        
+        loggerObject.logSomething("hello world!");
+        
+        FILE *f = fopen(logFile, "r");
+        
+        EXPECT_NE(0, (long int)f);
+    }
+}
+
+TEST(LoggerObjectTests, CreateDeletePtr)
+{
+    const char * logFile = "test.log";
+    
+    { // remove log if it exists
+        FILE *f = fopen(logFile, "r");
+        
+        if (f)
+        {
+            fclose(f);
+            remove(logFile);
+        }
+    }
+    {
+        LoggerObjectTester *loggerObject = new LoggerObjectTester(logFile);
+        
+        loggerObject->logSomething("hello world!");
+        
+        FILE *f = fopen(logFile, "r");
+        
+        EXPECT_NE(0, (long int)f);
+        
+        EXPECT_NO_THROW(
+                        delete loggerObject;
+                        );
+    }
+}
+
+TEST(LoggerObjectTests, CreateWithLogger)
+{
+    const char * logFile = "test.log";
+    
+    { // remove log if it exists
+        FILE *f = fopen(logFile, "r");
+        
+        if (f)
+        {
+            fclose(f);
+            remove(logFile);
+        }
+    }
+    {
+        NdnLogger logger(logFile);
+        LoggerObjectTester *loggerObject = new LoggerObjectTester(&logger);
+        EXPECT_FALSE(loggerObject->getIsLoggerCreated());
+        
+        loggerObject->logSomething("hello world!");
+        
+        FILE *f = fopen(logFile, "r");
+        
+        EXPECT_NE(0, (long int)f);
+        
+        EXPECT_NO_THROW(
+                        delete loggerObject;
+                        );
+    }
+}
+
+TEST(LoggerObjectTests, SetLogger)
+{
+    const char * logFile = "test.log";
+    
+    { // remove log if it exists
+        FILE *f = fopen(logFile, "r");
+        
+        if (f)
+        {
+            fclose(f);
+            remove(logFile);
+        }
+    }
+    {
+        NdnLogger logger(logFile);
+        LoggerObjectTester *loggerObject = new LoggerObjectTester();
+        
+        loggerObject->setLogger(&logger);
+        
+        EXPECT_FALSE(loggerObject->getIsLoggerCreated());
+        EXPECT_EQ(&logger, loggerObject->getLogger());
+        
+        loggerObject->logSomething("hello world!");
+        
+        FILE *f = fopen(logFile, "r");
+        
+        EXPECT_NE(0, (long int)f);
+        
+        EXPECT_NO_THROW(
+                        delete loggerObject;
+                        );
+    }
 }

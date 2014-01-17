@@ -21,72 +21,76 @@ using namespace std;
 int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
                                            string &prefix)
 {
-  int res = RESULT_OK;
-  string streamPrefix;
-  
-  MediaSender::getStreamPrefix(params, streamPrefix);
-  
-  string streamThread = ParamsStruct::validate(params.streamThread,
-                                               DefaultParamsAudio.streamThread,
-                                               res);
-  // RTP and RTCP are published under the same prefix
+    int res = RESULT_OK;
+    string streamPrefix;
+    
+    MediaSender::getStreamPrefix(params, streamPrefix);
+    
+    string streamThread = ParamsStruct::validate(params.streamThread,
+                                                 DefaultParamsAudio.streamThread,
+                                                 res);
+    // RTP and RTCP are published under the same prefix
 #if 0
-  string rtcpSuffix = "control";
+    string rtcpSuffix = "control";
 #else
-  string rtcpSuffix = NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames;
+    string rtcpSuffix = NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames;
 #endif
-  prefix = *NdnRtcNamespace::buildPath(false,
-                                       &streamPrefix,
-                                       &streamThread,
-                                       &rtcpSuffix,
-                                       NULL);
-  
-  return res;
+    prefix = *NdnRtcNamespace::buildPath(false,
+                                         &streamPrefix,
+                                         &streamThread,
+                                         &rtcpSuffix,
+                                         NULL);
+    
+    return res;
 }
 
 //******************************************************************************
 #pragma mark - public
 int NdnAudioSender::init(const shared_ptr<ndn::Transport> transport)
 {
-  int res = RESULT_OK;
-  
-  res = MediaSender::init(transport);
-  
-  if (RESULT_FAIL(res))
+    int res = RESULT_OK;
+    
+    res = MediaSender::init(transport);
+    
+    if (RESULT_FAIL(res))
+        return res;
+    
+    string prefix;
+    
+    res = NdnAudioSender::getStreamControlPrefix(params_, prefix);
+    
+    if (RESULT_GOOD(res))
+        rtcpPacketPrefix_.reset(new Name(prefix.c_str()));
+    
     return res;
-  
-  string prefix;
-  
-  res = NdnAudioSender::getStreamControlPrefix(params_, prefix);
-  
-  if (RESULT_GOOD(res))
-    rtcpPacketPrefix_.reset(new Name(prefix.c_str()));
-  
-  return res;
 }
 
 int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
+    // update packet rate meter
+    NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+    
     NdnAudioData::AudioPacket packet {false, NdnRtcUtils::millisecondTimestamp(),
         len, data};
-  NdnAudioData adata(packet);
-  
-  publishPacket(adata.getLength(), adata.getData());
-  packetNo_++;
-  
-  return 0;
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate()};
+    NdnAudioData adata(packet, metadata);
+    
+    publishPacket(adata.getLength(), adata.getData());
+    packetNo_++;
+    
+    return 0;
 }
 
 int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-  NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
-      len, data};
-  NdnAudioData adata(packet);
-  
-  publishPacket(adata.getLength(), adata.getData());
-  packetNo_++;
-  
-  return 0;
+    NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
+        len, data};
+    NdnAudioData adata(packet);
+    
+    publishPacket(adata.getLength(), adata.getData());
+    packetNo_++;
+    
+    return 0;
 }
 //******************************************************************************
 #pragma mark - intefaces realization - <#interface#>

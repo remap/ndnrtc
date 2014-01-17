@@ -22,11 +22,15 @@ NdnAudioReceiver::NdnAudioReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params)
 {
     playoutBuffer_ = new PlayoutBuffer();
+    frameLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
+                                 "fetch-astat-%s.log", params.producerId);
+    
 }
 
 NdnAudioReceiver::~NdnAudioReceiver()
 {
     stopFetching();
+    delete frameLogger_;
 }
 //******************************************************************************
 #pragma mark - public
@@ -68,8 +72,20 @@ void NdnAudioReceiver::playbackPacket()
                     packetConsumer_->onRTCPPacketReceived(packet.length_,
                                                           packet.data_);
                 else
+                {
                     packetConsumer_->onRTPPacketReceived(packet.length_,
                                                          packet.data_);
+                    frameLogger_->log(NdnLoggerLevelInfo,
+                                      "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
+                                      slot->getFrameNumber(),
+                                      slot->assembledSegmentsNumber(),
+                                      slot->totalSegmentsNumber(),
+                                      slot->isKeyFrame(),
+                                      playoutBuffer_->getJitterSize(),
+                                      slot->getAssemblingTimeUsec(),
+                                      packet.timestamp_,
+                                      currentProducerRate_);
+                }
                 
                 // get playout time (delay) for the rendered frame
                 int framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();

@@ -50,7 +50,7 @@ public :
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     {
         receivedFrames_.push_back(encodedImage.capture_time_ms_);
-        TRACE("fetched encoded frame. queue size %d", receivedFrames_.size());
+        LOG_TRACE("fetched encoded frame. queue size %d", receivedFrames_.size());
     }
     
     void flushFlags()
@@ -168,7 +168,7 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
-    TRACE("start fetching");
+    LOG_TRACE("start fetching");
     EXPECT_EQ(0, receiver->startFetching());
     
     // we should start publishing frames later, so that receiver will get first frame
@@ -186,7 +186,7 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
         payload = new NdnFrameData(*frame);
         publishMediaPacket(payload->getLength(), payload->getData(), i,
                            segmentSize, framePrefix, params_.freshness, true);
-        TRACE("published frame %d",i);
+        LOG_TRACE("published frame %d",i);
         WAIT(1000/producerFrameRate);
     }
     EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum, 5000);
@@ -229,7 +229,7 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
-    TRACE("start fetching");
+    LOG_TRACE("start fetching");
     receiver->startFetching();
     
     // we should start publishing frames later, so that receiver will get first frame
@@ -245,7 +245,7 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
         payload = new NdnFrameData(*frame);
         publishMediaPacket(payload->getLength(), payload->getData(), i,
                            segmentSize, framePrefix, params_.freshness, true);
-        TRACE("published frame %d",i,5);
+        LOG_TRACE("published frame %d",i,5);
         WAIT(1000/producerFrameRate);
     }
     
@@ -289,7 +289,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
     EXPECT_FALSE(obtainedError_);
     
-    TRACE("start fetching");
+    LOG_TRACE("start fetching");
     EXPECT_EQ(0, receiver->startFetching());
     string framePrefix;
     EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, framePrefix));
@@ -308,7 +308,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
             payload = new NdnFrameData(*frame, meta);
             publishMediaPacket(payload->getLength(), payload->getData(), i,
                                segmentSize, framePrefix, params_.freshness, true);
-            TRACE("published frame %d",i);
+            LOG_TRACE("published frame %d",i);
             WAIT(1000/producerFrameRate);
         }
         
@@ -338,7 +338,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
             payload = new NdnFrameData(*frame, meta);
             publishMediaPacket(payload->getLength(), payload->getData(), i,
                                segmentSize, framePrefix, params_.freshness, true);
-            TRACE("published frame %d",i);
+            LOG_TRACE("published frame %d",i);
             WAIT(1000/producerFrameRate);
         }
         

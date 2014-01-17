@@ -180,7 +180,6 @@ NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
   // Initialize the storage.
   Name keyName = *NdnRtcNamespace::keyPrefixForUser(userPrefix);
   
-  TRACE("store key name: %s", keyName.toUri().c_str());
   privateKeyStorage->setKeyPairForKeyName(keyName,
                                           DEFAULT_PUBLIC_KEY_DER,
                                           sizeof(DEFAULT_PUBLIC_KEY_DER),

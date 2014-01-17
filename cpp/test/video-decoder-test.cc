@@ -29,7 +29,7 @@ public:
 
         if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
         {
-            TRACE("can't get deafult params");
+            LOG_TRACE("can't get deafult params");
             strncpy(codec_.plName, "VP8", 31);
             codec_.maxFramerate = 30;
             codec_.startBitrate  = 300;
@@ -154,7 +154,7 @@ TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
     WAIT(5000);
     
     if (obtainedError_)
-        INFO("got error %s", obtainedEmsg_);
+        LOG_INFO("got error %s", obtainedEmsg_);
     
     cc->stopCapture();
     

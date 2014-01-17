@@ -24,7 +24,6 @@ using namespace ndnrtc;
 class NdnSenderChannelTest : public NdnRtcObjectTestHelper
 {
     void SetUp(){
-        TRACE("");
         NdnRtcObjectTestHelper::SetUp();
         p_ = DefaultParams;
         audioP_ = DefaultParamsAudio;
@@ -53,7 +52,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
-        TRACE("got error %s", obtainedEmsg_);
+        LOG_TRACE("got error %s", obtainedEmsg_);
     
     delete sc;
 }

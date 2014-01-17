@@ -76,7 +76,7 @@ public:
     {
         UnitTestHelperNdnNetwork::onTimeout(interest);
 
-        INFO("got timeout for %s", interest->getName().toUri().c_str());
+        LOG_INFO("got timeout for %s", interest->getName().toUri().c_str());
     }
     
     void onData(const shared_ptr<const Interest>& interest,
@@ -157,7 +157,7 @@ public:
     {
         NdnRtcObjectTestHelper::onErrorOccurred(errorMessage);
         
-        INFO("ERROR occurred: %s", errorMessage);
+        LOG_INFO("ERROR occurred: %s", errorMessage);
     }
     
 protected:
@@ -174,7 +174,7 @@ protected:
 TEST_F(NdnAudioChannelTester, TestSendChannelCreateDelete)
 {
     ASSERT_NO_THROW(
-                    NdnAudioSendChannel *ch = new NdnAudioSendChannel(voiceEngine_);
+                    NdnAudioSendChannel *ch = new NdnAudioSendChannel(DefaultParamsAudio, voiceEngine_);
                     delete ch;
     );
 }
@@ -189,10 +189,10 @@ TEST_F(NdnAudioChannelTester, TestSendChannel)
     // make sure packets will not be dropped
     params_.freshness = (publishTime*2/1000 < 1.)? 1 : publishTime*2/1000;
     
-    NdnAudioSendChannel sendChannel(voiceEngine_);
+    NdnAudioSendChannel sendChannel(params_, voiceEngine_);
     sendChannel.setObserver(this);
     
-    EXPECT_EQ(0, sendChannel.init(params_, ndnReceiverTransport_));
+    EXPECT_EQ(0, sendChannel.init(ndnReceiverTransport_));
     
     UnitTestHelperNdnNetwork::startProcessingNdn();
 
@@ -219,7 +219,7 @@ TEST_F(NdnAudioChannelTester, TestSendChannel)
         
         prefix.addComponent((const unsigned char*)&frameNoStr[0], strlen(frameNoStr));
         
-        INFO("expressing %s", prefix.toUri().c_str());
+        LOG_INFO("expressing %s", prefix.toUri().c_str());
         ndnFace_->expressInterest(prefix, bind(&NdnAudioChannelTester::onData, this, _1, _2),
                                   bind(&NdnAudioChannelTester::onTimeout, this, _1));
         WAIT(10);
@@ -263,8 +263,8 @@ TEST_F(NdnAudioChannelTester, TestSendChannel)
 class AudioReceiverChannelTester : public NdnAudioReceiveChannel
 {
 public:
-    AudioReceiverChannelTester(webrtc::VoiceEngine *ve):
-        NdnAudioReceiveChannel(ve){}
+    AudioReceiverChannelTester(ParamsStruct &params, webrtc::VoiceEngine *ve):
+        NdnAudioReceiveChannel(params, ve){}
     
     unsigned int nRTPReceived_ = 0, nRTCPReceived_ = 0;
     
@@ -285,10 +285,10 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
     params_.bufferSize = 33;
     params_.slotSize = 1500;
     
-    AudioReceiverChannelTester receiverTester(voiceEngine_);
+    AudioReceiverChannelTester receiverTester(params_, voiceEngine_);
     
     receiverTester.setObserver(this);
-    EXPECT_EQ(RESULT_OK, receiverTester.init(params_, ndnReceiverFace_));
+    EXPECT_EQ(RESULT_OK, receiverTester.init(ndnReceiverFace_));
     
     int channel = voe_base_->CreateChannel();
     
@@ -317,7 +317,7 @@ TEST_F(NdnAudioChannelTester, TestReceiveChannel)
         EXPECT_EQ(0, res);
         
         if (res < 0)
-            INFO("error while stopping voe_base: %d", voe_base_->LastError());
+            LOG_INFO("error while stopping voe_base: %d", voe_base_->LastError());
         
         EXPECT_EQ(0, voe_network->DeRegisterExternalTransport(channel));
         voe_network->Release();
@@ -345,11 +345,11 @@ TEST_F(NdnAudioChannelTester, TestSendReceive)
     params_.freshness = (recordingTime/1000.)<1.?1.:recordingTime/1000.;
     
     { // send datda
-        NdnAudioReceiveChannel recevier(voiceEngine_);
-        NdnAudioSendChannel sender(voiceEngine_);
+        NdnAudioReceiveChannel recevier(params_, voiceEngine_);
+        NdnAudioSendChannel sender(params_, voiceEngine_);
         
-        EXPECT_EQ(RESULT_OK, recevier.init(params_, ndnReceiverFace_));
-        EXPECT_EQ(RESULT_OK, sender.init(params_, ndnTransport_));
+        EXPECT_EQ(RESULT_OK, recevier.init(ndnReceiverFace_));
+        EXPECT_EQ(RESULT_OK, sender.init(ndnTransport_));
         
         EXPECT_EQ(RESULT_OK, recevier.start());
         EXPECT_EQ(RESULT_OK, sender.start());

@@ -40,13 +40,13 @@ static void initializer(int argc, char** argv, char** envp) {
     if (!initialized) {
         initialized = 1;
         NdnLogger::initialize(DefaultParams.logFile, DefaultParams.loggingLevel);
-        INFO("module loaded");
+        LOG_INFO("module loaded");
     }
 }
 
 __attribute__((destructor))
 static void destructor(){
-    INFO("module unloaded");
+    LOG_INFO("module unloaded");
 }
 
 extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
@@ -103,12 +103,10 @@ libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
-    TRACE("");
     NdnRtcUtils::sharedVoiceEngine();
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
-    TRACE("");
     NdnRtcUtils::releaseVoiceEngine();
 }
 //******************************************************************************
@@ -268,7 +266,7 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     if (strcmp(producerId, "") == 0)
         return notifyObserverWithError("username cannot be empty string");
     
-    TRACE("fetching from %s", producerId);
+    LOG_TRACE("fetching from %s", producerId);
     
     if (Producers.find(string(producerId)) != Producers.end())
         return notifyObserverWithError("already fetching");
@@ -303,7 +301,7 @@ int NdnRtcLibrary::startFetching(const char *producerId)
 
 int NdnRtcLibrary::stopFetching(const char *producerId)
 {
-    TRACE("stop fetching from prefix: %s", producerId);
+    LOG_TRACE("stop fetching from prefix: %s", producerId);
     
     if (Producers.find(string(producerId)) == Producers.end())
         return notifyObserverWithError("fetching from user was not started");
