@@ -325,7 +325,7 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
                                                       currentProducerRate_);
             
             playoutBuffer_->setMinJitterSize(newJitterSize);
-            DBG("[VIDEO RECEIVER] got updated producer rate %f. jitter size %d",
+            DBG("[RECEIVER] got updated producer rate %f. jitter size %d",
                 currentProducerRate_, playoutBuffer_->getMinJitterSize());
         }
     }
@@ -334,7 +334,7 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     nReceived_++;
     emptyJitterCounter_ = 0;
     
-    DBG("[VIDEO RECEVIER] received frame %d (type: %s). jitter size: %d",
+    DBG("[RECEIVER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
         playoutBuffer_->getJitterSize());
     frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d",
@@ -804,7 +804,6 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
             
         case ReceiverModeFetch:
         {
-            TRACE("[PIPELINER] pipeline more segments for frame %d", event.frameNo_);
             pipelineInterests(event);
         }
             break;

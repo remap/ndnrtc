@@ -23,7 +23,7 @@ NdnMediaChannel(params, audioParams),
 localRender_(new NdnRenderer(1,params)),
 decoder_(new NdnVideoDecoder(params)),
 receiver_(new NdnVideoReceiver(params)),
-audioReceiveChannel_(new NdnAudioReceiveChannel(params, NdnRtcUtils::sharedVoiceEngine()))
+audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::sharedVoiceEngine()))
 {
     this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "fetch-%s.log",
                                   params.producerId));
