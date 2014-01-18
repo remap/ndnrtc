@@ -35,7 +35,8 @@ pitCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 mode_(ReceiverModeCreated),
 face_(nullptr),
 pendingInterests_(),
-pipelineTimer_(*EventWrapper::Create())
+pipelineTimer_(*EventWrapper::Create()),
+avSync_(nullptr)
 {
     interestFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     segmentFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
@@ -325,7 +326,7 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
                                                       currentProducerRate_);
             
             playoutBuffer_->setMinJitterSize(newJitterSize);
-            DBG("[RECEIVER] got updated producer rate %f. jitter size %d",
+            DBG("[RECEIVER] got updated producer rate %f. min jitter size %d",
                 currentProducerRate_, playoutBuffer_->getMinJitterSize());
         }
     }
@@ -734,6 +735,13 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             // is bigger than preferred size, skip pipelining
             if (jitterFull || hasEnoughPending)
             {
+                DBG("[PIPELINING] not issuing further - jitter ms %d (%d), "
+                    "pipeliner ms %d (%d)",
+                    playoutBuffer_->getJitterSize(),
+                    framesInJitterMs,
+                    pipelinerBufferSize_,
+                    framesPendingMs);
+                
                 frameBuffer_.reuseEvent(event);
             }
             else

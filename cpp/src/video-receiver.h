@@ -18,8 +18,11 @@
 
 namespace ndnrtc
 {
+    class AudioVideoSynchronizer;
+    
     class NdnVideoReceiver :    public NdnMediaReceiver
     {
+        friend class AudioVideoSynchronizer;
     public:
         NdnVideoReceiver(const ParamsStruct &params);
         ~NdnVideoReceiver();

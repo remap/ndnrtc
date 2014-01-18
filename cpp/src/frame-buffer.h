@@ -60,10 +60,13 @@ namespace ndnrtc
         
         static int unpackFrame(unsigned int length_, const unsigned char *data,
                                webrtc::EncodedImage **frame);
-        static int unpackMetadata(unsigned int length_, const unsigned char *data,
+        static int unpackMetadata(unsigned int length_,
+                                  const unsigned char *data,
                                   PacketMetadata &metadata);
         static webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
                                             const unsigned char *headerSegment);
+        static bool isVideoData(unsigned int size,
+                                const unsigned char *headerSegment);
     private:
         struct FrameDataHeader {
             uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
@@ -99,6 +102,8 @@ namespace ndnrtc
                                AudioPacket &packet);
         static int unpackMetadata(unsigned int len, const unsigned char *data,
                                PacketMetadata &metadata);
+        static bool isAudioData(unsigned int size,
+                                const unsigned char *headerSegment);
     private:
         struct AudioDataHeader {
             unsigned int        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
@@ -278,10 +283,17 @@ namespace ndnrtc
             bool isKeyFrame() { return isKeyFrame_; };
             webrtc::VideoFrameType getFrameType() {
                 return NdnFrameData::getFrameTypeFromHeader(segmentSize_, data_);
-            };
+            }
             uint64_t getAssemblingTimeUsec() {
                 return assemblingTime_;
             }
+            bool isAudioPacket() {
+                return NdnAudioData::isAudioData(segmentSize_, data_);
+            }
+            bool isVideoPacket(){
+                return NdnFrameData::isVideoData(segmentSize_, data_);
+            }
+            
         private:
             bool isKeyFrame_;
             unsigned int frameNumber_;
