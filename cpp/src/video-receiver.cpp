@@ -67,8 +67,9 @@ void NdnVideoReceiver::playbackPacket()
         
         frameno = slot->getFrameNumber();
         nPlayedOut_++;
+        
         frameLogger_->log(NdnLoggerLevelInfo,
-                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
+                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f \t%d",
                           slot->getFrameNumber(),
                           slot->assembledSegmentsNumber(),
                           slot->totalSegmentsNumber(),
@@ -76,7 +77,8 @@ void NdnVideoReceiver::playbackPacket()
                           playoutBuffer_->getJitterSize(),
                           slot->getAssemblingTimeUsec(),
                           frame->capture_time_ms_,
-                          currentProducerRate_);
+                          currentProducerRate_,
+                          pipelinerBufferSize_);
         
         frameConsumer_->onEncodedFrameDelivered(*frame.get());
     }

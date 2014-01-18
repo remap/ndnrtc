@@ -337,12 +337,17 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     DBG("[RECEIVER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
         playoutBuffer_->getJitterSize());
-    frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d",
+    
+    frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d \t \t \t%.2f \t%d",
                       frameNo,
                       // empty
                       // empty
                       // empty
-                      playoutBuffer_->getJitterSize());
+                      playoutBuffer_->getJitterSize(),
+                      // empty
+                      // empty
+                      currentProducerRate_,
+                      pipelinerBufferSize_);
 }
 void NdnMediaReceiver::onBufferStateChanged(PlayoutBuffer::State newState)
 {
@@ -714,11 +719,12 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
         case ReceiverModeFetch:
         {
             int framesAssembling = frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
-            int framesPending = frameBuffer_.getStat(FrameBuffer::Slot::StateNew);
+            pipelinerBufferSize_ = frameBuffer_.getStat(FrameBuffer::Slot::StateNew) +
+                                        framesAssembling;
             
             int framesInJitterMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
                                                          currentProducerRate_);
-            int framesPendingMs = NdnRtcUtils::toTimeMs(framesPending,
+            int framesPendingMs = NdnRtcUtils::toTimeMs(pipelinerBufferSize_,
                                                         currentProducerRate_);
             
             bool jitterFull = framesInJitterMs >= MinJitterSizeMs;
@@ -739,12 +745,17 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                     pipelinerFrameNo_ - firstFrame_,
                     framesInJitterMs, framesPendingMs);
                 
-                frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t \t%d",
+                frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t "
+                                  "\t%d \t \t \t%.2f \t%d",
                                   pipelinerFrameNo_,
                                   // empty
                                   // empty
                                   // empty
-                                  playoutBuffer_->getJitterSize());
+                                  playoutBuffer_->getJitterSize(),
+                                  // empty
+                                  // empty
+                                  currentProducerRate_,
+                                  pipelinerBufferSize_);
                 
                 frameBuffer_.bookSlot(pipelinerFrameNo_);
                 

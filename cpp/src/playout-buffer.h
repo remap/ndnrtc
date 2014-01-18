@@ -76,12 +76,12 @@ namespace ndnrtc
             return playheadPointer_;
         }
         
-        unsigned int getJitterSize() DEPRECATED { return jitterBuffer_.size(); }
-        void setMinJitterSize(unsigned int minJitterSize) DEPRECATED {
+        unsigned int getJitterSize() { return jitterBuffer_.size(); }
+        void setMinJitterSize(unsigned int minJitterSize) {
             webrtc::CriticalSectionScoped scopedCs(&syncCs_);
             minJitterSize_ = minJitterSize;
         }
-        unsigned int getMinJitterSize() DEPRECATED { return minJitterSize_; }
+        unsigned int getMinJitterSize() { return minJitterSize_; }
         
         void setMinJitterSizeMs(unsigned int minJitterSizeMs) {
             webrtc::CriticalSectionScoped scopedCs(&syncCs_);
@@ -95,7 +95,7 @@ namespace ndnrtc
         bool bufferUnderrun_ = false, missingFrame_ = false;
         State state_ = StateUnknown;
         unsigned int framePointer_, playheadPointer_;
-        unsigned int minJitterSize_ DEPRECATED; // number of frames to keep in buffer before
+        unsigned int minJitterSize_; // number of frames to keep in buffer before
                                                 // they can be played out
         
         unsigned int minJitterSizeMs_; // minimal jitter size in milliseconds

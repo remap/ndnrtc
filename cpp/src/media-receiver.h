@@ -81,6 +81,8 @@ namespace ndnrtc
 
         NdnLogger *frameLogger_;
         long pipelinerFrameNo_;
+        unsigned int pipelinerBufferSize_ = 0; // pipeliner buffer size -
+                                               // number of pending frames
         unsigned int excludeFilter_ = 0; // used for rebufferings
         int pipelinerEventsMask_, interestTimeoutMs_, nTimeoutsKeyFrame_ = 0;
         unsigned int producerSegmentSize_;
@@ -106,8 +108,8 @@ namespace ndnrtc
         typedef std::map<const string, PendingInterestStruct> PitMap;
         typedef std::map<unsigned int, string> PitMapUri;
         
-        PitMap pendingInterests_;
-        PitMapUri pendingInterestsUri_;
+        PitMap pendingInterests_ DEPRECATED;
+        PitMapUri pendingInterestsUri_ DEPRECATED;
         
         FrameBuffer frameBuffer_;
         PlayoutBuffer *playoutBuffer_;
