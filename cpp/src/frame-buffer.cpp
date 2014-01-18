@@ -98,7 +98,6 @@ int NdnFrameData::unpackMetadata(unsigned int length_,
 webrtc::VideoFrameType NdnFrameData::getFrameTypeFromHeader(unsigned int size,
                                                             const unsigned char *headerSegment)
 {
-    unsigned int headerSize_ = sizeof(FrameDataHeader);
     FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
     
     // check markers if it's not video frame data - return key frame type always
@@ -107,6 +106,19 @@ webrtc::VideoFrameType NdnFrameData::getFrameTypeFromHeader(unsigned int size,
         return webrtc::kKeyFrame;
     
     return header.frameType_;
+}
+
+bool NdnFrameData::isVideoData(unsigned int size,
+                               const unsigned char *headerSegment)
+{
+    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
+    
+    // check markers if it's not video frame data - return key frame type always
+    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+        return true;
+    
+    return false;
 }
 
 //******************************************************************************
@@ -169,6 +181,19 @@ int NdnAudioData::unpackMetadata(unsigned int len, const unsigned char *data,
     
     return RESULT_OK;
     
+}
+
+bool NdnAudioData::isAudioData(unsigned int size,
+                               const unsigned char *headerSegment)
+{
+    AudioDataHeader header = *((AudioDataHeader*)(&headerSegment[0]));
+    
+    // check markers if it's not video frame data - return key frame type always
+    if (header.headerMarker_ != NDNRTC_AUDIOHDR_MRKR &&
+        header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
+        return true;
+    
+    return false;
 }
 
 //******************************************************************************

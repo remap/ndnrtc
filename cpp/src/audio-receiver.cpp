@@ -89,6 +89,10 @@ void NdnAudioReceiver::playbackPacket()
                 
                 // get playout time
                 int framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
+                int adjustedPlayoutTime = avSync_->synchronizePacket(slot,
+                                                                     framePlayoutTime);
+                
+                framePlayoutTime += adjustedPlayoutTime;
                 jitterTiming_.updatePlayoutTime(packet.isRTCP_?0:framePlayoutTime);
                 
                 // setup and run playout timer for calculated playout interval

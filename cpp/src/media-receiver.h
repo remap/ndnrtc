@@ -14,6 +14,7 @@
 #include "frame-buffer.h"
 #include "playout-buffer.h"
 #include "media-sender.h"
+#include "av-sync.h"
 
 const double StartSRTT = 20.; // default SRTT value to start from
 
@@ -58,6 +59,10 @@ namespace ndnrtc
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
         
+        void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> avSync){
+            avSync_ = avSync;
+        }
+        
         // overriden from LoggerObject
         void setLogger(NdnLogger *logger);
         
@@ -97,7 +102,8 @@ namespace ndnrtc
         unsigned int rebufferingEvent_ = 0;
         unsigned int nReceived_ = 0, nLost_ = 0, nPlayedOut_ = 0, nMissed_ = 0;
         unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_;
-        unsigned int firstFrame_ = 0, lastMissedFrameNo_ = 0;
+        unsigned int firstFrame_ DEPRECATED = 0,
+                        lastMissedFrameNo_ DEPRECATED = 0;
         uint64_t playoutLastUpdate_ = 0;
         unsigned int emptyJitterCounter_ = 0;
         
@@ -122,6 +128,9 @@ namespace ndnrtc
         webrtc::ThreadWrapper &pipelineThread_, &assemblingThread_,
                                 &playoutThread_;
         webrtc::EventWrapper &pipelineTimer_;
+        
+        // audio/video synchronizer
+        shared_ptr<AudioVideoSynchronizer> avSync_;
         
         // static routines for threads
         static bool pipelineThreadRoutine(void *obj)
@@ -177,7 +186,7 @@ namespace ndnrtc
         virtual bool onError(FrameBuffer::Event &event);
         
         PendingInterestStruct getPisForInterest(const string &iuri,
-                                                bool removeFromPITs = false);
+                                                bool removeFromPITs = false) DEPRECATED;
         void clearPITs();
     };
 }
