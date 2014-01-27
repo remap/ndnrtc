@@ -54,7 +54,7 @@ int NdnAudioReceiver::stopFetching()
 
 //******************************************************************************
 #pragma mark - private
-void NdnAudioReceiver::playbackPacket()
+void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
 {
     if (packetConsumer_)
     {
@@ -89,8 +89,12 @@ void NdnAudioReceiver::playbackPacket()
                 
                 // get playout time
                 int framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
-                int adjustedPlayoutTime = avSync_->synchronizePacket(slot,
-                                                                     framePlayoutTime);
+                int adjustedPlayoutTime = 0;
+                
+                // if av sync has been set up                
+                if (slot && avSync_.get())
+                    adjustedPlayoutTime= avSync_->synchronizePacket(slot,
+                                                                    packetTsLocal);
                 
                 framePlayoutTime += adjustedPlayoutTime;
                 jitterTiming_.updatePlayoutTime(packet.isRTCP_?0:framePlayoutTime);

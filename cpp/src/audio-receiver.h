@@ -42,7 +42,7 @@ namespace ndnrtc
         IAudioPacketConsumer *packetConsumer_;
         
         // overriden
-        void playbackPacket();        
+        void playbackPacket(int64_t packetTsLocal);
         bool isLate(unsigned int frameNo);
     };
 }

@@ -15,20 +15,15 @@
 
 namespace ndnrtc {
     
+    const int64_t TolerableDriftMs = 30; // packets will be synchronized
+                                         // if their timelines differ more
+                                         // than this value
+    
     class AudioVideoSynchronizer : public LoggerObject
     {
     public:
-        AudioVideoSynchronizer(double audioRate, double videoRate);
+        AudioVideoSynchronizer();
         ~AudioVideoSynchronizer(){}
-        
-        /**
-         * Sets synchronization frequency. This value will be used for 
-         * calculating main synchronization points - frame numbers at which 
-         * synchronization should be performed.
-         * @param syncFrequency Desired synchronization frequency (times per 
-         * second).
-         */
-        void setSynchronizationFrequency(double syncFrequency);
         
         /**
          * Main method which should be called for synchronization. It should
@@ -44,61 +39,60 @@ namespace ndnrtc {
          * @return Playout duration adjustment (in ms) needed for media streams 
          * to be synchronized or 0 if no adjustment is required.
          */
-        int synchronizePacket(FrameBuffer::Slot* slot,
-                              int playoutDuration);
+        int synchronizePacket(FrameBuffer::Slot* slot, int64_t localTimestamp);
         
         /**
-         * Updates actual audio packet rate
-         * @param audioPacketRate Actual packet rate for audio stream
+         * Resets synchronization data (used for rebufferings).
          */
-        void updateAudioPacketRate(double audioPacketRate)
-        {
-            updateRate(audioSyncData_, audioPacketRate);
-        }
+        void reset();
         
-        /**
-         * Updates actual video packet rate
-         * @param videoPacketRate Actual packet rate for video stream
-         */
-        void updateVideoPacketRate(double videoPacketRate)
-        {
-            updateRate(videoSyncData_, videoPacketRate);
-        }
-        
-    private:
+    protected:
         // those attribute which has prefix "remote" relate to remote producer's
         // timestamps, wherease suffixed with "local" relate to local timestamps
-        typedef struct _SyncStruct {
-            int lastPacketNumber_;  // last packet number
-            int64_t playbackStartLocal_ = -1;
-            int64_t playbackStartRemote_ = -1;   // playback start
+        class SyncStruct {
+        public:
+            SyncStruct(const char *name):
+            cs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
+            name_(name),
+            initialized_(false),
+            lastPacketTsLocal_(-1),
+            lastPacketTsRemote_(-1)
+            {}
+            
+            webrtc::CriticalSectionWrapper &cs_;
+            const char *name_;
+            bool initialized_;
+            
             int64_t lastPacketTsLocal_; // local timestamp of last packet
                                         // playout time, i.e. when packet was
                                         // acquired for playback
             int64_t lastPacketTsRemote_;    // remote timestamp of last packet
                                             // playout time, i.e. packet
                                             // timestamp published by producer
-            int64_t lastPacketPlayoutDuration_; // calculated playout duration
-                                                // of last packet (including
-                                                // AMP adjustments)
-            double actualPacketRate_;   // most recent value of packet rate
-                                        // provided by producer
-            int nextSyncPoint_; // next synchronization point, i.e. number of
-                                // the packet which should be analyzed for
-                                // AV synchronizations
-        } SyncStruct;
+            
+            // resets sync data strcuture
+            void reset(){
+                webrtc::CriticalSectionScoped scopedCs(&cs_);
+                initialized_ = false;
+                lastPacketTsLocal_ = -1;
+                lastPacketTsRemote_ = -1;
+            }
+        };
         
-        double syncFrequency_; // how often synchronization should be invoked
-                               // (per second, i.e. value of 2 means
-                               // synchronization mechanism will run twice per
-                               // second)
+        bool initialized_;  // indicates, whether synchronizer was initialized
+                       // (when both streams has started)
+        webrtc::CriticalSectionWrapper &syncCs_;
         SyncStruct audioSyncData_, videoSyncData_;
         
-        int syncPacket(SyncStruct& syncData, FrameBuffer::Slot* slot,
-                       int playoutDuration);
-        void updateRate(SyncStruct& syncData, double rate);
-        void initialize(SyncStruct& syncData, FrameBuffer::Slot* slot,
-                        int playoutDuration);
+        int syncPacket(SyncStruct& syncData,
+                       SyncStruct& pairedSyncData,
+                       int64_t packetTsRemote,
+                       int64_t packetTsLocal);
+        void initialize(SyncStruct& syncData,
+                        int64_t firstPacketTsRemote,
+                        int64_t packetTsLocal);
+        
+        int64_t getNextSyncPoint(int64_t startingPoint);
     };
 }
 

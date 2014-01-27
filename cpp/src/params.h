@@ -130,7 +130,7 @@ namespace ndnrtc
         NdnLoggerDetailLevelDebug,    // log level
         "ndnrtc.log",                   // log file
         
-        0,      // capture device id
+        1,      // capture device id
         640,    // capture width
         480,    // capture height
         30,     // capture framerate

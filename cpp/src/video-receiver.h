@@ -42,7 +42,7 @@ namespace ndnrtc
         IEncodedFrameConsumer *frameConsumer_;
     
         // overriden
-        void playbackPacket();
+        void playbackPacket(int64_t packetTsLocal);
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
         bool isLate(unsigned int frameNo);
     };

@@ -225,21 +225,39 @@ protected:
 TEST_F(VideoSenderTester, TestFrameData)
 {
     loadFrame();
-    
+    int64_t ts = NdnRtcUtils::millisecondTimestamp();
+    sampleFrame_->capture_time_ms_ = ts;
     NdnFrameData data(*sampleFrame_);
     
-    EXPECT_NE(0, data.getLength());
-    EXPECT_LT(sampleFrame_->_length, data.getLength());
-    
-    unsigned int length = data.getLength();
-    unsigned char *buf = data.getData();
-    webrtc::EncodedImage *frame = nullptr;
-    ASSERT_EQ(0, NdnFrameData::unpackFrame(length, buf, &frame));
-    
-    ASSERT_NE(nullptr, frame);
-    
-    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
+    {
+        EXPECT_NE(0, data.getLength());
+        EXPECT_LT(sampleFrame_->_length, data.getLength());
+        
+        unsigned int length = data.getLength();
+        unsigned char *buf = data.getData();
+        webrtc::EncodedImage *frame = nullptr;
+        ASSERT_EQ(0, NdnFrameData::unpackFrame(length, buf, &frame));
+        
+        ASSERT_NE(nullptr, frame);
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
+    }
+    {
+        EXPECT_TRUE(NdnFrameData::isVideoData(data.getLength(), data.getData()));
+
+        unsigned char *random = (unsigned char*)malloc(100);
+        EXPECT_FALSE(NdnFrameData::isVideoData(100, random));
+        free(random);
+    }
+    {
+        EXPECT_EQ(ts, NdnFrameData::getTimestamp(data.getLength(), data.getData()));
+
+        unsigned char *random = (unsigned char*)malloc(100);
+        EXPECT_EQ(-1, NdnFrameData::getTimestamp(100, random));
+        free(random);
+    }
 }
+
 TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
 {
     loadFrame();
