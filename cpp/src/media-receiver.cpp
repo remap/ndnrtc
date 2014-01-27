@@ -456,7 +456,7 @@ bool NdnMediaReceiver::processPlayout()
         if (now - playoutLastUpdate_ >= RebufferThreshold)
             rebuffer();
         else if (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)
-            playbackPacket();
+            playbackPacket(now);
     }
     
     return true;
@@ -698,6 +698,9 @@ void NdnMediaReceiver::rebuffer()
     srtt_ = StartSRTT;
     excludeFilter_ = pipelinerFrameNo_;
     switchToMode(ReceiverModeFlushed);
+    
+    if (avSync_.get())
+        avSync_->reset();
 }
 
 //******************************************************************************

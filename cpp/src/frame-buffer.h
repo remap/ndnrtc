@@ -67,6 +67,8 @@ namespace ndnrtc
                                             const unsigned char *headerSegment);
         static bool isVideoData(unsigned int size,
                                 const unsigned char *headerSegment);
+        static int64_t getTimestamp(unsigned int size,
+                                    const unsigned char *headerSegment);
     private:
         struct FrameDataHeader {
             uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
@@ -104,6 +106,8 @@ namespace ndnrtc
                                PacketMetadata &metadata);
         static bool isAudioData(unsigned int size,
                                 const unsigned char *headerSegment);
+        static int64_t getTimestamp(unsigned int size,
+                                    const unsigned char *headerSegment);
     private:
         struct AudioDataHeader {
             unsigned int        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;

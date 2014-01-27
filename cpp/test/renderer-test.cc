@@ -17,7 +17,7 @@ using namespace webrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(CocoaRenderWindow, TestCreateDestroy)
 {
     void *win = createCocoaRenderWindow("NoName", 640, 480);
@@ -78,7 +78,7 @@ TEST(CocoaRenderWindow, TestCreateSeveral)
         WAIT(200);
     }
 }
-
+#endif
 //********************************************************************************
 /**
  * @name NdnRenderer class tests
@@ -135,7 +135,7 @@ protected:
         return true;
     }
 };
-
+#if 0
 TEST_F(NdnRendererTester, CreateDelete)
 {
     NdnRenderer *nr = new NdnRenderer(0,p_);
@@ -250,11 +250,10 @@ TEST_F(NdnRendererTester, TestStartStopStart)
     r_->stopRendering();
     delete r_;
 }
-#if 0
+#endif
 TEST_F(NdnRendererTester, TestRender)
 {
-    FrameReader fr("resources/sample_futurama.yuv");
-//    FrameReader fr("resources/sample.yuv");
+    FrameReader fr("resources/bipbop.yuv");
     
     NdnRenderer r(1,p_);
     
@@ -264,22 +263,31 @@ TEST_F(NdnRendererTester, TestRender)
     r.startRendering("sample");
     WAIT(1000);
     
-    webrtc::I420VideoFrame frame, deliveredFrame;
+    webrtc::I420VideoFrame frame, nextFrame;
     unsigned int nFrames = 0;
     
-    while (fr.readFrame(frame))
+    if (fr.readFrame(frame) >= 0)
     {
-        deliveredFrame.CopyFrame(frame);
-        nFrames++;
-        r.onDeliverFrame(deliveredFrame);
-        usleep(30000);
+        while (fr.readFrame(nextFrame) >= 0)
+        {
+            // use saved render time for calculating rendering delay
+            int sleepMs = nextFrame.render_time_ms()-frame.render_time_ms();
+            
+            nFrames++;
+            // set current render timestamp (otherwise renderer will not work)
+            frame.set_render_time_ms(TickTime::MillisecondTimestamp());
+            
+            r.onDeliverFrame(frame);
+            frame.SwapFrame(&nextFrame);
+            
+            usleep(sleepMs*1000);
+        }
     }
     
-    TRACE("total frames number: %d", nFrames);
+    LOG_TRACE("total frames number: %d", nFrames);
     
     r.stopRendering();
-    processThread_.SetNotAlive();
+//    processThread_.SetNotAlive();
     deliverEvent_.Set();
-    processThread_.Stop();
+//    processThread_.Stop();
 }
-#endif

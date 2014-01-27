@@ -113,12 +113,22 @@ bool NdnFrameData::isVideoData(unsigned int size,
 {
     FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
     
-    // check markers if it's not video frame data - return key frame type always
-    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
+    if (header.headerMarker_ == NDNRTC_FRAMEHDR_MRKR &&
+        header.bodyMarker_ == NDNRTC_FRAMEBODY_MRKR)
         return true;
     
     return false;
+}
+
+int64_t NdnFrameData::getTimestamp(unsigned int size,
+                                   const unsigned char *headerSegment)
+{
+    if (!NdnFrameData::isVideoData(size, headerSegment))
+        return -1;
+    
+    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
+    
+    return header.capture_time_ms_;
 }
 
 //******************************************************************************
@@ -188,12 +198,22 @@ bool NdnAudioData::isAudioData(unsigned int size,
 {
     AudioDataHeader header = *((AudioDataHeader*)(&headerSegment[0]));
     
-    // check markers if it's not video frame data - return key frame type always
-    if (header.headerMarker_ != NDNRTC_AUDIOHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
+    if (header.headerMarker_ == NDNRTC_AUDIOHDR_MRKR &&
+        header.bodyMarker_ == NDNRTC_AUDIOBODY_MRKR)
         return true;
     
     return false;
+}
+
+int64_t NdnAudioData::getTimestamp(unsigned int size,
+                                   const unsigned char *headerSegment)
+{
+    if (!NdnAudioData::isAudioData(size, headerSegment))
+        return -1;
+    
+    AudioDataHeader header = *((AudioDataHeader*)(&headerSegment[0]));
+    
+    return header.timestamp_;
 }
 
 //******************************************************************************
@@ -283,15 +303,11 @@ int FrameBuffer::Slot::getPacketMetadata(PacketData::PacketMetadata &metadata)
 int64_t FrameBuffer::Slot::getPacketTimestamp()
 {
     // check, whether it's video or audio packet - check 1st byte
-    if (data_[0] == (unsigned char)NDNRTC_FRAMEHDR_MRKR) // video
-    {
-        shared_ptr<EncodedImage> frame = getFrame();
-
-        if (frame.get())
-            return frame->capture_time_ms_;
-    }
-    else if (data_[0] == (unsigned char)NDNRTC_AUDIOHDR_MRKR) // audio
-        return getAudioFrame().timestamp_;
+    if (NdnFrameData::isVideoData(segmentSize_, data_))
+        return NdnFrameData::getTimestamp(segmentSize_, data_);
+    
+    if (NdnAudioData::isAudioData(segmentSize_, data_))
+        return NdnAudioData::getTimestamp(segmentSize_, data_);
     
     // otherwise - error
     return RESULT_ERR;

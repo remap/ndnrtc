@@ -53,7 +53,7 @@ int NdnVideoReceiver::startFetching()
 
 //******************************************************************************
 #pragma mark - private
-void NdnVideoReceiver::playbackPacket()
+void NdnVideoReceiver::playbackPacket(int64_t packetTsLocal)
 {
     jitterTiming_.startFramePlayout();
     
@@ -85,7 +85,11 @@ void NdnVideoReceiver::playbackPacket()
     
     // get playout time (delay) for the rendered frame
     int framePlayoutTime = ((VideoPlayoutBuffer*)playoutBuffer_)->releaseAcquiredSlot();
-    int adjustedPlayoutTime = avSync_->synchronizePacket(slot, framePlayoutTime);
+    int adjustedPlayoutTime = 0;
+    
+    // if av sync has been set up
+    if (slot && avSync_.get())
+        adjustedPlayoutTime= avSync_->synchronizePacket(slot, packetTsLocal);
     
     framePlayoutTime += adjustedPlayoutTime;
     jitterTiming_.updatePlayoutTime(framePlayoutTime);

@@ -59,7 +59,7 @@ namespace ndnrtc
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
         
-        void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> avSync){
+        void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> &avSync){
             avSync_ = avSync;
         }
         
@@ -158,7 +158,8 @@ namespace ndnrtc
         virtual void switchToMode(ReceiverMode mode);
         // must be overriden by subclasses. called from playout thread
         // iteratively each time media frame should be played out
-        virtual void playbackPacket() = 0;
+        // @param packetTsLocal Local timestamp of the packet
+        virtual void playbackPacket(int64_t packetTsLocal) = 0;
         
         void requestInitialSegment();
         void pipelineInterests(FrameBuffer::Event &event);

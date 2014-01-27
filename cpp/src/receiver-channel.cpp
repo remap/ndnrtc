@@ -39,6 +39,12 @@ audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::shared
     
     receiver_->setFrameConsumer(decoder_.get());
     decoder_->setFrameConsumer(localRender_.get());
+    
+    shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer());
+    avSync->setLogger(logger_);
+    
+    receiver_->setAVSynchronizer(avSync);
+    audioReceiveChannel_->setAVSynchronizer(avSync);
 }
 
 int NdnReceiverChannel::init()
