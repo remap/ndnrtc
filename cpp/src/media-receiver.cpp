@@ -28,14 +28,18 @@ const unsigned int ndnrtc::RebufferThreshold = 3000; // if N seconds were no fra
 NdnMediaReceiver::NdnMediaReceiver(const ParamsStruct &params) :
 NdnRtcObject(params),
 pipelineThread_(*ThreadWrapper::CreateThread(pipelineThreadRoutine, this)),
+bookingThread_(*ThreadWrapper::CreateThread(bookingThreadRoutine, this)),
 assemblingThread_(*ThreadWrapper::CreateThread(assemblingThreadRoutine, this)),
 playoutThread_(*ThreadWrapper::CreateThread(playoutThreadRoutine, this, kRealtimePriority)),
 faceCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 pitCs_(*CriticalSectionWrapper::CreateCriticalSection()),
+dataCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 mode_(ReceiverModeCreated),
 face_(nullptr),
 pendingInterests_(),
 pipelineTimer_(*EventWrapper::Create()),
+needMoreFrames_(*EventWrapper::Create()),
+modeSwitchedEvent_(*EventWrapper::Create()),
 avSync_(nullptr)
 {
     interestFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
@@ -127,10 +131,15 @@ int NdnMediaReceiver::startFetching()
         notifyError(RESULT_ERR, "can't start playout thread");
         res = RESULT_ERR;
     }
+    else
+        if (!bookingThread_.Start(tid))
+        {
+            notifyError(RESULT_ERR, "can't start booking thread");
+            res = RESULT_ERR;
+        }
     
     if (RESULT_FAIL(res))
         stopFetching();
-    
     
     if (!playoutThread_.Start(tid))
     {
@@ -153,18 +162,24 @@ int NdnMediaReceiver::stopFetching()
     
     pipelineTimer_.StopTimer();
     pipelineTimer_.Set();
+    needMoreFrames_.Set();
+    
     assemblingThread_.SetNotAlive();
     pipelineThread_.SetNotAlive();
+    bookingThread_.SetNotAlive();
     TRACE("release buf");
     frameBuffer_.release();
     
     assemblingThread_.Stop();
     pipelineThread_.Stop();
+    bookingThread_.Stop();
     TRACE("stopped threads");
     
     jitterTiming_.stop();
+    modeSwitchedEvent_.Set();
     playoutThread_.SetNotAlive();
     playoutThread_.Stop();
+    modeSwitchedEvent_.Reset();
     
     switchToMode(ReceiverModeInit);
     return RESULT_OK;
@@ -335,6 +350,10 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     nReceived_++;
     emptyJitterCounter_ = 0;
     
+    // now check, whether we need more frames to request
+    if (needMoreFrames())
+        needMoreFrames_.Set();
+    
     DBG("[RECEIVER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
         playoutBuffer_->getJitterSize());
@@ -373,7 +392,9 @@ void NdnMediaReceiver::onMissedFrame(unsigned int frameNo)
 }
 void NdnMediaReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
 {
-    // should free all previous frames
+    // now check, whether we need more frames to request
+    if (needMoreFrames())
+        needMoreFrames_.Set();
 }
 void NdnMediaReceiver::onJitterBufferUnderrun()
 {
@@ -400,10 +421,6 @@ bool NdnMediaReceiver::processInterests()
     
     switch (ev.type_)
     {
-        case FrameBuffer::Event::EventTypeFreeSlot:
-            res = onFreeSlot(ev);
-            break;
-            
         case FrameBuffer::Event::EventTypeFirstSegment:
             res = onFirstSegmentReceived(ev);
             break;
@@ -421,6 +438,28 @@ bool NdnMediaReceiver::processInterests()
     }
     
     //    TRACE("res %d", res);
+    return res;
+}
+
+bool NdnMediaReceiver::processBookingSlots()
+{
+    bool res = true;
+    int eventMask = FrameBuffer::Event::EventTypeFreeSlot;
+    
+    FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventMask);
+    
+    switch (ev.type_) {
+        case FrameBuffer::Event::EventTypeFreeSlot:
+            TRACE("on free slot %d %d", getJitterBufferSizeMs(),
+                  getPipelinerBufferSizeMs());
+            res = onFreeSlot(ev);
+            break;
+            
+        default:
+            NDNERROR("got unexpected event: %d. ignoring", ev.type_);
+            break;
+    }
+    
     return res;
 }
 
@@ -458,6 +497,8 @@ bool NdnMediaReceiver::processPlayout()
         else if (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)
             playbackPacket(now);
     }
+    else
+        modeSwitchedEvent_.Wait(WEBRTC_EVENT_INFINITE);
     
     return true;
 }
@@ -477,17 +518,22 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         {
             mode_ = mode;
             // setup pipeliner thread params
-            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
+//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;            
+            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
+                                    FrameBuffer::Event::EventTypeTimeout;
+            needMoreFrames_.Reset();
         }
             break;
             
         case ReceiverModeFlushed:
         {
             mode_ = mode;
-            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
+
+//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
             
             playoutBuffer_->flush();
             frameBuffer_.flush();
+            needMoreFrames_.Set();
             
             INFO("switched to mode: Flushed");
         }
@@ -496,8 +542,8 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeChase:
         {
             mode_ = mode;
-            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
-            FrameBuffer::Event::EventTypeTimeout;
+//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
+//            FrameBuffer::Event::EventTypeTimeout;
             INFO("switched to mode: Chase");
         }
             break;
@@ -505,12 +551,13 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeFetch:
         {
             mode_ = mode;
-            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot |
-            FrameBuffer::Event::EventTypeFirstSegment |
-            FrameBuffer::Event::EventTypeTimeout;
+//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot |
+//                                    FrameBuffer::Event::EventTypeFirstSegment |
+//                                      FrameBuffer::Event::EventTypeTimeout;
             
             playoutBuffer_->setMinJitterSize(NdnRtcUtils::
                                              toFrames(MinJitterSizeMs, currentProducerRate_));
+            needMoreFrames_.Set();
             
             TRACE("set initial jitter size for %d ms (%d frames)",
                   MinJitterSizeMs,
@@ -524,6 +571,8 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
             WARN("unable to switch to unknown mode %d", mode);
             break;
     }
+    
+    modeSwitchedEvent_.Set();
 }
 
 void NdnMediaReceiver::pipelineInterests(FrameBuffer::Event &event)
@@ -648,6 +697,20 @@ void NdnMediaReceiver::cleanupLateFrame(unsigned int frameNo)
     frameBuffer_.markSlotFree(frameNo);
 }
 
+void NdnMediaReceiver::rebuffer()
+{
+    DBG("*** REBUFFERING *** [#%d]", ++rebufferingEvent_);
+    jitterTiming_.flush();
+    rtt_ = 0;
+    srtt_ = StartSRTT;
+    excludeFilter_ = pipelinerFrameNo_;
+    switchToMode(ReceiverModeFlushed);
+    needMoreFrames_.Reset();
+    
+    if (avSync_.get())
+        avSync_->reset();
+}
+
 NdnMediaReceiver::PendingInterestStruct
 NdnMediaReceiver::getPisForInterest(const string &iuri,
                                     bool removeFromPITs)
@@ -672,35 +735,24 @@ NdnMediaReceiver::getPisForInterest(const string &iuri,
     return pis;
 }
 
-void NdnMediaReceiver::clearPITs()
+unsigned int NdnMediaReceiver::getJitterBufferSizeMs()
 {
-    pitCs_.Enter();
+    CriticalSectionScoped scopedCs(&dataCs_);
     
-    PitMap::iterator it;
-    
-    for (it = pendingInterests_.begin(); it != pendingInterests_.end(); ++it)
-    {
-        PendingInterestStruct pis = it->second;
-        face_->removePendingInterest(pis.interestID_);
-    }
-    
-    pendingInterests_.clear();
-    pendingInterestsUri_.clear();
-    
-    pitCs_.Leave();
+    return NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
+                                 currentProducerRate_);
 }
 
-void NdnMediaReceiver::rebuffer()
+unsigned int NdnMediaReceiver::getPipelinerBufferSizeMs()
 {
-    DBG("*** REBUFFERING *** [#%d]", ++rebufferingEvent_);
-    jitterTiming_.flush();
-    rtt_ = 0;
-    srtt_ = StartSRTT;
-    excludeFilter_ = pipelinerFrameNo_;
-    switchToMode(ReceiverModeFlushed);
+    CriticalSectionScoped scopedCs(&dataCs_);
     
-    if (avSync_.get())
-        avSync_->reset();
+    int framesAssembling = frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
+    pipelinerBufferSize_ = frameBuffer_.getStat(FrameBuffer::Slot::StateNew) +
+    framesAssembling;
+    
+    return NdnRtcUtils::toTimeMs(pipelinerBufferSize_,
+                                 currentProducerRate_);
 }
 
 //******************************************************************************
@@ -722,30 +774,20 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             
         case ReceiverModeFetch:
         {
-            int framesAssembling = frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling);
-            pipelinerBufferSize_ = frameBuffer_.getStat(FrameBuffer::Slot::StateNew) +
-                                        framesAssembling;
-            
-            int framesInJitterMs = NdnRtcUtils::toTimeMs(playoutBuffer_->getJitterSize(),
-                                                         currentProducerRate_);
-            int framesPendingMs = NdnRtcUtils::toTimeMs(pipelinerBufferSize_,
-                                                        currentProducerRate_);
-            
-            bool jitterFull = framesInJitterMs >= MinJitterSizeMs;
-            bool hasEnoughPending = framesPendingMs >= MinJitterSizeMs;
+            unsigned pipelinerBufferSizeMs = getPipelinerBufferSizeMs();
+            unsigned jitterBufferSizeMs = getJitterBufferSizeMs();
             
             // if current jitter buffer size + number of awaiting frames
             // is bigger than preferred size, skip pipelining
-            if (jitterFull || hasEnoughPending)
+            if (!needMoreFrames())
             {
-                DBG("[PIPELINING] not issuing further - jitter ms %d (%d), "
-                    "pipeliner ms %d (%d)",
-                    playoutBuffer_->getJitterSize(),
-                    framesInJitterMs,
-                    pipelinerBufferSize_,
-                    framesPendingMs);
+                DBG("[PIPELINING] not issuing further - jitter %d ms, "
+                    "pipeliner %d ms",
+                    jitterBufferSizeMs,
+                    pipelinerBufferSizeMs);
                 
                 frameBuffer_.reuseEvent(event);
+                needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
             }
             else
             {
@@ -754,7 +796,7 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                     (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)?
                     pipelinerFrameNo_ - playoutBuffer_->getPlayheadPointer() :
                     pipelinerFrameNo_ - firstFrame_,
-                    framesInJitterMs, framesPendingMs);
+                    jitterBufferSizeMs, pipelinerBufferSizeMs);
                 
                 frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t "
                                   "\t%d \t \t \t%.2f \t%d",
@@ -777,6 +819,13 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                 
                 pipelinerFrameNo_++;
             }
+        }
+            break;
+            
+        case ReceiverModeChase:
+        {
+            TRACE("in chase mode - waiting for more frames needed");
+            needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
         }
             break;
         default:
@@ -807,8 +856,6 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
             // otherwise - it should have stored last pipelined frame
             if (event.frameNo_ >= excludeFilter_)
             {
-                switchToMode(ReceiverModeFetch);
-                
                 TRACE("buffers flush");
                 playoutBuffer_->flush();
                 frameBuffer_.flush();
@@ -816,6 +863,7 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
                 pipelinerFrameNo_ = event.frameNo_+ NdnRtcUtils::toFrames(rtt_/2., params_.producerRate);
                 firstFrame_ = pipelinerFrameNo_;
                 
+                switchToMode(ReceiverModeFetch);
                 DBG("[PIPELINER] start fetching from %d...", pipelinerFrameNo_);
             }
             else
@@ -902,3 +950,4 @@ bool NdnMediaReceiver::onError(FrameBuffer::Event &event)
     NDNERROR("got error event on frame buffer");
     return false; // stop pipelining
 }
+

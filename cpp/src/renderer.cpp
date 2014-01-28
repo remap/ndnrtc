@@ -80,9 +80,6 @@ int NdnRenderer::startRendering(const string &windowName)
     
     TRACE("[BUGTRACE] STARTED RENDERER");
     isRendering_ = true;
-
-    // [rendering bug] - sleep for 200ms after initialization call
-    usleep(200000);
     
     return 0;
 }

@@ -144,11 +144,6 @@ public:
     {
         nReceived_++;
         
-        cout << endl << "****" << endl;
-        for (int i = 0; i < len; i++)
-            cout << data[i];
-        cout << endl << "--end" << endl;
-        
         voe_network_->ReceivedRTPPacket(channel_, data, len);
     }
     

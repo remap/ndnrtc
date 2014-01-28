@@ -23,7 +23,6 @@ TEST(CameraCapturerParamsTest, CheckDefaults)
 {
     ParamsStruct p = DefaultParams;
     
-    EXPECT_EQ(0, p.captureDeviceId);
     EXPECT_EQ(640, p.captureWidth);
     EXPECT_EQ(480, p.captureHeight);
     EXPECT_EQ(30, p.captureFramerate);

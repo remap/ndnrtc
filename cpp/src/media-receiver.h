@@ -124,10 +124,21 @@ namespace ndnrtc
         webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchronous
                                                     // access to the NDN face
                                                     // object
-        webrtc::CriticalSectionWrapper &pitCs_ DEPRECATED;     // PIT table synchronization
-        webrtc::ThreadWrapper &pipelineThread_, &assemblingThread_,
+        webrtc::CriticalSectionWrapper &pitCs_,
+                                       &dataCs_;    // internal data access
+                                                    // critical section
+        webrtc::ThreadWrapper &pipelineThread_,
+                                &bookingThread_,
+                                &assemblingThread_,
                                 &playoutThread_;
-        webrtc::EventWrapper &pipelineTimer_;
+        webrtc::EventWrapper &pipelineTimer_,
+                                &needMoreFrames_; // this event is setup each
+                                                  // time more frames should be
+                                                  // fetched - this happens
+                                                  // either when jitter buffer
+                                                  // or pipeliner buffer decreases
+        webrtc::EventWrapper &modeSwitchedEvent_; // triggered whenever receiver
+                                                  // switches to a new mode
         
         // audio/video synchronizer
         shared_ptr<AudioVideoSynchronizer> avSync_;
@@ -136,6 +147,10 @@ namespace ndnrtc
         static bool pipelineThreadRoutine(void *obj)
         {
             return ((NdnMediaReceiver*)obj)->processInterests();
+        }
+        static bool bookingThreadRoutine(void *obj)
+        {
+            return ((NdnMediaReceiver*)obj)->processBookingSlots();
         }
         static bool assemblingThreadRoutine(void *obj)
         {
@@ -147,6 +162,8 @@ namespace ndnrtc
         
         // thread main functions (called iteratively by static routines)
         virtual bool processInterests();
+        // process booking slots and issusing inital interests for the data
+        virtual bool processBookingSlots();
         virtual bool processAssembling();
         virtual bool processPlayout();
         
@@ -179,6 +196,18 @@ namespace ndnrtc
         unsigned int getTimeout() const;
         unsigned int getFrameBufferSize() const;
         unsigned int getFrameSlotSize() const;
+        
+        unsigned int getJitterBufferSizeMs();
+        unsigned int getPipelinerBufferSizeMs();
+        // based on the current sizes of jitter and pipeline buffers, determines
+        // whether more frames need to be fetched
+        bool needMoreFrames(){
+            bool jitterFull = getJitterBufferSizeMs() >= MinJitterSizeMs;
+            bool hasEnoughPending = getPipelinerBufferSizeMs() >= MinJitterSizeMs;
+
+            return !(jitterFull || hasEnoughPending) &&
+                    mode_ != ReceiverModeChase;
+        }
         
         // frame buffer events handlers for pipeliner
         virtual bool onFirstSegmentReceived(FrameBuffer::Event &event);
