@@ -24,7 +24,7 @@ NdnVideoReceiver::NdnVideoReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params),
 frameConsumer_(nullptr)
 {
-    fetchAhead_ = 9; // fetch segments ahead
+    fetchAhead_ = 20; // fetch segments ahead
     playoutBuffer_ = new VideoPlayoutBuffer();
     frameLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
                                  "fetch-vstat-%s.log", params.producerId);

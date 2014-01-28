@@ -204,7 +204,7 @@ TEST(TestCodec, TestEncodeSampleFrame)
 
 TEST_F(NdnVideoCoderTest, TestEncodeSequence)
 {
-    FrameReader fr("resources/sample_futurama.yuv");
+    FrameReader fr("resources/bipbop30.yuv");
     
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
     

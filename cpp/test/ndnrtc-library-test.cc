@@ -445,4 +445,3 @@ TEST_F(NdnRtcLibraryTester, TestEmptyUsername)
     EXPECT_EQ(RESULT_ERR, library_->startFetching(""));
     EXPECT_STREQ("error", receivedState_.c_str());
 }
-

@@ -392,6 +392,8 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
         
         freeSlots_.push_back(slot);
         notifyBufferEventOccurred(-1, -1, Event::EventTypeFreeSlot, slot.get());
+        TRACE("free slot - pending %d, free %d", pendingEvents_.size(),
+              freeSlots_.size());
     }
     
     updateStat(Slot::StateFree, bufferSize_);
@@ -405,6 +407,9 @@ void FrameBuffer::flush()
     //    bufferEvent_.Reset();
     {
         CriticalSectionScoped scopedCs(&syncCs_);
+        TRACE("flushing frame buffer - size %d, pending %d, free %d",
+              frameSlotMapping_.size(), pendingEvents_.size(),
+              freeSlots_.size());
         
         for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
         {
@@ -419,6 +424,8 @@ void FrameBuffer::flush()
                 
                 updateStat(slot->getState(), 1);
             }
+            else
+                TRACE("trying to flush locked slot %d", slot->getFrameNumber());
         }
         fullTimeoutCase_ = 0;
         timeoutSegments_.clear();
@@ -687,6 +694,7 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
         else
         {
             // if couldn't find event we are looking for - wait for the event to occur
+            TRACE("wait for events");
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
         }
     }
