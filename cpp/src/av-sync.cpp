@@ -33,7 +33,7 @@ int AudioVideoSynchronizer::synchronizePacket(FrameBuffer::Slot *slot,
                           slot->getPacketTimestamp(), packetTsLocal);
     
     if (slot->isVideoPacket())
-        return syncPacket(videoSyncData_, videoSyncData_,
+        return syncPacket(videoSyncData_, audioSyncData_,
                           slot->getPacketTimestamp(), packetTsLocal);
     
     return 0;
@@ -56,6 +56,8 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
                                        int64_t packetTsRemote,
                                        int64_t packetTsLocal)
 {
+    CriticalSectionScoped scopedCs(&syncCs_);
+ 
     syncData.cs_.Enter();
     
     TRACE("[SYNC] %s: synchronizing packet %ld (%ld)",
@@ -68,17 +70,9 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     syncData.lastPacketTsLocal_ = packetTsLocal;
     syncData.lastPacketTsRemote_ = packetTsRemote;
     
-    // check, whether the packet reached the sync point
-    bool shouldHit = false;
-    
-    {
-        CriticalSectionScoped scopedCs(&syncCs_);
-        shouldHit = initialized_;
-    } // critical section
-    
     int drift = 0;
     
-    if (shouldHit)
+    if (initialized_)
     {
         CriticalSectionScoped scopedCs(&pairedSyncData.cs_);
         
@@ -111,17 +105,15 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     return drift;
 }
 
+// should be called from thread-safe place
 void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
                                         int64_t firstPacketTsRemote,
                                         int64_t localTimestamp)
 {
-    CriticalSectionScoped scopedCs(&syncData.cs_);
     TRACE("[SYNC] %s: initalize", syncData.name_);
     
-    syncCs_.Enter();
     syncData.initialized_ = true;
     initialized_ = audioSyncData_.initialized_ && videoSyncData_.initialized_;
-    syncCs_.Leave();
     
     syncData.lastPacketTsLocal_ = localTimestamp;
     syncData.lastPacketTsRemote_ = firstPacketTsRemote;

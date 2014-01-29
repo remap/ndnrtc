@@ -352,7 +352,10 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     
     // now check, whether we need more frames to request
     if (needMoreFrames())
+    {
+        TRACE("UNLOCKING needMoreFrames");
         needMoreFrames_.Set();
+    }
     
     DBG("[RECEIVER] received frame %d (type: %s). jitter size: %d",
         frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
@@ -394,7 +397,10 @@ void NdnMediaReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
 {
     // now check, whether we need more frames to request
     if (needMoreFrames())
+    {
+        TRACE("UNLOCKING needMoreFrames");
         needMoreFrames_.Set();
+    }
 }
 void NdnMediaReceiver::onJitterBufferUnderrun()
 {
@@ -414,7 +420,10 @@ void NdnMediaReceiver::onJitterBufferUnderrun()
 #pragma mark - private
 bool NdnMediaReceiver::processInterests()
 {
-    //    TRACE("wait event. size %d", frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
+    TRACE("[PIPELINER] LOCK on wait for event. new: %d free: %d assembling %d",
+          frameBuffer_.getStat(FrameBuffer::Slot::StateNew),
+          frameBuffer_.getStat(FrameBuffer::Slot::StateFree),
+          frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling));
     
     bool res = true;
     FrameBuffer::Event ev = frameBuffer_.waitForEvents(pipelinerEventsMask_);
@@ -445,6 +454,9 @@ bool NdnMediaReceiver::processBookingSlots()
 {
     bool res = true;
     int eventMask = FrameBuffer::Event::EventTypeFreeSlot;
+    
+    TRACE("[BOOKING] LOCK on wait for free slots. free %d",
+          frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
     
     FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventMask);
     
@@ -518,7 +530,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         {
             mode_ = mode;
             // setup pipeliner thread params
-//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;            
             pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
                                     FrameBuffer::Event::EventTypeTimeout;
             needMoreFrames_.Reset();
@@ -528,8 +539,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeFlushed:
         {
             mode_ = mode;
-
-//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot;
             
             playoutBuffer_->flush();
             frameBuffer_.flush();
@@ -542,8 +551,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeChase:
         {
             mode_ = mode;
-//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
-//            FrameBuffer::Event::EventTypeTimeout;
             INFO("switched to mode: Chase");
         }
             break;
@@ -551,10 +558,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeFetch:
         {
             mode_ = mode;
-//            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFreeSlot |
-//                                    FrameBuffer::Event::EventTypeFirstSegment |
-//                                      FrameBuffer::Event::EventTypeTimeout;
-            
             playoutBuffer_->setMinJitterSize(NdnRtcUtils::
                                              toFrames(MinJitterSizeMs, currentProducerRate_));
             needMoreFrames_.Set();
@@ -769,6 +772,8 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             switchToMode(ReceiverModeChase);
             frameBuffer_.bookSlot(0);
             requestInitialSegment();
+
+            needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
         }
             break;
             
@@ -787,6 +792,7 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                     pipelinerBufferSizeMs);
                 
                 frameBuffer_.reuseEvent(event);
+                TRACE("LOCK needMoreFrames - buffers full");
                 needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
             }
             else
@@ -821,14 +827,9 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             }
         }
             break;
-            
-        case ReceiverModeChase:
-        {
-            TRACE("in chase mode - waiting for more frames needed");
-            needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
-        }
-            break;
         default:
+            TRACE("onFreeSlot: switch-default case");
+            frameBuffer_.reuseEvent(event);
             break;
     }
     

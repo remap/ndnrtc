@@ -482,7 +482,7 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
         slot->markFree();
         freeSlots_.push_back(slot);
         frameSlotMapping_.erase(frameNumber);
-        
+        TRACE("added free slot. size %d", freeSlots_.size());
         syncCs_.Leave();
         updateStat(slot->getState(), 1);
         
@@ -694,7 +694,12 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
         else
         {
             // if couldn't find event we are looking for - wait for the event to occur
-            TRACE("wait for events");
+            bufferEventsRWLock_.AcquireLockExclusive();
+            TRACE("wait for events - mapped %d free %d pending %d",
+                  frameSlotMapping_.size(),
+                  freeSlots_.size(),
+                  pendingEvents_.size());
+            bufferEventsRWLock_.ReleaseLockExclusive();
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
         }
     }
@@ -712,6 +717,7 @@ unsigned int FrameBuffer::getStat(Slot::State state)
 
 void FrameBuffer::reuseEvent(FrameBuffer::Event &event)
 {
+    TRACE("re-use event %d", event.type_);
     notifyBufferEventOccurred(event.frameNo_, event.segmentNo_,
                               event.type_, event.slot_);
 }
@@ -729,6 +735,11 @@ void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int s
     
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.push_back(ev);
+    TRACE("added event %d mapped %d free %d pending %d",
+          eType,
+          frameSlotMapping_.size(),
+          freeSlots_.size(),
+          pendingEvents_.size());
     bufferEventsRWLock_.ReleaseLockExclusive();
     
     // notify about event
