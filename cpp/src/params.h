@@ -140,11 +140,11 @@ namespace ndnrtc
         
         30,     // codec framerate
         60,     // gop
-        100,    // codec start bitrate
-        1000,   // codec max bitrate
+        2000,    // codec start bitrate
+        10000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
-        0,      // instruct encoder to drop frames if cannot keep up with the
+        1,      // instruct encoder to drop frames if cannot keep up with the
                 // maximum bitrate
         
         "localhost",    // network ndnd remote host
