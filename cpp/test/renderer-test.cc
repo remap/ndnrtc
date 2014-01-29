@@ -17,7 +17,7 @@ using namespace webrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(CocoaRenderWindow, TestCreateDestroy)
 {
     void *win = createCocoaRenderWindow("NoName", 640, 480);
@@ -78,7 +78,7 @@ TEST(CocoaRenderWindow, TestCreateSeveral)
         WAIT(200);
     }
 }
-#endif
+
 //********************************************************************************
 /**
  * @name NdnRenderer class tests
@@ -135,7 +135,7 @@ protected:
         return true;
     }
 };
-#if 0
+
 TEST_F(NdnRendererTester, CreateDelete)
 {
     NdnRenderer *nr = new NdnRenderer(0,p_);
@@ -203,63 +203,14 @@ TEST_F(NdnRendererTester, TestInitAndStart)
     r.stopRendering();
 }
 
-TEST_F(NdnRendererTester, TestStartStopStart)
-{
-    FrameReader fr("resources/sample_futurama.yuv");
-    r_ = new NdnRenderer(1,p_);
-    
-    r_->setObserver(this);
-    
-    r_->init();
-    WAIT(1000);
-    
-    r_->startRendering("sample");
-    WAIT(1000);
-    
-    unsigned int t;
-    processThread_.Start(t);
-    
-    webrtc::I420VideoFrame frame;
-    curFrame_ = 0;
-    shutdown_ = 100;
-    
-    unsigned int nTotal = 200;
-    
-    while (fr.readFrame(frame))
-    {
-        deliver_cs_->Enter();
-        curFrame_++;
-        
-        if (curFrame_ == shutdown_)
-            r_->stopRendering();
-
-        if (curFrame_ == shutdown_+10)
-            r_->startRendering("sample. restart");
-        
-        deliverFrame_.SwapFrame(&frame);
-        deliver_cs_->Leave();
-        
-        deliverEvent_.Set();
-        
-        usleep(30000);
-        
-        if (curFrame_ == nTotal)
-            break;
-    }
-    
-    r_->stopRendering();
-    delete r_;
-}
-#endif
 TEST_F(NdnRendererTester, TestRender)
 {
-    FrameReader fr("resources/bipbop.yuv");
+    FrameReader fr("resources/bipbop10.yuv");
     
     NdnRenderer r(1,p_);
     
     r.setObserver(this);
     r.init();
-    WAIT(1000);
     r.startRendering("sample");
     WAIT(1000);
     
@@ -287,7 +238,30 @@ TEST_F(NdnRendererTester, TestRender)
     LOG_TRACE("total frames number: %d", nFrames);
     
     r.stopRendering();
-//    processThread_.SetNotAlive();
-    deliverEvent_.Set();
-//    processThread_.Stop();
+}
+
+class RendererTester : public NdnRenderer
+{
+public:
+    RendererTester(int id, const ParamsStruct &params):
+    NdnRenderer(id, params){}
+    
+    void* getRenderWindow(){
+        return renderWindow_;
+    }
+};
+
+// covers bug #107 http://redmine.named-data.net/issues/1107
+TEST_F(NdnRendererTester, TestBlackRender)
+{
+    for (int i = 0; i < 10; i++)
+    {
+        RendererTester r(1,p_);
+        
+        r.init();
+        r.startRendering("sample");
+        EXPECT_FALSE(getGLView(r.getRenderWindow()) == 0);
+        r.stopRendering();
+        usleep(10000);
+    }
 }
