@@ -60,6 +60,8 @@ int PlayoutBuffer::init(FrameBuffer *buffer, double startPacketRate,
 
 void PlayoutBuffer::flush()
 {
+    TRACE("flushing jitter buffer");
+    
     while (jitterBuffer_.size())
     {
         FrameBuffer::Slot *slot = jitterBuffer_.top();
@@ -113,9 +115,8 @@ FrameBuffer::Slot* PlayoutBuffer::acquireNextSlot(bool incCounter)
             break;
     }
     
-    playoutCs_.Leave();
-    
     adjustPlayoutTiming(slot);
+    playoutCs_.Leave();    
     
     if (missingFrame_ && callback_)
         callback_->onMissedFrame(playheadPointer_);

@@ -254,7 +254,34 @@ protected:
     webrtc::VoiceEngine *voiceEngine_;
     webrtc::VoEBase *voe_base_;
     webrtc::VoENetwork *voe_network_;
-    webrtc::Config config_;};
+    webrtc::Config config_;
+};
+
+TEST_F(AudioSenderTester, TestAudioData)
+{
+    int64_t ts = NdnRtcUtils::millisecondTimestamp();
+    NdnAudioData::AudioPacket p = {false, ts,
+        100, (unsigned char*)malloc(100)};
+    NdnAudioData data(p);
+    
+    {
+        EXPECT_TRUE(NdnAudioData::isAudioData(data.getLength(), data.getData()));
+        
+        unsigned char *random = (unsigned char *)malloc(100);
+        EXPECT_FALSE(NdnAudioData::isAudioData(100, random));
+        free(random);
+    }
+    
+    {
+        EXPECT_EQ(ts, NdnAudioData::getTimestamp(data.getLength(), data.getData()));
+        
+        unsigned char *random = (unsigned char *)malloc(100);
+        EXPECT_EQ(-1, NdnAudioData::getTimestamp(100, random));
+        free(random);
+    }
+    
+    free(p.data_);
+}
 
 TEST_F(AudioSenderTester, TestSend)
 {
@@ -318,3 +345,4 @@ TEST_F(AudioSenderTester, TestSend)
     EXPECT_LT(rtcpSent_, rtpSent_);
     WAIT(params_.freshness*1000);
 }
+

@@ -386,7 +386,6 @@ protected:
         return true; //!fullyBooked_;
     }
     
-    
     // booker thread mimics ndn-rtc real-app thread which pipelines interests for the segments and frames
     webrtc::CriticalSectionWrapper *bookingCs_;
     vector<int> bookedFrames_;
@@ -509,7 +508,6 @@ protected:
         providerGotEvent_ = false;
         providerWaitingEvents_ = FrameBuffer::Event::EventTypeReady;
     }
-    
     
     // playout thread - sets up playout buffer based on current frame buffer
     // asks playout buffer for encoded frames with frameRate frequency

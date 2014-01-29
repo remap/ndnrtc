@@ -83,6 +83,23 @@ int NdnAudioChannel::SendRTCPPacket(int channel, const void *data, int len)
 
 //******************************************************************************
 //******************************************************************************
+#pragma mark - construction/destruction
+NdnAudioReceiveChannel::NdnAudioReceiveChannel(const ParamsStruct &params,
+                                               webrtc::VoiceEngine *voiceEngine):
+NdnAudioChannel(params, voiceEngine),
+audioReceiver_(new NdnAudioReceiver(params))
+{
+    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                  "fetch-achannel-%s.log",
+                                  params.producerId));
+    isLoggerCreated_ = true;
+    
+    audioReceiver_->setObserver(this);
+    audioReceiver_->setFrameConsumer(this);
+    audioReceiver_->setLogger(logger_);
+}
+
+//******************************************************************************
 #pragma mark - public
 int NdnAudioReceiveChannel::init(shared_ptr<Face> &face)
 {
@@ -90,14 +107,6 @@ int NdnAudioReceiveChannel::init(shared_ptr<Face> &face)
     
     if (RESULT_FAIL(res))
         return res;
-    
-    if (!audioReceiver_)
-    {
-        audioReceiver_ = new NdnAudioReceiver(params_);
-        audioReceiver_->setObserver(this);
-        audioReceiver_->setFrameConsumer(this);
-        audioReceiver_->setLogger(logger_);
-    }
     
     if (RESULT_GOOD((res = audioReceiver_->init(face))))
     {

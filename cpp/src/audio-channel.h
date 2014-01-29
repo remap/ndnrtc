@@ -16,6 +16,7 @@
 #include "ndnrtc-object.h"
 #include "audio-receiver.h"
 #include "audio-sender.h"
+#include "av-sync.h"
 
 //#define AUDIO_OFF // disable audio channel
 
@@ -46,18 +47,17 @@ namespace ndnrtc {
     public IAudioPacketConsumer
     {
     public:
-        NdnAudioReceiveChannel(const ParamsStruct &params, webrtc::VoiceEngine *voiceEngine):
-        NdnAudioChannel(params, voiceEngine)
-        {
-            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
-                                          "fetch-achannel-%s.log",
-                                          params.producerId));
-            isLoggerCreated_ = true;
-        }
+        NdnAudioReceiveChannel(const ParamsStruct &params,
+                               webrtc::VoiceEngine *voiceEngine);
         
         int init(shared_ptr<Face> &face);
         int start();
         int stop();
+        
+        void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> &avSync)
+        {
+            audioReceiver_->setAVSynchronizer(avSync);
+        }
         
     protected:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);

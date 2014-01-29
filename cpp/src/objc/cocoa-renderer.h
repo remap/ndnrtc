@@ -18,5 +18,6 @@ void createDefaultCocoaMenu();
 void *createCocoaRenderWindow(const char *winName, int width, int height);
 void setWindowTitle(const char *title, void *window);
 void destroyCocoaRenderWindow(void *window);
+void* getGLView(void *window);
 
 #endif /* defined(__ndnrtc__cocoa_renderer__) */

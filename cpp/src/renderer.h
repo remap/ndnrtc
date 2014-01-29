@@ -35,7 +35,7 @@ namespace ndnrtc
         int stopRendering();
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
-    private:
+    protected:
         int rendererId_;
         bool isRendering_ = false;
         void *renderWindow_ = NULL;

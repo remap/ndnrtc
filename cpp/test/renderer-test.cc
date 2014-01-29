@@ -203,83 +203,65 @@ TEST_F(NdnRendererTester, TestInitAndStart)
     r.stopRendering();
 }
 
-TEST_F(NdnRendererTester, TestStartStopStart)
-{
-    FrameReader fr("resources/sample_futurama.yuv");
-    r_ = new NdnRenderer(1,p_);
-    
-    r_->setObserver(this);
-    
-    r_->init();
-    WAIT(1000);
-    
-    r_->startRendering("sample");
-    WAIT(1000);
-    
-    unsigned int t;
-    processThread_.Start(t);
-    
-    webrtc::I420VideoFrame frame;
-    curFrame_ = 0;
-    shutdown_ = 100;
-    
-    unsigned int nTotal = 200;
-    
-    while (fr.readFrame(frame))
-    {
-        deliver_cs_->Enter();
-        curFrame_++;
-        
-        if (curFrame_ == shutdown_)
-            r_->stopRendering();
-
-        if (curFrame_ == shutdown_+10)
-            r_->startRendering("sample. restart");
-        
-        deliverFrame_.SwapFrame(&frame);
-        deliver_cs_->Leave();
-        
-        deliverEvent_.Set();
-        
-        usleep(30000);
-        
-        if (curFrame_ == nTotal)
-            break;
-    }
-    
-    r_->stopRendering();
-    delete r_;
-}
-#if 0
 TEST_F(NdnRendererTester, TestRender)
 {
-    FrameReader fr("resources/sample_futurama.yuv");
-//    FrameReader fr("resources/sample.yuv");
+    FrameReader fr("resources/bipbop10.yuv");
     
     NdnRenderer r(1,p_);
     
     r.setObserver(this);
     r.init();
-    WAIT(1000);
     r.startRendering("sample");
     WAIT(1000);
     
-    webrtc::I420VideoFrame frame, deliveredFrame;
+    webrtc::I420VideoFrame frame, nextFrame;
     unsigned int nFrames = 0;
     
-    while (fr.readFrame(frame))
+    if (fr.readFrame(frame) >= 0)
     {
-        deliveredFrame.CopyFrame(frame);
-        nFrames++;
-        r.onDeliverFrame(deliveredFrame);
-        usleep(30000);
+        while (fr.readFrame(nextFrame) >= 0)
+        {
+            // use saved render time for calculating rendering delay
+            int sleepMs = nextFrame.render_time_ms()-frame.render_time_ms();
+            
+            nFrames++;
+            // set current render timestamp (otherwise renderer will not work)
+            frame.set_render_time_ms(TickTime::MillisecondTimestamp());
+            
+            r.onDeliverFrame(frame);
+            frame.SwapFrame(&nextFrame);
+            
+            usleep(sleepMs*1000);
+        }
     }
     
-    TRACE("total frames number: %d", nFrames);
+    LOG_TRACE("total frames number: %d", nFrames);
     
     r.stopRendering();
-    processThread_.SetNotAlive();
-    deliverEvent_.Set();
-    processThread_.Stop();
 }
-#endif
+
+class RendererTester : public NdnRenderer
+{
+public:
+    RendererTester(int id, const ParamsStruct &params):
+    NdnRenderer(id, params){}
+    
+    void* getRenderWindow(){
+        return renderWindow_;
+    }
+};
+
+// covers bug #107 http://redmine.named-data.net/issues/1107
+TEST_F(NdnRendererTester, TestBlackRender)
+{
+    for (int i = 0; i < 10; i++)
+    {
+        RendererTester r(1,p_);
+        
+        r.init();
+        r.startRendering("sample");
+        EXPECT_FALSE(getGLView(r.getRenderWindow()) == 0);
+        r.stopRendering();
+        usleep(10000);
+    }
+}

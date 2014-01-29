@@ -14,6 +14,7 @@
 #include "frame-buffer.h"
 #include "playout-buffer.h"
 #include "media-sender.h"
+#include "av-sync.h"
 
 const double StartSRTT = 20.; // default SRTT value to start from
 
@@ -58,6 +59,10 @@ namespace ndnrtc
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
         
+        void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> &avSync){
+            avSync_ = avSync;
+        }
+        
         // overriden from LoggerObject
         void setLogger(NdnLogger *logger);
         
@@ -81,6 +86,8 @@ namespace ndnrtc
 
         NdnLogger *frameLogger_;
         long pipelinerFrameNo_;
+        unsigned int pipelinerBufferSize_ = 0; // pipeliner buffer size -
+                                               // number of pending frames
         unsigned int excludeFilter_ = 0; // used for rebufferings
         int pipelinerEventsMask_, interestTimeoutMs_, nTimeoutsKeyFrame_ = 0;
         unsigned int producerSegmentSize_;
@@ -95,7 +102,8 @@ namespace ndnrtc
         unsigned int rebufferingEvent_ = 0;
         unsigned int nReceived_ = 0, nLost_ = 0, nPlayedOut_ = 0, nMissed_ = 0;
         unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_;
-        unsigned int firstFrame_ = 0, lastMissedFrameNo_ = 0;
+        unsigned int firstFrame_ DEPRECATED = 0,
+                        lastMissedFrameNo_ DEPRECATED = 0;
         uint64_t playoutLastUpdate_ = 0;
         unsigned int emptyJitterCounter_ = 0;
         
@@ -106,8 +114,8 @@ namespace ndnrtc
         typedef std::map<const string, PendingInterestStruct> PitMap;
         typedef std::map<unsigned int, string> PitMapUri;
         
-        PitMap pendingInterests_;
-        PitMapUri pendingInterestsUri_;
+        PitMap pendingInterests_ DEPRECATED;
+        PitMapUri pendingInterestsUri_ DEPRECATED;
         
         FrameBuffer frameBuffer_;
         PlayoutBuffer *playoutBuffer_;
@@ -116,15 +124,33 @@ namespace ndnrtc
         webrtc::CriticalSectionWrapper &faceCs_;    // needed for synchronous
                                                     // access to the NDN face
                                                     // object
-        webrtc::CriticalSectionWrapper &pitCs_ DEPRECATED;     // PIT table synchronization
-        webrtc::ThreadWrapper &pipelineThread_, &assemblingThread_,
+        webrtc::CriticalSectionWrapper &pitCs_,
+                                       &dataCs_;    // internal data access
+                                                    // critical section
+        webrtc::ThreadWrapper &pipelineThread_,
+                                &bookingThread_,
+                                &assemblingThread_,
                                 &playoutThread_;
-        webrtc::EventWrapper &pipelineTimer_;
+        webrtc::EventWrapper &pipelineTimer_,
+                                &needMoreFrames_; // this event is setup each
+                                                  // time more frames should be
+                                                  // fetched - this happens
+                                                  // either when jitter buffer
+                                                  // or pipeliner buffer decreases
+        webrtc::EventWrapper &modeSwitchedEvent_; // triggered whenever receiver
+                                                  // switches to a new mode
+        
+        // audio/video synchronizer
+        shared_ptr<AudioVideoSynchronizer> avSync_;
         
         // static routines for threads
         static bool pipelineThreadRoutine(void *obj)
         {
             return ((NdnMediaReceiver*)obj)->processInterests();
+        }
+        static bool bookingThreadRoutine(void *obj)
+        {
+            return ((NdnMediaReceiver*)obj)->processBookingSlots();
         }
         static bool assemblingThreadRoutine(void *obj)
         {
@@ -136,6 +162,8 @@ namespace ndnrtc
         
         // thread main functions (called iteratively by static routines)
         virtual bool processInterests();
+        // process booking slots and issusing inital interests for the data
+        virtual bool processBookingSlots();
         virtual bool processAssembling();
         virtual bool processPlayout();
         
@@ -147,7 +175,8 @@ namespace ndnrtc
         virtual void switchToMode(ReceiverMode mode);
         // must be overriden by subclasses. called from playout thread
         // iteratively each time media frame should be played out
-        virtual void playbackPacket() = 0;
+        // @param packetTsLocal Local timestamp of the packet
+        virtual void playbackPacket(int64_t packetTsLocal) = 0;
         
         void requestInitialSegment();
         void pipelineInterests(FrameBuffer::Event &event);
@@ -168,6 +197,18 @@ namespace ndnrtc
         unsigned int getFrameBufferSize() const;
         unsigned int getFrameSlotSize() const;
         
+        unsigned int getJitterBufferSizeMs();
+        unsigned int getPipelinerBufferSizeMs();
+        // based on the current sizes of jitter and pipeline buffers, determines
+        // whether more frames need to be fetched
+        bool needMoreFrames(){
+            bool jitterFull = getJitterBufferSizeMs() >= MinJitterSizeMs;
+            bool hasEnoughPending = getPipelinerBufferSizeMs() >= MinJitterSizeMs;
+
+            return !(jitterFull || hasEnoughPending) &&
+                    mode_ != ReceiverModeChase;
+        }
+        
         // frame buffer events handlers for pipeliner
         virtual bool onFirstSegmentReceived(FrameBuffer::Event &event);
         virtual bool onSegmentTimeout(FrameBuffer::Event &event);
@@ -175,7 +216,7 @@ namespace ndnrtc
         virtual bool onError(FrameBuffer::Event &event);
         
         PendingInterestStruct getPisForInterest(const string &iuri,
-                                                bool removeFromPITs = false);
+                                                bool removeFromPITs = false) DEPRECATED;
         void clearPITs();
     };
 }

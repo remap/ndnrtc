@@ -24,7 +24,7 @@ NdnVideoReceiver::NdnVideoReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params),
 frameConsumer_(nullptr)
 {
-    fetchAhead_ = 9; // fetch segments ahead
+    fetchAhead_ = 20; // fetch segments ahead
     playoutBuffer_ = new VideoPlayoutBuffer();
     frameLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
                                  "fetch-vstat-%s.log", params.producerId);
@@ -53,7 +53,7 @@ int NdnVideoReceiver::startFetching()
 
 //******************************************************************************
 #pragma mark - private
-void NdnVideoReceiver::playbackPacket()
+void NdnVideoReceiver::playbackPacket(int64_t packetTsLocal)
 {
     jitterTiming_.startFramePlayout();
     
@@ -67,8 +67,9 @@ void NdnVideoReceiver::playbackPacket()
         
         frameno = slot->getFrameNumber();
         nPlayedOut_++;
+        
         frameLogger_->log(NdnLoggerLevelInfo,
-                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
+                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f \t%d",
                           slot->getFrameNumber(),
                           slot->assembledSegmentsNumber(),
                           slot->totalSegmentsNumber(),
@@ -76,13 +77,21 @@ void NdnVideoReceiver::playbackPacket()
                           playoutBuffer_->getJitterSize(),
                           slot->getAssemblingTimeUsec(),
                           frame->capture_time_ms_,
-                          currentProducerRate_);
+                          currentProducerRate_,
+                          pipelinerBufferSize_);
         
         frameConsumer_->onEncodedFrameDelivered(*frame.get());
     }
     
     // get playout time (delay) for the rendered frame
     int framePlayoutTime = ((VideoPlayoutBuffer*)playoutBuffer_)->releaseAcquiredSlot();
+    int adjustedPlayoutTime = 0;
+    
+    // if av sync has been set up
+    if (slot && avSync_.get())
+        adjustedPlayoutTime= avSync_->synchronizePacket(slot, packetTsLocal);
+    
+    framePlayoutTime += adjustedPlayoutTime;
     jitterTiming_.updatePlayoutTime(framePlayoutTime);
     
     // setup and run playout timer for calculated playout interval
