@@ -459,6 +459,125 @@ public:
     }
 };
 
+// writes encoded video sequence frame by frame
+class EncodedFrameWriter : public PacketWriter
+{
+public:
+    EncodedFrameWriter(const char *fileName):PacketWriter(fileName){}
+    ~EncodedFrameWriter(){}
+    
+    int writeFrame(webrtc::EncodedImage &frame,
+                   ndnrtc::PacketData::PacketMetadata &metadata)
+    {
+        if (!f_)
+            return -1;
+        
+        /*
+         How frame is stored in file:
+         - size_
+         - length_
+         - encodedWidth_
+         - encodedHeight_
+         - timestamp_
+         - capture_time_ms_
+         - frameType_
+         - completeFrame_
+         - metadata
+         */
+        
+        writeData(&(frame._size), sizeof(frame._size));
+        writeData(&(frame._length), sizeof(frame._length));
+        writeData(&(frame._encodedWidth), sizeof(frame._encodedWidth));
+        writeData(&(frame._encodedHeight), sizeof(frame._encodedHeight));
+        writeData(&(frame._timeStamp), sizeof(frame._timeStamp));
+        writeData(&(frame.capture_time_ms_), sizeof(frame.capture_time_ms_));
+        writeData(&(frame._frameType), sizeof(frame._frameType));
+        writeData(&(frame._completeFrame), sizeof(frame._completeFrame));
+        writeData(&metadata, sizeof(metadata));
+        writeData(frame._buffer, frame._length);
+        
+        synchronize();
+        
+        return 0;
+    }
+};
+
+// reads encoded video sequence frame by frame
+class EncodedFrameReader : public PacketReader
+{
+public:
+    EncodedFrameReader(const char *fileName) : PacketReader(fileName){}
+    ~EncodedFrameReader(){}
+    
+    int readFrame(webrtc::EncodedImage &frame,
+                  ndnrtc::PacketData::PacketMetadata &metadata)
+    {
+        if (!f_)
+            return -1;
+        
+        /*
+         How frame is stored in file:
+         - size_
+         - length_
+         - encodedWidth_
+         - encodedHeight_
+         - timestamp_
+         - capture_time_ms_
+         - frameType_
+         - completeFrame_
+         - metadata
+         */
+        
+        bool res = true;
+        int size, length, width, height, frameType;
+        bool completeFrame;
+        int64_t timestamp, captureTime;
+        
+        res &= readInt32(size);
+        if (!res) return -1;
+        
+        res &= readInt32(length);
+        if (!res) return -1;
+        
+        res &= readInt32(width);
+        if (!res) return -1;
+        
+        res &= readInt32(height);
+        if (!res) return -1;
+        
+        res &= readInt64(timestamp);
+        if (!res) return -1;
+        
+        res &= readInt64(captureTime);
+        if (!res) return -1;
+        
+        res &= readInt32(frameType);
+        if (!res) return -1;
+        
+        res &= readBool(completeFrame);
+        if (!res) return -1;
+        
+        res &= readData(&metadata, sizeof(metadata));
+        if (!res) return -1;
+        
+        frame._buffer = (uint8_t*)realloc((void*)frame._buffer, length);
+        
+        res &= readData(frame._buffer, length);
+        if (!res) return -1;
+        
+        frame._length = length;
+        frame._size = size;
+        frame._encodedWidth = width;
+        frame._encodedHeight = height;
+        frame._timeStamp = timestamp;
+        frame.capture_time_ms_ = captureTime;
+        frame._frameType = (webrtc::VideoFrameType)frameType;
+        frame._completeFrame = completeFrame;
+
+        return 0;
+    }
+};
+
 // reads audio sequence sample by sample
 class AudioReader : public PacketReader
 {

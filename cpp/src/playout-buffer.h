@@ -15,19 +15,25 @@
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
 
+#define USE_AMP
+//#define USE_AMP_V2
+
 namespace ndnrtc
 {
     typedef std::priority_queue<FrameBuffer::Slot*,
     std::vector<FrameBuffer::Slot*>,
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
     
-    const int MinJitterSizeMs = 300;
+    const int MinJitterSizeMs = 150;
     const int MaxUnderrunNum = 10;
     const int MaxOutstandingInterests DEPRECATED = 1;
     
     // how fast playout should slow compared to the jitter buffer decrease
     const double PlayoutJitterRatio = 1/3;
     const double ExtraTimePerFrame = 0.3;
+    
+    const double AmpKeyFrameImportance = 1.5;
+    const double AmpMinimalAssembledLevel = 0.6;
     
     class IPlayoutBufferCallback;
     
@@ -111,9 +117,9 @@ namespace ndnrtc
                                     // milliseconds added for each playout
                                     // adaptation
         
-        int ampThreshold_ = 10;     // size of the jitter buffer which is taken
-                                    // as a boundary for enabling of the AMP
-                                    // algorithm
+        double ampThreshold_ = 0.7;     // size of the jitter buffer which is taken
+                                        // as a boundary for enabling of the AMP
+                                        // algorithm
         
         FrameBuffer *frameBuffer_;
         // completed frames ready for playout are sorted in ascending order

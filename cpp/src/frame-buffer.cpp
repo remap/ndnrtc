@@ -667,6 +667,7 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     
     while (!(stop || forcedRelease_))
     {
+//        TRACE("[BUFFER] - lock shared - wait for events - loop");
         bufferEventsRWLock_.AcquireLockShared();
         
         list<Event>::iterator it = pendingEvents_.begin();
@@ -683,23 +684,28 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
                 it++;
         }
         
+//        TRACE("[BUFFER] - unlock shared - wait for events - loop");
         bufferEventsRWLock_.ReleaseLockShared();
         
         if (stop)
         {
+//            TRACE("[BUFFER] - lock exclusive - wait for events - stop")
             bufferEventsRWLock_.AcquireLockExclusive();
             pendingEvents_.erase(it);
+//            TRACE("[BUFFER] - unlock exclusive - wait for events - stop")
             bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
         {
             // if couldn't find event we are looking for - wait for the event to occur
-            bufferEventsRWLock_.AcquireLockExclusive();
-            TRACE("wait for events - mapped %d free %d pending %d",
-                  frameSlotMapping_.size(),
-                  freeSlots_.size(),
-                  pendingEvents_.size());
-            bufferEventsRWLock_.ReleaseLockExclusive();
+//            TRACE("[BUFFER] - lock exclusive - wait for events - log");
+//            bufferEventsRWLock_.AcquireLockExclusive();
+//            TRACE("wait for events - mapped %d free %d pending %d",
+//                  frameSlotMapping_.size(),
+//                  freeSlots_.size(),
+//                  pendingEvents_.size());
+//            TRACE("[BUFFER] - unlock exclusive - wait for events - log");
+//            bufferEventsRWLock_.ReleaseLockExclusive();
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
         }
     }
@@ -733,13 +739,15 @@ void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int s
     ev.frameNo_ = frameNo;
     ev.slot_ = slot;
     
+//    TRACE("[BUFFER] - lock exclusive - notify event %d", eType);
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.push_back(ev);
-    TRACE("added event %d mapped %d free %d pending %d",
-          eType,
-          frameSlotMapping_.size(),
-          freeSlots_.size(),
-          pendingEvents_.size());
+//    TRACE("added event %d mapped %d free %d pending %d",
+//          eType,
+//          frameSlotMapping_.size(),
+//          freeSlots_.size(),
+//          pendingEvents_.size());
+//    TRACE("[BUFFER] - unlock exclusive - notify event %d", eType);
     bufferEventsRWLock_.ReleaseLockExclusive();
     
     // notify about event

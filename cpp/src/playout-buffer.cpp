@@ -343,38 +343,100 @@ int PlayoutBuffer::calculatePlayoutTime()
 
 int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
 {
+    // do not run AMP if the frame supposed to be skipped
+    if (playoutTimeMs == 0)
+        return 0;
+ 
+    bool canConsumeExtraTime = true;
+    
 #ifdef USE_AMP
-    if (jitterSize < ampThreshold_)
+    double thresholdSize = (double)ampThreshold_*(double)minJitterSize_;
+    
+    if (jitterSize <= thresholdSize)
     {
-        double jitterSizeDecrease = (double)(ampThreshold_-jitterSize)/(double)ampThreshold_;
-        double playouTimeIncrease = jitterSizeDecrease/3.;
+        canConsumeExtraTime = false;
+        
+        TRACE("[PLAYOUT-AMP] jitter hit AMP threshold - %d (%.2f)",
+              jitterSize, thresholdSize);
+        double jitterSizeDecrease = (double)(thresholdSize-jitterSize)/(double)thresholdSize;
+        double playouTimeIncrease = jitterSizeDecrease;
         int playoutIncreaseMs = (int)ceil((double)playoutTimeMs*playouTimeIncrease);
         
         ampExtraTimeMs_ += playoutIncreaseMs;
         playoutTimeMs += playoutIncreaseMs;
         
-        DBG("[PLAYOUT] ADAPTING PLAYOUT TIME: %d (by %.2f%%)",
-            playoutTimeMs, playouTimeIncrease*100);
+        DBG("[PLAYOUT-AMP] increased playout time for %d: %d (by %.2f%%)",
+            playheadPointer_-1, playoutTimeMs, playouTimeIncrease*100);
     }
-    else
-        // if jitter is ok, but we have extra time of delay collected, we
-        // should consume it by decreasing playout time
-        if (ampExtraTimeMs_)
+#endif
+    
+    
+#ifdef USE_AMP_V2
+    // main idea:
+    // if next frame is NOT present in playout buffer, AND present in
+    // assembling buffer AND number of assembled segments is bigger than 50% of
+    // total segments number (i.e. more than a half of the frame was already
+    // received) THEN increase current frame playout time in order to give some
+    // time for the next frame to be assembled
+    
+    if (!nextFramePresent_)
+    {
+        canConsumeExtraTime = false;
+        
+        if (frameBuffer_->getState(playheadPointer_) == FrameBuffer::Slot::StateAssembling)
         {
-            int maxDecreasePerFrame = (int)ceil((double)playoutTimeMs*ExtraTimePerFrame);
+            shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_);
             
-            if (ampExtraTimeMs_ > maxDecreasePerFrame)
+            if (slot.get())
             {
-                playoutTimeMs -= maxDecreasePerFrame;
-                ampExtraTimeMs_ -= maxDecreasePerFrame;
+                bool isKeyFrame = slot->isKeyFrame();
+                int nAssembled = slot->assembledSegmentsNumber();
+                int nTotal = slot->totalSegmentsNumber();
+                
+                double assembledLevel = (double)nAssembled/(double)nTotal;
+                int playoutIncrease = 0;
+                
+                if (assembledLevel >= AmpMinimalAssembledLevel)
+                {
+                    // increase current frame playout time
+                    playoutIncrease = (double)playoutTimeMs*1.;//(1-assembledLevel);
+                    playoutTimeMs += playoutIncrease;
+                    ampExtraTimeMs_ += playoutIncrease;
+                }
+                
+                TRACE("[PLAYOUT-AMP] next frame is key: %s (%d/%d - %.2f). "
+                      "playout time of %d increased by %d (total %d)",
+                      (isKeyFrame)?"YES":"NO", nAssembled, nTotal,
+                      assembledLevel, playheadPointer_-1, playoutIncrease,
+                      playoutTimeMs);
             }
             else
-            {
-                playoutTimeMs -= ampExtraTimeMs_;
-                ampExtraTimeMs_ = 0;
-            }
-        }
+                // should not happen
+                assert(false);
+        } // if assembling
+    } // if (!nextFramePresent_)
 #endif
+    
+    if (canConsumeExtraTime && ampExtraTimeMs_)
+    {
+        int maxDecreasePerFrame = (int)ceil((double)playoutTimeMs*ExtraTimePerFrame);
+        
+        if (ampExtraTimeMs_ > maxDecreasePerFrame)
+        {
+            playoutTimeMs -= maxDecreasePerFrame;
+            ampExtraTimeMs_ -= maxDecreasePerFrame;
+            TRACE("[PLAYOUT-AMP] decreased playout by %d (%d left)",
+                  maxDecreasePerFrame, ampExtraTimeMs_);
+        }
+        else
+        {
+            TRACE("[PLAYOUT-AMP] consumed extra time. decreased by %d",
+                  ampExtraTimeMs_);
+            
+            playoutTimeMs -= ampExtraTimeMs_;
+            ampExtraTimeMs_ = 0;
+        }
+    }
     
     return playoutTimeMs;
 }

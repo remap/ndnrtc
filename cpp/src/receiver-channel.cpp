@@ -43,8 +43,8 @@ audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::shared
     shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer());
     avSync->setLogger(logger_);
     
-    receiver_->setAVSynchronizer(avSync);
-    audioReceiveChannel_->setAVSynchronizer(avSync);
+//    receiver_->setAVSynchronizer(avSync);
+//    audioReceiveChannel_->setAVSynchronizer(avSync);
 }
 
 int NdnReceiverChannel::init()
@@ -69,6 +69,8 @@ int NdnReceiverChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't initialize ndn fetching for "
                         "incoming video");
+
+        videoInitialized_ = false;
     }
     
     { // initialize audio
