@@ -191,6 +191,7 @@ void NdnMediaReceiver::setLogger(NdnLogger *logger)
     
     frameBuffer_.setLogger(logger);
     playoutBuffer_->setLogger(logger);
+    jitterTiming_.setLogger(logger);
 }
 
 //******************************************************************************
@@ -509,9 +510,9 @@ bool NdnMediaReceiver::processAssembling()
     {
         faceCs_.Enter();
         try {
-            TRACE("process events");
+//            TRACE("process events");
             face_->processEvents();
-            usleep(10000);
+            usleep(5000);
         }
         catch(std::exception &e)
         {

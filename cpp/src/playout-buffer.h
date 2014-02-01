@@ -140,6 +140,8 @@ namespace ndnrtc
         void adjustPlayoutTiming(FrameBuffer::Slot *slot);
         int calculatePlayoutTime();
         int getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize);
+        
+        void resetData();
     };
     
     class IPlayoutBufferCallback {
@@ -196,6 +198,8 @@ namespace ndnrtc
         int framePlayoutTimeMs_ = 0;
         int processingTimeUsec_ = 0;
         int64_t playoutTimestampUsec_ = 0;
+        
+        void resetData();
     };
 }
 

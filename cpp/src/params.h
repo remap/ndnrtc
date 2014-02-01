@@ -154,7 +154,7 @@ namespace ndnrtc
         "video0",       // stream name
         "vp8",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
-        1100,   // segment size for media frame
+        1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
         5,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         
@@ -194,7 +194,7 @@ namespace ndnrtc
         "audio0",       // stream name
         "pcmu2",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
-        1000,   // segment size for media frame
+        1054,   // segment size for media frame
         5,      // data freshness (seconds) value
         50,     // producer rate (currently equal to playback rate)
         

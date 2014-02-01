@@ -26,6 +26,7 @@ syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 jitterBuffer_(FrameBuffer::Slot::SlotComparator(true)),
 framePointer_(0)
 {
+    resetData();
 }
 PlayoutBuffer::~PlayoutBuffer()
 {
@@ -235,16 +236,7 @@ void PlayoutBuffer::switchToState(State state)
         case StateClear:
         {
             DBG("[PLAYOUT] switched to state CLEAR");
-            playoutCs_.Enter();
-            
-            jitterBuffer_ = FrameJitterBuffer(FrameBuffer::Slot::SlotComparator(true));
-            //            lastKeyFrameNo_ = -1;
-            //            nKeyFramesInJitter_ = 0;
-            //            isPlaybackStarted_ = false;
-            framePointer_ = 0;
-            playheadPointer_ = 0;
-            jitterSizeMs_ = 0;
-            playoutCs_.Leave();
+            resetData();
         }
             break;
         case StateBuffering:
@@ -336,7 +328,8 @@ int PlayoutBuffer::calculatePlayoutTime()
     // adjust playout time
     adaptedPlayoutTimeMs_ = getAdaptedPlayoutTime(currentPlayoutTimeMs_,
                                                   jitterBuffer_.size());
-    TRACE("[PLAYOUT] adapted time %d", adaptedPlayoutTimeMs_);
+    TRACE("[PLAYOUT] adapted time %d, extra %d",
+          adaptedPlayoutTimeMs_, ampExtraTimeMs_);
     assert(adaptedPlayoutTimeMs_>=0);
     return adaptedPlayoutTimeMs_;
 }
@@ -441,22 +434,41 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     return playoutTimeMs;
 }
 
+void PlayoutBuffer::resetData()
+{
+    CriticalSectionScoped scopedCs(&playoutCs_);
+
+    jitterBuffer_ = FrameJitterBuffer(FrameBuffer::Slot::SlotComparator(true));
+    framePointer_ = 0;
+    playheadPointer_ = 0;
+    jitterSizeMs_ = 0;
+    currentPlayoutTimeMs_ = 0;
+    ampExtraTimeMs_ = 0;
+    lastFrameTimestampMs_ = 0;
+    currentPlayoutTimeMs_ = 0;
+    adaptedPlayoutTimeMs_ = 0;
+    minJitterSize_ = INT_MAX;
+    minJitterSizeMs_ = INT_MAX;
+    jitterSizeMs_ = 0;
+    nextFramePresent_ = true;
+    bufferUnderrun_ = false;
+    missingFrame_ = false;
+}
+
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
 JitterTiming::JitterTiming():
 playoutTimer_(*EventWrapper::Create())
 {
-    
+    resetData();
 }
 
 //******************************************************************************
 #pragma mark - public
 void JitterTiming::flush()
 {
-    framePlayoutTimeMs_ = 0;
-    processingTimeUsec_ = 0;
-    playoutTimestampUsec_ = 0;
+    resetData();
     //    stop();
 }
 void JitterTiming::stop()
@@ -471,7 +483,10 @@ int64_t JitterTiming::startFramePlayout()
     TRACE("PROCESSING START: %ld", processingStart);
     
     if (playoutTimestampUsec_ == 0)
+    {
+        TRACE("[PLAYOUT] init jitter timing");
         playoutTimestampUsec_ = NdnRtcUtils::microsecondTimestamp();
+    }
     else
     { // calculate processing delay from the previous iteration
         int64_t prevIterationProcTimeUsec = processingStart -
@@ -486,11 +501,11 @@ int64_t JitterTiming::startFramePlayout()
             // should not occur!
             assert(0);
         
-        TRACE("[PLAYOU] prev iter proc time %ld", prevIterationProcTimeUsec);
+        TRACE("[PLAYOUT] prev iter proc time %ld", prevIterationProcTimeUsec);
         
         // add this time to the average processing time
         processingTimeUsec_ += prevIterationProcTimeUsec;
-        TRACE("[PLAYOU] proc time %ld", prevIterationProcTimeUsec);
+        TRACE("[PLAYOUT] proc time %ld", prevIterationProcTimeUsec);
         
         playoutTimestampUsec_ = processingStart;
     }
@@ -545,4 +560,12 @@ void JitterTiming::runPlayoutTimer()
     }
     else
         TRACE("playout time zero - skipping frame");
+}
+
+//******************************************************************************
+void JitterTiming::resetData()
+{
+    framePlayoutTimeMs_ = 0;
+    processingTimeUsec_ = 0;
+    playoutTimestampUsec_ = 0;
 }
