@@ -81,7 +81,7 @@ protected:
         sentFrames_.push_back(millisecondTimestamp());
     }
 };
-
+#if 0
 TEST_F(NdnReceiverTester, CreateDelete)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(DefaultParams);
@@ -359,4 +359,48 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     receiver->stopFetching();
     delete receiver;
     WAIT(params_.freshness*1000);
+}
+#endif
+
+class VideoReceiverRecorder : public IEncodedFrameConsumer
+{
+public:
+    VideoReceiverRecorder(const char *fileName) :
+    writer_(new EncodedFrameWriter(fileName)) {}
+    ~VideoReceiverRecorder(){}
+            
+    void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+    {
+        PacketData::PacketMetadata metadata = {0};
+        
+        if (writer_)
+            writer_->writeFrame(encodedImage, metadata);
+    }
+    
+protected:
+    EncodedFrameWriter *writer_;
+    
+};
+
+TEST_F(NdnReceiverTester, Record)
+{
+    ParamsStruct params = DefaultParams;
+    params.producerId = "remap";
+    params.ndnHub = "ndn/edu/ucla/cs";
+    
+    VideoReceiverRecorder recorder("resources/remap30.wei");
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params);
+    
+    receiver->setFrameConsumer(&recorder);
+    receiver->setObserver(this);
+    
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
+    EXPECT_FALSE(obtainedError_);
+    
+    LOG_TRACE("start fetching");
+    EXPECT_EQ(0, receiver->startFetching());
+    
+    WAIT(30000);
+    
+    EXPECT_EQ(0, receiver->stopFetching());
 }

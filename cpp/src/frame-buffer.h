@@ -426,6 +426,13 @@ namespace ndnrtc
          */
         void reuseEvent(Event &event);
         
+        shared_ptr<Slot> getSlot(unsigned int frameNo)
+        {
+            shared_ptr<Slot> slot(nullptr);
+            getFrameSlot(frameNo, &slot);
+            return slot;
+        }
+        
     private:
         bool forcedRelease_, isTrackingFullTimeoutState_ = false,
         shouldCheckFullBufferTimeout_; // this flag indicates state when all

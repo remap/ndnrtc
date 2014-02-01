@@ -58,60 +58,70 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
 {
     if (packetConsumer_)
     {
+        int framePlayoutTime = 0;
+        int adjustedPlayoutTime = 0;
+        bool isRTCP = false;
+        
         FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
         
-        if (slot)
+        // after acquiring attempt, we could result in different state (i.e. if
+        // rebuffering happened). check this
+        if (mode_ == ReceiverModeFetch)
         {
-            NdnAudioData::AudioPacket packet = slot->getAudioFrame();
+            jitterTiming_.startFramePlayout();
             
-            if (packet.length_ && packet.data_)
+            if (slot)
             {
-                jitterTiming_.startFramePlayout();
+                NdnAudioData::AudioPacket packet = slot->getAudioFrame();
                 
-                if (packet.isRTCP_)
-                    packetConsumer_->onRTCPPacketReceived(packet.length_,
-                                                          packet.data_);
-                else
+                if (packet.length_ && packet.data_)
                 {
-                    packetConsumer_->onRTPPacketReceived(packet.length_,
-                                                         packet.data_);
-                    frameLogger_->log(NdnLoggerLevelInfo,
-                                      "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
-                                      slot->getFrameNumber(),
-                                      slot->assembledSegmentsNumber(),
-                                      slot->totalSegmentsNumber(),
-                                      slot->isKeyFrame(),
-                                      playoutBuffer_->getJitterSize(),
-                                      slot->getAssemblingTimeUsec(),
-                                      packet.timestamp_,
-                                      currentProducerRate_);
+                    isRTCP = packet.isRTCP_;
+                    
+                    if (packet.isRTCP_)
+                        packetConsumer_->onRTCPPacketReceived(packet.length_,
+                                                              packet.data_);
+                    else
+                    {
+                        packetConsumer_->onRTPPacketReceived(packet.length_,
+                                                             packet.data_);
+                        frameLogger_->log(NdnLoggerLevelInfo,
+                                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f",
+                                          slot->getFrameNumber(),
+                                          slot->assembledSegmentsNumber(),
+                                          slot->totalSegmentsNumber(),
+                                          slot->isKeyFrame(),
+                                          playoutBuffer_->getJitterSize(),
+                                          slot->getAssemblingTimeUsec(),
+                                          packet.timestamp_,
+                                          currentProducerRate_);
+                    }
+                    
+                    // if av sync has been set up
+                    if (slot && avSync_.get())
+                        adjustedPlayoutTime= avSync_->synchronizePacket(slot,
+                                                                        packetTsLocal);
                 }
-                
-                // get playout time
-                int framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
-                int adjustedPlayoutTime = 0;
-                
-                // if av sync has been set up                
-                if (slot && avSync_.get())
-                    adjustedPlayoutTime= avSync_->synchronizePacket(slot,
-                                                                    packetTsLocal);
-                
+                else
+                    WARN("got bad audio packet");
+            } // no slot - missed packet or underrun
+            else
+                WARN("can't obtain next audio slot");
+            
+            // get playout time
+            framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
+            
+            // check for error
+            if (framePlayoutTime >= 0)
+            {
                 framePlayoutTime += adjustedPlayoutTime;
-                jitterTiming_.updatePlayoutTime(packet.isRTCP_?0:framePlayoutTime);
+                jitterTiming_.updatePlayoutTime(isRTCP?0:framePlayoutTime);
                 
                 // setup and run playout timer for calculated playout interval
                 jitterTiming_.runPlayoutTimer();
             }
-            else
-                WARN("got bad audio packet");
-        } // no slot - missed packet
-        else
-        {
-            DBG("can't obtain next audio slot");
-            // should release slot event if it was not received
-            playoutBuffer_->releaseAcquiredSlot();
         }
-    }
+    } // if packet consumer
 }
 
 bool NdnAudioReceiver::isLate(unsigned int frameNo)
