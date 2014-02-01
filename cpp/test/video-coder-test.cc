@@ -44,10 +44,12 @@ public:
         NdnRtcObjectTestHelper::SetUp();
         
         obtainedFramesCount_= 0;
+        bitrateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
     }
     void TearDown()
     {
         NdnRtcObjectTestHelper::TearDown();
+        NdnRtcUtils::releaseDataRateMeter(bitrateMeter_);
     }
     
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
@@ -56,14 +58,20 @@ public:
         obtainedFramesCount_++;
         
         receivedEncodedFrame_ = &encodedImage;
+        receivedBytes_ += encodedImage._length;
+        NdnRtcUtils::dataRateMeterMoreData(bitrateMeter_, encodedImage._length);
+        
+        cout << frameNo_ << "\t" << getBitratePerSec() << "\t" << encodedImage._length << endl;
     }
     
 protected:
     webrtc::EncodedImage *receivedEncodedFrame_;
     int obtainedFramesCount_ = 0;
     bool obtainedFrame_ = false;
+    int receivedBytes_ = 0, frameNo_;
     ParamsStruct coderParams_ = DefaultParams;
     webrtc::I420VideoFrame *sampleFrame_;
+    int bitrateMeter_;
     
     void loadFrame()
     {
@@ -103,8 +111,12 @@ protected:
         obtainedFramesCount_ = 0;
     }
     
+    double getBitratePerSec(){
+        return ((double)NdnRtcUtils::currentDataRateMeterValue(bitrateMeter_))*8./1024.;
+    }
+    
 };
-
+#if 0
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
@@ -237,6 +249,61 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequence)
     
     EXPECT_EQ(nFrames, obtainedFramesCount_);
     LOG_TRACE("lost time - %d ms, delay: %d", lostTime, delayedFrames);
+    
+    delete vc;
+}
+#endif
+TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
+{
+    FrameReader fr("resources/bipbop10.yuv");
+    coderParams_.startBitrate = 150;
+    coderParams_.maxBitrate = 200;
+    coderParams_.dropFramesOn = true;
+    
+    NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
+    
+    vc->setObserver(this);
+    vc->setFrameConsumer(this);
+    vc->init();
+    
+    flushFlags();
+    webrtc::I420VideoFrame frame, nextFrame;
+    int nFrames = 0, droppedFrames = 0;
+    int64_t lostTime = 0;
+    int64_t totalTime = 0;
+    
+    frameNo_ = 0;
+    
+    EXPECT_EQ(0, fr.readFrame(frame));
+    
+    while (fr.readFrame(nextFrame) >= 0)
+    {
+        nFrames++;
+        obtainedFrame_ = false;
+        vc->onDeliverFrame(frame);
+        
+        int64_t sleepIntervalMs = nextFrame.render_time_ms() - frame.render_time_ms();
+        totalTime += sleepIntervalMs;
+        usleep(sleepIntervalMs*1000);
+        
+        if (!coderParams_.dropFramesOn)
+            EXPECT_TRUE(obtainedFrame_);
+        
+        if (!obtainedFrame_)
+        {
+            lostTime += sleepIntervalMs;
+            droppedFrames++;
+        }
+        
+        frameNo_++;
+        frame.SwapFrame(&nextFrame);
+        
+        LOG_TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
+    }
+    
+    EXPECT_EQ(nFrames, obtainedFramesCount_);
+    LOG_TRACE("total time %d ms, lost time - %d ms (%.2f%%), dropped frames: %d",
+            totalTime, lostTime, (double)lostTime/(double)totalTime, droppedFrames);
     
     delete vc;
 }

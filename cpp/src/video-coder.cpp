@@ -111,7 +111,7 @@ int NdnVideoCoder::init()
   encoder_->RegisterEncodeCompleteCallback(this);
   
 #warning how payload can be changed?
-  int maxPayload = 1100;
+  int maxPayload = 1440;
   
   if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
     return notifyError(-1, "can't initialize VP8 encoder");

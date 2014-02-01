@@ -191,6 +191,7 @@ void NdnMediaReceiver::setLogger(NdnLogger *logger)
     
     frameBuffer_.setLogger(logger);
     playoutBuffer_->setLogger(logger);
+    jitterTiming_.setLogger(logger);
 }
 
 //******************************************************************************
@@ -227,6 +228,7 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                                      const shared_ptr<Data>& data)
 {
+    TRACE("on data called");
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeter_);
     NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                        data->getContent().size());
@@ -386,12 +388,31 @@ void NdnMediaReceiver::onMissedFrame(unsigned int frameNo)
         nMissed_++;
     }
     
-    frameLogger_->log(NdnLoggerLevelInfo,"MISSED: \t%d \t \t \t \t%d",
+    bool isInBuffer = (frameBuffer_.getState(frameNo) == FrameBuffer::Slot::StateAssembling);
+    int nAssembled=0;
+    int nTotal=1;
+    bool isKeyFrame=0;
+    
+    if (isInBuffer)
+    {
+        shared_ptr<FrameBuffer::Slot> slot = frameBuffer_.getSlot(frameNo);
+        
+        if (slot.get())
+        {
+            isKeyFrame = slot->isKeyFrame();
+            nAssembled = slot->assembledSegmentsNumber();
+            nTotal = slot->totalSegmentsNumber();
+        }
+    }
+    
+    frameLogger_->log(NdnLoggerLevelInfo,"MISSED: \t%d \t \t \t%d \t%d \t%d \t%.2f (%d/%d)",
                       frameNo,
                       // empty
                       // empty
-                      // empty
-                      playoutBuffer_->getJitterSize());
+                      isKeyFrame,
+                      playoutBuffer_->getJitterSize(),
+                      isInBuffer,
+                      (double)nAssembled/(double)nTotal, nAssembled, nTotal);
 }
 void NdnMediaReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
 {
@@ -453,24 +474,30 @@ bool NdnMediaReceiver::processInterests()
 bool NdnMediaReceiver::processBookingSlots()
 {
     bool res = true;
-    int eventMask = FrameBuffer::Event::EventTypeFreeSlot;
     
-    TRACE("[BOOKING] LOCK on wait for free slots. free %d",
-          frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
-    
-    FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventMask);
-    
-    switch (ev.type_) {
-        case FrameBuffer::Event::EventTypeFreeSlot:
-            TRACE("on free slot %d %d", getJitterBufferSizeMs(),
-                  getPipelinerBufferSizeMs());
-            res = onFreeSlot(ev);
-            break;
-            
-        default:
-            NDNERROR("got unexpected event: %d. ignoring", ev.type_);
-            break;
+    if (mode_ != ReceiverModeChase)
+    {
+        int eventMask = FrameBuffer::Event::EventTypeFreeSlot;
+        
+        TRACE("[BOOKING] LOCK on wait for free slots. free %d",
+              frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
+        
+        FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventMask);
+        
+        switch (ev.type_) {
+            case FrameBuffer::Event::EventTypeFreeSlot:
+                TRACE("on free slot %d %d", getJitterBufferSizeMs(),
+                      getPipelinerBufferSizeMs());
+                res = onFreeSlot(ev);
+                break;
+                
+            default:
+                NDNERROR("got unexpected event: %d. ignoring", ev.type_);
+                break;
+        }
     }
+    else
+        modeSwitchedEvent_.Wait(WEBRTC_EVENT_INFINITE);
     
     return res;
 }
@@ -483,7 +510,9 @@ bool NdnMediaReceiver::processAssembling()
     {
         faceCs_.Enter();
         try {
+//            TRACE("process events");
             face_->processEvents();
+            usleep(5000);
         }
         catch(std::exception &e)
         {
@@ -492,6 +521,8 @@ bool NdnMediaReceiver::processAssembling()
         }
         faceCs_.Leave();
     }
+    else
+        modeSwitchedEvent_.Wait(WEBRTC_EVENT_INFINITE);
     
     usleep(10000);
     

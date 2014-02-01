@@ -140,11 +140,11 @@ namespace ndnrtc
         
         30,     // codec framerate
         60,     // gop
-        100,    // codec start bitrate
-        1000,   // codec max bitrate
+        2000,    // codec start bitrate
+        10000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
-        0,      // instruct encoder to drop frames if cannot keep up with the
+        1,      // instruct encoder to drop frames if cannot keep up with the
                 // maximum bitrate
         
         "localhost",    // network ndnd remote host
@@ -154,7 +154,7 @@ namespace ndnrtc
         "video0",       // stream name
         "vp8",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
-        1100,   // segment size for media frame
+        1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
         5,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         
@@ -194,7 +194,7 @@ namespace ndnrtc
         "audio0",       // stream name
         "pcmu2",          // stream thread name
         "ndn/ucla.edu/apps",     // ndn hub
-        1000,   // segment size for media frame
+        1054,   // segment size for media frame
         5,      // data freshness (seconds) value
         50,     // producer rate (currently equal to playback rate)
         
