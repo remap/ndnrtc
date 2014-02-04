@@ -233,10 +233,11 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
     NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                        data->getContent().size());
     
-    Name prefix = data->getName();
+    Name dataName = data->getName();
     string iuri =  (mode_ == ReceiverModeChase)?
-    framesPrefix_.toUri() :
-    prefix.toUri();
+        framesPrefix_.toUri() :
+            dataName.toUri();
+    
     PendingInterestStruct pis = getPisForInterest(iuri, true);
     
     if (pis.interestID_ != (unsigned int)-1)
@@ -246,17 +247,18 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
     }
     
     
-    TRACE("data: %s (size: %d, RTT: %d, SRTT: %f)", prefix.toUri().c_str(),
+    TRACE("data: %s (size: %d, RTT: %d, SRTT: %f)", dataName.toUri().c_str(),
           data->getContent().size(), rtt_, srtt_);
     
-    if (isStreamInterest(prefix))
+    if (isStreamInterest(dataName))
     {
-        unsigned int nComponents = prefix.getComponentCount();
-        long frameNo =
-        NdnRtcUtils::frameNumber(prefix.getComponent(framesPrefix_.getComponentCount())),
+        unsigned int nComponents = dataName.getComponentCount();
+        int64_t frameNo =
+        NdnRtcUtils::frameNumber(dataName.getComponent(framesPrefix_.getComponentCount())),
         
         segmentNo =
-        NdnRtcUtils::segmentNumber(prefix.getComponent(framesPrefix_.getComponentCount()+1));
+        NdnRtcUtils::segmentNumber(dataName.getComponent(framesPrefix_.getComponentCount()+1)),
+        finalSegmentNo = dataName[-1].toFinalSegment();
         
         if (frameNo >= 0 && segmentNo >= 0)
         {
@@ -290,14 +292,9 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                     if (frameBuffer_.getState(frameNo) ==
                         FrameBuffer::Slot::StateNew)
                     {
-                        // get total number of segments
-                        Name::Component finalBlockID =
-                        data->getMetaInfo().getFinalBlockID();
-                        
                         // final block id stores the number of the last segment, so
                         //  the number of all segments is greater by 1
-                        unsigned int segmentsNum =
-                        NdnRtcUtils::segmentNumber(finalBlockID)+1;
+                        unsigned int segmentsNum = finalSegmentNo+1;
                         
                         frameBuffer_.markSlotAssembling(frameNo, segmentsNum,
                                                         producerSegmentSize_);

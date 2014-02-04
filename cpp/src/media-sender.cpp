@@ -145,7 +145,7 @@ int MediaSender::publishPacket(unsigned int len,
     Name prefix = *packetPrefix;
     shared_ptr<const vector<unsigned char>> packetNumberComponent = NdnRtcNamespace::getNumberComponent(packetNo);
     
-    prefix.addComponent(*packetNumberComponent);
+    prefix.append(*packetNumberComponent);
     
     // check whether frame is larger than allowed segment size
     int bytesToSend, payloadSize = len;
@@ -179,10 +179,7 @@ int MediaSender::publishPacket(unsigned int len,
                 payloadSize -= segmentSize_;
                 
                 data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
-                data.getMetaInfo().setFinalBlockID(Name().
-                                                   appendSegment(segmentsNum-1).
-                                                   get(0).getValue());
-                
+                data.getName().appendFinalSegment(segmentsNum-1);
                 data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
                 data.setContent(&packetData[segmentNo*segmentSize_],
                                 bytesToSend);
