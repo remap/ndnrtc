@@ -15,9 +15,6 @@
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
 
-#define USE_AMP
-//#define USE_AMP_V2
-
 namespace ndnrtc
 {
     typedef std::priority_queue<FrameBuffer::Slot*,
@@ -33,7 +30,7 @@ namespace ndnrtc
     const double ExtraTimePerFrame = 0.3;
     
     const double AmpKeyFrameImportance = 1.5;
-    const double AmpMinimalAssembledLevel = 0.6;
+    const double AmpMinimalAssembledLevel = 0.7;
     
     class IPlayoutBufferCallback;
     
@@ -117,9 +114,14 @@ namespace ndnrtc
                                     // milliseconds added for each playout
                                     // adaptation
         
-        double ampThreshold_ = 0.7;     // size of the jitter buffer which is taken
+        double ampThreshold_ = 0.6;     // size of the jitter buffer which is taken
                                         // as a boundary for enabling of the AMP
                                         // algorithm
+        
+        int nKeyFrames_ = 0, nDeltaFrames_ = 0; // number of received key and
+                                                // delta frames accordingly
+        double deltaFrameAvgSize_ = 0.; // average size of delta frames (in segments)
+        double keyFrameAvgSize_ = 0.; // average size of key frame (in segments)
         
         FrameBuffer *frameBuffer_;
         // completed frames ready for playout are sorted in ascending order

@@ -61,41 +61,46 @@ void NdnVideoReceiver::playbackPacket(int64_t packetTsLocal)
     FrameBuffer::Slot* slot;
     shared_ptr<EncodedImage> frame = ((VideoPlayoutBuffer*)playoutBuffer_)->acquireNextFrame(&slot);
     
-    // render frame if we have one
-    if (frame.get() && frameConsumer_)
+    // after acquiring attempt, we could result in different state (i.e. if
+    // rebuffering happened). check this
+    if (mode_ == ReceiverModeFetch)
     {
+        // render frame if we have one
+        if (frame.get() && frameConsumer_)
+        {
+            
+            frameno = slot->getFrameNumber();
+            nPlayedOut_++;
+            
+            frameLogger_->log(NdnLoggerLevelInfo,
+                              "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f \t%d",
+                              slot->getFrameNumber(),
+                              slot->assembledSegmentsNumber(),
+                              slot->totalSegmentsNumber(),
+                              slot->isKeyFrame(),
+                              playoutBuffer_->getJitterSize(),
+                              slot->getAssemblingTimeUsec(),
+                              frame->capture_time_ms_,
+                              currentProducerRate_,
+                              pipelinerBufferSize_);
+            
+            frameConsumer_->onEncodedFrameDelivered(*frame.get());
+        }
         
-        frameno = slot->getFrameNumber();
-        nPlayedOut_++;
+        // get playout time (delay) for the rendered frame
+        int framePlayoutTime = ((VideoPlayoutBuffer*)playoutBuffer_)->releaseAcquiredSlot();
+        int adjustedPlayoutTime = 0;
         
-        frameLogger_->log(NdnLoggerLevelInfo,
-                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f \t%d",
-                          slot->getFrameNumber(),
-                          slot->assembledSegmentsNumber(),
-                          slot->totalSegmentsNumber(),
-                          slot->isKeyFrame(),
-                          playoutBuffer_->getJitterSize(),
-                          slot->getAssemblingTimeUsec(),
-                          frame->capture_time_ms_,
-                          currentProducerRate_,
-                          pipelinerBufferSize_);
+        // if av sync has been set up
+        if (slot && avSync_.get())
+            adjustedPlayoutTime= avSync_->synchronizePacket(slot, packetTsLocal);
         
-        frameConsumer_->onEncodedFrameDelivered(*frame.get());
+        framePlayoutTime += adjustedPlayoutTime;
+        jitterTiming_.updatePlayoutTime(framePlayoutTime);
+        
+        // setup and run playout timer for calculated playout interval
+        jitterTiming_.runPlayoutTimer();
     }
-    
-    // get playout time (delay) for the rendered frame
-    int framePlayoutTime = ((VideoPlayoutBuffer*)playoutBuffer_)->releaseAcquiredSlot();
-    int adjustedPlayoutTime = 0;
-    
-    // if av sync has been set up
-    if (slot && avSync_.get())
-        adjustedPlayoutTime= avSync_->synchronizePacket(slot, packetTsLocal);
-    
-    framePlayoutTime += adjustedPlayoutTime;
-    jitterTiming_.updatePlayoutTime(framePlayoutTime);
-    
-    // setup and run playout timer for calculated playout interval
-    jitterTiming_.runPlayoutTimer();
 }
 
 void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)

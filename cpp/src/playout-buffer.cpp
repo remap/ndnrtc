@@ -186,6 +186,19 @@ bool PlayoutBuffer::processFrameProvider()
             {
                 CriticalSectionScoped scopedCs(&playoutCs_);
                 jitterBuffer_.push(ev.slot_);
+                
+                if (ev.slot_->isKeyFrame())
+                {
+                    nKeyFrames_++;
+                    keyFrameAvgSize_ += ev.slot_->totalSegmentsNumber();
+                    keyFrameAvgSize_ /= (double)nKeyFrames_;
+                }
+                else
+                {
+                    nDeltaFrames_++;
+                    deltaFrameAvgSize_ += ev.slot_->totalSegmentsNumber();
+                    deltaFrameAvgSize_ /= (double)nDeltaFrames_;
+                }
             }
             
             frameBuffer_->lockSlot(ev.frameNo_);
@@ -323,7 +336,7 @@ int PlayoutBuffer::calculatePlayoutTime()
                   adaptedPlayoutTimeMs_);
     }
     else
-        TRACE("[PLAYOUT] nothing to release - %d", adaptedPlayoutTimeMs_);
+        TRACE("[PLAYOUT] no further frames to calculate playout, infer: %d", adaptedPlayoutTimeMs_);
     
     // adjust playout time
     adaptedPlayoutTimeMs_ = getAdaptedPlayoutTime(currentPlayoutTimeMs_,
@@ -339,12 +352,11 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     // do not run AMP if the frame supposed to be skipped
     if (playoutTimeMs == 0)
         return 0;
- 
-    bool canConsumeExtraTime = true;
+
+    double thresholdSize = (double)ampThreshold_*(double)minJitterSize_;
+    bool canConsumeExtraTime = jitterSize > thresholdSize;
     
 #ifdef USE_AMP
-    double thresholdSize = (double)ampThreshold_*(double)minJitterSize_;
-    
     if (jitterSize <= thresholdSize)
     {
         canConsumeExtraTime = false;
@@ -389,10 +401,11 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
                 double assembledLevel = (double)nAssembled/(double)nTotal;
                 int playoutIncrease = 0;
                 
-                if (assembledLevel >= AmpMinimalAssembledLevel)
+                if (assembledLevel >= AmpMinimalAssembledLevel ||
+                    isKeyFrame)
                 {
                     // increase current frame playout time
-                    playoutIncrease = (double)playoutTimeMs*1.;//(1-assembledLevel);
+                    playoutIncrease = (isKeyFrame)?(double)playoutTimeMs*1. : playoutTimeMs*.5;
                     playoutTimeMs += playoutIncrease;
                     ampExtraTimeMs_ += playoutIncrease;
                 }
@@ -412,23 +425,40 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     
     if (canConsumeExtraTime && ampExtraTimeMs_)
     {
-        int maxDecreasePerFrame = (int)ceil((double)playoutTimeMs*ExtraTimePerFrame);
+        // get the frame to-be played out
+        shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_-1);
         
-        if (ampExtraTimeMs_ > maxDecreasePerFrame)
+        if (slot.get())
         {
-            playoutTimeMs -= maxDecreasePerFrame;
-            ampExtraTimeMs_ -= maxDecreasePerFrame;
-            TRACE("[PLAYOUT-AMP] decreased playout by %d (%d left)",
-                  maxDecreasePerFrame, ampExtraTimeMs_);
-        }
-        else
-        {
-            TRACE("[PLAYOUT-AMP] consumed extra time. decreased by %d",
-                  ampExtraTimeMs_);
+            bool isKeyFrame = slot->isKeyFrame();
+            int nTotal = slot->totalSegmentsNumber();
             
-            playoutTimeMs -= ampExtraTimeMs_;
-            ampExtraTimeMs_ = 0;
-        }
+            int maxDecreasePerFrame = (int)ceil((double)playoutTimeMs*ExtraTimePerFrame);
+            
+            // now, if the frame is insignificant, we can skip it
+            if (nTotal <= deltaFrameAvgSize_)
+            {
+                TRACE("[PLAYOUT-AMP] skipping insignificant frame with size %d "
+                      "(%.2f avg)", deltaFrameAvgSize_);
+                maxDecreasePerFrame = playoutTimeMs;
+            }
+            
+            if (ampExtraTimeMs_ > maxDecreasePerFrame)
+            {
+                playoutTimeMs -= maxDecreasePerFrame;
+                ampExtraTimeMs_ -= maxDecreasePerFrame;
+                TRACE("[PLAYOUT-AMP] decreased playout by %d (%d left)",
+                      maxDecreasePerFrame, ampExtraTimeMs_);
+            }
+            else
+            {
+                TRACE("[PLAYOUT-AMP] consumed extra time. decreased by %d",
+                      ampExtraTimeMs_);
+                
+                playoutTimeMs -= ampExtraTimeMs_;
+                ampExtraTimeMs_ = 0;
+            }
+        } // if slot
     }
     
     return playoutTimeMs;
@@ -453,6 +483,10 @@ void PlayoutBuffer::resetData()
     nextFramePresent_ = true;
     bufferUnderrun_ = false;
     missingFrame_ = false;
+    nKeyFrames_ = 0;
+    nDeltaFrames_ = 0;
+    deltaFrameAvgSize_ = 0.;
+    keyFrameAvgSize_ = 0.;
 }
 
 //******************************************************************************
