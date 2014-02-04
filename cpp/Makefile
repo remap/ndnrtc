@@ -191,7 +191,7 @@ webrtcbuild:
 	cd $(WEBRTC_TRUNK) && gclient sync && make BUILDTYPE=Release
 
 ndnbuild:
-	cd $(NDNCPPLIB_PATH) && make  && cd $(CURRENT)
+	cd $(NDNCPPLIB_PATH) && ./configure --enable-tlv=yes && make  && cd $(CURRENT)
 	mkdir -p $(LIBBIN_PATH)/include/$(NDNCPP)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCLIB) $(LIBBIN_PATH)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCPPLIB) $(LIBBIN_PATH)
