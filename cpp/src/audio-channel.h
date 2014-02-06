@@ -17,8 +17,7 @@
 #include "audio-receiver.h"
 #include "audio-sender.h"
 #include "av-sync.h"
-
-//#define AUDIO_OFF // disable audio channel
+#include "statistics.h"
 
 namespace ndnrtc {
     class NdnAudioChannel : public NdnRtcObject,
@@ -44,7 +43,8 @@ namespace ndnrtc {
     };
     
     class NdnAudioReceiveChannel : public NdnAudioChannel,
-    public IAudioPacketConsumer
+    public IAudioPacketConsumer,
+    public IMediaReceiverCallback
     {
     public:
         NdnAudioReceiveChannel(const ParamsStruct &params,
@@ -58,12 +58,32 @@ namespace ndnrtc {
         {
             audioReceiver_->setAVSynchronizer(avSync);
         }
+        void registerCallback(IMediaReceiverCallback *callback)
+        {
+            callback_ = callback;
+        }
+        void deregisterCallback()
+        {
+            callback_ = nullptr;
+        }
+        void getStatistics(ReceiverChannelPerformance &stat);
+        
+        void onRebuffer(NdnMediaReceiver *caller)
+        {
+            callback_->onRebuffer(nullptr);
+        }
+        
+        void triggerRebuffering()
+        {
+            audioReceiver_->triggerRebuffering();
+        }
         
     protected:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);
         virtual void onRTCPPacketReceived(unsigned int len, unsigned char *data);
         
     private:
+        IMediaReceiverCallback *callback_;
         NdnAudioReceiver *audioReceiver_ = NULL;
     };
     
@@ -83,6 +103,8 @@ namespace ndnrtc {
         int init(shared_ptr<ndn::Transport> &transport);
         int start();
         int stop();
+        
+        void getStatistics(SenderChannelPerformance &stat);
         
     protected:
         // webrtc::Transport interface

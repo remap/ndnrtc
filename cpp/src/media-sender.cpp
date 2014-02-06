@@ -165,13 +165,13 @@ int MediaSender::publishPacket(unsigned int len,
             // 5. publish segments under <root>/packetNo/segmentNo URI
             while (payloadSize > 0)
             {
-                Name segmentPrefix = prefix;
-                segmentPrefix.appendSegment(segmentNo);
+                Name segmentName = prefix;
+                segmentName.appendSegment(segmentNo);
                 
-                TRACE("sending packet #%010lld. prefix: %s", packetNo_,
-                      segmentPrefix.toUri().c_str());
+                TRACE("sending packet #%010lld. data name: %s", packetNo_,
+                      segmentName.toUri().c_str());
                 
-                Data data(segmentPrefix);
+                Data data(segmentName);
                 
                 bytesToSend = (payloadSize < segmentSize_)?
                 payloadSize :

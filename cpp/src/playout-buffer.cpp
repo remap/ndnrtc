@@ -141,9 +141,6 @@ int PlayoutBuffer::releaseAcquiredSlot()
         webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
         FrameBuffer::Slot *slot = jitterBuffer_.top();
         
-        //        if (slot->isKeyFrame())
-        //            nKeyFramesInJitter_--;
-        
         jitterBuffer_.pop();
         frameBuffer_->unlockSlot(slot->getFrameNumber());
         moveHead = true;
@@ -155,10 +152,7 @@ int PlayoutBuffer::releaseAcquiredSlot()
     {
         webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
         
-        frameBuffer_->markSlotFree(playheadPointer_++);
-        
-        if (this->callback_)
-            this->callback_->onPlayheadMoved(playheadPointer_);
+        frameBuffer_->markSlotFree(playheadPointer_);
         
         DBG("[PLAYOUT] MOVE - playhead: %d, top: %d",
             playheadPointer_, framePointer_);
@@ -166,9 +160,15 @@ int PlayoutBuffer::releaseAcquiredSlot()
     }
     else
     {
-        DBG("[PLAYOUT] bufferring??? waiting for %d frame", playheadPointer_);
-        //      switchToState(PlayoutBuffer::StateBuffering);
+        DBG("[PLAYOUT] skipped frame %d because it was missing (buffer underrun)",
+            playheadPointer_);
     }
+
+    // increment playhead
+    playheadPointer_++;
+    
+    if (this->callback_)
+        this->callback_->onPlayheadMoved(playheadPointer_, missingFrame_);
     
     return calculatePlayoutTime();
 }
@@ -293,14 +293,22 @@ void PlayoutBuffer::adjustPlayoutTiming(FrameBuffer::Slot *slot)
     // playout time
     
     if (missingFrame_ || bufferUnderrun_ || frameWasNotPresent)
+    {
         lastFrameTimestampMs_ += adaptedPlayoutTimeMs_;
+        TRACE("[PLAYOUT] last frame timestamp with previsous value: %ld",
+              lastFrameTimestampMs_);
+    }
     else
         if (slot)
         {
             int64_t packetTimestamp = slot->getPacketTimestamp();
             
             if (lastFrameTimestampMs_ < packetTimestamp)
+            {
                 lastFrameTimestampMs_ =  packetTimestamp;
+                TRACE("[PLAYOUT] set current frame %d timestamp: %ld",
+                      slot->getFrameNumber(), lastFrameTimestampMs_);
+            }
             else
                 TRACE("[PLAYOUT] frame was missing");
         }
@@ -333,10 +341,10 @@ int PlayoutBuffer::calculatePlayoutTime()
         }
         else
             TRACE("[PLAYOUT] next frame is missing. infer playout time %d",
-                  adaptedPlayoutTimeMs_);
+                  currentPlayoutTimeMs_);
     }
     else
-        TRACE("[PLAYOUT] no further frames to calculate playout, infer: %d", adaptedPlayoutTimeMs_);
+        TRACE("[PLAYOUT] no further frames to calculate playout, infer: %d", currentPlayoutTimeMs_);
     
     // adjust playout time
     adaptedPlayoutTimeMs_ = getAdaptedPlayoutTime(currentPlayoutTimeMs_,

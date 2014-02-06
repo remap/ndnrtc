@@ -60,7 +60,6 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
     {
         int framePlayoutTime = 0;
         int adjustedPlayoutTime = 0;
-        bool isRTCP = false;
         
         FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
         
@@ -76,13 +75,12 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
                 
                 if (packet.length_ && packet.data_)
                 {
-                    isRTCP = packet.isRTCP_;
-                    
                     if (packet.isRTCP_)
                         packetConsumer_->onRTCPPacketReceived(packet.length_,
                                                               packet.data_);
                     else
                     {
+                        nPlayedOut_++;
                         packetConsumer_->onRTPPacketReceived(packet.length_,
                                                              packet.data_);
                         frameLogger_->log(NdnLoggerLevelInfo,
@@ -99,7 +97,7 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
                     
                     // if av sync has been set up
                     if (slot && avSync_.get())
-                        adjustedPlayoutTime= avSync_->synchronizePacket(slot,
+                        adjustedPlayoutTime = avSync_->synchronizePacket(slot,
                                                                         packetTsLocal);
                 }
                 else
@@ -115,7 +113,7 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
             if (framePlayoutTime >= 0)
             {
                 framePlayoutTime += adjustedPlayoutTime;
-                jitterTiming_.updatePlayoutTime(isRTCP?0:framePlayoutTime);
+                jitterTiming_.updatePlayoutTime(framePlayoutTime);
                 
                 // setup and run playout timer for calculated playout interval
                 jitterTiming_.runPlayoutTimer();
@@ -126,9 +124,5 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
 
 bool NdnAudioReceiver::isLate(unsigned int frameNo)
 {
-    if (mode_ == ReceiverModeFetch &&
-        frameNo < playoutBuffer_->framePointer())
-        return true;
-    
-    return false;
+    return (frameNo < playoutBuffer_->getPlayheadPointer());
 }

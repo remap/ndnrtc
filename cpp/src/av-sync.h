@@ -15,7 +15,7 @@
 
 namespace ndnrtc {
     
-    const int64_t TolerableDriftMs = 30; // packets will be synchronized
+    const int64_t TolerableDriftMs = 20; // packets will be synchronized
                                          // if their timelines differ more
                                          // than this value
     

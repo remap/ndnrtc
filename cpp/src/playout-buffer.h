@@ -22,6 +22,7 @@ namespace ndnrtc
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
     
     const int MinJitterSizeMs = 150;
+    const int MinPipelineSizeMs = 2*MinJitterSizeMs;
     const int MaxUnderrunNum = 10;
     const int MaxOutstandingInterests DEPRECATED = 1;
     
@@ -149,7 +150,8 @@ namespace ndnrtc
     class IPlayoutBufferCallback {
     public:
         virtual void onFrameAddedToJitter(FrameBuffer::Slot *slot) = 0;
-        virtual void onPlayheadMoved(unsigned int nextPlaybackFrame) = 0;
+        virtual void onPlayheadMoved(unsigned int nextPlaybackFrame,
+                                     bool frameWasMissing) = 0;
         virtual void onBufferStateChanged(PlayoutBuffer::State newState) = 0;
         virtual void onMissedFrame(unsigned int frameNo) = 0;
         virtual void onJitterBufferUnderrun() = 0;
