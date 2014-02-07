@@ -25,6 +25,8 @@ namespace ndnrtc
     extern const double RateDeviation;
     extern const unsigned int RebufferThreshold;
     
+    class IMediaReceiverCallback;
+    
     class NdnMediaReceiver :    public NdnRtcObject,
                                 public IPlayoutBufferCallback
     {
@@ -36,6 +38,11 @@ namespace ndnrtc
         virtual int init(shared_ptr<Face> face);
         virtual int startFetching();
         virtual int stopFetching();
+        
+        void triggerRebuffering();
+        
+        void registerCallback(IMediaReceiverCallback *callback);
+        void deregisterCallback();
         
         double getInterestFrequency() {
             return NdnRtcUtils::currentFrequencyMeterValue(interestFreqMeter_);
@@ -58,9 +65,15 @@ namespace ndnrtc
         unsigned int getNMissed() { return nMissed_; }
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
+        unsigned int getNPipelined() { return pipelinerFrameNo_; }
+        unsigned int getJitterOccupancy() { return playoutBuffer_->getJitterSize(); }
+        unsigned int getBufferStat(FrameBuffer::Slot::State state) {
+            return frameBuffer_.getStat(state);
+        }
         
         void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> &avSync){
             avSync_ = avSync;
+            registerCallback(avSync_.get());
         }
         
         // overriden from LoggerObject
@@ -70,7 +83,8 @@ namespace ndnrtc
         void onFrameAddedToJitter(FrameBuffer::Slot *slot);
         void onBufferStateChanged(PlayoutBuffer::State newState);
         void onMissedFrame(unsigned int frameNo);
-        void onPlayheadMoved(unsigned int nextPlaybackFrame);
+        void onPlayheadMoved(unsigned int nextPlaybackFrame,
+                             bool frameWasMissing);
         void onJitterBufferUnderrun();
         
     protected:
@@ -106,6 +120,7 @@ namespace ndnrtc
                         lastMissedFrameNo_ DEPRECATED = 0;
         uint64_t playoutLastUpdate_ = 0;
         unsigned int emptyJitterCounter_ = 0;
+        bool shouldRequestFrame_ = false;
         
         typedef struct _PendingInterestStruct {
             unsigned int interestID_;
@@ -113,6 +128,8 @@ namespace ndnrtc
         } PendingInterestStruct;
         typedef std::map<const string, PendingInterestStruct> PitMap;
         typedef std::map<unsigned int, string> PitMapUri;
+        
+        IMediaReceiverCallback *callback_;
         
         PitMap pendingInterests_ DEPRECATED;
         PitMapUri pendingInterestsUri_ DEPRECATED;
@@ -186,7 +203,7 @@ namespace ndnrtc
         unsigned int getSegmentNumber(Name prefix);
         void expressInterest(Name &prefix);
         void expressInterest(Interest &i);
-        virtual void rebuffer();
+        virtual void rebuffer(bool shouldNotify = true);
         
         // derived classes should determine whether a frame with frameNo number
         // is late or not
@@ -202,10 +219,18 @@ namespace ndnrtc
         // based on the current sizes of jitter and pipeline buffers, determines
         // whether more frames need to be fetched
         bool needMoreFrames(){
-            bool jitterFull = getJitterBufferSizeMs() >= MinJitterSizeMs;
-            bool hasEnoughPending = getPipelinerBufferSizeMs() >= MinJitterSizeMs;
-
-            return !(jitterFull || hasEnoughPending) &&
+            bool jitterBufferSmall = false; //getJitterBufferSizeMs() < MinJitterSizeMs/2.;
+            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < MinPipelineSizeMs;
+            
+            TRACE("need more frames? jitter small: %s, pipeline small: %s "
+                  "underrun: %s",
+                  (jitterBufferSmall)?"YES":"NO",
+                  (pipelineBufferSmall)?"YES":"NO",
+                  (shouldRequestFrame_)?"YES":"NO");
+            
+            return (jitterBufferSmall ||
+                    pipelineBufferSmall ||
+                    shouldRequestFrame_) &&
                     mode_ != ReceiverModeChase;
         }
         

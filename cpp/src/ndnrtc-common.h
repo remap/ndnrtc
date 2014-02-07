@@ -57,8 +57,11 @@ using namespace ndnlog;
 #define ERR_NDNLIB  -101
 
 // RTC features
-//#define USE_AVSYNC
+#define USE_AVSYNC
 //#define USE_AMP
 #define USE_AMP_V2
+#define USE_AMP_V3
 
+//#define AUDIO_OFF // disable audio
+//#define VIDEO_OFF // disable video
 #endif

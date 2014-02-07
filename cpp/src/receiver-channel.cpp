@@ -35,6 +35,7 @@ audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::shared
     localRender_->setObserver(this);
     decoder_->setObserver(this);
     receiver_->setObserver(this);
+
     audioReceiveChannel_->setObserver(this);
     
     receiver_->setFrameConsumer(decoder_.get());
@@ -71,6 +72,10 @@ int NdnReceiverChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't initialize ndn fetching for "
                         "incoming video");
+#warning FOR TESTING ONLY! REMOVE THIS IN RELEASE VERSION!
+#ifdef VIDEO_OFF
+        videoInitialized_ = false;
+#endif
     }
     
     { // initialize audio
@@ -160,7 +165,6 @@ int NdnReceiverChannel::stopTransmission()
     isTransmitting_ = false;
     return RESULT_OK;
 }
-
 void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
 {
     stat.videoStat_.nBytesPerSec_ = receiver_->getDataRate();
@@ -182,7 +186,5 @@ void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     stat.videoStat_.nSent_ = receiver_->getBufferStat(FrameBuffer::Slot::StateNew);
     stat.videoStat_.nAssembling_ = receiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
     
-    //    stat.audioStat_.dataRate_ =
-    //    stat.audioStat_.interestFrequency_ =
-    //    stat.audioStat_.segmentsFrequency_ =
+    audioReceiveChannel_->getStatistics(stat.audioStat_);
 }

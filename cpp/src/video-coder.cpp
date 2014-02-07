@@ -56,7 +56,7 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
     codec.codecSpecific.VP8.denoisingOn = true;
     codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
     codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
-    codec.codecSpecific.VP8.keyFrameInterval = 2000;
+    codec.codecSpecific.VP8.keyFrameInterval = 1000;
   }
   
   // dropping frames
@@ -175,12 +175,12 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
   
   int err;
   
-  if (!keyFrameCounter_%(2*currentFrameRate_))
+  if (!keyFrameCounter_%(currentFrameRate_))
     err = encoder_->Encode(frame, NULL, &keyFrameType_);
   else
     err = encoder_->Encode(frame, NULL, NULL);
   
-  keyFrameCounter_ = (keyFrameCounter_+1)%(2*currentFrameRate_);
+  keyFrameCounter_ = (keyFrameCounter_+1)%(currentFrameRate_);
   
   TRACE("ENCODING RESULT: %d", err);
   

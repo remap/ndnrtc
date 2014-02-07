@@ -326,6 +326,8 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
     stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
     stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
+    
+    audioSendChannel_->getStatistics(stat.audioStat_);
 }
 
 //******************************************************************************

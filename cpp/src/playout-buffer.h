@@ -22,8 +22,13 @@ namespace ndnrtc
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
     
     const int MinJitterSizeMs = 150;
+    const int MinPipelineSizeMs = 2*MinJitterSizeMs;
     const int MaxUnderrunNum = 10;
     const int MaxOutstandingInterests DEPRECATED = 1;
+    const double MaxJitterSizeCoeff = 1.2; // if jitter becomes greater than
+                                           // this value multiplied by min
+                                           // jitter size, AMP should reduce
+                                           // play time for the frames
     
     // how fast playout should slow compared to the jitter buffer decrease
     const double PlayoutJitterRatio = 1/3;
@@ -149,7 +154,8 @@ namespace ndnrtc
     class IPlayoutBufferCallback {
     public:
         virtual void onFrameAddedToJitter(FrameBuffer::Slot *slot) = 0;
-        virtual void onPlayheadMoved(unsigned int nextPlaybackFrame) = 0;
+        virtual void onPlayheadMoved(unsigned int nextPlaybackFrame,
+                                     bool frameWasMissing) = 0;
         virtual void onBufferStateChanged(PlayoutBuffer::State newState) = 0;
         virtual void onMissedFrame(unsigned int frameNo) = 0;
         virtual void onJitterBufferUnderrun() = 0;

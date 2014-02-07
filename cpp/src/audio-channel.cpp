@@ -168,6 +168,28 @@ int NdnAudioReceiveChannel::stop()
     return RESULT_OK;
 }
 
+void NdnAudioReceiveChannel::getStatistics(ReceiverChannelPerformance &stat)
+{
+    stat.nBytesPerSec_ = audioReceiver_->getDataRate();
+    stat.interestFrequency_ = audioReceiver_->getInterestFrequency();
+    stat.segmentsFrequency_ = audioReceiver_->getSegmentFrequency();
+    
+    stat.rtt_ = audioReceiver_->getLastRtt();
+    stat.srtt_ = audioReceiver_->getSrtt();
+    
+    stat.nPlayed_ = audioReceiver_->getNPlayed();
+    stat.nMissed_ = audioReceiver_->getNMissed();
+    stat.nLost_ = audioReceiver_->getNLost();
+    stat.nReceived_ = audioReceiver_->getNReceived();
+    
+    stat.jitterSize_ = audioReceiver_->getJitterOccupancy();
+    stat.rebufferingEvents_ = audioReceiver_->getRebufferingEvents();
+    stat.actualProducerRate_ = audioReceiver_->getActualProducerRate();
+    
+    stat.nSent_ = audioReceiver_->getBufferStat(FrameBuffer::Slot::StateNew);
+    stat.nAssembling_ = audioReceiver_->getBufferStat(FrameBuffer::Slot::StateAssembling);
+}
+
 //******************************************************************************
 #pragma mark - intefaces realization - IAudioPacketConsumer
 void NdnAudioReceiveChannel::onRTPPacketReceived(unsigned int len,
@@ -273,4 +295,13 @@ int NdnAudioSendChannel::SendRTCPPacket(int channel, const void *data, int len)
     
     // return bytes sent or negative value on error
     return len;
+}
+
+void NdnAudioSendChannel::getStatistics(SenderChannelPerformance &stat)
+{
+    stat.nBytesPerSec_ = audioSender_->getDataRate();
+    stat.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
+    stat.lastFrameNo_ = audioSender_->getPacketNo();
+    stat.encodingRate_ = stat.nFramesPerSec_;
+    stat.nDroppedByEncoder_ = 0;
 }

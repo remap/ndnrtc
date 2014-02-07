@@ -194,6 +194,21 @@ void NdnMediaReceiver::setLogger(NdnLogger *logger)
     jitterTiming_.setLogger(logger);
 }
 
+void NdnMediaReceiver::registerCallback(IMediaReceiverCallback *callback)
+{
+    callback_ = callback;
+}
+
+void NdnMediaReceiver::deregisterCallback()
+{
+    callback_ = nullptr;
+}
+
+void NdnMediaReceiver::triggerRebuffering()
+{
+    rebuffer(false);
+}
+
 //******************************************************************************
 #pragma mark - intefaces realization - ndn-cpp callbacks
 void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
@@ -252,7 +267,6 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
     
     if (isStreamInterest(dataName))
     {
-        unsigned int nComponents = dataName.getComponentCount();
         int64_t frameNo =
         NdnRtcUtils::frameNumber(dataName.getComponent(framesPrefix_.getComponentCount())),
         
@@ -295,6 +309,9 @@ void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                         // final block id stores the number of the last segment, so
                         //  the number of all segments is greater by 1
                         unsigned int segmentsNum = finalSegmentNo+1;
+                        
+                        TRACE("frame %d has total segments number %d",
+                              frameNo, segmentsNum);
                         
                         frameBuffer_.markSlotAssembling(frameNo, segmentsNum,
                                                         producerSegmentSize_);
@@ -410,8 +427,12 @@ void NdnMediaReceiver::onMissedFrame(unsigned int frameNo)
                       playoutBuffer_->getJitterSize(),
                       isInBuffer,
                       (double)nAssembled/(double)nTotal, nAssembled, nTotal);
+    
+    shouldRequestFrame_ = true;
+    needMoreFrames_.Set();
 }
-void NdnMediaReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame)
+void NdnMediaReceiver::onPlayheadMoved(unsigned int nextPlaybackFrame,
+                                       bool wasMissing)
 {
     // now check, whether we need more frames to request
     if (needMoreFrames())
@@ -424,6 +445,10 @@ void NdnMediaReceiver::onJitterBufferUnderrun()
 {
     TRACE("[PLAYOUT] UNDERRUN %d",
           emptyJitterCounter_+1);
+    
+    TRACE("UNLOCKING needMoreFrames (underrun)");
+    shouldRequestFrame_ = true;
+    needMoreFrames_.Set();
     
     emptyJitterCounter_++;
     
@@ -721,25 +746,28 @@ bool NdnMediaReceiver::isLate(unsigned int frameNo)
 
 void NdnMediaReceiver::cleanupLateFrame(unsigned int frameNo)
 {
-    TRACE("removing late frame %d from the buffer");
+    TRACE("removing late frame %d from the buffer", frameNo);
     if (frameBuffer_.getState(frameNo) != FrameBuffer::Slot::StateFree)
         nLost_++;
     
     frameBuffer_.markSlotFree(frameNo);
 }
 
-void NdnMediaReceiver::rebuffer()
+void NdnMediaReceiver::rebuffer(bool shouldNotify)
 {
     DBG("*** REBUFFERING *** [#%d]", ++rebufferingEvent_);
     jitterTiming_.flush();
     rtt_ = 0;
     srtt_ = StartSRTT;
-    excludeFilter_ = pipelinerFrameNo_;
+    excludeFilter_ = pipelinerFrameNo_; //playoutBuffer_->getPlayheadPointer(); //pipelinerFrameNo_; //
     switchToMode(ReceiverModeFlushed);
     needMoreFrames_.Reset();
     
     if (avSync_.get())
         avSync_->reset();
+    
+    if (shouldNotify && callback_)
+        callback_->onRebuffer(this);
 }
 
 NdnMediaReceiver::PendingInterestStruct
@@ -831,7 +859,6 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                     pipelinerFrameNo_ - playoutBuffer_->getPlayheadPointer() :
                     pipelinerFrameNo_ - firstFrame_,
                     jitterBufferSizeMs, pipelinerBufferSizeMs);
-                
                 frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t "
                                   "\t%d \t \t \t%.2f \t%d",
                                   pipelinerFrameNo_,
@@ -852,6 +879,9 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
                 }
                 
                 pipelinerFrameNo_++;
+                
+                if (shouldRequestFrame_)
+                    shouldRequestFrame_ = false;
             }
         }
             break;

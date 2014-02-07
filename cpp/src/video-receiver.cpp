@@ -89,17 +89,21 @@ void NdnVideoReceiver::playbackPacket(int64_t packetTsLocal)
         
         // get playout time (delay) for the rendered frame
         int framePlayoutTime = ((VideoPlayoutBuffer*)playoutBuffer_)->releaseAcquiredSlot();
-        int adjustedPlayoutTime = 0;
         
+        int adjustedPlayoutTime = 0;
         // if av sync has been set up
         if (slot && avSync_.get())
-            adjustedPlayoutTime= avSync_->synchronizePacket(slot, packetTsLocal);
+            adjustedPlayoutTime = avSync_->synchronizePacket(slot, packetTsLocal,
+                                                            this);
         
-        framePlayoutTime += adjustedPlayoutTime;
-        jitterTiming_.updatePlayoutTime(framePlayoutTime);
-        
-        // setup and run playout timer for calculated playout interval
-        jitterTiming_.runPlayoutTimer();
+        if (framePlayoutTime >= 0 && adjustedPlayoutTime >= 0)
+        {
+            framePlayoutTime += adjustedPlayoutTime;
+            jitterTiming_.updatePlayoutTime(framePlayoutTime);
+            
+            // setup and run playout timer for calculated playout interval
+            jitterTiming_.runPlayoutTimer();
+        }
     }
 }
 

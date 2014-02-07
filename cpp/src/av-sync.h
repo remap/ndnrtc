@@ -15,11 +15,20 @@
 
 namespace ndnrtc {
     
-    const int64_t TolerableDriftMs = 30; // packets will be synchronized
+    const int64_t TolerableDriftMs = 20; // packets will be synchronized
                                          // if their timelines differ more
                                          // than this value
+    class NdnMediaReceiver;
     
-    class AudioVideoSynchronizer : public LoggerObject
+    class IMediaReceiverCallback
+    {
+    public:
+        // called whenever receiver encounters rebuffering
+        virtual void onRebuffer(NdnMediaReceiver *caller) = 0;
+    };
+    
+    class AudioVideoSynchronizer : public LoggerObject,
+    public IMediaReceiverCallback
     {
     public:
         AudioVideoSynchronizer();
@@ -39,12 +48,18 @@ namespace ndnrtc {
          * @return Playout duration adjustment (in ms) needed for media streams 
          * to be synchronized or 0 if no adjustment is required.
          */
-        int synchronizePacket(FrameBuffer::Slot* slot, int64_t localTimestamp);
+        int synchronizePacket(FrameBuffer::Slot* slot, int64_t localTimestamp,
+                              NdnMediaReceiver *receiver);
         
         /**
          * Resets synchronization data (used for rebufferings).
          */
         void reset();
+        
+        /**
+         * IMediaReceiverCallback interface
+         */
+        void onRebuffer(NdnMediaReceiver *receiver);
         
     protected:
         // those attribute which has prefix "remote" relate to remote producer's
@@ -60,6 +75,7 @@ namespace ndnrtc {
             {}
             
             webrtc::CriticalSectionWrapper &cs_;
+            NdnMediaReceiver *receiver_;
             const char *name_;
             bool initialized_;
             
@@ -87,10 +103,13 @@ namespace ndnrtc {
         int syncPacket(SyncStruct& syncData,
                        SyncStruct& pairedSyncData,
                        int64_t packetTsRemote,
-                       int64_t packetTsLocal);
+                       int64_t packetTsLocal,
+                       NdnMediaReceiver *receiver);
+        
         void initialize(SyncStruct& syncData,
                         int64_t firstPacketTsRemote,
-                        int64_t packetTsLocal);
+                        int64_t packetTsLocal,
+                        NdnMediaReceiver *receiver);
         
         int64_t getNextSyncPoint(int64_t startingPoint);
     };

@@ -17,8 +17,7 @@
 #include "audio-receiver.h"
 #include "audio-sender.h"
 #include "av-sync.h"
-
-//#define AUDIO_OFF // disable audio channel
+#include "statistics.h"
 
 namespace ndnrtc {
     class NdnAudioChannel : public NdnRtcObject,
@@ -58,6 +57,7 @@ namespace ndnrtc {
         {
             audioReceiver_->setAVSynchronizer(avSync);
         }
+        void getStatistics(ReceiverChannelPerformance &stat);
         
     protected:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);
@@ -83,6 +83,8 @@ namespace ndnrtc {
         int init(shared_ptr<ndn::Transport> &transport);
         int start();
         int stop();
+        
+        void getStatistics(SenderChannelPerformance &stat);
         
     protected:
         // webrtc::Transport interface
