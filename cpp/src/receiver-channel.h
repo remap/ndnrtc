@@ -32,7 +32,7 @@ namespace ndnrtc
         int stopTransmission();
 
         void getChannelStatistics(ReceiverChannelStatistics &stat);
-
+        
     protected:
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoDecoder> decoder_;

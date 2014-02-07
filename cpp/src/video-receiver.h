@@ -32,12 +32,6 @@ namespace ndnrtc
             frameConsumer_ = consumer;
         }
         
-        unsigned int getNPipelined() { return pipelinerFrameNo_; }
-        unsigned int getJitterOccupancy() { return playoutBuffer_->getJitterSize(); }
-        unsigned int getBufferStat(FrameBuffer::Slot::State state) {
-            return frameBuffer_.getStat(state);
-        }
-        
     private:
         IEncodedFrameConsumer *frameConsumer_;
     
