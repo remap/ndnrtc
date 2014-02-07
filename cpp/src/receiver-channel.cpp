@@ -35,10 +35,8 @@ audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::shared
     localRender_->setObserver(this);
     decoder_->setObserver(this);
     receiver_->setObserver(this);
-    receiver_->registerCallback(this);
 
     audioReceiveChannel_->setObserver(this);
-    audioReceiveChannel_->registerCallback(this);
     
     receiver_->setFrameConsumer(decoder_.get());
     decoder_->setFrameConsumer(localRender_.get());
@@ -166,24 +164,6 @@ int NdnReceiverChannel::stopTransmission()
     
     isTransmitting_ = false;
     return RESULT_OK;
-}
-void NdnReceiverChannel::onRebuffer(NdnMediaReceiver *caller)
-{
-    if (caller == receiver_.get())
-    {
-        TRACE("video channel encountered rebuffer. "
-              "triggering audio for rebuffering...");
-
-        // trigger audio channel for rebuffering
-        audioReceiveChannel_->triggerRebuffering();
-    }
-    else
-    {
-        TRACE("audio channel encountered rebuffer. "
-              "triggering video for rebuffering...");
-        // trigger video channel for rebuffering
-        receiver_->triggerRebuffering();
-    }
 }
 void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
 {

@@ -43,8 +43,7 @@ namespace ndnrtc {
     };
     
     class NdnAudioReceiveChannel : public NdnAudioChannel,
-    public IAudioPacketConsumer,
-    public IMediaReceiverCallback
+    public IAudioPacketConsumer
     {
     public:
         NdnAudioReceiveChannel(const ParamsStruct &params,
@@ -58,32 +57,13 @@ namespace ndnrtc {
         {
             audioReceiver_->setAVSynchronizer(avSync);
         }
-        void registerCallback(IMediaReceiverCallback *callback)
-        {
-            callback_ = callback;
-        }
-        void deregisterCallback()
-        {
-            callback_ = nullptr;
-        }
         void getStatistics(ReceiverChannelPerformance &stat);
-        
-        void onRebuffer(NdnMediaReceiver *caller)
-        {
-            callback_->onRebuffer(nullptr);
-        }
-        
-        void triggerRebuffering()
-        {
-            audioReceiver_->triggerRebuffering();
-        }
         
     protected:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);
         virtual void onRTCPPacketReceived(unsigned int len, unsigned char *data);
         
     private:
-        IMediaReceiverCallback *callback_;
         NdnAudioReceiver *audioReceiver_ = NULL;
     };
     

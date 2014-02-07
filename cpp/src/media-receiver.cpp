@@ -659,7 +659,10 @@ void NdnMediaReceiver::pipelineInterests(FrameBuffer::Event &event)
             Name segmentPrefix = framePrefix;
             
             segmentPrefix.appendSegment(i);
-            expressInterest(segment
+            expressInterest(segmentPrefix);
+        }
+}
+
 void NdnMediaReceiver::requestInitialSegment()
 {
     Interest i(framesPrefix_, interestTimeoutMs_);
@@ -756,7 +759,7 @@ void NdnMediaReceiver::rebuffer(bool shouldNotify)
     jitterTiming_.flush();
     rtt_ = 0;
     srtt_ = StartSRTT;
-    excludeFilter_ = pipelinerFrameNo_; //playoutBuffer_->getPlayheadPointer()
+    excludeFilter_ = pipelinerFrameNo_; //playoutBuffer_->getPlayheadPointer(); //pipelinerFrameNo_; //
     switchToMode(ReceiverModeFlushed);
     needMoreFrames_.Reset();
     

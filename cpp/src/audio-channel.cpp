@@ -96,7 +96,6 @@ audioReceiver_(new NdnAudioReceiver(params))
     
     audioReceiver_->setObserver(this);
     audioReceiver_->setFrameConsumer(this);
-    audioReceiver_->registerCallback(this);
     audioReceiver_->setLogger(logger_);
 }
 

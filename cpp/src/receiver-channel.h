@@ -20,8 +20,7 @@
 
 namespace ndnrtc
 {
-    class NdnReceiverChannel : public NdnMediaChannel,
-    public IMediaReceiverCallback
+    class NdnReceiverChannel : public NdnMediaChannel
     {
     public:
         NdnReceiverChannel(const ParamsStruct &params,
@@ -33,8 +32,6 @@ namespace ndnrtc
         int stopTransmission();
 
         void getChannelStatistics(ReceiverChannelStatistics &stat);
-
-        void onRebuffer(NdnMediaReceiver *caller);
         
     protected:
         shared_ptr<NdnRenderer> localRender_;

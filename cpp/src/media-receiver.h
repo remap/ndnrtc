@@ -73,6 +73,7 @@ namespace ndnrtc
         
         void setAVSynchronizer(shared_ptr<AudioVideoSynchronizer> &avSync){
             avSync_ = avSync;
+            registerCallback(avSync_.get());
         }
         
         // overriden from LoggerObject
@@ -242,13 +243,6 @@ namespace ndnrtc
         PendingInterestStruct getPisForInterest(const string &iuri,
                                                 bool removeFromPITs = false) DEPRECATED;
         void clearPITs();
-    };
-    
-    class IMediaReceiverCallback
-    {
-    public:
-        // called whenever receiver encounters rebuffering
-        virtual void onRebuffer(NdnMediaReceiver *caller) = 0;
     };
 }
 

@@ -25,6 +25,10 @@ namespace ndnrtc
     const int MinPipelineSizeMs = 2*MinJitterSizeMs;
     const int MaxUnderrunNum = 10;
     const int MaxOutstandingInterests DEPRECATED = 1;
+    const double MaxJitterSizeCoeff = 1.2; // if jitter becomes greater than
+                                           // this value multiplied by min
+                                           // jitter size, AMP should reduce
+                                           // play time for the frames
     
     // how fast playout should slow compared to the jitter buffer decrease
     const double PlayoutJitterRatio = 1/3;

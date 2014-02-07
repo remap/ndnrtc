@@ -148,6 +148,8 @@ int PlayoutBuffer::releaseAcquiredSlot()
         framePointer_ = (jitterBuffer_.size())?jitterBuffer_.top()->getFrameNumber():framePointer_;
     }
     
+    int playoutTime = calculatePlayoutTime();
+    
     if (jitterBuffer_.size() || moveHead)
     {
         webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
@@ -163,14 +165,14 @@ int PlayoutBuffer::releaseAcquiredSlot()
         DBG("[PLAYOUT] skipped frame %d because it was missing (buffer underrun)",
             playheadPointer_);
     }
-
+    
     // increment playhead
     playheadPointer_++;
     
     if (this->callback_)
         this->callback_->onPlayheadMoved(playheadPointer_, missingFrame_);
     
-    return calculatePlayoutTime();
+    return playoutTime;
 }
 
 //******************************************************************************
@@ -320,11 +322,11 @@ int PlayoutBuffer::calculatePlayoutTime()
     {
         FrameBuffer::Slot *nextSlot = jitterBuffer_.top();
         
-        // check if it is a consecutive frame (playheadPointer_ was incremented
+        // check if it is a consecutive frame (playheadPointer_ was not incremented
         // by releaseAcquiredSlot() call)
         // if not - next frame has not arrived yet - use previous playout time
         if ((nextFramePresent_ = (nextSlot->getFrameNumber() ==
-                                  playheadPointer_)))
+                                  playheadPointer_+1)))
         {
             uint64_t nextSlotTimestamp = nextSlot->getPacketTimestamp();
             TRACE("[PLAYOUT] next frame %d, %ld",
@@ -334,7 +336,7 @@ int PlayoutBuffer::calculatePlayoutTime()
                                           (int64_t)lastFrameTimestampMs_);
             
             TRACE("[PLAYOUT] got playout for %d - %d",
-                  playheadPointer_-1, currentPlayoutTimeMs_);
+                  playheadPointer_, currentPlayoutTimeMs_);
             
             if (currentPlayoutTimeMs_ < 0)
                 currentPlayoutTimeMs_ = 0;
@@ -379,7 +381,7 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
         playoutTimeMs += playoutIncreaseMs;
         
         DBG("[PLAYOUT-AMP] increased playout time for %d: %d (by %.2f%%)",
-            playheadPointer_-1, playoutTimeMs, playouTimeIncrease*100);
+            playheadPointer_, playoutTimeMs, playouTimeIncrease*100);
     }
 #endif
     
@@ -396,9 +398,9 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     {
         canConsumeExtraTime = false;
         
-        if (frameBuffer_->getState(playheadPointer_) == FrameBuffer::Slot::StateAssembling)
+        if (frameBuffer_->getState(playheadPointer_+1) == FrameBuffer::Slot::StateAssembling)
         {
-            shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_);
+            shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_+1);
             
             if (slot.get())
             {
@@ -421,7 +423,7 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
                 TRACE("[PLAYOUT-AMP] next frame is key: %s (%d/%d - %.2f). "
                       "playout time of %d increased by %d (total %d)",
                       (isKeyFrame)?"YES":"NO", nAssembled, nTotal,
-                      assembledLevel, playheadPointer_-1, playoutIncrease,
+                      assembledLevel, playheadPointer_, playoutIncrease,
                       playoutTimeMs);
             }
             else
@@ -431,10 +433,19 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     } // if (!nextFramePresent_)
 #endif
     
-    if (canConsumeExtraTime && ampExtraTimeMs_)
+#ifdef USE_AMP_V3
+#warning update to calculate in ms after refactoring playout buffer
+    if (jitterSize >= MaxJitterSizeCoeff*minJitterSize_)
+    {
+        TRACE("[PLAYOUT-AMP] jitter is too large, fast-forwarding");
+        ampExtraTimeMs_ += playoutTimeMs*ExtraTimePerFrame;
+    }
+#endif
+    
+    if (canConsumeExtraTime && ampExtraTimeMs_ > 0)
     {
         // get the frame to-be played out
-        shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_-1);
+        shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(playheadPointer_);
         
         if (slot.get())
         {
@@ -467,6 +478,8 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
                 ampExtraTimeMs_ = 0;
             }
         } // if slot
+        else
+            TRACE("[PLAYOUT-AMP] no slot");
     }
     
     return playoutTimeMs;

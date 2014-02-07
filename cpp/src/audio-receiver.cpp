@@ -59,7 +59,6 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
     if (packetConsumer_)
     {
         int framePlayoutTime = 0;
-        int adjustedPlayoutTime = 0;
         
         FrameBuffer::Slot *slot = playoutBuffer_->acquireNextSlot();
         
@@ -94,11 +93,6 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
                                           packet.timestamp_,
                                           currentProducerRate_);
                     }
-                    
-                    // if av sync has been set up
-                    if (slot && avSync_.get())
-                        adjustedPlayoutTime = avSync_->synchronizePacket(slot,
-                                                                        packetTsLocal);
                 }
                 else
                     WARN("got bad audio packet");
@@ -109,8 +103,15 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
             // get playout time
             framePlayoutTime = playoutBuffer_->releaseAcquiredSlot();
             
+            int adjustedPlayoutTime = 0;
+            // if av sync has been set up
+            if (slot && avSync_.get())
+                adjustedPlayoutTime = avSync_->synchronizePacket(slot,
+                                                                 packetTsLocal,
+                                                                 this);
+            
             // check for error
-            if (framePlayoutTime >= 0)
+            if (framePlayoutTime >= 0 && adjustedPlayoutTime >= 0)
             {
                 framePlayoutTime += adjustedPlayoutTime;
                 jitterTiming_.updatePlayoutTime(framePlayoutTime);
