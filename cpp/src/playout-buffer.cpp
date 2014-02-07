@@ -47,6 +47,8 @@ int PlayoutBuffer::init(FrameBuffer *buffer, double startPacketRate,
     {
         switchToState(StateClear);
         
+        INFO("playout buffer initialized with min jitter size: %d", minJitterSize);
+        
         unsigned int tid = PROVIDER_THREAD_ID;
         providerThread_.Start(tid);
     }

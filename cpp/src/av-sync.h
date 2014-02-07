@@ -31,7 +31,7 @@ namespace ndnrtc {
     public IMediaReceiverCallback
     {
     public:
-        AudioVideoSynchronizer();
+        AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams);
         ~AudioVideoSynchronizer(){}
         
         /**
@@ -99,6 +99,7 @@ namespace ndnrtc {
                        // (when both streams has started)
         webrtc::CriticalSectionWrapper &syncCs_;
         SyncStruct audioSyncData_, videoSyncData_;
+        ParamsStruct videoParams_, audioParams_;
         
         int syncPacket(SyncStruct& syncData,
                        SyncStruct& pairedSyncData,

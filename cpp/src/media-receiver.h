@@ -219,8 +219,8 @@ namespace ndnrtc
         // based on the current sizes of jitter and pipeline buffers, determines
         // whether more frames need to be fetched
         bool needMoreFrames(){
-            bool jitterBufferSmall = false; //getJitterBufferSizeMs() < MinJitterSizeMs/2.;
-            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < MinPipelineSizeMs;
+            bool jitterBufferSmall = false;
+            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < params_.jitterSize;
             
             TRACE("need more frames? jitter small: %s, pipeline small: %s "
                   "underrun: %s",

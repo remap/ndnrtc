@@ -21,8 +21,6 @@ namespace ndnrtc
     std::vector<FrameBuffer::Slot*>,
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
     
-    const int MinJitterSizeMs = 150;
-    const int MinPipelineSizeMs = 2*MinJitterSizeMs;
     const int MaxUnderrunNum = 10;
     const int MaxOutstandingInterests DEPRECATED = 1;
     const double MaxJitterSizeCoeff = 1.2; // if jitter becomes greater than

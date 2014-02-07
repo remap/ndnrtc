@@ -86,8 +86,8 @@ int NdnMediaReceiver::init(shared_ptr<Face> face)
     currentProducerRate_ = params_.producerRate;
     
     if (RESULT_FAIL(playoutBuffer_->init(&frameBuffer_,
-                                          params_.jitterSize,
-                                          currentProducerRate_)))
+                                          currentProducerRate_,
+                                         params_.jitterSize)))
         return notifyError(RESULT_ERR, "could not initialize playout buffer");
     
     jitterTiming_.flush();
@@ -353,7 +353,7 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
         {
             currentProducerRate_ = metadata.packetRate_;
             
-            int newJitterSize = NdnRtcUtils::toFrames(MinJitterSizeMs,
+            int newJitterSize = NdnRtcUtils::toFrames(params_.jitterSize,
                                                       currentProducerRate_);
             
             playoutBuffer_->setMinJitterSize(newJitterSize);
@@ -612,11 +612,11 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         {
             mode_ = mode;
             playoutBuffer_->setMinJitterSize(NdnRtcUtils::
-                                             toFrames(MinJitterSizeMs, currentProducerRate_));
+                                             toFrames(params_.jitterSize, currentProducerRate_));
             needMoreFrames_.Set();
             
             TRACE("set initial jitter size for %d ms (%d frames)",
-                  MinJitterSizeMs,
+                  params_.jitterSize,
                   playoutBuffer_->getMinJitterSize());
             INFO("switched to mode: Fetch");
         }

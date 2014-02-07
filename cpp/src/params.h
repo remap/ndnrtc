@@ -69,7 +69,7 @@ namespace ndnrtc
         unsigned int playbackRate;
         unsigned int interestTimeout;
         unsigned int bufferSize, slotSize;
-        unsigned int jitterSize DEPRECATED;
+        unsigned int jitterSize;
         
         /**
          * Validates video parameters
@@ -160,9 +160,9 @@ namespace ndnrtc
         
         30,     // playback rate of local consumer
         5,      // interest timeout
-        30,     // incoming framebuffer size
+        90,     // assembling buffer size
         16000,  // frame buffer slot size
-        20       // jitter size
+        300       // jitter buffer size in ms
     };
     
     // only some parameters are used for audio configuration (those that are
@@ -200,9 +200,9 @@ namespace ndnrtc
         
         50,     // playback rate of local consumer
         2,      // interest timeout
-        20,     // incoming framebuffer size
+        90,     // assembling buffer size
         1000,  // frame buffer slot size
-        33      // jitter size
+        300      // jitter buffer size in ms
     };
 
 }
