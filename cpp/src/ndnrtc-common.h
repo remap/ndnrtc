@@ -35,12 +35,6 @@ using namespace ndn;
 using namespace ptr_lib;
 using namespace ndnlog;
 
-#define PROVIDER_THREAD_ID 1
-#define PIPELINER_THREAD_ID 2
-#define PLAYOUT_THREAD_ID 3
-#define ASSEMBLING_THREAD_ID 4
-#define AUDIO_THREAD_ID 5
-
 #define DEPRECATED __attribute__ ((deprecated))
 
 #define RESULT_GOOD(res) (res >= RESULT_OK)
@@ -57,10 +51,10 @@ using namespace ndnlog;
 #define ERR_NDNLIB  -101
 
 // RTC features
-#define USE_AVSYNC
+//#define USE_AVSYNC
 //#define USE_AMP
-#define USE_AMP_V2
-#define USE_AMP_V3
+//#define USE_AMP_V2
+//#define USE_AMP_V3
 
 //#define AUDIO_OFF // disable audio
 //#define VIDEO_OFF // disable video

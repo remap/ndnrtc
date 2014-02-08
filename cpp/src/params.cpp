@@ -107,6 +107,8 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
   validated.bufferSize = ParamsStruct::validate(params.bufferSize,
                                                 MinBufferSize, MaxBufferSize, res,
                                                 DefaultParams.bufferSize);
+#warning check this!!!
+    validated.jitterSize = params.jitterSize;
   validated.slotSize = ParamsStruct::validate(params.slotSize,
                                               MinSlotSize, MaxSlotSize, res,
                                               DefaultParams.slotSize);
@@ -172,6 +174,8 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
   validated.bufferSize = ParamsStruct::validate(params.bufferSize,
                                                 MinBufferSize, MaxBufferSize, res,
                                                 DefaultParamsAudio.bufferSize);
+#warning check this!!!
+        validated.jitterSize = params.jitterSize;
   validated.slotSize = ParamsStruct::validate(params.slotSize, MinSlotSize,
                                               MaxSlotSize, res,
                                               DefaultParamsAudio.slotSize);

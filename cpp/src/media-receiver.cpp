@@ -17,6 +17,7 @@
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
+using namespace std::tr1;
 
 const double ndnrtc::RateDeviation = 0.1; // 10%
 const double ndnrtc::RttFilterAlpha = 0.01;
@@ -75,7 +76,7 @@ int NdnMediaReceiver::init(shared_ptr<Face> face)
     int bufSz = params_.bufferSize;
     int slotSz = params_.slotSize;
     
-    interestTimeoutMs_ = params_.interestTimeout*1000;
+    interestTimeoutMs_ = params_.jitterSize*DeadlineBarrierCoeff; //interestTimeout*1000;
     
     if (RESULT_FAIL(frameBuffer_.init(bufSz, slotSz)))
         return notifyError(RESULT_ERR, "could not initialize frame buffer");
@@ -109,7 +110,7 @@ int NdnMediaReceiver::startFetching()
     switchToMode(ReceiverModeFlushed);
     
     // setup and start assembling thread
-    unsigned int tid = ASSEMBLING_THREAD_ID;
+    unsigned int tid;
     
     if (!assemblingThread_.Start(tid))
     {
@@ -125,7 +126,6 @@ int NdnMediaReceiver::startFetching()
     
     pipelineTimer_.StartTimer(true, pipelinerTimerInterval);
     
-    tid = PIPELINER_THREAD_ID;
     if (!pipelineThread_.Start(tid))
     {
         notifyError(RESULT_ERR, "can't start playout thread");
@@ -456,6 +456,17 @@ void NdnMediaReceiver::onJitterBufferUnderrun()
     {
         emptyJitterCounter_ = 0;
         rebuffer();
+    }
+}
+void NdnMediaReceiver::onFrameReachedDeadline(FrameBuffer::Slot *slot,
+                           unordered_set<int> &lateSegments)
+{
+    for (unordered_set<int>::iterator it = lateSegments.begin();
+         it != lateSegments.end(); ++it)
+    {
+        TRACE("[RECEIVER] slot %d needs retransmission for %d (is KEY: %s)",
+                  slot->getFrameNumber(), *it, (slot->isKeyFrame())?"YES":"NO");
+        requestSegment(slot->getFrameNumber(), *it);
     }
 }
 

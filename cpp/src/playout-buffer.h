@@ -21,8 +21,11 @@ namespace ndnrtc
     std::vector<FrameBuffer::Slot*>,
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
     
+    const double DeadlineBarrierCoeff = 0.5; // dedaline for late segments will
+                                             // be set on the time equals
+                                             // multiplication of this
+                                             // coefficient and jitter size
     const int MaxUnderrunNum = 10;
-    const int MaxOutstandingInterests DEPRECATED = 1;
     const double MaxJitterSizeCoeff = 1.2; // if jitter becomes greater than
                                            // this value multiplied by min
                                            // jitter size, AMP should reduce
@@ -133,6 +136,8 @@ namespace ndnrtc
         
         webrtc::CriticalSectionWrapper &playoutCs_, &syncCs_;
         webrtc::ThreadWrapper &providerThread_;
+        webrtc::EventWrapper &stateSwitchedEvent_; // triggered whenever buffer
+                                                   // switches to a new state
         
         static bool frameProviderThreadRoutine(void *obj) {
             return ((PlayoutBuffer*)obj)->processFrameProvider();
@@ -145,6 +150,7 @@ namespace ndnrtc
         void adjustPlayoutTiming(FrameBuffer::Slot *slot);
         int calculatePlayoutTime();
         int getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize);
+        void checkLateFrames();
         
         void resetData();
     };
@@ -157,6 +163,11 @@ namespace ndnrtc
         virtual void onBufferStateChanged(PlayoutBuffer::State newState) = 0;
         virtual void onMissedFrame(unsigned int frameNo) = 0;
         virtual void onJitterBufferUnderrun() = 0;
+        
+        // called each time slot that has not been assembled yet reaches its'
+        // deadline for retransmission
+        virtual void onFrameReachedDeadline(FrameBuffer::Slot *slot,
+                                           std::tr1::unordered_set<int> &lateSegments) = 0;
     };
     
     /**

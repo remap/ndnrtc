@@ -2,9 +2,10 @@
 //  av-sync.cpp
 //  ndnrtc
 //
-//  Created by Peter Gusev on 1/17/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
 //
+//  Author:  Peter Gusev
 
 #include "av-sync.h"
 #include "media-receiver.h"
