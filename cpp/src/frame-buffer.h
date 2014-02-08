@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__frame_buffer__
 #define __ndnrtc__frame_buffer__
 
+#include <tr1/unordered_set>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 
@@ -199,6 +201,7 @@ namespace ndnrtc
                 storedSegments_ = 0;
                 segmentsNum_ = 0;
                 segmentSize_ = 0;
+                nRetransmitRequested_ = 0;
             }
             void markLocked() {
                 stashedState_ = state_;
@@ -206,20 +209,7 @@ namespace ndnrtc
             }
             void markUnlocked() { state_ = stashedState_; }
             void markAssembling(unsigned int segmentsNum,
-                                unsigned int segmentSize) {
-                state_ = StateAssembling;
-                segmentSize_ = segmentSize;
-                segmentsNum_ = segmentsNum;
-                startAssemblingTs_ = NdnRtcUtils::microsecondTimestamp();
-                
-                if (dataLength_ < segmentsNum_*segmentSize_)
-                {
-                    LOG_WARN("slot size is smaller than expected amount of data. "
-                         "enlarging buffer...");
-                    dataLength_ = 2*segmentsNum_*segmentSize_;
-                    data_ = (unsigned char*)realloc(data_, dataLength_);
-                }
-            }
+                                unsigned int segmentSize);
             void rename(unsigned int newFrameNumber) {
                 frameNumber_ = newFrameNumber;
             }
@@ -297,6 +287,17 @@ namespace ndnrtc
             bool isVideoPacket(){
                 return NdnFrameData::isVideoData(segmentSize_, data_);
             }
+            std::tr1::unordered_set<int> getLateSegments(){
+                webrtc::CriticalSectionScoped scopedCs(&cs_);
+                return std::tr1::unordered_set<int>(missingSegments_);
+            }
+            int getRetransmitRequestedNum() {
+                return nRetransmitRequested_;
+            }
+            void incRetransmitRequestedNum()
+            {
+                nRetransmitRequested_++;
+            }
             
         private:
             bool isKeyFrame_;
@@ -308,6 +309,9 @@ namespace ndnrtc
             uint64_t assemblingTime_;
             unsigned char *data_;
             Slot::State state_, stashedState_;
+            webrtc::CriticalSectionWrapper &cs_;
+            int nRetransmitRequested_ = 0;
+            std::tr1::unordered_set<int> missingSegments_;
             
             void flushData() { memset(data_, 0, dataLength_); }
         };

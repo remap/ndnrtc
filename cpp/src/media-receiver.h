@@ -9,6 +9,8 @@
 #ifndef __ndnrtc__media_receiver__
 #define __ndnrtc__media_receiver__
 
+#include <tr1/unordered_set>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
@@ -86,6 +88,8 @@ namespace ndnrtc
         void onPlayheadMoved(unsigned int nextPlaybackFrame,
                              bool frameWasMissing);
         void onJitterBufferUnderrun();
+        void onFrameReachedDeadline(FrameBuffer::Slot *slot,
+                                   std::tr1::unordered_set<int> &lateSegments);
         
     protected:
         enum ReceiverMode {
@@ -129,7 +133,7 @@ namespace ndnrtc
         typedef std::map<const string, PendingInterestStruct> PitMap;
         typedef std::map<unsigned int, string> PitMapUri;
         
-        IMediaReceiverCallback *callback_;
+        IMediaReceiverCallback *callback_ = nullptr;
         
         PitMap pendingInterests_ DEPRECATED;
         PitMapUri pendingInterestsUri_ DEPRECATED;
@@ -219,8 +223,8 @@ namespace ndnrtc
         // based on the current sizes of jitter and pipeline buffers, determines
         // whether more frames need to be fetched
         bool needMoreFrames(){
-            bool jitterBufferSmall = false; //getJitterBufferSizeMs() < MinJitterSizeMs/2.;
-            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < MinPipelineSizeMs;
+            bool jitterBufferSmall = false;
+            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < params_.jitterSize;
             
             TRACE("need more frames? jitter small: %s, pipeline small: %s "
                   "underrun: %s",

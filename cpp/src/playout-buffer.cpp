@@ -8,10 +8,11 @@
 //  Author:  Peter Gusev
 
 //#undef NDN_LOGGING
-
+#include <tr1/unordered_set>
 #include "playout-buffer.h"
 
 using namespace std;
+using namespace std::tr1;
 using namespace webrtc;
 using namespace ndnrtc;
 
@@ -21,6 +22,7 @@ using namespace ndnrtc;
 PlayoutBuffer::PlayoutBuffer() :
 frameBuffer_(nullptr),
 providerThread_(*ThreadWrapper::CreateThread(frameProviderThreadRoutine, this)),
+stateSwitchedEvent_(*EventWrapper::Create()),
 playoutCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 jitterBuffer_(FrameBuffer::Slot::SlotComparator(true)),
@@ -47,7 +49,9 @@ int PlayoutBuffer::init(FrameBuffer *buffer, double startPacketRate,
     {
         switchToState(StateClear);
         
-        unsigned int tid = PROVIDER_THREAD_ID;
+        INFO("playout buffer initialized with min jitter size: %d", minJitterSize);
+        
+        unsigned int tid;
         providerThread_.Start(tid);
     }
     else
@@ -166,8 +170,13 @@ int PlayoutBuffer::releaseAcquiredSlot()
             playheadPointer_);
     }
     
-    // increment playhead
-    playheadPointer_++;
+    {
+        webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
+        // increment playhead
+        playheadPointer_++;
+    }
+    
+    checkLateFrames();
     
     if (this->callback_)
         this->callback_->onPlayheadMoved(playheadPointer_, missingFrame_);
@@ -280,6 +289,8 @@ void PlayoutBuffer::switchToState(State state)
         
         if (callback_)
             callback_->onBufferStateChanged(state_);
+        
+        stateSwitchedEvent_.Set();
     }
 }
 
@@ -483,6 +494,40 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
     }
     
     return playoutTimeMs;
+}
+
+void PlayoutBuffer::checkLateFrames()
+{
+    webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
+    
+    int deadlineFrameNo = playheadPointer_ + DeadlineBarrierCoeff*minJitterSize_;
+    int startFrame = playheadPointer_;
+    
+    TRACE("[PLAYOUT-WATCH] checking from %d till %d",
+          startFrame, deadlineFrameNo);
+    
+    // retrieve and check every frame from current playhead up to deadline frame
+    for (int frameNo = startFrame; frameNo < deadlineFrameNo; frameNo++)
+    {
+        shared_ptr<FrameBuffer::Slot> slot = frameBuffer_->getSlot(frameNo);
+        if (slot.get())
+        {
+            unordered_set<int> missingSegments = slot->getLateSegments();
+            
+            if (missingSegments.size() > 0  &&
+                slot->getRetransmitRequestedNum() == 0)
+            {
+                slot->incRetransmitRequestedNum();
+                TRACE("[PLAYOUT-WATCH] %d frame: %d missing segments",
+                      frameNo, missingSegments.size());
+                if (callback_)
+                    callback_->onFrameReachedDeadline(slot.get(),
+                                                     missingSegments);
+            }
+        }
+        else
+            TRACE("[PLAYOUT-WATCH] no slot for %d", frameNo);
+    } // for
 }
 
 void PlayoutBuffer::resetData()

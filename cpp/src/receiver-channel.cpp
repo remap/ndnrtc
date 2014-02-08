@@ -42,7 +42,7 @@ audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::shared
     decoder_->setFrameConsumer(localRender_.get());
     
 #ifdef USE_AVSYNC
-    shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer());
+    shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer(params, audioParams));
     avSync->setLogger(logger_);
     
     receiver_->setAVSynchronizer(avSync);

@@ -2,9 +2,10 @@
 //  av-sync.cpp
 //  ndnrtc
 //
-//  Created by Peter Gusev on 1/17/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
 //
+//  Author:  Peter Gusev
 
 #include "av-sync.h"
 #include "media-receiver.h"
@@ -17,10 +18,12 @@ name, -1, -1, -1, -1, -1, -1})
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioVideoSynchronizer::AudioVideoSynchronizer() :
+AudioVideoSynchronizer::AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams) :
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 audioSyncData_("audio"),
-videoSyncData_("video")
+videoSyncData_("video"),
+videoParams_(videoParams),
+audioParams_(audioParams)
 {
 }
 
@@ -95,8 +98,10 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         drift = syncData.lastPacketTsRemote_-hitTimeRemotePaired;
         TRACE("[SYNC] %s: drift is %d", syncData.name_, drift);
         
+        unsigned int minJitterSize = (receiver == audioSyncData_.receiver_) ? audioParams_.jitterSize : videoParams_.jitterSize;
+        
         // do not allow drift greater than jitter buffer size
-        if (abs(drift) > MinJitterSizeMs)
+        if (abs(drift) > minJitterSize)
         {
             // if drift > 0 - current stream is ahead, rebuffer paired stream
             if (drift > 0)

@@ -2,9 +2,10 @@
 //  av-sync.h
 //  ndnrtc
 //
-//  Created by Peter Gusev on 1/17/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
 //
+//  Author:  Peter Gusev
 
 #ifndef __ndnrtc__av_sync__
 #define __ndnrtc__av_sync__
@@ -31,7 +32,7 @@ namespace ndnrtc {
     public IMediaReceiverCallback
     {
     public:
-        AudioVideoSynchronizer();
+        AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams);
         ~AudioVideoSynchronizer(){}
         
         /**
@@ -99,6 +100,7 @@ namespace ndnrtc {
                        // (when both streams has started)
         webrtc::CriticalSectionWrapper &syncCs_;
         SyncStruct audioSyncData_, videoSyncData_;
+        ParamsStruct videoParams_, audioParams_;
         
         int syncPacket(SyncStruct& syncData,
                        SyncStruct& pairedSyncData,

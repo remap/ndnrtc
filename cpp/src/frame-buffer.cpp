@@ -227,7 +227,8 @@ segmentSize_(0),
 storedSegments_(0),
 segmentsNum_(0),
 assembledDataSize_(0),
-frameNumber_(-1)
+frameNumber_(-1),
+cs_(*CriticalSectionWrapper::CreateCriticalSection())
 {
     data_ = new unsigned char[slotSize];
 }
@@ -343,7 +344,36 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
     else
         state_ = StateAssembling;
     
+    {
+        webrtc::CriticalSectionScoped scopedCs(&cs_);
+        missingSegments_.erase(segmentNo);
+    }
+    
     return state_;
+}
+
+void FrameBuffer::Slot::markAssembling(unsigned int segmentsNum, unsigned int segmentSize)
+{
+    state_ = StateAssembling;
+    segmentSize_ = segmentSize;
+    segmentsNum_ = segmentsNum;
+    startAssemblingTs_ = NdnRtcUtils::microsecondTimestamp();
+    
+    {
+        webrtc::CriticalSectionScoped scopedCs(&cs_);
+        missingSegments_.clear();
+        
+        for (int segNo = 0; segNo < segmentsNum; segNo++)
+            missingSegments_.insert(segNo);
+    }
+    
+    if (dataLength_ < segmentsNum_*segmentSize_)
+    {
+        LOG_WARN("slot size is smaller than expected amount of data. "
+                 "enlarging buffer...");
+        dataLength_ = 2*segmentsNum_*segmentSize_;
+        data_ = (unsigned char*)realloc(data_, dataLength_);
+    }
 }
 
 //******************************************************************************
@@ -403,8 +433,6 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
 
 void FrameBuffer::flush()
 {
-    //    bufferEvent_.Set();
-    //    bufferEvent_.Reset();
     {
         CriticalSectionScoped scopedCs(&syncCs_);
         TRACE("flushing frame buffer - size %d, pending %d, free %d",
@@ -667,7 +695,6 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     
     while (!(stop || forcedRelease_))
     {
-//        TRACE("[BUFFER] - lock shared - wait for events - loop");
         bufferEventsRWLock_.AcquireLockShared();
         
         list<Event>::iterator it = pendingEvents_.begin();
@@ -684,28 +711,16 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
                 it++;
         }
         
-//        TRACE("[BUFFER] - unlock shared - wait for events - loop");
         bufferEventsRWLock_.ReleaseLockShared();
         
         if (stop)
         {
-//            TRACE("[BUFFER] - lock exclusive - wait for events - stop")
             bufferEventsRWLock_.AcquireLockExclusive();
             pendingEvents_.erase(it);
-//            TRACE("[BUFFER] - unlock exclusive - wait for events - stop")
             bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
         {
-            // if couldn't find event we are looking for - wait for the event to occur
-//            TRACE("[BUFFER] - lock exclusive - wait for events - log");
-//            bufferEventsRWLock_.AcquireLockExclusive();
-//            TRACE("wait for events - mapped %d free %d pending %d",
-//                  frameSlotMapping_.size(),
-//                  freeSlots_.size(),
-//                  pendingEvents_.size());
-//            TRACE("[BUFFER] - unlock exclusive - wait for events - log");
-//            bufferEventsRWLock_.ReleaseLockExclusive();
             stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
         }
     }
