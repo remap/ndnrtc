@@ -33,7 +33,8 @@ namespace ndnrtc
         MaxSlotSize = 20000,
         MinSlotSize = 10,
         MaxBufferSize = 5*120,
-        MinBufferSize = 1;
+        MinBufferSize = 1,
+        MinJitterSize = 150;
     
 
     typedef struct _ParamsStruct {
@@ -201,7 +202,7 @@ namespace ndnrtc
         50,     // playback rate of local consumer
         2,      // interest timeout
         90,     // assembling buffer size
-        1000,  // frame buffer slot size
+        1054,  // frame buffer slot size
         300      // jitter buffer size in ms
     };
 

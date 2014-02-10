@@ -143,6 +143,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         checkParams(p, resP);
         checkAParams(ap, resAudioP);
     }
+#if 0
     {// check for default params
         ParamsStruct resP, resAudioP;
         
@@ -398,6 +399,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         library_->configure(p, ap);
         EXPECT_STREQ("error", receivedState_.c_str());
     }
+#endif
 }
 
 TEST_F(NdnRtcLibraryTester, TestStartPublishingTwice)

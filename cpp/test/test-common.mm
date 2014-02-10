@@ -146,8 +146,7 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
             segmentPrefix.appendSegment(segmentIdx);
            publishData(dataSize, segmentData,
                        segmentPrefix.toUri(), freshness,
-                       Name().appendSegment(totalSegmentsNum-1).
-                        get(0).getValue());
+                       totalSegmentsNum);
         } // if
     } // for
     
@@ -155,12 +154,12 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
 void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
                                            unsigned char *dataPacket,
                                            const string &prefix, int freshness,
-                                           const Blob& finalBlockId)
+                                           int64_t totalSegmentsNum)
 {
     Data data(prefix);
     
     data.getMetaInfo().setFreshnessSeconds(freshness);
-    data.getMetaInfo().setFinalBlockID(finalBlockId);
+    data.getName().appendFinalSegment(totalSegmentsNum-1);
     data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
     data.setContent(dataPacket, dataLen);
     

@@ -241,7 +241,7 @@ protected:
     // publishes data under the prefix
     void publishData(unsigned int dataLen, unsigned char *dataPacket,
                      const string &prefix, int freshness,
-                     const Blob& finalBlockId);
+                     int64_t totalSegmentsNum);
     
     void startProcessingNdn();
     void stopProcessingNdn();

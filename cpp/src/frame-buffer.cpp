@@ -51,23 +51,23 @@ NdnFrameData(frame)
 
 //******************************************************************************
 #pragma mark - public
-int NdnFrameData::unpackFrame(unsigned int length_, const unsigned char *data,
+int NdnFrameData::unpackFrame(unsigned int length, const unsigned char *data,
                               webrtc::EncodedImage **frame)
 {
-    unsigned int headerSize_ = sizeof(FrameDataHeader);
+    unsigned int headerSize = sizeof(FrameDataHeader);
     FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
     
     // check markers
     if ((header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
          header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR) ||
-        length_ < headerSize_)
+        length < headerSize)
         return RESULT_ERR;
     
     int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,
                                           header.encodedHeight_);
     
-    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize_]),
-                                      length_-headerSize_, size);
+    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize]),
+                                      length-headerSize, size);
     (*frame)->_encodedWidth = header.encodedWidth_;
     (*frame)->_encodedHeight = header.encodedHeight_;
     (*frame)->_timeStamp = header.timeStamp_;

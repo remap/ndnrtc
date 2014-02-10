@@ -26,8 +26,8 @@ TEST(VideoCoderParamsTest, CheckDefaults)
     ParamsStruct p = DefaultParams;
     
     EXPECT_EQ(30, p.codecFrameRate);
-    EXPECT_EQ(1000, p.maxBitrate);
-    EXPECT_EQ(100, p.startBitrate);
+    EXPECT_EQ(10000, p.maxBitrate);
+    EXPECT_EQ(2000, p.startBitrate);
     EXPECT_EQ(640, p.encodeWidth);
     EXPECT_EQ(480, p.encodeHeight);
 }
@@ -116,7 +116,7 @@ protected:
     }
     
 };
-#if 0
+
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
@@ -252,7 +252,7 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequence)
     
     delete vc;
 }
-#endif
+
 TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
 {
     FrameReader fr("resources/bipbop10.yuv");
@@ -301,7 +301,7 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
         LOG_TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
     }
     
-    EXPECT_EQ(nFrames, obtainedFramesCount_);
+    EXPECT_LE(obtainedFramesCount_, nFrames);
     LOG_TRACE("total time %d ms, lost time - %d ms (%.2f%%), dropped frames: %d",
             totalTime, lostTime, (double)lostTime/(double)totalTime, droppedFrames);
     

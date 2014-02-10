@@ -467,7 +467,8 @@ TEST_F(VideoSenderTester, TestSendBySegments)
             if (framePrefix.match(segmentData->getName()))
             {
                 int ncomp = segmentData->getName().getComponentCount();
-                Name::Component segmentComp = segmentData->getName().getComponent(ncomp-1);
+                // the last component is a "new final block id"
+                Name::Component segmentComp = segmentData->getName().getComponent(ncomp-2);
                 
                 // decode segment component into a segment number
                 if (sno == NdnRtcUtils::segmentNumber(segmentComp))

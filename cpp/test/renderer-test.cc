@@ -260,6 +260,7 @@ TEST_F(NdnRendererTester, TestBlackRender)
         
         r.init();
         r.startRendering("sample");
+        usleep(20000);
         EXPECT_FALSE(getGLView(r.getRenderWindow()) == 0);
         r.stopRendering();
         usleep(10000);

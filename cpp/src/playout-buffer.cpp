@@ -41,13 +41,14 @@ PlayoutBuffer::~PlayoutBuffer()
 int PlayoutBuffer::init(FrameBuffer *buffer, double startPacketRate,
                         unsigned int minJitterSize)
 {
-    currentPlayoutTimeMs_ = 1000./startPacketRate;
-    minJitterSize_ = minJitterSize;
-    frameBuffer_ = buffer;
-    
     if (buffer)
     {
+        frameBuffer_ = buffer;
         switchToState(StateClear);
+        
+        // set initial values
+        currentPlayoutTimeMs_ = 1000./startPacketRate;
+        minJitterSize_ = minJitterSize;
         
         INFO("playout buffer initialized with min jitter size: %d", minJitterSize);
         
