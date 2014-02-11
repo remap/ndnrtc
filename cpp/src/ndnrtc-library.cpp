@@ -141,6 +141,17 @@ void NdnRtcLibrary::configure(const ParamsStruct &params,
     libParams_ = validatedVideoParams;
     libAudioParams_ = validatedAudioParams;
     
+    if (params.useTlv)
+    {
+        notifyObserver("info", "using TLV wire format");
+        WireFormat::setDefaultWireFormat(TlvWireFormat::get());
+    }
+    else
+    {
+        notifyObserver("info", "using BinaryXML wire format");
+        WireFormat::setDefaultWireFormat(BinaryXmlWireFormat::get());
+    }
+    
     if (wasModified)
         notifyObserverWithState("warn", "some parameters were malformed. using default"
                                 " instead");
