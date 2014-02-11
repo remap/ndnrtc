@@ -70,9 +70,7 @@ namespace ndnrtc {
                                    ParamsStruct &audioParams);
         
         virtual void setObserver(INdnRtcLibraryObserver *observer) {
-            LOG_TRACE("%d <- %d", observer_, observer);
             observer_ = observer;
-            LOG_TRACE("%d", observer_);
         }
         virtual void getDefaultParams(ParamsStruct &videoParams,
                                       ParamsStruct &audioParams) const;

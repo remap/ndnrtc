@@ -20,5 +20,7 @@
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 #include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
+#include <ndn-cpp/encoding/tlv-wire-format.hpp>
+#include <ndn-cpp/encoding/binary-xml-wire-format.hpp>
 
 #endif
