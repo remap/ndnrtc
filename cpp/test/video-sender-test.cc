@@ -117,6 +117,7 @@ public:
         
         videoSender_.reset(new NdnVideoSender(params_));
         videoSender_->setObserver(this);
+        videoSender_->setLogger(NdnLogger::sharedInstance());
         ndnTransport_.reset(new TcpTransport());
         ndnFace_.reset(new Face(ndnTransport_, connInfo));
         
@@ -517,4 +518,96 @@ TEST_F(VideoSenderTester, TestSendWithLibException)
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(true, obtainedError_);
+}
+#warning add tests for checking frame numbers
+// add tests for checking frame numbers: key frames should not appear in delta namespace
+TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
+{
+    // delay from previous tests - previous objects should be marked stale
+    WAIT(1200);
+    
+    loadFrame();
+    
+    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
+    
+    // send frame
+    int deltaFramesNum = 3, keyFramesNum = 3;
+    
+    for (int i = 0; i < deltaFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    sampleFrame_->_frameType = webrtc::kKeyFrame;
+    for (int i = 0; i < keyFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    EXPECT_EQ(false, obtainedError_);
+    
+    // just to be sure - wait for ndn network to poke the object
+    //    WAIT(1000);
+    
+    // get frame prefix
+    std::string deltaPrefixStr, keyPrefixStr;
+    EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, deltaPrefixStr));
+    EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, keyPrefixStr));
+    
+    Name deltaFramesPrefix(deltaPrefixStr.c_str());
+    Name keyFramesPrefix(keyPrefixStr.c_str());
+    
+    // fetch delta frames
+    for (int i = 0; i < deltaFramesNum; i++)
+    {
+        Name framePrefix = deltaFramesPrefix;
+        
+        char frameNoStr[3];
+        memset(&frameNoStr[0], 0, 3);
+        sprintf(&frameNoStr[0], "%d", i);
+        
+        framePrefix.addComponent((const unsigned char *)&frameNoStr[0], strlen(frameNoStr));
+        framePrefix.appendSegment(0);
+        ndnFace_->expressInterest(framePrefix, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    // fetch key frames
+    for (int i = deltaFramesNum; i < deltaFramesNum+keyFramesNum; i++)
+    {
+        Name framePrefix = deltaFramesPrefix;
+        
+        char frameNoStr[3];
+        memset(&frameNoStr[0], 0, 3);
+        sprintf(&frameNoStr[0], "%d", i);
+        
+        framePrefix.addComponent((const unsigned char *)&frameNoStr[0], strlen(frameNoStr));
+        framePrefix.appendSegment(0);
+        ndnFace_->expressInterest(framePrefix, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    
+    // fetch data from ndn
+    long long waitMs = 10000;
+    while (!(callbackCount_ == deltaFramesNum+keyFramesNum || timeoutReceived_) && waitMs > 0)
+    {
+        ndnFace_->processEvents();
+        usleep(10000);
+        waitMs -= 10;
+    }
+    
+    EXPECT_TRUE(dataReceived_);
+    EXPECT_EQ(3, dataInbox_.size());
+    
+    for (int i = 0; i < dataInbox_.size(); i++)
+    {
+        shared_ptr<Data> dataObject = dataInbox_[i];
+        webrtc::EncodedImage *frame = nullptr;
+        
+        ASSERT_EQ(0, NdnFrameData::unpackFrame(dataObject->getContent().size(), dataObject->getContent().buf(), &frame));
+        ASSERT_NE(nullptr, frame);
+        
+        // set frame type field accroding to the frame type
+        if (i < deltaFramesNum)
+            sampleFrame_->_frameType = webrtc::kDeltaFrame;
+        else
+            sampleFrame_->_frameType = webrtc::kKeyFrame;
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
+        
+        delete frame;
+    }
 }

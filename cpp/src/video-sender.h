@@ -41,12 +41,17 @@ namespace ndnrtc
         {
         }
         
+        // overriden from base class
+        int init(const shared_ptr<ndn::Transport> transport);
+        
         unsigned long int getFrameNo() { return getPacketNo(); }
         
         // interface conformance
         void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
         
     private:
+        int keyFrameNo_ = 0;
+        shared_ptr<Name> keyFramesPrefix_;
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {
