@@ -39,10 +39,19 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
     {
         char prefix[256];
         memset(prefix, 0, 256);
-        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames", hubEx, userEx, streamEx);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/delta", hubEx, userEx, streamEx);
         
         string prefixS;
         NdnAudioSender::getStreamFramePrefix(p, prefixS);
+        EXPECT_STREQ(prefix, prefixS.c_str());
+    }
+    {
+        char prefix[256];
+        memset(prefix, 0, 256);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/key", hubEx, userEx, streamEx);
+        
+        string prefixS;
+        NdnAudioSender::getStreamFramePrefix(p, prefixS, true);
         EXPECT_STREQ(prefix, prefixS.c_str());
     }
     if (0) // remove this check for now - RTP prefix equals RTCP

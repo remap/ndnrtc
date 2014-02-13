@@ -38,8 +38,8 @@ public :
         
         UnitTestHelperNdnNetwork::NdnSetUp(streamAccessPrefix, userPrefix);
         
-        frame = NdnRtcObjectTestHelper::loadEncodedFrame();
-        payload = new NdnFrameData(*frame);
+        frame_ = NdnRtcObjectTestHelper::loadEncodedFrame();
+        payload = new NdnFrameData(*frame_);
     }
     void TearDown()
     {
@@ -66,7 +66,7 @@ protected:
     std::vector<webrtc::EncodedImage*> fetchedFrames_;
     std::vector<uint64_t> sentFrames_;
     std::vector<uint64_t> receivedFrames_;
-    webrtc::EncodedImage *frame;
+    webrtc::EncodedImage *frame_;
     NdnFrameData *payload;
     
     void publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
@@ -81,7 +81,7 @@ protected:
         sentFrames_.push_back(millisecondTimestamp());
     }
 };
-#if 0
+
 TEST_F(NdnReceiverTester, CreateDelete)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(DefaultParams);
@@ -93,19 +93,17 @@ TEST_F(NdnReceiverTester, WrongCallSequences)
     NdnVideoReceiver *receiver = new NdnVideoReceiver(DefaultParams);
 
     receiver->setObserver(this);
-    
     flushFlags();
     { // call stop
         EXPECT_EQ(RESULT_ERR, receiver->stopFetching());
         EXPECT_TRUE(obtainedError_);
     }
-    
+
     flushFlags();
     { // call start
         EXPECT_EQ(RESULT_ERR, receiver->startFetching());
         EXPECT_TRUE(obtainedError_);
     }
-    
     flushFlags();
     { // call stop without start
         EXPECT_EQ(RESULT_OK, receiver->init(ndnFace_));
@@ -114,7 +112,6 @@ TEST_F(NdnReceiverTester, WrongCallSequences)
         WAIT(100);
         EXPECT_TRUE(obtainedError_);
     }
-    
     delete receiver;
 }
 
@@ -162,6 +159,8 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
+    receiver->setLogger(NdnLogger::sharedInstance());
+    
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);
     
@@ -181,9 +180,12 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     // start right from frame 0
     for (int i = 0; i < 2*framesNum; i++)
     {
-        frame->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
-        frame->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-        payload = new NdnFrameData(*frame);
+        frame_->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
+        frame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+        PacketData::PacketMetadata meta;
+        meta.sequencePacketNumber_ = i;
+        meta.packetRate_ = producerFrameRate;
+        payload = new NdnFrameData(*frame_, meta);
         publishMediaPacket(payload->getLength(), payload->getData(), i,
                            segmentSize, framePrefix, params_.freshness, true);
         LOG_TRACE("published frame %d",i);
@@ -240,9 +242,13 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
 
     for (int i = 0; i < 2*framesNum; i++)
     {
-        frame->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
-        frame->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-        payload = new NdnFrameData(*frame);
+        frame_->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
+        frame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+        PacketData::PacketMetadata meta;
+        meta.sequencePacketNumber_ = i;
+        meta.packetRate_ = producerFrameRate;
+        payload = new NdnFrameData(*frame_, meta);
+
         publishMediaPacket(payload->getLength(), payload->getData(), i,
                            segmentSize, framePrefix, params_.freshness, true);
         LOG_TRACE("published frame %d",i,5);
@@ -303,9 +309,13 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     {
         for (int i = 0; i < framesNum; i++)
         {
-            frame->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
-            frame->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-            payload = new NdnFrameData(*frame, meta);
+            frame_->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
+            frame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+            PacketData::PacketMetadata meta;
+            meta.sequencePacketNumber_ = i;
+            meta.packetRate_ = producerFrameRate;
+            payload = new NdnFrameData(*frame_, meta);
+
             publishMediaPacket(payload->getLength(), payload->getData(), i,
                                segmentSize, framePrefix, params_.freshness, true);
             LOG_TRACE("published frame %d",i);
@@ -333,9 +343,13 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     { // now publish again
         for (int i = 0; i < framesNum; i++)
         {
-            frame->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
-            frame->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-            payload = new NdnFrameData(*frame, meta);
+            frame_->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
+            frame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+            PacketData::PacketMetadata meta;
+            meta.sequencePacketNumber_ = i;
+            meta.packetRate_ = producerFrameRate;
+            payload = new NdnFrameData(*frame_, meta);
+
             publishMediaPacket(payload->getLength(), payload->getData(), i,
                                segmentSize, framePrefix, params_.freshness, true);
             LOG_TRACE("published frame %d",i);
@@ -360,8 +374,8 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     delete receiver;
     WAIT(params_.freshness*1000);
 }
-#endif
 
+#if 0
 class VideoReceiverRecorder : public IEncodedFrameConsumer
 {
 public:
@@ -404,3 +418,4 @@ TEST_F(NdnReceiverTester, Record)
     
     EXPECT_EQ(0, receiver->stopFetching());
 }
+#endif

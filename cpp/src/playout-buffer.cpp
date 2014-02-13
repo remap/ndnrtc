@@ -177,7 +177,7 @@ int PlayoutBuffer::releaseAcquiredSlot()
         playheadPointer_++;
     }
     
-    checkLateFrames();
+//    checkLateFrames();
     
     if (this->callback_)
         this->callback_->onPlayheadMoved(playheadPointer_, missingFrame_);

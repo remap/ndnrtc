@@ -134,6 +134,7 @@ namespace ndnlog {
         static void log(const char *fName, NdnLoggerLevel level, const char *format, ...);
         static std::string currentLogFile(); // returns "" if log to stdout
         static NdnLoggerDetailLevel currentLogLevel();
+        static NdnLogger *sharedInstance() { return getInstance(); }
 
         // public attributes go here
         
@@ -211,12 +212,16 @@ namespace ndnlog {
         
         /**
          * Sets a logger only if it was not previously created. This logger 
-         * will not be deleted upon object destruction
+         * will not be deleted upon object destruction. Otherwise, deletes 
+         * previous logger and sets a new one provided.
          * @param logger Logger which will be used for logging by the object
          */
         virtual void setLogger(NdnLogger *logger) {
-            if (!isLoggerCreated_)
-                logger_ = logger;
+            if (isLoggerCreated_)
+                delete logger_;
+
+            isLoggerCreated_ = false;
+            logger_ = logger;
         }
         
     protected:

@@ -102,7 +102,9 @@ public:
         string rtpPrefix;
         NdnAudioData::AudioPacket p = {false, NdnRtcUtils::millisecondTimestamp(),
             (unsigned int)len, (unsigned char*)data};
-        NdnAudioData adata(p);
+        PacketData::PacketMetadata meta = {50., (PacketNumber)currentRTPFrame_};
+        NdnAudioData adata(p, meta);
+
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
         sendCS_->Enter();
@@ -120,7 +122,8 @@ public:
         string rtcpPrefix;
         NdnAudioData::AudioPacket p = {true, NdnRtcUtils::millisecondTimestamp(),
             (unsigned int)len, (unsigned char*)data};
-        NdnAudioData adata(p);
+        PacketData::PacketMetadata meta = {50., (PacketNumber)currentRTPFrame_};
+        NdnAudioData adata(p, meta);
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
         
@@ -355,7 +358,6 @@ TEST_F(NdnAudioChannelTester, TestSendReceive)
         EXPECT_EQ(RESULT_OK, sender.start());
         
         WAIT(recordingTime);
-        
         EXPECT_EQ(RESULT_OK, recevier.stop());
         EXPECT_EQ(RESULT_OK, sender.stop());
     }

@@ -56,6 +56,10 @@ NdnMediaReceiver::~NdnMediaReceiver()
     NdnRtcUtils::releaseFrequencyMeter(interestFreqMeter_);
     NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeter_);
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
+
+    if (frameBuffer_.isActivated())
+        frameBuffer_.release();
+
     delete playoutBuffer_;
 }
 
@@ -157,37 +161,35 @@ int NdnMediaReceiver::stopFetching()
     if (mode_ < ReceiverModeFlushed)
     {
         TRACE("return on init");
+        frameBuffer_.release();
         return notifyError(RESULT_ERR, "media receiver was not started");
     }
+
+    assemblingThread_.SetNotAlive();
+    pipelineThread_.SetNotAlive();
+    bookingThread_.SetNotAlive();
+    playoutThread_.SetNotAlive();
     
+    switchToMode(ReceiverModeInit);
+    frameBuffer_.release();
+
     pipelineTimer_.StopTimer();
     pipelineTimer_.Set();
     needMoreFrames_.Set();
     
-    assemblingThread_.SetNotAlive();
-    pipelineThread_.SetNotAlive();
-    bookingThread_.SetNotAlive();
-    TRACE("release buf");
-    frameBuffer_.release();
-    
     assemblingThread_.Stop();
     pipelineThread_.Stop();
     bookingThread_.Stop();
-    TRACE("stopped threads");
+    playoutThread_.Stop();
     
     jitterTiming_.stop();
-    modeSwitchedEvent_.Set();
-    playoutThread_.SetNotAlive();
-    playoutThread_.Stop();
-    modeSwitchedEvent_.Reset();
-    
-    switchToMode(ReceiverModeInit);
+
     return RESULT_OK;
 }
 
 void NdnMediaReceiver::setLogger(NdnLogger *logger)
 {
-    logger_ = logger;
+    LoggerObject::setLogger(logger);
     
     frameBuffer_.setLogger(logger);
     playoutBuffer_->setLogger(logger);
@@ -484,15 +486,15 @@ bool NdnMediaReceiver::processInterests()
     
     switch (ev.type_)
     {
-        case FrameBuffer::Event::EventTypeFirstSegment:
+        case FrameBuffer::Event::FirstSegment:
             res = onFirstSegmentReceived(ev);
             break;
             
-        case FrameBuffer::Event::EventTypeTimeout:
+        case FrameBuffer::Event::Timeout:
             res = onSegmentTimeout(ev);
             break;
             
-        case FrameBuffer::Event::EventTypeError:
+        case FrameBuffer::Event::Error:
             res = onError(ev);
             break;
         default:
@@ -510,7 +512,7 @@ bool NdnMediaReceiver::processBookingSlots()
     
     if (mode_ != ReceiverModeChase)
     {
-        int eventMask = FrameBuffer::Event::EventTypeFreeSlot;
+        int eventMask = FrameBuffer::Event::FreeSlot;
         
         TRACE("[BOOKING] LOCK on wait for free slots. free %d",
               frameBuffer_.getStat(FrameBuffer::Slot::StateFree));
@@ -518,12 +520,16 @@ bool NdnMediaReceiver::processBookingSlots()
         FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventMask);
         
         switch (ev.type_) {
-            case FrameBuffer::Event::EventTypeFreeSlot:
+            case FrameBuffer::Event::FreeSlot:
                 TRACE("on free slot %d %d", getJitterBufferSizeMs(),
                       getPipelinerBufferSizeMs());
                 res = onFreeSlot(ev);
                 break;
-                
+            
+            case FrameBuffer::Event::Error:
+                res = false;
+                break;
+            
             default:
                 NDNERROR("got unexpected event: %d. ignoring", ev.type_);
                 break;
@@ -545,7 +551,6 @@ bool NdnMediaReceiver::processAssembling()
         try {
 //            TRACE("process events");
             face_->processEvents();
-            usleep(5000);
         }
         catch(std::exception &e)
         {
@@ -594,8 +599,8 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         {
             mode_ = mode;
             // setup pipeliner thread params
-            pipelinerEventsMask_ = FrameBuffer::Event::EventTypeFirstSegment |
-                                    FrameBuffer::Event::EventTypeTimeout;
+            pipelinerEventsMask_ = FrameBuffer::Event::FirstSegment |
+                                    FrameBuffer::Event::Timeout;
             needMoreFrames_.Reset();
         }
             break;

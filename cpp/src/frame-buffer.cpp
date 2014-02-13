@@ -415,6 +415,7 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
     
     bufferSize_ = bufferSize;
     slotSize_ = slotSize;
+    forcedRelease_ = false;    
     
     // create slots
     for (int i = 0; i < bufferSize_; i++)
@@ -458,6 +459,7 @@ void FrameBuffer::flush()
                 TRACE("trying to flush locked slot %d", slot->getFrameNumber());
         }
         frameSlotMapping_.clear();
+        resetData();
     }
     
     TRACE("flushed. pending events %d", pendingEvents_.size());
@@ -726,7 +728,6 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
     poppedEvent.type_ = Event::Error;
-    forcedRelease_ = false;
     
     while (!(stop || forcedRelease_))
     {
@@ -830,3 +831,7 @@ void FrameBuffer::updateStat(Slot::State state, int change)
     statistics_[state] += change;
 }
 
+void FrameBuffer::resetData()
+{
+    forcedRelease_ = false;
+}

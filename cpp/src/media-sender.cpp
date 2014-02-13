@@ -131,7 +131,7 @@ int MediaSender::init(const shared_ptr<ndn::Transport> transport)
     
     packetNo_ = 0;
     
-    return 0;
+    return RESULT_OK;
 }
 
 //******************************************************************************

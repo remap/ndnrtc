@@ -46,8 +46,11 @@ namespace ndnrtc
                 free(data_);
         }
         
-        int getLength() { return length_; }
-        unsigned char* getData() { return data_; }
+        int
+        getLength() { return length_; }
+        
+        unsigned char*
+        getData() { return data_; }
         
     protected:
         unsigned int length_;
@@ -67,17 +70,27 @@ namespace ndnrtc
         NdnFrameData(webrtc::EncodedImage &frame, PacketMetadata &metadata);
         ~NdnFrameData(){}
         
-        static int unpackFrame(unsigned int length_, const unsigned char *data,
-                               webrtc::EncodedImage **frame);
-        static int unpackMetadata(unsigned int length_,
-                                  const unsigned char *data,
-                                  PacketMetadata &metadata);
-        static webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
-                                            const unsigned char *headerSegment);
-        static bool isVideoData(unsigned int size,
-                                const unsigned char *headerSegment);
-        static int64_t getTimestamp(unsigned int size,
-                                    const unsigned char *headerSegment);
+        static int
+        unpackFrame(unsigned int length_, const unsigned char *data,
+                    webrtc::EncodedImage **frame);
+        
+        static int
+        unpackMetadata(unsigned int length_,
+                       const unsigned char *data,
+                       PacketMetadata &metadata);
+        
+        static
+        webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
+                                                      const unsigned char *headerSegment);
+        
+        static bool
+        isVideoData(unsigned int size,
+                    const unsigned char *headerSegment);
+        
+        static int64_t
+        getTimestamp(unsigned int size,
+                     const unsigned char *headerSegment);
+        
     private:
         struct FrameDataHeader {
             uint32_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
@@ -113,14 +126,21 @@ namespace ndnrtc
         NdnAudioData(AudioPacket &packet, PacketMetadata &metadata);
         ~NdnAudioData(){}
         
-        static int unpackAudio(unsigned int len, const unsigned char *data,
-                               AudioPacket &packet);
-        static int unpackMetadata(unsigned int len, const unsigned char *data,
-                               PacketMetadata &metadata);
-        static bool isAudioData(unsigned int size,
-                                const unsigned char *headerSegment);
-        static int64_t getTimestamp(unsigned int size,
-                                    const unsigned char *headerSegment);
+        static int
+        unpackAudio(unsigned int len, const unsigned char *data,
+                    AudioPacket &packet);
+        
+        static int
+        unpackMetadata(unsigned int len, const unsigned char *data,
+                       PacketMetadata &metadata);
+        static bool
+        isAudioData(unsigned int size,
+                    const unsigned char *headerSegment);
+        
+        static int64_t
+        getTimestamp(unsigned int size,
+                     const unsigned char *headerSegment);
+        
     private:
         struct AudioDataHeader {
             unsigned int        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
@@ -227,13 +247,23 @@ namespace ndnrtc
             Slot(unsigned int slotSize);
             ~Slot();
             
-            Slot::State getState() const { return state_; }
-            PacketNumber getFrameNumber() const { return frameNumber_; }
-            unsigned int assembledSegmentsNumber() const { return storedSegments_; }
-            unsigned int totalSegmentsNumber() const { return segmentsNum_; }
+            Slot::State
+            getState() const { return state_; }
             
-            void markFree() { state_ = StateFree; }
-            void markNew(PacketNumber frameNumber) {
+            PacketNumber
+            getFrameNumber() const { return frameNumber_; }
+            
+            unsigned int
+            assembledSegmentsNumber() const { return storedSegments_; }
+            
+            unsigned int
+            totalSegmentsNumber() const { return segmentsNum_; }
+            
+            void
+            markFree() { state_ = StateFree; }
+            
+            void
+            markNew(PacketNumber frameNumber) {
                 frameNumber_ = frameNumber;
                 state_ = StateNew;
                 assembledDataSize_ = 0;
@@ -242,14 +272,21 @@ namespace ndnrtc
                 segmentSize_ = 0;
                 nRetransmitRequested_ = 0;
             }
-            void markLocked() {
+            
+            void
+            markLocked() {
                 stashedState_ = state_;
                 state_ = StateLocked;
             }
-            void markUnlocked() { state_ = stashedState_; }
-            void markAssembling(unsigned int segmentsNum,
+            
+            void
+            markUnlocked() { state_ = stashedState_; }
+            
+            void
+            markAssembling(unsigned int segmentsNum,
                                 unsigned int segmentSize);
-            void rename(PacketNumber newFrameNumber) {
+            void
+            rename(PacketNumber newFrameNumber) {
                 frameNumber_ = newFrameNumber;
             }
             
@@ -258,25 +295,29 @@ namespace ndnrtc
              * @return  shared pointer to the encoded frame; frame buffer is 
              *          still owned by slot.
              */
-            shared_ptr<webrtc::EncodedImage> getFrame();
+            shared_ptr<webrtc::EncodedImage>
+            getFrame();
 
             /**
              * Unpacks audio frame from received data
              */
-            NdnAudioData::AudioPacket getAudioFrame();
+            NdnAudioData::AudioPacket
+            getAudioFrame();
             
             /**
              * Retrieves packet metadata
              * @return  RESULT_OK if metadata can be retrieved and RESULT_ERR
              *          upon error
              */
-            int getPacketMetadata(PacketData::PacketMetadata &metadata) const;
+            int
+            getPacketMetadata(PacketData::PacketMetadata &metadata) const;
             
             /**
              * Returns packet timestamp
              * @return video or audio packet timestamp or RESULT_ERR upon error
              */
-            int64_t getPacketTimestamp();
+            int64_t
+            getPacketTimestamp();
             
             /**
              * Appends segment to the frame data
@@ -286,8 +327,9 @@ namespace ndnrtc
              * @details dataLength should normally be equal to segmentSize, 
              *          except, probably, for the last segment
              */
-            State appendSegment(SegmentNumber segmentNo, unsigned int dataLength,
-                                const unsigned char *data);
+            State
+            appendSegment(SegmentNumber segmentNo, unsigned int dataLength,
+                          const unsigned char *data);
             
             static shared_ptr<string>
                 stateToString(FrameBuffer::Slot::State state);
@@ -324,27 +366,42 @@ namespace ndnrtc
             
             // indicates, whether slot contains key frame. returns always true
             // for audio frames
-            bool isKeyFrame() { return isKeyFrame_; };
-            webrtc::VideoFrameType getFrameType() {
+            bool
+            isKeyFrame() { return isKeyFrame_; };
+            
+            webrtc::VideoFrameType
+            getFrameType() {
                 return NdnFrameData::getFrameTypeFromHeader(segmentSize_, data_);
             }
-            uint64_t getAssemblingTimeUsec() {
+            
+            uint64_t
+            getAssemblingTimeUsec() {
                 return assemblingTime_;
             }
-            bool isAudioPacket() {
+            
+            bool
+            isAudioPacket() {
                 return NdnAudioData::isAudioData(segmentSize_, data_);
             }
-            bool isVideoPacket(){
+            
+            bool
+            isVideoPacket(){
                 return NdnFrameData::isVideoData(segmentSize_, data_);
             }
-            std::tr1::unordered_set<SegmentNumber> getLateSegments(){
+            
+            std::tr1::unordered_set<SegmentNumber>
+            getLateSegments(){
                 webrtc::CriticalSectionScoped scopedCs(&cs_);
                 return std::tr1::unordered_set<SegmentNumber>(missingSegments_);
             }
-            int getRetransmitRequestedNum() {
+            
+            int
+            getRetransmitRequestedNum() {
                 return nRetransmitRequested_;
             }
-            void incRetransmitRequestedNum()
+            
+            void
+            incRetransmitRequestedNum()
             {
                 nRetransmitRequested_++;
             }
@@ -369,15 +426,25 @@ namespace ndnrtc
         FrameBuffer();
         ~FrameBuffer();
         
-        int init(unsigned int bufferSize, unsigned int slotSize);
+        int
+        init(unsigned int bufferSize, unsigned int slotSize);
         /**
          * Flushes buffer except currently locked frames
          */
-        void flush();
+        void
+        flush();
         /**
          * Releases currently locked waiting threads
          */
-        void release();
+        void
+        release();
+        /**
+         * Indicates, whether buffer is activated.
+         * By default, buffer is activated after init call and de-activated 
+         * after release call
+         */
+        bool
+        isActivated() { return !forcedRelease_; }
         
         /**
          * *Blocking call* 
@@ -388,8 +455,8 @@ namespace ndnrtc
          *                  call is blocking unles new event received.
          * @return Occurred event instance
          */
-        Event waitForEvents(int &eventsMask,
-                            unsigned int timeout = 0xffffffff);
+        Event
+        waitForEvents(int &eventsMask, unsigned int timeout = 0xffffffff);
         
         /**
          * Books slot for assembling a frame. Buffer books slot only if there is at
@@ -401,8 +468,8 @@ namespace ndnrtc
          *          CallResultFull if buffer is full and there are no free slots available
          *          CallResultBooked if slot is already booked
          */
-        CallResult bookSlot(PacketNumber frameNumber,
-                            bool useKeyNamespace = false);
+        CallResult
+        bookSlot(PacketNumber frameNumber, bool useKeyNamespace = false);
         
         /**
          * Marks slot for specified frame as free
@@ -410,8 +477,8 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void markSlotFree(PacketNumber frameNumber,
-                          bool useKeyNamespace = false);
+        void
+        markSlotFree(PacketNumber frameNumber, bool useKeyNamespace = false);
         
         /**
          * Locks slot while it is being used by caller (for decoding for example).
@@ -420,51 +487,54 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void lockSlot(PacketNumber frameNumber,
-                      bool useKeyNamespace = false);
+        void
+        lockSlot(PacketNumber frameNumber, bool useKeyNamespace = false);
         /**
          * Unocks previously locked slot. Does nothing if slot was not locked previously.
          * @param frameNumber Number of frame which slot should be unlocked
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void unlockSlot(PacketNumber frameNumber,
-                        bool useKeyNamespace = false);
+        void
+        unlockSlot(PacketNumber frameNumber, bool useKeyNamespace = false);
         
         /**
-         * Marks slot as being assembled - when first segment arrived (in order to initialize slot
-         * buffer properly)
+         * Marks slot as being assembled - when first segment arrived (in order 
+         * to initialize slot buffer properly)
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void markSlotAssembling(PacketNumber frameNumber,
-                                unsigned int totalSegments,
-                                unsigned int segmentSize,
-                                bool useKeyNamespace = false);
+        void
+        markSlotAssembling(PacketNumber frameNumber,
+                           unsigned int totalSegments,
+                           unsigned int segmentSize,
+                           bool useKeyNamespace = false);
         
         /**
-         * Appends segment to the slot. Triggers defferent events according to situation
+         * Appends segment to the slot. Triggers defferent events according to 
+         * the situation
          * @param frameNumber Number of the frame
          * @param segmentNumber Number of the frame's segment
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        CallResult appendSegment(PacketNumber frameNumber,
-                                 SegmentNumber segmentNumber,
-                                 unsigned int dataLength,
-                                 const unsigned char *data,
-                                 bool useKeyNamespace = false);
+        CallResult
+        appendSegment(PacketNumber frameNumber, SegmentNumber segmentNumber,
+                      unsigned int dataLength, const unsigned char *data,
+                      bool useKeyNamespace = false);
         
         /**
-         * Notifies awaiting thread that the arrival of a segment of the booked slot was timeouted
+         * Notifies awaiting thread that the arrival of a segment of the booked 
+         * slot was timeouted
          * @param frameNumber Number of the frame
          * @param segmentNumber Number of the frame's segment
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void notifySegmentTimeout(PacketNumber frameNumber,
-                                  SegmentNumber segmentNumber,
-                                  bool useKeyNamespace = false);
+        void
+        notifySegmentTimeout(PacketNumber frameNumber,
+                             SegmentNumber segmentNumber,
+                             bool useKeyNamespace = false);
         
         /**
          * Returns state of slot for the specified frame number
@@ -472,7 +542,8 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        Slot::State getState(PacketNumber frameNo, bool useKeyNamespace);
+        Slot::State
+        getState(PacketNumber frameNo, bool useKeyNamespace = false);
         
         /**
          * Returns encoded frame if it is already assembled. Otherwise - null
@@ -480,8 +551,8 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        shared_ptr<webrtc::EncodedImage> getEncodedImage(PacketNumber frameNo,
-                                                         bool useKeyNamespace);
+        shared_ptr<webrtc::EncodedImage>
+        getEncodedImage(PacketNumber frameNo, bool useKeyNamespace = false);
         
         /**
          * Sets new frame number for booked slot
@@ -490,18 +561,21 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        void renameSlot(PacketNumber oldFrameNo, PacketNumber newFrameNo,
-                        bool useKeyNamespace = false);
+        void
+        renameSlot(PacketNumber oldFrameNo, PacketNumber newFrameNo,
+                   bool useKeyNamespace = false);
         
         /**
          * Buffer size
          */
-        unsigned int getBufferSize() { return bufferSize_; }
+        unsigned int
+        getBufferSize() { return bufferSize_; }
         
         /**
          * Returns number of slots in specified state
          */
-        unsigned int getStat(Slot::State state);
+        unsigned int
+        getStat(Slot::State state);
         
         /**
          * As buffer provides events-per-caller, once they emmited, they can not 
@@ -509,7 +583,8 @@ namespace ndnrtc
          * buffer event, it should call this method so event can be re-emmited 
          * by buffer.
          */
-        void reuseEvent(Event &event);
+        void
+        reuseEvent(Event &event);
         
         /**
          * Retireves current slot from the buffer according to the frame 
@@ -518,7 +593,8 @@ namespace ndnrtc
          * @param useKeyNamespace Indicates, whether key namespace should be
          * used or not
          */
-        shared_ptr<Slot> getSlot(PacketNumber frameNo, bool useKeyNamespace)
+        shared_ptr<Slot>
+        getSlot(PacketNumber frameNo, bool useKeyNamespace = false)
         {
             shared_ptr<Slot> slot(nullptr);
             getFrameSlot(frameNo, &slot);
@@ -543,14 +619,20 @@ namespace ndnrtc
         std::list<Event> pendingEvents_;
         webrtc::RWLockWrapper &bufferEventsRWLock_;
         
-        void notifyBufferEventOccurred(PacketNumber frameNo,
-                                       SegmentNumber segmentNo,
-                                       FrameBuffer::Event::EventType eType,
-                                       Slot *slot);
-        CallResult getFrameSlot(PacketNumber frameNo, shared_ptr<Slot> *slot,
-                                bool remove = false);
+        void
+        notifyBufferEventOccurred(PacketNumber frameNo, SegmentNumber segmentNo,
+                                  FrameBuffer::Event::EventType eType,
+                                  Slot *slot);
+
+        CallResult
+        getFrameSlot(PacketNumber frameNo, shared_ptr<Slot> *slot,
+                     bool remove = false);
         
-        void updateStat(Slot::State state, int change);
+        void
+        updateStat(Slot::State state, int change);
+        
+        void
+        resetData();
     };
 }
 

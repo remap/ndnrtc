@@ -84,10 +84,19 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
     {
         char prefix[256];
         memset(prefix, 0, 256);
-        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames", hubEx, userEx, streamEx);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames/delta", hubEx, userEx, streamEx);
         
         string frprefix;
         EXPECT_EQ(0, MediaSender::getStreamFramePrefix(p, frprefix));
+        EXPECT_STREQ(prefix, frprefix.c_str());
+    }
+    {
+        char prefix[256];
+        memset(prefix, 0, 256);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames/key", hubEx, userEx, streamEx);
+        
+        string frprefix;
+        EXPECT_EQ(0, MediaSender::getStreamFramePrefix(p, frprefix, true));
         EXPECT_STREQ(prefix, frprefix.c_str());
     }
 }
@@ -474,6 +483,7 @@ TEST_F(VideoSenderTester, TestSendBySegments)
                 if (sno == NdnRtcUtils::segmentNumber(segmentComp))
                 {
                     memcpy(pos, segmentData->getContent().buf(), segmentData->getContent().size());
+              
                     pos += segmentData->getContent().size();
                     break;
                 }

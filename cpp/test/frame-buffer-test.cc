@@ -1295,24 +1295,19 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
     // - assembling thread - appends segments (current main thread)
     // - frame playout thread (creates playout buffer based on current frame buffer and is invoked every 1/fps second)
     // buffer is smaller than the amount of frames needed to be delivered
-    
-    NdnFrameData frameData(*encodedFrame_);
-    
-    unsigned int payloadSize = frameData.getLength();
+
+    NdnFrameData data(*encodedFrame_);
+    unsigned int payloadSize = data.getLength();
     unsigned int framesNumber = 15;
     unsigned int bufferSize = 5;
     unsigned int slotSize = 4000;
     unsigned int fullSegmentsNumber = 7;
     unsigned int segmentSize = payloadSize/fullSegmentsNumber;
     unsigned int totalSegmentNumber = (payloadSize - segmentSize*fullSegmentsNumber !=0)?fullSegmentsNumber+1:fullSegmentsNumber;
-    map<unsigned int, unsigned char*> frameSegments;
     map<unsigned int, vector<unsigned int>> remainingSegments;
     
     buffer_ = new FrameBuffer();
     buffer_->init(bufferSize, slotSize);
-    
-    for (unsigned int i = 0; i < totalSegmentNumber; i++)
-        frameSegments[i] = frameData.getData()+i*segmentSize;
     
     for (unsigned int i = 0; i < framesNumber; i++)
     {
@@ -1363,6 +1358,15 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
         // append segment for each interest in random order
         if (gotPendingInterests && frameNo < framesNumber)
         {
+            // slice frame into segments
+            PacketData::PacketMetadata meta = {30., 0};
+            meta.sequencePacketNumber_ = frameNo;
+            NdnFrameData frameData(*encodedFrame_, meta);
+            map<unsigned int, unsigned char*> frameSegments;
+            
+            for (unsigned int i = 0; i < totalSegmentNumber; i++)
+                frameSegments[i] = frameData.getData()+i*segmentSize;
+            
             LOG_TRACE("got %d interests for frame %d", interestNumber, frameNo);
             for (unsigned int i = 0; i < interestNumber; i++)
             {
@@ -1377,6 +1381,7 @@ TEST_F(FrameBufferTester, TestFullWithPlayoutBuffer)
                     buffer_->markSlotAssembling(frameNo,
                                                 totalSegmentNumber,
                                                 segmentSize);
+                
                 
                 buffer_->appendSegment(frameNo, segmentNo, currentSegmentSize, frameSegments[segmentNo]);
                 
