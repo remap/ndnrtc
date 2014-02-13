@@ -62,17 +62,19 @@ static uint8_t DEFAULT_PRIVATE_KEY_DER[] = {
 //********************************************************************************
 #pragma mark - all static
 
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentApp = "ndnrtc";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentUser = "user";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentBroadcast = "/ndn/broadcast";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentDiscovery = "discovery";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentUserStreams = "streams";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentStreamAccess = "access";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey = "key";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames = "frames";
-const std::string NdnRtcNamespace::NdnRtcNamespaceComponentStreamInfo = "info";
-const std::string NdnRtcNamespace::NdnRtcNamespaceKeyComponent = "DSK-1408";
-const std::string NdnRtcNamespace::NdnRtcNamespaceCertificateComponent = "ID-CERT/0";
+const std::string NdnRtcNamespace::NameComponentApp = "ndnrtc";
+const std::string NdnRtcNamespace::NameComponentUser = "user";
+const std::string NdnRtcNamespace::NameComponentBroadcast = "/ndn/broadcast";
+const std::string NdnRtcNamespace::NameComponentDiscovery = "discovery";
+const std::string NdnRtcNamespace::NameComponentUserStreams = "streams";
+const std::string NdnRtcNamespace::NameComponentStreamAccess = "access";
+const std::string NdnRtcNamespace::NameComponentStreamKey = "key";
+const std::string NdnRtcNamespace::NameComponentStreamFrames = "frames";
+const std::string NdnRtcNamespace::NameComponentStreamFramesDelta = "delta";
+const std::string NdnRtcNamespace::NameComponentStreamFramesKey = "key";
+const std::string NdnRtcNamespace::NameComponentStreamInfo = "info";
+const std::string NdnRtcNamespace::KeyComponent = "DSK-1408";
+const std::string NdnRtcNamespace::CertificateComponent = "ID-CERT/0";
 
 shared_ptr<std::string>
 NdnRtcNamespace::getProducerPrefix(const std::string &hub,
@@ -80,8 +82,8 @@ NdnRtcNamespace::getProducerPrefix(const std::string &hub,
 {
   return buildPath(true,
                    &hub,
-                   &NdnRtcNamespaceComponentApp,
-                   &NdnRtcNamespaceComponentUser,
+                   &NameComponentApp,
+                   &NameComponentUser,
                    &producerId,
                    NULL);
 }
@@ -95,7 +97,7 @@ NdnRtcNamespace::getStreamPath(const std::string &hub,
   
   return buildPath(false,
                    producerPrefix.get(),
-                   &NdnRtcNamespaceComponentUserStreams,
+                   &NameComponentUserStreams,
                    &streamName,
                    NULL);
 }
@@ -149,7 +151,7 @@ NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
 shared_ptr<Name>
 NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix)
 {
-  shared_ptr<string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NdnRtcNamespaceComponentStreamKey, &NdnRtcNamespaceKeyComponent, NULL);
+  shared_ptr<string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NameComponentStreamKey, &KeyComponent, NULL);
   shared_ptr<Name> keyName(new Name(path->c_str()));
   
   return keyName;
@@ -160,7 +162,7 @@ NdnRtcNamespace::certificateNameForUser(const std::string &userPrefix)
 {
   shared_ptr<Name> certificateName =
   NdnRtcNamespace::keyPrefixForUser(userPrefix);
-  certificateName->append(Name(NdnRtcNamespaceCertificateComponent));
+  certificateName->append(Name(CertificateComponent));
   
   return certificateName;
 }

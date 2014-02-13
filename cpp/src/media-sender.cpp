@@ -61,14 +61,15 @@ int MediaSender::getStreamPrefix(const ParamsStruct &params, string &prefix)
     
     prefix = *NdnRtcNamespace::buildPath(false,
                                          &userPrefix,
-                                         &NdnRtcNamespace::NdnRtcNamespaceComponentUserStreams,
+                                         &NdnRtcNamespace::NameComponentUserStreams,
                                          &streamName,
                                          NULL);
     
     return res;
 }
 
-int MediaSender::getStreamFramePrefix(const ParamsStruct &params, string &prefix)
+int MediaSender::getStreamFramePrefix(const ParamsStruct &params, string &prefix,
+                                      bool isKeyNamespace)
 {
     string streamPrefix;
     int res = MediaSender::getStreamPrefix(params, streamPrefix);
@@ -76,11 +77,15 @@ int MediaSender::getStreamFramePrefix(const ParamsStruct &params, string &prefix
     res = (params.streamThread) ? res : RESULT_ERR;
     
     string streamThread = string((!res)?params.streamThread:DefaultParams.streamThread);
+    const string frameTypeNamespace = (isKeyNamespace)?
+                                 NdnRtcNamespace::NameComponentStreamFramesKey:
+                                 NdnRtcNamespace::NameComponentStreamFramesDelta;
     
     prefix = *NdnRtcNamespace::buildPath(false,
                                          &streamPrefix,
                                          &streamThread,
-                                         &NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames,
+                                         &NdnRtcNamespace::NameComponentStreamFrames,
+                                         &frameTypeNamespace,
                                          NULL);
     
     return res;
@@ -93,7 +98,7 @@ int MediaSender::getStreamKeyPrefix(const ParamsStruct &params, string &prefix)
     
     prefix = *NdnRtcNamespace::buildPath(false,
                                          &streamPrefix,
-                                         &NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey,
+                                         &NdnRtcNamespace::NameComponentStreamKey,
                                          NULL);
     
     return res;

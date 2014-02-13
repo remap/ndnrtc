@@ -39,7 +39,8 @@ namespace ndnrtc
         static int getUserPrefix(const ParamsStruct &params, string &prefix);
         static int getStreamPrefix(const ParamsStruct &params, string &prefix);
         static int getStreamFramePrefix(const ParamsStruct &params,
-                                        string &prefix);
+                                        string &prefix,
+                                        bool isKeyNamespace = false);
         static int getStreamKeyPrefix(const ParamsStruct &params,
                                       string &prefix);
         

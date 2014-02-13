@@ -189,11 +189,11 @@ int PlayoutBuffer::releaseAcquiredSlot()
 #pragma mark - private
 bool PlayoutBuffer::processFrameProvider()
 {
-    int eventsMask = FrameBuffer::Event::EventTypeReady;
+    int eventsMask = FrameBuffer::Event::Ready;
     FrameBuffer::Event ev = frameBuffer_->waitForEvents(eventsMask);
     
     switch (ev.type_) {
-        case FrameBuffer::Event::EventTypeReady:
+        case FrameBuffer::Event::Ready:
         {
             {
                 CriticalSectionScoped scopedCs(&playoutCs_);

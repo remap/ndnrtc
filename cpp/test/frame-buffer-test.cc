@@ -13,7 +13,7 @@
 #include "test-common.h"
 #include "frame-buffer.h"
 #include "playout-buffer.h"
-#include "video-receiver.h"
+//#include "video-receiver.h"
 
 using namespace ndnrtc;
 
@@ -355,7 +355,7 @@ protected:
             receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
             receivedEventsStack_.push_back(receivedEvent_);
             finishedWaiting_ = true;
-            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::EventTypeError);
+            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::Error);
         }
         return true;
     }
@@ -368,7 +368,7 @@ protected:
             receivedEvent_ = buffer_->waitForEvents(expectedBufferEvents_);
             finishedWaiting_ = true;
             
-            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::EventTypeError);
+            stopWaiting_ = (receivedEvent_.type_ == FrameBuffer::Event::Error);
             
             if (!stopWaiting_)
             {
@@ -411,7 +411,7 @@ protected:
         FrameBuffer::CallResult res;
         
         switch (ev.type_) {
-            case FrameBuffer::Event::EventTypeFreeSlot:
+            case FrameBuffer::Event::FreeSlot:
                 LOG_TRACE("free slot. booking %d", lastBooked_);
                 bookerFilledBuffer_ = false;
                 res = buffer_->bookSlot(lastBooked_);
@@ -419,17 +419,17 @@ protected:
                 interestsPerFrame_[lastBooked_++] = 1;
                 bookingCs_->Leave();
                 break;
-            case FrameBuffer::Event::EventTypeTimeout:
+            case FrameBuffer::Event::Timeout:
                 // in real app, re-issue interest here (if needed): "new interest(ev.frameNo_, ev.segmentNo_)"
                 break;
-            case FrameBuffer::Event::EventTypeFirstSegment:
+            case FrameBuffer::Event::FirstSegment:
                 // in real app, interest pipelining should be established here
                 // should check ev.slot_->totalSegmentsNumber() and ev.segmentNo_
                 bookingCs_->Enter();
                 interestsPerFrame_[ev.frameNo_] += (ev.slot_->totalSegmentsNumber() - 1);
                 bookingCs_->Leave();
                 break;
-            case FrameBuffer::Event::EventTypeError:
+            case FrameBuffer::Event::Error:
                 stopWaiting_ = true;
                 break;
             default:
@@ -442,9 +442,9 @@ protected:
     }
     void setupBooker()
     {
-        bookerWaitingEvents_ = FrameBuffer::Event::EventTypeFreeSlot| // for booking slots
-        FrameBuffer::Event::EventTypeFirstSegment| // for pipelining interests
-        FrameBuffer::Event::EventTypeTimeout; // interests re-issuing
+        bookerWaitingEvents_ = FrameBuffer::Event::FreeSlot| // for booking slots
+        FrameBuffer::Event::FirstSegment| // for pipelining interests
+        FrameBuffer::Event::Timeout; // interests re-issuing
         bookerCycleCount_ = 0;
         bookedFrames_.clear();
         lastBooked_ = 0;
@@ -472,7 +472,7 @@ protected:
         FrameBuffer::CallResult res;
         
         switch (ev.type_) {
-            case FrameBuffer::Event::EventTypeReady:
+            case FrameBuffer::Event::Ready:
             {
                 LOG_TRACE("%d frame %d is ready. unpacking",providerCycleCount_, ev.frameNo_);
                 
@@ -491,7 +491,7 @@ protected:
                 LOG_TRACE("frame checked");
             }
                 break;
-            case FrameBuffer::Event::EventTypeError:
+            case FrameBuffer::Event::Error:
                 stopWaiting_ = true;
                 break;
             default:
@@ -506,7 +506,7 @@ protected:
     {
         providerCycleCount_ = 0;
         providerGotEvent_ = false;
-        providerWaitingEvents_ = FrameBuffer::Event::EventTypeReady;
+        providerWaitingEvents_ = FrameBuffer::Event::Ready;
     }
     
     // playout thread - sets up playout buffer based on current frame buffer
@@ -594,7 +594,6 @@ TEST_F(FrameBufferTester, BufferInit)
     EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateAssembling));
     EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateLocked));
     EXPECT_EQ(0, buffer->getStat(FrameBuffer::Slot::StateReady));
-    EXPECT_EQ(0, buffer->getTimeoutsNumber());
     
     delete buffer;
 }
@@ -821,7 +820,7 @@ TEST_F(FrameBufferTester, FreeSlotEvent)
         
         EXPECT_TRUE_WAIT(finishedWaiting_, 1000);
         
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::FreeSlot,receivedEvent_.type_);
         
         // don't know for sure
         EXPECT_TRUE(buffSize+1 == waitingCycles_ || buffSize == waitingCycles_);
@@ -860,7 +859,7 @@ TEST_F(FrameBufferTester, BookOnFreeEvent)
         buffer_->markSlotFree(7);
         
         EXPECT_TRUE_WAIT(bookingNo_ == buffSize+1, 1000);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::FreeSlot,receivedEvent_.type_);
         EXPECT_EQ(7, receivedEvent_.frameNo_);
         
         EXPECT_EQ(buffSize, buffer_->getStat(FrameBuffer::Slot::StateNew));
@@ -899,7 +898,7 @@ TEST_F(FrameBufferTester, MarkFreeTwice)
         buffer_->markSlotFree(7);
         
         EXPECT_TRUE_WAIT(bookingNo_ == buffSize+1, 1000);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFreeSlot,receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::FreeSlot,receivedEvent_.type_);
         EXPECT_EQ(7, receivedEvent_.frameNo_);
         
         memset(&receivedEvent_, 0, sizeof(receivedEvent_));
@@ -934,7 +933,7 @@ TEST_F(FrameBufferTester, TestEventFirstSegment)
         
         webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
         
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeFirstSegment;
+        expectedBufferEvents_ = FrameBuffer::Event::FirstSegment;
         buffer_->bookSlot(frameNo);
         
         unsigned int tid = 1;
@@ -946,7 +945,7 @@ TEST_F(FrameBufferTester, TestEventFirstSegment)
         EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
         
         EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::FirstSegment, receivedEvent_.type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
         
@@ -973,7 +972,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
         
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeReady | FrameBuffer::Event::EventTypeFirstSegment;
+        expectedBufferEvents_ = FrameBuffer::Event::Ready | FrameBuffer::Event::FirstSegment;
         buffer_->bookSlot(frameNo);
         
         unsigned int tid = 1;
@@ -988,8 +987,8 @@ TEST_F(FrameBufferTester, TestEventReady)
         // should get 2 events - ready and first segment
         EXPECT_TRUE_WAIT(2 == receivedEventsStack_.size(), 1000);
         ASSERT_EQ(2, receivedEventsStack_.size());
-        EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEventsStack_[0].type_);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEventsStack_[1].type_);
+        EXPECT_EQ(FrameBuffer::Event::FirstSegment, receivedEventsStack_[0].type_);
+        EXPECT_EQ(FrameBuffer::Event::Ready, receivedEventsStack_[1].type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
         
@@ -1018,7 +1017,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
         
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeReady;
+        expectedBufferEvents_ = FrameBuffer::Event::Ready;
         buffer_->bookSlot(frameNo);
         
         unsigned int tid = 1;
@@ -1043,7 +1042,7 @@ TEST_F(FrameBufferTester, TestEventReady)
         
         EXPECT_FALSE(finishedWaiting_);
         EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::Ready, receivedEvent_.type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(lastSegmentNo, receivedEvent_.segmentNo_);
         
@@ -1073,7 +1072,7 @@ TEST_F(FrameBufferTester, TestEventTimeout)
         
         webrtc::ThreadWrapper &waitingThread(*webrtc::ThreadWrapper::CreateThread(waitBufferEvent, this));
         
-        expectedBufferEvents_ = FrameBuffer::Event::EventTypeTimeout;
+        expectedBufferEvents_ = FrameBuffer::Event::Timeout;
         buffer_->bookSlot(frameNo);
         
         unsigned int tid = 1;
@@ -1082,11 +1081,9 @@ TEST_F(FrameBufferTester, TestEventTimeout)
         buffer_->notifySegmentTimeout(frameNo, segmentNo);
         
         EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-        EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
+        EXPECT_EQ(FrameBuffer::Event::Timeout, receivedEvent_.type_);
         EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
         EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
-        
-        EXPECT_EQ(1, buffer_->getTimeoutsNumber());
         
         waitingThread.SetNotAlive();
         buffer_->release();
@@ -1124,11 +1121,9 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             buffer_->notifySegmentTimeout(frameNo, segmentNo);
             
             EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-            EXPECT_EQ(FrameBuffer::Event::EventTypeTimeout, receivedEvent_.type_);
+            EXPECT_EQ(FrameBuffer::Event::Timeout, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
-            
-            EXPECT_EQ(1, buffer_->getTimeoutsNumber());
         }
         
         { // first segment
@@ -1139,7 +1134,7 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             EXPECT_EQ(FrameBuffer::CallResultAssembling, buffer_->appendSegment(frameNo, segmentNo, 100, segment));
             
             EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-            EXPECT_EQ(FrameBuffer::Event::EventTypeFirstSegment, receivedEvent_.type_);
+            EXPECT_EQ(FrameBuffer::Event::FirstSegment, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentNo, receivedEvent_.segmentNo_);
             
@@ -1162,7 +1157,7 @@ TEST_F(FrameBufferTester, TestRandomBufferEvents)
             }
             
             EXPECT_TRUE_WAIT(finishedWaiting_, 500);
-            EXPECT_EQ(FrameBuffer::Event::EventTypeReady, receivedEvent_.type_);
+            EXPECT_EQ(FrameBuffer::Event::Ready, receivedEvent_.type_);
             EXPECT_EQ(frameNo, receivedEvent_.frameNo_);
             EXPECT_EQ(segmentsNum-1, receivedEvent_.segmentNo_);
             

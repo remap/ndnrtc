@@ -288,7 +288,7 @@ NdnAudioData::AudioPacket FrameBuffer::Slot::getAudioFrame()
     return packet;
 }
 
-int FrameBuffer::Slot::getPacketMetadata(PacketData::PacketMetadata &metadata)
+int FrameBuffer::Slot::getPacketMetadata(PacketData::PacketMetadata &metadata) const
 {
     // check, whether it's video or audio packet - check 1st byte
     if (data_[0] == (unsigned char)NDNRTC_FRAMEHDR_MRKR) // video
@@ -314,9 +314,10 @@ int64_t FrameBuffer::Slot::getPacketTimestamp()
     return RESULT_ERR;
 }
 
-FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo,
-                                                          unsigned int dataLength,
-                                                          const unsigned char *data)
+FrameBuffer::Slot::State
+FrameBuffer::Slot::appendSegment(SegmentNumber segmentNo,
+                                 unsigned int dataLength,
+                                 const unsigned char *data)
 {
     if (!(state_ == StateAssembling))
     {
@@ -352,7 +353,8 @@ FrameBuffer::Slot::State FrameBuffer::Slot::appendSegment(unsigned int segmentNo
     return state_;
 }
 
-void FrameBuffer::Slot::markAssembling(unsigned int segmentsNum, unsigned int segmentSize)
+void FrameBuffer::Slot::markAssembling(unsigned int segmentsNum,
+                                       unsigned int segmentSize)
 {
     state_ = StateAssembling;
     segmentSize_ = segmentSize;
@@ -379,17 +381,16 @@ void FrameBuffer::Slot::markAssembling(unsigned int segmentsNum, unsigned int se
 //******************************************************************************
 // FrameBuffer
 //******************************************************************************
-const int FrameBuffer::Event::AllEventsMask =   FrameBuffer::Event::EventTypeReady|
-FrameBuffer::Event::EventTypeFirstSegment|
-FrameBuffer::Event::EventTypeFreeSlot|
-FrameBuffer::Event::EventTypeTimeout|
-FrameBuffer::Event::EventTypeError;
+const int FrameBuffer::Event::AllEventsMask =   FrameBuffer::Event::Ready|
+FrameBuffer::Event::FirstSegment|
+FrameBuffer::Event::FreeSlot|
+FrameBuffer::Event::Timeout|
+FrameBuffer::Event::Error;
 
 #pragma mark - construction/destruction
 FrameBuffer::FrameBuffer():
 bufferSize_(0),
 slotSize_(0),
-nTimeouts_(0),
 bufferEvent_(*EventWrapper::Create()),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
@@ -421,7 +422,7 @@ int FrameBuffer::init(unsigned int bufferSize, unsigned int slotSize)
         shared_ptr<Slot> slot(new Slot(slotSize_));
         
         freeSlots_.push_back(slot);
-        notifyBufferEventOccurred(-1, -1, Event::EventTypeFreeSlot, slot.get());
+        notifyBufferEventOccurred(-1, -1, Event::FreeSlot, slot.get());
         TRACE("free slot - pending %d, free %d", pendingEvents_.size(),
               freeSlots_.size());
     }
@@ -439,7 +440,8 @@ void FrameBuffer::flush()
               frameSlotMapping_.size(), pendingEvents_.size(),
               freeSlots_.size());
         
-        for (map<unsigned int, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin(); it != frameSlotMapping_.end(); ++it)
+        for (map<PacketNumber, shared_ptr<Slot>>::iterator it = frameSlotMapping_.begin();
+             it != frameSlotMapping_.end(); ++it)
         {
             shared_ptr<Slot> slot = it->second;
             if (slot->getState() != Slot::StateLocked)
@@ -448,15 +450,13 @@ void FrameBuffer::flush()
                 
                 freeSlots_.push_back(slot);
                 slot->markFree();
-                notifyBufferEventOccurred(-1, -1, Event::EventTypeFreeSlot, slot.get());
+                notifyBufferEventOccurred(-1, -1, Event::FreeSlot, slot.get());
                 
                 updateStat(slot->getState(), 1);
             }
             else
                 TRACE("trying to flush locked slot %d", slot->getFrameNumber());
         }
-        fullTimeoutCase_ = 0;
-        timeoutSegments_.clear();
         frameSlotMapping_.clear();
     }
     
@@ -470,8 +470,12 @@ void FrameBuffer::release()
     bufferEvent_.Set();
 }
 
-FrameBuffer::CallResult FrameBuffer::bookSlot(unsigned int frameNumber)
+FrameBuffer::CallResult FrameBuffer::bookSlot(PacketNumber frameNumber,
+                                              bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> freeSlot;
     
     // check if this frame number is already booked
@@ -497,8 +501,11 @@ FrameBuffer::CallResult FrameBuffer::bookSlot(unsigned int frameNumber)
     return CallResultNew;
 }
 
-void FrameBuffer::markSlotFree(unsigned int frameNumber)
+void FrameBuffer::markSlotFree(PacketNumber frameNumber, bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk &&
@@ -514,7 +521,7 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
         syncCs_.Leave();
         updateStat(slot->getState(), 1);
         
-        notifyBufferEventOccurred(frameNumber, 0, Event::EventTypeFreeSlot, slot.get());
+        notifyBufferEventOccurred(frameNumber, 0, Event::FreeSlot, slot.get());
     }
     else
     {
@@ -522,8 +529,11 @@ void FrameBuffer::markSlotFree(unsigned int frameNumber)
     }
 }
 
-void FrameBuffer::lockSlot(unsigned int frameNumber)
+void FrameBuffer::lockSlot(PacketNumber frameNumber, bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
@@ -538,8 +548,11 @@ void FrameBuffer::lockSlot(unsigned int frameNumber)
     }
 }
 
-void FrameBuffer::unlockSlot(unsigned int frameNumber)
+void FrameBuffer::unlockSlot(PacketNumber frameNumber, bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
@@ -554,8 +567,14 @@ void FrameBuffer::unlockSlot(unsigned int frameNumber)
     }
 }
 
-void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int totalSegments, unsigned int segmentSize)
+void FrameBuffer::markSlotAssembling(PacketNumber frameNumber,
+                                     unsigned int totalSegments,
+                                     unsigned int segmentSize,
+                                     bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
@@ -570,9 +589,15 @@ void FrameBuffer::markSlotAssembling(unsigned int frameNumber, unsigned int tota
     }
 }
 
-FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, unsigned int segmentNumber,
-                                                   unsigned int dataLength, const unsigned char *data)
+FrameBuffer::CallResult FrameBuffer::appendSegment(PacketNumber frameNumber,
+                                                   SegmentNumber segmentNumber,
+                                                   unsigned int dataLength,
+                                                   const unsigned char *data,
+                                                   bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> slot;
     CallResult res = CallResultError;
     
@@ -581,10 +606,6 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
         if (slot->getState() == Slot::StateAssembling)
         {
             uint64_t segmentId = (uint64_t)frameNumber*1000+segmentNumber;
-            
-            timeoutSegments_.erase(segmentId);
-            fullTimeoutCase_ = 0;
-            isTrackingFullTimeoutState_ = false;
             
             res = CallResultAssembling;
             updateStat(slot->getState(), -1);
@@ -596,14 +617,14 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
             updateStat(slotState, 1);
             // if we got 1st segment - notify regardless of other events
             if (slot->assembledSegmentsNumber() == 1)
-                notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeFirstSegment, slot.get());
+                notifyBufferEventOccurred(frameNumber, segmentNumber, Event::FirstSegment, slot.get());
             
             switch (slotState)
             {
                 case Slot::StateAssembling:
                     break;
                 case Slot::StateReady: // slot ready event
-                    notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeReady, slot.get());
+                    notifyBufferEventOccurred(frameNumber, segmentNumber, Event::Ready, slot.get());
                     res = CallResultReady;
                     break;
                 default:
@@ -625,19 +646,18 @@ FrameBuffer::CallResult FrameBuffer::appendSegment(unsigned int frameNumber, uns
     return res;
 }
 
-void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int segmentNumber)
+void FrameBuffer::notifySegmentTimeout(PacketNumber frameNumber,
+                                       SegmentNumber segmentNumber,
+                                       bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNumber > 0)
+        frameNumber = -frameNumber;
+    
     shared_ptr<Slot> slot;
     
     if (getFrameSlot(frameNumber, &slot) == CallResultOk)
     {
-        uint64_t segmentId = (uint64_t)frameNumber*1000+segmentNumber;
-        bool isLastSegment;
-        
-        if ((isLastSegment = (timeoutSegments_.find(segmentId) == timeoutSegments_.end())))
-            timeoutSegments_[segmentId] = 0;
-        
-        notifyBufferEventOccurred(frameNumber, segmentNumber, Event::EventTypeTimeout, slot.get());
+        notifyBufferEventOccurred(frameNumber, segmentNumber, Event::Timeout, slot.get());
     }
     else
     {
@@ -646,8 +666,12 @@ void FrameBuffer::notifySegmentTimeout(unsigned int frameNumber, unsigned int se
     }
 }
 
-FrameBuffer::Slot::State FrameBuffer::getState(unsigned int frameNo)
+FrameBuffer::Slot::State FrameBuffer::getState(PacketNumber frameNo,
+                                               bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNo > 0)
+        frameNo = -frameNo;
+    
     Slot::State state;
     shared_ptr<Slot> slot;
     
@@ -657,8 +681,12 @@ FrameBuffer::Slot::State FrameBuffer::getState(unsigned int frameNo)
     return Slot::StateFree;
 }
 
-shared_ptr<EncodedImage> FrameBuffer::getEncodedImage(unsigned int frameNo)
+shared_ptr<EncodedImage> FrameBuffer::getEncodedImage(PacketNumber frameNo,
+                                                      bool useKeyNamespace)
 {
+    if (useKeyNamespace && frameNo > 0)
+        frameNo = -frameNo;
+    
     EncodedImage encodedImage;
     shared_ptr<Slot> slot;
     
@@ -669,8 +697,15 @@ shared_ptr<EncodedImage> FrameBuffer::getEncodedImage(unsigned int frameNo)
     return shared_ptr<EncodedImage>(nullptr);
 }
 
-void FrameBuffer::renameSlot(unsigned int oldFrameNo, unsigned int newFrameNo)
+void FrameBuffer::renameSlot(PacketNumber oldFrameNo, PacketNumber newFrameNo,
+                             bool useKeyNamespace)
 {
+    if (useKeyNamespace && oldFrameNo > 0 && newFrameNo > 0)
+    {
+        oldFrameNo = -oldFrameNo;
+        newFrameNo = -newFrameNo;
+    }
+    
     EncodedImage encodedImage;
     shared_ptr<Slot> slot;
     
@@ -690,7 +725,7 @@ FrameBuffer::Event FrameBuffer::waitForEvents(int &eventsMask, unsigned int time
     Event poppedEvent;
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
-    poppedEvent.type_ = Event::EventTypeError;
+    poppedEvent.type_ = Event::Error;
     forcedRelease_ = false;
     
     while (!(stop || forcedRelease_))
@@ -745,8 +780,10 @@ void FrameBuffer::reuseEvent(FrameBuffer::Event &event)
 
 //******************************************************************************
 #pragma mark - private
-void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int segmentNo,
-                                            Event::EventType eType, Slot *slot)
+void FrameBuffer::notifyBufferEventOccurred(PacketNumber frameNo,
+                                            SegmentNumber segmentNo,
+                                            Event::EventType eType,
+                                            Slot *slot)
 {
     Event ev;
     ev.type_ = eType;
@@ -754,25 +791,20 @@ void FrameBuffer::notifyBufferEventOccurred(unsigned int frameNo, unsigned int s
     ev.frameNo_ = frameNo;
     ev.slot_ = slot;
     
-//    TRACE("[BUFFER] - lock exclusive - notify event %d", eType);
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.push_back(ev);
-//    TRACE("added event %d mapped %d free %d pending %d",
-//          eType,
-//          frameSlotMapping_.size(),
-//          freeSlots_.size(),
-//          pendingEvents_.size());
-//    TRACE("[BUFFER] - unlock exclusive - notify event %d", eType);
     bufferEventsRWLock_.ReleaseLockExclusive();
     
     // notify about event
     bufferEvent_.Set();
 }
 
-FrameBuffer::CallResult FrameBuffer::getFrameSlot(unsigned int frameNo, shared_ptr<Slot> *slot, bool remove)
+FrameBuffer::CallResult FrameBuffer::getFrameSlot(PacketNumber frameNo,
+                                                  shared_ptr<Slot> *slot,
+                                                  bool remove)
 {
     CallResult res = CallResultNotFound;
-    map<unsigned int, shared_ptr<Slot>>::iterator it;
+    map<PacketNumber, shared_ptr<Slot>>::iterator it;
     
     syncCs_.Enter();
     it = frameSlotMapping_.find(frameNo);

@@ -19,17 +19,19 @@ namespace ndnrtc {
     {
     public:
         // namespace components
-        static const std::string NdnRtcNamespaceComponentApp;
-        static const std::string NdnRtcNamespaceComponentUser;
-        static const std::string NdnRtcNamespaceComponentBroadcast;
-        static const std::string NdnRtcNamespaceComponentDiscovery;
-        static const std::string NdnRtcNamespaceComponentUserStreams;
-        static const std::string NdnRtcNamespaceComponentStreamAccess;        
-        static const std::string NdnRtcNamespaceComponentStreamKey;
-        static const std::string NdnRtcNamespaceComponentStreamFrames;
-        static const std::string NdnRtcNamespaceComponentStreamInfo;
-        static const std::string NdnRtcNamespaceKeyComponent;
-        static const std::string NdnRtcNamespaceCertificateComponent;
+        static const std::string NameComponentApp;
+        static const std::string NameComponentUser;
+        static const std::string NameComponentBroadcast;
+        static const std::string NameComponentDiscovery;
+        static const std::string NameComponentUserStreams;
+        static const std::string NameComponentStreamAccess;        
+        static const std::string NameComponentStreamKey;
+        static const std::string NameComponentStreamFrames;
+        static const std::string NameComponentStreamFramesDelta;
+        static const std::string NameComponentStreamFramesKey;
+        static const std::string NameComponentStreamInfo;
+        static const std::string KeyComponent;
+        static const std::string CertificateComponent;
         
         // composing URI based on provided components
         static shared_ptr<std::string>
