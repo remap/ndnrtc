@@ -14,6 +14,8 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
+#include "frame-buffer.h"
+#include "segmentizer.h"
 
 namespace ndnrtc
 {
@@ -32,40 +34,29 @@ namespace ndnrtc
     class MediaSender : public NdnRtcObject
     {
     public:
-        MediaSender(){}
+//        MediaSender(){}
         MediaSender(const ParamsStruct &params);
         ~MediaSender();
         
-        static int getUserPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamFramePrefix(const ParamsStruct &params,
-                                        string &prefix,
-                                        bool isKeyNamespace = false);
-        static int getStreamKeyPrefix(const ParamsStruct &params,
-                                      string &prefix);
-        
-        virtual int init(const shared_ptr<Transport> transport);
+        virtual int init(const shared_ptr<Face> &face,
+                         const shared_ptr<Transport> &transport);
         unsigned long int getPacketNo() { return packetNo_; }
         
         // encoded packets/second
         double getCurrentPacketRate() {
             return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
         }
-        
-        // bytes/second
-        double getDataRate() {
-            return NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
-        }
+
     protected:
         // private attributes go here
-        shared_ptr<Transport> ndnTransport_;
-        shared_ptr<KeyChain> ndnKeyChain_;
         shared_ptr<Name> packetPrefix_;
-        shared_ptr<Name> certificateName_;
         
-        unsigned long int packetNo_ = 0; // sequential packet number
+        PacketNumber packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
-        unsigned int dataRateMeter_, packetRateMeter_;
+        unsigned int packetRateMeter_;
+        
+
+        Segmentizer segmentizer_;
 
         /**
          * Publishes specified data in the ndn network under specified prefix by
@@ -88,7 +79,7 @@ namespace ndnrtc
                           unsigned int packetNo);
         /**
          * Publishes specified data under the prefix, determined by the
-         * parameters provided upon callee creation and for the current packet 
+         * parameters provided upon callee creation and by the current packet
          * number, specified in packetNo_ variable of the class.
          */
         int publishPacket(unsigned int len,

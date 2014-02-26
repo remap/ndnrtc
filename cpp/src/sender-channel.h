@@ -78,6 +78,18 @@ namespace ndnrtc
         void onDeliverFrame(webrtc::I420VideoFrame &frame);
         
         void getChannelStatistics(SenderChannelStatistics &stat);
+        
+        void setLogger(NdnLogger *logger)
+        {
+            LoggerObject::setLogger(logger);
+            
+            cc_->setLogger(logger_);
+            localRender_->setLogger(logger_);
+            coder_->setLogger(logger_);
+            sender_->setLogger(logger_);
+            audioSendChannel_->setLogger(logger_);
+        }
+        
     private:
         uint64_t lastFrameStamp_ = 0;
         unsigned int frameFreqMeter_;

@@ -13,6 +13,8 @@
 #include "ndnrtc-utils.h"
 #include <mach/mach_time.h>
 
+#include "endian.h"
+
 using namespace ndnrtc;
 using namespace webrtc;
 
@@ -335,4 +337,24 @@ unsigned int NdnRtcUtils::toTimeMs(unsigned int frames,
                                    double fps)
 {
     return (unsigned int)ceil((double)frames/fps*1000.);
+}
+
+uint32_t NdnRtcUtils::generateNonceValue()
+{
+    uint32_t nonce = (uint32_t)std::rand();
+    
+    return nonce;
+}
+
+Blob NdnRtcUtils::nonceToBlob(const uint32_t nonceValue)
+{
+    uint32_t beValue = htobe32(nonceValue);
+    Blob b((uint8_t *)&beValue, 4);
+    return b;
+}
+
+uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
+{
+    uint32_t beValue = *(uint32_t *)blob.buf();
+    return be32toh(beValue);
 }

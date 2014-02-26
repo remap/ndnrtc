@@ -13,6 +13,7 @@
 
 #include "media-receiver.h"
 #include "ndnrtc-utils.h"
+#include "ndnrtc-namespace.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -37,11 +38,11 @@ pitCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 dataCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 mode_(ReceiverModeCreated),
 face_(nullptr),
-pendingInterests_(),
 pipelineTimer_(*EventWrapper::Create()),
 needMoreFrames_(*EventWrapper::Create()),
 modeSwitchedEvent_(*EventWrapper::Create()),
-avSync_(nullptr)
+avSync_(nullptr),
+keyNamespaceUsed_(true)
 {
     interestFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
     segmentFreqMeter_ = NdnRtcUtils::setupFrequencyMeter(10);
@@ -70,22 +71,28 @@ int NdnMediaReceiver::init(shared_ptr<Face> face)
     if (mode_ > ReceiverModeInit)
         return notifyError(RESULT_ERR, "can't initialize. stop receiver first");
     
-    string initialPrefix;
+    shared_ptr<string> streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
+    shared_ptr<string> deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_);
+    shared_ptr<string> keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
     
-    if (RESULT_NOT_OK(MediaSender::getStreamFramePrefix(params_,
-                                                        initialPrefix)))
-        return notifyError(RESULT_ERR, "producer frames prefix \
-                           was not provided");
+    if (!streamPrefixString.get() ||
+        !deltaPrefixString.get() ||
+        !keyPrefixString.get())
+        return notifyError(RESULT_ERR, "producer frames prefixes \
+                           were not provided");
     
     int bufSz = params_.bufferSize;
     int slotSz = params_.slotSize;
     
-    interestTimeoutMs_ = params_.jitterSize*DeadlineBarrierCoeff; //interestTimeout*1000;
+    interestTimeoutMs_ = params_.interestTimeout*1000;// params_.jitterSize*DeadlineBarrierCoeff; //interestTimeout*1000;
     
-    if (RESULT_FAIL(frameBuffer_.init(bufSz, slotSz)))
+    if (RESULT_FAIL(frameBuffer_.init(bufSz, slotSz, params_.segmentSize)))
         return notifyError(RESULT_ERR, "could not initialize frame buffer");
     
-    framesPrefix_ = Name(initialPrefix.c_str());
+    streamPrefix_ = Name(streamPrefixString->c_str());
+    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
+    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+    
     producerSegmentSize_ = params_.segmentSize;
     face_ = face;
     currentProducerRate_ = params_.producerRate;
@@ -109,7 +116,8 @@ int NdnMediaReceiver::startFetching()
                            has been already started");
     
     int res = RESULT_OK;
-    pipelinerFrameNo_ = 0;
+    pipelinerDeltaFrameNo_ = 0;
+    pipelinerKeyFrameNo_ = 0;
     
     switchToMode(ReceiverModeFlushed);
     
@@ -216,27 +224,23 @@ void NdnMediaReceiver::triggerRebuffering()
 void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 {
     Name prefix = interest->getName();
-    string iuri = prefix.toUri();
-    PendingInterestStruct pis = getPisForInterest(iuri, true);
     
     if (isStreamInterest(prefix))
     {
-        unsigned int frameNo = 0, segmentNo = 0;
+        bool isKey = NdnRtcNamespace::isKeyFramePrefix(prefix);
+        PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
+        SegmentNumber segmentNo = NdnRtcNamespace::getSegmentNumber(prefix);
         
-        // check if it's not a first segment
-        if (prefix.getComponentCount() > framesPrefix_.getComponentCount())
+        if (!checkIsLate(prefix, nullptr, 0))
         {
-            unsigned int nComponents = prefix.getComponentCount();
-            
-            frameNo =
-            NdnRtcUtils::frameNumber(prefix.getComponent(nComponents-2));
-            segmentNo =
-            NdnRtcUtils::segmentNumber(prefix.getComponent(nComponents-1));
+            LOG_TRACE("timeout %s", prefix.toUri().c_str());
+            frameBuffer_.notifySegmentTimeout(prefix);
         }
         else
-            TRACE("timeout for first interest");
-        
-        frameBuffer_.notifySegmentTimeout(frameNo, segmentNo);
+        {
+            LOG_TRACE("timeout for late %s", prefix.toUri().c_str());
+            frameBuffer_.markSlotFree(prefix);
+        }
     }
     else
         WARN("got timeout for unexpected prefix");
@@ -245,105 +249,70 @@ void NdnMediaReceiver::onTimeout(const shared_ptr<const Interest>& interest)
 void NdnMediaReceiver::onSegmentData(const shared_ptr<const Interest>& interest,
                                      const shared_ptr<Data>& data)
 {
-    TRACE("on data called");
+    TRACE("on data");
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeter_);
     NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                        data->getContent().size());
     
     Name dataName = data->getName();
-    string iuri =  (mode_ == ReceiverModeChase)?
-        framesPrefix_.toUri() :
-            dataName.toUri();
-    
-    PendingInterestStruct pis = getPisForInterest(iuri, true);
-    
-    if (pis.interestID_ != (unsigned int)-1)
-    {
-        rtt_ = NdnRtcUtils::millisecondTimestamp()- pis.emissionTimestamp_;
-        srtt_ = srtt_ + (rtt_-srtt_)*RttFilterAlpha;
-    }
-    
-    
     TRACE("data: %s (size: %d, RTT: %d, SRTT: %f)", dataName.toUri().c_str(),
           data->getContent().size(), rtt_, srtt_);
     
     if (isStreamInterest(dataName))
     {
-        int64_t frameNo =
-        NdnRtcUtils::frameNumber(dataName.getComponent(framesPrefix_.getComponentCount())),
-        
-        segmentNo =
-        NdnRtcUtils::segmentNumber(dataName.getComponent(framesPrefix_.getComponentCount()+1)),
+        bool isKey = NdnRtcNamespace::isKeyFramePrefix(dataName);
+        int64_t frameNo = NdnRtcNamespace::getPacketNumber(dataName),
+        segmentNo = NdnRtcNamespace::getSegmentNumber(dataName),
         finalSegmentNo = dataName[-1].toFinalSegment();
         
         if (frameNo >= 0 && segmentNo >= 0)
         {
-            if (isLate(frameNo))
+            // frame numbers are negative inside frame buffer for key namespace
+            if (checkExclusion(frameNo, isKey))
             {
-                TRACE("got data for late frame %d-%d", frameNo, segmentNo);
-                if (frameBuffer_.getState(frameNo) !=
-                    FrameBuffer::Slot::StateFree)
-                {
-                    frameLogger_->log(NdnLoggerLevelInfo, "\tLATE: \t%d", frameNo);
-                }
-                cleanupLateFrame(frameNo);
+                LOG_TRACE("exclude %s", dataName.toUri().c_str());
+                return;
             }
-            else
+
+            if (checkIsLate(dataName, (unsigned char*)data->getContent().buf(),
+                            data->getContent().size()))
             {
-                playoutLastUpdate_ = NdnRtcUtils::millisecondTimestamp();
-                
-                // check if it is a very first segment in a stream
-                if (frameNo >= excludeFilter_)
-                {
-                    if (mode_ == ReceiverModeChase)
-                    {
-                        TRACE("got first segment of size %d. rename slot: %d->%d",
-                              data->getContent().size(),
-                              0, frameNo);
-                        
-                        frameBuffer_.renameSlot(0, frameNo);
-                    }
-                    
-                    // check if it's a first segment
-                    if (frameBuffer_.getState(frameNo) ==
-                        FrameBuffer::Slot::StateNew)
-                    {
-                        // final block id stores the number of the last segment, so
-                        //  the number of all segments is greater by 1
-                        unsigned int segmentsNum = finalSegmentNo+1;
-                        
-                        TRACE("frame %d has total segments number %d",
-                              frameNo, segmentsNum);
-                        
-                        frameBuffer_.markSlotAssembling(frameNo, segmentsNum,
-                                                        producerSegmentSize_);
-                    }
-                    
-                    // finally, append data to the buffer
-                    FrameBuffer::CallResult res =
-                    frameBuffer_.appendSegment(frameNo, segmentNo,
-                                               data->getContent().size(),
-                                               (unsigned char*)data->getContent().buf());
-                }
-                else
-                    DBG("garbage (%d-%d)", frameNo, segmentNo);
+                LOG_TRACE("late %s", dataName.toUri().c_str());
+                return;
             }
+            
+            // append data to the buffer
+            FrameBuffer::CallResult res = frameBuffer_.appendSegment(*data);
         }
         else
-        {
-            WARN("got bad frame/segment numbers: %d (%d)", frameNo, segmentNo);
-        }
+            WARN("bad data name %s", dataName.toUri().c_str());
     }
     else
-        WARN("got data with unexpected prefix");
+        WARN("bad data name %s", dataName.toUri().c_str());
 }
 
 //******************************************************************************
-#pragma mark - intefaces realization - IPlayoutBufferCallback
+#pragma mark - interfaces realization - IPlayoutBufferCallback
 void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
 {
     unsigned int frameNo = slot->getFrameNumber();
-    webrtc::VideoFrameType type = slot->getFrameType();
+    bool isKeyFrame = (slot->getFrameType() == webrtc::kKeyFrame);
+    
+    playoutLastUpdate_ = NdnRtcUtils::millisecondTimestamp();
+    nReceived_++;
+    emptyJitterCounter_ = 0;
+    
+    if (isKeyFrame)
+    {
+        nReceivedKey_++;
+        keySegmentsNum_ += (double)slot->totalSegmentsNumber();
+        nKeyFramesPending_--;
+    }
+    else
+    {
+        nReceivedDelta_++;
+        deltaSegmentsNum_ += (double)slot->totalSegmentsNumber();
+    }
     
     // extract current producer rate
     PacketData::PacketMetadata metadata;
@@ -364,10 +333,6 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
         }
     }
     
-    playoutLastUpdate_ = NdnRtcUtils::millisecondTimestamp();
-    nReceived_++;
-    emptyJitterCounter_ = 0;
-    
     // now check, whether we need more frames to request
     if (needMoreFrames())
     {
@@ -376,7 +341,7 @@ void NdnMediaReceiver::onFrameAddedToJitter(FrameBuffer::Slot *slot)
     }
     
     DBG("[RECEIVER] received frame %d (type: %s). jitter size: %d",
-        frameNo, (type == webrtc::kKeyFrame)?"KEY":"DELTA",
+        frameNo, isKeyFrame?"KEY":"DELTA",
         playoutBuffer_->getJitterSize());
     
     frameLogger_->log(NdnLoggerLevelInfo,"ADDED: \t%d \t \t \t \t%d \t \t \t%.2f \t%d",
@@ -398,11 +363,7 @@ void NdnMediaReceiver::onMissedFrame(unsigned int frameNo)
 {
     TRACE("[PLAYOUT] missed %d", frameNo);
     
-    if (lastMissedFrameNo_ != frameNo)
-    {
-        lastMissedFrameNo_ = frameNo;
-        nMissed_++;
-    }
+    nMissed_++;
     
     bool isInBuffer = (frameBuffer_.getState(frameNo) == FrameBuffer::Slot::StateAssembling);
     int nAssembled=0;
@@ -460,6 +421,7 @@ void NdnMediaReceiver::onJitterBufferUnderrun()
         rebuffer();
     }
 }
+#if 0
 void NdnMediaReceiver::onFrameReachedDeadline(FrameBuffer::Slot *slot,
                            unordered_set<int> &lateSegments)
 {
@@ -471,6 +433,7 @@ void NdnMediaReceiver::onFrameReachedDeadline(FrameBuffer::Slot *slot,
         requestSegment(slot->getFrameNumber(), *it);
     }
 }
+#endif
 
 //******************************************************************************
 #pragma mark - private
@@ -482,7 +445,9 @@ bool NdnMediaReceiver::processInterests()
           frameBuffer_.getStat(FrameBuffer::Slot::StateAssembling));
     
     bool res = true;
-    FrameBuffer::Event ev = frameBuffer_.waitForEvents(pipelinerEventsMask_);
+    int eventsMask = FrameBuffer::Event::FirstSegment |
+                        FrameBuffer::Event::Timeout;
+    FrameBuffer::Event ev = frameBuffer_.waitForEvents(eventsMask);
     
     switch (ev.type_)
     {
@@ -598,9 +563,6 @@ void NdnMediaReceiver::switchToMode(NdnMediaReceiver::ReceiverMode mode)
         case ReceiverModeInit:
         {
             mode_ = mode;
-            // setup pipeliner thread params
-            pipelinerEventsMask_ = FrameBuffer::Event::FirstSegment |
-                                    FrameBuffer::Event::Timeout;
             needMoreFrames_.Reset();
         }
             break;
@@ -651,24 +613,27 @@ void NdnMediaReceiver::pipelineInterests(FrameBuffer::Event &event)
 {
     // 1. get number of interests to be send out
     int interestsNum = event.slot_->totalSegmentsNumber() - 1;
+    int nFetchAhead = getFetchAheadNumber(event.slot_->isKeyFrame());
     
-    if (interestsNum <= fetchAhead_)
+    if (interestsNum <= nFetchAhead)
         return;
     
-    TRACE("pipeline (frame %d)", event.frameNo_);
+    TRACE("pipeline (frame %d)", event.slot_->getFrameNumber());
     
     // 2. setup frame prefix
-    Name framePrefix = framesPrefix_;
+    Name framePrefix = event.slot_->isKeyFrame() ?
+                            keyFramesPrefix_ :
+                                deltaFramesPrefix_;
     stringstream ss;
     
-    ss << event.frameNo_;
+    ss << event.packetNo_;
     std::string frameNoStr = ss.str();
     
     framePrefix.addComponent((const unsigned char*)frameNoStr.c_str(),
                              frameNoStr.size());
     
     // 3. iteratively compute interest prefix and send out interest
-    for (int i = fetchAhead_+1; i < event.slot_->totalSegmentsNumber(); i++)
+    for (int i = nFetchAhead+1; i < event.slot_->totalSegmentsNumber(); i++)
         // send out interests only for segments we don't have yet
         if (i != event.segmentNo_)
         {
@@ -681,7 +646,8 @@ void NdnMediaReceiver::pipelineInterests(FrameBuffer::Event &event)
 
 void NdnMediaReceiver::requestInitialSegment()
 {
-    Interest i(framesPrefix_, interestTimeoutMs_);
+    Name framesPrefix = deltaFramesPrefix_;
+    Interest i(framesPrefix, interestTimeoutMs_);
     
     i.setMinSuffixComponents(2);
     
@@ -702,23 +668,52 @@ void NdnMediaReceiver::requestInitialSegment()
         i.setChildSelector(1);
     }
     
+    BookingId bookingId;
+    frameBuffer_.bookSlot(framesPrefix, bookingId);
     expressInterest(i);
 }
 
-void NdnMediaReceiver::requestSegment(unsigned int frameNo,
-                                      unsigned int segmentNo)
+void NdnMediaReceiver::requestLatestKey()
 {
-    Name segmentPrefix = framesPrefix_;
+    Interest i(keyFramesPrefix_, interestTimeoutMs_);
+    
+    i.setMinSuffixComponents(2);
+    
+    DBG("issuing key interest with exclusion: [*,%d]",
+        keyExcludeFilter_);
+    // seek for RIGHTMOST child with exclude wildcard [*,lastFrame]
+    i.getExclude().appendAny();
+    i.getExclude().appendComponent(NdnRtcUtils::componentFromInt(keyExcludeFilter_).getValue());
+    i.setChildSelector(1);
+
+    nKeyFramesPending_++;
+    
+    expressInterest(i);
+}
+
+void NdnMediaReceiver::requestSegment(PacketNumber frameNo,
+                                      unsigned int segmentNo,
+                                      bool useKeyNamespace)
+{
+    Name segmentPrefix = (useKeyNamespace)?keyFramesPrefix_:deltaFramesPrefix_;
     
     segmentPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
     segmentPrefix.appendSegment(segmentNo);
+    
+    BookingId bookingId;
+    frameBuffer_.bookSlot(segmentPrefix, bookingId);
     
     expressInterest(segmentPrefix);
 }
 
 bool NdnMediaReceiver::isStreamInterest(Name prefix)
 {
-    return framesPrefix_.match(prefix);
+    return streamPrefix_.match(prefix);
+}
+
+bool NdnMediaReceiver::isKeyInterest(Name prefix)
+{
+    return keyFramesPrefix_.match(prefix);
 }
 
 void NdnMediaReceiver::expressInterest(Name &prefix)
@@ -739,10 +734,10 @@ void NdnMediaReceiver::expressInterest(Interest &i)
                                                  bind(&NdnMediaReceiver::onSegmentData, this, _1, _2),
                                                  bind(&NdnMediaReceiver::onTimeout, this, _1));
         
-        string iuri = i.getName().toUri();
-        
-        pendingInterests_[iuri] = pis;
-        pendingInterestsUri_[pis.interestID_] = iuri;
+//        string iuri = i.getName().toUri();
+//        
+//        pendingInterests_[iuri] = pis;
+//        pendingInterestsUri_[pis.interestID_] = iuri;
         
         NdnRtcUtils::frequencyMeterTick(interestFreqMeter_);
     }
@@ -755,18 +750,33 @@ void NdnMediaReceiver::expressInterest(Interest &i)
     faceCs_.Leave();
 }
 
-bool NdnMediaReceiver::isLate(unsigned int frameNo)
+bool NdnMediaReceiver::isLate(const Name &prefix,
+                              const unsigned char *segmentData, int dataSz)
 {
-    return false;
+    PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
+
+    return (frameNo < playoutBuffer_->getPlayheadPointer());
 }
 
-void NdnMediaReceiver::cleanupLateFrame(unsigned int frameNo)
+void NdnMediaReceiver::cleanupLateFrame(const Name &prefix)
 {
+    PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
+    
     TRACE("removing late frame %d from the buffer", frameNo);
     if (frameBuffer_.getState(frameNo) != FrameBuffer::Slot::StateFree)
         nLost_++;
     
-    frameBuffer_.markSlotFree(frameNo);
+    frameBuffer_.markSlotFree(prefix);
+    
+    if (frameNo < 0)
+    {
+        keyExcludeFilter_ = abs(frameNo);
+        nKeyFramesPending_--;
+        needMoreFrames_.Set();
+        
+        if (abs(pipelinerKeyFrameNo_) < abs(frameNo))
+            pipelinerKeyFrameNo_ = abs(frameNo)+1;
+    }
 }
 
 void NdnMediaReceiver::rebuffer(bool shouldNotify)
@@ -775,7 +785,8 @@ void NdnMediaReceiver::rebuffer(bool shouldNotify)
     jitterTiming_.flush();
     rtt_ = 0;
     srtt_ = StartSRTT;
-    excludeFilter_ = pipelinerFrameNo_; //playoutBuffer_->getPlayheadPointer(); //pipelinerFrameNo_; //
+    nKeyFramesPending_ = 0;
+    excludeFilter_ = pipelinerDeltaFrameNo_; //playoutBuffer_->getPlayheadPointer();
     switchToMode(ReceiverModeFlushed);
     needMoreFrames_.Reset();
     
@@ -786,29 +797,29 @@ void NdnMediaReceiver::rebuffer(bool shouldNotify)
         callback_->onRebuffer(this);
 }
 
-NdnMediaReceiver::PendingInterestStruct
-NdnMediaReceiver::getPisForInterest(const string &iuri,
-                                    bool removeFromPITs)
-{
-    PendingInterestStruct pis = {(unsigned int)-1,(unsigned int)-1};
-    
-    pitCs_.Enter();
-    
-    if (pendingInterests_.find(iuri) != pendingInterests_.end())
-    {
-        pis = pendingInterests_[iuri];
-        
-        if (removeFromPITs)
-        {
-            pendingInterests_.erase(iuri);
-            pendingInterestsUri_.erase(pis.interestID_);
-        }
-    }
-    
-    pitCs_.Leave();
-    
-    return pis;
-}
+//NdnMediaReceiver::PendingInterestStruct
+//NdnMediaReceiver::getPisForInterest(const string &iuri,
+//                                    bool removeFromPITs)
+//{
+//    PendingInterestStruct pis = {(unsigned int)-1,(unsigned int)-1};
+//    
+//    pitCs_.Enter();
+//    
+//    if (pendingInterests_.find(iuri) != pendingInterests_.end())
+//    {
+//        pis = pendingInterests_[iuri];
+//        
+//        if (removeFromPITs)
+//        {
+//            pendingInterests_.erase(iuri);
+//            pendingInterestsUri_.erase(pis.interestID_);
+//        }
+//    }
+//    
+//    pitCs_.Leave();
+//    
+//    return pis;
+//}
 
 unsigned int NdnMediaReceiver::getJitterBufferSizeMs()
 {
@@ -830,6 +841,35 @@ unsigned int NdnMediaReceiver::getPipelinerBufferSizeMs()
                                  currentProducerRate_);
 }
 
+bool NdnMediaReceiver::needMoreFrames(){
+    bool pipelineBufferSmall = getPipelinerBufferSizeMs() < params_.jitterSize;
+    bool needKeyFrames = needMoreKeyFrames();
+    
+    TRACE("need more frames? more key frames: %s pipeline small: %s "
+          "underrun: %s",
+          (needKeyFrames)?"YES":"NO",
+          (pipelineBufferSmall)?"YES":"NO",
+          (shouldRequestFrame_)?"YES":"NO");
+    
+    return (needKeyFrames ||
+            pipelineBufferSmall ||
+            shouldRequestFrame_) &&
+            mode_ != ReceiverModeChase;
+}
+
+bool NdnMediaReceiver::needMoreKeyFrames(){
+    // by default - return false
+    return false;
+}
+
+int NdnMediaReceiver::getFetchAheadNumber(bool isKeyNamespace)
+{
+    int segNum = (isKeyNamespace)?keySegmentsNum_:deltaSegmentsNum_;
+    int nReceived = (isKeyNamespace)?nReceivedKey_:nReceivedDelta_;
+    
+    return (nReceived == 0)?segNum:ceil((double)segNum/(double)nReceived);
+}
+
 //******************************************************************************
 // frame buffer events for pipeliner
 bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
@@ -842,9 +882,7 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
         {
             DBG("[PIPELINING] issue for the latest frame");
             switchToMode(ReceiverModeChase);
-            frameBuffer_.bookSlot(0);
-            requestInitialSegment();
-
+            requestInitialSegment(); // request delta frame
             needMoreFrames_.Wait(WEBRTC_EVENT_INFINITE);
         }
             break;
@@ -869,32 +907,42 @@ bool NdnMediaReceiver::onFreeSlot(FrameBuffer::Event &event)
             }
             else
             {
-                DBG("[PIPELININIG] issue for %d (%d frames ahead), jitter size ms: %d, in progress ms: %d",
-                    pipelinerFrameNo_,
-                    (playoutBuffer_->getState() == PlayoutBuffer::StatePlayback)?
-                    pipelinerFrameNo_ - playoutBuffer_->getPlayheadPointer() :
-                    pipelinerFrameNo_ - firstFrame_,
+                bool isKey = needMoreKeyFrames();
+                FrameNumber requestFrameNo = (isKey)?
+                                                    pipelinerKeyFrameNo_:
+                                                    pipelinerDeltaFrameNo_;
+                
+                DBG("[PIPELININIG] issue for %d (is KEY: %s), "
+                    "jitter size ms: %d, in progress ms: %d",
+                    requestFrameNo,
+                    isKey ? "YES" : "NO",
                     jitterBufferSizeMs, pipelinerBufferSizeMs);
-                frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t "
+                frameLogger_->log(NdnLoggerLevelInfo,"PIPELINE: \t%d \t \t \t%d "
                                   "\t%d \t \t \t%.2f \t%d",
-                                  pipelinerFrameNo_,
+                                  requestFrameNo,
                                   // empty
                                   // empty
-                                  // empty
+                                  isKey,
                                   playoutBuffer_->getJitterSize(),
                                   // empty
                                   // empty
                                   currentProducerRate_,
                                   pipelinerBufferSize_);
                 
-                frameBuffer_.bookSlot(pipelinerFrameNo_);
+                int fetchAhead = getFetchAheadNumber(isKey);
                 
-                for (int i = 0; i <= fetchAhead_; i++)
+                for (int i = 0; i <= fetchAhead; i++)
                 {
-                    requestSegment(pipelinerFrameNo_, i);
+                    requestSegment(requestFrameNo, i, isKey);
                 }
                 
-                pipelinerFrameNo_++;
+                if (isKey)
+                {
+                    nKeyFramesPending_++;
+                    pipelinerKeyFrameNo_++;
+                }
+                else
+                    pipelinerDeltaFrameNo_++;
                 
                 if (shouldRequestFrame_)
                     shouldRequestFrame_ = false;
@@ -917,7 +965,8 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
     // in ReceiverModeChase mode we can receive whatever
     // segment number (as we requested right most child without knowing
     // frame number, nor segment number)
-    TRACE("on first segment (%d-%d). frame type: %s", event.frameNo_,
+    TRACE("on first segment (%d-%d). frame type: %s",
+          event.slot_->getFrameNumber(),
           event.segmentNo_, (event.segmentNo_ != 0)?
           "UNKNOWN": (event.slot_->isKeyFrame()?"KEY":"DELTA"));
     
@@ -929,21 +978,24 @@ bool NdnMediaReceiver::onFirstSegmentReceived(FrameBuffer::Event &event)
             // need to filter out late frames if we are re-starting
             // in case of cold start - pipelinerFrameNo_ will be 0
             // otherwise - it should have stored last pipelined frame
-            if (event.frameNo_ >= excludeFilter_)
+            if (event.packetNo_ >= excludeFilter_)
             {
                 TRACE("buffers flush");
                 playoutBuffer_->flush();
                 frameBuffer_.flush();
                 
-                pipelinerFrameNo_ = event.frameNo_+ NdnRtcUtils::toFrames(rtt_/2., params_.producerRate);
-                firstFrame_ = pipelinerFrameNo_;
+                isStartedKeyFetching_ = false;
+                
+                pipelinerDeltaFrameNo_ = event.packetNo_+
+                        NdnRtcUtils::toFrames(rtt_/2., params_.producerRate);
+                firstFrame_ = pipelinerDeltaFrameNo_;
                 
                 switchToMode(ReceiverModeFetch);
-                DBG("[PIPELINER] start fetching from %d...", pipelinerFrameNo_);
+                DBG("[PIPELINER] start fetching from %d...", pipelinerDeltaFrameNo_);
             }
             else
                 TRACE("[PIPELINER] receiving garbage after restart: %d-%d",
-                      event.frameNo_, event.segmentNo_);
+                      event.packetNo_, event.segmentNo_);
         }
             break;
             
@@ -965,7 +1017,7 @@ bool NdnMediaReceiver::onSegmentTimeout(FrameBuffer::Event &event)
     switch (mode_){
         case ReceiverModeChase:
         {
-            if (event.frameNo_ == 0)
+            if (event.packetNo_ == -1)
             {
                 // clear filter if any
                 excludeFilter_ = 0;
@@ -973,43 +1025,46 @@ bool NdnMediaReceiver::onSegmentTimeout(FrameBuffer::Event &event)
                 requestInitialSegment();
             }
             else
-                TRACE("[PIPELINER] got timeout for frame %d while waiting for initial",
-                      event.frameNo_);
+                TRACE("[PIPELINER] timeout for %d while waiting for initial",
+                      event.packetNo_);
         }
             break;
             
         case ReceiverModeFetch:
         {
-            if (!isLate(event.frameNo_))
-            {
+//            if (!isLate(event.packetNo_, event.segmentNo_,  event.isKeyFrame_))
+//            {
                 // as we were issuing extra interests, need to check, whether
                 // it is still make sens for re-issuing it
                 if (event.slot_->getState() == FrameBuffer::Slot::StateNew ||
                     (event.slot_->getState() == FrameBuffer::Slot::StateAssembling &&
                      event.segmentNo_ < event.slot_->totalSegmentsNumber()))
                 {
-                    DBG("[PIPELINER] REISSUE %d-%d",
-                        event.frameNo_, event.segmentNo_);
-                    requestSegment(event.frameNo_,event.segmentNo_);
+                    DBG("[PIPELINER] reissue %d-%d",
+                        event.packetNo_, event.segmentNo_);
+                    requestSegment(event.packetNo_, event.segmentNo_);
                 }
-            }
             else
-            {
-                DBG("got timeout for late frame %d-%d",
-                    event.frameNo_, event.segmentNo_);
-                if (frameBuffer_.getState(event.frameNo_) !=
-                    FrameBuffer::Slot::StateFree)
-                {
-                    frameLogger_->log(NdnLoggerLevelInfo, "\tTIMEOUT: \t%d \t%d \t%d \t%d \t%d",
-                                      event.frameNo_,
-                                      event.slot_->assembledSegmentsNumber(),
-                                      event.slot_->totalSegmentsNumber(),
-                                      event.slot_->isKeyFrame(),
-                                      playoutBuffer_->getJitterSize());
-                }
-                
-                cleanupLateFrame(event.frameNo_);
-            }
+                DBG("[PIPELINER] skip timeout %d-%d", event.packetNo_,
+                    event.segmentNo_);
+//            }
+//            else
+//            {
+//                DBG("got timeout for late frame %d-%d",
+//                    event.frameNo_, event.segmentNo_);
+//                if (frameBuffer_.getState(event.frameNo_) !=
+//                    FrameBuffer::Slot::StateFree)
+//                {
+//                    frameLogger_->log(NdnLoggerLevelInfo, "\tTIMEOUT: \t%d \t%d \t%d \t%d \t%d",
+//                                      event.frameNo_,
+//                                      event.slot_->assembledSegmentsNumber(),
+//                                      event.slot_->totalSegmentsNumber(),
+//                                      event.slot_->isKeyFrame(),
+//                                      playoutBuffer_->getJitterSize());
+//                }
+//                
+//                cleanupLateFrame(event.frameNo_);
+//            }
         }
             break;
             
@@ -1026,3 +1081,29 @@ bool NdnMediaReceiver::onError(FrameBuffer::Event &event)
     return false; // stop pipelining
 }
 
+
+//******************************************************************************
+bool NdnMediaReceiver::checkExclusion(PacketNumber frameNo, bool isKey)
+{
+    PacketNumber exclusion = (isKey)?keyExcludeFilter_:excludeFilter_;
+    
+    return (abs(frameNo) < exclusion);
+}
+
+bool NdnMediaReceiver::checkIsLate(const Name &prefix, const unsigned char *segmentData,
+                                   int dataSz)
+{
+    if (isLate(prefix, segmentData, dataSz))
+    {
+        PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
+        SegmentNumber segmentNo = NdnRtcNamespace::getSegmentNumber(prefix);
+        
+        TRACE("late callback %d-%d", frameNo, segmentNo);
+        cleanupLateFrame(prefix);
+
+        if (NdnRtcNamespace::isKeyFramePrefix(prefix))
+        {
+            keyExcludeFilter_ = frameNo;
+        }
+    }
+}

@@ -18,19 +18,18 @@ using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - overriden
-int NdnVideoSender::init(const shared_ptr<ndn::Transport> transport)
+int NdnVideoSender::init(const shared_ptr<Face> &face,
+                         const shared_ptr<ndn::Transport> &transport)
 {
-    int res = MediaSender::init(transport);
+    int res = MediaSender::init(face, transport);
     
     if (RESULT_FAIL(res))
         return res;
     
-    string keyPrefixString;
+    shared_ptr<string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
     
-    MediaSender::getStreamFramePrefix(params_,
-                                      keyPrefixString,
-                                      true);
-    keyFramesPrefix_.reset(new Name(keyPrefixString));
+    keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = 1; // key frames are starting numeration from 1
     
     return RESULT_OK;
@@ -51,7 +50,10 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:packetNo_;
     
     // copy frame into transport data object
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), (PacketNumber)packetNo_};
+    PacketData::PacketMetadata metadata;
+    metadata.packetRate_ = getCurrentPacketRate();
+    metadata.sequencePacketNumber_ = packetNo_;
+    
     NdnFrameData frameData(encodedImage, metadata);
     
     if (RESULT_GOOD(publishPacket(frameData.getLength(),

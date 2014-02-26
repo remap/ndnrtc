@@ -67,7 +67,7 @@ namespace ndnrtc
         unsigned int getNMissed() { return nMissed_; }
         unsigned int getNPlayed() { return nPlayedOut_; }
         unsigned int getRebufferingEvents() { return rebufferingEvent_; }
-        unsigned int getNPipelined() { return pipelinerFrameNo_; }
+        unsigned int getNPipelined() { return pipelinerKeyFrameNo_+pipelinerDeltaFrameNo_; }
         unsigned int getJitterOccupancy() { return playoutBuffer_->getJitterSize(); }
         unsigned int getBufferStat(FrameBuffer::Slot::State state) {
             return frameBuffer_.getStat(state);
@@ -88,8 +88,8 @@ namespace ndnrtc
         void onPlayheadMoved(unsigned int nextPlaybackFrame,
                              bool frameWasMissing);
         void onJitterBufferUnderrun();
-        void onFrameReachedDeadline(FrameBuffer::Slot *slot,
-                                   std::tr1::unordered_set<int> &lateSegments);
+//        void onFrameReachedDeadline(FrameBuffer::Slot *slot,
+//                                   std::tr1::unordered_set<int> &lateSegments);
         
     protected:
         enum ReceiverMode {
@@ -101,27 +101,39 @@ namespace ndnrtc
         };
         
         ReceiverMode mode_;
-
+        bool keyNamespaceUsed_ = false;
+        bool isStartedKeyFetching_ = false;
+        
         NdnLogger *frameLogger_;
-        long pipelinerFrameNo_;
+        PacketNumber pipelinerDeltaFrameNo_, // current pipelining delta frames
+                                            // number
+                    pipelinerKeyFrameNo_;   // current pipelining key frames
+                                            // number
         unsigned int pipelinerBufferSize_ = 0; // pipeliner buffer size -
                                                // number of pending frames
-        unsigned int excludeFilter_ = 0; // used for rebufferings
+        unsigned int nKeyFramesPending_ = 0; // number of pending key frames
+        double deltaSegmentsNum_ = 4,   // average number of segments for
+                                            // delta frames
+            keySegmentsNum_ = 25;      // average number f segments for key
+                                          // frames
+        
+        PacketNumber firstFrame_ = 0;
+        PacketNumber excludeFilter_ = 0, // used for rebufferings
+                        keyExcludeFilter_ = 0;
         int pipelinerEventsMask_, interestTimeoutMs_, nTimeoutsKeyFrame_ = 0;
         unsigned int producerSegmentSize_;
-        unsigned int fetchAhead_ = 0;
-        Name framesPrefix_;
+        Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
         shared_ptr<Face> face_;
         double currentProducerRate_;
         
         double srtt_ = StartSRTT;
         uint64_t rtt_ = 0;
-        double outstandingMs_ DEPRECATED;
+//        double outstandingMs_ DEPRECATED;
         unsigned int rebufferingEvent_ = 0;
         unsigned int nReceived_ = 0, nLost_ = 0, nPlayedOut_ = 0, nMissed_ = 0;
+        unsigned int nReceivedDelta_ = 0, nReceivedKey_ = 0;
         unsigned int interestFreqMeter_, segmentFreqMeter_, dataRateMeter_;
-        unsigned int firstFrame_ DEPRECATED = 0,
-                        lastMissedFrameNo_ DEPRECATED = 0;
+//        unsigned int lastMissedFrameNo_ DEPRECATED = 0;
         uint64_t playoutLastUpdate_ = 0;
         unsigned int emptyJitterCounter_ = 0;
         bool shouldRequestFrame_ = false;
@@ -135,8 +147,8 @@ namespace ndnrtc
         
         IMediaReceiverCallback *callback_ = nullptr;
         
-        PitMap pendingInterests_ DEPRECATED;
-        PitMapUri pendingInterestsUri_ DEPRECATED;
+//        PitMap pendingInterests_ DEPRECATED;
+//        PitMapUri pendingInterestsUri_ DEPRECATED;
         
         FrameBuffer frameBuffer_;
         PlayoutBuffer *playoutBuffer_;
@@ -200,9 +212,11 @@ namespace ndnrtc
         virtual void playbackPacket(int64_t packetTsLocal) = 0;
         
         void requestInitialSegment();
+        void requestLatestKey();
+        void requestSegment(PacketNumber frameNo, unsigned int segmentNo,
+                            bool useKeyNamespace = false);
         void pipelineInterests(FrameBuffer::Event &event);
-        void requestSegment(unsigned int frameNo, unsigned int segmentNo);
-        bool isStreamInterest(Name prefix);
+        
         unsigned int getFrameNumber(Name prefix);
         unsigned int getSegmentNumber(Name prefix);
         void expressInterest(Name &prefix);
@@ -211,8 +225,18 @@ namespace ndnrtc
         
         // derived classes should determine whether a frame with frameNo number
         // is late or not
-        virtual bool isLate(unsigned int frameNo);
-        void cleanupLateFrame(unsigned int frameNo);
+        virtual bool isLate(const Name &prefix, const unsigned char *segmentData,
+                            int dataSz);
+        bool checkIsLate(const Name &prefix, const unsigned char *segmentData,
+                         int dataSz);
+        bool checkExclusion(PacketNumber frameNo, bool isKey = false);
+        bool isStreamInterest(Name prefix);
+        bool isKeyInterest(Name prefix);
+        void handleIfInitial(PacketNumber frameNo,
+                             const unsigned char *segmentData,
+                             bool isKey = false);
+        
+        void cleanupLateFrame(const Name &prefix);
         
         unsigned int getTimeout() const;
         unsigned int getFrameBufferSize() const;
@@ -222,21 +246,10 @@ namespace ndnrtc
         unsigned int getPipelinerBufferSizeMs();
         // based on the current sizes of jitter and pipeline buffers, determines
         // whether more frames need to be fetched
-        bool needMoreFrames(){
-            bool jitterBufferSmall = false;
-            bool pipelineBufferSmall = getPipelinerBufferSizeMs() < params_.jitterSize;
-            
-            TRACE("need more frames? jitter small: %s, pipeline small: %s "
-                  "underrun: %s",
-                  (jitterBufferSmall)?"YES":"NO",
-                  (pipelineBufferSmall)?"YES":"NO",
-                  (shouldRequestFrame_)?"YES":"NO");
-            
-            return (jitterBufferSmall ||
-                    pipelineBufferSmall ||
-                    shouldRequestFrame_) &&
-                    mode_ != ReceiverModeChase;
-        }
+        bool needMoreFrames();
+        virtual bool needMoreKeyFrames();
+        
+        int getFetchAheadNumber(bool isKeyNamespace);
         
         // frame buffer events handlers for pipeliner
         virtual bool onFirstSegmentReceived(FrameBuffer::Event &event);

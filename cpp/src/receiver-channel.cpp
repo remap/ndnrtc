@@ -25,7 +25,7 @@ decoder_(new NdnVideoDecoder(params)),
 receiver_(new NdnVideoReceiver(params)),
 audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::sharedVoiceEngine()))
 {
-    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "fetch-%s.log",
+    NdnMediaChannel::setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "fetch-%s.log",
                                   params.producerId));
     isLoggerCreated_ = true;
     

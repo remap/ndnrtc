@@ -27,7 +27,8 @@ namespace ndnrtc
         static int getStreamControlPrefix(const ParamsStruct &params,
                                           string &prefix);
         
-        int init(const shared_ptr<ndn::Transport> transport);
+        int init(const shared_ptr<Face> &face,
+                 const shared_ptr<ndn::Transport> &transport);
         int publishRTPAudioPacket(unsigned int len, unsigned char *data);
         int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
         

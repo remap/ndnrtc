@@ -49,6 +49,8 @@ public :
     
     void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     {
+        receivedFramesTypes_.push_back(encodedImage._frameType);
+        
         receivedFrames_.push_back(encodedImage.capture_time_ms_);
         LOG_TRACE("fetched encoded frame. queue size %d", receivedFrames_.size());
     }
@@ -66,6 +68,7 @@ protected:
     std::vector<webrtc::EncodedImage*> fetchedFrames_;
     std::vector<uint64_t> sentFrames_;
     std::vector<uint64_t> receivedFrames_;
+    std::vector<int> receivedFramesTypes_;
     webrtc::EncodedImage *frame_;
     NdnFrameData *payload;
     
@@ -81,7 +84,7 @@ protected:
         sentFrames_.push_back(millisecondTimestamp());
     }
 };
-
+#if 0
 TEST_F(NdnReceiverTester, CreateDelete)
 {
     NdnVideoReceiver *receiver = new NdnVideoReceiver(DefaultParams);
@@ -172,7 +175,7 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
     
     // we should start publishing frames later, so that receiver will get first frame
     // by issuing interest with RightMostChild selector
-    WAIT(1000);
+    WAIT(100);
     string framePrefix;
     EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, framePrefix));
     
@@ -188,18 +191,16 @@ TEST_F(NdnReceiverTester, Fetching30FPS)
         payload = new NdnFrameData(*frame_, meta);
         publishMediaPacket(payload->getLength(), payload->getData(), i,
                            segmentSize, framePrefix, params_.freshness, true);
-        LOG_TRACE("published frame %d",i);
         WAIT(1000/producerFrameRate);
     }
     EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum, 5000);
     cout << "Fetched " << receivedFrames_.size() << " frames" << endl;
     
-    if (framesNum == receivedFrames_.size())
     {
-        for (int i = 0; i < framesNum; i++)
+        for (int i = 0; i < receivedFrames_.size(); i++)
         {
             // check arrival order
-            if (i != framesNum-1)
+            if (i != receivedFrames_.size()-1)
                 EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
         }
     }
@@ -258,10 +259,9 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum, 5000);
     cout << "Fetched " << receivedFrames_.size() << " frames" << endl;
 
-    if (framesNum == receivedFrames_.size())
     {
-        for (int i = 0; i < framesNum; i++)
-            if (i != framesNum-1)
+        for (int i = 0; i < receivedFrames_.size(); i++)
+            if (i != receivedFrames_.size()-1)
                 EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
     }
     
@@ -270,7 +270,7 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     delete receiver;
     WAIT(params_.freshness*1000);
 }
-
+#endif
 TEST_F(NdnReceiverTester, FetchingWithRecovery)
 {
     unsigned int jitterSize = 20;
@@ -289,6 +289,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
     
+    receiver->setLogger(NdnLogger::sharedInstance());
     receiver->setFrameConsumer(this);
     receiver->setObserver(this);
     
@@ -324,11 +325,10 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
         
         EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum/2, 5000);
         
-        if (framesNum == receivedFrames_.size())
         {
-            for (int i = 0; i < framesNum; i++)
+            for (int i = 0; i < receivedFrames_.size(); i++)
             {
-                if (i != framesNum-1)
+                if (i != receivedFrames_.size()-1)
                     EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
             }
         }
@@ -358,11 +358,10 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
         
         EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum/2, 5000);
         
-        if (framesNum == receivedFrames_.size())
         {
-            for (int i = 0; i < framesNum; i++)
+            for (int i = 0; i < receivedFrames_.size(); i++)
             {
-                if (i != framesNum-1)
+                if (i != receivedFrames_.size()-1)
                     EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
             }
         }
@@ -374,8 +373,80 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     delete receiver;
     WAIT(params_.freshness*1000);
 }
-
 #if 0
+TEST_F(NdnReceiverTester, FetchingWithKeyAndDeltaNamespace)
+{
+    unsigned int jitterSize = 20;
+    unsigned int gop = 60;
+    unsigned int framesNum = 4*gop;
+    unsigned int segmentSize = 100;
+    unsigned int bufferSize = gop*2;
+    unsigned int producerFrameRate = 30;
+    
+    params_.bufferSize = bufferSize;
+    params_.segmentSize = segmentSize;
+    params_.producerRate = producerFrameRate;
+    params_.producerId = "testuser4";
+    
+    NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
+    
+    receiver->setLogger(NdnLogger::sharedInstance());
+    receiver->setFrameConsumer(this);
+    receiver->setObserver(this);
+    
+    EXPECT_EQ(0, receiver->init(ndnReceiverFace_));
+    EXPECT_FALSE(obtainedError_);
+    
+    LOG_TRACE("start fetching");
+    EXPECT_EQ(0, receiver->startFetching());
+    
+    // we should start publishing frames later, so that receiver will get first frame
+    // by issuing interest with RightMostChild selector
+    WAIT(100);
+    string framePrefix;
+    EXPECT_EQ(RESULT_OK, MediaSender::getStreamFramePrefix(params_, framePrefix));
+    
+    // publish more than should - depending on RTT value, fetching will not
+    // start right from frame 0
+    for (int i = 0; i < 1.2*framesNum; i++)
+    {
+        frame_->_frameType = (i%gop)?webrtc::kDeltaFrame:webrtc::kKeyFrame;
+        frame_->capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
+        PacketData::PacketMetadata meta;
+        meta.sequencePacketNumber_ = i;
+        meta.packetRate_ = producerFrameRate;
+        payload = new NdnFrameData(*frame_, meta);
+        publishMediaPacket(payload->getLength(), payload->getData(), i,
+                           segmentSize, framePrefix, params_.freshness, true);
+        WAIT(1000/producerFrameRate);
+    }
+    EXPECT_TRUE_WAIT(receivedFrames_.size() >= framesNum, 5000);
+    cout << "Fetched " << receivedFrames_.size() << " frames" << endl;
+    
+    {
+        int nKeyFramesExpected = framesNum/gop-1; // 1 less key frame as we are feching
+                                                  // not from the very first frames
+        int nKeyFramesArrived = 0;
+        
+        for (int i = 0; i < receivedFrames_.size(); i++)
+        {
+            // check arrival order
+            if (i != receivedFrames_.size()-1)
+                EXPECT_LE(receivedFrames_[i], receivedFrames_[i+1]);
+            
+
+            if (receivedFramesTypes_[i] == webrtc::kKeyFrame)
+                nKeyFramesArrived++;
+        }
+        
+        EXPECT_LE(nKeyFramesExpected, nKeyFramesArrived);
+    }
+    
+    receiver->stopFetching();
+    delete receiver;
+    WAIT(params_.freshness*1000);
+}
+
 class VideoReceiverRecorder : public IEncodedFrameConsumer
 {
 public:

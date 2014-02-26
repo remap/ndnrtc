@@ -22,9 +22,7 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
                                            string &prefix)
 {
     int res = RESULT_OK;
-    string streamPrefix;
-    
-    MediaSender::getStreamPrefix(params, streamPrefix);
+    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
     string streamThread = ParamsStruct::validate(params.streamThread,
                                                  DefaultParamsAudio.streamThread,
@@ -36,9 +34,10 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
     string rtcpSuffix = NdnRtcNamespace::NameComponentStreamFrames;
 #endif
     prefix = *NdnRtcNamespace::buildPath(false,
-                                         &streamPrefix,
+                                         &(*streamPrefix),
                                          &streamThread,
                                          &rtcpSuffix,
+                                         &NdnRtcNamespace::NameComponentStreamFramesDelta,
                                          NULL);
     
     return res;
@@ -46,11 +45,12 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
 
 //******************************************************************************
 #pragma mark - public
-int NdnAudioSender::init(const shared_ptr<ndn::Transport> transport)
+int NdnAudioSender::init(const shared_ptr<Face> &face,
+                         const shared_ptr<ndn::Transport> &transport)
 {
     int res = RESULT_OK;
     
-    res = MediaSender::init(transport);
+    res = MediaSender::init(face, transport);
     
     if (RESULT_FAIL(res))
         return res;

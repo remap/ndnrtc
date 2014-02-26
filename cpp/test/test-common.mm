@@ -169,6 +169,8 @@ void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
     
     SignedBlob encodedData = data.wireEncode();
     ndnTransport_->send(*encodedData);
+//    NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, "published %s",prefix.c_str());
+    LOG_TRACE("published %s", prefix.c_str());
 }
 
 void UnitTestHelperNdnNetwork::startProcessingNdn()

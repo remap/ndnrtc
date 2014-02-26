@@ -98,7 +98,10 @@ audioReceiver_(new NdnAudioReceiver(params))
     audioReceiver_->setFrameConsumer(this);
     audioReceiver_->setLogger(logger_);
 }
-
+NdnAudioReceiveChannel::~NdnAudioReceiveChannel()
+{
+    delete audioReceiver_;
+}
 //******************************************************************************
 #pragma mark - public
 int NdnAudioReceiveChannel::init(shared_ptr<Face> &face)
@@ -211,22 +214,33 @@ void NdnAudioReceiveChannel::onRTCPPacketReceived(unsigned int len,
 //******************************************************************************
 //******************************************************************************
 #pragma mark - public
-int NdnAudioSendChannel::init(shared_ptr<ndn::Transport> &transport)
-{    
+NdnAudioSendChannel::NdnAudioSendChannel(const ParamsStruct &params,
+                                         webrtc::VoiceEngine *voiceEngine):
+NdnAudioChannel(params, voiceEngine),
+audioSender_(new NdnAudioSender(params))
+{
+    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
+                                  "publish-achannel-%s.log",
+                                  params.producerId));
+    isLoggerCreated_ = true;
+    
+    audioSender_->setObserver(this);
+    audioSender_->setLogger(logger_);
+}
+NdnAudioSendChannel::~NdnAudioSendChannel()
+{
+    delete audioSender_;
+}
+int NdnAudioSendChannel::init(const shared_ptr<Face> &face,
+                              const shared_ptr<ndn::Transport> &transport)
+{
     int res = RESULT_OK;
     shared_ptr<Face> nullFace(nullptr);
     
     if (RESULT_FAIL((res = NdnAudioChannel::init(nullFace))))
         return res;
     
-    if (!audioSender_)
-    {
-        audioSender_ = new NdnAudioSender(params_);
-        audioSender_->setObserver(this);
-        audioSender_->setLogger(logger_);
-    }
-    
-    if (RESULT_GOOD((res = audioSender_->init(transport))))
+    if (RESULT_GOOD((res = audioSender_->init(face, transport))))
         initialized_ = true;
     
     DBG("initialized audio send channel");
@@ -299,7 +313,7 @@ int NdnAudioSendChannel::SendRTCPPacket(int channel, const void *data, int len)
 
 void NdnAudioSendChannel::getStatistics(SenderChannelPerformance &stat)
 {
-    stat.nBytesPerSec_ = audioSender_->getDataRate();
+//    stat.nBytesPerSec_ = audioSender_->getDataRate();
     stat.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
     stat.lastFrameNo_ = audioSender_->getPacketNo();
     stat.encodingRate_ = stat.nFramesPerSec_;

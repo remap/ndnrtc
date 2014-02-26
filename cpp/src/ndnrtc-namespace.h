@@ -49,9 +49,65 @@ namespace ndnrtc {
         static shared_ptr<const std::vector<unsigned char>>
             getNumberComponent(long unsigned int frameNo);
         
+        /**
+         * Builds user stream prefix for current parameters
+         * @param params Library parameters
+         * @return User prefix (i.e. "<params.ndnHub>/<NameComponentApp>/<NameComponentUser>/<params.producerId>") 
+         * or pointer to null in case of error
+         */
+        static shared_ptr<std::string>
+        getUserPrefix(const ParamsStruct &params);
+        
+        /**
+         * Builds stream prefix for current parameters
+         * @param params Library parameters
+         * @return User's stream prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<params.streamName>"
+         * or pointer to null if an error
+         * @see getUserPrefix for more info on form of "user_prefix" component
+         */
+        static shared_ptr<std::string>
+        getStreamPrefix(const ParamsStruct &params);
+        
+        /**
+         * Builds stream frame prefix for current parameters
+         * @param params Library parameters
+         * @param isKeyNamespace indicates for which key types prefix should be 
+         * built
+         * @return User's stream frame prefix in a form of "<stream_prefix>/<params.streamThread>/<NameComponentStreamFrames>/<frame_type>"
+         * where "frame_type" is either NameComponentStreamFramesDelta or 
+         * NameComponentStreamFramesKey depending on isKeyNamespace paramter 
+         * value or pointer to null if an error
+         * @see getStreamPrefix for more info on form of "stream_prefix" component
+         */
+        static shared_ptr<string>
+        getStreamFramePrefix(const ParamsStruct &params,
+                             bool isKeyNamespace = false);
+        
+        /**
+         * Builds stream key prefix for current paramteres
+         * @param params Library parameters
+         * @return Stream's key prefix in a form of "<stream_prefix>/NameComponentStreamKey" 
+         * or pointer to null if error occured
+         * @see getStreamPrefix for more info on form ot "stream_prefix" component
+         */
+        static shared_ptr<string>
+        getStreamKeyPrefix(const ParamsStruct &params);
+        
         static shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);
         static shared_ptr<KeyChain> keyChainForUser(const std::string &userPrefix);
+        
+        static bool hasComponent(const Name &prefix,
+                                 const std::string &component);
+        static int findComponent(const Name &prefix,
+                                   const std::string &component);
+        static bool isKeyFramePrefix(const Name &prefix);
+        static bool isDeltaFramesPrefix(const Name &prefix);
+        
+        static PacketNumber getPacketNumber(const Name &prefix);
+        static SegmentNumber getSegmentNumber(const Name &prefix);
+        
+        static int trimSegmentNumber(const Name &prefix, Name &trimmedPrefix);
         
     private:
     };

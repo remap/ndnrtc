@@ -56,9 +56,13 @@ TEST(LoopbackTests, Transmission)
 {
     ParamsStruct p = DefaultParams;
     ParamsStruct audioP = DefaultParamsAudio;
+    p.captureDeviceId = 1;
     
     NdnSenderChannel *sc = new NdnSenderChannel(p, audioP);
     TestReceiverChannel *rc = new TestReceiverChannel(p, audioP);
+
+    sc->setLogger(NdnLogger::sharedInstance());
+    rc->setLogger(NdnLogger::sharedInstance());
     
     EXPECT_EQ(0, sc->init());
     EXPECT_EQ(0, rc->init());
@@ -69,7 +73,7 @@ TEST(LoopbackTests, Transmission)
     
     bool f=  false;
 //    EXPECT_TRUE_WAIT(f, 10000);
-    WAIT(10000);
+    WAIT(50000);
     
     EXPECT_EQ(0, sc->stopTransmission());
     EXPECT_EQ(RESULT_OK,rc->stopTransmission());
@@ -91,7 +95,7 @@ TEST(LoopbackTests, Transmission)
     p.ndnHub = "ndn/caida.org";
 #else
     p.producerId = "nibbler";
-    p.ndnHub = "ndn/ucla.edu/apps";
+    p.ndnHub = "ndn/edu/ucla/apps";
 #endif
     p.encodeWidth = 640;
     p.encodeHeight = 480;
@@ -108,7 +112,7 @@ TEST(LoopbackTests, Transmission)
     
     bool f=  false;
     //    EXPECT_TRUE_WAIT(f, 10000);
-    WAIT(100000);
+    WAIT(5000);
     
     EXPECT_EQ(RESULT_OK,rc->stopTransmission());
     EXPECT_EQ(0,rc->nMisordered_);

@@ -24,7 +24,8 @@ NdnVideoReceiver::NdnVideoReceiver(const ParamsStruct &params) :
 NdnMediaReceiver(params),
 frameConsumer_(nullptr)
 {
-    fetchAhead_ = 20; // fetch segments ahead
+//    fetchAhead_ = 20; // fetch segments ahead
+    keyNamespaceUsed_ = true;
     playoutBuffer_ = new VideoPlayoutBuffer();
     frameLogger_ = new NdnLogger(NdnLoggerDetailLevelDefault,
                                  "fetch-vstat-%s.log", params.producerId);
@@ -114,7 +115,72 @@ void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
     // empty
 }
 
-bool NdnVideoReceiver::isLate(unsigned int frameNo)
+bool NdnVideoReceiver::isLate(const Name &prefix, const unsigned char *segmentData,
+                              int dataSz)
 {
+    PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
+    SegmentNumber segmentNo = NdnRtcNamespace::getSegmentNumber(prefix);
+    bool isKey = NdnRtcNamespace::isKeyFramePrefix(prefix);
+    
+    if (frameNo < 0)
+    {
+        LOG_TRACE("KEY FRAME. OLD_SCHOOL BREAKPOINT!!!!!!");
+    }
+
+        if (isKey && segmentNo == 0)
+        {
+            // retrieve real sequence frame number if it is possible
+            PacketData::PacketMetadata meta;
+#if 0
+            TRACE("<==== DUMP2 %d (isKey: %s): %s",
+                  frameNo,
+                  isKey?"YES":"NO",
+                  dump<41>((void*)segmentData).c_str());
+#endif
+
+            
+            if (RESULT_NOT_FAIL(NdnFrameData::unpackMetadata(dataSz,
+                                                             segmentData, meta)))
+            {
+                TRACE("sequence #: %d (%d booking id)", meta.sequencePacketNumber_, frameNo);
+                
+                if (playoutBuffer_->getState() != PlayoutBuffer::StatePlayback)
+                {
+                    if (playoutBuffer_->getJitterSize() == 0)
+                    {
+                        LOG_TRACE("LATE: zero jitter: %d < %d (%s)" ,
+                                  meta.sequencePacketNumber_, firstFrame_,
+                                  meta.sequencePacketNumber_ < firstFrame_ ? "TRUE":"FALSE");
+                        
+                        return meta.sequencePacketNumber_ < firstFrame_;
+                    } // jitter is empty
+                    else
+                    {
+                        LOG_TRACE("LATE: non-empty jitter: %d < %d (%s)" ,
+                                  meta.sequencePacketNumber_,
+                                  playoutBuffer_->framePointer(),
+                                  meta.sequencePacketNumber_ < playoutBuffer_->framePointer() ? "TRUE":"FALSE");
+                        
+                        return meta.sequencePacketNumber_ < playoutBuffer_->framePointer();
+                    } // jitter not empty
+                } // check for playback state
+                else
+                {
+                    LOG_TRACE("LATE: playback jitter: %d < %d (%s)",
+                              meta.sequencePacketNumber_, playoutBuffer_->getPlayheadPointer(),
+                              meta.sequencePacketNumber_ < playoutBuffer_->getPlayheadPointer() ? "TRUE" : "FALSE");
+                    return (meta.sequencePacketNumber_ < playoutBuffer_->getPlayheadPointer());
+                } // playing back
+            } // get metadata
+            
+            return false;
+        } // is key namespace
+    
     return (frameNo < playoutBuffer_->getPlayheadPointer());
+}
+
+bool NdnVideoReceiver::needMoreKeyFrames()
+{
+//    return false;
+    return (nKeyFramesPending_ < MinKeyFramesPending);
 }

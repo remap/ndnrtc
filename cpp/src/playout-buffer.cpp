@@ -213,7 +213,7 @@ bool PlayoutBuffer::processFrameProvider()
                 }
             }
             
-            frameBuffer_->lockSlot(ev.frameNo_);
+            frameBuffer_->lockSlot(ev.slot_->getFrameNumber());
             framePointer_ = jitterBuffer_.top()->getFrameNumber();
             
             if (callback_)
@@ -237,8 +237,8 @@ bool PlayoutBuffer::processFrameProvider()
                     break;
             }
             
-            DBG("[PLAYOUT] ADDED frame %d to jitter (size %d)", ev.frameNo_,
-                jitterBuffer_.size());
+            DBG("[PLAYOUT] ADDED frame %d to jitter (size %d)",
+                ev.slot_->getFrameNumber(), jitterBuffer_.size());
         }
             break;
         default: // error
@@ -499,6 +499,7 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
 
 void PlayoutBuffer::checkLateFrames()
 {
+#if 0
     webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
     
     int deadlineFrameNo = playheadPointer_ + DeadlineBarrierCoeff*minJitterSize_;
@@ -529,6 +530,7 @@ void PlayoutBuffer::checkLateFrames()
         else
             TRACE("[PLAYOUT-WATCH] no slot for %d", frameNo);
     } // for
+#endif
 }
 
 void PlayoutBuffer::resetData()

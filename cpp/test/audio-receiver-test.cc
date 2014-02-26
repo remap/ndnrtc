@@ -77,6 +77,7 @@ public:
         NdnAudioData adata(p, meta);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
+        LOG_INFO("published RTP %d (%d bytes)", currentRTPFrame_, len);
 //        cout << "publish RTP  " << currentRTPFrame_ << " " << len << endl;
         sendCS_->Enter();
         publishMediaPacket(adata.getLength(), adata.getData(),
@@ -98,6 +99,7 @@ public:
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
         
+        LOG_INFO("published RTCP %d (%d bytes)", currentRTPFrame_, len);
 //        cout << "publish RTCP " << currentRTPFrame_ << " " << len << endl;
         // using RTP frames counter!!!
         sendCS_->Enter();

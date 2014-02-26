@@ -122,8 +122,3 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
         }
     } // if packet consumer
 }
-
-bool NdnAudioReceiver::isLate(unsigned int frameNo)
-{
-    return (frameNo < playoutBuffer_->getPlayheadPointer());
-}

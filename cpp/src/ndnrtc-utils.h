@@ -54,6 +54,10 @@ namespace ndnrtc{
                                      double fps);
         static unsigned int toTimeMs(unsigned int frames,
                                      double fps);
+        
+        static uint32_t generateNonceValue();
+        static Blob nonceToBlob(const uint32_t nonceValue);
+        static uint32_t blobToNonce(const Blob &blob);
     };
 }
 

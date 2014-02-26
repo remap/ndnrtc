@@ -29,11 +29,16 @@
 #include "ndnlib.h"
 #include "webrtc.h"
 #include "simple-log.h"
+#include "ndnrtc-debug.h"
 
 using namespace std;
 using namespace ndn;
 using namespace ptr_lib;
 using namespace ndnlog;
+
+typedef int PacketNumber;
+typedef int SegmentNumber;
+typedef PacketNumber FrameNumber;
 
 #define DEPRECATED __attribute__ ((deprecated))
 
@@ -56,6 +61,6 @@ using namespace ndnlog;
 //#define USE_AMP_V2
 //#define USE_AMP_V3
 
-//#define AUDIO_OFF // disable audio
+#define AUDIO_OFF // disable audio
 //#define VIDEO_OFF // disable video
 #endif

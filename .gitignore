@@ -11,3 +11,4 @@ cpp/thirdparty/ndn-gtest
 *.out
 cpp/resources
 cpp/thirdparty
+docs

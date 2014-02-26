@@ -25,6 +25,7 @@ namespace ndnrtc
                                              // be set on the time equals
                                              // multiplication of this
                                              // coefficient and jitter size
+    const int MinKeyFramesPending = 1;
     const int MaxUnderrunNum = 10;
     const double MaxJitterSizeCoeff = 1.2; // if jitter becomes greater than
                                            // this value multiplied by min
@@ -166,8 +167,8 @@ namespace ndnrtc
         
         // called each time slot that has not been assembled yet reaches its'
         // deadline for retransmission
-        virtual void onFrameReachedDeadline(FrameBuffer::Slot *slot,
-                                           std::tr1::unordered_set<int> &lateSegments) = 0;
+//        virtual void onFrameReachedDeadline(FrameBuffer::Slot *slot,
+//                                           std::tr1::unordered_set<int> &lateSegments) = 0;
     };
     
     /**

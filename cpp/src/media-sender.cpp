@@ -20,115 +20,39 @@ using namespace std;
 #pragma mark - construction/destruction
 MediaSender::MediaSender(const ParamsStruct &params) :
 NdnRtcObject(params),
+segmentizer_(params),
 packetNo_(0)
 {
-    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter();
 }
 
 MediaSender::~MediaSender()
 {
-    NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
     NdnRtcUtils::releaseFrequencyMeter(packetRateMeter_);
 }
 
 //******************************************************************************
 //******************************************************************************
 #pragma mark - static
-int MediaSender::getUserPrefix(const ParamsStruct &params, string &prefix)
-{
-    int res = RESULT_OK;
-    
-    res = (params.ndnHub && params.producerId) ? RESULT_OK : RESULT_ERR;
-    
-    prefix = *NdnRtcNamespace::
-    getProducerPrefix((params.ndnHub)?params.ndnHub:DefaultParams.ndnHub,
-                      (params.producerId)?params.producerId:
-                      DefaultParams.producerId);
-    
-    return res;
-}
 
-int MediaSender::getStreamPrefix(const ParamsStruct &params, string &prefix)
-{
-    string userPrefix;
-    int res = MediaSender::getUserPrefix(params, userPrefix);
-    
-    res = (params.streamName) ? res : RESULT_ERR;
-    
-    const string streamName = string((!res)?params.streamName:
-                                     DefaultParams.streamName);
-    
-    prefix = *NdnRtcNamespace::buildPath(false,
-                                         &userPrefix,
-                                         &NdnRtcNamespace::NameComponentUserStreams,
-                                         &streamName,
-                                         NULL);
-    
-    return res;
-}
-
-int MediaSender::getStreamFramePrefix(const ParamsStruct &params, string &prefix,
-                                      bool isKeyNamespace)
-{
-    string streamPrefix;
-    int res = MediaSender::getStreamPrefix(params, streamPrefix);
-    
-    res = (params.streamThread) ? res : RESULT_ERR;
-    
-    string streamThread = string((!res)?params.streamThread:DefaultParams.streamThread);
-    const string frameTypeNamespace = (isKeyNamespace)?
-                                 NdnRtcNamespace::NameComponentStreamFramesKey:
-                                 NdnRtcNamespace::NameComponentStreamFramesDelta;
-    
-    prefix = *NdnRtcNamespace::buildPath(false,
-                                         &streamPrefix,
-                                         &streamThread,
-                                         &NdnRtcNamespace::NameComponentStreamFrames,
-                                         &frameTypeNamespace,
-                                         NULL);
-    
-    return res;
-}
-
-int MediaSender::getStreamKeyPrefix(const ParamsStruct &params, string &prefix)
-{
-    string streamPrefix;
-    int res = MediaSender::getStreamPrefix(params, streamPrefix);
-    
-    prefix = *NdnRtcNamespace::buildPath(false,
-                                         &streamPrefix,
-                                         &NdnRtcNamespace::NameComponentStreamKey,
-                                         NULL);
-    
-    return res;
-}
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const shared_ptr<ndn::Transport> transport)
+int MediaSender::init(const shared_ptr<Face> &face,
+                      const shared_ptr<ndn::Transport> &transport)
 {
-    string userPrefix;
+    if (RESULT_FAIL(segmentizer_.init(face, transport)))
+        return notifyError(-1, "could not init segmentizer");
     
-    if (RESULT_FAIL(MediaSender::getStreamPrefix(params_, userPrefix)))
-        notifyError(-1, "user prefix differs from specified (check params): %s",
-                    userPrefix.c_str());
+    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     
-    certificateName_ = NdnRtcNamespace::certificateNameForUser(userPrefix);
+    if (!packetPrefix.get())
+        notifyError(-1, "bad frame prefix");
     
-    string packetPrefix;
+    packetPrefix_.reset(new Name(packetPrefix->c_str()));
     
-    if (RESULT_FAIL(MediaSender::getStreamFramePrefix(params_, packetPrefix)))
-        notifyError(-1, "frame prefix differ from specified (check params): %s",
-                    packetPrefix.c_str());
-    
-    packetPrefix_.reset(new Name(packetPrefix.c_str()));
-    
-    ndnTransport_ = transport;
-    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
     segmentSize_ = params_.segmentSize;
     freshnessInterval_ = params_.freshness;
-    
     packetNo_ = 0;
     
     return RESULT_OK;
@@ -141,9 +65,6 @@ int MediaSender::publishPacket(unsigned int len,
                                shared_ptr<Name> packetPrefix,
                                unsigned int packetNo)
 {
-    if (!ndnTransport_->getIsConnected())
-        return notifyError(-1, "can't send packet - no connection");
-    
     // send packet over NDN
     
     // 1. set packet number prefix
@@ -154,7 +75,6 @@ int MediaSender::publishPacket(unsigned int len,
     
     // check whether frame is larger than allowed segment size
     int bytesToSend, payloadSize = len;
-    double timeStampMS = NdnRtcUtils::timestamp();
     
     // 2. prepare variables for computing segment prefix
     unsigned long segmentNo = 0;
@@ -164,45 +84,25 @@ int MediaSender::publishPacket(unsigned int len,
     try {
         if (segmentsNum > 0)
         {
-            //            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_, payloadSize_);
-            
             // 4. split frame into segments
             // 5. publish segments under <root>/packetNo/segmentNo URI
             while (payloadSize > 0)
             {
                 Name segmentName = prefix;
                 segmentName.appendSegment(segmentNo);
+                segmentName.appendFinalSegment(segmentsNum-1);
                 
                 TRACE("sending packet #%010lld. data name: %s", packetNo_,
                       segmentName.toUri().c_str());
                 
-                Data data(segmentName);
-                
-                bytesToSend = (payloadSize < segmentSize_)?
-                payloadSize :
-                segmentSize_;
+                bytesToSend = (payloadSize < segmentSize_)? payloadSize : segmentSize_;
                 payloadSize -= segmentSize_;
-                
-                data.getMetaInfo().setFreshnessSeconds(freshnessInterval_);
-                data.getName().appendFinalSegment(segmentsNum-1);
-                data.getMetaInfo().setTimestampMilliseconds(timeStampMS);
-                data.setContent(&packetData[segmentNo*segmentSize_],
-                                bytesToSend);
-                
-                ndnKeyChain_->sign(data, *certificateName_);
-                
-                SignedBlob encodedData = data.wireEncode();
-                ndnTransport_->send(*encodedData);
-                TRACE("sent packet #%010lld", packetNo_);
-                
+
+                segmentizer_.publishData(segmentName,
+                                         &packetData[segmentNo*segmentSize_],
+                                         bytesToSend,
+                                         freshnessInterval_);
                 segmentNo++;
-                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-                                                   data.getContent().size());
-#if 0
-                for (unsigned int i = 0; i < data.getContent().size(); ++i)
-                    printf("%2x ",(*data.getContent())[i]);
-                cout << endl;
-#endif
             }
         }
         else

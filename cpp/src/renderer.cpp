@@ -69,16 +69,13 @@ int NdnRenderer::init()
 }
 int NdnRenderer::startRendering(const string &windowName)
 {
-    TRACE("[BUGTRACE] SETTING RENDER TITLE");
     setWindowTitle(windowName.c_str(), renderWindow_);
     
     if (render_->StartRender(rendererId_) < 0)
     {
-        TRACE("[BUGTRACE] CAN'T START RENDERER");
         return notifyError(RESULT_ERR, "can't start rendering");
     }
     
-    TRACE("[BUGTRACE] STARTED RENDERER");
     isRendering_ = true;
     
     return 0;

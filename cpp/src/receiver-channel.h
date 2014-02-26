@@ -32,7 +32,14 @@ namespace ndnrtc
         int stopTransmission();
 
         void getChannelStatistics(ReceiverChannelStatistics &stat);
-        
+        void setLogger(NdnLogger *logger){
+            LoggerObject::setLogger(logger);
+            
+            localRender_->setLogger(logger);
+            decoder_->setLogger(logger);
+            receiver_->setLogger(logger);
+            audioReceiveChannel_->setLogger(logger);
+        }
     protected:
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoDecoder> decoder_;
