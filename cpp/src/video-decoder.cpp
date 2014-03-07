@@ -66,7 +66,7 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 
 //********************************************************************************
 #pragma mark - intefaces realization IEncodedFrameConsumer
-void NdnVideoDecoder::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
   TRACE("trying to decode frame of size %d (type: %s)", encodedImage._length,
         NdnRtcUtils::stringFromFrameType(encodedImage._frameType).c_str());

@@ -118,6 +118,8 @@ void NdnVideoReceiver::switchToMode(NdnVideoReceiver::ReceiverMode mode)
 bool NdnVideoReceiver::isLate(const Name &prefix, const unsigned char *segmentData,
                               int dataSz)
 {
+    return false;
+#if 0
     PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(prefix);
     SegmentNumber segmentNo = NdnRtcNamespace::getSegmentNumber(prefix);
     bool isKey = NdnRtcNamespace::isKeyFramePrefix(prefix);
@@ -175,8 +177,9 @@ bool NdnVideoReceiver::isLate(const Name &prefix, const unsigned char *segmentDa
             
             return false;
         } // is key namespace
-    
+
     return (frameNo < playoutBuffer_->getPlayheadPointer());
+#endif
 }
 
 bool NdnVideoReceiver::needMoreKeyFrames()

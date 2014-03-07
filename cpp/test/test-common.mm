@@ -65,7 +65,7 @@ void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &user
     ndnReceiverTransport_.reset(new ndn::TcpTransport());
     ndnReceiverFace_.reset(new Face(ndnReceiverTransport_, connInfo2));
     ASSERT_NO_THROW(
-    ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/receiver").c_str()),
+    ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/rcv").c_str()),
                                      bind(&UnitTestHelperNdnNetwork::onInterest,
                                           this, _1, _2, _3),
                                      bind(&UnitTestHelperNdnNetwork::onRegisterFailed,

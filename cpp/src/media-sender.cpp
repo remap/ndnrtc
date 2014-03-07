@@ -12,6 +12,7 @@
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 
+using namespace ndnlog::new_api;
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
@@ -20,15 +21,20 @@ using namespace std;
 #pragma mark - construction/destruction
 MediaSender::MediaSender(const ParamsStruct &params) :
 NdnRtcObject(params),
-segmentizer_(params),
-packetNo_(0)
+packetNo_(0),
+pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
+faceThread_(*webrtc::ThreadWrapper::CreateThread(processEventsRoutine, this))
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter();
+    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
 }
 
 MediaSender::~MediaSender()
 {
+    stop();
+    
     NdnRtcUtils::releaseFrequencyMeter(packetRateMeter_);
+    NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
 }
 
 //******************************************************************************
@@ -41,8 +47,18 @@ MediaSender::~MediaSender()
 int MediaSender::init(const shared_ptr<Face> &face,
                       const shared_ptr<ndn::Transport> &transport)
 {
-    if (RESULT_FAIL(segmentizer_.init(face, transport)))
-        return notifyError(-1, "could not init segmentizer");
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getStreamPrefix(params_);
+    
+    if (!userPrefix.get())
+        notifyError(-1, "bad user prefix");
+    
+    certificateName_ = NdnRtcNamespace::certificateNameForUser(*userPrefix);
+    
+    ndnFace_ = face;
+    ndnTransport_ = transport;
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
+    
+    registerPrefix();
     
     shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     
@@ -55,62 +71,91 @@ int MediaSender::init(const shared_ptr<Face> &face,
     freshnessInterval_ = params_.freshness;
     packetNo_ = 0;
     
+    isProcessing_ = true;
+    
+    unsigned int tid;
+    faceThread_.Start(tid);
+    
     return RESULT_OK;
+}
+
+void MediaSender::stop()
+{
+    if (isProcessing_)
+    {
+        isProcessing_ = false;
+        faceThread_.SetNotAlive();
+        faceThread_.Stop();
+    }
 }
 
 //******************************************************************************
 #pragma mark - private
-int MediaSender::publishPacket(unsigned int len,
-                               const unsigned char *packetData,
-                               shared_ptr<Name> packetPrefix,
-                               unsigned int packetNo)
+bool MediaSender::processEvents()
 {
-    // send packet over NDN
+    try
+    {
+        ndnFace_->processEvents();
+        usleep(10000);
+    }
+    catch (std::exception &e)
+    {
+        notifyError(-1, "ndn exception while processing %s", e.what());
+        isProcessing_ = false;
+    }
+    return isProcessing_;
+}
+
+int MediaSender::publishPacket(const PacketData &packetData,
+                               shared_ptr<Name> packetPrefix,
+                               PacketNumber packetNo,
+                               PrefixMetaInfo prefixMeta)
+{
+    if (!ndnTransport_->getIsConnected())
+        return notifyError(-1, "transport is not connected");
     
-    // 1. set packet number prefix
     Name prefix = *packetPrefix;
-    shared_ptr<const vector<unsigned char>> packetNumberComponent = NdnRtcNamespace::getNumberComponent(packetNo);
+    prefix.append(NdnRtcUtils::componentFromInt(packetNo));
+
+    Segmentizer::SegmentList segments;
     
-    prefix.append(*packetNumberComponent);
-    
-    // check whether frame is larger than allowed segment size
-    int bytesToSend, payloadSize = len;
-    
-    // 2. prepare variables for computing segment prefix
-    unsigned long segmentNo = 0;
-    // calculate total number of segments for current frame
-    unsigned long segmentsNum = NdnRtcUtils::getSegmentsNumber(segmentSize_, payloadSize);
+    if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segmentSize_)))
+        return notifyError(-1, "packet segmentation failed");
     
     try {
-        if (segmentsNum > 0)
-        {
-            // 4. split frame into segments
-            // 5. publish segments under <root>/packetNo/segmentNo URI
-            while (payloadSize > 0)
-            {
-                Name segmentName = prefix;
-                segmentName.appendSegment(segmentNo);
-                segmentName.appendFinalSegment(segmentsNum-1);
-                
-                TRACE("sending packet #%010lld. data name: %s", packetNo_,
-                      segmentName.toUri().c_str());
-                
-                bytesToSend = (payloadSize < segmentSize_)? payloadSize : segmentSize_;
-                payloadSize -= segmentSize_;
-
-                segmentizer_.publishData(segmentName,
-                                         &packetData[segmentNo*segmentSize_],
-                                         bytesToSend,
-                                         freshnessInterval_);
-                segmentNo++;
-            }
-        }
-        else
-            TRACE("\tNO PUBLISH: \t%d \t%d \%d",
-                  segmentsNum,
-                  segmentSize_,
-                  payloadSize);
+        prefixMeta.totalSegmentsNum_ = segments.size();
+        Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
+        for (Segmentizer::SegmentList::iterator it = segments.begin();
+             it != segments.end(); ++it)
+        {
+            // add segment #
+            Name segmentName = prefix;
+            segmentName.appendSegment(it-segments.begin());
+
+            // lookup for pending interests and construct metaifno accordingly
+            SegmentData::SegmentMetaInfo meta = {0,0,0};
+            lookupPrefixInPit(segmentName, meta);
+            
+            // add name suffix meta info
+            segmentName.append(metaSuffix);
+            
+            // pack into network data
+            SegmentData segmentData(it->getDataPtr(), it->getPayloadSize(), meta);
+            
+            Data ndnData(segmentName);
+            ndnData.getMetaInfo().setFreshnessPeriod(params_.freshness*1000);
+            ndnData.setContent(segmentData.getData(), segmentData.getLength());
+            
+            ndnKeyChain_->sign(ndnData, *certificateName_);
+            
+            SignedBlob encodedData = ndnData.wireEncode();
+            ndnTransport_->send(*encodedData);
+            
+            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                               ndnData.getContent().size());
+            LogTrace("media-sender.log") << "published " << segmentName;
+        }
     }
     catch (std::exception &e)
     {
@@ -119,5 +164,84 @@ int MediaSender::publishPacket(unsigned int len,
                            e.what());
     }
     
-    return segmentsNum;
+    return segments.size();
+}
+
+void MediaSender::registerPrefix()
+{
+    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
+    
+    if (packetPrefix.get())
+    {
+        uint64_t prefixId = ndnFace_->registerPrefix(Name(packetPrefix->c_str()),
+                                                     bind(&MediaSender::onInterest,
+                                                          this, _1, _2, _3),
+                                                     bind(&MediaSender::onRegisterFailed,
+                                                          this, _1));
+        if (prefixId != 0)
+            TRACE("registered prefix %s", packetPrefix->c_str());
+    }
+    else
+        notifyError(-1, "bad packet prefix");
+}
+
+void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
+                             const shared_ptr<const Interest>& interest,
+                             ndn::Transport& transport)
+{
+    PitEntry pitEntry;
+    
+    pitEntry.arrivalTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+    pitEntry.interest_ = interest;
+    
+    Name n = interest->getName();
+    
+    {
+        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+        pit_[n] = pitEntry;
+    }
+    
+    TRACE("new pit entry %s (size %d)", interest->toUri().c_str(), pit_.size());
+}
+
+void MediaSender::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+{
+    notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
+}
+
+void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
+                                    SegmentData::SegmentMetaInfo &metaInfo)
+{
+    {
+        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+        
+        map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
+        
+        TRACE("pit lookup for %s", prefix.toUri().c_str());
+        
+        //        if (pitHit == pit_.end())
+        //        {
+        //            TRACE("pit closest for %s", prefix.toUri().c_str());
+        //            pitHit = pit_.upper_bound(prefix);
+        //        }
+        
+        if (pitHit != pit_.end())
+        {
+            int64_t currentTime = NdnRtcUtils::millisecondTimestamp();
+            
+            shared_ptr<const Interest> pendingInterest = pitHit->second.interest_;
+            
+            metaInfo.interestNonce_ =
+            NdnRtcUtils::blobToNonce(pendingInterest->getNonce());
+            metaInfo.interestArrivalMs_ = pitHit->second.arrivalTimestamp_;
+            metaInfo.generationDelayMs_ = (uint32_t)(currentTime - pitHit->second.arrivalTimestamp_);
+            
+            pit_.erase(pitHit);
+            
+            TRACE("pit hit for [%s] -> [%s] (size %d)", prefix.toUri().c_str(),
+                  pendingInterest->getName().toUri().c_str(), pit_.size());
+        }
+        else
+            WARN("no pit entry for %s", prefix.toUri().c_str());
+    }
 }

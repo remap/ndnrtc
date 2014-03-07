@@ -48,10 +48,10 @@ namespace ndnrtc
         unsigned long int getFrameNo() { return getPacketNo(); }
         
         // interface conformance
-        void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
+        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage);
         
     private:
-        int keyFrameNo_ = 0;
+        int keyFrameNo_ = 0, deltaFrameNo_ = 0;
         shared_ptr<Name> keyFramesPrefix_;
     };
     

@@ -23,6 +23,10 @@
 #include "webrtc/system_wrappers/interface/trace.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
+#include "frame-data.h"
+#include "segmentizer.h"
+
+using namespace ndnrtc;
 
 int64_t millisecondTimestamp();
 
@@ -48,6 +52,15 @@ bool res; \
 WAIT_(ex, timeout, res); \
 if (!res) EXPECT_TRUE(ex); \
 } while (0);
+
+class UnitTestHelper
+{
+public:
+    static bool checkFileExists(const char *fileName)
+    {
+        return (access(fileName, F_OK) != -1);
+    }
+};
 
 //******************************************************************************
 class NdnRtcObjectTestHelper : public ::testing::Test, public ndnrtc::INdnRtcObjectObserver
@@ -122,6 +135,45 @@ public:
         fclose(f);
         
         return sampleFrame;
+    }
+    
+    static std::vector<shared_ptr<Data>>
+    packAndSliceFrame(const webrtc::EncodedImage *frame, int frameNo, int segmentSize,
+                      const Name& prefix,
+                      PacketData::PacketMetadata meta,
+                      PrefixMetaInfo &prefixMeta,
+                      SegmentData::SegmentMetaInfo &segmentHeader)
+    {
+        std::vector<shared_ptr<Data>> dataSegments;
+        
+        // step 1 - pack into PacketData
+        NdnFrameData frameData(*frame, meta);
+        
+        // step 2 - segmentize packet
+        Segmentizer::SegmentList segments;
+        Segmentizer::segmentize(frameData, segments, segmentSize);
+        
+        prefixMeta.totalSegmentsNum_ = segments.size();
+        
+        for (Segmentizer::SegmentList::iterator it = segments.begin();
+             it != segments.end(); it++)
+        {
+            ndnrtc::new_api::FrameBuffer::Slot::Segment seg = *it;
+            SegmentData segData(seg.getDataPtr(), seg.getPayloadSize(),
+                                segmentHeader);
+            
+            Name segPrefix(prefix);
+            segPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
+            segPrefix.appendSegment(it-segments.begin());
+            segPrefix.append(PrefixMetaInfo::toName(prefixMeta));
+            
+            shared_ptr<Data> data(new Data(segPrefix));
+            data->setContent(segData.getData(), segData.getLength());
+            
+            dataSegments.push_back(data);
+        }
+        
+        return dataSegments;
     }
     
     static void checkFrames(webrtc::EncodedImage *f1, webrtc::EncodedImage *f2)

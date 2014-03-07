@@ -72,10 +72,10 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
     
     NdnAudioData::AudioPacket packet {false, NdnRtcUtils::millisecondTimestamp(),
         len, data};
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate()};
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
     NdnAudioData adata(packet, metadata);
     
-    publishPacket(adata.getLength(), adata.getData());
+    publishPacket(adata);
     packetNo_++;
     
     return 0;
@@ -85,9 +85,10 @@ int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data
 {
     NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
         len, data};
-    NdnAudioData adata(packet);
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
+    NdnAudioData adata(packet, metadata);
     
-    publishPacket(adata.getLength(), adata.getData());
+    publishPacket(adata);
     packetNo_++;
     
     return 0;

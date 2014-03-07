@@ -55,6 +55,8 @@ CPPFLAGS += -fshort-wchar		\
         --std=c++0x \
         $(DEBUGFLAGS) $(LOGFLAGS) \
 		-mmacosx-version-min=10.7 \
+		-D BASE_FILE_NAME=\"$*\" \
+		-I/opt/local/include \
 		$(NULL)
 OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace

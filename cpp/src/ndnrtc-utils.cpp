@@ -32,10 +32,22 @@ typedef struct _DataRateMeter {
     int64_t lastCheckTime_;
 } DataRateMeter;
 
+typedef struct _MeanEstimator {
+    unsigned int sampleSize_;
+    int nValues_;
+    double prevValue_;
+    double valueMean_;
+    double valueMeanSq_;
+    double valueVariance_;
+    double currentMean_;
+    double currentDeviation_;
+} MeanEstimator;
+
 //********************************************************************************
 #pragma mark - all static
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
+static std::vector<MeanEstimator> meanEstimators_;
 static VoiceEngine *VoiceEngineInstance = NULL;
 static Config AudioConfig;
 
@@ -61,8 +73,13 @@ int NdnRtcUtils::segmentNumber(const Name::Component &segmentNoComponent)
 
 int NdnRtcUtils::frameNumber(const Name::Component &frameNoComponent)
 {
-    std::vector<unsigned char> bytes = *frameNoComponent.getValue();
-    int valueLength = frameNoComponent.getValue().size();
+    return NdnRtcUtils::intFromComponent(frameNoComponent);
+}
+
+int NdnRtcUtils::intFromComponent(const Name::Component &comp)
+{
+    std::vector<unsigned char> bytes = *comp.getValue();
+    int valueLength = comp.getValue().size();
     int result = 0;
     unsigned int i;
     
@@ -75,7 +92,7 @@ int NdnRtcUtils::frameNumber(const Name::Component &frameNoComponent)
         result += (unsigned int)(digit - '0');
     }
     
-    return result;
+    return result;    
 }
 
 Name::Component NdnRtcUtils::componentFromInt(unsigned int number)
@@ -274,6 +291,86 @@ void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
     // nothing here yet
 }
 
+//******************************************************************************
+unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize)
+{
+    MeanEstimator meanEstimator = {sampleSize, 0, 0., 0., 0., 0., 0., 0.};
+    
+    meanEstimators_.push_back(meanEstimator);
+    
+    return meanEstimators_.size()-1;
+}
+
+void NdnRtcUtils::meanEstimatorNewValue(unsigned int estimatorId, double value)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    MeanEstimator &estimator = meanEstimators_[estimatorId];
+    
+    estimator.nValues_++;
+    
+    if (estimator.nValues_ > 1)
+    {
+        double delta = (value - estimator.valueMean_);
+        estimator.valueMean_ += (delta/(double)estimator.nValues_);
+        estimator.valueMeanSq_ += (delta*delta);
+        
+        if (estimator.sampleSize_ == 0 ||
+            estimator.nValues_ % estimator.sampleSize_ == 0)
+        {
+            estimator.currentMean_ = estimator.valueMean_;
+            
+            if (estimator.nValues_ >= 2)
+            {
+                double variance = estimator.valueMeanSq_/(double)(estimator.nValues_-1);
+                estimator.currentDeviation_ = sqrt(variance);
+            }
+            
+            // flush nValues if sample size specified
+            if (estimator.sampleSize_)
+                estimator.nValues_ = 0;
+        }
+    }
+    else
+    {
+        estimator.valueMean_ = 0;
+        estimator.valueMeanSq_ = 0;
+        estimator.valueVariance_ = 0;
+    }
+    
+    estimator.prevValue_ = value;
+}
+
+double NdnRtcUtils::currentMeanEstimation(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return 0;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+    
+    return estimator.currentMean_;
+}
+
+double NdnRtcUtils::currentDeviationEstimation(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return 0;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+    
+    return estimator.currentDeviation_;
+}
+
+void NdnRtcUtils::releaseMeanEstimator(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    // nothing
+}
+
+//******************************************************************************
 webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
     if (!VoiceEngineInstance)
@@ -309,7 +406,7 @@ void NdnRtcUtils::releaseVoiceEngine()
     VoiceEngine::Delete(VoiceEngineInstance);
 }
 
-string NdnRtcUtils::stringFromFrameType(webrtc::VideoFrameType &frameType)
+string NdnRtcUtils::stringFromFrameType(const webrtc::VideoFrameType &frameType)
 {
     switch (frameType) {
         case webrtc::kDeltaFrame:
@@ -349,12 +446,37 @@ uint32_t NdnRtcUtils::generateNonceValue()
 Blob NdnRtcUtils::nonceToBlob(const uint32_t nonceValue)
 {
     uint32_t beValue = htobe32(nonceValue);
-    Blob b((uint8_t *)&beValue, 4);
+    Blob b((uint8_t *)&beValue, sizeof(uint32_t));
     return b;
 }
 
 uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
 {
+    if (blob.size() < sizeof(uint32_t))
+        return 0;
+    
     uint32_t beValue = *(uint32_t *)blob.buf();
     return be32toh(beValue);
+}
+
+std::string NdnRtcUtils::toString(const char *format, ...)
+{
+    std::string str = "";
+    
+    if (format)
+    {
+        char *stringBuf = (char*)malloc(256);
+        memset((void*)stringBuf, 0, 256);
+        
+        va_list args;
+        
+        va_start(args, format);
+        vsprintf(stringBuf, format, args);
+        va_end(args);
+        
+        str = string(stringBuf);
+        free(stringBuf);
+    }
+    
+    return str;
 }

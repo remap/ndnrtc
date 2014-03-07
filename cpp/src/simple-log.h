@@ -15,6 +15,7 @@
 #include <iostream>
 #include <pthread.h>
 #include <string>
+#include <map>
 
 #if !defined(NDN_LOGGING)
 #undef NDN_TRACE
@@ -37,36 +38,57 @@
 #if defined (NDN_TRACE) //&& defined(DEBUG)
 #define TRACE(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
+#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelTrace, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define TRACE(fmt, ...)
+#define LogTrace(fname, ...)
 #endif
 
 #if defined (NDN_DEBUG) //&& defined(DEBUG)
 #define DBG(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelDebug, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
+
+#define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
+
 #else
 #define DBG(fmt, ...)
+#define LogDebug(fmt, ...)
 #endif
 
 #if defined (NDN_INFO)
 #define INFO(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelInfo, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
+
+#define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
+
 #else
+
 #define INFO(fmt, ...)
+#define LogInfo(fname, ...)
+
 #endif
 
 #if defined (NDN_WARN)
 #define WARN(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelWarning, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
+
+#define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
+
+
 #else
 #define WARN(fmt, ...)
+#define LogWarn(fname, ...)
 #endif
 
 #if defined (NDN_ERROR)
 #define NDNERROR(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelError, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+
+#define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
+
 #else
 #define NDNERROR(fmt, ...)
+#define LogError(fname, ...)
 #endif
 
 // following macros are used for logging usign global logger
@@ -109,6 +131,8 @@ namespace ndnlog {
         NdnLoggerLevelError = 4
     } NdnLoggerLevel;
     
+    typedef NdnLoggerLevel NdnLogType;
+    
     typedef enum _NdnLoggerDetailLevel {
         NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
         NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
@@ -141,6 +165,7 @@ namespace ndnlog {
         // public methods go here 
         void logString(const char *str);
         void log(NdnLoggerLevel level, const char *format, ...);
+
     private:
         // private static attributes go here
         
@@ -234,6 +259,197 @@ namespace ndnlog {
          */
 //        void initializeLogger(const char *format, ...);
     };
+    
+    namespace new_api
+    {
+        // interval at which logger is flushing data on disk (if file logging
+        // was chosen)
+        const unsigned int FlushIntervalMs = 100;
+        
+        class ILoggingObject;
+        
+        /**
+         * Logger object. Performs thread-safe logging into a file or standard 
+         * output.
+         */
+        class Logger
+        {
+        private:
+            using endl_type = std::ostream&(std::ostream&);
+            
+        public:
+            /**
+             * Creates an instance of logger with specified logging level and 
+             * file name. By default, creates logger wich logs everything into 
+             * the console.
+             * @param logLevel Minimal logging level for current instance. Eny 
+             * log wich has level less than specified will br ignored.
+             * @param logFileFmt Format for the logging file name. If NULL - 
+             * logging is performed into standard output.
+             */
+            Logger(const NdnLoggerDetailLevel& logLevel = NdnLoggerDetailLevelAll,
+                   const std::string& logFile = "");
+            /**
+             * Releases current instance and all associated resources
+             */
+            ~Logger();
+            
+            /**
+             * Starts new logging entry with the header. Logging entry
+             * can be completed with the "endl" function or by another new call
+             * to this method (i.e. calling "<<" will append to the existing
+             * logging entry initiated by the last "log" call).
+             * @param logType Current logging type
+             * @param loggingInstance Pointer to the instance of ILoggingObject
+             * interface which performs logging
+             * @param locationFile Name of the source file from which logging is
+             * performed
+             * @param locationLine Line number from the source file from which
+             * logging is performed
+             * @return A refernce to the current Logger instance
+             */
+            Logger&
+            log(const NdnLogType& logType,
+                const ILoggingObject* loggingInstance = nullptr,
+                const std::string& locationFile = "",
+                const int& locationLine = -1);
+            
+            /**
+             * Stream operator << implementation
+             * Any consequent call appends data to the previously created log 
+             * entry. Specific log entry can be created using "log" call,
+             * otherwise - if no previous log call was made, calling this 
+             * operator creates a new deafult log entry with INFO log level and 
+             * with no logging instance (set to nullptr) which results in poor 
+             * undetailed logging. However can be usfeul for system-wide logging.
+             */
+            template<typename T>
+            Logger& operator<< (const T& data)
+            {
+                if (isWritingLogEntry_ &&
+                    currentEntryLogType_ >= (NdnLogType)logLevel_)
+                {
+                    getOutStream() << data;
+                }
+                
+                return *this;
+            }
+            
+            /**
+             * Overload for std::endl explicitly
+             * Closes current logging entry
+             */
+            Logger& operator<< (endl_type endl)
+            {
+                if (isWritingLogEntry_ &&
+                    currentEntryLogType_ >= (NdnLogType)logLevel_)
+                {
+                    isWritingLogEntry_ = false;
+                    currentEntryLogType_ = NdnLoggerLevelTrace;
+                    
+                    getOutStream() << endl;
+                    unlockStream();
+                }
+                
+                return *this;
+            }
+            
+            void
+            setLogLevel(const NdnLoggerDetailLevel& logLevel)
+            { logLevel_ = logLevel; }
+            
+            static Logger&
+            getLogger(const std::string &logFile);
+            
+            static void
+            destroyLogger(const std::string &logFile);
+            
+            static Logger& log(const std::string &logFile,
+                               const NdnLogType& logType,
+                               const std::string& locationFile = "",
+                               const int& locationLine = -1,
+                               const ILoggingObject* loggingInstance = nullptr)
+            {
+                return getLogger(logFile).log(logType, loggingInstance,
+                                       locationFile, locationLine);
+            }
+            
+        private:
+            NdnLoggerDetailLevel logLevel_;
+            std::string logFile_;
+            std::ostream* outStream_;
+            int64_t lastFlushTimestampMs_;
+            
+            bool isWritingLogEntry_;
+            NdnLogType currentEntryLogType_;
+            pthread_t current_;
+            
+            pthread_mutex_t logMutex_;
+            static pthread_mutex_t stdOutMutex_;
+            
+            static std::map<std::string, Logger*> loggers_;
+
+            std::ostream&
+            getOutStream() { return *outStream_; }
+            
+            std::ofstream&
+            getOutFileStream()
+            {
+                std::ofstream *fstream = reinterpret_cast<std::ofstream*>(outStream_);
+                return *fstream;
+            }
+            
+            int64_t
+            getMillisecondTimestamp();
+            
+            static std::string
+            stringify(NdnLoggerLevel lvl);
+            
+            void
+            lockStreamExclusively()
+            {
+                if (getOutStream() == std::cout)
+                    pthread_mutex_lock(&stdOutMutex_);
+                else
+                    pthread_mutex_lock(&logMutex_);
+            }
+            
+            void unlockStream()
+            {
+                if (getOutStream() == std::cout)
+                    pthread_mutex_unlock(&stdOutMutex_);
+                else
+                    pthread_mutex_unlock(&logMutex_);
+            }
+        };
+        
+        /**
+         * Interface for logging objects - instances, that can do logging 
+         * should implement this interface
+         */
+        class ILoggingObject
+        {
+        public:
+            /**
+             * Instance short description
+             * @return Description of the current instance - should contain 
+             * short string representing just enough information about the 
+             * instance, which preforms logging
+             */
+            virtual std::string getDescription() const = 0;
+            
+            virtual bool isLoggingEnabled() const
+            {
+                return true;
+            }
+        };
+        
+        /**
+         * Loggin function
+         * @param
+         */
+
+    }
 }
 
 #endif /* defined(__ndnrtc__simple__) */

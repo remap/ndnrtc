@@ -302,7 +302,7 @@ bool NdnRtcNamespace::isKeyFramePrefix(const ndn::Name &prefix)
     return hasComponent(prefix, NdnRtcNamespace::NameComponentUserStreams) &&
             hasComponent(prefix, *framesKey);
 }
-
+#warning change name to be consistent with previous call
 bool NdnRtcNamespace::isDeltaFramesPrefix(const ndn::Name &prefix)
 {
     shared_ptr<string> framesDelta = buildPath(true,
@@ -387,6 +387,31 @@ int NdnRtcNamespace::trimSegmentNumber(const ndn::Name &prefix,
         p+2 < prefix.getComponentCount())
     {
         p += 2;
+        trimmedPrefix = prefix.getSubName(0, p);
+    }
+    
+    return p;
+}
+
+int NdnRtcNamespace::trimPacketNumber(const ndn::Name &prefix,
+                                       Name &trimmedPrefix)
+{
+    trimmedPrefix = prefix;
+    
+    int p = -1;
+    
+    if (isDeltaFramesPrefix(prefix))
+    {
+        p = findComponent(prefix, NameComponentStreamFramesDelta);
+    }
+    else if (isKeyFramePrefix(prefix))
+    {
+        p = findComponent(prefix, NameComponentStreamFramesKey);
+    }
+    
+    if (p > 0)
+    {
+        p += 1;
         trimmedPrefix = prefix.getSubName(0, p);
     }
     

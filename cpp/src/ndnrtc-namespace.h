@@ -108,7 +108,7 @@ namespace ndnrtc {
         static SegmentNumber getSegmentNumber(const Name &prefix);
         
         static int trimSegmentNumber(const Name &prefix, Name &trimmedPrefix);
-        
+        static int trimPacketNumber(const Name &prefix, Name &trimmedPrefix);
     private:
     };
 }

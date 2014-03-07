@@ -30,14 +30,14 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
-    keyFrameNo_ = 1; // key frames are starting numeration from 1
+    keyFrameNo_ = 0; // key frames are starting numeration from 1
     
     return RESULT_OK;
 }
 
 //******************************************************************************
 #pragma mark - intefaces realization
-void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
     // update packet rate meter
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
@@ -47,19 +47,23 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
     bool isKeyFrame = encodedImage._frameType == webrtc::kKeyFrame;
     
     shared_ptr<Name> framePrefix = (isKeyFrame)?keyFramesPrefix_:packetPrefix_;
-    FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:packetNo_;
+    FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
     
     // copy frame into transport data object
     PacketData::PacketMetadata metadata;
     metadata.packetRate_ = getCurrentPacketRate();
-    metadata.sequencePacketNumber_ = packetNo_;
+    metadata.timestamp_ = encodedImage.capture_time_ms_;
+    
+    PrefixMetaInfo prefixMeta;
+    prefixMeta.playbackNo_ = packetNo_;
+    prefixMeta.keySequenceNo_ = keyFrameNo_;
     
     NdnFrameData frameData(encodedImage, metadata);
     
-    if (RESULT_GOOD(publishPacket(frameData.getLength(),
-                                  const_cast<unsigned char*>(frameData.getData()),
+    if (RESULT_GOOD(publishPacket(frameData,
                                   framePrefix,
-                                  frameNo)))
+                                  frameNo,
+                                  prefixMeta)))
     {
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
         INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
@@ -72,6 +76,8 @@ void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
 
         if (isKeyFrame)
             keyFrameNo_++;
+        else
+            deltaFrameNo_++;
 
         // increment packet number regardless of key/delta condition
         // in this case we can preserve that key frames can have numbers in
