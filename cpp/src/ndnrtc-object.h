@@ -22,7 +22,7 @@ namespace ndnrtc {
         virtual void onErrorOccurred(const char *errorMessage) = 0;
     };
     
-    class NdnRtcObject :    public new_api::ILoggingObject,
+    class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,
                             public ndnlog::LoggerObject,
                             public INdnRtcObjectObserver
     {

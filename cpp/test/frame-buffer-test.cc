@@ -18,23 +18,6 @@ using namespace ndnrtc::new_api;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 
-class FetchChannelMock : public FetchChannel
-{
-public:
-    virtual std::string getLogFile() const
-    { return string(__FILE__)+".log"; }
-    
-    virtual ndnrtc::ParamsStruct
-    getParameters() const { return params_; }
-    
-    void
-    setParameters(ParamsStruct p)
-    { params_ = p; }
-    
-private:
-    ParamsStruct params_;
-};
-
 class FrameBufferTester : public ndnrtc::new_api::FrameBuffer
 {
 public:
@@ -48,7 +31,7 @@ class FrameBufferTests : public NdnRtcObjectTestHelper
 public:
     void SetUp()
     {
-        fetchChannel_.reset(new FetchChannelMock());
+        fetchChannel_.reset(new FetchChannelMock(ENV_LOGFILE));
         buffer_ = new FrameBufferTester(fetchChannel_);
     }
     

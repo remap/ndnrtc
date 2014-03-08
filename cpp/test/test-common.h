@@ -13,6 +13,7 @@
 #define ndnrtc_test_common_h
 
 #define ENV_NAME std::string(__FILE__)
+#define ENV_LOGFILE (std::string(__FILE__)+".log")
 
 #include <unistd.h>
 #include <stdint.h>
@@ -25,6 +26,7 @@
 #include "frame-buffer.h"
 #include "frame-data.h"
 #include "segmentizer.h"
+#include "fetch-channel.h"
 
 using namespace ndnrtc;
 
@@ -253,6 +255,26 @@ public:
     
 protected:
     void *pool_;
+};
+
+class FetchChannelMock : public ndnrtc::new_api::FetchChannel
+{
+public:
+    FetchChannelMock(string logFile):logFile_(logFile){}
+    
+    virtual std::string getLogFile() const
+    { return logFile_; }
+    
+    virtual ndnrtc::ParamsStruct
+    getParameters() const { return params_; }
+    
+    void
+    setParameters(ParamsStruct p)
+    { params_ = p; }
+    
+private:
+    string logFile_;
+    ParamsStruct params_;
 };
 
 //******************************************************************************
