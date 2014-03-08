@@ -270,7 +270,7 @@ TEST_F(NdnReceiverTester, Fetching1Segment30FPS)
     delete receiver;
     WAIT(params_.freshness*1000);
 }
-#endif
+
 TEST_F(NdnReceiverTester, FetchingWithRecovery)
 {
     unsigned int jitterSize = 20;
@@ -373,7 +373,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     delete receiver;
     WAIT(params_.freshness*1000);
 }
-#if 0
+
 TEST_F(NdnReceiverTester, FetchingWithKeyAndDeltaNamespace)
 {
     unsigned int jitterSize = 20;

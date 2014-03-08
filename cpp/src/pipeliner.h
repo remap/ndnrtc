@@ -42,6 +42,7 @@ namespace ndnrtc {
             shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
             shared_ptr<ChaseEstimation> chaseEstimation_;
             shared_ptr<BufferEstimator> bufferEstimator_;
+            shared_ptr<IPacketAssembler> ndnAssembler_;
             
             int defaultInterestTimeoutMs_;
             

@@ -65,7 +65,8 @@ namespace ndnrtc
         const char *streamName;
         const char *streamThread;
         const char *ndnHub;
-        unsigned int segmentSize, freshness, producerRate;
+        unsigned int segmentSize, freshness;
+        double producerRate;
         
         // ndn consumer
         unsigned int playbackRate;

@@ -23,7 +23,7 @@ namespace ndnrtc {
         class FrameBuffer;
         class Pipeliner;
         class InterestQueue;
-        class PacketAssembler;
+        class IPacketAssembler;
         class PacketPlayback;
         
         class RttEstimation;
@@ -69,7 +69,7 @@ namespace ndnrtc {
             virtual shared_ptr<InterestQueue>
             getInterestQueue() const { return interestQueue_; }
             
-            virtual shared_ptr<PacketAssembler>
+            virtual shared_ptr<IPacketAssembler>
             getPacketAssembler() const { return packetAssembler_; }
             
             virtual shared_ptr<PacketPlayback>
@@ -88,7 +88,7 @@ namespace ndnrtc {
             shared_ptr<FrameBuffer> frameBuffer_;
             shared_ptr<Pipeliner> pipeliner_;
             shared_ptr<InterestQueue> interestQueue_;
-            shared_ptr<PacketAssembler> packetAssembler_;
+            shared_ptr<IPacketAssembler> packetAssembler_;
             shared_ptr<PacketPlayback> packetPlayback_;
             shared_ptr<RttEstimation> rttEstimation_;
             shared_ptr<ChaseEstimation> chaseEstimation_;

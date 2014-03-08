@@ -239,7 +239,7 @@ TEST_F(VideoSenderTester, TestFrameData)
         EXPECT_EQ(PacketData::TypeVideo, data.getType());
         EXPECT_NE(PacketData::TypeAudio, data.getType());
         EXPECT_EQ(0, data.getMetadata().packetRate_);
-        EXPECT_EQ(0, data.getMetadata().sequencePacketNumber_);
+        EXPECT_EQ(0, data.getMetadata().timestamp_);
     }
     { // restore frame from raw data
         unsigned char* networkData = data.getData();
@@ -292,7 +292,7 @@ TEST_F(VideoSenderTester, TestFrameData)
         EXPECT_FALSE(restoredData.isValid());
         EXPECT_EQ(dataLength, restoredData.getLength());
         EXPECT_EQ(-1, restoredData.getMetadata().packetRate_);
-        EXPECT_EQ(-1, restoredData.getMetadata().sequencePacketNumber_);
+        EXPECT_EQ(-1, restoredData.getMetadata().timestamp_);
         
         webrtc::EncodedImage frame;
         EXPECT_EQ(RESULT_ERR, restoredData.getFrame(frame));
@@ -307,7 +307,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
     {
         PacketData::PacketMetadata metadata = {0., 0}, resMetadata = {0., 0};
         metadata.packetRate_ = (double)i;
-        metadata.sequencePacketNumber_ = 1;
+        metadata.timestamp_ = NdnRtcUtils::millisecondTimestamp();
         
         NdnFrameData data(*sampleFrame_, metadata);
         
@@ -322,7 +322,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
         
         NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
         EXPECT_EQ(metadata.packetRate_, data.getMetadata().packetRate_);
-        EXPECT_EQ(metadata.sequencePacketNumber_, data.getMetadata().sequencePacketNumber_);
+        EXPECT_EQ(metadata.timestamp_, data.getMetadata().timestamp_);
     }
     
     // check different frame numbers
@@ -330,7 +330,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
     {
         PacketData::PacketMetadata metadata = {0., 0}, resMetadata = {0., 0};
         metadata.packetRate_ = (double)i;
-        metadata.sequencePacketNumber_ = 1;
+        metadata.timestamp_ = NdnRtcUtils::millisecondTimestamp();
         
         NdnFrameData data(*sampleFrame_, metadata);
         
@@ -345,7 +345,7 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
         
         NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
         EXPECT_EQ(metadata.packetRate_, data.getMetadata().packetRate_);
-        EXPECT_EQ(metadata.sequencePacketNumber_, data.getMetadata().sequencePacketNumber_);
+        EXPECT_EQ(metadata.timestamp_, data.getMetadata().timestamp_);
     }
 }
 

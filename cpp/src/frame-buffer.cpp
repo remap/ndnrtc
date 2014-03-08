@@ -1225,9 +1225,12 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
     }
 }
 
-void
+bool
 ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
 {
+    if (consistency_&HeaderMeta)
+        return false;
+    
     consistency_ |= HeaderMeta;
     
     PacketData *packetData;
@@ -1235,6 +1238,8 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
     
     packetRate_ = packetData->getMetadata().packetRate_;
     producerTimestamp_ = packetData->getMetadata().timestamp_;
+    
+    return true;
 }
 
 //******************************************************************************
@@ -1458,7 +1463,7 @@ ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove)
         {
             Name rightmostPrefix;
             NdnRtcNamespace::trimPacketNumber(lookupPrefix, rightmostPrefix);
-            
+        
             it = activeSlots_.find(rightmostPrefix);
             
             if (it != activeSlots_.end())
@@ -1551,23 +1556,17 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
 {
     if (freeSlots_.size() > 0)
     {
-        shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false);
+        shared_ptr<Slot> reservedSlot = freeSlots_.back();
+        setSlot(interest.getName(), reservedSlot);
         
-        // if not reserved yet
-        if (!reservedSlot.get())
-        {
-            reservedSlot = freeSlots_.back();
-            setSlot(interest.getName(), reservedSlot);
-            
-            if (RESULT_GOOD(reservedSlot->addInterest(interest)))
-                LogTrace(fetchChannel_->getLogFile()) << "reserved "
-                << interest.getName() << endl;
-            else
-                LogWarn(fetchChannel_->getLogFile()) << "error reserve "
-                << interest.getName() << endl;
-            
-            return reservedSlot->getState();
-        }
+        if (RESULT_GOOD(reservedSlot->addInterest(interest)))
+            LogTrace(fetchChannel_->getLogFile()) << "reserved "
+            << interest.getName() << endl;
+        else
+            LogWarn(fetchChannel_->getLogFile()) << "error reserve "
+            << interest.getName() << endl;
+        
+        return reservedSlot->getState();
     }
     
     return Slot::StateFree;

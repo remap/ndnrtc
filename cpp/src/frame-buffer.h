@@ -395,7 +395,7 @@ namespace ndnrtc
                 void
                 initMissingSegments();
                 
-                void
+                bool
                 updateConsistencyFromHeader();
             };
             
@@ -414,7 +414,6 @@ namespace ndnrtc
                                            // happens for any segment
                                            // interest
                     StateChanged   = 1<<4, // triggered when buffer state changed
-                    Consistency    = 1<<5, // triggered when slot changes consistenct state
                     Error          = 1<<6  // general error event
                 };
                 

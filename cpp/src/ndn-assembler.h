@@ -15,8 +15,19 @@
 
 namespace ndnrtc {
     namespace new_api {
+        
+        class IPacketAssembler {
+        public:
+            virtual ndn::OnData getOnDataHandler() = 0;
+            virtual ndn::OnTimeout getOnTimeoutHandler() = 0;
+        };
+        
         class Assembler {
         public:
+
+            ndn::OnData getOnDataHandler() const;
+            ndn::OnTimeout getOnTimeoutHandler() const;
+
             
             static shared_ptr<Assembler> getSharedInstance();
             static ndn::OnData defaultOnDataHandler();

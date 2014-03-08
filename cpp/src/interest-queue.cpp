@@ -29,7 +29,7 @@ onTimeoutCallback_(onTimeout)
 }
 
 
-InterestQueue::InterestQueue(const shared_ptr<FetchChannel>& fetchChannel,
+InterestQueue::InterestQueue(const shared_ptr<const FetchChannel>& fetchChannel,
                              const shared_ptr<Face>& face):
 fetchChannel_(fetchChannel),
 face_(face),

@@ -53,7 +53,7 @@ namespace ndnrtc {
                 virtual void setExpressionTimestamp(int64_t timestamp) = 0;
             };
 
-            InterestQueue(const shared_ptr<FetchChannel>& fetchChannel,
+            InterestQueue(const shared_ptr<const FetchChannel>& fetchChannel,
                           const shared_ptr<Face> &face);
             ~InterestQueue();
             
@@ -115,7 +115,7 @@ namespace ndnrtc {
             typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, IPriority::Comparator>
             PriorityQueue;
             
-            shared_ptr<FetchChannel> fetchChannel_;
+            shared_ptr<const FetchChannel> fetchChannel_;
             shared_ptr<Face> face_;
             webrtc::RWLockWrapper &queueAccess_;
             webrtc::EventWrapper &queueEvent_;
