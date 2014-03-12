@@ -18,6 +18,9 @@ namespace ndnrtc {
     {
         class BufferEstimator {
         public:
+            BufferEstimator(){}
+            ~BufferEstimator(){}
+            
             void
             setProducerRate(double producerRate);
         };

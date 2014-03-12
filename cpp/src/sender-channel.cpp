@@ -367,6 +367,6 @@ bool NdnSenderChannel::process()
         }
         deliver_cs_->Leave();
     }
-    // We're done!
+
     return true;
 }

@@ -918,6 +918,17 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::isOriginal()
     return (interestNonce_ != 0 && dataNonce_ == interestNonce_);
 }
 
+SegmentData::SegmentMetaInfo
+ndnrtc::new_api::FrameBuffer::Slot::Segment::getMetadata() const
+{
+    SegmentData::SegmentMetaInfo meta;
+    meta.generationDelayMs_ = generationDelayMs_;
+    meta.interestNonce_ = interestNonce_;
+    meta.interestArrivalMs_ = consumeTimeMs_;
+    
+    return meta;
+}
+
 //******************************************************************************
 #pragma mark - private
 void
@@ -928,8 +939,12 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::resetData()
     arrivalTimeUsec_ = -1;
     reqCounter_ = 0;
     dataNonce_ = 0;
-    interestNonce_ = 0;
+    interestNonce_ = -1;
     generationDelayMs_ = -1;
+    segmentNumber_ = -1;
+    payloadSize_ = -1;
+    consumeTimeMs_ = -1;
+    prefix_ = Name();
 }
 
 //******************************************************************************
@@ -939,8 +954,11 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::resetData()
 ndnrtc::new_api::FrameBuffer::Slot::Slot(unsigned int segmentSize):
 state_(StateFree),
 consistency_(Inconsistent),
-segmentSize_(segmentSize)
-{}
+segmentSize_(segmentSize),
+accessCs_(*CriticalSectionWrapper::CreateCriticalSection())
+{
+    reset();
+}
 
 ndnrtc::new_api::FrameBuffer::Slot::~Slot() {}
 
@@ -953,6 +971,10 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(const ndn::Interest &interest)
         return RESULT_ERR;
     
     Name interestName = interest.getName();
+    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(interestName);
+    
+    if (packetSequenceNumber_ >= 0 && packetSequenceNumber_ != packetNumber)
+        return RESULT_ERR;
     
     if (NdnRtcNamespace::isKeyFramePrefix(interestName))
         packetNamespace_ = Key;
@@ -963,28 +985,75 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(const ndn::Interest &interest)
     if (packetNamespace_ == Unknown)
         return RESULT_ERR;
     
-    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(interestName);
     if (packetNumber >= 0)
         packetSequenceNumber_ = packetNumber;
-        
+    
     SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(interestName);
     shared_ptr<Segment> reservedSegment = prepareFreeSegment(segmentNumber);
     
-    reservedSegment->interestIssued(NdnRtcUtils::blobToNonce(interest.getNonce()));
-    reservedSegment->setNumber(segmentNumber);
-    
-    // rightmost child prefix
-    if (segmentNumber < 0)
-        rightmostSegment_ = reservedSegment;
+    if (reservedSegment.get())
+    {
+        reservedSegment->interestIssued(NdnRtcUtils::blobToNonce(interest.getNonce()));
+        reservedSegment->setNumber(segmentNumber);
+        
+        // rightmost child prefix
+        if (packetNumber < 0)
+            rightmostSegment_ = reservedSegment;
+        else
+        {
+            CriticalSectionScoped scopedCs(&accessCs_);
+            activeSegments_[segmentNumber] = reservedSegment;
+        }
+        
+        if (state_ == StateFree)
+        {
+            NdnRtcNamespace::trimSegmentNumber(interestName, slotPrefix_);
+            state_ = StateNew;
+        }
+        
+        nSegmentsPending_++;
+    }
     else
-        activeSegments_[segmentNumber] = reservedSegment;
-    
-    if (state_ == StateFree)
-        state_ = StateNew;
-    
-    nSegmentsPending_++;
+        return RESULT_WARN;
     
     return RESULT_OK;
+}
+
+int
+ndnrtc::new_api::FrameBuffer::Slot::markMissing(const ndn::Interest &interest)
+{
+    if (state_ == StateLocked)
+        return RESULT_ERR;
+    
+    Name interestName = interest.getName();
+    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(interestName);
+    SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(interestName);
+    
+    if (packetNumber < 0 &&
+        segmentNumber < 0 &&
+        rightmostSegment_.get() != nullptr)
+    {
+        rightmostSegment_->markMissed();
+        return RESULT_OK;
+    }
+
+    int res = RESULT_ERR;
+    shared_ptr<Segment> segment = getSegment(segmentNumber);
+    
+    if (segment.get())
+    {
+        if (segment->getState() == Segment::StatePending)
+        {
+            res = RESULT_OK;
+            nSegmentsMissing_++;
+            nSegmentsPending_--;
+            segment->markMissed();
+        }
+        else
+            res = RESULT_WARN;
+    }
+
+    return res;
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State
@@ -1002,7 +1071,7 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
         PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(dataName);
         SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(dataName);
         
-        fixRightmost(segmentNumber);
+        fixRightmost(packetNumber, segmentNumber);
         updateConsistencyWithMeta(packetNumber, prefixMeta);
         
         SegmentData segmentData;
@@ -1026,22 +1095,38 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
             segment->setPayloadSize(segmentData.getSegmentDataLength());
             segment->dataArrived(segmentMeta);
             
-            // check for rightmost
-            if (state_ == StateNew && rightmostSegment_.get())
-                rightmostSegment_.reset();
+            nSegmentsPending_--;
+            nSegmentsReady_++;
+            recentSegment_ = segment;
             
             vector<shared_ptr<Segment>> fetchedSegments =
                 getSegments(Segment::StateFetched);
+
+            if (nSegmentsReady_ == nSegmentsTotal_ &&
+                fetchedSegments.size() != prefixMeta.totalSegmentsNum_)
+                LogError("") << "alarma "<< endl;
             
             if (fetchedSegments.size() == prefixMeta.totalSegmentsNum_)
                 state_ = StateReady;
+            else
+            {
+                if (fetchedSegments.size() < prefixMeta.totalSegmentsNum_)
+                    state_ = StateAssembling;
+            }
             
-            if (fetchedSegments.size() < prefixMeta.totalSegmentsNum_)
-                state_ = StateAssembling;
-            
-            nSegmentsPending_--;
-            nSegmentsReady_++;
+//            if (nSegmentsPending_)
+//                state_ = StateAssembling;
+//            else
+//                state_ = StateReady;
         }
+        else
+        {
+            LogError("") << "couldn't get data from segment" << endl;
+        }
+    }
+    else
+    {
+        LogError("") << "couldn't get metadata from packet" << endl;
     }
     
     return state_;
@@ -1050,6 +1135,9 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
 int
 ndnrtc::new_api::FrameBuffer::Slot::reset()
 {
+    if (state_ == StateLocked)
+        return RESULT_ERR;
+    
     state_ = StateFree;
     consistency_ = Inconsistent;
     packetNamespace_ = Unknown;
@@ -1057,18 +1145,30 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     packetSequenceNumber_ = -1;
     keySequenceNumber_ = -1;
     producerTimestamp_ = -1;
+    playbackDeadline_ = -1;
+    packetRate_ = -1;
+    nSegmentsTotal_ = 0;
+    nSegmentsReady_ = 0;
+    nSegmentsPending_ = 0;
+    nSegmentsMissing_ = 0;
+    slotPrefix_ = Name();
+    recentSegment_.reset();
+    assembledSize_ = 0;
     
-    // clear all active segments if any
-    if (activeSegments_.size())
     {
-        map<SegmentNumber, shared_ptr<Segment>>::iterator it;
-        
-        for (it = activeSegments_.begin(); it != activeSegments_.end(); ++it)
+        CriticalSectionScoped scopedCs(&accessCs_);
+        // clear all active segments if any
+        if (activeSegments_.size())
         {
-            it->second->discard();
-            freeSegments_.push_back(it->second);
+            map<SegmentNumber, shared_ptr<Segment>>::iterator it;
+            
+            for (it = activeSegments_.begin(); it != activeSegments_.end(); ++it)
+            {
+                it->second->discard();
+                freeSegments_.push_back(it->second);
+            }
+            activeSegments_.clear();
         }
-        activeSegments_.clear();
     }
     
     // clear rightmost segment if any
@@ -1081,19 +1181,54 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     return RESULT_OK;
 }
 
+bool
+ndnrtc::new_api::FrameBuffer::Slot::PlaybackComparator::operator()
+(const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot1,
+ const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot2) const
+{
+    bool result = false;
+    
+    if (slot1.get() && slot2.get())
+    {
+        PacketNumber p1 = slot1->getSequentialNumber();
+        PacketNumber p2 = slot2->getSequentialNumber();
+        
+        if ((slot1->getNamespace() == slot2->getNamespace()) &&
+            (p1 >= 0 && p2 >= 0))
+        {
+            // compare based on namespace packet sequence number
+            assert(p1>=0); assert(p2>=0);
+            result = !(p1 < p2);
+        }
+        else
+        {
+            // otherwise - compare based on prefixes canonical order
+            // "key" will be always greater than delta - that's ok
+            result = !(slot1->getPrefix() < slot2->getPrefix());
+        }
+    } // if slots are Ok
+    
+    return result;
+}
+
 //******************************************************************************
 #pragma mark - private
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>
 ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo)
 {
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
     shared_ptr<Segment> freeSegment(NULL);
     map<SegmentNumber, shared_ptr<Segment>>::iterator
         it = activeSegments_.find(segNo);
     
-    if (it != activeSegments_.end() &&
-        it->second->getState() == Segment::StateMissing)
+    if (it != activeSegments_.end())
     {
-        freeSegment = it->second;
+        if (it->second->getState() == Segment::StateMissing)
+        {
+            freeSegment = it->second;
+            nSegmentsMissing_--;            
+        }
     }
     else
     {
@@ -1104,6 +1239,11 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo)
         }
         else
             freeSegment.reset(new Segment());
+
+        if (segNo >= 0)
+            freeSegment->setPrefix(Name(getPrefix()).appendSegment(segNo));
+        else
+            freeSegment->setPrefix(Name(getPrefix()));
     }
     
     return freeSegment;
@@ -1112,6 +1252,8 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo)
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>&
 ndnrtc::new_api::FrameBuffer::Slot::getActiveSegment(SegmentNumber segmentNumber)
 {
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
     map<SegmentNumber, shared_ptr<Segment>>::iterator
     it = activeSegments_.find(segmentNumber);
     
@@ -1125,14 +1267,22 @@ ndnrtc::new_api::FrameBuffer::Slot::getActiveSegment(SegmentNumber segmentNumber
 }
 
 void
-ndnrtc::new_api::FrameBuffer::Slot::fixRightmost(SegmentNumber segmentNumber)
+ndnrtc::new_api::FrameBuffer::Slot::fixRightmost(PacketNumber packetNumber,
+                                                 SegmentNumber segmentNumber)
 {
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
     map<SegmentNumber, shared_ptr<Segment>>::iterator
     it = activeSegments_.find(segmentNumber);
     
     if (it == activeSegments_.end() &&
         rightmostSegment_.get())
     {
+        setPrefix(slotPrefix_.append(NdnRtcUtils::componentFromInt(packetNumber)));
+
+        Name segmentPrefix(slotPrefix_);
+        rightmostSegment_->setPrefix(segmentPrefix.appendSegment(segmentNumber));
+        
         activeSegments_[segmentNumber] = rightmostSegment_;
         rightmostSegment_.reset();
     }
@@ -1178,6 +1328,8 @@ ndnrtc::new_api::FrameBuffer::Slot::getSegmentDataPtr(unsigned int segmentSize,
 std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>
 ndnrtc::new_api::FrameBuffer::Slot::getSegments(int segmentStateMask) 
 {
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
     std::vector<shared_ptr<Segment>> foundSegments;
     map<SegmentNumber, shared_ptr<Segment>>::iterator it;
     
@@ -1185,7 +1337,26 @@ ndnrtc::new_api::FrameBuffer::Slot::getSegments(int segmentStateMask)
         if (it->second->getState() & segmentStateMask)
             foundSegments.push_back(it->second);
     
+    if (rightmostSegment_.get() &&
+        rightmostSegment_->getState()&segmentStateMask)
+        foundSegments.push_back(rightmostSegment_);
+    
     return foundSegments;
+}
+
+shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>
+ndnrtc::new_api::FrameBuffer::Slot::getSegment(SegmentNumber segNo) const
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
+    shared_ptr<Segment> segment(NULL);
+    map<SegmentNumber, shared_ptr<Segment>>::const_iterator
+    it = activeSegments_.find(segNo);
+    
+    if (it != activeSegments_.end())
+        segment = it->second;
+    
+    return segment;
 }
 
 void
@@ -1209,6 +1380,7 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyWithMeta(const PacketNumber
 void
 ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
 {
+    CriticalSectionScoped scopedCs(&accessCs_);
     SegmentNumber segNo = 0;
     
     while (activeSegments_.size() < nSegmentsTotal_)
@@ -1218,8 +1390,10 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
             shared_ptr<Segment> segment(new Segment());
             segment->setNumber(segNo);
             segment->markMissed();
+            segment->setPrefix(Name(getPrefix()).appendSegment(segNo));
             
             activeSegments_[segNo] = segment;
+            nSegmentsMissing_++;
         }
         segNo++;
     }
@@ -1243,17 +1417,134 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
 }
 
 //******************************************************************************
+// PlaybackQueue
+//******************************************************************************
+#pragma mark - construction/destruction
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::PlaybackQueue
+(unsigned int playbackRate):
+playbackRate_(playbackRate),
+accessCs_(*CriticalSectionWrapper::CreateCriticalSection()),
+comparator_(FrameBuffer::Slot::PlaybackComparator())
+{}
+
+//******************************************************************************
+#pragma mark - public
+int64_t
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration()
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+    
+    int64_t playbackDurationMs = 0;
+    
+    if (this->size() >= 1)
+    {
+        std::vector<shared_ptr<FrameBuffer::Slot>>::iterator it = this->begin();
+        shared_ptr<FrameBuffer::Slot>& slot1 = *it;
+    
+        while (++it != this->end())
+        {
+            shared_ptr<FrameBuffer::Slot>& slot2 = *it;
+            
+            // if header metadata is available - we have frame timestamp
+            if (slot1->getConsistencyState()&Slot::HeaderMeta &&
+                slot2->getConsistencyState()&Slot::HeaderMeta)
+            {
+                playbackDurationMs += (slot2->getProducerTimestamp() - slot1->getProducerTimestamp());
+            }
+            else
+            {
+                // otherwise - infer playback duration from the producer rate
+                playbackDurationMs += getInferredDuration();
+            }
+            
+            slot1 = slot2;
+        }
+        
+        // add infered duration for the last frame always
+        playbackDurationMs += getInferredDuration();
+    }
+    
+    return playbackDurationMs;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
+(const shared_ptr<FrameBuffer::Slot> &slot)
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+
+//    {
+//        int j = 0;
+//        std::vector<shared_ptr<FrameBuffer::Slot>>::iterator it = this->begin();
+//        LogTrace("") << "pushing new " << slot->getPrefix() << endl;
+//        while (it != this->end())
+//        {
+//            LogTrace("") << j++ << " slot " << (*it)->getPrefix() << endl;
+//            it++;
+//        }
+//    }
+    
+    this->push_back(slot);
+    std::push_heap(this->begin(), this->end(), comparator_);
+
+//    {
+//        std::vector<shared_ptr<FrameBuffer::Slot>>::iterator it = this->begin();
+//        int i = 0;
+//        LogTrace("") << "-- pushed" << endl;
+//        while (it != this->end())
+//        {
+//            LogTrace("") << i++ << " slot " << (*it)->getPrefix() << endl;
+//            it++;
+//        }
+//    }
+}
+
+shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+    shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> slot(NULL);
+    
+    if (0 != this->size())
+    {
+        std::pop_heap(this->begin(), this->end(), comparator_);
+        slot = this->front();
+        this->pop_back();
+    }
+    
+    return slot;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(unsigned int playbackRate)
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+    playbackRate_ = playbackRate;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::clear()
+{
+    CriticalSectionScoped scopedCs(&accessCs_);
+    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>::clear();
+}
+
+//******************************************************************************
 // FrameBuffer
 //******************************************************************************
 #pragma mark - construction/destruction
 ndnrtc::new_api::FrameBuffer::FrameBuffer(shared_ptr<const ndnrtc::new_api::FetchChannel> &fetchChannel):
 fetchChannel_(fetchChannel),
-bufferEvent_(*EventWrapper::Create()),
+state_(Invalid),
+targetSizeMs_(-1),
+estimatedSizeMs_(-1),
+isEstimationNeeded_(true),
+playbackQueue_(fetchChannel_->getParameters().producerRate),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
-bufferEventsRWLock_(*RWLockWrapper::CreateRWLock()),
-state_(Invalid)
+bufferEvent_(*EventWrapper::Create()),
+forcedRelease_(false),
+bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
 {
-    
 }
 
 ndnrtc::new_api::FrameBuffer::~FrameBuffer()
@@ -1291,10 +1582,10 @@ ndnrtc::new_api::FrameBuffer::reset()
         else
             LogWarn(fetchChannel_->getLogFile()) << "slot locked " << it->first << endl;
     }
-    activeSlots_.clear();
     
-    state_ = Invalid;
-    addStateChangedEvent(state_);
+    resetData();
+    
+    return RESULT_OK;
 }
 
 void
@@ -1302,27 +1593,28 @@ ndnrtc::new_api::FrameBuffer::release()
 {
     forcedRelease_ = true;
     bufferEvent_.Set();
-    
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::interestIssued(const ndn::Interest &interest)
 {
-    shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false);
+    shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false, true);
     
     // check if slot is already reserved
     if (reservedSlot.get())
     {
       if (RESULT_GOOD(reservedSlot->addInterest(interest)))
       {
+          isEstimationNeeded_ = true;
+          
           LogTrace(fetchChannel_->getLogFile())
-          << "added interest " << interest.getName() << endl;
+          << "pending " << interest.getName() << endl;
           
           return reservedSlot->getState();
       }
       else
           LogWarn(fetchChannel_->getLogFile())
-          << "error adding interest " << interest.getName() << endl;
+          << "error adding " << interest.getName() << endl;
     }
     else
         return reserveSlot(interest);
@@ -1333,7 +1625,7 @@ ndnrtc::new_api::FrameBuffer::interestIssued(const ndn::Interest &interest)
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 {
-    shared_ptr<Slot> slot = getSlot(data.getName(), false);
+    shared_ptr<Slot> slot = getSlot(data.getName(), false, true);
     
     // if not reserved yet
     if (slot.get())
@@ -1345,12 +1637,21 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
         {
             Slot::State newState = slot->appendData(data);
             
-            LogTrace(fetchChannel_->getLogFile()) << "appending "
-            << data.getName() << " with result " << newState << endl;
+            LogTrace(fetchChannel_->getLogFile()) << "appended "
+            << data.getName() << " (" << slot->getAssembledLevel()*100 << "%) with result " << Slot::stateToString(newState) << endl;
+            
+            if (slot->getAssembledLevel() == 1. && newState == Slot::StateAssembling)
+                LogTrace("") << "alarma" << endl;
             
             if (oldState != newState ||
                 newState == Slot::StateAssembling)
             {
+                if (slot->getConsistencyState()&Slot::HeaderMeta)
+                {
+                    isEstimationNeeded_ = true;
+                    updateCurrentRate(slot->getPacketRate());
+                }
+                
                 // check for 1st segment
                 if (oldState == Slot::StateNew)
                     addBufferEvent(Event::FirstSegment, slot);
@@ -1364,11 +1665,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
         }
         else
             LogError(fetchChannel_->getLogFile()) << "error appending " << data.getName()
-            << ". state: " << oldState << endl;
+            << ". state: " << Slot::stateToString(oldState) << endl;
     }
     
     LogWarn(fetchChannel_->getLogFile()) << "no reservation for "
-    << data.getName() << " state " << state_ << endl;
+    << data.getName() << " state " << FrameBuffer::stateToString(state_) << endl;
 
     return Slot::StateFree;
 }
@@ -1376,7 +1677,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
 {
-    shared_ptr<Slot> slot = getSlot(prefix, true);
+    shared_ptr<Slot> slot = getSlot(prefix, true, true);
     
     if (slot.get())
     {
@@ -1440,6 +1741,24 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
 }
 
 void
+ndnrtc::new_api::FrameBuffer::recycleOldSlots()
+{
+    assert(false);
+}
+
+int64_t
+ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
+{
+    if (isEstimationNeeded_)
+    {
+        estimateBufferSize();
+        isEstimationNeeded_ = false;
+    }
+
+    return estimatedSizeMs_;
+}
+
+void
 ndnrtc::new_api::FrameBuffer::recycleEvent(ndnrtc::new_api::FrameBuffer::Event &event)
 {
     addBufferEvent(event.type_, event.slot_);
@@ -1448,8 +1767,12 @@ ndnrtc::new_api::FrameBuffer::recycleEvent(ndnrtc::new_api::FrameBuffer::Event &
 //******************************************************************************
 #pragma mark - private
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
-ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove)
+ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove,
+                                      bool shouldMatch)
 {
+    if (isWaitingForRightmost_)
+        fixRightmost(prefix);
+    
     shared_ptr<Slot> slot(NULL);
     Name lookupPrefix;
     
@@ -1457,19 +1780,6 @@ ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove)
     {
         CriticalSectionScoped scopedCs(&syncCs_);
         std::map<Name, shared_ptr<Slot>>::iterator it = activeSlots_.find(lookupPrefix);
-        
-        // if no exact match - search for rightmost prefixes
-        if (it == activeSlots_.end())
-        {
-            Name rightmostPrefix;
-            NdnRtcNamespace::trimPacketNumber(lookupPrefix, rightmostPrefix);
-        
-            it = activeSlots_.find(rightmostPrefix);
-            
-            if (it != activeSlots_.end())
-                LogInfo(fetchChannel_->getLogFile())
-                << "rightmost match for " << prefix << endl;
-        }
         
         if (it != activeSlots_.end())
         {
@@ -1493,6 +1803,7 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
     {
         CriticalSectionScoped scopedCs(&syncCs_);
         activeSlots_[lookupPrefix] = slot;
+        slot->setPrefix(lookupPrefix);
         
         return RESULT_OK;
     }
@@ -1500,18 +1811,59 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
     return RESULT_ERR;
 }
 
+void
+ndnrtc::new_api::FrameBuffer::estimateBufferSize()
+{
+    CriticalSectionScoped scopedCs(&syncCs_);
+    estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
+}
+
+void
+ndnrtc::new_api::FrameBuffer::resetData()
+{
+    activeSlots_.clear();
+    playbackQueue_.clear();
+    
+    state_ = Invalid;
+    addStateChangedEvent(state_);
+    
+    isWaitingForRightmost_ = true;
+    targetSizeMs_ = -1;
+    estimatedSizeMs_ = -1;
+    isEstimationNeeded_ = true;
+}
+
 bool
 ndnrtc::new_api::FrameBuffer::getLookupPrefix(const Name& prefix,
                                               Name& lookupPrefix)
 {
-    if (NdnRtcNamespace::trimSegmentNumber(prefix, lookupPrefix) < 0)
-    { // check for rightmost prefixes
-        if (NdnRtcNamespace::isKeyFramePrefix(prefix) ||
-            NdnRtcNamespace::isDeltaFramesPrefix(prefix))
-            return (NdnRtcNamespace::trimPacketNumber(prefix, lookupPrefix) >= 0);
-    }
+    bool res = false;
     
-    return true;
+    // check if it is ok
+    if (NdnRtcNamespace::isKeyFramePrefix(prefix) ||
+        NdnRtcNamespace::isDeltaFramesPrefix(prefix))
+    {
+        // check if it has packet number and segment number
+        if (NdnRtcNamespace::getPacketNumber(prefix) >= 0 &&
+            NdnRtcNamespace::getSegmentNumber(prefix) >= 0)
+                res = (NdnRtcNamespace::trimSegmentNumber(prefix, lookupPrefix) >= 0);
+        else
+        {
+            lookupPrefix = prefix;
+            res = true;
+        }
+    }
+    else
+        res = false;
+    
+//    if (res)
+//        LogTrace(fetchChannel_->getLogFile()) << "lookup " << lookupPrefix
+//            << " for prefix " << prefix << endl;
+//    else
+//        LogWarn(fetchChannel_->getLogFile()) << "wrong slot prefix "
+//            << prefix << endl;
+    
+    return res;
 }
 
 void
@@ -1549,6 +1901,8 @@ ndnrtc::new_api::FrameBuffer::initialize()
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
+    
+    playbackQueue_.updatePlaybackRate(fetchChannel_->getParameters().producerRate);
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State
@@ -1557,11 +1911,17 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
     if (freeSlots_.size() > 0)
     {
         shared_ptr<Slot> reservedSlot = freeSlots_.back();
-        setSlot(interest.getName(), reservedSlot);
         
         if (RESULT_GOOD(reservedSlot->addInterest(interest)))
+        {
+            setSlot(interest.getName(), reservedSlot);
+            freeSlots_.pop_back();
+            playbackQueue_.pushSlot(reservedSlot);
+            isEstimationNeeded_ = true;
+            
             LogTrace(fetchChannel_->getLogFile()) << "reserved "
-            << interest.getName() << endl;
+            << reservedSlot->getPrefix() << endl;
+        }
         else
             LogWarn(fetchChannel_->getLogFile()) << "error reserve "
             << interest.getName() << endl;
@@ -1585,4 +1945,27 @@ ndnrtc::new_api::FrameBuffer::getSlots(int slotStateMask)
     }
     
     return slots;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::fixRightmost
+(const Name& dataName)
+{
+    Name rightmostPrefix;
+    NdnRtcNamespace::trimPacketNumber(dataName, rightmostPrefix);
+ 
+    if (activeSlots_.find(rightmostPrefix) != activeSlots_.end())
+    {
+        shared_ptr<Slot> slot = activeSlots_[rightmostPrefix];
+        activeSlots_.erase(rightmostPrefix);
+        
+        Name lookupPrefix;
+        getLookupPrefix(dataName, lookupPrefix);
+        
+        activeSlots_[lookupPrefix] = slot;
+        
+        isWaitingForRightmost_ = false;
+        
+        LogTrace(fetchChannel_->getLogFile()) << "fixed righmost entry" << endl;
+    }
 }

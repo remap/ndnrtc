@@ -26,7 +26,7 @@ pipelineTimer_(*EventWrapper::Create()),
 fetchChannel_(fetchChannel),
 isProcessing_(false)
 {
-
+    initialize();
 }
 
 ndnrtc::new_api::Pipeliner::~Pipeliner()
@@ -66,12 +66,13 @@ ndnrtc::new_api::Pipeliner::stop()
 bool
 ndnrtc::new_api::Pipeliner::processEvents()
 {
-    LogTrace(fetchChannel_->getLogFile()) << "wait buf events. mask " << hex << bufferEventsMask_ << endl;
+    LogTrace(fetchChannel_->getLogFile()) << "wait buf events. mask " << bufferEventsMask_ << endl;
     
     ndnrtc::new_api::FrameBuffer::Event
     event = frameBuffer_->waitForEvents(bufferEventsMask_);
     
-    LogTrace(fetchChannel_->getLogFile()) << "event " << event.type_ << endl;
+    LogTrace(fetchChannel_->getLogFile()) << "event "
+        << FrameBuffer::Event::toString(event) << endl;
     
     switch (event.type_) {
         case FrameBuffer::Event::Error : {
@@ -96,7 +97,7 @@ int
 ndnrtc::new_api::Pipeliner::handleInvalidState
 (const ndnrtc::new_api::FrameBuffer::Event &event)
 {
-    LogTrace(fetchChannel_->getLogFile()) << "invalid buf state" << endl;
+    LogTrace(fetchChannel_->getLogFile()) << "handle invalid buf state" << endl;
     
     vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
     activeSlots = frameBuffer_->getActiveSlots();
@@ -107,7 +108,8 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
         rightmost = getInterestForRightMost(defaultInterestTimeoutMs_);
         
         express(*rightmost, defaultInterestTimeoutMs_);
-        bufferEventsMask_ = FrameBuffer::Event::Consistency | FrameBuffer::Event::Timeout;;
+        bufferEventsMask_ = FrameBuffer::Event::FirstSegment |
+                            FrameBuffer::Event::Timeout;
     }
     else
         handleChase(event);
@@ -131,8 +133,7 @@ ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
     vector<shared_ptr<FrameBuffer::Slot>>
     activeSlots = fetchChannel_->getFrameBuffer()->getActiveSlots();
     
-    if (activeSlots.size() == 1 &&
-        event.type_ == FrameBuffer::Event::Consistency)
+    if (activeSlots.size() == 1)
         initialDataArrived(event.slot_);
     
     if (activeSlots.size() > 1)
@@ -150,7 +151,9 @@ ndnrtc::new_api::Pipeliner::initialDataArrived
     // request next key frame
     requestKeyFrame(slot->getGopKeyFrameNumber()+1);
     bufferEstimator_->setProducerRate(slot->getPacketRate());
-    startPipeliningDelta(slot->getSequentialNumber()+1, slot->getPacketRate()/2);
+    double producerRate = (slot->getPacketRate())?slot->getPacketRate():params_.producerRate;
+    
+    startPipeliningDelta(slot->getSequentialNumber()+1, producerRate/2);
     
     bufferEventsMask_ = FrameBuffer::Event::FirstSegment | FrameBuffer::Event::Ready |
                             FrameBuffer::Event::Timeout;
@@ -164,13 +167,13 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
     switch (event.type_) {
         case FrameBuffer::Event::FirstSegment:
         {
-            chaseEstimation_->newArrivalDelay(event.segment_->getArrivalDelay());
+            chaseEstimation_->newArrivalDelay(event.slot_->getRecentSegment()->getArrivalDelay());
         } // fall through
         default:
         {
             pipelineIntervalMs_ = chaseEstimation_->getArrivalEstimation();
             
-            if (event.segment_->isOriginal())
+            if (event.slot_->getRecentSegment()->isOriginal())
             {
                 LogTrace(fetchChannel_->getLogFile()) << "chased producer succesfully" << endl;
                 
@@ -204,7 +207,7 @@ int
 ndnrtc::new_api::Pipeliner::handleValidState
 (const ndnrtc::new_api::FrameBuffer::Event &event)
 {
-    LogTrace(fetchChannel_->getLogFile()) << "valid buf state" << endl;
+    LogTrace(fetchChannel_->getLogFile()) << "handle valid buf state" << endl;
     
     return RESULT_OK;
 }
@@ -223,6 +226,7 @@ ndnrtc::new_api::Pipeliner::initialize()
     frameBuffer_ = fetchChannel_->getFrameBuffer();
     chaseEstimation_ = fetchChannel_->getChaseEstimation();
     bufferEstimator_ = fetchChannel_->getBufferEstimator();
+    ndnAssembler_ = fetchChannel_->getPacketAssembler();
     
     shared_ptr<string>
     streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
@@ -241,6 +245,8 @@ ndnrtc::new_api::Pipeliner::initialize()
     streamPrefix_ = Name(streamPrefixString->c_str());
     deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
     keyFramesPrefix_ = Name(keyPrefixString->c_str());
+    
+    return RESULT_OK;
 }
 
 shared_ptr<Interest>
@@ -257,7 +263,7 @@ ndnrtc::new_api::Pipeliner::getInterestForRightMost(int timeout,
                                                     bool isKeyNamespace,
                                                     PacketNumber exclude)
 {
-    Name prefix = isKeyNamespace?deltaFramesPrefix_:keyFramesPrefix_;
+    Name prefix = isKeyNamespace?keyFramesPrefix_:deltaFramesPrefix_;
     shared_ptr<Interest> rightmost = getDefaultInterest(prefix);
     
     rightmost->setChildSelector(1);
@@ -315,7 +321,11 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
 void
 ndnrtc::new_api::Pipeliner::express(const Interest &interest, int64_t priority)
 {
-    fetchChannel_->getInterestQueue()->enqueueInterest(interest, priority);
+    fetchChannel_->getInterestQueue()->enqueueInterest(interest,
+                                                       Priority::fromArrivalDelay(priority),
+                                                       ndnAssembler_->getOnDataHandler(),
+                                                       ndnAssembler_->getOnTimeoutHandler());
+
     frameBuffer_->interestIssued(interest);
 }
 

@@ -30,8 +30,8 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
-    keyFrameNo_ = 0; // key frames are starting numeration from 1
-    
+    keyFrameNo_ = 0; // key frames are starting numeration from 0
+
     return RESULT_OK;
 }
 
@@ -56,7 +56,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     
     PrefixMetaInfo prefixMeta;
     prefixMeta.playbackNo_ = packetNo_;
-    prefixMeta.keySequenceNo_ = keyFrameNo_;
+    prefixMeta.keySequenceNo_ = (isKeyFrame)?keyFrameNo_:keyFrameNo_-1;
     
     NdnFrameData frameData(encodedImage, metadata);
     

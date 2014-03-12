@@ -18,13 +18,21 @@ namespace ndnrtc {
         class ChaseEstimation {
         public:
             void
-            newArrivalDelay(double arrivalDelayMs);
+            newArrivalDelay(double arrivalDelayMs)
+            {
+            }
             
             double
-            getArrivalEstimation();
+            getArrivalEstimation()
+            {
+                return 30.;
+            }
             
             bool
-            isArrivalStable();
+            isArrivalStable()
+            {
+                return false;
+            }
             
         };
     }

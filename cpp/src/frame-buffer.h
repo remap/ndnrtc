@@ -93,7 +93,7 @@ namespace ndnrtc
                     dataArrived(const SegmentData::SegmentMetaInfo& segmentMeta);
                     
                     /**
-                     * Returns true if the interst issued for a segment was
+                     * Returns true if the interest issued for a segment was
                      * answered by a producer
                      */
                     bool
@@ -128,8 +128,28 @@ namespace ndnrtc
                     getArrivalDelay()
                     { return (arrivalTimeUsec_-requestTimeUsec_); }
                     
+                    void
+                    setPrefix(const Name& prefix)
+                    { prefix_ = prefix; }
+                    
+                    const Name&
+                    getPrefix() { return prefix_; };
+                    
+                    static std::string
+                    stateToString(State s)
+                    {
+                        switch (s)
+                        {
+                            case StateFetched: return "Fetched"; break;
+                            case StateMissing: return "Missing"; break;
+                            case StatePending: return "Pending"; break;
+                            case StateNotUsed: return "Not used"; break;
+                            default: return "Unknown"; break;
+                        }
+                    }
                 protected:
                     SegmentNumber segmentNumber_;
+                    Name prefix_;
                     unsigned int payloadSize_;  // size of actual data payload
                                                 // (without segment header)
                     unsigned char* dataPtr_;    // pointer to the payload data
@@ -162,7 +182,7 @@ namespace ndnrtc
                                                  // header, otherwise - 0
                     
                     void resetData();
-                };
+                }; // class Segment
                 
                 /**
                  * Slot namespace indicates, to which namespace does the
@@ -172,7 +192,8 @@ namespace ndnrtc
                     Unknown = -1,
                     Key = 0,
                     Delta = 1
-                };
+                }; // enum Namespace
+                
                 /**
                  * Slot can have different states
                  */
@@ -185,7 +206,8 @@ namespace ndnrtc
                     StateReady = 4, // slot assembled all the data and is ready for
                                     // decoding a frame
                     StateLocked = 5 // slot is locked for decoding
-                };
+                }; // enum State
+                
                 /**
                  * Slot can have different data consistency states, i.e. as
                  * frame meta info is spread over data segments and name
@@ -203,6 +225,21 @@ namespace ndnrtc
                     Consistent = PrefixMeta|HeaderMeta // all meta data is ready
                 } Consistency;
                 
+                /**
+                 * Slot comparator class used for ordering slots in playback 
+                 * order.
+                 * Playback ordering is mainly based on playback sequence number
+                 * of a frame. Sometimes, playback sequence number is not 
+                 * available - in cases if the interest just has been issued but 
+                 * no data has arrived yet. For such cases, one can use namespace sequence numbers if the frames are from the same namespace (i.e. either both are key or delta frames). Otherwise - comparison based on prefixes is performed - and key frame will always precede
+                 */
+                class PlaybackComparator {
+                public:
+                    PlaybackComparator(){}
+                    bool operator() (const shared_ptr<Slot> &slot1,
+                                     const shared_ptr<Slot> &slot2) const;
+                };
+                
                 Slot(unsigned int segmentSize);
                 ~Slot();
                 
@@ -215,6 +252,19 @@ namespace ndnrtc
                  */
                 int
                 addInterest(const Interest& interest);
+                
+                /**
+                 * Marks pending segment as missing
+                 * @param interest Interest used previously in addInterest call
+                 * @return  RESULT_OK   if pending segment was marked as missing
+                 *          RESULT_WARN there is a segment exists for current
+                 *                      interest but it is has state different 
+                 *                      from StatePending
+                 *          RESULT_ERR  there is no segment which satisfies
+                 *                      provided interest
+                 */
+                int
+                markMissing(const Interest& interest);
                 
                 /**
                  * Adds data to the slot
@@ -233,26 +283,31 @@ namespace ndnrtc
                 /**
                  * Lock slot for playback
                  */
-                int
-                lock();
+                void
+                lock()
+                {
+                    stashedState_ = state_;
+                    state_ = StateLocked;
+                }
                 
                 /**
                  * Unlocks slot after playback
                  */
-                int
-                unlock();
+                void
+                unlock() { state_ = stashedState_; }
                 
                 /**
                  * Returns slot's current playback deadline
                  */
                 int64_t
-                getPlaybackDeadline() const;
+                getPlaybackDeadline() const { return playbackDeadline_; }
                 
                 /**
                  * Updates slot's playback deadline
                  */
                 void
-                setPlaybackDeadline(int64_t playbackDeadline);
+                setPlaybackDeadline(int64_t playbackDeadline)
+                { playbackDeadline_ = playbackDeadline; }
                 
                 int64_t
                 getProducerTimestamp() const
@@ -284,16 +339,18 @@ namespace ndnrtc
                  * @see getConsitencyState
                  */
                 PacketNumber
-                getPlaybackNumber() const { return packetPlaybackNumber_; }
+                getPlaybackNumber() const {
+                    if (consistency_&PrefixMeta)
+                        return packetPlaybackNumber_;
+                    return -1;
+                }
                 
                 /**
                  * Returns sequential number in the current namespace
                  */
                 PacketNumber
                 getSequentialNumber() const {
-                    if (consistency_&PrefixMeta)
-                        return packetSequenceNumber_;
-                    return -1;
+                    return packetSequenceNumber_;
                 }
                 
                 /**
@@ -336,16 +393,56 @@ namespace ndnrtc
                 getMissingSegments()
                 { return getSegments(Segment::StateMissing); }
                 
-                Name
-                getPrefix();
+                std::vector<shared_ptr<Segment>>
+                getPendingSegments()
+                { return getSegments(Segment::StatePending); }
+
+                std::vector<shared_ptr<Segment>>
+                getFetchedSegments()
+                { return getSegments(Segment::StateFetched); }
                 
+                double
+                getAssembledLevel()
+                {
+                    if (!nSegmentsTotal_) return 0;
+                    return (double)nSegmentsReady_/(double)nSegmentsTotal_;
+                }
+                
+                const Name&
+                getPrefix() { return slotPrefix_; }
+                
+                void
+                setPrefix(const Name& prefix) { slotPrefix_ = prefix; }
+                
+                shared_ptr<Segment>
+                getSegment(SegmentNumber segNo) const;
+                
+                shared_ptr<Segment>
+                getRecentSegment() const { return recentSegment_; }
+                
+                bool
+                isRightmost() const { return rightmostSegment_.get() != NULL; }
+                
+                static std::string
+                stateToString(State s)
+                {
+                    switch (s) {
+                        case StateAssembling: return "Assembling"; break;
+                        case StateFree: return "Free"; break;
+                        case StateLocked: return "Locked"; break;
+                        case StateNew: return "New"; break;
+                        case StateReady: return "Ready"; break;
+                        default: return "Unknown"; break;
+                    }
+                }
             private:
                 unsigned int segmentSize_ = 0;
                 unsigned int allocatedSize_ = 0, assembledSize_ = 0;
                 unsigned char* slotData_ = NULL;
-                State state_;
+                State state_, stashedState_;
                 int consistency_;
                 
+                Name slotPrefix_;
                 PacketNumber packetSequenceNumber_, keySequenceNumber_,
                                 packetPlaybackNumber_;
                 Namespace packetNamespace_;
@@ -357,9 +454,11 @@ namespace ndnrtc
                 int nSegmentsReady_, nSegmentsPending_, nSegmentsMissing_,
                 nSegmentsTotal_;
                 
-                shared_ptr<Segment> rightmostSegment_;
+                shared_ptr<Segment> rightmostSegment_, recentSegment_;
                 std::vector<shared_ptr<Segment>> freeSegments_;
                 std::map<SegmentNumber, shared_ptr<Segment>> activeSegments_;
+                
+                webrtc::CriticalSectionWrapper& accessCs_;
                 
                 shared_ptr<Segment>
                 prepareFreeSegment(SegmentNumber segNo);
@@ -368,7 +467,8 @@ namespace ndnrtc
                 getActiveSegment(SegmentNumber segmentNumber);
                 
                 void
-                fixRightmost(SegmentNumber segmentNumber);
+                fixRightmost(PacketNumber packetNumber,
+                             SegmentNumber segmentNumber);
                 
                 void
                 releaseSegment(SegmentNumber segNum);
@@ -397,7 +497,7 @@ namespace ndnrtc
                 
                 bool
                 updateConsistencyFromHeader();
-            };
+            }; // class Slot
             
             // buffer synchronization event structure
             struct Event
@@ -418,10 +518,20 @@ namespace ndnrtc
                 };
                 
                 static const int AllEventsMask;
+                static std::string toString(Event e){
+                    switch (e.type_){
+                        case Ready: return "Ready"; break;
+                        case FirstSegment: return "FirstSegment"; break;
+                        case FreeSlot: return "FreeSlot"; break;
+                        case Timeout: return "Timeout"; break;
+                        case StateChanged: return "StateChanged"; break;
+                        case Error: return "Error"; break;
+                        default: return "Unknown"; break;
+                    }
+                }
                 
                 EventType type_; // type of the event occurred
                 shared_ptr<Slot> slot_;     // corresponding slot pointer
-                shared_ptr<Slot::Segment> segment_; // corresponding segment
             };
             
             FrameBuffer(shared_ptr<const FetchChannel> &fetchChannel);
@@ -430,7 +540,7 @@ namespace ndnrtc
             std::string
             getDescription() const { return "framebuffer"; };
             
-            int init() { reset(); initialize(); }
+            int init() { reset(); initialize(); return RESULT_OK; }
             int reset();
             
             Event
@@ -531,16 +641,66 @@ namespace ndnrtc
             void
             recycleEvent(Event& event);
             
+            static std::string
+            stateToString(State s)
+            {
+                switch (s)
+                {
+                    case Valid: return "Valid"; break;
+                    case Invalid: return "Invalid"; break;
+                    default: return "Unknown"; break;
+                }
+            }
+            
         private:
+            // playback queue contains active slots sorted in ascending
+            // playback order (see PlaybackComparator)
+            // - each elements is a shared_ptr for the slot in activeSlots_ map
+            // - std::vector is used as a container
+            // - PlaybackComparator is used for ordering slots in playback order
+            //            typedef std::priority_queue<shared_ptr<FrameBuffer::Slot>,
+            //            std::vector<shared_ptr<FrameBuffer::Slot>>,
+            //            FrameBuffer::Slot::PlaybackComparator>
+            class PlaybackQueue : public std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
+            {
+            public:
+                PlaybackQueue(unsigned int playbackRate);
+                
+                int64_t
+                getPlaybackDuration();
+                
+                void
+                pushSlot(const shared_ptr<FrameBuffer::Slot>& slot);
+                
+                shared_ptr<FrameBuffer::Slot>
+                popSlot();
+                
+                void
+                updatePlaybackRate(unsigned int playbackRate);
+                
+                void
+                clear();
+
+            private:
+                unsigned int playbackRate_;
+                webrtc::CriticalSectionWrapper& accessCs_;
+                FrameBuffer::Slot::PlaybackComparator comparator_;
+                
+                int64_t
+                getInferredDuration() { return ceil(1000./playbackRate_); }
+            };
+            
             shared_ptr<const FetchChannel> fetchChannel_;
             
             State state_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
-            bool isNeedEstimation_;
+            bool isEstimationNeeded_;
+            bool isWaitingForRightmost_;
             
             std::vector<shared_ptr<Slot>> freeSlots_;
             std::map<Name, shared_ptr<Slot>> activeSlots_;
+            PlaybackQueue playbackQueue_;
             
             webrtc::CriticalSectionWrapper &syncCs_;
             webrtc::EventWrapper &bufferEvent_;
@@ -551,7 +711,8 @@ namespace ndnrtc
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             
             shared_ptr<Slot>
-            getSlot(const Name& prefix, bool remove = false);
+            getSlot(const Name& prefix, bool remove = false,
+                    bool shouldMatch = true);
             
             int
             setSlot(const Name& prefix, shared_ptr<Slot>& slot);
@@ -582,6 +743,13 @@ namespace ndnrtc
             
             Slot::State
             reserveSlot(const Interest &interest);
+            
+            void
+            updateCurrentRate(unsigned int playbackRate)
+            { playbackQueue_.updatePlaybackRate(playbackRate); }
+            
+            void
+            fixRightmost(const Name& prefix);
         };
     }
     

@@ -38,7 +38,7 @@
 #if defined (NDN_TRACE) //&& defined(DEBUG)
 #define TRACE(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
-#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelTrace, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
 #else
 #define TRACE(fmt, ...)
 #define LogTrace(fname, ...)

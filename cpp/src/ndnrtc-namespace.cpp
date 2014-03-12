@@ -266,8 +266,8 @@ bool NdnRtcNamespace::hasComponent(const ndn::Name &prefix,
     if (searchStr[0] != '/')
         searchStr.insert(0, "/");
     
-    if (searchStr[searchStr.size()-1] != '/')
-        searchStr.append("/");
+//    if (searchStr[searchStr.size()-1] != '/')
+//        searchStr.append("/");
 
     return prefixStr.find(searchStr) != std::string::npos;
 }
@@ -309,7 +309,7 @@ bool NdnRtcNamespace::isDeltaFramesPrefix(const ndn::Name &prefix)
                                                &NameComponentStreamFrames,
                                                &NameComponentStreamFramesDelta,
                                                nullptr);
-    
+
     return hasComponent(prefix, NdnRtcNamespace::NameComponentUserStreams) &&
             hasComponent(prefix, *framesDelta);
 }

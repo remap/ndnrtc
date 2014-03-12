@@ -9,3 +9,12 @@
 //
 
 #include "buffer-estimator.h"
+
+using namespace ndnrtc::new_api;
+
+//******************************************************************************
+#pragma mark - public
+void
+BufferEstimator::setProducerRate(double producerRate)
+{
+}
