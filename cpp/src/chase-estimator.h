@@ -17,23 +17,37 @@ namespace ndnrtc {
     namespace new_api {
         class ChaseEstimation {
         public:
+            
+            static const unsigned int SampleSize;
+            static const double ChangeThreshold;
+            static const double FilterCoeff;
+            static const int InclineEstimatorSample;
+            static const int MinOccurences;
+            
+            ChaseEstimation(unsigned int sampleSize = SampleSize,
+                            double changeThreshold = ChangeThreshold,
+                            double filterCoeff = FilterCoeff);
+            ~ChaseEstimation();
+            
             void
-            newArrivalDelay(double arrivalDelayMs)
-            {
-            }
+            trackArrival();
             
             double
-            getArrivalEstimation()
-            {
-                return 30.;
-            }
+            getArrivalEstimation();
             
             bool
-            isArrivalStable()
-            {
-                return false;
-            }
-            
+            isArrivalStable();
+          
+        private:
+            unsigned int sampleSize_;
+            double changeThreshold_;
+            unsigned int arrivalDelayEstimatorId_,
+                        inclineEstimator_;
+            int64_t lastArrivalTimeMs_;
+
+            int nStabilizedOccurences_;
+            bool stabilized_;
+            double stabilizedValue_, lastCheckedValue_;
         };
     }
 }

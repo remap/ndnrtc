@@ -50,7 +50,7 @@ public:
     void SetUp()
     {
         params_ = DefaultParams;
-        params_.captureDeviceId = 1;
+        params_.captureDeviceId = 0;
         
         shared_ptr<string> accessPref = NdnRtcNamespace::getStreamKeyPrefix(params_);
         shared_ptr<string> userPref = NdnRtcNamespace::getStreamFramePrefix(params_);

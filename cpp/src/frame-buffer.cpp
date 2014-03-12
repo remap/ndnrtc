@@ -1227,7 +1227,7 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo)
         if (it->second->getState() == Segment::StateMissing)
         {
             freeSegment = it->second;
-            nSegmentsMissing_--;            
+            nSegmentsMissing_--;
         }
     }
     else
@@ -1516,7 +1516,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
 }
 
 void
-ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(unsigned int playbackRate)
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(double playbackRate)
 {
     CriticalSectionScoped scopedCs(&accessCs_);
     playbackRate_ = playbackRate;
@@ -1647,10 +1647,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 newState == Slot::StateAssembling)
             {
                 if (slot->getConsistencyState()&Slot::HeaderMeta)
-                {
-                    isEstimationNeeded_ = true;
                     updateCurrentRate(slot->getPacketRate());
-                }
                 
                 // check for 1st segment
                 if (oldState == Slot::StateNew)
@@ -1658,7 +1655,10 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // check for ready event
                 if (newState == Slot::StateReady)
+                {
+                    LogTrace("buffer.log") << "ready " << slot->getPrefix() << endl;
                     addBufferEvent(Event::Ready, slot);
+                }
                 
                 return newState;
             }
@@ -1756,6 +1756,18 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
     }
 
     return estimatedSizeMs_;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
+{
+
+}
+
+int
+ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot()
+{
+    return 0;
 }
 
 void
@@ -1902,6 +1914,8 @@ ndnrtc::new_api::FrameBuffer::initialize()
         addBufferEvent(Event::FreeSlot, slot);
     }
     
+    setTargetSize(fetchChannel_->getParameters().jitterSize);
+    
     playbackQueue_.updatePlaybackRate(fetchChannel_->getParameters().producerRate);
 }
 
@@ -1935,6 +1949,8 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
 std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
 ndnrtc::new_api::FrameBuffer::getSlots(int slotStateMask)
 {
+    CriticalSectionScoped scopedCs(&syncCs_);
+    
     vector<shared_ptr<FrameBuffer::Slot>> slots;
     map<Name, shared_ptr<Slot>>::iterator it;
     
@@ -1951,6 +1967,8 @@ void
 ndnrtc::new_api::FrameBuffer::fixRightmost
 (const Name& dataName)
 {
+    CriticalSectionScoped scopedCs(&syncCs_);
+    
     Name rightmostPrefix;
     NdnRtcNamespace::trimPacketNumber(dataName, rightmostPrefix);
  

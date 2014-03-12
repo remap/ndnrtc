@@ -1187,6 +1187,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
         webrtc::EncodedImage restoredFrame;
         ((NdnFrameData*)packetData)->getFrame(restoredFrame);
         NdnRtcObjectTestHelper::checkFrames(frame, &restoredFrame);
+        delete packetData;
     }
 }
 

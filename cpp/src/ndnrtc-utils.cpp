@@ -43,11 +43,26 @@ typedef struct _MeanEstimator {
     double currentDeviation_;
 } MeanEstimator;
 
+typedef struct _Filter {
+    double coeff_;
+    double filteredValue_;
+} Filter;
+
+typedef struct _InclineEstimator {
+    unsigned int meanEstimatorId_;
+    double lastValue_;
+    unsigned int sampleSize_;
+    unsigned int skipCounter_;
+} InclineEstimator;
+
 //********************************************************************************
 #pragma mark - all static
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
 static std::vector<MeanEstimator> meanEstimators_;
+static std::vector<Filter> filters_;
+static std::vector<InclineEstimator> inclineEstimators_;
+
 static VoiceEngine *VoiceEngineInstance = NULL;
 static Config AudioConfig;
 
@@ -368,6 +383,94 @@ void NdnRtcUtils::releaseMeanEstimator(unsigned int estimatorId)
         return ;
     
     // nothing
+}
+
+//******************************************************************************
+unsigned int
+NdnRtcUtils::setupFilter(double coeff)
+{
+    Filter filter = {coeff, 0.};
+    filters_.push_back(filter);
+    return filters_.size()-1;
+}
+
+void
+NdnRtcUtils::filterNewValue(unsigned int filterId, double value)
+{
+    if (filterId < filters_.size())
+    {
+        Filter &filter = filters_[filterId];
+        
+        if (filter.filteredValue_ == 0)
+            filter.filteredValue_ = value;
+        else
+            filter.filteredValue_ += (value-filter.filteredValue_)*filter.coeff_;
+    }
+}
+
+double
+NdnRtcUtils::currentFilteredValue(unsigned int filterId)
+{
+    if (filterId < filters_.size())
+        return filters_[filterId].filteredValue_;
+    
+    return 0.;
+}
+
+void
+NdnRtcUtils::releaseFilter(unsigned int filterId)
+{
+    // do nothing
+}
+
+//******************************************************************************
+unsigned int
+NdnRtcUtils::setupInclineEstimator(unsigned int sampleSize)
+{
+    InclineEstimator ie;
+    ie.sampleSize_ = (sampleSize == 0)?1:sampleSize;
+    ie.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
+    ie.lastValue_ = 0.;
+    ie.skipCounter_ = 0;
+    inclineEstimators_.push_back(ie);
+    
+    return inclineEstimators_.size()-1;
+}
+
+void
+NdnRtcUtils::inclineEstimatorNewValue(unsigned int estimatorId, double value)
+{
+    if (estimatorId < inclineEstimators_.size())
+    {
+        InclineEstimator& ie = inclineEstimators_[estimatorId];
+        ie.skipCounter_ = (ie.skipCounter_+1)%ie.sampleSize_;
+        
+        if (!ie.skipCounter_)
+        {
+            // update everything
+            double incline = (value-ie.lastValue_)/(double)ie.sampleSize_;
+            
+            meanEstimatorNewValue(ie.meanEstimatorId_, incline);
+            ie.lastValue_ = value;
+        }
+    }
+}
+
+double
+NdnRtcUtils::currentIncline(unsigned int estimatorId)
+{
+    if (estimatorId < inclineEstimators_.size())
+    {
+        InclineEstimator& ie = inclineEstimators_[estimatorId];
+        return currentMeanEstimation(ie.meanEstimatorId_);
+    }
+    
+    return 0.;
+}
+
+void NdnRtcUtils::releaseInclineEstaimtor(unsigned int estimatorId)
+{
+    // tbd
 }
 
 //******************************************************************************

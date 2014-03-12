@@ -46,6 +46,16 @@ namespace ndnrtc{
         static double currentDeviationEstimation(unsigned int estimatorId);
         static void releaseMeanEstimator(unsigned int estimatorId);
         
+        static unsigned int setupFilter(double coeff = 1.);
+        static void filterNewValue(unsigned int filterId, double value);
+        static double currentFilteredValue(unsigned int filterId);
+        static void releaseFilter(unsigned int filterId);
+        
+        static unsigned int setupInclineEstimator(unsigned int sampleSize = 0);
+        static void inclineEstimatorNewValue(unsigned int estimatorId, double value);
+        static double currentIncline(unsigned int estimatorId);
+        static void releaseInclineEstaimtor(unsigned int estimatorId);
+        
         static int frameNumber(const Name::Component &segmentComponent);        
         static int segmentNumber(const Name::Component &segmentComponent);
         

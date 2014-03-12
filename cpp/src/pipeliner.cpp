@@ -167,8 +167,12 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
     switch (event.type_) {
         case FrameBuffer::Event::FirstSegment:
         {
-            chaseEstimation_->newArrivalDelay(event.slot_->getRecentSegment()->getArrivalDelay());
+            chaseEstimation_->trackArrival();
         } // fall through
+        case FrameBuffer::Event::Ready:
+        {
+//            chaseEstimation_->trackArrival();            
+        }// fall through
         default:
         {
             pipelineIntervalMs_ = chaseEstimation_->getArrivalEstimation();
@@ -188,6 +192,7 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
             }
             else
             {
+#if 0
                 if (frameBuffer_->getEstimatedBufferSize() >
                     frameBuffer_->getTargetSize())
                 {
@@ -196,6 +201,7 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
                     
                     fetchChannel_->getFrameBuffer()->recycleOldSlots();
                 }
+#endif
             }
         }
             break;

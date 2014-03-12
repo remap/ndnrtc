@@ -638,6 +638,12 @@ namespace ndnrtc
             int64_t
             getEstimatedBufferSize();
             
+            virtual void
+            acquireSlot(PacketData** packetData);
+            
+            virtual int
+            releaseAcquiredSlot();
+            
             void
             recycleEvent(Event& event);
             
@@ -676,13 +682,16 @@ namespace ndnrtc
                 popSlot();
                 
                 void
-                updatePlaybackRate(unsigned int playbackRate);
+                updatePlaybackRate(double playbackRate);
+                
+                double
+                getPlaybackRate() { return playbackRate_; }
                 
                 void
                 clear();
 
             private:
-                unsigned int playbackRate_;
+                double playbackRate_;
                 webrtc::CriticalSectionWrapper& accessCs_;
                 FrameBuffer::Slot::PlaybackComparator comparator_;
                 
@@ -746,7 +755,14 @@ namespace ndnrtc
             
             void
             updateCurrentRate(unsigned int playbackRate)
-            { playbackQueue_.updatePlaybackRate(playbackRate); }
+            {
+                if (playbackRate != 0 &&
+                    playbackRate != playbackQueue_.getPlaybackRate())
+                {
+                    isEstimationNeeded_ = true;
+                    playbackQueue_.updatePlaybackRate(playbackRate);
+                }
+            }
             
             void
             fixRightmost(const Name& prefix);
