@@ -8,13 +8,13 @@
 //  Author:  Peter Gusev
 //
 
-#include "chase-estimator.h"
+#include "chase-estimation.h"
 #include "ndnrtc-utils.h"
 
 using namespace ndnrtc::new_api;
 
 const unsigned int ChaseEstimation::SampleSize = 0;
-const double ChaseEstimation::ChangeThreshold = 0.5;
+const double ChaseEstimation::ChangeThreshold = 1.5;
 const double ChaseEstimation::FilterCoeff = 0.07;
 const int ChaseEstimation::InclineEstimatorSample = 4;
 const int ChaseEstimation::MinOccurences = 3;
@@ -58,7 +58,8 @@ ChaseEstimation::trackArrival()
 
         NdnRtcUtils::inclineEstimatorNewValue(inclineEstimator_, NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_));
         
-        LogTrace("chaser.log") << "\tdelay\t" << delay << "\tmean\t" << NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_)
+        LogTrace("chaser.log") << "\tdelay\t" << delay << "\tmean\t"
+        << NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_)
         << "\tincline\t" << NdnRtcUtils::currentIncline(inclineEstimator_)
         << endl;
     }
