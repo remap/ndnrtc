@@ -1,5 +1,5 @@
 //
-//  fetch-channel.h
+//  consumer.h
 //  ndnrtc
 //
 //  Copyright 2013 Regents of the University of California
@@ -50,12 +50,12 @@ namespace ndnrtc {
          * - ChaseEstimator - estimates when the pipeliner should switch to the 
          *      Fetch mode
          */
-        class FetchChannel : public NdnRtcObject
+        class Consumer : public NdnRtcObject
         {
         public:
             
-            FetchChannel();
-            ~FetchChannel();
+            Consumer();
+            ~Consumer();
             
             virtual std::string getLogFile() const
             { return string("fetch.log"); }

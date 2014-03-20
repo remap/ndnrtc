@@ -1,5 +1,5 @@
 //
-//  fetch-channel.cpp
+//  consumer.cpp
 //  ndnrtc
 //
 //  Copyright 2013 Regents of the University of California
@@ -8,4 +8,4 @@
 //  Author:  Peter Gusev
 //
 
-#include "fetch-channel.h"
+#include "consumer.h"

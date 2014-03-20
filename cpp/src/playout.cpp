@@ -17,9 +17,9 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(const shared_ptr<const FetchChannel> &fetchChannel):
+Playout::Playout(const shared_ptr<const Consumer> &consumer):
 isRunning_(false),
-fetchChannel_(fetchChannel),
+consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
 frameConsumer_(nullptr),
 data_(nullptr)
@@ -27,9 +27,9 @@ data_(nullptr)
 //    jitterTiming_.setLogger(new NdnLogger("jitter-timing.log"));
     jitterTiming_.flush();
     
-    if (fetchChannel_.get())
+    if (consumer_.get())
     {
-        frameBuffer_ = fetchChannel_->getFrameBuffer();
+        frameBuffer_ = consumer_->getFrameBuffer();
     }
 }
 

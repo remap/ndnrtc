@@ -19,10 +19,10 @@
 
 using namespace ndnrtc::new_api;
 
-class PipelinerFetchChannelMock : public FetchChannelMock
+class PipelinerConsumerMock : public ConsumerMock
 {
 public:
-    PipelinerFetchChannelMock(string logfile):FetchChannelMock(logfile){}
+    PipelinerConsumerMock(string logfile):ConsumerMock(logfile){}
     
     void
     setFrameBuffer(const shared_ptr<ndnrtc::new_api::FrameBuffer>& frameBuffer)
@@ -59,12 +59,12 @@ public:
         shared_ptr<string> userPref = NdnRtcNamespace::getStreamFramePrefix(params_);
         UnitTestHelperNdnNetwork::NdnSetUp(*accessPref, *userPref);
         
-        PipelinerFetchChannelMock *mock = new PipelinerFetchChannelMock("pipeliner.log");//ENV_LOGFILE);
+        PipelinerConsumerMock *mock = new PipelinerConsumerMock("pipeliner.log");//ENV_LOGFILE);
         mock->setParameters(params_);
-        fetchChannel_.reset(mock);
+        consumer_.reset(mock);
         
-        frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(fetchChannel_));
-        interestQueue_.reset(new InterestQueue(fetchChannel_, ndnFace_));
+        frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(consumer_));
+        interestQueue_.reset(new InterestQueue(consumer_, ndnFace_));
         
         bufferEstimator_.reset(new BufferEstimator());
         bufferEstimator_->setMinimalBufferSize(params_.jitterSize);
@@ -108,7 +108,7 @@ public:
     }
     
 protected:
-    shared_ptr<const FetchChannel> fetchChannel_;
+    shared_ptr<const Consumer> consumer_;
     shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
     shared_ptr<BufferEstimator> bufferEstimator_;
     shared_ptr<ChaseEstimation> chaseEstimation_;
@@ -134,7 +134,7 @@ protected:
 #if 0
 TEST_F(PipelinerTests, TestCreateDelete)
 {
-    Pipeliner p(fetchChannel_);
+    Pipeliner p(consumer_);
 }
 
 TEST_F(PipelinerTests, TestInit)
@@ -142,7 +142,7 @@ TEST_F(PipelinerTests, TestInit)
     startPublishing();
     startProcessingNdn();
     
-    Pipeliner p(fetchChannel_);
+    Pipeliner p(consumer_);
     p.start();
     
     frameBuffer_->init();
@@ -157,7 +157,7 @@ TEST_F(PipelinerTests, TestInit)
 #endif
 TEST_F(PipelinerTests, TestFetching)
 {
-    VideoPlayout playout(fetchChannel_);
+    VideoPlayout playout(consumer_);
     
     NdnRenderer renderer(0, params_);
     renderer.init();
@@ -173,7 +173,7 @@ TEST_F(PipelinerTests, TestFetching)
     
     frameBuffer_->init();
     
-    Pipeliner p(fetchChannel_);
+    Pipeliner p(consumer_);
     p.start();
     
     EXPECT_TRUE_WAIT(ndnrtc::new_api::FrameBuffer::State::Valid ==
@@ -207,14 +207,14 @@ TEST_F(PipelinerTests, TestFetching)
 //            {
 //                EXPECT_EQ(RESULT_OK, ((NdnFrameData*)data)->getFrame(frame));
 //                
-//                LogTrace(fetchChannel_->getLogFile())
+//                LogTrace(consumer_->getLogFile())
 //                << "push for decode " << ((frame._frameType == webrtc::kKeyFrame)?"KEY":"DELTA") << endl;
 //                
 //                decoder.onEncodedFrameDelivered(frame);
 //            }
 //            else
 //            {
-//                LogTrace(fetchChannel_->getLogFile())
+//                LogTrace(consumer_->getLogFile())
 //                << "no data for decode" << endl;
 //            }
 //

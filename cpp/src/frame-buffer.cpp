@@ -1660,13 +1660,13 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpQueue()
 // FrameBuffer
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::FrameBuffer::FrameBuffer(shared_ptr<const ndnrtc::new_api::FetchChannel> &fetchChannel):
-fetchChannel_(fetchChannel),
+ndnrtc::new_api::FrameBuffer::FrameBuffer(shared_ptr<const ndnrtc::new_api::Consumer> &consumer):
+consumer_(consumer),
 state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),
 isEstimationNeeded_(true),
-playbackQueue_(fetchChannel_->getParameters().producerRate),
+playbackQueue_(consumer_->getParameters().producerRate),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 bufferEvent_(*EventWrapper::Create()),
 forcedRelease_(false),
@@ -1705,7 +1705,7 @@ ndnrtc::new_api::FrameBuffer::reset()
     pendingEvents_.clear();
     bufferEventsRWLock_.ReleaseLockExclusive();
 
-    LogTrace(fetchChannel_->getLogFile()) << "flush. active "
+    LogTrace(consumer_->getLogFile()) << "flush. active "
         << activeSlots_.size() << ". pending " << pendingEvents_.size()
         << ". free " << freeSlots_.size() << endl;
     
@@ -1720,7 +1720,7 @@ ndnrtc::new_api::FrameBuffer::reset()
             addBufferEvent(Event::FreeSlot, slot);
         }
         else
-            LogWarn(fetchChannel_->getLogFile()) << "slot locked " << it->first << endl;
+            LogWarn(consumer_->getLogFile()) << "slot locked " << it->first << endl;
     }
     
     resetData();
@@ -1753,11 +1753,11 @@ ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
           return reservedSlot->getState();
       }
       else
-          LogWarn(fetchChannel_->getLogFile())
+          LogWarn(consumer_->getLogFile())
           << "error adding " << interest.getName() << endl;
     }
     else
-        LogWarn(fetchChannel_->getLogFile())
+        LogWarn(consumer_->getLogFile())
         << "no free slots" << endl;
 
     return Slot::StateFree;
@@ -1773,7 +1773,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
     
     if (packetNo < 0)
     {
-        LogWarn(fetchChannel_->getLogFile())
+        LogWarn(consumer_->getLogFile())
         << "wrong prefix for range reservation - no packet number: " << packetInterest.getName() << endl;
         return Slot::StateFree;
     }
@@ -1796,12 +1796,12 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
             {
                 segmentInterests.push_back(segmentInterest);
                 
-                LogTrace(fetchChannel_->getLogFile())
+                LogTrace(consumer_->getLogFile())
                 << "pending " << segmentInterest->getName() << endl;
             }
             else
             {
-                LogWarn(fetchChannel_->getLogFile())
+                LogWarn(consumer_->getLogFile())
                 << "error adding " << segmentInterest->getName() << endl;
                 break;
             }
@@ -1812,7 +1812,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
         return reservedSlot->getState();
     }
     else
-        LogWarn(fetchChannel_->getLogFile())
+        LogWarn(consumer_->getLogFile())
         << "no free slots" << endl;
     
     return Slot::StateFree;
@@ -1840,7 +1840,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             Slot::State newState = slot->appendData(data);
             int newConsistency = slot->getConsistencyState();
             
-            LogTrace(fetchChannel_->getLogFile())
+            LogTrace(consumer_->getLogFile())
             << "appended " << dataName << " (" << slot->getAssembledLevel()*100 << "%)"
             << "with result " << Slot::stateToString(newState) << endl;
             
@@ -1865,7 +1865,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 // check for ready event
                 if (newState == Slot::StateReady)
                 {
-                    LogTrace(fetchChannel_->getLogFile())
+                    LogTrace(consumer_->getLogFile())
                     << "ready " << slot->getPrefix() << endl;
                     
                     addBufferEvent(Event::Ready, slot);
@@ -1875,12 +1875,12 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             }
         }
         else
-            LogError(fetchChannel_->getLogFile())
+            LogError(consumer_->getLogFile())
             << "error appending " << data.getName()
             << " state: " << Slot::stateToString(oldState) << endl;
     }
     
-    LogWarn(fetchChannel_->getLogFile())
+    LogWarn(consumer_->getLogFile())
     << "no reservation for " << data.getName()
     << " state " << FrameBuffer::stateToString(state_) << endl;
 
@@ -1899,14 +1899,14 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
     {
         if (RESULT_GOOD(slot->markMissing(interest)))
         {
-            LogTrace(fetchChannel_->getLogFile())
+            LogTrace(consumer_->getLogFile())
             << "timeout " << slot->getPrefix() << endl;
             
             addBufferEvent(Event::Timeout, slot);
         }
         else
         {
-            LogTrace(fetchChannel_->getLogFile())
+            LogTrace(consumer_->getLogFile())
             << "timeout error " << interest.getName()
             << " for " << slot->getPrefix() << endl;
         }
@@ -2008,7 +2008,7 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots()
     
     isEstimationNeeded_ = true;
     
-    LogTrace(fetchChannel_->getLogFile()) << "recycled "
+    LogTrace(consumer_->getLogFile()) << "recycled "
         << nRecycledSlots_ << " slots" << endl;
 }
 
@@ -2048,12 +2048,12 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
         
         addBufferEvent(Event::Playout, slot);
         
-        LogTrace(fetchChannel_->getLogFile())
+        LogTrace(consumer_->getLogFile())
         << "locked " << slot->getPrefix() << " "
         << slot->getAssembledLevel()*100 << "%" << endl;
     }
     else
-        LogWarn(fetchChannel_->getLogFile())
+        LogWarn(consumer_->getLogFile())
         << "no slot for playback" << endl;
 }
 
@@ -2075,18 +2075,18 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot()
         {
             playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
             
-            LogTrace(fetchChannel_->getLogFile())
+            LogTrace(consumer_->getLogFile())
             << "playback " << playbackDuration << endl;
         }
         else
         {
             playbackDuration = playbackQueue_.getInferredFrameDuration();
             
-            LogTrace(fetchChannel_->getLogFile())
+            LogTrace(consumer_->getLogFile())
             << "playback (inferred)" << playbackDuration << endl;
         }
         
-        LogTrace(fetchChannel_->getLogFile())
+        LogTrace(consumer_->getLogFile())
         << "unlocked " << lockedSlot->getPrefix() << endl;
         
         lockedSlot->unlock();
@@ -2194,10 +2194,10 @@ ndnrtc::new_api::FrameBuffer::getLookupPrefix(const Name& prefix,
         res = false;
     
 //    if (res)
-//        LogTrace(fetchChannel_->getLogFile()) << "lookup " << lookupPrefix
+//        LogTrace(consumer_->getLogFile()) << "lookup " << lookupPrefix
 //            << " for prefix " << prefix << endl;
 //    else
-//        LogWarn(fetchChannel_->getLogFile()) << "wrong slot prefix "
+//        LogWarn(consumer_->getLogFile()) << "wrong slot prefix "
 //            << prefix << endl;
     
     return res;
@@ -2229,17 +2229,17 @@ ndnrtc::new_api::FrameBuffer::addStateChangedEvent(ndnrtc::new_api::FrameBuffer:
 void
 ndnrtc::new_api::FrameBuffer::initialize()
 {
-    while (freeSlots_.size() < fetchChannel_->getParameters().bufferSize)
+    while (freeSlots_.size() < consumer_->getParameters().bufferSize)
     {
-        shared_ptr<Slot> slot(new Slot(fetchChannel_->getParameters().segmentSize));
+        shared_ptr<Slot> slot(new Slot(consumer_->getParameters().segmentSize));
         
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
     
-    setTargetSize(fetchChannel_->getParameters().jitterSize);
+    setTargetSize(consumer_->getParameters().jitterSize);
     
-    playbackQueue_.updatePlaybackRate(fetchChannel_->getParameters().producerRate);
+    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
 }
 
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
@@ -2254,7 +2254,7 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
         freeSlots_.pop_back();
         playbackQueue_.pushSlot(reservedSlot);
         
-        LogTrace(fetchChannel_->getLogFile()) << "reserved "
+        LogTrace(consumer_->getLogFile()) << "reserved "
         << reservedSlot->getPrefix() << endl;
     }
     
@@ -2296,7 +2296,7 @@ ndnrtc::new_api::FrameBuffer::fixRightmost(const Name& dataName)
         
         isWaitingForRightmost_ = false;
         
-        LogTrace(fetchChannel_->getLogFile()) << "fixed righmost entry" << endl;
+        LogTrace(consumer_->getLogFile()) << "fixed righmost entry" << endl;
     }
 }
 

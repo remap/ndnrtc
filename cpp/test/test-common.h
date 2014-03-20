@@ -26,7 +26,7 @@
 #include "frame-buffer.h"
 #include "frame-data.h"
 #include "segmentizer.h"
-#include "fetch-channel.h"
+#include "consumer.h"
 
 using namespace ndnrtc;
 
@@ -257,10 +257,10 @@ protected:
     void *pool_;
 };
 
-class FetchChannelMock : public ndnrtc::new_api::FetchChannel
+class ConsumerMock : public ndnrtc::new_api::Consumer
 {
 public:
-    FetchChannelMock(string logFile):logFile_(logFile){}
+    ConsumerMock(string logFile):logFile_(logFile){}
     
     virtual std::string getLogFile() const
     { return logFile_; }

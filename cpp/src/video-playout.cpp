@@ -13,8 +13,8 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(const shared_ptr<const FetchChannel>& fetchChannel):
-Playout(fetchChannel)
+VideoPlayout::VideoPlayout(const shared_ptr<const Consumer>& consumer):
+Playout(consumer)
 {
     
 }

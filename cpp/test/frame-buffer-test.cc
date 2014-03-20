@@ -9,7 +9,7 @@
 //
 #include "test-common.h"
 #include "frame-buffer.h"
-#include "fetch-channel.h"
+#include "consumer.h"
 #include "params.h"
 #include "ndnrtc-namespace.h"
 
@@ -183,8 +183,8 @@ class FrameBufferTester : public ndnrtc::new_api::FrameBuffer
 {
 public:
     
-    FrameBufferTester(shared_ptr<const FetchChannel> &fetchChannel):
-    FrameBuffer(fetchChannel){}
+    FrameBufferTester(shared_ptr<const Consumer> &consumer):
+    FrameBuffer(consumer){}
  
     typedef ndnrtc::new_api::FrameBuffer::PlaybackQueueBase PlaybackQueueBaseTester;
     
@@ -217,15 +217,15 @@ public:
     {
         BufferTests::SetUp();
         
-        fetchChannel_.reset(new FetchChannelMock(ENV_LOGFILE));
-        ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
-        buffer_ = new FrameBufferTester(fetchChannel_);
+        consumer_.reset(new ConsumerMock(ENV_LOGFILE));
+        ((ConsumerMock*)consumer_.get())->setParameters(params_);
+        buffer_ = new FrameBufferTester(consumer_);
     }
     
     void TearDown()
     {
         delete buffer_;
-        fetchChannel_.reset();
+        consumer_.reset();
         
         BufferTests::TearDown();
     }
@@ -235,7 +235,7 @@ public:
 protected:
     ParamsStruct params_;
     FrameBufferTester *buffer_;
-    shared_ptr<const FetchChannel> fetchChannel_;
+    shared_ptr<const Consumer> consumer_;
     
     webrtc::EventWrapper& interestArrivedEvent_;
     webrtc::CriticalSectionWrapper& accessCs_;
@@ -1260,7 +1260,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
     
     params_ = DefaultParams;
     params_.segmentSize = segmentSize;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     
     getBuffer().init();
     { // right most fetching
@@ -1372,7 +1372,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
     params_ = DefaultParams;
     params_.producerRate = 30;
     params_.segmentSize = segmentSize;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
     
     Name prefix("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
@@ -1484,7 +1484,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     params_ = DefaultParams;
     params_.producerRate = 30.;
     params_.segmentSize = segmentSize;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     
     getBuffer().init();
 
@@ -1623,7 +1623,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering)
     params_ = DefaultParams;
     params_.segmentSize = segmentSize_;
     params_.bufferSize = nFrames*1.5;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
     
     EXPECT_EQ(params_.bufferSize, getBuffer().getNFreeSlots());
@@ -1778,7 +1778,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering2)
     params_ = DefaultParams;
     params_.segmentSize = segmentSize_;
     params_.bufferSize = nFrames*1.5;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
     
     EXPECT_EQ(params_.bufferSize, getBuffer().getNFreeSlots());
@@ -1866,7 +1866,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering2)
 TEST_F(FrameBufferTests, TestInterestRange)
 {
     params_ = DefaultParams;
-    ((FetchChannelMock*)fetchChannel_.get())->setParameters(params_);
+    ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
     
     PacketNumber packetNo = 1;

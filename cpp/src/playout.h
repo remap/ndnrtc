@@ -14,7 +14,7 @@
 
 #include "ndnrtc-common.h"
 #include "playout-buffer.h"
-#include "fetch-channel.h"
+#include "consumer.h"
 #include "frame-buffer.h"
 #include "video-sender.h"
 
@@ -24,7 +24,7 @@ namespace ndnrtc{
         class Playout : public ndnlog::new_api::ILoggingObject
         {
         public:
-            Playout(const shared_ptr<const FetchChannel> &fetchChannel);
+            Playout(const shared_ptr<const Consumer> &consumer);
             ~Playout();
             
             virtual int
@@ -38,7 +38,7 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            shared_ptr<const FetchChannel> fetchChannel_;
+            shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;

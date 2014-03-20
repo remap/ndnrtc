@@ -14,7 +14,7 @@
 #include "ndnrtc-common.h"
 #include "frame-buffer.h"
 #include "ndnrtc-object.h"
-#include "fetch-channel.h"
+#include "consumer.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -25,7 +25,7 @@ namespace ndnrtc {
             static const double SegmentsAvgNumDelta;
             static const double SegmentsAvgNumKey;
             
-            Pipeliner(const shared_ptr<const FetchChannel> &fetchChannel);
+            Pipeliner(const shared_ptr<const Consumer> &consumer);
             ~Pipeliner();
             
             int start();
@@ -41,7 +41,7 @@ namespace ndnrtc {
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
-            shared_ptr<const FetchChannel> fetchChannel_;
+            shared_ptr<const Consumer> consumer_;
             ParamsStruct params_; 
             shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
             shared_ptr<ChaseEstimation> chaseEstimation_;

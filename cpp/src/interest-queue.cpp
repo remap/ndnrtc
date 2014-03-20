@@ -11,7 +11,7 @@
 //#undef NDN_LOGGING
 
 #include "interest-queue.h"
-#include "fetch-channel.h"
+#include "consumer.h"
 
 using namespace ndnrtc::new_api;
 using namespace std;
@@ -31,9 +31,9 @@ onTimeoutCallback_(onTimeout)
 }
 
 
-InterestQueue::InterestQueue(const shared_ptr<const FetchChannel>& fetchChannel,
+InterestQueue::InterestQueue(const shared_ptr<const Consumer>& consumer,
                              const shared_ptr<Face>& face):
-fetchChannel_(fetchChannel),
+consumer_(consumer),
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
@@ -64,7 +64,7 @@ InterestQueue::enqueueInterest(const Interest& interest,
     queueAccess_.AcquireLockExclusive();
     queue_.push(entry);
 
-//    LogTrace(fetchChannel_->getLogFile()) <<"added " << interest.getName()
+//    LogTrace(consumer_->getLogFile()) <<"added " << interest.getName()
 //    << " prio " << priority->getValue()
 //    << " queue size " << queue_.size()
 //    << " top " << ((queue_.size())?queue_.top().interest_->getName():" none") << endl;
@@ -124,7 +124,7 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {
-    LogTrace(fetchChannel_->getLogFile()) << "express "
+    LogTrace(consumer_->getLogFile()) << "express "
         << entry.interest_->getName() << endl;
     
     face_->expressInterest(*(entry.interest_),

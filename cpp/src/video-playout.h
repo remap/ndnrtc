@@ -16,7 +16,7 @@ namespace ndnrtc {
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(const shared_ptr<const FetchChannel>& fetchChannel);
+            VideoPlayout(const shared_ptr<const Consumer>& consumer);
             ~VideoPlayout();
             
         private:

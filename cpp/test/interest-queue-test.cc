@@ -34,8 +34,8 @@ public:
         params_ = DefaultParams;
         UnitTestHelperNdnNetwork::NdnSetUp(accessPrefix_, userPrefix_);
         
-        fetchChannel_.reset(new FetchChannelMock(ENV_LOGFILE));
-        queue_ = new InterestQueue(fetchChannel_, ndnReceiverFace_);
+        consumer_.reset(new ConsumerMock(ENV_LOGFILE));
+        queue_ = new InterestQueue(consumer_, ndnReceiverFace_);
     }
     
     void TearDown()
@@ -96,7 +96,7 @@ protected:
     std::string accessPrefix_, userPrefix_;
     std::tr1::unordered_set<int> pendingInterests_;
     InterestQueue *queue_;
-    shared_ptr<FetchChannel> fetchChannel_;
+    shared_ptr<Consumer> consumer_;
     
     webrtc::CriticalSectionWrapper &accessCs_;
     

@@ -18,7 +18,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 
-#include "fetch-channel.h"
+#include "consumer.h"
 
 namespace ndnrtc
 {
@@ -577,7 +577,7 @@ namespace ndnrtc
                 shared_ptr<Slot> slot_;     // corresponding slot pointer
             };
             
-            FrameBuffer(shared_ptr<const FetchChannel> &fetchChannel);
+            FrameBuffer(shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();
             
             std::string
@@ -771,7 +771,7 @@ namespace ndnrtc
                 dumpQueue();
             };
             
-            shared_ptr<const FetchChannel> fetchChannel_;
+            shared_ptr<const Consumer> consumer_;
             
             State state_;
             int64_t targetSizeMs_;
