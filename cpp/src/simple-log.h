@@ -38,10 +38,16 @@
 #if defined (NDN_TRACE) //&& defined(DEBUG)
 #define TRACE(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
 else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
-#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
+#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
+
+#define LogTraceC(...) LogTrace(NdnRtcUtils::toString("%s.log", NdnComponentName), ##__VA_ARGS__)
+
 #else
 #define TRACE(fmt, ...)
-#define LogTrace(fname, ...)
+#define LogTrace(fname, ...) ndnlog::new_api::NilLogger::get()
+
+#define LogTraceC(...) ndnlog::new_api::NilLogger::get()
+
 #endif
 
 #if defined (NDN_DEBUG) //&& defined(DEBUG)
@@ -52,7 +58,7 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 
 #else
 #define DBG(fmt, ...)
-#define LogDebug(fmt, ...)
+#define LogDebug(fmt, ...) ndnlog::new_api::NilLogger::get()
 #endif
 
 #if defined (NDN_INFO)
@@ -64,7 +70,7 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
 #else
 
 #define INFO(fmt, ...)
-#define LogInfo(fname, ...)
+#define LogInfo(fname, ...) ndnlog::new_api::NilLogger::get()
 
 #endif
 
@@ -77,7 +83,7 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
 
 #else
 #define WARN(fmt, ...)
-#define LogWarn(fname, ...)
+#define LogWarn(fname, ...) ndnlog::new_api::NilLogger::get()
 #endif
 
 #if defined (NDN_ERROR)
@@ -88,7 +94,7 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 
 #else
 #define NDNERROR(fmt, ...)
-#define LogError(fname, ...)
+#define LogError(fname, ...) ndnlog::new_api::NilLogger::get()
 #endif
 
 // following macros are used for logging usign global logger
@@ -264,9 +270,10 @@ namespace ndnlog {
     {
         // interval at which logger is flushing data on disk (if file logging
         // was chosen)
-        const unsigned int FlushIntervalMs = 100;
+        const unsigned int FlushIntervalMs = 10;
         
         class ILoggingObject;
+        class NilLogger;
         
         /**
          * Logger object. Performs thread-safe logging into a file or standard 
@@ -405,6 +412,8 @@ namespace ndnlog {
             static std::string
             stringify(NdnLoggerLevel lvl);
             
+            int i = 0;
+            
             void
             lockStreamExclusively()
             {
@@ -444,10 +453,27 @@ namespace ndnlog {
             }
         };
         
-        /**
-         * Loggin function
-         * @param
-         */
+        class NilLogger {
+        private:
+            using endl_type = std::ostream&(std::ostream&);
+            
+        public:
+            template<typename T>
+            NilLogger& operator<<(T const&)
+            { 
+                return *this;
+            }
+            
+            NilLogger& operator<< (endl_type endl)
+            {
+                return *this;
+            }
+            
+            static NilLogger& get() { return nilLogger_; }
+            
+        private:
+            static NilLogger nilLogger_;
+        };
 
     }
 }

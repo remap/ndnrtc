@@ -9,6 +9,21 @@
 #ifndef __ndnrtc__video_playout__
 #define __ndnrtc__video_playout__
 
-#include <iostream>
+#include "playout.h"
+
+namespace ndnrtc {
+    namespace new_api {
+        class VideoPlayout : public Playout
+        {
+        public:
+            VideoPlayout(const shared_ptr<const FetchChannel>& fetchChannel);
+            ~VideoPlayout();
+            
+        private:
+            void
+            playbackPacket(int64_t packetTsLocal);
+        };
+    }
+}
 
 #endif /* defined(__ndnrtc__video_playout__) */

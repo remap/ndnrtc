@@ -15,6 +15,11 @@
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
 
+#ifdef NdnComponentName
+#undef NdnComponentName
+#endif
+#define NdnComponentName "jitter-timing"
+
 namespace ndnrtc
 {
     typedef std::priority_queue<FrameBuffer::Slot*,

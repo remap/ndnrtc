@@ -11,6 +11,9 @@
 #include "ndnrtc-utils.h"
 #include "ndnrtc-namespace.h"
 #include "sender-channel.h"
+#include "renderer.h"
+#include "video-decoder.h"
+#include "video-playout.h"
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
@@ -50,19 +53,22 @@ public:
     void SetUp()
     {
         params_ = DefaultParams;
-        params_.captureDeviceId = 0;
+        params_.captureDeviceId = 2;
         
         shared_ptr<string> accessPref = NdnRtcNamespace::getStreamKeyPrefix(params_);
         shared_ptr<string> userPref = NdnRtcNamespace::getStreamFramePrefix(params_);
         UnitTestHelperNdnNetwork::NdnSetUp(*accessPref, *userPref);
         
-        PipelinerFetchChannelMock *mock = new PipelinerFetchChannelMock("");//ENV_LOGFILE);
+        PipelinerFetchChannelMock *mock = new PipelinerFetchChannelMock("pipeliner.log");//ENV_LOGFILE);
         mock->setParameters(params_);
         fetchChannel_.reset(mock);
         
         frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(fetchChannel_));
         interestQueue_.reset(new InterestQueue(fetchChannel_, ndnFace_));
+        
         bufferEstimator_.reset(new BufferEstimator());
+        bufferEstimator_->setMinimalBufferSize(params_.jitterSize);
+        
         chaseEstimation_.reset(new ChaseEstimation());
         packetAssembler_.reset(this);
         
@@ -82,15 +88,14 @@ public:
                         const shared_ptr<Data>& data)
     {
         UnitTestHelperNdnNetwork::onData(interest, data);
-        
-        cout << "new data " << data->getName() << endl;
-        
         frameBuffer_->newData(*data);
     }
     void onTimeout(const shared_ptr<const Interest>& interest)
     {
         UnitTestHelperNdnNetwork::onTimeout(interest);
         cout << "timeout" << endl;
+        
+        frameBuffer_->interestTimeout(*interest);
     }
     
     ndn::OnData getOnDataHandler()
@@ -126,7 +131,7 @@ protected:
         EXPECT_EQ(RESULT_OK, sendChannel_->stopTransmission());
     }
 };
-
+#if 0
 TEST_F(PipelinerTests, TestCreateDelete)
 {
     Pipeliner p(fetchChannel_);
@@ -141,8 +146,94 @@ TEST_F(PipelinerTests, TestInit)
     p.start();
     
     frameBuffer_->init();
-    WAIT(10000);
+    EXPECT_TRUE_WAIT(ndnrtc::new_api::FrameBuffer::State::Valid ==
+                     frameBuffer_->getState(), 10000);
+    
+    p.stop();
 
     stopProcessingNdn();
     stopPublishing();
+}
+#endif
+TEST_F(PipelinerTests, TestFetching)
+{
+    VideoPlayout playout(fetchChannel_);
+    
+    NdnRenderer renderer(0, params_);
+    renderer.init();
+
+    NdnVideoDecoder decoder(params_);
+    decoder.init();
+    decoder.setFrameConsumer(&renderer);
+    
+    playout.init(&decoder);
+    
+    startPublishing();
+    startProcessingNdn();
+    
+    frameBuffer_->init();
+    
+    Pipeliner p(fetchChannel_);
+    p.start();
+    
+    EXPECT_TRUE_WAIT(ndnrtc::new_api::FrameBuffer::State::Valid ==
+                     frameBuffer_->getState(), 100000);
+    
+    PacketData* data = nullptr;
+    
+    renderer.startRendering();
+    
+    playout.start();
+    WAIT(100000);
+    playout.stop();
+    
+//    int time = 100000;
+//    while (time > 0)
+//    {
+//        int playbackDuration;
+//        
+//        if (frameBuffer_->getState() == ndnrtc::new_api::FrameBuffer::Valid)
+//        {
+//            webrtc::EncodedImage frame;
+//            if (data)
+//            {
+//                delete data;
+//                data = nullptr;
+//            }
+//            
+//            frameBuffer_->acquireSlot(&data);
+//            
+//            if (data)
+//            {
+//                EXPECT_EQ(RESULT_OK, ((NdnFrameData*)data)->getFrame(frame));
+//                
+//                LogTrace(fetchChannel_->getLogFile())
+//                << "push for decode " << ((frame._frameType == webrtc::kKeyFrame)?"KEY":"DELTA") << endl;
+//                
+//                decoder.onEncodedFrameDelivered(frame);
+//            }
+//            else
+//            {
+//                LogTrace(fetchChannel_->getLogFile())
+//                << "no data for decode" << endl;
+//            }
+//
+//            playbackDuration = frameBuffer_->releaseAcquiredSlot();
+//        }
+//        
+//        if (playbackDuration <= 0)
+//            playbackDuration = 30;
+//        
+//        time -= playbackDuration;
+//        
+//        usleep(playbackDuration*1000);
+//    }
+    
+    p.stop();
+    
+    renderer.stopRendering();
+    
+    stopProcessingNdn();
+    stopPublishing();
+    
 }

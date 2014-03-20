@@ -14,7 +14,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "interest-queue.h"
-#include "chase-estimator.h"
+#include "chase-estimation.h"
 #include "buffer-estimator.h"
 
 namespace ndnrtc {
@@ -53,6 +53,9 @@ namespace ndnrtc {
         class FetchChannel : public NdnRtcObject
         {
         public:
+            
+            FetchChannel();
+            ~FetchChannel();
             
             virtual std::string getLogFile() const
             { return string("fetch.log"); }

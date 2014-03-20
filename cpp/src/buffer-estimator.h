@@ -18,11 +18,24 @@ namespace ndnrtc {
     {
         class BufferEstimator {
         public:
-            BufferEstimator(){}
-            ~BufferEstimator(){}
+            
+            static const int64_t MinBufferSizeMs;
+            
+            BufferEstimator();
+            ~BufferEstimator();
             
             void
             setProducerRate(double producerRate);
+            
+            void
+            setMinimalBufferSize(int64_t minimalBufferSize)
+            { minBufferSizeMs_ = minimalBufferSize; }
+            
+            int64_t
+            getTargetSize();
+            
+        private:
+            int64_t minBufferSizeMs_;
         };
     }
 }

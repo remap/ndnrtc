@@ -40,6 +40,8 @@ typedef int PacketNumber;
 typedef int SegmentNumber;
 typedef PacketNumber FrameNumber;
 
+#define NdnComponentName "ndnrtc"
+
 #define DEPRECATED __attribute__ ((deprecated))
 
 #define RESULT_GOOD(res) (res >= RESULT_OK)

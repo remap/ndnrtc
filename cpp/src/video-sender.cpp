@@ -30,7 +30,7 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
-    keyFrameNo_ = 0; // key frames are starting numeration from 0
+    keyFrameNo_ = -1;
 
     return RESULT_OK;
 }
@@ -46,6 +46,9 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     // determine, whether we should publish under key or delta namespaces
     bool isKeyFrame = encodedImage._frameType == webrtc::kKeyFrame;
     
+    if (isKeyFrame)
+        keyFrameNo_++;
+    
     shared_ptr<Name> framePrefix = (isKeyFrame)?keyFramesPrefix_:packetPrefix_;
     FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
     
@@ -56,7 +59,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     
     PrefixMetaInfo prefixMeta;
     prefixMeta.playbackNo_ = packetNo_;
-    prefixMeta.keySequenceNo_ = (isKeyFrame)?keyFrameNo_:keyFrameNo_-1;
+    prefixMeta.pairedSequenceNo_ = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
     
     NdnFrameData frameData(encodedImage, metadata);
     
@@ -66,17 +69,26 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
                                   prefixMeta)))
     {
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
-        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
-             getFrameNo(),
-             isKeyFrame,
-             publishingTime,
-             frameData.getLength(),
-             encodedImage.capture_time_ms_,
-             getCurrentPacketRate());
+//        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
+//             getFrameNo(),
+//             isKeyFrame,
+//             publishingTime,
+//             frameData.getLength(),
+//             encodedImage.capture_time_ms_,
+//             getCurrentPacketRate());
 
-        if (isKeyFrame)
-            keyFrameNo_++;
-        else
+        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+        << "published " << packetNo_ << " "
+        << " keyNo " << keyFrameNo_ << " "
+        << (isKeyFrame?"K":"D") << " "
+        << publishingTime << " "
+        << frameData.getLength() << " "
+        << encodedImage.capture_time_ms_ << " "
+        << getCurrentPacketRate() << endl;
+        
+        if (!isKeyFrame)
+//            keyFrameNo_++;
+//        else
             deltaFrameNo_++;
 
         // increment packet number regardless of key/delta condition
@@ -88,5 +100,24 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     {
         notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
                     getFrameNo(), (isKeyFrame)?"YES":"NO");
+    }
+}
+
+void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
+                             const shared_ptr<const Interest>& interest,
+                             ndn::Transport& transport)
+{
+    const Name& name = interest->getName();
+    PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
+    bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
+    
+    if (packetNo > (isKeyNamespace)?keyFrameNo_:deltaFrameNo_)
+    {
+        addToPit(interest);
+    }
+    else
+    {
+        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+        << "interest for old " << name << endl;
     }
 }

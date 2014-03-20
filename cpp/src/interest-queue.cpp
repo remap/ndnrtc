@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+//#undef NDN_LOGGING
+
 #include "interest-queue.h"
 #include "fetch-channel.h"
 

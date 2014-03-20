@@ -144,7 +144,7 @@ namespace ndnrtc
         
         30,     // codec framerate
         60,     // gop
-        2000,    // codec start bitrate
+        1000,    // codec start bitrate
         10000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
@@ -207,7 +207,7 @@ namespace ndnrtc
         2,      // interest timeout
         90,     // assembling buffer size
         1054,  // frame buffer slot size
-        300      // jitter buffer size in ms
+        200      // jitter buffer size in ms
     };
 
 }

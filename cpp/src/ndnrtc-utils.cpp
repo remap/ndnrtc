@@ -307,9 +307,10 @@ void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
 }
 
 //******************************************************************************
-unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize)
+unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize,
+                                             double startValue)
 {
-    MeanEstimator meanEstimator = {sampleSize, 0, 0., 0., 0., 0., 0., 0.};
+    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, 0., 0., startValue, 0.};
     
     meanEstimators_.push_back(meanEstimator);
     

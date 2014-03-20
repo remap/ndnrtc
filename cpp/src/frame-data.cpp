@@ -22,7 +22,7 @@ PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
     Name metaSuffix("");
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.totalSegmentsNum_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.playbackNo_));
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.keySequenceNo_));
+    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.pairedSequenceNo_));
     
     return metaSuffix;
 }
@@ -41,7 +41,7 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
     {
         meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(metaComponents[0]);
         meta.playbackNo_ = NdnRtcUtils::intFromComponent(metaComponents[1]);
-        meta.keySequenceNo_ = NdnRtcUtils::intFromComponent(metaComponents[2]);
+        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(metaComponents[2]);
         
         return RESULT_OK;
     }

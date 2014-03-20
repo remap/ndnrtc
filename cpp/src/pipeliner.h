@@ -21,6 +21,10 @@ namespace ndnrtc {
         class Pipeliner : NdnRtcObject
         {
         public:
+            // average number of segments for delta and key frames
+            static const double SegmentsAvgNumDelta;
+            static const double SegmentsAvgNumKey;
+            
             Pipeliner(const shared_ptr<const FetchChannel> &fetchChannel);
             ~Pipeliner();
             
@@ -44,14 +48,14 @@ namespace ndnrtc {
             shared_ptr<BufferEstimator> bufferEstimator_;
             shared_ptr<IPacketAssembler> ndnAssembler_;
             
-            int defaultInterestTimeoutMs_;
-            
             bool isProcessing_;
             webrtc::ThreadWrapper &mainThread_;
+            
+            bool isPipelining_, isPipelinePaused_, isBuffering_;
+            int64_t pipelineIntervalMs_;
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
-            bool isPipelining_;
-            int64_t pipelineIntervalMs_;
+            webrtc::EventWrapper &pipelinerPauseEvent_;
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
@@ -90,17 +94,23 @@ namespace ndnrtc {
             void
             chaseDataArrived(const FrameBuffer::Event& event);
             
+            void
+            handleBuffering(const FrameBuffer::Event& event);
+            
             int
             handleValidState(const FrameBuffer::Event& event);
+            
+            void
+            handleTimeout(const FrameBuffer::Event& event);
             
             int
             initialize();
             
             shared_ptr<Interest>
-            getDefaultInterest(const Name& prefix);
+            getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
             
             shared_ptr<Interest>
-            getInterestForRightMost(int timeout, bool isKeyNamespace = false,
+            getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
                                     PacketNumber exclude = -1);
             
             void
@@ -111,22 +121,38 @@ namespace ndnrtc {
             requestKeyFrame(PacketNumber keyFrameNo);
             
             void
+            requestDeltaFrame(PacketNumber deltaFrameNo);
+            
+            void
             expressRange(Interest& interest, SegmentNumber startNo,
                          SegmentNumber endNo, int64_t priority = 0);
             
             void
-            express(const Interest& interest, int64_t priority = 0);
+            express(Interest& interest, int64_t priority = 0);
             
             void
-            startPipeliningDelta(PacketNumber startPacketNo,
+            startChasePipeliner(PacketNumber startPacketNo,
                                  int64_t intervalMs);
             
             void
-            stopPipeliningDelta();
+            setChasePipelinerPaused(bool isPaused);
+            
+            void
+            stopChasePipeliner();
             
             void
             requestMissing(const shared_ptr<FrameBuffer::Slot>& slot,
                            int64_t lifetime, int64_t priority);
+            
+            int64_t
+            getInterestLifetime(FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
+            
+            void
+            prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
+                          int prefetchSize);
+            
+            void
+            keepBuffer(bool useEstimatedSize = true);
         };
     }
 }

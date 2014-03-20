@@ -22,6 +22,8 @@ using namespace ndnlog;
 static char tempBuf[MAX_BUF_SIZE];
 static NdnLogger *sharedLogger = NULL;
 
+ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
+
 pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 
 //********************************************************************************

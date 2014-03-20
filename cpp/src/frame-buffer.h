@@ -12,6 +12,7 @@
 #define __ndnrtc__frame_buffer__
 
 #include <tr1/unordered_set>
+#include <set>
 
 #include "frame-data.h"
 #include "ndnrtc-common.h"
@@ -231,13 +232,21 @@ namespace ndnrtc
                  * Playback ordering is mainly based on playback sequence number
                  * of a frame. Sometimes, playback sequence number is not 
                  * available - in cases if the interest just has been issued but 
-                 * no data has arrived yet. For such cases, one can use namespace sequence numbers if the frames are from the same namespace (i.e. either both are key or delta frames). Otherwise - comparison based on prefixes is performed - and key frame will always precede
+                 * no data has arrived yet. For such cases, one can use namespace 
+                 * sequence numbers if the frames are from the same namespace 
+                 * (i.e. either both are key or delta frames). Otherwise - 
+                 * comparison based on prefixes is performed - and key frame 
+                 * will always precede
                  */
                 class PlaybackComparator {
                 public:
-                    PlaybackComparator(){}
+                    PlaybackComparator(bool inverted = false):inverted_(inverted){}
+                    
                     bool operator() (const shared_ptr<Slot> &slot1,
                                      const shared_ptr<Slot> &slot2) const;
+                    
+                private:
+                    bool inverted_;
                 };
                 
                 Slot(unsigned int segmentSize);
@@ -246,12 +255,12 @@ namespace ndnrtc
                 /**
                  * Adds pending segment to the slot
                  * @param interest Interest for the data segment for the current
-                 * slot
+                 * slot. This call will set interest's nonce value
                  * @return  RESULT_OK if segment was added sucessfully,
                  *          RESULT_FAIL otherwise
                  */
                 int
-                addInterest(const Interest& interest);
+                addInterest(Interest& interest);
                 
                 /**
                  * Marks pending segment as missing
@@ -297,7 +306,10 @@ namespace ndnrtc
                 unlock() { state_ = stashedState_; }
                 
                 /**
-                 * Returns slot's current playback deadline
+                 * Returns slot's current playback deadline. Playback deadline 
+                 * defines how far (in milliseconds) is the frame from the 
+                 * current playhead. In other words - playback deadline defines 
+                 * delay after which current frame should be played out
                  */
                 int64_t
                 getPlaybackDeadline() const { return playbackDeadline_; }
@@ -360,18 +372,20 @@ namespace ndnrtc
                 getNamespace() const { return packetNamespace_; }
                 
                 /**
-                 * Returns appropriate key frame playback number
-                 * For key frames: the same as getPlaybackNumber
-                 * Fro delta frames: returns last key frame playback number
-                 * which belongs to the same GOP as current frames
+                 * Returns appropriate frame sequence number from the paired 
+                 * namespace (delta for key frames and vice versa)
+                 * For key frames: sequence number of first delta frame in the 
+                 * gop
+                 * Fro delta frames: returns key frame sequence number from the 
+                 * gop of current delta frame
                  * @return frame number or -1 if data has not been received yet
                  * @see getConsistencyState
                  */
                 PacketNumber
-                getGopKeyFrameNumber() const
+                getPairedFrameNumber() const
                 {
                     if (consistency_&PrefixMeta)
-                        return keySequenceNumber_;
+                        return pairedSequenceNumber_;
                     return -1;
                 }
                 
@@ -381,8 +395,9 @@ namespace ndnrtc
                 int
                 getPacketData(PacketData** packetData) const
                 {
-                    if (consistency_&Consistent &&
-                        nSegmentsPending_ == 0)
+#warning put back checking
+                    if (consistency_&Consistent)// &&
+//                        nSegmentsPending_ == 0)
                         return PacketData::packetFromRaw(assembledSize_,
                                                          slotData_,
                                                          packetData);
@@ -412,7 +427,7 @@ namespace ndnrtc
                 getPrefix() { return slotPrefix_; }
                 
                 void
-                setPrefix(const Name& prefix) { slotPrefix_ = prefix; }
+                setPrefix(const Name& prefix);
                 
                 shared_ptr<Segment>
                 getSegment(SegmentNumber segNo) const;
@@ -422,6 +437,12 @@ namespace ndnrtc
                 
                 bool
                 isRightmost() const { return rightmostSegment_.get() != NULL; }
+                
+                void
+                synchronizeAcquire() DEPRECATED { /*accessCs_.Enter();*/ }
+                
+                void
+                synchronizeRelease() DEPRECATED { /*accessCs_.Leave();*/ }
                 
                 static std::string
                 stateToString(State s)
@@ -435,6 +456,28 @@ namespace ndnrtc
                         default: return "Unknown"; break;
                     }
                 }
+                
+                static std::string
+                toString(int consistency)
+                {
+                    std::stringstream str;
+                    if (consistency == Consistent)
+                        str << "C";
+                    else if (consistency == Inconsistent)
+                        str << "I";
+                    else
+                    {
+                        if (consistency&HeaderMeta)
+                            str << "H";
+                        if (consistency&PrefixMeta)
+                            str << "P";
+                    }
+                    return str.str();
+                }
+                
+                std::string
+                dump();
+                
             private:
                 unsigned int segmentSize_ = 0;
                 unsigned int allocatedSize_ = 0, assembledSize_ = 0;
@@ -443,7 +486,7 @@ namespace ndnrtc
                 int consistency_;
                 
                 Name slotPrefix_;
-                PacketNumber packetSequenceNumber_, keySequenceNumber_,
+                PacketNumber packetSequenceNumber_, pairedSequenceNumber_,
                                 packetPlaybackNumber_;
                 Namespace packetNamespace_;
 
@@ -457,8 +500,6 @@ namespace ndnrtc
                 shared_ptr<Segment> rightmostSegment_, recentSegment_;
                 std::vector<shared_ptr<Segment>> freeSegments_;
                 std::map<SegmentNumber, shared_ptr<Segment>> activeSegments_;
-                
-                webrtc::CriticalSectionWrapper& accessCs_;
                 
                 shared_ptr<Segment>
                 prepareFreeSegment(SegmentNumber segNo);
@@ -514,6 +555,7 @@ namespace ndnrtc
                                            // happens for any segment
                                            // interest
                     StateChanged   = 1<<4, // triggered when buffer state changed
+                    Playout        = 1<<5, // frame was taken for playout (locked)
                     Error          = 1<<6  // general error event
                 };
                 
@@ -525,6 +567,7 @@ namespace ndnrtc
                         case FreeSlot: return "FreeSlot"; break;
                         case Timeout: return "Timeout"; break;
                         case StateChanged: return "StateChanged"; break;
+                        case Playout: return "Playout"; break;
                         case Error: return "Error"; break;
                         default: return "Unknown"; break;
                     }
@@ -540,7 +583,7 @@ namespace ndnrtc
             std::string
             getDescription() const { return "framebuffer"; };
             
-            int init() { reset(); initialize(); return RESULT_OK; }
+            int init();
             int reset();
             
             Event
@@ -558,18 +601,20 @@ namespace ndnrtc
             void
             release();
             
-            std::vector<shared_ptr<Slot>>
-            getActiveSlots()
+            unsigned int
+            getActiveSlotsNum()
             {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
-                                Slot::StateReady | Slot::StateLocked);
+                                Slot::StateReady | Slot::StateLocked).size();
             }
             
             /**
              * Reserves slot for specified interest
              * @param interest Segment interest that has been issued. Prefix
              * will be stripped to contain only frame number (if possible) and
-             * this stripped prefix will be used as a key to reserve slot.
+             * this stripped prefix will be used as a key to reserve slot. This 
+             * call will set interest's nonce value.
              * @return returns state of the slot after reservation attempt:
              *          StateNew if slot has been reserved successfuly
              *          StateAssembling if slot has been already reserved
@@ -578,7 +623,13 @@ namespace ndnrtc
              *          StateReady if slot can't be reserved and is ready
              */
             Slot::State
-            interestIssued(const Interest &interest);
+            interestIssued(Interest &interest);
+            
+            Slot::State
+            interestRangeIssued(const Interest &packetInterest,
+                                SegmentNumber startSegmentNo,
+                                SegmentNumber endSegmentNo,
+                                std::vector<shared_ptr<Interest>> &segmentInterests);
             
             /**
              * Appends data to the slot
@@ -591,15 +642,8 @@ namespace ndnrtc
             Slot::State
             newData(const Data& data);
             
-            /**
-             * Frees slot for specified name prefix
-             * @param prefix NDN prefix name which corresponds to the slot's
-             * reservation prefix. If prefix has more components than it is
-             * required (up to fram no), it will be trimmed and the rest of
-             * the prefix will be used to locate reserved slot in the storage.
-             */
-            Slot::State
-            freeSlot(const Name &prefix);
+            void
+            interestTimeout(const Interest& interest);
             
             /**
              * Frees every slot which is less in NDN prefix canonical ordering
@@ -625,7 +669,7 @@ namespace ndnrtc
             getTargetSize() { return targetSizeMs_; }
             
             /**
-             * Check estimated buffer size and if it's greater than targetSizeMs
+             * Checks estimated buffer size and if it's greater than targetSizeMs
              * removes frees slots starting from the end of the buffer (the end
              * contains oldest slots, beginning - newest)
              */
@@ -637,6 +681,12 @@ namespace ndnrtc
              */
             int64_t
             getEstimatedBufferSize();
+
+            /**
+             * Returns actually playbale frames duration from buffer
+             */
+            int64_t
+            getPlayableBufferSize();
             
             virtual void
             acquireSlot(PacketData** packetData);
@@ -645,8 +695,14 @@ namespace ndnrtc
             releaseAcquiredSlot();
             
             void
-            recycleEvent(Event& event);
+            recycleEvent(const Event& event);
             
+            void
+            synchronizeAcquire() { syncCs_.Enter(); }
+        
+        void
+        synchronizeRelease() { syncCs_.Leave(); }
+    
             static std::string
             stateToString(State s)
             {
@@ -658,7 +714,7 @@ namespace ndnrtc
                 }
             }
             
-        private:
+        protected:
             // playback queue contains active slots sorted in ascending
             // playback order (see PlaybackComparator)
             // - each elements is a shared_ptr for the slot in activeSlots_ map
@@ -667,18 +723,28 @@ namespace ndnrtc
             //            typedef std::priority_queue<shared_ptr<FrameBuffer::Slot>,
             //            std::vector<shared_ptr<FrameBuffer::Slot>>,
             //            FrameBuffer::Slot::PlaybackComparator>
-            class PlaybackQueue : public std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
+            typedef
+            std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
+            PlaybackQueueBase;
+            
+            class PlaybackQueue : public PlaybackQueueBase
             {
             public:
-                PlaybackQueue(unsigned int playbackRate);
+                PlaybackQueue(double playbackRate);
                 
                 int64_t
-                getPlaybackDuration();
+                getPlaybackDuration(bool estimate = true);
+                
+                void
+                updatePlaybackDeadlines();
                 
                 void
                 pushSlot(const shared_ptr<FrameBuffer::Slot>& slot);
-                
+
                 shared_ptr<FrameBuffer::Slot>
+                peekSlot();
+                
+                void
                 popSlot();
                 
                 void
@@ -689,14 +755,20 @@ namespace ndnrtc
                 
                 void
                 clear();
+                
+                void
+                sort();
+                
+                int64_t
+                getInferredFrameDuration() { return ceil(1000./playbackRate_); }
 
             private:
                 double playbackRate_;
                 webrtc::CriticalSectionWrapper& accessCs_;
                 FrameBuffer::Slot::PlaybackComparator comparator_;
                 
-                int64_t
-                getInferredDuration() { return ceil(1000./playbackRate_); }
+                void
+                dumpQueue();
             };
             
             shared_ptr<const FetchChannel> fetchChannel_;
@@ -726,6 +798,16 @@ namespace ndnrtc
             int
             setSlot(const Name& prefix, shared_ptr<Slot>& slot);
             
+            /**
+             * Frees slot for specified name prefix
+             * @param prefix NDN prefix name which corresponds to the slot's
+             * reservation prefix. If prefix has more components than it is
+             * required (up to fram no), it will be trimmed and the rest of
+             * the prefix will be used to locate reserved slot in the storage.
+             */
+            Slot::State
+            freeSlot(const Name &prefix);
+            
             std::vector<shared_ptr<Slot>>
             getSlots(int slotStateMask);
             
@@ -742,7 +824,7 @@ namespace ndnrtc
             getLookupPrefix(const Name& prefix, Name& lookupPrefix);
             
             void
-            addBufferEvent(Event::EventType type, shared_ptr<Slot>& slot);
+            addBufferEvent(Event::EventType type, const shared_ptr<Slot>& slot);
             
             void
             addStateChangedEvent(State newState);
@@ -750,7 +832,7 @@ namespace ndnrtc
             void
             initialize();
             
-            Slot::State
+            shared_ptr<Slot>
             reserveSlot(const Interest &interest);
             
             void
@@ -766,9 +848,11 @@ namespace ndnrtc
             
             void
             fixRightmost(const Name& prefix);
+            
+            void
+            dumpActiveSlots();
         };
     }
-    
     //******************************************************************************
     //******************************************************************************
     // old api *********************************************************************

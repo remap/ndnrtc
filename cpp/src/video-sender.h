@@ -11,8 +11,6 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
-//#define USE_FRAME_LOGGER
-
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
 #include "video-coder.h"
@@ -53,6 +51,10 @@ namespace ndnrtc
     private:
         int keyFrameNo_ = 0, deltaFrameNo_ = 0;
         shared_ptr<Name> keyFramesPrefix_;
+        
+        void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

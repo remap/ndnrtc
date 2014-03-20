@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__media_sender__
 #define __ndnrtc__media_sender__
 
+#define NLOG_COMPONENT_NAME "NdnRtcSender"
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
@@ -99,12 +101,14 @@ namespace ndnrtc
                           PrefixMetaInfo prefixMeta);
         
         // ndn-cpp callbacks
-        void onInterest(const shared_ptr<const Name>& prefix,
+        virtual void onInterest(const shared_ptr<const Name>& prefix,
                         const shared_ptr<const Interest>& interest,
                         ndn::Transport& transport);
         
-        void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
         void registerPrefix();
+        
+        void addToPit(const shared_ptr<const Interest>& interest);
         void lookupPrefixInPit(const Name &prefix,
                                SegmentData::SegmentMetaInfo &metaInfo);
     };

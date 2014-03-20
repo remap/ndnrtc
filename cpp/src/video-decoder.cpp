@@ -20,59 +20,72 @@ using namespace webrtc;
 NdnVideoDecoder::NdnVideoDecoder(const ParamsStruct &params) :
 NdnRtcObject(params), frameConsumer_(NULL)
 {
-  memset(&codec_, 0, sizeof(codec_));
+    memset(&codec_, 0, sizeof(codec_));
 }
 
 //********************************************************************************
 #pragma mark - public
 int NdnVideoDecoder::init()
 {
-  int res = RESULT_OK;
-  
-  res = NdnVideoCoder::getCodec(params_, codec_);
-  
-  if (RESULT_GOOD(res))
-  {
-    decoder_.reset(VP8Decoder::Create());
+    int res = RESULT_OK;
     
-    if (!decoder_.get())
-      return notifyError(RESULT_ERR, "can't create VP8 decoder");
+    res = NdnVideoCoder::getCodec(params_, codec_);
     
-    decoder_->RegisterDecodeCompleteCallback(this);
+    if (RESULT_GOOD(res))
+    {
+        decoder_.reset(VP8Decoder::Create());
+        
+        if (!decoder_.get())
+            return notifyError(RESULT_ERR, "can't create VP8 decoder");
+        
+        decoder_->RegisterDecodeCompleteCallback(this);
+        
+        if (decoder_->InitDecode(&codec_, 1) != WEBRTC_VIDEO_CODEC_OK)
+            return notifyError(RESULT_ERR, "can't initialize VP8 decoder");
+    }
     
-    if (decoder_->InitDecode(&codec_, 1) != WEBRTC_VIDEO_CODEC_OK)
-      return notifyError(RESULT_ERR, "can't initialize VP8 decoder");
-  }
-  
-  return 0;
+    return 0;
 }
 
 //********************************************************************************
 #pragma mark - intefaces realization webrtc::DecodedImageCallback
 int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 {
-  decodedImage.set_render_time_ms(NdnRtcUtils::millisecondTimestamp());
-  
-  if (frameConsumer_)
-  {
-    TRACE("pushing decoded frame further");
-    frameConsumer_->onDeliverFrame(decodedImage);
-  }
-  else
-    WARN("frame was decoded but never used");
-  
-  return 0;
+    decodedImage.set_render_time_ms(NdnRtcUtils::millisecondTimestamp());
+    
+    if (frameConsumer_)
+    {
+        TRACE("pushing decoded frame further");
+        frameConsumer_->onDeliverFrame(decodedImage);
+    }
+    else
+        WARN("frame was decoded but never used");
+    
+    return 0;
 }
 
 //********************************************************************************
 #pragma mark - intefaces realization IEncodedFrameConsumer
 void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
-  TRACE("trying to decode frame of size %d (type: %s)", encodedImage._length,
-        NdnRtcUtils::stringFromFrameType(encodedImage._frameType).c_str());
-  
-  if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
-    notifyError(-1, "can't decode frame");
-  else
-    TRACE("decoded");
+    LogTrace("fetch-decoder.log")
+    << "trying to decode frame of size " << encodedImage._length
+    << " type " << NdnRtcUtils::stringFromFrameType(encodedImage._frameType) << endl;
+    
+    TRACE("trying to decode frame of size %d (type: %s)", encodedImage._length,
+          NdnRtcUtils::stringFromFrameType(encodedImage._frameType).c_str());
+    
+    if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
+    {
+        LogTrace("fetch-decoder.log")
+        << "error decoding " << endl;
+        notifyError(-1, "can't decode frame");
+    }
+    else
+    {
+        LogTrace("fetch-decoder.log")
+        << "decoded" << endl;
+        
+        TRACE("decoded");
+    }
 }

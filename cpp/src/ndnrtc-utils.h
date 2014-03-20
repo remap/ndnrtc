@@ -40,7 +40,8 @@ namespace ndnrtc{
         static double currentDataRateMeterValue(unsigned int meterId);
         static void releaseDataRateMeter(unsigned int meterId);
         
-        static unsigned int setupMeanEstimator(unsigned int sampleSize = 0);
+        static unsigned int setupMeanEstimator(unsigned int sampleSize = 0,
+                                               double startValue = 0.);
         static void meanEstimatorNewValue(unsigned int estimatorId, double value);
         static double currentMeanEstimation(unsigned int estimatorId);
         static double currentDeviationEstimation(unsigned int estimatorId);

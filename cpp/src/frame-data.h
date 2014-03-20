@@ -29,7 +29,7 @@ namespace ndnrtc {
     typedef struct _PrefixMetaInfo {
         int totalSegmentsNum_;
         PacketNumber playbackNo_;
-        PacketNumber keySequenceNo_;
+        PacketNumber pairedSequenceNo_;
         
         static Name toName(const _PrefixMetaInfo &meta);
         static int extractMetadata(const Name& metaComponents, _PrefixMetaInfo &meta);

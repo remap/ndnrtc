@@ -154,7 +154,9 @@ int MediaSender::publishPacket(const PacketData &packetData,
             
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
-            LogTrace("media-sender.log") << "published " << segmentName;
+
+            LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+            << "published " << segmentName << endl;
         }
     }
     catch (std::exception &e)
@@ -179,7 +181,8 @@ void MediaSender::registerPrefix()
                                                      bind(&MediaSender::onRegisterFailed,
                                                           this, _1));
         if (prefixId != 0)
-            TRACE("registered prefix %s", packetPrefix->c_str());
+            LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+            << "registered prefix " << *packetPrefix << endl;
     }
     else
         notifyError(-1, "bad packet prefix");
@@ -189,24 +192,45 @@ void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
                              const shared_ptr<const Interest>& interest,
                              ndn::Transport& transport)
 {
-    PitEntry pitEntry;
+    PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
     
-    pitEntry.arrivalTimestamp_ = NdnRtcUtils::millisecondTimestamp();
-    pitEntry.interest_ = interest;
-    
-    Name n = interest->getName();
-    
+    if (packetNo > packetNo_)
     {
-        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
-        pit_[n] = pitEntry;
+        addToPit(interest);
     }
-    
-    TRACE("new pit entry %s (size %d)", interest->toUri().c_str(), pit_.size());
+    else
+    {
+        LogTrace(NdnRtcUtils::toString("old-%s.log", params_.producerId))
+        << "interest for old " << interest->getName() << endl;
+    }
 }
 
 void MediaSender::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 {
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
+}
+
+void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
+{
+    const Name& name = interest->getName();
+    PitEntry pitEntry;
+    
+    pitEntry.arrivalTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+    pitEntry.interest_ = interest;
+    
+    {
+        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+        
+        if (pit_.find(name) != pit_.end())
+            LogTrace(NdnRtcUtils::toString("addpit-%s.log", params_.producerId))
+            << "pit exists " << name << endl;
+        
+        pit_[name] = pitEntry;
+    }
+    
+    LogTrace(NdnRtcUtils::toString("addpit-%s.log", params_.producerId))
+    << "new pit entry " << name << " " << pit_.size() << endl;
+    
 }
 
 void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
@@ -217,13 +241,8 @@ void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
         
         map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
         
-        TRACE("pit lookup for %s", prefix.toUri().c_str());
-        
-        //        if (pitHit == pit_.end())
-        //        {
-        //            TRACE("pit closest for %s", prefix.toUri().c_str());
-        //            pitHit = pit_.upper_bound(prefix);
-        //        }
+//        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+//        << "published " << prefix << endl;
         
         if (pitHit != pit_.end())
         {
@@ -238,10 +257,15 @@ void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
             
             pit_.erase(pitHit);
             
-            TRACE("pit hit for [%s] -> [%s] (size %d)", prefix.toUri().c_str(),
-                  pendingInterest->getName().toUri().c_str(), pit_.size());
+            LogTrace(NdnRtcUtils::toString("pithit-%s.log", params_.producerId))
+            << "pit hit [" << prefix.toUri() << "] -> ["
+            << pendingInterest->getName().toUri() << " (size " << pit_.size() << endl;
+            
         }
         else
-            WARN("no pit entry for %s", prefix.toUri().c_str());
+        {
+            LogTrace(NdnRtcUtils::toString("nopit-%s.log", params_.producerId))
+            << "no pit entry " << prefix.toUri() << endl;
+        }
     }
 }
