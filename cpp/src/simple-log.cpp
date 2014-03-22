@@ -12,7 +12,6 @@
 #include <sys/time.h>
 #include <mach/mach_time.h>
 #include <fstream>
-
 #include "simple-log.h"
 
 #define MAX_BUF_SIZE 4*256 // string buffer

@@ -9,19 +9,12 @@
 //
 
 #include "buffer-estimator.h"
-#include "rtt-estimator.h"
+#include "rtt-estimation.h"
 
 using namespace ndnrtc::new_api;
 
 // minimal buffer size in milliseconds
 const int64_t BufferEstimator::MinBufferSizeMs = 100;
-
-//******************************************************************************
-#pragma mark - construction/destruction
-BufferEstimator::BufferEstimator():
-minBufferSizeMs_(MinBufferSizeMs)
-{
-}
 
 //******************************************************************************
 #pragma mark - public

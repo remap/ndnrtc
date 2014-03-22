@@ -14,14 +14,9 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
+#include "ndnrtc-observer.h"
 
-namespace ndnrtc {
-    class INdnRtcObjectObserver {
-    public:
-        // public methods go here
-        virtual void onErrorOccurred(const char *errorMessage) = 0;
-    };
-    
+namespace ndnrtc {    
     class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,
                             public ndnlog::LoggerObject,
                             public INdnRtcObjectObserver

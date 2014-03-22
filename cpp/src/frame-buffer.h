@@ -126,7 +126,7 @@ namespace ndnrtc
                     getState() const { return state_; };
                     
                     int64_t
-                    getArrivalDelay()
+                    getRoundTripDelayUsec()
                     { return (arrivalTimeUsec_-requestTimeUsec_); }
                     
                     void
@@ -577,7 +577,7 @@ namespace ndnrtc
                 shared_ptr<Slot> slot_;     // corresponding slot pointer
             };
             
-            FrameBuffer(shared_ptr<const Consumer> &consumer);
+            FrameBuffer(const shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();
             
             std::string
@@ -699,10 +699,13 @@ namespace ndnrtc
             
             void
             synchronizeAcquire() { syncCs_.Enter(); }
-        
-        void
-        synchronizeRelease() { syncCs_.Leave(); }
+            
+            void
+            synchronizeRelease() { syncCs_.Leave(); }
     
+            void
+            dump();
+            
             static std::string
             stateToString(State s)
             {
@@ -756,19 +759,18 @@ namespace ndnrtc
                 void
                 clear();
                 
-                void
-                sort();
-                
                 int64_t
                 getInferredFrameDuration() { return ceil(1000./playbackRate_); }
 
+                void
+                dumpQueue();
+                
             private:
                 double playbackRate_;
-                webrtc::CriticalSectionWrapper& accessCs_;
                 FrameBuffer::Slot::PlaybackComparator comparator_;
                 
                 void
-                dumpQueue();
+                sort();
             };
             
             shared_ptr<const Consumer> consumer_;

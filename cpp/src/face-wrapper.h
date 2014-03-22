@@ -10,6 +10,7 @@
 #define __ndnrtc__face_wrapper__
 
 #include "ndnrtc-common.h"
+#include "params.h"
 
 namespace ndnrtc {
     /**
@@ -38,6 +39,63 @@ namespace ndnrtc {
     private:
         shared_ptr<Face> face_;
         webrtc::CriticalSectionWrapper &faceCs_;
+    };
+    
+    class FaceProcessor : public ndnlog::new_api::ILoggingObject
+    {
+    public:
+        FaceProcessor(const shared_ptr<FaceWrapper>& faceWrapper);
+        ~FaceProcessor();
+        
+        int
+        startProcessing(unsigned int usecInterval = 100);
+        
+        void
+        stopProcessing();
+        
+        void
+        setProcessingInterval(unsigned int usecInterval)
+        { usecInterval_ = usecInterval; }
+        
+        shared_ptr<FaceWrapper>
+        getFace()
+        { return faceWrapper_; }
+        
+        shared_ptr<ndn::Transport>
+        getTransport()
+        { return transport_; }
+        
+        void
+        setTransport(shared_ptr<ndn::Transport>& transport)
+        { transport_ = transport; }
+        
+        static int
+        setupFaceAndTransport(const ParamsStruct &params,
+                              shared_ptr<FaceWrapper>& face,
+                              shared_ptr<ndn::Transport>& transport);
+        
+        static shared_ptr<FaceProcessor>
+        createFaceProcessor(const ParamsStruct& params);
+        
+        std::string
+        getDescription() const
+        { return "frame-processor"; }
+        
+    private:
+        bool isProcessing_;
+        unsigned int usecInterval_;
+        shared_ptr<FaceWrapper> faceWrapper_;
+        shared_ptr<ndn::Transport> transport_;
+        webrtc::ThreadWrapper &processingThread_;
+        
+        static bool
+        processFaceEventsRoutine(void *processor)
+        {
+            return ((FaceProcessor*)processor)->processEvents();
+        }
+        
+        bool
+        processEvents();
     };
 };
 

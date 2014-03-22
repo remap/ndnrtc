@@ -30,10 +30,7 @@ onTimeoutCallback_(onTimeout)
 {
 }
 
-
-InterestQueue::InterestQueue(const shared_ptr<const Consumer>& consumer,
-                             const shared_ptr<Face>& face):
-consumer_(consumer),
+InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face):
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
@@ -63,11 +60,6 @@ InterestQueue::enqueueInterest(const Interest& interest,
     
     queueAccess_.AcquireLockExclusive();
     queue_.push(entry);
-
-//    LogTrace(consumer_->getLogFile()) <<"added " << interest.getName()
-//    << " prio " << priority->getValue()
-//    << " queue size " << queue_.size()
-//    << " top " << ((queue_.size())?queue_.top().interest_->getName():" none") << endl;
     queueAccess_.ReleaseLockExclusive();
     
     queueEvent_.Set();
@@ -124,7 +116,7 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {
-    LogTrace(consumer_->getLogFile()) << "express "
+    LogTrace("interest-queue.log") << "express "
         << entry.interest_->getName() << endl;
     
     face_->expressInterest(*(entry.interest_),

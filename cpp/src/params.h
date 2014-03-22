@@ -11,7 +11,11 @@
 #ifndef ndnrtc_NdnParams_h
 #define ndnrtc_NdnParams_h
 
-#include "ndnrtc-common.h"
+#include <cstdlib>
+#include <sstream>
+
+#include "simple-log.h"
+#include "ndnrtc-defines.h"
 
 #define PARAM_OK(p, l, r) (p >= l && p <= r)
 
@@ -38,7 +42,7 @@ namespace ndnrtc
     
 
     typedef struct _ParamsStruct {
-        NdnLoggerDetailLevel loggingLevel;
+        ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
         bool useTlv;
         
@@ -125,12 +129,12 @@ namespace ndnrtc
             if (RESULT_NOT_OK(result))
                 res = result;
             
-            return string((RESULT_GOOD(result)?param:defParam));
+            return std::string((RESULT_GOOD(result)?param:defParam));
         }
     } ParamsStruct;
     
     static ParamsStruct DefaultParams = {
-        NdnLoggerDetailLevelDebug,    // log level
+        ndnlog::NdnLoggerDetailLevelDebug,    // log level
         "ndnrtc.log",                   // log file
         true,   // use TLV encoding
         
@@ -166,13 +170,13 @@ namespace ndnrtc
         5,      // interest timeout
         90,     // assembling buffer size
         16000,  // frame buffer slot size
-        300       // jitter buffer size in ms
+        150       // jitter buffer size in ms
     };
     
     // only some parameters are used for audio configuration (those that are
     // not 0's/empty strings)
     static ParamsStruct DefaultParamsAudio = {
-        NdnLoggerDetailLevelNone,    // log level
+        ndnlog::NdnLoggerDetailLevelNone,    // log level
         "",                   // log file
         true,  // use TLV encoding
         

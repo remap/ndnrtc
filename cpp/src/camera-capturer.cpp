@@ -75,7 +75,7 @@ int CameraCapturer::init()
     vcm_ = VideoCaptureFactory::Create(deviceID, deviceUniqueName);
     
     if (vcm_ == NULL)
-        return notifyError(-1,"can't get video capture module");
+        return notifyError(RESULT_ERR, "can't get video capture module");
     
     int res = RESULT_OK;
     

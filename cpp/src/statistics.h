@@ -28,17 +28,22 @@ namespace ndnrtc {
 
         // RTT values for packets
         double srtt_;
-        unsigned int rtt_;
         
         // buffers
-        unsigned int jitterSize_, rebufferingEvents_;
+        unsigned int rebufferingEvents_;
+        unsigned int jitterPlayableMs_, jitterEstimationMs_, jitterTargetMs_;
         double actualProducerRate_;
         
         // buffer stat
         unsigned int nSent_, nAssembling_;
         
         // frames
-        unsigned int nPlayed_, nMissed_, nLost_, nReceived_;
+        unsigned int nPlayed_, nMissed_, nLost_, nReceived_, nRescued_;
+        
+        double segNumDelta_, segNumKey_;
+        
+        unsigned int rtxNum_;
+        double rtxFreq_;
         
     } ReceiverChannelPerformance;
     

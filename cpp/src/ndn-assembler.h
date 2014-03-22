@@ -25,8 +25,8 @@ namespace ndnrtc {
         class Assembler {
         public:
 
-            ndn::OnData getOnDataHandler() const;
-            ndn::OnTimeout getOnTimeoutHandler() const;
+            ndn::OnData getOnDataHandler();
+            ndn::OnTimeout getOnTimeoutHandler();
 
             
             static shared_ptr<Assembler> getSharedInstance();

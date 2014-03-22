@@ -22,6 +22,9 @@ namespace ndnrtc {
             static RttEstimation&
             sharedInstance();
             
+            RttEstimation(const double& startEstimate = RttStartEstimate);
+            ~RttEstimation();
+            
             /**
              * Updates current RTT estimation
              * @param expressTime Timestamp (milliseconds) of segment interest 
@@ -32,16 +35,12 @@ namespace ndnrtc {
              * the producer
              * @return Updated RTT estimation value
              */
-            double updateEstimation(int64_t expressTime,
-                                    int64_t consumeTime, int64_t generationDelay);
+            double updateEstimation(int64_t roundtripTimeMs,
+                                    int64_t generationDelay);
             
             double getCurrentEstimation() const;
             
         private:
-            
-            RttEstimation();
-            ~RttEstimation();
-            
             static RttEstimation sharedRttEstimation_;
             unsigned int estimatorId_;
         };

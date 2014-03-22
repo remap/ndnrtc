@@ -14,7 +14,7 @@
 using namespace ndnrtc::new_api;
 
 const unsigned int ChaseEstimation::SampleSize = 0;
-const double ChaseEstimation::ChangeThreshold = 1.5;
+const double ChaseEstimation::ChangeThreshold = 1.0;
 const double ChaseEstimation::FilterCoeff = 0.07;
 const int ChaseEstimation::InclineEstimatorSample = 4;
 const int ChaseEstimation::MinOccurences = 3;

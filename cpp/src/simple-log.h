@@ -16,6 +16,7 @@
 #include <pthread.h>
 #include <string>
 #include <map>
+#include <fstream>
 
 #if !defined(NDN_LOGGING)
 #undef NDN_TRACE
@@ -36,8 +37,8 @@
 // each macro checks, whether a logger, associated with object has been
 // initialized and use it instead of global logger
 #if defined (NDN_TRACE) //&& defined(DEBUG)
-#define TRACE(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
-else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
+#define TRACE(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
+else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
 #define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
 
 #define LogTraceC(...) LogTrace(NdnRtcUtils::toString("%s.log", NdnComponentName), ##__VA_ARGS__)
@@ -51,8 +52,8 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
 #endif
 
 #if defined (NDN_DEBUG) //&& defined(DEBUG)
-#define DBG(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelDebug, fmt, ##__VA_ARGS__); \
-else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
+#define DBG(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__); \
+else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 
 #define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
 
@@ -62,10 +63,10 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 #endif
 
 #if defined (NDN_INFO)
-#define INFO(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelInfo, fmt, ##__VA_ARGS__); \
-else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
+#define INFO(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__); \
+else ndnlog::NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
 
-#define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
 
 #else
 
@@ -75,8 +76,8 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
 #endif
 
 #if defined (NDN_WARN)
-#define WARN(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelWarning, fmt, ##__VA_ARGS__); \
-else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
+#define WARN(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__); \
+else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
 
 #define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
 
@@ -87,8 +88,8 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
 #endif
 
 #if defined (NDN_ERROR)
-#define NDNERROR(fmt, ...) if (this->logger_) this->logger_->log(NdnLoggerLevelError, fmt, ##__VA_ARGS__); \
-else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+#define NDNERROR(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__); \
+else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 
 #define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
 
@@ -99,31 +100,31 @@ else NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 
 // following macros are used for logging usign global logger
 #if defined (NDN_TRACE) //&& defined(DEBUG)
-#define LOG_TRACE(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
+#define LOG_TRACE(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
 #else
 #define LOG_TRACE(fmt, ...)
 #endif
 
 #if defined (NDN_DEBUG) //&& defined(DEBUG)
-#define LOG_DBG(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
+#define LOG_DBG(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 #else
 #define LOG_DBG(fmt, ...)
 #endif
 
 #if defined (NDN_INFO)
-#define LOG_INFO(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
 #else
 #define LOG_INFO(fmt, ...)
 #endif
 
 #if defined (NDN_WARN)
-#define LOG_WARN(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
 #else
 #define LOG_WARN(fmt, ...)
 #endif
 
 #if defined (NDN_ERROR)
-#define LOG_NDNERROR(fmt, ...) NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+#define LOG_NDNERROR(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__)
 #else
 #define LOG_NDNERROR(fmt, ...)
 #endif

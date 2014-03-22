@@ -171,7 +171,7 @@ void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     stat.videoStat_.interestFrequency_ = receiver_->getInterestFrequency();
     stat.videoStat_.segmentsFrequency_ = receiver_->getSegmentFrequency();
     
-    stat.videoStat_.rtt_ = receiver_->getLastRtt();
+//    stat.videoStat_.rtt_ = receiver_->getLastRtt();
     stat.videoStat_.srtt_ = receiver_->getSrtt();
     
     stat.videoStat_.nPlayed_ = receiver_->getNPlayed();
@@ -179,7 +179,7 @@ void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     stat.videoStat_.nLost_ = receiver_->getNLost();
     stat.videoStat_.nReceived_ = receiver_->getNReceived();
     
-    stat.videoStat_.jitterSize_ = receiver_->getJitterOccupancy();
+//    stat.videoStat_.jitterSize_ = receiver_->getJitterOccupancy();
     stat.videoStat_.rebufferingEvents_ = receiver_->getRebufferingEvents();
     stat.videoStat_.actualProducerRate_ = receiver_->getActualProducerRate();
     

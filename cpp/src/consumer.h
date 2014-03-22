@@ -11,11 +11,14 @@
 #ifndef __ndnrtc__fetch_channel__
 #define __ndnrtc__fetch_channel__
 
+#include <boost/enable_shared_from_this.hpp>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "interest-queue.h"
 #include "chase-estimation.h"
 #include "buffer-estimator.h"
+#include "statistics.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -23,8 +26,7 @@ namespace ndnrtc {
         class FrameBuffer;
         class Pipeliner;
         class InterestQueue;
-        class IPacketAssembler;
-        class PacketPlayback;
+        class Playout;
         
         class RttEstimation;
         class ChaseEstimation;
@@ -50,52 +52,102 @@ namespace ndnrtc {
          * - ChaseEstimator - estimates when the pipeliner should switch to the 
          *      Fetch mode
          */
-        class Consumer : public NdnRtcObject
+        class Consumer : public NdnRtcObject,
+                         public IPacketAssembler,
+                        public boost::enable_shared_from_this<Consumer>
         {
         public:
             
-            Consumer();
-            ~Consumer();
+            Consumer(const ParamsStruct& params,
+                     const shared_ptr<InterestQueue>& interestQueue,
+                     const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+            virtual ~Consumer();
             
-            virtual std::string getLogFile() const
+            virtual int
+            init();
+            
+            virtual int
+            start();
+            
+            virtual int
+            stop();
+            
+            virtual std::string
+            getLogFile() const
             { return string("fetch.log"); }
             
             virtual ParamsStruct
-            getParameters() const { return params_; }
+            getParameters() const
+            { return params_; }
             
             virtual shared_ptr<FrameBuffer>
-            getFrameBuffer() const { return frameBuffer_; }
+            getFrameBuffer() const
+            { return frameBuffer_; }
             
             virtual shared_ptr<Pipeliner>
-            getPipeliner() const { return pipeliner_; }
+            getPipeliner() const
+            { return pipeliner_; }
             
             virtual shared_ptr<InterestQueue>
-            getInterestQueue() const { return interestQueue_; }
+            getInterestQueue() const
+            { return interestQueue_; }
             
-            virtual shared_ptr<IPacketAssembler>
-            getPacketAssembler() const { return packetAssembler_; }
+            virtual IPacketAssembler*
+            getPacketAssembler()
+            { return this; }
             
-            virtual shared_ptr<PacketPlayback>
-            getPacketPlayback() const { return packetPlayback_; }
+            virtual shared_ptr<Playout>
+            getPacketPlayout() const
+            { return playout_; }
             
             virtual shared_ptr<RttEstimation>
-            getRttEstimation() const { return rttEstimation_; }
+            getRttEstimation() const
+            { return rttEstimation_; }
             
             virtual shared_ptr<ChaseEstimation>
-            getChaseEstimation() const { return chaseEstimation_; }
+            getChaseEstimation() const
+            { return chaseEstimation_; }
             
             virtual shared_ptr<BufferEstimator>
-            getBufferEstimator() const { return bufferEstimator_; }
+            getBufferEstimator() const
+            { return bufferEstimator_; }
+            
+            void
+            setRttEstimator(const shared_ptr<RttEstimation>& rttEstimation)
+            { rttEstimation_= rttEstimation; }
+            
+            void
+            setInterestQueue(const shared_ptr<InterestQueue>& interestQueue)
+            { interestQueue_ = interestQueue; }
+            
+            void
+            getStatistics(ReceiverChannelPerformance& stat);
             
         protected:
+            bool isConsuming_;
+            
             shared_ptr<FrameBuffer> frameBuffer_;
             shared_ptr<Pipeliner> pipeliner_;
             shared_ptr<InterestQueue> interestQueue_;
-            shared_ptr<IPacketAssembler> packetAssembler_;
-            shared_ptr<PacketPlayback> packetPlayback_;
+            shared_ptr<Playout> playout_;
             shared_ptr<RttEstimation> rttEstimation_;
             shared_ptr<ChaseEstimation> chaseEstimation_;
             shared_ptr<BufferEstimator> bufferEstimator_;
+            
+            unsigned int dataMeterId_, segmentFreqMeterId_;
+            
+            virtual ndn::OnData
+            getOnDataHandler()
+            { return bind(&Consumer::onData, this, _1, _2); }
+            
+            virtual ndn::OnTimeout
+            getOnTimeoutHandler()
+            { return bind(&Consumer::onTimeout, this, _1); }
+            
+            void onData(const shared_ptr<const Interest>& interest,
+                        const shared_ptr<Data>& data);
+            void onTimeout(const shared_ptr<const Interest>& interest);
+
         };
     }
 }

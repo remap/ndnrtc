@@ -14,6 +14,7 @@
 #include "ndnrtc-common.h"
 #include "ndn-assembler.h"
 #include "ndnrtc-utils.h"
+#include "face-wrapper.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -53,8 +54,7 @@ namespace ndnrtc {
                 virtual void setExpressionTimestamp(int64_t timestamp) = 0;
             };
 
-            InterestQueue(const shared_ptr<const Consumer>& consumer,
-                          const shared_ptr<Face> &face);
+            InterestQueue(const shared_ptr<FaceWrapper> &face);
             ~InterestQueue();
             
             void enqueueInterest(const Interest& interest,
@@ -115,8 +115,7 @@ namespace ndnrtc {
             typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, IPriority::Comparator>
             PriorityQueue;
             
-            shared_ptr<const Consumer> consumer_;
-            shared_ptr<Face> face_;
+            shared_ptr<FaceWrapper> face_;
             webrtc::RWLockWrapper &queueAccess_;
             webrtc::EventWrapper &queueEvent_;
             webrtc::ThreadWrapper &queueWatchingThread_;

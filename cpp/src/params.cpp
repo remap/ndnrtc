@@ -12,6 +12,7 @@
 #include "params.h"
 
 using namespace ndnrtc;
+using namespace ndnlog;
 
 int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
                                        struct _ParamsStruct &validatedResult)

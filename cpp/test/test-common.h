@@ -257,26 +257,6 @@ protected:
     void *pool_;
 };
 
-class ConsumerMock : public ndnrtc::new_api::Consumer
-{
-public:
-    ConsumerMock(string logFile):logFile_(logFile){}
-    
-    virtual std::string getLogFile() const
-    { return logFile_; }
-    
-    virtual ndnrtc::ParamsStruct
-    getParameters() const { return params_; }
-    
-    void
-    setParameters(ParamsStruct p)
-    { params_ = p; }
-    
-private:
-    string logFile_;
-    ParamsStruct params_;
-};
-
 //******************************************************************************
 class UnitTestHelperNdnNetwork
 {

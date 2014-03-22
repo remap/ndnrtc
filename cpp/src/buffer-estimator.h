@@ -21,8 +21,8 @@ namespace ndnrtc {
             
             static const int64_t MinBufferSizeMs;
             
-            BufferEstimator();
-            ~BufferEstimator();
+            BufferEstimator():minBufferSizeMs_(MinBufferSizeMs){}
+            ~BufferEstimator(){}
             
             void
             setProducerRate(double producerRate);

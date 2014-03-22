@@ -19,10 +19,51 @@
 
 using namespace ndnrtc::new_api;
 
+class ConsumerMock : public ndnrtc::new_api::Consumer
+{
+public:
+    ConsumerMock(const ParamsStruct& params,
+                 const shared_ptr<IPacketAssembler>& packetAssembler,
+                 const shared_ptr<InterestQueue>& interestQueue,
+                 string logFile):
+    Consumer(params, interestQueue),logFile_(logFile){}
+    
+    virtual std::string getLogFile() const
+    { return logFile_; }
+    
+    virtual ndnrtc::ParamsStruct
+    getParameters() const { return params_; }
+    
+    void
+    setParameters(ParamsStruct p)
+    { params_ = p; }
+    
+private:
+    string logFile_;
+    ParamsStruct params_;
+};
+
+class PipelinerTestsCallbacks
+{
+public:
+    virtual void onData(const shared_ptr<const Interest>& interest,
+                        const shared_ptr<Data>& data)
+    {
+    }
+    virtual void onTimeout(const shared_ptr<const Interest>& interest)
+    {
+    }
+};
+
 class PipelinerConsumerMock : public ConsumerMock
 {
 public:
-    PipelinerConsumerMock(string logfile):ConsumerMock(logfile){}
+    PipelinerConsumerMock(const ParamsStruct& params,
+                          const shared_ptr<InterestQueue>& interestQueue,
+                          const shared_ptr<IPacketAssembler>& packetAssembler,
+                          string logfile,
+                          PipelinerTestsCallbacks *assembler):
+    ConsumerMock(params, packetAssembler, interestQueue, logfile){}
     
     void
     setFrameBuffer(const shared_ptr<ndnrtc::new_api::FrameBuffer>& frameBuffer)
@@ -37,16 +78,25 @@ public:
     { chaseEstimation_ = chaseEstimation; }
     
     void
-    setAssembler(const shared_ptr<IPacketAssembler>& ndnAssembler)
-    { packetAssembler_ = ndnAssembler; }
-    
-    void
     setInterestQueue(const shared_ptr<InterestQueue>& interestQueue)
     { interestQueue_ = interestQueue; }
+    
+    ndn::OnData getOnDataHandler()
+    {
+        return bind(&PipelinerTestsCallbacks::onData, assembler_, _1, _2);
+    }
+    ndn::OnTimeout getOnTimeoutHandler()
+    {
+        return bind(&PipelinerTestsCallbacks::onTimeout, assembler_, _1);
+    }
+
+protected:
+    PipelinerTestsCallbacks *assembler_;
 };
 
 class PipelinerTests : public UnitTestHelperNdnNetwork,
 public NdnRtcObjectTestHelper,
+public PipelinerTestsCallbacks,
 public IPacketAssembler
 {
 public:
@@ -59,20 +109,28 @@ public:
         shared_ptr<string> userPref = NdnRtcNamespace::getStreamFramePrefix(params_);
         UnitTestHelperNdnNetwork::NdnSetUp(*accessPref, *userPref);
         
-        PipelinerConsumerMock *mock = new PipelinerConsumerMock("pipeliner.log");//ENV_LOGFILE);
+        shared_ptr<FaceWrapper> face(new FaceWrapper(ndnFace_));
+        
+        interestQueue_.reset(new InterestQueue(face));
+        packetAssembler_.reset(this);
+        
+        PipelinerConsumerMock *mock = new PipelinerConsumerMock(params_,
+                                                                interestQueue_,
+                                                                packetAssembler_,
+                                                                "pipeliner.log",
+                                                                this);//ENV_LOGFILE);
         mock->setParameters(params_);
         consumer_.reset(mock);
-        
+
         frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(consumer_));
-        interestQueue_.reset(new InterestQueue(consumer_, ndnFace_));
+
         
         bufferEstimator_.reset(new BufferEstimator());
         bufferEstimator_->setMinimalBufferSize(params_.jitterSize);
         
         chaseEstimation_.reset(new ChaseEstimation());
-        packetAssembler_.reset(this);
+
         
-        mock->setAssembler(packetAssembler_);
         mock->setFrameBuffer(frameBuffer_);
         mock->setBufferEstimator(bufferEstimator_);
         mock->setChaseEstimation(chaseEstimation_);
@@ -108,7 +166,7 @@ public:
     }
     
 protected:
-    shared_ptr<const Consumer> consumer_;
+    shared_ptr<Consumer> consumer_;
     shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
     shared_ptr<BufferEstimator> bufferEstimator_;
     shared_ptr<ChaseEstimation> chaseEstimation_;
@@ -131,6 +189,7 @@ protected:
         EXPECT_EQ(RESULT_OK, sendChannel_->stopTransmission());
     }
 };
+
 #if 0
 TEST_F(PipelinerTests, TestCreateDelete)
 {
@@ -186,48 +245,6 @@ TEST_F(PipelinerTests, TestFetching)
     playout.start();
     WAIT(100000);
     playout.stop();
-    
-//    int time = 100000;
-//    while (time > 0)
-//    {
-//        int playbackDuration;
-//        
-//        if (frameBuffer_->getState() == ndnrtc::new_api::FrameBuffer::Valid)
-//        {
-//            webrtc::EncodedImage frame;
-//            if (data)
-//            {
-//                delete data;
-//                data = nullptr;
-//            }
-//            
-//            frameBuffer_->acquireSlot(&data);
-//            
-//            if (data)
-//            {
-//                EXPECT_EQ(RESULT_OK, ((NdnFrameData*)data)->getFrame(frame));
-//                
-//                LogTrace(consumer_->getLogFile())
-//                << "push for decode " << ((frame._frameType == webrtc::kKeyFrame)?"KEY":"DELTA") << endl;
-//                
-//                decoder.onEncodedFrameDelivered(frame);
-//            }
-//            else
-//            {
-//                LogTrace(consumer_->getLogFile())
-//                << "no data for decode" << endl;
-//            }
-//
-//            playbackDuration = frameBuffer_->releaseAcquiredSlot();
-//        }
-//        
-//        if (playbackDuration <= 0)
-//            playbackDuration = 30;
-//        
-//        time -= playbackDuration;
-//        
-//        usleep(playbackDuration*1000);
-//    }
     
     p.stop();
     

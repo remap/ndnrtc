@@ -13,10 +13,11 @@
 
 #include <dlfcn.h>
 
-#include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
+//#include "ndnrtc-common.h"
+//#include "ndnrtc-object.h"
 #include "params.h"
 #include "statistics.h"
+#include "ndnrtc-observer.h"
 
 namespace ndnrtc {
     

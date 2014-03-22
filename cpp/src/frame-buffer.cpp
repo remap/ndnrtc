@@ -914,10 +914,12 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::dataArrived
     dataNonce_ = segmentMeta.interestNonce_;
     generationDelayMs_ = segmentMeta.generationDelayMs_;
     
+    /*
     if (isOriginal())
         RttEstimation::sharedInstance().updateEstimation(requestTimeUsec_/1000,
                                                          arrivalTimeUsec_/1000,
                                                          generationDelayMs_);
+     */
 }
 
 bool
@@ -1489,7 +1491,7 @@ ndnrtc::new_api::FrameBuffer::Slot::dump()
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::PlaybackQueue
 (double playbackRate):
 playbackRate_(playbackRate),
-accessCs_(*CriticalSectionWrapper::CreateCriticalSection()),
+//accessCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 comparator_(FrameBuffer::Slot::PlaybackComparator(false))
 {}
 
@@ -1498,8 +1500,6 @@ comparator_(FrameBuffer::Slot::PlaybackComparator(false))
 int64_t
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
-
     int64_t playbackDurationMs = 0;
     
     if (this->size() >= 1)
@@ -1512,8 +1512,10 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
             shared_ptr<FrameBuffer::Slot> slot2 = *it;
             
             // if header metadata is available - we have frame timestamp
+            // and frames are consequent - we have real playback time
             if (slot1->getConsistencyState()&Slot::HeaderMeta &&
-                slot2->getConsistencyState()&Slot::HeaderMeta)
+                slot2->getConsistencyState()&Slot::HeaderMeta &&
+                slot1->getPlaybackNumber() + 1 == slot2->getPlaybackNumber())
             {
                 playbackDurationMs += (slot2->getProducerTimestamp() - slot1->getProducerTimestamp());
             }
@@ -1525,11 +1527,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
             
             slot1 = slot2;
         }
-        
-        if (estimate ||
-            !estimate && slot1->getConsistencyState() != Slot::Consistent)
-            // add infered duration for the last frame always
-            playbackDurationMs += getInferredFrameDuration();
     }
     
     return playbackDurationMs;
@@ -1538,8 +1535,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
-    
+    sort();
     int64_t playbackDeadlineMs = 0;
     
     if (this->size() >= 1)
@@ -1577,9 +1573,6 @@ void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
 (const shared_ptr<FrameBuffer::Slot> &slot)
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
-    
-//    this->insert(slot);
     this->push_back(slot);
     sort();
 
@@ -1592,7 +1585,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::peekSlot()
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
     shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> slot(NULL);
     
     if (0 != this->size())
@@ -1606,7 +1598,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::peekSlot()
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
     shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> slot(NULL);
     
     if (0 != this->size())
@@ -1615,7 +1606,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         LogTrace("playback-queue.log") << "▲pop [" << slot->dump() << "]" << endl;
         
         this->erase(this->begin());
-        sort();
+        updatePlaybackDeadlines();
         
         dumpQueue();
     }
@@ -1624,7 +1615,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(double playbackRate)
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
     playbackRate_ = playbackRate;
     
     LogTrace("playback-queue.log") << "update rate " << playbackRate << endl;
@@ -1633,7 +1623,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(double playbackR
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::clear()
 {
-    CriticalSectionScoped scopedCs(&accessCs_);
     PlaybackQueueBase::clear();
 }
 
@@ -1660,7 +1649,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpQueue()
 // FrameBuffer
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::FrameBuffer::FrameBuffer(shared_ptr<const ndnrtc::new_api::Consumer> &consumer):
+ndnrtc::new_api::FrameBuffer::FrameBuffer(const shared_ptr<const ndnrtc::new_api::Consumer> &consumer):
 consumer_(consumer),
 state_(Invalid),
 targetSizeMs_(-1),
@@ -1852,7 +1841,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     if (newConsistency&Slot::HeaderMeta)
                     {
                         updateCurrentRate(slot->getPacketRate());
-                        playbackQueue_.sort();
                     }
                     
                     playbackQueue_.updatePlaybackDeadlines();
@@ -1869,6 +1857,14 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     << "ready " << slot->getPrefix() << endl;
                     
                     addBufferEvent(Event::Ready, slot);
+                }
+                
+                // track rtt value
+                if (slot->getRecentSegment()->isOriginal())
+                {
+                    consumer_->getRttEstimation()->
+                    updateEstimation(slot->getRecentSegment()->getRoundTripDelayUsec()/1000,
+                                     slot->getRecentSegment()->getMetadata().generationDelayMs_);
                 }
                 
                 return newState;
@@ -2036,8 +2032,6 @@ void
 ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
-
-    playbackQueue_.sort();
     
     shared_ptr<FrameBuffer::Slot> slot = playbackQueue_.peekSlot();
     
@@ -2104,6 +2098,18 @@ ndnrtc::new_api::FrameBuffer::recycleEvent(const ndnrtc::new_api::FrameBuffer::E
     addBufferEvent(event.type_, event.slot_);
 }
 
+void
+ndnrtc::new_api::FrameBuffer::dump()
+{
+    CriticalSectionScoped scopedCs(&syncCs_);
+    
+    LogTrace("playback-queue.log")
+    << "buffer dump (duration est " << getEstimatedBufferSize()
+    << " playable " << getPlayableBufferSize() << ")" << endl;
+    
+    playbackQueue_.dumpQueue();
+}
+
 //******************************************************************************
 #pragma mark - private
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
@@ -2151,7 +2157,6 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
 void
 ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
-    playbackQueue_.sort();
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
 }
 

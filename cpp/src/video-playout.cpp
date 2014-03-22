@@ -46,20 +46,6 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal)
     // render frame if we have one
     if (data_ && frameConsumer_)
     {
-//        frameno = slot->getFrameNumber();
-//        nPlayedOut_++;
-//        
-//        frameLogger_->log(NdnLoggerLevelInfo,
-//                          "PLAYOUT: \t%d \t%d \t%d \t%d \t%d \t%ld \t%ld \t%.2f \t%d",
-//                          slot->getFrameNumber(),
-//                          slot->assembledSegmentsNumber(),
-//                          slot->totalSegmentsNumber(),
-//                          slot->isKeyFrame(),
-//                          playoutBuffer_->getJitterSize(),
-//                          slot->getAssemblingTimeUsec(),
-//                          frame->capture_time_ms_,
-//                          currentProducerRate_,
-//                          pipelinerBufferSize_);
         ((NdnFrameData*)data_)->getFrame(frame);
         frameConsumer_->onEncodedFrameDelivered(frame);
     }
@@ -67,13 +53,8 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal)
     // get playout time (delay) for the rendered frame
     int framePlayoutTime = frameBuffer_->releaseAcquiredSlot();
     
-//    LogTrace("jitter-timing.log")
-//    << "playout time " << framePlayoutTime << " data: " << (data_?"YES":"NO") << endl;
-//    int adjustedPlayoutTime = 0;
-//    // if av sync has been set up
-//    if (slot && avSync_.get())
-//        adjustedPlayoutTime = avSync_->synchronizePacket(slot, packetTsLocal,
-//                                                         this);
+    LogTrace("jitter-timing.log")
+    << "playout time " << framePlayoutTime << " data: " << (data_?"YES":"NO") << endl;
     
     if (framePlayoutTime >= 0)
     {

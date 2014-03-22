@@ -177,7 +177,7 @@ void NdnAudioReceiveChannel::getStatistics(ReceiverChannelPerformance &stat)
     stat.interestFrequency_ = audioReceiver_->getInterestFrequency();
     stat.segmentsFrequency_ = audioReceiver_->getSegmentFrequency();
     
-    stat.rtt_ = audioReceiver_->getLastRtt();
+//    stat.rtt_ = audioReceiver_->getLastRtt();
     stat.srtt_ = audioReceiver_->getSrtt();
     
     stat.nPlayed_ = audioReceiver_->getNPlayed();
@@ -185,7 +185,7 @@ void NdnAudioReceiveChannel::getStatistics(ReceiverChannelPerformance &stat)
     stat.nLost_ = audioReceiver_->getNLost();
     stat.nReceived_ = audioReceiver_->getNReceived();
     
-    stat.jitterSize_ = audioReceiver_->getJitterOccupancy();
+//    stat.jitterSize_ = audioReceiver_->getJitterOccupancy();
     stat.rebufferingEvents_ = audioReceiver_->getRebufferingEvents();
     stat.actualProducerRate_ = audioReceiver_->getActualProducerRate();
     

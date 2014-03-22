@@ -18,8 +18,8 @@ const double RttEstimation::RttStartEstimate = 30; // millseconds
 
 //******************************************************************************
 #pragma mark - construction/destruction
-RttEstimation::RttEstimation():
-estimatorId_(NdnRtcUtils::setupMeanEstimator(0, RttStartEstimate))
+RttEstimation::RttEstimation(const double& startEstimate):
+estimatorId_(NdnRtcUtils::setupMeanEstimator(0, startEstimate))
 {
     
 }
@@ -37,10 +37,10 @@ RttEstimation::sharedInstance()
 }
 
 double
-RttEstimation::updateEstimation(int64_t expressTime, int64_t consumeTime,
+RttEstimation::updateEstimation(int64_t rountripTimeMs,
                                 int64_t generationDelay)
 {
-    double rawValue = consumeTime-expressTime-generationDelay;
+    double rawValue = rountripTimeMs-generationDelay;
     
     if (rawValue > 0)
     {
@@ -52,7 +52,7 @@ RttEstimation::updateEstimation(int64_t expressTime, int64_t consumeTime,
     else
     {
         LogWarn("") << "wrong data for RTT estimation "
-        << expressTime << consumeTime << generationDelay << endl;
+        << rountripTimeMs << " " << generationDelay << endl;
     }
     
     return NdnRtcUtils::currentMeanEstimation(estimatorId_);

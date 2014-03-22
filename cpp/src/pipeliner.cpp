@@ -22,7 +22,7 @@ const double Pipeliner::SegmentsAvgNumKey = 25.;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<const Consumer> &consumer):
+ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
 NdnRtcObject(consumer->getParameters()),
 consumer_(consumer),
 isProcessing_(false),
@@ -35,7 +35,8 @@ pipelineThread_(*ThreadWrapper::CreateThread(Pipeliner::pipelineThreadRoutin, th
 pipelineTimer_(*EventWrapper::Create()),
 pipelinerPauseEvent_(*EventWrapper::Create()),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta)),
-keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey))
+keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey)),
+rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter())
 {
     initialize();
 }
@@ -255,10 +256,11 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     }
     else
     {
+        keepBuffer();
+        
         LogTrace(consumer_->getLogFile())
         << "[*****] buffering. playable size " << bufferSize << endl;
-        
-        keepBuffer();
+        frameBuffer_->dump();
     }
 }
 
@@ -321,13 +323,7 @@ ndnrtc::new_api::Pipeliner::handleTimeout(const FrameBuffer::Event &event)
 
     requestMissing(event.slot_,
                    getInterestLifetime(event.slot_->getNamespace()),
-                   event.slot_->getPlaybackDeadline());
-}
-
-int
-ndnrtc::new_api::Pipeliner::scanBuffer()
-{
-    return RESULT_OK;
+                   event.slot_->getPlaybackDeadline(), true);
 }
 
 int
@@ -521,7 +517,7 @@ ndnrtc::new_api::Pipeliner::processPipeline()
 void
 ndnrtc::new_api::Pipeliner::requestMissing
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot,
- int64_t lifetime, int64_t priority)
+ int64_t lifetime, int64_t priority, bool wasTimedOut)
 {
     Name prefix = (slot->getNamespace() == FrameBuffer::Slot::Key)?
                     Name(keyFramesPrefix_):Name(deltaFramesPrefix_);
@@ -547,6 +543,12 @@ ndnrtc::new_api::Pipeliner::requestMissing
         << segmentInterest->getName() << endl;
         
         express(*segmentInterest, priority);
+        
+        if (wasTimedOut)
+        {
+            NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
+            rtxNum_++;
+        }
     }
     
     frameBuffer_->synchronizeRelease();
@@ -599,4 +601,12 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
         bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
         frameBuffer_->getPlayableBufferSize();
     }
+}
+
+void
+ndnrtc::new_api::Pipeliner::resetData()
+{
+    rtxNum_ = 0;
+    rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
+    
 }

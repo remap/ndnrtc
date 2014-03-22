@@ -25,15 +25,31 @@ namespace ndnrtc {
             static const double SegmentsAvgNumDelta;
             static const double SegmentsAvgNumKey;
             
-            Pipeliner(const shared_ptr<const Consumer> &consumer);
+            Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
             
             int start();
             int stop();
             
+            double
+            getAvgSegNum(bool isKey) const
+            {
+                return NdnRtcUtils::currentMeanEstimation((isKey)?
+                                                          keySegnumEstimatorId_:
+                                                          deltaSegnumEstimatorId_);
+            }
+            
+            double
+            getRtxFreq() const
+            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
+            
+            unsigned int
+            getRtxNum() const
+            { return rtxNum_; }
+            
             // ILoggingObject conformance
             virtual std::string
-            getDescription()
+            getDescription() const
             {
                 return string("pipeliner");
             }
@@ -41,12 +57,12 @@ namespace ndnrtc {
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
-            shared_ptr<const Consumer> consumer_;
+            shared_ptr<Consumer> consumer_;
             ParamsStruct params_; 
             shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
             shared_ptr<ChaseEstimation> chaseEstimation_;
             shared_ptr<BufferEstimator> bufferEstimator_;
-            shared_ptr<IPacketAssembler> ndnAssembler_;
+            IPacketAssembler* ndnAssembler_;
             
             bool isProcessing_;
             webrtc::ThreadWrapper &mainThread_;
@@ -60,10 +76,9 @@ namespace ndnrtc {
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             
-            
             // --
-            int
-            bufferEventsMask_;
+            unsigned int rtxFreqMeterId_, rtxNum_;
+            int bufferEventsMask_;
             
             static bool
             mainThreadRoutine(void *pipeliner){
@@ -78,9 +93,6 @@ namespace ndnrtc {
             }
             bool
             processPipeline();
-            
-            int
-            scanBuffer();
             
             int
             handleInvalidState(const ndnrtc::new_api::FrameBuffer::Event &event);
@@ -142,7 +154,8 @@ namespace ndnrtc {
             
             void
             requestMissing(const shared_ptr<FrameBuffer::Slot>& slot,
-                           int64_t lifetime, int64_t priority);
+                           int64_t lifetime, int64_t priority,
+                           bool wasTimedOut = false);
             
             int64_t
             getInterestLifetime(FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
@@ -153,6 +166,9 @@ namespace ndnrtc {
             
             void
             keepBuffer(bool useEstimatedSize = true);
+            
+            void
+            resetData();
         };
     }
 }
