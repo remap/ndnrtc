@@ -29,7 +29,7 @@ public:
     {
         NdnRtcObjectTestHelper::SetUp();
         
-        params_ = DefaultParams;
+        params_ = DefaultParamsAudio;
         
         std::string streamAccessPrefix;
         string userPrefix;
@@ -73,9 +73,11 @@ public:
         string rtpPrefix;
         NdnAudioData::AudioPacket p = {false, NdnRtcUtils::millisecondTimestamp(),
             (unsigned int)len, (unsigned char*)data};
-        NdnAudioData adata(p);
+        PacketData::PacketMetadata meta = {50., (PacketNumber)currentRTPFrame_};
+        NdnAudioData adata(p, meta);
         NdnAudioSender::getStreamFramePrefix(params_, rtpPrefix);
         
+        LOG_INFO("published RTP %d (%d bytes)", currentRTPFrame_, len);
 //        cout << "publish RTP  " << currentRTPFrame_ << " " << len << endl;
         sendCS_->Enter();
         publishMediaPacket(adata.getLength(), adata.getData(),
@@ -92,10 +94,12 @@ public:
         string rtcpPrefix;
         NdnAudioData::AudioPacket p = {true, NdnRtcUtils::millisecondTimestamp(),
             (unsigned int)len, (unsigned char*)data};
-        NdnAudioData adata(p);
+        PacketData::PacketMetadata meta = {50., (PacketNumber)currentRTPFrame_};
+        NdnAudioData adata(p, meta);
         
         NdnAudioSender::getStreamControlPrefix(params_, rtcpPrefix);
         
+        LOG_INFO("published RTCP %d (%d bytes)", currentRTPFrame_, len);
 //        cout << "publish RTCP " << currentRTPFrame_ << " " << len << endl;
         // using RTP frames counter!!!
         sendCS_->Enter();
@@ -170,12 +174,13 @@ protected:
 TEST_F(AudioReceiverTester, TestFetch)
 {
     unsigned int expectedFetchedPacketsNum = 100;
-    unsigned int publishPacketsNum = 1.5*100;
+    unsigned int publishPacketsNum = 1.5*expectedFetchedPacketsNum;
     params_.streamName = "audio-receiver-test";
     params_.streamThread = "pcmu2";
     
     NdnAudioReceiver receiver(params_);
     
+    receiver.setLogger(NdnLogger::sharedInstance());
     receiver.setFrameConsumer(this);
     
     EXPECT_EQ(RESULT_OK, receiver.init(ndnReceiverFace_));

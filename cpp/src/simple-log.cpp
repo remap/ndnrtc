@@ -11,7 +11,7 @@
 
 #include <sys/time.h>
 #include <mach/mach_time.h>
-
+#include <fstream>
 #include "simple-log.h"
 
 #define MAX_BUF_SIZE 4*256 // string buffer
@@ -20,6 +20,8 @@ using namespace ndnlog;
 
 static char tempBuf[MAX_BUF_SIZE];
 static NdnLogger *sharedLogger = NULL;
+
+ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
 
 pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 
@@ -252,22 +254,163 @@ void NdnLogger::log(const char *str)
 
 //******************************************************************************
 //******************************************************************************
-// LoggerObject
-//void LoggerObject::initializeLogger(const char *format, ...)
-//{
-//    char *logFile = (char*)malloc(256);
-//    memset((void*)logFile, 0, 256);
-//    
-//    va_list args;
-//    
-//    va_start(args, format);
-//    vsprintf(logFile, format, args);
-//    va_end(args);
-//    
-//    this->setLogger(new NdnLogger(logFile, NdnLoggerDetailLevelAll));
-//    this->isLoggerCreated_ = true;
-//    
-//    free(logFile);
-//}
+pthread_mutex_t new_api::Logger::stdOutMutex_ = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+std::map<std::string, new_api::Logger*> new_api::Logger::loggers_;
 
+#pragma mark - construction/destruction
+new_api::Logger::Logger(const NdnLoggerDetailLevel& logLevel,
+                        const std::string& logFile):
+isWritingLogEntry_(false),
+currentEntryLogType_(NdnLoggerLevelTrace),
+logLevel_(logLevel),
+logFile_(logFile),
+outStream_(&std::cout),
+logMutex_(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
+{
+    if (logFile_ != "")
+    {
+        outStream_ = new std::ofstream();
+        getOutFileStream().open(logFile_.c_str(),
+                                std::ofstream::out | std::ofstream::trunc);
+        lastFlushTimestampMs_ = getMillisecondTimestamp();
+    }    
+}
+new_api::Logger::~Logger()
+{
+    if (getOutStream() != std::cout)
+    {
+        getOutFileStream().flush();
+        getOutFileStream().close();
+    }
+}
 
+//******************************************************************************
+#pragma mark - public
+new_api::Logger&
+new_api::Logger::log(const NdnLogType& logType,
+                     const ndnlog::new_api::ILoggingObject* loggingInstance,
+                     const std::string& locationFile,
+                     const int& locationLine)
+{
+    lockStreamExclusively();
+    
+    if (isWritingLogEntry_ &&
+        currentEntryLogType_ >= (NdnLogType)logLevel_)
+        *this << std::endl;
+    
+    unlockStream();
+    
+    bool shouldIgnore = (loggingInstance != nullptr &&
+                            !loggingInstance->isLoggingEnabled());
+    
+    if (!shouldIgnore &&
+        logType >= (NdnLogType)logLevel_)
+    {
+        lockStreamExclusively();
+        
+        isWritingLogEntry_ = true;
+        currentEntryLogType_ = logType;
+        
+        // LogEntry header has the following format:
+        // <timestamp> <log_level> - <logging_instance> [<location_file>:<location_line>] ":"
+        // log location info is enabled only for debug levels less than INFO
+        getOutStream() << getMillisecondTimestamp() << " [" << stringify(logType) << "]";
+        
+        if (loggingInstance)
+            getOutStream() << "[" << loggingInstance->getDescription() << "]";
+        
+        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
+            locationFile != "" &&
+            locationLine >= 0)
+            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
+        
+        getOutStream() << ": ";
+        
+        if (getOutStream() != std::cout)
+        {
+            if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
+                getOutStream().flush();
+        }
+    }
+    
+    return *this;
+}
+
+//******************************************************************************
+#pragma mark - static
+new_api::Logger& new_api::Logger::getLogger(const std::string &logFile)
+{
+    std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
+    Logger *logger;
+    
+    if (it == loggers_.end())
+    {
+        logger = new Logger(NdnLoggerDetailLevelAll, logFile);
+        loggers_[logFile] = logger;
+    }
+    else
+        logger = it->second;
+    
+    return *logger;
+}
+
+void new_api::Logger::destroyLogger(const std::string &logFile)
+{
+    std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
+    
+    if (it != loggers_.end())
+        delete it->second;
+}
+
+//******************************************************************************
+#pragma mark - private
+std::string new_api::Logger::stringify(NdnLoggerLevel lvl)
+{
+    static std::string lvlToString[] = {
+        [NdnLoggerLevelTrace] =     "TRACE",
+        [NdnLoggerLevelDebug] =     "DEBUG",
+        [NdnLoggerLevelInfo] =      "INFO ",
+        [NdnLoggerLevelWarning] =   "WARN ",
+        [NdnLoggerLevelError] =     "ERROR"
+    };
+    
+    return lvlToString[lvl];
+}
+
+int64_t new_api::Logger::getMillisecondTimestamp()
+{
+#if 0
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+    
+    return ticks;
+#endif
+    
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    int64_t ticks = 0;
+    
+#if 0
+    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
+#else
+    static mach_timebase_info_data_t timebase;
+    if (timebase.denom == 0) {
+        // Get the timebase if this is the first time we run.
+        // Recommended by Apple's QA1398.
+        kern_return_t retval = mach_timebase_info(&timebase);
+        if (retval != KERN_SUCCESS) {
+            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
+            // Then replace this with a CHECK(retval == KERN_SUCCESS);
+            asm("int3");
+        }
+    }
+    // Use timebase to convert absolute time tick units into nanoseconds.
+    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
+    ticks /= 1000000LL;
+#endif
+    
+    return ticks;
+}

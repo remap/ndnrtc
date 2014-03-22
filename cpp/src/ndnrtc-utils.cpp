@@ -13,6 +13,8 @@
 #include "ndnrtc-utils.h"
 #include <mach/mach_time.h>
 
+#include "endian.h"
+
 using namespace ndnrtc;
 using namespace webrtc;
 
@@ -30,10 +32,37 @@ typedef struct _DataRateMeter {
     int64_t lastCheckTime_;
 } DataRateMeter;
 
+typedef struct _MeanEstimator {
+    unsigned int sampleSize_;
+    int nValues_;
+    double prevValue_;
+    double valueMean_;
+    double valueMeanSq_;
+    double valueVariance_;
+    double currentMean_;
+    double currentDeviation_;
+} MeanEstimator;
+
+typedef struct _Filter {
+    double coeff_;
+    double filteredValue_;
+} Filter;
+
+typedef struct _InclineEstimator {
+    unsigned int meanEstimatorId_;
+    double lastValue_;
+    unsigned int sampleSize_;
+    unsigned int skipCounter_;
+} InclineEstimator;
+
 //********************************************************************************
 #pragma mark - all static
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
+static std::vector<MeanEstimator> meanEstimators_;
+static std::vector<Filter> filters_;
+static std::vector<InclineEstimator> inclineEstimators_;
+
 static VoiceEngine *VoiceEngineInstance = NULL;
 static Config AudioConfig;
 
@@ -59,8 +88,13 @@ int NdnRtcUtils::segmentNumber(const Name::Component &segmentNoComponent)
 
 int NdnRtcUtils::frameNumber(const Name::Component &frameNoComponent)
 {
-    std::vector<unsigned char> bytes = *frameNoComponent.getValue();
-    int valueLength = frameNoComponent.getValue().size();
+    return NdnRtcUtils::intFromComponent(frameNoComponent);
+}
+
+int NdnRtcUtils::intFromComponent(const Name::Component &comp)
+{
+    std::vector<unsigned char> bytes = *comp.getValue();
+    int valueLength = comp.getValue().size();
     int result = 0;
     unsigned int i;
     
@@ -73,7 +107,7 @@ int NdnRtcUtils::frameNumber(const Name::Component &frameNoComponent)
         result += (unsigned int)(digit - '0');
     }
     
-    return result;
+    return result;    
 }
 
 Name::Component NdnRtcUtils::componentFromInt(unsigned int number)
@@ -272,6 +306,175 @@ void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
     // nothing here yet
 }
 
+//******************************************************************************
+unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize,
+                                             double startValue)
+{
+    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, 0., 0., startValue, 0.};
+    
+    meanEstimators_.push_back(meanEstimator);
+    
+    return meanEstimators_.size()-1;
+}
+
+void NdnRtcUtils::meanEstimatorNewValue(unsigned int estimatorId, double value)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    MeanEstimator &estimator = meanEstimators_[estimatorId];
+    
+    estimator.nValues_++;
+    
+    if (estimator.nValues_ > 1)
+    {
+        double delta = (value - estimator.valueMean_);
+        estimator.valueMean_ += (delta/(double)estimator.nValues_);
+        estimator.valueMeanSq_ += (delta*delta);
+        
+        if (estimator.sampleSize_ == 0 ||
+            estimator.nValues_ % estimator.sampleSize_ == 0)
+        {
+            estimator.currentMean_ = estimator.valueMean_;
+            
+            if (estimator.nValues_ >= 2)
+            {
+                double variance = estimator.valueMeanSq_/(double)(estimator.nValues_-1);
+                estimator.currentDeviation_ = sqrt(variance);
+            }
+            
+            // flush nValues if sample size specified
+            if (estimator.sampleSize_)
+                estimator.nValues_ = 0;
+        }
+    }
+    else
+    {
+        estimator.valueMean_ = 0;
+        estimator.valueMeanSq_ = 0;
+        estimator.valueVariance_ = 0;
+    }
+    
+    estimator.prevValue_ = value;
+}
+
+double NdnRtcUtils::currentMeanEstimation(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return 0;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+    
+    return estimator.currentMean_;
+}
+
+double NdnRtcUtils::currentDeviationEstimation(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return 0;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+    
+    return estimator.currentDeviation_;
+}
+
+void NdnRtcUtils::releaseMeanEstimator(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    // nothing
+}
+
+//******************************************************************************
+unsigned int
+NdnRtcUtils::setupFilter(double coeff)
+{
+    Filter filter = {coeff, 0.};
+    filters_.push_back(filter);
+    return filters_.size()-1;
+}
+
+void
+NdnRtcUtils::filterNewValue(unsigned int filterId, double value)
+{
+    if (filterId < filters_.size())
+    {
+        Filter &filter = filters_[filterId];
+        
+        if (filter.filteredValue_ == 0)
+            filter.filteredValue_ = value;
+        else
+            filter.filteredValue_ += (value-filter.filteredValue_)*filter.coeff_;
+    }
+}
+
+double
+NdnRtcUtils::currentFilteredValue(unsigned int filterId)
+{
+    if (filterId < filters_.size())
+        return filters_[filterId].filteredValue_;
+    
+    return 0.;
+}
+
+void
+NdnRtcUtils::releaseFilter(unsigned int filterId)
+{
+    // do nothing
+}
+
+//******************************************************************************
+unsigned int
+NdnRtcUtils::setupInclineEstimator(unsigned int sampleSize)
+{
+    InclineEstimator ie;
+    ie.sampleSize_ = (sampleSize == 0)?1:sampleSize;
+    ie.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
+    ie.lastValue_ = 0.;
+    ie.skipCounter_ = 0;
+    inclineEstimators_.push_back(ie);
+    
+    return inclineEstimators_.size()-1;
+}
+
+void
+NdnRtcUtils::inclineEstimatorNewValue(unsigned int estimatorId, double value)
+{
+    if (estimatorId < inclineEstimators_.size())
+    {
+        InclineEstimator& ie = inclineEstimators_[estimatorId];
+        ie.skipCounter_ = (ie.skipCounter_+1)%ie.sampleSize_;
+        
+        if (!ie.skipCounter_)
+        {
+            // update everything
+            double incline = (value-ie.lastValue_)/(double)ie.sampleSize_;
+            
+            meanEstimatorNewValue(ie.meanEstimatorId_, incline);
+            ie.lastValue_ = value;
+        }
+    }
+}
+
+double
+NdnRtcUtils::currentIncline(unsigned int estimatorId)
+{
+    if (estimatorId < inclineEstimators_.size())
+    {
+        InclineEstimator& ie = inclineEstimators_[estimatorId];
+        return currentMeanEstimation(ie.meanEstimatorId_);
+    }
+    
+    return 0.;
+}
+
+void NdnRtcUtils::releaseInclineEstaimtor(unsigned int estimatorId)
+{
+    // tbd
+}
+
+//******************************************************************************
 webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
     if (!VoiceEngineInstance)
@@ -307,7 +510,7 @@ void NdnRtcUtils::releaseVoiceEngine()
     VoiceEngine::Delete(VoiceEngineInstance);
 }
 
-string NdnRtcUtils::stringFromFrameType(webrtc::VideoFrameType &frameType)
+string NdnRtcUtils::stringFromFrameType(const webrtc::VideoFrameType &frameType)
 {
     switch (frameType) {
         case webrtc::kDeltaFrame:
@@ -335,4 +538,49 @@ unsigned int NdnRtcUtils::toTimeMs(unsigned int frames,
                                    double fps)
 {
     return (unsigned int)ceil((double)frames/fps*1000.);
+}
+
+uint32_t NdnRtcUtils::generateNonceValue()
+{
+    uint32_t nonce = (uint32_t)std::rand();
+    
+    return nonce;
+}
+
+Blob NdnRtcUtils::nonceToBlob(const uint32_t nonceValue)
+{
+    uint32_t beValue = htobe32(nonceValue);
+    Blob b((uint8_t *)&beValue, sizeof(uint32_t));
+    return b;
+}
+
+uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
+{
+    if (blob.size() < sizeof(uint32_t))
+        return 0;
+    
+    uint32_t beValue = *(uint32_t *)blob.buf();
+    return be32toh(beValue);
+}
+
+std::string NdnRtcUtils::toString(const char *format, ...)
+{
+    std::string str = "";
+    
+    if (format)
+    {
+        char *stringBuf = (char*)malloc(256);
+        memset((void*)stringBuf, 0, 256);
+        
+        va_list args;
+        
+        va_start(args, format);
+        vsprintf(stringBuf, format, args);
+        va_end(args);
+        
+        str = string(stringBuf);
+        free(stringBuf);
+    }
+    
+    return str;
 }

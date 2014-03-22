@@ -38,7 +38,9 @@ namespace ndnrtc
         // overriden
         void playbackPacket(int64_t packetTsLocal);
         void switchToMode(NdnVideoReceiver::ReceiverMode mode);
-        bool isLate(unsigned int frameNo);
+        bool isLate(const Name &prefix, const unsigned char *segmentData,
+                    int dataSz);
+        bool needMoreKeyFrames();
     };
 }
 

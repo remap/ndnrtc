@@ -17,34 +17,107 @@ using namespace ndnrtc;
 using namespace webrtc;
 
 //******************************************************************************
+#pragma mark - overriden
+int NdnVideoSender::init(const shared_ptr<Face> &face,
+                         const shared_ptr<ndn::Transport> &transport)
+{
+    int res = MediaSender::init(face, transport);
+    
+    if (RESULT_FAIL(res))
+        return res;
+    
+    shared_ptr<string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    
+    keyFramesPrefix_.reset(new Name(*keyPrefixString));
+    keyFrameNo_ = -1;
+
+    return RESULT_OK;
+}
+
+//******************************************************************************
 #pragma mark - intefaces realization
-void NdnVideoSender::onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
     // update packet rate meter
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
-    
-    // send frame over NDN
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
-    // 0. copy frame into transport data object
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate()};
+    // determine, whether we should publish under key or delta namespaces
+    bool isKeyFrame = encodedImage._frameType == webrtc::kKeyFrame;
+    
+    if (isKeyFrame)
+        keyFrameNo_++;
+    
+    shared_ptr<Name> framePrefix = (isKeyFrame)?keyFramesPrefix_:packetPrefix_;
+    FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
+    
+    // copy frame into transport data object
+    PacketData::PacketMetadata metadata;
+    metadata.packetRate_ = getCurrentPacketRate();
+    metadata.timestamp_ = encodedImage.capture_time_ms_;
+    
+    PrefixMetaInfo prefixMeta;
+    prefixMeta.playbackNo_ = packetNo_;
+    prefixMeta.pairedSequenceNo_ = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
+    
     NdnFrameData frameData(encodedImage, metadata);
     
-    if (RESULT_GOOD(publishPacket(frameData.getLength(),
-                                  const_cast<unsigned char*>(frameData.getData()))))
+    if (RESULT_GOOD(publishPacket(frameData,
+                                  framePrefix,
+                                  frameNo,
+                                  prefixMeta)))
     {
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
-        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
-             getFrameNo(),
-             (encodedImage._frameType == webrtc::kKeyFrame),
-             publishingTime,
-             frameData.getLength(),
-             encodedImage.capture_time_ms_,
-             getCurrentPacketRate());
+//        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
+//             getFrameNo(),
+//             isKeyFrame,
+//             publishingTime,
+//             frameData.getLength(),
+//             encodedImage.capture_time_ms_,
+//             getCurrentPacketRate());
+
+        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+        << "published " << packetNo_ << " "
+        << " keyNo " << keyFrameNo_ << " "
+        << (isKeyFrame?"K":"D") << " "
+        << publishingTime << " "
+        << frameData.getLength() << " "
+        << encodedImage.capture_time_ms_ << " "
+        << getCurrentPacketRate() << endl;
+        
+        if (!isKeyFrame)
+//            keyFrameNo_++;
+//        else
+            deltaFrameNo_++;
+
+        // increment packet number regardless of key/delta condition
+        // in this case we can preserve that key frames can have numbers in
+        // delta namespace as well
         packetNo_++;
     }
     else
     {
-        notifyError(RESULT_ERR, "were not able to publish frame %d", getFrameNo());
+        notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
+                    getFrameNo(), (isKeyFrame)?"YES":"NO");
+    }
+}
+
+void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
+                             const shared_ptr<const Interest>& interest,
+                             ndn::Transport& transport)
+{
+    const Name& name = interest->getName();
+    PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
+    bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
+    
+    if (packetNo > (isKeyNamespace)?keyFrameNo_:deltaFrameNo_)
+    {
+        addToPit(interest);
+    }
+    else
+    {
+        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
+        << "interest for old " << name << endl;
     }
 }

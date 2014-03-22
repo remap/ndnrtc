@@ -48,6 +48,7 @@ namespace ndnrtc {
     public:
         NdnAudioReceiveChannel(const ParamsStruct &params,
                                webrtc::VoiceEngine *voiceEngine);
+        ~NdnAudioReceiveChannel();
         
         int init(shared_ptr<Face> &face);
         int start();
@@ -58,6 +59,11 @@ namespace ndnrtc {
             audioReceiver_->setAVSynchronizer(avSync);
         }
         void getStatistics(ReceiverChannelPerformance &stat);
+        void setLogger(NdnLogger *logger)
+        {
+            LoggerObject::setLogger(logger);
+            audioReceiver_->setLogger(logger);
+        }
         
     protected:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data);
@@ -71,20 +77,20 @@ namespace ndnrtc {
     {
     public:
         NdnAudioSendChannel(const ParamsStruct &params,
-                            webrtc::VoiceEngine *voiceEngine):
-            NdnAudioChannel(params, voiceEngine)
-        {
-            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
-                                          "publish-achannel-%s.log",
-                                          params.producerId));
-            isLoggerCreated_ = true;
-        }
+                            webrtc::VoiceEngine *voiceEngine);
+        ~NdnAudioSendChannel();
         
-        int init(shared_ptr<ndn::Transport> &transport);
+        int init(const shared_ptr<Face> &face,
+                 const shared_ptr<ndn::Transport> &transport);
         int start();
         int stop();
         
         void getStatistics(SenderChannelPerformance &stat);
+        void setLogger(NdnLogger *logger)
+        {
+            LoggerObject::setLogger(logger);
+            audioSender_->setLogger(logger);
+        }
         
     protected:
         // webrtc::Transport interface

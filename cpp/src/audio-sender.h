@@ -27,7 +27,8 @@ namespace ndnrtc
         static int getStreamControlPrefix(const ParamsStruct &params,
                                           string &prefix);
         
-        int init(const shared_ptr<ndn::Transport> transport);
+        int init(const shared_ptr<Face> &face,
+                 const shared_ptr<ndn::Transport> &transport);
         int publishRTPAudioPacket(unsigned int len, unsigned char *data);
         int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
         
@@ -36,6 +37,18 @@ namespace ndnrtc
     private:
         unsigned int rtcpPacketNo_;
         shared_ptr<Name> rtcpPacketPrefix_;
+        
+        /**
+         * Publishes specified data under the prefix, determined by the
+         * parameters provided upon callee creation and by the current packet
+         * number, specified in packetNo_ variable of the class.
+         */
+        int publishPacket(const PacketData &packetData,
+                          PrefixMetaInfo prefixMeta = {0,0,0})
+        {
+            return MediaSender::publishPacket(packetData, packetPrefix_, packetNo_,
+                                 prefixMeta);
+        }
     };
 }
 

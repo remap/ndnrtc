@@ -11,9 +11,13 @@
 #ifndef __ndnrtc__media_sender__
 #define __ndnrtc__media_sender__
 
+#define NLOG_COMPONENT_NAME "NdnRtcSender"
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
+#include "frame-buffer.h"
+#include "segmentizer.h"
 
 namespace ndnrtc
 {
@@ -32,39 +36,49 @@ namespace ndnrtc
     class MediaSender : public NdnRtcObject
     {
     public:
-        MediaSender(){}
         MediaSender(const ParamsStruct &params);
         ~MediaSender();
         
-        static int getUserPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamFramePrefix(const ParamsStruct &params,
-                                        string &prefix);
-        static int getStreamKeyPrefix(const ParamsStruct &params,
-                                      string &prefix);
+        virtual int init(const shared_ptr<Face> &face,
+                         const shared_ptr<Transport> &transport);
+        virtual void stop();
         
-        virtual int init(const shared_ptr<Transport> transport);
         unsigned long int getPacketNo() { return packetNo_; }
         
         // encoded packets/second
         double getCurrentPacketRate() {
             return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
         }
-        
-        // bytes/second
-        double getDataRate() {
-            return NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
-        }
+
     protected:
-        // private attributes go here
+        typedef struct _PitEntry {
+            int64_t arrivalTimestamp_;
+            shared_ptr<const Interest> interest_;
+        } PitEntry;
+        
         shared_ptr<Transport> ndnTransport_;
         shared_ptr<KeyChain> ndnKeyChain_;
-        shared_ptr<Name> packetPrefix_;
+        shared_ptr<Face> ndnFace_;
         shared_ptr<Name> certificateName_;
+        shared_ptr<Name> packetPrefix_;
         
-        unsigned long int packetNo_ = 0; // sequential packet number
+        PacketNumber packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
-        unsigned int dataRateMeter_, packetRateMeter_;
+        unsigned int packetRateMeter_;
+        unsigned int dataRateMeter_;
+
+        // comparator greater is specified in order to use upper_bound method
+        // of the map
+        map<Name, PitEntry> pit_;
+        webrtc::CriticalSectionWrapper &pitCs_;
+        
+        bool isProcessing_ = false;
+        webrtc::ThreadWrapper &faceThread_;
+        static bool processEventsRoutine(void *obj)
+        {
+            return ((MediaSender*)obj)->processEvents();
+        }
+        bool processEvents();
 
         /**
          * Publishes specified data in the ndn network under specified prefix by
@@ -81,20 +95,22 @@ namespace ndnrtc
          * @return Number of segments used for publishing data or RESULT_FAIL on 
          *          error
          */
-        int publishPacket(unsigned int len,
-                          const unsigned char *packetData,
+        int publishPacket(const PacketData &packetData,
                           shared_ptr<Name> prefix,
-                          unsigned int packetNo);
-        /**
-         * Publishes specified data under the prefix, determined by the
-         * parameters provided upon callee creation and for the current packet 
-         * number, specified in packetNo_ variable of the class.
-         */
-        int publishPacket(unsigned int len,
-                          const unsigned char *packetData)
-        {
-            return publishPacket(len, packetData, packetPrefix_, packetNo_);
-        }
+                          PacketNumber packetNo,
+                          PrefixMetaInfo prefixMeta);
+        
+        // ndn-cpp callbacks
+        virtual void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
+        
+        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+        void registerPrefix();
+        
+        void addToPit(const shared_ptr<const Interest>& interest);
+        void lookupPrefixInPit(const Name &prefix,
+                               SegmentData::SegmentMetaInfo &metaInfo);
     };
 }
 

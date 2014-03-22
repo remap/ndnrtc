@@ -22,9 +22,7 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
                                            string &prefix)
 {
     int res = RESULT_OK;
-    string streamPrefix;
-    
-    MediaSender::getStreamPrefix(params, streamPrefix);
+    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
     string streamThread = ParamsStruct::validate(params.streamThread,
                                                  DefaultParamsAudio.streamThread,
@@ -33,12 +31,13 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
 #if 0
     string rtcpSuffix = "control";
 #else
-    string rtcpSuffix = NdnRtcNamespace::NdnRtcNamespaceComponentStreamFrames;
+    string rtcpSuffix = NdnRtcNamespace::NameComponentStreamFrames;
 #endif
     prefix = *NdnRtcNamespace::buildPath(false,
-                                         &streamPrefix,
+                                         &(*streamPrefix),
                                          &streamThread,
                                          &rtcpSuffix,
+                                         &NdnRtcNamespace::NameComponentStreamFramesDelta,
                                          NULL);
     
     return res;
@@ -46,11 +45,12 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
 
 //******************************************************************************
 #pragma mark - public
-int NdnAudioSender::init(const shared_ptr<ndn::Transport> transport)
+int NdnAudioSender::init(const shared_ptr<Face> &face,
+                         const shared_ptr<ndn::Transport> &transport)
 {
     int res = RESULT_OK;
     
-    res = MediaSender::init(transport);
+    res = MediaSender::init(face, transport);
     
     if (RESULT_FAIL(res))
         return res;
@@ -72,10 +72,10 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
     
     NdnAudioData::AudioPacket packet {false, NdnRtcUtils::millisecondTimestamp(),
         len, data};
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate()};
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
     NdnAudioData adata(packet, metadata);
     
-    publishPacket(adata.getLength(), adata.getData());
+    publishPacket(adata);
     packetNo_++;
     
     return 0;
@@ -85,9 +85,10 @@ int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data
 {
     NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
         len, data};
-    NdnAudioData adata(packet);
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
+    NdnAudioData adata(packet, metadata);
     
-    publishPacket(adata.getLength(), adata.getData());
+    publishPacket(adata);
     packetNo_++;
     
     return 0;

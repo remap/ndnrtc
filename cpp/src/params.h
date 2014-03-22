@@ -11,7 +11,11 @@
 #ifndef ndnrtc_NdnParams_h
 #define ndnrtc_NdnParams_h
 
-#include "ndnrtc-common.h"
+#include <cstdlib>
+#include <sstream>
+
+#include "simple-log.h"
+#include "ndnrtc-defines.h"
 
 #define PARAM_OK(p, l, r) (p >= l && p <= r)
 
@@ -38,7 +42,7 @@ namespace ndnrtc
     
 
     typedef struct _ParamsStruct {
-        NdnLoggerDetailLevel loggingLevel;
+        ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
         bool useTlv;
         
@@ -65,7 +69,8 @@ namespace ndnrtc
         const char *streamName;
         const char *streamThread;
         const char *ndnHub;
-        unsigned int segmentSize, freshness, producerRate;
+        unsigned int segmentSize, freshness;
+        double producerRate;
         
         // ndn consumer
         unsigned int playbackRate;
@@ -124,12 +129,12 @@ namespace ndnrtc
             if (RESULT_NOT_OK(result))
                 res = result;
             
-            return string((RESULT_GOOD(result)?param:defParam));
+            return std::string((RESULT_GOOD(result)?param:defParam));
         }
     } ParamsStruct;
     
     static ParamsStruct DefaultParams = {
-        NdnLoggerDetailLevelDebug,    // log level
+        ndnlog::NdnLoggerDetailLevelDebug,    // log level
         "ndnrtc.log",                   // log file
         true,   // use TLV encoding
         
@@ -143,7 +148,7 @@ namespace ndnrtc
         
         30,     // codec framerate
         60,     // gop
-        2000,    // codec start bitrate
+        1000,    // codec start bitrate
         10000,   // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
@@ -156,7 +161,7 @@ namespace ndnrtc
         "testuser",     // producer id
         "video0",       // stream name
         "vp8",          // stream thread name
-        "ndn/ucla.edu/apps",     // ndn hub
+        "ndn/edu/ucla/apps",     // ndn hub
         1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
         5,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
@@ -165,13 +170,13 @@ namespace ndnrtc
         5,      // interest timeout
         90,     // assembling buffer size
         16000,  // frame buffer slot size
-        300       // jitter buffer size in ms
+        150       // jitter buffer size in ms
     };
     
     // only some parameters are used for audio configuration (those that are
     // not 0's/empty strings)
     static ParamsStruct DefaultParamsAudio = {
-        NdnLoggerDetailLevelNone,    // log level
+        ndnlog::NdnLoggerDetailLevelNone,    // log level
         "",                   // log file
         true,  // use TLV encoding
         
@@ -197,7 +202,7 @@ namespace ndnrtc
         "testuser",     // producer id
         "audio0",       // stream name
         "pcmu2",          // stream thread name
-        "ndn/ucla.edu/apps",     // ndn hub
+        "ndn/edu/ucla/apps",     // ndn hub
         1054,   // segment size for media frame
         5,      // data freshness (seconds) value
         50,     // producer rate (currently equal to playback rate)
@@ -206,7 +211,7 @@ namespace ndnrtc
         2,      // interest timeout
         90,     // assembling buffer size
         1054,  // frame buffer slot size
-        300      // jitter buffer size in ms
+        200      // jitter buffer size in ms
     };
 
 }

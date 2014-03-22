@@ -68,7 +68,8 @@ namespace ndnrtc {
     class IEncodedFrameConsumer
     {
     public:
-        virtual void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage) = 0;
+        virtual void
+        onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage) = 0;
     };
 }
 

@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 
 //#undef NDN_LOGGING
+
 #include <tr1/unordered_set>
 #include "playout-buffer.h"
 
@@ -177,7 +178,7 @@ int PlayoutBuffer::releaseAcquiredSlot()
         playheadPointer_++;
     }
     
-    checkLateFrames();
+//    checkLateFrames();
     
     if (this->callback_)
         this->callback_->onPlayheadMoved(playheadPointer_, missingFrame_);
@@ -189,11 +190,11 @@ int PlayoutBuffer::releaseAcquiredSlot()
 #pragma mark - private
 bool PlayoutBuffer::processFrameProvider()
 {
-    int eventsMask = FrameBuffer::Event::EventTypeReady;
+    int eventsMask = FrameBuffer::Event::Ready;
     FrameBuffer::Event ev = frameBuffer_->waitForEvents(eventsMask);
     
     switch (ev.type_) {
-        case FrameBuffer::Event::EventTypeReady:
+        case FrameBuffer::Event::Ready:
         {
             {
                 CriticalSectionScoped scopedCs(&playoutCs_);
@@ -213,7 +214,7 @@ bool PlayoutBuffer::processFrameProvider()
                 }
             }
             
-            frameBuffer_->lockSlot(ev.frameNo_);
+            frameBuffer_->lockSlot(ev.slot_->getFrameNumber());
             framePointer_ = jitterBuffer_.top()->getFrameNumber();
             
             if (callback_)
@@ -237,8 +238,8 @@ bool PlayoutBuffer::processFrameProvider()
                     break;
             }
             
-            DBG("[PLAYOUT] ADDED frame %d to jitter (size %d)", ev.frameNo_,
-                jitterBuffer_.size());
+            DBG("[PLAYOUT] ADDED frame %d to jitter (size %d)",
+                ev.slot_->getFrameNumber(), jitterBuffer_.size());
         }
             break;
         default: // error
@@ -499,6 +500,7 @@ int PlayoutBuffer::getAdaptedPlayoutTime(int playoutTimeMs, int jitterSize)
 
 void PlayoutBuffer::checkLateFrames()
 {
+#if 0
     webrtc::CriticalSectionScoped scopedCs(&playoutCs_);
     
     int deadlineFrameNo = playheadPointer_ + DeadlineBarrierCoeff*minJitterSize_;
@@ -529,6 +531,7 @@ void PlayoutBuffer::checkLateFrames()
         else
             TRACE("[PLAYOUT-WATCH] no slot for %d", frameNo);
     } // for
+#endif
 }
 
 void PlayoutBuffer::resetData()
@@ -581,11 +584,12 @@ void JitterTiming::stop()
 int64_t JitterTiming::startFramePlayout()
 {
     int64_t processingStart = NdnRtcUtils::microsecondTimestamp();
-    TRACE("PROCESSING START: %ld", processingStart);
+//    TRACE("PROCESSING START: %ld", processingStart);
+    LogTraceC() << "processing start " << processingStart << endl;
     
     if (playoutTimestampUsec_ == 0)
     {
-        TRACE("[PLAYOUT] init jitter timing");
+        LogTraceC() << "init jitter timing" << endl;
         playoutTimestampUsec_ = NdnRtcUtils::microsecondTimestamp();
     }
     else
@@ -593,7 +597,7 @@ int64_t JitterTiming::startFramePlayout()
         int64_t prevIterationProcTimeUsec = processingStart -
         playoutTimestampUsec_;
         
-        TRACE("[PLAYOUT] prev iteration time %ld", prevIterationProcTimeUsec);
+        LogTraceC() << "prev iteration time " << prevIterationProcTimeUsec << endl;
         
         // substract frame playout delay
         if (prevIterationProcTimeUsec >= framePlayoutTimeMs_*1000)
@@ -602,11 +606,11 @@ int64_t JitterTiming::startFramePlayout()
             // should not occur!
             assert(0);
         
-        TRACE("[PLAYOUT] prev iter proc time %ld", prevIterationProcTimeUsec);
+        LogTraceC() << "prev iter proc time " << prevIterationProcTimeUsec << endl;
         
         // add this time to the average processing time
         processingTimeUsec_ += prevIterationProcTimeUsec;
-        TRACE("[PLAYOUT] proc time %ld", prevIterationProcTimeUsec);
+        LogTraceC() << "proc time " << prevIterationProcTimeUsec << endl;
         
         playoutTimestampUsec_ = processingStart;
     }
@@ -616,24 +620,23 @@ int64_t JitterTiming::startFramePlayout()
 
 void JitterTiming::updatePlayoutTime(int framePlayoutTime)
 {
-    TRACE("producer playout time %ld", framePlayoutTime);
+    LogTraceC() << "producer playout time " << framePlayoutTime << endl;
     
     int playoutTimeUsec = framePlayoutTime*1000;
     if (playoutTimeUsec < 0) playoutTimeUsec = 0;
     
     if (processingTimeUsec_ >= 1000)
     {
-        TRACE("[PLAYOUT] accomodate processing time %ld",
-              processingTimeUsec_);
+        LogTraceC() <<"accomodate processing time " << processingTimeUsec_ << endl;
         
         int processingUsec = (processingTimeUsec_/1000)*1000;
         
-        TRACE("[PLAYOUT] processing %d", processingUsec);
+        LogTraceC() << "processing " << processingUsec << endl;
         
         if (processingUsec > playoutTimeUsec)
         {
-            TRACE("[PLAYOUT] skipping frame. processing %d, playout %d",
-                  processingUsec, playoutTimeUsec);
+            LogTraceC() << "skipping frame. processing " << processingUsec
+            << " playout " << playoutTimeUsec << endl;
             
             processingUsec = playoutTimeUsec;
             playoutTimeUsec = 0;
@@ -642,8 +645,8 @@ void JitterTiming::updatePlayoutTime(int framePlayoutTime)
             playoutTimeUsec -= processingUsec;
         
         processingTimeUsec_ = processingTimeUsec_ - processingUsec;
-        TRACE("[PLAYOUT] playout usec %d, processing %ld",
-              playoutTimeUsec, processingTimeUsec_);
+        LogTraceC() << "playout usec " << playoutTimeUsec
+        << " processing " << processingTimeUsec_ << endl;
     }
     
     framePlayoutTimeMs_ = playoutTimeUsec/1000;
@@ -654,13 +657,13 @@ void JitterTiming::runPlayoutTimer()
     assert(framePlayoutTimeMs_ >= 0);
     if (framePlayoutTimeMs_ > 0)
     {
-        TRACE("TIMER WAIT %d", framePlayoutTimeMs_);
+        LogTraceC() << "timer wait " << framePlayoutTimeMs_ << endl;
         playoutTimer_.StartTimer(false, framePlayoutTimeMs_);
         playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
-        TRACE("TIMER DONE");
+        LogTraceC() << "timer done " << endl;
     }
     else
-        TRACE("playout time zero - skipping frame");
+        LogTraceC() << "skipping frame" << endl;
 }
 
 //******************************************************************************

@@ -6,8 +6,10 @@ digraph ndnrtc {
 "/<root>/ndnrtc/user/<producer-id>/"	-> access;
 "/<root>/ndnrtc/user/<producer-id>/"	-> streams;
 
-//session	-> access;
-//session -> info;
+access [peripheries=2]
+
+# session	-> access;
+# session -> info;
 
 streams -> audio0;
 streams -> video0;
@@ -17,26 +19,42 @@ codec1 [label="vp8-1024"];
 codec2 [label="vp8-640"];
 codec3 [label="vp8-370"];
 
-key1 [label="key"];
-key0 [label="key"];
+# key1 [label="key"]; 
+# key0 [label="key"];
+root->empty [style="invis"]
+empty->stream [style="invis"]
+stream->quality [style="invis"]
+quality->encoding [style="invis"]
+encoding->packet [style="invis"]
+packet->segment [style="invis"]
 
-video0 -> key1;
+empty [style="invis"]
+root [shape=none, fontname="times-italic"]
+stream [shape=none , fontname="times-italic"]
+quality [shape=none, fontname="times-italic"]
+encoding [shape=none, fontname="times-italic"]
+packet [shape=none, fontname="times-italic"]
+segment [shape=none, fontname="times-italic"]
+
+video0 -> "sym-key";
 video0 -> codec1;
 video0 -> codec2;
 video0 -> codec3;
 
-acodec1 [label="pcm-2-44"];
+"sym-key" [peripheries=2];
+
+# acodec1 [label="pcm-2-44"];
 acodec3 [label="mp3-128"];
 
-audio0 -> key0;
-audio0 -> acodec1;
+# audio0 -> key0;
+# audio0 -> acodec1;
 audio0 -> acodec3;
 
 
 //codec2 -> info;
 codec2 -> frames;
 
-info_codec [label="info"];
+info_codec [label="codec info"];
 codec2 -> info_codec;
 //codec2 -> index [color=red];
 

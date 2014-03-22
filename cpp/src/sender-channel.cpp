@@ -91,11 +91,10 @@ int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
             transport.reset(new TcpTransport());
             face.reset(new Face(transport, connInfo));
             
-            std::string streamAccessPrefix;
-            res = MediaSender::getStreamKeyPrefix(params, streamAccessPrefix);
+            shared_ptr<string> streamAccessPrefix = NdnRtcNamespace::getStreamKeyPrefix(params);
             
-            if (RESULT_GOOD(res))
-                face->registerPrefix(Name(streamAccessPrefix.c_str()),
+            if (streamAccessPrefix.get())
+                face->registerPrefix(Name(streamAccessPrefix->c_str()),
                                      bind(&NdnMediaChannel::onInterest,
                                           callbackListener, _1, _2, _3),
                                      bind(&NdnMediaChannel::onRegisterFailed,
@@ -103,8 +102,8 @@ int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
         }
         else
         {
-            LOG_NDNERROR("malformed parameters for host/port: %s, %d", params.host,
-                         params.portNum);
+            LOG_NDNERROR("malformed parameters for host/port: %s, %d",
+                         params.host, params.portNum);
             return RESULT_ERR;
         }
     }
@@ -151,11 +150,7 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
     this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "publish-%s.log",
                                   params.producerId));
     isLoggerCreated_ = true;
-    
-    cc_->setLogger(logger_);
-    localRender_->setLogger(logger_);
-    coder_->setLogger(logger_);
-    
+        
     cc_->setObserver(this);
     localRender_->setObserver(this);
     coder_->setObserver(this);
@@ -212,13 +207,13 @@ int NdnSenderChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video encoder");
         
-        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(ndnTransport_));
+        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(ndnFace_, ndnTransport_));
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video sender");
     }
     
     { // initialize audio
-        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioTransport_));
+        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioFace_, ndnAudioTransport_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         
@@ -321,7 +316,7 @@ int NdnSenderChannel::stopTransmission()
 
 void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
+//    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
     stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
     stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
@@ -372,6 +367,6 @@ bool NdnSenderChannel::process()
         }
         deliver_cs_->Leave();
     }
-    // We're done!
+
     return true;
 }

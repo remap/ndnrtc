@@ -11,8 +11,6 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
-//#define USE_FRAME_LOGGER
-
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
 #include "video-coder.h"
@@ -41,12 +39,22 @@ namespace ndnrtc
         {
         }
         
+        // overriden from base class
+        int init(const shared_ptr<Face> &face,
+                 const shared_ptr<ndn::Transport> &transport);
+        
         unsigned long int getFrameNo() { return getPacketNo(); }
         
         // interface conformance
-        void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
+        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage);
         
     private:
+        int keyFrameNo_ = 0, deltaFrameNo_ = 0;
+        shared_ptr<Name> keyFramesPrefix_;
+        
+        void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

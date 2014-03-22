@@ -143,7 +143,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         checkParams(p, resP);
         checkAParams(ap, resAudioP);
     }
-#if 0
+
     {// check for default params
         ParamsStruct resP, resAudioP;
         
@@ -155,10 +155,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         checkParams(DefaultParams, resP);
         checkAParams(DefaultParamsAudio, resAudioP);
     }
+
     {// check custom params
         ParamsStruct p = {
             NdnLoggerDetailLevelNone,    // log level
             "file.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             320,    // capture width
@@ -190,12 +192,14 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             15,     // playback rate of local consumer
             3,      // interest timeout
             30,     // incoming framebuffer size
-            15000  // frame buffer slot size
+            15000,  // frame buffer slot size
+            300
         };
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
             "ndnrtc.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             0,    // capture width
@@ -220,14 +224,15 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             "audio",       // stream name
             "mp3",          // stream thread name
             "ndn/apps",     // ndn hub
-            1000,   // segment size for media frame
+            1054,   // segment size for media frame
             4,      // data freshness (seconds) value
             20,     // producer rate (currently equal to playback rate)
             
             20,     // playback rate of local consumer
             2,      // interest timeout
-            20,     // incoming framebuffer size
-            1500  // frame buffer slot size
+            120,     // incoming framebuffer size
+            1500,  // frame buffer slot size
+            300
         };
 
         library_->configure(p, ap);
@@ -243,10 +248,12 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         checkParams(p, resP);
         checkAParams(ap, resAudioP);
     }
+
     {// check recoverable params
         ParamsStruct p = {
             NdnLoggerDetailLevelNone,    // log level
             "file.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             489289,    // capture width
@@ -278,12 +285,14 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0xffff,     // playback rate of local consumer
             3,      // interest timeout
             30,     // incoming framebuffer size
-            0  // frame buffer slot size
+            0,  // frame buffer slot size
+            300
         };
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
             "ndnrtc.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             0,    // capture width
@@ -315,7 +324,8 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0,     // playback rate of local consumer
             2,      // interest timeout
             20,     // incoming framebuffer size
-            1  // frame buffer slot size
+            1,  // frame buffer slot size
+            300
         };
         
         library_->configure(p, ap);
@@ -325,6 +335,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         ParamsStruct p = {
             NdnLoggerDetailLevelNone,    // log level
             "file.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             489289,    // capture width
@@ -356,12 +367,14 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             0xffff,     // playback rate of local consumer
             3,      // interest timeout
             30,     // incoming framebuffer size
-            15000  // frame buffer slot size
+            15000,  // frame buffer slot size
+            300
         };
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
             "ndnrtc.log",                   // log file
+            true, // use TLV
             
             0,      // capture device id
             0,    // capture width
@@ -393,13 +406,14 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
             20,     // playback rate of local consumer
             2,      // interest timeout
             20,     // incoming framebuffer size
-            1500  // frame buffer slot size
+            1500, // frame buffer slot size
+            300
         };
         
         library_->configure(p, ap);
         EXPECT_STREQ("error", receivedState_.c_str());
     }
-#endif
+
 }
 
 TEST_F(NdnRtcLibraryTester, TestStartPublishingTwice)

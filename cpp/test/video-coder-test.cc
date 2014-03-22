@@ -61,7 +61,7 @@ public:
         receivedBytes_ += encodedImage._length;
         NdnRtcUtils::dataRateMeterMoreData(bitrateMeter_, encodedImage._length);
         
-        cout << frameNo_ << "\t" << getBitratePerSec() << "\t" << encodedImage._length << endl;
+//        cout << frameNo_ << "\t" << getBitratePerSec() << "\t" << encodedImage._length << endl;
     }
     
 protected:

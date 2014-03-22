@@ -63,8 +63,8 @@ TEST(NdnRtcNamespace, TestUserPrefix)
         memset(str, 0, 256);
         sprintf(str, "/%s/%s/%s/%s",
                 hub.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                NdnRtcNamespace::NameComponentApp.c_str(),
+                NdnRtcNamespace::NameComponentUser.c_str(),
                 producerId.c_str());
         
         EXPECT_EQ(str,*(path.get()));
@@ -83,10 +83,10 @@ TEST(NdnRtcNamespace, TestStreamPath)
         
         memset(str, 0, 256);
         sprintf(str, "/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                NdnRtcNamespace::NameComponentApp.c_str(),
+                NdnRtcNamespace::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentUserStreams.c_str(),
+                NdnRtcNamespace::NameComponentUserStreams.c_str(),
                 stream.c_str());
         
         EXPECT_EQ(str,*(path.get()));
@@ -107,11 +107,11 @@ TEST(NdnRtcNamespace, TestKeyPath)
         memset(str, 0, 256);
         
         sprintf(str, "/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                NdnRtcNamespace::NameComponentApp.c_str(),
+                NdnRtcNamespace::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str());
+                NdnRtcNamespace::NameComponentStreamKey.c_str(),
+                NdnRtcNamespace::KeyComponent.c_str());
         LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
@@ -130,12 +130,12 @@ TEST(NdnRtcNamespace, TestCertPath)
         memset(str, 0, 256);
         
         sprintf(str, "/%s/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentApp.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentUser.c_str(),
+                NdnRtcNamespace::NameComponentApp.c_str(),
+                NdnRtcNamespace::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceComponentStreamKey.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceKeyComponent.c_str(),
-                NdnRtcNamespace::NdnRtcNamespaceCertificateComponent.c_str());
+                NdnRtcNamespace::NameComponentStreamKey.c_str(),
+                NdnRtcNamespace::KeyComponent.c_str(),
+                NdnRtcNamespace::CertificateComponent.c_str());
         LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
@@ -180,3 +180,173 @@ TEST(NdnRtcNamespace, TestNumberComponent)
             EXPECT_EQ(number[i], (*comp)[i]);
     }
 }
+
+TEST(NdnRtcNamespace, TestCheckComponents)
+{
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        
+        EXPECT_TRUE(NdnRtcNamespace::isDeltaFramesPrefix(prefix));
+        EXPECT_FALSE(NdnRtcNamespace::isKeyFramePrefix(prefix));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "user"));
+        EXPECT_FALSE(NdnRtcNamespace::hasComponent(prefix, "video"));
+        
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "video0"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "video0/"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "/video0"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "/video0/"));
+        
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "video0/vp8"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "video0/vp8/frames/"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "/video0/vp8/frames/"));
+        
+        EXPECT_FALSE(NdnRtcNamespace::hasComponent(prefix, "streams/video"));
+        EXPECT_FALSE(NdnRtcNamespace::hasComponent(prefix, "testuser/streams/video"));
+        EXPECT_TRUE(NdnRtcNamespace::hasComponent(prefix, "testuser/streams"));
+        EXPECT_FALSE(NdnRtcNamespace::hasComponent(prefix, "testuser//streams"));
+    }
+    
+    {
+         Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        
+        EXPECT_TRUE(NdnRtcNamespace::isKeyFramePrefix(prefix));
+        EXPECT_FALSE(NdnRtcNamespace::isDeltaFramesPrefix(prefix));
+    }
+}
+
+TEST(NdnRtcNamespace, TestHelperFunctions)
+{
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1");
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        prefix.appendFinalSegment(4);
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1");
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04/%C1.M.FINAL%00%06");
+        prefix.appendFinalSegment(4);
+        
+        EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    
+    {// no streams component
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/%00%04");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    {// no streams component
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/delta/1/%00%04");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    
+    { // no key/delta component
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/%00%04");
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
+        EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
+    }
+    
+    { // trim segment number
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        Name trimmedPrefix;
+        
+        EXPECT_LE(0, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix.getComponentCount()-1, trimmedPrefix.getComponentCount());
+        EXPECT_FALSE(prefix.toUri().find("%00%04") == std::string::npos);
+        EXPECT_TRUE(trimmedPrefix.toUri().find("%00%04") == std::string::npos);
+    }
+    { // trim segment number for key
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        Name trimmedPrefix;
+        
+        EXPECT_LE(0, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix.getComponentCount()-1, trimmedPrefix.getComponentCount());
+        EXPECT_FALSE(prefix.toUri().find("%00%04") == std::string::npos);
+        EXPECT_TRUE(trimmedPrefix.toUri().find("%00%04") == std::string::npos);
+    }
+    { // trim segment number for bad prefix 1
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/%00%04");
+        Name trimmedPrefix;
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix, trimmedPrefix);
+    }
+    { // trim segment number for bad prefix 2
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/key/1/%00%04");
+        Name trimmedPrefix;
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix, trimmedPrefix);
+    }
+    { // trim segment number for bad prefix 3
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/%00%04");
+        Name trimmedPrefix;
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix, trimmedPrefix);
+    }
+    { // trim segment number for bad prefix 4
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1");
+        Name trimmedPrefix;
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix, trimmedPrefix);
+    }
+    { // trim segment number for bad prefix 4
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key");
+        Name trimmedPrefix;
+        
+        EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
+        EXPECT_EQ(prefix, trimmedPrefix);
+    }
+}
+
+

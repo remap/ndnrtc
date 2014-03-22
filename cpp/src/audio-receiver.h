@@ -43,7 +43,6 @@ namespace ndnrtc
         
         // overriden
         void playbackPacket(int64_t packetTsLocal);
-        bool isLate(unsigned int frameNo);
     };
 }
 
