@@ -34,7 +34,9 @@ dataMeterId_(NdnRtcUtils::setupDataRateMeter(10)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
     if (!rttEstimation.get())
+    {
         rttEstimation_.reset(new RttEstimation());
+    }
 }
 
 Consumer::~Consumer()
@@ -55,7 +57,10 @@ Consumer::init()
         return notifyError(-1, "");
     
     frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(shared_from_this()));
-
+    frameBuffer_->setLogger(logger_);
+    frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
+                                                       getDescription().c_str()));
+    
     res = frameBuffer_->init();
 
     if (RESULT_FAIL(res))
@@ -63,7 +68,10 @@ Consumer::init()
     
 #warning error handling!
     bufferEstimator_->setMinimalBufferSize(params_.jitterSize);
+    
     pipeliner_.reset(new Pipeliner(shared_from_this()));
+    pipeliner_->setLogger(logger_);
+    
     chaseEstimation_.reset(new ChaseEstimation());
     bufferEstimator_.reset(new BufferEstimator());
     
@@ -102,6 +110,43 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat)
     
     stat.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
     stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
+    
+    playout_->getStatistics(stat);
+    interestQueue_->getStatistics(stat);
+    frameBuffer_->getStatistics(stat);
+}
+
+void
+Consumer::setLogger(ndnlog::new_api::Logger *logger)
+{
+    if (frameBuffer_.get())
+        frameBuffer_->setLogger(logger);
+    
+    if (pipeliner_.get())
+        pipeliner_->setLogger(logger);
+    
+    if (playout_.get())
+        playout_->setLogger(logger);
+    
+    interestQueue_->setLogger(logger);
+    rttEstimation_->setLogger(logger);
+    chaseEstimation_->setLogger(logger);
+    bufferEstimator_->setLogger(logger);
+    
+    ILoggingObject::setLogger(logger);
+}
+
+void
+Consumer::setDescription(const std::string &desc)
+{
+    rttEstimation_->setDescription(NdnRtcUtils::toString("%s-rtt-est",
+                                                         desc.c_str()));
+    chaseEstimation_->setDescription(NdnRtcUtils::toString("%s-chase-est",
+                                                           desc.c_str()));
+    bufferEstimator_->setDescription(NdnRtcUtils::toString("%s-buffer-est",
+                                                           desc.c_str()));
+    
+    ILoggingObject::setDescription(desc);
 }
 
 //******************************************************************************
@@ -109,6 +154,8 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat)
 void Consumer::onData(const shared_ptr<const Interest>& interest,
             const shared_ptr<Data>& data)
 {
+    LogTraceC << "data " << data->getName() << endl;
+    
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getContent().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
     
@@ -116,5 +163,7 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
 }
 void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
+    LogTraceC << "timeout " << interest->getName() << endl;
+    
     frameBuffer_->interestTimeout(*interest);
 }

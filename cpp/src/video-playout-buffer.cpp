@@ -14,6 +14,7 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
+#if 0
 //******************************************************************************
 //******************************************************************************
 #pragma mark - public
@@ -36,3 +37,4 @@ int VideoPlayoutBuffer::releaseAcquiredFrame()
 {
     return PlayoutBuffer::releaseAcquiredSlot();
 }
+#endif

@@ -17,12 +17,16 @@
 #define MAX_BUF_SIZE 4*256 // string buffer
 
 using namespace ndnlog;
+using namespace new_api;
 
 static char tempBuf[MAX_BUF_SIZE];
-static NdnLogger *sharedLogger = NULL;
+//static NdnLogger *sharedLogger = NULL;
 
 ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
 
+ndnlog::new_api::Logger* Logger::sharedInstance_ = nullptr;
+
+#if 0
 pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
 
 //********************************************************************************
@@ -251,6 +255,7 @@ void NdnLogger::log(const char *str)
       fflush(outLogStream_);
   }
 }
+#endif
 
 //******************************************************************************
 //******************************************************************************
@@ -371,7 +376,8 @@ std::string new_api::Logger::stringify(NdnLoggerLevel lvl)
         [NdnLoggerLevelDebug] =     "DEBUG",
         [NdnLoggerLevelInfo] =      "INFO ",
         [NdnLoggerLevelWarning] =   "WARN ",
-        [NdnLoggerLevelError] =     "ERROR"
+        [NdnLoggerLevelError] =     "ERROR",
+        [NdnLoggerLevelStat] =      "STAT "
     };
     
     return lvlToString[lvl];
@@ -414,3 +420,24 @@ int64_t new_api::Logger::getMillisecondTimestamp()
     
     return ticks;
 }
+
+//******************************************************************************
+//******************************************************************************
+ILoggingObject::ILoggingObject(const NdnLoggerDetailLevel& logLevel,
+                               const std::string& logFile):
+logger_(new Logger(logLevel, logFile)),
+isLoggerCreated_(true){
+}
+
+void
+ILoggingObject::setLogger(ndnlog::new_api::Logger *logger)
+{
+    if (logger_ && isLoggerCreated_)
+        delete logger_;
+    
+    isLoggerCreated_ = false;
+    logger_ = logger;
+}
+
+
+

@@ -28,16 +28,8 @@ namespace ndnrtc
     class NdnVideoSender : public MediaSender, public IEncodedFrameConsumer
     {
     public:
-        NdnVideoSender(const ParamsStruct &params):MediaSender(params)
-        {
-            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
-                                          "publish-vchannel-%s.log",
-                                          params.producerId));
-            isLoggerCreated_ = true;
-        }
-        ~NdnVideoSender()
-        {
-        }
+        NdnVideoSender(const ParamsStruct &params);
+        ~NdnVideoSender(){}
         
         // overriden from base class
         int init(const shared_ptr<Face> &face,

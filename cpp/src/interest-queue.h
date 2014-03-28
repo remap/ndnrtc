@@ -15,12 +15,14 @@
 #include "ndn-assembler.h"
 #include "ndnrtc-utils.h"
 #include "face-wrapper.h"
+#include "statistics.h"
 
 namespace ndnrtc {
     namespace new_api {
         class Consumer;
         
-        class InterestQueue {
+        class InterestQueue : public ndnlog::new_api::ILoggingObject
+        {
         public:
             
             class IPriority
@@ -61,6 +63,10 @@ namespace ndnrtc {
                                  const shared_ptr<IPriority>& priority,
                                  const OnData& onData = Assembler::defaultOnDataHandler(),
                                  const OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            
+            void
+            getStatistics(ReceiverChannelPerformance& stat);
+            
         private:
             class QueueEntry : public IPriority
             {
@@ -115,6 +121,7 @@ namespace ndnrtc {
             typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, IPriority::Comparator>
             PriorityQueue;
             
+            unsigned int freqMeterId_;
             shared_ptr<FaceWrapper> face_;
             webrtc::RWLockWrapper &queueAccess_;
             webrtc::EventWrapper &queueEvent_;

@@ -38,12 +38,15 @@ protected:
 TEST_F(NdnSenderChannelTest, CreateDelete)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     delete sc;
 }
 
 TEST_F(NdnSenderChannelTest, TestInit)
 {
+    p_.captureDeviceId = 1;
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     sc->setObserver(this);
     
     int res = sc->init();
@@ -52,7 +55,8 @@ TEST_F(NdnSenderChannelTest, TestInit)
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
-        LOG_TRACE("got error %s", obtainedEmsg_);
+        Logger::sharedInstance().log(NdnLoggerLevelError)
+        << "got error " << obtainedEmsg_ << endl;
     
     delete sc;
 }
@@ -60,6 +64,7 @@ TEST_F(NdnSenderChannelTest, TestInit)
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     
     sc->setObserver(this);
     ASSERT_EQ(RESULT_OK, sc->init());

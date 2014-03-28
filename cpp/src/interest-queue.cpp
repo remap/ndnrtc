@@ -31,6 +31,7 @@ onTimeoutCallback_(onTimeout)
 }
 
 InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face):
+freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
@@ -65,6 +66,11 @@ InterestQueue::enqueueInterest(const Interest& interest,
     queueEvent_.Set();
 }
 
+void
+InterestQueue::getStatistics(ReceiverChannelPerformance& stat)
+{
+    stat.interestFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(freqMeterId_);
+}
 
 //******************************************************************************
 #pragma mark - private
@@ -115,10 +121,14 @@ InterestQueue::watchQueue()
 
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
-{
-    LogTrace("interest-queue.log") << "express "
-        << entry.interest_->getName() << endl;
+{    
+    LogStatC
+    << "express\t" << entry.interest_->getName() << "\t"
+    << entry.getValue() << "\t"
+    << queue_.size() << "\t"
+    << entry.interest_->getInterestLifetimeMilliseconds() << endl;
     
+    NdnRtcUtils::frequencyMeterTick(freqMeterId_);
     face_->expressInterest(*(entry.interest_),
                            entry.onDataCallback_, entry.onTimeoutCallback_);
 }

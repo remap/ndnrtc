@@ -20,7 +20,7 @@ namespace ndnrtc {
             ~VideoPlayout();
             
         private:
-            void
+            bool
             playbackPacket(int64_t packetTsLocal);
         };
     }

@@ -17,13 +17,14 @@
 
 namespace ndnrtc
 {
+#if 0 // suspended    
     class IAudioPacketConsumer
     {
     public:
         virtual void onRTPPacketReceived(unsigned int len, unsigned char *data) = 0;
         virtual void onRTCPPacketReceived(unsigned int len, unsigned char *data) = 0;
     };
-    
+
     class NdnAudioReceiver : public NdnMediaReceiver
     {
     public:
@@ -44,6 +45,7 @@ namespace ndnrtc
         // overriden
         void playbackPacket(int64_t packetTsLocal);
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__audio_receiver__) */

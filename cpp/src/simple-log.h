@@ -37,97 +37,102 @@
 // each macro checks, whether a logger, associated with object has been
 // initialized and use it instead of global logger
 #if defined (NDN_TRACE) //&& defined(DEBUG)
-#define TRACE(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
+//#define TRACE(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__); \
 else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
 #define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-
-#define LogTraceC(...) LogTrace(NdnRtcUtils::toString("%s.log", NdnComponentName), ##__VA_ARGS__)
+#define LogTraceC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__)
 
 #else
-#define TRACE(fmt, ...)
+//#define TRACE(fmt, ...)
 #define LogTrace(fname, ...) ndnlog::new_api::NilLogger::get()
-
-#define LogTraceC(...) ndnlog::new_api::NilLogger::get()
+#define LogTraceC ndnlog::new_api::NilLogger::get()
 
 #endif
 
 #if defined (NDN_DEBUG) //&& defined(DEBUG)
-#define DBG(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__); \
+//#define DBG(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__); \
 else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
 
-#define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
-
+#define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogDebugC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelDebug, this, BASE_FILE_NAME, __LINE__)
 #else
-#define DBG(fmt, ...)
+//#define DBG(fmt, ...)
 #define LogDebug(fmt, ...) ndnlog::new_api::NilLogger::get()
+#define LogDebugC ndnlog::new_api::NilLogger::get()
 #endif
 
 #if defined (NDN_INFO)
-#define INFO(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__); \
+//#define INFO(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__); \
 else ndnlog::NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
 
 #define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogInfoC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelInfo, this, BASE_FILE_NAME, __LINE__)
 
 #else
 
-#define INFO(fmt, ...)
+//#define INFO(fmt, ...)
 #define LogInfo(fname, ...) ndnlog::new_api::NilLogger::get()
+#define LogInfoC ndnlog::new_api::NilLogger::get()
 
 #endif
 
 #if defined (NDN_WARN)
-#define WARN(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__); \
+//#define WARN(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__); \
 else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
-
-#define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
-
+#define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogWarnC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelWarning, this, BASE_FILE_NAME, __LINE__)
 
 #else
-#define WARN(fmt, ...)
+//#define WARN(fmt, ...)
 #define LogWarn(fname, ...) ndnlog::new_api::NilLogger::get()
+#define LogWarnC ndnlog::new_api::NilLogger::get()
 #endif
 
 #if defined (NDN_ERROR)
-#define NDNERROR(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__); \
+//#define NDNERROR(fmt, ...) if (this->logger_) this->logger_->log(ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__); \
 else ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__)
-
-#define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelError, __FILE__, __LINE__, ##__VA_ARGS__)
+#define LogErrorC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__)
 
 #else
-#define NDNERROR(fmt, ...)
+//#define NDNERROR(fmt, ...)
 #define LogError(fname, ...) ndnlog::new_api::NilLogger::get()
+#define LogErrorC ndnlog::new_api::NilLogger::get()
 #endif
+
+#define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
+#define LogStatC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__)
 
 // following macros are used for logging usign global logger
-#if defined (NDN_TRACE) //&& defined(DEBUG)
-#define LOG_TRACE(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
-#else
-#define LOG_TRACE(fmt, ...)
-#endif
-
-#if defined (NDN_DEBUG) //&& defined(DEBUG)
-#define LOG_DBG(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
-#else
-#define LOG_DBG(fmt, ...)
-#endif
-
-#if defined (NDN_INFO)
-#define LOG_INFO(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
-#else
-#define LOG_INFO(fmt, ...)
-#endif
-
-#if defined (NDN_WARN)
-#define LOG_WARN(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
-#else
-#define LOG_WARN(fmt, ...)
-#endif
-
-#if defined (NDN_ERROR)
-#define LOG_NDNERROR(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__)
-#else
-#define LOG_NDNERROR(fmt, ...)
-#endif
+//#if defined (NDN_TRACE) //&& defined(DEBUG)
+//#define LOG_TRACE(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelTrace, fmt, ##__VA_ARGS__)
+//#else
+//#define LOG_TRACE(fmt, ...)
+//#endif
+//
+//#if defined (NDN_DEBUG) //&& defined(DEBUG)
+//#define LOG_DBG(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelDebug, fmt, ##__VA_ARGS__)
+//#else
+//#define LOG_DBG(fmt, ...)
+//#endif
+//
+//#if defined (NDN_INFO)
+//#define LOG_INFO(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelInfo, fmt, ##__VA_ARGS__)
+//#else
+//#define LOG_INFO(fmt, ...)
+//#endif
+//
+//#if defined (NDN_WARN)
+//#define LOG_WARN(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelWarning, fmt, ##__VA_ARGS__)
+//#else
+//#define LOG_WARN(fmt, ...)
+//#endif
+//
+//#if defined (NDN_ERROR)
+//#define LOG_NDNERROR(fmt, ...) ndnlog::NdnLogger::log(__NDN_FNAME__, ndnlog::NdnLoggerLevelError, fmt, ##__VA_ARGS__)
+//#else
+//#define LOG_NDNERROR(fmt, ...)
+//#endif
 
 namespace ndnlog {
     typedef enum _NdnLoggerLevel {
@@ -135,21 +140,24 @@ namespace ndnlog {
         NdnLoggerLevelDebug = 1,
         NdnLoggerLevelInfo = 2,
         NdnLoggerLevelWarning = 3,
-        NdnLoggerLevelError = 4
+        NdnLoggerLevelError = 4,
+        NdnLoggerLevelStat = 5
     } NdnLoggerLevel;
     
     typedef NdnLoggerLevel NdnLogType;
     
     typedef enum _NdnLoggerDetailLevel {
-        NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
+        NdnLoggerDetailLevelNone = NdnLoggerLevelStat+1,
         NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
         NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
         NdnLoggerDetailLevelAll = NdnLoggerLevelTrace
     } NdnLoggerDetailLevel;
-    
+
     /**
      * Thread-safe logger class to stdout or file
+     * DEPRECATED use logger from new_api instead
      */
+#if 0
     class NdnLogger
     {
     public:
@@ -201,6 +209,7 @@ namespace ndnlog {
     /**
      * Abstract class for an object which can print logs into its' logger if 
      * it is initialized
+     * DEPRECATED use ILoggingObject from new_api instead
      */
     class LoggerObject
     {
@@ -266,7 +275,7 @@ namespace ndnlog {
          */
 //        void initializeLogger(const char *format, ...);
     };
-    
+#endif
     namespace new_api
     {
         // interval at which logger is flushing data on disk (if file logging
@@ -382,6 +391,21 @@ namespace ndnlog {
                                        locationFile, locationLine);
             }
             
+            
+            static void
+            initializeSharedInstance(const NdnLoggerDetailLevel& logLevel,
+                                     const std::string& logFile)
+            {
+                if (sharedInstance_)
+                    delete sharedInstance_;
+                
+                sharedInstance_ = new Logger(logLevel, logFile);
+            }
+            
+            static Logger&
+            sharedInstance()
+            { return *sharedInstance_; }
+            
         private:
             NdnLoggerDetailLevel logLevel_;
             std::string logFile_;
@@ -393,10 +417,11 @@ namespace ndnlog {
             pthread_t current_;
             
             pthread_mutex_t logMutex_;
-            static pthread_mutex_t stdOutMutex_;
             
+            static pthread_mutex_t stdOutMutex_;
             static std::map<std::string, Logger*> loggers_;
-
+            static Logger* sharedInstance_;
+            
             std::ostream&
             getOutStream() { return *outStream_; }
             
@@ -446,12 +471,39 @@ namespace ndnlog {
              * short string representing just enough information about the 
              * instance, which preforms logging
              */
-            virtual std::string getDescription() const = 0;
+            virtual std::string
+            getDescription() const
+            { return description_; }
             
-            virtual bool isLoggingEnabled() const
+            virtual void
+            setDescription(const std::string& desc)
+            { description_ = desc; }
+            
+            virtual bool
+            isLoggingEnabled() const
+            { return true; }
+            
+            ILoggingObject():logger_(nullptr), isLoggerCreated_(false){}
+            ILoggingObject(const NdnLoggerDetailLevel& logLevel,
+                           const std::string& logFile);
+            
+            virtual ~ILoggingObject()
             {
-                return true;
+                if (isLoggerCreated_)
+                    delete logger_;
             }
+            
+            virtual void
+            setLogger(Logger* logger);
+            
+            virtual Logger*
+            getLogger() const
+            { return logger_; }
+            
+        protected:
+            bool isLoggerCreated_ = false;
+            Logger* logger_;
+            std::string description_ = "<no description>";
         };
         
         class NilLogger {

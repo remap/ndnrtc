@@ -14,7 +14,7 @@
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
-
+#if 0
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -319,3 +319,4 @@ void NdnAudioSendChannel::getStatistics(SenderChannelPerformance &stat)
     stat.encodingRate_ = stat.nFramesPerSec_;
     stat.nDroppedByEncoder_ = 0;
 }
+#endif

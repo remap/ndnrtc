@@ -17,8 +17,7 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class ConsumerChannel : public NdnRtcObject,
-            public ndnlog::new_api::ILoggingObject
+        class ConsumerChannel : public NdnRtcObject
         {
         public:
             ConsumerChannel(const ParamsStruct& params,
@@ -34,7 +33,10 @@ namespace ndnrtc {
             
             std::string
             getDescription() const
-            { return NdnRtcUtils::toString("consumer-%s", params_.producerId); }
+            { return "cchannel"; }
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
             
         protected:
             bool isOwnFace_;

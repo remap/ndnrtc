@@ -58,7 +58,8 @@ ChaseEstimation::trackArrival()
 
         NdnRtcUtils::inclineEstimatorNewValue(inclineEstimator_, NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_));
         
-        LogTrace("chaser.log") << "\tdelay\t" << delay << "\tmean\t"
+        LogStatC
+        << "\tdelay\t" << delay << "\tmean\t"
         << NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_)
         << "\tincline\t" << NdnRtcUtils::currentIncline(inclineEstimator_)
         << endl;

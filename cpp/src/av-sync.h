@@ -15,7 +15,7 @@
 #include "frame-buffer.h"
 
 namespace ndnrtc {
-    
+#if 0 // suspended
     const int64_t TolerableDriftMs = 20; // packets will be synchronized
                                          // if their timelines differ more
                                          // than this value
@@ -115,6 +115,7 @@ namespace ndnrtc {
         
         int64_t getNextSyncPoint(int64_t startingPoint);
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__av_sync__) */

@@ -34,6 +34,9 @@ namespace ndnrtc {
             int
             stop();
             
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
         private:
             shared_ptr<NdnRenderer> renderer_;
             shared_ptr<NdnVideoDecoder> decoder_;

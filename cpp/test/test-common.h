@@ -29,6 +29,7 @@
 #include "consumer.h"
 
 using namespace ndnrtc;
+using namespace ndnlog::new_api;
 
 int64_t millisecondTimestamp();
 
@@ -74,8 +75,11 @@ public:
         
         const ::testing::TestInfo* const test_info =
         ::testing::UnitTest::GetInstance()->current_test_info();
-        LOG_INFO("***");
-        LOG_INFO("***[GTESTS]: entering test %s:%s", test_info->test_case_name(),test_info->name());
+        
+        Logger::sharedInstance() << "***" << endl;
+        Logger::sharedInstance()
+        << "***[GTESTS]: entering test " << string(test_info->test_case_name()) << " "
+        << string(test_info->name()) << endl;
         
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
@@ -85,8 +89,11 @@ public:
     {
         const ::testing::TestInfo* const test_info =
         ::testing::UnitTest::GetInstance()->current_test_info();
-        LOG_INFO("***[GTESTS]: leaving test %s:%s", test_info->test_case_name(),test_info->name());
-        LOG_INFO("***");
+
+        Logger::sharedInstance()
+        << "***[GTESTS]: leaving test " << string(test_info->test_case_name()) << " "
+        << string(test_info->name()) << endl;
+        Logger::sharedInstance() << "***" << endl;
     }
     
     virtual void onErrorOccurred(const char *errorMessage)
@@ -227,12 +234,12 @@ public:
     }
     void SetUp()
     {
-        NdnLogger::initialize(name_.c_str(), logLevel_);
-        LOG_INFO("test suite started. log is here: %s", name_.c_str());
+        Logger::initializeSharedInstance(logLevel_, name_);        
+        LogInfo("") << "test suite started. log is here: " << name_.c_str() << endl;
     }
     void TearDown()
     {
-        LOG_INFO("test suite finished");
+        LogInfo("") << "test suite finished" << endl;
     }
     
     void setLogLevel(NdnLoggerDetailLevel lvl)
@@ -448,7 +455,7 @@ public:
                                     width, height,
                                     stride_y, stride_u, stride_v))
         {
-            LOG_NDNERROR("couldn't create frame");
+            Logger::sharedInstance() << "couldn't create frame" << endl;
             return -1;
         }
         

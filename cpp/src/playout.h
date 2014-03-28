@@ -36,8 +36,18 @@ namespace ndnrtc{
             virtual int
             stop();
             
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
+            void
+            setDescription(const std::string& desc);
+            
+            void
+            getStatistics(ReceiverChannelPerformance& stat);
+            
         protected:
             bool isRunning_;
+            unsigned int nPlayed_, nMissed_;
             shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             
@@ -47,7 +57,7 @@ namespace ndnrtc{
             IEncodedFrameConsumer *frameConsumer_;
             PacketData *data_;
             
-            virtual void
+            virtual bool
             playbackPacket(int64_t packetTsLocal) = 0;
             
             static bool
@@ -58,11 +68,6 @@ namespace ndnrtc{
             
             bool
             processPlayout();
-            
-            virtual std::string
-            getDescription() const
-            { return "playout"; }
-            
         };
     }
 }

@@ -7,6 +7,7 @@
 //
 
 #include "face-wrapper.h"
+#include "ndnrtc-utils.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -128,7 +129,6 @@ usecInterval_(100),
 faceWrapper_(faceWrapper),
 processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFaceEventsRoutine, this))
 {
-    
 }
 
 FaceProcessor::~FaceProcessor()

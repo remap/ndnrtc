@@ -20,6 +20,7 @@ using namespace webrtc;
 NdnVideoDecoder::NdnVideoDecoder(const ParamsStruct &params) :
 NdnRtcObject(params), frameConsumer_(NULL)
 {
+    description_ = NdnRtcUtils::toString("decoder-%s", params.producerId);
     memset(&codec_, 0, sizeof(codec_));
 }
 
@@ -55,11 +56,10 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
     
     if (frameConsumer_)
     {
-        TRACE("pushing decoded frame further");
         frameConsumer_->onDeliverFrame(decodedImage);
     }
     else
-        WARN("frame was decoded but never used");
+        LogWarnC << "unused decoded" << endl;
     
     return 0;
 }
@@ -68,24 +68,18 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 #pragma mark - intefaces realization IEncodedFrameConsumer
 void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
-    LogTrace("fetch-decoder.log")
-    << "trying to decode frame of size " << encodedImage._length
+    LogTraceC
+    << "to decode " << encodedImage._length
     << " type " << NdnRtcUtils::stringFromFrameType(encodedImage._frameType) << endl;
-    
-    TRACE("trying to decode frame of size %d (type: %s)", encodedImage._length,
-          NdnRtcUtils::stringFromFrameType(encodedImage._frameType).c_str());
     
     if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
     {
-        LogTrace("fetch-decoder.log")
-        << "error decoding " << endl;
+        LogTraceC << "error decoding " << endl;
+        
         notifyError(-1, "can't decode frame");
     }
     else
     {
-        LogTrace("fetch-decoder.log")
-        << "decoded" << endl;
-        
-        TRACE("decoded");
+        LogTraceC << "decoded" << endl;
     }
 }

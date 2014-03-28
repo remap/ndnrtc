@@ -22,6 +22,7 @@
 
 namespace ndnrtc
 {
+#if 0 // old code
     typedef std::priority_queue<FrameBuffer::Slot*,
     std::vector<FrameBuffer::Slot*>,
     FrameBuffer::Slot::SlotComparator> FrameJitterBuffer;
@@ -175,7 +176,7 @@ namespace ndnrtc
 //        virtual void onFrameReachedDeadline(FrameBuffer::Slot *slot,
 //                                           std::tr1::unordered_set<int> &lateSegments) = 0;
     };
-    
+#endif    
     /**
      * Video jitter buffer timing class
      * Provides interface for managing playout timing in separate playout thread
@@ -186,7 +187,7 @@ namespace ndnrtc
      * (extracting frame from the jitter buffer, rendering frame on the canvas,
      * etc.).
      */
-    class JitterTiming : public LoggerObject
+    class JitterTiming : public ndnlog::new_api::ILoggingObject
     {
     public:
         JitterTiming();

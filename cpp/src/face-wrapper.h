@@ -16,7 +16,7 @@ namespace ndnrtc {
     /**
      * Thread-safe wrapper for NDN face class
      */
-    class FaceWrapper : public LoggerObject {
+    class FaceWrapper : public ndnlog::new_api::ILoggingObject {
     public:
         FaceWrapper();
         FaceWrapper(shared_ptr<Face> &face_);
@@ -76,11 +76,7 @@ namespace ndnrtc {
         
         static shared_ptr<FaceProcessor>
         createFaceProcessor(const ParamsStruct& params);
-        
-        std::string
-        getDescription() const
-        { return "frame-processor"; }
-        
+                
     private:
         bool isProcessing_;
         unsigned int usecInterval_;

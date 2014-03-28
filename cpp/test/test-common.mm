@@ -102,7 +102,8 @@ void UnitTestHelperNdnNetwork::onData(const shared_ptr<const Interest>& interest
 void UnitTestHelperNdnNetwork::
 onTimeout(const shared_ptr<const Interest>& interest)
 {
-    LOG_TRACE("got timeout for interest: %s", interest->getName().toUri().c_str());
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "interest timeout " << interest->getName() << endl;
     nReceivedTimeout_++;
 }
 
@@ -170,7 +171,8 @@ void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
     SignedBlob encodedData = data.wireEncode();
     ndnTransport_->send(*encodedData);
 //    NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, "published %s",prefix.c_str());
-    LOG_TRACE("published %s", prefix.c_str());
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << ("published %s", prefix.c_str());
 }
 
 void UnitTestHelperNdnNetwork::startProcessingNdn()

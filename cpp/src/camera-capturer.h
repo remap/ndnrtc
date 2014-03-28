@@ -20,7 +20,8 @@
 namespace ndnrtc {
     class IRawFrameConsumer;
     
-    class CameraCapturer : public NdnRtcObject, public webrtc::VideoCaptureDataCallback
+    class CameraCapturer : public NdnRtcObject,
+    public webrtc::VideoCaptureDataCallback
     {
     public:
         // construction/desctruction
@@ -46,6 +47,7 @@ namespace ndnrtc {
 
         // statistics
         double getCapturingFrequency() { return NdnRtcUtils::currentFrequencyMeterValue(meterId_); }
+        
         
     private:        
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;

@@ -22,6 +22,7 @@ const double StartSRTT = 20.; // default SRTT value to start from
 
 namespace ndnrtc
 {
+#if 0 // old code
     extern const double RttFilterAlpha; // SRTT(i+1) = SRTT(i) + alpha*(RTT(i+1) - SRTT(i))
     extern const double RateFilterAlpha;
     extern const double RateDeviation;
@@ -261,6 +262,7 @@ namespace ndnrtc
                                                 bool removeFromPITs = false) DEPRECATED;
         void clearPITs();
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__media_receiver__) */

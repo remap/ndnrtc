@@ -15,7 +15,8 @@
 namespace ndnrtc {
     namespace new_api {
         
-        class RttEstimation {
+        class RttEstimation : public ndnlog::new_api::ILoggingObject
+        {
         public:
             static const double RttStartEstimate;
             

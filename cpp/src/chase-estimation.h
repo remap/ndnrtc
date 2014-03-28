@@ -15,7 +15,8 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class ChaseEstimation {
+        class ChaseEstimation : public ndnlog::new_api::ILoggingObject
+        {
         public:
             
             static const unsigned int SampleSize;

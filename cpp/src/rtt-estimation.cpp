@@ -20,13 +20,10 @@ const double RttEstimation::RttStartEstimate = 30; // millseconds
 #pragma mark - construction/destruction
 RttEstimation::RttEstimation(const double& startEstimate):
 estimatorId_(NdnRtcUtils::setupMeanEstimator(0, startEstimate))
-{
-    
-}
+{}
 
 RttEstimation::~RttEstimation()
-{
-}
+{}
 
 //******************************************************************************
 #pragma mark - public
@@ -46,12 +43,13 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
     {
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
         
-        LogTrace("rtt.log") << "new RTT " <<
+        LogTraceC << "rtt estimate\t" <<
         NdnRtcUtils::currentMeanEstimation(estimatorId_) << endl;
     }
     else
     {
-        LogWarn("") << "wrong data for RTT estimation "
+        LogWarnC
+        << "wrong data for RTT "
         << rountripTimeMs << " " << generationDelay << endl;
     }
     

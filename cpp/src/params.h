@@ -44,7 +44,7 @@ namespace ndnrtc
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
-        bool useTlv;
+        bool useTlv, useRtx;
         
         // capture settings
         unsigned int captureDeviceId;
@@ -135,8 +135,9 @@ namespace ndnrtc
     
     static ParamsStruct DefaultParams = {
         ndnlog::NdnLoggerDetailLevelDebug,    // log level
-        "ndnrtc.log",                   // log file
+        "ndnrtc.log\0",                   // log file
         true,   // use TLV encoding
+        true,   // reissue timed out interests
         
         0,      // capture device id
         640,    // capture width
@@ -179,6 +180,7 @@ namespace ndnrtc
         ndnlog::NdnLoggerDetailLevelNone,    // log level
         "",                   // log file
         true,  // use TLV encoding
+        true,
         
         0,      // capture device id
         0,    // capture width

@@ -18,15 +18,12 @@
 
 namespace ndnrtc {    
     class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,
-                            public ndnlog::LoggerObject,
                             public INdnRtcObjectObserver
     {
     public:
         // construction/desctruction
-        NdnRtcObject(const ParamsStruct &params = DefaultParams,
-                     NdnLogger *logger = nullptr);
+        NdnRtcObject(const ParamsStruct &params = DefaultParams);
         NdnRtcObject(const ParamsStruct &params,
-                     NdnLogger *logger,
                      INdnRtcObjectObserver *observer);
         virtual ~NdnRtcObject();
         
@@ -37,12 +34,8 @@ namespace ndnrtc {
         
         // ILoggingObject interface conformance
         virtual std::string
-        getDescription() const
-        {
-            std::stringstream ss;
-            ss << "NdnRtcObject "<< std::hex << this;
-            return ss.str();
-        }
+        getDescription() const;
+        
         virtual bool
         isLoggingEnabled() const
         {

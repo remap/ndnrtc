@@ -21,8 +21,7 @@ using namespace ndnlog;
  * @name NdnRtcObject class
  */
 #pragma mark - construction/destruction
-NdnRtcObject::NdnRtcObject(const ParamsStruct &params, NdnLogger *logger):
-LoggerObject(logger),
+NdnRtcObject::NdnRtcObject(const ParamsStruct &params):
 params_(params),
 callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 {
@@ -30,9 +29,8 @@ callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 }
 
 NdnRtcObject::NdnRtcObject(const ParamsStruct &params,
-                           NdnLogger *logger,
                            INdnRtcObjectObserver *observer):
-NdnRtcObject(params, logger)
+NdnRtcObject(params)
 {
   observer_ = observer;
 }
@@ -46,10 +44,12 @@ NdnRtcObject::~NdnRtcObject()
 void NdnRtcObject::onErrorOccurred(const char *errorMessage)
 {
   callbackSync_.Enter();
+    
   if (hasObserver())
     observer_->onErrorOccurred(errorMessage);
   else
-    NDNERROR("error occurred: %s", errorMessage);
+    LogErrorC << "error occurred: " << string(errorMessage) << endl;
+    
   callbackSync_.Leave();
 }
 
@@ -67,11 +67,10 @@ int NdnRtcObject::notifyError(const int ecode, const char *format, ...)
   
   if (hasObserver())
   {
-    TRACE("error occurred: %s",emsg);
     observer_->onErrorOccurred(emsg);
   }
   else
-    NDNERROR("%s", emsg);
+      LogErrorC << "error occurred: " << string(emsg) << endl;
   
   return ecode;
 }
@@ -84,4 +83,17 @@ int NdnRtcObject::notifyErrorNoParams()
 int NdnRtcObject::notifyErrorBadArg(const std::string &paramName)
 {
   return notifyError(-1, "bad or non-existent argument: %s", paramName.c_str());
+}
+
+std::string
+NdnRtcObject::getDescription() const
+{
+    if (description_ == "")
+    {
+        std::stringstream ss;
+        ss << "NdnRtcObject "<< std::hex << this;
+        return ss.str();
+    }
+    
+    return description_;
 }

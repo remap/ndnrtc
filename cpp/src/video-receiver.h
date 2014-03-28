@@ -18,6 +18,7 @@
 
 namespace ndnrtc
 {
+#if 0 // old code
     class AudioVideoSynchronizer;
     
     class NdnVideoReceiver :    public NdnMediaReceiver
@@ -42,6 +43,7 @@ namespace ndnrtc
                     int dataSz);
         bool needMoreKeyFrames();
     };
+#endif 
 }
 
 #endif /* defined(__ndnrtc__video_receiver__) */

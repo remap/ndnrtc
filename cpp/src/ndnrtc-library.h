@@ -39,7 +39,9 @@ namespace ndnrtc {
             
             if (libHandle == NULL)
             {
-                LOG_NDNERROR("error while loading NdnRTC library: %s", dlerror());
+                LogError("")
+                << "error while loading NdnRTC library: " << dlerror() << std::endl;
+                
                 return NULL;
             }
             

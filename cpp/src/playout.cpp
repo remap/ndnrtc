@@ -24,7 +24,7 @@ playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutin
 frameConsumer_(nullptr),
 data_(nullptr)
 {
-//    jitterTiming_.setLogger(new NdnLogger("jitter-timing.log"));
+    setDescription("playout");
     jitterTiming_.flush();
     
     if (consumer_.get())
@@ -51,6 +51,8 @@ Playout::init(IEncodedFrameConsumer* consumer)
 int
 Playout::start()
 {
+    nPlayed_ = 0;
+    nMissed_ = 0;
     isRunning_ = true;
     
     unsigned int tid;
@@ -65,6 +67,28 @@ Playout::stop()
     playoutThread_.Stop();
 }
 
+void
+Playout::setLogger(ndnlog::new_api::Logger *logger)
+{
+    jitterTiming_.setLogger(logger);
+    ILoggingObject::setLogger(logger);
+}
+
+void
+Playout::setDescription(const std::string &desc)
+{
+    ILoggingObject::setDescription(desc);
+    jitterTiming_.setDescription(NdnRtcUtils::toString("%s-timing",
+                                                       getDescription().c_str()));
+}
+
+void
+Playout::getStatistics(ReceiverChannelPerformance& stat)
+{
+    stat.nPlayed_ = nPlayed_;
+    stat.nMissed_ = nMissed_;
+}
+
 //******************************************************************************
 #pragma mark - private
 bool
@@ -76,7 +100,18 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
-            playbackPacket(now);
+            if (playbackPacket(now))
+            {
+                nPlayed_++;
+                
+                LogStatC << "play\t" << nPlayed_ << endl;
+            }
+            else
+            {
+                nMissed_++;
+                
+                LogStatC << "missed\t" << nMissed_ << endl;
+            }
         }
     }
     

@@ -15,6 +15,7 @@ using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
 
+#if 0
 //********************************************************************************
 #pragma mark - construction/destruction
 NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params,
@@ -188,3 +189,4 @@ void NdnReceiverChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     
     audioReceiveChannel_->getStatistics(stat.audioStat_);
 }
+#endif

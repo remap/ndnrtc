@@ -27,6 +27,7 @@ Consumer(params, interestQueue),
 renderer_(new NdnRenderer(1, params)),
 decoder_(new NdnVideoDecoder(params))
 {
+    setDescription("vconsumer");
     decoder_->setFrameConsumer(renderer_.get());
 }
 
@@ -41,13 +42,18 @@ VideoConsumer::init()
 {
 #warning error handling!
     Consumer::init();
+
+    pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
+                                                     getDescription().c_str()));
     
     renderer_->init();
     decoder_->init();
     
     playout_.reset(new VideoPlayout(shared_from_this()));
+    playout_->setLogger(logger_);
     playout_->init(decoder_.get());
     
+    LogInfoC << "initialized" << endl;
     return RESULT_OK;
 }
 
@@ -59,6 +65,7 @@ VideoConsumer::start()
     
     Consumer::start();
     
+    LogInfoC << "started" << endl;
     return RESULT_OK;
 }
 
@@ -70,7 +77,17 @@ VideoConsumer::stop()
     
     renderer_->stopRendering();
     
+    LogInfoC << "stopped" << endl;
     return RESULT_OK;
+}
+
+void
+VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
+{
+    renderer_->setLogger(logger);
+    decoder_->setLogger(logger);
+    
+    Consumer::setLogger(logger);
 }
 
 //******************************************************************************

@@ -198,7 +198,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
-            "ndnrtc.log",                   // log file
+            "ndnrtc.log\0",                   // log file
             true, // use TLV
             
             0,      // capture device id
@@ -291,7 +291,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
-            "ndnrtc.log",                   // log file
+            "ndnrtc.log\0",                   // log file
             true, // use TLV
             
             0,      // capture device id
@@ -373,7 +373,7 @@ TEST_F(NdnRtcLibraryTester, TestConfigure)
         
         ParamsStruct ap = {
             NdnLoggerDetailLevelAll,    // log level
-            "ndnrtc.log",                   // log file
+            "ndnrtc.log\0",                   // log file
             true, // use TLV
             
             0,      // capture device id

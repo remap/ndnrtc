@@ -18,7 +18,7 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class Pipeliner : NdnRtcObject
+        class Pipeliner : public NdnRtcObject
         {
         public:
             // average number of segments for delta and key frames
@@ -46,13 +46,6 @@ namespace ndnrtc {
             unsigned int
             getRtxNum() const
             { return rtxNum_; }
-            
-            // ILoggingObject conformance
-            virtual std::string
-            getDescription() const
-            {
-                return string("pipeliner");
-            }
             
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
@@ -130,17 +123,17 @@ namespace ndnrtc {
                                    int nSegments);
             
             void
-            requestKeyFrame(PacketNumber keyFrameNo);
+            requestNextKey(PacketNumber& keyFrameNo);
             
             void
-            requestDeltaFrame(PacketNumber deltaFrameNo);
+            requestNextDelta(PacketNumber& deltaFrameNo);
             
             void
             expressRange(Interest& interest, SegmentNumber startNo,
-                         SegmentNumber endNo, int64_t priority = 0);
+                         SegmentNumber endNo, int64_t priority);
             
             void
-            express(Interest& interest, int64_t priority = 0);
+            express(Interest& interest, int64_t priority);
             
             void
             startChasePipeliner(PacketNumber startPacketNo,
@@ -158,11 +151,13 @@ namespace ndnrtc {
                            bool wasTimedOut = false);
             
             int64_t
-            getInterestLifetime(FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
+            getInterestLifetime(int64_t playbackDeadline,
+                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
             void
             prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
-                          int prefetchSize);
+                          int prefetchSize,
+                          FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
             void
             keepBuffer(bool useEstimatedSize = true);

@@ -28,9 +28,7 @@ namespace ndnrtc {
     {
     public:
         NdnVideoCoder(const ParamsStruct &params);
-        ~NdnVideoCoder() {
-            delete encodeLogger_;
-        };
+        ~NdnVideoCoder() {}
         
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
             frameConsumer_ = frameConsumer;
@@ -52,7 +50,6 @@ namespace ndnrtc {
     private:
 #warning remove this in release
         uint64_t encodeTime_;
-        NdnLogger *encodeLogger_;
         unsigned int counter_ = 1;
         unsigned int nDroppedByEncoder_ = 0;
         

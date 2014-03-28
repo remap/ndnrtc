@@ -20,6 +20,7 @@
 #include "statistics.h"
 
 namespace ndnrtc {
+#if 0
     class NdnAudioChannel : public NdnRtcObject,
     public webrtc::Transport
     {
@@ -100,6 +101,7 @@ namespace ndnrtc {
     private:
         NdnAudioSender *audioSender_ = NULL;
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__ndnaudio_transport__) */

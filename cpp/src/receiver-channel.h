@@ -20,6 +20,7 @@
 
 namespace ndnrtc
 {
+#if 0 // suspended
     class NdnReceiverChannel : public NdnMediaChannel
     {
     public:
@@ -46,6 +47,7 @@ namespace ndnrtc
         shared_ptr<NdnVideoReceiver> receiver_;
         shared_ptr<NdnAudioReceiveChannel> audioReceiveChannel_;
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__receiver_channel__) */

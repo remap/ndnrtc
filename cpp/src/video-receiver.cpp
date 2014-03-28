@@ -16,7 +16,7 @@
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
-
+#if 0
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -187,3 +187,4 @@ bool NdnVideoReceiver::needMoreKeyFrames()
 //    return false;
     return (nKeyFramesPending_ < MinKeyFramesPending);
 }
+#endif

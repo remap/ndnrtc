@@ -39,7 +39,8 @@ namespace ndnrtc
             /**
              * Buffer slot represents frame/packet which is being assembled
              */
-            class Slot {
+            class Slot
+            {
             public:
                 /**
                  * Slot (frame/packet data) is being assembled from several ndn
@@ -438,11 +439,14 @@ namespace ndnrtc
                 bool
                 isRightmost() const { return rightmostSegment_.get() != NULL; }
                 
-                void
-                synchronizeAcquire() DEPRECATED { /*accessCs_.Enter();*/ }
+                unsigned int
+                getRtxNum(){ return nRtx_; }
                 
                 void
-                synchronizeRelease() DEPRECATED { /*accessCs_.Leave();*/ }
+                incremenrRtxNum() { nRtx_++; }
+                
+                bool
+                hasOriginalSegments() { return hasOriginalSegments_; }
                 
                 static std::string
                 stateToString(State s)
@@ -467,10 +471,10 @@ namespace ndnrtc
                         str << "I";
                     else
                     {
-                        if (consistency&HeaderMeta)
-                            str << "H";
                         if (consistency&PrefixMeta)
                             str << "P";
+                        if (consistency&HeaderMeta)
+                            str << "H";
                     }
                     return str.str();
                 }
@@ -484,6 +488,8 @@ namespace ndnrtc
                 unsigned char* slotData_ = NULL;
                 State state_, stashedState_;
                 int consistency_;
+                unsigned int nRtx_;
+                bool hasOriginalSegments_;
                 
                 Name slotPrefix_;
                 PacketNumber packetSequenceNumber_, pairedSequenceNumber_,
@@ -549,14 +555,19 @@ namespace ndnrtc
                     FirstSegment   = 1<<1, // first segment arrived for new
                                            // slot, usually this
                                            // means that segment interest pipelining can start
-                    FreeSlot       = 1<<2, // new slot free for frame
-                                           // assembling
+                    FreeSlot       = 1<<2, // new slot free for frame assembling
+                                           // ! slot attribute is unreliable
                     Timeout        = 1<<3, // triggered when timeout
                                            // happens for any segment
                                            // interest
                     StateChanged   = 1<<4, // triggered when buffer state changed
+                                           // ! slot attribute is unreliable
                     Playout        = 1<<5, // frame was taken for playout (locked)
-                    Error          = 1<<6  // general error event
+                    Underrun       = 1<<6, // frame buffer underrun (zero size)
+                                           // ! slot attribute is unreliable                    
+                    NeedKey        = 1<<7, // frame buffer asks for key frame.
+                                           // ! slot attribute is unreliable
+                    Error          = 1<<8  // general error event
                 };
                 
                 static const int AllEventsMask;
@@ -568,6 +579,8 @@ namespace ndnrtc
                         case Timeout: return "Timeout"; break;
                         case StateChanged: return "StateChanged"; break;
                         case Playout: return "Playout"; break;
+                        case Underrun: return "Underrun"; break;
+                        case NeedKey: return "NeedKey"; break;
                         case Error: return "Error"; break;
                         default: return "Unknown"; break;
                     }
@@ -579,9 +592,6 @@ namespace ndnrtc
             
             FrameBuffer(const shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();
-            
-            std::string
-            getDescription() const { return "framebuffer"; };
             
             int init();
             int reset();
@@ -717,6 +727,15 @@ namespace ndnrtc
                 }
             }
             
+            void
+            setDescription(const std::string& desc);
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
+            void
+            getStatistics(ReceiverChannelPerformance& stat);
+            
         protected:
             // playback queue contains active slots sorted in ascending
             // playback order (see PlaybackComparator)
@@ -730,7 +749,8 @@ namespace ndnrtc
             std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
             PlaybackQueueBase;
             
-            class PlaybackQueue : public PlaybackQueueBase
+            class PlaybackQueue : public PlaybackQueueBase,
+            public ndnlog::new_api::ILoggingObject
             {
             public:
                 PlaybackQueue(double playbackRate);
@@ -760,13 +780,17 @@ namespace ndnrtc
                 clear();
                 
                 int64_t
-                getInferredFrameDuration() { return ceil(1000./playbackRate_); }
+                getInferredFrameDuration()
+                { /*return lastFrameDuration_;*/
+                    return ceil(1000./playbackRate_);
+                }
 
                 void
                 dumpQueue();
                 
             private:
                 double playbackRate_;
+                int64_t lastFrameDuration_;
                 FrameBuffer::Slot::PlaybackComparator comparator_;
                 
                 void
@@ -776,6 +800,10 @@ namespace ndnrtc
             shared_ptr<const Consumer> consumer_;
             
             State state_;
+            PacketNumber playbackNo_;
+            int nKeyFrames_;
+            unsigned int nReceivedFrames_, nRescuedFrames_;
+            shared_ptr<Slot> playbackSlot_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
@@ -838,7 +866,7 @@ namespace ndnrtc
             reserveSlot(const Interest &interest);
             
             void
-            updateCurrentRate(unsigned int playbackRate)
+            updateCurrentRate(double playbackRate)
             {
                 if (playbackRate != 0 &&
                     playbackRate != playbackQueue_.getPlaybackRate())
@@ -855,12 +883,12 @@ namespace ndnrtc
             dumpActiveSlots();
         };
     }
+    
     //******************************************************************************
     //******************************************************************************
     // old api *********************************************************************
-    //******************************************************************************
-    //******************************************************************************
-
+    
+#if 0 // old code
     typedef int BookingId;
     
     /**
@@ -1412,6 +1440,7 @@ namespace ndnrtc
         
         void dumpActiveSlots();
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__frame_buffer__) */

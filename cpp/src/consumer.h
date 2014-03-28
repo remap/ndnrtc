@@ -72,10 +72,6 @@ namespace ndnrtc {
             virtual int
             stop();
             
-            virtual std::string
-            getLogFile() const
-            { return string("fetch.log"); }
-            
             virtual ParamsStruct
             getParameters() const
             { return params_; }
@@ -122,6 +118,12 @@ namespace ndnrtc {
             
             void
             getStatistics(ReceiverChannelPerformance& stat);
+            
+            virtual void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
+            virtual void
+            setDescription(const std::string& desc);
             
         protected:
             bool isConsuming_;

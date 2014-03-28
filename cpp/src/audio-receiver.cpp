@@ -16,6 +16,7 @@ using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
 
+#if 0
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnAudioReceiver::NdnAudioReceiver(const ParamsStruct &params) :
@@ -122,3 +123,4 @@ void NdnAudioReceiver::playbackPacket(int64_t packetTsLocal)
         }
     } // if packet consumer
 }
+#endif

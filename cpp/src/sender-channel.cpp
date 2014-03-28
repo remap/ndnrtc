@@ -14,6 +14,7 @@
 #define AUDIO_ID 0
 #define VIDEO_ID 1
 
+using namespace ndnlog::new_api;
 using namespace ndnrtc;
 using namespace webrtc;
 
@@ -102,14 +103,16 @@ int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
         }
         else
         {
-            LOG_NDNERROR("malformed parameters for host/port: %s, %d",
-                         params.host, params.portNum);
+            LogError("")
+            << "malformed parameters for host/port:" << params.host << " "
+            << params.portNum << endl;
+            
             return RESULT_ERR;
         }
     }
     catch (std::exception &e)
     {
-        LOG_NDNERROR("got error from ndn library: %s", e.what());
+        LogError("") << "got error from ndn library: " << e.what() << endl;
         return RESULT_ERR;
     }
     
@@ -122,13 +125,13 @@ void NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
                                  const shared_ptr<const Interest>& interest,
                                  ndn::Transport& transport)
 {
-    INFO("got interest: %s", interest->getName().toUri().c_str());
+    LogInfoC << "incoming interest "<< interest->getName() << endl;
 }
 
 void
 NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 {
-    NDNERROR("failed to register prefix %s", prefix->toUri().c_str());
+    notifyError(RESULT_ERR, "failed to register prefix %s", prefix->toUri().c_str());
 }
 
 //******************************************************************************
@@ -141,14 +144,16 @@ cc_(new CameraCapturer(params)),
 localRender_(new NdnRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
 sender_(new NdnVideoSender(params)),
-audioSendChannel_(new NdnAudioSendChannel(audioParams, NdnRtcUtils::sharedVoiceEngine())),
+//audioSendChannel_(new NdnAudioSendChannel(audioParams, NdnRtcUtils::sharedVoiceEngine())),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                             kHighPriority))
 {
-    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "publish-%s.log",
-                                  params.producerId));
+    description_ = "send-channel";
+    
+    this->setLogger(new Logger(params.loggingLevel,
+                               NdnRtcUtils::toString("producer-%s.log", params.producerId)));
     isLoggerCreated_ = true;
         
     cc_->setObserver(this);
@@ -173,7 +178,7 @@ NdnSenderChannel::~NdnSenderChannel()
 #pragma mark - intefaces realization: IRawFrameConsumer
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
-    INFO("\tCAPTURED: \t%ld", sender_->getPacketNo());
+    LogStatC << "captured\t" << sender_->getPacketNo() << endl;
     
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
@@ -189,6 +194,8 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 #pragma mark - public
 int NdnSenderChannel::init()
 {
+    LogInfoC << "starting initialization" << endl;
+    
     int res = NdnMediaChannel::init();
     
     if (RESULT_FAIL(res))
@@ -213,7 +220,7 @@ int NdnSenderChannel::init()
     }
     
     { // initialize audio
-        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioFace_, ndnAudioTransport_));
+//        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioFace_, ndnAudioTransport_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         
@@ -228,15 +235,18 @@ int NdnSenderChannel::init()
         return notifyError(RESULT_ERR, "audio and video can not be initialized."
                            " aborting.");
     
-    INFO("publishing initialized with video: %s, audio: %s",
-         (videoInitialized_)?"yes":"no",
-         (audioInitialized_)?"yes":"no");
+    LogInfoC
+    << "publishing initialized with video: "
+    << ((videoInitialized_)?"yes":"no")
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
     return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
 
 int NdnSenderChannel::startTransmission()
 {
+    LogInfoC << "starting publishing" << endl;
+    
     int res = NdnMediaChannel::startTransmission();
     
     if (RESULT_FAIL(res))
@@ -261,7 +271,7 @@ int NdnSenderChannel::startTransmission()
     
     if (audioInitialized_)
     {
-        audioTransmitting_ = RESULT_NOT_FAIL(audioSendChannel_->start());
+//        audioTransmitting_ = RESULT_NOT_FAIL(audioSendChannel_->start());
         if (!audioTransmitting_)
             notifyError(RESULT_WARN, "can't start audio send channel");
     }
@@ -272,15 +282,18 @@ int NdnSenderChannel::startTransmission()
         return notifyError(RESULT_ERR, "both audio and video can not be started."
                            " aborting.");
     
-    INFO("publishing started with video: %s, audio: %s",
-         (videoInitialized_)?"yes":"no",
-         (audioInitialized_)?"yes":"no");
+    LogInfoC
+    << "publishing started with video: "
+    << ((videoInitialized_)?"yes":"no")
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
     return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
 
 int NdnSenderChannel::stopTransmission()
 {
+    LogInfoC << "stopping publishing" << endl;
+    
     int res = NdnMediaChannel::stopTransmission();
     
     if (RESULT_FAIL(res))
@@ -305,10 +318,10 @@ int NdnSenderChannel::stopTransmission()
     if (audioTransmitting_)
     {
         audioTransmitting_ = false;
-        audioSendChannel_->stop();
+//        audioSendChannel_->stop();
     }
     
-    INFO("publishing stopped");
+    LogInfoC << "stopped" << endl;
     
     isTransmitting_ = false;
     return RESULT_OK;
@@ -322,7 +335,17 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
     stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
     
-    audioSendChannel_->getStatistics(stat.audioStat_);
+//    audioSendChannel_->getStatistics(stat.audioStat_);
+}
+
+void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
+{
+    cc_->setLogger(logger);
+    localRender_->setLogger(logger);
+    coder_->setLogger(logger);
+    sender_->setLogger(logger);
+    
+    ILoggingObject::setLogger(logger);
 }
 
 //******************************************************************************
@@ -340,17 +363,15 @@ bool NdnSenderChannel::process()
             double currentRate = sender_->getCurrentPacketRate();
             double rate = 1000./(now-lastFrameStamp_);
             
-            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
+//            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
         }
-        TRACE("[SENDER] current frame rate: %f", frameRate);
+        LogStatC << "rate\t" << frameRate << endl;
         
         lastFrameStamp_ = now;
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
-            INFO("\tGRAB: \t%ld", sender_->getPacketNo());
-            
-            //(NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_));
+            LogStatC << "grab\t" << sender_->getPacketNo() << endl;
             
             uint64_t t = NdnRtcUtils::microsecondTimestamp();
             
@@ -358,15 +379,20 @@ bool NdnSenderChannel::process()
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
-            INFO("\tRENDERED: \t%ld \t%ld",
-                 sender_->getPacketNo(), t2 - t);
+            LogStatC
+            << "rendered\t" << sender_->getPacketNo() << " "
+            << t2 - t << endl;
+            
             coder_->onDeliverFrame(deliverFrame_);
-            INFO("\tPUBLISHED: \t%ld \t%ld",
-                 sender_->getFrameNo()-1,
-                 NdnRtcUtils::microsecondTimestamp()-t2);
+            
+            LogStatC
+            << "published\t"
+            << sender_->getFrameNo()-1 << " "
+            << NdnRtcUtils::microsecondTimestamp()-t2 << endl;
         }
         deliver_cs_->Leave();
     }
 
     return true;
 }
+

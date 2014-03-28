@@ -25,7 +25,9 @@ NdnRenderer::NdnRenderer(int rendererId, const ParamsStruct &params) :
 NdnRtcObject(params),
 rendererId_(rendererId)
 {
+    description_ = "renderer";
 }
+
 NdnRenderer::~NdnRenderer()
 {
     stopRendering();
@@ -96,13 +98,18 @@ void NdnRenderer::onDeliverFrame(I420VideoFrame &frame)
 {
     if (isRendering_)
     {
-        TRACE("render frame at %ld", NdnRtcUtils::millisecondTimestamp());
+        LogTraceC
+        << "render frame at %ld" << NdnRtcUtils::millisecondTimestamp() << endl;
+        
+        LogStatC
+        << "render\t" << NdnRtcUtils::millisecondTimestamp() << endl;
+        
         int res = frameSink_->RenderFrame(rendererId_, frame);
 
         if (res < 0)
-            NDNERROR("error while rendering frame");
+            notifyError(RESULT_ERR, "render error %d", res);
         else
-            TRACE("rendering result %d", res);
+            LogTraceC << "render result " << res << endl;
     }
     else
         notifyError(RESULT_ERR, "render not started");

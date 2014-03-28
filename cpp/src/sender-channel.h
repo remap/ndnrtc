@@ -70,25 +70,24 @@ namespace ndnrtc
         virtual ~NdnSenderChannel();
         
         // public methods
-        int init();
-        int startTransmission();
-        int stopTransmission();
+        int
+        init();
+        
+        int
+        startTransmission();
+        
+        int
+        stopTransmission();
         
         // interface conformance - IRawFrameConsumer
-        void onDeliverFrame(webrtc::I420VideoFrame &frame);
+        void
+        onDeliverFrame(webrtc::I420VideoFrame &frame);
         
-        void getChannelStatistics(SenderChannelStatistics &stat);
+        void
+        getChannelStatistics(SenderChannelStatistics &stat);
         
-        void setLogger(NdnLogger *logger)
-        {
-            LoggerObject::setLogger(logger);
-            
-            cc_->setLogger(logger_);
-            localRender_->setLogger(logger_);
-            coder_->setLogger(logger_);
-            sender_->setLogger(logger_);
-            audioSendChannel_->setLogger(logger_);
-        }
+        void
+        setLogger(ndnlog::new_api::Logger* logger);
         
     private:
         uint64_t lastFrameStamp_ = 0;
@@ -98,7 +97,8 @@ namespace ndnrtc
         shared_ptr<NdnRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
-        shared_ptr<NdnAudioSendChannel> audioSendChannel_;
+        // suspended code
+//        shared_ptr<NdnAudioSendChannel> audioSendChannel_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;
@@ -106,12 +106,14 @@ namespace ndnrtc
         webrtc::I420VideoFrame deliverFrame_;
         
         // static methods
-        static bool processDeliveredFrame(void *obj) {
+        static bool
+        processDeliveredFrame(void *obj) {
             return ((NdnSenderChannel*)obj)->process();
         }
         
         // private methods
-        bool process();
+        bool
+        process();
     };
     
 }

@@ -15,7 +15,7 @@ using namespace ndnrtc;
 
 #define SYNC_INIT(name) ({*CriticalSectionWrapper::CreateCriticalSection(), \
 name, -1, -1, -1, -1, -1, -1})
-
+#if 0
 //******************************************************************************
 #pragma mark - construction/destruction
 AudioVideoSynchronizer::AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams) :
@@ -166,3 +166,4 @@ void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
     syncData.lastPacketTsRemote_ = firstPacketTsRemote;
 }
 
+#endif

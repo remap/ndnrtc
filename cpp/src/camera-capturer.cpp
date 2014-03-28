@@ -37,11 +37,10 @@ deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),
 captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPriority))
 {
-    TRACE("capturer create");
+    description_ = "capturer";
 }
 CameraCapturer::~CameraCapturer()
 {
-    TRACE("capturer destroy");
     if (vcm_)
     {
         if (isCapturing())
@@ -57,7 +56,7 @@ int CameraCapturer::init()
 {
     int deviceID = params_.captureDeviceId;
     
-    TRACE("trying to get device with ID %d", deviceID);
+    LogTraceC << "acquiring device " << deviceID << endl;
     
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(deviceID);
     
@@ -70,7 +69,9 @@ int CameraCapturer::init()
     
     devInfo->GetDeviceName(deviceID, deviceName, 256, deviceUniqueName, 256);
     
-    TRACE("got device name: %s, unique name: %s",deviceName, deviceUniqueName);
+    LogTraceC
+    << "got device name: " << deviceName
+    << " (unique: " << deviceUniqueName << ")" << endl;
     
     vcm_ = VideoCaptureFactory::Create(deviceID, deviceUniqueName);
     
@@ -88,7 +89,7 @@ int CameraCapturer::init()
     
     meterId_ = NdnRtcUtils::setupFrequencyMeter();
     
-    INFO("capturing initialized with device: %s", deviceUniqueName);
+    LogInfoC << "initialized (device: " << deviceUniqueName << ")" << endl;
     
     return 0;
 }
@@ -105,13 +106,12 @@ int CameraCapturer::startCapture()
     if (!vcm_->CaptureStarted())
         return notifyError(-1, "capture failed to start");
     
-    INFO("started capturing");
+    LogInfoC << "started" << endl;
     
     return 0;
 }
 int CameraCapturer::stopCapture()
 {
-    DBG("Stopping capture");
     vcm_->DeRegisterCaptureDataCallback();
     vcm_->StopCapture();
     captureThread_.SetNotAlive();
@@ -120,7 +120,7 @@ int CameraCapturer::stopCapture()
     if (!captureThread_.Stop())
         return notifyError(-1, "can't stop capturing thread");
     
-    INFO("capturing stopped");
+    LogInfoC << "stopped" << endl;
     
     return 0;
 }
@@ -197,9 +197,12 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
 //        videoFrame.render_time_ms() <= NdnRtcUtils::millisecondTimestamp())
 //        TRACE("..delayed");
     
-#ifdef USE_I420
-    TRACE("got frame with time %ld, current %ld", videoFrame.render_time_ms(),
-          NdnRtcUtils::millisecondTimestamp());
+    LogTraceC
+    << "captured frame. time "<< videoFrame.render_time_ms() << " "
+    << "current " << NdnRtcUtils::millisecondTimestamp() << endl;
+    
+    LogStatC
+    << "capture\t" << videoFrame.render_time_ms() << endl;
     
     NdnRtcUtils::frequencyMeterTick(meterId_);
     
@@ -208,34 +211,11 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
     capture_cs_->Leave();
     
     captureEvent_.Set();
-#else
-    int bufSize = CalcBufferSize(kARGB, videoFrame.width(), videoFrame.height());
-    
-    if (!frameBuffer)
-    {
-        TRACE("creating frame buffer of size %d", bufSize);
-        frameBuffer = (unsigned char*)malloc(bufSize);
-    }
-    
-    if (ConvertFromI420(videoFrame, kARGB, 0, frameBuffer) < 0)
-    {
-        NDNERROR("can't convert from I420 to RGB");
-        return;
-    }
-    
-    if (delegate_)
-        delegate_->onDeliverFrame(frameBuffer, bufSize,
-                                  videoFrame.width(), videoFrame.height(),
-                                  TickTime::MillisecondTimestamp(), videoFrame.render_time_ms());
-    else
-        TRACE("..skipping");
-#endif
-    
 }
 
 void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay)
 {
-    DBG("capture delay changed: %d", delay);
+    LogWarnC << "delay changed: " << delay << endl;
 }
 
 //********************************************************************************

@@ -15,6 +15,7 @@
 
 namespace ndnrtc
 {
+#if 0 // old code
     /**
      * Video jitter buffer class
      */
@@ -27,6 +28,7 @@ namespace ndnrtc
         
         int releaseAcquiredFrame();
     };
+#endif
 }
 
 #endif /* defined(__ndnrtc__video_playout_buffer__) */

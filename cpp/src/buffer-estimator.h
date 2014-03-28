@@ -16,7 +16,8 @@
 namespace ndnrtc {
     namespace new_api
     {
-        class BufferEstimator {
+        class BufferEstimator : public ndnlog::new_api::ILoggingObject
+        {
         public:
             
             static const int64_t MinBufferSizeMs;

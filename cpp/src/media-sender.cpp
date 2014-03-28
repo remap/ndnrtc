@@ -155,8 +155,7 @@ int MediaSender::publishPacket(const PacketData &packetData,
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
 
-            LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
-            << "published " << segmentName << endl;
+            LogTraceC << "published " << segmentName << endl;
         }
     }
     catch (std::exception &e)
@@ -181,8 +180,7 @@ void MediaSender::registerPrefix()
                                                      bind(&MediaSender::onRegisterFailed,
                                                           this, _1));
         if (prefixId != 0)
-            LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
-            << "registered prefix " << *packetPrefix << endl;
+            LogTraceC << "registered prefix " << *packetPrefix << endl;
     }
     else
         notifyError(-1, "bad packet prefix");
@@ -200,8 +198,7 @@ void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
     }
     else
     {
-        LogTrace(NdnRtcUtils::toString("old-%s.log", params_.producerId))
-        << "interest for old " << interest->getName() << endl;
+        LogTraceC << "interest for old " << interest->getName() << endl;
     }
 }
 
@@ -222,50 +219,42 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
         webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
         
         if (pit_.find(name) != pit_.end())
-            LogTrace(NdnRtcUtils::toString("addpit-%s.log", params_.producerId))
-            << "pit exists " << name << endl;
+            LogTraceC << "pit exists " << name << endl;
         
         pit_[name] = pitEntry;
     }
     
-    LogTrace(NdnRtcUtils::toString("addpit-%s.log", params_.producerId))
-    << "new pit entry " << name << " " << pit_.size() << endl;
+    LogTraceC << "new pit entry " << name << " " << pit_.size() << endl;
     
 }
 
 void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
                                     SegmentData::SegmentMetaInfo &metaInfo)
 {
+    webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+    
+    map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
+    
+    if (pitHit != pit_.end())
     {
-        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+        int64_t currentTime = NdnRtcUtils::millisecondTimestamp();
         
-        map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
+        shared_ptr<const Interest> pendingInterest = pitHit->second.interest_;
         
-//        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
-//        << "published " << prefix << endl;
+        metaInfo.interestNonce_ =
+        NdnRtcUtils::blobToNonce(pendingInterest->getNonce());
+        metaInfo.interestArrivalMs_ = pitHit->second.arrivalTimestamp_;
+        metaInfo.generationDelayMs_ = (uint32_t)(currentTime - pitHit->second.arrivalTimestamp_);
         
-        if (pitHit != pit_.end())
-        {
-            int64_t currentTime = NdnRtcUtils::millisecondTimestamp();
-            
-            shared_ptr<const Interest> pendingInterest = pitHit->second.interest_;
-            
-            metaInfo.interestNonce_ =
-            NdnRtcUtils::blobToNonce(pendingInterest->getNonce());
-            metaInfo.interestArrivalMs_ = pitHit->second.arrivalTimestamp_;
-            metaInfo.generationDelayMs_ = (uint32_t)(currentTime - pitHit->second.arrivalTimestamp_);
-            
-            pit_.erase(pitHit);
-            
-            LogTrace(NdnRtcUtils::toString("pithit-%s.log", params_.producerId))
-            << "pit hit [" << prefix.toUri() << "] -> ["
-            << pendingInterest->getName().toUri() << " (size " << pit_.size() << endl;
-            
-        }
-        else
-        {
-            LogTrace(NdnRtcUtils::toString("nopit-%s.log", params_.producerId))
-            << "no pit entry " << prefix.toUri() << endl;
-        }
+        pit_.erase(pitHit);
+        
+        LogTraceC
+        << "pit hit [" << prefix.toUri() << "] -> ["
+        << pendingInterest->getName().toUri() << " (size " << pit_.size() << endl;
+        
+    }
+    else
+    {
+        LogTraceC << "no pit entry " << prefix.toUri() << endl;
     }
 }

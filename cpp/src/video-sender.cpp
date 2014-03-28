@@ -16,6 +16,11 @@ using namespace std;
 using namespace ndnrtc;
 using namespace webrtc;
 
+NdnVideoSender::NdnVideoSender(const ParamsStruct& params):MediaSender(params)
+{
+    description_ = "vsender";
+}
+
 //******************************************************************************
 #pragma mark - overriden
 int NdnVideoSender::init(const shared_ptr<Face> &face,
@@ -32,6 +37,8 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = -1;
 
+    LogInfoC << "initialized" << endl;
+    
     return RESULT_OK;
 }
 
@@ -59,14 +66,15 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     
     PrefixMetaInfo prefixMeta;
     prefixMeta.playbackNo_ = packetNo_;
-    prefixMeta.pairedSequenceNo_ = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
+    prefixMeta.pairedSequenceNo_ = (isKeyFrame)?deltaFrameNo_:keyFrameNo_;
     
     NdnFrameData frameData(encodedImage, metadata);
+    int nSegments = 0;
     
-    if (RESULT_GOOD(publishPacket(frameData,
+    if ((nSegments = publishPacket(frameData,
                                   framePrefix,
                                   frameNo,
-                                  prefixMeta)))
+                                  prefixMeta)) > 0)
     {
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
 //        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
@@ -77,18 +85,18 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
 //             encodedImage.capture_time_ms_,
 //             getCurrentPacketRate());
 
-        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
-        << "published " << packetNo_ << " "
-        << " keyNo " << keyFrameNo_ << " "
-        << (isKeyFrame?"K":"D") << " "
-        << publishingTime << " "
-        << frameData.getLength() << " "
-        << encodedImage.capture_time_ms_ << " "
-        << getCurrentPacketRate() << endl;
+        LogStatC
+        << "publish\t" << packetNo_ << "\t"
+        << deltaFrameNo_ << "\t"
+        << keyFrameNo_ << "\t"
+        << (isKeyFrame?"K":"D") << "\t"
+        << publishingTime << "\t"
+        << frameData.getLength() << "\t"
+        << encodedImage.capture_time_ms_ << "\t"
+        << getCurrentPacketRate() << "\t"
+        << nSegments << endl;
         
         if (!isKeyFrame)
-//            keyFrameNo_++;
-//        else
             deltaFrameNo_++;
 
         // increment packet number regardless of key/delta condition
@@ -117,7 +125,7 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
     }
     else
     {
-        LogTrace(NdnRtcUtils::toString("publisher-%s.log", params_.producerId))
-        << "interest for old " << name << endl;
+        LogTraceC
+        << "late interest " << name << endl;
     }
 }

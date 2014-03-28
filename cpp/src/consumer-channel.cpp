@@ -14,6 +14,7 @@
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnlog::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -26,6 +27,8 @@ audioParams_(audioParams),
 rttEstimation_(new RttEstimation()),
 faceProcessor_(faceProcessor)
 {
+    rttEstimation_->setDescription(NdnRtcUtils::toString("%s-rtt-est", getDescription().c_str()));
+    
     if (!faceProcessor_.get())
     {
         isOwnFace_ = true;
@@ -35,10 +38,17 @@ faceProcessor_(faceProcessor)
                                                        this, _1, _2, _3),
                                                   bind(&ConsumerChannel::onRegisterFailed,
                                                        this, _1));
+        faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
     }
     
     interestQueue_.reset(new InterestQueue(faceProcessor_->getFace()));
+    interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     videoConsumer_.reset(new VideoConsumer(params_, interestQueue_));
+    
+    this->setLogger(new Logger(params_.loggingLevel,
+                               NdnRtcUtils::toString("consumer-%s.log",
+                                                     params.producerId)));
+    isLoggerCreated_ = true;
 }
 
 //******************************************************************************
@@ -91,6 +101,17 @@ ConsumerChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
     stat.videoStat_.nReceived_ = 0;
     
     videoConsumer_->getStatistics(stat.videoStat_);
+}
+
+void
+ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
+{
+    videoConsumer_->setLogger(logger);
+    rttEstimation_->setLogger(logger);
+    faceProcessor_->setLogger(logger);
+    interestQueue_->setLogger(logger);
+    
+    ILoggingObject::setLogger(logger);
 }
 
 //******************************************************************************
