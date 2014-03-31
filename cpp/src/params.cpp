@@ -49,6 +49,8 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     // check other values
     validated.loggingLevel = params.loggingLevel;
     validated.logFile = params.logFile;
+    validated.useTlv = params.useTlv;
+    validated.useRtx = params.useRtx;
     
     validated.captureDeviceId = params.captureDeviceId;
     validated.captureWidth = ParamsStruct::validate(params.captureWidth,
@@ -152,6 +154,11 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     // check other values
     int res = RESULT_OK;
     ParamsStruct validated = DefaultParamsAudio;
+    
+    validated.loggingLevel = params.loggingLevel;
+    validated.logFile = params.logFile;
+    validated.useTlv = params.useTlv;
+    validated.useRtx = params.useRtx;
     
     validated.host = params.host;
     validated.portNum = ParamsStruct::validateLE(params.portNum, MaxPortNum,
