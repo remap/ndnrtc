@@ -579,7 +579,6 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
                                                 FrameBuffer::Slot::Namespace nspc)
 {
     int64_t interestLifetime = 0;
-    assert(playbackDeadline > 0);
     
     if (nspc == FrameBuffer::Slot::Key ||
         frameBuffer_->getState() == FrameBuffer::Invalid)
@@ -596,9 +595,11 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
             interestLifetime = rtt;
     }
     
-    if (interestLifetime > playbackDeadline)
+    if (interestLifetime > playbackDeadline &&
+        playbackDeadline != 0)
         interestLifetime = playbackDeadline;
     
+    assert(interestLifetime > 0);
     return interestLifetime;
 }
 
