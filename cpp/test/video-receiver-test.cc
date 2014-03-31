@@ -284,7 +284,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     params_.segmentSize = segmentSize;
     params_.producerRate = producerFrameRate;
     params_.freshness = 1;
-    params_.interestTimeout = 2;
+    params_.interestTimeout = 2000;
     params_.producerId = "testuser3";
     
     NdnVideoReceiver *receiver = new NdnVideoReceiver(params_);
@@ -338,7 +338,7 @@ TEST_F(NdnReceiverTester, FetchingWithRecovery)
     flushFlags();
     
     // now let's wait a bit so receiver can switch back to chasing mode
-    WAIT(RebufferThreshold+params_.interestTimeout*1000);
+    WAIT(RebufferThreshold+params_.interestTimeout);
     
     { // now publish again
         for (int i = 0; i < framesNum; i++)

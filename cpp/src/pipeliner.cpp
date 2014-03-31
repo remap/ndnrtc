@@ -144,7 +144,7 @@ ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
 {
     if (event.type_ == FrameBuffer::Event::FirstSegment)
     {
-        int64_t lifetime = consumer_->getParameters().interestTimeout*1000;
+        int64_t lifetime = consumer_->getParameters().interestTimeout;
         requestMissing(event.slot_, lifetime, 0);
     }
     
@@ -377,7 +377,7 @@ ndnrtc::new_api::Pipeliner::initialize()
 shared_ptr<Interest>
 ndnrtc::new_api::Pipeliner::getDefaultInterest(const ndn::Name &prefix, int64_t timeoutMs)
 {
-    shared_ptr<Interest> interest(new Interest(prefix, (timeoutMs == 0)?consumer_->getParameters().interestTimeout*1000:timeoutMs));
+    shared_ptr<Interest> interest(new Interest(prefix, (timeoutMs == 0)?consumer_->getParameters().interestTimeout:timeoutMs));
     interest->setMustBeFresh(true);
     
     return interest;
@@ -584,7 +584,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     if (nspc == FrameBuffer::Slot::Key ||
         frameBuffer_->getState() == FrameBuffer::Invalid)
     {
-        interestLifetime = params_.interestTimeout*1000;
+        interestLifetime = params_.interestTimeout;
     }
     else
     {
