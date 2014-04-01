@@ -12,6 +12,7 @@
 #include "playout.h"
 #include "ndnrtc-utils.h"
 
+using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 

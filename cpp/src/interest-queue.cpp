@@ -13,8 +13,9 @@
 #include "interest-queue.h"
 #include "consumer.h"
 
-using namespace ndnrtc::new_api;
 using namespace std;
+using namespace ndnlog;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //******************************************************************************

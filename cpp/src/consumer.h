@@ -22,6 +22,8 @@
 
 namespace ndnrtc {
     namespace new_api {
+        using namespace ndn;
+        using namespace ptr_lib;
         
         class FrameBuffer;
         class Pipeliner;
@@ -138,11 +140,11 @@ namespace ndnrtc {
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             
-            virtual ndn::OnData
+            virtual OnData
             getOnDataHandler()
             { return bind(&Consumer::onData, this, _1, _2); }
             
-            virtual ndn::OnTimeout
+            virtual OnTimeout
             getOnTimeoutHandler()
             { return bind(&Consumer::onTimeout, this, _1); }
             

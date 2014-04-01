@@ -11,6 +11,7 @@
 #include "chase-estimation.h"
 #include "ndnrtc-utils.h"
 
+using namespace ndnlog;
 using namespace ndnrtc::new_api;
 
 const unsigned int ChaseEstimation::SampleSize = 0;

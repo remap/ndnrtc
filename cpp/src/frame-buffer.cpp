@@ -17,6 +17,7 @@
 #include "rtt-estimation.h"
 
 using namespace std;
+using namespace ndnlog;
 using namespace webrtc;
 using namespace ndnrtc;
 

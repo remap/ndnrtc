@@ -16,6 +16,7 @@
 #include "rtt-estimation.h"
 #include "video-playout.h"
 
+using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 

@@ -32,11 +32,6 @@
 #include "ndnrtc-debug.h"
 #include "ndnrtc-defines.h"
 
-using namespace std;
-using namespace ndn;
-using namespace ptr_lib;
-using namespace ndnlog;
-
 typedef int PacketNumber;
 typedef int SegmentNumber;
 typedef PacketNumber FrameNumber;

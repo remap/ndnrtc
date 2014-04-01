@@ -56,13 +56,13 @@ namespace ndnrtc {
                 virtual void setExpressionTimestamp(int64_t timestamp) = 0;
             };
 
-            InterestQueue(const shared_ptr<FaceWrapper> &face);
+            InterestQueue(const ndn::ptr_lib::shared_ptr<FaceWrapper> &face);
             ~InterestQueue();
             
-            void enqueueInterest(const Interest& interest,
-                                 const shared_ptr<IPriority>& priority,
-                                 const OnData& onData = Assembler::defaultOnDataHandler(),
-                                 const OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            void enqueueInterest(const ndn::Interest& interest,
+                                 const ndn::ptr_lib::shared_ptr<IPriority>& priority,
+                                 const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
+                                 const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
             
             void
             getStatistics(ReceiverChannelPerformance& stat);
@@ -73,10 +73,10 @@ namespace ndnrtc {
                 friend InterestQueue;
             public:
                 QueueEntry(){}
-                QueueEntry(const Interest& interest,
-                           const shared_ptr<IPriority>& priority,
-                           const OnData& onData,
-                           const OnTimeout& onTimeout);
+                QueueEntry(const ndn::Interest& interest,
+                           const ndn::ptr_lib::shared_ptr<IPriority>& priority,
+                           const ndn::OnData& onData,
+                           const ndn::OnTimeout& onTimeout);
 
                 int64_t
                 getValue() const { return priority_->getValue(); }
@@ -94,7 +94,7 @@ namespace ndnrtc {
                 
                 QueueEntry& operator=(const QueueEntry& entry)
                 {
-                    interest_.reset(new Interest(*entry.interest_));
+                    interest_.reset(new ndn::Interest(*entry.interest_));
                     priority_  = entry.priority_;
                     onDataCallback_ = entry.onDataCallback_;
                     onTimeoutCallback_ = entry.onTimeoutCallback_;
@@ -103,10 +103,10 @@ namespace ndnrtc {
                 }
                 
             private:
-                shared_ptr<const Interest> interest_;
-                shared_ptr<IPriority> priority_;
-                OnData onDataCallback_;
-                OnTimeout onTimeoutCallback_;
+                ndn::ptr_lib::shared_ptr<const ndn::Interest> interest_;
+                ndn::ptr_lib::shared_ptr<IPriority> priority_;
+                ndn::OnData onDataCallback_;
+                ndn::OnTimeout onTimeoutCallback_;
                 
                 void
                 setEnqueueTimestamp(int64_t timestamp) {
@@ -122,7 +122,7 @@ namespace ndnrtc {
             PriorityQueue;
             
             unsigned int freqMeterId_;
-            shared_ptr<FaceWrapper> face_;
+            ndn::ptr_lib::shared_ptr<FaceWrapper> face_;
             webrtc::RWLockWrapper &queueAccess_;
             webrtc::EventWrapper &queueEvent_;
             webrtc::ThreadWrapper &queueWatchingThread_;
@@ -170,10 +170,10 @@ namespace ndnrtc {
             int64_t getEnqueueTimestamp() const { return enqueuedMs_; }
             int64_t getExpressionTimestamp() const { return expressedMs_; }
             
-            static shared_ptr<Priority>
+            static ndn::ptr_lib::shared_ptr<Priority>
             fromArrivalDelay(int64_t millisecondsFromNow)
             {
-                return shared_ptr<Priority>(new Priority(millisecondsFromNow));
+                return ndn::ptr_lib::shared_ptr<Priority>(new Priority(millisecondsFromNow));
             }
             
         private:

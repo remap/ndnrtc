@@ -12,10 +12,11 @@
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 
+using namespace std;
+using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;
 using namespace webrtc;
-using namespace std;
 
 //******************************************************************************
 #pragma mark - construction/destruction

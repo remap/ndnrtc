@@ -32,7 +32,7 @@ FaceWrapper::~FaceWrapper()
 
 //******************************************************************************
 #pragma mark - public
-uint64_t FaceWrapper::expressInterest(const ndn::Interest &interest,
+uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       const OnData &onData,
                                       const OnTimeout& onTimeout,
                                       WireFormat& wireFormat)

@@ -15,6 +15,9 @@
 #include "ndnrtc-object.h"
 
 namespace ndnrtc {
+    using namespace ndn;
+    using namespace ndn::ptr_lib;
+    
     class NdnRtcNamespace
     {
     public:

@@ -13,6 +13,9 @@
 #include "params.h"
 
 namespace ndnrtc {
+    using namespace ndn;
+    using namespace ptr_lib;
+    
     /**
      * Thread-safe wrapper for NDN face class
      */
@@ -24,11 +27,14 @@ namespace ndnrtc {
         
         void setFace(shared_ptr<Face> face) { face_ = face; }
         
-        uint64_t expressInterest(const Interest& interest, const OnData& onData,
-                                 const OnTimeout& onTimeout = OnTimeout(),
-                                 WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
+        uint64_t
+        expressInterest(const Interest& interest,
+                        const OnData& onData,
+                        const OnTimeout& onTimeout = OnTimeout(),
+                        WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
-        uint64_t registerPrefix(const Name& prefix, const OnInterest& onInterest,
+        uint64_t registerPrefix(const Name& prefix,
+                                const OnInterest& onInterest,
                                 const OnRegisterFailed& onRegisterFailed,
                                 const ForwardingFlags& flags = ForwardingFlags(),
                                 WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
@@ -61,18 +67,18 @@ namespace ndnrtc {
         getFace()
         { return faceWrapper_; }
         
-        shared_ptr<ndn::Transport>
+        shared_ptr<Transport>
         getTransport()
         { return transport_; }
         
         void
-        setTransport(shared_ptr<ndn::Transport>& transport)
+        setTransport(shared_ptr<Transport>& transport)
         { transport_ = transport; }
         
         static int
         setupFaceAndTransport(const ParamsStruct &params,
                               shared_ptr<FaceWrapper>& face,
-                              shared_ptr<ndn::Transport>& transport);
+                              shared_ptr<Transport>& transport);
         
         static shared_ptr<FaceProcessor>
         createFaceProcessor(const ParamsStruct& params);
@@ -81,7 +87,7 @@ namespace ndnrtc {
         bool isProcessing_;
         unsigned int usecInterval_;
         shared_ptr<FaceWrapper> faceWrapper_;
-        shared_ptr<ndn::Transport> transport_;
+        shared_ptr<Transport> transport_;
         webrtc::ThreadWrapper &processingThread_;
         
         static bool

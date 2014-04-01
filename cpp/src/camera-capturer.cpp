@@ -19,6 +19,7 @@
 
 using namespace ndnrtc;
 using namespace webrtc;
+using namespace ndnlog;
 
 static unsigned char *frameBuffer = nullptr;
 

@@ -11,6 +11,7 @@
 #include "rtt-estimation.h"
 #include "ndnrtc-utils.h"
 
+using namespace ndnlog;
 using namespace ndnrtc::new_api;
 
 RttEstimation RttEstimation::sharedRttEstimation_ = RttEstimation();

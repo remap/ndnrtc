@@ -82,7 +82,7 @@ namespace ndnrtc {
         ~NdnAudioSendChannel();
         
         int init(const shared_ptr<Face> &face,
-                 const shared_ptr<ndn::Transport> &transport);
+                 const shared_ptr<Transport> &transport);
         int start();
         int stop();
         

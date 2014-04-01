@@ -16,6 +16,8 @@ using namespace std;
 using namespace std::tr1;
 using namespace webrtc;
 using namespace ndnrtc;
+using namespace ndnlog;
+
 #if 0
 //******************************************************************************
 //******************************************************************************

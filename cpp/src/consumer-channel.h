@@ -50,7 +50,7 @@ namespace ndnrtc {
             // ndn-cpp callbacks
             virtual void onInterest(const shared_ptr<const Name>& prefix,
                                     const shared_ptr<const Interest>& interest,
-                                    ndn::Transport& transport);
+                                    Transport& transport);
             
             virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
                                           prefix);

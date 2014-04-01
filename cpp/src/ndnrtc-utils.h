@@ -16,7 +16,11 @@
 
 #define STR(exp) (#exp)
 
-namespace ndnrtc{
+namespace ndnrtc
+{
+    using namespace ndn;
+    using namespace ptr_lib;
+    
     class NdnRtcUtils {
     public:
         static unsigned int getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize);

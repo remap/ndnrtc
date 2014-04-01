@@ -21,6 +21,9 @@
 
 namespace ndnrtc
 {
+    using namespace ndn;
+    using namespace ptr_lib;
+    
     /**
      * This is a base class for sending media packets (video frames or audio
      * samples/RTP packets) to ndn network under the following prefix 

@@ -31,8 +31,8 @@ namespace ndnrtc {
         PacketNumber playbackNo_;
         PacketNumber pairedSequenceNo_;
         
-        static Name toName(const _PrefixMetaInfo &meta);
-        static int extractMetadata(const Name& metaComponents, _PrefixMetaInfo &meta);
+        static ndn::Name toName(const _PrefixMetaInfo &meta);
+        static int extractMetadata(const ndn::Name& metaComponents, _PrefixMetaInfo &meta);
         
     } __attribute__((packed)) PrefixMetaInfo;
     

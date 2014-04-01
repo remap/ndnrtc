@@ -16,6 +16,7 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnlog;
 
 const double Pipeliner::SegmentsAvgNumDelta = 8.;
 const double Pipeliner::SegmentsAvgNumKey = 25.;

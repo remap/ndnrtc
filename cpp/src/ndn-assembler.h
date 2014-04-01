@@ -15,6 +15,8 @@
 
 namespace ndnrtc {
     namespace new_api {
+        using namespace ndn;
+        using namespace ptr_lib;
         
         class IPacketAssembler {
         public:
