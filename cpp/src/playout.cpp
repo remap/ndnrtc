@@ -53,6 +53,7 @@ Playout::start()
 {
     nPlayed_ = 0;
     nMissed_ = 0;
+    nIncomplete_ = 0;
     isRunning_ = true;
     
     unsigned int tid;
@@ -87,6 +88,7 @@ Playout::getStatistics(ReceiverChannelPerformance& stat)
 {
     stat.nPlayed_ = nPlayed_;
     stat.nMissed_ = nMissed_;
+    stat.nIncomplete_ = nIncomplete_;
 }
 
 //******************************************************************************
@@ -104,13 +106,13 @@ Playout::processPlayout()
             {
                 nPlayed_++;
                 
-                LogStatC << "play\t" << nPlayed_ << endl;
+                LogStatC << "\tplay\t" << nPlayed_ << endl;
             }
             else
             {
                 nMissed_++;
                 
-                LogStatC << "missed\t" << nMissed_ << endl;
+                LogStatC << "\tmissed\t" << nMissed_ << endl;
             }
         }
     }

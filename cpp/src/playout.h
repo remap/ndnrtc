@@ -47,7 +47,7 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            unsigned int nPlayed_, nMissed_;
+            unsigned int nPlayed_, nMissed_, nIncomplete_;
             shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             

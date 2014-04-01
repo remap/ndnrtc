@@ -568,6 +568,8 @@ ndnrtc::new_api::Pipeliner::requestMissing
             slot->incremenrRtxNum();
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             rtxNum_++;
+            
+            LogStatC << "\tretransmit\t" << rtxNum_ << endl;
         }
     }
     
@@ -593,11 +595,11 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
             interestLifetime = frameBuffer_->getEstimatedBufferSize()/2.;
         else
             interestLifetime = rtt;
+        
+        if (interestLifetime > playbackDeadline &&
+            playbackDeadline != 0)
+            interestLifetime = playbackDeadline;
     }
-    
-    if (interestLifetime > playbackDeadline &&
-        playbackDeadline != 0)
-        interestLifetime = playbackDeadline;
     
     assert(interestLifetime > 0);
     return interestLifetime;

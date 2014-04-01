@@ -270,10 +270,12 @@ currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
 logFile_(logFile),
 outStream_(&std::cout),
+isStdOutActive_(true),
 logMutex_(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
 {
     if (logFile_ != "")
     {
+        isStdOutActive_ = false;
         outStream_ = new std::ofstream();
         getOutFileStream().open(logFile_.c_str(),
                                 std::ofstream::out | std::ofstream::trunc);

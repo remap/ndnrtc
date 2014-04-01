@@ -412,7 +412,7 @@ namespace ndnlog {
             std::ostream* outStream_;
             int64_t lastFlushTimestampMs_;
             
-            bool isWritingLogEntry_;
+            bool isWritingLogEntry_, isStdOutActive_;
             NdnLogType currentEntryLogType_;
             pthread_t current_;
             
@@ -443,7 +443,7 @@ namespace ndnlog {
             void
             lockStreamExclusively()
             {
-                if (getOutStream() == std::cout)
+                if (isStdOutActive_)
                     pthread_mutex_lock(&stdOutMutex_);
                 else
                     pthread_mutex_lock(&logMutex_);
@@ -451,7 +451,7 @@ namespace ndnlog {
             
             void unlockStream()
             {
-                if (getOutStream() == std::cout)
+                if (isStdOutActive_)
                     pthread_mutex_unlock(&stdOutMutex_);
                 else
                     pthread_mutex_unlock(&logMutex_);

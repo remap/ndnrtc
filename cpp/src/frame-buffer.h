@@ -698,9 +698,30 @@ namespace ndnrtc
             int64_t
             getPlayableBufferSize();
             
+            /**
+             * Acquires current top slot from the playback queue for playback.
+             * Acquired slot will be locked unless corresponding 
+             * releaseAcquiredSlot method will be called. One can rely on slot's
+             * data consistency between these calls. That's why passing a frame
+             * into decoder should be implemented between these calls.
+             * @param packetData Pointer to the packet's data, where frame's 
+             *                   data wil be extracted
+             * @param assembledLevel Frame assembled level, i.e. ratio (0<r<1) 
+             *                       of how many segments were assembled. 1 
+             *                       means frame was fully assembled, 0 means 
+             *                       frame was not assembled at all (most likely
+             *                       in this case, *packetData will be null).
+             */
             virtual void
-            acquireSlot(PacketData** packetData);
+            acquireSlot(PacketData** packetData, PacketNumber& packetNo,
+                        bool& isKey, double& assembledLevel);
             
+            /**
+             * Releases previously acquired slot. 
+             * After this call, slot will be unlocked, reset and freed in the
+             * buffer so it can be re-used for new frames. One should not rely 
+             * on data slot's consistency after this call.
+             */
             virtual int
             releaseAcquiredSlot();
             

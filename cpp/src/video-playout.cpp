@@ -42,7 +42,20 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal)
         data_ = nullptr;
     }
     
-    frameBuffer_->acquireSlot(&data_);
+    PacketNumber packetNo;
+    double assembledLevel = 0;
+    bool isKey;
+    frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
+    
+    if (assembledLevel > 0 &&
+        assembledLevel < 1)
+    {
+        nIncomplete_++;
+        LogStatC
+        << "\tincomplete\t" << nIncomplete_  << "\t"
+        << (isKey?"K":"D") << "\t"
+        << packetNo << "\t" << endl;
+    }
     
     // render frame if we have one
     if (data_ && frameConsumer_)

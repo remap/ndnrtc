@@ -1864,7 +1864,10 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     << "ready " << slot->getPrefix() << endl;
                     
                     if (slot->getRtxNum() > 0)
+                    {
                         nRescuedFrames_++;
+                        LogStatC << "\trescued\t" << nRescuedFrames_ << endl;
+                    }
                     
                     nReceivedFrames_++;
                     addBufferEvent(Event::Ready, slot);
@@ -2049,10 +2052,12 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 }
 
 void
-ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
+ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
+                                          PacketNumber& packetNo,
+                                          bool& isKey,
+                                          double& assembledLevel)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
-    
     shared_ptr<FrameBuffer::Slot> slot = playbackQueue_.peekSlot();
     
     if (slot.get())
@@ -2067,6 +2072,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
         
         playbackSlot_ = slot;
         playbackNo_ = slot->getPlaybackNumber();
+        assembledLevel = slot->getAssembledLevel();
+        packetNo = slot->getPlaybackNumber();
+        isKey = (slot->getNamespace() == Slot::Key);
         
         slot->lock();
         slot->getPacketData(packetData);
@@ -2078,6 +2086,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData)
     else
     {
         playbackSlot_.reset();
+        assembledLevel = 0;
         
         if (!playbackQueue_.size())
         {
