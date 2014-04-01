@@ -9,7 +9,7 @@
 #ifndef __ndnrtc__media_receiver__
 #define __ndnrtc__media_receiver__
 
-#include <tr1/unordered_set>
+#include <ndnboost/unordered_set.hpp>
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"

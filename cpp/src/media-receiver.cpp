@@ -18,7 +18,7 @@
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace std;
-using namespace std::tr1;
+
 #if 0
 const double ndnrtc::RateDeviation = 0.1; // 10%
 const double ndnrtc::RttFilterAlpha = 0.01;

@@ -29,6 +29,7 @@
 #include "consumer.h"
 
 using namespace ndnrtc;
+using namespace ndnlog;
 using namespace ndnlog::new_api;
 
 int64_t millisecondTimestamp();

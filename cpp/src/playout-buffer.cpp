@@ -9,11 +9,10 @@
 
 //#undef NDN_LOGGING
 
-#include <tr1/unordered_set>
+#include <ndnboost/unordered_set.hpp>
 #include "playout-buffer.h"
 
 using namespace std;
-using namespace std::tr1;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnlog;

@@ -52,7 +52,7 @@ DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE -O0
 LOGFLAGS = -DWEBRTC_LOGGING -DNDN_LOGGING -DNDN_TRACE -DNDN_DEBUG -DNDN_INFO -DNDN_WARN -DNDN_ERROR 
 CPPFLAGS += -fshort-wchar		\
 		-fPIC			\
-        --std=c++0x \
+        -std=c++0x \
         $(DEBUGFLAGS) $(LOGFLAGS) \
 		-mmacosx-version-min=10.7 \
 		-D BASE_FILE_NAME=\"$*\" \

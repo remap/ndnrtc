@@ -11,8 +11,8 @@
 #ifndef __ndnrtc__frame_buffer__
 #define __ndnrtc__frame_buffer__
 
-#include <tr1/unordered_set>
 #include <set>
+#include <ndnboost/unordered_set.hpp>
 
 #include "frame-data.h"
 #include "ndnrtc-common.h"

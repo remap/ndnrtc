@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include <tr1/unordered_set>
+#include <ndnboost/unordered_set.hpp>
 
 #include "test-common.h"
 #include "interest-queue.h"
