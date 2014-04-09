@@ -115,6 +115,10 @@ namespace ndnrtc {
                                  bool isClosed = true);
         static int findComponent(const Name &prefix,
                                    const std::string &component);
+        
+        static bool isValidInterestPrefix(const Name& prefix);
+        static bool isValidPacketDataPrefix(const Name& prefix);
+        
         static bool isKeyFramePrefix(const Name &prefix);
         static bool isDeltaFramesPrefix(const Name &prefix);
         static bool isParitySegmentPrefix(const Name &prefix);

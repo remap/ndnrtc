@@ -18,7 +18,7 @@ using namespace ndnrtc::new_api;
 using namespace ndnrtc::testing;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
-::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
 class BufferTests : public NdnRtcObjectTestHelper
 {
@@ -230,6 +230,7 @@ public:
                                          ENV_LOGFILE));
         ((ConsumerMock*)consumer_.get())->setParameters(params_);
         buffer_ = new FrameBufferTester(consumer_);
+        getBuffer().setLogger(&Logger::sharedInstance());
     }
     
     void TearDown()
@@ -433,6 +434,7 @@ protected:
         for (int segno = startSegNo; segno <= endSegNo; segno++)
         {
             Name segmentPrefix(framePrefix);
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(segno);
             
             shared_ptr<Interest> interest(new Interest(segmentPrefix));
@@ -573,7 +575,7 @@ protected:
     }
     
 };
-#if 0
+
 TEST_F(SegmentTests, TestInit)
 {
     SegmentTester segment;
@@ -1396,7 +1398,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
         delete packetData;
     }
 }
-#endif
+
 TEST_F(FrameBufferTests, TestAssembleManyFrames)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
@@ -1409,7 +1411,6 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
     params_.segmentSize = segmentSize;
     ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
-    getBuffer().setLogger(&Logger::sharedInstance());
     
     Name prefix("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
     PacketNumber startPno = 1, endPno = 30;
@@ -1509,7 +1510,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
         pipelinerThread->Stop();
     }
 }
-#if 0
+
 TEST_F(FrameBufferTests, TestPlaybackQueue)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
@@ -1546,7 +1547,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     rightmostDataPrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
     
     std::vector<shared_ptr<Data>> rightmostSegments =
-    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 0, segmentSize,
+    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 0, segmentSize-SegmentData::getHeaderSize(),
                                               rightmostDataPrefix, packetMeta,
                                               rightmostPrefixMeta, rightmostSegmentMeta);
 
@@ -1560,7 +1561,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     
     SegmentData::SegmentMetaInfo deltaSegmentMeta;// ignore
     std::vector<shared_ptr<Data>> delta1Segments =
-    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 1, segmentSize,
+    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 1, segmentSize-SegmentData::getHeaderSize(),
                                               deltaPrefix, packetMeta,
                                               deltaPrefixMeta, deltaSegmentMeta);
 
@@ -1568,7 +1569,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     packetMeta.timestamp_ += delta1Duration;
     deltaPrefixMeta.playbackNo_++;
     std::vector<shared_ptr<Data>> delta2Segments =
-    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 2, segmentSize,
+    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 2, segmentSize-SegmentData::getHeaderSize(),
                                               deltaPrefix, packetMeta,
                                               deltaPrefixMeta, deltaSegmentMeta);
 
@@ -1584,7 +1585,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     
     
     std::vector<shared_ptr<Data>> keySegments =
-    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 0, segmentSize,
+    NdnRtcObjectTestHelper::packAndSliceFrame(frame, 0, segmentSize-SegmentData::getHeaderSize(),
                                               keyPrefix, packetMeta,
                                               keyPrefixMeta, keySegmentMeta);
     
@@ -1600,25 +1601,30 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
         rightmostInterest.setNonce(NdnRtcUtils::nonceToBlob(NdnRtcUtils::generateNonceValue()));
         
         getBuffer().interestIssued(rightmostInterest);
-        EXPECT_EQ(frameDuration, getBuffer().getEstimatedBufferSize());
+        EXPECT_EQ(0, getBuffer().getEstimatedBufferSize());
         EXPECT_EQ(1, getBuffer().getActiveSlotsNum());
         
         // now append 1st rightmost non-zero segment
         getBuffer().newData(*rightmostSegments[1]);
-        EXPECT_EQ(ceil(1000/params_.producerRate), getBuffer().getEstimatedBufferSize());
+        EXPECT_EQ(0, getBuffer().getEstimatedBufferSize());
         
         // now issue for 2 more delta frames
         Name delta1Name(deltaPrefix);
         delta1Name.append(NdnRtcUtils::componentFromInt(1));
+        NdnRtcNamespace::appendDataKind(delta1Name, false);
+        delta1Name.appendSegment(1);
         
         Interest intrst1(delta1Name);
         getBuffer().interestIssued(intrst1);
         EXPECT_EQ(2, getBuffer().getActiveSlotsNum());
         
-        EXPECT_EQ(2*frameDuration, getBuffer().getEstimatedBufferSize());
+        EXPECT_EQ(frameDuration, getBuffer().getEstimatedBufferSize());
         
         Name delta2Name(deltaPrefix);
         delta2Name.append(NdnRtcUtils::componentFromInt(2));
+        NdnRtcNamespace::appendDataKind(delta2Name, false);
+        delta2Name.appendSegment(1);
+        
         Interest intrst2(delta2Name);
         getBuffer().interestIssued(intrst2);
         EXPECT_EQ(3, getBuffer().getActiveSlotsNum());
@@ -1627,16 +1633,19 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
         getBuffer().newData(*delta1Segments[1]);
         
         // now size should be inferred from provided producer rate for 2 frames
-        EXPECT_EQ(3*frameDuration, getBuffer().getEstimatedBufferSize());
+        EXPECT_EQ(2*frameDuration, getBuffer().getEstimatedBufferSize());
 
         // append zero segment (which contains actual timestamps)
         Interest rmseg0(deltaPrefix);
         rmseg0.getName().append(NdnRtcUtils::componentFromInt(0));
+        NdnRtcNamespace::appendDataKind(rmseg0.getName(), false);
         rmseg0.getName().appendSegment(0);
+        
         getBuffer().interestIssued(rmseg0);
         
         Interest delta1seg0(deltaPrefix);
         delta1seg0.getName().append(NdnRtcUtils::componentFromInt(1));
+        NdnRtcNamespace::appendDataKind(delta1seg0.getName(), false);
         delta1seg0.getName().appendSegment(0);
         getBuffer().interestIssued(delta1seg0);
         
@@ -1644,9 +1653,10 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
         getBuffer().newData(*rightmostSegments[0]);
         
         // now first frame has precise duration
-        EXPECT_EQ(rightMostDuration+2*frameDuration, getBuffer().getEstimatedBufferSize());
+        EXPECT_EQ(2*frameDuration, getBuffer().getEstimatedBufferSize());
     }
 }
+
 #if 0
 TEST_F(FrameBufferTests, TestPlaybackQueueOrdering)
 {
@@ -1934,4 +1944,3 @@ TEST_F(FrameBufferTests, TestInterestRange)
     std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>> segments = slot->getPendingSegments();
     EXPECT_EQ(endSegNo+1-startSegNo, segments.size());
 }
-#endif

@@ -324,6 +324,30 @@ int NdnRtcNamespace::findComponent(const ndn::Name &prefix,
     return pos;
 }
 
+bool NdnRtcNamespace::isValidInterestPrefix(const Name& prefix)
+{
+    // interest prefixes could be of two types:
+    // 1. interests for the rightmost frames (in delta namespace)
+    // 2. interests for exact data segments:
+    //      - interests for data segments
+    //      - interests for parity segments
+    
+    // TBD: use regexp for these checks
+    
+    return true;
+}
+
+bool NdnRtcNamespace::isValidPacketDataPrefix(const Name& prefix)
+{
+    // packet data prefix could be of two types:
+    // 1. prefix for data segments
+    // 2. prefix for parity segments
+    
+    // TBD: use regexp for these checks    
+    
+    return true;
+}
+
 bool NdnRtcNamespace::isKeyFramePrefix(const ndn::Name &prefix)
 {
     shared_ptr<string> framesKey = buildPath(true,
