@@ -33,6 +33,8 @@ namespace ndnrtc {
         static const std::string NameComponentStreamFramesDelta;
         static const std::string NameComponentStreamFramesKey;
         static const std::string NameComponentStreamInfo;
+        static const std::string NameComponentFrameSegmentData;
+        static const std::string NameComponentFrameSegmentParity;
         static const std::string KeyComponent;
         static const std::string CertificateComponent;
         
@@ -82,7 +84,7 @@ namespace ndnrtc {
          * value or pointer to null if an error
          * @see getStreamPrefix for more info on form of "stream_prefix" component
          */
-        static shared_ptr<string>
+        static shared_ptr<std::string>
         getStreamFramePrefix(const ParamsStruct &params,
                              bool isKeyNamespace = false);
         
@@ -93,25 +95,37 @@ namespace ndnrtc {
          * or pointer to null if error occured
          * @see getStreamPrefix for more info on form ot "stream_prefix" component
          */
-        static shared_ptr<string>
+        static shared_ptr<std::string>
         getStreamKeyPrefix(const ParamsStruct &params);
         
         static shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);
         static shared_ptr<KeyChain> keyChainForUser(const std::string &userPrefix);
+
+        static void appendStringComponent(Name& prefix,
+                                          const std::string& stringComponent);
+        static void appendStringComponent(shared_ptr<Name>& prefix,
+                                          const std::string& stringComponent);
+        
+        static void appendDataKind(Name& prefix, bool shouldAppendParity);
+        static void appendDataKind(shared_ptr<Name>& prefix, bool shouldAppendParity);
         
         static bool hasComponent(const Name &prefix,
-                                 const std::string &component);
+                                 const std::string &component,
+                                 bool isClosed = true);
         static int findComponent(const Name &prefix,
                                    const std::string &component);
         static bool isKeyFramePrefix(const Name &prefix);
         static bool isDeltaFramesPrefix(const Name &prefix);
+        static bool isParitySegmentPrefix(const Name &prefix);
         
         static PacketNumber getPacketNumber(const Name &prefix);
         static SegmentNumber getSegmentNumber(const Name &prefix);
         
         static int trimSegmentNumber(const Name &prefix, Name &trimmedPrefix);
         static int trimPacketNumber(const Name &prefix, Name &trimmedPrefix);
+        static int trimDataTypeComponent(const Name &prefix,
+                                         Name &trimmedPrefix);
     private:
     };
 }

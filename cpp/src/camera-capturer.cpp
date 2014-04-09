@@ -17,6 +17,7 @@
 
 #define USE_I420
 
+using namespace std;
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace ndnlog;

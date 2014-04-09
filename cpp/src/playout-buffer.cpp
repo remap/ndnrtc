@@ -9,7 +9,7 @@
 
 //#undef NDN_LOGGING
 
-#include <ndnboost/unordered_set.hpp>
+#include <tr1/unordered_set>
 #include "playout-buffer.h"
 
 using namespace std;

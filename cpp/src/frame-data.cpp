@@ -11,6 +11,8 @@
 #include "frame-data.h"
 #include "params.h"
 
+#define PREFIX_META_NCOMP 4
+
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
@@ -23,25 +25,27 @@ PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.totalSegmentsNum_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.playbackNo_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.pairedSequenceNo_));
+    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.paritySegmentsNum_));
     
     return metaSuffix;
 }
 
 int
 PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
-                           PrefixMetaInfo &meta)
+                                PrefixMetaInfo &meta)
 {
     Name metaComponents(prefix);
     
-    // get last three components
-    if (metaComponents.size() > 3)
-        metaComponents = metaComponents.getSubName(prefix.size()-3, 3);
+    // get last four components
+    if (metaComponents.size() > PREFIX_META_NCOMP)
+        metaComponents = metaComponents.getSubName(prefix.size()-PREFIX_META_NCOMP, PREFIX_META_NCOMP);
     
-    if (metaComponents.size() == 3)
+    if (metaComponents.size() == PREFIX_META_NCOMP)
     {
         meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(metaComponents[0]);
         meta.playbackNo_ = NdnRtcUtils::intFromComponent(metaComponents[1]);
         meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(metaComponents[2]);
+        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(metaComponents[3]);
         
         return RESULT_OK;
     }
@@ -174,6 +178,23 @@ int SegmentData::segmentDataFromRaw(unsigned int dataLength,
     return segmentData.initFromRawData(dataLength, rawData);
 }
 
+
+//******************************************************************************
+//******************************************************************************
+#pragma mark - construction/destruction
+FrameParityData::FrameParityData(unsigned int length,
+                                 const unsigned char* rawData):
+PacketData(length, rawData)
+{
+    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+}
+
+int
+FrameParityData::initFromRawData(unsigned int dataLength,
+                                 const unsigned char *rawData)
+{
+    return RESULT_OK;
+}
 
 //******************************************************************************
 //******************************************************************************

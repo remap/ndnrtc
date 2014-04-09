@@ -44,7 +44,7 @@ namespace ndnrtc
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
-        bool useTlv, useRtx;
+        bool useTlv, useRtx, useFec;
         
         // capture settings
         unsigned int captureDeviceId;
@@ -138,6 +138,7 @@ namespace ndnrtc
         "ndnrtc.log\0",                   // log file
         true,   // use TLV encoding
         true,   // reissue timed out interests
+        true,   // use FEC
         
         0,      // capture device id
         640,    // capture width
@@ -168,7 +169,7 @@ namespace ndnrtc
         30,     // producer rate (currently equal to playback rate)
         
         30,     // playback rate of local consumer
-        5,      // interest timeout
+        5000,      // interest timeout
         90,     // assembling buffer size
         16000,  // frame buffer slot size
         150       // jitter buffer size in ms
@@ -180,7 +181,8 @@ namespace ndnrtc
         ndnlog::NdnLoggerDetailLevelNone,    // log level
         "",                   // log file
         true,  // use TLV encoding
-        true,
+        true, // use RTX
+        true, // use FEC
         
         0,      // capture device id
         0,    // capture width
@@ -210,7 +212,7 @@ namespace ndnrtc
         50,     // producer rate (currently equal to playback rate)
         
         50,     // playback rate of local consumer
-        2,      // interest timeout
+        2000,      // interest timeout
         90,     // assembling buffer size
         1054,  // frame buffer slot size
         200      // jitter buffer size in ms

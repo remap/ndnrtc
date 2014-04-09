@@ -20,6 +20,8 @@ using namespace ndnlog;
 
 const double Pipeliner::SegmentsAvgNumDelta = 8.;
 const double Pipeliner::SegmentsAvgNumKey = 25.;
+const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
+const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -37,6 +39,8 @@ pipelineTimer_(*EventWrapper::Create()),
 pipelinerPauseEvent_(*EventWrapper::Create()),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta)),
 keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey)),
+deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta)),
+keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter())
 {
     initialize();
@@ -101,7 +105,11 @@ ndnrtc::new_api::Pipeliner::processEvents()
         case FrameBuffer::Event::FirstSegment:
         {
             updateSegnumEstimation(event.slot_->getNamespace(),
-                                   event.slot_->getSegmentsNumber());
+                                   event.slot_->getSegmentsNumber(),
+                                   false);
+            updateSegnumEstimation(event.slot_->getNamespace(),
+                                   event.slot_->getParitySegmentsNumber(),
+                                   true);
         } // fall through
         default:
         {
@@ -169,15 +177,15 @@ void
 ndnrtc::new_api::Pipeliner::initialDataArrived
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slot)
 {
-    LogTraceC << "first data arrived" << endl;
+    LogTraceC << "first data arrived " << slot->getPrefix() << endl;
     
     // request next key frame
     keyFrameSeqNo_ = slot->getPairedFrameNumber()+1;
     requestNextKey(keyFrameSeqNo_);
     
-    double producerRate = (slot->getPacketRate())?slot->getPacketRate():params_.producerRate;
+    double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
     bufferEstimator_->setProducerRate(producerRate);
-    startChasePipeliner(slot->getSequentialNumber()+1, producerRate/2);
+    startChasePipeliner(slot->getSequentialNumber()+1, 1000./(2*producerRate));
     
     bufferEventsMask_ = FrameBuffer::Event::FirstSegment |
                         FrameBuffer::Event::Ready |
@@ -406,11 +414,21 @@ ndnrtc::new_api::Pipeliner::getInterestForRightMost(int64_t timeoutMs,
 
 void
 ndnrtc::new_api::Pipeliner::updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
-                                                   int nSegments)
+                                                   int nSegments, bool isParity)
 {
-    int estimatorId = (frameNs == FrameBuffer::Slot::Key)?
-                        keySegnumEstimatorId_:deltaSegnumEstimatorId_;
-
+    int estimatorId = 0;
+    
+    if (isParity)
+    {
+        estimatorId = (frameNs == FrameBuffer::Slot::Key)?
+    keyParitySegnumEstimatorId_:deltaParitySegnumEstimatorId_;
+    }
+    else
+    {
+        estimatorId = (frameNs == FrameBuffer::Slot::Key)?
+    keySegnumEstimatorId_:deltaSegnumEstimatorId_;
+    }
+    
     NdnRtcUtils::meanEstimatorNewValue(estimatorId, (double)nSegments);
 }
 
@@ -422,6 +440,7 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
     prefetchFrame(keyFramesPrefix_,
                   keyFrameNo++,
                   ceil(NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_))-1,
+                  ceil(NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_))-1,
                   FrameBuffer::Slot::Key);
 }
 
@@ -430,22 +449,25 @@ ndnrtc::new_api::Pipeliner::requestNextDelta(PacketNumber& deltaFrameNo)
 {
     prefetchFrame(deltaFramesPrefix_,
                   deltaFrameNo++,
-                  ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_))-1);
+                  ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_))-1,
+                  ceil(NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_))-1);
 }
 
 void
 ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
                                          SegmentNumber startNo,
-                                         SegmentNumber endNo, int64_t priority)
+                                         SegmentNumber endNo,
+                                         int64_t priority, bool isParity)
 {
     Name prefix = interest.getName();
     
     LogTraceC
     << "express range "
-    << interest.getName() << "/[" << startNo << ", " << endNo << "]"<< endl;
+    << interest.getName() << ((isParity)?"/parity":"/data")
+    << "/[" << startNo << ", " << endNo << "]"<< endl;
     
     std::vector<shared_ptr<Interest>> segmentInterests;
-    frameBuffer_->interestRangeIssued(interest, startNo, endNo, segmentInterests);
+    frameBuffer_->interestRangeIssued(interest, startNo, endNo, segmentInterests, isParity);
     
     if (segmentInterests.size())
     {
@@ -478,6 +500,8 @@ void
 ndnrtc::new_api::Pipeliner::startChasePipeliner(PacketNumber startPacketNo,
                                                  int64_t intervalMs)
 {
+    assert(intervalMs > 0);
+    
     LogTraceC
     << "start pipeline from "
     << startPacketNo << " interval = " << intervalMs << "ms" << endl;
@@ -540,10 +564,6 @@ ndnrtc::new_api::Pipeliner::requestMissing
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot,
  int64_t lifetime, int64_t priority, bool wasTimedOut)
 {
-    Name prefix = (slot->getNamespace() == FrameBuffer::Slot::Key)?
-                    Name(keyFramesPrefix_):Name(deltaFramesPrefix_);
-    prefix.append(NdnRtcUtils::componentFromInt(slot->getSequentialNumber()));
-    
     // synchronize with buffer
     frameBuffer_->synchronizeAcquire();
     
@@ -598,7 +618,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
             interestLifetime = rtt;
         
         if (interestLifetime > playbackDeadline &&
-            playbackDeadline != 0)
+            playbackDeadline > 0)
             interestLifetime = playbackDeadline;
     }
     
@@ -609,7 +629,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
 void
 ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
                                           PacketNumber packetNo,
-                                          int prefetchSize,
+                                          int prefetchSize, int parityPrefetchSize,
                                           FrameBuffer::Slot::Namespace nspc)
 {
     Name packetPrefix(basePrefix);
@@ -622,7 +642,17 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
     expressRange(*frameInterest,
                  0,
                  prefetchSize,
-                 playbackDeadline);
+                 playbackDeadline,
+                 false);
+    
+    if (params_.useFec)
+    {
+        expressRange(*frameInterest,
+                     0,
+                     parityPrefetchSize,
+                     playbackDeadline,
+                     true);
+    }
 }
 
 void

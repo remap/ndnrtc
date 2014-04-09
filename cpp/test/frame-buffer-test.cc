@@ -12,10 +12,13 @@
 #include "consumer.h"
 #include "params.h"
 #include "ndnrtc-namespace.h"
+#include "ndnrtc-testing.h"
 
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::testing;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
+::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
 class BufferTests : public NdnRtcObjectTestHelper
 {
@@ -172,7 +175,8 @@ protected:
         EXPECT_EQ(0, slot.getMissingSegments().size());
         EXPECT_EQ(0, slot.getAssembledLevel());
         EXPECT_STREQ(Name().toUri().c_str(), slot.getPrefix().toUri().c_str());
-        EXPECT_EQ(NULL, slot.getSegment(0).get());
+        EXPECT_EQ(NULL, slot.getSegment(0, false).get());
+        EXPECT_EQ(NULL, slot.getSegment(0, true).get());
         EXPECT_EQ(NULL, slot.getRecentSegment().get());
         EXPECT_FALSE(slot.isRightmost());
     }
@@ -217,7 +221,13 @@ public:
     {
         BufferTests::SetUp();
         
-        consumer_.reset(new ConsumerMock(ENV_LOGFILE));
+        interestQueue_.reset();
+        packetAssembler_.reset();
+        
+        consumer_.reset(new ConsumerMock(params_,
+                                         packetAssembler_,
+                                         interestQueue_,
+                                         ENV_LOGFILE));
         ((ConsumerMock*)consumer_.get())->setParameters(params_);
         buffer_ = new FrameBufferTester(consumer_);
     }
@@ -236,6 +246,9 @@ protected:
     ParamsStruct params_;
     FrameBufferTester *buffer_;
     shared_ptr<const Consumer> consumer_;
+    
+    shared_ptr<InterestQueue> interestQueue_;
+    shared_ptr<IPacketAssembler> packetAssembler_;
     
     webrtc::EventWrapper& interestArrivedEvent_;
     webrtc::CriticalSectionWrapper& accessCs_;
@@ -305,6 +318,7 @@ protected:
             prefixMeta.pairedSequenceNo_ = lastKey;
             prefixMeta.playbackNo_ = pNo;
             prefixMeta.totalSegmentsNum_ = -1; // will be added later inside packAndSlice call
+            prefixMeta.paritySegmentsNum_ = 0;
             
             SegmentData::SegmentMetaInfo segmentMeta;
             
@@ -316,7 +330,8 @@ protected:
                 packetPrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
             
             std::vector<shared_ptr<Data>> segments =
-            NdnRtcObjectTestHelper::packAndSliceFrame(frame, pNo, segmentSize,
+            NdnRtcObjectTestHelper::packAndSliceFrame(frame, pNo,
+                                                      segmentSize - SegmentData::getHeaderSize(),
                                                       packetPrefix, packetMeta,
                                                       prefixMeta, segmentMeta);
             packets_[pNo] = segments;
@@ -558,7 +573,7 @@ protected:
     }
     
 };
-
+#if 0
 TEST_F(SegmentTests, TestInit)
 {
     SegmentTester segment;
@@ -695,7 +710,7 @@ TEST_F(SlotTests, TestAddInterests)
         EXPECT_EQ(0, slot.getAssembledLevel());
         EXPECT_STREQ(rightmostDeltaPrefix_.toUri().c_str(),
                      slot.getPrefix().toUri().c_str());
-        EXPECT_EQ(nullptr, slot.getSegment(0).get());
+        EXPECT_EQ(nullptr, slot.getSegment(0, false).get());
         EXPECT_EQ(nullptr, slot.getRecentSegment().get());
         EXPECT_TRUE(slot.isRightmost());
     }
@@ -709,6 +724,7 @@ TEST_F(SlotTests, TestAddInterests)
         SegmentNumber segNo = NdnRtcObjectTestHelper::randomInt(0, 10);
         Name segmentPrefix(rightmostDeltaPrefix_);
         segmentPrefix.append(NdnRtcUtils::componentFromInt(packetNo));
+        NdnRtcNamespace::appendDataKind(segmentPrefix, false);
         segmentPrefix.appendSegment(segNo);
         
         Interest i(segmentPrefix);
@@ -732,11 +748,11 @@ TEST_F(SlotTests, TestAddInterests)
         EXPECT_EQ(0, slot.getAssembledLevel());
         
         Name packetPrefix;
-        NdnRtcNamespace::trimSegmentNumber(segmentPrefix, packetPrefix);
+        NdnRtcNamespace::trimDataTypeComponent(segmentPrefix, packetPrefix);
         
         EXPECT_STREQ(packetPrefix.toUri().c_str(),
                      slot.getPrefix().toUri().c_str());
-        EXPECT_EQ(NULL, slot.getSegment(segNo+1).get());
+        EXPECT_EQ(NULL, slot.getSegment(segNo+1, false).get());
         EXPECT_EQ(NULL, slot.getRecentSegment().get());
         EXPECT_FALSE(slot.isRightmost());
     }
@@ -755,6 +771,7 @@ TEST_F(SlotTests, TestAddInterests)
         {
             SegmentNumber segNo = i;
             Name segmentPrefix(packetPrefix);
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(segNo);
             
             if (i == 0)
@@ -785,6 +802,7 @@ TEST_F(SlotTests, TestAddInterests)
         {
             SegmentNumber segNo = i;
             Name segmentPrefix(packetPrefix);
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(segNo);
             
             if (i == 0)
@@ -886,12 +904,15 @@ TEST_F(SlotTests, TestAddInterestsAndData)
         EXPECT_EQ(0, slot.getAssembledLevel());
         EXPECT_STREQ(rightmostDeltaPrefix_.toUri().c_str(),
                      slot.getPrefix().toUri().c_str());
-        EXPECT_EQ(NULL, slot.getSegment(0).get());
+        EXPECT_EQ(NULL, slot.getSegment(0, false).get());
         EXPECT_EQ(NULL, slot.getRecentSegment().get());
         EXPECT_TRUE(slot.isRightmost());
         
         std::vector<shared_ptr<Data>>::iterator it = segments_.begin();
         int i = 0;
+        
+//        NdnFrameData originalFrameData(*frame_, packetMeta_);
+//        std::cout << "original \n" << ndnrtc::test::dump<600>(originalFrameData.getData()) << endl;
         
         while (it != segments_.end())
         {
@@ -904,7 +925,12 @@ TEST_F(SlotTests, TestAddInterestsAndData)
             
             PacketNumber dataPacketNo = NdnRtcNamespace::getPacketNumber(data->getName());
             SegmentNumber dataSegNo = NdnRtcNamespace::getSegmentNumber(data->getName());
+            EXPECT_EQ(dataPacketNo, slot.getSequentialNumber());
             EXPECT_EQ(dataSegNo, slot.getRecentSegment()->getNumber());
+            
+//            std::cout
+//            << "\n****** append " << i << "(" << dataSegNo << ") \n"
+//            << ndnrtc::test::dump<600>(slot.getDataPtr()) << std::endl;
             
             Name dataPrefix;
             NdnRtcNamespace::trimSegmentNumber(data->getName(), dataPrefix);
@@ -935,6 +961,7 @@ TEST_F(SlotTests, TestAddInterestsAndData)
                     if (seg != dataSegNo)
                     {
                         Name segmentPrefix(framePrefix_);
+                        NdnRtcNamespace::appendDataKind(segmentPrefix, false);
                         segmentPrefix.appendSegment(seg);
 
                         Interest intrst(segmentPrefix);
@@ -976,11 +1003,11 @@ TEST_F(SlotTests, TestAddInterestsAndData)
         webrtc::EncodedImage restoredFrame;
         EXPECT_EQ(RESULT_OK, ((NdnFrameData*)frameData)->getFrame(restoredFrame));
         NdnRtcObjectTestHelper::checkFrames(frame_, &restoredFrame);
-    }
+    } // block
     
     slot.reset();
     testSlotIsFresh(slot);
-    
+
     // add rightmost - reply with data - add rest interests -
     // reply with some data - mark missing - re-express interests - add rest data
     {
@@ -1010,6 +1037,7 @@ TEST_F(SlotTests, TestAddInterestsAndData)
                     if (seg != dataSegNo)
                     {
                         Name segmentPrefix(framePrefix_);
+                        NdnRtcNamespace::appendDataKind(segmentPrefix, false);
                         segmentPrefix.appendSegment(seg);
                         
                         Interest intrst(segmentPrefix);
@@ -1031,6 +1059,7 @@ TEST_F(SlotTests, TestAddInterestsAndData)
                         SegmentNumber segNo = NdnRtcNamespace::getSegmentNumber(segments_[seg]->getName());
                         
                         Name segmentPrefix(framePrefix_);
+                        NdnRtcNamespace::appendDataKind(segmentPrefix, false);
                         segmentPrefix.appendSegment(segNo);
                         
                         if (seg > missingTrigger)
@@ -1072,7 +1101,7 @@ TEST_F(SlotTests, TestAddInterestsAndData)
         webrtc::EncodedImage restoredFrame;
         EXPECT_EQ(RESULT_OK, ((NdnFrameData*)frameData)->getFrame(restoredFrame));
         NdnRtcObjectTestHelper::checkFrames(frame_, &restoredFrame);
-    }
+    } // block
 }
 
 TEST_F(SlotTests, TestVariousCalls)
@@ -1093,10 +1122,11 @@ TEST_F(SlotTests, TestVariousCalls)
         for (int i = 0; i < segments_.size(); i++)
         {
             Name segmentPrefix(framePrefix_);
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(i);
             
             Interest intrst(segmentPrefix);
-            EXPECT_EQ(RESULT_OK,slot.addInterest(intrst));
+            EXPECT_EQ(RESULT_OK, slot.addInterest(intrst));
         }
         
         for (int i = 0; i < segments_.size(); i++)
@@ -1163,6 +1193,7 @@ TEST_F(SlotTests, TestVariousCalls)
         {
             Name segmentPrefix(rightmostDeltaPrefix_);
             segmentPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(i);
             
             Interest intrst(segmentPrefix);
@@ -1195,6 +1226,7 @@ TEST_F(SlotTests, TestVariousCalls)
         for (int i = 0; i < nSegments_; i++)
         {
             Name segmentPrefix(framePrefix_);
+            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
             segmentPrefix.appendSegment(i);
             
             Interest intrst(segmentPrefix);
@@ -1292,7 +1324,8 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
         segmentMeta.interestNonce_ = NdnRtcUtils::blobToNonce(interest.getNonce());
         
         std::vector<shared_ptr<Data>> segments =
-        NdnRtcObjectTestHelper::packAndSliceFrame(frame, frameNo, segmentSize,
+        NdnRtcObjectTestHelper::packAndSliceFrame(frame, frameNo,
+                                                  segmentSize - SegmentData::getHeaderSize(),
                                                   prefix, packetMeta,
                                                   prefixMeta, segmentMeta);
         // first segment arrived
@@ -1330,6 +1363,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
                     {
                         Name segmentPrefix(prefix);
                         segmentPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
+                        NdnRtcNamespace::appendDataKind(segmentPrefix, false);
                         segmentPrefix.appendSegment(i);
 
                         Interest interest(segmentPrefix);
@@ -1362,18 +1396,20 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
         delete packetData;
     }
 }
-
+#endif
 TEST_F(FrameBufferTests, TestAssembleManyFrames)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
     int nSegments = 7;
     int segmentSize = frame->_length/nSegments;
     
+    params_.useFec = false;
     params_ = DefaultParams;
     params_.producerRate = 30;
     params_.segmentSize = segmentSize;
     ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
+    getBuffer().setLogger(&Logger::sharedInstance());
     
     Name prefix("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
     PacketNumber startPno = 1, endPno = 30;
@@ -1473,7 +1509,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
         pipelinerThread->Stop();
     }
 }
-
+#if 0
 TEST_F(FrameBufferTests, TestPlaybackQueue)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
@@ -1881,13 +1917,13 @@ TEST_F(FrameBufferTests, TestInterestRange)
     std::vector<shared_ptr<Interest>> interests;
     EXPECT_EQ(ndnrtc::new_api::FrameBuffer::Slot::StateFree,
               getBuffer().interestRangeIssued(interest, startSegNo, endSegNo,
-                                              interests));
+                                              interests, false));
     EXPECT_EQ(0, interests.size());
     interest.getName().append(NdnRtcUtils::componentFromInt(packetNo));
     
     EXPECT_EQ(ndnrtc::new_api::FrameBuffer::Slot::StateNew,
               getBuffer().interestRangeIssued(interest, startSegNo, endSegNo,
-                                              interests));
+                                              interests, false));
     EXPECT_EQ(endSegNo-startSegNo+1, interests.size());
     
     EXPECT_EQ(1, getBuffer().getActiveSlotsNum());
@@ -1898,3 +1934,4 @@ TEST_F(FrameBufferTests, TestInterestRange)
     std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>> segments = slot->getPendingSegments();
     EXPECT_EQ(endSegNo+1-startSegNo, segments.size());
 }
+#endif

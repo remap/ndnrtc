@@ -30,6 +30,7 @@ namespace ndnrtc {
         int totalSegmentsNum_;
         PacketNumber playbackNo_;
         PacketNumber pairedSequenceNo_;
+        int paritySegmentsNum_;
         
         static ndn::Name toName(const _PrefixMetaInfo &meta);
         static int extractMetadata(const ndn::Name& metaComponents, _PrefixMetaInfo &meta);
@@ -123,7 +124,8 @@ namespace ndnrtc {
     public:
         enum PacketDataType {
             TypeVideo = 1,
-            TypeAudio = 2
+            TypeAudio = 2,
+            TypeParity = 3
         };
         struct PacketMetadata {
             double packetRate_; // current packet production rate
@@ -148,6 +150,18 @@ namespace ndnrtc {
         packetFromRaw(unsigned int length, unsigned char* data,
                       PacketData **packetData);
         
+    };
+    
+    class FrameParityData: public PacketData
+    {
+    public:
+        FrameParityData(unsigned int length, const unsigned char* rawData);
+        
+        PacketDataType
+        getType() { return TypeParity; }
+        
+        int
+        initFromRawData(unsigned int dataLength, const unsigned char* rawData);
     };
     
     /**

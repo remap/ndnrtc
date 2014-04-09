@@ -11,6 +11,7 @@
 #include "rtt-estimation.h"
 #include "ndnrtc-utils.h"
 
+using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc::new_api;
 

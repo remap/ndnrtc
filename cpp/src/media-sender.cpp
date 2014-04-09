@@ -11,12 +11,24 @@
 #include "media-sender.h"
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
+#include "ndnrtc-debug.h"
 
 using namespace std;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;
 using namespace webrtc;
+
+#define RECORD 0
+#if RECORD
+#include "ndnrtc-testing.h"
+using namespace ndnrtc::testing;
+
+static EncodedFrameWriter frameWriter("encoded.nrtc");
+static unsigned char* frameData = (unsigned char*)malloc(640*480);
+static int dataLength = 0;
+
+#endif
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -68,7 +80,7 @@ int MediaSender::init(const shared_ptr<Face> &face,
     
     packetPrefix_.reset(new Name(packetPrefix->c_str()));
     
-    segmentSize_ = params_.segmentSize;
+    segmentSize_ = params_.segmentSize - SegmentData::getHeaderSize();
     freshnessInterval_ = params_.freshness;
     packetNo_ = 0;
     
@@ -88,6 +100,10 @@ void MediaSender::stop()
         faceThread_.SetNotAlive();
         faceThread_.Stop();
     }
+    
+#if RECORD
+    frameWriter.synchronize();
+#endif
 }
 
 //******************************************************************************
@@ -116,14 +132,16 @@ int MediaSender::publishPacket(const PacketData &packetData,
         return notifyError(-1, "transport is not connected");
     
     Name prefix = *packetPrefix;
-    prefix.append(NdnRtcUtils::componentFromInt(packetNo));
-
     Segmentizer::SegmentList segments;
     
     if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segmentSize_)))
         return notifyError(-1, "packet segmentation failed");
     
     try {
+#if RECORD
+        dataLength = 0;
+        memset(frameData, 0, 640*480);
+#endif
         prefixMeta.totalSegmentsNum_ = segments.size();
         Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
@@ -156,8 +174,42 @@ int MediaSender::publishPacket(const PacketData &packetData,
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
 
-            LogTraceC << "published " << segmentName << endl;
+            LogTrace("data.log")
+            << "published " << segmentName << ": "
+            << test::dump<100>(segmentData.getSegmentData())
+            << endl;
+
+            
+            LogTraceC
+            << "published " << segmentName << " "
+            << ndnData.getContent().size() << " bytes" << endl;
+#if RECORD
+            {
+                SegmentData segData;
+                SegmentData::segmentDataFromRaw(ndnData.getContent().size(),
+                                                ndnData.getContent().buf(),
+                                                segData);
+                SegmentNumber segNo = NdnRtcNamespace::getSegmentNumber(ndnData.getName());
+                memcpy(frameData+segNo*segmentSize_,
+                       segData.getSegmentData(),
+                       segData.getSegmentDataLength());
+                dataLength += segData.getSegmentDataLength();
+            }
+#endif
         }
+        
+#if RECORD
+        PacketData *frame;
+        PacketData::packetFromRaw(dataLength,
+                                  frameData,
+                                  &frame);
+        assert(frame);
+        
+        webrtc::EncodedImage img;
+        ((NdnFrameData*)frame)->getFrame(img);
+        PacketData::PacketMetadata meta = ((NdnFrameData*)frame)->getMetadata();
+        frameWriter.writeFrame(img, meta);
+#endif
     }
     catch (std::exception &e)
     {

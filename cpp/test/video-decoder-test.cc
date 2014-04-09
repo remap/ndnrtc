@@ -13,8 +13,10 @@
 #include "renderer.h"
 #include "camera-capturer.h"
 #include "video-coder.h"
+#include "ndnrtc-testing.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::testing;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
 ::testing::Environment* const env2 = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
@@ -29,7 +31,6 @@ public:
 
         if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
         {
-            LOG_TRACE("can't get deafult params");
             strncpy(codec_.plName, "VP8", 31);
             codec_.maxFramerate = 30;
             codec_.startBitrate  = 300;
@@ -107,7 +108,7 @@ protected:
         obtainedFramesCount_ = 0;
     }
 };
-
+#if 0
 TEST_F(NdnVideoDecoderTest, CreateDelete)
 {
     EXPECT_NO_THROW(
@@ -163,3 +164,53 @@ TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
     delete decoder;
     delete renderer;
 }
+#endif
+TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
+{
+//    EncodedFrameReader ereader("bin/encoded.nrtc");
+//    EncodedFrameReader ereader("bin/received.nrtc");
+    EncodedFrameReader ereader("bin/received-key.nrtc");    
+    NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);
+    NdnRenderer *renderer = new NdnRenderer(1, DefaultParams);
+    
+    EXPECT_EQ(0, decoder->init());
+    EXPECT_EQ(0, renderer->init());
+    
+    decoder->setFrameConsumer(renderer);
+    
+    decoder->setObserver(this);
+    renderer->setObserver(this);
+    
+    EXPECT_EQ(false, obtainedError_);
+    
+    EXPECT_EQ(0, renderer->startRendering());
+    EXPECT_EQ(false, obtainedError_);
+    
+    unsigned char* buf = (unsigned char*)malloc(640*480*4);
+    unsigned char* buf2 = (unsigned char*)malloc(640*480*4);
+    
+    webrtc::EncodedImage frame(buf, 0, 0);
+    webrtc::EncodedImage frame2(buf2, 0, 0);
+    PacketData::PacketMetadata meta, meta2;
+    
+    if (ereader.readFrame(frame, meta) >= 0)
+    {
+        while (ereader.readFrame(frame2, meta2) >= 0)
+        {
+            decoder->onEncodedFrameDelivered(frame);
+            
+            uint32_t delay = meta2.timestamp_ - meta.timestamp_;
+            meta = meta2;
+
+            unsigned char* tmp = frame._buffer;
+            frame = frame2;
+            frame2._buffer = tmp;
+            
+            WAIT(delay);
+        }
+    }
+    
+    delete decoder;
+    delete renderer;
+}
+

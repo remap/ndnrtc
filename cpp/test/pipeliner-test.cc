@@ -19,30 +19,6 @@
 
 using namespace ndnrtc::new_api;
 
-class ConsumerMock : public ndnrtc::new_api::Consumer
-{
-public:
-    ConsumerMock(const ParamsStruct& params,
-                 const shared_ptr<IPacketAssembler>& packetAssembler,
-                 const shared_ptr<InterestQueue>& interestQueue,
-                 string logFile):
-    Consumer(params, interestQueue),logFile_(logFile){}
-    
-    virtual std::string getLogFile() const
-    { return logFile_; }
-    
-    virtual ndnrtc::ParamsStruct
-    getParameters() const { return params_; }
-    
-    void
-    setParameters(ParamsStruct p)
-    { params_ = p; }
-    
-private:
-    string logFile_;
-    ParamsStruct params_;
-};
-
 class PipelinerTestsCallbacks
 {
 public:

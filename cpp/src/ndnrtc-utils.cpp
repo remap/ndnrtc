@@ -15,6 +15,7 @@
 
 #include "endian.h"
 
+using namespace std;
 using namespace ndnrtc;
 using namespace webrtc;
 

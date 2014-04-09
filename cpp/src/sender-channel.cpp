@@ -14,6 +14,7 @@
 #define AUDIO_ID 0
 #define VIDEO_ID 1
 
+using namespace std;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;

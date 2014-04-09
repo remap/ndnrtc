@@ -15,6 +15,7 @@
 #import "objc/cocoa-renderer.h"
 #include "ndnrtc-utils.h"
 
+using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace webrtc;

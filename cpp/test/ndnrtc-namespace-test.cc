@@ -112,7 +112,6 @@ TEST(NdnRtcNamespace, TestKeyPath)
                 producerId.c_str(),
                 NdnRtcNamespace::NameComponentStreamKey.c_str(),
                 NdnRtcNamespace::KeyComponent.c_str());
-        LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
 }
@@ -136,7 +135,6 @@ TEST(NdnRtcNamespace, TestCertPath)
                 NdnRtcNamespace::NameComponentStreamKey.c_str(),
                 NdnRtcNamespace::KeyComponent.c_str(),
                 NdnRtcNamespace::CertificateComponent.c_str());
-        LOG_TRACE("%s",keyPrefix->toUri().c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
 }
@@ -217,7 +215,7 @@ TEST(NdnRtcNamespace, TestCheckComponents)
 TEST(NdnRtcNamespace, TestHelperFunctions)
 {
     {
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/data/%00%04");
         
         EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
         EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
@@ -229,7 +227,7 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
         EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
     }
     {
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/parity/%00%04");
         prefix.appendFinalSegment(4);
         
         EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
@@ -249,7 +247,7 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
     }
     
     {
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/data/%00%04");
         
         EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
         EXPECT_EQ(4, NdnRtcNamespace::getSegmentNumber(prefix));
@@ -261,7 +259,7 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
         EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
     }
     {
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04/%C1.M.FINAL%00%06");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/parity/%00%04/%C1.M.FINAL%00%06");
         prefix.appendFinalSegment(4);
         
         EXPECT_EQ(1, NdnRtcNamespace::getPacketNumber(prefix));
@@ -275,27 +273,27 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
     }
     
     {// no streams component
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/data/%00%04");
         
         EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
         EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
     }
     {// no streams component
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/delta/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/delta/1/parity/%00%04");
         
         EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
         EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
     }
     
     { // no key/delta component
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/data/%00%04");
         
         EXPECT_EQ(-1, NdnRtcNamespace::getPacketNumber(prefix));
         EXPECT_EQ(-1, NdnRtcNamespace::getSegmentNumber(prefix));
     }
     
     { // trim segment number
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/data/%00%04");
         Name trimmedPrefix;
         
         EXPECT_LE(0, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
@@ -304,7 +302,7 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
         EXPECT_TRUE(trimmedPrefix.toUri().find("%00%04") == std::string::npos);
     }
     { // trim segment number for key
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/parity/%00%04");
         Name trimmedPrefix;
         
         EXPECT_LE(0, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
@@ -313,21 +311,21 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
         EXPECT_TRUE(trimmedPrefix.toUri().find("%00%04") == std::string::npos);
     }
     { // trim segment number for bad prefix 1
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/video0/vp8/frames/key/1/data/%00%04");
         Name trimmedPrefix;
         
         EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
         EXPECT_EQ(prefix, trimmedPrefix);
     }
     { // trim segment number for bad prefix 2
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/key/1/parity/%00%04");
         Name trimmedPrefix;
         
         EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));
         EXPECT_EQ(prefix, trimmedPrefix);
     }
     { // trim segment number for bad prefix 3
-        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/1/data/%00%04");
         Name trimmedPrefix;
         
         EXPECT_EQ(-1, NdnRtcNamespace::trimSegmentNumber(prefix, trimmedPrefix));

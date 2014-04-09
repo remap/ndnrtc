@@ -8,9 +8,17 @@
 
 #include "video-playout.h"
 
+using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+
+#define RECORD 1
+#if RECORD
+#include "ndnrtc-testing.h"
+using namespace ndnrtc::testing;
+static EncodedFrameWriter frameWriter("received.nrtc");
+#endif
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -62,6 +70,12 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal)
     if (data_ && frameConsumer_)
     { 
         ((NdnFrameData*)data_)->getFrame(frame);
+        
+#if RECORD
+        PacketData::PacketMetadata meta = data_->getMetadata();
+        frameWriter.writeFrame(frame, meta);
+#endif
+        
         frameConsumer_->onEncodedFrameDelivered(frame);
         res = true;
     }

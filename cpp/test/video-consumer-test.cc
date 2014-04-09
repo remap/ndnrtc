@@ -52,9 +52,12 @@ protected:
         EXPECT_EQ(RESULT_OK, sendChannel_->stopTransmission());
     }
 };
-#if 0
+//#if 0
 TEST_F(ConsumerTests, Test)
 {
+    params_.useFec = false;
+    params_.captureDeviceId = 1;
+    
     faceProcessor_ = FaceProcessor::createFaceProcessor(params_);
     faceProcessor_->getFace()->registerPrefix(*NdnRtcNamespace::getStreamKeyPrefix(params_),
                                               bind(&UnitTestHelperNdnNetwork::onInterest,
@@ -63,9 +66,11 @@ TEST_F(ConsumerTests, Test)
                                                    this, _1));
     
     interestQueue_.reset(new InterestQueue(faceProcessor_->getFace()));
+    interestQueue_->setDescription("cchannel-iqueue");
     rttEstimation_.reset(new RttEstimation());
     
     shared_ptr<VideoConsumer> vconsumer(new VideoConsumer(params_, interestQueue_));
+    vconsumer->setLogger(&ndnlog::new_api::Logger::sharedInstance());
     
     EXPECT_EQ(RESULT_OK, vconsumer->init());
     
@@ -80,10 +85,16 @@ TEST_F(ConsumerTests, Test)
     stopPublishing();
     
 }
-#endif
+//#endif
+#if 0
 TEST_F(ConsumerTests, Test2)
 {
-    ConsumerChannel cchannel(DefaultParams, DefaultParamsAudio);
+    ParamsStruct p = DefaultParams, ap = DefaultParamsAudio;
+    p.useFec = false; ap.useFec = false;
+    p.captureDeviceId = 1;
+    ConsumerChannel cchannel(p, ap);
+    cchannel.setLogger(&Logger::sharedInstance());
+    
     startPublishing();
     
     EXPECT_EQ(RESULT_OK, cchannel.init());
@@ -94,3 +105,4 @@ TEST_F(ConsumerTests, Test2)
     EXPECT_EQ(RESULT_OK, cchannel.stopTransmission());
     stopPublishing();
 }
+#endif

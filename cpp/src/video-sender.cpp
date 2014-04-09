@@ -12,10 +12,15 @@
 #include "ndnlib.h"
 #include "ndnrtc-utils.h"
 
+#include <ndn-fec/fec_encode.h>
+#include <ndn-fec/fec_common.h>
+
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace webrtc;
+
+const double NdnVideoSender::ParityRatio = 0.2;
 
 NdnVideoSender::NdnVideoSender(const ParamsStruct& params):MediaSender(params)
 {
@@ -44,7 +49,7 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
 }
 
 //******************************************************************************
-#pragma mark - intefaces realization
+#pragma mark - interfaces realization
 void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
 {
     // update packet rate meter
@@ -57,26 +62,41 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     if (isKeyFrame)
         keyFrameNo_++;
     
-    shared_ptr<Name> framePrefix = (isKeyFrame)?keyFramesPrefix_:packetPrefix_;
+    shared_ptr<Name> tmpPrefix = (isKeyFrame)?keyFramesPrefix_:packetPrefix_;
+    shared_ptr<Name> framePrefix(new Name(*tmpPrefix));
+    
     FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
+    
+    framePrefix->append(NdnRtcUtils::componentFromInt(frameNo));
+    
+    shared_ptr<Name> framePrefixData(new Name(*framePrefix));
+    NdnRtcNamespace::appendStringComponent(framePrefixData,
+                                           NdnRtcNamespace::NameComponentFrameSegmentData);
     
     // copy frame into transport data object
     PacketData::PacketMetadata metadata;
     metadata.packetRate_ = getCurrentPacketRate();
     metadata.timestamp_ = encodedImage.capture_time_ms_;
     
-    PrefixMetaInfo prefixMeta;
+    PrefixMetaInfo prefixMeta = {0,0,0,0};
     prefixMeta.playbackNo_ = packetNo_;
     prefixMeta.pairedSequenceNo_ = (isKeyFrame)?deltaFrameNo_:keyFrameNo_;
     
     NdnFrameData frameData(encodedImage, metadata);
     int nSegments = 0;
     
+    int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize_);
+    int nSegmentsParityExpected = (params_.useFec)?getParitySegmentsNum(nSegmentsExpected):0;
+    
+    prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
+    
     if ((nSegments = publishPacket(frameData,
-                                  framePrefix,
+                                  framePrefixData,
                                   frameNo,
                                   prefixMeta)) > 0)
     {
+        assert(nSegments == nSegmentsExpected);
+        
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
 //        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
 //             getFrameNo(),
@@ -85,7 +105,9 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
 //             frameData.getLength(),
 //             encodedImage.capture_time_ms_,
 //             getCurrentPacketRate());
-
+//        webrtc::EncodedImage *eimg = (webrtc::EncodedImage*)(&encodedImage);
+//        ewriter.writeFrame(*eimg, metadata);
+        
         LogStatC
         << "publish\t" << packetNo_ << "\t"
         << deltaFrameNo_ << "\t"
@@ -97,9 +119,17 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
         << getCurrentPacketRate() << "\t"
         << nSegments << endl;
         
+        if (params_.useFec)
+        {
+            int nSegmentsParity = publishParityData(frameNo, encodedImage,
+                                                    nSegments, framePrefix,
+                                                    prefixMeta);
+            assert(nSegmentsParity == nSegmentsParityExpected);
+        }
+        
         if (!isKeyFrame)
             deltaFrameNo_++;
-
+        
         // increment packet number regardless of key/delta condition
         // in this case we can preserve that key frames can have numbers in
         // delta namespace as well
@@ -129,4 +159,78 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
         LogTraceC
         << "late interest " << name << endl;
     }
+}
+
+int
+NdnVideoSender::publishParityData(PacketNumber frameNo,
+                                  const webrtc::EncodedImage &encodedImage,
+                                  unsigned int nSegments,
+                                  const shared_ptr<Name>& framePrefix,
+                                  const PrefixMetaInfo& prefixMeta)
+{
+    int nSegmentsP = -1;
+    
+    //Parameters for FEC
+    uint32_t dataLen   = encodedImage._length;
+    
+    //[Prb]: How to decide Redundancy Rate?
+    uint32_t nParitySegments  = getParitySegmentsNum(nSegments);
+    unsigned char* parityBuffer = new unsigned char[getParityDataLength(nSegments, segmentSize_)];
+    
+    //Create redundancy data
+    Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize_);
+    
+    if (enc.encode((char*)encodedImage._buffer, (char*)parityBuffer) < 0)
+    {
+        LogErrorC << "FEC Encoding Failure" << endl;
+    }
+    else
+    {
+        //Prefix
+        shared_ptr<Name> framePrefixParity(new Name(*framePrefix));
+        NdnRtcNamespace::appendStringComponent(framePrefixParity,
+                                               NdnRtcNamespace::NameComponentFrameSegmentParity);
+        
+        //Create NdnFrameData from Parity Data
+        FrameParityData frameParityData(nParitySegments * segmentSize_,
+                                        parityBuffer);
+        
+        //Publish Packet of Parity
+        if ((nSegmentsP = publishPacket(frameParityData,
+                                        framePrefixParity,
+                                        frameNo,
+                                        prefixMeta)) > 0)
+        {
+            assert(nSegmentsP == nParitySegments);
+            
+            LogStatC
+            << "publish parity\t" << packetNo_ << "\t"
+            << deltaFrameNo_ << "\t"
+            << keyFrameNo_ << "\t"
+            << ((frameNo == keyFrameNo_)?"K":"D") << "\t"
+            << frameParityData.getLength() << "\t"
+            << nSegmentsP << endl;
+        }
+        else
+        {
+            notifyError(RESULT_ERR, "were not able to publish parity data %d",
+                        getFrameNo());
+        }
+    }
+    
+    delete [] parityBuffer;
+    
+    return nSegmentsP;
+}
+
+unsigned int
+NdnVideoSender::getParitySegmentsNum(unsigned int nSegments)
+{
+    return (uint32_t)ceil(ParityRatio*nSegments);
+}
+
+unsigned int
+NdnVideoSender::getParityDataLength(unsigned int nSegments, unsigned int segmentSize)
+{
+    return getParitySegmentsNum(nSegments) * segmentSize_;
 }

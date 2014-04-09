@@ -40,6 +40,9 @@ namespace ndnrtc
          */
         static int
         desegmentize(const SegmentList &segments, PacketData **packetData);
+        
+        static int
+        getSegmentsNum(unsigned int dataSize, unsigned int segmentSize);
     };
 }
 

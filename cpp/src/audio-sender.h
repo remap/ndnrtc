@@ -25,7 +25,7 @@ namespace ndnrtc
         ~NdnAudioSender(){};
      
         static int getStreamControlPrefix(const ParamsStruct &params,
-                                          string &prefix);
+                                          std::string &prefix);
         
         int init(const shared_ptr<Face> &face,
                  const shared_ptr<ndn::Transport> &transport);

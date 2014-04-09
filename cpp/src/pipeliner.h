@@ -24,6 +24,8 @@ namespace ndnrtc {
             // average number of segments for delta and key frames
             static const double SegmentsAvgNumDelta;
             static const double SegmentsAvgNumKey;
+            static const double ParitySegmentsAvgNumDelta;
+            static const double ParitySegmentsAvgNumKey;
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
@@ -67,6 +69,8 @@ namespace ndnrtc {
             webrtc::EventWrapper &pipelinerPauseEvent_;
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
+            int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
+            
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             
             // --
@@ -120,7 +124,7 @@ namespace ndnrtc {
             
             void
             updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
-                                   int nSegments);
+                                   int nSegments, bool isParity);
             
             void
             requestNextKey(PacketNumber& keyFrameNo);
@@ -130,7 +134,7 @@ namespace ndnrtc {
             
             void
             expressRange(Interest& interest, SegmentNumber startNo,
-                         SegmentNumber endNo, int64_t priority);
+                         SegmentNumber endNo, int64_t priority, bool isParity);
             
             void
             express(Interest& interest, int64_t priority);
@@ -156,7 +160,7 @@ namespace ndnrtc {
             
             void
             prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
-                          int prefetchSize,
+                          int prefetchSize, int parityPrefetchSize,
                           FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
             void

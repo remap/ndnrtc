@@ -21,9 +21,11 @@ Segmentizer::segmentize(const ndnrtc::PacketData &packetData,
     {
         segments.clear();
         
-        int sliceSize = segmentSize - SegmentData::getHeaderSize();
-        int nSegments = ceil((double)packetData.getLength()/(double)sliceSize);
-        int lastSegmentSize = packetData.getLength()-(packetData.getLength()/sliceSize)*sliceSize;
+        int sliceSize = segmentSize;
+        int nSegments = getSegmentsNum(packetData.getLength(), sliceSize);
+        int lastSegmentSize = (packetData.getLength()/sliceSize != nSegments)?
+        packetData.getLength()-(packetData.getLength()/sliceSize)*sliceSize:
+        sliceSize;        
         unsigned char* segmentPointer = packetData.getData();
         
         for (int i = 0; i < nSegments; i++)
@@ -57,4 +59,11 @@ Segmentizer::desegmentize(const SegmentList &segments, ndnrtc::PacketData **pack
     }
     
     return RESULT_ERR;
+}
+
+
+int
+Segmentizer::getSegmentsNum(unsigned int dataSize, unsigned int segmentSize)
+{
+    return ceil((double)dataSize/(double)segmentSize);
 }

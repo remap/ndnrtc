@@ -72,7 +72,7 @@ namespace ndnrtc
 
         // comparator greater is specified in order to use upper_bound method
         // of the map
-        map<Name, PitEntry> pit_;
+        std::map<Name, PitEntry> pit_;
         webrtc::CriticalSectionWrapper &pitCs_;
         
         bool isProcessing_ = false;

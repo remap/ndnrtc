@@ -19,6 +19,7 @@ THIRDPARTY_PATH = $(CURRENT)/thirdparty
 NDNC = ndn-c
 NDNCPP = ndn-cpp
 WEBRTC = ndn-webrtc
+FECLIB = openfec
 
 NDNCPPLIB = lib$(NDNCPP).a
 NDNCLIB = lib$(NDNC).a
@@ -145,7 +146,7 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lwebrtc_vp8 \
 	-lyuv 
 
-LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto
+LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto -l$(FECLIB)
 LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 
 # GCC only define which allows us to not have to #include mozilla-config

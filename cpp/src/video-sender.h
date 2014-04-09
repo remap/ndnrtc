@@ -30,6 +30,8 @@ namespace ndnrtc
     public:
         NdnVideoSender(const ParamsStruct &params);
         ~NdnVideoSender(){}
+     
+        static const double ParityRatio;
         
         // overriden from base class
         int init(const shared_ptr<Face> &face,
@@ -47,6 +49,19 @@ namespace ndnrtc
         void onInterest(const shared_ptr<const Name>& prefix,
                         const shared_ptr<const Interest>& interest,
                         ndn::Transport& transport);
+        
+        int
+        publishParityData(PacketNumber frameNo,
+                          const webrtc::EncodedImage &encodedImage,
+                          unsigned int nSegments,
+                          const shared_ptr<Name>& framePrefix,
+                          const PrefixMetaInfo& prefixMeta);
+        
+        unsigned int
+        getParitySegmentsNum(unsigned int nSegments);
+        
+        unsigned int
+        getParityDataLength(unsigned int nSegments, unsigned segmentSize);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

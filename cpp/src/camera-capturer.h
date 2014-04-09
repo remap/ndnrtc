@@ -36,7 +36,7 @@ namespace ndnrtc {
         int startCapture();
         int stopCapture();
         int numberOfCaptureDevices();
-        vector<std::string>* availableCaptureDevices();
+        std::vector<std::string>* availableCaptureDevices();
         void printCapturingInfo();
 
         // interface conformance - webrtc::VideoCaptureDataCallback
