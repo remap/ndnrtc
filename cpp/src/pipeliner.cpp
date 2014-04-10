@@ -212,14 +212,7 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
         default:
         {
             pipelineIntervalMs_ = chaseEstimation_->getArrivalEstimation();
-#if 0
-            if (event.slot_->getRecentSegment()->isOriginal())
-            {
-                LogTraceC << "chased producer succesfully" << endl;
-                
-                frameBuffer_->freeSlotsLessThan(event.slot_->getPrefix());
-            }
-#endif
+
             int bufferSize = frameBuffer_->getEstimatedBufferSize();
             assert(bufferSize >= 0);
             
@@ -271,6 +264,8 @@ void
 ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
 {
     int bufferSize = frameBuffer_->getPlayableBufferSize();
+    
+    LogTraceC << "buffering. playable size " << bufferSize << endl;
     
     if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
     {
@@ -606,7 +601,11 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     if (nspc == FrameBuffer::Slot::Key ||
         frameBuffer_->getState() == FrameBuffer::Invalid)
     {
-        interestLifetime = params_.interestTimeout;
+        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
+        interestLifetime = gopInterval-frameBuffer_->getEstimatedBufferSize();
+        
+        if (interestLifetime < 0)
+            interestLifetime = params_.interestTimeout;
     }
     else
     {
@@ -660,6 +659,12 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
 {
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
     frameBuffer_->getPlayableBufferSize();
+    
+    LogTraceC
+    << "frame buffer " << bufferSize
+    << (useEstimatedSize?" (est) ":" (play) ")
+    << " target " << frameBuffer_->getTargetSize()
+    << ((bufferSize < frameBuffer_->getTargetSize())?" KEEP UP":" NO KEEP UP") << endl;
     
     while (bufferSize < frameBuffer_->getTargetSize())
     {

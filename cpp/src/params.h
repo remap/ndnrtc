@@ -149,7 +149,7 @@ namespace ndnrtc
         480,    // render height
         
         30,     // codec framerate
-        60,     // gop
+        30,     // gop
         1000,    // codec start bitrate
         10000,   // codec max bitrate
         640,    // codec encoding width
