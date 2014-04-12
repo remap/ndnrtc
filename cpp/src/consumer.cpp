@@ -99,6 +99,27 @@ Consumer::stop()
 }
 
 void
+Consumer::reset()
+{
+}
+
+Consumer::State
+Consumer::getState() const
+{
+    switch (pipeliner_->getState()) {
+        case Pipeliner::StateBuffering: // fall through
+        case Pipeliner::StateChasing:
+            return Consumer::StateChasing;
+            
+        case Pipeliner::StateFetching:
+            return Consumer::StateFetching;
+
+        default:
+            return Consumer::StateInactive;
+    }
+}
+
+void
 Consumer::getStatistics(ReceiverChannelPerformance& stat)
 {
     stat.segNumDelta_ = pipeliner_->getAvgSegNum(false);

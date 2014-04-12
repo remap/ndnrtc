@@ -572,6 +572,9 @@ namespace ndnrtc
                                           const PrefixMetaInfo &prefixMeta);
                 
                 void
+                refineActiveSegments();
+                
+                void
                 initMissingSegments();
 
                 void

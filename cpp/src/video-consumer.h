@@ -35,6 +35,9 @@ namespace ndnrtc {
             stop();
             
             void
+            reset();
+            
+            void
             setLogger(ndnlog::new_api::Logger* logger);
             
         private:

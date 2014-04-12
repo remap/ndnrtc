@@ -38,6 +38,9 @@ namespace ndnrtc {
             
             bool
             isArrivalStable();
+            
+            void
+            reset();
           
         private:
             unsigned int sampleSize_;

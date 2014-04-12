@@ -484,10 +484,13 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo,
             freeSegment.reset(new Segment());
 
         Name segmentPrefix(getPrefix());
-        NdnRtcNamespace::appendDataKind(segmentPrefix, isParity);
-        
+
+        // check for rightmost
         if (segNo >= 0)
+        {
+            NdnRtcNamespace::appendDataKind(segmentPrefix, isParity);
             freeSegment->setPrefix(Name(segmentPrefix).appendSegment(segNo));
+        }
         else
             freeSegment->setPrefix(Name(segmentPrefix));
     }
@@ -656,8 +659,29 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyWithMeta(const PacketNumber
     nSegmentsTotal_ = prefixMeta.totalSegmentsNum_;
     nSegmentsParity_ = prefixMeta.paritySegmentsNum_;
     
+    refineActiveSegments();
     initMissingSegments();
     initMissingParitySegments();
+}
+
+void
+ndnrtc::new_api::FrameBuffer::Slot::refineActiveSegments()
+{
+    std::map<SegmentNumber, shared_ptr<Segment>>::iterator
+    it = activeSegments_.begin();
+    
+    while (activeSegments_.size() > nSegmentsTotal_+nSegmentsParity_)
+    {
+        SegmentNumber segNo = it->second->getNumber();
+        SegmentNumber segNum = (it->second->isParity())?nSegmentsParity_:nSegmentsTotal_;
+        
+        if (segNo >= segNum)
+        {
+            activeSegments_.erase(it++);
+        }
+        else
+            it++;
+    }
 }
 
 void
@@ -1548,6 +1572,9 @@ ndnrtc::new_api::FrameBuffer::resetData()
     nKeyFrames_ = 0;
     nReceivedFrames_ = 0;
     nRescuedFrames_ = 0;
+    forcedRelease_ = false;
+    
+    setTargetSize(consumer_->getParameters().jitterSize);
 }
 
 bool
@@ -1611,8 +1638,6 @@ ndnrtc::new_api::FrameBuffer::initialize()
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
-    
-    setTargetSize(consumer_->getParameters().jitterSize);
     
     playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
 }

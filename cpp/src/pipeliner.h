@@ -21,11 +21,19 @@ namespace ndnrtc {
         class Pipeliner : public NdnRtcObject
         {
         public:
+            typedef enum _State {
+                StateInactive = -1,
+                StateChasing = 0,
+                StateBuffering = 1,
+                StateFetching = 2
+            } State;
+            
             // average number of segments for delta and key frames
             static const double SegmentsAvgNumDelta;
             static const double SegmentsAvgNumKey;
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
+            static const int64_t MaxInterruptionDelay;
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
@@ -49,6 +57,9 @@ namespace ndnrtc {
             getRtxNum() const
             { return rtxNum_; }
             
+            State
+            getState() const;
+            
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
@@ -63,7 +74,7 @@ namespace ndnrtc {
             webrtc::ThreadWrapper &mainThread_;
             
             bool isPipelining_, isPipelinePaused_, isBuffering_;
-            int64_t pipelineIntervalMs_;
+            int64_t pipelineIntervalMs_, recoveryCheckpointTimestamp_;
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
             webrtc::EventWrapper &pipelinerPauseEvent_;
@@ -74,6 +85,8 @@ namespace ndnrtc {
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             
             // --
+            unsigned rebufferingNum_;
+            PacketNumber exclusionFilter_;
             unsigned int rtxFreqMeterId_, rtxNum_;
             int bufferEventsMask_;
             
@@ -168,6 +181,9 @@ namespace ndnrtc {
             
             void
             resetData();
+            
+            void
+            recoveryCheck(const ndnrtc::new_api::FrameBuffer::Event& event);
         };
     }
 }

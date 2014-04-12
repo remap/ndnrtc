@@ -29,8 +29,6 @@ ChaseEstimation::ChaseEstimation(unsigned int sampleSize,
 sampleSize_(sampleSize),
 changeThreshold_(changeThreshold),
 arrivalDelayEstimatorId_(NdnRtcUtils::setupMeanEstimator(sampleSize)),
-//filterId_(NdnRtcUtils::setupFilter(filterCoeff)),
-//changeEstimatorId_(NdnRtcUtils::setupMeanEstimator(sampleSize)),
 inclineEstimator_(NdnRtcUtils::setupInclineEstimator(InclineEstimatorSample)),
 lastArrivalTimeMs_(-1),
 nStabilizedOccurences_(0),
@@ -43,6 +41,7 @@ lastCheckedValue_(0)
 ChaseEstimation::~ChaseEstimation()
 {
     NdnRtcUtils::releaseMeanEstimator(arrivalDelayEstimatorId_);
+    NdnRtcUtils::releaseInclineEstimator(inclineEstimator_);
 }
 
 //******************************************************************************
@@ -103,4 +102,20 @@ ChaseEstimation::isArrivalStable()
     }
         
     return stabilized_;
+}
+
+void
+ChaseEstimation::reset()
+{
+    lastArrivalTimeMs_ = -1;
+    nStabilizedOccurences_ = 0;
+    stabilized_ = false;
+    stabilizedValue_ = 0.;
+    lastCheckedValue_ = 0;
+    
+    NdnRtcUtils::releaseMeanEstimator(arrivalDelayEstimatorId_);
+    NdnRtcUtils::releaseInclineEstimator(inclineEstimator_);
+    
+    arrivalDelayEstimatorId_ = NdnRtcUtils::setupMeanEstimator(sampleSize_);
+    inclineEstimator_ = NdnRtcUtils::setupInclineEstimator(InclineEstimatorSample);
 }

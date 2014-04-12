@@ -470,7 +470,7 @@ NdnRtcUtils::currentIncline(unsigned int estimatorId)
     return 0.;
 }
 
-void NdnRtcUtils::releaseInclineEstaimtor(unsigned int estimatorId)
+void NdnRtcUtils::releaseInclineEstimator(unsigned int estimatorId)
 {
     // tbd
 }

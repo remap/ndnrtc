@@ -334,7 +334,7 @@ bool NdnRtcNamespace::isValidInterestPrefix(const Name& prefix)
     
     // TBD: use regexp for these checks
     
-    return true;
+    return isKeyFramePrefix(prefix) || isDeltaFramesPrefix(prefix);
 }
 
 bool NdnRtcNamespace::isValidPacketDataPrefix(const Name& prefix)
