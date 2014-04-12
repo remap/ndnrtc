@@ -156,12 +156,26 @@ namespace ndnrtc {
     {
     public:
         FrameParityData(unsigned int length, const unsigned char* rawData);
+        FrameParityData(){}
         
         PacketDataType
         getType() { return TypeParity; }
         
         int
+        initFromFrame(const webrtc::EncodedImage& frame,
+                      double parityRatio,
+                      unsigned int nSegments,
+                      unsigned int segmentSize);
+        
+        int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
+        
+        static unsigned int
+        getParitySegmentsNum(unsigned int nSegments, double parityRatio);
+        
+        static unsigned int
+        getParityDataLength(unsigned int nSegments, double parityRatio,
+                            unsigned int segmentSize);
     };
     
     /**

@@ -153,16 +153,29 @@ public:
                       const Name& prefix,
                       PacketData::PacketMetadata meta,
                       PrefixMetaInfo &prefixMeta,
-                      SegmentData::SegmentMetaInfo &segmentHeader)
+                      SegmentData::SegmentMetaInfo &segmentHeader,
+                      bool isParity = false)
     {
         std::vector<shared_ptr<Data>> dataSegments;
         
         // step 1 - pack into PacketData
-        NdnFrameData frameData(*frame, meta);
+        PacketData *packetData;
+        
+        if (!isParity)
+            packetData = new NdnFrameData(*frame, meta);
+        else
+        {
+            NdnFrameData frameData(*frame, meta);
+            
+            packetData = new FrameParityData();
+            ((FrameParityData*)packetData)->initFromFrame(*frame, 0.3,
+                                                          Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize),
+                                                          segmentSize);
+        }
         
         // step 2 - segmentize packet
         Segmentizer::SegmentList segments;
-        Segmentizer::segmentize(frameData, segments, segmentSize);
+        Segmentizer::segmentize(*packetData, segments, segmentSize);
         
         prefixMeta.totalSegmentsNum_ = segments.size();
         
@@ -175,7 +188,7 @@ public:
             
             Name segPrefix(prefix);
             segPrefix.append(NdnRtcUtils::componentFromInt(frameNo));
-            NdnRtcNamespace::appendDataKind(segPrefix, false);
+            NdnRtcNamespace::appendDataKind(segPrefix, isParity);
             segPrefix.appendSegment(it-segments.begin());
             segPrefix.append(PrefixMetaInfo::toName(prefixMeta));
             

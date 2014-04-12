@@ -60,6 +60,12 @@ namespace ndnrtc {
         {
         public:
             
+            typedef enum _State {
+                StateInactive = -1,
+                StateChasing = 0,
+                StateFetching = 1
+            } State;
+            
             Consumer(const ParamsStruct& params,
                      const shared_ptr<InterestQueue>& interestQueue,
                      const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
@@ -73,6 +79,12 @@ namespace ndnrtc {
             
             virtual int
             stop();
+            
+            virtual void
+            reset();
+            
+            State
+            getState() const;
             
             virtual ParamsStruct
             getParameters() const

@@ -12,9 +12,6 @@
 #include "ndnlib.h"
 #include "ndnrtc-utils.h"
 
-#include <ndn-fec/fec_encode.h>
-#include <ndn-fec/fec_common.h>
-
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
@@ -86,7 +83,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     int nSegments = 0;
     
     int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize_);
-    int nSegmentsParityExpected = (params_.useFec)?getParitySegmentsNum(nSegmentsExpected):0;
+    int nSegmentsParityExpected = (params_.useFec)?FrameParityData::getParitySegmentsNum(nSegmentsExpected, ParityRatio):0;
     
     prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
     
@@ -149,8 +146,10 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
     const Name& name = interest->getName();
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
     bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
+
     
-    if (packetNo > (isKeyNamespace)?keyFrameNo_:deltaFrameNo_)
+    if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
+        packetNo >= (isKeyNamespace)?keyFrameNo_:deltaFrameNo_)
     {
         addToPit(interest);
     }
@@ -169,40 +168,21 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
                                   const PrefixMetaInfo& prefixMeta)
 {
     int nSegmentsP = -1;
+    FrameParityData frameParityData;
     
-    //Parameters for FEC
-    uint32_t dataLen   = encodedImage._length;
-    
-    //[Prb]: How to decide Redundancy Rate?
-    uint32_t nParitySegments  = getParitySegmentsNum(nSegments);
-    unsigned char* parityBuffer = new unsigned char[getParityDataLength(nSegments, segmentSize_)];
-    
-    //Create redundancy data
-    Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize_);
-    
-    if (enc.encode((char*)encodedImage._buffer, (char*)parityBuffer) < 0)
-    {
-        LogErrorC << "FEC Encoding Failure" << endl;
-    }
-    else
+    if (RESULT_GOOD(frameParityData.initFromFrame(encodedImage, ParityRatio,
+                                                  nSegments, segmentSize_)))
     {
         //Prefix
         shared_ptr<Name> framePrefixParity(new Name(*framePrefix));
         NdnRtcNamespace::appendStringComponent(framePrefixParity,
                                                NdnRtcNamespace::NameComponentFrameSegmentParity);
-        
-        //Create NdnFrameData from Parity Data
-        FrameParityData frameParityData(nParitySegments * segmentSize_,
-                                        parityBuffer);
-        
         //Publish Packet of Parity
         if ((nSegmentsP = publishPacket(frameParityData,
                                         framePrefixParity,
                                         frameNo,
                                         prefixMeta)) > 0)
         {
-            assert(nSegmentsP == nParitySegments);
-            
             LogStatC
             << "publish parity\t" << packetNo_ << "\t"
             << deltaFrameNo_ << "\t"
@@ -217,20 +197,11 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
                         getFrameNo());
         }
     }
+    else
+    {
+        LogErrorC << "FEC Encoding Failure" << endl;
+    }
     
-    delete [] parityBuffer;
     
     return nSegmentsP;
-}
-
-unsigned int
-NdnVideoSender::getParitySegmentsNum(unsigned int nSegments)
-{
-    return (uint32_t)ceil(ParityRatio*nSegments);
-}
-
-unsigned int
-NdnVideoSender::getParityDataLength(unsigned int nSegments, unsigned int segmentSize)
-{
-    return getParitySegmentsNum(nSegments) * segmentSize_;
 }

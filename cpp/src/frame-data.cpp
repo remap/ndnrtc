@@ -11,6 +11,9 @@
 #include "frame-data.h"
 #include "params.h"
 
+#include <ndn-fec/fec_encode.h>
+#include <ndn-fec/fec_common.h>
+
 #define PREFIX_META_NCOMP 4
 
 using namespace std;
@@ -190,10 +193,50 @@ PacketData(length, rawData)
 }
 
 int
+FrameParityData::initFromFrame(const webrtc::EncodedImage& frame,
+                               double parityRatio,
+                               unsigned int nSegments,
+                               unsigned int segmentSize)
+{
+    uint32_t dataLen = frame._length;
+    uint32_t nParitySegments = getParitySegmentsNum(nSegments, parityRatio);
+    
+    length_ = getParityDataLength(nSegments, parityRatio, segmentSize);
+    data_ = (unsigned char*)malloc(length_);
+    isDataCopied_ = true;
+    
+    // create redundancy data
+    Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize);
+    
+    if (enc.encode((char*)frame._buffer, (char*)data_) < 0)
+        return RESULT_ERR;
+    else
+    {
+        isValid_ = true;
+    }
+    
+    return RESULT_OK;
+}
+
+int
 FrameParityData::initFromRawData(unsigned int dataLength,
                                  const unsigned char *rawData)
 {
     return RESULT_OK;
+}
+
+unsigned int
+FrameParityData::getParitySegmentsNum
+(unsigned int nSegments, double parityRatio)
+{
+    return (uint32_t)ceil(parityRatio*nSegments);
+}
+
+unsigned int
+FrameParityData::getParityDataLength
+(unsigned int nSegments, double parityRatio, unsigned int segmentSize)
+{
+    return getParitySegmentsNum(nSegments, parityRatio) * segmentSize;
 }
 
 //******************************************************************************

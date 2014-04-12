@@ -56,12 +56,6 @@ namespace ndnrtc
                           unsigned int nSegments,
                           const shared_ptr<Name>& framePrefix,
                           const PrefixMetaInfo& prefixMeta);
-        
-        unsigned int
-        getParitySegmentsNum(unsigned int nSegments);
-        
-        unsigned int
-        getParityDataLength(unsigned int nSegments, unsigned segmentSize);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

@@ -84,6 +84,17 @@ VideoConsumer::stop()
 }
 
 void
+VideoConsumer::reset()
+{
+    Consumer::reset();
+    decoder_->init();
+    
+    playout_->stop();
+    playout_->init(decoder_.get());
+    playout_->start();
+}
+
+void
 VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
 {
     renderer_->setLogger(logger);

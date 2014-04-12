@@ -572,6 +572,9 @@ namespace ndnrtc
                                           const PrefixMetaInfo &prefixMeta);
                 
                 void
+                refineActiveSegments();
+                
+                void
                 initMissingSegments();
 
                 void
@@ -792,6 +795,10 @@ namespace ndnrtc
                 }
             }
             
+            double
+            getCurrentRate() const
+            { return playbackQueue_.getPlaybackRate(); }
+            
             void
             setDescription(const std::string& desc);
             
@@ -839,7 +846,7 @@ namespace ndnrtc
                 updatePlaybackRate(double playbackRate);
                 
                 double
-                getPlaybackRate() { return playbackRate_; }
+                getPlaybackRate() const { return playbackRate_; }
                 
                 void
                 clear();

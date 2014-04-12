@@ -59,7 +59,7 @@ namespace ndnrtc
         static unsigned int setupInclineEstimator(unsigned int sampleSize = 0);
         static void inclineEstimatorNewValue(unsigned int estimatorId, double value);
         static double currentIncline(unsigned int estimatorId);
-        static void releaseInclineEstaimtor(unsigned int estimatorId);
+        static void releaseInclineEstimator(unsigned int estimatorId);
         
         static int frameNumber(const Name::Component &segmentComponent);        
         static int segmentNumber(const Name::Component &segmentComponent);

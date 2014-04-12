@@ -288,6 +288,15 @@ void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
     
     map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
     
+    // check for rightmost prefixes
+    if (pitHit == pit_.end())
+    {
+        ndn::Name testPrefix(prefix);
+        
+        NdnRtcNamespace::trimPacketNumber(prefix, testPrefix);
+        pitHit = pit_.find(testPrefix);
+    }
+    
     if (pitHit != pit_.end())
     {
         int64_t currentTime = NdnRtcUtils::millisecondTimestamp();

@@ -22,6 +22,7 @@ const double Pipeliner::SegmentsAvgNumDelta = 8.;
 const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
+const int64_t Pipeliner::MaxInterruptionDelay = 1000;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -41,10 +42,10 @@ deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta))
 keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey)),
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta)),
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
-rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter())
+rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
+exclusionFilter_(-1)
 {
     initialize();
-    
 }
 
 ndnrtc::new_api::Pipeliner::~Pipeliner()
@@ -59,6 +60,7 @@ ndnrtc::new_api::Pipeliner::start()
 {
     bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
     isProcessing_ = true;
+    rebufferingNum_ = 0;
     
     unsigned int tid;
     mainThread_.Start(tid);
@@ -73,12 +75,31 @@ ndnrtc::new_api::Pipeliner::stop()
     if (isPipelining_)
         stopChasePipeliner();
     
+    frameBuffer_->release();
     mainThread_.SetNotAlive();
-    isProcessing_ = false;
     mainThread_.Stop();
     
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
+}
+
+Pipeliner::State
+Pipeliner::getState() const
+{
+    if (isProcessing_)
+    {
+        if (isBuffering_)
+            return StateBuffering;
+        else
+        {
+            if (frameBuffer_->getState() == FrameBuffer::Invalid)
+                return StateChasing;
+            else
+                return StateFetching;
+        }
+    }
+    else
+        return StateInactive;
 }
 
 //******************************************************************************
@@ -121,6 +142,8 @@ ndnrtc::new_api::Pipeliner::processEvents()
             break;
     }
     
+    recoveryCheck(event);
+    
     return isProcessing_;
 }
 
@@ -135,11 +158,13 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
     if (activeSlotsNum == 0)
     {
         shared_ptr<Interest>
-        rightmost = getInterestForRightMost(getInterestLifetime(params_.interestTimeout));
+        rightmost = getInterestForRightMost(getInterestLifetime(params_.interestTimeout),
+                                            false, exclusionFilter_);
         
         express(*rightmost, getInterestLifetime(params_.interestTimeout));
         bufferEventsMask_ = FrameBuffer::Event::FirstSegment |
                             FrameBuffer::Event::Timeout;
+        recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
     }
     else
         handleChase(event);
@@ -151,23 +176,34 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
 int
 ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
 {
-    if (event.type_ == FrameBuffer::Event::FirstSegment)
-    {
-        int64_t lifetime = consumer_->getParameters().interestTimeout;
-        requestMissing(event.slot_, lifetime, 0);
-    }
-    
-    unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
-    
-    if (activeSlotsNum == 1)
-        initialDataArrived(event.slot_);
-    
-    if (activeSlotsNum > 1)
-    {
-        if (isBuffering_)
-            handleBuffering(event);
-        else
-            chaseDataArrived(event);
+    switch (event.type_) {
+        case FrameBuffer::Event::Timeout:
+            handleTimeout(event);
+            break;
+            
+        case FrameBuffer::Event::FirstSegment: //
+        {
+            requestMissing(event.slot_,
+                           getInterestLifetime(event.slot_->getPlaybackDeadline(),
+                                               event.slot_->getNamespace()),
+                           0);
+        } // fall through
+        default:
+        {
+            unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
+            
+            if (activeSlotsNum == 1)
+                initialDataArrived(event.slot_);
+            
+            if (activeSlotsNum > 1)
+            {
+                if (isBuffering_)
+                    handleBuffering(event);
+                else
+                    chaseDataArrived(event);
+            }
+        }
+            break;
     }
     
     return RESULT_OK;
@@ -212,14 +248,7 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
         default:
         {
             pipelineIntervalMs_ = chaseEstimation_->getArrivalEstimation();
-#if 0
-            if (event.slot_->getRecentSegment()->isOriginal())
-            {
-                LogTraceC << "chased producer succesfully" << endl;
-                
-                frameBuffer_->freeSlotsLessThan(event.slot_->getPrefix());
-            }
-#endif
+
             int bufferSize = frameBuffer_->getEstimatedBufferSize();
             assert(bufferSize >= 0);
             
@@ -264,7 +293,6 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
         }
             break;
     }
-
 }
 
 void
@@ -272,11 +300,14 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
 {
     int bufferSize = frameBuffer_->getPlayableBufferSize();
     
+    LogTraceC << "buffering. playable size " << bufferSize << endl;
+    
     if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
     {
         LogTraceC
         << "[*****] switch to valid state. playable size " << bufferSize << endl;
         
+        isBuffering_ = false;
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
     }
@@ -570,19 +601,29 @@ ndnrtc::new_api::Pipeliner::requestMissing
     vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>
     missingSegments = slot->getMissingSegments();
     
+    if (missingSegments.size() == 0)
+        LogTraceC << "no missing segments for " << slot->getPrefix() << endl;
+    
     vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>::iterator it;
     for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
     {
         shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
+
+        shared_ptr<Interest> segmentInterest;
         
-        assert(segment->getNumber() >= 0);
-        
-        shared_ptr<Interest> segmentInterest = getDefaultInterest(segment->getPrefix());
-        segmentInterest->setInterestLifetimeMilliseconds(lifetime);
+        if (!slot->isRightmost())
+        {
+            assert((segment->getNumber() >= 0));
+            segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
+        }
+        else
+            segmentInterest = getInterestForRightMost(lifetime,
+                                                      slot->getNamespace()==FrameBuffer::Slot::Key,
+                                                      exclusionFilter_);
         
         LogTraceC << "enqueue missing " << segmentInterest->getName() << endl;
-        
         express(*segmentInterest, priority);
+        segmentInterest->setInterestLifetimeMilliseconds(lifetime);
         
         if (wasTimedOut)
         {
@@ -606,7 +647,11 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     if (nspc == FrameBuffer::Slot::Key ||
         frameBuffer_->getState() == FrameBuffer::Invalid)
     {
-        interestLifetime = params_.interestTimeout;
+        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
+        interestLifetime = gopInterval-frameBuffer_->getEstimatedBufferSize();
+        
+        if (interestLifetime < 0)
+            interestLifetime = params_.interestTimeout;
     }
     else
     {
@@ -661,6 +706,12 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
     frameBuffer_->getPlayableBufferSize();
     
+    LogTraceC
+    << "frame buffer " << bufferSize
+    << (useEstimatedSize?" (est) ":" (play) ")
+    << " target " << frameBuffer_->getTargetSize()
+    << ((bufferSize < frameBuffer_->getTargetSize())?" KEEP UP":" NO KEEP UP") << endl;
+    
     while (bufferSize < frameBuffer_->getTargetSize())
     {
         LogTraceC
@@ -676,7 +727,58 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
 void
 ndnrtc::new_api::Pipeliner::resetData()
 {
+    deltaSegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta);
+    keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey);
+    deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta);
+    keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey);
+    rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     rtxNum_ = 0;
     rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
+    recoveryCheckpointTimestamp_ = -1;
+    isPipelinePaused_ = false;
+    isPipelining_ = false;
+    isBuffering_ = false;
+    isProcessing_ = false;
+    
+    exclusionFilter_ = -1;
+    
+    frameBuffer_->reset();
+}
+
+void
+ndnrtc::new_api::Pipeliner::recoveryCheck
+(const ndnrtc::new_api::FrameBuffer::Event& event)
+{
+    if (event.type_ &
+        (FrameBuffer::Event::FirstSegment | FrameBuffer::Event::Ready))
+    {
+        recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+    }
+    
+    if (recoveryCheckpointTimestamp_ > 0 &&
+        NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > MaxInterruptionDelay)
+    {
+        rebufferingNum_++;
+        
+        resetData();
+        consumer_->reset();
+        
+//        chaseEstimation_->reset();
+        bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
+        isProcessing_ = true;
+        
+        if (rebufferingNum_ >= 5)
+            exclusionFilter_ = -1;
+        else
+            exclusionFilter_ = deltaFrameSeqNo_+1;
+
+        LogWarnC
+        << "No data for the last " << MaxInterruptionDelay
+        << " ms. Rebuffering " << rebufferingNum_
+        << " exclusion " << exclusionFilter_
+        << endl;
+        LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;
+        
+    }
 }
