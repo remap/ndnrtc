@@ -15,7 +15,7 @@ using namespace ndnrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-#if 0
+
 TEST(AudioSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
@@ -32,27 +32,27 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/key", hubEx, userEx, streamEx);
         
-        string prefixS;
-        NdnAudioSender::getStreamKeyPrefix(p, prefixS);
-        EXPECT_STREQ(prefix, prefixS.c_str());
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamKeyPrefix(p);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/delta", hubEx, userEx, streamEx);
         
-        string prefixS;
-        NdnAudioSender::getStreamFramePrefix(p, prefixS);
-        EXPECT_STREQ(prefix, prefixS.c_str());
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamFramePrefix(p);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/key", hubEx, userEx, streamEx);
         
-        string prefixS;
-        NdnAudioSender::getStreamFramePrefix(p, prefixS, true);
-        EXPECT_STREQ(prefix, prefixS.c_str());
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamFramePrefix(p, true);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
     }
     
     // currently RTP prefix equals RTCP
@@ -78,7 +78,7 @@ TEST(AudioData, TestCreateDelete)
         bool isRTCP = false;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
     
-        NdnAudioData::AudioPacket p = {isRTCP, timestamp_exp, dataSz, dummyData};
+        NdnAudioData::AudioPacket p = {isRTCP, dataSz, dummyData};
         ASSERT_NO_THROW(
                         NdnAudioData data(p);
                         );
@@ -91,6 +91,7 @@ TEST(AudioData, TestCreateDelete)
         EXPECT_TRUE(NULL != packetData);
     }
 }
+
 TEST(AudioData, TestPackUnpack)
 {
     {
@@ -102,16 +103,19 @@ TEST(AudioData, TestPackUnpack)
         bool isRTCP_exp = false;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+        PacketData::PacketMetadata meta = {50., timestamp_exp};
+        NdnAudioData::AudioPacket p = {isRTCP_exp, /*timestamp_exp,*/
             dataSz, dummyData};
-        NdnAudioData data(p);
+        NdnAudioData data(p, meta);
+        
+        NdnAudioData resData(data.getLength(), data.getData());
+        EXPECT_TRUE(resData.isValid());
         
         NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
-                                                       data.getData(), resP));
+        data.getAudioPacket(resP);
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
-        EXPECT_EQ(timestamp_exp, resP.timestamp_);
+        EXPECT_EQ(timestamp_exp, resData.getMetadata().timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         
@@ -128,16 +132,19 @@ TEST(AudioData, TestPackUnpack)
         bool isRTCP_exp = true;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+        NdnAudioData::AudioPacket p = {isRTCP_exp,
             dataSz, dummyData};
-        NdnAudioData data(p);
+        PacketData::PacketMetadata meta = {50., timestamp_exp};
+        NdnAudioData data(p, meta);
+
+        NdnAudioData resData(data.getLength(), data.getData());
+        EXPECT_TRUE(resData.isValid());
 
         NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
-                                                       data.getData(), resP));
+        resData.getAudioPacket(resP);
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
-        EXPECT_EQ(timestamp_exp, resP.timestamp_);
+        EXPECT_EQ(timestamp_exp, resData.getMetadata().timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         
@@ -159,12 +166,11 @@ TEST(AudioData, TestUnpackError)
         bool isRTCP;
         unsigned char *packetData = NULL;
         
-        NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_ERR, NdnAudioData::unpackAudio(dataSz,
-                                                       dummyData, resP));
+        NdnAudioData resData(dataSz, dummyData);
+        EXPECT_FALSE(resData.isValid());
     }
 }
-#endif
+
 class AudioSenderTester : public webrtc::Transport,
 public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {
@@ -235,10 +241,15 @@ public:
         
         unsigned char *rawAudioData = (unsigned char*)data->getContent().buf();
         
-        NdnAudioData::AudioPacket packet;
+        SegmentData segData;
+        EXPECT_EQ(RESULT_OK, SegmentData::segmentDataFromRaw(data->getContent().size(), rawAudioData, segData));
         
-        EXPECT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data->getContent().size(),
-                                                       rawAudioData, packet));
+        NdnAudioData audioData(segData.getSegmentDataLength(),
+                               segData.getSegmentData());
+        EXPECT_TRUE(audioData.isValid());
+        
+        NdnAudioData::AudioPacket packet;
+        EXPECT_EQ(RESULT_OK, audioData.getAudioPacket(packet));
         
         if (packet.isRTCP_)
             rtcpDataFetched_++;
@@ -251,7 +262,8 @@ public:
         UnitTestHelperNdnNetwork::onTimeout(interest);
         
         timeoutReceived_ = true;
-        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelInfo)
+        << "Time out for interest %s" << interest->getName() << endl;
     }
     
 protected:
@@ -271,10 +283,12 @@ protected:
 TEST_F(AudioSenderTester, TestAudioData)
 {
     {
+        double packetRate = 50.;
         int64_t ts = NdnRtcUtils::millisecondTimestamp();
-        NdnAudioData::AudioPacket p = {false, ts,
+        PacketData::PacketMetadata meta = {packetRate, ts};
+        NdnAudioData::AudioPacket p = {false,
             100, (unsigned char*)malloc(100)};
-        NdnAudioData data(p);
+        NdnAudioData data(p, meta);
         
         NdnAudioData::AudioPacket packet;
         
@@ -284,89 +298,22 @@ TEST_F(AudioSenderTester, TestAudioData)
         EXPECT_EQ(RESULT_OK, data.getAudioPacket(packet));
 
         EXPECT_EQ(p.isRTCP_, packet.isRTCP_);
-        EXPECT_EQ(p.timestamp_, packet.timestamp_);
+        EXPECT_EQ(ts, data.getMetadata().timestamp_);
         EXPECT_EQ(p.length_, packet.length_);
 
         
-        EXPECT_EQ(0, data.getMetadata().packetRate_);
-        EXPECT_EQ(0, data.getMetadata().sequencePacketNumber_);
-        free(p.data_);
-    }
-    { // restore from raw data
-        int64_t ts = NdnRtcUtils::millisecondTimestamp();
-        NdnAudioData::AudioPacket p = {false, ts,
-            100, (unsigned char*)malloc(100)};
-        NdnAudioData data(p);
-        
-        unsigned int dataLength = data.getLength();
-        unsigned char* networkData = data.getData();
-        NdnAudioData restoredData(dataLength, networkData);
-        
-        EXPECT_TRUE(restoredData.isValid());
-        EXPECT_EQ(dataLength, restoredData.getLength());
-        EXPECT_EQ(PacketData::TypeAudio, restoredData.getType());
-        EXPECT_EQ(0, data.getMetadata().packetRate_);
-        EXPECT_EQ(0, data.getMetadata().sequencePacketNumber_);
-        free(p.data_);
-    }
-    { // restore from corrupted data
-        int64_t ts = NdnRtcUtils::millisecondTimestamp();
-        NdnAudioData::AudioPacket p = {false, ts,
-            100, (unsigned char*)malloc(100)};
-        NdnAudioData data(p);
-        
-        unsigned int dataLength = data.getLength();
-        unsigned char* networkData = data.getData();
-        
-        // corrupt head markers
-        networkData[0] = 0;
-        networkData[1] = 0;
-        
-        NdnAudioData restoredData(dataLength, networkData);
-        NdnAudioData::AudioPacket packet;
-        
-        EXPECT_FALSE(restoredData.isValid());
-        EXPECT_EQ(RESULT_ERR, restoredData.getAudioPacket(packet));
-        EXPECT_EQ(-1, restoredData.getMetadata().packetRate_);
-        EXPECT_EQ(-1, restoredData.getMetadata().sequencePacketNumber_);
-        free(p.data_);
-    }
-    {
-        int64_t ts = NdnRtcUtils::millisecondTimestamp();
-        NdnAudioData::AudioPacket p = {false, ts,
-            100, (unsigned char*)malloc(100)};
-        NdnAudioData data(p);
-        
-        unsigned int dataLength = data.getLength();
-        unsigned char* networkData = data.getData();
-        
-        PacketData *packet;
-        
-        ASSERT_EQ(RESULT_OK, PacketData::packetFromRaw(dataLength, networkData, &packet));
-        EXPECT_TRUE(packet->isValid());
-        EXPECT_EQ(PacketData::TypeAudio, packet->getType());
-        
-        NdnAudioData::AudioPacket restored;
-        
-        EXPECT_EQ(RESULT_OK,
-                  dynamic_cast<NdnAudioData*>(packet)->getAudioPacket(restored));
-
-        EXPECT_EQ(p.isRTCP_, restored.isRTCP_);
-        EXPECT_EQ(p.timestamp_, restored.timestamp_);
-        EXPECT_EQ(p.length_, restored.length_);
-        
-        delete packet;
+        EXPECT_EQ(packetRate, data.getMetadata().packetRate_);
         free(p.data_);
     }
 }
-#if 0
+#if 1
 TEST_F(AudioSenderTester, TestSend)
 {
     int nPackets = 100;
     
     params_.freshness =  (int)(((double)20*(double)nPackets*2)/1000.);
     
-    sender_->init(ndnTransport_);
+    sender_->init(ndnReceiverFace_, ndnReceiverTransport_);
     channel_ = voe_base_->CreateChannel();
     
     ASSERT_LE(0, channel_);
@@ -387,13 +334,14 @@ TEST_F(AudioSenderTester, TestSend)
     UnitTestHelperNdnNetwork::startProcessingNdn();
     
     // now check what we have on the network
-    string rtpPrefix, rtcpPrefix;
-    EXPECT_EQ(RESULT_OK, NdnAudioSender::getStreamFramePrefix(params_,
-                                                              rtpPrefix));
+    shared_ptr<string> rtpPrefix;
+    string rtcpPrefix;
+    
+    rtpPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     EXPECT_EQ(RESULT_OK, NdnAudioSender::getStreamControlPrefix(params_,
                                                                 rtcpPrefix));
     
-    Name rtpPacketPrefix(rtpPrefix);
+    Name rtpPacketPrefix(*rtpPrefix);
     Name rtcpPacketPrefix(rtcpPrefix);
     
     for (int i = 0; i < rtpSent_+rtcpSent_; i++)
@@ -407,7 +355,7 @@ TEST_F(AudioSenderTester, TestSend)
         prefix.addComponent((const unsigned char*)&frameNoStr[0],
                             strlen(frameNoStr));
         
-        LOG_INFO("expressing %s", prefix.toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelInfo) << "expressing " << prefix << endl;
         ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }

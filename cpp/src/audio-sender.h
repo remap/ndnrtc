@@ -46,7 +46,12 @@ namespace ndnrtc
         int publishPacket(const PacketData &packetData,
                           PrefixMetaInfo prefixMeta = {0,0,0})
         {
-            return MediaSender::publishPacket(packetData, packetPrefix_, packetNo_,
+            shared_ptr<Name> packetPrefix(new Name(*packetPrefix_));
+            packetPrefix->append(NdnRtcUtils::componentFromInt(packetNo_));
+            
+            prefixMeta.playbackNo_ = packetNo_;
+            
+            return MediaSender::publishPacket(packetData, packetPrefix, packetNo_,
                                  prefixMeta);
         }
     };

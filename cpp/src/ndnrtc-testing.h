@@ -364,9 +364,6 @@ namespace ndnrtc {
                 res &= readBool(packet.isRTCP_);
                 if (!res) return -1;
                 
-                res &= readInt64(packet.timestamp_);
-                if (!res) return -1;
-                
                 res &= readUint32(packet.length_);
                 if (!res) return -1;
                 
@@ -395,7 +392,6 @@ namespace ndnrtc {
                  */
                 
                 writeData(&packet.isRTCP_, sizeof(packet.isRTCP_));
-                writeData(&packet.timestamp_, sizeof(packet.timestamp_));
                 writeData(&packet.length_, sizeof(packet.length_));
                 writeData(packet.data_, packet.length_);
                 

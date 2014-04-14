@@ -70,9 +70,8 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
     // update packet rate meter
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
     
-    NdnAudioData::AudioPacket packet {false, NdnRtcUtils::millisecondTimestamp(),
-        len, data};
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
+    NdnAudioData::AudioPacket packet = {false, len, data};
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), NdnRtcUtils::millisecondTimestamp()};
     NdnAudioData adata(packet, metadata);
     
     publishPacket(adata);
@@ -83,9 +82,8 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 
 int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-    NdnAudioData::AudioPacket packet {true, NdnRtcUtils::millisecondTimestamp(),
-        len, data};
-    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), packet.timestamp_};
+    NdnAudioData::AudioPacket packet {true, len, data};
+    PacketData::PacketMetadata metadata = {getCurrentPacketRate(), NdnRtcUtils::millisecondTimestamp()};
     NdnAudioData adata(packet, metadata);
     
     publishPacket(adata);
