@@ -65,6 +65,19 @@ int NdnAudioSender::init(const shared_ptr<Face> &face,
     return res;
 }
 
+int NdnAudioSender::publishPacket(const PacketData &packetData,
+                                  PrefixMetaInfo prefixMeta)
+{
+    shared_ptr<Name> packetPrefix(new Name(*packetPrefix_));
+    packetPrefix->append(NdnRtcUtils::componentFromInt(packetNo_));
+    NdnRtcNamespace::appendDataKind(packetPrefix, false);
+    
+    prefixMeta.playbackNo_ = packetNo_;
+    
+    return MediaSender::publishPacket(packetData, packetPrefix, packetNo_,
+                                      prefixMeta);
+}
+
 int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
     // update packet rate meter
@@ -82,6 +95,8 @@ int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 
 int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
+    NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+    
     NdnAudioData::AudioPacket packet {true, len, data};
     PacketData::PacketMetadata metadata = {getCurrentPacketRate(), NdnRtcUtils::millisecondTimestamp()};
     NdnAudioData adata(packet, metadata);

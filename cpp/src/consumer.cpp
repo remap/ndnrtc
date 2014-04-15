@@ -73,9 +73,13 @@ Consumer::init()
     
     pipeliner_.reset(new Pipeliner(shared_from_this()));
     pipeliner_->setLogger(logger_);
+    pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
+                                                     getDescription().c_str()));
     
     chaseEstimation_.reset(new ChaseEstimation());
     bufferEstimator_.reset(new BufferEstimator());
+    
+    renderer_->init();
     
     return res;
 }
@@ -86,6 +90,8 @@ Consumer::start()
 #warning error handling!
     pipeliner_->start();
     playout_->start();
+    renderer_->startRendering(string(params_.producerId));
+    
     return RESULT_OK;
 }
 
@@ -95,6 +101,8 @@ Consumer::stop()
 #warning error handling!
     pipeliner_->stop();
     playout_->stop();
+    renderer_->stopRendering();
+    
     return RESULT_OK;
 }
 

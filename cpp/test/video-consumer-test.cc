@@ -2,8 +2,10 @@
 //  consumer-test.cc
 //  ndnrtc
 //
-//  Created by Peter Gusev on 3/20/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev
 //
 
 #include "test-common.h"
@@ -108,24 +110,24 @@ TEST_F(ConsumerTests, TestFetching)
 }
 #endif
 #if 0
-TEST_F(ConsumerTests, TestConsumerChannel)
-{
-    ParamsStruct p = DefaultParams, ap = DefaultParamsAudio;
-    p.useFec = false; ap.useFec = false;
-    p.captureDeviceId = 1;
-    ConsumerChannel cchannel(p, ap);
-    cchannel.setLogger(&Logger::sharedInstance());
-    
-    startPublishing();
-    
-    EXPECT_EQ(RESULT_OK, cchannel.init());
-    EXPECT_EQ(RESULT_OK, cchannel.startTransmission());
-    
-    WAIT(100000);
-    
-    EXPECT_EQ(RESULT_OK, cchannel.stopTransmission());
-    stopPublishing();
-}
+//TEST_F(ConsumerTests, TestConsumerChannel)
+//{
+//    ParamsStruct p = DefaultParams, ap = DefaultParamsAudio;
+//    p.useFec = false; ap.useFec = false;
+//    p.captureDeviceId = 1;
+//    ConsumerChannel cchannel(p, ap);
+//    cchannel.setLogger(&Logger::sharedInstance());
+//    
+//    startPublishing();
+//    
+//    EXPECT_EQ(RESULT_OK, cchannel.init());
+//    EXPECT_EQ(RESULT_OK, cchannel.startTransmission());
+//    
+//    WAIT(100000);
+//    
+//    EXPECT_EQ(RESULT_OK, cchannel.stopTransmission());
+//    stopPublishing();
+//}
 #endif
 #if 1
 TEST_F(ConsumerTests, TestDelayedProducer)

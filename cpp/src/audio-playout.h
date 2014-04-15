@@ -1,24 +1,25 @@
 //
-//  video-playout.h
+//  audio-playout.h
 //  ndnrtc
 //
-//  Created by Peter Gusev on 3/19/14.
+//  Created by Peter Gusev on 4/14/14.
 //  Copyright (c) 2014 Peter Gusev. All rights reserved.
 //
 
-#ifndef __ndnrtc__video_playout__
-#define __ndnrtc__video_playout__
+#ifndef __ndnrtc__audio_playout__
+#define __ndnrtc__audio_playout__
 
+#include "ndnrtc-common.h"
 #include "playout.h"
-#include "video-coder.h"
+#include "audio-renderer.h"
 
 namespace ndnrtc {
     namespace new_api {
-        class VideoPlayout : public Playout
+        class AudioPlayout : public Playout
         {
         public:
-            VideoPlayout(const shared_ptr<const Consumer>& consumer);
-            ~VideoPlayout();
+            AudioPlayout(const shared_ptr<const Consumer>& consumer);
+            ~AudioPlayout();
             
         private:
             bool
@@ -29,4 +30,4 @@ namespace ndnrtc {
     }
 }
 
-#endif /* defined(__ndnrtc__video_playout__) */
+#endif /* defined(__ndnrtc__audio_playout__) */

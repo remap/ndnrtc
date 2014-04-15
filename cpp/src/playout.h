@@ -21,14 +21,21 @@
 namespace ndnrtc{
     namespace new_api {
         
-        class Playout : public ndnlog::new_api::ILoggingObject
+        /**
+         * Base class for playout mechanisms. The core playout logic is similar 
+         * for audio and video streams. Differences must be implemented in 
+         * overriden method playbackPacket which is called from main playout 
+         * routine each time playout timer fires. Necessary information is 
+         * provided as arguments to the method.
+         */
+        class Playout : public NdnRtcObject
         {
         public:
             Playout(const shared_ptr<const Consumer> &consumer);
             ~Playout();
             
             virtual int
-            init(IEncodedFrameConsumer* frameConsumer);
+            init(void* frameConsumer);
             
             virtual int
             start();
@@ -54,11 +61,25 @@ namespace ndnrtc{
             JitterTiming jitterTiming_;
             webrtc::ThreadWrapper &playoutThread_;
             
-            IEncodedFrameConsumer *frameConsumer_;
+            void* frameConsumer_;
             PacketData *data_;
             
+            /**
+             * This method should be overriden by derived classes for 
+             * media-specific playback (audio/video)
+             * @param packetTsLocal Packet local timestamp
+             * @param data Packet data retrieved from the buffer
+             * @param packetNo Packet playback number provided by a producer
+             * @param isKey Indicates, whether the packet is a key frame (@note 
+             * always false for audio packets)
+             * @param assembledLevel Ratio indicating assembled level of the 
+             * packet: number of fetched segments divided by total number of 
+             * segments for this packet
+             */
             virtual bool
-            playbackPacket(int64_t packetTsLocal) = 0;
+            playbackPacket(int64_t packetTsLocal, PacketData* data,
+                           PacketNumber packetNo, bool isKey,
+                           double assembledLevel) = 0;
             
             static bool
             playoutThreadRoutine(void *obj)

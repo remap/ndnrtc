@@ -21,7 +21,7 @@ using namespace std;
 NdnReceiverChannel::NdnReceiverChannel(const ParamsStruct &params,
                                        const ParamsStruct &audioParams) :
 NdnMediaChannel(params, audioParams),
-localRender_(new NdnRenderer(1,params)),
+localRender_(new VideoRenderer(1,params)),
 decoder_(new NdnVideoDecoder(params)),
 receiver_(new NdnVideoReceiver(params)),
 audioReceiveChannel_(new NdnAudioReceiveChannel(audioParams, NdnRtcUtils::sharedVoiceEngine()))

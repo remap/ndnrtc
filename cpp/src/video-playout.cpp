@@ -13,7 +13,7 @@ using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
-#define RECORD 1
+#define RECORD 0
 #if RECORD
 #include "ndnrtc-testing.h"
 using namespace ndnrtc::testing;
@@ -25,7 +25,7 @@ static EncodedFrameWriter frameWriter("received.nrtc");
 VideoPlayout::VideoPlayout(const shared_ptr<const Consumer>& consumer):
 Playout(consumer)
 {
-    
+    description_ = "video-playout";
 }
 
 VideoPlayout::~VideoPlayout()
@@ -39,62 +39,25 @@ VideoPlayout::~VideoPlayout()
 //******************************************************************************
 #pragma mark - private
 bool
-VideoPlayout::playbackPacket(int64_t packetTsLocal)
+VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
+                             PacketNumber packetNo, bool isKey,
+                             double assembledLevel)
 {
     bool res = false;
-    jitterTiming_.startFramePlayout();
     webrtc::EncodedImage frame;
     
-    if (data_)
-    {
-        delete data_;
-        data_ = nullptr;
-    }
-    
-    PacketNumber packetNo;
-    double assembledLevel = 0;
-    bool isKey;
-    frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
-    
-    if (assembledLevel > 0 &&
-        assembledLevel < 1)
-    {
-        nIncomplete_++;
-        LogStatC
-        << "\tincomplete\t" << nIncomplete_  << "\t"
-        << (isKey?"K":"D") << "\t"
-        << packetNo << "\t" << endl;
-    }
-    
     // render frame if we have one
-    if (data_ && frameConsumer_)
+    if (data && frameConsumer_)
     { 
-        ((NdnFrameData*)data_)->getFrame(frame);
+        ((NdnFrameData*)data)->getFrame(frame);
         
 #if RECORD
         PacketData::PacketMetadata meta = data_->getMetadata();
         frameWriter.writeFrame(frame, meta);
 #endif
         
-        frameConsumer_->onEncodedFrameDelivered(frame);
+        ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
         res = true;
-    }
-    
-    // get playout time (delay) for the rendered frame
-    int framePlayoutTime = frameBuffer_->releaseAcquiredSlot();
-    
-    assert(framePlayoutTime >= 0);
-    
-    LogTraceC
-    << "playout time " << framePlayoutTime
-    << " data: " << (data_?"YES":"NO") << endl;
-    
-    if (framePlayoutTime >= 0)
-    {
-        jitterTiming_.updatePlayoutTime(framePlayoutTime);
-        
-        // setup and run playout timer for calculated playout interval
-        jitterTiming_.runPlayoutTimer();
     }
     
     return res;

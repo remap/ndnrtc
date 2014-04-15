@@ -10,7 +10,7 @@
 
 #include "test-common.h"
 #include "video-decoder.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "camera-capturer.h"
 #include "video-coder.h"
 #include "ndnrtc-testing.h"
@@ -129,7 +129,7 @@ TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
     CameraCapturer *cc = new CameraCapturer(DefaultParams);
     NdnVideoCoder *coder = new NdnVideoCoder(DefaultParams);
     NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);
-    NdnRenderer *renderer = new NdnRenderer(1, DefaultParams);
+    VideoRenderer *renderer = new VideoRenderer(1, DefaultParams);
     
     EXPECT_EQ(0, cc->init());
     EXPECT_EQ(0, coder->init());
@@ -171,7 +171,7 @@ TEST_F(NdnVideoDecoderTest, CaptureEncodeDecodeAndRender)
 //    EncodedFrameReader ereader("bin/received.nrtc");
     EncodedFrameReader ereader("bin/received-key.nrtc");    
     NdnVideoDecoder  *decoder = new NdnVideoDecoder(DefaultParams);
-    NdnRenderer *renderer = new NdnRenderer(1, DefaultParams);
+    VideoRenderer *renderer = new VideoRenderer(1, DefaultParams);
     
     EXPECT_EQ(0, decoder->init());
     EXPECT_EQ(0, renderer->init());

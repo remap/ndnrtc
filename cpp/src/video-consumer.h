@@ -12,7 +12,7 @@
 #define __ndnrtc__video_consumer__
 
 #include "consumer.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "video-decoder.h"
 #include "statistics.h"
 
@@ -41,8 +41,11 @@ namespace ndnrtc {
             setLogger(ndnlog::new_api::Logger* logger);
             
         private:
-            shared_ptr<NdnRenderer> renderer_;
             shared_ptr<NdnVideoDecoder> decoder_;
+            
+            shared_ptr<VideoRenderer>
+            getRenderer()
+            { return dynamic_pointer_cast<VideoRenderer>(renderer_); }
         };
     }
 }

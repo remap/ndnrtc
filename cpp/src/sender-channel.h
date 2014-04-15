@@ -15,11 +15,12 @@
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
 #include "video-coder.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
 #include "audio-channel.h"
 #include "statistics.h"
+#include "audio-capturer.h"
 
 namespace ndnrtc
 {
@@ -93,12 +94,13 @@ namespace ndnrtc
         uint64_t lastFrameStamp_ = 0;
         unsigned int frameFreqMeter_;
         
-        shared_ptr<CameraCapturer> cc_;
-        shared_ptr<NdnRenderer> localRender_;
+        shared_ptr<CameraCapturer> cameraCapturer_;
+        shared_ptr<VideoRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
-        // suspended code
-//        shared_ptr<NdnAudioSendChannel> audioSendChannel_;
+        
+        shared_ptr<new_api::AudioCapturer> audioCapturer_;
+        shared_ptr<NdnAudioSender> audioSender_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;

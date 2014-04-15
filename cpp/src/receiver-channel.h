@@ -14,7 +14,7 @@
 #include "ndnrtc-common.h"
 #include "video-receiver.h"
 #include "video-decoder.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "sender-channel.h"
 #include "audio-channel.h"
 
@@ -42,7 +42,7 @@ namespace ndnrtc
             audioReceiveChannel_->setLogger(logger);
         }
     protected:
-        shared_ptr<NdnRenderer> localRender_;
+        shared_ptr<VideoRenderer> localRender_;
         shared_ptr<NdnVideoDecoder> decoder_;
         shared_ptr<NdnVideoReceiver> receiver_;
         shared_ptr<NdnAudioReceiveChannel> audioReceiveChannel_;

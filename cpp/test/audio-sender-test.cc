@@ -222,7 +222,7 @@ public:
     {
 //        cout << "publish rtp packet " << len << endl;
         rtpSent_++;
-        sender_->publishRTPAudioPacket(len, (unsigned char*)data);
+        sender_->onDeliverRtpFrame(len, (unsigned char*)data);
         
         return len;
     }
@@ -230,7 +230,7 @@ public:
     {
 //        cout << "publish rtcp packet " << len << endl;
         rtcpSent_++;
-        sender_->publishRTCPAudioPacket(len, (unsigned char*)data);
+        sender_->onDeliverRtcpFrame(len, (unsigned char*)data);
 
         return len;
     }

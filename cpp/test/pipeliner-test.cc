@@ -11,7 +11,7 @@
 #include "ndnrtc-utils.h"
 #include "ndnrtc-namespace.h"
 #include "sender-channel.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "video-decoder.h"
 #include "video-playout.h"
 
@@ -194,7 +194,7 @@ TEST_F(PipelinerTests, TestFetching)
 {
     VideoPlayout playout(consumer_);
     
-    NdnRenderer renderer(0, params_);
+    VideoRenderer renderer(0, params_);
     renderer.init();
 
     NdnVideoDecoder decoder(params_);
