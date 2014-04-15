@@ -14,14 +14,17 @@
 #include "ndnrtc-common.h"
 #include "media-sender.h"
 #include "ndnrtc-namespace.h"
+#include "audio-capturer.h"
 
 namespace ndnrtc
 {
-    class NdnAudioSender : public MediaSender
+    class NdnAudioSender : public MediaSender,
+    public new_api::IAudioFrameConsumer
     {
     public:
         // construction/desctruction
-        NdnAudioSender(const ParamsStruct &params):MediaSender(params){}
+        NdnAudioSender(const ParamsStruct &params):MediaSender(params)
+        { description_ = "asender"; }
         ~NdnAudioSender(){};
      
         static int getStreamControlPrefix(const ParamsStruct &params,
@@ -29,14 +32,23 @@ namespace ndnrtc
         
         int init(const shared_ptr<Face> &face,
                  const shared_ptr<ndn::Transport> &transport);
-        int publishRTPAudioPacket(unsigned int len, unsigned char *data);
-        int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
         
         unsigned long int getSampleNo() { return getPacketNo(); }
+        
+        void
+        onDeliverRtpFrame(unsigned int len, unsigned char *data)
+        { publishRTPAudioPacket(len, data); }
+        
+        void
+        onDeliverRtcpFrame(unsigned int len, unsigned char *data)
+        { publishRTCPAudioPacket(len, data); }
         
     private:
         unsigned int rtcpPacketNo_;
         shared_ptr<Name> rtcpPacketPrefix_;
+        
+        int publishRTPAudioPacket(unsigned int len, unsigned char *data);
+        int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
         
         /**
          * Publishes specified data under the prefix, determined by the
@@ -44,11 +56,7 @@ namespace ndnrtc
          * number, specified in packetNo_ variable of the class.
          */
         int publishPacket(const PacketData &packetData,
-                          PrefixMetaInfo prefixMeta = {0,0,0})
-        {
-            return MediaSender::publishPacket(packetData, packetPrefix_, packetNo_,
-                                 prefixMeta);
-        }
+                          PrefixMetaInfo prefixMeta = {0,0,0});
     };
 }
 

@@ -18,12 +18,16 @@
 #include "video-coder.h"
 
 namespace ndnrtc {
-    class NdnVideoDecoder : public NdnRtcObject, public IEncodedFrameConsumer, public webrtc::DecodedImageCallback {
+    class NdnVideoDecoder : public IEncodedFrameConsumer,
+    public webrtc::DecodedImageCallback, public NdnRtcObject
+    {
     public:
         NdnVideoDecoder(const ParamsStruct &coderParams);
         ~NdnVideoDecoder() { }
         
-        void setFrameConsumer(IRawFrameConsumer *frameConsumer) { frameConsumer_ = frameConsumer; };
+        void setFrameConsumer(IRawFrameConsumer *frameConsumer)
+        { frameConsumer_ = frameConsumer; };
+        
         int init();
         
         // interface conformance - webrtc::DecodedImageCallback

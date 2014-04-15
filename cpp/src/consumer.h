@@ -19,6 +19,7 @@
 #include "chase-estimation.h"
 #include "buffer-estimator.h"
 #include "statistics.h"
+#include "renderer.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -35,7 +36,7 @@ namespace ndnrtc {
         class BufferEstimator;
         
         /**
-         * Fetch channel combines all the necessary components for successful 
+         * Consumer class combines all the necessary components for successful
          * fetching media (audio or video) data from the network. Main 
          * components are the follows:
          * - FrameBuffer - used for assembling and ordering packets/frames
@@ -44,9 +45,9 @@ namespace ndnrtc {
          *      buffer
          * - InterestQueue - control center for outgoing interests. Outgoing 
          *      interest can be prioritized based on the playback deadlines 
-         *      (how many ms left for the deadline)
+         *      (how many ms left before the deadline)
          * - PacketAssembler - dispatches callbacks from the NDN library, 
-         *      appends buffer or notifies about timeout; also, is responsible 
+         *      appends buffer or notifies about timeout; also, it is responsible
          *      for calling processEvents of the Face object
          * - BufferEtimator - dictates the buffer size based on current 
          *      RttEstimation
@@ -149,6 +150,7 @@ namespace ndnrtc {
             shared_ptr<RttEstimation> rttEstimation_;
             shared_ptr<ChaseEstimation> chaseEstimation_;
             shared_ptr<BufferEstimator> bufferEstimator_;
+            shared_ptr<IRenderer> renderer_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             

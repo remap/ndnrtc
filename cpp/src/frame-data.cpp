@@ -566,7 +566,6 @@ NdnAudioData::initFromRawData(unsigned int dataLength,
         return RESULT_ERR;
     
     packet_.isRTCP_ = header.isRTCP_;
-    packet_.timestamp_ = header.metadata_.timestamp_;
     packet_.length_ = dataLength-headerSize;
     packet_.data_ = (unsigned char*)rawData+headerSize;
     

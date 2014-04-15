@@ -182,7 +182,7 @@ namespace ndnrtc
         "",                   // log file
         true,  // use TLV encoding
         true, // use RTX
-        true, // use FEC
+        false, // use FEC
         
         0,      // capture device id
         0,    // capture width
@@ -193,7 +193,7 @@ namespace ndnrtc
         0,    // render height
         
         0,     // codec framerate
-        INT_MAX,      // gop
+        0,      // gop
         0,    // codec start bitrate
         0,   // codec max bitrate
         0,    // codec encoding width

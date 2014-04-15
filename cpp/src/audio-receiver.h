@@ -17,7 +17,7 @@
 
 namespace ndnrtc
 {
-#if 0 // suspended    
+#if 0
     class IAudioPacketConsumer
     {
     public:

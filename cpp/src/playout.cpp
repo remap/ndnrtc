@@ -23,7 +23,6 @@ Playout::Playout(const shared_ptr<const Consumer> &consumer):
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
-frameConsumer_(nullptr),
 data_(nullptr)
 {
     setDescription("playout");
@@ -44,10 +43,10 @@ Playout::~Playout()
 //******************************************************************************
 #pragma mark - public
 int
-Playout::init(IEncodedFrameConsumer* consumer)
+Playout::init(void* frameConsumer)
 {
     jitterTiming_.flush();
-    frameConsumer_ = consumer;
+    frameConsumer_ = frameConsumer;
 }
 
 int
@@ -60,6 +59,9 @@ Playout::start()
     
     unsigned int tid;
     playoutThread_.Start(tid);
+    
+    LogInfoC << "started" << endl;
+    return RESULT_OK;
 }
 
 int
@@ -68,6 +70,9 @@ Playout::stop()
     playoutThread_.SetNotAlive();
     isRunning_ = false;
     playoutThread_.Stop();
+    
+    LogInfoC << "stopped" << endl;
+    return RESULT_OK;
 }
 
 void
@@ -104,7 +109,34 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
-            if (playbackPacket(now))
+            jitterTiming_.startFramePlayout();
+            
+            if (data_)
+            {
+                delete data_;
+                data_ = nullptr;
+            }
+            
+            PacketNumber packetNo;
+            double assembledLevel = 0;
+            bool isKey;
+            
+            frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
+            
+            if (assembledLevel > 0 &&
+                assembledLevel < 1)
+            {
+                nIncomplete_++;
+                LogStatC
+                << "\tincomplete\t" << nIncomplete_  << "\t"
+                << (isKey?"K":"D") << "\t"
+                << packetNo << "\t" << endl;
+            }
+            
+            //******************************************************************
+            // next call is overriden by specific playout mechanism - either
+            // video or audio. the rest of the code is similar for both cases
+            if (playbackPacket(now, data_, packetNo, assembledLevel, isKey))
             {
                 nPlayed_++;
                 
@@ -115,6 +147,24 @@ Playout::processPlayout()
                 nMissed_++;
                 
                 LogStatC << "\tmissed\t" << nMissed_ << endl;
+            }
+            //******************************************************************
+            
+            // get playout time (delay) for the rendered frame
+            int framePlayoutTime = frameBuffer_->releaseAcquiredSlot();
+            
+            assert(framePlayoutTime >= 0);
+            
+            LogTraceC
+            << "playout time " << framePlayoutTime
+            << " data: " << (data_?"YES":"NO") << endl;
+            
+            if (framePlayoutTime >= 0)
+            {
+                jitterTiming_.updatePlayoutTime(framePlayoutTime);
+                
+                // setup and run playout timer for calculated playout interval
+                jitterTiming_.runPlayoutTimer();
             }
         }
     }

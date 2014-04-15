@@ -60,6 +60,10 @@ namespace ndnrtc {
             State
             getState() const;
             
+            void
+            setUseKeyNamespace(bool useKeyNamespace)
+            { useKeyNamespace_ = useKeyNamespace; }
+            
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
@@ -89,6 +93,7 @@ namespace ndnrtc {
             PacketNumber exclusionFilter_;
             unsigned int rtxFreqMeterId_, rtxNum_;
             int bufferEventsMask_;
+            bool useKeyNamespace_;
             
             static bool
             mainThreadRoutine(void *pipeliner){

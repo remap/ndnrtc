@@ -1,17 +1,16 @@
 //
-//  canvas-renderer.cpp
+//  video-renderer.cpp
 //  ndnrtc
 //
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
 //  Author:  Peter Gusev
-//  Created: 8/19/13
 //
 
 #undef DEBUG
 
-#include "renderer.h"
+#include "video-renderer.h"
 #import "objc/cocoa-renderer.h"
 #include "ndnrtc-utils.h"
 
@@ -23,14 +22,14 @@ using namespace webrtc;
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
-NdnRenderer::NdnRenderer(int rendererId, const ParamsStruct &params) :
+VideoRenderer::VideoRenderer(int rendererId, const ParamsStruct &params) :
 NdnRtcObject(params),
 rendererId_(rendererId)
 {
-    description_ = "renderer";
+    description_ = "vrenderer";
 }
 
-NdnRenderer::~NdnRenderer()
+VideoRenderer::~VideoRenderer()
 {
     stopRendering();
     
@@ -48,7 +47,7 @@ NdnRenderer::~NdnRenderer()
 }
 //******************************************************************************
 #pragma mark - public
-int NdnRenderer::init()
+int VideoRenderer::init()
 {
     int res = RESULT_OK;
     
@@ -71,7 +70,7 @@ int NdnRenderer::init()
     
     return res;
 }
-int NdnRenderer::startRendering(const string &windowName)
+int VideoRenderer::startRendering(const string &windowName)
 {
     setWindowTitle(windowName.c_str(), renderWindow_);
     
@@ -84,7 +83,7 @@ int NdnRenderer::startRendering(const string &windowName)
     
     return 0;
 }
-int NdnRenderer::stopRendering()
+int VideoRenderer::stopRendering()
 {
     if (render_)
     {
@@ -96,18 +95,18 @@ int NdnRenderer::stopRendering()
 }
 //******************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
-void NdnRenderer::onDeliverFrame(I420VideoFrame &frame)
+void VideoRenderer::onDeliverFrame(I420VideoFrame &frame)
 {
     if (isRendering_)
     {
         LogTraceC
-        << "render frame at %ld" << NdnRtcUtils::millisecondTimestamp() << endl;
+        << "render frame at " << NdnRtcUtils::millisecondTimestamp() << endl;
         
         LogStatC
         << "render\t" << NdnRtcUtils::millisecondTimestamp() << endl;
         
         int res = frameSink_->RenderFrame(rendererId_, frame);
-
+        
         if (res < 0)
             notifyError(RESULT_ERR, "render error %d", res);
         else
@@ -116,6 +115,3 @@ void NdnRenderer::onDeliverFrame(I420VideoFrame &frame)
     else
         notifyError(RESULT_ERR, "render not started");
 }
-
-//******************************************************************************
-#pragma mark - private

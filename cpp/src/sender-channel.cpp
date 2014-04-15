@@ -18,6 +18,7 @@ using namespace std;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //******************************************************************************
@@ -142,11 +143,12 @@ NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    const ParamsStruct &audioParams):
 NdnMediaChannel(params, audioParams),
-cc_(new CameraCapturer(params)),
-localRender_(new NdnRenderer(0,params)),
+cameraCapturer_(new CameraCapturer(params)),
+localRender_(new VideoRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
 sender_(new NdnVideoSender(params)),
-//audioSendChannel_(new NdnAudioSendChannel(audioParams, NdnRtcUtils::sharedVoiceEngine())),
+audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
+audioSender_(new NdnAudioSender(audioParams)),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
@@ -158,15 +160,16 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                NdnRtcUtils::toString("producer-%s.log", params.producerId)));
     isLoggerCreated_ = true;
         
-    cc_->setObserver(this);
+    cameraCapturer_->setObserver(this);
     localRender_->setObserver(this);
     coder_->setObserver(this);
     
     // set connection capturer -> this
-    cc_->setFrameConsumer(this);
-    
-    // set direct connection coder->sender
+    cameraCapturer_->setFrameConsumer(this);
+    // set connection coder->sender
     coder_->setFrameConsumer(sender_.get());
+    // set connection audioCapturer -> audioSender
+    audioCapturer_->setFrameConsumer(audioSender_.get());
     
     frameFreqMeter_ = NdnRtcUtils::setupFrequencyMeter();
 }
@@ -204,7 +207,7 @@ int NdnSenderChannel::init()
         return res;
     
     { // initialize video
-        videoInitialized_ = RESULT_NOT_FAIL(cc_->init());
+        videoInitialized_ = RESULT_NOT_FAIL(cameraCapturer_->init());
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize camera capturer");
         
@@ -222,7 +225,9 @@ int NdnSenderChannel::init()
     }
     
     { // initialize audio
-//        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioFace_, ndnAudioTransport_));
+         audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
+        audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(ndnAudioFace_,
+                                                                ndnAudioTransport_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         
@@ -266,14 +271,15 @@ int NdnSenderChannel::startTransmission()
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start render");
         
-        videoTransmitting_ &= RESULT_NOT_FAIL(cc_->startCapture());
+        videoTransmitting_ &= RESULT_NOT_FAIL(cameraCapturer_->startCapture());
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start camera capturer");
     }
     
     if (audioInitialized_)
     {
-//        audioTransmitting_ = RESULT_NOT_FAIL(audioSendChannel_->start());
+        audioTransmitting_ = RESULT_NOT_FAIL(audioCapturer_->startCapture());
+        
         if (!audioTransmitting_)
             notifyError(RESULT_WARN, "can't start audio send channel");
     }
@@ -305,8 +311,8 @@ int NdnSenderChannel::stopTransmission()
     {
         videoTransmitting_ = false;
         
-        if (cc_->isCapturing())
-            cc_->stopCapture();
+        if (cameraCapturer_->isCapturing())
+            cameraCapturer_->stopCapture();
         
         processThread_.SetNotAlive();
         deliverEvent_.Set();
@@ -320,7 +326,8 @@ int NdnSenderChannel::stopTransmission()
     if (audioTransmitting_)
     {
         audioTransmitting_ = false;
-//        audioSendChannel_->stop();
+        audioCapturer_->stopCapture();
+        audioSender_->stop();
     }
     
     LogInfoC << "stopped" << endl;
@@ -342,10 +349,11 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 
 void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
 {
-    cc_->setLogger(logger);
+    cameraCapturer_->setLogger(logger);
     localRender_->setLogger(logger);
     coder_->setLogger(logger);
     sender_->setLogger(logger);
+    audioSender_->setLogger(logger);
     
     ILoggingObject::setLogger(logger);
 }

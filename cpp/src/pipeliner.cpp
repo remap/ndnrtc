@@ -1,4 +1,4 @@
-//
+.//
 //  pipeliner.cpp
 //  ndnrtc
 //
@@ -43,7 +43,8 @@ keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey)),
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta)),
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
-exclusionFilter_(-1)
+exclusionFilter_(-1),
+useKeyNamespace_(true)
 {
     initialize();
 }
@@ -466,6 +467,10 @@ ndnrtc::new_api::Pipeliner::updateSegnumEstimation(FrameBuffer::Slot::Namespace 
 void
 ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
 {
+    // just ignore if key namespace is not used
+    if (!useKeyNamespace_)
+        return;
+        
     LogTraceC << "request key " << keyFrameNo << endl;
     
     prefetchFrame(keyFramesPrefix_,
@@ -578,7 +583,7 @@ ndnrtc::new_api::Pipeliner::processPipeline()
     
     if (isPipelining_)
     {
-        if (frameBuffer_->getEstimatedBufferSize() < frameBuffer_->getTargetSize())
+        if (frameBuffer_->getEstimatedBufferSize() <= frameBuffer_->getTargetSize())
         {
             requestNextDelta(deltaFrameSeqNo_);
         }
@@ -650,7 +655,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
         double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
         interestLifetime = gopInterval-frameBuffer_->getEstimatedBufferSize();
         
-        if (interestLifetime < 0)
+        if (interestLifetime <= 0)
             interestLifetime = params_.interestTimeout;
     }
     else

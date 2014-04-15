@@ -6,7 +6,6 @@
 //  For licensing details see the LICENSE file.
 //
 //  Author:  Peter Gusev
-//  Created: 8/29/13
 //
 
 #ifndef ndnrtc_test_common_h

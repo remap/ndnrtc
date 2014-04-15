@@ -173,12 +173,6 @@ int MediaSender::publishPacket(const PacketData &packetData,
             
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
-
-            LogTrace("data.log")
-            << "published " << segmentName << ": "
-            << test::dump<100>(segmentData.getSegmentData())
-            << endl;
-
             
             LogTraceC
             << "published " << segmentName << " "

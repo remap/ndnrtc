@@ -489,7 +489,7 @@ protected:
     AudioVideoSynchronizerTester synchronizer_;
     ParamsStruct videoParams_, audioParams_;
     AudioFileRenderer arenderer_;
-    NdnRenderer vrenderer_;
+    VideoRenderer vrenderer_;
     FrameReader vreader_;
     
     bool audioProc()

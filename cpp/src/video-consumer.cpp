@@ -26,11 +26,11 @@ using namespace ndnrtc::new_api;
 VideoConsumer::VideoConsumer(const ParamsStruct& params,
                              const shared_ptr<InterestQueue>& interestQueue):
 Consumer(params, interestQueue),
-renderer_(new NdnRenderer(1, params)),
 decoder_(new NdnVideoDecoder(params))
 {
     setDescription("vconsumer");
-    decoder_->setFrameConsumer(renderer_.get());
+    renderer_.reset(new VideoRenderer(1, params));
+    decoder_->setFrameConsumer(getRenderer().get());
 }
 
 VideoConsumer::~VideoConsumer()
@@ -45,10 +45,6 @@ VideoConsumer::init()
 #warning error handling!
     Consumer::init();
 
-    pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
-                                                     getDescription().c_str()));
-    
-    renderer_->init();
     decoder_->init();
     
     playout_.reset(new VideoPlayout(shared_from_this()));
@@ -63,8 +59,6 @@ int
 VideoConsumer::start()
 {
 #warning error handling!
-    renderer_->startRendering(string(params_.producerId));
-    
     Consumer::start();
     
     LogInfoC << "started" << endl;
@@ -77,8 +71,6 @@ VideoConsumer::stop()
 #warning error handling!
     Consumer::stop();
     
-    renderer_->stopRendering();
-    
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
 }
@@ -87,7 +79,6 @@ void
 VideoConsumer::reset()
 {
     Consumer::reset();
-    decoder_->init();
     
     playout_->stop();
     playout_->init(decoder_.get());
@@ -97,11 +88,9 @@ VideoConsumer::reset()
 void
 VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
 {
-    renderer_->setLogger(logger);
+    getRenderer()->setLogger(logger);
     decoder_->setLogger(logger);
     
     Consumer::setLogger(logger);
 }
 
-//******************************************************************************
-#pragma mark - construction/destruction

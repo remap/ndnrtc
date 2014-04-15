@@ -262,7 +262,6 @@ namespace ndnrtc {
     public:
         typedef struct _AudioPacket {
             bool isRTCP_;
-            int64_t timestamp_;
             unsigned int length_;
             unsigned char *data_;
         } AudioPacket;
