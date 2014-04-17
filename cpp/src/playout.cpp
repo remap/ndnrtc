@@ -54,8 +54,10 @@ Playout::start()
 {
     nPlayed_ = 0;
     nMissed_ = 0;
-    nIncomplete_ = 0;
     isRunning_ = true;
+    isInferredPlayback_ = false;
+    lastPacketTs_ = 0;
+    inferredDelay_ = 0;
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -95,7 +97,6 @@ Playout::getStatistics(ReceiverChannelPerformance& stat)
 {
     stat.nPlayed_ = nPlayed_;
     stat.nMissed_ = nMissed_;
-    stat.nIncomplete_ = nIncomplete_;
 }
 
 //******************************************************************************
@@ -121,24 +122,25 @@ Playout::processPlayout()
             double assembledLevel = 0;
             bool isKey;
             
-            frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
+            frameBuffer_->acquireSlot(&data_, packetNo, isKey);
             
-            if (assembledLevel > 0 &&
-                assembledLevel < 1)
-            {
-                nIncomplete_++;
-                LogStatC
-                << "\tincomplete\t" << nIncomplete_  << "\t"
-                << (isKey?"K":"D") << "\t"
-                << packetNo << "\t" << endl;
-            }
+            unsigned int playbackAdjustment = 0;
             
             //******************************************************************
             // next call is overriden by specific playout mechanism - either
             // video or audio. the rest of the code is similar for both cases
-            if (playbackPacket(now, data_, packetNo, assembledLevel, isKey))
+            if (playbackPacket(now, data_, packetNo, isKey))
             {
                 nPlayed_++;
+                
+                if (lastPacketTs_ > 0 &&
+                    isInferredPlayback_)
+                {
+                    int realPlayback = data_->getMetadata().timestamp_-lastPacketTs_;
+                    playbackAdjustment = realPlayback-inferredDelay_;
+                }
+                
+                lastPacketTs_ = data_->getMetadata().timestamp_;
                 
                 LogStatC << "\tplay\t" << nPlayed_ << endl;
             }
@@ -151,17 +153,33 @@ Playout::processPlayout()
             //******************************************************************
             
             // get playout time (delay) for the rendered frame
-            int framePlayoutTime = frameBuffer_->releaseAcquiredSlot();
+            int playbackDelay = frameBuffer_->releaseAcquiredSlot(isInferredPlayback_);
             
-            assert(framePlayoutTime >= 0);
+            if (isInferredPlayback_)
+                inferredDelay_ += playbackDelay;
+            else
+                inferredDelay_ = 0;
+            
+            assert(playbackDelay >= 0);
+            
+            if (playbackAdjustment > playbackDelay)
+            {
+                playbackAdjustment -= playbackDelay;
+                playbackDelay = 0;
+            }
+            else
+                playbackDelay += playbackAdjustment;
             
             LogTraceC
-            << "playout time " << framePlayoutTime
-            << " data: " << (data_?"YES":"NO") << endl;
+            << "playout time (inferred "
+            << (isInferredPlayback_?"YES":"NO") << ") "
+            << playbackDelay
+            << " (adjustment " << playbackAdjustment
+            << ") data: " << (data_?"YES":"NO") << endl;
             
-            if (framePlayoutTime >= 0)
+            if (playbackDelay >= 0)
             {
-                jitterTiming_.updatePlayoutTime(framePlayoutTime);
+                jitterTiming_.updatePlayoutTime(playbackDelay);
                 
                 // setup and run playout timer for calculated playout interval
                 jitterTiming_.runPlayoutTimer();

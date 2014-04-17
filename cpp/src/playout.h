@@ -54,7 +54,12 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            unsigned int nPlayed_, nMissed_, nIncomplete_;
+            unsigned int nPlayed_, nMissed_;
+            
+            bool isInferredPlayback_;
+            int64_t lastPacketTs_;
+            unsigned int inferredDelay_;
+            
             shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             
@@ -78,8 +83,7 @@ namespace ndnrtc{
              */
             virtual bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey,
-                           double assembledLevel) = 0;
+                           PacketNumber packetNo, bool isKey) = 0;
             
             static bool
             playoutThreadRoutine(void *obj)

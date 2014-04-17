@@ -44,7 +44,9 @@ faceProcessor_(faceProcessor)
     interestQueue_.reset(new InterestQueue(faceProcessor_->getFace()));
     interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     videoConsumer_.reset(new VideoConsumer(params_, interestQueue_));
-    
+#ifndef AUDIO_OFF
+    audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_));
+#endif
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
                                                      params.producerId)));
@@ -57,6 +59,9 @@ int
 ConsumerChannel::init()
 {
 #warning handle errors
+#ifndef AUDIO_OFF
+    audioConsumer_->init();
+#endif
     videoConsumer_->init();
     
     return RESULT_OK;
@@ -68,7 +73,10 @@ ConsumerChannel::startTransmission()
 #warning handle errors
     if (isOwnFace_)
         faceProcessor_->startProcessing();
-    
+
+#ifndef AUDIO_OFF
+    audioConsumer_->start();
+#endif
     videoConsumer_->start();
     
     return RESULT_OK;
@@ -78,6 +86,9 @@ int
 ConsumerChannel::stopTransmission()
 {
 #warning handle errors
+#ifndef AUDIO_OFF
+    audioConsumer_->stop();
+#endif
     videoConsumer_->stop();
     
     if (isOwnFace_)
@@ -89,23 +100,19 @@ ConsumerChannel::stopTransmission()
 void
 ConsumerChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
 {
-    stat.videoStat_.nBytesPerSec_ = 0;
-    stat.videoStat_.interestFrequency_ = 0;
-    stat.videoStat_.segmentsFrequency_ = 0;
-    
     stat.videoStat_.srtt_ = rttEstimation_->getCurrentEstimation();
-    
-    stat.videoStat_.nPlayed_ = 0;
-    stat.videoStat_.nMissed_ = 0;
-    stat.videoStat_.nLost_ = 0;
-    stat.videoStat_.nReceived_ = 0;
-    
     videoConsumer_->getStatistics(stat.videoStat_);
+#ifndef AUDIO_OFF
+    audioConsumer_->getStatistics(stat.audioStat_);
+#endif
 }
 
 void
 ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
 {
+#ifndef AUDIO_OFF
+    audioConsumer_->setLogger(logger);
+#endif
     videoConsumer_->setLogger(logger);
     rttEstimation_->setLogger(logger);
     faceProcessor_->setLogger(logger);

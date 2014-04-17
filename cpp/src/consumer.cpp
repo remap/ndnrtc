@@ -134,6 +134,7 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat)
     stat.segNumKey_ = pipeliner_->getAvgSegNum(true);
     stat.rtxNum_ = pipeliner_->getRtxNum();
     stat.rtxFreq_ = pipeliner_->getRtxFreq();
+    stat.rebufferingEvents_ = pipeliner_->getRebufferingNum();
     
     stat.jitterPlayableMs_ = frameBuffer_->getPlayableBufferSize();
     stat.jitterEstimationMs_ = frameBuffer_->getEstimatedBufferSize();

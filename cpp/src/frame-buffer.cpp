@@ -245,7 +245,9 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
     if (RESULT_GOOD(PrefixMetaInfo::extractMetadata(dataName, prefixMeta)))
     {
         fixRightmost(packetNumber, segmentNumber, isParity);
+
         updateConsistencyWithMeta(packetNumber, prefixMeta);
+        assert(prefixMeta.totalSegmentsNum_ == nSegmentsTotal_);
         
         SegmentData segmentData;
         
@@ -282,7 +284,7 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
             vector<shared_ptr<Segment>> fetchedSegments =
                 getSegments(Segment::StateFetched);
             
-            if (fetchedSegments.size() == prefixMeta.totalSegmentsNum_)
+            if (nSegmentsReady_ == prefixMeta.totalSegmentsNum_)
                 state_ = StateReady;
             else
             {
@@ -309,7 +311,7 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     if (state_ == StateLocked)
         return RESULT_ERR;
     
-    memset(fecSegmentList_, 0, nSegmentsTotal_+nSegmentsParity_);
+    memset(fecSegmentList_, '0', nSegmentsTotal_+nSegmentsParity_);
     
     state_ = StateFree;
     consistency_ = Inconsistent;
@@ -375,10 +377,16 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
         rs28Info.r_list = (char*)fecSegmentList_;
         
         Rs28Decode dec(rs28Info);
-        int nRecovered = dec.decode();
+        
+        if (nSegmentsParity_ > 0)
+            nRecovered = dec.decode();
         
         LogTrace("recovery.log")
-        << "recovered " << nRecovered << " segments from "
+        << "level " << getAssembledLevel()
+        << " total " << nSegmentsTotal_
+        << " parity " << nSegmentsParity_
+        << " seg size " << segmentSize_
+        << " recovered " << nRecovered << " segments from "
         << slotPrefix_ << endl;
     }
     
@@ -556,7 +564,7 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareStorage(unsigned int segmentSize,
         
         slotData_ = (unsigned char*)realloc(slotData_, slotSize);
         fecSegmentList_ = (unsigned char*)realloc(fecSegmentList_, nSegments+nParitySegments);
-        memset(fecSegmentList_, 0, nSegments+nParitySegments);
+        memset(fecSegmentList_, '0', nSegments+nParitySegments);
         allocatedSize_ = slotSize;
     }
 }
@@ -571,12 +579,11 @@ ndnrtc::new_api::FrameBuffer::Slot::addData(const unsigned char* segmentData,
 {
     prepareStorage(segmentSize_, totalSegNum, totalParitySegNum);
 
-    isParitySegment = false;
     unsigned int segmentIdx = (isParitySegment)? totalSegNum+segNo : segNo;
- 
+    
     memcpy(slotData_+segmentIdx*segmentSize_, segmentData, segmentSize);
     
-    fecSegmentList_[segmentIdx] = 1;
+    fecSegmentList_[segmentIdx] = '1';
     assembledSize_ += segmentSize;
 }
 
@@ -1368,8 +1375,7 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 void
 ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                                           PacketNumber& packetNo,
-                                          bool& isKey,
-                                          double& assembledLevel)
+                                          bool& isKey)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
     shared_ptr<FrameBuffer::Slot> slot = playbackQueue_.peekSlot();
@@ -1386,19 +1392,39 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         
         playbackSlot_ = slot;
         playbackNo_ = slot->getPlaybackNumber();
-        assembledLevel = slot->getAssembledLevel();
+        
+        double assembledLevel = slot->getAssembledLevel();
         packetNo = slot->getPlaybackNumber();
         isKey = (slot->getNamespace() == Slot::Key);
         
         slot->lock();
         
-        if (assembledLevel < 1. &&
-            consumer_->getParameters().useFec)
+        if (assembledLevel > 0 &&
+            assembledLevel < 1.)
         {
-            LogTraceC << "applying FEC for impaired frame "
-            << packetNo << " " << assembledLevel << endl;
+            nIncomplete_++;
             
-            slot->recover();
+            LogStatC
+            << "\tincomplete\t" << nIncomplete_  << "\t"
+            << (isKey?"K":"D") << "\t"
+            << packetNo << "\t" << endl;
+            
+            if (consumer_->getParameters().useFec)
+            {
+                LogTraceC << "applying FEC for incomplete frame "
+                << packetNo << " " << assembledLevel << endl;
+                
+                slot->recover();
+                
+                if (slot->isRecovered())
+                {
+                    nRecovered_++;
+                    LogStatC
+                    << "\trecovered\t" << slot->getSequentialNumber()  << "\t"
+                    << (isKey?"K":"D") << "\t"
+                    << packetNo << "\t" << endl;
+                }
+            }
         }
         
         slot->getPacketData(packetData);
@@ -1411,7 +1437,6 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
     else
     {
         playbackSlot_.reset();
-        assembledLevel = 0;
         
         if (!playbackQueue_.size())
         {
@@ -1426,9 +1451,11 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
 }
 
 int
-ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot()
+ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
+    
+    isInferredDuration = true;
     
     int playbackDuration = playbackQueue_.getInferredFrameDuration();
     shared_ptr<FrameBuffer::Slot> lockedSlot = playbackSlot_;
@@ -1444,6 +1471,7 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot()
             nextSlot->getConsistencyState()&Slot::HeaderMeta)
         {
             playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
+            isInferredDuration = false;
             
             LogTraceC << "playback " << playbackDuration << endl;
         }
@@ -1502,6 +1530,8 @@ ndnrtc::new_api::FrameBuffer::getStatistics(ReceiverChannelPerformance &stat)
 {
     stat.nReceived_ = nReceivedFrames_;
     stat.nRescued_ = nRescuedFrames_;
+    stat.nIncomplete_ = nIncomplete_;
+    stat.nRecovered_ = nRecovered_;
 }
 
 //******************************************************************************
@@ -1572,6 +1602,8 @@ ndnrtc::new_api::FrameBuffer::resetData()
     nKeyFrames_ = 0;
     nReceivedFrames_ = 0;
     nRescuedFrames_ = 0;
+    nIncomplete_ = 0;
+    nRecovered_ = 0;
     forcedRelease_ = false;
     
     setTargetSize(consumer_->getParameters().jitterSize);

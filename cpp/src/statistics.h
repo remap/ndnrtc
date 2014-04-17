@@ -38,7 +38,7 @@ namespace ndnrtc {
         unsigned int nSent_, nAssembling_;
         
         // frames
-        unsigned int nPlayed_, nMissed_, nLost_, nReceived_, nRescued_, nIncomplete_;
+        unsigned int nPlayed_, nMissed_, nLost_, nReceived_, nRescued_, nIncomplete_, nRecovered_;
         
         double segNumDelta_, segNumKey_;
         

@@ -12,6 +12,7 @@
 #define __ndnrtc__consumer_channel__
 
 #include "video-consumer.h"
+#include "audio-consumer.h"
 #include "statistics.h"
 #include "face-wrapper.h"
 
@@ -42,7 +43,7 @@ namespace ndnrtc {
             bool isOwnFace_;
             ParamsStruct audioParams_;
             shared_ptr<VideoConsumer> videoConsumer_;
-//            shared_ptr<AudioConsumer> audioConsumer_;
+            shared_ptr<AudioConsumer> audioConsumer_;
             shared_ptr<RttEstimation> rttEstimation_;
             shared_ptr<FaceProcessor> faceProcessor_;
             shared_ptr<InterestQueue> interestQueue_;

@@ -72,6 +72,10 @@ int NdnAudioSender::publishPacket(const PacketData &packetData,
     packetPrefix->append(NdnRtcUtils::componentFromInt(packetNo_));
     NdnRtcNamespace::appendDataKind(packetPrefix, false);
     
+    prefixMeta.totalSegmentsNum_ = Segmentizer::getSegmentsNum(packetData.getLength(),
+                                                               segmentSize_);
+    // no fec for audio
+    prefixMeta.paritySegmentsNum_ = 0;
     prefixMeta.playbackNo_ = packetNo_;
     
     return MediaSender::publishPacket(packetData, packetPrefix, packetNo_,

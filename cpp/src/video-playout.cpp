@@ -40,8 +40,7 @@ VideoPlayout::~VideoPlayout()
 #pragma mark - private
 bool
 VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
-                             PacketNumber packetNo, bool isKey,
-                             double assembledLevel)
+                             PacketNumber packetNo, bool isKey)
 {
     bool res = false;
     webrtc::EncodedImage frame;

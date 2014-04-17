@@ -445,6 +445,10 @@ namespace ndnrtc
                     return (double)nSegmentsReady_/(double)nSegmentsTotal_;
                 }
                 
+                bool
+                isRecovered()
+                { return isRecovered_; }
+                
                 const Name&
                 getPrefix() const { return slotPrefix_; }
                 
@@ -761,16 +765,20 @@ namespace ndnrtc
              */
             virtual void
             acquireSlot(PacketData** packetData, PacketNumber& packetNo,
-                        bool& isKey, double& assembledLevel);
+                        bool& isKey);
             
             /**
              * Releases previously acquired slot. 
              * After this call, slot will be unlocked, reset and freed in the
              * buffer so it can be re-used for new frames. One should not rely 
              * on data slot's consistency after this call.
+             * @param (out) isInferredPlayback Indicates, whether the value 
+             * returned is an inferred playback duration (as opposed to duration 
+             * calculated using timestamp difference).
+             * @return Playback duration
              */
             virtual int
-            releaseAcquiredSlot();
+            releaseAcquiredSlot(bool& isInferredPlayback);
             
             void
             recycleEvent(const Event& event);
@@ -874,7 +882,9 @@ namespace ndnrtc
             State state_;
             PacketNumber playbackNo_;
             int nKeyFrames_;
-            unsigned int nReceivedFrames_, nRescuedFrames_;
+            unsigned int nReceivedFrames_, nRescuedFrames_,
+                nIncomplete_, nRecovered_;
+            
             shared_ptr<Slot> playbackSlot_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;

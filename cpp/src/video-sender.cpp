@@ -85,6 +85,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize_);
     int nSegmentsParityExpected = (params_.useFec)?FrameParityData::getParitySegmentsNum(nSegmentsExpected, ParityRatio):0;
     
+    prefixMeta.totalSegmentsNum_ = nSegmentsExpected;
     prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
     
     if ((nSegments = publishPacket(frameData,

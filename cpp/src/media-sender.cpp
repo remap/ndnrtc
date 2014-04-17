@@ -38,7 +38,7 @@ packetNo_(0),
 pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
 faceThread_(*webrtc::ThreadWrapper::CreateThread(processEventsRoutine, this))
 {
-    packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter();
+    packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
 }
 
@@ -142,7 +142,6 @@ int MediaSender::publishPacket(const PacketData &packetData,
         dataLength = 0;
         memset(frameData, 0, 640*480);
 #endif
-        prefixMeta.totalSegmentsNum_ = segments.size();
         Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
         for (Segmentizer::SegmentList::iterator it = segments.begin();
@@ -267,12 +266,12 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
         
         if (pit_.find(name) != pit_.end())
             LogTraceC << "pit exists " << name << endl;
-        
-        pit_[name] = pitEntry;
+        else
+        {
+            pit_[name] = pitEntry;
+            LogTraceC << "new pit entry " << name << " " << pit_.size() << endl;
+        }
     }
-    
-    LogTraceC << "new pit entry " << name << " " << pit_.size() << endl;
-    
 }
 
 void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,

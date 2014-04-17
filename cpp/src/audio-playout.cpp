@@ -37,8 +37,7 @@ AudioPlayout::~AudioPlayout()
 #pragma mark - private
 bool
 AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
-                             PacketNumber packetNo, bool isKey,
-                             double assembledLevel)
+                             PacketNumber packetNo, bool isKey)
 {
     bool res = false;
     

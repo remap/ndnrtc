@@ -57,6 +57,10 @@ namespace ndnrtc {
             getRtxNum() const
             { return rtxNum_; }
             
+            unsigned int
+            getRebufferingNum()
+            { return rebufferingNum_; }
+            
             State
             getState() const;
             
@@ -174,7 +178,8 @@ namespace ndnrtc {
             
             int64_t
             getInterestLifetime(int64_t playbackDeadline,
-                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
+                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
+                                bool rtx = false);
             
             void
             prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
