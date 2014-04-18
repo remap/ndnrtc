@@ -386,8 +386,9 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
         LogTrace("recovery.log")
         << "level " << getAssembledLevel()
         << " total " << nSegmentsTotal_
+        << " fetched " << nSegmentsReady_
         << " parity " << nSegmentsParity_
-        << " seg size " << segmentSize_
+        << " fetched " << nSegmentsParityReady_
         << " recovered " << nRecovered << " segments from "
         << slotPrefix_ << endl;
     }
@@ -698,11 +699,13 @@ ndnrtc::new_api::FrameBuffer::Slot::refineActiveSegments()
 void
 ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
 {
-    SegmentNumber segNo = 0;
+    SegmentNumber segNo = nSegmentsTotal_-1;
     Name segmentPrefix(getPrefix());
     NdnRtcNamespace::appendDataKind(segmentPrefix, false);
     
-    while (activeSegments_.size() < nSegmentsTotal_)
+    bool stop = false;
+    while (!stop && segNo >= 0)
+        //(activeSegments_.size() < nSegmentsTotal_)
     {
         if (activeSegments_.find(segNo) == activeSegments_.end())
         {
@@ -714,18 +717,21 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
             activeSegments_[segNo] = segment;
             nSegmentsMissing_++;
         }
-        segNo++;
+        
+        segNo--;
     }
 }
 
 void
 ndnrtc::new_api::FrameBuffer::Slot::initMissingParitySegments()
 {
-    SegmentNumber segNo = 0;
+    SegmentNumber segNo = nSegmentsParity_-1;
     Name segmentPrefix(getPrefix());
     NdnRtcNamespace::appendDataKind(segmentPrefix, true);
-    
-    while (activeSegments_.size() < nSegmentsParity_+nSegmentsTotal_)
+
+    bool stop = false;
+    while (!stop && segNo >= 0)
+        //(activeSegments_.size() < nSegmentsParity_+nSegmentsTotal_)
     {
         SegmentNumber segIdx = toMapParityIdx(segNo);
         
@@ -740,7 +746,8 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingParitySegments()
             activeSegments_[segIdx] = segment;
             nSegmentsMissing_++;
         }
-        segNo++;
+        
+        segNo--;
     }
 }
 
@@ -778,6 +785,7 @@ ndnrtc::new_api::FrameBuffer::Slot::dump()
     << setw(3) << getPlaybackDeadline() << ", "
     << (hasOriginalSegments_?"ORIG":"CACH") << ", "
     << setw(3) << nRtx_ << ", "
+    << (isRecovered_ ? "R" : "I") << ", "
     << setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
     << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
     << "/" << nSegmentsParity_;

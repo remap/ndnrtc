@@ -162,7 +162,7 @@ protected:
 class SlotTester : public ndnrtc::new_api::FrameBuffer::Slot
 {
 public:
-    SlotTester(unsigned int segmentsize) : Slot(segmentsize){}
+    SlotTester(unsigned int segmentsize) : Slot(segmentsize, true){}
 };
 
 class SlotTests : public BufferTests
