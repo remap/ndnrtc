@@ -260,7 +260,7 @@ namespace ndnrtc
                     bool inverted_;
                 };
                 
-                Slot(unsigned int segmentSize);
+                Slot(unsigned int segmentSize, bool useFec);
                 ~Slot();
                 
                 /**
@@ -519,8 +519,8 @@ namespace ndnrtc
                 State state_, stashedState_;
                 int consistency_;
                 unsigned int nRtx_;
-                bool hasOriginalSegments_;
-                bool isRecovered_;
+                
+                bool hasOriginalSegments_, isRecovered_, useFec_;
                 
                 Name slotPrefix_;
                 PacketNumber packetSequenceNumber_, pairedSequenceNumber_,
@@ -638,7 +638,7 @@ namespace ndnrtc
                 
                 EventType type_; // type of the event occurred
                 shared_ptr<Slot> slot_;     // corresponding slot pointer
-            };
+            }; // Event
             
             FrameBuffer(const shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();

@@ -124,7 +124,9 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::resetData()
 // FrameBuffer::Slot
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::FrameBuffer::Slot::Slot(unsigned int segmentSize):
+ndnrtc::new_api::FrameBuffer::Slot::Slot(unsigned int segmentSize,
+                                         bool useFec):
+useFec_(useFec),
 state_(StateFree),
 consistency_(Inconsistent),
 segmentSize_(segmentSize)
@@ -668,7 +670,9 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyWithMeta(const PacketNumber
     
     refineActiveSegments();
     initMissingSegments();
-    initMissingParitySegments();
+    
+    if (useFec_)
+        initMissingParitySegments();
 }
 
 void
@@ -712,11 +716,6 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
         }
         segNo++;
     }
-    
-    // if there are more pending interests than we expect
-//    while (activeSegments_.size() > nSegmentsTotal_) {
-//        activeSegments_.erase(--activeSegments_.end());
-//    }
 }
 
 void
@@ -858,8 +857,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
             if (slot1->getConsistencyState()&Slot::HeaderMeta &&
                 slot2->getConsistencyState()&Slot::HeaderMeta)
             {
-//                lastFrameDuration_ = (slot2->getProducerTimestamp() - slot1->getProducerTimestamp());
-
                 playbackDeadlineMs += (slot2->getProducerTimestamp() - slot1->getProducerTimestamp());
             }
             else
@@ -1665,7 +1662,8 @@ ndnrtc::new_api::FrameBuffer::initialize()
     {
         unsigned int payloadSegmentSize = consumer_->getParameters().segmentSize - SegmentData::getHeaderSize();
         
-        shared_ptr<Slot> slot(new Slot(payloadSegmentSize));
+        shared_ptr<Slot> slot(new Slot(payloadSegmentSize,
+                                       consumer_->getParameters().useFec));
         
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
