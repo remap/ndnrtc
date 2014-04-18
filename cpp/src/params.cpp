@@ -52,6 +52,7 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.useTlv = params.useTlv;
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
+    validated.headlessMode = params.headlessMode;
     
     validated.captureDeviceId = params.captureDeviceId;
     validated.captureWidth = ParamsStruct::validate(params.captureWidth,
@@ -161,6 +162,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.useTlv = params.useTlv;
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
+    validated.headlessMode = params.headlessMode;
     
     validated.host = params.host;
     validated.portNum = ParamsStruct::validateLE(params.portNum, MaxPortNum,

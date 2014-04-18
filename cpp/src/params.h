@@ -45,6 +45,7 @@ namespace ndnrtc
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
         bool useTlv, useRtx, useFec;
+        unsigned int headlessMode;
         
         // capture settings
         unsigned int captureDeviceId;
@@ -139,6 +140,7 @@ namespace ndnrtc
         true,   // use TLV encoding
         true,   // reissue timed out interests
         true,   // use FEC
+        0,      // headless mode off
         
         0,      // capture device id
         640,    // capture width
@@ -183,6 +185,7 @@ namespace ndnrtc
         true,  // use TLV encoding
         true, // use RTX
         false, // use FEC
+        0,      // headless mode off
         
         0,      // capture device id
         0,    // capture width

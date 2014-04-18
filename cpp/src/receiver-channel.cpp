@@ -10,6 +10,7 @@
 
 #include "receiver-channel.h"
 #include "sender-channel.h"
+#include "ndnrtc-defines.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
