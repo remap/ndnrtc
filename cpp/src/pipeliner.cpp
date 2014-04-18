@@ -652,20 +652,15 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     int64_t interestLifetime = 0;
     int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
     
-    if (playbackDeadline == 0)
+    if (playbackDeadline <= 0)
         playbackDeadline = params_.interestTimeout;
 
-    if (halfBufferSize == 0)
+    if (halfBufferSize <= 0)
         halfBufferSize = playbackDeadline;
     
     if (rtx || nspc != FrameBuffer::Slot::Key)
     {
         interestLifetime = min(playbackDeadline, halfBufferSize);
-        
-//        if (playbackDeadline > halfBufferSize)
-//            interestLifetime = halfBufferSize;
-//        else
-//            interestLifetime = playbackDeadline;
     }
     else
     { // only key frames
@@ -675,29 +670,6 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
         if (interestLifetime <= 0)
             interestLifetime = params_.interestTimeout;
     }
-    
-//    if (nspc == FrameBuffer::Slot::Key ||
-//        frameBuffer_->getState() == FrameBuffer::Invalid)
-//    {
-//        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
-//        interestLifetime = gopInterval-frameBuffer_->getEstimatedBufferSize();
-//        
-//        if (interestLifetime <= 0)
-//            interestLifetime = params_.interestTimeout;
-//    }
-//    else
-//    {
-//        double rtt = consumer_->getRttEstimation()->getCurrentEstimation();
-//        
-//        if (frameBuffer_->getEstimatedBufferSize()/2. > rtt)
-//            interestLifetime = frameBuffer_->getEstimatedBufferSize()/2.;
-//        else
-//            interestLifetime = rtt;
-//        
-//        if (interestLifetime > playbackDeadline &&
-//            playbackDeadline > 0)
-//            interestLifetime = playbackDeadline;
-//    }
     
     assert(interestLifetime > 0);
     return interestLifetime;

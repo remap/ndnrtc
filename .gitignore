@@ -12,3 +12,5 @@ cpp/thirdparty/ndn-gtest
 cpp/resources
 cpp/thirdparty
 docs
+test_app
+.deps
