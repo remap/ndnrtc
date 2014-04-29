@@ -44,7 +44,7 @@ namespace ndnrtc
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
-        bool useTlv, useRtx, useFec;
+        bool useTlv, useRtx, useFec, useCache;
         unsigned int headlessMode;
         
         // capture settings
@@ -140,6 +140,7 @@ namespace ndnrtc
         true,   // use TLV encoding
         true,   // reissue timed out interests
         true,   // use FEC
+        false,  // use memory cache
         0,      // headless mode off
         
         0,      // capture device id
@@ -185,6 +186,7 @@ namespace ndnrtc
         true,  // use TLV encoding
         true, // use RTX
         false, // use FEC
+        false,  // use memory cache        
         0,      // headless mode off
         
         0,      // capture device id

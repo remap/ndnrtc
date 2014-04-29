@@ -71,6 +71,9 @@ int MediaSender::init(const shared_ptr<Face> &face,
     ndnTransport_ = transport;
     ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
     
+    if (params_.useCache)
+        memCache_.reset(new MemoryContentCache(ndnFace_.get()));
+    
     registerPrefix();
     
     shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
@@ -153,7 +156,7 @@ int MediaSender::publishPacket(const PacketData &packetData,
 
             // lookup for pending interests and construct metaifno accordingly
             SegmentData::SegmentMetaInfo meta = {0,0,0};
-            lookupPrefixInPit(segmentName, meta);
+            bool pitHit = (lookupPrefixInPit(segmentName, meta) != 0);
             
             // add name suffix meta info
             segmentName.append(metaSuffix);
@@ -167,15 +170,27 @@ int MediaSender::publishPacket(const PacketData &packetData,
             
             ndnKeyChain_->sign(ndnData, *certificateName_);
             
-            SignedBlob encodedData = ndnData.wireEncode();
-            ndnTransport_->send(*encodedData);
+            if (params_.useCache && !pitHit)
+            {
+                memCache_->add(ndnData);
+                
+                LogTraceC
+                << "added to cache " << segmentName << " "
+                << ndnData.getContent().size() << " bytes" << endl;
+            }
+            else
+            {
+                SignedBlob encodedData = ndnData.wireEncode();
+                ndnTransport_->send(*encodedData);
+                
+                LogTraceC
+                << "published " << segmentName << " "
+                << ndnData.getContent().size() << " bytes" << endl;
+            }
             
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
             
-            LogTraceC
-            << "published " << segmentName << " "
-            << ndnData.getContent().size() << " bytes" << endl;
 #if RECORD
             {
                 SegmentData segData;
@@ -220,13 +235,25 @@ void MediaSender::registerPrefix()
     
     if (packetPrefix.get())
     {
-        uint64_t prefixId = ndnFace_->registerPrefix(Name(packetPrefix->c_str()),
-                                                     bind(&MediaSender::onInterest,
-                                                          this, _1, _2, _3),
-                                                     bind(&MediaSender::onRegisterFailed,
-                                                          this, _1));
-        if (prefixId != 0)
-            LogTraceC << "registered prefix " << *packetPrefix << endl;
+        if (params_.useCache)
+        {
+            memCache_->registerPrefix(Name(packetPrefix->c_str()),
+                                      bind(&MediaSender::onRegisterFailed,
+                                           this, _1),
+                                      bind(&MediaSender::onInterest,
+                                           this, _1, _2, _3));
+        }
+        else
+        {
+            uint64_t prefixId = ndnFace_->registerPrefix(Name(packetPrefix->c_str()),
+                                                         bind(&MediaSender::onInterest,
+                                                              this, _1, _2, _3),
+                                                         bind(&MediaSender::onRegisterFailed,
+                                                              this, _1));
+            if (prefixId != 0)
+                LogTraceC << "registered prefix " << *packetPrefix << endl;
+        }
+        
     }
     else
         notifyError(-1, "bad packet prefix");
@@ -274,8 +301,8 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
     }
 }
 
-void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
-                                    SegmentData::SegmentMetaInfo &metaInfo)
+int MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
+                                   SegmentData::SegmentMetaInfo &metaInfo)
 {
     webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
     
@@ -307,9 +334,12 @@ void MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
         << "pit hit [" << prefix.toUri() << "] -> ["
         << pendingInterest->getName().toUri() << " (size " << pit_.size() << endl;
         
+        return 1;
     }
     else
     {
         LogTraceC << "no pit entry " << prefix.toUri() << endl;
     }
+    
+    return 0;
 }

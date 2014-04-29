@@ -64,6 +64,7 @@ namespace ndnrtc
         shared_ptr<Face> ndnFace_;
         shared_ptr<Name> certificateName_;
         shared_ptr<Name> packetPrefix_;
+        shared_ptr<MemoryContentCache> memCache_;
         
         PacketNumber packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
@@ -112,8 +113,8 @@ namespace ndnrtc
         void registerPrefix();
         
         void addToPit(const shared_ptr<const Interest>& interest);
-        void lookupPrefixInPit(const Name &prefix,
-                               SegmentData::SegmentMetaInfo &metaInfo);
+        int lookupPrefixInPit(const Name &prefix,
+                              SegmentData::SegmentMetaInfo &metaInfo);
     };
 }
 
