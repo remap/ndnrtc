@@ -24,7 +24,8 @@ namespace ndnrtc {
         private:
             bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey);
+                           PacketNumber packetNo, bool isKey,
+                           double assembledLevel);
         };
     }
 }

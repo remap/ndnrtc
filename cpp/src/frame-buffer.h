@@ -765,7 +765,7 @@ namespace ndnrtc
              */
             virtual void
             acquireSlot(PacketData** packetData, PacketNumber& packetNo,
-                        bool& isKey);
+                        bool& isKey, double& assembledLevel);
             
             /**
              * Releases previously acquired slot. 
