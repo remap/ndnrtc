@@ -20,10 +20,18 @@ namespace ndnrtc {
             VideoPlayout(const shared_ptr<const Consumer>& consumer);
             ~VideoPlayout();
             
+            int
+            start();
+            
         private:
+            // this flags indicates whether frames should be played out (unless
+            // new full key frame received)
+            bool hasKeyForGop_;
+            
             bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey);
+                           PacketNumber packetNo, bool isKey,
+                           double assembledLevel);
         };
     }
 }

@@ -122,14 +122,14 @@ Playout::processPlayout()
             double assembledLevel = 0;
             bool isKey;
             
-            frameBuffer_->acquireSlot(&data_, packetNo, isKey);
+            frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
             
             unsigned int playbackAdjustment = 0;
             
             //******************************************************************
             // next call is overriden by specific playout mechanism - either
             // video or audio. the rest of the code is similar for both cases
-            if (playbackPacket(now, data_, packetNo, isKey))
+            if (playbackPacket(now, data_, packetNo, isKey, assembledLevel))
             {
                 nPlayed_++;
                 
