@@ -11,8 +11,10 @@
 #include "test-common.h"
 #include "video-renderer.h"
 #import "objc/cocoa-renderer.h"
+#include "ndnrtc-testing.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::testing;
 using namespace webrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
@@ -145,7 +147,7 @@ TEST_F(VideoRendererTester, CreateDelete)
 TEST_F(VideoRendererTester, TestInit)
 {
     VideoRenderer *nr = new VideoRenderer(0, p_);
-    
+    nr->setLogger(&Logger::sharedInstance());
     nr->setObserver(this);
     flushFlags();
     
@@ -161,7 +163,7 @@ TEST_F(VideoRendererTester, TestBadInit)
         p_.renderWidth = -1;
         
         VideoRenderer *nr = new VideoRenderer(0, p_);
-        
+        nr->setLogger(&Logger::sharedInstance());
         nr->setObserver(this);
         flushFlags();
         
@@ -176,7 +178,7 @@ TEST_F(VideoRendererTester, TestBadInit)
     { // test bad height
         p_.renderHeight = -1;
         VideoRenderer *nr = new VideoRenderer(0, p_);
-        
+        nr->setLogger(&Logger::sharedInstance());
         nr->setObserver(this);
         flushFlags();
         
@@ -193,7 +195,7 @@ TEST_F(VideoRendererTester, TestBadInit)
 TEST_F(VideoRendererTester, TestInitAndStart)
 {
     VideoRenderer r(0,p_);
-    
+    r.setLogger(&Logger::sharedInstance());
     r.init();
     WAIT(1000);
     
@@ -209,6 +211,7 @@ TEST_F(VideoRendererTester, TestRender)
     
     VideoRenderer r(1,p_);
     
+    r.setLogger(&Logger::sharedInstance());
     r.setObserver(this);
     r.init();
     r.startRendering("sample");
@@ -235,7 +238,8 @@ TEST_F(VideoRendererTester, TestRender)
         }
     }
     
-    LOG_TRACE("total frames number: %d", nFrames);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "total frames number: " << nFrames << endl;
     
     r.stopRendering();
 }

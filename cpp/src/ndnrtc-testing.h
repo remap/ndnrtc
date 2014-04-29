@@ -403,7 +403,6 @@ namespace ndnrtc {
         {
         public:
             ConsumerMock(const ParamsStruct& params,
-                         const shared_ptr<IPacketAssembler>& packetAssembler,
                          const shared_ptr<new_api::InterestQueue>& interestQueue,
                          string logFile):
             Consumer(params, interestQueue),logFile_(logFile){}

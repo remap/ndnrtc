@@ -14,9 +14,11 @@
 #include "video-renderer.h"
 #include "video-decoder.h"
 #include "video-playout.h"
+#include "ndnrtc-testing.h"
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
+using namespace ndnrtc::testing;
 using namespace ndnrtc::new_api;
 
 class PipelinerTestsCallbacks
@@ -36,10 +38,9 @@ class PipelinerConsumerMock : public ConsumerMock
 public:
     PipelinerConsumerMock(const ParamsStruct& params,
                           const shared_ptr<InterestQueue>& interestQueue,
-                          const shared_ptr<IPacketAssembler>& packetAssembler,
                           string logfile,
                           PipelinerTestsCallbacks *assembler):
-    ConsumerMock(params, packetAssembler, interestQueue, logfile){}
+    ConsumerMock(params, interestQueue, logfile), assembler_(assembler){}
     
     void
     setFrameBuffer(const shared_ptr<ndnrtc::new_api::FrameBuffer>& frameBuffer)
@@ -73,28 +74,34 @@ protected:
 class PipelinerTests : public UnitTestHelperNdnNetwork,
 public NdnRtcObjectTestHelper,
 public PipelinerTestsCallbacks,
-public IPacketAssembler
+public IPacketAssembler,
+public enable_shared_from_this<PipelinerTests>
 {
 public:
+    virtual ~PipelinerTests(){
+        
+    }
+    
     void SetUp()
     {
+
         params_ = DefaultParams;
         params_.captureDeviceId = 2;
         
         shared_ptr<string> accessPref = NdnRtcNamespace::getStreamKeyPrefix(params_);
         shared_ptr<string> userPref = NdnRtcNamespace::getStreamFramePrefix(params_);
+
         UnitTestHelperNdnNetwork::NdnSetUp(*accessPref, *userPref);
         
         shared_ptr<FaceWrapper> face(new FaceWrapper(ndnFace_));
         
         interestQueue_.reset(new InterestQueue(face));
-        packetAssembler_.reset(this);
         
         PipelinerConsumerMock *mock = new PipelinerConsumerMock(params_,
                                                                 interestQueue_,
-                                                                packetAssembler_,
                                                                 "pipeliner.log",
-                                                                this);//ENV_LOGFILE);
+                                                                this);
+#if 1
         mock->setParameters(params_);
         consumer_.reset(mock);
 
@@ -111,6 +118,7 @@ public:
         mock->setBufferEstimator(bufferEstimator_);
         mock->setChaseEstimation(chaseEstimation_);
         mock->setInterestQueue(interestQueue_);
+#endif
     }
     
     void TearDown()
@@ -127,7 +135,6 @@ public:
     void onTimeout(const shared_ptr<const Interest>& interest)
     {
         UnitTestHelperNdnNetwork::onTimeout(interest);
-        cout << "timeout" << endl;
         
         frameBuffer_->interestTimeout(*interest);
     }
@@ -147,7 +154,6 @@ protected:
     shared_ptr<BufferEstimator> bufferEstimator_;
     shared_ptr<ChaseEstimation> chaseEstimation_;
     shared_ptr<InterestQueue> interestQueue_;
-    shared_ptr<IPacketAssembler> packetAssembler_;
     shared_ptr<NdnSenderChannel> sendChannel_;
     
     void
@@ -166,12 +172,15 @@ protected:
     }
 };
 
-#if 0
+#if 1
 TEST_F(PipelinerTests, TestCreateDelete)
 {
-    Pipeliner p(consumer_);
+    ASSERT_NO_THROW(
+                    Pipeliner p(consumer_)
+                    );
 }
-
+#endif
+#if 1
 TEST_F(PipelinerTests, TestInit)
 {
     startPublishing();
@@ -188,8 +197,10 @@ TEST_F(PipelinerTests, TestInit)
 
     stopProcessingNdn();
     stopPublishing();
+    WAIT(3000);
 }
 #endif
+#if 1
 TEST_F(PipelinerTests, TestFetching)
 {
     VideoPlayout playout(consumer_);
@@ -219,7 +230,7 @@ TEST_F(PipelinerTests, TestFetching)
     renderer.startRendering();
     
     playout.start();
-    WAIT(100000);
+    WAIT(10000);
     playout.stop();
     
     p.stop();
@@ -230,3 +241,4 @@ TEST_F(PipelinerTests, TestFetching)
     stopPublishing();
     
 }
+#endif

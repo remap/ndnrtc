@@ -109,26 +109,6 @@ TEST_F(ConsumerTests, TestFetching)
     WAIT(params_.freshness*1000);
 }
 #endif
-#if 0
-//TEST_F(ConsumerTests, TestConsumerChannel)
-//{
-//    ParamsStruct p = DefaultParams, ap = DefaultParamsAudio;
-//    p.useFec = false; ap.useFec = false;
-//    p.captureDeviceId = 1;
-//    ConsumerChannel cchannel(p, ap);
-//    cchannel.setLogger(&Logger::sharedInstance());
-//    
-//    startPublishing();
-//    
-//    EXPECT_EQ(RESULT_OK, cchannel.init());
-//    EXPECT_EQ(RESULT_OK, cchannel.startTransmission());
-//    
-//    WAIT(100000);
-//    
-//    EXPECT_EQ(RESULT_OK, cchannel.stopTransmission());
-//    stopPublishing();
-//}
-#endif
 #if 1
 TEST_F(ConsumerTests, TestDelayedProducer)
 {

@@ -15,7 +15,7 @@ using namespace ndnrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(AudioSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
@@ -170,7 +170,7 @@ TEST(AudioData, TestUnpackError)
         EXPECT_FALSE(resData.isValid());
     }
 }
-
+#endif
 class AudioSenderTester : public webrtc::Transport,
 public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {
@@ -228,7 +228,7 @@ public:
     }
     int SendRTCPPacket(int channel, const void *data, int len)
     {
-//        cout << "publish rtcp packet " << len << endl;
+        cout << "publish rtcp packet " << len << endl;
         rtcpSent_++;
         sender_->onDeliverRtcpFrame(len, (unsigned char*)data);
 
@@ -279,7 +279,7 @@ protected:
     webrtc::VoENetwork *voe_network_;
     webrtc::Config config_;
 };
-
+#if 0
 TEST_F(AudioSenderTester, TestAudioData)
 {
     {
@@ -306,6 +306,7 @@ TEST_F(AudioSenderTester, TestAudioData)
         free(p.data_);
     }
 }
+#endif
 #if 1
 TEST_F(AudioSenderTester, TestSend)
 {

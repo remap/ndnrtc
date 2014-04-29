@@ -18,7 +18,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 1
 TEST(VideoSenderParamsTest, CheckDefaults)
 {
     ParamsStruct p = DefaultParams;
@@ -103,7 +103,7 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
         EXPECT_STREQ(prefix, frprefix->c_str());
     }
 }
-
+#endif
 class VideoSenderTester :
 public NdnRtcObjectTestHelper,
 public UnitTestHelperNdnNetwork
@@ -121,7 +121,7 @@ public:
         
         videoSender_.reset(new NdnVideoSender(params_));
         videoSender_->setObserver(this);
-        videoSender_->setLogger(NdnLogger::sharedInstance());
+        videoSender_->setLogger(&Logger::sharedInstance());
         
         shared_ptr<std::string> streamAccessPrefix = NdnRtcNamespace::getStreamKeyPrefix(params_);
         shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
@@ -148,7 +148,8 @@ public:
     
     void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, Transport& transport)
     {
-        LOG_INFO("got interest: %s", interest->getName().toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "got interest: " << interest->getName() << endl;
     }
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
@@ -158,7 +159,10 @@ public:
     
     void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
-        LOG_INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "Got data packet with name " << data->getName()
+        << " size: " << data->getContent().size() << endl;
+        
         dataInbox_.push_back(data);
         
         dataReceived_ = true;
@@ -169,7 +173,9 @@ public:
     {
         timeoutReceived_ = true;
         ++callbackCount_;
-        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "Time out for interest " << interest->getName() << endl;
     }
     
 protected:
@@ -216,7 +222,7 @@ protected:
         timeoutReceived_ = false;
     }
 };
-
+#if 1
 TEST_F(VideoSenderTester, TestFrameData)
 {
     loadFrame();
@@ -459,7 +465,7 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
         NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     }
 }
-
+#endif
 TEST_F(VideoSenderTester, TestSendBySegments)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -487,13 +493,14 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     Name framePrefix(prefixStr->c_str());
     
     framePrefix.append(NdnRtcUtils::componentFromInt(0));
+    NdnRtcNamespace::appendDataKind(framePrefix, false);
     
     int waitMs = 10000;
     // send out interests for each segment
     for (int sno = 0; sno < segmentNum; sno++)
     {
         Name segmentPrefix = framePrefix;
-        
+
         segmentPrefix.appendSegment(sno);
         
         // fetch data from ndn
@@ -544,7 +551,7 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     
 }
-
+#if 1
 TEST_F(VideoSenderTester, TestSendWithLibException)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -598,7 +605,9 @@ TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
     for (int i = 0; i < deltaFramesNum; i++)
     {
         Name framePrefix = deltaFramesPrefix;
+
         framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
         framePrefix.appendSegment(0);
         
         Interest interest(framePrefix, 3000);
@@ -611,6 +620,7 @@ TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
     {
         Name framePrefix = keyFramesPrefix;
         framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
         framePrefix.appendSegment(0);
         
         Interest interest(framePrefix, 3000);
@@ -650,3 +660,4 @@ TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
         NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     }
 }
+#endif

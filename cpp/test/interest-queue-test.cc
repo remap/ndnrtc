@@ -13,10 +13,10 @@
 #include "test-common.h"
 #include "interest-queue.h"
 #include "ndnrtc-namespace.h"
-
+#include "ndnrtc-testing.h"
 
 //::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+using namespace ndnrtc::testing;
 using namespace ndnrtc::new_api;
 
 class InterestQueueTests : public UnitTestHelperNdnNetwork,
@@ -34,8 +34,9 @@ public:
         params_ = DefaultParams;
         UnitTestHelperNdnNetwork::NdnSetUp(accessPrefix_, userPrefix_);
         
-        consumer_.reset(new ConsumerMock(ENV_LOGFILE));
-        queue_ = new InterestQueue(consumer_, ndnReceiverFace_);
+        const shared_ptr<FaceWrapper> faceWrapper(new FaceWrapper(ndnReceiverFace_));
+        
+        queue_ = new InterestQueue(faceWrapper);
     }
     
     void TearDown()

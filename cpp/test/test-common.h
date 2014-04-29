@@ -293,6 +293,10 @@ protected:
 class UnitTestHelperNdnNetwork
 {
 public:
+    virtual ~UnitTestHelperNdnNetwork(){
+        
+    }
+    
     virtual void NdnSetUp(string &streamAccessPrefix, string &userPrefix);
     virtual void NdnTearDown();
     
