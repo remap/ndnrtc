@@ -393,7 +393,7 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
         << slotPrefix_ << endl;
     }
     
-    isRecovered_ = (nRecovered > 0);
+    isRecovered_ = ((nRecovered + nSegmentsReady_) == nSegmentsTotal_);
     
     return nRecovered;
 }
@@ -1380,7 +1380,7 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 void
 ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                                           PacketNumber& packetNo,
-                                          bool& isKey)
+                                          bool& isKey, double& assembledLevel)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
     shared_ptr<FrameBuffer::Slot> slot = playbackQueue_.peekSlot();
@@ -1398,7 +1398,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         playbackSlot_ = slot;
         playbackNo_ = slot->getPlaybackNumber();
         
-        double assembledLevel = slot->getAssembledLevel();
+        assembledLevel = slot->getAssembledLevel();
         packetNo = slot->getPlaybackNumber();
         isKey = (slot->getNamespace() == Slot::Key);
         
@@ -1423,7 +1423,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 
                 if (slot->isRecovered())
                 {
+                    assembledLevel = 1.;
                     nRecovered_++;
+                    
                     LogStatC
                     << "\trecovered\t" << slot->getSequentialNumber()  << "\t"
                     << (isKey?"K":"D") << "\t"

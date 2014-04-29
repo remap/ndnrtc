@@ -83,7 +83,8 @@ namespace ndnrtc{
              */
             virtual bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey) = 0;
+                           PacketNumber packetNo, bool isKey,
+                           double assembledLevel) = 0;
             
             static bool
             playoutThreadRoutine(void *obj)
