@@ -39,7 +39,9 @@ int NdnVideoSender::init(const shared_ptr<Face> &face,
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = -1;
-
+    
+    registerPrefix(keyFramesPrefix_);
+    
     LogInfoC << "initialized" << endl;
     
     return RESULT_OK;

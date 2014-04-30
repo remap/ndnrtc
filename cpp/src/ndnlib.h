@@ -22,5 +22,5 @@
 #include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
 #include <ndn-cpp/encoding/tlv-wire-format.hpp>
 #include <ndn-cpp/encoding/binary-xml-wire-format.hpp>
-
+#include <ndn-cpp/util/memory-content-cache.hpp>
 #endif
