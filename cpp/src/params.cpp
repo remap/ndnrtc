@@ -52,6 +52,7 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.useTlv = params.useTlv;
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
+    validated.useCache = params.useCache;
     validated.headlessMode = params.headlessMode;
     
     validated.captureDeviceId = params.captureDeviceId;
@@ -118,6 +119,8 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.slotSize = ParamsStruct::validate(params.slotSize,
                                                 MinSlotSize, MaxSlotSize, res,
                                                 DefaultParams.slotSize);
+    validated.skipIncomplete = params.skipIncomplete;
+    
     if (validated.slotSize < validated.segmentSize)
     {
         validated.slotSize = validated.segmentSize;
@@ -162,6 +165,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.useTlv = params.useTlv;
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
+    validated.useCache = params.useCache;
     validated.headlessMode = params.headlessMode;
     
     validated.host = params.host;
@@ -194,6 +198,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.slotSize = ParamsStruct::validate(params.slotSize, MinSlotSize,
                                                 MaxSlotSize, res,
                                                 DefaultParamsAudio.slotSize);
+    validated.skipIncomplete = params.skipIncomplete;
     
     if (validated.slotSize < validated.segmentSize)
     {

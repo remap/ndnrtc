@@ -118,6 +118,7 @@ public:
         params_ = DefaultParams;
         params_.host = "localhost";
         params_.freshness = 1;
+        params_.useCache = true;
         
         videoSender_.reset(new NdnVideoSender(params_));
         videoSender_->setObserver(this);
@@ -222,7 +223,7 @@ protected:
         timeoutReceived_ = false;
     }
 };
-#if 1
+
 TEST_F(VideoSenderTester, TestFrameData)
 {
     loadFrame();
@@ -354,18 +355,14 @@ TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
         EXPECT_EQ(metadata.timestamp_, data.getMetadata().timestamp_);
     }
 }
-
-TEST_F(VideoSenderTester, TestInit)
-{
-    EXPECT_EQ(0,videoSender_->init(ndnFace_, ndnTransport_));
-}
-
+#if 1
 TEST_F(VideoSenderTester, TestSend)
 {
     // delay from previous tests - previous objects should be marked stale
     loadFrame();
     
     EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
     
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
@@ -377,12 +374,14 @@ TEST_F(VideoSenderTester, TestSend)
     framePrefix.addComponent((const unsigned char *)"0", 1);
     
     // fetch data from ndn
-    int waitMs = 1000;
+    int waitMs = 2000;
     Interest interest(framePrefix, waitMs);
     interest.setMustBeFresh(true);
-    ndnReceiverFace_->expressInterest(interest,
-                                     bind(&VideoSenderTester::onData, this, _1, _2),
-                                     bind(&VideoSenderTester::onTimeout, this, _1));
+
+    WAIT(500);
+    ndnFace_->expressInterest(interest,
+                              bind(&VideoSenderTester::onData, this, _1, _2),
+                              bind(&VideoSenderTester::onTimeout, this, _1));
     
     startProcessingNdn();
     EXPECT_TRUE_WAIT(dataReceived_, waitMs);
@@ -405,7 +404,8 @@ TEST_F(VideoSenderTester, TestSend)
     EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
 }
-
+#endif
+#if 1
 TEST_F(VideoSenderTester, TestSendSeveralFrames)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -414,6 +414,7 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
     loadFrame();
     
     EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(1500);
     
     // send frame
     int framesNum = 10;
@@ -435,11 +436,13 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
         
         Interest interest(framePrefix, 1000);
         interest.setMustBeFresh(true);
-        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+        ndnFace_->expressInterest(interest,
+                                  bind(&VideoSenderTester::onData, this, _1, _2),
+                                  bind(&VideoSenderTester::onTimeout, this, _1));
     }
     
     startProcessingNdn();
-    int waitTime = 10;
+    int waitTime = 1000;
     WAIT(waitTime);
     stopProcessingNdn();
     
@@ -466,6 +469,7 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
     }
 }
 #endif
+#if 1
 TEST_F(VideoSenderTester, TestSendBySegments)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -481,7 +485,8 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     videoSender_.reset(new NdnVideoSender(params_));
     videoSender_->setObserver(this);
     
-    EXPECT_EQ(0,videoSender_->init(ndnFace_, ndnTransport_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
     
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
@@ -551,6 +556,7 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     
 }
+#endif
 #if 1
 TEST_F(VideoSenderTester, TestSendWithLibException)
 {
@@ -569,7 +575,8 @@ TEST_F(VideoSenderTester, TestSendWithLibException)
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(true, obtainedError_);
 }
-
+#endif
+#if 1
 TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -578,6 +585,7 @@ TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
     loadFrame();
     
     EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
     
     // send frame
     int deltaFramesNum = 3, keyFramesNum = 3;
@@ -639,6 +647,99 @@ TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
     {
         shared_ptr<Data> dataObject = dataInbox_[i];
 
+        SegmentData segmentData;
+        EXPECT_EQ(RESULT_OK,
+                  SegmentData::segmentDataFromRaw(dataObject->getContent().size(),
+                                                  dataObject->getContent().buf(),
+                                                  segmentData));
+        EXPECT_TRUE(segmentData.isValid());
+        
+        NdnFrameData data(segmentData.getSegmentDataLength(),
+                          segmentData.getSegmentData());
+        webrtc::EncodedImage restoredFrame;
+        EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+        
+        // set frame type field accroding to the frame type
+        if (i < deltaFramesNum)
+            sampleFrame_->_frameType = webrtc::kDeltaFrame;
+        else
+            sampleFrame_->_frameType = webrtc::kKeyFrame;
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
+    }
+}
+TEST_F(VideoSenderTester, TestSendPokeInTwoNamespaces)
+{
+    // delay from previous tests - previous objects should be marked stale
+    WAIT(1200);
+    
+    loadFrame();
+    
+    params_.useCache = false;
+    videoSender_.reset(new NdnVideoSender(params_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
+    
+    // send frame
+    int deltaFramesNum = 3, keyFramesNum = 3;
+    
+    for (int i = 0; i < deltaFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    sampleFrame_->_frameType = webrtc::kKeyFrame;
+    for (int i = 0; i < keyFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    EXPECT_EQ(false, obtainedError_);
+    
+    // get frame prefix
+    shared_ptr<std::string> deltaPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_),
+    keyPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    
+    EXPECT_NE(nullptr, deltaPrefixStr);
+    EXPECT_NE(nullptr, keyPrefixStr);
+    
+    Name deltaFramesPrefix(deltaPrefixStr->c_str());
+    Name keyFramesPrefix(keyPrefixStr->c_str());
+    
+    // fetch delta frames
+    for (int i = 0; i < deltaFramesNum; i++)
+    {
+        Name framePrefix = deltaFramesPrefix;
+        
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    WAIT(200);
+    // fetch key frames
+    for (int i = 0; i < keyFramesNum; i++)
+    {
+        Name framePrefix = keyFramesPrefix;
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    
+    startProcessingNdn();
+    EXPECT_TRUE_WAIT((callbackCount_ == deltaFramesNum+keyFramesNum || timeoutReceived_), 10000);
+    stopProcessingNdn();
+    
+    EXPECT_TRUE(dataReceived_);
+    EXPECT_EQ(deltaFramesNum+keyFramesNum, dataInbox_.size());
+    
+    for (int i = 0; i < dataInbox_.size(); i++)
+    {
+        shared_ptr<Data> dataObject = dataInbox_[i];
+        
         SegmentData segmentData;
         EXPECT_EQ(RESULT_OK,
                   SegmentData::segmentDataFromRaw(dataObject->getContent().size(),

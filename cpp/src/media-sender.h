@@ -110,7 +110,7 @@ namespace ndnrtc
                         ndn::Transport& transport);
         
         virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
-        void registerPrefix();
+        void registerPrefix(const shared_ptr<Name>& prefix);
         
         void addToPit(const shared_ptr<const Interest>& interest);
         int lookupPrefixInPit(const Name &prefix,

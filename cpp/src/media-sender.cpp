@@ -74,14 +74,14 @@ int MediaSender::init(const shared_ptr<Face> &face,
     if (params_.useCache)
         memCache_.reset(new MemoryContentCache(ndnFace_.get()));
     
-    registerPrefix();
-    
     shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     
     if (!packetPrefix.get())
         notifyError(-1, "bad frame prefix");
     
     packetPrefix_.reset(new Name(packetPrefix->c_str()));
+    
+    registerPrefix(packetPrefix_);
     
     segmentSize_ = params_.segmentSize - SegmentData::getHeaderSize();
     freshnessInterval_ = params_.freshness;
@@ -229,34 +229,26 @@ int MediaSender::publishPacket(const PacketData &packetData,
     return segments.size();
 }
 
-void MediaSender::registerPrefix()
+void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
 {
-    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
-    
-    if (packetPrefix.get())
+    if (params_.useCache)
     {
-        if (params_.useCache)
-        {
-            memCache_->registerPrefix(Name(packetPrefix->c_str()),
-                                      bind(&MediaSender::onRegisterFailed,
-                                           this, _1),
-                                      bind(&MediaSender::onInterest,
-                                           this, _1, _2, _3));
-        }
-        else
-        {
-            uint64_t prefixId = ndnFace_->registerPrefix(Name(packetPrefix->c_str()),
-                                                         bind(&MediaSender::onInterest,
-                                                              this, _1, _2, _3),
-                                                         bind(&MediaSender::onRegisterFailed,
-                                                              this, _1));
-            if (prefixId != 0)
-                LogTraceC << "registered prefix " << *packetPrefix << endl;
-        }
-        
+        memCache_->registerPrefix(*prefix,
+                                  bind(&MediaSender::onRegisterFailed,
+                                       this, _1),
+                                  bind(&MediaSender::onInterest,
+                                       this, _1, _2, _3));
     }
     else
-        notifyError(-1, "bad packet prefix");
+    {
+        uint64_t prefixId = ndnFace_->registerPrefix(*prefix,
+                                                     bind(&MediaSender::onInterest,
+                                                          this, _1, _2, _3),
+                                                     bind(&MediaSender::onRegisterFailed,
+                                                          this, _1));
+        if (prefixId != 0)
+            LogTraceC << "registered prefix " << *prefix << endl;
+    }
 }
 
 void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
