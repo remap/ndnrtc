@@ -22,7 +22,7 @@ const double Pipeliner::SegmentsAvgNumDelta = 8.;
 const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
-const int64_t Pipeliner::MaxInterruptionDelay = 1000;
+const int64_t Pipeliner::MaxInterruptionDelay = 2000;
 
 //******************************************************************************
 #pragma mark - construction/destruction

@@ -143,13 +143,13 @@ Playout::processPlayout()
                 
                 lastPacketTs_ = data_->getMetadata().timestamp_;
                 
-                LogStatC << "\tplay\t" << nPlayed_ << endl;
+                LogStatC << "\tplay\t" << packetNo << "\ttotal\t" << nPlayed_ << endl;
             }
             else
             {
                 nMissed_++;
                 
-                LogStatC << "\tmissed\t" << nMissed_ << endl;
+                LogStatC << "\tmissed\t" <<packetNo << "\ttotal\t"<< nMissed_ << endl;
             }
             //******************************************************************
             
