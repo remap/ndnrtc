@@ -52,6 +52,8 @@ VideoConsumer::init()
     playout_->init(decoder_.get());
     
     LogInfoC << "initialized" << endl;
+    LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;
+    
     return RESULT_OK;
 }
 

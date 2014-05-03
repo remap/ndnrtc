@@ -128,7 +128,7 @@ int64_t NdnRtcUtils::millisecondTimestamp()
     gettimeofday(&tv, NULL);
     
     int64_t ticks = 0;
-    
+
 #if 0
     ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
 #else
@@ -201,6 +201,17 @@ int64_t NdnRtcUtils::nanosecondTimestamp()
     
     return ticks;
 };
+
+double NdnRtcUtils::unixTimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    double ticks = 0;
+    ticks = static_cast<double>(tv.tv_sec)+static_cast<double>(tv.tv_usec)/1000000LL;
+    
+    return ticks;
+}
 
 //******************************************************************************
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)

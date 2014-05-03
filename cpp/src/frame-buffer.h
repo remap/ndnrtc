@@ -868,6 +868,9 @@ namespace ndnrtc
                 void
                 dumpQueue();
                 
+                std::string
+                dumpShort();
+                
             private:
                 double playbackRate_;
                 int64_t lastFrameDuration_;

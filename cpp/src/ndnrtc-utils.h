@@ -32,6 +32,7 @@ namespace ndnrtc
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();
         static int64_t nanosecondTimestamp();
+        static double unixTimestamp();
         
         static unsigned int setupFrequencyMeter(unsigned int granularity = 1);
         static void frequencyMeterTick(unsigned int meterId);

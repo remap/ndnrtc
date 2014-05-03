@@ -403,6 +403,9 @@ ndnrtc::new_api::FrameBuffer::Slot::PlaybackComparator::operator()
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot1,
  const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot2) const
 {
+    if (!slot1.get() || !slot2.get())
+        return false;
+    
     bool ascending = false;
     
     if (slot1->getConsistencyState() & ndnrtc::new_api::FrameBuffer::Slot::PrefixMeta &&
@@ -847,6 +850,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
+    dumpQueue();
     sort();
     int64_t playbackDeadlineMs = 0;
     
@@ -885,6 +889,8 @@ void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
 (const shared_ptr<FrameBuffer::Slot> &slot)
 {
+    assert(slot.get());
+    
     this->push_back(slot);
     sort();
     updatePlaybackDeadlines();
@@ -892,6 +898,8 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
     {
         LogTraceC << "▼push[" << slot->dump() << "]" << endl;
         dumpQueue();
+        
+        LogStatC << "▼push " << dumpShort() << endl;
     }
 }
 
@@ -922,6 +930,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         updatePlaybackDeadlines();
         
         dumpQueue();
+        LogStatC << "▲pop " << dumpShort() << endl;
     }
 }
 
@@ -950,13 +959,53 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpQueue()
 {
     PlaybackQueueBase::iterator it;
     int i = 0;
-    while (it != this->end())
+
     for (it = this->begin(); it != this->end(); ++it)
     {
         LogTraceC
         << "[" << setw(3) << i++ << ": "
         << (*it)->dump() << "]" << endl;
     }
+}
+
+std::string
+ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpShort()
+{
+    std::stringstream ss;
+    PlaybackQueueBase::iterator it;
+    int nSkipped = 0;
+    
+    ss << "[" ;
+    for (it = this->begin(); it != this->end(); ++it)
+    {
+        if (it+2 == this->end())
+            ss << " +" << nSkipped << " ";
+        
+        if (it == this->begin() ||
+            it+1 == this->end() || it+2 == this->end() ||
+            (*it)->getNamespace() == Slot::Key)
+        {
+            if (nSkipped != 0 && it < this->end()-2)
+            {
+                ss << " +" << nSkipped << " ";
+                nSkipped = 0;
+            }
+                
+            ss << (*it)->getSequentialNumber() << "(";
+            
+            if (it+1 == this->end() ||
+                it+2 == this->end() ||
+                (*it)->getNamespace() == Slot::Key)
+                ss << (*it)->getPlaybackDeadline() << "|";
+            
+            ss << round((*it)->getAssembledLevel()*100)/100 << ")";
+        }
+        else
+            nSkipped++;
+    }
+    ss << "]";
+    
+    return ss.str();
 }
 
 //******************************************************************************
@@ -1588,12 +1637,14 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
 void
 ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
+    CriticalSectionScoped scopedCs_(&syncCs_);
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
 }
 
 void
 ndnrtc::new_api::FrameBuffer::resetData()
 {
+    LogTraceC << "buffer reset" << endl;
     activeSlots_.clear();
     playbackQueue_.clear();
     
