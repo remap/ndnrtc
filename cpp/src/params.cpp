@@ -53,6 +53,8 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
     validated.useCache = params.useCache;
+    validated.useAudio = params.useAudio;
+    validated.useVideo = params.useVideo;
     validated.headlessMode = params.headlessMode;
     
     validated.captureDeviceId = params.captureDeviceId;
@@ -166,6 +168,8 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
     validated.useCache = params.useCache;
+    validated.useAudio = params.useAudio;
+    validated.useVideo = params.useVideo;
     validated.headlessMode = params.headlessMode;
     
     validated.host = params.host;
