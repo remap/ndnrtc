@@ -35,8 +35,7 @@ static int dataLength = 0;
 MediaSender::MediaSender(const ParamsStruct &params) :
 NdnRtcObject(params),
 packetNo_(0),
-pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
-faceThread_(*webrtc::ThreadWrapper::CreateThread(processEventsRoutine, this))
+pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
@@ -57,22 +56,17 @@ MediaSender::~MediaSender()
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const shared_ptr<Face> &face,
-                      const shared_ptr<ndn::Transport> &transport)
+int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
+                      const shared_ptr<KeyChain>& ndnKeyChain)
 {
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getStreamPrefix(params_);
+    faceProcessor_ = faceProcessor;
+    ndnKeyChain_ = ndnKeyChain;
     
-    if (!userPrefix.get())
-        notifyError(-1, "bad user prefix");
-    
-    certificateName_ = NdnRtcNamespace::certificateNameForUser(*userPrefix);
-    
-    ndnFace_ = face;
-    ndnTransport_ = transport;
-    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    certificateName_ =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
     
     if (params_.useCache)
-        memCache_.reset(new MemoryContentCache(ndnFace_.get()));
+        memCache_.reset(new MemoryContentCache(faceProcessor_->getFaceWrapper()->getFace().get()));
     
     shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     
@@ -87,23 +81,11 @@ int MediaSender::init(const shared_ptr<Face> &face,
     freshnessInterval_ = params_.freshness;
     packetNo_ = 0;
     
-    isProcessing_ = true;
-    
-    unsigned int tid;
-    faceThread_.Start(tid);
-    
     return RESULT_OK;
 }
 
 void MediaSender::stop()
 {
-    if (isProcessing_)
-    {
-        isProcessing_ = false;
-        faceThread_.SetNotAlive();
-        faceThread_.Stop();
-    }
-    
 #if RECORD
     frameWriter.synchronize();
 #endif
@@ -111,27 +93,12 @@ void MediaSender::stop()
 
 //******************************************************************************
 #pragma mark - private
-bool MediaSender::processEvents()
-{
-    try
-    {
-        ndnFace_->processEvents();
-        usleep(10000);
-    }
-    catch (std::exception &e)
-    {
-        notifyError(-1, "ndn exception while processing %s", e.what());
-        isProcessing_ = false;
-    }
-    return isProcessing_;
-}
-
 int MediaSender::publishPacket(const PacketData &packetData,
                                shared_ptr<Name> packetPrefix,
                                PacketNumber packetNo,
                                PrefixMetaInfo prefixMeta)
 {
-    if (!ndnTransport_->getIsConnected())
+    if (!faceProcessor_->getTransport()->getIsConnected())
         return notifyError(-1, "transport is not connected");
     
     Name prefix = *packetPrefix;
@@ -181,7 +148,7 @@ int MediaSender::publishPacket(const PacketData &packetData,
             else
             {
                 SignedBlob encodedData = ndnData.wireEncode();
-                ndnTransport_->send(*encodedData);
+                faceProcessor_->getTransport()->send(*encodedData);
                 
                 LogTraceC
                 << "published " << segmentName << " "
@@ -231,6 +198,21 @@ int MediaSender::publishPacket(const PacketData &packetData,
 
 void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
 {
+    // this is a key chain workaround:
+    // media sender is given a key chain upon initialization (@see init method)
+    // this key chain is used for signing individual data segments. this means,
+    // sign method will be invoked >100 times per second. to decrease costs of
+    // retrieving private key while signing, this key chain should be created
+    // using MemoryIdentityStorage. however, the same key chain can not be
+    // used for registering a prefix - in this case, NFD will not recognize the
+    // key, created in app memory. this is why, we are using default key chain
+    // here which talks to OS key chain and provides default certificate for
+    // signing control interest - in this case, NFD can recognize this
+    // certificate
+    KeyChain keyChain;
+    faceProcessor_->getFaceWrapper()->setCommandSigningInfo(keyChain,
+                                                            keyChain.getDefaultCertificateName());
+    
     if (params_.useCache)
     {
         memCache_->registerPrefix(*prefix,
@@ -241,11 +223,11 @@ void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
     }
     else
     {
-        uint64_t prefixId = ndnFace_->registerPrefix(*prefix,
-                                                     bind(&MediaSender::onInterest,
-                                                          this, _1, _2, _3),
-                                                     bind(&MediaSender::onRegisterFailed,
-                                                          this, _1));
+        uint64_t prefixId = faceProcessor_->getFaceWrapper()->registerPrefix(*prefix,
+                                                                             bind(&MediaSender::onInterest,
+                                                                                  this, _1, _2, _3),
+                                                                             bind(&MediaSender::onRegisterFailed,
+                                                                                  this, _1));
         if (prefixId != 0)
             LogTraceC << "registered prefix " << *prefix << endl;
     }

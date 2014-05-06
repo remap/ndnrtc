@@ -25,7 +25,10 @@ namespace ndnrtc {
         FaceWrapper(shared_ptr<Face> &face_);
         ~FaceWrapper();
         
-        void setFace(shared_ptr<Face> face) { face_ = face; }
+        void
+        setFace(shared_ptr<Face> face) { face_ = face; }
+        shared_ptr<Face>
+        getFace() { return face_; }
         
         uint64_t
         expressInterest(const Interest& interest,
@@ -33,14 +36,19 @@ namespace ndnrtc {
                         const OnTimeout& onTimeout = OnTimeout(),
                         WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
-        uint64_t registerPrefix(const Name& prefix,
-                                const OnInterest& onInterest,
-                                const OnRegisterFailed& onRegisterFailed,
-                                const ForwardingFlags& flags = ForwardingFlags(),
-                                WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
+        uint64_t
+        registerPrefix(const Name& prefix,
+                       const OnInterest& onInterest,
+                       const OnRegisterFailed& onRegisterFailed,
+                       const ForwardingFlags& flags = ForwardingFlags(),
+                       WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
-        void processEvents();
-        void shutdown();
+        void
+        setCommandSigningInfo(KeyChain& keyChain, const Name& certificateName);
+        void
+        processEvents();
+        void
+        shutdown();
         
     private:
         shared_ptr<Face> face_;
@@ -54,7 +62,7 @@ namespace ndnrtc {
         ~FaceProcessor();
         
         int
-        startProcessing(unsigned int usecInterval = 100);
+        startProcessing(unsigned int usecInterval = 10000);
         
         void
         stopProcessing();
@@ -64,7 +72,7 @@ namespace ndnrtc {
         { usecInterval_ = usecInterval; }
         
         shared_ptr<FaceWrapper>
-        getFace()
+        getFaceWrapper()
         { return faceWrapper_; }
         
         shared_ptr<Transport>
@@ -81,8 +89,10 @@ namespace ndnrtc {
                               shared_ptr<Transport>& transport);
         
         static shared_ptr<FaceProcessor>
-        createFaceProcessor(const ParamsStruct& params);
-                
+        createFaceProcessor(const ParamsStruct& params,
+                            const shared_ptr<ndn::KeyChain>& keyChain = shared_ptr<ndn::KeyChain>(nullptr),
+                            const shared_ptr<Name>& certificateName = shared_ptr<Name>(nullptr));
+        
     private:
         bool isProcessing_;
         unsigned int usecInterval_;

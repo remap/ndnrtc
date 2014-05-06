@@ -34,8 +34,8 @@ namespace ndnrtc
         static const double ParityRatio;
         
         // overriden from base class
-        int init(const shared_ptr<Face> &face,
-                 const shared_ptr<ndn::Transport> &transport);
+        int init(const shared_ptr<FaceProcessor>& faceProcessor,
+                 const shared_ptr<KeyChain>& ndnKeyChain);
         
         unsigned long int getFrameNo() { return getPacketNo(); }
         

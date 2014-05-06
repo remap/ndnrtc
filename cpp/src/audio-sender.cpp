@@ -45,12 +45,12 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
 
 //******************************************************************************
 #pragma mark - public
-int NdnAudioSender::init(const shared_ptr<Face> &face,
-                         const shared_ptr<ndn::Transport> &transport)
+int NdnAudioSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
+                         const shared_ptr<KeyChain>& ndnKeyChain)
 {
     int res = RESULT_OK;
     
-    res = MediaSender::init(face, transport);
+    res = MediaSender::init(faceProcessor, ndnKeyChain);
     
     if (RESULT_FAIL(res))
         return res;

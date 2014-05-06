@@ -241,11 +241,9 @@ NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
   shared_ptr<MemoryPrivateKeyStorage>
   privateKeyStorage(new MemoryPrivateKeyStorage());
   
-  shared_ptr<KeyChain> keyChain(new KeyChain(
-                                             make_shared<IdentityManager>(
-                                                                          make_shared<MemoryIdentityStorage>(),
-                                                                          privateKeyStorage),
-                                             make_shared<NoVerifyPolicyManager>()));
+    shared_ptr<KeyChain> keyChain(new KeyChain(make_shared<IdentityManager>(make_shared<MemoryIdentityStorage>(),
+                                                                            privateKeyStorage),
+                                               make_shared<NoVerifyPolicyManager>()));
   
   // Initialize the storage.
   Name keyName = *NdnRtcNamespace::keyPrefixForUser(userPrefix);

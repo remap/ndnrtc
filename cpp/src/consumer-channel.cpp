@@ -33,7 +33,7 @@ faceProcessor_(faceProcessor)
     {
         isOwnFace_ = true;
         faceProcessor_ = FaceProcessor::createFaceProcessor(params_);
-        faceProcessor_->getFace()->registerPrefix(*NdnRtcNamespace::getStreamKeyPrefix(params_),
+        faceProcessor_->getFaceWrapper()->registerPrefix(*NdnRtcNamespace::getStreamKeyPrefix(params_),
                                                   bind(&ConsumerChannel::onInterest,
                                                        this, _1, _2, _3),
                                                   bind(&ConsumerChannel::onRegisterFailed,
@@ -41,7 +41,7 @@ faceProcessor_(faceProcessor)
         faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
     }
     
-    interestQueue_.reset(new InterestQueue(faceProcessor_->getFace()));
+    interestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
     interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     
     if (params.useVideo)

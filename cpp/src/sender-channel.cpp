@@ -41,19 +41,24 @@ NdnMediaChannel::~NdnMediaChannel()
 #pragma mark - public
 int NdnMediaChannel::init()
 {
-    if (!(videoInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(params_,
-                                                                           DefaultParams, this,
-                                                                           ndnFace_, ndnTransport_))))
-        notifyError(RESULT_WARN, "can't initialize NDN networking for video channel");
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
     
-    if (!(audioInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(audioParams_,
-                                                                           DefaultParamsAudio,
-                                                                           this, ndnAudioFace_,
-                                                                           ndnAudioTransport_))))
-        notifyError(RESULT_WARN, "can't initialize NDN networking for audio channel");
+    videoFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
+    
+    if (!(videoInitialized_ = (videoFaceProcessor_.get() != nullptr)))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for video "
+                    "channel");
+    
+    audioFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
+    
+    if (!(audioInitialized_ = (audioFaceProcessor_.get() != nullptr)))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for audio "
+                    "channel");
     
     if (!(videoInitialized_ || audioInitialized_))
-        return notifyError(RESULT_ERR, "audio and video can not be initialized (ndn errors). aborting.");
+        return notifyError(RESULT_ERR, "audio and video can not be initialized "
+                           "(ndn errors). aborting.");
     
     return RESULT_OK;
 }
@@ -62,6 +67,12 @@ int NdnMediaChannel::startTransmission()
     if (!isInitialized_)
         return notifyError(RESULT_ERR, "sender channel was not initalized");
     
+    if (videoInitialized_)
+        videoFaceProcessor_->startProcessing();
+    
+    if (audioInitialized_)
+        audioFaceProcessor_->startProcessing();
+    
     return RESULT_OK;
 }
 int NdnMediaChannel::stopTransmission()
@@ -69,58 +80,16 @@ int NdnMediaChannel::stopTransmission()
     if (!isTransmitting_)
         return notifyError(RESULT_ERR, "sender channel was not transmitting data");
     
+    if (videoTransmitting_)
+        videoFaceProcessor_->stopProcessing();
+    
+    if (audioTransmitting_)
+        audioFaceProcessor_->stopProcessing();
+    
     return RESULT_OK;
 }
 //******************************************************************************
 #pragma mark - private
-int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
-                                     const ParamsStruct &defaultParams,
-                                     NdnMediaChannel *callbackListener,
-                                     shared_ptr<Face> &face,
-                                     shared_ptr<ndn::Transport> &transport)
-{
-    int res = RESULT_OK;
-    
-    try
-    {
-        std::string host = (params.host)?string(params.host):string(defaultParams.host);
-        int port = ParamsStruct::validateLE(params.portNum, MaxPortNum,
-                                            res, defaultParams.portNum);
-        
-        if (RESULT_GOOD(res))
-        {
-            shared_ptr<ndn::Transport::ConnectionInfo>
-            connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
-            
-            transport.reset(new TcpTransport());
-            face.reset(new Face(transport, connInfo));
-            
-            shared_ptr<string> streamAccessPrefix = NdnRtcNamespace::getStreamKeyPrefix(params);
-            
-            if (streamAccessPrefix.get())
-                face->registerPrefix(Name(streamAccessPrefix->c_str()),
-                                     bind(&NdnMediaChannel::onInterest,
-                                          callbackListener, _1, _2, _3),
-                                     bind(&NdnMediaChannel::onRegisterFailed,
-                                          callbackListener, _1));
-        }
-        else
-        {
-            LogError("")
-            << "malformed parameters for host/port:" << params.host << " "
-            << params.portNum << endl;
-            
-            return RESULT_ERR;
-        }
-    }
-    catch (std::exception &e)
-    {
-        LogError("") << "got error from ndn library: " << e.what() << endl;
-        return RESULT_ERR;
-    }
-    
-    return res;
-}
 
 //******************************************************************************
 #pragma mark - intefaces realization
@@ -155,6 +124,8 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                             kHighPriority))
 {
     description_ = "send-channel";
+    sender_->setObserver(this);
+    audioSender_->setObserver(this);
     
     this->setLogger(new Logger(params.loggingLevel,
                                NdnRtcUtils::toString("producer-%s.log", params.producerId)));
@@ -220,15 +191,15 @@ int NdnSenderChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video encoder");
         
-        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(ndnFace_, ndnTransport_));
+        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(videoFaceProcessor_, ndnKeyChain_));
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video sender");
     }
     
     { // initialize audio
          audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
-        audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(ndnAudioFace_,
-                                                                ndnAudioTransport_));
+        audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(audioFaceProcessor_,
+                                                                ndnKeyChain_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         

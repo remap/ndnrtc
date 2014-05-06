@@ -45,14 +45,8 @@ namespace ndnrtc
         bool videoInitialized_ = false, audioInitialized_ = false;
         bool videoTransmitting_ = false, audioTransmitting_ = false;
         bool isInitialized_ = false, isTransmitting_ = false;
-        shared_ptr<ndn::Transport> ndnTransport_, ndnAudioTransport_;
-        shared_ptr<Face> ndnFace_, ndnAudioFace_;
-        
-        static int setupNdnNetwork(const ParamsStruct &params,
-                                   const ParamsStruct &defaultParams,
-                                   NdnMediaChannel *callbackListener,
-                                   shared_ptr<Face> &face,
-                                   shared_ptr<ndn::Transport> &transport);
+        shared_ptr<FaceProcessor> videoFaceProcessor_, audioFaceProcessor_;
+        shared_ptr<KeyChain> ndnKeyChain_;
         
         // ndn-cpp callbacks
         virtual void onInterest(const shared_ptr<const Name>& prefix,

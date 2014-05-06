@@ -42,8 +42,8 @@ namespace ndnrtc
         MediaSender(const ParamsStruct &params);
         ~MediaSender();
         
-        virtual int init(const shared_ptr<Face> &face,
-                         const shared_ptr<Transport> &transport);
+        virtual int init(const shared_ptr<FaceProcessor>& faceProcessor,
+                         const shared_ptr<KeyChain>& ndnKeyChain);
         virtual void stop();
         
         unsigned long int getPacketNo() { return packetNo_; }
@@ -59,9 +59,8 @@ namespace ndnrtc
             shared_ptr<const Interest> interest_;
         } PitEntry;
         
-        shared_ptr<Transport> ndnTransport_;
         shared_ptr<KeyChain> ndnKeyChain_;
-        shared_ptr<Face> ndnFace_;
+        shared_ptr<FaceProcessor> faceProcessor_;
         shared_ptr<Name> certificateName_;
         shared_ptr<Name> packetPrefix_;
         shared_ptr<MemoryContentCache> memCache_;
@@ -77,12 +76,6 @@ namespace ndnrtc
         webrtc::CriticalSectionWrapper &pitCs_;
         
         bool isProcessing_ = false;
-        webrtc::ThreadWrapper &faceThread_;
-        static bool processEventsRoutine(void *obj)
-        {
-            return ((MediaSender*)obj)->processEvents();
-        }
-        bool processEvents();
 
         /**
          * Publishes specified data in the ndn network under specified prefix by

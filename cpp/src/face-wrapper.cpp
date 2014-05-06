@@ -54,6 +54,15 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                  wireFormat);
 }
 
+void
+FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
+                                   const Name& certificateName)
+{
+    CriticalSectionScoped scopedCs(&faceCs_);
+    
+    face_->setCommandSigningInfo(keyChain, certificateName);
+}
+
 void FaceWrapper::processEvents()
 {
     CriticalSectionScoped scopedCs(&faceCs_);
@@ -105,7 +114,9 @@ FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
 }
 
 shared_ptr<FaceProcessor>
-FaceProcessor::createFaceProcessor(const ParamsStruct& params)
+FaceProcessor::createFaceProcessor(const ParamsStruct& params,
+                                   const shared_ptr<ndn::KeyChain>& keyChain,
+                                   const shared_ptr<Name>& certificateName)
 {
     shared_ptr<FaceWrapper> face(nullptr);
     shared_ptr<ndn::Transport> transport(nullptr);
@@ -113,6 +124,14 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params)
     
     if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(params, face, transport)))
     {
+        if (keyChain.get())
+        {
+            if (certificateName.get())
+                face->setCommandSigningInfo(*keyChain, *certificateName);
+            else
+                face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
+            }
+            
         fp.reset(new FaceProcessor(face));
         fp->setTransport(transport);
     }
@@ -149,6 +168,7 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
         unsigned int tid;
         processingThread_.Start(tid);
     }
+    return RESULT_OK;
 }
 
 void
