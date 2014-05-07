@@ -1,3 +1,5 @@
+# some ndn hosts which can be added to /etc/hosts file and used by relaunch_ndnd.sh script
+
 # beijing node (PKU)
 # http://162.105.146.26:6363/
 162.105.146.26	ndn.beijing
@@ -20,4 +22,8 @@
 
 # remap node (lioncub)
 # http://131.179.141.18:6363/
-131.179.141.18	lioncub
+131.179.141.18	ndn.lioncub
+
+# aleph 
+# http://aleph.ndn.ucla.edu:6363/
+164.67.204.133	ndn.aleph

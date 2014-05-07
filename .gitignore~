@@ -1,7 +1,0 @@
-cpp/bin
-cpp/obj
-.DS_Store
-*.log
-*.aux
-*.toc
-*.out

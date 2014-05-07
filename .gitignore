@@ -12,6 +12,7 @@ cpp/thirdparty/ndn-gtest
 cpp/resources
 cpp/thirdparty
 docs
-test_app
+test_app/suite
 .deps
 !cpp/test_app/app/merge_logs.py
+autom4te.cache

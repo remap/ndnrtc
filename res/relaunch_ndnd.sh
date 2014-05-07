@@ -1,16 +1,23 @@
 #!/bin/sh
-ndnd-tlv-stop
+
+DAEMON_START=ndnd-tlv-start
+DAEMON_STOP=ndnd-tlv-stop
+DAEMON_SET_ROUTE='ndndc add /ndn/edu udp'
+
+$DAEMON_STOP
 rm -f /tmp/ndnd.log
-ndnd-tlv-start
-#ndnd2c add /ndn/edu/ucla/cs udp lioncub
-echo "set route to lioncub"
-ndndc add /ndn/edu/ucla/cs udp lioncub
+$DAEMON_START
+
+echo "ndn daemon started"
 
 hosts=$(cat /etc/hosts)
-regex='(ndn\..*)'
-for host in $hosts; do 
-	if [[ "${host}" =~ $regex ]] ; then 
+regex='^[0-9]+.*(ndn\..*)$'
+
+IFS=$'\n' 
+for line in $hosts; do 
+	if [[ "${line}" =~ $regex ]] ; then
+		host="${BASH_REMATCH[1]}"
 	    echo "set route to ${host}"
-		ndndc add /ndn/edu/ucla/cs udp "${host}"
+		eval $DAEMON_SET_ROUTE "${host}"
 	fi; 
 done;
