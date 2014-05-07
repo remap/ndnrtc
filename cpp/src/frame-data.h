@@ -132,6 +132,9 @@ namespace ndnrtc {
             int64_t timestamp_; // packet timestamp set by producer
         } __attribute__((packed));
         
+        static const PacketMetadata ZeroMetadata;
+        static const PacketMetadata BadMetadata;
+        
         PacketData(){}
         PacketData(unsigned int dataLength, const unsigned char* rawData):
             NetworkData(dataLength, rawData) {}
@@ -150,6 +153,17 @@ namespace ndnrtc {
         packetFromRaw(unsigned int length, unsigned char* data,
                       PacketData **packetData);
         
+        /**
+         * Retrieves metadata from raw bytes. It is assumed that these bytes 
+         * represent 0 segment of the data (audio or video), i.e. control 
+         * header markers are checked and if they are not satisfy video or audio 
+         * packet, returned value is initialized with -1s.
+         * @param lenght Length of data block
+         * @param data Data block
+         * @return packet metadata of type PacketMetadata
+         */
+        static PacketMetadata
+        metadataFromRaw(unsigned int length, const unsigned char* data);
     };
     
     class FrameParityData: public PacketData
@@ -204,29 +218,11 @@ namespace ndnrtc {
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
         
-        //******************************************************************************
-        // old api
-        static int
-        unpackFrame(unsigned int length_, const unsigned char *data,
-                    webrtc::EncodedImage **frame) DEPRECATED;
-        
-        static int
-        unpackMetadata(unsigned int length_,
-                       const unsigned char *data,
-                       PacketMetadata &metadata) DEPRECATED;
-        
-        static
-        webrtc::VideoFrameType getFrameTypeFromHeader(unsigned int size,
-                                                      const unsigned char *headerSegment) DEPRECATED;
-        
         static bool
-        isVideoData(unsigned int size,
-                    const unsigned char *headerSegment) DEPRECATED;
+        isValidHeader(unsigned int length, const unsigned char* data);
         
-        static int64_t
-        getTimestamp(unsigned int size,
-                     const unsigned char *headerSegment) DEPRECATED;
-        //******************************************************************************
+        static PacketMetadata
+        metadataFromRaw(unsigned int length, const unsigned char* data);
         
     protected:
         struct FrameDataHeader {
@@ -284,23 +280,12 @@ namespace ndnrtc {
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
         
-        //******************************************************************************
-        // old api
-        static int
-        unpackAudio(unsigned int len, const unsigned char *data,
-                    AudioPacket &packet) DEPRECATED;
-        
-        static int
-        unpackMetadata(unsigned int len, const unsigned char *data,
-                       PacketMetadata &metadata) DEPRECATED;
         static bool
-        isAudioData(unsigned int size,
-                    const unsigned char *headerSegment) DEPRECATED;
+        isValidHeader(unsigned int length, const unsigned char* data);
         
-        static int64_t
-        getTimestamp(unsigned int size,
-                     const unsigned char *headerSegment) DEPRECATED;
-        //******************************************************************************
+        static PacketMetadata
+        metadataFromRaw(unsigned int length, const unsigned char* data);
+        
     private:
         struct AudioDataHeader {
             uint16_t        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;

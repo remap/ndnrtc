@@ -37,4 +37,6 @@
 //#define AUDIO_OFF // disable audio
 //#define VIDEO_OFF // disable video
 
+//#define DEFAULT_KEYCHAIN
+
 #endif

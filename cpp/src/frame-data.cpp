@@ -57,7 +57,10 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
 }
 
 //******************************************************************************
-//******************************************************************************
+
+const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0};
+const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1};
+
 #pragma mark - public
 ndnrtc::PacketData::PacketMetadata
 PacketData::getMetadata()
@@ -102,25 +105,33 @@ ndnrtc::PacketData::packetFromRaw(unsigned int length,
                                   unsigned char *data,
                                   ndnrtc::PacketData **packetData)
 {
-    NdnFrameData *frameData = new NdnFrameData();
-    
-    frameData->length_ = length;
-    frameData->data_ = data;
-
-    if (RESULT_GOOD(frameData->initFromRawData(frameData->length_, frameData->data_)))
+    if (NdnFrameData::isValidHeader(length, data))
     {
-        frameData->isValid_ = true;
-        *packetData = frameData;
-        return RESULT_OK;
+        NdnFrameData *frameData = new NdnFrameData();
+        
+        frameData->length_ = length;
+        frameData->data_ = data;
+        
+        if (RESULT_GOOD(frameData->initFromRawData(frameData->length_,
+                                                   frameData->data_)))
+        {
+            frameData->isValid_ = true;
+            *packetData = frameData;
+            return RESULT_OK;
+        }
+        
+        delete frameData;
     }
-    else
+
+    if (NdnAudioData::isValidHeader(length, data))
     {
         NdnAudioData *audioData = new NdnAudioData();
 
         audioData->length_ = length;
         audioData->data_ = data;
         
-        if (RESULT_GOOD(audioData->initFromRawData(audioData->length_, audioData->data_)))
+        if (RESULT_GOOD(audioData->initFromRawData(audioData->length_,
+                                                   audioData->data_)))
         {
             audioData->isValid_ = true;
             *packetData = audioData;
@@ -129,9 +140,22 @@ ndnrtc::PacketData::packetFromRaw(unsigned int length,
         
         delete audioData;
     }
-    delete frameData;
+
     
     return RESULT_ERR;
+}
+
+PacketData::PacketMetadata
+ndnrtc::PacketData::metadataFromRaw(unsigned int length,
+                                    const unsigned char *data)
+{
+    if (NdnFrameData::isValidHeader(length, data))
+        return NdnFrameData::metadataFromRaw(length, data);
+    
+    if (NdnAudioData::isValidHeader(length, data))
+        return NdnAudioData::metadataFromRaw(length, data);
+    
+    return BadMetadata;
 }
 
 //******************************************************************************
@@ -312,91 +336,34 @@ NdnFrameData::getMetadata()
     return meta;
 }
 
-//******************************************************************************
-// old api
-int NdnFrameData::unpackFrame(unsigned int length, const unsigned char *data,
-                              webrtc::EncodedImage **frame)
+bool
+NdnFrameData::isValidHeader(unsigned int length, const unsigned char *data)
 {
     unsigned int headerSize = sizeof(FrameDataHeader);
-    FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
     
-    // check markers
-    if ((header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-         header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR) ||
-        length < headerSize)
-        return RESULT_ERR;
-    
-    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,
-                                          header.encodedHeight_);
-    
-    *frame = new webrtc::EncodedImage(const_cast<uint8_t*>(&data[headerSize]),
-                                      length-headerSize, size);
-    (*frame)->_encodedWidth = header.encodedWidth_;
-    (*frame)->_encodedHeight = header.encodedHeight_;
-    (*frame)->_timeStamp = header.timeStamp_;
-    (*frame)->capture_time_ms_ = header.capture_time_ms_;
-    (*frame)->_frameType = header.frameType_;
-    (*frame)->_completeFrame = header.completeFrame_;
-    
-    return RESULT_OK;
-}
+    if (length >= headerSize)
+    {
+        FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
 
-int NdnFrameData::unpackMetadata(unsigned int length_,
-                                 const unsigned char *data, ndnrtc::
-                                 PacketData::PacketMetadata &metadata)
-{
-    if (!data)
-        return RESULT_ERR;
-    
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
-    
-    // check markers
-    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
-        return RESULT_ERR;
-    
-    metadata = header.metadata_;
-    
-    return RESULT_OK;
-}
-
-webrtc::VideoFrameType NdnFrameData::getFrameTypeFromHeader(unsigned int size,
-                                                            const unsigned char *headerSegment)
-{
-    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
-    
-    // check markers if it's not video frame data - return key frame type always
-    if (header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR)
-        return webrtc::kDeltaFrame;
-    
-    return header.frameType_;
-}
-
-bool NdnFrameData::isVideoData(unsigned int size,
-                               const unsigned char *headerSegment)
-{
-    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
-    
-    if (header.headerMarker_ == NDNRTC_FRAMEHDR_MRKR &&
-        header.bodyMarker_ == NDNRTC_FRAMEBODY_MRKR)
-        return true;
+        if (header.headerMarker_ == NDNRTC_FRAMEHDR_MRKR &&
+            header.bodyMarker_ == NDNRTC_FRAMEBODY_MRKR)
+            return true;
+    }
     
     return false;
 }
 
-int64_t NdnFrameData::getTimestamp(unsigned int size,
-                                   const unsigned char *headerSegment)
+PacketData::PacketMetadata
+NdnFrameData::metadataFromRaw(unsigned int length, const unsigned char *data)
 {
-    if (!NdnFrameData::isVideoData(size, headerSegment))
-        return -1;
+    if (NdnFrameData::isValidHeader(length, data))
+    {
+        NdnFrameData::FrameDataHeader header = *((FrameDataHeader*)data);
+        return header.metadata_;
+    }
     
-    FrameDataHeader header = *((FrameDataHeader*)(&headerSegment[0]));
-    
-    return header.capture_time_ms_;
+    return PacketData::BadMetadata;
 }
-//******************************************************************************
 
 //******************************************************************************
 #pragma mark - private
@@ -492,65 +459,34 @@ NdnAudioData::getAudioPacket(AudioPacket &audioPacket)
     return RESULT_OK;
 }
 
-//******************************************************************************
-// old api
-int NdnAudioData::unpackAudio(unsigned int len, const unsigned char *data,
-                              AudioPacket &packet)
+bool
+NdnAudioData::isValidHeader(unsigned int length, const unsigned char *data)
 {
     unsigned int headerSize = sizeof(AudioDataHeader);
-    AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
     
-    if (header.headerMarker_ != NDNRTC_AUDIOHDR_MRKR &&
-        header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
-        return RESULT_ERR;
-    
-    packet.isRTCP_ = header.isRTCP_;
-    packet.length_ = len-headerSize;
-    packet.data_ = (unsigned char*)data+headerSize;
-    
-    return RESULT_OK;
-}
-
-int NdnAudioData::unpackMetadata(unsigned int len, const unsigned char *data,
-                                 PacketData::PacketMetadata &metadata)
-{
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
-    
-    // check markers
-    if (header.headerMarker_ != (uint16_t)NDNRTC_AUDIOHDR_MRKR &&
-        header.bodyMarker_ != (uint16_t)NDNRTC_AUDIOBODY_MRKR)
-        return RESULT_ERR;
-    
-    metadata = header.metadata_;
-    
-    return RESULT_OK;
-    
-}
-
-bool NdnAudioData::isAudioData(unsigned int size,
-                               const unsigned char *headerSegment)
-{
-    AudioDataHeader header = *((AudioDataHeader*)(&headerSegment[0]));
-    
-    if (header.headerMarker_ == (uint16_t)NDNRTC_AUDIOHDR_MRKR &&
-        header.bodyMarker_ == (uint16_t)NDNRTC_AUDIOBODY_MRKR)
-        return true;
+    if (length >= headerSize)
+    {
+        AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
+        
+        if (header.headerMarker_ == NDNRTC_AUDIOHDR_MRKR &&
+            header.bodyMarker_ == NDNRTC_AUDIOBODY_MRKR)
+            return true;
+    }
     
     return false;
 }
 
-int64_t NdnAudioData::getTimestamp(unsigned int size,
-                                   const unsigned char *headerSegment)
+PacketData::PacketMetadata
+NdnAudioData::metadataFromRaw(unsigned int length, const unsigned char *data)
 {
-    if (!NdnAudioData::isAudioData(size, headerSegment))
-        return -1;
+    if (NdnAudioData::isValidHeader(length, data))
+    {
+        NdnAudioData::AudioDataHeader header = *((AudioDataHeader*)data);
+        return header.metadata_;
+    }
     
-    AudioDataHeader header = *((AudioDataHeader*)(&headerSegment[0]));
-    
-    return header.metadata_.timestamp_;
+    return PacketData::BadMetadata;
 }
-//******************************************************************************
 
 //******************************************************************************
 #pragma mark - private

@@ -68,8 +68,8 @@ int CameraCapturer::init()
     char deviceName [256];
     char deviceUniqueName [256];
     
-    
     devInfo->GetDeviceName(deviceID, deviceName, 256, deviceUniqueName, 256);
+    delete devInfo;
     
     LogTraceC
     << "got device name: " << deviceName

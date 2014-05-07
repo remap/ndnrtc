@@ -134,7 +134,14 @@ segmentSize_(segmentSize)
     reset();
 }
 
-ndnrtc::new_api::FrameBuffer::Slot::~Slot() {}
+ndnrtc::new_api::FrameBuffer::Slot::~Slot()
+{
+    if (slotData_)
+        free(slotData_);
+    
+    if (fecSegmentList_)
+        free(fecSegmentList_);
+}
 
 //******************************************************************************
 #pragma mark - public
@@ -708,7 +715,6 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingSegments()
     
     bool stop = false;
     while (!stop && segNo >= 0)
-        //(activeSegments_.size() < nSegmentsTotal_)
     {
         if (activeSegments_.find(segNo) == activeSegments_.end())
         {
@@ -734,7 +740,6 @@ ndnrtc::new_api::FrameBuffer::Slot::initMissingParitySegments()
 
     bool stop = false;
     while (!stop && segNo >= 0)
-        //(activeSegments_.size() < nSegmentsParity_+nSegmentsTotal_)
     {
         SegmentNumber segIdx = toMapParityIdx(segNo);
         
@@ -762,11 +767,11 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
     
     consistency_ |= HeaderMeta;
     
-    PacketData *packetData;
-    PacketData::packetFromRaw(allocatedSize_, slotData_, &packetData);
+    PacketData::PacketMetadata metadata = PacketData::metadataFromRaw(allocatedSize_,
+                                                                      slotData_);
     
-    packetRate_ = packetData->getMetadata().packetRate_;
-    producerTimestamp_ = packetData->getMetadata().timestamp_;
+    packetRate_ = metadata.packetRate_;
+    producerTimestamp_ = metadata.timestamp_;
     
     return true;
 }

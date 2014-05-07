@@ -241,6 +241,7 @@ NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
   shared_ptr<MemoryPrivateKeyStorage>
   privateKeyStorage(new MemoryPrivateKeyStorage());
   
+#ifndef DEFAULT_KEYCHAIN
     shared_ptr<KeyChain> keyChain(new KeyChain(make_shared<IdentityManager>(make_shared<MemoryIdentityStorage>(),
                                                                             privateKeyStorage),
                                                make_shared<NoVerifyPolicyManager>()));
@@ -253,7 +254,9 @@ NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
                                           sizeof(DEFAULT_PUBLIC_KEY_DER),
                                           DEFAULT_PRIVATE_KEY_DER,
                                           sizeof(DEFAULT_PRIVATE_KEY_DER));
-  
+#else
+    shared_ptr<KeyChain> keyChain(new KeyChain());
+#endif
   return keyChain;
 }
 

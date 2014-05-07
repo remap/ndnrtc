@@ -62,8 +62,12 @@ int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     faceProcessor_ = faceProcessor;
     ndnKeyChain_ = ndnKeyChain;
     
+#ifndef DEFAULT_KEYCHAIN
     shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
     certificateName_ =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
+#else
+    certificateName_ = shared_ptr<Name>(new Name(ndnKeyChain_->getDefaultCertificateName()));
+#endif
     
     if (params_.useCache)
         memCache_.reset(new MemoryContentCache(faceProcessor_->getFaceWrapper()->getFace().get()));
@@ -209,9 +213,14 @@ void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
     // here which talks to OS key chain and provides default certificate for
     // signing control interest - in this case, NFD can recognize this
     // certificate
+#ifndef DEFAULT_KEYCHAIN
     KeyChain keyChain;
     faceProcessor_->getFaceWrapper()->setCommandSigningInfo(keyChain,
                                                             keyChain.getDefaultCertificateName());
+#else
+    faceProcessor_->getFaceWrapper()->setCommandSigningInfo(*ndnKeyChain_,
+                                                            ndnKeyChain_->getDefaultCertificateName());
+#endif
     
     if (params_.useCache)
     {
