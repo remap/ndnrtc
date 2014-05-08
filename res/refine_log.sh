@@ -52,6 +52,12 @@ echo "  playout statistics ready ["$CFOLDER/vplayout.stat.log"]"
 catAndGrep $CLOG "\[STAT.\]\[audio-playout\]" $CFOLDER/aplayout.stat.log
 echo "  playout statistics ready ["$CFOLDER/aplayout.stat.log"]"
 
+catAndGrep $CLOG "\[STAT.\]\[aconsumer-chase-est\]" $CFOLDER/achase.stat.log
+echo "  chase statistics ready ["$CFOLDER/achase.stat.log"]"
+
+catAndGrep $CLOG "\[STAT.\]\[vconsumer-chase-est\]" $CFOLDER/vchase.stat.log
+echo "  chase statistics ready ["$CFOLDER/vchase.stat.log"]"
+
 catAndGrep $CLOG "\[STAT.\]" $CFOLDER/all.stat.log
 echo "  all statistics ready ["$CFOLDER/all.stat.log"]"
 }

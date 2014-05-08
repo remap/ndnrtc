@@ -2,28 +2,36 @@
 
 # beijing node (PKU)
 # http://162.105.146.26:6363/
-162.105.146.26	ndn.beijing
+# 162.105.146.26	ndn.beijing
 
 # tongji node
 # http://202.120.188.176:6363/
-202.120.188.176	ndn.tongji
+# 202.120.188.176	ndn.tongji
 
 # colorado node (mccoy)
 # http://mccoy.netsec.colostate.edu:6363/
-129.82.138.48	ndn.colorado
+#129.82.138.48	ndn.colorado
 
 # arizona node (hobo)
 # http://hobo.cs.arizona.edu:6363/
-128.196.203.36	ndn.arizona
+#128.196.203.36	ndn.arizona
 
 # michigan node 
 # http://ndn0.eecs.umich.edu:6363/
-141.212.108.18	ndn.michigan
+#141.212.108.18	ndn.michigan
 
 # remap node (lioncub)
 # http://131.179.141.18:6363/
-131.179.141.18	ndn.lioncub
+#131.179.141.18	ndn.lioncub
 
 # aleph 
 # http://aleph.ndn.ucla.edu:6363/
-164.67.204.133	ndn.aleph
+#164.67.204.133	ndn.aleph
+
+# washington
+# http://128.252.153.193:6363/
+#128.252.153.193	ndn.wash
+
+# memphis
+# http://netlogic.cs.memphis.edu:6363/
+141.225.11.150	ndn.memphis
