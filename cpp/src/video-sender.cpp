@@ -39,6 +39,7 @@ int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = -1;
+    deltaFrameNo_ = 0;
     
     registerPrefix(keyFramesPrefix_);
     
@@ -152,15 +153,13 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
 
     
     if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
-        packetNo >= (isKeyNamespace)?keyFrameNo_:deltaFrameNo_)
+        packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_))
     {
         addToPit(interest);
     }
-    else
-    {
-        LogTraceC
-        << "late interest " << name << endl;
-    }
+    
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << endl;
 }
 
 int

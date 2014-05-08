@@ -253,14 +253,13 @@ void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
 {
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
     
-    if (packetNo > packetNo_)
+    if (packetNo >= packetNo_)
     {
         addToPit(interest);
     }
-    else
-    {
-        LogTraceC << "interest for old " << interest->getName() << endl;
-    }
+    
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << endl;
 }
 
 void MediaSender::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
@@ -280,7 +279,9 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
         webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
         
         if (pit_.find(name) != pit_.end())
+        {
             LogTraceC << "pit exists " << name << endl;
+        }
         else
         {
             pit_[name] = pitEntry;

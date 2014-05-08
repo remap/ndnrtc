@@ -25,7 +25,7 @@ using namespace ndnlog;
 using namespace webrtc;
 using namespace ndnrtc;
 
-#define RECORD 1
+#define RECORD 0
 #if RECORD
 #include "ndnrtc-testing.h"
 using namespace ndnrtc::testing;
@@ -390,14 +390,14 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
         if (nSegmentsParity_ > 0)
             nRecovered = dec.decode();
         
-        LogTrace("recovery.log")
-        << "level " << getAssembledLevel()
-        << " total " << nSegmentsTotal_
-        << " fetched " << nSegmentsReady_
-        << " parity " << nSegmentsParity_
-        << " fetched " << nSegmentsParityReady_
-        << " recovered " << nRecovered << " segments from "
-        << slotPrefix_ << endl;
+//        LogTraceC << "recovery: "
+//        << "level " << getAssembledLevel()
+//        << " total " << nSegmentsTotal_
+//        << " fetched " << nSegmentsReady_
+//        << " parity " << nSegmentsParity_
+//        << " fetched " << nSegmentsParityReady_
+//        << " recovered " << nRecovered << " segments from "
+//        << slotPrefix_ << endl;
     }
     
     isRecovered_ = ((nRecovered + nSegmentsReady_) == nSegmentsTotal_);
@@ -570,10 +570,6 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareStorage(unsigned int segmentSize,
     if (allocatedSize_ < slotSize)
     {
         assert(assembledSize_ == 0);
-        LogTrace("realloc.log")
-        << "realloc " << getPrefix() << " (" << allocatedSize_ << ") "
-        << nSegments << " X "
-        << segmentSize << " = " << slotSize << endl;
         
         slotData_ = (unsigned char*)realloc(slotData_, slotSize);
         fecSegmentList_ = (unsigned char*)realloc(fecSegmentList_, nSegments+nParitySegments);

@@ -16,3 +16,7 @@ test_app/suite
 .deps
 !cpp/test_app/app/merge_logs.py
 autom4te.cache
+.com.apple.timemachine.supported
+cpp/src/Makefile
+cpp/src/Makefile.in
+cpp/src/Makefile.am

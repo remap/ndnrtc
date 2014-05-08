@@ -170,8 +170,8 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 #pragma mark - public
 int NdnSenderChannel::init()
 {
-    LogInfoC << "starting initialization " << endl;
     LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;
+    LogInfoC << "starting initialization " << endl;
     
     int res = NdnMediaChannel::init();
     
