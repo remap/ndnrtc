@@ -143,7 +143,12 @@ int MediaSender::publishPacket(const PacketData &packetData,
             
             if (params_.useCache && !pitHit)
             {
+                // according to http://named-data.net/doc/ndn-ccl-api/memory-content-cache.html#memorycontentcache-registerprefix-method
+                // adding content should be synchronized with the processEvents
+                // call
+                faceProcessor_->getFaceWrapper()->synchronizeStart();
                 memCache_->add(ndnData);
+                faceProcessor_->getFaceWrapper()->synchronizeStop();
                 
                 LogTraceC
                 << "added to cache " << segmentName << " "

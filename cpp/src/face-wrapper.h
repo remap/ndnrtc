@@ -50,6 +50,16 @@ namespace ndnrtc {
         void
         shutdown();
         
+        /**
+         * Synchronizes with the face's critical section. Can be used in 
+         * situations when API requires calls from one thread (e.g. adding to 
+         * memory cache and calling processEvents should be on one thread)
+         */
+        void
+        synchronizeStart() { faceCs_.Enter(); }
+        void
+        synchronizeStop() { faceCs_.Leave(); }
+        
     private:
         shared_ptr<Face> face_;
         webrtc::CriticalSectionWrapper &faceCs_;
