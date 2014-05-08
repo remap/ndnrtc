@@ -34,7 +34,8 @@ lastArrivalTimeMs_(-1),
 nStabilizedOccurences_(0),
 stabilized_(false),
 stabilizedValue_(0.),
-lastCheckedValue_(0)
+lastCheckedValue_(0),
+startTime_(0)
 {
 }
 
@@ -50,6 +51,9 @@ void
 ChaseEstimation::trackArrival()
 {
     int64_t arrivalTimestamp = NdnRtcUtils::millisecondTimestamp();
+    
+    if (startTime_ == 0)
+        startTime_ = arrivalTimestamp;
     
     if (lastArrivalTimeMs_ != -1)
     {
@@ -98,6 +102,10 @@ ChaseEstimation::isArrivalStable()
         {
             stabilized_ = true;
             stabilizedValue_ = incline;
+            
+            LogStatC
+            << "chasing finished in " << NdnRtcUtils::millisecondTimestamp() - startTime_
+            << " msec" << endl;
         }
     }
         

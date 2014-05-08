@@ -47,7 +47,7 @@ namespace ndnrtc {
             double changeThreshold_;
             unsigned int arrivalDelayEstimatorId_,
                         inclineEstimator_;
-            int64_t lastArrivalTimeMs_;
+            int64_t lastArrivalTimeMs_, startTime_;
 
             int nStabilizedOccurences_;
             bool stabilized_;
