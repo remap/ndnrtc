@@ -48,6 +48,8 @@ Playout::init(void* frameConsumer)
 {
     jitterTiming_.flush();
     frameConsumer_ = frameConsumer;
+    
+    return RESULT_OK;
 }
 
 int
@@ -55,10 +57,12 @@ Playout::start()
 {
     nPlayed_ = 0;
     nMissed_ = 0;
+    latency_ = 0;
     isRunning_ = true;
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
+    data_ = nullptr;
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -98,6 +102,7 @@ Playout::getStatistics(ReceiverChannelPerformance& stat)
 {
     stat.nPlayed_ = nPlayed_;
     stat.nMissed_ = nMissed_;
+    stat.latency_ = latency_;
 }
 
 //******************************************************************************
@@ -132,6 +137,16 @@ Playout::processPlayout()
             // video or audio. the rest of the code is similar for both cases
             if (playbackPacket(now, data_, packetNo, isKey, assembledLevel))
             {
+                if (data_)
+                {
+                    double currentUnixTimestamp = NdnRtcUtils::unixTimestamp();
+                    double frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
+                    latency_ = currentUnixTimestamp - frameUnixTimestamp;
+                    
+                    LogStatC
+                    << "\tlatency\t" << latency_ << endl;
+                }
+                
                 nPlayed_++;
                 
                 if (lastPacketTs_ > 0 &&

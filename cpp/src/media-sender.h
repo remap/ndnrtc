@@ -79,20 +79,18 @@ namespace ndnrtc
 
         /**
          * Publishes specified data in the ndn network under specified prefix by
-         * appending packet number to it. Packet number IS NOT incremented by 
-         * default, instead it should be incremented by derived classes upon 
-         * neccessity. Big data blocks will be splitted by segments and 
-         * published under the "<prefix>/<packetNo>/<segment>" prefix. Each 
-         * segment has the number of the last segment in its' FinalBlockId 
-         * field, so upon retrieving any segment, consumer can evaluate total 
-         * number of segments for this data.
-         * @param len Length of the data in bytes
+         * appending packet number to it. Big data blocks will be splitted by 
+         * segments and published under the
+         * "<prefix>/<packetNo>/<segment>/<prefix_meta>" prefix.
          * @param packetData Pointer to the data being published
          * @param prefix NDN name prefix under which data will be published
+         * @param packetNo Packet number
+         * @param prefixMeta Prefix metadata which will be added after main 
+         * prefix with packet and segment numbers
          * @return Number of segments used for publishing data or RESULT_FAIL on 
          *          error
          */
-        int publishPacket(const PacketData &packetData,
+        int publishPacket(PacketData &packetData,
                           shared_ptr<Name> prefix,
                           PacketNumber packetNo,
                           PrefixMetaInfo prefixMeta);

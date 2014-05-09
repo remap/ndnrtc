@@ -105,7 +105,7 @@ void MediaSender::stop()
 
 //******************************************************************************
 #pragma mark - private
-int MediaSender::publishPacket(const PacketData &packetData,
+int MediaSender::publishPacket(PacketData &packetData,
                                shared_ptr<Name> packetPrefix,
                                PacketNumber packetNo,
                                PrefixMetaInfo prefixMeta)
@@ -124,6 +124,13 @@ int MediaSender::publishPacket(const PacketData &packetData,
         dataLength = 0;
         memset(frameData, 0, 640*480);
 #endif
+        // update metadata for the packet
+        PacketData::PacketMetadata metadata = {getCurrentPacketRate(),
+            NdnRtcUtils::millisecondTimestamp(),
+            NdnRtcUtils::unixTimestamp()};
+        
+        packetData.setMetadata(metadata);
+        
         Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
         for (Segmentizer::SegmentList::iterator it = segments.begin();

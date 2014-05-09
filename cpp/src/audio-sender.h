@@ -55,7 +55,7 @@ namespace ndnrtc
          * parameters provided upon callee creation and by the current packet
          * number, specified in packetNo_ variable of the class.
          */
-        int publishPacket(const PacketData &packetData,
+        int publishPacket(PacketData &packetData,
                           PrefixMetaInfo prefixMeta = {0,0,0});
     };
 }

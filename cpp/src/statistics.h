@@ -28,6 +28,9 @@ namespace ndnrtc {
 
         // RTT values for packets
         double srtt_;
+        // playback latency (reliable only if consumer and producer are
+        // ntp-synchronized)
+        double latency_;
         
         // buffers
         unsigned int rebufferingEvents_;

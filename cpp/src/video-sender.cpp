@@ -73,16 +73,11 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     NdnRtcNamespace::appendStringComponent(framePrefixData,
                                            NdnRtcNamespace::NameComponentFrameSegmentData);
     
-    // copy frame into transport data object
-    PacketData::PacketMetadata metadata;
-    metadata.packetRate_ = getCurrentPacketRate();
-    metadata.timestamp_ = encodedImage.capture_time_ms_;
-    
     PrefixMetaInfo prefixMeta = {0,0,0,0};
     prefixMeta.playbackNo_ = packetNo_;
     prefixMeta.pairedSequenceNo_ = (isKeyFrame)?deltaFrameNo_:keyFrameNo_;
     
-    NdnFrameData frameData(encodedImage, metadata);
+    NdnFrameData frameData(encodedImage);
     int nSegments = 0;
     
     int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize_);

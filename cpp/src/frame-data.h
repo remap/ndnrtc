@@ -130,6 +130,7 @@ namespace ndnrtc {
         struct PacketMetadata {
             double packetRate_; // current packet production rate
             int64_t timestamp_; // packet timestamp set by producer
+            double unixTimestamp_; // unix timestamp set by producer
         } __attribute__((packed));
         
         static const PacketMetadata ZeroMetadata;
@@ -141,6 +142,9 @@ namespace ndnrtc {
         
         virtual PacketMetadata
         getMetadata();
+        
+        virtual void
+        setMetadata(PacketMetadata& metadata) = 0;
         
         virtual PacketDataType
         getType() = 0;
@@ -174,6 +178,9 @@ namespace ndnrtc {
         
         PacketDataType
         getType() { return TypeParity; }
+        
+        void
+        setMetadata(PacketMetadata& metadata) {}
         
         int
         initFromFrame(const webrtc::EncodedImage& frame,
@@ -214,6 +221,9 @@ namespace ndnrtc {
         
         PacketMetadata
         getMetadata();
+        
+        void
+        setMetadata(PacketMetadata& metadata);
 
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
@@ -276,6 +286,9 @@ namespace ndnrtc {
         
         PacketMetadata
         getMetadata();
+        
+        void
+        setMetadata(PacketMetadata& metadata);
         
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);

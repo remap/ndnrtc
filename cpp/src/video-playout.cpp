@@ -75,7 +75,9 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         }
         
         if (hasKeyForGop_ || !params_.skipIncomplete)
+        {
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
+        }
         else
             LogWarnC << "skipping incomplete frame " << packetNo
             << " isKey: " << (isKey?"YES":"NO")

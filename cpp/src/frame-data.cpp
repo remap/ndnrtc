@@ -58,8 +58,8 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
 
 //******************************************************************************
 
-const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0};
-const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1};
+const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0, 0};
+const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1, -1};
 
 #pragma mark - public
 ndnrtc::PacketData::PacketMetadata
@@ -336,6 +336,13 @@ NdnFrameData::getMetadata()
     return meta;
 }
 
+void
+NdnFrameData::setMetadata(PacketMetadata &metadata)
+{
+    if (isValid())
+        ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
+}
+
 bool
 NdnFrameData::isValidHeader(unsigned int length, const unsigned char *data)
 {
@@ -446,6 +453,13 @@ NdnAudioData::getMetadata()
         meta = getHeader().metadata_;
     
     return meta;
+}
+
+void
+NdnAudioData::setMetadata(PacketMetadata &metadata)
+{
+    if (isValid())
+        ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
 
 int
