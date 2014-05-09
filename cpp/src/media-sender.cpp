@@ -79,7 +79,15 @@ int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     
     packetPrefix_.reset(new Name(packetPrefix->c_str()));
     
-    registerPrefix(packetPrefix_);
+    try {
+        registerPrefix(packetPrefix_);
+    }
+    catch (std::exception &e)
+    {
+        return notifyError(RESULT_ERR,
+                           "got error from ndn library while registering prefix: %s",
+                           e.what());
+    }
     
     segmentSize_ = params_.segmentSize - SegmentData::getHeaderSize();
     freshnessInterval_ = params_.freshness;
@@ -197,7 +205,7 @@ int MediaSender::publishPacket(const PacketData &packetData,
     }
     catch (std::exception &e)
     {
-        return notifyError(-1,
+        return notifyError(RESULT_ERR,
                            "got error from ndn library while sending data: %s",
                            e.what());
     }
