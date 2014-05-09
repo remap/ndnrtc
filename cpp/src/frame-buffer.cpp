@@ -13,9 +13,9 @@
 
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
-#include "video-receiver.h"
 #include "rtt-estimation.h"
 #include "ndnrtc-debug.h"
+#include "ndnrtc-namespace.h"
 
 #include <ndn-fec/fec_common.h>
 #include <ndn-fec/fec_decode.h>

@@ -13,7 +13,7 @@
 #define __ndnrtc__playout__
 
 #include "ndnrtc-common.h"
-#include "playout-buffer.h"
+#include "jitter-timing.h"
 #include "consumer.h"
 #include "frame-buffer.h"
 #include "video-sender.h"

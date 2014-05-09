@@ -14,7 +14,6 @@
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
-#include "audio-receiver.h"
 #include "audio-sender.h"
 #include "av-sync.h"
 #include "statistics.h"

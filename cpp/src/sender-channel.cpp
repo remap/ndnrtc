@@ -9,7 +9,6 @@
 //
 
 #include "sender-channel.h"
-#include "video-receiver.h"
 
 #define AUDIO_ID 0
 #define VIDEO_ID 1

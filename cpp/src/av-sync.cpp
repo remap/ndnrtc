@@ -8,7 +8,6 @@
 //  Author:  Peter Gusev
 
 #include "av-sync.h"
-#include "media-receiver.h"
 
 using namespace webrtc;
 using namespace ndnrtc;
