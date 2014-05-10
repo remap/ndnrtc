@@ -177,6 +177,7 @@ int NdnSenderChannel::init()
     if (RESULT_FAIL(res))
         return res;
     
+    if (params_.useVideo)
     { // initialize video
         videoInitialized_ = RESULT_NOT_FAIL(cameraCapturer_->init());
         if (!videoInitialized_)
@@ -195,8 +196,9 @@ int NdnSenderChannel::init()
             notifyError(RESULT_WARN, "can't intialize video sender");
     }
     
+    if (params_.useAudio)
     { // initialize audio
-         audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
+        audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
         audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(audioFaceProcessor_,
                                                                 ndnKeyChain_));
         if (!audioInitialized_)

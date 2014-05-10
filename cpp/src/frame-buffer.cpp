@@ -585,6 +585,8 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareStorage(unsigned int segmentSize,
         assert(assembledSize_ == 0);
         
         slotData_ = (unsigned char*)realloc(slotData_, slotSize);
+        memset(slotData_, 0, slotSize);
+        
         fecSegmentList_ = (unsigned char*)realloc(fecSegmentList_, nSegments+nParitySegments);
         memset(fecSegmentList_, '0', nSegments+nParitySegments);
         allocatedSize_ = slotSize;
