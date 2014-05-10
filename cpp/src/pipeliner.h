@@ -93,7 +93,7 @@ namespace ndnrtc {
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             
             // --
-            unsigned rebufferingNum_;
+            unsigned rebufferingNum_, reconnectNum_;
             PacketNumber exclusionFilter_;
             unsigned int rtxFreqMeterId_, rtxNum_;
             int bufferEventsMask_;

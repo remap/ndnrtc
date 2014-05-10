@@ -62,6 +62,8 @@ ndnrtc::new_api::Pipeliner::start()
     bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
     isProcessing_ = true;
     rebufferingNum_ = 0;
+    reconnectNum_ = 0;
+    deltaFrameSeqNo_ = -1;
     
     unsigned int tid;
     mainThread_.Start(tid);
@@ -184,6 +186,7 @@ ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
             
         case FrameBuffer::Event::FirstSegment: //
         {
+            reconnectNum_ = 0;
             requestMissing(event.slot_,
                            getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                                event.slot_->getNamespace()),
@@ -739,6 +742,7 @@ ndnrtc::new_api::Pipeliner::resetData()
     rtxNum_ = 0;
     rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
+    reconnectNum_ = 0;
     recoveryCheckpointTimestamp_ = -1;
     isPipelinePaused_ = false;
     isPipelining_ = false;
@@ -763,17 +767,21 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
     if (recoveryCheckpointTimestamp_ > 0 &&
         NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > MaxInterruptionDelay)
     {
+        reconnectNum_++;
         rebufferingNum_++;
         
         resetData();
         consumer_->reset();
         
-//        chaseEstimation_->reset();
         bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
         isProcessing_ = true;
         
-        if (rebufferingNum_ >= 5)
+        chaseEstimation_->reset();
+        
+        if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
+        {
             exclusionFilter_ = -1;
+        }
         else
             exclusionFilter_ = deltaFrameSeqNo_+1;
 

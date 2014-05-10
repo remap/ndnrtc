@@ -115,6 +115,9 @@ ChaseEstimation::isArrivalStable()
 void
 ChaseEstimation::reset()
 {
+    LogTraceC << "chase estimation reset" << endl;
+    
+    startTime_ = 0;
     lastArrivalTimeMs_ = -1;
     nStabilizedOccurences_ = 0;
     stabilized_ = false;
