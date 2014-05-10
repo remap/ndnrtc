@@ -18,12 +18,12 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 1
 TEST(VideoSenderParamsTest, CheckDefaults)
 {
     ParamsStruct p = DefaultParams;
     
-    char *hubEx = (char*)"ndn/ucla.edu/apps";
+    char *hubEx = (char*)"ndn/edu/ucla/apps";
     char *userEx = (char*)"testuser";
     char *streamEx = (char*)"video0";
     
@@ -44,10 +44,10 @@ TEST(VideoSenderParamsTest, CheckDefaults)
     char prefix[256];
     sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s", hubEx, userEx, streamEx);
     
-    string streamPrefix;
+    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(p);
     
-    EXPECT_EQ(0, MediaSender::getStreamPrefix(p, streamPrefix));
-    EXPECT_STREQ(prefix, streamPrefix.c_str());
+    EXPECT_NE(nullptr, streamPrefix.get());
+    EXPECT_STREQ(prefix, streamPrefix->c_str());
     
     free(hub);
     free(user);
@@ -58,7 +58,7 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
     
-    const char *hubEx = "ndn/ucla.edu/apps";
+    const char *hubEx = "ndn/edu/ucla/apps";
     char *userEx = (char*)"testuser";
     char *streamEx = (char*)"video0";
     
@@ -67,32 +67,46 @@ TEST(VideoSenderParamsTest, CheckPrefixes)
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s", hubEx, userEx);
         
-        string uprefix;
+        shared_ptr<string> uprefix = NdnRtcNamespace::getUserPrefix(p);
         
-        EXPECT_EQ(0,MediaSender::getUserPrefix(p, uprefix));
-        EXPECT_STREQ(prefix, uprefix.c_str());
+        EXPECT_NE(nullptr, uprefix.get());
+        EXPECT_STREQ(prefix, uprefix->c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/key", hubEx, userEx, streamEx);
         
-        string keyprefix;
-        EXPECT_EQ(0, MediaSender::getStreamKeyPrefix(p, keyprefix));
-        EXPECT_STREQ(prefix, keyprefix.c_str());
+        shared_ptr<string> keyprefix = NdnRtcNamespace::getStreamKeyPrefix(p);
+        
+        EXPECT_NE(nullptr, keyprefix.get());
+        EXPECT_STREQ(prefix, keyprefix->c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
-        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames", hubEx, userEx, streamEx);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames/delta", hubEx, userEx, streamEx);
         
-        string frprefix;
-        EXPECT_EQ(0, MediaSender::getStreamFramePrefix(p, frprefix));
-        EXPECT_STREQ(prefix, frprefix.c_str());
+        shared_ptr<string> frprefix = NdnRtcNamespace::getStreamFramePrefix(p);
+        
+        EXPECT_NE(nullptr, frprefix.get());
+        EXPECT_TRUE(string(prefix) == *frprefix);
+        EXPECT_STREQ(prefix, frprefix->c_str());
+    }
+    {
+        char prefix[256];
+        memset(prefix, 0, 256);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/vp8/frames/key", hubEx, userEx, streamEx);
+        
+        shared_ptr<string> frprefix = NdnRtcNamespace::getStreamFramePrefix(p, true);
+        EXPECT_NE(nullptr, frprefix.get());
+        EXPECT_STREQ(prefix, frprefix->c_str());
     }
 }
-
-class VideoSenderTester : public NdnRtcObjectTestHelper
+#endif
+class VideoSenderTester :
+public NdnRtcObjectTestHelper,
+public UnitTestHelperNdnNetwork
 {
 public:
     void SetUp()
@@ -100,30 +114,22 @@ public:
         NdnRtcObjectTestHelper::SetUp();
         
         dataInbox_.clear();
-        
-        shared_ptr<Transport::ConnectionInfo> connInfo(new TcpTransport::ConnectionInfo("localhost", 6363));
-        
+    
         params_ = DefaultParams;
+        params_.host = "localhost";
         params_.freshness = 1;
+        params_.useCache = true;
         
         videoSender_.reset(new NdnVideoSender(params_));
         videoSender_->setObserver(this);
-        ndnTransport_.reset(new TcpTransport());
-        ndnFace_.reset(new Face(ndnTransport_, connInfo));
+        videoSender_->setLogger(&Logger::sharedInstance());
         
-        std::string streamAccessPrefix;
+        shared_ptr<std::string> streamAccessPrefix = NdnRtcNamespace::getStreamKeyPrefix(params_);
+        shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
         
-        MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
-        ASSERT_NO_THROW(
-                        ndnFace_->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                                 bind(&VideoSenderTester::onInterest, this, _1, _2, _3),
-                                                 bind(&VideoSenderTester::onRegisterFailed, this, _1));
-                        );
+        UnitTestHelperNdnNetwork::NdnSetUp(*streamAccessPrefix, *userPrefix);
         
-        std::string userPrefix;
-        MediaSender::getUserPrefix(params_, userPrefix);
-        
-        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix);
+        ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
         ndnKeyChain_->setFace(ndnFace_.get());
         sampleFrame_ = NULL;
     }
@@ -138,15 +144,13 @@ public:
             delete sampleFrame_;
         }
         
-        ndnFace_.reset();
-        ndnTransport_.reset();
-        videoSender_.reset();
-        ndnKeyChain_.reset();
+        UnitTestHelperNdnNetwork::NdnTearDown();
     }
     
     void onInterest(const shared_ptr<const Name>& prefix, const shared_ptr<const Interest>& interest, Transport& transport)
     {
-        LOG_INFO("got interest: %s", interest->getName().toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "got interest: " << interest->getName() << endl;
     }
     
     void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
@@ -156,7 +160,10 @@ public:
     
     void onData(const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
     {
-        LOG_INFO("Got data packet with name %s, size: %d", data->getName().to_uri().c_str(), data->getContent().size());
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "Got data packet with name " << data->getName()
+        << " size: " << data->getContent().size() << endl;
+        
         dataInbox_.push_back(data);
         
         dataReceived_ = true;
@@ -167,21 +174,16 @@ public:
     {
         timeoutReceived_ = true;
         ++callbackCount_;
-        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "Time out for interest " << interest->getName() << endl;
     }
     
 protected:
     int callbackCount_;
     bool dataReceived_, timeoutReceived_;
-    
     std::vector<shared_ptr<Data>> dataInbox_;
-    
-    shared_ptr<TcpTransport> ndnTransport_;
-    shared_ptr<Face> ndnFace_;
-    ParamsStruct params_;
     shared_ptr<NdnVideoSender> videoSender_;
-    shared_ptr<KeyChain> ndnKeyChain_;
-    
     webrtc::EncodedImage *sampleFrame_;
     
     void loadFrame()
@@ -229,114 +231,181 @@ TEST_F(VideoSenderTester, TestFrameData)
     sampleFrame_->capture_time_ms_ = ts;
     NdnFrameData data(*sampleFrame_);
     
-    {
+    { // pack frame into network-ready data
         EXPECT_NE(0, data.getLength());
         EXPECT_LT(sampleFrame_->_length, data.getLength());
         
         unsigned int length = data.getLength();
         unsigned char *buf = data.getData();
-        webrtc::EncodedImage *frame = nullptr;
-        ASSERT_EQ(0, NdnFrameData::unpackFrame(length, buf, &frame));
+        webrtc::EncodedImage frame;
+        ASSERT_EQ(RESULT_OK, data.getFrame(frame));
         
-        ASSERT_NE(nullptr, frame);
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
         
-        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
+        EXPECT_TRUE(data.isValid());
+        EXPECT_EQ(PacketData::TypeVideo, data.getType());
+        EXPECT_NE(PacketData::TypeAudio, data.getType());
+        EXPECT_EQ(0, data.getMetadata().packetRate_);
+        EXPECT_EQ(0, data.getMetadata().timestamp_);
+    }
+    { // restore frame from raw data
+        unsigned char* networkData = data.getData();
+        unsigned int dataLength = data.getLength();
+        
+        NdnFrameData restoredData(dataLength, networkData);
+        
+        EXPECT_TRUE(restoredData.isValid());
+        EXPECT_EQ(dataLength, restoredData.getLength());
+        EXPECT_EQ(PacketData::TypeVideo, restoredData.getType());
+        EXPECT_NE(PacketData::TypeAudio, restoredData.getType());
+        
+        webrtc::EncodedImage frame;
+        EXPECT_EQ(RESULT_OK, restoredData.getFrame(frame));
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
     }
     {
-        EXPECT_TRUE(NdnFrameData::isVideoData(data.getLength(), data.getData()));
-
-        unsigned char *random = (unsigned char*)malloc(100);
-        EXPECT_FALSE(NdnFrameData::isVideoData(100, random));
-        free(random);
+        unsigned char* networkData = data.getData();
+        unsigned int dataLength = data.getLength();
+        
+        PacketData *packet;
+        ASSERT_EQ(RESULT_OK, PacketData::packetFromRaw(dataLength, networkData, &packet));
+        
+        EXPECT_TRUE(packet->isValid());
+        EXPECT_EQ(PacketData::TypeVideo, packet->getType());
+        
+        webrtc::EncodedImage frame;
+        EXPECT_EQ(RESULT_OK,
+                  dynamic_cast<NdnFrameData*>(packet)->getFrame(frame));
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
+        
+        delete packet;
     }
-    {
-        EXPECT_EQ(ts, NdnFrameData::getTimestamp(data.getLength(), data.getData()));
-
-        unsigned char *random = (unsigned char*)malloc(100);
-        EXPECT_EQ(-1, NdnFrameData::getTimestamp(100, random));
-        free(random);
+    { // corrupted data
+        unsigned char* networkData = data.getData();
+        unsigned int dataLength = data.getLength();
+        
+        // corrupt byte 0 - marker
+        networkData[0] = 0;
+        
+        for (int i = 0; i < dataLength/2; i++)
+        {
+            int pos = NdnRtcObjectTestHelper::randomInt(0, dataLength);
+            int val = NdnRtcObjectTestHelper::randomInt(0, 255);
+            networkData[pos] = val;
+        }
+        
+        NdnFrameData restoredData(dataLength, networkData);
+        
+        EXPECT_FALSE(restoredData.isValid());
+        EXPECT_EQ(dataLength, restoredData.getLength());
+        EXPECT_EQ(-1, restoredData.getMetadata().packetRate_);
+        EXPECT_EQ(-1, restoredData.getMetadata().timestamp_);
+        
+        webrtc::EncodedImage frame;
+        EXPECT_EQ(RESULT_ERR, restoredData.getFrame(frame));
     }
 }
 
 TEST_F(VideoSenderTester, TestFrameDataWithMetadata)
 {
     loadFrame();
+    // check different rates
+    for (int i = 1; i <= 30; i++)
+    {
+        PacketData::PacketMetadata metadata = {0., 0}, resMetadata = {0., 0};
+        metadata.packetRate_ = (double)i;
+        metadata.timestamp_ = NdnRtcUtils::millisecondTimestamp();
+        
+        NdnFrameData data(*sampleFrame_, metadata);
+        
+        EXPECT_NE(0, data.getLength());
+        EXPECT_LT(sampleFrame_->_length, data.getLength());
+        
+        unsigned int length = data.getLength();
+        unsigned char *buf = data.getData();
+        webrtc::EncodedImage frame;
+        ASSERT_EQ(RESULT_OK, data.getFrame(frame));
+        ASSERT_TRUE(data.isValid());
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
+        EXPECT_EQ(metadata.packetRate_, data.getMetadata().packetRate_);
+        EXPECT_EQ(metadata.timestamp_, data.getMetadata().timestamp_);
+    }
     
-    PacketData::PacketMetadata metadata = {0.}, resMetadata = {0.};
-    metadata.packetRate_ = 23.6;
-    
-    NdnFrameData data(*sampleFrame_, metadata);
-    
-    EXPECT_NE(0, data.getLength());
-    EXPECT_LT(sampleFrame_->_length, data.getLength());
-    
-    unsigned int length = data.getLength();
-    unsigned char *buf = data.getData();
-    webrtc::EncodedImage *frame = nullptr;
-    ASSERT_EQ(0, NdnFrameData::unpackFrame(length, buf, &frame));
-    ASSERT_EQ(0, NdnFrameData::unpackMetadata(length, buf, resMetadata));
-    ASSERT_NE(nullptr, frame);
-    
-    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
-    EXPECT_EQ(metadata.packetRate_, resMetadata.packetRate_);
+    // check different frame numbers
+    for (int i = -INT_MAX/100000; i < INT_MAX/10000; i++)
+    {
+        PacketData::PacketMetadata metadata = {0., 0}, resMetadata = {0., 0};
+        metadata.packetRate_ = (double)i;
+        metadata.timestamp_ = NdnRtcUtils::millisecondTimestamp();
+        
+        NdnFrameData data(*sampleFrame_, metadata);
+        
+        EXPECT_NE(0, data.getLength());
+        EXPECT_LT(sampleFrame_->_length, data.getLength());
+        
+        unsigned int length = data.getLength();
+        unsigned char *buf = data.getData();
+        webrtc::EncodedImage frame;
+        ASSERT_EQ(RESULT_OK, data.getFrame(frame));
+        ASSERT_TRUE(data.isValid());
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &frame);
+        EXPECT_EQ(metadata.packetRate_, data.getMetadata().packetRate_);
+        EXPECT_EQ(metadata.timestamp_, data.getMetadata().timestamp_);
+    }
 }
-
-TEST_F(VideoSenderTester, TestInit)
-{
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
-}
-
+#if 1
 TEST_F(VideoSenderTester, TestSend)
 {
     // delay from previous tests - previous objects should be marked stale
-    WAIT(1000);
-    
     loadFrame();
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
     
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(false, obtainedError_);
     
-    // just to be sure - wait for ndn network to poke the object
-    //    WAIT(1000);
-    
     // get frame prefix
-    std::string prefixStr;
-    MediaSender::getStreamFramePrefix(params_, prefixStr);
-    
-    Name framePrefix(prefixStr.c_str());
-    
+    shared_ptr<std::string> prefixStr = NdnRtcNamespace::getStreamFramePrefix(params_);
+    Name framePrefix(prefixStr->c_str());
     framePrefix.addComponent((const unsigned char *)"0", 1);
-    framePrefix.appendSegment(0);
     
     // fetch data from ndn
-    long long waitMs = 10000;
+    int waitMs = 2000;
     Interest interest(framePrefix, waitMs);
-    ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    interest.setMustBeFresh(true);
+
+    WAIT(500);
+    ndnFace_->expressInterest(interest,
+                              bind(&VideoSenderTester::onData, this, _1, _2),
+                              bind(&VideoSenderTester::onTimeout, this, _1));
     
-    while (!(dataReceived_ || timeoutReceived_) && waitMs > 0)
-    {
-        ndnFace_->processEvents();
-        usleep(10000);
-        waitMs -= 10;
-    }
-    
-    EXPECT_TRUE(dataReceived_);
+    startProcessingNdn();
+    EXPECT_TRUE_WAIT(dataReceived_, waitMs);
+    stopProcessingNdn();
+
     ASSERT_EQ(1, dataInbox_.size());
     
     shared_ptr<Data> dataObject = dataInbox_[0];
-    webrtc::EncodedImage *frame = nullptr;
     
-    ASSERT_EQ(0,NdnFrameData::unpackFrame(dataObject->getContent().size(), dataObject->getContent().buf(), &frame));
-    ASSERT_NE(nullptr, frame);
+    SegmentData segmentData;
+    EXPECT_EQ(RESULT_OK,
+              SegmentData::segmentDataFromRaw(dataObject->getContent().size(),
+                                              dataObject->getContent().buf(),
+                                              segmentData));
+    EXPECT_TRUE(segmentData.isValid());
     
-    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
-    
-    delete frame;
+    NdnFrameData data(segmentData.getSegmentDataLength(),
+                      segmentData.getSegmentData());
+    webrtc::EncodedImage restoredFrame;
+    EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
 }
-
+#endif
+#if 1
 TEST_F(VideoSenderTester, TestSendSeveralFrames)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -344,64 +413,63 @@ TEST_F(VideoSenderTester, TestSendSeveralFrames)
     
     loadFrame();
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(1500);
     
     // send frame
-    int framesNum = 3;
+    int framesNum = 10;
     
     for (int i = 0; i < framesNum; i++)
         videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     
     EXPECT_EQ(false, obtainedError_);
     
-    // just to be sure - wait for ndn network to poke the object
-    //    WAIT(1000);
-    
     // get frame prefix
-    std::string prefixStr;
-    MediaSender::getStreamFramePrefix(params_, prefixStr);
+    shared_ptr<std::string> prefixStr = NdnRtcNamespace::getStreamFramePrefix(params_);
     
-    Name framesPrefix(prefixStr.c_str());
+    Name framesPrefix(prefixStr->c_str());
     
     for (int i = 0; i < framesNum; i++)
     {
         Name framePrefix = framesPrefix;
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
         
-        char frameNoStr[3];
-        memset(&frameNoStr[0], 0, 3);
-        sprintf(&frameNoStr[0], "%d", i);
-        
-        framePrefix.addComponent((const unsigned char *)&frameNoStr[0], strlen(frameNoStr));
-        framePrefix.appendSegment(0);
-        ndnFace_->expressInterest(framePrefix, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+        Interest interest(framePrefix, 1000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest,
+                                  bind(&VideoSenderTester::onData, this, _1, _2),
+                                  bind(&VideoSenderTester::onTimeout, this, _1));
     }
     
-    // fetch data from ndn
-    long long waitMs = 10000;
-    while (!(callbackCount_ == 3 || timeoutReceived_) && waitMs > 0)
-    {
-        ndnFace_->processEvents();
-        usleep(10000);
-        waitMs -= 10;
-    }
+    startProcessingNdn();
+    int waitTime = 1000;
+    WAIT(waitTime);
+    stopProcessingNdn();
     
     EXPECT_TRUE(dataReceived_);
-    EXPECT_EQ(3, dataInbox_.size());
+    EXPECT_EQ(framesNum, dataInbox_.size());
     
     for (int i = 0; i < dataInbox_.size(); i++)
     {
         shared_ptr<Data> dataObject = dataInbox_[i];
-        webrtc::EncodedImage *frame = nullptr;
+        webrtc::EncodedImage frame;
         
-        ASSERT_EQ(0, NdnFrameData::unpackFrame(dataObject->getContent().size(), dataObject->getContent().buf(), &frame));
-        ASSERT_NE(nullptr, frame);
-
-        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
-
-        delete frame;
+        SegmentData segmentData;
+        EXPECT_EQ(RESULT_OK,
+                  SegmentData::segmentDataFromRaw(dataObject->getContent().size(),
+                                                  dataObject->getContent().buf(),
+                                                  segmentData));
+        EXPECT_TRUE(segmentData.isValid());
+        
+        NdnFrameData data(segmentData.getSegmentDataLength(),
+                          segmentData.getSegmentData());
+        webrtc::EncodedImage restoredFrame;
+        EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     }
 }
-
+#endif
+#if 1
 TEST_F(VideoSenderTester, TestSendBySegments)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -417,39 +485,38 @@ TEST_F(VideoSenderTester, TestSendBySegments)
     videoSender_.reset(new NdnVideoSender(params_));
     videoSender_->setObserver(this);
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
     
     // send frame
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(false, obtainedError_);
     
     // get frame prefix
-    std::string prefixStr;
-    MediaSender::getStreamFramePrefix(params_, prefixStr);
+    shared_ptr<std::string> prefixStr = NdnRtcNamespace::getStreamFramePrefix(params_);
     
-    Name framePrefix(prefixStr.c_str());
+    Name framePrefix(prefixStr->c_str());
     
-    framePrefix.addComponent((const unsigned char *)"0", 1);
+    framePrefix.append(NdnRtcUtils::componentFromInt(0));
+    NdnRtcNamespace::appendDataKind(framePrefix, false);
     
-    long long waitMs = 10000;
+    int waitMs = 10000;
     // send out interests for each segment
     for (int sno = 0; sno < segmentNum; sno++)
     {
         Name segmentPrefix = framePrefix;
-        
+
         segmentPrefix.appendSegment(sno);
         
         // fetch data from ndn
-        ndnFace_->expressInterest(segmentPrefix, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+        Interest interest(segmentPrefix, waitMs);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
     }
     
-    // wait for data
-    while (!(callbackCount_ == segmentNum || timeoutReceived_) && waitMs > 0)
-    {
-        ndnFace_->processEvents();
-        usleep(10000);
-        waitMs -= 10;
-    }
+    startProcessingNdn();
+    EXPECT_TRUE_WAIT(callbackCount_ == segmentNum, 2000);
+    stopProcessingNdn();
     
     EXPECT_TRUE(dataReceived_);
     ASSERT_EQ(segmentNum, dataInbox_.size());
@@ -466,30 +533,31 @@ TEST_F(VideoSenderTester, TestSendBySegments)
             
             if (framePrefix.match(segmentData->getName()))
             {
-                int ncomp = segmentData->getName().getComponentCount();
-                Name::Component segmentComp = segmentData->getName().getComponent(ncomp-1);
+                int ncomp = framePrefix.getComponentCount();
+                Name::Component segmentComp = segmentData->getName().getComponent(ncomp);
                 
                 // decode segment component into a segment number
                 if (sno == NdnRtcUtils::segmentNumber(segmentComp))
                 {
-                    memcpy(pos, segmentData->getContent().buf(), segmentData->getContent().size());
-                    pos += segmentData->getContent().size();
+                    memcpy(pos,
+                           segmentData->getContent().buf()+SegmentData::getHeaderSize(),
+                           segmentData->getContent().size()-SegmentData::getHeaderSize());
+              
+                    pos += segmentData->getContent().size()-SegmentData::getHeaderSize();
                     break;
                 }
             } // prefix match
         } // search for a segment
     } // segments number
     
-    webrtc::EncodedImage *frame = nullptr;
+    NdnFrameData data(pos-&frameBuf[0], &frameBuf[0]);
+    webrtc::EncodedImage restoredFrame;
+    ASSERT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
     
-    ASSERT_EQ(0,NdnFrameData::unpackFrame(pos-&frameBuf[0], &frameBuf[0], &frame));
-    ASSERT_NE(nullptr, frame);
-
-    NdnRtcObjectTestHelper::checkFrames(sampleFrame_, frame);
-    
-    delete frame;
 }
-
+#endif
+#if 1
 TEST_F(VideoSenderTester, TestSendWithLibException)
 {
     // delay from previous tests - previous objects should be marked stale
@@ -499,7 +567,7 @@ TEST_F(VideoSenderTester, TestSendWithLibException)
     
     videoSender_->setObserver(this);
     
-    EXPECT_EQ(0,videoSender_->init(ndnTransport_));
+    EXPECT_EQ(0,videoSender_->init(ndnFace_, ndnTransport_));
     
     ndnTransport_->close();
     
@@ -507,3 +575,190 @@ TEST_F(VideoSenderTester, TestSendWithLibException)
     videoSender_->onEncodedFrameDelivered(*sampleFrame_);
     EXPECT_EQ(true, obtainedError_);
 }
+#endif
+#if 1
+TEST_F(VideoSenderTester, TestSendInTwoNamespaces)
+{
+    // delay from previous tests - previous objects should be marked stale
+    WAIT(1200);
+    
+    loadFrame();
+    
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
+    
+    // send frame
+    int deltaFramesNum = 3, keyFramesNum = 3;
+    
+    for (int i = 0; i < deltaFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    sampleFrame_->_frameType = webrtc::kKeyFrame;
+    for (int i = 0; i < keyFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    EXPECT_EQ(false, obtainedError_);
+    
+    // get frame prefix
+    shared_ptr<std::string> deltaPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_),
+    keyPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+
+    EXPECT_NE(nullptr, deltaPrefixStr);
+    EXPECT_NE(nullptr, keyPrefixStr);
+    
+    Name deltaFramesPrefix(deltaPrefixStr->c_str());
+    Name keyFramesPrefix(keyPrefixStr->c_str());
+    
+    // fetch delta frames
+    for (int i = 0; i < deltaFramesNum; i++)
+    {
+        Name framePrefix = deltaFramesPrefix;
+
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    WAIT(200);
+    // fetch key frames
+    for (int i = 0; i < keyFramesNum; i++)
+    {
+        Name framePrefix = keyFramesPrefix;
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    
+    startProcessingNdn();
+    EXPECT_TRUE_WAIT((callbackCount_ == deltaFramesNum+keyFramesNum || timeoutReceived_), 10000);
+    stopProcessingNdn();
+    
+    EXPECT_TRUE(dataReceived_);
+    EXPECT_EQ(deltaFramesNum+keyFramesNum, dataInbox_.size());
+    
+    for (int i = 0; i < dataInbox_.size(); i++)
+    {
+        shared_ptr<Data> dataObject = dataInbox_[i];
+
+        SegmentData segmentData;
+        EXPECT_EQ(RESULT_OK,
+                  SegmentData::segmentDataFromRaw(dataObject->getContent().size(),
+                                                  dataObject->getContent().buf(),
+                                                  segmentData));
+        EXPECT_TRUE(segmentData.isValid());
+        
+        NdnFrameData data(segmentData.getSegmentDataLength(),
+                          segmentData.getSegmentData());
+        webrtc::EncodedImage restoredFrame;
+        EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+        
+        // set frame type field accroding to the frame type
+        if (i < deltaFramesNum)
+            sampleFrame_->_frameType = webrtc::kDeltaFrame;
+        else
+            sampleFrame_->_frameType = webrtc::kKeyFrame;
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
+    }
+}
+TEST_F(VideoSenderTester, TestSendPokeInTwoNamespaces)
+{
+    // delay from previous tests - previous objects should be marked stale
+    WAIT(1200);
+    
+    loadFrame();
+    
+    params_.useCache = false;
+    videoSender_.reset(new NdnVideoSender(params_));
+    EXPECT_EQ(0,videoSender_->init(ndnReceiverFace_, ndnTransport_));
+    WAIT(500);
+    
+    // send frame
+    int deltaFramesNum = 3, keyFramesNum = 3;
+    
+    for (int i = 0; i < deltaFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    sampleFrame_->_frameType = webrtc::kKeyFrame;
+    for (int i = 0; i < keyFramesNum; i++)
+        videoSender_->onEncodedFrameDelivered(*sampleFrame_);
+    
+    EXPECT_EQ(false, obtainedError_);
+    
+    // get frame prefix
+    shared_ptr<std::string> deltaPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_),
+    keyPrefixStr = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    
+    EXPECT_NE(nullptr, deltaPrefixStr);
+    EXPECT_NE(nullptr, keyPrefixStr);
+    
+    Name deltaFramesPrefix(deltaPrefixStr->c_str());
+    Name keyFramesPrefix(keyPrefixStr->c_str());
+    
+    // fetch delta frames
+    for (int i = 0; i < deltaFramesNum; i++)
+    {
+        Name framePrefix = deltaFramesPrefix;
+        
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    WAIT(200);
+    // fetch key frames
+    for (int i = 0; i < keyFramesNum; i++)
+    {
+        Name framePrefix = keyFramesPrefix;
+        framePrefix.append(NdnRtcUtils::componentFromInt(i));
+        NdnRtcNamespace::appendDataKind(framePrefix, false);
+        framePrefix.appendSegment(0);
+        
+        Interest interest(framePrefix, 3000);
+        interest.setMustBeFresh(true);
+        ndnFace_->expressInterest(interest, bind(&VideoSenderTester::onData, this, _1, _2), bind(&VideoSenderTester::onTimeout, this, _1));
+    }
+    
+    startProcessingNdn();
+    EXPECT_TRUE_WAIT((callbackCount_ == deltaFramesNum+keyFramesNum || timeoutReceived_), 10000);
+    stopProcessingNdn();
+    
+    EXPECT_TRUE(dataReceived_);
+    EXPECT_EQ(deltaFramesNum+keyFramesNum, dataInbox_.size());
+    
+    for (int i = 0; i < dataInbox_.size(); i++)
+    {
+        shared_ptr<Data> dataObject = dataInbox_[i];
+        
+        SegmentData segmentData;
+        EXPECT_EQ(RESULT_OK,
+                  SegmentData::segmentDataFromRaw(dataObject->getContent().size(),
+                                                  dataObject->getContent().buf(),
+                                                  segmentData));
+        EXPECT_TRUE(segmentData.isValid());
+        
+        NdnFrameData data(segmentData.getSegmentDataLength(),
+                          segmentData.getSegmentData());
+        webrtc::EncodedImage restoredFrame;
+        EXPECT_EQ(RESULT_OK, data.getFrame(restoredFrame));
+        
+        // set frame type field accroding to the frame type
+        if (i < deltaFramesNum)
+            sampleFrame_->_frameType = webrtc::kDeltaFrame;
+        else
+            sampleFrame_->_frameType = webrtc::kKeyFrame;
+        
+        NdnRtcObjectTestHelper::checkFrames(sampleFrame_, &restoredFrame);
+    }
+}
+#endif

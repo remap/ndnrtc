@@ -15,11 +15,12 @@
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
 #include "video-coder.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
 #include "audio-channel.h"
 #include "statistics.h"
+#include "audio-capturer.h"
 
 namespace ndnrtc
 {
@@ -44,14 +45,8 @@ namespace ndnrtc
         bool videoInitialized_ = false, audioInitialized_ = false;
         bool videoTransmitting_ = false, audioTransmitting_ = false;
         bool isInitialized_ = false, isTransmitting_ = false;
-        shared_ptr<ndn::Transport> ndnTransport_, ndnAudioTransport_;
-        shared_ptr<Face> ndnFace_, ndnAudioFace_;
-        
-        static int setupNdnNetwork(const ParamsStruct &params,
-                                   const ParamsStruct &defaultParams,
-                                   NdnMediaChannel *callbackListener,
-                                   shared_ptr<Face> &face,
-                                   shared_ptr<ndn::Transport> &transport);
+        shared_ptr<FaceProcessor> videoFaceProcessor_, audioFaceProcessor_;
+        shared_ptr<KeyChain> ndnKeyChain_;
         
         // ndn-cpp callbacks
         virtual void onInterest(const shared_ptr<const Name>& prefix,
@@ -70,23 +65,36 @@ namespace ndnrtc
         virtual ~NdnSenderChannel();
         
         // public methods
-        int init();
-        int startTransmission();
-        int stopTransmission();
+        int
+        init();
+        
+        int
+        startTransmission();
+        
+        int
+        stopTransmission();
         
         // interface conformance - IRawFrameConsumer
-        void onDeliverFrame(webrtc::I420VideoFrame &frame);
+        void
+        onDeliverFrame(webrtc::I420VideoFrame &frame);
         
-        void getChannelStatistics(SenderChannelStatistics &stat);
+        void
+        getChannelStatistics(SenderChannelStatistics &stat);
+        
+        void
+        setLogger(ndnlog::new_api::Logger* logger);
+        
     private:
         uint64_t lastFrameStamp_ = 0;
         unsigned int frameFreqMeter_;
         
-        shared_ptr<CameraCapturer> cc_;
-        shared_ptr<NdnRenderer> localRender_;
+        shared_ptr<CameraCapturer> cameraCapturer_;
+        shared_ptr<VideoRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
-        shared_ptr<NdnAudioSendChannel> audioSendChannel_;
+        
+        shared_ptr<new_api::AudioCapturer> audioCapturer_;
+        shared_ptr<NdnAudioSender> audioSender_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;
@@ -94,12 +102,14 @@ namespace ndnrtc
         webrtc::I420VideoFrame deliverFrame_;
         
         // static methods
-        static bool processDeliveredFrame(void *obj) {
+        static bool
+        processDeliveredFrame(void *obj) {
             return ((NdnSenderChannel*)obj)->process();
         }
         
         // private methods
-        bool process();
+        bool
+        process();
     };
     
 }

@@ -28,17 +28,26 @@ namespace ndnrtc {
 
         // RTT values for packets
         double srtt_;
-        unsigned int rtt_;
+        // playback latency (reliable only if consumer and producer are
+        // ntp-synchronized)
+        double latency_;
+        double rttEstimation_;
         
         // buffers
-        unsigned int jitterSize_, rebufferingEvents_;
+        unsigned int rebufferingEvents_;
+        unsigned int jitterPlayableMs_, jitterEstimationMs_, jitterTargetMs_;
         double actualProducerRate_;
         
         // buffer stat
         unsigned int nSent_, nAssembling_;
         
         // frames
-        unsigned int nPlayed_, nMissed_, nLost_, nReceived_;
+        unsigned int nPlayed_, nMissed_, nLost_, nReceived_, nRescued_, nIncomplete_, nRecovered_;
+        
+        double segNumDelta_, segNumKey_;
+        
+        unsigned int rtxNum_;
+        double rtxFreq_;
         
     } ReceiverChannelPerformance;
     

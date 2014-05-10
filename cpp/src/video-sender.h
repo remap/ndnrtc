@@ -11,8 +11,6 @@
 #ifndef __ndnrtc__video_sender__
 #define __ndnrtc__video_sender__
 
-//#define USE_FRAME_LOGGER
-
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
 #include "video-coder.h"
@@ -30,23 +28,34 @@ namespace ndnrtc
     class NdnVideoSender : public MediaSender, public IEncodedFrameConsumer
     {
     public:
-        NdnVideoSender(const ParamsStruct &params):MediaSender(params)
-        {
-            this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll,
-                                          "publish-vchannel-%s.log",
-                                          params.producerId));
-            isLoggerCreated_ = true;
-        }
-        ~NdnVideoSender()
-        {
-        }
+        NdnVideoSender(const ParamsStruct &params);
+        ~NdnVideoSender(){}
+     
+        static const double ParityRatio;
+        
+        // overriden from base class
+        int init(const shared_ptr<FaceProcessor>& faceProcessor,
+                 const shared_ptr<KeyChain>& ndnKeyChain);
         
         unsigned long int getFrameNo() { return getPacketNo(); }
         
         // interface conformance
-        void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage);
+        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage);
         
     private:
+        int keyFrameNo_ = 0, deltaFrameNo_ = 0;
+        shared_ptr<Name> keyFramesPrefix_;
+        
+        void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
+        
+        int
+        publishParityData(PacketNumber frameNo,
+                          const webrtc::EncodedImage &encodedImage,
+                          unsigned int nSegments,
+                          const shared_ptr<Name>& framePrefix,
+                          const PrefixMetaInfo& prefixMeta);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

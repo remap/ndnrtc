@@ -15,6 +15,10 @@
 
 #define USE_AVSYNC
 
+// test audio/video by default are recorded with some offset
+// it should be defined here
+#define DEFAULT_AV_OFFSET 777
+
 using namespace ndnrtc;
 using namespace std;
 
@@ -23,15 +27,18 @@ using namespace std;
 class AudioVideoSynchronizerTester : public AudioVideoSynchronizer
 {
 public:
+    AudioVideoSynchronizerTester(ParamsStruct videoParams, ParamsStruct audioParams)
+    :AudioVideoSynchronizer(videoParams, audioParams){}
+    
     int syncAudioPacket(int64_t packetTsRemote, int64_t packetTsLocal)
     {
         return syncPacket(audioSyncData_, videoSyncData_,
-                          packetTsRemote, packetTsLocal);
+                          packetTsRemote, packetTsLocal, (NdnMediaReceiver*)0);
     }
     int syncVideoPacket(int64_t packetTsRemote, int64_t packetTsLocal)
     {
         return syncPacket(videoSyncData_, audioSyncData_,
-                          packetTsRemote, packetTsLocal);
+                          packetTsRemote, packetTsLocal, (NdnMediaReceiver*)1);
     }
 };
 
@@ -433,9 +440,11 @@ class AVRenderer : public AVStreamWorker
 {
 public:
     AVRenderer(const char *audioFile, const char *videoFile,
-               ParamsStruct &videoParams) :
+               ParamsStruct &videoParams, ParamsStruct &audioParams) :
     AVStreamWorker(),
     videoParams_(videoParams),
+    audioParams_(audioParams),
+    synchronizer_(videoParams_, audioParams_),
     arenderer_(audioFile),
     vrenderer_(1, videoParams),
     vreader_(videoFile)
@@ -478,9 +487,9 @@ protected:
     int audioOffsetMs_ = 0, videoOffsetMs_ = 0;
     
     AudioVideoSynchronizerTester synchronizer_;
-    ParamsStruct videoParams_;
+    ParamsStruct videoParams_, audioParams_;
     AudioFileRenderer arenderer_;
-    NdnRenderer vrenderer_;
+    VideoRenderer vrenderer_;
     FrameReader vreader_;
     
     bool audioProc()
@@ -536,7 +545,7 @@ public:
         areader_ = new AudioReader("resources/bipbop30.pcmu");
         vreader_ = new FrameReader("resources/bipbop30.yuv");
         
-        avSync_ = new AudioVideoSynchronizerTester();
+        avSync_ = new AudioVideoSynchronizerTester(DefaultParams, DefaultParamsAudio);
     }
     
     void TearDown()
@@ -716,34 +725,34 @@ TEST(AVSyncTest, PlayoutAV)
 
 TEST_F(AVSyncTester, TestAVSynchronizerNormal)
 {
-    aOffset_ = 0;
+    aOffset_ = DEFAULT_AV_OFFSET;
     vOffset_ = 0;
     
     testSync();
 }
 TEST_F(AVSyncTester, TestAVSynchronizerAudioLate)
 {
-    aOffset_ = 1500;
+    aOffset_ = DEFAULT_AV_OFFSET+((double)DefaultParamsAudio.jitterSize)/2.;
     vOffset_ = 0;
     
     testSync();
 }
 TEST_F(AVSyncTester, TestAVSynchronizerVideoLate)
 {
-    aOffset_ = 0;
-    vOffset_ = 500;
+    aOffset_ = DEFAULT_AV_OFFSET;
+    vOffset_ = ((double)DefaultParams.jitterSize)/2.;
     
     testSync();
 }
 TEST_F(AVSyncTester, TestAVSynchronizerReset)
 {
-    aOffset_ = 0;
+    aOffset_ = DEFAULT_AV_OFFSET;
     vOffset_ = 50;
     testSync();
     
     avSync_->reset();
     
-    aOffset_ = 50;
+    aOffset_ = DEFAULT_AV_OFFSET+50;
     vOffset_ = 0;
     testSync();
 }

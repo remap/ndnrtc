@@ -28,9 +28,10 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
 {
     // In Cocoa, rendering is not done directly to a window like in Windows and Linux.
     // It is rendererd to a Subclass of NSOpenGLView
+    [NSApp activateIgnoringOtherApps:YES];
     
     // create cocoa container window
-    NSRect outWindowFrame = NSMakeRect(0/*+TotalWindows*40*/, 2000+TotalWindows*80, width , height );
+    NSRect outWindowFrame = NSMakeRect(0+TotalWindows*width, TotalWindows*height, width , height );
     NSWindow* outWindow = [[NSWindow alloc] initWithContentRect:outWindowFrame
                                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|
                            NSMiniaturizableWindowMask|NSResizableWindowMask
@@ -45,11 +46,12 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
     NSRect cocoaRendererFrame = NSMakeRect(0, 0, width, height);
     cocoaRenderer = [[CocoaRenderView alloc] initWithFrame:cocoaRendererFrame];
     [[outWindow contentView] addSubview:(NSView*)cocoaRenderer];
-    
+    [outWindow display];
     [outWindow setIsVisible:YES];
     [outWindow makeMainWindow];
     [outWindow makeKeyAndOrderFront:NSApp];
-    [outWindow display];
+    [outWindow setOrderedIndex:0];
+
     
     TotalWindows++;
     return 0;

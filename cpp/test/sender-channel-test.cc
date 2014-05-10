@@ -34,16 +34,20 @@ class NdnSenderChannelTest : public NdnRtcObjectTestHelper
 protected:
     ParamsStruct p_, audioP_;
 };
-
+#if 0
 TEST_F(NdnSenderChannelTest, CreateDelete)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     delete sc;
 }
-
+#endif
+#if 1
 TEST_F(NdnSenderChannelTest, TestInit)
 {
+    p_.captureDeviceId = 1;
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     sc->setObserver(this);
     
     int res = sc->init();
@@ -52,26 +56,30 @@ TEST_F(NdnSenderChannelTest, TestInit)
     EXPECT_FALSE(obtainedError_);
     
     if (obtainedError_)
-        LOG_TRACE("got error %s", obtainedEmsg_);
+        Logger::sharedInstance().log(NdnLoggerLevelError)
+        << "got error " << obtainedEmsg_ << endl;
     
     delete sc;
 }
-
+#endif
+#if 1
 TEST_F(NdnSenderChannelTest, TestTransmission)
 {
     NdnSenderChannel *sc = new NdnSenderChannel(p_, audioP_);
+    sc->setLogger(&Logger::sharedInstance());
     
     sc->setObserver(this);
     ASSERT_EQ(RESULT_OK, sc->init());
     
-    EXPECT_NO_THROW({
+//    EXPECT_NO_THROW({
         EXPECT_EQ(RESULT_OK, sc->startTransmission());
         EXPECT_FALSE(obtainedError_);
         WAIT(5000);
         EXPECT_EQ(RESULT_OK, sc->stopTransmission());
         EXPECT_FALSE(obtainedError_);
-    });
+//    });
     
     delete sc;
     
 }
+#endif

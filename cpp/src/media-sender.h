@@ -11,12 +11,19 @@
 #ifndef __ndnrtc__media_sender__
 #define __ndnrtc__media_sender__
 
+#define NLOG_COMPONENT_NAME "NdnRtcSender"
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
+#include "frame-buffer.h"
+#include "segmentizer.h"
 
 namespace ndnrtc
 {
+    using namespace ndn;
+    using namespace ptr_lib;
+    
     /**
      * This is a base class for sending media packets (video frames or audio
      * samples/RTP packets) to ndn network under the following prefix 
@@ -32,69 +39,73 @@ namespace ndnrtc
     class MediaSender : public NdnRtcObject
     {
     public:
-        MediaSender(){}
         MediaSender(const ParamsStruct &params);
         ~MediaSender();
         
-        static int getUserPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamPrefix(const ParamsStruct &params, string &prefix);
-        static int getStreamFramePrefix(const ParamsStruct &params,
-                                        string &prefix);
-        static int getStreamKeyPrefix(const ParamsStruct &params,
-                                      string &prefix);
+        virtual int init(const shared_ptr<FaceProcessor>& faceProcessor,
+                         const shared_ptr<KeyChain>& ndnKeyChain);
+        virtual void stop();
         
-        virtual int init(const shared_ptr<Transport> transport);
         unsigned long int getPacketNo() { return packetNo_; }
         
         // encoded packets/second
         double getCurrentPacketRate() {
             return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
         }
-        
-        // bytes/second
-        double getDataRate() {
-            return NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
-        }
+
     protected:
-        // private attributes go here
-        shared_ptr<Transport> ndnTransport_;
-        shared_ptr<KeyChain> ndnKeyChain_;
-        shared_ptr<Name> packetPrefix_;
-        shared_ptr<Name> certificateName_;
+        typedef struct _PitEntry {
+            int64_t arrivalTimestamp_;
+            shared_ptr<const Interest> interest_;
+        } PitEntry;
         
-        unsigned long int packetNo_ = 0; // sequential packet number
+        shared_ptr<KeyChain> ndnKeyChain_;
+        shared_ptr<FaceProcessor> faceProcessor_;
+        shared_ptr<Name> certificateName_;
+        shared_ptr<Name> packetPrefix_;
+        shared_ptr<MemoryContentCache> memCache_;
+        
+        PacketNumber packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
-        unsigned int dataRateMeter_, packetRateMeter_;
+        unsigned int packetRateMeter_;
+        unsigned int dataRateMeter_;
+
+        // comparator greater is specified in order to use upper_bound method
+        // of the map
+        std::map<Name, PitEntry> pit_;
+        webrtc::CriticalSectionWrapper &pitCs_;
+        
+        bool isProcessing_ = false;
 
         /**
          * Publishes specified data in the ndn network under specified prefix by
-         * appending packet number to it. Packet number IS NOT incremented by 
-         * default, instead it should be incremented by derived classes upon 
-         * neccessity. Big data blocks will be splitted by segments and 
-         * published under the "<prefix>/<packetNo>/<segment>" prefix. Each 
-         * segment has the number of the last segment in its' FinalBlockId 
-         * field, so upon retrieving any segment, consumer can evaluate total 
-         * number of segments for this data.
-         * @param len Length of the data in bytes
+         * appending packet number to it. Big data blocks will be splitted by 
+         * segments and published under the
+         * "<prefix>/<packetNo>/<segment>/<prefix_meta>" prefix.
          * @param packetData Pointer to the data being published
          * @param prefix NDN name prefix under which data will be published
+         * @param packetNo Packet number
+         * @param prefixMeta Prefix metadata which will be added after main 
+         * prefix with packet and segment numbers
          * @return Number of segments used for publishing data or RESULT_FAIL on 
          *          error
          */
-        int publishPacket(unsigned int len,
-                          const unsigned char *packetData,
+        int publishPacket(PacketData &packetData,
                           shared_ptr<Name> prefix,
-                          unsigned int packetNo);
-        /**
-         * Publishes specified data under the prefix, determined by the
-         * parameters provided upon callee creation and for the current packet 
-         * number, specified in packetNo_ variable of the class.
-         */
-        int publishPacket(unsigned int len,
-                          const unsigned char *packetData)
-        {
-            return publishPacket(len, packetData, packetPrefix_, packetNo_);
-        }
+                          PacketNumber packetNo,
+                          PrefixMetaInfo prefixMeta);
+        
+        // ndn-cpp callbacks
+        virtual void onInterest(const shared_ptr<const Name>& prefix,
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Transport& transport);
+        
+        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+        void registerPrefix(const shared_ptr<Name>& prefix);
+        
+        void addToPit(const shared_ptr<const Interest>& interest);
+        int lookupPrefixInPit(const Name &prefix,
+                              SegmentData::SegmentMetaInfo &metaInfo);
     };
 }
 

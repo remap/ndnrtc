@@ -1,7 +1,0 @@
-resource ndnrtc chrome/content/
-content ndnrtc chrome/content/
-manifest components/wrapper.manifest
-
-interfaces components/ndINrtc.xpt
-binary-component components/libndnrtc.dylib ABI=Darwin_x86-gcc3
-binary-component components/libndnrtc.dylib ABI=Darwin_x86_64-gcc3

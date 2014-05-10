@@ -10,69 +10,73 @@ http://named-data.net/
 Description
 ----
 
-Early stages of an NDN-based videoconferencing tool based on the WebRTC implementation in Firefox.
+NDN-based video conferencing library.
+
+It provides all basic operations for establishing NDN-connections to NDN-hub and transmitting/receiving encoded media (audio/video).
+Library is written in C++ and is a dynamic library which can be loaded at runtime. There is a binary for console demo application (ndnrtc-app) included in the project which can demonstrate the use of the library.
 
 Structure
 ----
-App code is divided into to main parts - C++ code of add-on and Javascript code of web app.
-C++ code provides all basic operations for establishing NDN-connections to other peers and transmitting/receiving encoded media. It also exposes it's interface to the web-page Javascript through Javascript wrapper object attached to DOM's window object of a page.
-
-Javascript code of web app provides all th UI and peer discovery/authentication logic of the NDN-RTC application.
 
 The directory structure is as follows:
 
 * **/root**
-    * **ccp/** *-- c++ code*
-        * **addon/** *-- Firefox-specific files for add-on installation*
-            * **components/** *-- Javascript wrapper code*
-        * **bin/** *-- compiled files, dynamic library of c++ add-on, .xpt component interface file for Firefox*
-            * **ndnrtc/** *-- upacked add-on*
-            * **ndnrtc.xpi** *-- compiled add-on package*
-        * **content/** *-- add-on resources and helper Javascript files*
-        * **idl/** *-- add-on's idl interface files*
-        * **src/** *-- .h and .cpp files of c++ component*
-    * **html/** *-- web app directory*
-        * **js/** *-- Javascript for web app*
-        * **index.html** *-- main page for web app*
+    * **ccp/**
+        * **src** *-- source code*
+        * **test** *-- unit tests code*
+    * **docs/** *-- documentation*
+    * **res/** *-- helpful resources, scripts, etc.* 
+    * **test_app/**
+        * **app/** *-- compiled binaries for library and demo application*
+        * **utils** *-- any helpful apps for testing*
     * **LICENSE**
     * **README.md**
 
 Build prerequisites
 ----
-1. XULRunner SDK (or Gecko SDK). Check the latest version [here](http://ftp.mozilla.org/pub/mozilla.org/xulrunner/nightly/latest-trunk/). Current code was compiled with SDK version 25.0a1 (Nightly).
-2. WebRTC libraries (check http://www.webrtc.org/reference/getting-started).
-3. Gtests framework (check https://code.google.com/p/googletest/source/checkout).
-4. NDN-CPP library (check the latest commit from https://github.com/named-data/ndn-cpp.git).
+TBD
 
 How to build
 ----
-1. Setup `XULSDK` environment path:
-<pre>
-    $ export XULSDK=~/mozilla/xulrunner/dist
-</pre>
-    
-2. Setup `PYTHONPATH` environment path:
-<pre>
-    $ export PYTHONPATH=$(PYTHONPATH):$(XULSDK)/sdk/bin
-</pre>
-
-3. Checkout latest commit of WebRTC into **thirdparty** directory under **ndn-webrtc** name and build it for x64 architecture.
-
-4. In order to run tests, checkout Gtests library into **thirdparty/ndn-gtest**.
-
-4. Initialize git submodules (for NDN-CPP):
-<pre>
-    $ git submodule init
-    & git submodue update
-</pre>
-
-3. Perform make:
-<pre>
-    $ cd cpp
-    $ make addon
-</pre>
+TBD - currently only binaries for MacOS X 10.7, 10.8 and 10.9 are provided.
 
 How to use
 ----
-1. Check **bin** directory for **ndnrtc.xpi** file, open it in Firefox and restart.
-2. Open **html/index.html** file.
+1. Open Terminal
+2. Run `cd` to the folder where demo app resides:
+<pre>
+$ cd test_app/app
+</pre>
+3. Make sure, that ndnrtc library (libndnrtc-sa.dylib) and configuration file (ndnrtc.cfg) are in the same directory as demo app:
+<pre>
+$ ls
+libndnrtc-sa.dylib*
+ndnrtc-app*		
+ndnrtc.cfg		
+refine_log.sh*
+</pre>
+4. Verify that configuration file contains all the parameters you want. App loads configuration file at start-up time, but also allows run-time loading (option 5 in main menu). 
+<pre>
+$ nano ndnrtc.cfg
+</pre>
+5. Run demo app:
+<pre>
+$ ./ndnrtc-app
+</pre>
+
+Demo app
+----
+Demo application is a simple console application which loads ndnrtc library (NOTE: *the library should reside in the same folder as the demo app*) and provides functionality to publish media streams (audio, video or both, depending on configuration file). Demo app configures ndnrtc library using parameters loaded from configuration file (ndnrtc.cfg by default). Configuration file is a simple text file (as defined by libconfig) with several sections. Default configuration file has plenty of comments and is self-explanatory.
+
+**Some usful tips for using demo app:**
+
+In order to:
+* **start publishing** choose option *"1 start media publishing"* or press *1*. After that, the app will ask for user name and prefix under which you would like to publish media. NOTE: *if you would like to run separate consumer later on, make sure you chose prefix which is routable from your machine*.
+* **fetch media stream** choose option *"3 fetch stream"* or press *3*. After that, specify username and prefix. Depending on configuration, media playback should start shortly.
+* **stop fetching** choose option *"4 stop fetching stream"* or press *4*. After that, specify username from which you want to stop fetching media.
+* **run loopback test** choose option *"6 loopback mode"* or press "*6*". App will start publishing media under username "loopback" and default prefix. Also, app will start fetching this data.
+* **see runtime statistics** choose option *"7 show statistics"* or press "*7*". App will open screen with statistics for current media publisher/consumers. To navigate between several consumers use arrows.
+
+**Feedback**
+
+While running, demo app is logging events in several log files (depending on use case). For publishing, logs are stored in *"producer-<username>.log"* files, for fetching - in *"consumer-<username>.log"*. Please, attach these log files if you would like to contribute or report a bug and send them via e-mail to <peter@remap.ucla.edu>. Also you can use provided script *refine_log.sh* which will gather all log files into one time-stamped folder and zip it.

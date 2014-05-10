@@ -89,7 +89,7 @@ TEST(NdnRtcUtilsTests, TestFrameNumber)
     }
 }
 
-TEST(NdnRTcUtilsTests, TestVoiceEngineInstance)
+TEST(NdnRtcUtilsTests, TestVoiceEngineInstance)
 {
     VoiceEngine *voiceEngine = NdnRtcUtils::sharedVoiceEngine();
     
@@ -173,7 +173,7 @@ TEST(NdnRTcUtilsTests, TestVoiceEngineInstance)
     NdnRtcUtils::releaseVoiceEngine();
 }
 
-TEST(NdnRTcUtilsTests, TestTimestamps)
+TEST(NdnRtcUtilsTests, TestTimestamps)
 {
     { // test microseconds timestamps
         int sleepUS = 100000;
@@ -194,5 +194,20 @@ TEST(NdnRTcUtilsTests, TestTimestamps)
                 rb = (b-a)+(int64_t)(0.1*(double)sleepUS);
         EXPECT_GE(sleepUS, lb);
         EXPECT_LE(sleepUS, rb);
+    }
+}
+
+TEST(NdnRtcUtilsTests, TestNonce)
+{
+    {
+        uint32_t nonce = NdnRtcUtils::generateNonceValue();
+        Blob nonceBlob = NdnRtcUtils::nonceToBlob(nonce);
+        
+        for (int i = 0; i < 4; i++)
+        {
+            uint8_t b = ((uint8_t*)&nonce)[i];
+            
+            EXPECT_EQ(b, nonceBlob.buf()[3-i]);
+        }
     }
 }

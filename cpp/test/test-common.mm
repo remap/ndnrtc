@@ -65,7 +65,7 @@ void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &user
     ndnReceiverTransport_.reset(new ndn::TcpTransport());
     ndnReceiverFace_.reset(new Face(ndnReceiverTransport_, connInfo2));
     ASSERT_NO_THROW(
-    ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/receiver").c_str()),
+    ndnReceiverFace_->registerPrefix(Name((streamAccessPrefix+"/rcv").c_str()),
                                      bind(&UnitTestHelperNdnNetwork::onInterest,
                                           this, _1, _2, _3),
                                      bind(&UnitTestHelperNdnNetwork::onRegisterFailed,
@@ -102,7 +102,8 @@ void UnitTestHelperNdnNetwork::onData(const shared_ptr<const Interest>& interest
 void UnitTestHelperNdnNetwork::
 onTimeout(const shared_ptr<const Interest>& interest)
 {
-    LOG_TRACE("got timeout for interest: %s", interest->getName().toUri().c_str());
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "interest timeout " << interest->getName() << endl;
     nReceivedTimeout_++;
 }
 
@@ -146,8 +147,7 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
             segmentPrefix.appendSegment(segmentIdx);
            publishData(dataSize, segmentData,
                        segmentPrefix.toUri(), freshness,
-                       Name().appendSegment(totalSegmentsNum-1).
-                        get(0).getValue());
+                       totalSegmentsNum);
         } // if
     } // for
     
@@ -155,12 +155,12 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
 void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
                                            unsigned char *dataPacket,
                                            const string &prefix, int freshness,
-                                           const Blob& finalBlockId)
+                                           int64_t totalSegmentsNum)
 {
     Data data(prefix);
     
     data.getMetaInfo().setFreshnessSeconds(freshness);
-    data.getMetaInfo().setFinalBlockID(finalBlockId);
+    data.getName().appendFinalSegment(totalSegmentsNum-1);
     data.getMetaInfo().setTimestampMilliseconds(millisecondTimestamp());
     data.setContent(dataPacket, dataLen);
     
@@ -170,6 +170,9 @@ void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
     
     SignedBlob encodedData = data.wireEncode();
     ndnTransport_->send(*encodedData);
+//    NdnLogger::log(__NDN_FNAME__, NdnLoggerLevelTrace, "published %s",prefix.c_str());
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << ("published %s", prefix.c_str());
 }
 
 void UnitTestHelperNdnNetwork::startProcessingNdn()

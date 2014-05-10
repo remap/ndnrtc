@@ -11,8 +11,10 @@
 
 #include "test-common.h"
 #include "video-coder.h"
+#include "ndnrtc-testing.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::testing;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
 
@@ -26,8 +28,8 @@ TEST(VideoCoderParamsTest, CheckDefaults)
     ParamsStruct p = DefaultParams;
     
     EXPECT_EQ(30, p.codecFrameRate);
-    EXPECT_EQ(1000, p.maxBitrate);
-    EXPECT_EQ(100, p.startBitrate);
+    EXPECT_EQ(10000, p.maxBitrate);
+    EXPECT_EQ(1000, p.startBitrate);
     EXPECT_EQ(640, p.encodeWidth);
     EXPECT_EQ(480, p.encodeHeight);
 }
@@ -52,7 +54,7 @@ public:
         NdnRtcUtils::releaseDataRateMeter(bitrateMeter_);
     }
     
-    void onEncodedFrameDelivered(webrtc::EncodedImage &encodedImage)
+    void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
     {
         obtainedFrame_ = true;
         obtainedFramesCount_++;
@@ -61,11 +63,11 @@ public:
         receivedBytes_ += encodedImage._length;
         NdnRtcUtils::dataRateMeterMoreData(bitrateMeter_, encodedImage._length);
         
-        cout << frameNo_ << "\t" << getBitratePerSec() << "\t" << encodedImage._length << endl;
+//        cout << frameNo_ << "\t" << getBitratePerSec() << "\t" << encodedImage._length << endl;
     }
     
 protected:
-    webrtc::EncodedImage *receivedEncodedFrame_;
+    const webrtc::EncodedImage *receivedEncodedFrame_;
     int obtainedFramesCount_ = 0;
     bool obtainedFrame_ = false;
     int receivedBytes_ = 0, frameNo_;
@@ -116,7 +118,7 @@ protected:
     }
     
 };
-#if 0
+
 TEST_F(NdnVideoCoderTest, CreateDelete)
 {
     NdnVideoCoder *vc = new NdnVideoCoder(coderParams_);
@@ -181,7 +183,9 @@ TEST(TestCodec, TestEncodeSampleFrame)
     
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec_))
     {
-        LOG_TRACE("can't get deafult params");
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "can't get deafult params" << endl;
+        
         strncpy(codec_.plName, "VP8", 31);
         codec_.maxFramerate = 30;
         codec_.startBitrate  = 300;
@@ -244,15 +248,19 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequence)
             delayedFrames++;
         }
         
-        LOG_TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "frame no: " << nFrames-1
+        << " obtained: %d" << obtainedFramesCount_ << endl;
     }
     
     EXPECT_EQ(nFrames, obtainedFramesCount_);
-    LOG_TRACE("lost time - %d ms, delay: %d", lostTime, delayedFrames);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "lost time - " << lostTime
+    << "ms, delay: " << delayedFrames << endl;
     
     delete vc;
 }
-#endif
+
 TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
 {
     FrameReader fr("resources/bipbop10.yuv");
@@ -298,12 +306,16 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
         frameNo_++;
         frame.SwapFrame(&nextFrame);
         
-        LOG_TRACE("frame no: %d, obtained: %d", nFrames-1, obtainedFramesCount_);
+        Logger::sharedInstance().log(NdnLoggerLevelTrace)
+        << "frame no: " <<  nFrames-1
+        << " obtained: " << obtainedFramesCount_ << endl;
     }
     
-    EXPECT_EQ(nFrames, obtainedFramesCount_);
-    LOG_TRACE("total time %d ms, lost time - %d ms (%.2f%%), dropped frames: %d",
-            totalTime, lostTime, (double)lostTime/(double)totalTime, droppedFrames);
+    EXPECT_LE(obtainedFramesCount_, nFrames);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "total time " << totalTime << " ms, "
+    << "lost time - " << lostTime << " ms (" << (double)lostTime/(double)totalTime << "%), "
+    << "dropped frames: " << droppedFrames << endl;
     
     delete vc;
 }

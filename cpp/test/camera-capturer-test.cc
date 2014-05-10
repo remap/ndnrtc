@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //
 
 #include "camera-capturer.h"
@@ -50,8 +50,12 @@ public:
     {
         obtainedFrame_ = true;
         obtainedFramesCount_++;
-        LOG_TRACE("got frame %d %ld %dx%d", obtainedFramesCount_,
-              frame.render_time_ms(), frame.width(), frame.height());
+        
+        Logger::sharedInstance().log(NdnLoggerLevelTrace) << "got frame"
+        <<  obtainedFramesCount_ << " "
+        << frame.render_time_ms() << " "
+        << frame.width() << " "
+        << frame.height() << endl;
     }
     
 protected:
@@ -68,7 +72,7 @@ TEST_F(CameraCapturerTest, CreateDelete)
 TEST_F(CameraCapturerTest, TestInit)
 {
     CameraCapturer *cc = new CameraCapturer(cameraParams_);
-
+    
     EXPECT_EQ(cc->init(),0);
     
     delete cc;
@@ -95,7 +99,11 @@ TEST_F(CameraCapturerTest, TestCapture)
     unsigned int sec = 3;
     
     EXPECT_TRUE_WAIT(obtainedFramesCount_ >= sec*cameraParams_.captureFramerate, 5000.);
-    LOG_TRACE("captured frames - %d", obtainedFramesCount_);
+
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "captured frames - "
+    << obtainedFramesCount_ << endl;
+    
     EXPECT_TRUE(obtainedFrame_);
     
     EXPECT_EQ(cc->stopCapture(),0);

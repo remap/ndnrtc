@@ -19,9 +19,11 @@ THIRDPARTY_PATH = $(CURRENT)/thirdparty
 NDNC = ndn-c
 NDNCPP = ndn-cpp
 WEBRTC = ndn-webrtc
+FECLIB = openfec
 
 NDNCPPLIB = lib$(NDNCPP).a
 NDNCLIB = lib$(NDNC).a
+OPENFECLIB = libopenfec.a
 
 LIBBIN_PATH = $(THIRDPARTY_PATH)/bin
 NDNCPPLIB_PATH = $(THIRDPARTY_PATH)/$(NDNCPP)
@@ -52,9 +54,11 @@ DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE -O0
 LOGFLAGS = -DWEBRTC_LOGGING -DNDN_LOGGING -DNDN_TRACE -DNDN_DEBUG -DNDN_INFO -DNDN_WARN -DNDN_ERROR 
 CPPFLAGS += -fshort-wchar		\
 		-fPIC			\
-        --std=c++0x \
+        -std=c++0x \
         $(DEBUGFLAGS) $(LOGFLAGS) \
 		-mmacosx-version-min=10.7 \
+		-D BASE_FILE_NAME=\"$*\" \
+		-I/opt/local/include \
 		$(NULL)
 OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
 LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
@@ -143,7 +147,7 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lwebrtc_vp8 \
 	-lyuv 
 
-LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto
+LDLIBFLAGS = -L$(LIBBIN_PATH) -l$(NDNCPP) -l$(NDNC) $(WEBRTC_LDFLAGS) -lcrypto -l$(FECLIB)
 LIB_INCLUDES = -I$(LIBBIN_PATH)/include $(WEBRTC_INCLUDES)
 
 # GCC only define which allows us to not have to #include mozilla-config

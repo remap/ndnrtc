@@ -9,10 +9,12 @@
 //
 
 #include "test-common.h"
-#include "renderer.h"
+#include "video-renderer.h"
 #import "objc/cocoa-renderer.h"
+#include "ndnrtc-testing.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::testing;
 using namespace webrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new CocoaTestEnvironment);
@@ -81,12 +83,12 @@ TEST(CocoaRenderWindow, TestCreateSeveral)
 
 //********************************************************************************
 /**
- * @name NdnRenderer class tests
+ * @name VideoRenderer class tests
  */
-class NdnRendererTester : public NdnRtcObjectTestHelper
+class VideoRendererTester : public NdnRtcObjectTestHelper
 {
 public:
-    NdnRendererTester():deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
+    VideoRendererTester():deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
     deliverEvent_(*EventWrapper::Create()),
     processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                                 kHighPriority)){
@@ -104,7 +106,7 @@ public:
     
 protected:
     unsigned int shutdown_, curFrame_;
-    NdnRenderer *r_;
+    VideoRenderer *r_;
     ParamsStruct p_;
     
     webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
@@ -113,7 +115,7 @@ protected:
     webrtc::I420VideoFrame deliverFrame_;
     
     static bool processDeliveredFrame(void *obj) {
-        return ((NdnRendererTester*)obj)->process();
+        return ((VideoRendererTester*)obj)->process();
     }
     
     bool process()
@@ -136,16 +138,16 @@ protected:
     }
 };
 
-TEST_F(NdnRendererTester, CreateDelete)
+TEST_F(VideoRendererTester, CreateDelete)
 {
-    NdnRenderer *nr = new NdnRenderer(0,p_);
+    VideoRenderer *nr = new VideoRenderer(0,p_);
     delete nr;
 }
 
-TEST_F(NdnRendererTester, TestInit)
+TEST_F(VideoRendererTester, TestInit)
 {
-    NdnRenderer *nr = new NdnRenderer(0, p_);
-    
+    VideoRenderer *nr = new VideoRenderer(0, p_);
+    nr->setLogger(&Logger::sharedInstance());
     nr->setObserver(this);
     flushFlags();
     
@@ -155,13 +157,13 @@ TEST_F(NdnRendererTester, TestInit)
     delete nr;
 }
 
-TEST_F(NdnRendererTester, TestBadInit)
+TEST_F(VideoRendererTester, TestBadInit)
 {
     { // test bad width
         p_.renderWidth = -1;
         
-        NdnRenderer *nr = new NdnRenderer(0, p_);
-        
+        VideoRenderer *nr = new VideoRenderer(0, p_);
+        nr->setLogger(&Logger::sharedInstance());
         nr->setObserver(this);
         flushFlags();
         
@@ -175,8 +177,8 @@ TEST_F(NdnRendererTester, TestBadInit)
     }
     { // test bad height
         p_.renderHeight = -1;
-        NdnRenderer *nr = new NdnRenderer(0, p_);
-        
+        VideoRenderer *nr = new VideoRenderer(0, p_);
+        nr->setLogger(&Logger::sharedInstance());
         nr->setObserver(this);
         flushFlags();
         
@@ -190,10 +192,10 @@ TEST_F(NdnRendererTester, TestBadInit)
     }
 }
 
-TEST_F(NdnRendererTester, TestInitAndStart)
+TEST_F(VideoRendererTester, TestInitAndStart)
 {
-    NdnRenderer r(0,p_);
-    
+    VideoRenderer r(0,p_);
+    r.setLogger(&Logger::sharedInstance());
     r.init();
     WAIT(1000);
     
@@ -203,12 +205,13 @@ TEST_F(NdnRendererTester, TestInitAndStart)
     r.stopRendering();
 }
 
-TEST_F(NdnRendererTester, TestRender)
+TEST_F(VideoRendererTester, TestRender)
 {
     FrameReader fr("resources/bipbop10.yuv");
     
-    NdnRenderer r(1,p_);
+    VideoRenderer r(1,p_);
     
+    r.setLogger(&Logger::sharedInstance());
     r.setObserver(this);
     r.init();
     r.startRendering("sample");
@@ -235,16 +238,17 @@ TEST_F(NdnRendererTester, TestRender)
         }
     }
     
-    LOG_TRACE("total frames number: %d", nFrames);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "total frames number: " << nFrames << endl;
     
     r.stopRendering();
 }
 
-class RendererTester : public NdnRenderer
+class RendererTester : public VideoRenderer
 {
 public:
     RendererTester(int id, const ParamsStruct &params):
-    NdnRenderer(id, params){}
+    VideoRenderer(id, params){}
     
     void* getRenderWindow(){
         return renderWindow_;
@@ -252,7 +256,7 @@ public:
 };
 
 // covers bug #107 http://redmine.named-data.net/issues/1107
-TEST_F(NdnRendererTester, TestBlackRender)
+TEST_F(VideoRendererTester, TestBlackRender)
 {
     for (int i = 0; i < 10; i++)
     {
@@ -260,6 +264,7 @@ TEST_F(NdnRendererTester, TestBlackRender)
         
         r.init();
         r.startRendering("sample");
+        usleep(20000);
         EXPECT_FALSE(getGLView(r.getRenderWindow()) == 0);
         r.stopRendering();
         usleep(10000);

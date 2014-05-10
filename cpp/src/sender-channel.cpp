@@ -9,12 +9,15 @@
 //
 
 #include "sender-channel.h"
-#include "video-receiver.h"
 
 #define AUDIO_ID 0
 #define VIDEO_ID 1
 
+using namespace std;
+using namespace ndnlog;
+using namespace ndnlog::new_api;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //******************************************************************************
@@ -37,19 +40,24 @@ NdnMediaChannel::~NdnMediaChannel()
 #pragma mark - public
 int NdnMediaChannel::init()
 {
-    if (!(videoInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(params_,
-                                                                           DefaultParams, this,
-                                                                           ndnFace_, ndnTransport_))))
-        notifyError(RESULT_WARN, "can't initialize NDN networking for video channel");
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
     
-    if (!(audioInitialized_ = RESULT_GOOD(NdnMediaChannel::setupNdnNetwork(audioParams_,
-                                                                           DefaultParamsAudio,
-                                                                           this, ndnAudioFace_,
-                                                                           ndnAudioTransport_))))
-        notifyError(RESULT_WARN, "can't initialize NDN networking for audio channel");
+    videoFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
+    
+    if (!(videoInitialized_ = (videoFaceProcessor_.get() != nullptr)))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for video "
+                    "channel");
+    
+    audioFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
+    
+    if (!(audioInitialized_ = (audioFaceProcessor_.get() != nullptr)))
+        notifyError(RESULT_WARN, "can't initialize NDN networking for audio "
+                    "channel");
     
     if (!(videoInitialized_ || audioInitialized_))
-        return notifyError(RESULT_ERR, "audio and video can not be initialized (ndn errors). aborting.");
+        return notifyError(RESULT_ERR, "audio and video can not be initialized "
+                           "(ndn errors). aborting.");
     
     return RESULT_OK;
 }
@@ -58,6 +66,12 @@ int NdnMediaChannel::startTransmission()
     if (!isInitialized_)
         return notifyError(RESULT_ERR, "sender channel was not initalized");
     
+    if (videoInitialized_)
+        videoFaceProcessor_->startProcessing();
+    
+    if (audioInitialized_)
+        audioFaceProcessor_->startProcessing();
+    
     return RESULT_OK;
 }
 int NdnMediaChannel::stopTransmission()
@@ -65,57 +79,16 @@ int NdnMediaChannel::stopTransmission()
     if (!isTransmitting_)
         return notifyError(RESULT_ERR, "sender channel was not transmitting data");
     
+    if (videoTransmitting_)
+        videoFaceProcessor_->stopProcessing();
+    
+    if (audioTransmitting_)
+        audioFaceProcessor_->stopProcessing();
+    
     return RESULT_OK;
 }
 //******************************************************************************
 #pragma mark - private
-int NdnMediaChannel::setupNdnNetwork(const ParamsStruct &params,
-                                     const ParamsStruct &defaultParams,
-                                     NdnMediaChannel *callbackListener,
-                                     shared_ptr<Face> &face,
-                                     shared_ptr<ndn::Transport> &transport)
-{
-    int res = RESULT_OK;
-    
-    try
-    {
-        std::string host = (params.host)?string(params.host):string(defaultParams.host);
-        int port = ParamsStruct::validateLE(params.portNum, MaxPortNum,
-                                            res, defaultParams.portNum);
-        
-        if (RESULT_GOOD(res))
-        {
-            shared_ptr<ndn::Transport::ConnectionInfo>
-            connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
-            
-            transport.reset(new TcpTransport());
-            face.reset(new Face(transport, connInfo));
-            
-            std::string streamAccessPrefix;
-            res = MediaSender::getStreamKeyPrefix(params, streamAccessPrefix);
-            
-            if (RESULT_GOOD(res))
-                face->registerPrefix(Name(streamAccessPrefix.c_str()),
-                                     bind(&NdnMediaChannel::onInterest,
-                                          callbackListener, _1, _2, _3),
-                                     bind(&NdnMediaChannel::onRegisterFailed,
-                                          callbackListener, _1));
-        }
-        else
-        {
-            LOG_NDNERROR("malformed parameters for host/port: %s, %d", params.host,
-                         params.portNum);
-            return RESULT_ERR;
-        }
-    }
-    catch (std::exception &e)
-    {
-        LOG_NDNERROR("got error from ndn library: %s", e.what());
-        return RESULT_ERR;
-    }
-    
-    return res;
-}
 
 //******************************************************************************
 #pragma mark - intefaces realization
@@ -123,13 +96,13 @@ void NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
                                  const shared_ptr<const Interest>& interest,
                                  ndn::Transport& transport)
 {
-    INFO("got interest: %s", interest->getName().toUri().c_str());
+    LogInfoC << "incoming interest "<< interest->getName() << endl;
 }
 
 void
 NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 {
-    NDNERROR("failed to register prefix %s", prefix->toUri().c_str());
+    notifyError(RESULT_ERR, "failed to register prefix %s", prefix->toUri().c_str());
 }
 
 //******************************************************************************
@@ -138,33 +111,35 @@ NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    const ParamsStruct &audioParams):
 NdnMediaChannel(params, audioParams),
-cc_(new CameraCapturer(params)),
-localRender_(new NdnRenderer(0,params)),
+cameraCapturer_(new CameraCapturer(params)),
+localRender_(new VideoRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
 sender_(new NdnVideoSender(params)),
-audioSendChannel_(new NdnAudioSendChannel(audioParams, NdnRtcUtils::sharedVoiceEngine())),
+audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
+audioSender_(new NdnAudioSender(audioParams)),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                             kHighPriority))
 {
-    this->setLogger(new NdnLogger(NdnLoggerDetailLevelAll, "publish-%s.log",
-                                  params.producerId));
+    description_ = "send-channel";
+    sender_->setObserver(this);
+    audioSender_->setObserver(this);
+    
+    this->setLogger(new Logger(params.loggingLevel,
+                               NdnRtcUtils::toString("producer-%s.log", params.producerId)));
     isLoggerCreated_ = true;
-    
-    cc_->setLogger(logger_);
-    localRender_->setLogger(logger_);
-    coder_->setLogger(logger_);
-    
-    cc_->setObserver(this);
+        
+    cameraCapturer_->setObserver(this);
     localRender_->setObserver(this);
     coder_->setObserver(this);
     
     // set connection capturer -> this
-    cc_->setFrameConsumer(this);
-    
-    // set direct connection coder->sender
+    cameraCapturer_->setFrameConsumer(this);
+    // set connection coder->sender
     coder_->setFrameConsumer(sender_.get());
+    // set connection audioCapturer -> audioSender
+    audioCapturer_->setFrameConsumer(audioSender_.get());
     
     frameFreqMeter_ = NdnRtcUtils::setupFrequencyMeter();
 }
@@ -178,7 +153,7 @@ NdnSenderChannel::~NdnSenderChannel()
 #pragma mark - intefaces realization: IRawFrameConsumer
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 {
-    INFO("\tCAPTURED: \t%ld", sender_->getPacketNo());
+    LogStatC << "captured\t" << sender_->getPacketNo() << endl;
     
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
@@ -194,13 +169,17 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
 #pragma mark - public
 int NdnSenderChannel::init()
 {
+    LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;
+    LogInfoC << "starting initialization " << endl;
+    
     int res = NdnMediaChannel::init();
     
     if (RESULT_FAIL(res))
         return res;
     
+    if (params_.useVideo)
     { // initialize video
-        videoInitialized_ = RESULT_NOT_FAIL(cc_->init());
+        videoInitialized_ = RESULT_NOT_FAIL(cameraCapturer_->init());
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize camera capturer");
         
@@ -212,13 +191,16 @@ int NdnSenderChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video encoder");
         
-        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(ndnTransport_));
+        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(videoFaceProcessor_, ndnKeyChain_));
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize video sender");
     }
     
+    if (params_.useAudio)
     { // initialize audio
-        audioInitialized_ = RESULT_NOT_FAIL(audioSendChannel_->init(ndnAudioTransport_));
+        audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
+        audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(audioFaceProcessor_,
+                                                                ndnKeyChain_));
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         
@@ -233,15 +215,18 @@ int NdnSenderChannel::init()
         return notifyError(RESULT_ERR, "audio and video can not be initialized."
                            " aborting.");
     
-    INFO("publishing initialized with video: %s, audio: %s",
-         (videoInitialized_)?"yes":"no",
-         (audioInitialized_)?"yes":"no");
+    LogInfoC
+    << "publishing initialized with video: "
+    << ((videoInitialized_)?"yes":"no")
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
     return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
 
 int NdnSenderChannel::startTransmission()
 {
+    LogInfoC << "starting publishing" << endl;
+    
     int res = NdnMediaChannel::startTransmission();
     
     if (RESULT_FAIL(res))
@@ -259,14 +244,15 @@ int NdnSenderChannel::startTransmission()
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start render");
         
-        videoTransmitting_ &= RESULT_NOT_FAIL(cc_->startCapture());
+        videoTransmitting_ &= RESULT_NOT_FAIL(cameraCapturer_->startCapture());
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start camera capturer");
     }
     
     if (audioInitialized_)
     {
-        audioTransmitting_ = RESULT_NOT_FAIL(audioSendChannel_->start());
+        audioTransmitting_ = RESULT_NOT_FAIL(audioCapturer_->startCapture());
+        
         if (!audioTransmitting_)
             notifyError(RESULT_WARN, "can't start audio send channel");
     }
@@ -277,15 +263,18 @@ int NdnSenderChannel::startTransmission()
         return notifyError(RESULT_ERR, "both audio and video can not be started."
                            " aborting.");
     
-    INFO("publishing started with video: %s, audio: %s",
-         (videoInitialized_)?"yes":"no",
-         (audioInitialized_)?"yes":"no");
+    LogInfoC
+    << "publishing started with video: "
+    << ((videoInitialized_)?"yes":"no")
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
     return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
 
 int NdnSenderChannel::stopTransmission()
 {
+    LogInfoC << "stopping publishing" << endl;
+    
     int res = NdnMediaChannel::stopTransmission();
     
     if (RESULT_FAIL(res))
@@ -295,8 +284,8 @@ int NdnSenderChannel::stopTransmission()
     {
         videoTransmitting_ = false;
         
-        if (cc_->isCapturing())
-            cc_->stopCapture();
+        if (cameraCapturer_->isCapturing())
+            cameraCapturer_->stopCapture();
         
         processThread_.SetNotAlive();
         deliverEvent_.Set();
@@ -310,10 +299,11 @@ int NdnSenderChannel::stopTransmission()
     if (audioTransmitting_)
     {
         audioTransmitting_ = false;
-        audioSendChannel_->stop();
+        audioCapturer_->stopCapture();
+        audioSender_->stop();
     }
     
-    INFO("publishing stopped");
+    LogInfoC << "stopped" << endl;
     
     isTransmitting_ = false;
     return RESULT_OK;
@@ -321,13 +311,25 @@ int NdnSenderChannel::stopTransmission()
 
 void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
+//    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
     stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
     stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
     stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
     
-    audioSendChannel_->getStatistics(stat.audioStat_);
+    stat.audioStat_.lastFrameNo_ = audioSender_->getSampleNo();
+    stat.audioStat_.encodingRate_ = audioSender_->getCurrentPacketRate();
+}
+
+void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
+{
+    cameraCapturer_->setLogger(logger);
+    localRender_->setLogger(logger);
+    coder_->setLogger(logger);
+    sender_->setLogger(logger);
+    audioSender_->setLogger(logger);
+    
+    ILoggingObject::setLogger(logger);
 }
 
 //******************************************************************************
@@ -345,17 +347,15 @@ bool NdnSenderChannel::process()
             double currentRate = sender_->getCurrentPacketRate();
             double rate = 1000./(now-lastFrameStamp_);
             
-            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
+//            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
         }
-        TRACE("[SENDER] current frame rate: %f", frameRate);
+        LogStatC << "rate\t" << frameRate << endl;
         
         lastFrameStamp_ = now;
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
-            INFO("\tGRAB: \t%ld", sender_->getPacketNo());
-            
-            //(NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_));
+            LogStatC << "grab\t" << sender_->getPacketNo() << endl;
             
             uint64_t t = NdnRtcUtils::microsecondTimestamp();
             
@@ -363,15 +363,20 @@ bool NdnSenderChannel::process()
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
-            INFO("\tRENDERED: \t%ld \t%ld",
-                 sender_->getPacketNo(), t2 - t);
+            LogStatC
+            << "rendered\t" << sender_->getPacketNo() << " "
+            << t2 - t << endl;
+            
             coder_->onDeliverFrame(deliverFrame_);
-            INFO("\tPUBLISHED: \t%ld \t%ld",
-                 sender_->getFrameNo()-1,
-                 NdnRtcUtils::microsecondTimestamp()-t2);
+            
+            LogStatC
+            << "published\t"
+            << sender_->getFrameNo()-1 << " "
+            << NdnRtcUtils::microsecondTimestamp()-t2 << endl;
         }
         deliver_cs_->Leave();
     }
-    // We're done!
+
     return true;
 }
+

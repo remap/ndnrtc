@@ -13,10 +13,11 @@
 
 #include <dlfcn.h>
 
-#include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
+//#include "ndnrtc-common.h"
+//#include "ndnrtc-object.h"
 #include "params.h"
 #include "statistics.h"
+#include "ndnrtc-observer.h"
 
 namespace ndnrtc {
     
@@ -38,7 +39,9 @@ namespace ndnrtc {
             
             if (libHandle == NULL)
             {
-                LOG_NDNERROR("error while loading NdnRTC library: %s", dlerror());
+                LogError("")
+                << "error while loading NdnRTC library: " << dlerror() << std::endl;
+                
                 return NULL;
             }
             
@@ -70,9 +73,7 @@ namespace ndnrtc {
                                    ParamsStruct &audioParams);
         
         virtual void setObserver(INdnRtcLibraryObserver *observer) {
-            LOG_TRACE("%d <- %d", observer_, observer);
             observer_ = observer;
-            LOG_TRACE("%d", observer_);
         }
         virtual void getDefaultParams(ParamsStruct &videoParams,
                                       ParamsStruct &audioParams) const;

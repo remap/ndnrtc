@@ -10,7 +10,8 @@
 
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
-#include "receiver-channel.h"
+//#include "receiver-channel.h"
+#include "consumer-channel.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,11 +27,14 @@ if (paramValue)\
 paramSet.setStringParam(paramName, string(paramValue));\
 }
 
-using namespace ndnrtc;
 using namespace std;
+using namespace ndnrtc;
+using namespace ndnrtc::new_api;
+using namespace ndnlog;
+using namespace ndnlog::new_api;
 
 static shared_ptr<NdnSenderChannel> SenderChannel(nullptr);
-static map<string, shared_ptr<NdnReceiverChannel>> Producers;
+static map<string, shared_ptr<ConsumerChannel>> Producers;
 
 //********************************************************************************
 #pragma mark module loading
@@ -39,14 +43,15 @@ static void initializer(int argc, char** argv, char** envp) {
     static int initialized = 0;
     if (!initialized) {
         initialized = 1;
-        NdnLogger::initialize(DefaultParams.logFile, DefaultParams.loggingLevel);
-        LOG_INFO("module loaded");
+        Logger::initializeSharedInstance(DefaultParams.loggingLevel,
+                                         string(DefaultParams.logFile));
+        Logger::sharedInstance().log(NdnLoggerLevelInfo) << "module loaded" << endl;
     }
 }
 
 __attribute__((destructor))
 static void destructor(){
-    LOG_INFO("module unloaded");
+//    Logger::sharedInstance().log(NdnLoggerLevelInfo) << "module unloaded" << endl;
 }
 
 extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
@@ -62,11 +67,11 @@ extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
     
     if (Producers.size())
     {
-        map<string, shared_ptr<NdnReceiverChannel>>::iterator it;
+        map<string, shared_ptr<ConsumerChannel>>::iterator it;
         
         for (it = Producers.begin(); it != Producers.end(); it++)
         {
-            shared_ptr<NdnReceiverChannel> producer = it->second;
+            shared_ptr<ConsumerChannel> producer = it->second;
             producer->stopTransmission();
         }
     }
@@ -136,10 +141,22 @@ void NdnRtcLibrary::configure(const ParamsStruct &params,
     
     wasModified |= RESULT_WARNING(res);
     
-    NdnLogger::initialize(validatedVideoParams.logFile, validatedVideoParams.loggingLevel);
+    Logger::initializeSharedInstance(validatedVideoParams.loggingLevel,
+                                     string(validatedVideoParams.logFile));
     
     libParams_ = validatedVideoParams;
     libAudioParams_ = validatedAudioParams;
+    
+    if (params.useTlv)
+    {
+        notifyObserver("info", "using TLV wire format");
+        WireFormat::setDefaultWireFormat(TlvWireFormat::get());
+    }
+    else
+    {
+        notifyObserver("info", "using BinaryXML wire format");
+        WireFormat::setDefaultWireFormat(BinaryXmlWireFormat::get());
+    }
     
     if (wasModified)
         notifyObserverWithState("warn", "some parameters were malformed. using default"
@@ -174,7 +191,7 @@ int NdnRtcLibrary::getStatistics(const char *producerId,
     if (!producerId || Producers.find(string(producerId)) == Producers.end())
         return -1; //notifyObserverWithError("producer was not found");
     
-    shared_ptr<NdnReceiverChannel> producer = Producers[string(producerId)];
+    shared_ptr<ConsumerChannel> producer = Producers[string(producerId)];
     
     stat.producerId_ = producerId;
     producer->getChannelStatistics(stat.receiveStat_);
@@ -218,13 +235,13 @@ int NdnRtcLibrary::startPublishing(const char *username)
     
     SenderChannel = sc;
     
-    string producerPrefix, framePrefix;
-    MediaSender::getUserPrefix(params, producerPrefix);
-    MediaSender::getStreamFramePrefix(params, framePrefix);
+    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params);
+    
     
     return notifyObserverWithState("transmitting",
                                    "started publishing under the user prefix: %s",
-                                   producerPrefix.c_str());
+                                   producerPrefix->c_str());
 }
 
 int NdnRtcLibrary::stopPublishing()
@@ -240,13 +257,14 @@ int NdnRtcLibrary::stopPublishing()
 
 void NdnRtcLibrary::getPublisherPrefix(const char** userPrefix)
 {
-    string prefix;
+    shared_ptr<string> prefix;
     ParamsStruct p = libParams_;
     p.producerId = publisherId_;
     
-    MediaSender::getUserPrefix(p, prefix);
-    
-    memcpy((void*)*userPrefix, (void*)(prefix.c_str()), prefix.size());
+    prefix = NdnRtcNamespace::getUserPrefix(p);
+
+    if (prefix.get())
+        memcpy((void*)*userPrefix, (void*)(prefix->c_str()), prefix->size());
 }
 
 void NdnRtcLibrary::getProducerPrefix(const char* producerId,
@@ -255,10 +273,10 @@ void NdnRtcLibrary::getProducerPrefix(const char* producerId,
     ParamsStruct p  = libParams_;
     p.producerId = producerId;
     
-    string prefix;
-    MediaSender::getUserPrefix(p, prefix);
+    shared_ptr<string> prefix;
+    prefix = NdnRtcNamespace::getUserPrefix(p);
     
-    memcpy((void*)*producerPrefx, prefix.c_str(), prefix.size());
+    memcpy((void*)*producerPrefx, prefix->c_str(), prefix->size());
 }
 
 int NdnRtcLibrary::startFetching(const char *producerId)
@@ -266,7 +284,8 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     if (strcmp(producerId, "") == 0)
         return notifyObserverWithError("username cannot be empty string");
     
-    LOG_TRACE("fetching from %s", producerId);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "fetching from " << string(producerId) << endl;
     
     if (Producers.find(string(producerId)) != Producers.end())
         return notifyObserverWithError("already fetching");
@@ -278,7 +297,7 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     params.producerId = producerId;
     audioParams.producerId = producerId;
     
-    shared_ptr<NdnReceiverChannel> producer(new NdnReceiverChannel(params,
+    shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
                                                                    audioParams));
     
     producer->setObserver(this);
@@ -291,22 +310,22 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     
     Producers[string(producerId)] = producer;
     
-    string producerPrefix;
-    MediaSender::getUserPrefix(params, producerPrefix);
+    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
     
     return notifyObserverWithState("fetching",
                                    "fetching from the user %s",
-                                   producerPrefix.c_str());
+                                   producerPrefix->c_str());
 }
 
 int NdnRtcLibrary::stopFetching(const char *producerId)
 {
-    LOG_TRACE("stop fetching from prefix: %s", producerId);
+    Logger::sharedInstance().log(NdnLoggerLevelTrace)
+    << "stop fetching from prefix: " << string(producerId) << endl;
     
     if (Producers.find(string(producerId)) == Producers.end())
         return notifyObserverWithError("fetching from user was not started");
     
-    shared_ptr<NdnReceiverChannel> producer = Producers[string(producerId)];
+    shared_ptr<ConsumerChannel> producer = Producers[string(producerId)];
     
     if (producer->stopTransmission() < 0)
         notifyObserverWithError("can't stop fetching");

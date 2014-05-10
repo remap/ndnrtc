@@ -15,7 +15,7 @@ using namespace ndnrtc;
 using namespace std;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 0
 TEST(AudioSenderParamsTest, CheckPrefixes)
 {
     ParamsStruct p = DefaultParams;
@@ -23,7 +23,7 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
     p.streamName = "audio0";
     p.streamThread = "pcmu2";
     
-    const char *hubEx = "ndn/ucla.edu/apps";
+    const char *hubEx = "ndn/edu/ucla/apps";
     char *userEx = (char*)"testuser";
     char *streamEx = (char*)"audio0";
     
@@ -32,24 +32,34 @@ TEST(AudioSenderParamsTest, CheckPrefixes)
         memset(prefix, 0, 256);
         sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/key", hubEx, userEx, streamEx);
         
-        string prefixS;
-        NdnAudioSender::getStreamKeyPrefix(p, prefixS);
-        EXPECT_STREQ(prefix, prefixS.c_str());
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamKeyPrefix(p);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
     }
     {
         char prefix[256];
         memset(prefix, 0, 256);
-        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames", hubEx, userEx, streamEx);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/delta", hubEx, userEx, streamEx);
         
-        string prefixS;
-        NdnAudioSender::getStreamFramePrefix(p, prefixS);
-        EXPECT_STREQ(prefix, prefixS.c_str());
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamFramePrefix(p);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
     }
-    if (0) // remove this check for now - RTP prefix equals RTCP
     {
         char prefix[256];
         memset(prefix, 0, 256);
-        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/control", hubEx, userEx, streamEx);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/key", hubEx, userEx, streamEx);
+        
+        shared_ptr<string> prefixS = NdnRtcNamespace::getStreamFramePrefix(p, true);
+        EXPECT_FALSE(prefixS.get() == nullptr);
+        EXPECT_STREQ(prefix, prefixS->c_str());
+    }
+    
+    // currently RTP prefix equals RTCP
+    {
+        char prefix[256];
+        memset(prefix, 0, 256);
+        sprintf(prefix, "/%s/ndnrtc/user/%s/streams/%s/pcmu2/frames/delta", hubEx, userEx, streamEx);
         
         string prefixS;
         NdnAudioSender::getStreamControlPrefix(p, prefixS);
@@ -68,7 +78,7 @@ TEST(AudioData, TestCreateDelete)
         bool isRTCP = false;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
     
-        NdnAudioData::AudioPacket p = {isRTCP, timestamp_exp, dataSz, dummyData};
+        NdnAudioData::AudioPacket p = {isRTCP, dataSz, dummyData};
         ASSERT_NO_THROW(
                         NdnAudioData data(p);
                         );
@@ -81,6 +91,7 @@ TEST(AudioData, TestCreateDelete)
         EXPECT_TRUE(NULL != packetData);
     }
 }
+
 TEST(AudioData, TestPackUnpack)
 {
     {
@@ -92,16 +103,19 @@ TEST(AudioData, TestPackUnpack)
         bool isRTCP_exp = false;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+        PacketData::PacketMetadata meta = {50., timestamp_exp};
+        NdnAudioData::AudioPacket p = {isRTCP_exp, /*timestamp_exp,*/
             dataSz, dummyData};
-        NdnAudioData data(p);
+        NdnAudioData data(p, meta);
+        
+        NdnAudioData resData(data.getLength(), data.getData());
+        EXPECT_TRUE(resData.isValid());
         
         NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
-                                                       data.getData(), resP));
+        data.getAudioPacket(resP);
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
-        EXPECT_EQ(timestamp_exp, resP.timestamp_);
+        EXPECT_EQ(timestamp_exp, resData.getMetadata().timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         
@@ -118,16 +132,19 @@ TEST(AudioData, TestPackUnpack)
         bool isRTCP_exp = true;
         int64_t timestamp_exp = NdnRtcUtils::millisecondTimestamp();
         
-        NdnAudioData::AudioPacket p = {isRTCP_exp, timestamp_exp,
+        NdnAudioData::AudioPacket p = {isRTCP_exp,
             dataSz, dummyData};
-        NdnAudioData data(p);
+        PacketData::PacketMetadata meta = {50., timestamp_exp};
+        NdnAudioData data(p, meta);
+
+        NdnAudioData resData(data.getLength(), data.getData());
+        EXPECT_TRUE(resData.isValid());
 
         NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data.getLength(),
-                                                       data.getData(), resP));
+        resData.getAudioPacket(resP);
         
         EXPECT_EQ(isRTCP_exp, resP.isRTCP_);
-        EXPECT_EQ(timestamp_exp, resP.timestamp_);
+        EXPECT_EQ(timestamp_exp, resData.getMetadata().timestamp_);
         EXPECT_EQ(dataSz, resP.length_);
         EXPECT_FALSE(NULL == resP.data_);
         
@@ -135,6 +152,7 @@ TEST(AudioData, TestPackUnpack)
             EXPECT_EQ(dummyData[i], resP.data_[i]);
     }
 }
+
 TEST(AudioData, TestUnpackError)
 {
     {
@@ -148,12 +166,11 @@ TEST(AudioData, TestUnpackError)
         bool isRTCP;
         unsigned char *packetData = NULL;
         
-        NdnAudioData::AudioPacket resP;
-        ASSERT_EQ(RESULT_ERR, NdnAudioData::unpackAudio(dataSz,
-                                                       dummyData, resP));
+        NdnAudioData resData(dataSz, dummyData);
+        EXPECT_FALSE(resData.isValid());
     }
 }
-
+#endif
 class AudioSenderTester : public webrtc::Transport,
 public NdnRtcObjectTestHelper, public UnitTestHelperNdnNetwork
 {
@@ -167,10 +184,10 @@ public:
         params_ = DefaultParamsAudio;
         params_.streamName = "audio-sender-test";
         
-        std::string streamAccessPrefix, userPrefix = "whatever";
-        MediaSender::getStreamKeyPrefix(params_, streamAccessPrefix);
+        shared_ptr<std::string> streamAccessPrefix = NdnRtcNamespace::getStreamKeyPrefix(params_);
+        std::string userPrefix = "whatever";
         
-        UnitTestHelperNdnNetwork::NdnSetUp(streamAccessPrefix, userPrefix);
+        UnitTestHelperNdnNetwork::NdnSetUp(*streamAccessPrefix, userPrefix);
         
         config_.Set<webrtc::AudioCodingModuleFactory>(new webrtc::NewAudioCodingModuleFactory());
         voiceEngine_ = webrtc::VoiceEngine::Create(config_);
@@ -205,15 +222,15 @@ public:
     {
 //        cout << "publish rtp packet " << len << endl;
         rtpSent_++;
-        sender_->publishRTPAudioPacket(len, (unsigned char*)data);
+        sender_->onDeliverRtpFrame(len, (unsigned char*)data);
         
         return len;
     }
     int SendRTCPPacket(int channel, const void *data, int len)
     {
-//        cout << "publish rtcp packet " << len << endl;
+        cout << "publish rtcp packet " << len << endl;
         rtcpSent_++;
-        sender_->publishRTCPAudioPacket(len, (unsigned char*)data);
+        sender_->onDeliverRtcpFrame(len, (unsigned char*)data);
 
         return len;
     }
@@ -224,10 +241,15 @@ public:
         
         unsigned char *rawAudioData = (unsigned char*)data->getContent().buf();
         
-        NdnAudioData::AudioPacket packet;
+        SegmentData segData;
+        EXPECT_EQ(RESULT_OK, SegmentData::segmentDataFromRaw(data->getContent().size(), rawAudioData, segData));
         
-        EXPECT_EQ(RESULT_OK, NdnAudioData::unpackAudio(data->getContent().size(),
-                                                       rawAudioData, packet));
+        NdnAudioData audioData(segData.getSegmentDataLength(),
+                               segData.getSegmentData());
+        EXPECT_TRUE(audioData.isValid());
+        
+        NdnAudioData::AudioPacket packet;
+        EXPECT_EQ(RESULT_OK, audioData.getAudioPacket(packet));
         
         if (packet.isRTCP_)
             rtcpDataFetched_++;
@@ -240,7 +262,8 @@ public:
         UnitTestHelperNdnNetwork::onTimeout(interest);
         
         timeoutReceived_ = true;
-        LOG_INFO("Time out for interest %s", interest->getName().toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelInfo)
+        << "Time out for interest %s" << interest->getName() << endl;
     }
     
 protected:
@@ -256,40 +279,42 @@ protected:
     webrtc::VoENetwork *voe_network_;
     webrtc::Config config_;
 };
-
+#if 0
 TEST_F(AudioSenderTester, TestAudioData)
 {
-    int64_t ts = NdnRtcUtils::millisecondTimestamp();
-    NdnAudioData::AudioPacket p = {false, ts,
-        100, (unsigned char*)malloc(100)};
-    NdnAudioData data(p);
-    
     {
-        EXPECT_TRUE(NdnAudioData::isAudioData(data.getLength(), data.getData()));
+        double packetRate = 50.;
+        int64_t ts = NdnRtcUtils::millisecondTimestamp();
+        PacketData::PacketMetadata meta = {packetRate, ts};
+        NdnAudioData::AudioPacket p = {false,
+            100, (unsigned char*)malloc(100)};
+        NdnAudioData data(p, meta);
         
-        unsigned char *random = (unsigned char *)malloc(100);
-        EXPECT_FALSE(NdnAudioData::isAudioData(100, random));
-        free(random);
-    }
-    
-    {
-        EXPECT_EQ(ts, NdnAudioData::getTimestamp(data.getLength(), data.getData()));
+        NdnAudioData::AudioPacket packet;
         
-        unsigned char *random = (unsigned char *)malloc(100);
-        EXPECT_EQ(-1, NdnAudioData::getTimestamp(100, random));
-        free(random);
-    }
-    
-    free(p.data_);
-}
+        EXPECT_TRUE(data.isValid());
+        EXPECT_EQ(PacketData::TypeAudio, data.getType());
+        EXPECT_NE(PacketData::TypeVideo, data.getType());
+        EXPECT_EQ(RESULT_OK, data.getAudioPacket(packet));
 
+        EXPECT_EQ(p.isRTCP_, packet.isRTCP_);
+        EXPECT_EQ(ts, data.getMetadata().timestamp_);
+        EXPECT_EQ(p.length_, packet.length_);
+
+        
+        EXPECT_EQ(packetRate, data.getMetadata().packetRate_);
+        free(p.data_);
+    }
+}
+#endif
+#if 1
 TEST_F(AudioSenderTester, TestSend)
 {
     int nPackets = 100;
     
     params_.freshness =  (int)(((double)20*(double)nPackets*2)/1000.);
     
-    sender_->init(ndnTransport_);
+    sender_->init(ndnReceiverFace_, ndnReceiverTransport_);
     channel_ = voe_base_->CreateChannel();
     
     ASSERT_LE(0, channel_);
@@ -310,13 +335,14 @@ TEST_F(AudioSenderTester, TestSend)
     UnitTestHelperNdnNetwork::startProcessingNdn();
     
     // now check what we have on the network
-    string rtpPrefix, rtcpPrefix;
-    EXPECT_EQ(RESULT_OK, NdnAudioSender::getStreamFramePrefix(params_,
-                                                              rtpPrefix));
+    shared_ptr<string> rtpPrefix;
+    string rtcpPrefix;
+    
+    rtpPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
     EXPECT_EQ(RESULT_OK, NdnAudioSender::getStreamControlPrefix(params_,
                                                                 rtcpPrefix));
     
-    Name rtpPacketPrefix(rtpPrefix);
+    Name rtpPacketPrefix(*rtpPrefix);
     Name rtcpPacketPrefix(rtcpPrefix);
     
     for (int i = 0; i < rtpSent_+rtcpSent_; i++)
@@ -330,7 +356,7 @@ TEST_F(AudioSenderTester, TestSend)
         prefix.addComponent((const unsigned char*)&frameNoStr[0],
                             strlen(frameNoStr));
         
-        LOG_INFO("expressing %s", prefix.toUri().c_str());
+        Logger::sharedInstance().log(NdnLoggerLevelInfo) << "expressing " << prefix << endl;
         ndnFace_->expressInterest(prefix, bind(&AudioSenderTester::onData, this, _1, _2),
                                   bind(&AudioSenderTester::onTimeout, this, _1));
     }
@@ -340,9 +366,12 @@ TEST_F(AudioSenderTester, TestSend)
     
     UnitTestHelperNdnNetwork::stopProcessingNdn();
     
+    cout << "RTP sent: " << rtpSent_ << " fetched: " << rtpDataFetched_ << endl;
+    cout << "RTCP sent: " << rtcpSent_ << " fetched: " << rtcpDataFetched_ << endl;
+    
     EXPECT_EQ(rtpSent_, rtpDataFetched_);
     EXPECT_EQ(rtcpSent_, rtcpDataFetched_);
     EXPECT_LT(rtcpSent_, rtpSent_);
     WAIT(params_.freshness*1000);
 }
-
+#endif

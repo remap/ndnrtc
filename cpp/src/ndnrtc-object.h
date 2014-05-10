@@ -14,29 +14,33 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
+#include "ndnrtc-observer.h"
 
-namespace ndnrtc {
-    class INdnRtcObjectObserver {
-    public:
-        // public methods go here
-        virtual void onErrorOccurred(const char *errorMessage) = 0;
-    };
-    
-    class NdnRtcObject :    public ndnlog::LoggerObject,
+namespace ndnrtc {    
+    class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,
                             public INdnRtcObjectObserver
     {
     public:
         // construction/desctruction
-        NdnRtcObject(const ParamsStruct &params = DefaultParams,
-                     NdnLogger *logger = nullptr);
+        NdnRtcObject(const ParamsStruct &params = DefaultParams);
         NdnRtcObject(const ParamsStruct &params,
-                     NdnLogger *logger,
                      INdnRtcObjectObserver *observer);
         virtual ~NdnRtcObject();
         
         // public methods go here
         void setObserver(INdnRtcObjectObserver *observer) { observer_ = observer; }
+        
         virtual void onErrorOccurred(const char *errorMessage);
+        
+        // ILoggingObject interface conformance
+        virtual std::string
+        getDescription() const;
+        
+        virtual bool
+        isLoggingEnabled() const
+        {
+            return true;
+        }
         
     protected:
         // critical section for observer's callbacks
