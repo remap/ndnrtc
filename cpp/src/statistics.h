@@ -31,6 +31,7 @@ namespace ndnrtc {
         // playback latency (reliable only if consumer and producer are
         // ntp-synchronized)
         double latency_;
+        double rttEstimation_;
         
         // buffers
         unsigned int rebufferingEvents_;
