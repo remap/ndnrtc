@@ -60,6 +60,7 @@ namespace ndnrtc{
             bool isInferredPlayback_;
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
+            int playbackAdjustment_;
             
             shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
@@ -84,8 +85,10 @@ namespace ndnrtc{
              */
             virtual bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey,
-                           double assembledLevel) = 0;
+                           PacketNumber playbackPacketNo,
+                           PacketNumber sequencePacketNo,
+                           PacketNumber pairedPacketNo,
+                           bool isKey, double assembledLevel) = 0;
             
             static bool
             playoutThreadRoutine(void *obj)

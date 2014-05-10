@@ -474,6 +474,19 @@ ndnrtc::new_api::FrameBuffer::Slot::PlaybackComparator::operator()
     return ascending^inverted_;
 }
 
+bool
+ndnrtc::new_api::FrameBuffer::Slot::isNextPacket(const Slot& slot,
+                                                 const Slot& nextSlot)
+{
+    if (slot.getConsistencyState()&Slot::HeaderMeta &&
+        nextSlot.getConsistencyState()&Slot::HeaderMeta)
+    {
+        return (slot.getPlaybackNumber() == nextSlot.getPlaybackNumber()+1);
+    }
+    
+    return false;
+}
+
 //******************************************************************************
 #pragma mark - private
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>
@@ -851,7 +864,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
-    dumpQueue();
+//    dumpQueue();
     sort();
     int64_t playbackDeadlineMs = 0;
     
@@ -1430,6 +1443,8 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 void
 ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                                           PacketNumber& packetNo,
+                                          PacketNumber& sequencePacketNo,
+                                          PacketNumber& pairedPacketNo,
                                           bool& isKey, double& assembledLevel)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
@@ -1437,60 +1452,74 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
     
     if (slot.get())
     {
+        packetNo = slot->getPlaybackNumber();
+        sequencePacketNo = slot->getSequentialNumber();
+        pairedPacketNo = slot->getPairedFrameNumber();
+        isKey = (slot->getNamespace() == Slot::Key);
+        assembledLevel = slot->getAssembledLevel();
+        
         if (playbackNo_ >= 0 &&
             slot->getPlaybackNumber() >= 0 &&
             playbackNo_+1 != slot->getPlaybackNumber())
-
+        {
             LogWarnC
             << "playback No " << playbackNo_
             << " current playback No " << slot->getPlaybackNumber() << endl;
-        
-        playbackSlot_ = slot;
-        playbackNo_ = slot->getPlaybackNumber();
-        
-        assembledLevel = slot->getAssembledLevel();
-        packetNo = slot->getPlaybackNumber();
-        isKey = (slot->getNamespace() == Slot::Key);
-        
-        slot->lock();
-        
-        if (assembledLevel > 0 &&
-            assembledLevel < 1.)
-        {
-            nIncomplete_++;
             
-            LogStatC
-            << "\tincomplete\t" << nIncomplete_  << "\t"
-            << (isKey?"K":"D") << "\t"
-            << packetNo << "\t" << endl;
-            
-            if (consumer_->getParameters().useFec)
+            // if we got old slot - skip it
+            if (slot->getPlaybackNumber() <= playbackNo_)
             {
-                LogTraceC << "applying FEC for incomplete frame "
-                << packetNo << " " << assembledLevel << endl;
-                
-                slot->recover();
-                
-                if (slot->isRecovered())
-                {
-                    assembledLevel = 1.;
-                    nRecovered_++;
-                    
-                    LogStatC
-                    << "\trecovered\t" << slot->getSequentialNumber()  << "\t"
-                    << (isKey?"K":"D") << "\t"
-                    << packetNo << "\t" << endl;
-                }
+                // we should release this frame and skip it
+                playbackQueue_.popSlot();
+                skipFrame_ = true;
             }
         }
         
-        slot->getPacketData(packetData);
-        
-        addBufferEvent(Event::Playout, slot);
-        
-        LogTraceC << "locked " << slot->dump()
-        << " size " << ((*packetData)?(*packetData)->getLength():-1) << endl;
-    }
+        if (!skipFrame_)
+        {
+            playbackSlot_ = slot;
+            playbackNo_ = slot->getPlaybackNumber();
+            
+            slot->lock();
+            
+            if (assembledLevel > 0 &&
+                assembledLevel < 1.)
+            {
+                nIncomplete_++;
+                
+                LogStatC
+                << "\tincomplete\t" << nIncomplete_  << "\t"
+                << (isKey?"K":"D") << "\t"
+                << packetNo << "\t" << endl;
+                
+                if (consumer_->getParameters().useFec)
+                {
+                    LogTraceC << "applying FEC for incomplete frame "
+                    << packetNo << " " << assembledLevel << endl;
+                    
+                    slot->recover();
+                    
+                    if (slot->isRecovered())
+                    {
+                        assembledLevel = 1.;
+                        nRecovered_++;
+                        
+                        LogStatC
+                        << "\trecovered\t" << slot->getSequentialNumber()  << "\t"
+                        << (isKey?"K":"D") << "\t"
+                        << packetNo << "\t" << endl;
+                    }
+                }
+            }
+            
+            slot->getPacketData(packetData);
+            
+            addBufferEvent(Event::Playout, slot);
+            
+            LogTraceC << "locked " << slot->dump()
+            << " size " << ((*packetData)?(*packetData)->getLength():-1) << endl;
+        } // if (!skipFrame_)
+    } // if (slot.get())
     else
     {
         playbackSlot_.reset();
@@ -1504,7 +1533,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             // should never happen
             assert(false);
         }
-    }
+    } // else (slot.get())
 }
 
 int
@@ -1514,7 +1543,7 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
     
     isInferredDuration = true;
     
-    int playbackDuration = playbackQueue_.getInferredFrameDuration();
+    int playbackDuration = (skipFrame_)?0:playbackQueue_.getInferredFrameDuration();
     shared_ptr<FrameBuffer::Slot> lockedSlot = playbackSlot_;
     
     if (lockedSlot.get())
@@ -1523,18 +1552,19 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
         
         shared_ptr<FrameBuffer::Slot> nextSlot = playbackQueue_.peekSlot();
         
-        if (lockedSlot->getConsistencyState()&Slot::HeaderMeta &&
-            nextSlot.get() &&
-            nextSlot->getConsistencyState()&Slot::HeaderMeta)
+        if (nextSlot.get() &&
+            FrameBuffer::Slot::isNextPacket(*lockedSlot, *nextSlot))
         {
             playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
             isInferredDuration = false;
             
-            LogTraceC << "playback " << playbackDuration << endl;
+            LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+            << " " << playbackDuration << endl;
         }
         else
         {
-            LogTraceC << "playback (inferred)" << playbackDuration << endl;
+            LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+            << " (inferred) " << playbackDuration << endl;
         }
         
         LogTraceC << "unlocked " << lockedSlot->getPrefix() << endl;
@@ -1545,6 +1575,9 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
         
         isEstimationNeeded_ = true;
     }
+    
+    // reset skipFrame_ flag
+    skipFrame_ = false;
     
     return playbackDuration;
 }
@@ -1657,6 +1690,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     estimatedSizeMs_ = -1;
     isEstimationNeeded_ = true;
     playbackNo_ = -1;
+    skipFrame_ = false;
     playbackSlot_.reset();
     nKeyFrames_ = 0;
     nReceivedFrames_ = 0;

@@ -504,6 +504,9 @@ namespace ndnrtc
                     return str.str();
                 }
                 
+                static bool
+                isNextPacket(const Slot& slot, const Slot& nextSlot);
+                
                 std::string
                 dump();
                 
@@ -764,11 +767,14 @@ namespace ndnrtc
              *                       in this case, *packetData will be null).
              */
             virtual void
-            acquireSlot(PacketData** packetData, PacketNumber& packetNo,
+            acquireSlot(ndnrtc::PacketData **packetData,
+                        PacketNumber& packetNo,
+                        PacketNumber& sequencePacketNo,
+                        PacketNumber& pairedPacketNo,
                         bool& isKey, double& assembledLevel);
             
             /**
-             * Releases previously acquired slot. 
+             * Releases previously acquired slot.
              * After this call, slot will be unlocked, reset and freed in the
              * buffer so it can be re-used for new frames. One should not rely 
              * on data slot's consistency after this call.
@@ -888,6 +894,9 @@ namespace ndnrtc
             unsigned int nReceivedFrames_, nRescuedFrames_,
                 nIncomplete_, nRecovered_;
             
+            // flag which determines whether currently acquired packet should
+            // be skipped (in case of old slot acquisition)
+            bool skipFrame_ = false;
             shared_ptr<Slot> playbackSlot_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;

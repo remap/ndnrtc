@@ -27,11 +27,14 @@ namespace ndnrtc {
             // this flags indicates whether frames should be played out (unless
             // new full key frame received)
             bool hasKeyForGop_;
+            PacketNumber currentKeyNo_;
             
             bool
             playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber packetNo, bool isKey,
-                           double assembledLevel);
+                           PacketNumber playbackPacketNo,
+                           PacketNumber sequencePacketNo,
+                           PacketNumber pairedPacketNo,
+                           bool isKey, double assembledLevel);
         };
     }
 }

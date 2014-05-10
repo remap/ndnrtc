@@ -46,6 +46,7 @@ Playout::~Playout()
 int
 Playout::init(void* frameConsumer)
 {
+    setDescription(description_);    
     jitterTiming_.flush();
     frameConsumer_ = frameConsumer;
     
@@ -62,6 +63,7 @@ Playout::start()
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
+    playbackAdjustment_ = 0;
     data_ = nullptr;
     
     unsigned int tid;
@@ -124,18 +126,18 @@ Playout::processPlayout()
                 data_ = nullptr;
             }
             
-            PacketNumber packetNo;
+            PacketNumber packetNo, sequencePacketNo, pairedPacketNo;
             double assembledLevel = 0;
             bool isKey;
             
-            frameBuffer_->acquireSlot(&data_, packetNo, isKey, assembledLevel);
-            
-            unsigned int playbackAdjustment = 0;
+            frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
+                                      pairedPacketNo, isKey, assembledLevel);
             
             //******************************************************************
             // next call is overriden by specific playout mechanism - either
             // video or audio. the rest of the code is similar for both cases
-            if (playbackPacket(now, data_, packetNo, isKey, assembledLevel))
+            if (playbackPacket(now, data_, packetNo, sequencePacketNo,
+                               pairedPacketNo, isKey, assembledLevel))
             {
                 if (data_)
                 {
@@ -153,18 +155,17 @@ Playout::processPlayout()
                     isInferredPlayback_)
                 {
                     int realPlayback = data_->getMetadata().timestamp_-lastPacketTs_;
-                    playbackAdjustment = realPlayback-inferredDelay_;
+                    playbackAdjustment_ += (realPlayback-inferredDelay_);
+                    inferredDelay_ = 0;
                 }
                 
                 lastPacketTs_ = data_->getMetadata().timestamp_;
-                
-                LogStatC << "\tplay\t" << packetNo << "\ttotal\t" << nPlayed_ << endl;
             }
             else
             {
                 nMissed_++;
                 
-                LogStatC << "\tmissed\t" <<packetNo << "\ttotal\t"<< nMissed_ << endl;
+                LogStatC << "\tmissed\t" << packetNo << "\ttotal\t"<< nMissed_ << endl;
             }
             //******************************************************************
             
@@ -176,21 +177,25 @@ Playout::processPlayout()
             else
                 inferredDelay_ = 0;
             
-            assert(playbackDelay >= 0);
-            
-            if (playbackAdjustment > playbackDelay)
+            if (playbackAdjustment_ < 0 &&
+                abs(playbackAdjustment_) > playbackDelay)
             {
-                playbackAdjustment -= playbackDelay;
+                playbackAdjustment_ += playbackDelay;
                 playbackDelay = 0;
             }
             else
-                playbackDelay += playbackAdjustment;
+            {
+                playbackDelay += playbackAdjustment_;
+                playbackAdjustment_ = 0;
+            }
+            
+            assert(playbackDelay >= 0);
             
             LogTraceC
-            << "playout time (inferred "
+            << "playout time " << packetNo << " (inferred "
             << (isInferredPlayback_?"YES":"NO") << ") "
             << playbackDelay
-            << " (adjustment " << playbackAdjustment
+            << " (adjustment " << playbackAdjustment_
             << ") data: " << (data_?"YES":"NO") << endl;
             
             if (playbackDelay >= 0)

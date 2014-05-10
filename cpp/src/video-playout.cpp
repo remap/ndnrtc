@@ -38,16 +38,22 @@ VideoPlayout::~VideoPlayout()
 int
 VideoPlayout::start()
 {
-    Playout::start();
+    int res = Playout::start();
+    
     hasKeyForGop_ = false;
+    currentKeyNo_ = 0;
+    
+    return res;
 }
 
 //******************************************************************************
 #pragma mark - private
 bool
 VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
-                             PacketNumber packetNo, bool isKey,
-                             double assembledLevel)
+                             PacketNumber playbackPacketNo,
+                             PacketNumber sequencePacketNo,
+                             PacketNumber pairedPacketNo,
+                             bool isKey, double assembledLevel)
 {
     bool res = false;
     webrtc::EncodedImage frame;
@@ -66,20 +72,32 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         {
             if (isKey && assembledLevel >= 1)
             {
+                currentKeyNo_ = sequencePacketNo;
                 hasKeyForGop_ = true;
                 LogTraceC << "resumed frames playout" << endl;
             }
             
-            if (assembledLevel < 1)
-                hasKeyForGop_ = false;
+            hasKeyForGop_ = (assembledLevel >= 1);
+            
+            if (!isKey)
+            {
+                if (pairedPacketNo != currentKeyNo_)
+                    LogTrace("order.log")
+                    << playbackPacketNo << " is unexpected: "
+                    << " current key " << currentKeyNo_
+                    << " got " << sequencePacketNo << endl;
+                
+                hasKeyForGop_ &= (pairedPacketNo == currentKeyNo_);
+            }
         }
         
         if (hasKeyForGop_ || !params_.skipIncomplete)
         {
+            LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << nPlayed_ << endl;
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
         }
         else
-            LogWarnC << "skipping incomplete frame " << packetNo
+            LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
             << " isKey: " << (isKey?"YES":"NO")
             << " level: " << assembledLevel << endl;
         
