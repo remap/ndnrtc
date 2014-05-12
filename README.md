@@ -42,6 +42,10 @@ TBD - currently only binaries for MacOS X 10.7, 10.8 and 10.9 are provided.
 
 How to use
 ----
+#### *ndnd-tlv configuration*
+NOTE: *In case of using ndnd-tlv remember to [configure](http://redmine.named-data.net/projects/ndnd-tlv/wiki/Configuring_ndnd-tlv) it beforehand.*
+
+
 1. Open Terminal
 2. Run `cd` to the folder where demo app resides:
 <pre>
