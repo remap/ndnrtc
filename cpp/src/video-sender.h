@@ -52,7 +52,7 @@ namespace ndnrtc
         
         int
         publishParityData(PacketNumber frameNo,
-                          const webrtc::EncodedImage &encodedImage,
+                          const PacketData &packetData,
                           unsigned int nSegments,
                           const shared_ptr<Name>& framePrefix,
                           const PrefixMetaInfo& prefixMeta);

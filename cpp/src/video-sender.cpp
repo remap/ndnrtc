@@ -117,10 +117,10 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
         
         if (params_.useFec)
         {
-            int nSegmentsParity = publishParityData(frameNo, encodedImage,
+            int nSegmentsParity = publishParityData(frameNo, frameData,
                                                     nSegments, framePrefix,
                                                     prefixMeta);
-            assert(nSegmentsParity == nSegmentsParityExpected);
+//            assert(nSegmentsParity == nSegmentsParityExpected);
         }
         
         if (!isKeyFrame)
@@ -159,7 +159,7 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
 
 int
 NdnVideoSender::publishParityData(PacketNumber frameNo,
-                                  const webrtc::EncodedImage &encodedImage,
+                                  const PacketData &packetData,
                                   unsigned int nSegments,
                                   const shared_ptr<Name>& framePrefix,
                                   const PrefixMetaInfo& prefixMeta)
@@ -167,8 +167,8 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
     int nSegmentsP = -1;
     FrameParityData frameParityData;
     
-    if (RESULT_GOOD(frameParityData.initFromFrame(encodedImage, ParityRatio,
-                                                  nSegments, segmentSize_)))
+    if (RESULT_GOOD(frameParityData.initFromPacketData(packetData, ParityRatio,
+                                                       nSegments, segmentSize_)))
     {
         //Prefix
         shared_ptr<Name> framePrefixParity(new Name(*framePrefix));

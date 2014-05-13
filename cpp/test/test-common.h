@@ -167,9 +167,9 @@ public:
             NdnFrameData frameData(*frame, meta);
             
             packetData = new FrameParityData();
-            ((FrameParityData*)packetData)->initFromFrame(*frame, 0.3,
-                                                          Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize),
-                                                          segmentSize);
+            ((FrameParityData*)packetData)->initFromPacketData(frameData, 0.3,
+                                                               Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize),
+                                                               segmentSize);
         }
         
         // step 2 - segmentize packet
@@ -212,17 +212,22 @@ public:
         EXPECT_EQ(f1->_completeFrame, f2->_completeFrame);
         
         int nDiffer = 0;
+        int diffStart = 0;
         for (unsigned int i = 0; i < f1->_length; i++)
         {
             if (f1->_buffer[i] != f2->_buffer[i])
             {
+                if (diffStart == 0)
+                    diffStart = i;
+                
                 nDiffer++;
             }
         }
         EXPECT_EQ(0, nDiffer);
         
         if (nDiffer)
-            std::cout << nDiffer << " bytes are different out of " << f1->_length << std::endl;
+            std::cout << nDiffer << " bytes are different out of " << f1->_length
+            << " starting from " << diffStart << std::endl;
     }
     
     static int randomInt(int min, int max)

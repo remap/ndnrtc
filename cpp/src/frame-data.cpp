@@ -217,12 +217,11 @@ PacketData(length, rawData)
 }
 
 int
-FrameParityData::initFromFrame(const webrtc::EncodedImage& frame,
-                               double parityRatio,
-                               unsigned int nSegments,
-                               unsigned int segmentSize)
+FrameParityData::initFromPacketData(const PacketData& packetData,
+                                    double parityRatio,
+                                    unsigned int nSegments,
+                                    unsigned int segmentSize)
 {
-    uint32_t dataLen = frame._length;
     uint32_t nParitySegments = getParitySegmentsNum(nSegments, parityRatio);
     
     length_ = getParityDataLength(nSegments, parityRatio, segmentSize);
@@ -232,7 +231,7 @@ FrameParityData::initFromFrame(const webrtc::EncodedImage& frame,
     // create redundancy data
     Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize);
     
-    if (enc.encode((char*)frame._buffer, (char*)data_) < 0)
+    if (enc.encode((char*)packetData.getData(), (char*)data_) < 0)
         return RESULT_ERR;
     else
     {

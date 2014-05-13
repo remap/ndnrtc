@@ -400,7 +400,7 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
 //        << slotPrefix_ << endl;
     }
     
-    isRecovered_ = ((nRecovered + nSegmentsReady_) == nSegmentsTotal_);
+    isRecovered_ = ((nRecovered + nSegmentsReady_) >= nSegmentsTotal_);
     
     return nRecovered;
 }
