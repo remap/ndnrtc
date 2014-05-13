@@ -181,12 +181,13 @@ namespace ndnrtc {
         
         void
         setMetadata(PacketMetadata& metadata) {}
-        
+
         int
-        initFromFrame(const webrtc::EncodedImage& frame,
-                      double parityRatio,
-                      unsigned int nSegments,
-                      unsigned int segmentSize);
+        initFromPacketData(const PacketData& packetData,
+                           double parityRatio,
+                           unsigned int nSegments,
+                           unsigned int segmentSize);
+
         
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
