@@ -161,10 +161,10 @@ public:
         PacketData *packetData;
         
         if (!isParity)
-            packetData = new NdnFrameData(*frame, meta);
+            packetData = new NdnFrameData(*frame, segmentSize, meta);
         else
         {
-            NdnFrameData frameData(*frame, meta);
+            NdnFrameData frameData(*frame, segmentSize, meta);
             
             packetData = new FrameParityData();
             ((FrameParityData*)packetData)->initFromPacketData(frameData, 0.3,

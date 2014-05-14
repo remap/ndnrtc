@@ -16,14 +16,13 @@
 #include "rtt-estimation.h"
 #include "ndnrtc-debug.h"
 #include "ndnrtc-namespace.h"
-
-#include <ndn-fec/fec_common.h>
-#include <ndn-fec/fec_decode.h>
+#include "fec.h"
 
 using namespace std;
 using namespace ndnlog;
 using namespace webrtc;
 using namespace ndnrtc;
+using namespace fec;
 
 #define RECORD 0
 #if RECORD
@@ -376,19 +375,13 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
     int nRecovered  = 0;
     
     if (getAssembledLevel() < 1.)
-    {
-        RS28INFO rs28Info;
-        
-        rs28Info.data_segment_num = nSegmentsTotal_;
-        rs28Info.parity_segment_num = nSegmentsParity_;
-        rs28Info.one_segment_size = segmentSize_;
-        rs28Info.buf = (char*)slotData_;
-        rs28Info.r_list = (char*)fecSegmentList_;
-        
-        Rs28Decode dec(rs28Info);
+    {        
+        Rs28Decoder dec(nSegmentsTotal_, nSegmentsParity_, segmentSize_);
         
         if (nSegmentsParity_ > 0)
-            nRecovered = dec.decode();
+            nRecovered = dec.decode(slotData_,
+                                    slotData_+nSegmentsTotal_*segmentSize_,
+                                    fecSegmentList_);
         
 //        LogTraceC << "recovery: "
 //        << "level " << getAssembledLevel()

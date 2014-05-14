@@ -150,10 +150,6 @@ namespace ndnrtc {
         getType() = 0;
         
         static int
-        copyPacketFromRaw(unsigned int length, const unsigned char* data,
-                         PacketData **packetData);
-        
-        static int
         packetFromRaw(unsigned int length, unsigned char* data,
                       PacketData **packetData);
         
@@ -204,13 +200,17 @@ namespace ndnrtc {
      * Class is used for packaging encoded frame metadata and actual data for
      * transferring over the network.
      * It has also methods for unarchiving this data into an encoded frame.
+     * 
      */
     class NdnFrameData : public PacketData
     {
     public:
         NdnFrameData(unsigned int length, const unsigned char* rawData);
-        NdnFrameData(const webrtc::EncodedImage &frame);
-        NdnFrameData(const webrtc::EncodedImage &frame, PacketMetadata &metadata);
+        NdnFrameData(const webrtc::EncodedImage &frame,
+                     unsigned int segmentSize);
+        NdnFrameData(const webrtc::EncodedImage &frame,
+                     unsigned int segmentSize,
+                     PacketMetadata &metadata);
         NdnFrameData(){}
         ~NdnFrameData();
         
@@ -252,6 +252,7 @@ namespace ndnrtc {
         } __attribute__((packed));
         
         webrtc::EncodedImage frame_;
+        unsigned int segmentSize_;
         
         FrameDataHeader
         getHeader()

@@ -77,7 +77,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     prefixMeta.playbackNo_ = packetNo_;
     prefixMeta.pairedSequenceNo_ = (isKeyFrame)?deltaFrameNo_:keyFrameNo_;
     
-    NdnFrameData frameData(encodedImage);
+    NdnFrameData frameData(encodedImage, segmentSize_);
     int nSegments = 0;
     
     int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segmentSize_);
