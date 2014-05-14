@@ -75,7 +75,14 @@ Demo application is a simple console application which loads ndnrtc library (NOT
 **Some usful tips for using demo app:**
 
 In order to:
-* **start publishing** choose option *"1 start media publishing"* or press *1*. After that, the app will ask for user name and prefix under which you would like to publish media. NOTE: *if you would like to run separate consumer later on, make sure you chose prefix which is routable from your machine*.
+* **start publishing** choose option *"1 start media publishing"* or press *1*. After that, the app will ask for **user name** and **prefix** under which you would like to publish media. NOTE: *if you would like to run separate consumer later on, make sure you chose prefix which is routable from your machine*.
+
+>Depending on the configuration file demo app may start publishing media streams under the following prefixes:
+>    - **&lt;prefix>**/ndnrtc/user/**&lt;username>**/streams/audio0/pcmu2/frames/delta - for audio samples
+>    - **&lt;prefix>**/ndnrtc/user/**&lt;username>**/streams/video0/vp8/frames/delta - for video DELTA frames
+>    - **&lt;prefix>**/ndnrtc/user/**&lt;username>**/streams/video0/vp8/frames/key - for video KEY frames
+
+
 * **fetch media stream** choose option *"3 fetch stream"* or press *3*. After that, specify username and prefix. Depending on configuration, media playback should start shortly.
 * **stop fetching** choose option *"4 stop fetching stream"* or press *4*. After that, specify username from which you want to stop fetching media.
 * **run loopback test** choose option *"6 loopback mode"* or press "*6*". App will start publishing media under username "loopback" and default prefix. Also, app will start fetching this data.

@@ -85,7 +85,7 @@ shared_ptr<std::string>
 NdnRtcNamespace::getProducerPrefix(const std::string &hub,
 const std::string &producerId)
 {
-  return buildPath(true,
+  return buildPath(hub[0] != '/',
                    &hub,
                    &NameComponentApp,
                    &NameComponentUser,
