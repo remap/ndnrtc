@@ -7,13 +7,19 @@
 //
 
 #include "test-common.h"
+#include "fec.h"
 
+::testing
+::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
+
+#if 0
 //#include <ndn-fec/fec_encode.h>
 //#include <ndn-fec/fec_decode.h>
 #include <ndn-fec/fec_common.h>
 extern "C" {
 #include "ndn-fec/lib_common/of_openfec_api.h"
 }
+
 
 // FEC classes declarations
 class FecEncode {
@@ -85,135 +91,157 @@ public:
     int decode();
 };
 
-//
+#endif
 
-::testing
-::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
-TEST(TestFEC, TestEncodeDecode)
-{
-    webrtc::EncodedImage *testFrame = NdnRtcObjectTestHelper::loadEncodedFrame();
-    
-    unsigned int nSegments = 5;
-    double parityRatio = 2;
-    unsigned int nParitySegments = ceil(parityRatio*nSegments);
-    unsigned int segmentSize = testFrame->_length/nSegments;
-    
-    PacketData::PacketMetadata meta;
-    meta.packetRate_ = 16.;
-    meta.timestamp_ = NdnRtcUtils::millisecondTimestamp();
-    meta.unixTimestamp_ = NdnRtcUtils::unixTimestamp();
-    
-    NdnFrameData frameData(*testFrame, meta);
-    Segmentizer::SegmentList segments;
-    Segmentizer::segmentize(frameData, segments, segmentSize);
-    
-    nSegments = segments.size();
-    
-    Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize);
-    
-    unsigned char* parityData = (unsigned char*)malloc(segmentSize*nParitySegments);
-    memset(parityData, 0, segmentSize*nParitySegments);
-    
-    EXPECT_EQ(0, enc.encode((char*)frameData.getData(), (char*)parityData));
-    
-    // now decode
-    unsigned char* segList = (unsigned char*)malloc(nSegments+nParitySegments);
-    memset(segList, '1', nSegments+nParitySegments);
-    
-    unsigned char* packetDataWithParity = (unsigned char*)malloc((nSegments+nParitySegments)*segmentSize);
-    memset(packetDataWithParity, 0, (nSegments+nParitySegments)*segmentSize);
-    
-    memcpy(packetDataWithParity, frameData.getData(), frameData.getLength());
-    memcpy(packetDataWithParity+nSegments*segmentSize, parityData, nParitySegments*segmentSize);
-    
-    // now remove some segment
-    int nSegmentToLose = NdnRtcObjectTestHelper::randomInt(0, nSegments);
-    
-    segList[nSegmentToLose] = '0';
-    memset(packetDataWithParity+nSegmentToLose*segmentSize, 0, segmentSize);
-    
-    RS28INFO rsInfo;
-    rsInfo.data_segment_num = nSegments;
-    rsInfo.parity_segment_num = nParitySegments;
-    rsInfo.one_segment_size = segmentSize;
-    rsInfo.buf = (char*)packetDataWithParity;
-    rsInfo.r_list = (char*)segList;
-    
-    Rs28Decode dec(rsInfo);
-    
-    EXPECT_EQ(1, dec.decode());
-    EXPECT_EQ('2', segList[nSegmentToLose]);
-    
-    // now check frame
-    NdnFrameData recoveredData(frameData.getLength(), packetDataWithParity);
-    webrtc::EncodedImage recoveredFrame;
-    recoveredData.getFrame(recoveredFrame);
-    
-    NdnRtcObjectTestHelper::checkFrames(testFrame, &recoveredFrame);
-    
-    delete testFrame;
-}
-#if 0
+#if 1
 TEST(TestFEC, TestEncodeDecodePacket)
 {
-    webrtc::EncodedImage *testFrame = NdnRtcObjectTestHelper::loadEncodedFrame();
-    
-    unsigned int nSegments = 30;
-    double parityRatio = 0.5;
-    unsigned int nParitySegments = ceil(parityRatio*nSegments);
-    unsigned int segmentSize = testFrame->_length/nSegments;
-    
-    PacketData::PacketMetadata meta;
-    meta.packetRate_ = 16.;
-    meta.timestamp_ = NdnRtcUtils::millisecondTimestamp();
-    meta.unixTimestamp_ = NdnRtcUtils::unixTimestamp();
-    
-    NdnFrameData frameData(*testFrame, meta);
-    Segmentizer::SegmentList segments;
-    Segmentizer::segmentize(frameData, segments, segmentSize);
-    
-    nSegments = segments.size();
-    
-    FrameParityData parityData;
-    
-    EXPECT_EQ(RESULT_OK, parityData.initFromPacketData(frameData, parityRatio, nSegments, segmentSize));
-    
-    // now decode
-    unsigned char* segList = (unsigned char*)malloc(nSegments+nParitySegments);
-    memset(segList, '1', nSegments+nParitySegments);
-    
-    unsigned char* packetDataWithParity = (unsigned char*)malloc((nSegments+nParitySegments)*segmentSize);
-    memset(packetDataWithParity, 0, (nSegments+nParitySegments)*segmentSize);
-    
-    memcpy(packetDataWithParity, frameData.getData(), frameData.getLength());
-    memcpy(packetDataWithParity+nSegments*segmentSize, parityData.getData(), parityData.getLength());
-    
-    // now remove some segment
-    int nSegmentToLose = NdnRtcObjectTestHelper::randomInt(0, nSegments);
-    
-    segList[nSegmentToLose] = '0';
-    memset(packetDataWithParity+nSegmentToLose*segmentSize, 0, segmentSize);
-    
-    RS28INFO rsInfo;
-    rsInfo.data_segment_num = nSegments;
-    rsInfo.parity_segment_num = nParitySegments;
-    rsInfo.one_segment_size = segmentSize;
-    rsInfo.buf = (char*)packetDataWithParity;
-    rsInfo.r_list = (char*)segList;
-    
-    Rs28Decode dec(rsInfo);
-    
-    EXPECT_EQ(1, dec.decode());
-    EXPECT_EQ('2', segList[nSegmentToLose]);
-    
-    // now check frame
-    NdnFrameData recoveredData(frameData.getLength(), packetDataWithParity);
-    webrtc::EncodedImage recoveredFrame;
-    recoveredData.getFrame(recoveredFrame);
-    
-    NdnRtcObjectTestHelper::checkFrames(testFrame, &recoveredFrame);
-    
-    delete testFrame;
+    for (int i = 0; i < 10000; i++)
+    {
+        webrtc::EncodedImage *testFrame = NdnRtcObjectTestHelper::loadEncodedFrame();
+        
+        unsigned int nSegments = 3;
+        double parityRatio = 0.5;
+        unsigned int nParitySegments = ceil(parityRatio*nSegments);
+        unsigned int segmentSize = testFrame->_length/nSegments;
+        
+        PacketData::PacketMetadata meta;
+        meta.packetRate_ = 16.;
+        meta.timestamp_ = NdnRtcUtils::millisecondTimestamp();
+        meta.unixTimestamp_ = NdnRtcUtils::unixTimestamp();
+        
+        NdnFrameData frameData(*testFrame, segmentSize, meta);
+        Segmentizer::SegmentList segments;
+        Segmentizer::segmentize(frameData, segments, segmentSize);
+        
+        nSegments = segments.size();
+        
+        FrameParityData parityData;
+        
+        EXPECT_EQ(RESULT_OK, parityData.initFromPacketData(frameData, parityRatio, nSegments, segmentSize));
+        
+        // now decode
+        unsigned char* segList = (unsigned char*)malloc(nSegments+nParitySegments);
+        memset(segList, '1', nSegments+nParitySegments);
+        
+        unsigned char* packetDataWithParity = (unsigned char*)malloc((nSegments+nParitySegments)*segmentSize);
+        memset(packetDataWithParity, 0, (nSegments+nParitySegments)*segmentSize);
+        
+        memcpy(packetDataWithParity, frameData.getData(), frameData.getLength());
+        memcpy(packetDataWithParity+nSegments*segmentSize, parityData.getData(), parityData.getLength());
+        
+        // now remove some segment
+        int nSegmentToLose = NdnRtcObjectTestHelper::randomInt(0, nSegments);
+        
+        segList[nSegmentToLose] = '0';
+        memset(packetDataWithParity+nSegmentToLose*segmentSize, 0, segmentSize);
+        
+#if 0
+        RS28INFO rsInfo;
+        rsInfo.data_segment_num = nSegments;
+        rsInfo.parity_segment_num = nParitySegments;
+        rsInfo.one_segment_size = segmentSize;
+        rsInfo.buf = (char*)packetDataWithParity;
+        rsInfo.r_list = (char*)segList;
+        
+        Rs28Decode dec(rsInfo);
+#endif
+        {
+            fec::Rs28Decoder dec(nSegments, nParitySegments, segmentSize);
+            
+            EXPECT_EQ(1, dec.decode(packetDataWithParity, parityData.getData(), segList));
+            EXPECT_EQ('2', segList[nSegmentToLose]);
+        }
+        
+        // now check frame
+        NdnFrameData recoveredData(frameData.getLength(), packetDataWithParity);
+        webrtc::EncodedImage recoveredFrame;
+        recoveredData.getFrame(recoveredFrame);
+        
+        NdnRtcObjectTestHelper::checkFrames(testFrame, &recoveredFrame);
+        
+        delete testFrame;
+    }
+}
+#endif
+#if 1
+TEST(TestFEC, TestEncodeDecode)
+{
+    for (int i = 0; i < 10000; i++)
+    {
+        webrtc::EncodedImage *testFrame = NdnRtcObjectTestHelper::loadEncodedFrame();
+        
+        unsigned int nSegments = 3;
+        double parityRatio = 0.5;
+        unsigned int nParitySegments = ceil(parityRatio*nSegments);
+        unsigned int segmentSize = testFrame->_length/nSegments;
+        
+        PacketData::PacketMetadata meta;
+        meta.packetRate_ = 16.;
+        meta.timestamp_ = NdnRtcUtils::millisecondTimestamp();
+        meta.unixTimestamp_ = NdnRtcUtils::unixTimestamp();
+        
+        NdnFrameData frameData(*testFrame, segmentSize, meta);
+        Segmentizer::SegmentList segments;
+        Segmentizer::segmentize(frameData, segments, segmentSize);
+        
+        nSegments = segments.size();
+        
+        unsigned char* parityData = (unsigned char*)malloc(segmentSize*nParitySegments);
+        memset(parityData, 0, segmentSize*nParitySegments);
+        
+        unsigned char* packetDataWithParity = (unsigned char*)malloc((nSegments+nParitySegments)*segmentSize);
+        memset(packetDataWithParity, 0, (nSegments+nParitySegments)*segmentSize);
+        
+        memcpy(packetDataWithParity, frameData.getData(), frameData.getLength());
+        
+        {
+            fec::Rs28Encoder enc(nSegments, nParitySegments, segmentSize);
+#if 0
+            Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize);
+#endif
+            
+            ASSERT_EQ(0, enc.encode(packetDataWithParity, parityData));
+        }
+        
+        memcpy(packetDataWithParity+nSegments*segmentSize, parityData, nParitySegments*segmentSize);
+        
+        // now decode
+        unsigned char* segList = (unsigned char*)malloc(nSegments+nParitySegments);
+        memset(segList, FEC_RLIST_SYMREADY, nSegments+nParitySegments);
+        
+#if 0
+        RS28INFO rsInfo;
+        rsInfo.data_segment_num = nSegments;
+        rsInfo.parity_segment_num = nParitySegments;
+        rsInfo.one_segment_size = segmentSize;
+        rsInfo.buf = (char*)packetDataWithParity;
+        rsInfo.r_list = (char*)segList;
+        
+        Rs28Decode dec(rsInfo);
+#endif
+        
+        // now remove some segment
+        int nSegmentToLose = NdnRtcObjectTestHelper::randomInt(0, nSegments);
+        
+        segList[nSegmentToLose] = FEC_RLIST_SYMEMPTY;
+        memset(packetDataWithParity+nSegmentToLose*segmentSize, 0, segmentSize);
+        
+        {
+            fec::Rs28Decoder dec(nSegments, nParitySegments, segmentSize);
+            
+            EXPECT_EQ(1, dec.decode(packetDataWithParity, parityData, segList));
+            EXPECT_EQ(FEC_RLIST_SYMREPAIRED, segList[nSegmentToLose]);
+        }
+        
+        // now check frame
+        NdnFrameData recoveredData(frameData.getLength(), packetDataWithParity);
+        webrtc::EncodedImage recoveredFrame;
+        recoveredData.getFrame(recoveredFrame);
+        
+        NdnRtcObjectTestHelper::checkFrames(testFrame, &recoveredFrame);
+        
+        delete testFrame;
+    }
 }
 #endif

@@ -10,15 +10,14 @@
 
 #include "frame-data.h"
 #include "params.h"
-
-#include <ndn-fec/fec_encode.h>
-#include <ndn-fec/fec_common.h>
+#include "fec.h"
 
 #define PREFIX_META_NCOMP 4
 
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
+using namespace fec;
 
 //******************************************************************************
 Name
@@ -71,35 +70,7 @@ PacketData::getMetadata()
     
     return meta;
 }
-int
-ndnrtc::PacketData::copyPacketFromRaw(unsigned int length,
-                                      const unsigned char *data,
-                                      ndnrtc::PacketData **packetData)
-{
-    NdnFrameData *frameData = new NdnFrameData(length, data);
-    
-    if (frameData->isValid())
-    {
-        *packetData = frameData;
-        return RESULT_OK;
-    }
-    else
-    {
-        NdnAudioData *audioData = new NdnAudioData(length, data);
 
-        if (audioData->isValid())
-        {
-            *packetData = audioData;
-            return RESULT_OK;
-        }
-        
-        delete audioData;
-    }
-    
-    delete frameData;
-    
-    return RESULT_ERR;
-}
 int
 ndnrtc::PacketData::packetFromRaw(unsigned int length,
                                   unsigned char *data,
@@ -229,9 +200,9 @@ FrameParityData::initFromPacketData(const PacketData& packetData,
     isDataCopied_ = true;
     
     // create redundancy data
-    Rs28Encode enc(nSegments+nParitySegments, nSegments, segmentSize);
+    Rs28Encoder enc(nSegments, nParitySegments, segmentSize);
     
-    if (enc.encode((char*)packetData.getData(), (char*)data_) < 0)
+    if (enc.encode(packetData.getData(), data_) < 0)
         return RESULT_ERR;
     else
     {
@@ -270,13 +241,16 @@ PacketData(length, rawData)
 {
     isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
 }
-NdnFrameData::NdnFrameData(const EncodedImage &frame)
+NdnFrameData::NdnFrameData(const EncodedImage &frame,
+                           unsigned int segmentSize)
 {
     unsigned int headerSize = sizeof(FrameDataHeader);
-
+    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
+    
     length_ = frame._length+headerSize;
     isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(length_);
+    data_ = (unsigned char*)malloc(allocSize);
+    memset(data_, 0, allocSize);
     
     // copy frame data with offset of header
     memcpy(data_+headerSize, frame._buffer, frame._length);
@@ -294,8 +268,9 @@ NdnFrameData::NdnFrameData(const EncodedImage &frame)
     isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
 }
 
-NdnFrameData::NdnFrameData(const EncodedImage &frame, PacketMetadata &metadata):
-NdnFrameData(frame)
+NdnFrameData::NdnFrameData(const EncodedImage &frame, unsigned int segmentSize,
+                           PacketMetadata &metadata):
+NdnFrameData(frame, segmentSize)
 {
     ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
