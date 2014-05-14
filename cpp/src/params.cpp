@@ -14,6 +14,35 @@
 using namespace ndnrtc;
 using namespace ndnlog;
 
+char*
+validatePrefix(const char* prefix)
+{
+    int strLen = strlen(prefix)+1;
+    char* validated = (char*)malloc(strLen);
+    memset(validated, 0, strLen);
+    
+    bool slash = false;
+    int i = 0,k = 0;
+    
+    while (prefix[i] != '\0')
+    {
+        if (!(slash && prefix[i] == '/'))
+        {
+            validated[k] = prefix[i];
+            k++;
+        }
+
+        slash = (prefix[i] == '/');
+        i++;
+    }
+
+    // remove trailing slash
+    if (slash)
+        validated[k-1] = '\0';
+    
+    return validated;
+}
+
 int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
                                        struct _ParamsStruct &validatedResult)
 {
@@ -99,7 +128,7 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.producerId = params.producerId;
     validated.streamName = params.streamName;
     validated.streamThread = params.streamThread;
-    validated.ndnHub = params.ndnHub;
+    validated.ndnHub = validatePrefix(params.ndnHub);
     
     validated.segmentSize = ParamsStruct::validate(params.segmentSize,
                                                    MinSegmentSize, MaxSegmentSize, res,
@@ -179,7 +208,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.producerId = params.producerId;
     validated.streamName = params.streamName;
     validated.streamThread = params.streamThread;
-    validated.ndnHub = params.ndnHub;
+    validated.ndnHub = validatePrefix(params.ndnHub);
     
     validated.segmentSize = ParamsStruct::validate(params.segmentSize,
                                                    MinSegmentSize, MaxSegmentSize, res,
