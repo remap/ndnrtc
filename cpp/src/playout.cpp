@@ -11,6 +11,7 @@
 
 #include "playout.h"
 #include "ndnrtc-utils.h"
+#include "av-sync.h"
 
 using namespace std;
 using namespace ndnlog;
@@ -128,7 +129,7 @@ Playout::processPlayout()
             
             PacketNumber packetNo, sequencePacketNo, pairedPacketNo;
             double assembledLevel = 0;
-            bool isKey;
+            bool isKey, packetValid = false;
             
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
@@ -139,6 +140,8 @@ Playout::processPlayout()
             if (playbackPacket(now, data_, packetNo, sequencePacketNo,
                                pairedPacketNo, isKey, assembledLevel))
             {
+                packetValid = true;
+                
                 if (data_)
                 {
                     double currentUnixTimestamp = NdnRtcUtils::unixTimestamp();
@@ -187,6 +190,23 @@ Playout::processPlayout()
             {
                 playbackDelay += playbackAdjustment_;
                 playbackAdjustment_ = 0;
+            }
+            
+            int syncDriftAdjustment  = 0;
+            
+            // if a/v sync is enabled
+            if (packetValid &&
+                consumer_->getAvSynchronizer().get())
+            {
+                syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, now, (Consumer*)(consumer_.get()));
+                
+                LogTraceC << " av-sync adjustment: "
+                << syncDriftAdjustment << endl;
+                
+                if (syncDriftAdjustment > 0)
+                {
+                    playbackDelay += syncDriftAdjustment;
+                }
             }
             
             assert(playbackDelay >= 0);

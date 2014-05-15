@@ -111,6 +111,12 @@ Consumer::reset()
 {
 }
 
+void
+Consumer::triggerRebuffering()
+{
+    pipeliner_->triggerRebuffering();
+}
+
 Consumer::State
 Consumer::getState() const
 {

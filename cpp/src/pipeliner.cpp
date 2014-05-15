@@ -86,6 +86,12 @@ ndnrtc::new_api::Pipeliner::stop()
     return RESULT_OK;
 }
 
+void
+ndnrtc::new_api::Pipeliner::triggerRebuffering()
+{
+    rebuffer();
+}
+
 Pipeliner::State
 Pipeliner::getState() const
 {
@@ -767,30 +773,35 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
     if (recoveryCheckpointTimestamp_ > 0 &&
         NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > MaxInterruptionDelay)
     {
-        reconnectNum_++;
-        rebufferingNum_++;
-        
-        resetData();
-        consumer_->reset();
-        
-        bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
-        isProcessing_ = true;
-        
-        chaseEstimation_->reset();
-        
-        if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
-        {
-            exclusionFilter_ = -1;
-        }
-        else
-            exclusionFilter_ = deltaFrameSeqNo_+1;
-
-        LogWarnC
-        << "No data for the last " << MaxInterruptionDelay
-        << " ms. Rebuffering " << rebufferingNum_
-        << " exclusion " << exclusionFilter_
-        << endl;
-        LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;
-        
+        rebuffer();
     }
+}
+
+void
+ndnrtc::new_api::Pipeliner::rebuffer()
+{
+    reconnectNum_++;
+    rebufferingNum_++;
+    
+    resetData();
+    consumer_->reset();
+    
+    bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
+    isProcessing_ = true;
+    
+    chaseEstimation_->reset();
+    
+    if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
+    {
+        exclusionFilter_ = -1;
+    }
+    else
+        exclusionFilter_ = deltaFrameSeqNo_+1;
+    
+    LogWarnC
+    << "No data for the last " << MaxInterruptionDelay
+    << " ms. Rebuffering " << rebufferingNum_
+    << " exclusion " << exclusionFilter_
+    << endl;
+    LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;    
 }

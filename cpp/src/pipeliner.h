@@ -38,8 +38,14 @@ namespace ndnrtc {
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
             
-            int start();
-            int stop();
+            int
+            start();
+            
+            int
+            stop();
+            
+            void
+            triggerRebuffering();
             
             double
             getAvgSegNum(bool isKey) const
@@ -194,6 +200,9 @@ namespace ndnrtc {
             
             void
             recoveryCheck(const ndnrtc::new_api::FrameBuffer::Event& event);
+            
+            void
+            rebuffer();
         };
     }
 }
