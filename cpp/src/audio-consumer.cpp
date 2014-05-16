@@ -20,8 +20,9 @@ using namespace ndnlog::new_api;
 //******************************************************************************
 #pragma mark - construction/destruction
 AudioConsumer::AudioConsumer(const ParamsStruct& params,
-                             const shared_ptr<InterestQueue>& interestQueue):
-Consumer(params, interestQueue)
+                             const shared_ptr<InterestQueue>& interestQueue,
+                             const shared_ptr<RttEstimation>& rttEstimation):
+Consumer(params, interestQueue, rttEstimation)
 {
     renderer_.reset(new AudioRenderer(params));
     setDescription("aconsumer");

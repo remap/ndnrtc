@@ -17,7 +17,8 @@ namespace ndnrtc {
         class AudioConsumer : public Consumer {
         public:
             AudioConsumer(const ParamsStruct& params,
-                          const shared_ptr<InterestQueue>& interestQueue);
+                          const shared_ptr<InterestQueue>& interestQueue,
+                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
             ~AudioConsumer();
             
             int
