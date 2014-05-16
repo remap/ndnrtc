@@ -22,6 +22,8 @@
 #include "renderer.h"
 
 namespace ndnrtc {
+    class AudioVideoSynchronizer;
+    
     namespace new_api {
         using namespace ndn;
         using namespace ptr_lib;
@@ -57,7 +59,7 @@ namespace ndnrtc {
          */
         class Consumer : public NdnRtcObject,
                          public IPacketAssembler,
-                        public boost::enable_shared_from_this<Consumer>
+                         public boost::enable_shared_from_this<Consumer>
         {
         public:
             
@@ -83,6 +85,9 @@ namespace ndnrtc {
             
             virtual void
             reset();
+            
+            void
+            triggerRebuffering();
             
             State
             getState() const;
@@ -132,6 +137,14 @@ namespace ndnrtc {
             { interestQueue_ = interestQueue; }
             
             void
+            setAvSynchronizer(const shared_ptr<AudioVideoSynchronizer>& avSync)
+            { avSync_ = avSync; };
+            
+            shared_ptr<AudioVideoSynchronizer>
+            getAvSynchronizer() const
+            { return avSync_; }
+            
+            void
             getStatistics(ReceiverChannelPerformance& stat);
             
             virtual void
@@ -151,6 +164,7 @@ namespace ndnrtc {
             shared_ptr<ChaseEstimation> chaseEstimation_;
             shared_ptr<BufferEstimator> bufferEstimator_;
             shared_ptr<IRenderer> renderer_;
+            shared_ptr<AudioVideoSynchronizer> avSync_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             

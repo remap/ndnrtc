@@ -44,7 +44,7 @@ namespace ndnrtc
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
-        bool useTlv, useRtx, useFec, useCache, useAudio, useVideo;
+        bool useTlv, useRtx, useFec, useCache, useAudio, useVideo, useAvSync;
         unsigned int headlessMode;
         
         // capture settings
@@ -141,8 +141,9 @@ namespace ndnrtc
         true,   // use TLV encoding
         true,   // reissue timed out interests
         true,   // use FEC
-        false,  // use memory cache
-        false,  // use audio
+        true,   // use memory cache
+        true,   // use av sync
+        true,   // use audio
         true,   // use video
         0,      // headless mode off
         
@@ -156,8 +157,8 @@ namespace ndnrtc
         
         30,     // codec framerate
         30,     // gop
-        1000,    // codec start bitrate
-        10000,   // codec max bitrate
+        1000,   // codec start bitrate
+        10000,  // codec max bitrate
         640,    // codec encoding width
         480,    // codec encoding height
         1,      // instruct encoder to drop frames if cannot keep up with the
@@ -176,10 +177,10 @@ namespace ndnrtc
         true,   // skip incomplete frames
         
         30,     // playback rate of local consumer
-        5000,      // interest timeout
+        5000,   // interest timeout
         90,     // assembling buffer size
         16000,  // frame buffer slot size
-        150       // jitter buffer size in ms
+        150     // jitter buffer size in ms
     };
     
     // only some parameters are used for audio configuration (those that are
@@ -187,28 +188,29 @@ namespace ndnrtc
     static ParamsStruct DefaultParamsAudio = {
         ndnlog::NdnLoggerDetailLevelNone,    // log level
         "",                   // log file
-        true,  // use TLV encoding
-        true, // use RTX
-        false, // use FEC
-        false,  // use memory cache
-        false,  // use audio
+        true,   // use TLV encoding
+        true,   // use RTX
+        false,  // use FEC
+        true,   // use memory cache
+        true,   // use av sync
+        true,   // use audio
         true,   // use video
         0,      // headless mode off
         
         0,      // capture device id
-        0,    // capture width
-        0,    // capture height
-        0,     // capture framerate
+        0,      // capture width
+        0,      // capture height
+        0,      // capture framerate
         
-        0,    // render width
-        0,    // render height
+        0,      // render width
+        0,      // render height
         
-        0,     // codec framerate
+        0,      // codec framerate
         0,      // gop
-        0,    // codec start bitrate
-        0,   // codec max bitrate
-        0,    // codec encoding width
-        0,    // codec encoding height
+        0,      // codec start bitrate
+        0,      // codec max bitrate
+        0,      // codec encoding width
+        0,      // codec encoding height
         0,      // drop frames
         
         "localhost",    // network ndnd remote host
@@ -216,7 +218,7 @@ namespace ndnrtc
         
         "testuser",     // producer id
         "audio0",       // stream name
-        "pcmu2",          // stream thread name
+        "pcmu2",        // stream thread name
         "ndn/edu/ucla/apps",     // ndn hub
         1054,   // segment size for media frame
         5,      // data freshness (seconds) value
@@ -224,10 +226,10 @@ namespace ndnrtc
         false,  // skip incomplete frames
         
         50,     // playback rate of local consumer
-        2000,      // interest timeout
+        2000,   // interest timeout
         90,     // assembling buffer size
-        1054,  // frame buffer slot size
-        200      // jitter buffer size in ms
+        1054,   // frame buffer slot size
+        200     // jitter buffer size in ms
     };
 
 }

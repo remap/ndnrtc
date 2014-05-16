@@ -11,33 +11,49 @@
 
 using namespace webrtc;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
+using namespace ndnlog;
+using namespace std;
 
 #define SYNC_INIT(name) ({*CriticalSectionWrapper::CreateCriticalSection(), \
 name, -1, -1, -1, -1, -1, -1})
-#if 0
+
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioVideoSynchronizer::AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams) :
+AudioVideoSynchronizer::AudioVideoSynchronizer(const shared_ptr<new_api::VideoConsumer>& videoConsumer,
+                       const shared_ptr<new_api::AudioConsumer>& audioConsumer):
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 audioSyncData_("audio"),
-videoSyncData_("video"),
-videoParams_(videoParams),
-audioParams_(audioParams)
+videoSyncData_("video")
 {
+    description_ = "av-sync";
+    
+    if (videoConsumer.get())
+    {
+        videoSyncData_.consumer_ = videoConsumer.get();
+        videoParams_ = videoConsumer->getParameters();
+    }
+    
+    if (audioConsumer.get())
+    {
+        audioSyncData_.consumer_ = audioConsumer.get();
+        audioParams_ = audioConsumer->getParameters();
+    }
 }
 
 //******************************************************************************
 #pragma mark - public
-int AudioVideoSynchronizer::synchronizePacket(FrameBuffer::Slot *slot,
-                                              int64_t packetTsLocal, NdnMediaReceiver *receiver)
+int AudioVideoSynchronizer::synchronizePacket(int64_t remoteTimestamp,
+                                              int64_t packetTsLocal,
+                                              Consumer *consumer)
 {
-    if (slot->isAudioPacket())
+    if (consumer == audioSyncData_.consumer_)
         return syncPacket(audioSyncData_, videoSyncData_,
-                          slot->getPacketTimestamp(), packetTsLocal, receiver);
+                          remoteTimestamp, packetTsLocal, consumer);
     
-    if (slot->isVideoPacket())
+    if (consumer == videoSyncData_.consumer_)
         return syncPacket(videoSyncData_, audioSyncData_,
-                          slot->getPacketTimestamp(), packetTsLocal, receiver);
+                          remoteTimestamp, packetTsLocal, consumer);
     
     return 0;
 }
@@ -58,18 +74,18 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
                                        SyncStruct& pairedSyncData,
                                        int64_t packetTsRemote,
                                        int64_t packetTsLocal,
-                                       NdnMediaReceiver *receiver)
+                                       Consumer *consumer)
 {
     CriticalSectionScoped scopedCs(&syncCs_);
  
     syncData.cs_.Enter();
     
-    TRACE("[SYNC] %s: synchronizing packet %ld (%ld)",
-              syncData.name_, packetTsRemote, packetTsLocal);
+    LogTraceC << syncData.name_
+    << " synchronizing packet " << packetTsRemote <<  packetTsLocal << endl;
     
     // check if it's a first call
     if (syncData.lastPacketTsLocal_ < 0)
-        initialize(syncData, packetTsRemote, packetTsLocal, receiver);
+        initialize(syncData, packetTsRemote, packetTsLocal, consumer);
     
     syncData.lastPacketTsLocal_ = packetTsLocal;
     syncData.lastPacketTsRemote_ = packetTsRemote;
@@ -86,18 +102,21 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         // 1. calcualte difference between remote and local timelines for the
         // paired stream
         int pairedD = pairedSyncData.lastPacketTsRemote_ - pairedSyncData.lastPacketTsLocal_;
-        TRACE("[SYNC] %s: paired D is: %d", syncData.name_, pairedD);
+        LogTraceC << syncData.name_
+        << " pairedD is " << pairedD << endl;
         
         // 2. calculate hit time in remote's timeline of the paired stream
         int64_t hitTimeRemotePaired = hitTime + pairedD;
-        TRACE("[SYNC] %s: hit remote is %d", syncData.name_, hitTimeRemotePaired);
+        LogTraceC << syncData.name_
+        << " hit remote is " << hitTimeRemotePaired << endl;
         
         // 3. calculate drift by comparing remote times of the current stream
         // and hit time of the paired stream
         drift = syncData.lastPacketTsRemote_-hitTimeRemotePaired;
-        TRACE("[SYNC] %s: drift is %d", syncData.name_, drift);
+        LogTraceC << syncData.name_
+        << " drift is " << drift << endl;
         
-        unsigned int minJitterSize = (receiver == audioSyncData_.receiver_) ? audioParams_.jitterSize : videoParams_.jitterSize;
+        unsigned int minJitterSize = (consumer == audioSyncData_.consumer_) ? audioParams_.jitterSize : videoParams_.jitterSize;
         
         // do not allow drift greater than jitter buffer size
         if (abs(drift) > minJitterSize)
@@ -105,24 +124,31 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
             // if drift > 0 - current stream is ahead, rebuffer paired stream
             if (drift > 0)
             {
-                TRACE("[SYNC] %s: drift exceeded - rebuffering for %s",
-                      syncData.name_, pairedSyncData.name_);
+                LogTraceC << syncData.name_
+                << " drift exceeded - rebuffering for "
+                << pairedSyncData.name_ << endl;
+                
                 drift = 0;
-                pairedSyncData.receiver_->triggerRebuffering();
+                pairedSyncData.consumer_->triggerRebuffering();
             }
             else
             {
-                TRACE("[SYNC] %s: drift exceeded - rebuffering for %s",
-                      syncData.name_, pairedSyncData.name_);
-                syncData.receiver_->triggerRebuffering();
+                LogTraceC << syncData.name_
+                << " drift exceeded - rebuffering for "
+                << syncData.name_ << endl;
+                
+                syncData.consumer_->triggerRebuffering();
                 drift = -1;
             }
         }
         else
         {
             if (drift > TolerableDriftMs)
-                DBG("[SYNC] %s: adjusting %s stream for %d", syncData.name_,
-                    pairedSyncData.name_, drift);
+            {
+                LogDebugC << syncData.name_
+                << " adjusting %s stream for %d" << pairedSyncData.name_
+                <<  drift << endl;
+            }
             else
                 drift = 0;
         }
@@ -133,19 +159,21 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     return drift;
 }
 
-void AudioVideoSynchronizer::onRebuffer(NdnMediaReceiver *receiver)
+void AudioVideoSynchronizer::onRebuffer(Consumer *consumer)
 {
-    if (audioSyncData_.receiver_ == receiver)
+    if (audioSyncData_.consumer_ == consumer)
     {
-        TRACE("audio channel encountered rebuffer. "
-              "triggering video for rebuffering...");
-        videoSyncData_.receiver_->triggerRebuffering();
+        LogTraceC << "audio channel encountered rebuffer. "
+        "triggering video for rebuffering..." << endl;
+        
+        videoSyncData_.consumer_->triggerRebuffering();
     }
     else
     {
-        TRACE("video channel encountered rebuffer. "
-              "triggering audio for rebuffering...");
-        audioSyncData_.receiver_->triggerRebuffering();
+        LogTraceC << "video channel encountered rebuffer. "
+              "triggering audio for rebuffering..." << endl;
+        
+        audioSyncData_.consumer_->triggerRebuffering();
     }
 }
 
@@ -153,16 +181,14 @@ void AudioVideoSynchronizer::onRebuffer(NdnMediaReceiver *receiver)
 void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
                                         int64_t firstPacketTsRemote,
                                         int64_t localTimestamp,
-                                        NdnMediaReceiver *receiver)
+                                        Consumer *consumer)
 {
-    TRACE("[SYNC] %s: initalize", syncData.name_);
+    LogTraceC << "initalize " << syncData.name_ << endl;
     
     syncData.initialized_ = true;
     initialized_ = audioSyncData_.initialized_ && videoSyncData_.initialized_;
     
-    syncData.receiver_ = receiver;
+    syncData.consumer_ = consumer;
     syncData.lastPacketTsLocal_ = localTimestamp;
     syncData.lastPacketTsRemote_ = firstPacketTsRemote;
 }
-
-#endif

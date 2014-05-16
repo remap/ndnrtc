@@ -82,6 +82,7 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
     validated.useCache = params.useCache;
+    validated.useAvSync = params.useAvSync;
     validated.useAudio = params.useAudio;
     validated.useVideo = params.useVideo;
     validated.headlessMode = params.headlessMode;
@@ -197,6 +198,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.useRtx = params.useRtx;
     validated.useFec = params.useFec;
     validated.useCache = params.useCache;
+    validated.useAvSync = params.useAvSync;
     validated.useAudio = params.useAudio;
     validated.useVideo = params.useVideo;
     validated.headlessMode = params.headlessMode;
