@@ -859,7 +859,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
-//    dumpQueue();
     sort();
     int64_t playbackDeadlineMs = 0;
     
@@ -1463,16 +1462,13 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             // if we got old slot - skip it
             if (slot->getPlaybackNumber() <= playbackNo_)
-            {
-                // we should release this frame and skip it
-                playbackQueue_.popSlot();
                 skipFrame_ = true;
-            }
         }
+        
+        playbackSlot_ = slot;
         
         if (!skipFrame_)
         {
-            playbackSlot_ = slot;
             playbackNo_ = slot->getPlaybackNumber();
             
             slot->lock();
@@ -1545,30 +1541,33 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
     {
         playbackQueue_.popSlot();
         
-        shared_ptr<FrameBuffer::Slot> nextSlot = playbackQueue_.peekSlot();
-        
-        if (nextSlot.get() &&
-            FrameBuffer::Slot::isNextPacket(*lockedSlot, *nextSlot))
+        if (!skipFrame_)
         {
-            playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
-            isInferredDuration = false;
+            shared_ptr<FrameBuffer::Slot> nextSlot = playbackQueue_.peekSlot();
             
-            LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
-            << " " << playbackDuration << endl;
-        }
-        else
-        {
-            LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
-            << " (inferred) " << playbackDuration << endl;
+            if (nextSlot.get() &&
+                FrameBuffer::Slot::isNextPacket(*lockedSlot, *nextSlot))
+            {
+                playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
+                isInferredDuration = false;
+                
+                LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+                << " " << playbackDuration << endl;
+            }
+            else
+            {
+                LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+                << " (inferred) " << playbackDuration << endl;
+            }
+            
+            LogTraceC << "unlocked " << lockedSlot->getPrefix() << endl;
+            
+            lockedSlot->unlock();
+            isEstimationNeeded_ = true;
         }
         
-        LogTraceC << "unlocked " << lockedSlot->getPrefix() << endl;
-        
-        lockedSlot->unlock();
         freeSlot(lockedSlot->getPrefix());
         playbackSlot_.reset();
-        
-        isEstimationNeeded_ = true;
     }
     
     // reset skipFrame_ flag
