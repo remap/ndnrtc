@@ -34,6 +34,7 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
             static const int64_t MaxInterruptionDelay;
+            static const int64_t MinInterestLifetime;
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
@@ -97,6 +98,7 @@ namespace ndnrtc {
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
+            PacketNumber playbackStartFrameNo_;
             
             // --
             unsigned rebufferingNum_, reconnectNum_;

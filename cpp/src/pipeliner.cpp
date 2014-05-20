@@ -23,6 +23,7 @@ const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
 const int64_t Pipeliner::MaxInterruptionDelay = 2000;
+const int64_t Pipeliner::MinInterestLifetime = 250;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -268,13 +269,15 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
             
             if (chaseEstimation_->isArrivalStable())
             {
-                LogTraceC
-                << "[****] arrival stable -> buffering. buf size "
-                << bufferSize << endl;
-                
                 stopChasePipeliner();
                 frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
                 isBuffering_ = true;
+                playbackStartFrameNo_ = deltaFrameSeqNo_;
+                
+                LogTraceC
+                << "[****] arrival stable -> buffering. buf size: " << bufferSize
+                << ". start playback from: "
+                << playbackStartFrameNo_ << endl;
             }
             else
             {
@@ -312,7 +315,10 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     
     LogTraceC << "buffering. playable size " << bufferSize << endl;
     
-    if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
+//    if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
+//    if (bufferSize >= frameBuffer_->getTargetSize()*2./3. - consumer_->getRttEstimation()->getCurrentEstimation())
+//    if (playbackStartFrameNo_ == event.slot_->getSequentialNumber() &&
+//        event.type_ == FrameBuffer::Event::Ready)
     {
         LogTraceC
         << "[*****] switch to valid state. playable size " << bufferSize << endl;
@@ -321,14 +327,14 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
     }
-    else
-    {
-        keepBuffer();
-        
-        LogTraceC << "[*****] buffering. playable size " << bufferSize << endl;
-        
-        frameBuffer_->dump();
-    }
+//    else
+//    {
+//        keepBuffer();
+//        
+//        LogTraceC << "[*****] buffering. playable size " << bufferSize << endl;
+//        
+//        frameBuffer_->dump();
+//    }
 }
 
 int
@@ -681,7 +687,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     }
     
     assert(interestLifetime > 0);
-    return interestLifetime;
+    return (interestLifetime < MinInterestLifetime)? MinInterestLifetime : interestLifetime;
 }
 
 void

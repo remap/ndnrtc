@@ -61,7 +61,10 @@ ndnrtc::new_api::FrameBuffer::Slot::Segment::interestIssued
     assert(nonceValue != 0);
     
     state_ = StatePending;
-    requestTimeUsec_ = NdnRtcUtils::microsecondTimestamp();
+
+    if (requestTimeUsec_ <= 0)
+        requestTimeUsec_ = NdnRtcUtils::microsecondTimestamp();
+    
     interestNonce_ = nonceValue;
     reqCounter_++;
 }
@@ -184,6 +187,7 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(ndn::Interest &interest)
         {
             NdnRtcNamespace::trimDataTypeComponent(interestName, slotPrefix_);
             state_ = StateNew;
+            requestTimeUsec_ = reservedSegment->getRequestTimeUsec();
         }
         
         nSegmentsPending_++;
@@ -293,11 +297,19 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
                 getSegments(Segment::StateFetched);
             
             if (nSegmentsReady_ == prefixMeta.totalSegmentsNum_)
+            {
                 state_ = StateReady;
+                readyTimeUsec_ = segment->getArrivalTimeUsec();
+            }
             else
             {
                 if (fetchedSegments.size() < prefixMeta.totalSegmentsNum_)
+                {
+                    if (state_ == StateNew)
+                        firstSegmentTimeUsec_ = segment->getArrivalTimeUsec();
+                    
                     state_ = StateAssembling;
+                }
             }
         }
         else
@@ -342,6 +354,9 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     nRtx_ = 0;
     hasOriginalSegments_ = false;
     isRecovered_ = false;
+    requestTimeUsec_ = -1;
+    readyTimeUsec_ = -1;
+    firstSegmentTimeUsec_ = -1;
     memset(slotData_, 0, allocatedSize_);
     
     {
@@ -800,7 +815,9 @@ ndnrtc::new_api::FrameBuffer::Slot::dump()
     << (isRecovered_ ? "R" : "I") << ", "
     << setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
     << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
-    << "/" << nSegmentsParity_;
+    << "/" << nSegmentsParity_ << " "
+    << getLifetime() << " "
+    << getAssemblingTime();
     
     return dump.str();
 }
@@ -1257,11 +1274,17 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 }
                 
                 // track rtt value
-                if (slot->getRecentSegment()->isOriginal())
+//                if (slot->getRecentSegment()->isOriginal())
                 {
                     consumer_->getRttEstimation()->
                     updateEstimation(slot->getRecentSegment()->getRoundTripDelayUsec()/1000,
                                      slot->getRecentSegment()->getMetadata().generationDelayMs_);
+                    // now update target size
+                    int64_t targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
+                    setTargetSize(targetBufferSize);
+                    
+                    LogTraceC << "target buffer size updated: "
+                    << targetBufferSize << endl;
                 }
                 
                 return newState;

@@ -46,10 +46,10 @@ faceProcessor_(faceProcessor)
     interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     
     if (params.useVideo)
-        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_, rttEstimation_));
+        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_));//, rttEstimation_));
     
     if (params_.useAudio)
-        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
+        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_));//, rttEstimation_));
     
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
