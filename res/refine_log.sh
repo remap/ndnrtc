@@ -46,11 +46,11 @@ echo "  playout queue logs ready ["$CFOLDER/vpqueue.log"]"
 catAndGrep $CLOG "\[aconsumer-buffer-pqueue\]" $CFOLDER/apqueue.log
 echo "  playout queue logs ready ["$CFOLDER/apqueue.log"]"
 
-catAndGrep $CLOG "\[STAT.\]\[video-playout\]" $CFOLDER/vplayout.stat.log
-echo "  playout statistics ready ["$CFOLDER/vplayout.stat.log"]"
+catAndGrep $CLOG "\[video-playout\]" $CFOLDER/vplayout.log
+echo "  playout logs ready ["$CFOLDER/vplayout.log"]"
 
-catAndGrep $CLOG "\[STAT.\]\[audio-playout\]" $CFOLDER/aplayout.stat.log
-echo "  playout statistics ready ["$CFOLDER/aplayout.stat.log"]"
+catAndGrep $CLOG "\[audio-playout\]" $CFOLDER/aplayout.log
+echo "  playout logs ready ["$CFOLDER/aplayout.log"]"
 
 catAndGrep $CLOG "\[STAT.\]\[aconsumer-chase-est\]" $CFOLDER/achase.stat.log
 echo "  chase statistics ready ["$CFOLDER/achase.stat.log"]"

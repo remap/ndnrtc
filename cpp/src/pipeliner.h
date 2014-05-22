@@ -194,7 +194,13 @@ namespace ndnrtc {
                           int prefetchSize, int parityPrefetchSize,
                           FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
-            void
+            /**
+             * Requests additional frames to keep buffer meet its target size
+             * @param useEstimatedSize Indicates whether estimated buffer size 
+             * or playable buffer size should be used for checking
+             * @return Number of frames requested
+             */
+            int
             keepBuffer(bool useEstimatedSize = true);
             
             void

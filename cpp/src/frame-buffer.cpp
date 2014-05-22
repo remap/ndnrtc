@@ -489,7 +489,7 @@ ndnrtc::new_api::FrameBuffer::Slot::isNextPacket(const Slot& slot,
     if (slot.getConsistencyState()&Slot::HeaderMeta &&
         nextSlot.getConsistencyState()&Slot::HeaderMeta)
     {
-        return (slot.getPlaybackNumber() == nextSlot.getPlaybackNumber()+1);
+        return (slot.getPlaybackNumber() == nextSlot.getPlaybackNumber()-1);
     }
     
     return false;
@@ -1574,12 +1574,12 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
                 playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
                 isInferredDuration = false;
                 
-                LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+                LogTraceC << "playback " << lockedSlot->getSequentialNumber()
                 << " " << playbackDuration << endl;
             }
             else
             {
-                LogTraceC << "playback " << lockedSlot->getPlaybackNumber()
+                LogTraceC << "playback " << lockedSlot->getSequentialNumber()
                 << " (inferred) " << playbackDuration << endl;
             }
             
@@ -1588,6 +1588,8 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
             lockedSlot->unlock();
             isEstimationNeeded_ = true;
         }
+        else
+            isInferredDuration = false;
         
         freeSlot(lockedSlot->getPrefix());
         playbackSlot_.reset();
