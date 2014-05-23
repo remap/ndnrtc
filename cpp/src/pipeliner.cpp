@@ -11,6 +11,7 @@
 #include "pipeliner.h"
 #include "ndnrtc-namespace.h"
 #include "rtt-estimation.h"
+#include "playout.h"
 
 using namespace std;
 using namespace webrtc;
@@ -23,6 +24,7 @@ const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
 const int64_t Pipeliner::MaxInterruptionDelay = 2000;
+const int64_t Pipeliner::MinInterestLifetime = 250;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -268,13 +270,16 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
             
             if (chaseEstimation_->isArrivalStable())
             {
-                LogTraceC
-                << "[****] arrival stable -> buffering. buf size "
-                << bufferSize << endl;
-                
                 stopChasePipeliner();
                 frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
                 isBuffering_ = true;
+                playbackStartFrameNo_ = deltaFrameSeqNo_;
+                consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);
+                
+                LogTraceC
+                << "[****] arrival stable -> buffering. buf size: " << bufferSize
+                << ". start playback from: "
+                << playbackStartFrameNo_ << endl;
             }
             else
             {
@@ -308,27 +313,34 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
 void
 ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
 {
-    int bufferSize = frameBuffer_->getPlayableBufferSize();
+    int targetSize = frameBuffer_->getTargetSize();
+    int estimatedSize = frameBuffer_->getEstimatedBufferSize();
+    int playableSize = frameBuffer_->getPlayableBufferSize();
     
-    LogTraceC << "buffering. playable size " << bufferSize << endl;
+    LogTraceC << "buffering. playable size " << playableSize << endl;
     
-    if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
+    int nRequested = keepBuffer();
+    
+//    if (playableSize >= frameBuffer_->getTargetSize()*2./3.)
+    if (playableSize >= (targetSize - consumer_->getRttEstimation()->getCurrentEstimation()) ||
+//    if (playbackStartFrameNo_ == event.slot_->getSequentialNumber() &&
+//        event.type_ == FrameBuffer::Event::Ready)
+        (nRequested == 0 && playableSize >= 0.7*targetSize))
     {
         LogTraceC
-        << "[*****] switch to valid state. playable size " << bufferSize << endl;
+        << "[*****] switch to valid state. playable size " << playableSize << endl;
         
         isBuffering_ = false;
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
     }
-    else
-    {
-        keepBuffer();
-        
-        LogTraceC << "[*****] buffering. playable size " << bufferSize << endl;
-        
-        frameBuffer_->dump();
-    }
+//    else
+//    {
+//        keepBuffer();
+//        
+//        LogTraceC << "[*****] buffering. playable size " << playableSize << endl;
+//        frameBuffer_->dump();
+//    }
 }
 
 int
@@ -681,6 +693,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     }
     
     assert(interestLifetime > 0);
+//    return (interestLifetime < MinInterestLifetime)? MinInterestLifetime : interestLifetime;
     return interestLifetime;
 }
 
@@ -713,7 +726,7 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
     }
 }
 
-void
+int
 ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
 {
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
@@ -725,6 +738,7 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     << " target " << frameBuffer_->getTargetSize()
     << ((bufferSize < frameBuffer_->getTargetSize())?" KEEP UP":" NO KEEP UP") << endl;
     
+    int nRequested = 0;
     while (bufferSize < frameBuffer_->getTargetSize())
     {
         LogTraceC
@@ -734,7 +748,11 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
         
         bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
         frameBuffer_->getPlayableBufferSize();
+        
+        nRequested++;
     }
+    
+    return nRequested;
 }
 
 void

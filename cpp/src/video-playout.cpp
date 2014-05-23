@@ -68,33 +68,49 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         frameWriter.writeFrame(frame, meta);
 #endif
 
+        bool pushFrameFurther = false;
+        
         if (params_.skipIncomplete)
         {
-            if (isKey && assembledLevel >= 1)
+            if (isKey)
             {
-                currentKeyNo_ = sequencePacketNo;
-                hasKeyForGop_ = true;
-                LogTraceC << "resumed frames playout" << endl;
+                if (assembledLevel >= 1)
+                {
+                    pushFrameFurther = true;
+                    currentKeyNo_ = sequencePacketNo;
+                    hasKeyForGop_ = true;
+                    LogTraceC << "new GOP with key: "
+                    << sequencePacketNo << endl;
+                }
+                else
+                {
+                    hasKeyForGop_ = false;
+                    LogTraceC << "GOP failed - key incomplete: "
+                    << sequencePacketNo << endl;
+                }
             }
-            
-            hasKeyForGop_ = (assembledLevel >= 1);
-            
-            if (!isKey)
+//            hasKeyForGop_ = (assembledLevel >= 1);
+            else
             {
                 if (pairedPacketNo != currentKeyNo_)
-                    LogTrace("order.log")
+                    LogTraceC
                     << playbackPacketNo << " is unexpected: "
                     << " current key " << currentKeyNo_
-                    << " got " << sequencePacketNo << endl;
+                    << " got " << pairedPacketNo << endl;
                 
-                hasKeyForGop_ &= (pairedPacketNo == currentKeyNo_);
+                // we should decode frame only if it belongs to the current GOP
+                // (i.e. it's corresponding key frame is equal to the current
+                // GOP key frame)
+                pushFrameFurther = (pairedPacketNo == currentKeyNo_);
             }
         }
+        else
+            pushFrameFurther  = true;
         
-        if (hasKeyForGop_ || !params_.skipIncomplete)
+        if (pushFrameFurther)
         {
             LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << nPlayed_ << endl;
-            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
+            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
         }
         else
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
@@ -102,7 +118,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             << " level: " << assembledLevel << endl;
         
         res = true;
-    }
+    } // if data
     
     return res;
 }

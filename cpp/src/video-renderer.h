@@ -41,7 +41,7 @@ namespace ndnrtc
         stopRendering();
         
         void
-        onDeliverFrame(webrtc::I420VideoFrame &frame);
+        onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
     protected:
         int rendererId_;

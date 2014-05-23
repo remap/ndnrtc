@@ -55,6 +55,8 @@ namespace ndnrtc {
         webrtc::ThreadWrapper &captureThread_;
         webrtc::EventWrapper &captureEvent_;
         webrtc::I420VideoFrame capturedFrame_, deliverFrame_;
+        double capturedTimeStamp_ = 0;
+        
         // private attributes go here
         webrtc::VideoCaptureCapability capability_;
         webrtc::VideoCaptureModule* vcm_ = nullptr;
@@ -71,7 +73,8 @@ namespace ndnrtc {
     class IRawFrameConsumer
     {
     public:
-        virtual void onDeliverFrame(webrtc::I420VideoFrame &frame) = 0;
+        virtual void onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                    double unixTimeStamp) = 0;
     };
 }
 

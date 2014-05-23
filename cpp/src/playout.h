@@ -52,6 +52,10 @@ namespace ndnrtc{
             void
             getStatistics(ReceiverChannelPerformance& stat);
             
+            void
+            setStartPacketNo(PacketNumber packetNo)
+            { startPacketNo_ = packetNo; }
+            
         protected:
             bool isRunning_;
             unsigned int nPlayed_, nMissed_;
@@ -61,6 +65,12 @@ namespace ndnrtc{
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
             int playbackAdjustment_;
+            PacketNumber startPacketNo_;
+            
+#if 1 // left for future testing
+            int test_timelineDiff_ = -1;
+            int test_timelineDiffInclineEst_ = -1;
+#endif
             
             shared_ptr<const Consumer> consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
@@ -95,6 +105,15 @@ namespace ndnrtc{
             {
                 return ((Playout*)obj)->processPlayout();
             }
+            
+            void
+            updatePlaybackAdjustment();
+            
+            void
+            adjustPlaybackDelay(int& playbackDelay);
+            
+            int
+            avSyncAdjustment(int64_t nowTimestamp, int playbackDelay);
             
             bool
             processPlayout();

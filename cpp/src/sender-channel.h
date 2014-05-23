@@ -76,7 +76,7 @@ namespace ndnrtc
         
         // interface conformance - IRawFrameConsumer
         void
-        onDeliverFrame(webrtc::I420VideoFrame &frame);
+        onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
         void
         getChannelStatistics(SenderChannelStatistics &stat);
@@ -100,6 +100,7 @@ namespace ndnrtc
         webrtc::ThreadWrapper &processThread_;
         webrtc::EventWrapper &deliverEvent_;
         webrtc::I420VideoFrame deliverFrame_;
+        double deliveredTimestamp_;
         
         // static methods
         static bool

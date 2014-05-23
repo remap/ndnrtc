@@ -93,7 +93,8 @@ namespace ndnrtc
         int publishPacket(PacketData &packetData,
                           shared_ptr<Name> prefix,
                           PacketNumber packetNo,
-                          PrefixMetaInfo prefixMeta);
+                          PrefixMetaInfo prefixMeta,
+                          double captureTimestamp);
         
         // ndn-cpp callbacks
         virtual void onInterest(const shared_ptr<const Name>& prefix,

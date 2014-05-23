@@ -46,11 +46,11 @@ echo "  playout queue logs ready ["$CFOLDER/vpqueue.log"]"
 catAndGrep $CLOG "\[aconsumer-buffer-pqueue\]" $CFOLDER/apqueue.log
 echo "  playout queue logs ready ["$CFOLDER/apqueue.log"]"
 
-catAndGrep $CLOG "\[STAT.\]\[video-playout\]" $CFOLDER/vplayout.stat.log
-echo "  playout statistics ready ["$CFOLDER/vplayout.stat.log"]"
+catAndGrep $CLOG "\[video-playout\]" $CFOLDER/vplayout.log
+echo "  playout logs ready ["$CFOLDER/vplayout.log"]"
 
-catAndGrep $CLOG "\[STAT.\]\[audio-playout\]" $CFOLDER/aplayout.stat.log
-echo "  playout statistics ready ["$CFOLDER/aplayout.stat.log"]"
+catAndGrep $CLOG "\[audio-playout\]" $CFOLDER/aplayout.log
+echo "  playout logs ready ["$CFOLDER/aplayout.log"]"
 
 catAndGrep $CLOG "\[STAT.\]\[aconsumer-chase-est\]" $CFOLDER/achase.stat.log
 echo "  chase statistics ready ["$CFOLDER/achase.stat.log"]"
@@ -86,6 +86,7 @@ echo "  producer statistics ready ["$PFOLDER/asender.stat.log"]"
 echo "copying logs into ["$LOGSFOLDER/raw"]"
 mkdir -p $LOGSFOLDER/raw
 cp *.log $LOGSFOLDER/raw
+cp *.cfg $LOGSFOLDER/raw
 echo "`ntpq -p`" >> $LOGSFOLDER/raw/ntp.info
 
 for consumer in $CONSUMERS
