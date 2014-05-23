@@ -92,66 +92,137 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     
     int drift = 0;
     
-    if (initialized_)
+    // we synchronize audio only
+    if (consumer == this->audioSyncData_.consumer_ && initialized_)
     {
         CriticalSectionScoped scopedCs(&pairedSyncData.cs_);
         
         int64_t hitTime = packetTsLocal;
         
+        LogTrace("media-diff.log") << "\tdiff\t" << syncData.lastPacketTsRemote_ - pairedSyncData.lastPacketTsRemote_ << endl;
+        
+        // packet synchroniztation comes from the idea of strem timelines:
+        // each media stream has timeline with points which corresponds to the
+        // media packet:
+        //  ex.:
+        //      video timeline (CLCK_R)          audio timeline (CLCK_R)
+        //          |                               |
+        //      t1v-+ - video frame                 |
+        //          |   ¡                       t1a-+ - audio sample
+        //          |   |  inter-frame delay        |   ¡ inter-sample delay
+        //          |   !                           |   !
+        //      t2v-+ - video frame             t2a-+ - audio sample
+        //          |                               |
+        //          |                               |
+        //          |                           t3a-+ - audio sample
+        //      t3v-+ - video frame                 |
+        //          |                               |
+        //
+        // - timelines are based on the same remote clock (CLCK_R)
+        // - timelines are played out using local clock (CLCK_L)
+        // - synchronization is therefore consists of determining offset between
+        //      two timeline and adjusting them by delaying leading media stream
+        // - further in the comments:
+        //      sync'ed media - newly received packet of the media being checked
+        //      paired media - other media stream against which sync'ed media is
+        //                      being checked
+        
         // check with the paired stream - whether it's keeping up or not
         // 1. calcualte difference between remote and local timelines for the
         // paired stream
+        // (in this example, TsL and T1 should be synchronized - sync'ed media
+        // need to be delayed)
+        //
+        //      paired media                    paired media                    sync'ed media                           sync'ed media
+        //    (local timeline)             (remote timeline)                    (local timeline)                        (remote timeline)
+        //          (CLCK_L)                    (CLCK_R)                            (CLCK_L)                            (CLCK_R)
+        //              |                           |                                   |                                   |
+        //              |                           |                                   +                                   |
+        // last packet  + <- timestmp local(TsL)    + <- timestamp remote (TsR)         |                               T1  +
+        //              :                           :                                   |                                   |
+        //              :                           :                              T1   + <- hitTime (timestamp local)      |
+        // pairedD = TsR - TsL
+        //
         int pairedD = pairedSyncData.lastPacketTsRemote_ - pairedSyncData.lastPacketTsLocal_;
         LogTraceC << syncData.name_
         << " pairedD is " << pairedD << endl;
         
         // 2. calculate hit time in remote's timeline of the paired stream
+        //
+        //      paired media                    paired media                    sync'ed media
+        //    (local timeline)             (remote timeline)                    (local timeline)
+        //          (CLCK_L)                    (CLCK_R)                            (CLCK_L)
+        //              |                           |                                   |
+        //              |                           |                                   +
+        // last packet  +                           +                                   |
+        //              :                           :    hitRemote = hitTime + pairedD  |
+        //              :                           : <................................ + <- hitTime (timestamp local)
+        
         int64_t hitTimeRemotePaired = hitTime + pairedD;
         LogTraceC << syncData.name_
         << " hit remote is " << hitTimeRemotePaired << endl;
         
         // 3. calculate drift by comparing remote times of the current stream
         // and hit time of the paired stream
+        //
+        //         paired media                       sync'ed media            sync'ed media
+        //      (remote timeline)                    (local timeline)          (remote timeline)
+        //          (CLCK_R)                            (CLCK_L)                (CLCK_R)
+        //              |                                   |                       |
+        //              |                                   +                       |
+        //              +                                   |                       + <- timestamp remote ......
+        //              :    hitRemote = hitTime + pairedD  |                       |                           } - drift
+        // hitRemote -> : <................................ + <- hitTime........................................
+        //
+        // positive drift - sync'ed media leads paired media (audio leads video)
+        // negative drift - sync'de media lags paired media (audio lags video)
         drift = syncData.lastPacketTsRemote_-hitTimeRemotePaired;
+        
+        
+        
         LogTraceC << syncData.name_
         << " drift is " << drift << endl;
         
-        unsigned int minJitterSize = (consumer == audioSyncData_.consumer_) ? audioParams_.jitterSize : videoParams_.jitterSize;
+//        unsigned int minJitterSize = (consumer == audioSyncData_.consumer_) ? audioParams_.jitterSize : videoParams_.jitterSize;
         
         // do not allow drift greater than jitter buffer size
-        if (abs(drift) > minJitterSize)
+        if ((drift > 0 && drift < TolerableLeadingDriftMs) ||
+            (drift < 0 && drift > -TolerableLaggingDriftMs))
         {
-            // if drift > 0 - current stream is ahead, rebuffer paired stream
-            if (drift > 0)
-            {
-                LogTraceC << syncData.name_
-                << " drift exceeded - rebuffering for "
-                << pairedSyncData.name_ << endl;
-                
-                drift = 0;
-                pairedSyncData.consumer_->triggerRebuffering();
-            }
-            else
-            {
-                LogTraceC << syncData.name_
-                << " drift exceeded - rebuffering for "
-                << syncData.name_ << endl;
-                
-                syncData.consumer_->triggerRebuffering();
-                drift = -1;
-            }
+            drift = 0;
         }
-        else
-        {
-            if (drift > TolerableDriftMs)
-            {
-                LogDebugC << syncData.name_
-                << " adjusting %s stream for %d" << pairedSyncData.name_
-                <<  drift << endl;
-            }
-            else
-                drift = 0;
-        }
+//        {
+//            // if drift > 0 - current stream is ahead, rebuffer paired stream
+//            if (drift > 0)
+//            {
+//                LogTraceC << syncData.name_
+//                << " drift exceeded - rebuffering for "
+//                << pairedSyncData.name_ << endl;
+//                
+//                drift = 0;
+//                pairedSyncData.consumer_->triggerRebuffering();
+//            }
+//            else
+//            {
+//                LogTraceC << syncData.name_
+//                << " drift exceeded - rebuffering for "
+//                << syncData.name_ << endl;
+//                
+//                syncData.consumer_->triggerRebuffering();
+//                drift = 0;
+//            }
+//        }
+//        else
+//        {
+//            if (drift > TolerableDriftMs)
+//            {
+//                LogDebugC << syncData.name_
+//                << " adjusting %s stream for %d" << pairedSyncData.name_
+//                <<  drift << endl;
+//            }
+//            else
+//                drift = 0;
+//        }        
     } // critical section
     
     syncData.cs_.Leave();
