@@ -38,7 +38,7 @@ packetNo_(0),
 pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
-    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(10);
+    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter();
 }
 
 MediaSender::~MediaSender()
@@ -108,7 +108,8 @@ void MediaSender::stop()
 int MediaSender::publishPacket(PacketData &packetData,
                                shared_ptr<Name> packetPrefix,
                                PacketNumber packetNo,
-                               PrefixMetaInfo prefixMeta)
+                               PrefixMetaInfo prefixMeta,
+                               double captureTimestamp)
 {
     if (!faceProcessor_->getTransport()->getIsConnected())
         return notifyError(-1, "transport is not connected");
@@ -127,7 +128,7 @@ int MediaSender::publishPacket(PacketData &packetData,
         // update metadata for the packet
         PacketData::PacketMetadata metadata = {getCurrentPacketRate(),
             NdnRtcUtils::millisecondTimestamp(),
-            NdnRtcUtils::unixTimestamp()};
+            captureTimestamp};
         
         packetData.setMetadata(metadata);
         

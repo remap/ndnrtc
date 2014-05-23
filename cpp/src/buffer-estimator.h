@@ -16,6 +16,11 @@
 namespace ndnrtc {
     namespace new_api
     {
+        using namespace ndn;
+        using namespace ptr_lib;
+        
+        class RttEstimation;
+        
         class BufferEstimator : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -23,10 +28,16 @@ namespace ndnrtc {
             static const int64_t MinBufferSizeMs;
             
             BufferEstimator():minBufferSizeMs_(MinBufferSizeMs){}
+            BufferEstimator(const shared_ptr<RttEstimation>& rttEstimation,
+                            int64_t minBufferSizeMs = MinBufferSizeMs);
             ~BufferEstimator(){}
             
             void
-            setProducerRate(double producerRate);
+            setProducerRate(double producerRate) DEPRECATED;
+            
+            void
+            setRttEstimation(const shared_ptr<RttEstimation>& rttEstimation)
+            { rttEstimation_ = rttEstimation; }
             
             void
             setMinimalBufferSize(int64_t minimalBufferSize)
@@ -36,6 +47,7 @@ namespace ndnrtc {
             getTargetSize();
             
         private:
+            shared_ptr<RttEstimation> rttEstimation_;
             int64_t minBufferSizeMs_;
         };
     }

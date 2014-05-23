@@ -42,7 +42,7 @@ namespace ndnrtc {
                         const webrtc::RTPFragmentationHeader* fragmentation = NULL);
         
         // interface conformance - ndnrtc::IRawFrameConsumer
-        void onDeliverFrame(webrtc::I420VideoFrame &frame);
+        void onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
         unsigned int getDroppedFramesNum() { return nDroppedByEncoder_; };
         static int getCodec(const ParamsStruct &params, webrtc::VideoCodec &codec);
@@ -55,6 +55,7 @@ namespace ndnrtc {
         
         int keyFrameCounter_ = 0;
         int currentFrameRate_;
+        double deliveredTimestamp_;
         std::vector<webrtc::VideoFrameType> keyFrameType_;
         // private attributes go here
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
@@ -66,7 +67,8 @@ namespace ndnrtc {
     {
     public:
         virtual void
-        onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage) = 0;
+        onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                double captureTimestamp) = 0;
     };
 }
 

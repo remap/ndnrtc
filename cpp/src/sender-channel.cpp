@@ -151,12 +151,14 @@ NdnSenderChannel::~NdnSenderChannel()
 
 //******************************************************************************
 #pragma mark - intefaces realization: IRawFrameConsumer
-void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame)
+void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                      double timestamp)
 {
     LogStatC << "captured\t" << sender_->getPacketNo() << endl;
     
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
+    deliveredTimestamp_ = timestamp;
     deliver_cs_->Leave();
     
     deliverEvent_.Set();
@@ -355,11 +357,10 @@ bool NdnSenderChannel::process()
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
-            LogStatC << "grab\t" << sender_->getPacketNo() << endl;
             
             uint64_t t = NdnRtcUtils::microsecondTimestamp();
             
-            localRender_->onDeliverFrame(deliverFrame_);
+            localRender_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
@@ -367,7 +368,7 @@ bool NdnSenderChannel::process()
             << "rendered\t" << sender_->getPacketNo() << " "
             << t2 - t << endl;
             
-            coder_->onDeliverFrame(deliverFrame_);
+            coder_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
             
             LogStatC
             << "published\t"

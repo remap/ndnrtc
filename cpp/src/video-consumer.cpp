@@ -24,8 +24,9 @@ using namespace ndnrtc::new_api;
 //******************************************************************************
 #pragma mark - construction/destruction
 VideoConsumer::VideoConsumer(const ParamsStruct& params,
-                             const shared_ptr<InterestQueue>& interestQueue):
-Consumer(params, interestQueue),
+                             const shared_ptr<InterestQueue>& interestQueue,
+                             const shared_ptr<RttEstimation>& rttEstimation):
+Consumer(params, interestQueue, rttEstimation),
 decoder_(new NdnVideoDecoder(params))
 {
     setDescription("vconsumer");

@@ -34,6 +34,7 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
             static const int64_t MaxInterruptionDelay;
+            static const int64_t MinInterestLifetime;
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
@@ -97,6 +98,7 @@ namespace ndnrtc {
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
+            PacketNumber playbackStartFrameNo_;
             
             // --
             unsigned rebufferingNum_, reconnectNum_;
@@ -192,7 +194,13 @@ namespace ndnrtc {
                           int prefetchSize, int parityPrefetchSize,
                           FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
-            void
+            /**
+             * Requests additional frames to keep buffer meet its target size
+             * @param useEstimatedSize Indicates whether estimated buffer size 
+             * or playable buffer size should be used for checking
+             * @return Number of frames requested
+             */
+            int
             keepBuffer(bool useEstimatedSize = true);
             
             void
