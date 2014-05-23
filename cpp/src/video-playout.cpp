@@ -79,13 +79,13 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     pushFrameFurther = true;
                     currentKeyNo_ = sequencePacketNo;
                     hasKeyForGop_ = true;
-                    LogTrace("order.log") << "new GOP with key: "
+                    LogTraceC << "new GOP with key: "
                     << sequencePacketNo << endl;
                 }
                 else
                 {
                     hasKeyForGop_ = false;
-                    LogTrace("order.log") << "GOP failed - key incomplete: "
+                    LogTraceC << "GOP failed - key incomplete: "
                     << sequencePacketNo << endl;
                 }
             }
@@ -93,7 +93,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             else
             {
                 if (pairedPacketNo != currentKeyNo_)
-                    LogTrace("order.log")
+                    LogTraceC
                     << playbackPacketNo << " is unexpected: "
                     << " current key " << currentKeyNo_
                     << " got " << pairedPacketNo << endl;
@@ -110,7 +110,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         if (pushFrameFurther)
         {
             LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << nPlayed_ << endl;
-            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
+            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
         }
         else
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo

@@ -40,7 +40,7 @@ BufferEstimator::getTargetSize()
     // we set buffer target size to be 2*RTT or
     // minimal buffer size specified by user (or default)
     
-    if (rttEstimate > MinBufferSizeMs)
+    if (rttEstimate*2 > MinBufferSizeMs)
         return rttEstimate*2;
     
     return minBufferSizeMs_;

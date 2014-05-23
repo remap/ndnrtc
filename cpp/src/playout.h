@@ -67,7 +67,7 @@ namespace ndnrtc{
             int playbackAdjustment_;
             PacketNumber startPacketNo_;
             
-#if 0 // left for future testing
+#if 1 // left for future testing
             int test_timelineDiff_ = -1;
             int test_timelineDiffInclineEst_ = -1;
 #endif

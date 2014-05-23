@@ -198,18 +198,11 @@ void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
 //    if (videoFrame.render_time_ms() >= NdnRtcUtils::millisecondTimestamp()-30 &&
 //        videoFrame.render_time_ms() <= NdnRtcUtils::millisecondTimestamp())
 //        TRACE("..delayed");
-    
-    LogTraceC
-    << "captured frame. time "<< videoFrame.render_time_ms() << " "
-    << "current " << NdnRtcUtils::millisecondTimestamp() << endl;
-    
-    LogStatC
-    << "capture\t" << videoFrame.render_time_ms() << endl;
-    
     NdnRtcUtils::frequencyMeterTick(meterId_);
     
     capture_cs_->Enter();
     capturedFrame_.SwapFrame(&videoFrame);
+    capturedTimeStamp_ = NdnRtcUtils::unixTimestamp();
     capture_cs_->Leave();
     
     captureEvent_.Set();
@@ -229,12 +222,13 @@ bool CameraCapturer::process()
         if (!capturedFrame_.IsZeroSize()) {
             // New I420 frame.
             capture_cs_->Enter();
+            double timestamp = capturedTimeStamp_;
             deliverFrame_.SwapFrame(&capturedFrame_);
             capturedFrame_.ResetSize();
             capture_cs_->Leave();
             
             if (frameConsumer_)
-                frameConsumer_->onDeliverFrame(deliverFrame_);
+                frameConsumer_->onDeliverFrame(deliverFrame_, timestamp);
         }
         deliver_cs_->Leave();
     }

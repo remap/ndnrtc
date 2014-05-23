@@ -917,14 +917,13 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
     assert(slot.get());
     
     this->push_back(slot);
-    sort();
     updatePlaybackDeadlines();
     
     {
         LogTraceC << "▼push[" << slot->dump() << "]" << endl;
         dumpQueue();
         
-        LogStatC << "▼push " << dumpShort() << endl;
+//        LogStatC << "▼push " << dumpShort() << endl;
     }
 }
 
@@ -955,7 +954,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         updatePlaybackDeadlines();
         
         dumpQueue();
-        LogStatC << "▲pop " << dumpShort() << endl;
+//        LogStatC << "▲pop " << dumpShort() << endl;
     }
 }
 
@@ -1616,7 +1615,7 @@ ndnrtc::new_api::FrameBuffer::dump()
     << "buffer dump (duration est " << getEstimatedBufferSize()
     << " playable " << getPlayableBufferSize() << ")" << endl;
     
-    playbackQueue_.dumpQueue();
+//    playbackQueue_.dumpQueue();
 }
 
 void

@@ -159,14 +159,15 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
     << encodeTime_ << endl;
     
     if (frameConsumer_)
-        frameConsumer_->onEncodedFrameDelivered(encodedImage);
+        frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
     
 #warning need to handle return value
     return 0;
 }
 //********************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
-void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
+void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                   double timestamp)
 {
     LogTraceC << "encoding..." << endl;
     
@@ -180,6 +181,7 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame)
     counter_++;
     
     encodeTime_ = NdnRtcUtils::microsecondTimestamp();
+    deliveredTimestamp_  = timestamp;
     
     int err;
     

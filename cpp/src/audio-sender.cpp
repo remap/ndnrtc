@@ -79,7 +79,7 @@ int NdnAudioSender::publishPacket(PacketData &packetData,
     prefixMeta.playbackNo_ = packetNo_;
     
     return MediaSender::publishPacket(packetData, packetPrefix, packetNo_,
-                                      prefixMeta);
+                                      prefixMeta, NdnRtcUtils::unixTimestamp());
 }
 
 int NdnAudioSender::publishRTPAudioPacket(unsigned int len, unsigned char *data)

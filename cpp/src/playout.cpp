@@ -68,7 +68,7 @@ Playout::start()
     playbackAdjustment_ = 0;
     data_ = nullptr;
     
-#if 0
+#if 1
     test_timelineDiff_ = -1;
 #endif
     
@@ -140,7 +140,7 @@ Playout::processPlayout()
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
             
-            if (sequencePacketNo >= startPacketNo_ || isKey)
+//            if (sequencePacketNo >= startPacketNo_ || isKey)
             {
                 //******************************************************************
                 // next call is overriden by specific playout mechanism - either
@@ -149,16 +149,6 @@ Playout::processPlayout()
                                    pairedPacketNo, isKey, assembledLevel))
                 {
                     packetValid = true;
-                    
-                    if (data_)
-                    {
-                        double currentUnixTimestamp = NdnRtcUtils::unixTimestamp();
-                        double frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-                        latency_ = currentUnixTimestamp - frameUnixTimestamp;
-                        
-                        LogStatC
-                        << "\tlatency\t" << latency_ << endl;
-                    }
                     
                     nPlayed_++;
                     updatePlaybackAdjustment();
@@ -172,11 +162,11 @@ Playout::processPlayout()
                     << "\ttotal\t" << nMissed_ << endl;
                 }
             }
-            else
-                LogTraceC << "playout has not started: "
-                << sequencePacketNo << " < " << startPacketNo_  << endl;
+//            else
+//                LogTraceC << "playout has not started: "
+//                << sequencePacketNo << " < " << startPacketNo_  << endl;
             
-#if 0
+#if 1
             // testing
             if (test_timelineDiff_ == -1 && data_)
             {
@@ -206,7 +196,16 @@ Playout::processPlayout()
             }
             // testing
 #endif
-            
+            double frameUnixTimestamp = 0;
+
+            if (data_)
+                frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
+            if (data_)
+            {
+                latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
+                LogStatC
+                << "\tlatency\t" << latency_ << endl;
+            }
             
             //******************************************************************
             // get playout time (delay) for the rendered frame
@@ -295,6 +294,13 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
         syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, nowTimestamp, (Consumer*)(consumer_.get()));
         
         LogTraceC << " av-sync adjustment: " << syncDriftAdjustment << endl;
+        
+        if (abs(syncDriftAdjustment) > playbackDelay && syncDriftAdjustment < 0)
+        {
+            playbackAdjustment_ = syncDriftAdjustment+playbackDelay;
+            syncDriftAdjustment = -playbackDelay;
+            LogTraceC << " av-sync updated playback adjustment: " << playbackAdjustment_ << endl;
+        }
     }
     
     return syncDriftAdjustment;
