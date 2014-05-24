@@ -36,6 +36,7 @@ decoder_(new NdnVideoDecoder(params))
 
 VideoConsumer::~VideoConsumer()
 {
+    
 }
 
 //******************************************************************************
@@ -49,7 +50,7 @@ VideoConsumer::init()
 
     decoder_->init();
     
-    playout_.reset(new VideoPlayout(shared_from_this()));
+    playout_.reset(new VideoPlayout(this));
     playout_->setLogger(logger_);
     playout_->init(decoder_.get());
     

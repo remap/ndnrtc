@@ -22,6 +22,7 @@ namespace ndnrtc
         class IRenderer
         {
         public:
+            virtual ~IRenderer(){}
             virtual int init() = 0;
             virtual int startRendering(const std::string &name = "Renderer") = 0;
             virtual int stopRendering() = 0;

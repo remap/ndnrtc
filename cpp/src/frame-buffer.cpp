@@ -1037,7 +1037,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpShort()
 //******************************************************************************
 #pragma mark - construction/destruction
 ndnrtc::new_api::FrameBuffer::FrameBuffer(const shared_ptr<const ndnrtc::new_api::Consumer> &consumer):
-consumer_(consumer),
+consumer_(consumer.get()),
 state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),

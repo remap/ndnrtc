@@ -29,7 +29,7 @@ namespace ndnrtc
     {
     public:
         VideoRenderer(int rendererId, const ParamsStruct &params);
-        ~VideoRenderer();
+        virtual ~VideoRenderer();
         
         int
         init();

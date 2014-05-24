@@ -24,7 +24,7 @@ namespace ndnrtc {
             VideoConsumer(const ParamsStruct& params,
                           const shared_ptr<InterestQueue>& interestQueue,
                           const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
-            ~VideoConsumer();
+            virtual ~VideoConsumer();
             
             int
             init();

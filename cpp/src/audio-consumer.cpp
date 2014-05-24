@@ -41,7 +41,7 @@ AudioConsumer::init()
     {
         pipeliner_->setUseKeyNamespace(false);
         
-        playout_.reset(new AudioPlayout(shared_from_this()));
+        playout_.reset(new AudioPlayout(this));
         playout_->setLogger(logger_);
         playout_->init(renderer_.get());
         

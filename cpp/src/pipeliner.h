@@ -78,11 +78,11 @@ namespace ndnrtc {
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
-            shared_ptr<Consumer> consumer_;
-            ParamsStruct params_; 
-            shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
-            shared_ptr<ChaseEstimation> chaseEstimation_;
-            shared_ptr<BufferEstimator> bufferEstimator_;
+            Consumer* consumer_;
+            ParamsStruct params_;
+            ndnrtc::new_api::FrameBuffer* frameBuffer_;
+            ChaseEstimation* chaseEstimation_;
+            BufferEstimator* bufferEstimator_;
             IPacketAssembler* ndnAssembler_;
             
             bool isProcessing_;

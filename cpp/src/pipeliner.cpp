@@ -30,7 +30,7 @@ const int64_t Pipeliner::MinInterestLifetime = 250;
 #pragma mark - construction/destruction
 ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
 NdnRtcObject(consumer->getParameters()),
-consumer_(consumer),
+consumer_(consumer.get()),
 isProcessing_(false),
 mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this)),
 isPipelining_(false),
@@ -401,9 +401,9 @@ int
 ndnrtc::new_api::Pipeliner::initialize()
 {
     params_ = consumer_->getParameters();
-    frameBuffer_ = consumer_->getFrameBuffer();
-    chaseEstimation_ = consumer_->getChaseEstimation();
-    bufferEstimator_ = consumer_->getBufferEstimator();
+    frameBuffer_ = consumer_->getFrameBuffer().get();
+    chaseEstimation_ = consumer_->getChaseEstimation().get();
+    bufferEstimator_ = consumer_->getBufferEstimator().get();
     ndnAssembler_ = consumer_->getPacketAssembler();
     
     shared_ptr<string>

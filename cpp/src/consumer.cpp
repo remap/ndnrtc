@@ -72,12 +72,12 @@ Consumer::init()
         notifyError(-1, "can't initialize frame buffer");
     
 #warning error handling!
+    chaseEstimation_.reset(new ChaseEstimation());
+    
     pipeliner_.reset(new Pipeliner(shared_from_this()));
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
-    
-    chaseEstimation_.reset(new ChaseEstimation());
     
     renderer_->init();
     

@@ -20,7 +20,7 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(const shared_ptr<const Consumer> &consumer):
+Playout::Playout(const Consumer* consumer):
 NdnRtcObject(consumer->getParameters()),
 isRunning_(false),
 consumer_(consumer),
@@ -30,7 +30,7 @@ data_(nullptr)
     setDescription("playout");
     jitterTiming_.flush();
     
-    if (consumer_.get())
+    if (consumer_)
     {
         frameBuffer_ = consumer_->getFrameBuffer();
     }
@@ -283,7 +283,7 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     
     if (consumer_->getAvSynchronizer().get())
     {
-        syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, nowTimestamp, (Consumer*)(consumer_.get()));
+        syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, nowTimestamp, (Consumer*)consumer_);
         
         LogTraceC << " av-sync adjustment: " << syncDriftAdjustment << endl;
         

@@ -902,7 +902,7 @@ namespace ndnrtc
                 sort();
             };
             
-            shared_ptr<const Consumer> consumer_;
+            const Consumer* consumer_;
             
             State state_;
             PacketNumber playbackNo_;

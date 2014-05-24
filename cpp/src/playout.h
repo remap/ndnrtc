@@ -31,7 +31,7 @@ namespace ndnrtc{
         class Playout : public NdnRtcObject
         {
         public:
-            Playout(const shared_ptr<const Consumer> &consumer);
+            Playout(const Consumer* consumer);
             ~Playout();
             
             virtual int
@@ -72,7 +72,7 @@ namespace ndnrtc{
             int test_timelineDiffInclineEst_ = -1;
 #endif
             
-            shared_ptr<const Consumer> consumer_;
+            const Consumer* consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
