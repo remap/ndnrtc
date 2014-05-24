@@ -63,7 +63,7 @@ int64_t JitterTiming::startFramePlayout()
         
         // add this time to the average processing time
         processingTimeUsec_ += prevIterationProcTimeUsec;
-        LogTraceC << "proc time " << prevIterationProcTimeUsec << endl;
+        LogTraceC << "proc time " << processingTimeUsec_ << endl;
         
         playoutTimestampUsec_ = processingStart;
     }

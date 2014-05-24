@@ -34,12 +34,19 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
             static const int64_t MaxInterruptionDelay;
+            static const int64_t MinInterestLifetime;
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
             
-            int start();
-            int stop();
+            int
+            start();
+            
+            int
+            stop();
+            
+            void
+            triggerRebuffering();
             
             double
             getAvgSegNum(bool isKey) const
@@ -71,11 +78,11 @@ namespace ndnrtc {
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
-            shared_ptr<Consumer> consumer_;
-            ParamsStruct params_; 
-            shared_ptr<ndnrtc::new_api::FrameBuffer> frameBuffer_;
-            shared_ptr<ChaseEstimation> chaseEstimation_;
-            shared_ptr<BufferEstimator> bufferEstimator_;
+            Consumer* consumer_;
+            ParamsStruct params_;
+            ndnrtc::new_api::FrameBuffer* frameBuffer_;
+            ChaseEstimation* chaseEstimation_;
+            BufferEstimator* bufferEstimator_;
             IPacketAssembler* ndnAssembler_;
             
             bool isProcessing_;
@@ -91,6 +98,7 @@ namespace ndnrtc {
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
+            PacketNumber playbackStartFrameNo_;
             
             // --
             unsigned rebufferingNum_, reconnectNum_;
@@ -186,7 +194,13 @@ namespace ndnrtc {
                           int prefetchSize, int parityPrefetchSize,
                           FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
-            void
+            /**
+             * Requests additional frames to keep buffer meet its target size
+             * @param useEstimatedSize Indicates whether estimated buffer size 
+             * or playable buffer size should be used for checking
+             * @return Number of frames requested
+             */
+            int
             keepBuffer(bool useEstimatedSize = true);
             
             void
@@ -194,6 +208,9 @@ namespace ndnrtc {
             
             void
             recoveryCheck(const ndnrtc::new_api::FrameBuffer::Event& event);
+            
+            void
+            rebuffer();
         };
     }
 }

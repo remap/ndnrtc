@@ -127,6 +127,14 @@ namespace ndnrtc
                     getState() const { return state_; };
                     
                     int64_t
+                    getRequestTimeUsec()
+                    { return requestTimeUsec_; }
+                    
+                    int64_t
+                    getArrivalTimeUsec()
+                    { return arrivalTimeUsec_; }
+                    
+                    int64_t
                     getRoundTripDelayUsec()
                     { return (arrivalTimeUsec_-requestTimeUsec_); }
                     
@@ -470,6 +478,14 @@ namespace ndnrtc
                 void
                 incremenrRtxNum() { nRtx_++; }
                 
+                int64_t
+                getLifetime()
+                { return (requestTimeUsec_ > 0)?NdnRtcUtils::millisecondTimestamp()-requestTimeUsec_/1000.:0;}
+                
+                int64_t
+                getAssemblingTime()
+                { return ((readyTimeUsec_ >= 0) ? (readyTimeUsec_-firstSegmentTimeUsec_)/1000. : 0); }
+                
                 bool
                 hasOriginalSegments() { return hasOriginalSegments_; }
                 
@@ -530,7 +546,7 @@ namespace ndnrtc
                                 packetPlaybackNumber_;
                 Namespace packetNamespace_;
 
-                int64_t requestTimeUsec_, readyTimeUsec_;
+                int64_t requestTimeUsec_, firstSegmentTimeUsec_, readyTimeUsec_;
                 int64_t playbackDeadline_, producerTimestamp_;
                 double packetRate_;
 
@@ -886,7 +902,7 @@ namespace ndnrtc
                 sort();
             };
             
-            shared_ptr<const Consumer> consumer_;
+            const Consumer* consumer_;
             
             State state_;
             PacketNumber playbackNo_;

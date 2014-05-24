@@ -20,6 +20,8 @@ namespace ndnrtc {
         
         class IPacketAssembler {
         public:
+            virtual ~IPacketAssembler(){}
+            
             virtual ndn::OnData getOnDataHandler() = 0;
             virtual ndn::OnTimeout getOnTimeoutHandler() = 0;
         };

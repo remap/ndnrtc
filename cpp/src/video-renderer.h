@@ -29,7 +29,7 @@ namespace ndnrtc
     {
     public:
         VideoRenderer(int rendererId, const ParamsStruct &params);
-        ~VideoRenderer();
+        virtual ~VideoRenderer();
         
         int
         init();
@@ -41,7 +41,7 @@ namespace ndnrtc
         stopRendering();
         
         void
-        onDeliverFrame(webrtc::I420VideoFrame &frame);
+        onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
     protected:
         int rendererId_;

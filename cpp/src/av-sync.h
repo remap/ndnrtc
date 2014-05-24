@@ -13,26 +13,31 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
+#include "simple-log.h"
+#include "audio-consumer.h"
+#include "video-consumer.h"
 
-namespace ndnrtc {
-#if 0 // suspended
-    const int64_t TolerableDriftMs = 20; // packets will be synchronized
-                                         // if their timelines differ more
-                                         // than this value
-    class NdnMediaReceiver;
+namespace ndnrtc
+{
+    const int64_t TolerableDriftMs = 50;  // packets will be synchronized
+                                          // if their timelines differ more
+                                          // than this value (milliseconds)
+    const int64_t TolerableLeadingDriftMs = 15; // audio should not lead video by more than this value
+    const int64_t TolerableLaggingDriftMs = 45; // audio should not lag video by more than this value
     
     class IMediaReceiverCallback
     {
     public:
         // called whenever receiver encounters rebuffering
-        virtual void onRebuffer(NdnMediaReceiver *caller) = 0;
+        virtual void onRebuffer(new_api::Consumer *caller) = 0;
     };
     
-    class AudioVideoSynchronizer : public LoggerObject,
+    class AudioVideoSynchronizer : public ndnlog::new_api::ILoggingObject,
     public IMediaReceiverCallback
     {
     public:
-        AudioVideoSynchronizer(ParamsStruct videoParams, ParamsStruct audioParams);
+        AudioVideoSynchronizer(const shared_ptr<new_api::VideoConsumer>& videoConsumer,
+                               const shared_ptr<new_api::AudioConsumer>& audioConsumer);
         ~AudioVideoSynchronizer(){}
         
         /**
@@ -45,12 +50,11 @@ namespace ndnrtc {
          * @param slot Slot which contains packet to be played out. By its 
          * content (audio sample or video frame) it also determines whether 
          * audio or video stream should be synchronized.
-         * @param playoutDuration Playout duration returned by playout buffer.
          * @return Playout duration adjustment (in ms) needed for media streams 
          * to be synchronized or 0 if no adjustment is required.
          */
-        int synchronizePacket(FrameBuffer::Slot* slot, int64_t localTimestamp,
-                              NdnMediaReceiver *receiver);
+        int synchronizePacket(int64_t remoteTimestamp, int64_t localTimestamp,
+                              new_api::Consumer *consumer);
         
         /**
          * Resets synchronization data (used for rebufferings).
@@ -60,11 +64,11 @@ namespace ndnrtc {
         /**
          * IMediaReceiverCallback interface
          */
-        void onRebuffer(NdnMediaReceiver *receiver);
+        void onRebuffer(new_api::Consumer *consumer);
         
     protected:
-        // those attribute which has prefix "remote" relate to remote producer's
-        // timestamps, wherease suffixed with "local" relate to local timestamps
+        // those attributes which have suffix "remote" relate to remote producer's
+        // timestamps, whereas suffixed with "local" relate to local timestamps
         class SyncStruct {
         public:
             SyncStruct(const char *name):
@@ -76,7 +80,7 @@ namespace ndnrtc {
             {}
             
             webrtc::CriticalSectionWrapper &cs_;
-            NdnMediaReceiver *receiver_;
+            new_api::Consumer *consumer_;
             const char *name_;
             bool initialized_;
             
@@ -106,16 +110,13 @@ namespace ndnrtc {
                        SyncStruct& pairedSyncData,
                        int64_t packetTsRemote,
                        int64_t packetTsLocal,
-                       NdnMediaReceiver *receiver);
+                       new_api::Consumer *consumer);
         
         void initialize(SyncStruct& syncData,
                         int64_t firstPacketTsRemote,
                         int64_t packetTsLocal,
-                        NdnMediaReceiver *receiver);
-        
-        int64_t getNextSyncPoint(int64_t startingPoint);
+                        new_api::Consumer *consumer);
     };
-#endif
 }
 
 #endif /* defined(__ndnrtc__av_sync__) */

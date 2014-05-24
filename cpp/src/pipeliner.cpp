@@ -11,6 +11,7 @@
 #include "pipeliner.h"
 #include "ndnrtc-namespace.h"
 #include "rtt-estimation.h"
+#include "playout.h"
 
 using namespace std;
 using namespace webrtc;
@@ -23,12 +24,13 @@ const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
 const int64_t Pipeliner::MaxInterruptionDelay = 2000;
+const int64_t Pipeliner::MinInterestLifetime = 250;
 
 //******************************************************************************
 #pragma mark - construction/destruction
 ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
 NdnRtcObject(consumer->getParameters()),
-consumer_(consumer),
+consumer_(consumer.get()),
 isProcessing_(false),
 mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this)),
 isPipelining_(false),
@@ -84,6 +86,12 @@ ndnrtc::new_api::Pipeliner::stop()
     
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
+}
+
+void
+ndnrtc::new_api::Pipeliner::triggerRebuffering()
+{
+    rebuffer();
 }
 
 Pipeliner::State
@@ -262,13 +270,16 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
             
             if (chaseEstimation_->isArrivalStable())
             {
-                LogTraceC
-                << "[****] arrival stable -> buffering. buf size "
-                << bufferSize << endl;
-                
                 stopChasePipeliner();
                 frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
                 isBuffering_ = true;
+                playbackStartFrameNo_ = deltaFrameSeqNo_;
+                consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);
+                
+                LogTraceC
+                << "[****] arrival stable -> buffering. buf size: " << bufferSize
+                << ". start playback from: "
+                << playbackStartFrameNo_ << endl;
             }
             else
             {
@@ -302,26 +313,23 @@ ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
 void
 ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
 {
-    int bufferSize = frameBuffer_->getPlayableBufferSize();
+    int targetSize = frameBuffer_->getTargetSize();
+    int estimatedSize = frameBuffer_->getEstimatedBufferSize();
+    int playableSize = frameBuffer_->getPlayableBufferSize();
     
-    LogTraceC << "buffering. playable size " << bufferSize << endl;
+    LogTraceC << "buffering. playable size " << playableSize << endl;
     
-    if (bufferSize >= frameBuffer_->getTargetSize()*2./3.)
+    int nRequested = keepBuffer();
+    
+    if (playableSize >= (targetSize - consumer_->getRttEstimation()->getCurrentEstimation()) ||
+        (nRequested == 0 && playableSize >= 0.7*targetSize))
     {
         LogTraceC
-        << "[*****] switch to valid state. playable size " << bufferSize << endl;
+        << "[*****] switch to valid state. playable size " << playableSize << endl;
         
         isBuffering_ = false;
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
-    }
-    else
-    {
-        keepBuffer();
-        
-        LogTraceC << "[*****] buffering. playable size " << bufferSize << endl;
-        
-        frameBuffer_->dump();
     }
 }
 
@@ -393,9 +401,9 @@ int
 ndnrtc::new_api::Pipeliner::initialize()
 {
     params_ = consumer_->getParameters();
-    frameBuffer_ = consumer_->getFrameBuffer();
-    chaseEstimation_ = consumer_->getChaseEstimation();
-    bufferEstimator_ = consumer_->getBufferEstimator();
+    frameBuffer_ = consumer_->getFrameBuffer().get();
+    chaseEstimation_ = consumer_->getChaseEstimation().get();
+    bufferEstimator_ = consumer_->getBufferEstimator().get();
     ndnAssembler_ = consumer_->getPacketAssembler();
     
     shared_ptr<string>
@@ -675,6 +683,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     }
     
     assert(interestLifetime > 0);
+//    return (interestLifetime < MinInterestLifetime)? MinInterestLifetime : interestLifetime;
     return interestLifetime;
 }
 
@@ -707,7 +716,7 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
     }
 }
 
-void
+int
 ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
 {
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
@@ -719,6 +728,7 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     << " target " << frameBuffer_->getTargetSize()
     << ((bufferSize < frameBuffer_->getTargetSize())?" KEEP UP":" NO KEEP UP") << endl;
     
+    int nRequested = 0;
     while (bufferSize < frameBuffer_->getTargetSize())
     {
         LogTraceC
@@ -728,7 +738,11 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
         
         bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
         frameBuffer_->getPlayableBufferSize();
+        
+        nRequested++;
     }
+    
+    return nRequested;
 }
 
 void
@@ -767,30 +781,35 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
     if (recoveryCheckpointTimestamp_ > 0 &&
         NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > MaxInterruptionDelay)
     {
-        reconnectNum_++;
-        rebufferingNum_++;
-        
-        resetData();
-        consumer_->reset();
-        
-        bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
-        isProcessing_ = true;
-        
-        chaseEstimation_->reset();
-        
-        if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
-        {
-            exclusionFilter_ = -1;
-        }
-        else
-            exclusionFilter_ = deltaFrameSeqNo_+1;
-
-        LogWarnC
-        << "No data for the last " << MaxInterruptionDelay
-        << " ms. Rebuffering " << rebufferingNum_
-        << " exclusion " << exclusionFilter_
-        << endl;
-        LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;
-        
+        rebuffer();
     }
+}
+
+void
+ndnrtc::new_api::Pipeliner::rebuffer()
+{
+    reconnectNum_++;
+    rebufferingNum_++;
+    
+    resetData();
+    consumer_->reset();
+    
+    bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
+    isProcessing_ = true;
+    
+    chaseEstimation_->reset();
+    
+    if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
+    {
+        exclusionFilter_ = -1;
+    }
+    else
+        exclusionFilter_ = deltaFrameSeqNo_+1;
+    
+    LogWarnC
+    << "No data for the last " << MaxInterruptionDelay
+    << " ms. Rebuffering " << rebufferingNum_
+    << " exclusion " << exclusionFilter_
+    << endl;
+    LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;    
 }

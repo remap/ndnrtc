@@ -17,7 +17,7 @@ namespace ndnrtc {
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(const shared_ptr<const Consumer>& consumer);
+            VideoPlayout(const Consumer* consumer);
             ~VideoPlayout();
             
             int
@@ -26,7 +26,7 @@ namespace ndnrtc {
         private:
             // this flags indicates whether frames should be played out (unless
             // new full key frame received)
-            bool hasKeyForGop_;
+            bool validGop_;
             PacketNumber currentKeyNo_;
             
             bool

@@ -24,7 +24,7 @@ namespace ndnrtc {
             ConsumerChannel(const ParamsStruct& params,
                             const ParamsStruct& audioParams,
                             const shared_ptr<FaceProcessor>& faceProcessor = shared_ptr<FaceProcessor>(nullptr));
-            ~ConsumerChannel(){ }
+            virtual ~ConsumerChannel(){ }
             
             int init();
             int startTransmission();

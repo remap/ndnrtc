@@ -22,7 +22,7 @@ static EncodedFrameWriter frameWriter("received.nrtc");
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(const shared_ptr<const Consumer>& consumer):
+VideoPlayout::VideoPlayout(const Consumer* consumer):
 Playout(consumer)
 {
     description_ = "video-playout";
@@ -40,7 +40,7 @@ VideoPlayout::start()
 {
     int res = Playout::start();
     
-    hasKeyForGop_ = false;
+    validGop_ = false;
     currentKeyNo_ = 0;
     
     return res;
@@ -68,41 +68,57 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         frameWriter.writeFrame(frame, meta);
 #endif
 
+        bool pushFrameFurther = false;
+        
         if (params_.skipIncomplete)
         {
-            if (isKey && assembledLevel >= 1)
+            if (isKey)
             {
-                currentKeyNo_ = sequencePacketNo;
-                hasKeyForGop_ = true;
-                LogTraceC << "resumed frames playout" << endl;
+                if (assembledLevel >= 1)
+                {
+                    pushFrameFurther = true;
+                    currentKeyNo_ = sequencePacketNo;
+                    validGop_ = true;
+                    LogTraceC << "new GOP with key: "
+                    << sequencePacketNo << endl;
+                }
+                else
+                {
+                    validGop_ = false;
+                    LogTraceC << "GOP failed - key incomplete: "
+                    << sequencePacketNo << endl;
+                }
             }
-            
-            hasKeyForGop_ = (assembledLevel >= 1);
-            
-            if (!isKey)
+            else
             {
                 if (pairedPacketNo != currentKeyNo_)
-                    LogTrace("order.log")
+                    LogTraceC
                     << playbackPacketNo << " is unexpected: "
                     << " current key " << currentKeyNo_
-                    << " got " << sequencePacketNo << endl;
+                    << " got " << pairedPacketNo << endl;
                 
-                hasKeyForGop_ &= (pairedPacketNo == currentKeyNo_);
+                validGop_ &= (assembledLevel >= 1);
+                pushFrameFurther = validGop_ && (pairedPacketNo == currentKeyNo_);
             }
         }
+        else
+            pushFrameFurther  = true;
         
-        if (hasKeyForGop_ || !params_.skipIncomplete)
+        if (pushFrameFurther)
         {
             LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << nPlayed_ << endl;
-            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame);
+            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
         }
         else
+        {
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
             << " isKey: " << (isKey?"YES":"NO")
             << " level: " << assembledLevel << endl;
+            nMissed_++;
+        }
         
         res = true;
-    }
+    } // if data
     
     return res;
 }

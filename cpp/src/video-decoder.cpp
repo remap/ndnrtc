@@ -58,7 +58,7 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
     
     if (frameConsumer_)
     {
-        frameConsumer_->onDeliverFrame(decodedImage);
+        frameConsumer_->onDeliverFrame(decodedImage, capturedTimestamp_);
     }
     else
         LogWarnC << "unused decoded" << endl;
@@ -68,11 +68,13 @@ int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
 
 //********************************************************************************
 #pragma mark - intefaces realization IEncodedFrameConsumer
-void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
+void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                              double timestamp)
 {
     LogTraceC
     << "to decode " << encodedImage._length
     << " type " << NdnRtcUtils::stringFromFrameType(encodedImage._frameType) << endl;
+    capturedTimestamp_ = timestamp;
     
     if (decoder_->Decode(encodedImage, false, NULL) != WEBRTC_VIDEO_CODEC_OK)
     {

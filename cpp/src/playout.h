@@ -31,7 +31,7 @@ namespace ndnrtc{
         class Playout : public NdnRtcObject
         {
         public:
-            Playout(const shared_ptr<const Consumer> &consumer);
+            Playout(const Consumer* consumer);
             ~Playout();
             
             virtual int
@@ -52,6 +52,10 @@ namespace ndnrtc{
             void
             getStatistics(ReceiverChannelPerformance& stat);
             
+            void
+            setStartPacketNo(PacketNumber packetNo)
+            { startPacketNo_ = packetNo; }
+            
         protected:
             bool isRunning_;
             unsigned int nPlayed_, nMissed_;
@@ -61,8 +65,14 @@ namespace ndnrtc{
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
             int playbackAdjustment_;
+            PacketNumber startPacketNo_;
             
-            shared_ptr<const Consumer> consumer_;
+#if 1 // left for future testing
+            int test_timelineDiff_ = -1;
+            int test_timelineDiffInclineEst_ = -1;
+#endif
+            
+            const Consumer* consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
@@ -95,6 +105,15 @@ namespace ndnrtc{
             {
                 return ((Playout*)obj)->processPlayout();
             }
+            
+            void
+            updatePlaybackAdjustment();
+            
+            void
+            adjustPlaybackDelay(int& playbackDelay);
+            
+            int
+            avSyncAdjustment(int64_t nowTimestamp, int playbackDelay);
             
             bool
             processPlayout();

@@ -12,6 +12,8 @@
 namespace ndnrtc {
     class INdnRtcObjectObserver {
     public:
+        virtual ~INdnRtcObjectObserver(){}
+        
         // public methods go here
         virtual void onErrorOccurred(const char *errorMessage) = 0;
     };

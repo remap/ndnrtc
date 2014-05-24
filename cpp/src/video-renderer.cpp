@@ -95,7 +95,7 @@ int VideoRenderer::stopRendering()
 }
 //******************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
-void VideoRenderer::onDeliverFrame(I420VideoFrame &frame)
+void VideoRenderer::onDeliverFrame(I420VideoFrame &frame, double timestamp)
 {
     if (isRendering_)
     {

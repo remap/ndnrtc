@@ -39,6 +39,9 @@ segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
     {
         rttEstimation_.reset(new RttEstimation());
     }
+    
+    bufferEstimator_->setRttEstimation(rttEstimation_);
+    bufferEstimator_->setMinimalBufferSize(params.jitterSize);
 }
 
 Consumer::~Consumer()
@@ -69,15 +72,12 @@ Consumer::init()
         notifyError(-1, "can't initialize frame buffer");
     
 #warning error handling!
-    bufferEstimator_->setMinimalBufferSize(params_.jitterSize);
+    chaseEstimation_.reset(new ChaseEstimation());
     
     pipeliner_.reset(new Pipeliner(shared_from_this()));
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
-    
-    chaseEstimation_.reset(new ChaseEstimation());
-    bufferEstimator_.reset(new BufferEstimator());
     
     renderer_->init();
     
@@ -109,6 +109,12 @@ Consumer::stop()
 void
 Consumer::reset()
 {
+}
+
+void
+Consumer::triggerRebuffering()
+{
+    pipeliner_->triggerRebuffering();
 }
 
 Consumer::State

@@ -50,7 +50,8 @@ int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
 
 //******************************************************************************
 #pragma mark - interfaces realization
-void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage)
+void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                             double captureTimestamp)
 {
     // update packet rate meter
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
@@ -87,9 +88,10 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
     
     if ((nSegments = publishPacket(frameData,
-                                  framePrefixData,
-                                  frameNo,
-                                  prefixMeta)) > 0)
+                                   framePrefixData,
+                                   frameNo,
+                                   prefixMeta,
+                                   captureTimestamp)) > 0)
     {
         assert(nSegments == nSegmentsExpected);
         
@@ -178,7 +180,8 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
         if ((nSegmentsP = publishPacket(frameParityData,
                                         framePrefixParity,
                                         frameNo,
-                                        prefixMeta)) > 0)
+                                        prefixMeta,
+                                        NdnRtcUtils::unixTimestamp())) > 0)
         {
             LogStatC
             << "publish parity\t" << packetNo_ << "\t"

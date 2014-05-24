@@ -11,6 +11,7 @@
 #include "consumer-channel.h"
 #include "rtt-estimation.h"
 #include "ndnrtc-namespace.h"
+#include "av-sync.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -45,15 +46,24 @@ faceProcessor_(faceProcessor)
     interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     
     if (params.useVideo)
-        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_));
+        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_, rttEstimation_));
     
-#ifndef AUDIO_OFF
     if (params_.useAudio)
-        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_));
-#endif
+        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
+    
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
                                                      params.producerId)));
+    
+    if (params.useAvSync && params.useAudio && params.useVideo)
+    {
+        shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer(videoConsumer_, audioConsumer_));
+        avSync->setLogger(logger_);
+        
+        audioConsumer_->setAvSynchronizer(avSync);
+        videoConsumer_->setAvSynchronizer(avSync);
+    }
+
     isLoggerCreated_ = true;
 }
 
@@ -63,10 +73,9 @@ int
 ConsumerChannel::init()
 {
 #warning handle errors
-#ifndef AUDIO_OFF
     if (params_.useAudio)
         audioConsumer_->init();
-#endif
+
     if (params_.useVideo)
         videoConsumer_->init();
     
@@ -80,10 +89,8 @@ ConsumerChannel::startTransmission()
     if (isOwnFace_)
         faceProcessor_->startProcessing();
 
-#ifndef AUDIO_OFF
     if (params_.useAudio)
         audioConsumer_->start();
-#endif
     
     if (params_.useVideo)
         videoConsumer_->start();
