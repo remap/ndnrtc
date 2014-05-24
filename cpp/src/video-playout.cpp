@@ -40,7 +40,7 @@ VideoPlayout::start()
 {
     int res = Playout::start();
     
-    hasKeyForGop_ = false;
+    validGop_ = false;
     currentKeyNo_ = 0;
     
     return res;
@@ -78,18 +78,17 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 {
                     pushFrameFurther = true;
                     currentKeyNo_ = sequencePacketNo;
-                    hasKeyForGop_ = true;
+                    validGop_ = true;
                     LogTraceC << "new GOP with key: "
                     << sequencePacketNo << endl;
                 }
                 else
                 {
-                    hasKeyForGop_ = false;
+                    validGop_ = false;
                     LogTraceC << "GOP failed - key incomplete: "
                     << sequencePacketNo << endl;
                 }
             }
-//            hasKeyForGop_ = (assembledLevel >= 1);
             else
             {
                 if (pairedPacketNo != currentKeyNo_)
@@ -98,10 +97,8 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     << " current key " << currentKeyNo_
                     << " got " << pairedPacketNo << endl;
                 
-                // we should decode frame only if it belongs to the current GOP
-                // (i.e. it's corresponding key frame is equal to the current
-                // GOP key frame)
-                pushFrameFurther = (pairedPacketNo == currentKeyNo_);
+                validGop_ &= (assembledLevel >= 1);
+                pushFrameFurther = validGop_ && (pairedPacketNo == currentKeyNo_);
             }
         }
         else
@@ -113,9 +110,12 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
         }
         else
+        {
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
             << " isKey: " << (isKey?"YES":"NO")
             << " level: " << assembledLevel << endl;
+            nMissed_++;
+        }
         
         res = true;
     } // if data
