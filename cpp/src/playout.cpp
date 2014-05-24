@@ -140,32 +140,25 @@ Playout::processPlayout()
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
             
-//            if (sequencePacketNo >= startPacketNo_ || isKey)
+            //******************************************************************
+            // next call is overriden by specific playout mechanism - either
+            // video or audio. the rest of the code is similar for both cases
+            if (playbackPacket(now, data_, packetNo, sequencePacketNo,
+                               pairedPacketNo, isKey, assembledLevel))
             {
-                //******************************************************************
-                // next call is overriden by specific playout mechanism - either
-                // video or audio. the rest of the code is similar for both cases
-                if (playbackPacket(now, data_, packetNo, sequencePacketNo,
-                                   pairedPacketNo, isKey, assembledLevel))
-                {
-                    packetValid = true;
-                    
-                    nPlayed_++;
-                    updatePlaybackAdjustment();
-                }
-                else
-                {
-                    nMissed_++;
-                    
-                    LogStatC
-                    << "\tskipping\t" << packetNo
-                    << "\ttotal\t" << nMissed_ << endl;
-                }
+                packetValid = true;
+                
+                nPlayed_++;
+                updatePlaybackAdjustment();
             }
-//            else
-//                LogTraceC << "playout has not started: "
-//                << sequencePacketNo << " < " << startPacketNo_  << endl;
-            
+            else
+            {
+                nMissed_++;
+                
+                LogStatC
+                << "\tskipping\t" << sequencePacketNo
+                << "\ttotal\t" << nMissed_ << endl;
+            }
 #if 1
             // testing
             if (test_timelineDiff_ == -1 && data_)
@@ -199,9 +192,8 @@ Playout::processPlayout()
             double frameUnixTimestamp = 0;
 
             if (data_)
-                frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-            if (data_)
             {
+                frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
                 latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
                 LogStatC
                 << "\tlatency\t" << latency_ << endl;

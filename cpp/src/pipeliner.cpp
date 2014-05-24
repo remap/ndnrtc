@@ -321,10 +321,7 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     
     int nRequested = keepBuffer();
     
-//    if (playableSize >= frameBuffer_->getTargetSize()*2./3.)
     if (playableSize >= (targetSize - consumer_->getRttEstimation()->getCurrentEstimation()) ||
-//    if (playbackStartFrameNo_ == event.slot_->getSequentialNumber() &&
-//        event.type_ == FrameBuffer::Event::Ready)
         (nRequested == 0 && playableSize >= 0.7*targetSize))
     {
         LogTraceC
@@ -334,13 +331,6 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
     }
-//    else
-//    {
-//        keepBuffer();
-//        
-//        LogTraceC << "[*****] buffering. playable size " << playableSize << endl;
-//        frameBuffer_->dump();
-//    }
 }
 
 int

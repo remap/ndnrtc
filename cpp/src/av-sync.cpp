@@ -183,46 +183,12 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         LogTraceC << syncData.name_
         << " drift is " << drift << endl;
         
-//        unsigned int minJitterSize = (consumer == audioSyncData_.consumer_) ? audioParams_.jitterSize : videoParams_.jitterSize;
-        
         // do not allow drift greater than jitter buffer size
         if ((drift > 0 && drift < TolerableLeadingDriftMs) ||
             (drift < 0 && drift > -TolerableLaggingDriftMs))
         {
             drift = 0;
         }
-//        {
-//            // if drift > 0 - current stream is ahead, rebuffer paired stream
-//            if (drift > 0)
-//            {
-//                LogTraceC << syncData.name_
-//                << " drift exceeded - rebuffering for "
-//                << pairedSyncData.name_ << endl;
-//                
-//                drift = 0;
-//                pairedSyncData.consumer_->triggerRebuffering();
-//            }
-//            else
-//            {
-//                LogTraceC << syncData.name_
-//                << " drift exceeded - rebuffering for "
-//                << syncData.name_ << endl;
-//                
-//                syncData.consumer_->triggerRebuffering();
-//                drift = 0;
-//            }
-//        }
-//        else
-//        {
-//            if (drift > TolerableDriftMs)
-//            {
-//                LogDebugC << syncData.name_
-//                << " adjusting %s stream for %d" << pairedSyncData.name_
-//                <<  drift << endl;
-//            }
-//            else
-//                drift = 0;
-//        }        
     } // critical section
     
     syncData.cs_.Leave();
