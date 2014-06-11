@@ -197,6 +197,13 @@ Consumer::onBufferingEnded()
         renderer_->startRendering(string(params_.producerId));
 }
 
+void
+Consumer::onRebufferingOccurred()
+{
+    playout_->stop();
+    renderer_->stopRendering();
+}
+
 //******************************************************************************
 #pragma mark - private
 void Consumer::onData(const shared_ptr<const Interest>& interest,

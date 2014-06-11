@@ -42,6 +42,9 @@ namespace ndnrtc {
         public:
             virtual void
             onBufferingEnded() = 0;
+            
+            virtual void
+            onRebufferingOccurred() = 0;
         };
         
         /**
@@ -163,6 +166,9 @@ namespace ndnrtc {
             
             void
             onBufferingEnded();
+            
+            void
+            onRebufferingOccurred();
             
         protected:
             bool isConsuming_;
