@@ -27,6 +27,10 @@ namespace ndnrtc
             virtual int startRendering(const std::string &name = "Renderer") = 0;
             virtual int stopRendering() = 0;
             
+            bool
+            isRendering()
+            { return isRendering_; }
+            
         protected:
             bool isRendering_ = false;
         };

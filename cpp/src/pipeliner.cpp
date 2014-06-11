@@ -330,6 +330,9 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
         isBuffering_ = false;
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
+        
+        if (callback_)
+            callback_->onBufferingEnded();
     }
 }
 

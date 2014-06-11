@@ -56,6 +56,10 @@ namespace ndnrtc{
             setStartPacketNo(PacketNumber packetNo)
             { startPacketNo_ = packetNo; }
             
+            bool
+            isRunning()
+            { return isRunning_; }
+            
         protected:
             bool isRunning_;
             unsigned int nPlayed_, nMissed_;

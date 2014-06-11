@@ -78,6 +78,7 @@ Consumer::init()
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
+    pipeliner_->registerCallback(this);
     
     renderer_->init();
     
@@ -89,8 +90,6 @@ Consumer::start()
 {
 #warning error handling!
     pipeliner_->start();
-    playout_->start();
-    renderer_->startRendering(string(params_.producerId));
     
     return RESULT_OK;
 }
@@ -186,6 +185,16 @@ Consumer::setDescription(const std::string &desc)
                                                            desc.c_str()));
     
     ILoggingObject::setDescription(desc);
+}
+
+void
+Consumer::onBufferingEnded()
+{
+    if (!playout_->isRunning())
+        playout_->start();
+    
+    if (!renderer_->isRendering())
+        renderer_->startRendering(string(params_.producerId));
 }
 
 //******************************************************************************

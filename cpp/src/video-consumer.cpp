@@ -86,7 +86,6 @@ VideoConsumer::reset()
     
     playout_->stop();
     playout_->init(decoder_.get());
-    playout_->start();
 }
 
 void

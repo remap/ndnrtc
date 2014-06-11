@@ -18,6 +18,7 @@
 
 namespace ndnrtc {
     namespace new_api {
+        
         class Pipeliner : public NdnRtcObject
         {
         public:
@@ -75,6 +76,10 @@ namespace ndnrtc {
             setUseKeyNamespace(bool useKeyNamespace)
             { useKeyNamespace_ = useKeyNamespace; }
             
+            void
+            registerCallback(IPipelinerCallback* callback)
+            { callback_ = callback; }
+            
         private:
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
@@ -84,6 +89,7 @@ namespace ndnrtc {
             ChaseEstimation* chaseEstimation_;
             BufferEstimator* bufferEstimator_;
             IPacketAssembler* ndnAssembler_;
+            IPipelinerCallback* callback_;
             
             bool isProcessing_;
             webrtc::ThreadWrapper &mainThread_;
