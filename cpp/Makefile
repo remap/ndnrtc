@@ -47,7 +47,9 @@ CXX	       	= clang++
 
 XPIDLSRCS	= $(patsubst $(IDL_PATH)/%.idl,%.idl,$(wildcard $(IDL_PATH)/*.idl))
 CPPSRCS		= $(patsubst $(SRC_PATH)/%.cpp,%.cpp,$(wildcard $(SRC_PATH)/*.cpp))
+CPPHDRS		= $(patsubst $(SRC_PATH)/%.h,%.h,$(wildcard $(SRC_PATH)/*.h))
 CPPSRCS_SA	= $(filter-out ndNrtc%,$(CPPSRCS))
+CPPHDRS_SA	= $(filter-out ndNrtc%,$(CPPHDRS))
 OBJCSRCS    = $(patsubst $(OBJSRC_PATH)/%.mm,%.mm,$(wildcard $(OBJSRC_PATH)/*.mm))
 
 DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE -O0
@@ -255,7 +257,7 @@ undef:
 undefdebug:
 	$(eval DEBUGFLAGS=)
 
-$(MODULE_SA).dylib: $(addprefix $(OBJ_PATH)/,$(CPPSRCS_SA:%.cpp=%.o)) $(addprefix $(OBJ_PATH)/,$(OBJCSRCS:%.mm=%.om))
+$(MODULE_SA).dylib: $(addprefix $(OBJ_PATH)/,$(CPPSRCS_SA:%.cpp=%.o)) $(addprefix $(SRC_PATH)/, $(CPPHDRS_SA)) $(addprefix $(OBJ_PATH)/,$(OBJCSRCS:%.mm=%.om))
 	mkdir -p $(BIN_PATH)
 	$(CXX) -o $(BIN_PATH)/$@ $(LDFLAGS) $(OBJCFLAGS) $(LDLIBFLAGS) $(CPPSRCS_SA:%.cpp=$(OBJ_PATH)/%.o) $(OBJCSRCS:%.mm=$(OBJ_PATH)/%.om)
 	chmod +x $(BIN_PATH)/$@

@@ -330,6 +330,9 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
         isBuffering_ = false;
         frameBuffer_->setState(FrameBuffer::Valid);
         bufferEventsMask_ |= FrameBuffer::Event::Playout;
+        
+        if (callback_)
+            callback_->onBufferingEnded();
     }
 }
 
@@ -788,7 +791,7 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
 void
 ndnrtc::new_api::Pipeliner::rebuffer()
 {
-    reconnectNum_++;
+    int nReconnects = reconnectNum_+1;
     rebufferingNum_++;
     
     resetData();
@@ -798,6 +801,7 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     isProcessing_ = true;
     
     chaseEstimation_->reset();
+    reconnectNum_ = nReconnects;
     
     if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
     {
@@ -806,9 +810,13 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     else
         exclusionFilter_ = deltaFrameSeqNo_+1;
     
+    if (callback_)
+        callback_->onRebufferingOccurred();
+    
     LogWarnC
     << "No data for the last " << MaxInterruptionDelay
     << " ms. Rebuffering " << rebufferingNum_
+    << " reconnect " << reconnectNum_
     << " exclusion " << exclusionFilter_
     << endl;
     LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;    
