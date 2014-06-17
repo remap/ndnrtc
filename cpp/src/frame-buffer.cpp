@@ -876,6 +876,9 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
+    LogTraceC << "update: dump before sort" << endl;
+    dumpQueue();
+    
     sort();
     int64_t playbackDeadlineMs = 0;
     
