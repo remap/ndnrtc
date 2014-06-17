@@ -36,6 +36,16 @@ namespace ndnrtc {
         class RttEstimation;
         class ChaseEstimation;
         class BufferEstimator;
+
+        class IPipelinerCallback
+        {
+        public:
+            virtual void
+            onBufferingEnded() = 0;
+            
+            virtual void
+            onRebufferingOccurred() = 0;
+        };
         
         /**
          * Consumer class combines all the necessary components for successful
@@ -59,6 +69,7 @@ namespace ndnrtc {
          */
         class Consumer : public NdnRtcObject,
                          public IPacketAssembler,
+                         public IPipelinerCallback,
                          public boost::enable_shared_from_this<Consumer>
         {
         public:
@@ -152,6 +163,12 @@ namespace ndnrtc {
             
             virtual void
             setDescription(const std::string& desc);
+            
+            void
+            onBufferingEnded();
+            
+            void
+            onRebufferingOccurred();
             
         protected:
             bool isConsuming_;
