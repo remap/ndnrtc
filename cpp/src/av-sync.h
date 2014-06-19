@@ -38,7 +38,7 @@ namespace ndnrtc
     public:
         AudioVideoSynchronizer(const shared_ptr<new_api::VideoConsumer>& videoConsumer,
                                const shared_ptr<new_api::AudioConsumer>& audioConsumer);
-        ~AudioVideoSynchronizer(){}
+        ~AudioVideoSynchronizer();
         
         /**
          * Main method which should be called for synchronization. It should
@@ -78,6 +78,11 @@ namespace ndnrtc
             lastPacketTsLocal_(-1),
             lastPacketTsRemote_(-1)
             {}
+            
+            ~SyncStruct()
+            {
+                cs_.~CriticalSectionWrapper();
+            }
             
             webrtc::CriticalSectionWrapper &cs_;
             new_api::Consumer *consumer_;

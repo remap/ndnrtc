@@ -1055,7 +1055,9 @@ bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
 
 ndnrtc::new_api::FrameBuffer::~FrameBuffer()
 {
-    
+    syncCs_.~CriticalSectionWrapper();
+    bufferEvent_.~EventWrapper();
+    bufferEventsRWLock_.~RWLockWrapper();
 }
 //******************************************************************************
 #pragma mark - public

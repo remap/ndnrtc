@@ -22,6 +22,10 @@ playoutTimer_(*EventWrapper::Create())
     resetData();
 }
 
+JitterTiming::~JitterTiming(){
+    playoutTimer_.~EventWrapper();
+}
+
 //******************************************************************************
 #pragma mark - public
 void JitterTiming::flush()

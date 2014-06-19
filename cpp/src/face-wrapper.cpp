@@ -28,6 +28,7 @@ face_(face)
 
 FaceWrapper::~FaceWrapper()
 {
+    faceCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -153,6 +154,8 @@ processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFac
 FaceProcessor::~FaceProcessor()
 {
     stopProcessing();
+    
+    processingThread_.~ThreadWrapper();
 }
 
 //******************************************************************************

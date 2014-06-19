@@ -37,6 +37,7 @@ NdnRtcObject(params)
 
 NdnRtcObject::~NdnRtcObject()
 {
+    callbackSync_.~CriticalSectionWrapper();
 }
 
 //********************************************************************************
