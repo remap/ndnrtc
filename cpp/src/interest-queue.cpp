@@ -46,6 +46,10 @@ isWatchingQueue_(false)
 InterestQueue::~InterestQueue()
 {
     stopQueueWatching();
+    
+    queueWatchingThread_.~ThreadWrapper();
+    queueAccess_.~RWLockWrapper();
+    queueEvent_.~EventWrapper();
 }
 
 

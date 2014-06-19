@@ -41,6 +41,10 @@ videoSyncData_("video")
     }
 }
 
+AudioVideoSynchronizer::~AudioVideoSynchronizer(){
+    syncCs_.~CriticalSectionWrapper();
+}
+
 //******************************************************************************
 #pragma mark - public
 int AudioVideoSynchronizer::synchronizePacket(int64_t remoteTimestamp,

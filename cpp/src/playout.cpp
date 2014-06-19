@@ -40,6 +40,8 @@ Playout::~Playout()
 {
     if (isRunning_)
         stop();
+    
+    playoutThread_.~ThreadWrapper();
 }
 
 //******************************************************************************

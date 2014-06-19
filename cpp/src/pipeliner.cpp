@@ -53,7 +53,10 @@ useKeyNamespace_(true)
 
 ndnrtc::new_api::Pipeliner::~Pipeliner()
 {
-    
+    mainThread_.~ThreadWrapper();
+    pipelineThread_.~ThreadWrapper();
+    pipelineTimer_.~EventWrapper();
+    pipelinerPauseEvent_.~EventWrapper();
 }
 
 //******************************************************************************

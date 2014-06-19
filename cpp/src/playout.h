@@ -32,7 +32,7 @@ namespace ndnrtc{
         {
         public:
             Playout(const Consumer* consumer);
-            ~Playout();
+            virtual ~Playout();
             
             virtual int
             init(void* frameConsumer);
