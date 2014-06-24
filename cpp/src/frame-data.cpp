@@ -36,18 +36,12 @@ int
 PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
                                 PrefixMetaInfo &meta)
 {
-    Name metaComponents(prefix);
-    
-    // get last four components
-    if (metaComponents.size() > PREFIX_META_NCOMP)
-        metaComponents = metaComponents.getSubName(prefix.size()-PREFIX_META_NCOMP, PREFIX_META_NCOMP);
-    
-    if (metaComponents.size() == PREFIX_META_NCOMP)
+    if (prefix.size() >= PREFIX_META_NCOMP)
     {
-        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(metaComponents[0]);
-        meta.playbackNo_ = NdnRtcUtils::intFromComponent(metaComponents[1]);
-        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(metaComponents[2]);
-        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(metaComponents[3]);
+        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-PREFIX_META_NCOMP]);
+        meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-PREFIX_META_NCOMP]);
+        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-PREFIX_META_NCOMP]);
+        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-PREFIX_META_NCOMP]);
         
         return RESULT_OK;
     }
