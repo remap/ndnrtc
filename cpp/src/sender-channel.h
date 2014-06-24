@@ -18,9 +18,9 @@
 #include "video-renderer.h"
 #include "video-sender.h"
 #include "ndnrtc-utils.h"
-#include "audio-channel.h"
 #include "statistics.h"
 #include "audio-capturer.h"
+#include "audio-sender.h"
 
 namespace ndnrtc
 {
