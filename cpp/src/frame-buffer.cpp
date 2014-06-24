@@ -154,7 +154,10 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(ndn::Interest &interest)
         return RESULT_ERR;
     
     Name interestName = interest.getName();
-    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(interestName);
+    PacketNumber packetNumber;
+    SegmentNumber segmentNumber;
+    NdnRtcNamespace::getSegmentationNumbers(interestName, packetNumber,
+                                            segmentNumber);
     
     if (packetSequenceNumber_ >= 0 && packetSequenceNumber_ != packetNumber)
         return RESULT_ERR;
@@ -162,7 +165,6 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(ndn::Interest &interest)
     if (packetNumber >= 0)
         packetSequenceNumber_ = packetNumber;
     
-    SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(interestName);
     bool isParityPrefix = NdnRtcNamespace::isParitySegmentPrefix(interestName);
     shared_ptr<Segment> reservedSegment = prepareFreeSegment(segmentNumber, isParityPrefix);
     
@@ -244,8 +246,10 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
         return state_;
     
     Name dataName = data.getName();
-    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(dataName);
-    SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(dataName);
+    PacketNumber packetNumber;
+    SegmentNumber segmentNumber;
+    NdnRtcNamespace::getSegmentationNumbers(dataName, packetNumber, segmentNumber);
+    
     bool isParity = NdnRtcNamespace::isParitySegmentPrefix(dataName);
 
     if (!rightmostSegment_.get() &&
@@ -877,7 +881,7 @@ void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackDeadlines()
 {
     LogTraceC << "update: dump before sort" << endl;
-    dumpQueue();
+//    dumpQueue();
     
     sort();
     int64_t playbackDeadlineMs = 0;
@@ -924,7 +928,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
     
     {
         LogTraceC << "▼push[" << slot->dump() << "]" << endl;
-        dumpQueue();
+//        dumpQueue();
         
 //        LogStatC << "▼push " << dumpShort() << endl;
     }
@@ -956,7 +960,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         this->erase(this->begin());
         updatePlaybackDeadlines();
         
-        dumpQueue();
+//        dumpQueue();
 //        LogStatC << "▲pop " << dumpShort() << endl;
     }
 }
@@ -1367,8 +1371,8 @@ ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
 ndnrtc::new_api::FrameBuffer::Event
 ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout)
 {
-    unsigned int wbrtcTimeout = (timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout;
-    bool stop = false;
+    unsigned int webrtcTimeout = (timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout;
+    bool stop = false, firstRun = true;
     Event poppedEvent;
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
@@ -1378,10 +1382,11 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     {
         bufferEventsRWLock_.AcquireLockShared();
         
-        list<Event>::iterator it = pendingEvents_.begin();
+        list<Event>::iterator it = (firstRun) ? pendingEvents_.begin() : --pendingEvents_.end();
+        list<Event>::iterator end = pendingEvents_.end();
         
         // iterate through pending events
-        while (!(stop || it == pendingEvents_.end()))
+        while (!(stop || it == end))
         {
             if ((*it).type_ & eventsMask) // questioned event type found in pending events
             {
@@ -1402,7 +1407,8 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
         }
         else
         {
-            stop = (bufferEvent_.Wait(wbrtcTimeout) != kEventSignaled);
+            firstRun = false;
+            stop = (bufferEvent_.Wait(webrtcTimeout) != kEventSignaled);
         }
     }
     
@@ -1683,7 +1689,7 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
         activeSlots_[lookupPrefix] = slot;
         slot->setPrefix(Name(lookupPrefix));
         
-        dumpActiveSlots();
+//        dumpActiveSlots();
         
         return RESULT_OK;
     }
@@ -1729,26 +1735,7 @@ bool
 ndnrtc::new_api::FrameBuffer::getLookupPrefix(const Name& prefix,
                                               Name& lookupPrefix)
 {
-    bool res = false;
-    
-    // check if it is ok
-    if (NdnRtcNamespace::isKeyFramePrefix(prefix) ||
-        NdnRtcNamespace::isDeltaFramesPrefix(prefix))
-    {
-        // check if it has packet number and segment number
-        if (NdnRtcNamespace::getPacketNumber(prefix) >= 0 &&
-            NdnRtcNamespace::getSegmentNumber(prefix) >= 0)
-            res = (NdnRtcNamespace::trimDataTypeComponent(prefix, lookupPrefix) >= 0);
-        else
-        {
-            lookupPrefix = prefix;
-            res = true;
-        }
-    }
-    else
-        res = false;
-    
-    return res;
+    return NdnRtcNamespace::trimmedLookupPrefix(prefix, lookupPrefix);
 }
 
 void
@@ -1843,7 +1830,7 @@ ndnrtc::new_api::FrameBuffer::fixRightmost(const Name& dataName)
         
         activeSlots_[lookupPrefix] = slot;
         
-        dumpActiveSlots();
+//        dumpActiveSlots();
         
         isWaitingForRightmost_ = false;
         

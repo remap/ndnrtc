@@ -284,8 +284,8 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
     
-    params.producerId = producerId;
-    audioParams.producerId = producerId;
+    params.setProducerId(producerId);
+    audioParams.setProducerId(producerId);
     
     try
     {

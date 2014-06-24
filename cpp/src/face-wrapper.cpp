@@ -38,9 +38,11 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       const OnTimeout& onTimeout,
                                       WireFormat& wireFormat)
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    faceCs_.Enter();
+    uint64_t iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
+    faceCs_.Leave();
     
-    return face_->expressInterest(interest, onData, onTimeout, wireFormat);
+    return iid;
 }
 
 uint64_t FaceWrapper::registerPrefix(const Name& prefix,
@@ -66,9 +68,9 @@ FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
 
 void FaceWrapper::processEvents()
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
-    
+    faceCs_.Enter();
     face_->processEvents();
+    faceCs_.Leave();
 }
 
 void FaceWrapper::shutdown()

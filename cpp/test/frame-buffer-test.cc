@@ -1540,7 +1540,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
     getBuffer().init();
     
     Name prefix("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
-    PacketNumber startPno = 1, endPno = 300;
+    PacketNumber startPno = 1, endPno = 150;
     prepareData(startPno, endPno, nSegments, prefix, true);
     
     {

@@ -14,7 +14,7 @@
 using namespace ndnrtc;
 
 ::testing::Environment* const env = ::testing::AddGlobalTestEnvironment(new NdnRtcTestEnvironment(ENV_NAME));
-
+#if 1
 TEST(NdnRtcNamespace, TestBuildPathComponents)
 {
     std::string producerId = "producer1";
@@ -178,9 +178,10 @@ TEST(NdnRtcNamespace, TestNumberComponent)
             EXPECT_EQ(number[i], (*comp)[i]);
     }
 }
-
+#endif
 TEST(NdnRtcNamespace, TestCheckComponents)
 {
+    if (0)
     {
         Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
         
@@ -204,14 +205,33 @@ TEST(NdnRtcNamespace, TestCheckComponents)
         EXPECT_FALSE(NdnRtcNamespace::hasComponent(prefix, "testuser//streams"));
     }
     
+    if (0)
     {
-         Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
+        Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/key/1/%00%04");
         
         EXPECT_TRUE(NdnRtcNamespace::isKeyFramePrefix(prefix));
         EXPECT_FALSE(NdnRtcNamespace::isDeltaFramesPrefix(prefix));
     }
+    
+#if 0
+    int64_t startTime = NdnRtcUtils::millisecondTimestamp();
+    int n = 100000;
+    std::string searchStr = "video0";
+    Name prefix("/ndn/edu/ucla/cs/ndnrtc/user/testuser/streams/video0/vp8/frames/delta/1/%00%04");
+    
+    for (int i = 0; i < n; i++)
+    {
+        NdnRtcNamespace::findComponent(prefix, searchStr);
+    }
+    
+    int64_t endTime = NdnRtcUtils::millisecondTimestamp();
+    
+    std::cout << "processing "
+    << (double)(endTime - startTime) / (double)n
+    << std::endl;
+#endif
 }
-
+#if 1
 TEST(NdnRtcNamespace, TestHelperFunctions)
 {
     {
@@ -346,5 +366,4 @@ TEST(NdnRtcNamespace, TestHelperFunctions)
         EXPECT_EQ(prefix, trimmedPrefix);
     }
 }
-
-
+#endif
