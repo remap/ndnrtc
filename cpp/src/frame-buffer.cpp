@@ -1374,6 +1374,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     unsigned int webrtcTimeout = (timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout;
     bool stop = false, firstRun = true;
     Event poppedEvent;
+    list<Event>::iterator startIt;
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
     poppedEvent.type_ = Event::Error;
@@ -1382,27 +1383,34 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     {
         bufferEventsRWLock_.AcquireLockShared();
         
-        list<Event>::iterator it = (firstRun) ? pendingEvents_.begin() : --pendingEvents_.end();
+        if (firstRun)
+            startIt = pendingEvents_.begin();
+        else
+            startIt++;
+        
         list<Event>::iterator end = pendingEvents_.end();
         
         // iterate through pending events
-        while (!(stop || it == end))
+        while (!(stop || startIt == end))
         {
-            if ((*it).type_ & eventsMask) // questioned event type found in pending events
+            if ((*startIt).type_ & eventsMask) // questioned event type found in pending events
             {
-                poppedEvent = *it;
+                poppedEvent = *startIt;
                 stop = true;
             }
             else
-                it++;
+                startIt++;
         }
+        
+        if (startIt == end)
+            startIt--;
         
         bufferEventsRWLock_.ReleaseLockShared();
         
         if (stop)
         {
             bufferEventsRWLock_.AcquireLockExclusive();
-            pendingEvents_.erase(it);
+            pendingEvents_.erase(startIt);
             bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
@@ -1746,6 +1754,8 @@ ndnrtc::new_api::FrameBuffer::addBufferEvent(Event::EventType type,
     
     ev.type_ = type;
     ev.slot_ = slot;
+
+    LogTraceC << "new buffer event " << Event::toString(ev) << endl;
     
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.push_back(ev);
