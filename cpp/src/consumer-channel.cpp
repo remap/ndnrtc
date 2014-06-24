@@ -54,6 +54,7 @@ faceProcessor_(faceProcessor)
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
                                                      params.producerId)));
+    isLoggerCreated_ = true;
     
     if (params.useAvSync && params.useAudio && params.useVideo)
     {

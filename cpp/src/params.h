@@ -133,6 +133,13 @@ namespace ndnrtc
             
             return std::string((RESULT_GOOD(result)?param:defParam));
         }
+        
+        void setProducerId(const char* producerId)
+        {   
+            this->producerId = (char*)malloc(strlen(producerId)+1);
+            memset((void*)this->producerId, 0, strlen(producerId));
+            strcpy((char*)this->producerId, producerId);
+        }
     } ParamsStruct;
     
     static ParamsStruct DefaultParams = {

@@ -125,11 +125,17 @@ namespace ndnrtc {
         
         static PacketNumber getPacketNumber(const Name &prefix);
         static SegmentNumber getSegmentNumber(const Name &prefix);
+        static void getSegmentationNumbers(const ndn::Name &prefix,
+                                           PacketNumber& packetNumber,
+                                           SegmentNumber& segmentNumber);
         
         static int trimSegmentNumber(const Name &prefix, Name &trimmedPrefix);
         static int trimPacketNumber(const Name &prefix, Name &trimmedPrefix);
         static int trimDataTypeComponent(const Name &prefix,
                                          Name &trimmedPrefix);
+        
+        static bool trimmedLookupPrefix(const Name& prefix, Name& lookupPrefix);
+        
     private:
     };
 }

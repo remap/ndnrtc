@@ -27,7 +27,7 @@ namespace ndnrtc {
     {
     public:
         JitterTiming();
-        ~JitterTiming(){}
+        ~JitterTiming();
         
         void flush();
         void stop();

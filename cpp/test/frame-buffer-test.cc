@@ -246,7 +246,6 @@ public:
         packetAssembler_.reset();
         
         consumer_.reset(new ConsumerMock(params_,
-                                         packetAssembler_,
                                          interestQueue_,
                                          ENV_LOGFILE));
         ((ConsumerMock*)consumer_.get())->setParameters(params_);
@@ -304,6 +303,40 @@ protected:
         return isRunning_;
     }
     
+    static bool
+    playbackRoutine(void *obj)
+    {
+        return ((FrameBufferTests*)obj)->playback();
+    }
+    
+    PacketData *data_ = NULL;
+    
+    bool
+    playback()
+    {
+        if (isRunning_ && getBuffer().getState() == FrameBuffer::Valid)
+        {
+            PacketNumber packetNo, sequencePacketNo, pairedPacketNo;
+            double assembledLevel = 0;
+            bool isKey;
+            
+            if (data_)
+            {
+                delete data_;
+                data_ = nullptr;
+            }
+            
+            getBuffer().acquireSlot(&data_, packetNo, sequencePacketNo, pairedPacketNo, isKey, assembledLevel);
+            
+            bool isInferredPlayback;
+            int64_t sleepTimeMs = getBuffer().releaseAcquiredSlot(isInferredPlayback);
+            
+            usleep(sleepTimeMs*1000);
+        }
+        
+        return isRunning_;
+    }
+    
     std::map<PacketNumber, std::vector<shared_ptr<Data>>> packets_;
     
     void
@@ -356,10 +389,10 @@ protected:
                                                       segmentSize - SegmentData::getHeaderSize(),
                                                       packetPrefix, packetMeta,
                                                       prefixMeta, segmentMeta);
-            packets_[pNo] = segments;
-
             if (isShuffled)
-                std::random_shuffle(packets_[pNo].begin(), packets_[pNo].end());
+                std::random_shuffle(segments.begin(), segments.end());
+
+            packets_[pNo] = segments;
             i++;
         }
     }
@@ -431,7 +464,9 @@ protected:
             bool isKey = false; //(pNo%(int)task->obj_->params_.producerRate == 0);
             task->obj_->issueInterests(task->prefix_, pNo, 0, (isKey)?task->nSegKey_:task->nSegDelta_, isKey);
             pNo++;
-            usleep(task->sleepTimeMs_*1000);
+            
+            if (task->obj_->getBuffer().getEstimatedBufferSize() >= task->obj_->params_.jitterSize)
+                usleep(task->sleepTimeMs_*1000);
         }
         
         delete task;
@@ -451,17 +486,25 @@ protected:
             framePrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
         
         framePrefix.append(NdnRtcUtils::componentFromInt(frameNo));
+
+        Name segmentPrefix(framePrefix);
+        Interest interest(segmentPrefix);
+        std::vector<shared_ptr<Interest>> segmentInterests;
         
-        for (int segno = startSegNo; segno <= endSegNo; segno++)
+        getBuffer().interestRangeIssued(interest, startSegNo, endSegNo,
+                                        segmentInterests, false);
+
+        std::vector<shared_ptr<Interest>>::iterator it;
+        
+        for (it = segmentInterests.begin(); it != segmentInterests.end(); it++)
         {
-            Name segmentPrefix(framePrefix);
-            NdnRtcNamespace::appendDataKind(segmentPrefix, false);
-            segmentPrefix.appendSegment(segno);
-            
-            shared_ptr<Interest> interest(new Interest(segmentPrefix));
-            
-            if (!hasInterest(interest))
-                issueInterest(interest);
+            if (!hasInterest(*it))
+            {
+                accessCs_.Enter();
+                pendingInterests_.push_back(*it);
+                accessCs_.Leave();
+                interestArrivedEvent_.Set();
+            }
         }
     }
     
@@ -596,7 +639,7 @@ protected:
     }
     
 };
-
+#if 0
 TEST_F(SegmentTests, TestInit)
 {
     SegmentTester segment;
@@ -1481,7 +1524,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
         delete packetData;
     }
 }
-
+#endif
 TEST_F(FrameBufferTests, TestAssembleManyFrames)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
@@ -1492,19 +1535,25 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
     params_ = DefaultParams;
     params_.producerRate = 30;
     params_.segmentSize = segmentSize;
+    params_.jitterSize = 300;
     ((ConsumerMock*)consumer_.get())->setParameters(params_);
     getBuffer().init();
     
     Name prefix("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
-    PacketNumber startPno = 1, endPno = 30;
+    PacketNumber startPno = 1, endPno = 150;
     prepareData(startPno, endPno, nSegments, prefix, true);
     
     {
         webrtc::ThreadWrapper& providerThread = *webrtc::ThreadWrapper::CreateThread(FrameBufferTests::segmentProviderRoutine, this);
         webrtc::ThreadWrapper* pipelinerThread;
+        webrtc::ThreadWrapper& playbackThread = *webrtc::ThreadWrapper::CreateThread(FrameBufferTests::playbackRoutine, this);
+        
         isRunning_ = true;
         unsigned int tid;
+        
         providerThread.Start(tid);
+        playbackThread.Start(tid);
+        
         bool stop = (packets_.size() == 0);
         int bufferEventsMask = ndnrtc::new_api::FrameBuffer::Event::StateChanged |
         ndnrtc::new_api::FrameBuffer::Event::FirstSegment |
@@ -1512,7 +1561,8 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
         bool gotFirstSegment = false;
         int nReadySlots_ = 0;
         int startTimeMs = NdnRtcUtils::millisecondTimestamp();
-        int waitTimeMs = 5000;
+        int waitTimeMs = 60000;
+        int targetBufferSize = params_.jitterSize; // milliseconds
         
         while (!stop)
         {
@@ -1529,6 +1579,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
                     
                     issueInterest(rightmost);
                     EXPECT_EQ(1, getBuffer().getActiveSlotsNum());
+                    bufferEventsMask = ndnrtc::new_api::FrameBuffer::Event::FirstSegment | ndnrtc::new_api::FrameBuffer::Event::Ready;
                 }
                     break;
                     
@@ -1576,6 +1627,12 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
                 case ndnrtc::new_api::FrameBuffer::Event::Ready:
                 {
                     nReadySlots_++;
+                    
+                    if (getBuffer().getEstimatedBufferSize() >= targetBufferSize &&
+                        getBuffer().getPlayableBufferSize() >= 2/3*targetBufferSize &&
+                        getBuffer().getState() != FrameBuffer::Valid)
+                        getBuffer().setState(FrameBuffer::Valid);
+                    
                 }
                     break;
                 default:
@@ -1590,10 +1647,11 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
         isRunning_ = false;
         interestArrivedEvent_.Set();
         providerThread.Stop();
+        playbackThread.Stop();
         pipelinerThread->Stop();
     }
 }
-
+#if 0
 TEST_F(FrameBufferTests, TestPlaybackQueue)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
@@ -1740,7 +1798,6 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     }
 }
 
-#if 0
 TEST_F(FrameBufferTests, TestPlaybackQueueOrdering)
 {
     FrameBufferTester::PlaybackQueueTester queue(params_.producerRate);
@@ -1789,7 +1846,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering)
         
         packets.push_back(segments_);
         
-        shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> slot(new ndnrtc::new_api::FrameBuffer::Slot(segmentSize_));
+        shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> slot(new ndnrtc::new_api::FrameBuffer::Slot(segmentSize_, false));
         slots.push_back(slot);
         
         SegmentList::iterator it;
@@ -1890,7 +1947,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering)
                 }
             }
             
-            queue.sort();
+//            queue.sort();
             checkPlaybackQueue(queue);
         }
     }
@@ -1990,7 +2047,6 @@ TEST_F(FrameBufferTests, TestPlaybackQueueOrdering2)
         checkPlaybackQueue(queue);
     }
 }
-#endif
 
 TEST_F(FrameBufferTests, TestInterestRange)
 {
@@ -2027,3 +2083,4 @@ TEST_F(FrameBufferTests, TestInterestRange)
     std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>> segments = slot->getPendingSegments();
     EXPECT_EQ(endSegNo+1-startSegNo, segments.size());
 }
+#endif

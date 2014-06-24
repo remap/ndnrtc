@@ -284,21 +284,29 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
     
-    params.producerId = producerId;
-    audioParams.producerId = producerId;
+    params.setProducerId(producerId);
+    audioParams.setProducerId(producerId);
     
-    shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
-                                                                   audioParams));
-    
-    producer->setObserver(this);
-    
-    if (RESULT_FAIL(producer->init()))
-        return -1;
-    
-    if (RESULT_FAIL(producer->startTransmission()))
-        return -1;
-    
-    Producers[string(producerId)] = producer;
+    try
+    {
+        shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
+                                                                 audioParams));
+        
+        producer->setObserver(this);
+        
+        if (RESULT_FAIL(producer->init()))
+            return -1;
+        
+        if (RESULT_FAIL(producer->startTransmission()))
+            return -1;
+        
+        Producers[string(producerId)] = producer;
+    }
+    catch (std::exception &e)
+    {
+        return notifyObserverWithError("couldn't initiate fetching due to exception: %s",
+                                       e.what());
+    }
     
     shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
     

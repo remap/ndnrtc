@@ -101,8 +101,11 @@ void setWindowTitle(const char *title, void *window)
     
     // get view's window and destroy
     NSWindow *mainWin = cocoaView.window;
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     
     [mainWin setTitle:[NSString stringWithCString:title encoding:NSUTF8StringEncoding]];
+    
+    [pool drain];
 }
 
 void* getGLView(void *window)
