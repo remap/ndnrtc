@@ -260,9 +260,8 @@ namespace ndnrtc
                 class PlaybackComparator {
                 public:
                     PlaybackComparator(bool inverted = false):inverted_(inverted){}
-                    
-                    bool operator() (const shared_ptr<Slot> &slot1,
-                                     const shared_ptr<Slot> &slot2) const;
+                    bool operator() (const Slot* slot1,
+                                     const Slot* slot2) const;
                     
                 private:
                     bool inverted_;
@@ -848,7 +847,7 @@ namespace ndnrtc
             //            std::vector<shared_ptr<FrameBuffer::Slot>>,
             //            FrameBuffer::Slot::PlaybackComparator>
             typedef
-            std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>>
+            std::vector<ndnrtc::new_api::FrameBuffer::Slot*>
             PlaybackQueueBase;
             
             class PlaybackQueue : public PlaybackQueueBase,
@@ -864,9 +863,9 @@ namespace ndnrtc
                 updatePlaybackDeadlines();
                 
                 void
-                pushSlot(const shared_ptr<FrameBuffer::Slot>& slot);
+                pushSlot(FrameBuffer::Slot* const slot);
 
-                shared_ptr<FrameBuffer::Slot>
+                FrameBuffer::Slot*
                 peekSlot();
                 
                 void
