@@ -196,7 +196,7 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     validated.logFile = params.logFile;
     validated.useTlv = params.useTlv;
     validated.useRtx = params.useRtx;
-    validated.useFec = params.useFec;
+    validated.useFec = false;
     validated.useCache = params.useCache;
     validated.useAvSync = params.useAvSync;
     validated.useAudio = params.useAudio;

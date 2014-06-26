@@ -540,8 +540,8 @@ protected:
     
     // return true is slotA < slotB
     bool
-    compareSlots(const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slotA,
-                 const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slotB)
+    compareSlots(const ndnrtc::new_api::FrameBuffer::Slot* slotA,
+                 const ndnrtc::new_api::FrameBuffer::Slot* slotB)
     {
         // check timestamps
         if (slotA->getConsistencyState() & ndnrtc::new_api::FrameBuffer::Slot::PrefixMeta &&
@@ -594,8 +594,8 @@ protected:
         // if slot is inconsistent - use NDN canonical ordering
         FrameBufferTester::PlaybackQueueBaseTester::iterator
         it = queue.begin();
-        
-        shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> checkingSlot = *it;
+        ndnrtc::new_api::FrameBuffer::Slot* checkingSlot = *it;
+
         // check next slots
         if (queue.size() > 1)
         {
@@ -604,8 +604,7 @@ protected:
             ++it2;
             for (it2; it2 != queue.end(); ++it2)
             {
-                shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> compareSlot = *it2;
-                
+                ndnrtc::new_api::FrameBuffer::Slot* compareSlot = *it2;
                 bool compareResult = compareSlots(checkingSlot, compareSlot);
                 
                 // there's a chance that we don't know the exact ordering -
@@ -1525,6 +1524,7 @@ TEST_F(FrameBufferTests, TestAssembleFrames)
     }
 }
 #endif
+
 TEST_F(FrameBufferTests, TestAssembleManyFrames)
 {
     webrtc::EncodedImage *frame = NdnRtcObjectTestHelper::loadEncodedFrame();
