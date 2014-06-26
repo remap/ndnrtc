@@ -194,47 +194,7 @@ int NdnRtcLibrary::getStatistics(const char *producerId,
 
 int NdnRtcLibrary::startPublishing(const char *username)
 {
-    ParamsStruct params = libParams_;
-    ParamsStruct audioParams = libAudioParams_;
-    
-    if (username)
-    {
-        if (strcmp(username, "") == 0)
-            return notifyObserverWithError("username cannot be empty string");
-
-        if (publisherId_)
-            free(publisherId_);
-
-        publisherId_ = (char*)malloc(strlen(username)+1);
-        memset((void*)publisherId_, 0, strlen(username)+1);
-        memcpy((void*)publisherId_, username, strlen(username));
-        
-        params.producerId = username;
-        audioParams.producerId = username;
-    }
-    
-    if (SenderChannel.get())
-        stopPublishing();
-    
-    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams));
-    
-    sc->setObserver(this);
-    
-    if (RESULT_FAIL(sc->init()))
-        return -1;
-    
-    if (RESULT_FAIL(sc->startTransmission()))
-        return -1;
-    
-    SenderChannel = sc;
-    
-    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
-    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params);
-    
-    
-    return notifyObserverWithState("transmitting",
-                                   "started publishing under the user prefix: %s",
-                                   producerPrefix->c_str());
+    startPublishing(username, nullptr);
 }
 
 int NdnRtcLibrary::stopPublishing()
@@ -339,9 +299,49 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 }
 
 int NdnRtcLibrary::startPublishing(const char* username,
-                                   const IExternalRenderer *renderer)
+                                   IExternalRenderer* const renderer)
 {
-    return RESULT_OK;
+    ParamsStruct params = libParams_;
+    ParamsStruct audioParams = libAudioParams_;
+    
+    if (username)
+    {
+        if (strcmp(username, "") == 0)
+            return notifyObserverWithError("username cannot be empty string");
+        
+        if (publisherId_)
+            free(publisherId_);
+        
+        publisherId_ = (char*)malloc(strlen(username)+1);
+        memset((void*)publisherId_, 0, strlen(username)+1);
+        memcpy((void*)publisherId_, username, strlen(username));
+        
+        params.producerId = username;
+        audioParams.producerId = username;
+    }
+    
+    if (SenderChannel.get())
+        stopPublishing();
+    
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams, renderer));
+    
+    sc->setObserver(this);
+    
+    if (RESULT_FAIL(sc->init()))
+        return -1;
+    
+    if (RESULT_FAIL(sc->startTransmission()))
+        return -1;
+    
+    SenderChannel = sc;
+    
+    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params);
+    
+    
+    return notifyObserverWithState("transmitting",
+                                   "started publishing under the user prefix: %s",
+                                   producerPrefix->c_str());
 }
 
 //********************************************************************************

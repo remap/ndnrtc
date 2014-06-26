@@ -23,9 +23,9 @@ using namespace webrtc;
 //******************************************************************************
 #pragma mark - construction/destruction
 VideoRenderer::VideoRenderer(int rendererId, const ParamsStruct &params) :
-NdnRtcObject(params),
 rendererId_(rendererId)
 {
+    params_ = params;
     description_ = "vrenderer";
 }
 
@@ -150,9 +150,7 @@ ExternalVideoRendererAdaptor::onDeliverFrame(webrtc::I420VideoFrame &frame,
 {
     uint8_t *rgbFrameBuffer = externalRenderer_->getFrameBuffer(frame.width(),
                                                                 frame.height());
-    int bufferSize = frame.width()*frame.height()*3;
-
-    ConvertFromI420(frame, kRGB24, bufferSize, rgbFrameBuffer);
+    ConvertFromI420(frame, kRGB24, 0, rgbFrameBuffer);
     externalRenderer_->renderRGBFrame(NdnRtcUtils::millisecondTimestamp(),
                                       frame.width(), frame.height(),
                                       rgbFrameBuffer);

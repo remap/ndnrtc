@@ -30,7 +30,7 @@ namespace ndnrtc {
          * @param height Height of the frame (NOTE: height can change during run)
          * @return Allocated buffer where library can copy RGB frame data
          */
-        virtual uint8_t* getFrameBuffer(int width, int height);
+        virtual uint8_t* getFrameBuffer(int width, int height) = 0;
         
         /**
          * This method is called every time new frame is available for rendering

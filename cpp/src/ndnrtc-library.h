@@ -94,7 +94,7 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
         
         virtual int startPublishing(const char* username,
-                                    const IExternalRenderer *renderer);
+                                    IExternalRenderer* const renderer);
         
     private:
         void *libraryHandle_;
