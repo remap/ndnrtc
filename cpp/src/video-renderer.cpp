@@ -115,3 +115,45 @@ void VideoRenderer::onDeliverFrame(I420VideoFrame &frame, double timestamp)
     else
         notifyError(RESULT_ERR, "render not started");
 }
+
+//******************************************************************************
+//******************************************************************************
+ExternalVideoRendererAdaptor::ExternalVideoRendererAdaptor(IExternalRenderer* externalRenderer): externalRenderer_(externalRenderer)
+{
+    
+}
+
+int
+ExternalVideoRendererAdaptor::init()
+{
+    return RESULT_OK;
+}
+
+int
+ExternalVideoRendererAdaptor::startRendering(const std::string &windowName)
+{
+    isRendering_ = true;
+    return RESULT_OK;
+}
+
+int
+ExternalVideoRendererAdaptor::stopRendering()
+{
+    isRendering_ = false;
+    return RESULT_OK;
+}
+
+//******************************************************************************
+void
+ExternalVideoRendererAdaptor::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                             double timestamp)
+{
+    uint8_t *rgbFrameBuffer = externalRenderer_->getFrameBuffer(frame.width(),
+                                                                frame.height());
+    int bufferSize = frame.width()*frame.height()*3;
+
+    ConvertFromI420(frame, kRGB24, bufferSize, rgbFrameBuffer);
+    externalRenderer_->renderRGBFrame(NdnRtcUtils::millisecondTimestamp(),
+                                      frame.width(), frame.height(),
+                                      rgbFrameBuffer);
+}

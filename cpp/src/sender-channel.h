@@ -61,7 +61,8 @@ namespace ndnrtc
     {
     public:
         NdnSenderChannel(const ParamsStruct &params,
-                         const ParamsStruct &audioParams);
+                         const ParamsStruct &audioParams,
+                         IExternalRenderer *const externalRenderer = nullptr);
         virtual ~NdnSenderChannel();
         
         // public methods
@@ -89,7 +90,7 @@ namespace ndnrtc
         unsigned int frameFreqMeter_;
         
         shared_ptr<CameraCapturer> cameraCapturer_;
-        shared_ptr<VideoRenderer> localRender_;
+        shared_ptr<IVideoRenderer> localRender_;
         shared_ptr<NdnVideoCoder> coder_;
         shared_ptr<NdnVideoSender> sender_;
         

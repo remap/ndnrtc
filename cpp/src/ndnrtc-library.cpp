@@ -338,6 +338,12 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
     notifyObserverWithError(errorMessage);
 }
 
+int NdnRtcLibrary::startPublishing(const char* username,
+                                   const IExternalRenderer *renderer)
+{
+    return RESULT_OK;
+}
+
 //********************************************************************************
 #pragma mark - private
 int NdnRtcLibrary::notifyObserverWithError(const char *format, ...) const

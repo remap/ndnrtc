@@ -109,10 +109,10 @@ NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
-                                   const ParamsStruct &audioParams):
+                                   const ParamsStruct &audioParams,
+                                   IExternalRenderer *const externalRenderer):
 NdnMediaChannel(params, audioParams),
 cameraCapturer_(new CameraCapturer(params)),
-localRender_(new VideoRenderer(0,params)),
 coder_(new NdnVideoCoder(params)),
 sender_(new NdnVideoSender(params)),
 audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
@@ -122,6 +122,11 @@ deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                             kHighPriority))
 {
+    if (externalRenderer)
+        localRender_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
+    else
+        localRender_.reset(new VideoRenderer(0,params));
+    
     description_ = "send-channel";
     sender_->setObserver(this);
     audioSender_->setObserver(this);

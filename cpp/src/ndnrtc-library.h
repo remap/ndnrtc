@@ -18,6 +18,7 @@
 #include "params.h"
 #include "statistics.h"
 #include "ndnrtc-observer.h"
+#include "external-renderer.h"
 
 namespace ndnrtc {
     
@@ -91,6 +92,10 @@ namespace ndnrtc {
         
         virtual void onErrorOccurred(const char *errorMessage);
         virtual void* getLibraryHandle(){ return libraryHandle_; };
+        
+        virtual int startPublishing(const char* username,
+                                    const IExternalRenderer *renderer);
+        
     private:
         void *libraryHandle_;
         char *publisherId_ = 0;
