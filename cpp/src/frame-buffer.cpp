@@ -973,7 +973,11 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::clear()
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::sort()
 {
+    LogTraceC << "start sorting" << endl;
+    dumpQueue();
     std::sort(this->begin(), this->end(), comparator_);
+    LogTraceC << "end sorting" << endl;
+    dumpQueue();
 }
 
 void
@@ -1749,8 +1753,6 @@ ndnrtc::new_api::FrameBuffer::addBufferEvent(Event::EventType type,
     
     ev.type_ = type;
     ev.slot_ = slot;
-
-    LogTraceC << "new buffer event " << Event::toString(ev) << endl;
     
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.push_back(ev);
