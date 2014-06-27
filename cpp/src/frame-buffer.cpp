@@ -466,7 +466,7 @@ ndnrtc::new_api::FrameBuffer::Slot::PlaybackComparator::operator()
                         ascending = slot1->getSequentialNumber() < slot2->getSequentialNumber();
                     }
                     else
-                        ascending = slot2->getConsistencyState()&Inconsistent;
+                        ascending = (slot2->getConsistencyState()&Inconsistent);
                 } // end: seq number compare
                 else
                 {
@@ -701,6 +701,9 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyWithMeta(const PacketNumber
     if (consistency_ & PrefixMeta)
         return;
     
+    if (consistency_&Inconsistent)
+        consistency_ ^= Inconsistent;    
+    
     consistency_ |= PrefixMeta;
     
     packetSequenceNumber_ = sequenceNumber;
@@ -794,6 +797,9 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
 {
     if (consistency_&HeaderMeta)
         return false;
+    
+    if (consistency_&Inconsistent)
+        consistency_ ^= Inconsistent;
     
     consistency_ |= HeaderMeta;
     
@@ -973,16 +979,15 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::clear()
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::sort()
 {
-    LogTraceC << "start sorting" << endl;
-    dumpQueue();
     std::sort(this->begin(), this->end(), comparator_);
-    LogTraceC << "end sorting" << endl;
-    dumpQueue();
 }
 
 void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpQueue()
 {
+    if (this->logger_->getLogLevel() != NdnLoggerDetailLevelAll)
+        return;
+        
     PlaybackQueueBase::iterator it;
     int i = 0;
 
@@ -1848,6 +1853,9 @@ ndnrtc::new_api::FrameBuffer::fixRightmost(const Name& dataName)
 void
 ndnrtc::new_api::FrameBuffer::dumpActiveSlots()
 {
+    if (this->logger_->getLogLevel() != NdnLoggerDetailLevelAll)
+        return;
+    
     std::map<Name, shared_ptr<FrameBuffer::Slot>>::iterator it;
     int i = 0;
     
