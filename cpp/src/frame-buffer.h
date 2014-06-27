@@ -237,10 +237,10 @@ namespace ndnrtc
                  * received - as producer adds header to the frame data.
                  */
                 typedef enum _Consistency {
-                    Inconsistent = 0<<0,       // slot has no meta info yet
-                    PrefixMeta = 1<<1,    // slot has meta data from the
+                    Inconsistent = 1<<0,       // slot has no meta info yet
+                    PrefixMeta = 1<<2,    // slot has meta data from the
                                           // name prefix
-                    HeaderMeta = 1<<2,    // slot has meta data from the
+                    HeaderMeta = 1<<3,    // slot has meta data from the
                                           // header, provided by producer
                     Consistent = PrefixMeta|HeaderMeta // all meta data is ready
                 } Consistency;
