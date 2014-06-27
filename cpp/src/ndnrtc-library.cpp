@@ -299,7 +299,7 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 }
 
 int NdnRtcLibrary::startPublishing(const char* username,
-                                   IExternalRenderer* const renderer)
+                                   void* const renderer)
 {
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
@@ -323,7 +323,8 @@ int NdnRtcLibrary::startPublishing(const char* username,
     if (SenderChannel.get())
         stopPublishing();
     
-    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams, renderer));
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams,
+                                                         (IExternalRenderer*)renderer));
     
     sc->setObserver(this);
     

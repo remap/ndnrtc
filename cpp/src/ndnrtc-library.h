@@ -13,12 +13,9 @@
 
 #include <dlfcn.h>
 
-//#include "ndnrtc-common.h"
-//#include "ndnrtc-object.h"
 #include "params.h"
 #include "statistics.h"
 #include "ndnrtc-observer.h"
-#include "external-renderer.h"
 
 namespace ndnrtc {
     
@@ -94,7 +91,7 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
         
         virtual int startPublishing(const char* username,
-                                    IExternalRenderer* const renderer);
+                                    void* const renderer);
         
     private:
         void *libraryHandle_;
