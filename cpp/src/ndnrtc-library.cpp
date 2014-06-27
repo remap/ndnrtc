@@ -8,9 +8,10 @@
 //  Author:  Peter Gusev
 //
 
+#define NDNRTC_BUILD_NUMBER 1
+
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
-//#include "receiver-channel.h"
 #include "consumer-channel.h"
 
 #include <stdlib.h>
@@ -343,6 +344,12 @@ int NdnRtcLibrary::startPublishing(const char* username,
     return notifyObserverWithState("transmitting",
                                    "started publishing under the user prefix: %s",
                                    producerPrefix->c_str());
+}
+
+int
+NdnRtcLibrary::getBuildNumber()
+{
+    return NDNRTC_BUILD_NUMBER;
 }
 
 //********************************************************************************

@@ -150,8 +150,11 @@ ExternalVideoRendererAdaptor::onDeliverFrame(webrtc::I420VideoFrame &frame,
 {
     uint8_t *rgbFrameBuffer = externalRenderer_->getFrameBuffer(frame.width(),
                                                                 frame.height());
-    ConvertFromI420(frame, kRGB24, 0, rgbFrameBuffer);
-    externalRenderer_->renderRGBFrame(NdnRtcUtils::millisecondTimestamp(),
-                                      frame.width(), frame.height(),
-                                      rgbFrameBuffer);
+    if (rgbFrameBuffer)
+    {
+        ConvertFromI420(frame, kRGB24, 0, rgbFrameBuffer);
+        externalRenderer_->renderRGBFrame(NdnRtcUtils::millisecondTimestamp(),
+                                          frame.width(), frame.height(),
+                                          rgbFrameBuffer);
+    }
 }

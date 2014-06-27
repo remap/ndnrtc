@@ -93,6 +93,8 @@ namespace ndnrtc {
         virtual int startPublishing(const char* username,
                                     void* const renderer);
         
+        virtual int getBuildNumber();
+        
     private:
         void *libraryHandle_;
         char *publisherId_ = 0;
