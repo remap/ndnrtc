@@ -83,23 +83,6 @@ extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
 #pragma mark - all static
 static const char *DefaultLogFile = NULL;
 
-ParamsStruct NdnRtcLibrary::createParamsStruct()
-{
-    ParamsStruct params;
-    memset(&params, 0, sizeof(ParamsStruct));
-    return params;
-}
-
-void NdnRtcLibrary::releaseParamsStruct(ParamsStruct &params)
-{
-    if (params.logFile)
-        free((void*)params.logFile);
-    
-    if (params.host)
-        free((void*)params.host);
-}
-
-
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
@@ -303,7 +286,7 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 }
 
 int NdnRtcLibrary::startPublishing(const char* username,
-                                   void* const renderer)
+                                   IExternalRenderer* const renderer)
 {
     ParamsStruct params = libParams_;
     ParamsStruct audioParams = libAudioParams_;
