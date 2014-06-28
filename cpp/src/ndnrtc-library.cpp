@@ -13,6 +13,7 @@
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
 #include "consumer-channel.h"
+#include "objc/cocoa-renderer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +72,8 @@ extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
             shared_ptr<ConsumerChannel> producer = it->second;
             producer->stopTransmission();
         }
+        
+        Producers.clear();
     }
     
     delete object;
@@ -350,6 +353,12 @@ int
 NdnRtcLibrary::getBuildNumber()
 {
     return NDNRTC_BUILD_NUMBER;
+}
+
+void
+NdnRtcLibrary::arrangeWindows()
+{
+    arrangeAllWindows();
 }
 
 //********************************************************************************

@@ -95,6 +95,11 @@ namespace ndnrtc {
         
         virtual int getBuildNumber();
         
+        /**
+         * Arranges all app windows on the screen
+         */
+        virtual void arrangeWindows();
+        
     private:
         void *libraryHandle_;
         char *publisherId_ = 0;
