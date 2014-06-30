@@ -19,7 +19,7 @@
 
 namespace ndnrtc
 {
-    const int64_t TolerableDriftMs = 50;  // packets will be synchronized
+    const int64_t TolerableDriftMs = 20;  // packets will be synchronized
                                           // if their timelines differ more
                                           // than this value (milliseconds)
     const int64_t TolerableLeadingDriftMs = 15; // audio should not lead video by more than this value
