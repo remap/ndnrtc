@@ -23,9 +23,9 @@ using namespace webrtc;
 //******************************************************************************
 #pragma mark - construction/destruction
 VideoRenderer::VideoRenderer(int rendererId, const ParamsStruct &params) :
-NdnRtcObject(params),
 rendererId_(rendererId)
 {
+    params_ = params;
     description_ = "vrenderer";
 }
 
@@ -114,4 +114,47 @@ void VideoRenderer::onDeliverFrame(I420VideoFrame &frame, double timestamp)
     }
     else
         notifyError(RESULT_ERR, "render not started");
+}
+
+//******************************************************************************
+//******************************************************************************
+ExternalVideoRendererAdaptor::ExternalVideoRendererAdaptor(IExternalRenderer* externalRenderer): externalRenderer_(externalRenderer)
+{
+    
+}
+
+int
+ExternalVideoRendererAdaptor::init()
+{
+    return RESULT_OK;
+}
+
+int
+ExternalVideoRendererAdaptor::startRendering(const std::string &windowName)
+{
+    isRendering_ = true;
+    return RESULT_OK;
+}
+
+int
+ExternalVideoRendererAdaptor::stopRendering()
+{
+    isRendering_ = false;
+    return RESULT_OK;
+}
+
+//******************************************************************************
+void
+ExternalVideoRendererAdaptor::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                             double timestamp)
+{
+    uint8_t *rgbFrameBuffer = externalRenderer_->getFrameBuffer(frame.width(),
+                                                                frame.height());
+    if (rgbFrameBuffer)
+    {
+        ConvertFromI420(frame, kRGB24, 0, rgbFrameBuffer);
+        externalRenderer_->renderRGBFrame(NdnRtcUtils::millisecondTimestamp(),
+                                          frame.width(), frame.height(),
+                                          rgbFrameBuffer);
+    }
 }

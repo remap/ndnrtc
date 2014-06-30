@@ -83,6 +83,7 @@ ndnrtc::new_api::Pipeliner::stop()
     if (isPipelining_)
         stopChasePipeliner();
     
+    isProcessing_ = false;
     frameBuffer_->release();
     mainThread_.SetNotAlive();
     mainThread_.Stop();

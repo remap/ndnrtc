@@ -20,9 +20,13 @@
 #include <sys/time.h>
 #import <modules/video_render/mac/cocoa_render_view.h>
 
-static int TotalWindows = 0;
+static NSMutableDictionary *Windows = nil;
+static NSNumber *LocalViewWindow = nil;
 
 using namespace webrtc;
+
+void setupLocalView(NSWindow* win);
+NSRect resizeProportionally(NSRect frame, double scale);
 
 int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int width, int height)
 {
@@ -31,12 +35,14 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
     [NSApp activateIgnoringOtherApps:YES];
     
     // create cocoa container window
-    NSRect outWindowFrame = NSMakeRect(0+TotalWindows*width, TotalWindows*height, width , height );
+    NSRect outWindowFrame = NSMakeRect(0, 0, width , height );
+
     NSWindow* outWindow = [[NSWindow alloc] initWithContentRect:outWindowFrame
-                                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|
+                                                      styleMask:NSTitledWindowMask|
                            NSMiniaturizableWindowMask|NSResizableWindowMask
                                                         backing:NSBackingStoreBuffered
                                                           defer:NO];
+
     [outWindow setTitle:[NSString stringWithCString:winName encoding:NSUTF8StringEncoding]];
     [outWindow setBackgroundColor:[NSColor blackColor]];
     [outWindow setReleasedWhenClosed:YES];
@@ -46,14 +52,19 @@ int WebRtcCreateWindow(CocoaRenderView*& cocoaRenderer, const char *winName, int
     NSRect cocoaRendererFrame = NSMakeRect(0, 0, width, height);
     cocoaRenderer = [[CocoaRenderView alloc] initWithFrame:cocoaRendererFrame];
     [[outWindow contentView] addSubview:(NSView*)cocoaRenderer];
+    ((NSView*)cocoaRenderer).autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [outWindow display];
     [outWindow setIsVisible:YES];
     [outWindow makeMainWindow];
     [outWindow makeKeyAndOrderFront:NSApp];
     [outWindow setOrderedIndex:0];
-
     
-    TotalWindows++;
+    if (!Windows)
+        Windows = [NSMutableDictionary dictionary];
+    
+    [Windows setObject:outWindow forKey:[NSNumber numberWithInt:[cocoaRenderer hash]]];
+    arrangeAllWindows();    
+    
     return 0;
 }
 
@@ -83,7 +94,7 @@ void *createCocoaRenderWindow(const char *winName, int width, int height)
     
     return (void*)window;
 }
-
+static int counter = 0;
 void destroyCocoaRenderWindow(void *window)
 {
     CocoaRenderView *cocoaView = (CocoaRenderView*)window;
@@ -91,8 +102,12 @@ void destroyCocoaRenderWindow(void *window)
     // get view's window and destroy
     NSWindow *mainWin = cocoaView.window;
     
+    [Windows removeObjectForKey:[NSNumber numberWithInt:[cocoaView hash]]];
+    
     [mainWin close];
-    TotalWindows--;
+    
+    arrangeAllWindows();
+    counter++;
 }
 
 void setWindowTitle(const char *title, void *window)
@@ -105,6 +120,12 @@ void setWindowTitle(const char *title, void *window)
     
     [mainWin setTitle:[NSString stringWithCString:title encoding:NSUTF8StringEncoding]];
     
+    if ([mainWin.title isEqualToString:@"Local render"])
+    {
+        LocalViewWindow = [NSNumber numberWithInt:cocoaView.hash];
+        arrangeAllWindows();
+    }
+    
     [pool drain];
 }
 
@@ -112,3 +133,60 @@ void* getGLView(void *window)
 {
     return (void*)[[((CocoaRenderView*)window) nsOpenGLContext] view];
 }
+
+void arrangeAllWindows()
+{
+    CGFloat widthLeft = [NSScreen mainScreen].frame.size.width;
+    CGFloat heightLeft = [NSScreen mainScreen].frame.size.height;
+
+    int nWindows = (LocalViewWindow)?Windows.count-1:Windows.count;
+    CGFloat windowWidth = widthLeft/(CGFloat)nWindows;
+    
+    for (NSNumber *hash in Windows.allKeys)
+    {
+        NSWindow *window = [Windows objectForKey:hash];
+
+        if ([hash isEqual:LocalViewWindow])
+            setupLocalView(window);
+        else
+        {
+            NSRect frame = [window frame];
+            
+            if (nWindows > 2)
+                frame = resizeProportionally(frame, (double)( windowWidth/frame.size.width));
+            
+            frame.origin.x = [NSScreen mainScreen].frame.size.width - widthLeft;
+            frame.origin.y = [NSScreen mainScreen].frame.size.height - heightLeft;
+            widthLeft -= frame.size.width;
+            
+            [window setFrame:frame display:YES];
+            [window makeKeyAndOrderFront:NSApp];
+        }
+    }
+}
+
+
+void setupLocalView(NSWindow* win)
+{
+    NSRect frame = win.frame;
+    CGFloat ratio = frame.size.height/frame.size.width;
+    
+    frame.size.width = 320;
+    frame.size.height = frame.size.width*ratio;
+    frame.origin.x = [NSScreen mainScreen].frame.size.width-frame.size.width;
+    frame.origin.y = [NSScreen mainScreen].frame.size.height-frame.size.height;
+    
+    [win setFrame:frame display:YES];
+    [win makeKeyAndOrderFront:NSApp];
+}
+
+NSRect resizeProportionally(NSRect frame, double scale)
+{
+    NSRect rect;
+    
+    rect.size.width = frame.size.width*scale;
+    rect.size.height = frame.size.height*scale;
+    
+    return rect;
+}
+

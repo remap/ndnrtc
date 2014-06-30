@@ -21,6 +21,7 @@ using namespace ndnlog::new_api;
 #pragma mark - construction/destruction
 ConsumerChannel::ConsumerChannel(const ParamsStruct& params,
                                  const ParamsStruct& audioParams,
+                                 IExternalRenderer* const videoRenderer,
                                  const shared_ptr<FaceProcessor>& faceProcessor):
 ndnrtc::NdnRtcObject(params),
 isOwnFace_(false),
@@ -46,7 +47,8 @@ faceProcessor_(faceProcessor)
     interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
     
     if (params.useVideo)
-        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_, rttEstimation_));
+        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_,
+                                               rttEstimation_, videoRenderer));
     
     if (params_.useAudio)
         audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
