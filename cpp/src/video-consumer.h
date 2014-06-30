@@ -23,7 +23,8 @@ namespace ndnrtc {
         public:
             VideoConsumer(const ParamsStruct& params,
                           const shared_ptr<InterestQueue>& interestQueue,
-                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr),
+                          IExternalRenderer* const externalRenderer = nullptr);
             virtual ~VideoConsumer();
             
             int
@@ -44,9 +45,9 @@ namespace ndnrtc {
         private:
             shared_ptr<NdnVideoDecoder> decoder_;
             
-            shared_ptr<VideoRenderer>
+            shared_ptr<IVideoRenderer>
             getRenderer()
-            { return dynamic_pointer_cast<VideoRenderer>(renderer_); }
+            { return dynamic_pointer_cast<IVideoRenderer>(renderer_); }
         };
     }
 }

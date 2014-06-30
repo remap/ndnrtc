@@ -158,6 +158,8 @@ namespace ndnrtc {
          * enabled, rendering is delegated to the external renderer object which
          * should conform to the IExternalRenderer interface.
          * @param username Which will be used for publishing media
+         * @param renderer Pointer to external rendering class which conforms to
+         * IExternalRenderer interface.
          */
         virtual int startPublishing(const char* username,
                                     IExternalRenderer* const renderer);
@@ -178,6 +180,16 @@ namespace ndnrtc {
          * @param producerId Name of the user which streams will be fetched
          */
         virtual int startFetching(const char* producerId);
+        /**
+         * Starts fetching from the remote user. If video is enabled, rendering
+         * is performed in delegated to the external object which hsould conform
+         * to the IEXternalRenderer interface.
+         * @param producerId Name of the user which streams will be fetched
+         * @param renderer Pointer to external rendering class which conforms to
+         * IExternalRenderer interface.
+         */
+        virtual int startFetching(const char* producerId,
+                                  IExternalRenderer* const renderer);
         /**
          * Stops fetching from the remote user. If fetching was not intitated, 
          * does nothing.

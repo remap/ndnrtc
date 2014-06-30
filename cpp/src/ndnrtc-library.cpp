@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#define NDNRTC_BUILD_NUMBER 1
+#define NDNRTC_BUILD_NUMBER 15
 
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
@@ -221,6 +221,12 @@ void NdnRtcLibrary::getProducerPrefix(const char* producerId,
 
 int NdnRtcLibrary::startFetching(const char *producerId)
 {
+    return startFetching(producerId, nullptr);
+}
+
+int NdnRtcLibrary::startFetching(const char *producerId,
+                                 IExternalRenderer* const renderer)
+{
     if (strcmp(producerId, "") == 0)
         return notifyObserverWithError("username cannot be empty string");
     
@@ -237,7 +243,8 @@ int NdnRtcLibrary::startFetching(const char *producerId)
     try
     {
         shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
-                                                                 audioParams));
+                                                                 audioParams,
+                                                                 renderer));
         
         producer->setObserver(this);
         

@@ -25,12 +25,18 @@ using namespace ndnrtc::new_api;
 #pragma mark - construction/destruction
 VideoConsumer::VideoConsumer(const ParamsStruct& params,
                              const shared_ptr<InterestQueue>& interestQueue,
-                             const shared_ptr<RttEstimation>& rttEstimation):
+                             const shared_ptr<RttEstimation>& rttEstimation,
+                             IExternalRenderer* const externalRenderer):
 Consumer(params, interestQueue, rttEstimation),
 decoder_(new NdnVideoDecoder(params))
 {
     setDescription("vconsumer");
-    renderer_.reset(new VideoRenderer(1, params));
+    
+    if (externalRenderer)
+        renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
+    else
+        renderer_.reset(new VideoRenderer(1, params));
+    
     decoder_->setFrameConsumer(getRenderer().get());
 }
 

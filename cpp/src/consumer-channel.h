@@ -23,6 +23,7 @@ namespace ndnrtc {
         public:
             ConsumerChannel(const ParamsStruct& params,
                             const ParamsStruct& audioParams,
+                            IExternalRenderer* const videoRenderer = nullptr,
                             const shared_ptr<FaceProcessor>& faceProcessor = shared_ptr<FaceProcessor>(nullptr));
             virtual ~ConsumerChannel(){ }
             
