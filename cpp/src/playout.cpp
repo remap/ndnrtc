@@ -49,8 +49,7 @@ Playout::~Playout()
 int
 Playout::init(void* frameConsumer)
 {
-    setDescription(description_);    
-    jitterTiming_.flush();
+    setDescription(description_);
     frameConsumer_ = frameConsumer;
     
     return RESULT_OK;
@@ -59,6 +58,8 @@ Playout::init(void* frameConsumer)
 int
 Playout::start()
 {
+    jitterTiming_.flush();
+    
     startPacketNo_ = 0;
     nPlayed_ = 0;
     nMissed_ = 0;

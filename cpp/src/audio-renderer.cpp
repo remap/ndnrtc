@@ -79,6 +79,7 @@ AudioRenderer::stopRendering()
     voeBase_->StopReceive(webrtcChannelId_);
     voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
     webrtcChannelId_ = -1;
+    isRendering_ = false;
     
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
