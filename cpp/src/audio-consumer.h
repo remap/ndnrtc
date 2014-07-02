@@ -11,6 +11,7 @@
 
 #include "consumer.h"
 #include "statistics.h"
+#include "audio-renderer.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -32,6 +33,15 @@ namespace ndnrtc {
             
             void
             reset();
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
+        private:
+            shared_ptr<AudioRenderer>
+            getRenderer()
+            { return dynamic_pointer_cast<AudioRenderer>(renderer_); }
+            
         };
     }
 }
