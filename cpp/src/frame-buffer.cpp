@@ -1380,7 +1380,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     list<Event>::iterator startIt;
     
     memset(&poppedEvent, 0, sizeof(poppedEvent));
-    poppedEvent.type_ = Event::Error;
+    poppedEvent.type_ = Event::Empty;
     
     while (!(stop || forcedRelease_))
     {
@@ -1420,6 +1420,12 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
         {
             firstRun = false;
             stop = (bufferEvent_.Wait(webrtcTimeout) != kEventSignaled);
+
+            if (forcedRelease_)
+            {
+                LogWarnC << "buffering interrupted" << endl;
+                poppedEvent.type_ = Event::Error;
+            }
         }
     }
     

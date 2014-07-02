@@ -36,6 +36,8 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumKey;
             static const int64_t MaxInterruptionDelay;
             static const int64_t MinInterestLifetime;
+            static const int MaxRetryNum; // maximum number of retires when
+                                          // streaming suddenly inerrupts
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();

@@ -635,7 +635,9 @@ namespace ndnrtc
                                            // ! slot attribute is unreliable                    
                     NeedKey        = 1<<7, // frame buffer asks for key frame.
                                            // ! slot attribute is unreliable
-                    Error          = 1<<8  // general error event
+                    Error          = 1<<8, // general error event
+                    Empty          = 1<<9, // no event has occurred during
+                                           // specified time interval
                 };
                 
                 static const int AllEventsMask;

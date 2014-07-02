@@ -25,6 +25,7 @@ const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
 const int64_t Pipeliner::MaxInterruptionDelay = 2000;
 const int64_t Pipeliner::MinInterestLifetime = 250;
+const int Pipeliner::MaxRetryNum = 3;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -126,7 +127,7 @@ bool
 ndnrtc::new_api::Pipeliner::processEvents()
 {
     ndnrtc::new_api::FrameBuffer::Event
-    event = frameBuffer_->waitForEvents(bufferEventsMask_);
+    event = frameBuffer_->waitForEvents(bufferEventsMask_, MaxInterruptionDelay);
     
     LogTraceC << "event " << FrameBuffer::Event::toString(event) << endl;
     
@@ -138,6 +139,12 @@ ndnrtc::new_api::Pipeliner::processEvents()
             isProcessing_ = false;
         }
             break;
+        case FrameBuffer::Event::Empty:
+        {
+            LogWarnC << "no activity in the buffer for " << MaxInterruptionDelay
+            << " milliseconds" << endl;
+            
+        } break;
         case FrameBuffer::Event::FirstSegment:
         {
             updateSegnumEstimation(event.slot_->getNamespace(),
@@ -807,7 +814,7 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     chaseEstimation_->reset();
     reconnectNum_ = nReconnects;
     
-    if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
+    if (reconnectNum_ >= MaxRetryNum || deltaFrameSeqNo_ == -1)
     {
         exclusionFilter_ = -1;
     }
