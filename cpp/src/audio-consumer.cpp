@@ -77,3 +77,10 @@ AudioConsumer::reset()
 {
     
 }
+
+void
+AudioConsumer::setLogger(ndnlog::new_api::Logger *logger)
+{
+    getRenderer()->setLogger(logger);
+    Consumer::setLogger(logger);
+}
