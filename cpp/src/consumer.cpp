@@ -148,6 +148,7 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat)
     
     stat.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
     stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
+    stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
     
     playout_->getStatistics(stat);
     interestQueue_->getStatistics(stat);

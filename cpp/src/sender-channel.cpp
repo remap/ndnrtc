@@ -318,13 +318,15 @@ int NdnSenderChannel::stopTransmission()
 
 void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-//    stat.videoStat_.nBytesPerSec_ = sender_->getDataRate();
+    stat.videoStat_.nBytesPerSec_ = sender_->getCurrentOutgoingBitrate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
     stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
     stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
     stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
     
+    stat.audioStat_.nBytesPerSec_ = audioSender_->getCurrentOutgoingBitrate();
     stat.audioStat_.lastFrameNo_ = audioSender_->getSampleNo();
+    stat.audioStat_.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
     stat.audioStat_.encodingRate_ = audioSender_->getCurrentPacketRate();
 }
 

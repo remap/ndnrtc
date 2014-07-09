@@ -52,6 +52,10 @@ namespace ndnrtc
         double getCurrentPacketRate() {
             return NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
         }
+        
+        double getCurrentOutgoingBitrate(){
+            return NdnRtcUtils::currentDataRateMeterValue(dataRateMeter_);
+        }
 
     protected:
         typedef struct _PitEntry {
