@@ -218,14 +218,14 @@ namespace ndnrtc
                  * Slot can have different states
                  */
                 enum State {
-                    StateFree = 1,  // slot is free for being used
-                    StateNew = 2,   // slot is being used for assembling, but has
+                    StateFree = 1<<0,  // slot is free for being used
+                    StateNew = 1<<1,   // slot is being used for assembling, but has
                                     // not recevied any data segments yet
-                    StateAssembling = 3,    // slot is being used for assembling and
+                    StateAssembling = 1<<2,    // slot is being used for assembling and
                                             // already has some data segments arrived
-                    StateReady = 4, // slot assembled all the data and is ready for
+                    StateReady = 1<<3, // slot assembled all the data and is ready for
                                     // decoding a frame
-                    StateLocked = 5 // slot is locked for decoding
+                    StateLocked = 1<<4 // slot is locked for decoding
                 }; // enum State
                 
                 /**
@@ -652,6 +652,7 @@ namespace ndnrtc
                         case Underrun: return "Underrun"; break;
                         case NeedKey: return "NeedKey"; break;
                         case Error: return "Error"; break;
+                        case Empty: return "Empty"; break;
                         default: return "Unknown"; break;
                     }
                 }
@@ -682,11 +683,43 @@ namespace ndnrtc
             release();
             
             unsigned int
+            getTotalSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return activeSlots_.size();
+            }
+            
+            /**
+             * Returns total number of active slots - assemlbing, ready, locked 
+             * or new slots
+             */
+            unsigned int
             getActiveSlotsNum()
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
+            }
+            
+            /**
+             * Returns total number of slots that have any segments fetched
+             */
+            unsigned int
+            getFetchedSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateAssembling |
+                                Slot::StateReady | Slot::StateLocked).size();
+            }
+            
+            /**
+             * Returns total number of free slots in the buffer
+             */
+            unsigned int
+            getFreeSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateFree).size();
             }
             
             /**
@@ -756,6 +789,13 @@ namespace ndnrtc
              */
             void
             recycleOldSlots();
+
+            /**
+             * Recycles specified number of first slots from the buffer
+             * @param nSlotsToRecycle Number of slots to recycle
+             */
+            void
+            recycleOldSlots(int nSlotsToRecycle);
             
             /**
              * Estimates current buffer size based on current active slots

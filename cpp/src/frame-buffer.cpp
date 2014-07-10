@@ -1169,8 +1169,6 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
     
     CriticalSectionScoped scopedCs_(&syncCs_);
     
-    playbackQueue_.dumpQueue();
-    
     shared_ptr<Slot> reservedSlot = getSlot(packetInterest.getName(), false, true);
     
     // check if slot is already reserved
@@ -1234,6 +1232,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             << "appended " << dataName
             << " (" << slot->getAssembledLevel()*100 << "%)"
             << "with result " << Slot::stateToString(newState) << endl;
+            playbackQueue_.dumpQueue();
             
             if (oldState != newState ||
                 newState == Slot::StateAssembling)
@@ -1457,6 +1456,26 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots()
         nRecycledSlots_++;
         freeSlot(oldSlot->getPrefix());
         playbackDuration = playbackQueue_.getPlaybackDuration();
+    }
+    
+    isEstimationNeeded_ = true;
+    
+    LogTraceC << "recycled " << nRecycledSlots_ << " slots" << endl;
+}
+
+void
+ndnrtc::new_api::FrameBuffer::recycleOldSlots(int nSlotsToRecycle)
+{
+    CriticalSectionScoped scopedCs_(&syncCs_);
+    int nRecycledSlots_ = 0;
+    
+    while (nRecycledSlots_ < nSlotsToRecycle && playbackQueue_.size() != 0)
+    {
+        Slot* oldSlot = playbackQueue_.peekSlot();
+        playbackQueue_.popSlot();
+        
+        nRecycledSlots_++;
+        freeSlot(oldSlot->getPrefix());
     }
     
     isEstimationNeeded_ = true;

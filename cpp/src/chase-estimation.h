@@ -31,7 +31,7 @@ namespace ndnrtc {
             ~ChaseEstimation();
             
             void
-            trackArrival();
+            trackArrival(double currentRate = 0.);
             
             double
             getArrivalEstimation();
@@ -40,7 +40,7 @@ namespace ndnrtc {
             isArrivalStable();
             
             void
-            reset();
+            reset(bool resetStartTime = false);
           
         private:
             unsigned int sampleSize_;
@@ -48,6 +48,7 @@ namespace ndnrtc {
             unsigned int arrivalDelayEstimatorId_,
                         inclineEstimator_;
             int64_t lastArrivalTimeMs_, startTime_;
+            double lastPacketRateUpdate_ = 33.;
 
             int nStabilizedOccurences_;
             bool stabilized_;

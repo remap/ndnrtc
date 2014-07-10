@@ -162,7 +162,7 @@ Playout::processPlayout()
                 << "\tskipping\t" << sequencePacketNo
                 << "\ttotal\t" << nMissed_ << endl;
             }
-#if 1
+#if 0
             // testing
             if (test_timelineDiff_ == -1 && data_)
             {

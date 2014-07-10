@@ -52,6 +52,11 @@ namespace ndnrtc
         static double currentDeviationEstimation(unsigned int estimatorId);
         static void releaseMeanEstimator(unsigned int estimatorId);
         
+        static unsigned int setupSlidingAverageEstimator(unsigned int sampleSize = 2);
+        static void slidingAverageEstimatorNewValue(unsigned int estimatorId, double value);
+        static double currentSlidingAverageValue(unsigned int estimatorId);
+        static void releaseAverageEstimator(unsigned int estimatorID);
+        
         static unsigned int setupFilter(double coeff = 1.);
         static void filterNewValue(unsigned int filterId, double value);
         static double currentFilteredValue(unsigned int filterId);

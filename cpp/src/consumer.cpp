@@ -72,7 +72,7 @@ Consumer::init()
         notifyError(-1, "can't initialize frame buffer");
     
 #warning error handling!
-    chaseEstimation_.reset(new ChaseEstimation());
+    chaseEstimation_->setLogger(logger_);
     
     pipeliner_.reset(new Pipeliner(shared_from_this()));
     pipeliner_->setLogger(logger_);
@@ -190,7 +190,7 @@ Consumer::setDescription(const std::string &desc)
 
 void
 Consumer::onBufferingEnded()
-{
+{   
     if (!playout_->isRunning())
         playout_->start();
     

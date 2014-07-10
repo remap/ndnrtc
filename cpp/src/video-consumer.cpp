@@ -51,18 +51,21 @@ int
 VideoConsumer::init()
 {
     LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;    
-#warning error handling!
-    Consumer::init();
 
-    decoder_->init();
+    if (RESULT_GOOD(Consumer::init()))
+    {
+        decoder_->init();
+        
+        playout_.reset(new VideoPlayout(this));
+        playout_->setLogger(logger_);
+        playout_->init(decoder_.get());
+        
+        LogInfoC << "initialized" << endl;
+        
+        return RESULT_OK;
+    }
     
-    playout_.reset(new VideoPlayout(this));
-    playout_->setLogger(logger_);
-    playout_->init(decoder_.get());
-    
-    LogInfoC << "initialized" << endl;
-    
-    return RESULT_OK;
+    return RESULT_ERR;
 }
 
 int

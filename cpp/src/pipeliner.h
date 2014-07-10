@@ -38,6 +38,12 @@ namespace ndnrtc {
             static const int64_t MinInterestLifetime;
             static const int MaxRetryNum; // maximum number of retires when
                                           // streaming suddenly inerrupts
+            static const int ChaserRateCoefficient; // how faster than producer
+                                                    // rate the chaser should
+                                                    // skim through cached content
+            static const int FullBufferRecycle; // number of slots to recycle if
+                                                // the buffer became full during
+                                                // chasing stage
             
             Pipeliner(const shared_ptr<Consumer>& consumer);
             ~Pipeliner();
@@ -72,7 +78,8 @@ namespace ndnrtc {
             { return rebufferingNum_; }
             
             State
-            getState() const;
+            getState() const
+            { return state_; }
             
             void
             setUseKeyNamespace(bool useKeyNamespace)
@@ -83,6 +90,29 @@ namespace ndnrtc {
             { callback_ = callback; }
             
         private:
+            // this events masks are used in different moments during pipeliner
+            // and used for filtering buffer events
+            // startup events mask is used for pipeline initiation
+            static const int StartupEventsMask = FrameBuffer::Event::StateChanged;
+            // this events mask is used when rightmost interest has been issued
+            // and initial data is awaited
+            static const int WaitForRightmostEventsMask = FrameBuffer::Event::FirstSegment | FrameBuffer::Event::Timeout;
+            // this events mask is used during chasing stage
+            static const int ChasingEventsMask = FrameBuffer::Event::FirstSegment |
+                                                 FrameBuffer::Event::Timeout |
+                                                 FrameBuffer::Event::StateChanged;
+            // this events mask is used during buffering stage
+            static const int BufferingEventsMask = FrameBuffer::Event::FirstSegment |
+                                                FrameBuffer::Event::Ready |
+                                                FrameBuffer::Event::Timeout |
+                                                FrameBuffer::Event::StateChanged |
+                                                FrameBuffer::Event::NeedKey;
+            // this events mask is used during fetching stage
+            static const int FetchingEventsMask = BufferingEventsMask |
+                                                FrameBuffer::Event::Playout;
+            
+            
+            State state_;
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
             Consumer* consumer_;
@@ -93,10 +123,9 @@ namespace ndnrtc {
             IPacketAssembler* ndnAssembler_;
             IPipelinerCallback* callback_;
             
-            bool isProcessing_;
             webrtc::ThreadWrapper &mainThread_;
             
-            bool isPipelining_, isPipelinePaused_, isBuffering_;
+            bool isPipelinePaused_, isPipelining_;
             int64_t pipelineIntervalMs_, recoveryCheckpointTimestamp_;
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
@@ -139,7 +168,7 @@ namespace ndnrtc {
             initialDataArrived(const shared_ptr<FrameBuffer::Slot>& slot);
             
             void
-            chaseDataArrived(const FrameBuffer::Event& event);
+            handleChasing(const FrameBuffer::Event& event);
             
             void
             handleBuffering(const FrameBuffer::Event& event);

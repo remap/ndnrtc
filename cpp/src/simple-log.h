@@ -166,7 +166,7 @@ namespace ndnlog {
              * logging is performed
              * @return A refernce to the current Logger instance
              */
-            Logger&
+            virtual Logger&
             log(const NdnLogType& logType,
                 const ILoggingObject* loggingInstance = nullptr,
                 const std::string& locationFile = "",
