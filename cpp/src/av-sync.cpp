@@ -84,9 +84,6 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
  
     syncData.cs_.Enter();
     
-    LogTraceC << syncData.name_
-    << " synchronizing packet " << packetTsRemote <<  packetTsLocal << endl;
-    
     // check if it's a first call
     if (syncData.lastPacketTsLocal_ < 0)
         initialize(syncData, packetTsRemote, packetTsLocal, consumer);

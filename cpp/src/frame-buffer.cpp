@@ -1520,10 +1520,6 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             slot->getPlaybackNumber() >= 0 &&
             playbackNo_+1 != slot->getPlaybackNumber())
         {
-            LogWarnC
-            << "playback No " << playbackNo_
-            << " current playback No " << slot->getPlaybackNumber() << endl;
-            
             // if we got old slot - skip it
             if (slot->getPlaybackNumber() <= playbackNo_)
                 skipFrame_ = true;
@@ -1540,7 +1536,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 assembledLevel < 1.)
             {
                 nIncomplete_++;
-                
+                LogDebugC << "incomplete [" << slot->dump() << "]" << endl;
                 consumer_->dumpStat(SYMBOL_NINCOMPLETE);
 //                LogStatC
 //                << "\tincomplete\t" << nIncomplete_  << "\t"
@@ -1549,13 +1545,11 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 
                 if (consumer_->getParameters().useFec)
                 {
-                    LogTraceC << "applying FEC for "
-                    << packetNo << " " << assembledLevel << endl;
-                    
                     slot->recover();
                     
                     if (slot->isRecovered())
                     {
+                        LogDebugC << "recovered [" << slot->dump() << "]" << endl;
                         assembledLevel = 1.;
                         nRecovered_++;
                         consumer_->dumpStat(SYMBOL_NRECOVERED);
@@ -1564,11 +1558,10 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             }
             
             slot->getPacketData(packetData);
-            
             addBufferEvent(Event::Playout, slot);
             
-            LogTraceC
-            << "locked [" << slot->dump() << "]" << endl;
+            LogDebugC
+            << "lock [" << slot->dump() << "]" << endl;
         } // if (!skipFrame_)
     } // if (slot.get())
     else
@@ -1611,22 +1604,24 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
                 playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
                 isInferredDuration = false;
                 
-                LogTraceC << "playback " << lockedSlot->getSequentialNumber()
-                << " " << playbackDuration << endl;
+                LogDebugC << "delay "  << playbackDuration << " ["
+                << lockedSlot->dump() << "]-" << endl;
             }
             else
             {
-                LogTraceC << "playback " << lockedSlot->getSequentialNumber()
-                << " (inferred) " << playbackDuration << endl;
+                LogDebugC << "delay inferred " << playbackDuration << " ["
+                << lockedSlot->dump() << "]-" << endl;
             }
-            
-            LogTraceC << "unlocked " << lockedSlot->getPrefix() << endl;
             
             isEstimationNeeded_ = true;
         }
         else
+        {
+            LogDebugC << "skip old [" << lockedSlot->dump() << "]" << endl;
             isInferredDuration = false;
+        }
         
+        LogDebugC << "unlock [" << lockedSlot->dump() << "]" << endl;
         lockedSlot->unlock();
         freeSlot(lockedSlot->getPrefix());
         playbackSlot_.reset();

@@ -108,8 +108,8 @@ namespace ndnrtc{
             void
             updatePlaybackAdjustment();
             
-            void
-            adjustPlaybackDelay(int& playbackDelay);
+            int
+            playbackDelayAdjustment(int playbackDelay);
             
             int
             avSyncAdjustment(int64_t nowTimestamp, int playbackDelay);

@@ -176,20 +176,22 @@ Playout::processPlayout()
             //******************************************************************
             // get playout time (delay) for the rendered frame
             int playbackDelay = frameBuffer_->releaseAcquiredSlot(isInferredPlayback_);
-            
-            adjustPlaybackDelay(playbackDelay);
+            int adjustment = playbackDelayAdjustment(playbackDelay);
+            int avSync = 0;
             
             if (packetValid)
-                playbackDelay += avSyncAdjustment(now, playbackDelay);
-            
-            assert(playbackDelay >= 0);
+                avSync = avSyncAdjustment(now, playbackDelay+adjustment);
             
             LogTraceC
-            << "packet " << sequencePacketNo << " has playout time (inferred "
-            << (isInferredPlayback_?"YES":"NO") << ") "
-            << playbackDelay
-            << " (adjustment " << playbackAdjustment_
-            << ") data: " << (data_?"YES":"NO") << endl;
+            << "packet " << sequencePacketNo
+            << " " << playbackDelay+adjustment+avSync
+            << " delay " << playbackDelay
+            << " adjustment " << adjustment
+            << " avsync " << avSync
+            << " inferred " << (isInferredPlayback_?"YES":"NO") << endl;
+            
+            playbackDelay += (adjustment + avSync);
+            assert(playbackDelay >= 0);
             
             // setup and run playout timer for calculated playout interval            
             jitterTiming_.updatePlayoutTime(playbackDelay);
@@ -212,38 +214,34 @@ Playout::updatePlaybackAdjustment()
         int realPlayback = data_->getMetadata().timestamp_-lastPacketTs_;
         playbackAdjustment_ += (realPlayback-inferredDelay_);
         inferredDelay_ = 0;
-        LogDebugC << "adjustments from previous iterations: " << playbackAdjustment_ << endl;
     }
     
     lastPacketTs_ = data_->getMetadata().timestamp_;
 }
 
-void
-Playout::adjustPlaybackDelay(int& playbackDelay)
+int
+Playout::playbackDelayAdjustment(int playbackDelay)
 {
+    int adjustment = 0;
+    
     if (isInferredPlayback_)
         inferredDelay_ += playbackDelay;
     else
         inferredDelay_ = 0;
     
-    LogDebugC << "inferred delay " << inferredDelay_ << endl;
-    
     if (playbackAdjustment_ < 0 &&
         abs(playbackAdjustment_) > playbackDelay)
     {
         playbackAdjustment_ += playbackDelay;
-        playbackDelay = 0;
+        adjustment = -playbackDelay;
     }
     else
     {
-        LogDebugC
-        << "increased playback by adjustment: " << playbackDelay
-        << " +" << playbackAdjustment_ << endl;
-        
-        playbackDelay += playbackAdjustment_;
+        adjustment = playbackDelay + playbackAdjustment_;
         playbackAdjustment_ = 0;
     }
-    LogDebugC << "playback adjustment:  " << playbackAdjustment_ << endl;
+    
+    return adjustment;
 }
 
 int
@@ -255,13 +253,10 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     {
         syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, nowTimestamp, (Consumer*)consumer_);
         
-        LogTraceC << " av-sync adjustment: " << syncDriftAdjustment << endl;
-        
         if (abs(syncDriftAdjustment) > playbackDelay && syncDriftAdjustment < 0)
         {
             playbackAdjustment_ = syncDriftAdjustment+playbackDelay;
             syncDriftAdjustment = -playbackDelay;
-            LogTraceC << " av-sync updated playback adjustment: " << playbackAdjustment_ << endl;
         }
     }
     
