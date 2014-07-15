@@ -71,10 +71,6 @@ Playout::start()
     playbackAdjustment_ = 0;
     data_ = nullptr;
     
-#if 1
-    test_timelineDiff_ = -1;
-#endif
-    
     unsigned int tid;
     playoutThread_.Start(tid);
     
@@ -139,9 +135,14 @@ Playout::processPlayout()
             PacketNumber packetNo, sequencePacketNo, pairedPacketNo;
             double assembledLevel = 0;
             bool isKey, packetValid = false;
+            bool skipped = false, missed = false,
+                    outOfOrder = false, noData = false, incomplete = false;
             
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
+            
+            noData = (data_ == nullptr);
+            incomplete = (assembledLevel < 1.);
             
             //******************************************************************
             // next call is overriden by specific playout mechanism - either
@@ -153,53 +154,23 @@ Playout::processPlayout()
                 
                 nPlayed_++;
                 updatePlaybackAdjustment();
+                consumer_->dumpStat(SYMBOL_NPLAYED);
             }
             else
             {
                 nMissed_++;
-                
-                LogStatC
-                << "\tskipping\t" << sequencePacketNo
-                << "\ttotal\t" << nMissed_ << endl;
+                consumer_->dumpStat(SYMBOL_NMISSED);
+//                LogStatC
+//                << "\tskipping\t" << sequencePacketNo
+//                << "\ttotal\t" << nMissed_ << endl;
             }
-#if 0
-            // testing
-            if (test_timelineDiff_ == -1 && data_)
-            {
-                test_timelineDiff_ = now-data_->getMetadata().timestamp_;
-                test_timelineDiffInclineEst_ = NdnRtcUtils::setupInclineEstimator();
-                
-                LogTrace("timeslide.log")
-                << "start timeline diff " << test_timelineDiff_ << endl;
-            }
-            else
-            {
-                if (data_)
-                {
-                    int currentDiffDelta = test_timelineDiff_ - (now-data_->getMetadata().timestamp_);
-                    
-                    NdnRtcUtils::inclineEstimatorNewValue(test_timelineDiffInclineEst_, (double)currentDiffDelta);
-                    
-                    
-                    LogTrace("timeslide.log")
-                    << "timeline diff delta for " << sequencePacketNo
-                    << ": " << currentDiffDelta
-                    << " incline " << NdnRtcUtils::currentIncline(test_timelineDiffInclineEst_)
-                    << " now: " << now
-                    << " ts: " << data_->getMetadata().timestamp_
-                    << endl;
-                }
-            }
-            // testing
-#endif
+
             double frameUnixTimestamp = 0;
 
             if (data_)
             {
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
                 latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
-                LogStatC
-                << "\tlatency\t" << latency_ << endl;
             }
             
             //******************************************************************
@@ -220,13 +191,9 @@ Playout::processPlayout()
             << " (adjustment " << playbackAdjustment_
             << ") data: " << (data_?"YES":"NO") << endl;
             
-            if (playbackDelay >= 0)
-            {
-                jitterTiming_.updatePlayoutTime(playbackDelay);
-                
-                // setup and run playout timer for calculated playout interval
-                jitterTiming_.runPlayoutTimer();
-            }
+            // setup and run playout timer for calculated playout interval            
+            jitterTiming_.updatePlayoutTime(playbackDelay);
+            jitterTiming_.runPlayoutTimer();
         }
     }
     

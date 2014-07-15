@@ -935,7 +935,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
     this->push_back(slot);
 
     updatePlaybackDeadlines();
-    dumpQueue();
+//    dumpQueue();
 }
 
 ndnrtc::new_api::FrameBuffer::Slot*
@@ -957,7 +957,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         this->erase(this->begin());
         updatePlaybackDeadlines();
         
-        dumpQueue();
+//        dumpQueue();
 //        LogStatC << "▲pop " << dumpShort() << endl;
     }
 }
@@ -966,8 +966,6 @@ void
 ndnrtc::new_api::FrameBuffer::PlaybackQueue::updatePlaybackRate(double playbackRate)
 {
     playbackRate_ = playbackRate;
-    
-    LogTraceC << "update rate " << playbackRate << endl;
 }
 
 void
@@ -1137,11 +1135,13 @@ ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
     {
       if (RESULT_GOOD(reservedSlot->addInterest(interest)))
       {
+          LogDebugC << "request: " << playbackQueue_.dumpShort() << endl;
+          
           isEstimationNeeded_ = true;
           return reservedSlot->getState();
       }
       else
-          LogWarnC << "error adding " << interest.getName() << endl;
+          LogWarnC << "error requesting " << interest.getName() << endl;
     }
     else
         LogWarnC << "no free slots" << endl;
@@ -1167,6 +1167,9 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
         return Slot::StateFree;
     }
     
+    if (startSegmentNo > endSegmentNo)
+        return Slot::StateFree;
+    
     CriticalSectionScoped scopedCs_(&syncCs_);
     
     shared_ptr<Slot> reservedSlot = getSlot(packetInterest.getName(), false, true);
@@ -1184,20 +1187,18 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
             segmentInterest->getName().appendSegment(segNo);
             
             if (RESULT_GOOD(reservedSlot->addInterest(*segmentInterest)))
-            {
                 segmentInterests.push_back(segmentInterest);
-                
-                LogTraceC << "pending " << segmentInterest->getName() << endl;
-            }
             else
             {
-                LogWarnC << "error adding " << segmentInterest->getName() << endl;
+                LogWarnC << "error requesting " << segmentInterest->getName() << endl;
                 break;
             }
         }
         
-        isEstimationNeeded_ = true;
+        LogDebugC << "requested range (" << segmentInterests.size()
+        << "): " << playbackQueue_.dumpShort() << endl;
         
+        isEstimationNeeded_ = true;
         return reservedSlot->getState();
     }
     else
@@ -1228,11 +1229,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             Slot::State newState = slot->appendData(data);
             int newConsistency = slot->getConsistencyState();
             
-            LogTraceC
-            << "appended " << dataName
-            << " (" << slot->getAssembledLevel()*100 << "%)"
-            << "with result " << Slot::stateToString(newState) << endl;
-            playbackQueue_.dumpQueue();
+//            LogTraceC
+//            << "appended " << dataName
+//            << " (" << slot->getAssembledLevel()*100 << "%)"
+//            << "with result " << Slot::stateToString(newState) << endl;
+            LogDebugC << "append: "<< playbackQueue_.dumpShort() << endl;
             
             if (oldState != newState ||
                 newState == Slot::StateAssembling)
@@ -1240,9 +1241,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 if (oldConsistency != newConsistency)
                 {
                     if (newConsistency&Slot::HeaderMeta)
-                    {
                         updateCurrentRate(slot->getPacketRate());
-                    }
                     
                     playbackQueue_.updatePlaybackDeadlines();
                     isEstimationNeeded_ = true;
@@ -1255,14 +1254,8 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 // check for ready event
                 if (newState == Slot::StateReady)
                 {
-                    LogTraceC
-                    << "ready " << slot->getPrefix() << endl;
-                    
                     if (slot->getRtxNum() > 0)
-                    {
                         nRescuedFrames_++;
-                        LogStatC << "\trescued\t" << nRescuedFrames_ << endl;
-                    }
                     
                     nReceivedFrames_++;
                     addBufferEvent(Event::Ready, slot);
@@ -1293,8 +1286,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     int64_t targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
                     setTargetSize(targetBufferSize);
                     
-                    LogTraceC << "target buffer size updated: "
-                    << targetBufferSize << endl;
+                    consumer_->dumpStat(SYMBOL_RTT_EST+string("/")+SYMBOL_JITTER_TARGET);
                 }
                 
                 return newState;
@@ -1325,8 +1317,6 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
     {
         if (RESULT_GOOD(slot->markMissing(interest)))
         {
-            LogTraceC << "timeout " << slot->getPrefix() << endl;
-            
             addBufferEvent(Event::Timeout, slot);
         }
         else
@@ -1460,7 +1450,8 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots()
     
     isEstimationNeeded_ = true;
     
-    LogTraceC << "recycled " << nRecycledSlots_ << " slots" << endl;
+    LogTraceC << "recycled " << nRecycledSlots_ << " "
+    << playbackQueue_.dumpShort() << endl;
 }
 
 void
@@ -1480,7 +1471,8 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots(int nSlotsToRecycle)
     
     isEstimationNeeded_ = true;
     
-    LogTraceC << "recycled " << nRecycledSlots_ << " slots" << endl;
+    LogTraceC << "recycled " << nRecycledSlots_ << " "
+    << playbackQueue_.dumpShort() << endl;
 }
 
 int64_t
@@ -1491,6 +1483,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
         CriticalSectionScoped scopedCs(&syncCs_);
         estimateBufferSize();
         isEstimationNeeded_ = false;
+        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
     }
 
     return estimatedSizeMs_;
@@ -1548,14 +1541,15 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             {
                 nIncomplete_++;
                 
-                LogStatC
-                << "\tincomplete\t" << nIncomplete_  << "\t"
-                << (isKey?"K":"D") << "\t"
-                << packetNo << "\t" << endl;
+                consumer_->dumpStat(SYMBOL_NINCOMPLETE);
+//                LogStatC
+//                << "\tincomplete\t" << nIncomplete_  << "\t"
+//                << (isKey?"K":"D") << "\t"
+//                << packetNo << "\t" << endl;
                 
                 if (consumer_->getParameters().useFec)
                 {
-                    LogTraceC << "applying FEC for incomplete frame "
+                    LogTraceC << "applying FEC for "
                     << packetNo << " " << assembledLevel << endl;
                     
                     slot->recover();
@@ -1564,11 +1558,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                     {
                         assembledLevel = 1.;
                         nRecovered_++;
-                        
-                        LogStatC
-                        << "\trecovered\t" << slot->getSequentialNumber()  << "\t"
-                        << (isKey?"K":"D") << "\t"
-                        << packetNo << "\t" << endl;
+                        consumer_->dumpStat(SYMBOL_NRECOVERED);
                     }
                 }
             }
@@ -1577,8 +1567,8 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             addBufferEvent(Event::Playout, slot);
             
-            LogTraceC << "locked " << slot->dump()
-            << " size " << ((*packetData)?(*packetData)->getLength():-1) << endl;
+            LogTraceC
+            << "locked [" << slot->dump() << "]" << endl;
         } // if (!skipFrame_)
     } // if (slot.get())
     else
@@ -1726,8 +1716,6 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
         activeSlots_[lookupPrefix] = slot;
         slot->setPrefix(Name(lookupPrefix));
         
-        dumpActiveSlots();
-        
         return RESULT_OK;
     }
     
@@ -1829,8 +1817,6 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
         
         if (NdnRtcNamespace::isKeyFramePrefix(interest.getName()))
             nKeyFrames_++;
-        
-        LogTraceC << "reserved " << reservedSlot->getPrefix() << endl;
     }
     
     return reservedSlot;
@@ -1866,12 +1852,7 @@ ndnrtc::new_api::FrameBuffer::fixRightmost(const Name& dataName)
         getLookupPrefix(dataName, lookupPrefix);
         
         activeSlots_[lookupPrefix] = slot;
-        
-//        dumpActiveSlots();
-        
         isWaitingForRightmost_ = false;
-        
-        LogTraceC << "fixed righmost entry" << endl;
     }
 }
 

@@ -71,11 +71,6 @@ namespace ndnrtc{
             int playbackAdjustment_;
             PacketNumber startPacketNo_;
             
-#if 1 // left for future testing
-            int test_timelineDiff_ = -1;
-            int test_timelineDiffInclineEst_ = -1;
-#endif
-            
             const Consumer* consumer_;
             shared_ptr<FrameBuffer> frameBuffer_;
             

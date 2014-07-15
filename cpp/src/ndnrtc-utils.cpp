@@ -36,6 +36,7 @@ typedef struct _DataRateMeter {
 typedef struct _MeanEstimator {
     unsigned int sampleSize_;
     int nValues_;
+    double startValue_;
     double prevValue_;
     double valueMean_;
     double valueMeanSq_;
@@ -332,7 +333,7 @@ void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
 unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize,
                                              double startValue)
 {
-    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, 0., 0., startValue, 0.};
+    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, startValue, 0., 0., startValue, 0.};
     
     meanEstimators_.push_back(meanEstimator);
     
@@ -407,6 +408,18 @@ void NdnRtcUtils::releaseMeanEstimator(unsigned int estimatorId)
         return ;
     
     // nothing
+}
+
+void NdnRtcUtils::resetMeanEstimator(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+
+    estimator = {estimator.sampleSize_, 0, estimator.startValue_,
+        estimator.startValue_, estimator.startValue_, 0., 0.,
+        estimator.startValue_, 0.};
 }
 
 //******************************************************************************

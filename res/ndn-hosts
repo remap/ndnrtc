@@ -56,6 +56,10 @@
 # http://202.120.188.176:6363/
 #202.120.188.176	ndn.tongji
 
-#france node
-# http://ndnmap.arl.wustl.edu/
-#128.252.153.27	ndn.france
+#france node - lip6
+# http://132.227.62.163:6363/
+132.227.62.163	ndn.lip6
+
+#france node - orange
+# http://161.105.194.154:6363/
+#161.105.194.154	ndn.orange

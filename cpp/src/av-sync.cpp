@@ -103,8 +103,6 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         
         int64_t hitTime = packetTsLocal;
         
-        LogTrace("media-diff.log") << "\tdiff\t" << syncData.lastPacketTsRemote_ - pairedSyncData.lastPacketTsRemote_ << endl;
-        
         // packet synchroniztation comes from the idea of strem timelines:
         // each media stream has timeline with points which corresponds to the
         // media packet:

@@ -41,6 +41,8 @@ namespace ndnrtc {
             
             double getCurrentEstimation() const;
             
+            void reset();
+            
         private:
             static RttEstimation sharedRttEstimation_;
             unsigned int estimatorId_;

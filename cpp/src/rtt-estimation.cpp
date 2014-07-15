@@ -44,9 +44,6 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
     if (rawValue > 0)
     {
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
-        
-        LogTraceC << "rtt estimate\t" <<
-        NdnRtcUtils::currentMeanEstimation(estimatorId_) << endl;
     }
     else
     {
@@ -62,4 +59,10 @@ double
 RttEstimation::getCurrentEstimation() const
 {
     return NdnRtcUtils::currentMeanEstimation(estimatorId_);
+}
+
+void
+RttEstimation::reset()
+{
+    NdnRtcUtils::resetMeanEstimator(estimatorId_);
 }
