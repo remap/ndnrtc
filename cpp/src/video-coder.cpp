@@ -27,11 +27,13 @@ char* plotCodec(webrtc::VideoCodec codec)
     
     sprintf(msg, "\t\tMax Framerate:\t%d\n \
             \tStart Bitrate:\t%d\n \
+            \tMin Bitrate:\t%d\n \
             \tMax Bitrate:\t%d\n \
             \tWidth:\t%d\n \
             \tHeight:\t%d",
             codec.maxFramerate,
             codec.startBitrate,
+            codec.minBitrate,
             codec.maxBitrate,
             codec.width,
             codec.height);
@@ -72,9 +74,11 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
     codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
                                                   MaxStartBitrate, res,
                                                   DefaultParams.startBitrate);
+    codec.minBitrate = codec.startBitrate;
     codec.maxBitrate = ParamsStruct::validateLE(params.maxBitrate,
                                                 MaxBitrate, res,
                                                 DefaultParams.maxBitrate);
+    codec.targetBitrate = codec.maxBitrate;
     codec.width = ParamsStruct::validateLE(params.encodeWidth,
                                            MaxWidth, res,
                                            DefaultParams.encodeWidth);

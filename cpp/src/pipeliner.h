@@ -248,6 +248,34 @@ namespace ndnrtc {
             
             void
             rebuffer();
+            
+            void
+            switchToState(State newState)
+            {
+                state_ = newState;
+                
+                LogDebugC << "new state " << toString(state_) << std::endl;
+                
+                if (callback_)
+                    callback_->onStateChanged(state_);
+            }
+            
+            std::string
+            toString(State state)
+            {
+                switch (state) {
+                    case StateInactive:
+                        return "Inactive";
+                    case StateChasing:
+                        return "Chasing";
+                    case StateBuffering:
+                        return "Buffering";
+                    case StateFetching:
+                        return "Fetching";
+                    default:
+                        return "Unknown";
+                }
+            }
         };
     }
 }

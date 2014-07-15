@@ -94,6 +94,8 @@
 #define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
 #define LogStatC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__)
 
+#define STAT_DIV "\t"
+
 namespace ndnlog {
     typedef enum _NdnLoggerLevel {
         NdnLoggerLevelTrace = 0,
@@ -250,6 +252,9 @@ namespace ndnlog {
             static Logger&
             sharedInstance()
             { return *sharedInstance_; }
+            
+            void
+            flush();
             
         private:
             NdnLoggerDetailLevel logLevel_;

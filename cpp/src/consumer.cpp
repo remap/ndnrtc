@@ -133,8 +133,10 @@ Consumer::getState() const
 }
 
 void
-Consumer::getStatistics(ReceiverChannelPerformance& stat)
+Consumer::getStatistics(ReceiverChannelPerformance& stat) const
 {
+    memset(&stat, 0, sizeof(stat));
+    
     stat.segNumDelta_ = pipeliner_->getAvgSegNum(false);
     stat.segNumKey_ = pipeliner_->getAvgSegNum(true);
     stat.rtxNum_ = pipeliner_->getRtxNum();
@@ -203,6 +205,47 @@ Consumer::onRebufferingOccurred()
 {
     playout_->stop();
     renderer_->stopRendering();
+    rttEstimation_->reset();
+}
+
+void
+Consumer::onStateChanged(const int &newState)
+{
+    
+}
+
+void
+Consumer::dumpStat(const std::string& comment) const
+{
+    ReceiverChannelPerformance stat;
+    memset(&stat, 0, sizeof(stat));
+
+    getStatistics(stat);
+    if (playout_.get()) playout_->getStatistics(stat);
+    interestQueue_->getStatistics(stat);
+    frameBuffer_->getStatistics(stat);
+    
+    
+    LogStatC << comment << STAT_DIV
+    << SYMBOL_SEG_RATE << STAT_DIV << stat.segmentsFrequency_ << STAT_DIV
+    << SYMBOL_INTEREST_RATE << STAT_DIV << stat.interestFrequency_ << STAT_DIV
+    << SYMBOL_PRODUCER_RATE << STAT_DIV << stat.actualProducerRate_ << STAT_DIV
+    << SYMBOL_JITTER_TARGET << STAT_DIV << stat.jitterTargetMs_ << STAT_DIV
+    << SYMBOL_JITTER_ESTIMATE << STAT_DIV << stat.jitterEstimationMs_ << STAT_DIV
+    << SYMBOL_JITTER_PLAYABLE << STAT_DIV << stat.jitterPlayableMs_ << STAT_DIV
+    << SYMBOL_INRATE << STAT_DIV << stat.nBytesPerSec_*8/1000 << STAT_DIV
+    << SYMBOL_NREBUFFER << STAT_DIV << stat.rebufferingEvents_ << STAT_DIV
+    << SYMBOL_NRECEIVED << STAT_DIV << stat.nReceived_ << STAT_DIV
+    << SYMBOL_NPLAYED << STAT_DIV << stat.nPlayed_ << STAT_DIV
+    << SYMBOL_NMISSED << STAT_DIV << stat.nMissed_ << STAT_DIV
+    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.nIncomplete_ << STAT_DIV
+    << SYMBOL_NRESCUED << STAT_DIV << stat.nRescued_ << STAT_DIV
+    << SYMBOL_NRECOVERED << STAT_DIV << stat.nRecovered_ << STAT_DIV
+    << SYMBOL_NRTX << STAT_DIV << stat.rtxNum_ << STAT_DIV
+    << SYMBOL_AVG_DELTA << STAT_DIV << stat.segNumDelta_ << STAT_DIV
+    << SYMBOL_AVG_KEY << STAT_DIV << stat.segNumKey_ << STAT_DIV
+    << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_
+    << endl;
 }
 
 //******************************************************************************
@@ -219,7 +262,5 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
 }
 void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    LogTraceC << "timeout " << interest->getName() << endl;
-    
     frameBuffer_->interestTimeout(*interest);
 }

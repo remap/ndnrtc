@@ -21,6 +21,25 @@
 #include "statistics.h"
 #include "renderer.h"
 
+#define SYMBOL_SEG_RATE "sr"
+#define SYMBOL_INTEREST_RATE "ir"
+#define SYMBOL_PRODUCER_RATE "rate"
+#define SYMBOL_JITTER_TARGET "jt"
+#define SYMBOL_JITTER_ESTIMATE "je"
+#define SYMBOL_JITTER_PLAYABLE "jp"
+#define SYMBOL_INRATE "in"
+#define SYMBOL_NREBUFFER "nreb"
+#define SYMBOL_NRECEIVED "nrecv"
+#define SYMBOL_NPLAYED "npbck"
+#define SYMBOL_NMISSED "nmiss"
+#define SYMBOL_NINCOMPLETE "ninc"
+#define SYMBOL_NRESCUED "nresc"
+#define SYMBOL_NRECOVERED "nrec"
+#define SYMBOL_NRTX "nrtx"
+#define SYMBOL_AVG_DELTA "ndelta"
+#define SYMBOL_AVG_KEY "nkey"
+#define SYMBOL_RTT_EST "rtt"
+
 namespace ndnrtc {
     class AudioVideoSynchronizer;
     
@@ -45,6 +64,9 @@ namespace ndnrtc {
             
             virtual void
             onRebufferingOccurred() = 0;
+            
+            virtual void
+            onStateChanged(const int& newState) = 0;
         };
         
         /**
@@ -156,7 +178,7 @@ namespace ndnrtc {
             { return avSync_; }
             
             void
-            getStatistics(ReceiverChannelPerformance& stat);
+            getStatistics(ReceiverChannelPerformance& stat) const;
             
             virtual void
             setLogger(ndnlog::new_api::Logger* logger);
@@ -169,6 +191,34 @@ namespace ndnrtc {
             
             void
             onRebufferingOccurred();
+            
+            void
+            onStateChanged(const int& newState);
+            
+            /**
+             * Dumps statistics for the current producer into the log
+             * Statistics are dumped in the following format:
+             *  - incoming data rate (segments/sec) - "sr"
+             *  - interest rate (interests/sec) - "ir"
+             *  - producer rate (frames/sec) - "rate"
+             *  - jitter buffer target size (ms) - "jt"
+             *  - jitter buffer estimate size (ms) - "je"
+             *  - jitter buffer playable size (ms) - "jp"
+             *  - incoming rate (kbit/sec) - "in"
+             *  - number of rebufferings - "nreb"
+             *  - number of received frames - "nrecv"
+             *  - number of played frames - "npbck"
+             *  - number of missed frames - "nmiss"
+             *  - number of incomplete frames - "ninc"
+             *  - number of rescued frames - "nresc"
+             *  - number of recovered frames - "nrec"
+             *  - number of retransmissions - "nrtx"
+             *  - average number of segments for delta frames - "ndelta"
+             *  - average number of segments for key frames - "nkey"
+             *  - current rtt estimation - "rtt"
+             */
+            void
+            dumpStat(const std::string& comment = "") const;
             
         protected:
             bool isConsuming_;

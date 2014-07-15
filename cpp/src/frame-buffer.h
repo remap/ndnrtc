@@ -25,6 +25,8 @@ namespace ndnrtc
     // namespace for new API
     namespace new_api
     {
+        using namespace ndnlog;
+        
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -1024,6 +1026,7 @@ namespace ndnrtc
                 {
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
+                    consumer_->dumpStat(SYMBOL_PRODUCER_RATE);
                 }
             }
             

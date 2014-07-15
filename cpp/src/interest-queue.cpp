@@ -127,11 +127,12 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {    
-    LogStatC
-    << "express\t" << entry.interest_->getName() << "\t"
-    << entry.getValue() << "\t"
-    << queue_.size() << "\t"
-    << entry.interest_->getInterestLifetimeMilliseconds() << endl;
+    LogDebugC
+    << "express\t" << entry.interest_->getName() << "\tpri: "
+    << entry.getValue() << "\tlifetime: "
+    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
+    << queue_.size()
+    << endl;
     
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
     face_->expressInterest(*(entry.interest_),

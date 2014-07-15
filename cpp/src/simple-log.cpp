@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <mach/mach_time.h>
 #include <fstream>
+#include <iomanip>
 #include "simple-log.h"
 
 #define MAX_BUF_SIZE 4*256 // string buffer
@@ -324,23 +325,31 @@ new_api::Logger::log(const NdnLogType& logType,
         getOutStream() << getMillisecondTimestamp() << " [" << stringify(logType) << "]";
         
         if (loggingInstance)
-            getOutStream() << "[" << loggingInstance->getDescription() << "]";
+            getOutStream()
+            << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
+            << std::hex << std::setw(15) << loggingInstance << std::dec;
         
-        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
-            locationFile != "" &&
-            locationLine >= 0)
-            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
+//        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
+//            locationFile != "" &&
+//            locationLine >= 0)
+//            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
         
         getOutStream() << ": ";
         
         if (getOutStream() != std::cout)
         {
             if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-                getOutStream().flush();
+                flush();
         }
     }
     
     return *this;
+}
+
+void
+new_api::Logger::flush()
+{
+    getOutStream().flush();    
 }
 
 //******************************************************************************
