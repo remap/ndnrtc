@@ -86,6 +86,7 @@ namespace ndnrtc {
          */
         static shared_ptr<std::string>
         getStreamFramePrefix(const ParamsStruct &params,
+                             int streamIdx,
                              bool isKeyNamespace = false);
         
         /**
@@ -135,6 +136,9 @@ namespace ndnrtc {
                                          Name &trimmedPrefix);
         
         static bool trimmedLookupPrefix(const Name& prefix, Name& lookupPrefix);
+        
+        static int getStreamIdFromPrefix(const Name& prefix,
+                                         const ParamsStruct& params);
         
     private:
     };

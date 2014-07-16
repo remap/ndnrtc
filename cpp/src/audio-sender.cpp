@@ -49,8 +49,8 @@ int NdnAudioSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
                          const shared_ptr<KeyChain>& ndnKeyChain)
 {
     int res = RESULT_OK;
-    
-    res = MediaSender::init(faceProcessor, ndnKeyChain);
+    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, -1);
+    res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
     
     if (RESULT_FAIL(res))
         return res;

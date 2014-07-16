@@ -45,7 +45,7 @@ char* plotCodec(webrtc::VideoCodec codec)
 
 //******************************************************************************
 #pragma mark - static
-int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
+int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
 {
     // setup default params first
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
@@ -93,7 +93,9 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params), frameConsumer_(nullptr)
+NdnVideoCoder::NdnVideoCoder(const CodecParams &params) : NdnRtcObject(),
+codecParams_(params),
+frameConsumer_(nullptr)
 {
     description_ = "coder";
     memset(&codec_, 0, sizeof(codec_));
@@ -102,7 +104,7 @@ NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params),
 #pragma mark - public
 int NdnVideoCoder::init()
 {
-    if (RESULT_FAIL(NdnVideoCoder::getCodec(params_, codec_)))
+    if (RESULT_FAIL(NdnVideoCoder::getCodec(codecParams_, codec_)))
         notifyError(-1, "some codec parameters were out of bounds. \
                     actual parameters: %s", plotCodec(codec_));
     
@@ -157,13 +159,6 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
     
-    encodeTime_ = NdnRtcUtils::microsecondTimestamp()-encodeTime_;
-
-    LogDebugC
-    << "encoded\t"
-    << counter_-1 << "\t"
-    << encodeTime_ << endl;
-    
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
     
@@ -185,8 +180,6 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     }
     
     counter_++;
-    
-    encodeTime_ = NdnRtcUtils::microsecondTimestamp();
     deliveredTimestamp_  = timestamp;
     
     int err;

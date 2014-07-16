@@ -104,23 +104,26 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.renderHeight = ParamsStruct::validate(params.renderHeight,
                                                     MinHeight, MaxHeight, res,
                                                     DefaultParams.renderHeight);
+    validated.nStreams = params.nStreams;
+    validated.streamsParams = (CodecParams*)malloc(sizeof(CodecParams)*validated.nStreams);
+    memcpy(validated.streamsParams, params.streamsParams, sizeof(CodecParams)*validated.nStreams);
     
-    validated.codecFrameRate = ParamsStruct::validate(params.codecFrameRate,
-                                                      MinFrameRate, MaxFrameRate, res,
-                                                      DefaultParams.codecFrameRate);
-    validated.startBitrate = ParamsStruct::validate(params.startBitrate,
-                                                    MinStartBitrate, MaxStartBitrate, res,
-                                                    DefaultParams.startBitrate);
-    validated.maxBitrate = ParamsStruct::validate(params.maxBitrate,
-                                                  MinStartBitrate, MaxBitrate, res,
-                                                  DefaultParams.maxBitrate);
-    validated.encodeWidth = ParamsStruct::validate(params.encodeWidth,
-                                                   MinWidth, MaxWidth, res,
-                                                   DefaultParams.encodeWidth);
-    validated.encodeHeight = ParamsStruct::validate(params.encodeHeight,
-                                                    MinHeight, MaxHeight, res,
-                                                    DefaultParams.encodeHeight);
-    validated.dropFramesOn = params.dropFramesOn;
+//    validated.codecFrameRate = ParamsStruct::validate(params.codecFrameRate,
+//                                                      MinFrameRate, MaxFrameRate, res,
+//                                                      DefaultParams.codecFrameRate);
+//    validated.startBitrate = ParamsStruct::validate(params.startBitrate,
+//                                                    MinStartBitrate, MaxStartBitrate, res,
+//                                                    DefaultParams.startBitrate);
+//    validated.maxBitrate = ParamsStruct::validate(params.maxBitrate,
+//                                                  MinStartBitrate, MaxBitrate, res,
+//                                                  DefaultParams.maxBitrate);
+//    validated.encodeWidth = ParamsStruct::validate(params.encodeWidth,
+//                                                   MinWidth, MaxWidth, res,
+//                                                   DefaultParams.encodeWidth);
+//    validated.encodeHeight = ParamsStruct::validate(params.encodeHeight,
+//                                                    MinHeight, MaxHeight, res,
+//                                                    DefaultParams.encodeHeight);
+//    validated.dropFramesOn = params.dropFramesOn;
     
     validated.host = params.host;
     validated.portNum = ParamsStruct::validateLE(params.portNum, MaxPortNum, res,

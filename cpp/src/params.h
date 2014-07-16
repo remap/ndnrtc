@@ -40,6 +40,13 @@ namespace ndnrtc
         MinBufferSize = 1,
         MinJitterSize = 150;
     
+    typedef struct _CodecParams {
+        unsigned int idx;
+        unsigned int codecFrameRate, gop;
+        unsigned int startBitrate, maxBitrate;
+        unsigned int encodeWidth, encodeHeight;
+        bool dropFramesOn;
+    } CodecParams;
 
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
@@ -60,6 +67,10 @@ namespace ndnrtc
         unsigned int startBitrate, maxBitrate;
         unsigned int encodeWidth, encodeHeight;
         bool dropFramesOn;
+        
+        // streams
+        unsigned int nStreams;
+        CodecParams* streamsParams;
         
         // network parameters
         const char *host;
@@ -140,6 +151,15 @@ namespace ndnrtc
             memset((void*)this->producerId, 0, strlen(producerId));
             strcpy((char*)this->producerId, producerId);
         }
+        
+        void addNewStream(const CodecParams& streamParams)
+        {
+            this->nStreams++;
+            this->streamsParams = (CodecParams*)realloc(this->streamsParams,
+                                                         this->nStreams*sizeof(CodecParams));
+            this->streamsParams[this->nStreams-1] = streamParams;
+        }
+        
     } ParamsStruct;
     
     static ParamsStruct DefaultParams = {
@@ -170,6 +190,9 @@ namespace ndnrtc
         480,    // codec encoding height
         1,      // instruct encoder to drop frames if cannot keep up with the
                 // maximum bitrate
+        
+        0,      // number of simultaneous streams
+        nullptr, // no streams
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
@@ -219,6 +242,9 @@ namespace ndnrtc
         0,      // codec encoding width
         0,      // codec encoding height
         0,      // drop frames
+        
+        0,
+        nullptr,
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number

@@ -182,15 +182,22 @@ shared_ptr<string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &params)
                                          NULL);
 }
 
-shared_ptr<string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct &params,
-                                      bool isKeyNamespace)
+ptr_lib::shared_ptr<string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct &params,
+                                                         int streamIdx,
+                                                         bool isKeyNamespace)
 {
     shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
-    if (!streamPrefix.get() || !params.streamThread)
-        return shared_ptr<string>(nullptr);
+    if (!streamPrefix.get() || params.nStreams < streamIdx)
+        return ptr_lib::shared_ptr<string>(nullptr);
     
-    string streamThread = string(params.streamThread);
+    string streamThread;
+    
+    if (streamIdx < 0)
+        streamThread = string(params.streamThread);
+    else
+        streamThread = NdnRtcUtils::toString("%d", params.streamsParams[streamIdx].startBitrate);
+    
     const string frameTypeNamespace = (isKeyNamespace)?
     NdnRtcNamespace::NameComponentStreamFramesKey:
     NdnRtcNamespace::NameComponentStreamFramesDelta;
@@ -579,6 +586,27 @@ bool NdnRtcNamespace::trimmedLookupPrefix(const ndn::Name &prefix,
     }
     
     return res;
+}
+
+int NdnRtcNamespace::getStreamIdFromPrefix(const ndn::Name &prefix,
+                                           const ParamsStruct &params)
+{
+    if (params.nStreams == 0)
+        return -1;
+    
+    int p = findComponent(prefix, NameComponentStreamFrames);
+    
+    if (p > 0)
+    {
+        ndn::Name::Component streamRateComp = prefix.get(p-1);
+        int streamRate = NdnRtcUtils::intFromComponent(streamRateComp);
+        
+        for (int i = 0; i < params.nStreams; i++)
+            if (streamRate == params.streamsParams[i].startBitrate)
+                return params.streamsParams[i].idx;
+    }
+    
+    return -1;
 }
 
 //********************************************************************************

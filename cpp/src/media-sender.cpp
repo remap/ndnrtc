@@ -56,8 +56,9 @@ MediaSender::~MediaSender()
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
-                      const shared_ptr<KeyChain>& ndnKeyChain)
+int MediaSender::init(const ptr_lib::shared_ptr<FaceProcessor>& faceProcessor,
+                      const ptr_lib::shared_ptr<KeyChain>& ndnKeyChain,
+                      const ptr_lib::shared_ptr<string>& packetPrefix)
 {
     faceProcessor_ = faceProcessor;
     ndnKeyChain_ = ndnKeyChain;
@@ -71,11 +72,6 @@ int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     
     if (params_.useCache)
         memCache_.reset(new MemoryContentCache(faceProcessor_->getFaceWrapper()->getFace().get()));
-    
-    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
-    
-    if (!packetPrefix.get())
-        notifyError(-1, "bad frame prefix");
     
     packetPrefix_.reset(new Name(packetPrefix->c_str()));
     

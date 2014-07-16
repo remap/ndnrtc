@@ -336,14 +336,13 @@ int NdnRtcLibrary::startPublishing(const char* username,
         return -1;
     
     SenderChannel = sc;
+    ptr_lib::shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params, 0);
+    notifyObserverWithState("transmitting",
+                            "started publishing under the user prefix: %s",
+                            producerPrefix->c_str());
     
-    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
-    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params);
-    
-    
-    return notifyObserverWithState("transmitting",
-                                   "started publishing under the user prefix: %s",
-                                   producerPrefix->c_str());
+    return RESULT_OK;
 }
 
 int

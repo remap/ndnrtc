@@ -19,9 +19,15 @@ using namespace webrtc;
 
 const double NdnVideoSender::ParityRatio = 0.2;
 
-NdnVideoSender::NdnVideoSender(const ParamsStruct& params):MediaSender(params)
+NdnVideoSender::NdnVideoSender(const ParamsStruct& params,
+                               const CodecParams& codecParams):
+MediaSender(params),
+codecParams_(codecParams),
+coder_(new NdnVideoCoder(codecParams))
 {
     description_ = "vsender";
+    coder_->setObserver(this);
+    coder_->setFrameConsumer(this);
 }
 
 //******************************************************************************
@@ -29,13 +35,17 @@ NdnVideoSender::NdnVideoSender(const ParamsStruct& params):MediaSender(params)
 int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
                          const shared_ptr<KeyChain>& ndnKeyChain)
 {
-    int res = MediaSender::init(faceProcessor, ndnKeyChain);
+    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, codecParams_.idx);
+    int res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
     
     if (RESULT_FAIL(res))
         return res;
     
-    shared_ptr<string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    if (RESULT_FAIL(coder_->init()))
+        return notifyError(RESULT_ERR, "can't initialize video encoder");
+    
+    ptr_lib::shared_ptr<string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, codecParams_.idx, true);
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = -1;
@@ -50,6 +60,12 @@ int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
 
 //******************************************************************************
 #pragma mark - interfaces realization
+void NdnVideoSender::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                                    double unixTimeStamp)
+{
+    coder_->onDeliverFrame(frame, unixTimeStamp);
+}
+
 void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                              double captureTimestamp)
 {
@@ -140,9 +156,15 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     }
 }
 
+void NdnVideoSender::setLogger(ndnlog::new_api::Logger *logger)
+{
+    coder_->setLogger(logger);
+    ILoggingObject::setLogger(logger);
+}
+
 void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
-                             const shared_ptr<const Interest>& interest,
-                             ndn::Transport& transport)
+                                const shared_ptr<const Interest>& interest,
+                                ndn::Transport& transport)
 {
     const Name& name = interest->getName();
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);

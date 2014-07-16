@@ -27,7 +27,7 @@ namespace ndnrtc {
     public webrtc::EncodedImageCallback
     {
     public:
-        NdnVideoCoder(const ParamsStruct &params);
+        NdnVideoCoder(const CodecParams& codecParams);//const ParamsStruct &params);
         ~NdnVideoCoder() {}
         
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
@@ -45,11 +45,10 @@ namespace ndnrtc {
         void onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
         unsigned int getDroppedFramesNum() { return nDroppedByEncoder_; };
-        static int getCodec(const ParamsStruct &params, webrtc::VideoCodec &codec);
+        static int getCodec(const CodecParams &params, webrtc::VideoCodec &codec);
     
     private:
-#warning remove this in release
-        uint64_t encodeTime_;
+        CodecParams codecParams_;
         unsigned int counter_ = 1;
         unsigned int nDroppedByEncoder_ = 0;
         
