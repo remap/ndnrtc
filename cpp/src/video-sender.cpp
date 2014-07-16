@@ -106,7 +106,7 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
 //        webrtc::EncodedImage *eimg = (webrtc::EncodedImage*)(&encodedImage);
 //        ewriter.writeFrame(*eimg, metadata);
         
-        LogStatC
+        LogDebugC
         << "publish\t" << packetNo_ << "\t"
         << deltaFrameNo_ << "\t"
         << keyFrameNo_ << "\t"
@@ -183,7 +183,7 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
                                         prefixMeta,
                                         NdnRtcUtils::unixTimestamp())) > 0)
         {
-            LogStatC
+            LogDebugC
             << "publish parity\t" << packetNo_ << "\t"
             << deltaFrameNo_ << "\t"
             << keyFrameNo_ << "\t"

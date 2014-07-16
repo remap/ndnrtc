@@ -24,6 +24,7 @@ typedef struct _FrequencyMeter {
     unsigned int nCyclesPerSec_;
     double callsPerSecond_;
     int64_t lastCheckTime_;
+    unsigned int meanEstimatorId_;
 } FrequencyMeter;
 
 typedef struct _DataRateMeter {
@@ -31,6 +32,7 @@ typedef struct _DataRateMeter {
     unsigned int bytesPerCycle_;
     double nBytesPerSec_;
     int64_t lastCheckTime_;
+    unsigned int meanEstimatorId_;
 } DataRateMeter;
 
 typedef struct _MeanEstimator {
@@ -227,7 +229,8 @@ double NdnRtcUtils::unixTimestamp()
 //******************************************************************************
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
-    FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0};
+    FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
+    meter.meanEstimatorId_ = setupMeanEstimator();
     
     freqMeters_.push_back(meter);
     
@@ -252,6 +255,7 @@ void NdnRtcUtils::frequencyMeterTick(unsigned int meterId)
             {
                 meter.callsPerSecond_ = 1000.*(double)meter.nCyclesPerSec_/(double)(delta);
                 meter.nCyclesPerSec_ = 0;
+                meanEstimatorNewValue(meter.meanEstimatorId_, meter.callsPerSecond_);
             }
             
             meter.lastCheckTime_ = now;
@@ -265,7 +269,7 @@ double NdnRtcUtils::currentFrequencyMeterValue(unsigned int meterId)
     
     FrequencyMeter &meter = freqMeters_[meterId];
     
-    return meter.callsPerSecond_;
+    return currentMeanEstimation(meter.meanEstimatorId_);
 }
 
 void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
@@ -279,7 +283,8 @@ void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
 //******************************************************************************
 unsigned int NdnRtcUtils::setupDataRateMeter(unsigned int granularity)
 {
-    DataRateMeter meter = {1000./(double)granularity, 0, 0., 0};
+    DataRateMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
+    meter.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
     
     dataMeters_.push_back(meter);
     
@@ -305,6 +310,7 @@ void NdnRtcUtils::dataRateMeterMoreData(unsigned int meterId,
             {
                 meter.nBytesPerSec_ = 1000.*meter.bytesPerCycle_/delta;
                 meter.bytesPerCycle_ = 0;
+                meanEstimatorNewValue(meter.meanEstimatorId_, meter.nBytesPerSec_);
             }
             
             meter.lastCheckTime_ = now;
@@ -317,8 +323,7 @@ double NdnRtcUtils::currentDataRateMeterValue(unsigned int meterId)
         return 0.;
     
     DataRateMeter &meter = dataMeters_[meterId];
-    
-    return meter.nBytesPerSec_;
+    return currentMeanEstimation(meter.meanEstimatorId_);
 }
 
 void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)

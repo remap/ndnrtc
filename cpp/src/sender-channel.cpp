@@ -159,7 +159,7 @@ NdnSenderChannel::~NdnSenderChannel()
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                       double timestamp)
 {
-    LogStatC << "captured\t" << sender_->getPacketNo() << endl;
+    LogDebugC << "captured\t" << sender_->getPacketNo() << endl;
     
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
@@ -328,6 +328,14 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     stat.audioStat_.lastFrameNo_ = audioSender_->getSampleNo();
     stat.audioStat_.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
     stat.audioStat_.encodingRate_ = audioSender_->getCurrentPacketRate();
+    
+    LogStatC << STAT_DIV
+    << "br" << STAT_DIV << stat.videoStat_.nBytesPerSec_*8/1000 << STAT_DIV
+    << "fps" << STAT_DIV << stat.videoStat_.nFramesPerSec_ << STAT_DIV
+    << "fnum" << STAT_DIV << stat.videoStat_.lastFrameNo_ << STAT_DIV
+    << "enc" << STAT_DIV << stat.videoStat_.encodingRate_ << STAT_DIV
+    << "drop" << STAT_DIV << stat.videoStat_.nDroppedByEncoder_
+    << endl;
 }
 
 void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
@@ -358,7 +366,6 @@ bool NdnSenderChannel::process()
             
 //            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
         }
-        LogStatC << "rate\t" << frameRate << endl;
         
         lastFrameStamp_ = now;
         
@@ -371,13 +378,13 @@ bool NdnSenderChannel::process()
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
-            LogStatC
+            LogDebugC
             << "rendered\t" << sender_->getPacketNo() << " "
             << t2 - t << endl;
             
             coder_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
             
-            LogStatC
+            LogDebugC
             << "published\t"
             << sender_->getFrameNo()-1 << " "
             << NdnRtcUtils::microsecondTimestamp()-t2 << endl;

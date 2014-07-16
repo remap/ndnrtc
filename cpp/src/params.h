@@ -28,7 +28,7 @@ namespace ndnrtc
         MinHeight = 100,
         MaxPortNum = 65535,
         MaxStartBitrate = 50000,
-        MinStartBitrate = 100,
+        MinStartBitrate = 0,
         MaxBitrate = 500000,
         MaxFrameRate = 60,
         MinFrameRate = 1,

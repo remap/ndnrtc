@@ -38,7 +38,7 @@ packetNo_(0),
 pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
-    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter();
+    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(5);
 }
 
 MediaSender::~MediaSender()
@@ -180,9 +180,14 @@ int MediaSender::publishPacket(PacketData &packetData,
                 << ndnData.getContent().size() << " bytes" << endl;
             }
             
-            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-                                               ndnData.getContent().size());
-            
+//            if (it == segments.begin())
+//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+//                                               segmentData.getSegmentDataLength()-41);
+//            else
+//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+//                                                   segmentData.getSegmentDataLength());
+                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                                   ndnData.getContent().size());
 #if RECORD
             {
                 SegmentData segData;
