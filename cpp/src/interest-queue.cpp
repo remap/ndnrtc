@@ -137,4 +137,7 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
     face_->expressInterest(*(entry.interest_),
                            entry.onDataCallback_, entry.onTimeoutCallback_);
+    
+    if (callback_)
+        callback_->onInterestIssued(entry.interest_);
 }

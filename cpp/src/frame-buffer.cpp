@@ -17,6 +17,7 @@
 #include "ndnrtc-debug.h"
 #include "ndnrtc-namespace.h"
 #include "fec.h"
+#include "pipeliner.h"
 
 using namespace std;
 using namespace ndnlog;
@@ -1288,6 +1289,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     
                     consumer_->dumpStat(SYMBOL_RTT_EST+string("/")+SYMBOL_JITTER_TARGET);
                 }
+
+                if (rateControl_.get())
+#warning RTX should be per segment!
+                    rateControl_->dataReceived(data, slot->getRtxNum());
+                
                 
                 return newState;
             }

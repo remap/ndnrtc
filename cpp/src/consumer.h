@@ -20,6 +20,7 @@
 #include "buffer-estimator.h"
 #include "statistics.h"
 #include "renderer.h"
+#include "rate-control.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -66,7 +67,7 @@ namespace ndnrtc {
             onRebufferingOccurred() = 0;
             
             virtual void
-            onStateChanged(const int& newState) = 0;
+            onStateChanged(const int& oldState, const int& newState) = 0;
         };
         
         /**
@@ -161,6 +162,10 @@ namespace ndnrtc {
             getBufferEstimator() const
             { return bufferEstimator_; }
             
+            virtual shared_ptr<RateControl>
+            getRateControlModule() const
+            { return rateControl_; }
+            
             void
             setRttEstimator(const shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_= rttEstimation; }
@@ -186,14 +191,14 @@ namespace ndnrtc {
             virtual void
             setDescription(const std::string& desc);
             
-            void
+            virtual void
             onBufferingEnded();
             
-            void
+            virtual void
             onRebufferingOccurred();
             
-            void
-            onStateChanged(const int& newState);
+            virtual void
+            onStateChanged(const int& oldState, const int& newState);
             
             /**
              * Dumps statistics for the current producer into the log
@@ -232,6 +237,7 @@ namespace ndnrtc {
             shared_ptr<BufferEstimator> bufferEstimator_;
             shared_ptr<IRenderer> renderer_;
             shared_ptr<AudioVideoSynchronizer> avSync_;
+            shared_ptr<RateControl> rateControl_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             
@@ -246,7 +252,6 @@ namespace ndnrtc {
             void onData(const shared_ptr<const Interest>& interest,
                         const shared_ptr<Data>& data);
             void onTimeout(const shared_ptr<const Interest>& interest);
-
         };
     }
 }

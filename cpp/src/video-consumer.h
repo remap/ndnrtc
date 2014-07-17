@@ -18,7 +18,8 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class VideoConsumer : public Consumer
+        class VideoConsumer : public Consumer,
+                              public IInterestQueueCallback
         {
         public:
             VideoConsumer(const ParamsStruct& params,
@@ -42,12 +43,22 @@ namespace ndnrtc {
             void
             setLogger(ndnlog::new_api::Logger* logger);
             
+            void
+            onInterestIssued(const shared_ptr<const ndn::Interest>& interest);
+            
+            void
+            onStateChanged(const int& oldState, const int& newState);
+            
         private:
             shared_ptr<NdnVideoDecoder> decoder_;
             
             shared_ptr<IVideoRenderer>
             getRenderer()
             { return dynamic_pointer_cast<IVideoRenderer>(renderer_); }
+            
+            
+            void
+            onTimeout(const shared_ptr<const Interest>& interest);
         };
     }
 }

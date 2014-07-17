@@ -182,6 +182,14 @@ Playout::processPlayout()
             if (packetValid)
                 avSync = avSyncAdjustment(now, playbackDelay+adjustment);
             
+            if (playbackDelay < 0)
+            {
+#warning this should be fixed with proper rate swithing mechanism
+                LogErrorC << "playback delay below zero: " << playbackDelay << endl;
+                playbackDelay = 0;
+            }
+            assert(playbackDelay >= 0);
+            
             LogTraceC
             << "packet " << sequencePacketNo
             << " " << playbackDelay+adjustment+avSync

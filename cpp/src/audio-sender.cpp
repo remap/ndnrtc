@@ -24,9 +24,8 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
     int res = RESULT_OK;
     shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
-    string streamThread = ParamsStruct::validate(params.streamThread,
-                                                 DefaultParamsAudio.streamThread,
-                                                 res);
+    string streamThread = NdnRtcUtils::toString("%d", params.streamsParams[0].startBitrate);
+    
     // RTP and RTCP are published under the same prefix
 #if 0
     string rtcpSuffix = "control";
@@ -49,7 +48,7 @@ int NdnAudioSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
                          const shared_ptr<KeyChain>& ndnKeyChain)
 {
     int res = RESULT_OK;
-    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, -1);
+    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
     res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
     
     if (RESULT_FAIL(res))

@@ -51,7 +51,9 @@ deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsA
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 exclusionFilter_(-1),
-useKeyNamespace_(true)
+useKeyNamespace_(true),
+streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
+streamId_(0)
 {
     initialize();
 }
@@ -101,6 +103,23 @@ void
 ndnrtc::new_api::Pipeliner::triggerRebuffering()
 {
     rebuffer();
+}
+
+void
+ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
+{
+    CriticalSectionScoped scopedCs(&streamSwitchSync_);
+    
+    shared_ptr<string>
+    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
+    
+    shared_ptr<string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
+    
+    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
+    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+    
+    streamId_ = streamId;
 }
 
 //******************************************************************************
@@ -372,7 +391,7 @@ ndnrtc::new_api::Pipeliner::initialize()
     deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
     
     shared_ptr<string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0, true);
     
     if (!streamPrefixString.get() || !deltaPrefixString.get() ||
         !keyPrefixString.get())
@@ -634,7 +653,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     }
     else
     { // only key frames
-        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
+        double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
         interestLifetime = gopInterval-2*halfBufferSize;
         
         if (interestLifetime <= 0)
@@ -651,7 +670,10 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
                                           int prefetchSize, int parityPrefetchSize,
                                           FrameBuffer::Slot::Namespace nspc)
 {
+    streamSwitchSync_.Enter();
     Name packetPrefix(basePrefix);
+    streamSwitchSync_.Leave();
+    
     packetPrefix.append(NdnRtcUtils::componentFromInt(packetNo));
     
     int64_t playbackDeadline = frameBuffer_->getEstimatedBufferSize();

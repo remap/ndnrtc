@@ -169,6 +169,9 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     if (playout_.get())
         playout_->setLogger(logger);
     
+    if (rateControl_.get())
+        rateControl_->setLogger(logger);
+    
     interestQueue_->setLogger(logger);
     rttEstimation_->setLogger(logger);
     chaseEstimation_->setLogger(logger);
@@ -209,9 +212,8 @@ Consumer::onRebufferingOccurred()
 }
 
 void
-Consumer::onStateChanged(const int &newState)
+Consumer::onStateChanged(const int &oldState, const int &newState)
 {
-    
 }
 
 void

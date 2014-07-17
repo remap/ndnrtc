@@ -89,6 +89,9 @@ namespace ndnrtc {
             registerCallback(IPipelinerCallback* callback)
             { callback_ = callback; }
             
+            void
+            switchToStream(unsigned int streamId);
+            
         private:
             // this events masks are used in different moments during pipeliner
             // and used for filtering buffer events
@@ -130,6 +133,7 @@ namespace ndnrtc {
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
             webrtc::EventWrapper &pipelinerPauseEvent_;
+            webrtc::CriticalSectionWrapper &streamSwitchSync_;
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
@@ -143,6 +147,7 @@ namespace ndnrtc {
             unsigned int rtxFreqMeterId_, rtxNum_;
             int bufferEventsMask_;
             bool useKeyNamespace_;
+            unsigned int streamId_; // currently fetched stream id
             
             static bool
             mainThreadRoutine(void *pipeliner){
@@ -252,12 +257,13 @@ namespace ndnrtc {
             void
             switchToState(State newState)
             {
+                State oldState = state_;
                 state_ = newState;
                 
                 LogDebugC << "new state " << toString(state_) << std::endl;
                 
                 if (callback_)
-                    callback_->onStateChanged(state_);
+                    callback_->onStateChanged(oldState, state_);
             }
             
             std::string

@@ -192,11 +192,7 @@ ptr_lib::shared_ptr<string> NdnRtcNamespace::getStreamFramePrefix(const ParamsSt
         return ptr_lib::shared_ptr<string>(nullptr);
     
     string streamThread;
-    
-    if (streamIdx < 0)
-        streamThread = string(params.streamThread);
-    else
-        streamThread = NdnRtcUtils::toString("%d", params.streamsParams[streamIdx].startBitrate);
+    streamThread = NdnRtcUtils::toString("%d", params.streamsParams[streamIdx].startBitrate);
     
     const string frameTypeNamespace = (isKeyNamespace)?
     NdnRtcNamespace::NameComponentStreamFramesKey:
