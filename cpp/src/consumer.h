@@ -20,6 +20,7 @@
 #include "buffer-estimator.h"
 #include "statistics.h"
 #include "renderer.h"
+#include "realtime-arc.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -66,7 +67,7 @@ namespace ndnrtc {
             onRebufferingOccurred() = 0;
             
             virtual void
-            onStateChanged(const int& newState) = 0;
+            onStateChanged(const int& oldState, const int& newState) = 0;
         };
         
         /**
@@ -92,6 +93,7 @@ namespace ndnrtc {
         class Consumer : public NdnRtcObject,
                          public IPacketAssembler,
                          public IPipelinerCallback,
+                         public IInterestQueueCallback,
                          public boost::enable_shared_from_this<Consumer>
         {
         public:
@@ -161,6 +163,10 @@ namespace ndnrtc {
             getBufferEstimator() const
             { return bufferEstimator_; }
             
+            virtual shared_ptr<IRateAdaptationModule>
+            getArcModule() const
+            { return arcModule_; }
+            
             void
             setRttEstimator(const shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_= rttEstimation; }
@@ -193,7 +199,10 @@ namespace ndnrtc {
             onRebufferingOccurred();
             
             void
-            onStateChanged(const int& newState);
+            onStateChanged(const int& oldState, const int& newState);
+            
+            void
+            onInterestIssued(const shared_ptr<const ndn::Interest>& interest);
             
             /**
              * Dumps statistics for the current producer into the log
@@ -233,6 +242,9 @@ namespace ndnrtc {
             shared_ptr<IRenderer> renderer_;
             shared_ptr<AudioVideoSynchronizer> avSync_;
             
+            unsigned int streamId_ = 0;
+            shared_ptr<IRateAdaptationModule> arcModule_;
+            
             unsigned int dataMeterId_, segmentFreqMeterId_;
             
             virtual OnData
@@ -246,7 +258,21 @@ namespace ndnrtc {
             void onData(const shared_ptr<const Interest>& interest,
                         const shared_ptr<Data>& data);
             void onTimeout(const shared_ptr<const Interest>& interest);
-
+            
+            // ARC code
+            webrtc::ThreadWrapper& arcWatchingThread_;
+            webrtc::EventWrapper &arcWatchTimer_;
+            
+            static void
+            getStreamArrayForArcModule(const ParamsStruct& params,
+                                       StreamEntry** streamArray);
+            
+            static bool
+            arcWatchingRoutine(void *obj)
+            { return ((Consumer*)obj)->checkArcStatus(); }
+            
+            bool
+            checkArcStatus();
         };
     }
 }

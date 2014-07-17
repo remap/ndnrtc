@@ -17,6 +17,7 @@
 #include "ndnrtc-debug.h"
 #include "ndnrtc-namespace.h"
 #include "fec.h"
+#include "pipeliner.h"
 
 using namespace std;
 using namespace ndnlog;
@@ -1287,6 +1288,16 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     setTargetSize(targetBufferSize);
                     
                     consumer_->dumpStat(SYMBOL_RTT_EST+string("/")+SYMBOL_JITTER_TARGET);
+                    
+                    if (consumer_->getPipeliner()->getState() == Pipeliner::StateFetching)
+                    {
+                        unsigned int streamId = NdnRtcNamespace::getStreamIdFromPrefix(dataName, consumer_->getParameters());
+                        consumer_->getArcModule()->dataReceived(dataName.toUri(),
+                                                                streamId,
+                                                                data.getContent().size(),
+                                                                consumer_->getRttEstimation()->getCurrentEstimation(),
+                                                                slot->getRtxNum());
+                    }
                 }
                 
                 return newState;

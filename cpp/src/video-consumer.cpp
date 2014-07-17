@@ -54,6 +54,8 @@ VideoConsumer::init()
 
     if (RESULT_GOOD(Consumer::init()))
     {
+        int res = RESULT_OK;
+        
         decoder_->init();
         
         playout_.reset(new VideoPlayout(this));
@@ -61,8 +63,23 @@ VideoConsumer::init()
         playout_->init(decoder_.get());
         
         LogInfoC << "initialized" << endl;
+     
+        {
+            arcModule_.reset(new RealTimeAdaptiveRateControl());
+            
+            StreamEntry *streamsArray = nullptr;
+            Consumer::getStreamArrayForArcModule(params_, &streamsArray);
+            
+            if (arcModule_->initialize(CodecModeNormal, params_.nStreams, streamsArray) < 0)
+            {
+                res = RESULT_ERR;
+                notifyError(RESULT_ERR, "couldn't initialize ARC module");
+            }
+            
+            free(streamsArray);
+        }
         
-        return RESULT_OK;
+        return res;
     }
     
     return RESULT_ERR;

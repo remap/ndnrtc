@@ -21,6 +21,11 @@ namespace ndnrtc {
     namespace new_api {
         class Consumer;
         
+        class IInterestQueueCallback {
+        public:
+            virtual void onInterestIssued(const shared_ptr<const ndn::Interest>&) = 0;
+        };
+        
         class InterestQueue : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -66,6 +71,10 @@ namespace ndnrtc {
             
             void
             getStatistics(ReceiverChannelPerformance& stat);
+            
+            void
+            registerCallback(IInterestQueueCallback *callback)
+            { callback_ = callback; }
             
         private:
             class QueueEntry : public IPriority
@@ -127,6 +136,8 @@ namespace ndnrtc {
             webrtc::EventWrapper &queueEvent_;
             webrtc::ThreadWrapper &queueWatchingThread_;
             PriorityQueue queue_;
+            
+            IInterestQueueCallback *callback_;
             
             bool isWatchingQueue_ = false;
             
