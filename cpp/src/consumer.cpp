@@ -33,16 +33,13 @@ rttEstimation_(rttEstimation),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator()),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
-arcWatchingThread_(*webrtc::ThreadWrapper::CreateThread(Consumer::arcWatchingRoutine, this)),
-arcWatchTimer_(*webrtc::EventWrapper::Create())
+segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
     if (!rttEstimation.get())
     {
         rttEstimation_.reset(new RttEstimation());
     }
     
-    interestQueue_->registerCallback(this);
     bufferEstimator_->setRttEstimation(rttEstimation_);
     bufferEstimator_->setMinimalBufferSize(params.jitterSize);
 }
@@ -172,6 +169,9 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     if (playout_.get())
         playout_->setLogger(logger);
     
+    if (rateControl_.get())
+        rateControl_->setLogger(logger);
+    
     interestQueue_->setLogger(logger);
     rttEstimation_->setLogger(logger);
     chaseEstimation_->setLogger(logger);
@@ -214,37 +214,6 @@ Consumer::onRebufferingOccurred()
 void
 Consumer::onStateChanged(const int &oldState, const int &newState)
 {
-    if (newState == Pipeliner::StateFetching)
-    {
-        LogDebugC
-        << "arc thread started" << endl;
-        
-        pipeliner_->switchToStream(streamId_);
-        
-        unsigned int tid;
-        arcWatchingThread_.Start(tid);
-    }
-    
-    if (oldState == Pipeliner::StateFetching)
-    {
-        LogDebugC
-        << "arc thread stopped" << endl;
-        
-        arcWatchTimer_.StopTimer();
-        arcWatchTimer_.Set();
-        arcWatchingThread_.Stop();
-        arcWatchingThread_.SetNotAlive();
-    }
-}
-
-void
-Consumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
-{
-    if (pipeliner_->getState() == Pipeliner::StateFetching)
-    {
-        unsigned int streamId = NdnRtcNamespace::getStreamIdFromPrefix(interest->getName(), params_);
-        arcModule_->interestExpressed(interest->getName().toUri(), streamId);
-    }
 }
 
 void
@@ -281,21 +250,6 @@ Consumer::dumpStat(const std::string& comment) const
     << endl;
 }
 
-void Consumer::getStreamArrayForArcModule(const ParamsStruct &params,
-                                          StreamEntry **streamArray)
-{
-#warning free it somewhere!!!
-    *streamArray = (StreamEntry*)malloc(sizeof(StreamEntry)*params.nStreams);
-    memset(*streamArray, 0, sizeof(StreamEntry)*params.nStreams);
-    
-    for (int i = 0; i < params.nStreams; i++)
-    {
-        (*streamArray)[i].id_ = params.streamsParams[i].idx;
-        (*streamArray)[i].bitrate_ = params.streamsParams[i].startBitrate*1000;
-        (*streamArray)[i].parityRatio_ = NdnVideoSender::ParityRatio;
-    }
-}
-
 //******************************************************************************
 #pragma mark - private
 void Consumer::onData(const shared_ptr<const Interest>& interest,
@@ -311,38 +265,4 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
 void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
     frameBuffer_->interestTimeout(*interest);
-    
-    if (pipeliner_->getState() == Pipeliner::StateFetching)
-    {
-        unsigned int streamId = NdnRtcNamespace::getStreamIdFromPrefix(interest->getName(), params_);
-        arcModule_->interestTimeout(interest->getName().toUri(), streamId);
-    }
-}
-
-bool
-Consumer::checkArcStatus()
-{
-    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
-    double interestRate = 0;
-    unsigned int streamId = 0;
-    
-    arcModule_->getInterestRate(timestamp, interestRate, streamId);
-    
-    if (streamId_ != streamId && streamId < params_.nStreams)
-    {
-        LogTrace("arc.log") << "switching "
-        << streamId_ << " -> " << streamId << endl;
-        
-        streamId_ = streamId;
-        pipeliner_->switchToStream(streamId_);
-    }
-    
-    LogTrace("arc.log") << STAT_DIV
-    << "interest rate " << STAT_DIV << interestRate << STAT_DIV
-    << "stream id" << STAT_DIV << streamId << endl;
-    
-    arcWatchTimer_.StartTimer(false, 50);
-    arcWatchTimer_.Wait(WEBRTC_EVENT_INFINITE);
-    
-    return true;
 }

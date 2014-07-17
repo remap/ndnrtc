@@ -52,7 +52,8 @@ keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvg
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 exclusionFilter_(-1),
 useKeyNamespace_(true),
-streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection())
+streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
+streamId_(0)
 {
     initialize();
 }
@@ -118,6 +119,7 @@ ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
     deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
     keyFramesPrefix_ = Name(keyPrefixString->c_str());
     
+    streamId_ = streamId;
 }
 
 //******************************************************************************
@@ -651,7 +653,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     }
     else
     { // only key frames
-        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
+        double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
         interestLifetime = gopInterval-2*halfBufferSize;
         
         if (interestLifetime <= 0)

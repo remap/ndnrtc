@@ -17,7 +17,6 @@
 #include "frame-data.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
-
 #include "consumer.h"
 
 namespace ndnrtc
@@ -26,6 +25,7 @@ namespace ndnrtc
     namespace new_api
     {
         using namespace ndnlog;
+        class RateControl;
         
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
@@ -881,6 +881,10 @@ namespace ndnrtc
             void
             getStatistics(ReceiverChannelPerformance& stat);
             
+            void
+            setRateControl(const shared_ptr<RateControl>& rateControl)
+            { rateControl_ = rateControl; }
+            
         protected:
             // playback queue contains active slots sorted in ascending
             // playback order (see PlaybackComparator)
@@ -973,6 +977,8 @@ namespace ndnrtc
             bool forcedRelease_ = false;
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
+            
+            shared_ptr<RateControl> rateControl_;
             
             shared_ptr<Slot>
             getSlot(const Name& prefix, bool remove = false,

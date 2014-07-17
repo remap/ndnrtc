@@ -72,21 +72,21 @@ int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
     int res = RESULT_OK;
     codec.maxFramerate = ParamsStruct::validateLE(params.codecFrameRate,
                                                   MaxFrameRate, res,
-                                                  DefaultParams.codecFrameRate);
+                                                  DefaultCodecParams.codecFrameRate);
     codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
                                                   MaxStartBitrate, res,
-                                                  DefaultParams.startBitrate);
-    codec.minBitrate = 100; //codec.startBitrate;
+                                                  DefaultCodecParams.startBitrate);
+    codec.minBitrate = 100;
     codec.maxBitrate = ParamsStruct::validateLE(params.maxBitrate,
                                                 MaxBitrate, res,
-                                                DefaultParams.maxBitrate);
-    codec.targetBitrate = codec.startBitrate;//+codec.minBitrate)/2.;
+                                                DefaultCodecParams.maxBitrate);
+    codec.targetBitrate = codec.startBitrate;
     codec.width = ParamsStruct::validateLE(params.encodeWidth,
                                            MaxWidth, res,
-                                           DefaultParams.encodeWidth);
+                                           DefaultCodecParams.encodeWidth);
     codec.height = ParamsStruct::validateLE(params.encodeHeight,
                                             MaxHeight, res,
-                                            DefaultParams.encodeHeight);
+                                            DefaultCodecParams.encodeHeight);
     
     return res;
 }
@@ -139,23 +139,6 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 {
     counter_++;
     
-    //    TRACE("got encoded byte length: %d\n"
-    //          "info: \thasReceivedSLI: %d\n\tpictureIdSLI: %d\n\thasReceivedRPSI: %d\n\t"
-    //          "pictureIdRPSI: %ld\n\tpictureId:%d\n\tnonReference:%d\n\tsimulcastIdx:%d\n\t"
-    //          "temporalIdx: %d\n\tlayerSync:%d\n\ttl0PicIdx:%d\n\tkeyIdx:%d\n",
-    //          encodedImage._length,
-    //          codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureIdSLI,
-    //          codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureId,
-    //          codecSpecificInfo->codecSpecific.VP8.nonReference,
-    //          codecSpecificInfo->codecSpecific.VP8.simulcastIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.temporalIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.layerSync,
-    //          codecSpecificInfo->codecSpecific.VP8.tl0PicIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.keyIdx);
-    
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
     
@@ -184,7 +167,7 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     
     int err;
     
-    if (!keyFrameCounter_%(params_.gop))
+    if (!keyFrameCounter_%(codecParams_.gop))
         err = encoder_->Encode(frame, NULL, &keyFrameType_);
     else
         err = encoder_->Encode(frame, NULL, NULL);

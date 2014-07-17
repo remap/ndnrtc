@@ -147,6 +147,7 @@ namespace ndnrtc {
             unsigned int rtxFreqMeterId_, rtxNum_;
             int bufferEventsMask_;
             bool useKeyNamespace_;
+            unsigned int streamId_; // currently fetched stream id
             
             static bool
             mainThreadRoutine(void *pipeliner){

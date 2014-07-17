@@ -62,12 +62,6 @@ namespace ndnrtc
         // render
         unsigned int renderWidth, renderHeight;
         
-        // codec
-        unsigned int codecFrameRate, gop;
-        unsigned int startBitrate, maxBitrate;
-        unsigned int encodeWidth, encodeHeight;
-        bool dropFramesOn;
-        
         // streams
         unsigned int nStreams;
         CodecParams* streamsParams;
@@ -79,7 +73,6 @@ namespace ndnrtc
         // ndn producer
         const char *producerId;
         const char *streamName;
-        const char *streamThread;
         const char *ndnHub;
         unsigned int segmentSize, freshness;
         double producerRate;
@@ -162,6 +155,16 @@ namespace ndnrtc
         
     } ParamsStruct;
     
+    static CodecParams DefaultCodecParams = {
+        0,      // idx
+        30,     // fps
+        30,     // gop
+        300,    // start bitrate
+        0,      // max bitrate
+        640,    // encode width
+        480     // encode height
+    };
+    
     static ParamsStruct DefaultParams = {
         ndnlog::NdnLoggerDetailLevelDebug,    // log level
         "ndnrtc.log\0",                   // log file
@@ -182,15 +185,6 @@ namespace ndnrtc
         640,    // render width
         480,    // render height
         
-        30,     // codec framerate
-        30,     // gop
-        1000,   // codec start bitrate
-        10000,  // codec max bitrate
-        640,    // codec encoding width
-        480,    // codec encoding height
-        1,      // instruct encoder to drop frames if cannot keep up with the
-                // maximum bitrate
-        
         0,      // number of simultaneous streams
         nullptr, // no streams
         
@@ -199,7 +193,6 @@ namespace ndnrtc
         
         "testuser",     // producer id
         "video0",       // stream name
-        "vp8",          // stream thread name
         "ndn/edu/ucla/remap",     // ndn hub
         1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
         1,      // data freshness (seconds) value
@@ -235,14 +228,6 @@ namespace ndnrtc
         0,      // render width
         0,      // render height
         
-        0,      // codec framerate
-        0,      // gop
-        0,      // codec start bitrate
-        0,      // codec max bitrate
-        0,      // codec encoding width
-        0,      // codec encoding height
-        0,      // drop frames
-        
         0,
         nullptr,
         
@@ -251,7 +236,6 @@ namespace ndnrtc
         
         "testuser",     // producer id
         "audio0",       // stream name
-        "pcmu2",        // stream thread name
         "ndn/edu/ucla/remap",     // ndn hub
         1054,   // segment size for media frame
         1,      // data freshness (seconds) value

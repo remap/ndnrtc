@@ -31,6 +31,7 @@ Consumer(params, interestQueue, rttEstimation),
 decoder_(new NdnVideoDecoder(params.streamsParams[0]))
 {
     setDescription("vconsumer");
+    interestQueue_->registerCallback(this);
     
     if (externalRenderer)
         renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
@@ -62,21 +63,17 @@ VideoConsumer::init()
         playout_->setLogger(logger_);
         playout_->init(decoder_.get());
         
-        LogInfoC << "initialized" << endl;
-     
+        rateControl_.reset(new RateControl(shared_from_this()));
+        
+        if (RESULT_FAIL(rateControl_->initialize(params_)))
         {
-            arcModule_.reset(new RealTimeAdaptiveRateControl());
-            
-            StreamEntry *streamsArray = nullptr;
-            Consumer::getStreamArrayForArcModule(params_, &streamsArray);
-            
-            if (arcModule_->initialize(CodecModeNormal, params_.nStreams, streamsArray) < 0)
-            {
-                res = RESULT_ERR;
-                notifyError(RESULT_ERR, "couldn't initialize ARC module");
-            }
-            
-            free(streamsArray);
+            res = RESULT_ERR;
+            LogErrorC << "failed to initialize rate control" << endl;
+        }
+        else
+        {
+            getFrameBuffer()->setRateControl(rateControl_);
+            LogInfoC << "initialized" << endl;
         }
         
         return res;
@@ -123,3 +120,26 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
     Consumer::setLogger(logger);
 }
 
+void
+VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
+{
+    rateControl_->interestExpressed(interest);
+}
+
+void
+VideoConsumer::onStateChanged(const int& oldState, const int& newState)
+{
+    
+    if (newState == Pipeliner::StateFetching)
+        rateControl_->start();
+    
+    if (oldState == Pipeliner::StateFetching)
+        rateControl_->stop();
+}
+
+void
+VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
+{
+    if (pipeliner_->getState() == Pipeliner::StateFetching)
+        rateControl_->interestTimeout(interest);
+}

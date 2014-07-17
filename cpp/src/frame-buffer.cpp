@@ -1288,17 +1288,12 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     setTargetSize(targetBufferSize);
                     
                     consumer_->dumpStat(SYMBOL_RTT_EST+string("/")+SYMBOL_JITTER_TARGET);
-                    
-                    if (consumer_->getPipeliner()->getState() == Pipeliner::StateFetching)
-                    {
-                        unsigned int streamId = NdnRtcNamespace::getStreamIdFromPrefix(dataName, consumer_->getParameters());
-                        consumer_->getArcModule()->dataReceived(dataName.toUri(),
-                                                                streamId,
-                                                                data.getContent().size(),
-                                                                consumer_->getRttEstimation()->getCurrentEstimation(),
-                                                                slot->getRtxNum());
-                    }
                 }
+
+                if (rateControl_.get())
+#warning RTX should be per segment!
+                    rateControl_->dataReceived(data, slot->getRtxNum());
+                
                 
                 return newState;
             }
