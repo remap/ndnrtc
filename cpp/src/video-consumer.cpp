@@ -63,6 +63,7 @@ VideoConsumer::init()
         playout_->setLogger(logger_);
         playout_->init(decoder_.get());
         
+#if 0
         rateControl_.reset(new RateControl(shared_from_this()));
         
         if (RESULT_FAIL(rateControl_->initialize(params_)))
@@ -73,8 +74,11 @@ VideoConsumer::init()
         else
         {
             getFrameBuffer()->setRateControl(rateControl_);
+#endif
             LogInfoC << "initialized" << endl;
+#if 0
         }
+#endif
         
         return res;
     }
@@ -123,23 +127,26 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
 void
 VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
 {
-    rateControl_->interestExpressed(interest);
+    if (rateControl_.get())
+        rateControl_->interestExpressed(interest);
 }
 
 void
 VideoConsumer::onStateChanged(const int& oldState, const int& newState)
 {
-    
-    if (newState == Pipeliner::StateFetching)
-        rateControl_->start();
-    
-    if (oldState == Pipeliner::StateFetching)
-        rateControl_->stop();
+    if (rateControl_.get())
+    {
+        if (newState == Pipeliner::StateFetching)
+            rateControl_->start();
+        
+        if (oldState == Pipeliner::StateFetching)
+            rateControl_->stop();
+    }
 }
 
 void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    if (pipeliner_->getState() == Pipeliner::StateFetching)
+    if (rateControl_.get())
         rateControl_->interestTimeout(interest);
 }
