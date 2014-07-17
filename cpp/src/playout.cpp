@@ -192,8 +192,8 @@ Playout::processPlayout()
             
             LogTraceC
             << "packet " << sequencePacketNo
-            << " " << playbackDelay+adjustment+avSync
-            << " delay " << playbackDelay
+            << " total " << playbackDelay+adjustment+avSync
+            << ": delay " << playbackDelay
             << " adjustment " << adjustment
             << " avsync " << avSync
             << " inferred " << (isInferredPlayback_?"YES":"NO") << endl;
@@ -245,9 +245,11 @@ Playout::playbackDelayAdjustment(int playbackDelay)
     }
     else
     {
-        adjustment = playbackDelay + playbackAdjustment_;
+        adjustment = playbackAdjustment_;
         playbackAdjustment_ = 0;
     }
+    
+    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
     
     return adjustment;
 }
