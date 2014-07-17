@@ -86,13 +86,13 @@ namespace ndnrtc
         setLogger(ndnlog::new_api::Logger* logger);
         
     private:
-        uint64_t lastFrameStamp_ = 0;
         unsigned int frameFreqMeter_;
         
         shared_ptr<CameraCapturer> cameraCapturer_;
         shared_ptr<IVideoRenderer> localRender_;
-        shared_ptr<NdnVideoCoder> coder_;
-        shared_ptr<NdnVideoSender> sender_;
+//        shared_ptr<NdnVideoSender> sender_;
+        
+        std::vector<shared_ptr<NdnVideoSender>> senders_;
         
         shared_ptr<new_api::AudioCapturer> audioCapturer_;
         shared_ptr<NdnAudioSender> audioSender_;

@@ -369,7 +369,7 @@ ndnrtc::new_api::Pipeliner::initialize()
     streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
     
     shared_ptr<string>
-    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_);
+    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
     
     shared_ptr<string>
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);

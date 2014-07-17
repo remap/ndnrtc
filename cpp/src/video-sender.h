@@ -25,10 +25,12 @@ namespace ndnrtc
      * This class is a sink for encoded frames and it publishes them on ndn 
      * network under the prefix, determined by the parameters.
      */
-    class NdnVideoSender : public MediaSender, public IEncodedFrameConsumer
+    class NdnVideoSender : public MediaSender, public IRawFrameConsumer,
+    public IEncodedFrameConsumer
     {
     public:
-        NdnVideoSender(const ParamsStruct &params);
+        NdnVideoSender(const ParamsStruct &params,
+                       const CodecParams &codecParams);
         ~NdnVideoSender(){}
      
         static const double ParityRatio;
@@ -38,14 +40,20 @@ namespace ndnrtc
                  const shared_ptr<KeyChain>& ndnKeyChain);
         
         unsigned long int getFrameNo() { return getPacketNo(); }
+        unsigned int getEncoderDroppedNum()
+        { return coder_->getDroppedFramesNum(); }
         
         // interface conformance
-        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                     double captureTimestamp);
+        void onDeliverFrame(webrtc::I420VideoFrame &frame,
+                            double unixTimeStamp);
+        
+        void setLogger(ndnlog::new_api::Logger *logger);
         
     private:
+        CodecParams codecParams_;
         int keyFrameNo_ = 0, deltaFrameNo_ = 0;
         shared_ptr<Name> keyFramesPrefix_;
+        shared_ptr<NdnVideoCoder> coder_;
         
         void onInterest(const shared_ptr<const Name>& prefix,
                         const shared_ptr<const Interest>& interest,
@@ -57,6 +65,10 @@ namespace ndnrtc
                           unsigned int nSegments,
                           const shared_ptr<Name>& framePrefix,
                           const PrefixMetaInfo& prefixMeta);
+        
+        // interface conformance
+        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                     double captureTimestamp);
     };
     
     class INdnVideoSenderDelegate : public INdnRtcObjectObserver {

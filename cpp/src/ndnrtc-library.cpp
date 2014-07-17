@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#define NDNRTC_BUILD_NUMBER 15
+#define NDNRTC_BUILD_NUMBER 16
 
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
@@ -105,6 +105,8 @@ void NdnRtcLibrary::configure(const ParamsStruct &params,
 {
     ParamsStruct validatedVideoParams, validatedAudioParams;
     
+    notifyObserverWithState("info", "library build number %d", getBuildNumber());
+    
     bool wasModified = false;
     int res = ParamsStruct::validateVideoParams(params, validatedVideoParams);
     
@@ -138,6 +140,10 @@ void NdnRtcLibrary::configure(const ParamsStruct &params,
         notifyObserver("info", "using BinaryXML wire format");
         WireFormat::setDefaultWireFormat(BinaryXmlWireFormat::get());
     }
+    
+    notifyObserverWithState("info", "in-memory cache: %s", (params.useCache?"ENABLED":"DISABLED"));
+    notifyObserverWithState("info", "FEC: %s", (params.useFec?"ENABLED":"DISABLED"));
+    notifyObserverWithState("info", "retransmissions: %s", (params.useRtx?"ENABLED":"DISABLED"));
     
     if (wasModified)
         notifyObserverWithState("warn", "some parameters were malformed. using default"
@@ -330,14 +336,13 @@ int NdnRtcLibrary::startPublishing(const char* username,
         return -1;
     
     SenderChannel = sc;
+    ptr_lib::shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params, 0);
+    notifyObserverWithState("transmitting",
+                            "started publishing under the user prefix: %s",
+                            producerPrefix->c_str());
     
-    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
-    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params);
-    
-    
-    return notifyObserverWithState("transmitting",
-                                   "started publishing under the user prefix: %s",
-                                   producerPrefix->c_str());
+    return RESULT_OK;
 }
 
 int

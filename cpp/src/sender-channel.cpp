@@ -113,8 +113,7 @@ NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    IExternalRenderer *const externalRenderer):
 NdnMediaChannel(params, audioParams),
 cameraCapturer_(new CameraCapturer(params)),
-coder_(new NdnVideoCoder(params)),
-sender_(new NdnVideoSender(params)),
+//sender_(new NdnVideoSender(params)),
 audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
 audioSender_(new NdnAudioSender(audioParams)),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
@@ -128,7 +127,14 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
         localRender_.reset(new VideoRenderer(0,params));
     
     description_ = "send-channel";
-    sender_->setObserver(this);
+    
+    for (int i = 0; i < params.nStreams; i++)
+    {
+        ptr_lib::shared_ptr<NdnVideoSender> sender(new NdnVideoSender(params, params.streamsParams[i]));
+        senders_.push_back(sender);
+        sender->setObserver(this);
+    }
+    
     audioSender_->setObserver(this);
     
     this->setLogger(new Logger(params.loggingLevel,
@@ -137,12 +143,10 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
         
     cameraCapturer_->setObserver(this);
     localRender_->setObserver(this);
-    coder_->setObserver(this);
     
     // set connection capturer -> this
     cameraCapturer_->setFrameConsumer(this);
-    // set connection coder->sender
-    coder_->setFrameConsumer(sender_.get());
+
     // set connection audioCapturer -> audioSender
     audioCapturer_->setFrameConsumer(audioSender_.get());
     
@@ -159,7 +163,7 @@ NdnSenderChannel::~NdnSenderChannel()
 void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                       double timestamp)
 {
-    LogStatC << "captured\t" << sender_->getPacketNo() << endl;
+//    LogDebugC << "captured\t" << sender_->getPacketNo() << endl;
     
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
@@ -194,13 +198,15 @@ int NdnSenderChannel::init()
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize renderer");
         
-        videoInitialized_ &= RESULT_NOT_FAIL(coder_->init());
-        if (!videoInitialized_)
-            notifyError(RESULT_WARN, "can't intialize video encoder");
-        
-        videoInitialized_ &= RESULT_NOT_FAIL(sender_->init(videoFaceProcessor_, ndnKeyChain_));
-        if (!videoInitialized_)
-            notifyError(RESULT_WARN, "can't intialize video sender");
+        bool streamsInitialized = false;
+        for (int i = 0; i < senders_.size(); i++)
+        {
+            streamsInitialized |= RESULT_NOT_FAIL(senders_[i]->init(videoFaceProcessor_, ndnKeyChain_));
+            if (!streamsInitialized)
+                notifyError(RESULT_WARN, "can't intialize stream with bitrate %d",
+                            params_.streamsParams[i].startBitrate);
+        }
+        videoInitialized_ &= streamsInitialized;
     }
     
     if (params_.useAudio)
@@ -318,24 +324,34 @@ int NdnSenderChannel::stopTransmission()
 
 void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-    stat.videoStat_.nBytesPerSec_ = sender_->getCurrentOutgoingBitrate();
+    stat.videoStat_.nBytesPerSec_ = senders_[0]->getCurrentOutgoingBitrate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
-    stat.videoStat_.lastFrameNo_ = sender_->getFrameNo();
-    stat.videoStat_.encodingRate_ = sender_->getCurrentPacketRate();
-    stat.videoStat_.nDroppedByEncoder_ = coder_->getDroppedFramesNum();
+    stat.videoStat_.lastFrameNo_ = senders_[0]->getFrameNo();
+    stat.videoStat_.encodingRate_ = senders_[0]->getCurrentPacketRate();
+    stat.videoStat_.nDroppedByEncoder_ = senders_[0]->getEncoderDroppedNum();
     
     stat.audioStat_.nBytesPerSec_ = audioSender_->getCurrentOutgoingBitrate();
     stat.audioStat_.lastFrameNo_ = audioSender_->getSampleNo();
     stat.audioStat_.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
     stat.audioStat_.encodingRate_ = audioSender_->getCurrentPacketRate();
+    
+    LogStatC << STAT_DIV
+    << "br" << STAT_DIV << stat.videoStat_.nBytesPerSec_*8/1000 << STAT_DIV
+    << "fps" << STAT_DIV << stat.videoStat_.nFramesPerSec_ << STAT_DIV
+    << "fnum" << STAT_DIV << stat.videoStat_.lastFrameNo_ << STAT_DIV
+    << "enc" << STAT_DIV << stat.videoStat_.encodingRate_ << STAT_DIV
+    << "drop" << STAT_DIV << stat.videoStat_.nDroppedByEncoder_
+    << endl;
 }
 
 void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
 {
     cameraCapturer_->setLogger(logger);
     localRender_->setLogger(logger);
-    coder_->setLogger(logger);
-    sender_->setLogger(logger);
+    
+    for (int i = 0; i < senders_.size(); i++)
+        senders_[i]->setLogger(logger);
+    
     audioSender_->setLogger(logger);
     
     ILoggingObject::setLogger(logger);
@@ -351,17 +367,6 @@ bool NdnSenderChannel::process()
         double frameRate = params_.captureFramerate;
         uint64_t now = NdnRtcUtils::millisecondTimestamp();
         
-        if (lastFrameStamp_ != 0)
-        {
-            double currentRate = sender_->getCurrentPacketRate();
-            double rate = 1000./(now-lastFrameStamp_);
-            
-//            frameRate = currentRate + (rate-currentRate)*RateFilterAlpha;
-        }
-        LogStatC << "rate\t" << frameRate << endl;
-        
-        lastFrameStamp_ = now;
-        
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
             
@@ -371,16 +376,19 @@ bool NdnSenderChannel::process()
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
-            LogStatC
-            << "rendered\t" << sender_->getPacketNo() << " "
-            << t2 - t << endl;
+//            LogDebugC
+//            << "rendered\t" << sender_->getPacketNo() << " "
+//            << t2 - t << endl;
             
-            coder_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
+            for (int i = 0; i < senders_.size(); i++)
+                senders_[i]->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
             
-            LogStatC
-            << "published\t"
-            << sender_->getFrameNo()-1 << " "
-            << NdnRtcUtils::microsecondTimestamp()-t2 << endl;
+//            sender_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
+            
+//            LogDebugC
+//            << "published\t"
+//            << sender_->getFrameNo()-1 << " "
+//            << NdnRtcUtils::microsecondTimestamp()-t2 << endl;
         }
         deliver_cs_->Leave();
     }

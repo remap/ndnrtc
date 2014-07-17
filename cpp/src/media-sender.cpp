@@ -38,7 +38,7 @@ packetNo_(0),
 pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
-    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter();
+    dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(5);
 }
 
 MediaSender::~MediaSender()
@@ -56,8 +56,9 @@ MediaSender::~MediaSender()
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
-                      const shared_ptr<KeyChain>& ndnKeyChain)
+int MediaSender::init(const ptr_lib::shared_ptr<FaceProcessor>& faceProcessor,
+                      const ptr_lib::shared_ptr<KeyChain>& ndnKeyChain,
+                      const ptr_lib::shared_ptr<string>& packetPrefix)
 {
     faceProcessor_ = faceProcessor;
     ndnKeyChain_ = ndnKeyChain;
@@ -71,11 +72,6 @@ int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     
     if (params_.useCache)
         memCache_.reset(new MemoryContentCache(faceProcessor_->getFaceWrapper()->getFace().get()));
-    
-    shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_);
-    
-    if (!packetPrefix.get())
-        notifyError(-1, "bad frame prefix");
     
     packetPrefix_.reset(new Name(packetPrefix->c_str()));
     
@@ -180,9 +176,14 @@ int MediaSender::publishPacket(PacketData &packetData,
                 << ndnData.getContent().size() << " bytes" << endl;
             }
             
-            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-                                               ndnData.getContent().size());
-            
+//            if (it == segments.begin())
+//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+//                                               segmentData.getSegmentDataLength()-41);
+//            else
+//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+//                                                   segmentData.getSegmentDataLength());
+                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                                   ndnData.getContent().size());
 #if RECORD
             {
                 SegmentData segData;

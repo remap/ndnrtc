@@ -28,7 +28,7 @@ VideoConsumer::VideoConsumer(const ParamsStruct& params,
                              const shared_ptr<RttEstimation>& rttEstimation,
                              IExternalRenderer* const externalRenderer):
 Consumer(params, interestQueue, rttEstimation),
-decoder_(new NdnVideoDecoder(params))
+decoder_(new NdnVideoDecoder(params.streamsParams[0]))
 {
     setDescription("vconsumer");
     

@@ -43,7 +43,8 @@ namespace ndnrtc
         ~MediaSender();
         
         virtual int init(const shared_ptr<FaceProcessor>& faceProcessor,
-                         const shared_ptr<KeyChain>& ndnKeyChain);
+                         const shared_ptr<KeyChain>& ndnKeyChain,
+                         const shared_ptr<std::string>& packetPrefix);
         virtual void stop();
         
         unsigned long int getPacketNo() { return packetNo_; }
