@@ -1230,10 +1230,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             Slot::State newState = slot->appendData(data);
             int newConsistency = slot->getConsistencyState();
             
-//            LogTraceC
-//            << "appended " << dataName
-//            << " (" << slot->getAssembledLevel()*100 << "%)"
-//            << "with result " << Slot::stateToString(newState) << endl;
             LogDebugC << "append: "<< playbackQueue_.dumpShort() << endl;
             
             if (oldState != newState ||

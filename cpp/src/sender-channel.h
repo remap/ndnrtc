@@ -129,6 +129,10 @@ namespace ndnrtc
                    ndn::Transport& transport);
         
         void
+        onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+                              prefix);
+        
+        void
         registerSessionInfoPrefix();
         
         void

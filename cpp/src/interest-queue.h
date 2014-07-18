@@ -187,6 +187,12 @@ namespace ndnrtc {
                 return ndn::ptr_lib::shared_ptr<Priority>(new Priority(millisecondsFromNow));
             }
             
+            static ndn::ptr_lib::shared_ptr<Priority>
+            fromAbsolutePriority(int priority)
+            {
+                return ndn::ptr_lib::shared_ptr<Priority>(new Priority(priority));
+            }
+            
         private:
             int64_t createdMs_ = -1, enqueuedMs_ = -1,
                     expressedMs_ = -1, arrivalDelayMs_ = -1;

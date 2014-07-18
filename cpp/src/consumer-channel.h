@@ -15,10 +15,12 @@
 #include "audio-consumer.h"
 #include "statistics.h"
 #include "face-wrapper.h"
+#include "service-channel.h"
 
 namespace ndnrtc {
     namespace new_api {
-        class ConsumerChannel : public NdnRtcObject
+        class ConsumerChannel : public NdnRtcObject,
+                            public IServiceChannelCallback
         {
         public:
             ConsumerChannel(const ParamsStruct& params,
@@ -48,6 +50,7 @@ namespace ndnrtc {
             shared_ptr<RttEstimation> rttEstimation_;
             shared_ptr<FaceProcessor> faceProcessor_;
             shared_ptr<InterestQueue> interestQueue_;
+            shared_ptr<ServiceChannel> serviceChannel_;
             
             // ndn-cpp callbacks
             virtual void onInterest(const shared_ptr<const Name>& prefix,
@@ -56,6 +59,17 @@ namespace ndnrtc {
             
             virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
                                           prefix);
+            
+            // IServiceChannel interface
+            void
+            onProducerParametersUpdated(const ParamsStruct& newVideoParams,
+                                        const ParamsStruct& newAudioParams);
+            
+            void
+            onUpdateFailedWithTimeout();
+            
+            void
+            onUpdateFailedWithError(const char* errMsg);
             
         };
     }

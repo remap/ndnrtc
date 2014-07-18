@@ -16,6 +16,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog::new_api;
+using namespace std;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -53,6 +54,8 @@ faceProcessor_(faceProcessor)
     if (params_.useAudio)
         audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
     
+    serviceChannel_.reset(new ServiceChannel(this, interestQueue_));
+    
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
                                                      params.producerId)));
@@ -89,6 +92,8 @@ int
 ConsumerChannel::startTransmission()
 {
 #warning handle errors
+    serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
+    
     if (isOwnFace_)
         faceProcessor_->startProcessing();
 
@@ -145,6 +150,7 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
     rttEstimation_->setLogger(logger);
     faceProcessor_->setLogger(logger);
     interestQueue_->setLogger(logger);
+    serviceChannel_->setLogger(logger);
     
     ILoggingObject::setLogger(logger);
 }
@@ -164,5 +170,26 @@ ConsumerChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
                               prefix)
 {
     // empty
+}
+
+void
+ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
+                            const ParamsStruct& newAudioParams)
+{
+    LogInfoC << "producer parameters updated" << endl;
+    
+}
+
+void
+ConsumerChannel::onUpdateFailedWithTimeout()
+{
+    LogWarnC << "service update failed with timeout" << endl;
+    serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
+}
+
+void
+ConsumerChannel::onUpdateFailedWithError(const char* errMsg)
+{
+    LogErrorC << "service update failed with message: " << string(errMsg) << endl;
 }
 

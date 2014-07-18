@@ -358,8 +358,12 @@ namespace ndnrtc {
          * normally, RESULT_ERR otherwise
          */
         int
-        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams);
+        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const;
         
+        static void
+        updateParams(ParamsStruct& paramsForUpdate,
+                     const ParamsStruct& params);
+
     private:
         struct _VideoStreamDescription {
             double rate_; // FPS
@@ -394,9 +398,6 @@ namespace ndnrtc {
         
         int
         initFromRawData(unsigned int dataLength, const unsigned char* data);
-        
-        void
-        updateParams(ParamsStruct& paramsForUpdate, const ParamsStruct& params);
     };
     
 };

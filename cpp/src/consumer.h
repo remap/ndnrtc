@@ -21,6 +21,7 @@
 #include "statistics.h"
 #include "renderer.h"
 #include "rate-control.h"
+#include "service-channel.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -238,6 +239,7 @@ namespace ndnrtc {
             shared_ptr<IRenderer> renderer_;
             shared_ptr<AudioVideoSynchronizer> avSync_;
             shared_ptr<RateControl> rateControl_;
+            shared_ptr<ServiceChannel> serviceChannel_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             

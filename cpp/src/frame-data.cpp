@@ -505,7 +505,7 @@ NetworkData(dataLength, data)
 }
 
 int
-SessionInfo::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams)
+SessionInfo::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const
 {
     if (isValid_)
     {

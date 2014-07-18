@@ -263,9 +263,7 @@ NdnSenderChannel::init()
     << ((videoInitialized_)?"yes":"no")
     << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
-    // use either of two faces to register a prefix
-    shared_ptr<Name> certificateName =  NdnRtcNamespace::certificateNameForUser(*NdnRtcNamespace::getUserPrefix(params_));
-    serviceFaceProcessor_ = FaceProcessor::createFaceProcessor(params_, ndnKeyChain_, certificateName);
+    serviceFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
     registerSessionInfoPrefix();
     
     return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
@@ -465,13 +463,17 @@ NdnSenderChannel::registerSessionInfoPrefix()
     KeyChain keyChain;
     serviceFaceProcessor_->getFaceWrapper()->setCommandSigningInfo(keyChain,
                                                            keyChain.getDefaultCertificateName());
+#else
+    serviceFaceProcessor_->getFaceWrapper()->setCommandSigningInfo(*ndnKeyChain_,
+                                                                   ndnKeyChain_->getDefaultCertificateName());
 #endif
+    
     
     Name sessionInfoPrefix(NdnRtcNamespace::getSessionInfoPrefix(params_)->c_str());
     
     serviceFaceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
                                                     bind(&NdnSenderChannel::onInterest, this, _1, _2, _3),
-                                                    bind(&NdnSenderChannel::NdnMediaChannel::onRegisterFailed, this, _1));
+                                                    bind(&NdnSenderChannel::onRegisterFailed, this, _1));
 }
 
 void
@@ -482,4 +484,11 @@ NdnSenderChannel::onInterest(const shared_ptr<const Name>& prefix,
     NdnMediaChannel::onInterest(prefix, interest, transport);
     
     publishSessionInfo(transport);
+}
+
+void
+NdnSenderChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+                                   prefix)
+{
+    LogErrorC << "registration failed " << prefix << endl;
 }
