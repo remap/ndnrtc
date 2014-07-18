@@ -197,13 +197,13 @@ webrtcbuild:
 	cd $(WEBRTC_TRUNK) && gclient sync && make BUILDTYPE=Release
 
 ndnbuild:
-	cd $(NDNCPPLIB_PATH) && ./configure --enable-tlv=yes && make  && cd $(CURRENT)
+	cd $(NDNCPPLIB_PATH) && ./configure --enable-tlv=yes --with-std-shared-ptr=no --with-std-function=no && make  && cd $(CURRENT)
 	mkdir -p $(LIBBIN_PATH)/include/$(NDNCPP)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCLIB) $(LIBBIN_PATH)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCPPLIB) $(LIBBIN_PATH)
 	cp -Rf $(NDNCPPLIB_PATH)/include $(LIBBIN_PATH)
 	find $(LIBBIN_PATH)/include/$(NDNCPP)/ -name '*.[co]*' | xargs rm
-	cp $(NDNCPPLIB_PATH)/config.h $(LIBBIN_PATH)/include/    
+	#cp $(NDNCPPLIB_PATH)/config.h $(LIBBIN_PATH)/include/    
 	cp -Rf $(NDNCPPLIB_PATH)/include/ndnboost $(LIBBIN_PATH)/include/
 
 # creates a package for add-on in $(BIN_PATH)
