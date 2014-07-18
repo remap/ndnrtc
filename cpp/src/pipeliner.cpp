@@ -268,13 +268,14 @@ ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
     if (chaseEstimation_->isArrivalStable())
     {
         stopChasePipeliner();
+        switchToState(StateBuffering);
+        
         frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
         frameBuffer_->recycleOldSlots();
 
         keyFrameSeqNo_++;
         requestNextKey(keyFrameSeqNo_);
         
-        switchToState(StateBuffering);
         bufferEventsMask_ = BufferingEventsMask;
         playbackStartFrameNo_ = deltaFrameSeqNo_;
         consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);

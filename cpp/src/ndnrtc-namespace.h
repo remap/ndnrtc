@@ -27,6 +27,7 @@ namespace ndnrtc {
         static const std::string NameComponentBroadcast;
         static const std::string NameComponentDiscovery;
         static const std::string NameComponentUserStreams;
+        static const std::string NameComponentSession;
         static const std::string NameComponentStreamAccess;        
         static const std::string NameComponentStreamKey;
         static const std::string NameComponentStreamFrames;
@@ -98,6 +99,16 @@ namespace ndnrtc {
          */
         static shared_ptr<std::string>
         getStreamKeyPrefix(const ParamsStruct &params);
+        
+        /**
+         * Builds session info prefix for current parameters
+         * @param params Library parameters
+         * @return User's session info prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<NameComponentSession>
+         * @see getUserPrefix for more info on form ot "user_prefix" component
+         
+         */
+        static shared_ptr<std::string>
+        getSessionInfoPrefix(const ParamsStruct &params);
         
         static shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);

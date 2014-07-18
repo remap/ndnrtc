@@ -175,15 +175,9 @@ int MediaSender::publishPacket(PacketData &packetData,
                 << "published " << segmentName << " "
                 << ndnData.getContent().size() << " bytes" << endl;
             }
-            
-//            if (it == segments.begin())
-//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-//                                               segmentData.getSegmentDataLength()-41);
-//            else
-//                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-//                                                   segmentData.getSegmentDataLength());
-                NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
-                                                   ndnData.getContent().size());
+
+            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                               ndnData.getContent().size());
 #if RECORD
             {
                 SegmentData segData;

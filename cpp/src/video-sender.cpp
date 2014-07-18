@@ -32,8 +32,9 @@ coder_(new NdnVideoCoder(codecParams))
 
 //******************************************************************************
 #pragma mark - overriden
-int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
-                         const shared_ptr<KeyChain>& ndnKeyChain)
+int
+NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
+                     const shared_ptr<KeyChain>& ndnKeyChain)
 {
     shared_ptr<string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, codecParams_.idx);
     int res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
@@ -60,17 +61,20 @@ int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
 
 //******************************************************************************
 #pragma mark - interfaces realization
-void NdnVideoSender::onDeliverFrame(webrtc::I420VideoFrame &frame,
-                                    double unixTimeStamp)
+void
+NdnVideoSender::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                               double unixTimeStamp)
 {
     coder_->onDeliverFrame(frame, unixTimeStamp);
 }
 
-void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                             double captureTimestamp)
+void
+NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                        double captureTimestamp)
 {
-    // update packet rate meter
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+    codecParams_.codecFrameRate = NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
+    
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
     // determine, whether we should publish under key or delta namespaces
@@ -112,15 +116,6 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
         assert(nSegments == nSegmentsExpected);
         
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
-//        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
-//             getFrameNo(),
-//             isKeyFrame,
-//             publishingTime,
-//             frameData.getLength(),
-//             encodedImage.capture_time_ms_,
-//             getCurrentPacketRate());
-//        webrtc::EncodedImage *eimg = (webrtc::EncodedImage*)(&encodedImage);
-//        ewriter.writeFrame(*eimg, metadata);
         
         LogDebugC
         << "publish\t" << packetNo_ << "\t"
@@ -138,7 +133,6 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
             int nSegmentsParity = publishParityData(frameNo, frameData,
                                                     nSegments, framePrefix,
                                                     prefixMeta);
-//            assert(nSegmentsParity == nSegmentsParityExpected);
         }
         
         if (!isKeyFrame)
@@ -156,20 +150,22 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     }
 }
 
-void NdnVideoSender::setLogger(ndnlog::new_api::Logger *logger)
+void
+NdnVideoSender::setLogger(ndnlog::new_api::Logger *logger)
 {
     coder_->setLogger(logger);
     ILoggingObject::setLogger(logger);
 }
 
-void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
-                                const shared_ptr<const Interest>& interest,
-                                ndn::Transport& transport)
+void
+NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
+                           const shared_ptr<const Interest>& interest,
+                           ndn::Transport& transport)
 {
     const Name& name = interest->getName();
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
     bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
-
+    
     
     if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
         packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_))

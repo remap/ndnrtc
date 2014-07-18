@@ -40,6 +40,14 @@ namespace ndnrtc
         bool isTransmittingAudio() { return isTransmitting_ && audioInitialized_; }
         bool isTransmittingVideo() { return isTransmitting_ && videoInitialized_; }
         
+        // ndn-cpp callbacks
+        virtual void onInterest(const shared_ptr<const Name>& prefix,
+                                const shared_ptr<const Interest>& interest,
+                                ndn::Transport& transport);
+        
+        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+                                      prefix);
+        
     protected:
         ParamsStruct audioParams_;
         bool videoInitialized_ = false, audioInitialized_ = false;
@@ -47,17 +55,11 @@ namespace ndnrtc
         bool isInitialized_ = false, isTransmitting_ = false;
         shared_ptr<FaceProcessor> videoFaceProcessor_, audioFaceProcessor_;
         shared_ptr<KeyChain> ndnKeyChain_;
-        
-        // ndn-cpp callbacks
-        virtual void onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
-                        ndn::Transport& transport);
-        
-        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
-                                      prefix);
     };
     
-    class NdnSenderChannel : public NdnMediaChannel, public IRawFrameConsumer
+    class NdnSenderChannel : public NdnMediaChannel,
+                            public IRawFrameConsumer,
+                            public new_api::IAudioFrameConsumer
     {
     public:
         NdnSenderChannel(const ParamsStruct &params,
@@ -79,6 +81,13 @@ namespace ndnrtc
         void
         onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
         
+        // interface conformance - IAudioFrameConsumer
+        void
+        onDeliverRtpFrame(unsigned int len, unsigned char *data);
+        
+        void
+        onDeliverRtcpFrame(unsigned int len, unsigned char *data);
+        
         void
         getChannelStatistics(SenderChannelStatistics &stat);
         
@@ -90,18 +99,18 @@ namespace ndnrtc
         
         shared_ptr<CameraCapturer> cameraCapturer_;
         shared_ptr<IVideoRenderer> localRender_;
-//        shared_ptr<NdnVideoSender> sender_;
-        
-        std::vector<shared_ptr<NdnVideoSender>> senders_;
+        std::vector<shared_ptr<NdnVideoSender>> videoSenders_;
         
         shared_ptr<new_api::AudioCapturer> audioCapturer_;
-        shared_ptr<NdnAudioSender> audioSender_;
+        std::vector<shared_ptr<NdnAudioSender>> audioSenders_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;
         webrtc::EventWrapper &deliverEvent_;
         webrtc::I420VideoFrame deliverFrame_;
         double deliveredTimestamp_;
+        
+        shared_ptr<FaceProcessor> serviceFaceProcessor_;
         
         // static methods
         static bool
@@ -112,6 +121,18 @@ namespace ndnrtc
         // private methods
         bool
         process();
+        
+        // this should reply only to session info interests
+        void
+        onInterest(const shared_ptr<const Name>& prefix,
+                   const shared_ptr<const Interest>& interest,
+                   ndn::Transport& transport);
+        
+        void
+        registerSessionInfoPrefix();
+        
+        void
+        publishSessionInfo(ndn::Transport& transport);
     };
     
 }

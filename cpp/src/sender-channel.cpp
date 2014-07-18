@@ -38,7 +38,8 @@ NdnMediaChannel::~NdnMediaChannel()
 #pragma mark - static
 //******************************************************************************
 #pragma mark - public
-int NdnMediaChannel::init()
+int
+NdnMediaChannel::init()
 {
     shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
     ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
@@ -61,7 +62,8 @@ int NdnMediaChannel::init()
     
     return RESULT_OK;
 }
-int NdnMediaChannel::startTransmission()
+int
+NdnMediaChannel::startTransmission()
 {
     if (!isInitialized_)
         return notifyError(RESULT_ERR, "sender channel was not initalized");
@@ -74,7 +76,8 @@ int NdnMediaChannel::startTransmission()
     
     return RESULT_OK;
 }
-int NdnMediaChannel::stopTransmission()
+int
+NdnMediaChannel::stopTransmission()
 {
     if (!isTransmitting_)
         return notifyError(RESULT_ERR, "sender channel was not transmitting data");
@@ -92,7 +95,8 @@ int NdnMediaChannel::stopTransmission()
 
 //******************************************************************************
 #pragma mark - intefaces realization
-void NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
+void
+NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
                                  const shared_ptr<const Interest>& interest,
                                  ndn::Transport& transport)
 {
@@ -113,9 +117,7 @@ NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    IExternalRenderer *const externalRenderer):
 NdnMediaChannel(params, audioParams),
 cameraCapturer_(new CameraCapturer(params)),
-//sender_(new NdnVideoSender(params)),
 audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
-audioSender_(new NdnAudioSender(audioParams)),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
@@ -130,12 +132,17 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
     
     for (int i = 0; i < params.nStreams; i++)
     {
-        ptr_lib::shared_ptr<NdnVideoSender> sender(new NdnVideoSender(params, params.streamsParams[i]));
-        senders_.push_back(sender);
+        shared_ptr<NdnVideoSender> sender(new NdnVideoSender(params, params.streamsParams[i]));
+        videoSenders_.push_back(sender);
         sender->setObserver(this);
     }
     
-    audioSender_->setObserver(this);
+    for (int i = 0; i < audioParams.nStreams; i++)
+    {
+        shared_ptr<NdnAudioSender> audioSender(new NdnAudioSender(audioParams));
+        audioSenders_.push_back(audioSender);
+        audioSender->setObserver(this);
+    }
     
     this->setLogger(new Logger(params.loggingLevel,
                                NdnRtcUtils::toString("producer-%s.log", params.producerId)));
@@ -147,8 +154,8 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
     // set connection capturer -> this
     cameraCapturer_->setFrameConsumer(this);
 
-    // set connection audioCapturer -> audioSender
-    audioCapturer_->setFrameConsumer(audioSender_.get());
+    // set connection audioCapturer -> this
+    audioCapturer_->setFrameConsumer(this);
     
     frameFreqMeter_ = NdnRtcUtils::setupFrequencyMeter();
 }
@@ -160,11 +167,10 @@ NdnSenderChannel::~NdnSenderChannel()
 
 //******************************************************************************
 #pragma mark - intefaces realization: IRawFrameConsumer
-void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
+void
+NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                       double timestamp)
 {
-//    LogDebugC << "captured\t" << sender_->getPacketNo() << endl;
-    
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
     deliveredTimestamp_ = timestamp;
@@ -174,11 +180,28 @@ void NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
 };
 
 //******************************************************************************
+#pragma mark - intefaces realization: IRawFrameConsumer
+void
+NdnSenderChannel::onDeliverRtpFrame(unsigned int len, unsigned char *data)
+{
+    for (int i = 0; i < audioSenders_.size(); i++)
+        audioSenders_[i]->onDeliverRtpFrame(len, data);
+}
+
+void
+NdnSenderChannel::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
+{
+    for (int i = 0; i < audioSenders_.size(); i++)
+        audioSenders_[i]->onDeliverRtcpFrame(len, data);
+}
+
+//******************************************************************************
 #pragma mark - all static
 
 //******************************************************************************
 #pragma mark - public
-int NdnSenderChannel::init()
+int
+NdnSenderChannel::init()
 {
     LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;
     LogInfoC << "starting initialization " << endl;
@@ -199,9 +222,9 @@ int NdnSenderChannel::init()
             notifyError(RESULT_WARN, "can't intialize renderer");
         
         bool streamsInitialized = false;
-        for (int i = 0; i < senders_.size(); i++)
+        for (int i = 0; i < videoSenders_.size(); i++)
         {
-            streamsInitialized |= RESULT_NOT_FAIL(senders_[i]->init(videoFaceProcessor_, ndnKeyChain_));
+            streamsInitialized |= RESULT_NOT_FAIL(videoSenders_[i]->init(videoFaceProcessor_, ndnKeyChain_));
             if (!streamsInitialized)
                 notifyError(RESULT_WARN, "can't intialize stream with bitrate %d",
                             params_.streamsParams[i].startBitrate);
@@ -212,14 +235,21 @@ int NdnSenderChannel::init()
     if (params_.useAudio)
     { // initialize audio
         audioInitialized_ = RESULT_NOT_FAIL(audioCapturer_->init());
-        audioInitialized_ &= RESULT_NOT_FAIL(audioSender_->init(audioFaceProcessor_,
-                                                                ndnKeyChain_));
+        
+        bool streamsInitialized = false;
+        for (int i = 0; i < audioSenders_.size(); i++)
+        {
+            streamsInitialized |= RESULT_NOT_FAIL(audioSenders_[i]->init(audioFaceProcessor_,
+                                                                         ndnKeyChain_));
+            if (!streamsInitialized)
+                notifyError(RESULT_WARN, "can't intialize audio stream with bitrate %d",
+                            audioParams_.streamsParams[i].startBitrate);
+        }
+        
         if (!audioInitialized_)
             notifyError(RESULT_WARN, "can't initialize audio send channel");
         
-#ifdef AUDIO_OFF
-        audioInitialized_ = false;
-#endif
+        audioInitialized_ &= streamsInitialized;
     }
     
     isInitialized_ = audioInitialized_||videoInitialized_;
@@ -233,10 +263,16 @@ int NdnSenderChannel::init()
     << ((videoInitialized_)?"yes":"no")
     << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
     
+    // use either of two faces to register a prefix
+    shared_ptr<Name> certificateName =  NdnRtcNamespace::certificateNameForUser(*NdnRtcNamespace::getUserPrefix(params_));
+    serviceFaceProcessor_ = FaceProcessor::createFaceProcessor(params_, ndnKeyChain_, certificateName);
+    registerSessionInfoPrefix();
+    
     return (videoInitialized_&&audioInitialized_)?RESULT_OK:RESULT_WARN;
 }
 
-int NdnSenderChannel::startTransmission()
+int
+NdnSenderChannel::startTransmission()
 {
     LogInfoC << "starting publishing" << endl;
     
@@ -284,7 +320,8 @@ int NdnSenderChannel::startTransmission()
     return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
 
-int NdnSenderChannel::stopTransmission()
+int
+NdnSenderChannel::stopTransmission()
 {
     LogInfoC << "stopping publishing" << endl;
     
@@ -307,13 +344,18 @@ int NdnSenderChannel::stopTransmission()
             notifyError(RESULT_WARN, "can't stop processing thread");
         
         localRender_->stopRendering();
+        
+        for (int i = 0; i < videoSenders_.size(); i++)
+            videoSenders_[i]->stop();
     }
     
     if (audioTransmitting_)
     {
         audioTransmitting_ = false;
         audioCapturer_->stopCapture();
-        audioSender_->stop();
+        
+        for (int i = 0; i < audioSenders_.size(); i++)
+            audioSenders_[i]->stop();
     }
     
     LogInfoC << "stopped" << endl;
@@ -322,18 +364,19 @@ int NdnSenderChannel::stopTransmission()
     return RESULT_OK;
 }
 
-void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
+void
+NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 {
-    stat.videoStat_.nBytesPerSec_ = senders_[0]->getCurrentOutgoingBitrate();
+    stat.videoStat_.nBytesPerSec_ = videoSenders_[0]->getCurrentOutgoingBitrate();
     stat.videoStat_.nFramesPerSec_ = NdnRtcUtils::currentFrequencyMeterValue(frameFreqMeter_);
-    stat.videoStat_.lastFrameNo_ = senders_[0]->getFrameNo();
-    stat.videoStat_.encodingRate_ = senders_[0]->getCurrentPacketRate();
-    stat.videoStat_.nDroppedByEncoder_ = senders_[0]->getEncoderDroppedNum();
+    stat.videoStat_.lastFrameNo_ = videoSenders_[0]->getFrameNo();
+    stat.videoStat_.encodingRate_ = videoSenders_[0]->getCurrentPacketRate();
+    stat.videoStat_.nDroppedByEncoder_ = videoSenders_[0]->getEncoderDroppedNum();
     
-    stat.audioStat_.nBytesPerSec_ = audioSender_->getCurrentOutgoingBitrate();
-    stat.audioStat_.lastFrameNo_ = audioSender_->getSampleNo();
-    stat.audioStat_.nFramesPerSec_ = audioSender_->getCurrentPacketRate();
-    stat.audioStat_.encodingRate_ = audioSender_->getCurrentPacketRate();
+    stat.audioStat_.nBytesPerSec_ = audioSenders_[0]->getCurrentOutgoingBitrate();
+    stat.audioStat_.lastFrameNo_ = audioSenders_[0]->getSampleNo();
+    stat.audioStat_.nFramesPerSec_ = audioSenders_[0]->getCurrentPacketRate();
+    stat.audioStat_.encodingRate_ = audioSenders_[0]->getCurrentPacketRate();
     
     LogStatC << STAT_DIV
     << "br" << STAT_DIV << stat.videoStat_.nBytesPerSec_*8/1000 << STAT_DIV
@@ -344,22 +387,25 @@ void NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     << endl;
 }
 
-void NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
+void
+NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
 {
     cameraCapturer_->setLogger(logger);
     localRender_->setLogger(logger);
     
-    for (int i = 0; i < senders_.size(); i++)
-        senders_[i]->setLogger(logger);
+    for (int i = 0; i < videoSenders_.size(); i++)
+        videoSenders_[i]->setLogger(logger);
     
-    audioSender_->setLogger(logger);
+    for (int i = 0; i < audioSenders_.size(); i++)
+        audioSenders_[i]->setLogger(logger);
     
     ILoggingObject::setLogger(logger);
 }
 
 //******************************************************************************
 #pragma mark - private
-bool NdnSenderChannel::process()
+bool
+NdnSenderChannel::process()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled) {
         NdnRtcUtils::frequencyMeterTick(frameFreqMeter_);
@@ -376,19 +422,8 @@ bool NdnSenderChannel::process()
             
             uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
             
-//            LogDebugC
-//            << "rendered\t" << sender_->getPacketNo() << " "
-//            << t2 - t << endl;
-            
-            for (int i = 0; i < senders_.size(); i++)
-                senders_[i]->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
-            
-//            sender_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
-            
-//            LogDebugC
-//            << "published\t"
-//            << sender_->getFrameNo()-1 << " "
-//            << NdnRtcUtils::microsecondTimestamp()-t2 << endl;
+            for (int i = 0; i < videoSenders_.size(); i++)
+                videoSenders_[i]->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
         }
         deliver_cs_->Leave();
     }
@@ -396,3 +431,55 @@ bool NdnSenderChannel::process()
     return true;
 }
 
+void
+NdnSenderChannel::publishSessionInfo(ndn::Transport& transport)
+{
+    LogInfoC << "session info requested" << endl;
+    
+    // update params info
+    for (int i = 0; i < params_.nStreams; i++)
+        params_.streamsParams[i].codecFrameRate = videoSenders_[i]->getCurrentPacketRate();
+    
+    for (int i = 0; i < audioParams_.nStreams; i++)
+        audioParams_.streamsParams[i].codecFrameRate = audioSenders_[i]->getCurrentPacketRate();
+    
+    
+    SessionInfo sessionInfo(params_, audioParams_);
+    Name sessionInfoPrefix(NdnRtcNamespace::getSessionInfoPrefix(params_)->c_str());
+    Data ndnData(sessionInfoPrefix);
+    ndnData.getMetaInfo().setFreshnessPeriod(params_.freshness*1000);
+    ndnData.setContent(sessionInfo.getData(), sessionInfo.getLength());
+    
+    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    shared_ptr<Name> certificateName =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
+    ndnKeyChain_->sign(ndnData, *certificateName);
+    
+    SignedBlob encodedData = ndnData.wireEncode();
+    transport.send(*encodedData);
+}
+
+void
+NdnSenderChannel::registerSessionInfoPrefix()
+{
+#if 1
+    KeyChain keyChain;
+    serviceFaceProcessor_->getFaceWrapper()->setCommandSigningInfo(keyChain,
+                                                           keyChain.getDefaultCertificateName());
+#endif
+    
+    Name sessionInfoPrefix(NdnRtcNamespace::getSessionInfoPrefix(params_)->c_str());
+    
+    serviceFaceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
+                                                    bind(&NdnSenderChannel::onInterest, this, _1, _2, _3),
+                                                    bind(&NdnSenderChannel::NdnMediaChannel::onRegisterFailed, this, _1));
+}
+
+void
+NdnSenderChannel::onInterest(const shared_ptr<const Name>& prefix,
+                             const shared_ptr<const Interest>& interest,
+                             ndn::Transport& transport)
+{
+    NdnMediaChannel::onInterest(prefix, interest, transport);
+    
+    publishSessionInfo(transport);
+}
