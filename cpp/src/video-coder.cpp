@@ -167,12 +167,12 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     
     int err;
     
-    if (!keyFrameCounter_%(codecParams_.gop))
+    if (keyFrameCounter_%codecParams_.gop == 0)
         err = encoder_->Encode(frame, NULL, &keyFrameType_);
     else
         err = encoder_->Encode(frame, NULL, NULL);
     
-    keyFrameCounter_ = (keyFrameCounter_+1)%(currentFrameRate_);
+    keyFrameCounter_++;
     
     LogTraceC << "encode result " << err << endl;
     
