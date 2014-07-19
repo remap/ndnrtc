@@ -573,8 +573,7 @@ webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
     if (!VoiceEngineInstance)
     {
-        AudioConfig.Set<AudioCodingModuleFactory>(new NewAudioCodingModuleFactory());
-        VoiceEngineInstance = VoiceEngine::Create(AudioConfig);
+        VoiceEngineInstance = VoiceEngine::Create();
         
         int res = 0;
         

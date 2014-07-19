@@ -56,14 +56,14 @@ DEBUGFLAGS = -g -DDEBUG -DNDN_TRACE -O0
 LOGFLAGS = -DWEBRTC_LOGGING -DNDN_LOGGING -DNDN_TRACE -DNDN_DEBUG -DNDN_INFO -DNDN_WARN -DNDN_ERROR 
 CPPFLAGS += -fshort-wchar		\
 		-fPIC			\
-        -std=c++0x \
+        -std=c++0x -stdlib=libc++\
         $(DEBUGFLAGS) $(LOGFLAGS) \
 		-mmacosx-version-min=10.7 \
 		-D BASE_FILE_NAME=\"$*\" \
 		-I/opt/local/include \
 		$(NULL)
 OBJCFLAGS += -fobjc-link-runtime -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
-LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace
+LDFLAGS +=		-Wl, -dynamiclib -undefined suppress -flat_namespace -mmacosx-version-min=10.7
 
 WEBRTC_TRUNK = $(THIRDPARTY_PATH)/$(WEBRTC)/trunk
 WEBRTC_SRCPATH = $(WEBRTC_TRUNK)/webrtc
@@ -79,15 +79,13 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lacm2 \
 	-laudio_coding_module \
 	-laudio_conference_mixer \
+	-laudioproc_debug_proto \
 	-laudio_device \
 	-laudio_processing \
 	-laudio_processing_sse2 \
-	-laudioproc_debug_proto \
-	-laudioproc_unittest_proto \
 	-lbitrate_controller \
 	-lchannel_transport \
 	-lCNG \
-	-lcommand_line_parser \
 	-lcommon_audio \
 	-lcommon_audio_sse2 \
 	-lcommon_video \
@@ -98,9 +96,6 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lG711 \
 	-lG722 \
 	-lgenperf_libs \
-	-lgflags \
-	-lgmock \
-	-lgtest \
 	-liLBC \
 	-liSAC \
 	-liSACFix \
@@ -110,32 +105,20 @@ WEBRTC_LDFLAGS = -L$(WEBRTC_LIBPATH) \
 	-lNetEq \
 	-lNetEq4 \
 	-lNetEq4TestTools \
-	-lneteq_unittest_tools \
 	-lNetEqTestTools \
 	-lopus \
 	-lpaced_sender \
-	-lPCM16B \
-	-lprotobuf_full_do_not_use \
 	-lprotobuf_lite \
+	-lPCM16B \
 	-lrbe_components \
-	-lremote_bitrate_estimator \
-	-lrtp_rtcp \
 	-lsystem_wrappers \
-	-ltest \
-	-ltest_framework \
-	-ltest_support \
-	-ltest_support_main \
-	-ltest_support_main_threaded_mac \
 	-lvideo_capture_module \
-	-lvideo_codecs_test_framework \
 	-lvideo_coding_utility \
 	-lvideo_engine_core \
 	-lvideo_processing \
 	-lvideo_processing_sse2 \
 	-lvideo_quality_analysis \
 	-lvideo_render_module \
-	-lvideo_tests_common \
-	-lvietest \
 	-lvoice_engine \
 	-lvpx \
 	-lvpx_asm_offsets_vp8 \
@@ -197,7 +180,7 @@ webrtcbuild:
 	cd $(WEBRTC_TRUNK) && gclient sync && make BUILDTYPE=Release
 
 ndnbuild:
-	cd $(NDNCPPLIB_PATH) && ./configure --enable-tlv=yes --with-std-shared-ptr=no --with-std-function=no && make  && cd $(CURRENT)
+	cd $(NDNCPPLIB_PATH) && ./configure --enable-tlv=yes  --with-std-shared-ptr=no --with-std-function=no && make  && cd $(CURRENT)
 	mkdir -p $(LIBBIN_PATH)/include/$(NDNCPP)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCLIB) $(LIBBIN_PATH)
 	cp $(NDNCPPLIB_PATH)/.libs/$(NDNCPPLIB) $(LIBBIN_PATH)
@@ -329,7 +312,7 @@ TESTOBJ = $(addprefix $(OBJ_PATH)/,$(filter-out nsthread-tasks.o ndNrtcModule.o 
 
 build-%: undef $(OBJ_PATH)/%.o $(TESTOBJ) $(addprefix $(OBJ_PATH)/,test-common.o cocoa-renderer.om libgtest-all.a libtest-main-mac.a)
 	mkdir -p $(BIN_PATH)
-	$(GT_CXX) -g --std=c++0x \
+	$(GT_CXX) -g --std=c++0x $(GT_CPPFLAGS) \
 	$(TESTOBJ) \
 	$(OBJ_PATH)/$(patsubst build-%,%.o,$@) \
 	$(addprefix $(OBJ_PATH)/,test-common.o cocoa-renderer.om) \
