@@ -18,7 +18,7 @@
 #define FEC_RLIST_SYMREPAIRED '2'
 
 extern "C" {
-#include <ndn-fec/lib_common/of_openfec_api.h>
+#include <lib_common/of_openfec_api.h>
 }
 
 typedef struct {

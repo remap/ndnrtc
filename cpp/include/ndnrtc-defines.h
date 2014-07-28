@@ -28,15 +28,4 @@
 
 #define DEPRECATED __attribute__ ((deprecated))
 
-// RTC features
-//#define USE_AVSYNC
-//#define USE_AMP
-//#define USE_AMP_V2
-//#define USE_AMP_V3
-
-//#define AUDIO_OFF // disable audio
-//#define VIDEO_OFF // disable video
-
-//#define DEFAULT_KEYCHAIN
-
 #endif

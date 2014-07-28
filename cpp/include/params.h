@@ -186,7 +186,7 @@ namespace ndnrtc
         480,    // render height
         
         0,      // number of simultaneous streams
-        nullptr, // no streams
+        NULL, // no streams
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
@@ -229,7 +229,7 @@ namespace ndnrtc
         0,      // render height
         
         0,
-        nullptr,
+        NULL,
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
