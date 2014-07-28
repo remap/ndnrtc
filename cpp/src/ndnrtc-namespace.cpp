@@ -12,7 +12,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnrtc;
 using namespace ndn;
 
@@ -138,7 +138,7 @@ NdnRtcNamespace::buildPath(bool precede, const std::string *component1, ...)
     return path;
 }
 
-shared_ptr<const std::vector<unsigned char>>
+shared_ptr<const std::vector<unsigned char> >
 NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
 {
     char value[256];
@@ -147,34 +147,34 @@ NdnRtcNamespace::getNumberComponent(long unsigned int frameNo)
     sprintf(value, "%lu", frameNo);
     
     unsigned int valueLength = strlen(value);
-    shared_ptr<vector<unsigned char>> component(
-                                                new vector<unsigned char>
+    shared_ptr<std::vector<unsigned char> > component(
+                                                new std::vector<unsigned char>
                                                 (value, value + valueLength));
     
     return component;
 }
 
-shared_ptr<string> NdnRtcNamespace::getUserPrefix(const ParamsStruct &params)
+shared_ptr<std::string> NdnRtcNamespace::getUserPrefix(const ParamsStruct &params)
 {
     int res = RESULT_OK;
     
     res = (params.ndnHub && params.producerId) ? RESULT_OK : RESULT_ERR;
     
     if (RESULT_FAIL(res))
-        return shared_ptr<string>(nullptr);
+        return shared_ptr<std::string>();
     
     return NdnRtcNamespace::getProducerPrefix((params.ndnHub) ? params.ndnHub : DefaultParams.ndnHub,
                                               (params.producerId) ? params.producerId : DefaultParams.producerId);
 }
 
-shared_ptr<string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &params)
+shared_ptr<std::string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &params)
 {
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params);
+    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params);
     
     if (!userPrefix.get() || !params.streamName)
-        return shared_ptr<string>(nullptr);
+        return shared_ptr<std::string>();
     
-    const string streamName = params.streamName;
+    const std::string streamName = params.streamName;
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*userPrefix),
@@ -183,19 +183,19 @@ shared_ptr<string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &params)
                                       NULL);
 }
 
-ptr_lib::shared_ptr<string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct &params,
+shared_ptr<std::string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct &params,
                                                                   int streamIdx,
                                                                   bool isKeyNamespace)
 {
-    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
+    shared_ptr<std::string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
     if (!streamPrefix.get() || params.nStreams < streamIdx)
-        return ptr_lib::shared_ptr<string>(nullptr);
+        return shared_ptr<std::string>();
     
-    string streamThread;
+    std::string streamThread;
     streamThread = NdnRtcUtils::toString("%d", params.streamsParams[streamIdx].startBitrate);
     
-    const string frameTypeNamespace = (isKeyNamespace)?
+    const std::string frameTypeNamespace = (isKeyNamespace)?
     NdnRtcNamespace::NameComponentStreamFramesKey:
     NdnRtcNamespace::NameComponentStreamFramesDelta;
     
@@ -207,12 +207,12 @@ ptr_lib::shared_ptr<string> NdnRtcNamespace::getStreamFramePrefix(const ParamsSt
                                       NULL);
 }
 
-shared_ptr<string> NdnRtcNamespace::getStreamKeyPrefix(const ParamsStruct &params)
+shared_ptr<std::string> NdnRtcNamespace::getStreamKeyPrefix(const ParamsStruct &params)
 {
-    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
+    shared_ptr<std::string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
     if (!streamPrefix.get())
-        return shared_ptr<string>(nullptr);
+        return shared_ptr<std::string>();
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*streamPrefix),
@@ -220,12 +220,12 @@ shared_ptr<string> NdnRtcNamespace::getStreamKeyPrefix(const ParamsStruct &param
                                       NULL);
 }
 
-shared_ptr<string> NdnRtcNamespace::getSessionInfoPrefix(const ParamsStruct &params)
+shared_ptr<std::string> NdnRtcNamespace::getSessionInfoPrefix(const ParamsStruct &params)
 {
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params);
+    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params);
     
     if (!userPrefix.get() || !params.streamName)
-        return shared_ptr<string>(nullptr);
+        return shared_ptr<std::string>();
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*userPrefix),
@@ -236,7 +236,7 @@ shared_ptr<string> NdnRtcNamespace::getSessionInfoPrefix(const ParamsStruct &par
 shared_ptr<Name>
 NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix)
 {
-    shared_ptr<string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NameComponentStreamKey, &KeyComponent, NULL);
+    shared_ptr<std::string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NameComponentStreamKey, &KeyComponent, NULL);
     shared_ptr<Name> keyName(new Name(path->c_str()));
     
     return keyName;
@@ -309,8 +309,8 @@ bool NdnRtcNamespace::hasComponent(const ndn::Name &prefix,
                                    const std::string &componentString,
                                    bool isClosed)
 {
-    string prefixStr = prefix.toUri();
-    string searchStr(componentString);
+    std::string prefixStr = prefix.toUri();
+    std::string searchStr(componentString);
     
     if (searchStr[0] != '/')
         searchStr.insert(0, "/");

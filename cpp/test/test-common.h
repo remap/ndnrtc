@@ -27,7 +27,7 @@
 #include "segmentizer.h"
 #include "consumer.h"
 #include "ndnrtc-namespace.h"
-using namespace std;
+
 using namespace ndnrtc;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
@@ -77,10 +77,10 @@ public:
         const ::testing::TestInfo* const test_info =
         ::testing::UnitTest::GetInstance()->current_test_info();
         
-        Logger::sharedInstance() << "***" << endl;
+        Logger::sharedInstance() << "***" << std::endl;
         Logger::sharedInstance()
-        << "***[GTESTS]: entering test " << string(test_info->test_case_name()) << " "
-        << string(test_info->name()) << endl;
+        << "***[GTESTS]: entering test " << std::string(test_info->test_case_name()) << " "
+        << std::string(test_info->name()) << std::endl;
         
 #ifdef WEBRTC_LOGGING
         setupWebRTCLogging();
@@ -92,9 +92,9 @@ public:
         ::testing::UnitTest::GetInstance()->current_test_info();
 
         Logger::sharedInstance()
-        << "***[GTESTS]: leaving test " << string(test_info->test_case_name()) << " "
-        << string(test_info->name()) << endl;
-        Logger::sharedInstance() << "***" << endl;
+        << "***[GTESTS]: leaving test " << std::string(test_info->test_case_name()) << " "
+        << std::string(test_info->name()) << std::endl;
+        Logger::sharedInstance() << "***" << std::endl;
     }
     
     virtual void onErrorOccurred(const char *errorMessage)
@@ -147,7 +147,7 @@ public:
         return sampleFrame;
     }
     
-    static std::vector<shared_ptr<Data>>
+    static std::vector<boost::shared_ptr<Data>>
     packAndSliceFrame(const webrtc::EncodedImage *frame, int frameNo, int segmentSize,
                       const Name& prefix,
                       PacketData::PacketMetadata meta,
@@ -155,7 +155,7 @@ public:
                       SegmentData::SegmentMetaInfo &segmentHeader,
                       bool isParity = false)
     {
-        std::vector<shared_ptr<Data>> dataSegments;
+        std::vector<boost::shared_ptr<Data>> dataSegments;
         
         // step 1 - pack into PacketData
         PacketData *packetData;
@@ -191,7 +191,7 @@ public:
             segPrefix.appendSegment(it-segments.begin());
             segPrefix.append(PrefixMetaInfo::toName(prefixMeta));
             
-            shared_ptr<Data> data(new Data(segPrefix));
+            boost::shared_ptr<Data> data(new Data(segPrefix));
             data->setContent(segData.getData(), segData.getLength());
             
             dataSegments.push_back(data);
@@ -265,11 +265,11 @@ public:
     void SetUp()
     {
         Logger::initializeSharedInstance(logLevel_, name_);        
-        LogInfo("") << "test suite started. log is here: " << name_.c_str() << endl;
+        LogInfo("") << "test suite started. log is here: " << name_.c_str() << std::endl;
     }
     void TearDown()
     {
-        LogInfo("") << "test suite finished" << endl;
+        LogInfo("") << "test suite finished" << std::endl;
     }
     
     void setLogLevel(NdnLoggerDetailLevel lvl)
@@ -302,17 +302,17 @@ public:
         
     }
     
-    virtual void NdnSetUp(string &streamAccessPrefix, string &userPrefix);
+    virtual void NdnSetUp(std::string &streamAccessPrefix, std::string &userPrefix);
     virtual void NdnTearDown();
     
-    virtual void onInterest(const shared_ptr<const Name>& prefix,
-                            const shared_ptr<const Interest>& interest,
+    virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
+                            const boost::shared_ptr<const Interest>& interest,
                             ndn::Transport& transport);
-    virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
+    virtual void onRegisterFailed(const boost::shared_ptr<const Name>& prefix);
     
-    virtual void onData(const shared_ptr<const Interest>& interest,
-                        const shared_ptr<Data>& data);
-    virtual void onTimeout(const shared_ptr<const Interest>& interest);
+    virtual void onData(const boost::shared_ptr<const Interest>& interest,
+                        const boost::shared_ptr<Data>& data);
+    virtual void onTimeout(const boost::shared_ptr<const Interest>& interest);
     
 protected:
     bool isFetching_;
@@ -320,22 +320,22 @@ protected:
     unsigned int nReceivedInterests_, nReceivedData_, nReceivedTimeout_;
     
     ndnrtc::ParamsStruct params_;
-    shared_ptr<ndn::Transport> ndnTransport_, ndnReceiverTransport_;
-    shared_ptr<Face> ndnFace_, ndnReceiverFace_;
-    shared_ptr<KeyChain> ndnKeyChain_;
-    shared_ptr<Name> certName_;
+    boost::shared_ptr<ndn::Transport> ndnTransport_, ndnReceiverTransport_;
+    boost::shared_ptr<Face> ndnFace_, ndnReceiverFace_;
+    boost::shared_ptr<KeyChain> ndnKeyChain_;
+    boost::shared_ptr<Name> certName_;
     
     // publishes audio or video data packet under the specified prefix by
     // splitting data into a segments and appending
     //  <frame_number>/<segment_number> to the prefix
     void publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
                             unsigned int frameNo, unsigned int segmentSize,
-                            const string &framePrefix, int freshness,
+                            const std::string &framePrefix, int freshness,
                             bool mixedSendOrder = false);
     
     // publishes data under the prefix
     void publishData(unsigned int dataLen, unsigned char *dataPacket,
-                     const string &prefix, int freshness,
+                     const std::string &prefix, int freshness,
                      int64_t totalSegmentsNum);
     
     void startProcessingNdn();

@@ -16,7 +16,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog::new_api;
-using namespace std;
+using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -166,7 +166,7 @@ ConsumerChannel::onInterest(const shared_ptr<const Name>& prefix,
 }
 
 void
-ConsumerChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+ConsumerChannel::onRegisterFailed(const shared_ptr<const Name>&
                               prefix)
 {
     // empty
@@ -176,20 +176,21 @@ void
 ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
                             const ParamsStruct& newAudioParams)
 {
-    LogInfoC << "producer parameters updated" << endl;
+    LogInfoC << "producer parameters updated" << std::endl;
     
 }
 
 void
 ConsumerChannel::onUpdateFailedWithTimeout()
 {
-    LogWarnC << "service update failed with timeout" << endl;
+    LogWarnC << "service update failed with timeout" << std::endl;
     serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
 }
 
 void
 ConsumerChannel::onUpdateFailedWithError(const char* errMsg)
 {
-    LogErrorC << "service update failed with message: " << string(errMsg) << endl;
+    LogErrorC << "service update failed with message: "
+    << std::string(errMsg) << std::endl;
 }
 

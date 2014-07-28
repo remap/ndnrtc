@@ -19,7 +19,6 @@
 namespace ndnrtc
 {
     using namespace ndn;
-    using namespace ptr_lib;
     
     class NdnRtcUtils {
     public:

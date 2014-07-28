@@ -8,6 +8,8 @@
 //  Authors:  Takahiro Yoneda, Peter Gusev
 //
 
+#ifdef USE_ARC
+
 #include <limits>
 #include <cmath>
 #include <cstring>
@@ -354,7 +356,7 @@ int64_t
 RealTimeAdaptiveRateControl::diffTimestamp (int64_t a, int64_t b)
 {
     int64_t diff;
-    if (a < 0 || b < 0) abort ();
+    if (a < 0 || b < 0) std::abort ();
     if (a >= b) {
         diff = a - b;
     }
@@ -372,7 +374,7 @@ int64_t
 RealTimeAdaptiveRateControl::addTimestamp (int64_t a, int64_t b)
 {
     int64_t diff_a, diff_b;
-    if (a < 0 || b < 0) abort ();
+    if (a < 0 || b < 0) std::abort ();
     
     diff_a = std::numeric_limits<int64_t>::max () - a;
     diff_b = std::numeric_limits<int64_t>::max () - b;
@@ -385,3 +387,4 @@ RealTimeAdaptiveRateControl::addTimestamp (int64_t a, int64_t b)
         return (a + b);
 }
 
+#endif

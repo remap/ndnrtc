@@ -17,7 +17,6 @@ namespace ndnrtc {
     namespace new_api
     {
         using namespace ndn;
-        using namespace ptr_lib;
         
         class RttEstimation;
         
@@ -28,7 +27,7 @@ namespace ndnrtc {
             static const int64_t MinBufferSizeMs;
             
             BufferEstimator():minBufferSizeMs_(MinBufferSizeMs){}
-            BufferEstimator(const shared_ptr<RttEstimation>& rttEstimation,
+            BufferEstimator(const boost::shared_ptr<RttEstimation>& rttEstimation,
                             int64_t minBufferSizeMs = MinBufferSizeMs);
             ~BufferEstimator(){}
             
@@ -36,7 +35,7 @@ namespace ndnrtc {
             setProducerRate(double producerRate) DEPRECATED;
             
             void
-            setRttEstimation(const shared_ptr<RttEstimation>& rttEstimation)
+            setRttEstimation(const boost::shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_ = rttEstimation; }
             
             void
@@ -47,7 +46,7 @@ namespace ndnrtc {
             getTargetSize();
             
         private:
-            shared_ptr<RttEstimation> rttEstimation_;
+            boost::shared_ptr<RttEstimation> rttEstimation_;
             int64_t minBufferSizeMs_;
         };
     }

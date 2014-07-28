@@ -13,7 +13,7 @@
 #include "interest-queue.h"
 #include "consumer.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc::new_api;
 using namespace webrtc;
@@ -132,7 +132,7 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     << entry.getValue() << "\tlifetime: "
     << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
     << queue_.size()
-    << endl;
+    << std::endl;
     
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
     face_->expressInterest(*(entry.interest_),

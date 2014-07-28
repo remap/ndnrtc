@@ -18,8 +18,8 @@ namespace ndnrtc {
         class AudioConsumer : public Consumer {
         public:
             AudioConsumer(const ParamsStruct& params,
-                          const shared_ptr<InterestQueue>& interestQueue,
-                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+                          const boost::shared_ptr<InterestQueue>& interestQueue,
+                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
             ~AudioConsumer();
             
             int
@@ -38,9 +38,9 @@ namespace ndnrtc {
             setLogger(ndnlog::new_api::Logger* logger);
             
         private:
-            shared_ptr<AudioRenderer>
+            boost::shared_ptr<AudioRenderer>
             getRenderer()
-            { return dynamic_pointer_cast<AudioRenderer>(renderer_); }
+            { return boost::dynamic_pointer_cast<AudioRenderer>(renderer_); }
             
         };
     }

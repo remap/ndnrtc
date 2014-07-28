@@ -45,7 +45,7 @@ namespace ndnrtc {
                                                 // the buffer became full during
                                                 // chasing stage
             
-            Pipeliner(const shared_ptr<Consumer>& consumer);
+            Pipeliner(const boost::shared_ptr<Consumer>& consumer);
             ~Pipeliner();
             
             int
@@ -170,7 +170,7 @@ namespace ndnrtc {
             handleChase(const FrameBuffer::Event& event);
             
             void
-            initialDataArrived(const shared_ptr<FrameBuffer::Slot>& slot);
+            initialDataArrived(const boost::shared_ptr<FrameBuffer::Slot>& slot);
             
             void
             handleChasing(const FrameBuffer::Event& event);
@@ -187,10 +187,10 @@ namespace ndnrtc {
             int
             initialize();
             
-            shared_ptr<Interest>
+            boost::shared_ptr<Interest>
             getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
             
-            shared_ptr<Interest>
+            boost::shared_ptr<Interest>
             getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
                                     PacketNumber exclude = -1);
             
@@ -222,7 +222,7 @@ namespace ndnrtc {
             stopChasePipeliner();
             
             void
-            requestMissing(const shared_ptr<FrameBuffer::Slot>& slot,
+            requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
                            int64_t lifetime, int64_t priority,
                            bool wasTimedOut = false);
             

@@ -36,8 +36,8 @@ namespace ndnrtc
         static const double ParityRatio;
         
         // overriden from base class
-        int init(const shared_ptr<FaceProcessor>& faceProcessor,
-                 const shared_ptr<KeyChain>& ndnKeyChain);
+        int init(const boost::shared_ptr<FaceProcessor>& faceProcessor,
+                 const boost::shared_ptr<KeyChain>& ndnKeyChain);
         
         unsigned long int getFrameNo() { return getPacketNo(); }
         unsigned int getEncoderDroppedNum()
@@ -52,18 +52,18 @@ namespace ndnrtc
     private:
         CodecParams codecParams_;
         int keyFrameNo_ = 0, deltaFrameNo_ = 0;
-        shared_ptr<Name> keyFramesPrefix_;
-        shared_ptr<NdnVideoCoder> coder_;
+        boost::shared_ptr<Name> keyFramesPrefix_;
+        boost::shared_ptr<NdnVideoCoder> coder_;
         
-        void onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
+        void onInterest(const boost::shared_ptr<const Name>& prefix,
+                        const boost::shared_ptr<const Interest>& interest,
                         ndn::Transport& transport);
         
         int
         publishParityData(PacketNumber frameNo,
                           const PacketData &packetData,
                           unsigned int nSegments,
-                          const shared_ptr<Name>& framePrefix,
+                          const boost::shared_ptr<Name>& framePrefix,
                           const PrefixMetaInfo& prefixMeta);
         
         // interface conformance

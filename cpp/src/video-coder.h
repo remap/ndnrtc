@@ -59,7 +59,7 @@ namespace ndnrtc {
         // private attributes go here
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;
-        shared_ptr<webrtc::VideoEncoder> encoder_;
+        boost::shared_ptr<webrtc::VideoEncoder> encoder_;
     };
     
     class IEncodedFrameConsumer

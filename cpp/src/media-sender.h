@@ -22,7 +22,6 @@
 namespace ndnrtc
 {
     using namespace ndn;
-    using namespace ptr_lib;
     
     /**
      * This is a base class for sending media packets (video frames or audio
@@ -42,9 +41,9 @@ namespace ndnrtc
         MediaSender(const ParamsStruct &params);
         ~MediaSender();
         
-        virtual int init(const shared_ptr<FaceProcessor>& faceProcessor,
-                         const shared_ptr<KeyChain>& ndnKeyChain,
-                         const shared_ptr<std::string>& packetPrefix);
+        virtual int init(const boost::shared_ptr<FaceProcessor>& faceProcessor,
+                         const boost::shared_ptr<KeyChain>& ndnKeyChain,
+                         const boost::shared_ptr<std::string>& packetPrefix);
         virtual void stop();
         
         unsigned long int getPacketNo() { return packetNo_; }
@@ -61,14 +60,14 @@ namespace ndnrtc
     protected:
         typedef struct _PitEntry {
             int64_t arrivalTimestamp_;
-            shared_ptr<const Interest> interest_;
+            boost::shared_ptr<const Interest> interest_;
         } PitEntry;
         
-        shared_ptr<KeyChain> ndnKeyChain_;
-        shared_ptr<FaceProcessor> faceProcessor_;
-        shared_ptr<Name> certificateName_;
-        shared_ptr<Name> packetPrefix_;
-        shared_ptr<MemoryContentCache> memCache_;
+        boost::shared_ptr<KeyChain> ndnKeyChain_;
+        boost::shared_ptr<FaceProcessor> faceProcessor_;
+        boost::shared_ptr<Name> certificateName_;
+        boost::shared_ptr<Name> packetPrefix_;
+        boost::shared_ptr<MemoryContentCache> memCache_;
         
         PacketNumber packetNo_ = 0; // sequential packet number
         unsigned int segmentSize_, freshnessInterval_;
@@ -96,20 +95,20 @@ namespace ndnrtc
          *          error
          */
         int publishPacket(PacketData &packetData,
-                          shared_ptr<Name> prefix,
+                          boost::shared_ptr<Name> prefix,
                           PacketNumber packetNo,
                           PrefixMetaInfo prefixMeta,
                           double captureTimestamp);
         
         // ndn-cpp callbacks
-        virtual void onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
+        virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
+                        const boost::shared_ptr<const Interest>& interest,
                         ndn::Transport& transport);
         
-        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix);
-        void registerPrefix(const shared_ptr<Name>& prefix);
+        virtual void onRegisterFailed(const boost::shared_ptr<const Name>& prefix);
+        void registerPrefix(const boost::shared_ptr<Name>& prefix);
         
-        void addToPit(const shared_ptr<const Interest>& interest);
+        void addToPit(const boost::shared_ptr<const Interest>& interest);
         int lookupPrefixInPit(const Name &prefix,
                               SegmentData::SegmentMetaInfo &metaInfo);
     };

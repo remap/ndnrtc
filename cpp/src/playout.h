@@ -72,7 +72,7 @@ namespace ndnrtc{
             PacketNumber startPacketNo_;
             
             const Consumer* consumer_;
-            shared_ptr<FrameBuffer> frameBuffer_;
+            boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
             webrtc::ThreadWrapper &playoutThread_;

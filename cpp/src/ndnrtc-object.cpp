@@ -30,7 +30,8 @@ callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 
 NdnRtcObject::NdnRtcObject(const ParamsStruct &params,
                            INdnRtcObjectObserver *observer):
-NdnRtcObject(params)
+params_(params),
+callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 {
   observer_ = observer;
 }

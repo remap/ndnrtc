@@ -29,14 +29,16 @@ if (paramValue)\
 paramSet.setStringParam(paramName, string(paramValue));\
 }
 
-using namespace std;
+using namespace boost;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
-static shared_ptr<NdnSenderChannel> SenderChannel(nullptr);
-static map<string, shared_ptr<ConsumerChannel>> Producers;
+typedef std::map<std::string, shared_ptr<ConsumerChannel> > ProducerMap;
+
+static shared_ptr<NdnSenderChannel> SenderChannel;
+static ProducerMap Producers;
 
 //********************************************************************************
 #pragma mark module loading
@@ -65,7 +67,7 @@ extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
     
     if (Producers.size())
     {
-        map<string, shared_ptr<ConsumerChannel>>::iterator it;
+        ProducerMap::iterator it;
         
         for (it = Producers.begin(); it != Producers.end(); it++)
         {
@@ -175,10 +177,10 @@ int NdnRtcLibrary::getStatistics(const char *producerId,
         SenderChannel->getChannelStatistics(stat.sendStat_);
     }
     
-    if (!producerId || Producers.find(string(producerId)) == Producers.end())
+    if (!producerId || Producers.find(std::string(producerId)) == Producers.end())
         return -1; //notifyObserverWithError("producer was not found");
     
-    shared_ptr<ConsumerChannel> producer = Producers[string(producerId)];
+    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
     
     stat.producerId_ = producerId;
     producer->getChannelStatistics(stat.receiveStat_);
@@ -204,7 +206,7 @@ int NdnRtcLibrary::stopPublishing()
 
 void NdnRtcLibrary::getPublisherPrefix(const char** userPrefix)
 {
-    shared_ptr<string> prefix;
+    shared_ptr<std::string> prefix;
     ParamsStruct p = libParams_;
     p.producerId = publisherId_;
     
@@ -220,7 +222,7 @@ void NdnRtcLibrary::getProducerPrefix(const char* producerId,
     ParamsStruct p  = libParams_;
     p.producerId = producerId;
     
-    shared_ptr<string> prefix;
+    shared_ptr<std::string> prefix;
     prefix = NdnRtcNamespace::getUserPrefix(p);
     
     memcpy((void*)*producerPrefx, prefix->c_str(), prefix->size());
@@ -237,7 +239,7 @@ int NdnRtcLibrary::startFetching(const char *producerId,
     if (strcmp(producerId, "") == 0)
         return notifyObserverWithError("username cannot be empty string");
     
-    if (Producers.find(string(producerId)) != Producers.end())
+    if (Producers.find(std::string(producerId)) != Producers.end())
         return notifyObserverWithError("already fetching");
     
     // setup params
@@ -261,7 +263,7 @@ int NdnRtcLibrary::startFetching(const char *producerId,
         if (RESULT_FAIL(producer->startTransmission()))
             return -1;
         
-        Producers[string(producerId)] = producer;
+        Producers[std::string(producerId)] = producer;
     }
     catch (std::exception &e)
     {
@@ -269,7 +271,7 @@ int NdnRtcLibrary::startFetching(const char *producerId,
                                        e.what());
     }
     
-    shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
+    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
     
     return notifyObserverWithState("fetching",
                                    "fetching from the user %s",
@@ -278,15 +280,15 @@ int NdnRtcLibrary::startFetching(const char *producerId,
 
 int NdnRtcLibrary::stopFetching(const char *producerId)
 {
-    if (Producers.find(string(producerId)) == Producers.end())
+    if (Producers.find(std::string(producerId)) == Producers.end())
         return notifyObserverWithError("fetching from user was not started");
     
-    shared_ptr<ConsumerChannel> producer = Producers[string(producerId)];
+    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
     
     if (producer->stopTransmission() < 0)
         notifyObserverWithError("can't stop fetching");
     
-    string producerKey = string(producerId);
+    std::string producerKey = std::string(producerId);
     
     Producers.erase(producerKey);
     
@@ -336,7 +338,7 @@ int NdnRtcLibrary::startPublishing(const char* username,
         return -1;
     
     SenderChannel = sc;
-    ptr_lib::shared_ptr<string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
     framePrefix = NdnRtcNamespace::getStreamFramePrefix(params, 0);
     notifyObserverWithState("transmitting",
                             "started publishing under the user prefix: %s",

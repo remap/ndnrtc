@@ -47,7 +47,6 @@ namespace ndnrtc {
     
     namespace new_api {
         using namespace ndn;
-        using namespace ptr_lib;
         
         class FrameBuffer;
         class Pipeliner;
@@ -105,8 +104,8 @@ namespace ndnrtc {
             } State;
             
             Consumer(const ParamsStruct& params,
-                     const shared_ptr<InterestQueue>& interestQueue,
-                     const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+                     const boost::shared_ptr<InterestQueue>& interestQueue,
+                     const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
             virtual ~Consumer();
             
             virtual int
@@ -131,15 +130,15 @@ namespace ndnrtc {
             getParameters() const
             { return params_; }
             
-            virtual shared_ptr<FrameBuffer>
+            virtual boost::shared_ptr<FrameBuffer>
             getFrameBuffer() const
             { return frameBuffer_; }
             
-            virtual shared_ptr<Pipeliner>
+            virtual boost::shared_ptr<Pipeliner>
             getPipeliner() const
             { return pipeliner_; }
             
-            virtual shared_ptr<InterestQueue>
+            virtual boost::shared_ptr<InterestQueue>
             getInterestQueue() const
             { return interestQueue_; }
             
@@ -147,39 +146,39 @@ namespace ndnrtc {
             getPacketAssembler()
             { return this; }
             
-            virtual shared_ptr<Playout>
+            virtual boost::shared_ptr<Playout>
             getPacketPlayout() const
             { return playout_; }
             
-            virtual shared_ptr<RttEstimation>
+            virtual boost::shared_ptr<RttEstimation>
             getRttEstimation() const
             { return rttEstimation_; }
             
-            virtual shared_ptr<ChaseEstimation>
+            virtual boost::shared_ptr<ChaseEstimation>
             getChaseEstimation() const
             { return chaseEstimation_; }
             
-            virtual shared_ptr<BufferEstimator>
+            virtual boost::shared_ptr<BufferEstimator>
             getBufferEstimator() const
             { return bufferEstimator_; }
             
-            virtual shared_ptr<RateControl>
+            virtual boost::shared_ptr<RateControl>
             getRateControlModule() const
             { return rateControl_; }
             
             void
-            setRttEstimator(const shared_ptr<RttEstimation>& rttEstimation)
+            setRttEstimator(const boost::shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_= rttEstimation; }
             
             void
-            setInterestQueue(const shared_ptr<InterestQueue>& interestQueue)
+            setInterestQueue(const boost::shared_ptr<InterestQueue>& interestQueue)
             { interestQueue_ = interestQueue; }
             
             void
-            setAvSynchronizer(const shared_ptr<AudioVideoSynchronizer>& avSync)
+            setAvSynchronizer(const boost::shared_ptr<AudioVideoSynchronizer>& avSync)
             { avSync_ = avSync; };
             
-            shared_ptr<AudioVideoSynchronizer>
+            boost::shared_ptr<AudioVideoSynchronizer>
             getAvSynchronizer() const
             { return avSync_; }
             
@@ -229,17 +228,17 @@ namespace ndnrtc {
         protected:
             bool isConsuming_;
             
-            shared_ptr<FrameBuffer> frameBuffer_;
-            shared_ptr<Pipeliner> pipeliner_;
-            shared_ptr<InterestQueue> interestQueue_;
-            shared_ptr<Playout> playout_;
-            shared_ptr<RttEstimation> rttEstimation_;
-            shared_ptr<ChaseEstimation> chaseEstimation_;
-            shared_ptr<BufferEstimator> bufferEstimator_;
-            shared_ptr<IRenderer> renderer_;
-            shared_ptr<AudioVideoSynchronizer> avSync_;
-            shared_ptr<RateControl> rateControl_;
-            shared_ptr<ServiceChannel> serviceChannel_;
+            boost::shared_ptr<FrameBuffer> frameBuffer_;
+            boost::shared_ptr<Pipeliner> pipeliner_;
+            boost::shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<Playout> playout_;
+            boost::shared_ptr<RttEstimation> rttEstimation_;
+            boost::shared_ptr<ChaseEstimation> chaseEstimation_;
+            boost::shared_ptr<BufferEstimator> bufferEstimator_;
+            boost::shared_ptr<IRenderer> renderer_;
+            boost::shared_ptr<AudioVideoSynchronizer> avSync_;
+            boost::shared_ptr<RateControl> rateControl_;
+            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             
@@ -251,9 +250,9 @@ namespace ndnrtc {
             getOnTimeoutHandler()
             { return bind(&Consumer::onTimeout, this, _1); }
             
-            void onData(const shared_ptr<const Interest>& interest,
-                        const shared_ptr<Data>& data);
-            void onTimeout(const shared_ptr<const Interest>& interest);
+            void onData(const boost::shared_ptr<const Interest>& interest,
+                        const boost::shared_ptr<Data>& data);
+            void onTimeout(const boost::shared_ptr<const Interest>& interest);
         };
     }
 }

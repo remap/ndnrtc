@@ -422,7 +422,7 @@ void NdnRtcUtils::resetMeanEstimator(unsigned int estimatorId)
     
     MeanEstimator& estimator = meanEstimators_[estimatorId];
 
-    estimator = {estimator.sampleSize_, 0, estimator.startValue_,
+    estimator = (MeanEstimator){estimator.sampleSize_, 0, estimator.startValue_,
         estimator.startValue_, estimator.startValue_, 0., 0.,
         estimator.startValue_, 0.};
 }

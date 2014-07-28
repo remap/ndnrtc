@@ -13,7 +13,7 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -80,7 +80,7 @@ ndnrtc::new_api::Pipeliner::start()
     unsigned int tid;
     mainThread_.Start(tid);
     
-    LogInfoC << "started" << endl;
+    LogInfoC << "started" << std::endl;
     return RESULT_OK;
 }
 
@@ -95,7 +95,7 @@ ndnrtc::new_api::Pipeliner::stop()
     mainThread_.SetNotAlive();
     mainThread_.Stop();
     
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 
@@ -110,10 +110,10 @@ ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
 {
     CriticalSectionScoped scopedCs(&streamSwitchSync_);
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
     
     deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
@@ -135,19 +135,19 @@ ndnrtc::new_api::Pipeliner::processEvents()
     
     LogDebugC << "Event " << FrameBuffer::Event::toString(event) << " ["
     << (event.slot_.get()?event.slot_->dump():"") << "]"
-    << endl;
+    << std::endl;
     
     switch (event.type_) {
         case FrameBuffer::Event::Error : {
             
-            LogErrorC << "error on buffer events" << endl;
+            LogErrorC << "error on buffer events" << std::endl;
             switchToState(StateInactive);
         }
             break;
         case FrameBuffer::Event::Empty:
         {
             LogWarnC << "no activity in the buffer for " << MaxInterruptionDelay
-            << " milliseconds" << endl;
+            << " milliseconds" << std::endl;
             
         } break;
         case FrameBuffer::Event::FirstSegment:
@@ -159,7 +159,7 @@ ndnrtc::new_api::Pipeliner::processEvents()
                                    event.slot_->getParitySegmentsNumber(),
                                    true);
             
-            consumer_->dumpStat(SYMBOL_AVG_KEY+string("/")+SYMBOL_AVG_DELTA);
+            consumer_->dumpStat(SYMBOL_AVG_KEY+std::string("/")+SYMBOL_AVG_DELTA);
         } // fall through
         default:
         {
@@ -243,7 +243,7 @@ void
 ndnrtc::new_api::Pipeliner::initialDataArrived
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slot)
 {
-    LogTraceC << "initial data: [" << slot->dump() << "]" << endl;
+    LogTraceC << "initial data: [" << slot->dump() << "]" << std::endl;
     
     double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
     startChasePipeliner(slot->getSequentialNumber()+1, 1000./(ChaserRateCoefficient*producerRate));
@@ -289,7 +289,7 @@ ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
         
         LogTraceC << "no stabilization after "
         << bufferSize << "ms has fetched. recycled "
-        << framesForRecycle << " frames" << endl;
+        << framesForRecycle << " frames" << std::endl;
         
         setChasePipelinerPaused(false);
     }
@@ -305,7 +305,9 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     int estimatedSize = frameBuffer_->getEstimatedBufferSize();
     int playableSize = frameBuffer_->getPlayableBufferSize();
     
-    consumer_->dumpStat(SYMBOL_JITTER_TARGET + string("/") + SYMBOL_JITTER_ESTIMATE+string("/")+SYMBOL_JITTER_PLAYABLE);
+    consumer_->dumpStat(SYMBOL_JITTER_TARGET + std::string("/") +
+                        SYMBOL_JITTER_ESTIMATE + std::string("/")+
+                        SYMBOL_JITTER_PLAYABLE);
     
     int nRequested = keepBuffer();
     
@@ -344,7 +346,7 @@ ndnrtc::new_api::Pipeliner::handleValidState
             break;
         case FrameBuffer::Event::Ready:
         {
-            LogStatC << "ready\t" << event.slot_->dump() << endl;
+            LogStatC << "ready\t" << event.slot_->dump() << std::endl;
         }
             break;
         case FrameBuffer::Event::NeedKey:
@@ -385,13 +387,13 @@ ndnrtc::new_api::Pipeliner::initialize()
     bufferEstimator_ = consumer_->getBufferEstimator().get();
     ndnAssembler_ = consumer_->getPacketAssembler();
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0, true);
     
     if (!streamPrefixString.get() || !deltaPrefixString.get() ||
@@ -462,7 +464,7 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
     if (!useKeyNamespace_)
         return;
         
-    LogTraceC << "request key " << keyFrameNo << endl;
+    LogTraceC << "request key " << keyFrameNo << std::endl;
     
     prefetchFrame(keyFramesPrefix_,
                   keyFrameNo++,
@@ -491,14 +493,14 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
 //    LogTraceC
 //    << "express range "
 //    << interest.getName() << ((isParity)?"/parity":"/data")
-//    << "/[" << startNo << ", " << endNo << "]"<< endl;
+//    << "/[" << startNo << ", " << endNo << "]"<< std::endl;
     
-    std::vector<shared_ptr<Interest>> segmentInterests;
+    std::vector<shared_ptr<Interest> > segmentInterests;
     frameBuffer_->interestRangeIssued(interest, startNo, endNo, segmentInterests, isParity);
     
     if (segmentInterests.size())
     {
-        std::vector<shared_ptr<Interest>>::iterator it;
+        std::vector<shared_ptr<Interest> >::iterator it;
         for (it = segmentInterests.begin(); it != segmentInterests.end(); ++it)
         {
             shared_ptr<Interest> interestPtr = *it;
@@ -529,7 +531,7 @@ ndnrtc::new_api::Pipeliner::startChasePipeliner(PacketNumber startPacketNo,
     
     LogTraceC
     << "chaser started from "
-    << startPacketNo << " interval = " << intervalMs << " ms" << endl;
+    << startPacketNo << " interval = " << intervalMs << " ms" << std::endl;
     
     deltaFrameSeqNo_ = startPacketNo;
     pipelineIntervalMs_ = intervalMs;
@@ -557,7 +559,7 @@ ndnrtc::new_api::Pipeliner::stopChasePipeliner()
     pipelinerPauseEvent_.Set();
     pipelineThread_.Stop();
     
-    LogTraceC << "chaser stopped" << endl;
+    LogTraceC << "chaser stopped" << std::endl;
 }
 
 bool
@@ -565,11 +567,11 @@ ndnrtc::new_api::Pipeliner::processPipeline()
 {
     if (isPipelinePaused_)
     {
-        LogTraceC << "chaser paused" << endl;
+        LogTraceC << "chaser paused" << std::endl;
         
         pipelinerPauseEvent_.Wait(WEBRTC_EVENT_INFINITE);
         
-        LogTraceC << "chaser resumed" << endl;
+        LogTraceC << "chaser resumed" << std::endl;
     }
     else
     {
@@ -596,13 +598,13 @@ ndnrtc::new_api::Pipeliner::requestMissing
     // synchronize with buffer
     frameBuffer_->synchronizeAcquire();
     
-    vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>
+    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >
     missingSegments = slot->getMissingSegments();
     
     if (missingSegments.size() == 0)
-        LogTraceC << "no missing segments for " << slot->getPrefix() << endl;
+        LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
     
-    vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>::iterator it;
+    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
     for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
     {
         shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
@@ -650,7 +652,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     
     if (rtx || nspc != FrameBuffer::Slot::Key)
     {
-        interestLifetime = min(playbackDeadline, halfBufferSize);
+        interestLifetime = std::min(playbackDeadline, halfBufferSize);
     }
     else
     { // only key frames
@@ -786,7 +788,7 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     << " ms. Rebuffering " << rebufferingNum_
     << " reconnect " << reconnectNum_
     << " exclusion " << exclusionFilter_
-    << endl;
+    << std::endl;
     
     consumer_->dumpStat(SYMBOL_NREBUFFER);
 }

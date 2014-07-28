@@ -66,7 +66,7 @@ public:
     }
     
     void
-    onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+    onRegisterFailed(const shared_ptr<const Name>& prefix)
     {
         cout << "failed registering " << prefix << endl;
         

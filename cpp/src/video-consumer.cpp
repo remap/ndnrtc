@@ -16,7 +16,7 @@
 #include "rtt-estimation.h"
 #include "video-playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -51,7 +51,8 @@ VideoConsumer::~VideoConsumer()
 int
 VideoConsumer::init()
 {
-    LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;    
+    LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
+    << NdnRtcUtils::unixTimestamp() << std::endl;
 
     if (RESULT_GOOD(Consumer::init()))
     {
@@ -69,13 +70,13 @@ VideoConsumer::init()
         if (RESULT_FAIL(rateControl_->initialize(params_)))
         {
             res = RESULT_ERR;
-            LogErrorC << "failed to initialize rate control" << endl;
+            LogErrorC << "failed to initialize rate control" << std::endl;
         }
         else
         {
             getFrameBuffer()->setRateControl(rateControl_);
 #endif
-            LogInfoC << "initialized" << endl;
+            LogInfoC << "initialized" << std::endl;
 #if 0
         }
 #endif
@@ -92,7 +93,7 @@ VideoConsumer::start()
 #warning error handling!
     Consumer::start();
     
-    LogInfoC << "started" << endl;
+    LogInfoC << "started" << std::endl;
     return RESULT_OK;
 }
 
@@ -102,7 +103,7 @@ VideoConsumer::stop()
 #warning error handling!
     Consumer::stop();
     
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 

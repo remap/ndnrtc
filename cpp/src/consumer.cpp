@@ -16,7 +16,7 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -200,7 +200,7 @@ Consumer::onBufferingEnded()
         playout_->start();
     
     if (!renderer_->isRendering())
-        renderer_->startRendering(string(params_.producerId));
+        renderer_->startRendering(std::string(params_.producerId));
 }
 
 void
@@ -247,7 +247,7 @@ Consumer::dumpStat(const std::string& comment) const
     << SYMBOL_AVG_DELTA << STAT_DIV << stat.segNumDelta_ << STAT_DIV
     << SYMBOL_AVG_KEY << STAT_DIV << stat.segNumKey_ << STAT_DIV
     << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_
-    << endl;
+    << std::endl;
 }
 
 //******************************************************************************
@@ -255,7 +255,7 @@ Consumer::dumpStat(const std::string& comment) const
 void Consumer::onData(const shared_ptr<const Interest>& interest,
             const shared_ptr<Data>& data)
 {
-    LogTraceC << "data " << data->getName() << endl;
+    LogTraceC << "data " << data->getName() << std::endl;
     
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getContent().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);

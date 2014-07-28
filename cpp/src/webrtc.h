@@ -25,7 +25,6 @@
 // video capturing
 #include <modules/video_capture/include/video_capture_defines.h>
 #include <modules/video_capture/include/video_capture.h>
-//#include <modules/video_capture/mac//qtkitvideo_capture.h>
 #include <modules/video_capture/include/video_capture_factory.h>
 #include <common_video/libyuv/include/webrtc_libyuv.h>
 

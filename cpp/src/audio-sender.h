@@ -30,8 +30,8 @@ namespace ndnrtc
         static int getStreamControlPrefix(const ParamsStruct &params,
                                           std::string &prefix);
         
-        int init(const shared_ptr<FaceProcessor>& faceProcessor,
-                 const shared_ptr<KeyChain>& ndnKeyChain);
+        int init(const boost::shared_ptr<FaceProcessor>& faceProcessor,
+                 const boost::shared_ptr<KeyChain>& ndnKeyChain);
         
         unsigned long int getSampleNo() { return getPacketNo(); }
         
@@ -45,7 +45,7 @@ namespace ndnrtc
         
     private:
         unsigned int rtcpPacketNo_;
-        shared_ptr<Name> rtcpPacketPrefix_;
+        boost::shared_ptr<Name> rtcpPacketPrefix_;
         
         int publishRTPAudioPacket(unsigned int len, unsigned char *data);
         int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
@@ -56,7 +56,7 @@ namespace ndnrtc
          * number, specified in packetNo_ variable of the class.
          */
         int publishPacket(PacketData &packetData,
-                          PrefixMetaInfo prefixMeta = {0,0,0});
+                          PrefixMetaInfo prefixMeta = (PrefixMetaInfo){0,0,0});
     };
 }
 

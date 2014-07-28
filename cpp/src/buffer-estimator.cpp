@@ -11,6 +11,7 @@
 #include "buffer-estimator.h"
 #include "rtt-estimation.h"
 
+using namespace boost;
 using namespace ndnrtc::new_api;
 
 // minimal buffer size in milliseconds

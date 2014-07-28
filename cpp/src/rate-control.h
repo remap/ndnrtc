@@ -22,7 +22,7 @@ namespace ndnrtc {
         class RateControl : public ndnlog::new_api::ILoggingObject {
         public:
             
-            RateControl(const shared_ptr<Consumer>& consumer);
+            RateControl(const boost::shared_ptr<Consumer>& consumer);
             ~RateControl(){}
             
             int
@@ -39,18 +39,18 @@ namespace ndnrtc {
                                        StreamEntry** streamArray);
             
             void
-            interestExpressed(const shared_ptr<const Interest>& interest);
+            interestExpressed(const boost::shared_ptr<const Interest>& interest);
             
             void
-            interestTimeout(const shared_ptr<const Interest>& interest);
+            interestTimeout(const boost::shared_ptr<const Interest>& interest);
             
             void
             dataReceived(const ndn::Data& data, unsigned int nRtx);
             
         private:
             unsigned int streamId_ = 0;
-            shared_ptr<Consumer> consumer_;
-            shared_ptr<IRateAdaptationModule> arcModule_;
+            boost::shared_ptr<Consumer> consumer_;
+            boost::shared_ptr<IRateAdaptationModule> arcModule_;
             
             webrtc::ThreadWrapper& arcWatchingThread_;
             webrtc::EventWrapper &arcWatchTimer_;

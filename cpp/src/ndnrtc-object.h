@@ -14,7 +14,7 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
-#include "ndnrtc-observer.h"
+#include "ndnrtc-library.h"
 
 namespace ndnrtc {    
     class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,

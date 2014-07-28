@@ -11,16 +11,17 @@
 #ifndef ndnrtc_realtime_adaptive_rate_control_h
 #define ndnrtc_realtime_adaptive_rate_control_h
 
+#ifdef USE_ARC
+
 #define SSTBL_MAX 10
 #define MIN_RTT_EXPIRE_MS 10000
 #define X_BYTE 1024
 
-/*
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/tag.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index/member.hpp>
-*/
+//#include <boost/multi_index_container.hpp>
+//#include <boost/multi_index/tag.hpp>
+//#include <boost/multi_index/ordered_index.hpp>
+//#include <boost/multi_index/member.hpp>
+
 #include "./rate-adaptation-module.h"
 
 namespace ndnrtc {
@@ -114,5 +115,6 @@ namespace ndnrtc {
         */
     };
 }
+#endif
 
 #endif

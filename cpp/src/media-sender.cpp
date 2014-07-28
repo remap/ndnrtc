@@ -13,7 +13,7 @@
 #include "ndnrtc-utils.h"
 #include "ndnrtc-debug.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;
@@ -56,15 +56,15 @@ MediaSender::~MediaSender()
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const ptr_lib::shared_ptr<FaceProcessor>& faceProcessor,
-                      const ptr_lib::shared_ptr<KeyChain>& ndnKeyChain,
-                      const ptr_lib::shared_ptr<string>& packetPrefix)
+int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
+                      const shared_ptr<KeyChain>& ndnKeyChain,
+                      const shared_ptr<std::string>& packetPrefix)
 {
     faceProcessor_ = faceProcessor;
     ndnKeyChain_ = ndnKeyChain;
     
 #ifndef DEFAULT_KEYCHAIN
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
     certificateName_ =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
 #else
     certificateName_ = shared_ptr<Name>(new Name(ndnKeyChain_->getDefaultCertificateName()));
@@ -164,7 +164,7 @@ int MediaSender::publishPacket(PacketData &packetData,
                 
                 LogTraceC
                 << "added to cache " << segmentName << " "
-                << ndnData.getContent().size() << " bytes" << endl;
+                << ndnData.getContent().size() << " bytes" << std::endl;
             }
             else
             {
@@ -173,7 +173,7 @@ int MediaSender::publishPacket(PacketData &packetData,
                 
                 LogTraceC
                 << "published " << segmentName << " "
-                << ndnData.getContent().size() << " bytes" << endl;
+                << ndnData.getContent().size() << " bytes" << std::endl;
             }
 
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
@@ -254,7 +254,7 @@ void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
                                                                              bind(&MediaSender::onRegisterFailed,
                                                                                   this, _1));
         if (prefixId != 0)
-            LogTraceC << "registered prefix " << *prefix << endl;
+            LogTraceC << "registered prefix " << *prefix << std::endl;
     }
 }
 
@@ -270,10 +270,10 @@ void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
     }
     
     LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << endl;
+    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
-void MediaSender::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+void MediaSender::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
 }
@@ -291,12 +291,12 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
         
         if (pit_.find(name) != pit_.end())
         {
-            LogTraceC << "pit exists " << name << endl;
+            LogTraceC << "pit exists " << name << std::endl;
         }
         else
         {
             pit_[name] = pitEntry;
-            LogTraceC << "new pit entry " << name << " " << pit_.size() << endl;
+            LogTraceC << "new pit entry " << name << " " << pit_.size() << std::endl;
         }
     }
 }
@@ -306,7 +306,7 @@ int MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
 {
     webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
     
-    map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
+    std::map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
     
     // check for rightmost prefixes
     if (pitHit == pit_.end())
@@ -332,13 +332,14 @@ int MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
         
         LogTraceC
         << "pit hit [" << prefix.toUri() << "] -> ["
-        << pendingInterest->getName().toUri() << " (size " << pit_.size() << endl;
+        << pendingInterest->getName().toUri() << " (size "
+        << pit_.size() << std::endl;
         
         return 1;
     }
     else
     {
-        LogTraceC << "no pit entry " << prefix.toUri() << endl;
+        LogTraceC << "no pit entry " << prefix.toUri() << std::endl;
     }
     
     return 0;

@@ -10,12 +10,12 @@
 #include "audio-playout.h"
 #include "pipeliner.h"
 
-using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
+using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -45,7 +45,7 @@ AudioConsumer::init()
         playout_->setLogger(logger_);
         playout_->init(renderer_.get());
         
-        LogInfoC << "initialized" << endl;
+        LogInfoC << "initialized" << std::endl;
         return RESULT_OK;
     }
     
@@ -57,7 +57,7 @@ AudioConsumer::start()
 {
     if (RESULT_GOOD(Consumer::start()))
     {
-        LogInfoC << "started" << endl;
+        LogInfoC << "started" << std::endl;
         return RESULT_OK;
     }
     
@@ -68,7 +68,7 @@ int
 AudioConsumer::stop()
 {
     Consumer::stop();
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 

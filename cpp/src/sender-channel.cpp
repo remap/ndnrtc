@@ -13,7 +13,7 @@
 #define AUDIO_ID 0
 #define VIDEO_ID 1
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace ndnrtc;
@@ -41,7 +41,7 @@ NdnMediaChannel::~NdnMediaChannel()
 int
 NdnMediaChannel::init()
 {
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
     ndnKeyChain_ = NdnRtcNamespace::keyChainForUser(*userPrefix);
     
     videoFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
@@ -100,11 +100,11 @@ NdnMediaChannel::onInterest(const shared_ptr<const Name>& prefix,
                                  const shared_ptr<const Interest>& interest,
                                  ndn::Transport& transport)
 {
-    LogInfoC << "incoming interest "<< interest->getName() << endl;
+    LogInfoC << "incoming interest "<< interest->getName() << std::endl;
 }
 
 void
-NdnMediaChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+NdnMediaChannel::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
     notifyError(RESULT_ERR, "failed to register prefix %s", prefix->toUri().c_str());
 }
@@ -203,8 +203,10 @@ NdnSenderChannel::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
 int
 NdnSenderChannel::init()
 {
-    LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;
-    LogInfoC << "starting initialization " << endl;
+    LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
+    << NdnRtcUtils::unixTimestamp() << std::endl;
+    
+    LogInfoC << "starting initialization " << std::endl;
     
     int res = NdnMediaChannel::init();
     
@@ -261,7 +263,7 @@ NdnSenderChannel::init()
     LogInfoC
     << "publishing initialized with video: "
     << ((videoInitialized_)?"yes":"no")
-    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << std::endl;
     
     serviceFaceProcessor_ = FaceProcessor::createFaceProcessor(params_);
     registerSessionInfoPrefix();
@@ -272,7 +274,7 @@ NdnSenderChannel::init()
 int
 NdnSenderChannel::startTransmission()
 {
-    LogInfoC << "starting publishing" << endl;
+    LogInfoC << "starting publishing" << std::endl;
     
     int res = NdnMediaChannel::startTransmission();
     
@@ -313,7 +315,7 @@ NdnSenderChannel::startTransmission()
     LogInfoC
     << "publishing started with video: "
     << ((videoInitialized_)?"yes":"no")
-    << ", audio: " << ((audioInitialized_)?"yes":"no") << endl;
+    << ", audio: " << ((audioInitialized_)?"yes":"no") << std::endl;
     
     return (audioTransmitting_&&videoTransmitting_)?RESULT_OK:RESULT_WARN;
 }
@@ -321,7 +323,7 @@ NdnSenderChannel::startTransmission()
 int
 NdnSenderChannel::stopTransmission()
 {
-    LogInfoC << "stopping publishing" << endl;
+    LogInfoC << "stopping publishing" << std::endl;
     
     int res = NdnMediaChannel::stopTransmission();
     
@@ -356,7 +358,7 @@ NdnSenderChannel::stopTransmission()
             audioSenders_[i]->stop();
     }
     
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     
     isTransmitting_ = false;
     return RESULT_OK;
@@ -382,7 +384,7 @@ NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
     << "fnum" << STAT_DIV << stat.videoStat_.lastFrameNo_ << STAT_DIV
     << "enc" << STAT_DIV << stat.videoStat_.encodingRate_ << STAT_DIV
     << "drop" << STAT_DIV << stat.videoStat_.nDroppedByEncoder_
-    << endl;
+    << std::endl;
 }
 
 void
@@ -432,7 +434,7 @@ NdnSenderChannel::process()
 void
 NdnSenderChannel::publishSessionInfo(ndn::Transport& transport)
 {
-    LogInfoC << "session info requested" << endl;
+    LogInfoC << "session info requested" << std::endl;
     
     // update params info
     for (int i = 0; i < params_.nStreams; i++)
@@ -448,7 +450,7 @@ NdnSenderChannel::publishSessionInfo(ndn::Transport& transport)
     ndnData.getMetaInfo().setFreshnessPeriod(params_.freshness*1000);
     ndnData.setContent(sessionInfo.getData(), sessionInfo.getLength());
     
-    shared_ptr<string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
+    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
     shared_ptr<Name> certificateName =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
     ndnKeyChain_->sign(ndnData, *certificateName);
     
@@ -487,8 +489,8 @@ NdnSenderChannel::onInterest(const shared_ptr<const Name>& prefix,
 }
 
 void
-NdnSenderChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+NdnSenderChannel::onRegisterFailed(const shared_ptr<const Name>&
                                    prefix)
 {
-    LogErrorC << "registration failed " << prefix << endl;
+    LogErrorC << "registration failed " << prefix << std::endl;
 }

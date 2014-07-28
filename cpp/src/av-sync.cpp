@@ -13,7 +13,7 @@ using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
-using namespace std;
+using namespace boost;
 
 #define SYNC_INIT(name) ({*CriticalSectionWrapper::CreateCriticalSection(), \
 name, -1, -1, -1, -1, -1, -1})
@@ -144,7 +144,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         //
         int pairedD = pairedSyncData.lastPacketTsRemote_ - pairedSyncData.lastPacketTsLocal_;
         LogTraceC << syncData.name_
-        << " pairedD is " << pairedD << endl;
+        << " pairedD is " << pairedD << std::endl;
         
         // 2. calculate hit time in remote's timeline of the paired stream
         //
@@ -159,7 +159,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         
         int64_t hitTimeRemotePaired = hitTime + pairedD;
         LogTraceC << syncData.name_
-        << " hit remote is " << hitTimeRemotePaired << endl;
+        << " hit remote is " << hitTimeRemotePaired << std::endl;
         
         // 3. calculate drift by comparing remote times of the current stream
         // and hit time of the paired stream
@@ -180,7 +180,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         
         
         LogTraceC << syncData.name_
-        << " drift is " << drift << endl;
+        << " drift is " << drift << std::endl;
         
         // do not allow drift greater than jitter buffer size
         if ((drift > 0 && drift < TolerableLeadingDriftMs) ||
@@ -200,14 +200,14 @@ void AudioVideoSynchronizer::onRebuffer(Consumer *consumer)
     if (audioSyncData_.consumer_ == consumer)
     {
         LogTraceC << "audio channel encountered rebuffer. "
-        "triggering video for rebuffering..." << endl;
+        "triggering video for rebuffering..." << std::endl;
         
         videoSyncData_.consumer_->triggerRebuffering();
     }
     else
     {
         LogTraceC << "video channel encountered rebuffer. "
-              "triggering audio for rebuffering..." << endl;
+        "triggering audio for rebuffering..." << std::endl;
         
         audioSyncData_.consumer_->triggerRebuffering();
     }
@@ -219,7 +219,7 @@ void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
                                         int64_t localTimestamp,
                                         Consumer *consumer)
 {
-    LogTraceC << "initalize " << syncData.name_ << endl;
+    LogTraceC << "initalize " << syncData.name_ << std::endl;
     
     syncData.initialized_ = true;
     initialized_ = audioSyncData_.initialized_ && videoSyncData_.initialized_;

@@ -40,7 +40,7 @@ namespace ndnrtc {
         CodecParams codecParams_;
         IRawFrameConsumer *frameConsumer_;
         webrtc::VideoCodec codec_;
-        shared_ptr<webrtc::VideoDecoder> decoder_;
+        boost::shared_ptr<webrtc::VideoDecoder> decoder_;
         double capturedTimestamp_ = 0;
     };
 }

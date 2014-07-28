@@ -44,7 +44,7 @@ namespace ndnrtc {
             static unsigned int DefaultUpdateIntervalMs;
             
             ServiceChannel(IServiceChannelCallback* callback,
-                           shared_ptr<InterestQueue> interestQueue,
+                           boost::shared_ptr<InterestQueue> interestQueue,
                            unsigned int updateIntervalMs = DefaultUpdateIntervalMs);
             virtual ~ServiceChannel(){}
             
@@ -58,7 +58,7 @@ namespace ndnrtc {
             bool isMonitoring_;
             unsigned int updateCounter_, updateIntervalMs_;
             IServiceChannelCallback *callback_;
-            shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<InterestQueue> interestQueue_;
             
             ParamsStruct videoParams_, audioParams_;
             Name sessionInfoPrefix_;
@@ -83,10 +83,10 @@ namespace ndnrtc {
             requestSessionInfo();
             
             void
-            onData(const shared_ptr<const Interest>& interest,
-                   const shared_ptr<Data>& data);
+            onData(const boost::shared_ptr<const Interest>& interest,
+                   const boost::shared_ptr<Data>& data);
             void
-            onTimeout(const shared_ptr<const Interest>& interest);
+            onTimeout(const boost::shared_ptr<const Interest>& interest);
             
             void
             updateParametersFromInfo(const SessionInfo& sessionInfo);

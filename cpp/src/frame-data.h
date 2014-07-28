@@ -84,7 +84,7 @@ namespace ndnrtc {
         
         SegmentData(){}
         SegmentData(const unsigned char *segmentData, const unsigned int dataSize,
-                    SegmentMetaInfo metadata = {0,0,0});
+                    SegmentMetaInfo metadata = (SegmentMetaInfo){0,0,0});
         
         SegmentMetaInfo
         getMetadata() { return ((SegmentHeader*)(&data_[0]))->metaInfo_; }
@@ -255,6 +255,10 @@ namespace ndnrtc {
         webrtc::EncodedImage frame_;
         unsigned int segmentSize_;
         
+        void
+        initialize(const webrtc::EncodedImage &frame,
+                   unsigned int segmentSize);
+        
         FrameDataHeader
         getHeader()
         {
@@ -311,6 +315,9 @@ namespace ndnrtc {
         } __attribute__((packed));;
         
         AudioPacket packet_;
+        
+        void
+        initialize(AudioPacket &packet);
         
         AudioDataHeader
         getHeader()

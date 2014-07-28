@@ -15,7 +15,7 @@
 #include "pipeliner.h"
 #include "rtt-estimation.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
@@ -32,7 +32,10 @@ int
 RateControl::initialize(const ParamsStruct& params)
 {
     int res = RESULT_OK;
+
+#ifdef USE_ARC
     arcModule_.reset(new RealTimeAdaptiveRateControl());
+#endif
     
     StreamEntry *streamsArray = nullptr;
     streamArrayForArcModule(params, &streamsArray);
@@ -40,7 +43,7 @@ RateControl::initialize(const ParamsStruct& params)
     if (arcModule_->initialize(CodecModeNormal, params.nStreams, streamsArray) < 0)
     {
         res = RESULT_ERR;
-        LogErrorC << "couldn't initialize ARC module" << endl;
+        LogErrorC << "couldn't initialize ARC module" << std::endl;
     }
     
     free(streamsArray);
@@ -52,7 +55,7 @@ void
 RateControl::start()
 {
     LogDebugC
-    << "arc thread started" << endl;
+    << "arc thread started" << std::endl;
     
     consumer_->getPipeliner()->switchToStream(streamId_);
     
@@ -64,7 +67,7 @@ void
 RateControl::stop()
 {
     LogDebugC
-    << "arc thread stopped" << endl;
+    << "arc thread stopped" << std::endl;
     
     arcWatchTimer_.StopTimer();
     arcWatchTimer_.Set();
@@ -125,7 +128,7 @@ RateControl::checkArcStatus()
     if (streamId_ != streamId && streamId < consumer_->getParameters().nStreams)
     {
         LogTrace("arc.log") << "switching "
-        << streamId_ << " -> " << streamId << endl;
+        << streamId_ << " -> " << streamId << std::endl;
         
         streamId_ = streamId;
         consumer_->getPipeliner()->switchToStream(streamId_);
@@ -133,7 +136,7 @@ RateControl::checkArcStatus()
     
     LogTrace("arc.log") << STAT_DIV
     << "interest rate " << STAT_DIV << interestRate << STAT_DIV
-    << "stream id" << STAT_DIV << streamId << endl;
+    << "stream id" << STAT_DIV << streamId << std::endl;
     
     arcWatchTimer_.StartTimer(false, 50);
     arcWatchTimer_.Wait(WEBRTC_EVENT_INFINITE);

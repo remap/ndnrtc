@@ -41,11 +41,11 @@ namespace ndnrtc
         bool isTransmittingVideo() { return isTransmitting_ && videoInitialized_; }
         
         // ndn-cpp callbacks
-        virtual void onInterest(const shared_ptr<const Name>& prefix,
-                                const shared_ptr<const Interest>& interest,
+        virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
+                                const boost::shared_ptr<const Interest>& interest,
                                 ndn::Transport& transport);
         
-        virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+        virtual void onRegisterFailed(const boost::shared_ptr<const Name>&
                                       prefix);
         
     protected:
@@ -53,8 +53,8 @@ namespace ndnrtc
         bool videoInitialized_ = false, audioInitialized_ = false;
         bool videoTransmitting_ = false, audioTransmitting_ = false;
         bool isInitialized_ = false, isTransmitting_ = false;
-        shared_ptr<FaceProcessor> videoFaceProcessor_, audioFaceProcessor_;
-        shared_ptr<KeyChain> ndnKeyChain_;
+        boost::shared_ptr<FaceProcessor> videoFaceProcessor_, audioFaceProcessor_;
+        boost::shared_ptr<KeyChain> ndnKeyChain_;
     };
     
     class NdnSenderChannel : public NdnMediaChannel,
@@ -97,12 +97,12 @@ namespace ndnrtc
     private:
         unsigned int frameFreqMeter_;
         
-        shared_ptr<CameraCapturer> cameraCapturer_;
-        shared_ptr<IVideoRenderer> localRender_;
-        std::vector<shared_ptr<NdnVideoSender>> videoSenders_;
+        boost::shared_ptr<CameraCapturer> cameraCapturer_;
+        boost::shared_ptr<IVideoRenderer> localRender_;
+        std::vector<boost::shared_ptr<NdnVideoSender> > videoSenders_;
         
-        shared_ptr<new_api::AudioCapturer> audioCapturer_;
-        std::vector<shared_ptr<NdnAudioSender>> audioSenders_;
+        boost::shared_ptr<new_api::AudioCapturer> audioCapturer_;
+        std::vector<boost::shared_ptr<NdnAudioSender> > audioSenders_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &processThread_;
@@ -110,7 +110,7 @@ namespace ndnrtc
         webrtc::I420VideoFrame deliverFrame_;
         double deliveredTimestamp_;
         
-        shared_ptr<FaceProcessor> serviceFaceProcessor_;
+        boost::shared_ptr<FaceProcessor> serviceFaceProcessor_;
         
         // static methods
         static bool
@@ -124,12 +124,12 @@ namespace ndnrtc
         
         // this should reply only to session info interests
         void
-        onInterest(const shared_ptr<const Name>& prefix,
-                   const shared_ptr<const Interest>& interest,
+        onInterest(const boost::shared_ptr<const Name>& prefix,
+                   const boost::shared_ptr<const Interest>& interest,
                    ndn::Transport& transport);
         
         void
-        onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+        onRegisterFailed(const boost::shared_ptr<const Name>&
                               prefix);
         
         void

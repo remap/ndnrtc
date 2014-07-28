@@ -15,7 +15,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace webrtc;
-using namespace std;
+using namespace boost;
 
 unsigned int ServiceChannel::DefaultUpdateIntervalMs = 1000; // 1 sec
 

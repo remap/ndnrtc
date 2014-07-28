@@ -25,8 +25,8 @@ namespace ndnrtc {
         public:
             ConsumerChannel(const ParamsStruct& params,
                             const ParamsStruct& audioParams,
-                            IExternalRenderer* const videoRenderer = nullptr,
-                            const shared_ptr<FaceProcessor>& faceProcessor = shared_ptr<FaceProcessor>(nullptr));
+                            IExternalRenderer* const videoRenderer = 0,
+                            const boost::shared_ptr<FaceProcessor>& faceProcessor = boost::shared_ptr<FaceProcessor>());
             virtual ~ConsumerChannel(){ }
             
             int init();
@@ -45,19 +45,19 @@ namespace ndnrtc {
         protected:
             bool isOwnFace_;
             ParamsStruct audioParams_;
-            shared_ptr<VideoConsumer> videoConsumer_;
-            shared_ptr<AudioConsumer> audioConsumer_;
-            shared_ptr<RttEstimation> rttEstimation_;
-            shared_ptr<FaceProcessor> faceProcessor_;
-            shared_ptr<InterestQueue> interestQueue_;
-            shared_ptr<ServiceChannel> serviceChannel_;
+            boost::shared_ptr<VideoConsumer> videoConsumer_;
+            boost::shared_ptr<AudioConsumer> audioConsumer_;
+            boost::shared_ptr<RttEstimation> rttEstimation_;
+            boost::shared_ptr<FaceProcessor> faceProcessor_;
+            boost::shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             // ndn-cpp callbacks
-            virtual void onInterest(const shared_ptr<const Name>& prefix,
-                                    const shared_ptr<const Interest>& interest,
+            virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
+                                    const boost::shared_ptr<const Interest>& interest,
                                     Transport& transport);
             
-            virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+            virtual void onRegisterFailed(const boost::shared_ptr<const Name>&
                                           prefix);
             
             // IServiceChannel interface

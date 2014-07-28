@@ -12,7 +12,7 @@
 #define __ndnrtc__frame_buffer__
 
 #include <set>
-#include <tr1/unordered_set>
+#include <boost/unordered_set.hpp>
 
 #include "frame-data.h"
 #include "ndnrtc-common.h"
@@ -435,15 +435,15 @@ namespace ndnrtc
                     return RESULT_ERR;
                 }
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getMissingSegments()
                 { return getSegments(Segment::StateMissing); }
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getPendingSegments()
                 { return getSegments(Segment::StatePending); }
 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getFetchedSegments()
                 { return getSegments(Segment::StateFetched); }
                 
@@ -464,10 +464,10 @@ namespace ndnrtc
                 void
                 setPrefix(const Name& prefix);
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 getSegment(SegmentNumber segNo, bool isParity) const;
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 getRecentSegment() const { return recentSegment_; }
                 
                 bool
@@ -555,14 +555,14 @@ namespace ndnrtc
                 nSegmentsMissing_ = 0, nSegmentsTotal_ = 0,
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
                 
-                shared_ptr<Segment> rightmostSegment_, recentSegment_;
-                std::vector<shared_ptr<Segment>> freeSegments_;
-                std::map<SegmentNumber, shared_ptr<Segment>> activeSegments_;
+                boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
+                std::vector<boost::shared_ptr<Segment> > freeSegments_;
+                std::map<SegmentNumber, boost::shared_ptr<Segment> > activeSegments_;
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 prepareFreeSegment(SegmentNumber segNo, bool isParity);
                 
-                shared_ptr<Segment>&
+                boost::shared_ptr<Segment>&
                 getActiveSegment(SegmentNumber segmentNumber, bool isParity);
                 
                 void
@@ -588,7 +588,7 @@ namespace ndnrtc
                                   SegmentNumber segmentNumber,
                                   bool isParity);
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getSegments(int segmentStateMask);
                 
                 void
@@ -660,10 +660,10 @@ namespace ndnrtc
                 }
                 
                 EventType type_; // type of the event occurred
-                shared_ptr<Slot> slot_;     // corresponding slot pointer
+                boost::shared_ptr<Slot> slot_;     // corresponding slot pointer
             }; // Event
             
-            FrameBuffer(const shared_ptr<const Consumer> &consumer);
+            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();
             
             int init();
@@ -744,7 +744,7 @@ namespace ndnrtc
             interestRangeIssued(const Interest &packetInterest,
                                 SegmentNumber startSegmentNo,
                                 SegmentNumber endSegmentNo,
-                                std::vector<shared_ptr<Interest>> &segmentInterests,
+                                std::vector<boost::shared_ptr<Interest> > &segmentInterests,
                                 bool isParity);
             
             /**
@@ -882,7 +882,7 @@ namespace ndnrtc
             getStatistics(ReceiverChannelPerformance& stat);
             
             void
-            setRateControl(const shared_ptr<RateControl>& rateControl)
+            setRateControl(const boost::shared_ptr<RateControl>& rateControl)
             { rateControl_ = rateControl; }
             
         protected:
@@ -891,8 +891,8 @@ namespace ndnrtc
             // - each elements is a shared_ptr for the slot in activeSlots_ map
             // - std::vector is used as a container
             // - PlaybackComparator is used for ordering slots in playback order
-            //            typedef std::priority_queue<shared_ptr<FrameBuffer::Slot>,
-            //            std::vector<shared_ptr<FrameBuffer::Slot>>,
+            //            typedef std::priority_queue<boost::shared_ptr<FrameBuffer::Slot>,
+            //            std::vector<boost::shared_ptr<FrameBuffer::Slot>>,
             //            FrameBuffer::Slot::PlaybackComparator>
             typedef
             std::vector<ndnrtc::new_api::FrameBuffer::Slot*>
@@ -960,14 +960,14 @@ namespace ndnrtc
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
             bool skipFrame_ = false;
-            shared_ptr<Slot> playbackSlot_;
+            boost::shared_ptr<Slot> playbackSlot_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
             
-            std::vector<shared_ptr<Slot>> freeSlots_;
-            std::map<Name, shared_ptr<Slot>> activeSlots_;
+            std::vector<boost::shared_ptr<Slot> > freeSlots_;
+            std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
             PlaybackQueue playbackQueue_;
             
             webrtc::CriticalSectionWrapper &syncCs_;
@@ -978,14 +978,14 @@ namespace ndnrtc
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             
-            shared_ptr<RateControl> rateControl_;
+            boost::shared_ptr<RateControl> rateControl_;
             
-            shared_ptr<Slot>
+            boost::shared_ptr<Slot>
             getSlot(const Name& prefix, bool remove = false,
                     bool shouldMatch = true);
             
             int
-            setSlot(const Name& prefix, shared_ptr<Slot>& slot);
+            setSlot(const Name& prefix, boost::shared_ptr<Slot>& slot);
             
             /**
              * Frees slot for specified name prefix
@@ -997,7 +997,7 @@ namespace ndnrtc
             Slot::State
             freeSlot(const Name &prefix);
             
-            std::vector<shared_ptr<Slot>>
+            std::vector<boost::shared_ptr<Slot> >
             getSlots(int slotStateMask);
             
             /**
@@ -1013,7 +1013,7 @@ namespace ndnrtc
             getLookupPrefix(const Name& prefix, Name& lookupPrefix);
             
             void
-            addBufferEvent(Event::EventType type, const shared_ptr<Slot>& slot);
+            addBufferEvent(Event::EventType type, const boost::shared_ptr<Slot>& slot);
             
             void
             addStateChangedEvent(State newState);
@@ -1021,7 +1021,7 @@ namespace ndnrtc
             void
             initialize();
             
-            shared_ptr<Slot>
+            boost::shared_ptr<Slot>
             reserveSlot(const Interest &interest);
             
             void

@@ -238,34 +238,13 @@ PacketData(length, rawData)
 NdnFrameData::NdnFrameData(const EncodedImage &frame,
                            unsigned int segmentSize)
 {
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
-    
-    length_ = frame._length+headerSize;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(allocSize);
-    memset(data_, 0, allocSize);
-    
-    // copy frame data with offset of header
-    memcpy(data_+headerSize, frame._buffer, frame._length);
-    
-    // setup header
-    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
-    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
-    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
-    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
-    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
-    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
-    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
-    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
-    
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+    initialize(frame, segmentSize);
 }
 
 NdnFrameData::NdnFrameData(const EncodedImage &frame, unsigned int segmentSize,
-                           PacketMetadata &metadata):
-NdnFrameData(frame, segmentSize)
+                           PacketMetadata &metadata)
 {
+    initialize(frame, segmentSize);
     ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
 
@@ -342,6 +321,33 @@ NdnFrameData::metadataFromRaw(unsigned int length, const unsigned char *data)
 
 //******************************************************************************
 #pragma mark - private
+void
+NdnFrameData::initialize(const webrtc::EncodedImage &frame, unsigned int segmentSize)
+{
+    unsigned int headerSize = sizeof(FrameDataHeader);
+    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
+    
+    length_ = frame._length+headerSize;
+    isDataCopied_ = true;
+    data_ = (unsigned char*)malloc(allocSize);
+    memset(data_, 0, allocSize);
+    
+    // copy frame data with offset of header
+    memcpy(data_+headerSize, frame._buffer, frame._length);
+    
+    // setup header
+    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
+    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
+    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
+    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
+    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
+    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
+    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+    
+    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+}
+
 int
 NdnFrameData::initFromRawData(unsigned int dataLength,
                               const unsigned char *rawData)
@@ -388,25 +394,12 @@ PacketData(dataLength, rawData)
 
 NdnAudioData::NdnAudioData(AudioPacket &packet)
 {
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    
-    length_ = packet.length_+headerSize;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(length_);
-    
-    memcpy(data_+headerSize, packet.data_, packet.length_);
-    
-    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
-    ((AudioDataHeader*)(&data_[0]))->metadata_ = {0., 0};
-    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
-    
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+    initialize(packet);
 }
 
-NdnAudioData::NdnAudioData(AudioPacket &packet, PacketMetadata &metadata):
-NdnAudioData(packet)
+NdnAudioData::NdnAudioData(AudioPacket &packet, PacketMetadata &metadata)
 {
+    initialize(packet);
     ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
 
@@ -472,6 +465,27 @@ NdnAudioData::metadataFromRaw(unsigned int length, const unsigned char *data)
 
 //******************************************************************************
 #pragma mark - private
+void
+NdnAudioData::initialize(AudioPacket &packet)
+{
+    unsigned int headerSize = sizeof(AudioDataHeader);
+    
+    length_ = packet.length_+headerSize;
+    isDataCopied_ = true;
+    data_ = (unsigned char*)malloc(length_);
+    
+    memcpy(data_+headerSize, packet.data_, packet.length_);
+    
+    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
+    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.packetRate_ = 0.;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.timestamp_ = 0;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.unixTimestamp_ = 0;
+    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
+    
+    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+}
+
 int
 NdnAudioData::initFromRawData(unsigned int dataLength,
                               const unsigned char *rawData)
