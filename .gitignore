@@ -48,6 +48,7 @@ cpp/m4/ltversion.m4
 cpp/m4/lt~obsolete.m4
 
 #Other
-cpp/resources
+cpp/resources/*.yuv
+cpp/resources/*.pcmu
 docs
 test_app/suite
