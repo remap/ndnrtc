@@ -1,0 +1,67 @@
+# remap node (lioncub)
+# http://131.179.141.18:6363/
+#131.179.141.18	ndn.lioncub
+
+# aleph 
+# http://aleph.ndn.ucla.edu:6363/
+#128.97.98.7	ndn.aleph
+
+# UCI
+# http://ndnhub.ics.uci.edu:6363/
+#128.195.4.36	ndn.uci
+
+# caida (CAIDA/UCSD)
+# http://click.caida.org:6363/
+#192.172.226.248	ndn.caida
+
+# spurs (UCLA)
+# http://spurs.cs.ucla.edu:6363/
+#131.179.196.46	ndn.spurs
+
+# arizona node (UA)
+# http://hobo.cs.arizona.edu:6363/
+#128.196.203.36	ndn.arizona
+
+# colorado node (CSU)
+# http://mccoy.netsec.colostate.edu:6363/
+#129.82.138.48	ndn.colorado
+
+# washington (WashU)
+# http://wundngw.arl.wustl.edu:6363/
+#128.252.153.194	ndn.wash
+
+# memphis (UM)
+# http://titan.cs.memphis.edu:6363/
+#141.225.11.173	ndn.memphis
+
+# illinois (UIUC)
+# http://tarekb17.cs.uiuc.edu:6363/
+#128.174.239.4	ndn.illinois
+
+# michigan node (MICH)
+# http://ndn0.eecs.umich.edu:6363/
+#141.212.108.18	ndn.michigan
+
+# north pole (NEU)
+# http://129.10.52.193:6363/
+#129.10.52.193	ndn.northpole
+
+# beijing node (PKU)
+# http://162.105.146.26:6363/
+#162.105.146.26	ndn.beijing
+
+# beijing node (BUPT)
+# http://114.247.165.44/
+#114.247.165.44	ndn.bupt
+
+# tongji node (TONGJI)
+# http://202.120.188.176:6363/
+#202.120.188.176	ndn.tongji
+
+#france node - lip6
+# http://132.227.62.163:6363/
+#132.227.62.163	ndn.lip6
+
+#france node - orange
+# http://161.105.194.154:6363/
+#161.105.194.154	ndn.orange
