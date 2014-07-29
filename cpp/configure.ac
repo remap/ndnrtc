@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT([NDN-RTC], [0.9.alpha3], [peter@remap.ucla.edu], [ndnrtc], [https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC], [0.9.alpha4], [peter@remap.ucla.edu], [ndnrtc], [https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -169,6 +169,9 @@ esac
 
 # check for compiler flags
 AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS -stdlib=libstdc++"])
+
+# check for linker flags
+AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS -stdlib=libstdc++"])
 
 # create links for demo script
 AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])

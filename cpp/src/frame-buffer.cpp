@@ -1283,7 +1283,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     int64_t targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
                     setTargetSize(targetBufferSize);
                     
-                    consumer_->dumpStat(SYMBOL_RTT_EST+std::string("/")+SYMBOL_JITTER_TARGET);
+//                    consumer_->dumpStat(SYMBOL_RTT_EST+std::string("/")+SYMBOL_JITTER_TARGET);
                 }
 
                 if (rateControl_.get())
@@ -1485,7 +1485,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
         CriticalSectionScoped scopedCs(&syncCs_);
         estimateBufferSize();
         isEstimationNeeded_ = false;
-        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
+//        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
     }
 
     return estimatedSizeMs_;
@@ -1539,7 +1539,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             {
                 nIncomplete_++;
                 LogDebugC << "incomplete [" << slot->dump() << "]" << std::endl;
-                consumer_->dumpStat(SYMBOL_NINCOMPLETE);
+//                consumer_->dumpStat(SYMBOL_NINCOMPLETE);
 //                LogStatC
 //                << "\tincomplete\t" << nIncomplete_  << "\t"
 //                << (isKey?"K":"D") << "\t"
@@ -1554,7 +1554,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                         LogDebugC << "recovered [" << slot->dump() << "]" << std::endl;
                         assembledLevel = 1.;
                         nRecovered_++;
-                        consumer_->dumpStat(SYMBOL_NRECOVERED);
+//                        consumer_->dumpStat(SYMBOL_NRECOVERED);
                     }
                 }
             }

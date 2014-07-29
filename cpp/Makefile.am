@@ -60,14 +60,14 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 
 if OS_DARWIN
   libndnrtc_la_OBJCFLAGS = -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
+  libndnrtc_la_LIBADD = src/objc/libcocoa-renderer.a  
 endif
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\" -stdlib=libc++
-libndnrtc_la_LDFLAGS = -stdlib=libc++ -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@
-libndnrtc_la_LIBADD = src/objc/libcocoa-renderer.a
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@
 
 .mm.o :
-	$(OBJCXX) -x objective-c++ -c @DEFS@ $(ndnrtc_demo_CPPFLAGS) $< -o $@
+	$(OBJCXX) -x objective-c++ -c @DEFS@ $(CPPFLAGS) $(ndnrtc_demo_CPPFLAGS) $< -o $@
 
 if OS_DARWIN
   EXTRA_PROGRAMS = ndnrtc-demo
@@ -76,7 +76,7 @@ if OS_DARWIN
     demoapp/renderer-stub.cc demoapp/renderer-stub.h \
     demoapp/view.cc demoapp/view.h \
     src/simple-log.cpp include/simple-log.h
-  ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@ -stdlib=libstdc++
-  ndnrtc_demo_LDFLAGS = -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa -stdlib=libstdc++
+  ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
+  ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa
   noinst_SCRIPTS = demoapp/rundemo.sh resources/ndnrtc.cfg
 endif

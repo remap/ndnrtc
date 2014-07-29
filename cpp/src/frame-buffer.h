@@ -1032,7 +1032,7 @@ namespace ndnrtc
                 {
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
-                    consumer_->dumpStat(SYMBOL_PRODUCER_RATE);
+//                    consumer_->dumpStat(SYMBOL_PRODUCER_RATE);
                 }
             }
             

@@ -159,7 +159,7 @@ ndnrtc::new_api::Pipeliner::processEvents()
                                    event.slot_->getParitySegmentsNumber(),
                                    true);
             
-            consumer_->dumpStat(SYMBOL_AVG_KEY+std::string("/")+SYMBOL_AVG_DELTA);
+//            consumer_->dumpStat(SYMBOL_AVG_KEY+std::string("/")+SYMBOL_AVG_DELTA);
         } // fall through
         default:
         {
@@ -305,9 +305,9 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     int estimatedSize = frameBuffer_->getEstimatedBufferSize();
     int playableSize = frameBuffer_->getPlayableBufferSize();
     
-    consumer_->dumpStat(SYMBOL_JITTER_TARGET + std::string("/") +
-                        SYMBOL_JITTER_ESTIMATE + std::string("/")+
-                        SYMBOL_JITTER_PLAYABLE);
+//    consumer_->dumpStat(SYMBOL_JITTER_TARGET + std::string("/") +
+//                        SYMBOL_JITTER_ESTIMATE + std::string("/")+
+//                        SYMBOL_JITTER_PLAYABLE);
     
     int nRequested = keepBuffer();
     
@@ -629,7 +629,7 @@ ndnrtc::new_api::Pipeliner::requestMissing
             slot->incremenrRtxNum();
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             rtxNum_++;
-            consumer_->dumpStat(SYMBOL_NRTX);
+//            consumer_->dumpStat(SYMBOL_NRTX);
         }
     }
     
@@ -705,7 +705,7 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
     frameBuffer_->getPlayableBufferSize();
     
-    consumer_->dumpStat((useEstimatedSize?SYMBOL_JITTER_ESTIMATE:SYMBOL_JITTER_PLAYABLE));
+//    consumer_->dumpStat((useEstimatedSize?SYMBOL_JITTER_ESTIMATE:SYMBOL_JITTER_PLAYABLE));
     
     int nRequested = 0;
     while (bufferSize < frameBuffer_->getTargetSize())
@@ -790,5 +790,5 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     << " exclusion " << exclusionFilter_
     << std::endl;
     
-    consumer_->dumpStat(SYMBOL_NREBUFFER);
+//    consumer_->dumpStat(SYMBOL_NREBUFFER);
 }

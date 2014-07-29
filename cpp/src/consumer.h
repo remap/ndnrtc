@@ -223,7 +223,7 @@ namespace ndnrtc {
              *  - current rtt estimation - "rtt"
              */
             void
-            dumpStat(const std::string& comment = "") const;
+            dumpStat(ReceiverChannelPerformance stat) const;
             
         protected:
             bool isConsuming_;

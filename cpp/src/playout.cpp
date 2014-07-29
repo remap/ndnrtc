@@ -154,12 +154,12 @@ Playout::processPlayout()
                 
                 nPlayed_++;
                 updatePlaybackAdjustment();
-                consumer_->dumpStat(SYMBOL_NPLAYED);
+//                consumer_->dumpStat(SYMBOL_NPLAYED);
             }
             else
             {
                 nMissed_++;
-                consumer_->dumpStat(SYMBOL_NMISSED);
+//                consumer_->dumpStat(SYMBOL_NMISSED);
 //                LogStatC
 //                << "\tskipping\t" << sequencePacketNo
 //                << "\ttotal\t" << nMissed_ << endl;

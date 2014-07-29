@@ -155,6 +155,8 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
     playout_->getStatistics(stat);
     interestQueue_->getStatistics(stat);
     frameBuffer_->getStatistics(stat);
+    
+    dumpStat(stat);
 }
 
 void
@@ -217,18 +219,9 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
 }
 
 void
-Consumer::dumpStat(const std::string& comment) const
+Consumer::dumpStat(ReceiverChannelPerformance stat) const
 {
-    ReceiverChannelPerformance stat;
-    memset(&stat, 0, sizeof(stat));
-
-    getStatistics(stat);
-    if (playout_.get()) playout_->getStatistics(stat);
-    interestQueue_->getStatistics(stat);
-    frameBuffer_->getStatistics(stat);
-    
-    
-    LogStatC << comment << STAT_DIV
+    LogStatC
     << SYMBOL_SEG_RATE << STAT_DIV << stat.segmentsFrequency_ << STAT_DIV
     << SYMBOL_INTEREST_RATE << STAT_DIV << stat.interestFrequency_ << STAT_DIV
     << SYMBOL_PRODUCER_RATE << STAT_DIV << stat.actualProducerRate_ << STAT_DIV
