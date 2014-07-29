@@ -333,6 +333,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lpaced_sender \
    -lprotobuf_lite \
    -lPCM16B \
+   -lrtp_rtcp \
    -lrbe_components \
    -lsystem_wrappers \
    -lvideo_capture_module \

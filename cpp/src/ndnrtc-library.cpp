@@ -93,8 +93,8 @@ libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
-    NdnRtcUtils::sharedVoiceEngine();
     fclose(stderr);    
+    NdnRtcUtils::sharedVoiceEngine();
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
