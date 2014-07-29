@@ -16349,12 +16349,12 @@ case $host_os in
 			if test -d /opt/local ; then
 				CFLAGS="$CFLAGS -I/opt/local/include"
 				CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-				CPPFLAGS="$CPPFLAGS -I/opt/local/include -stdlib=libstdc++"
+				CPPFLAGS="$CPPFLAGS -I/opt/local/include"
 				LDFLAGS="$LDFLAGS -L/opt/local/lib"
 			elif test -d /sw ; then
 				CFLAGS="$CFLAGS -I/sw/include"
 				CXXFLAGS="$CXXFLAGS -I/sw/include"
-				CPPFLAGS="$CPPFLAGS -I/sw/include -stdlib=libstdc++"
+				CPPFLAGS="$CPPFLAGS -I/sw/include"
 				LDFLAGS="$LDFLAGS -L/sw/lib"
 			fi
 			;;
@@ -16375,6 +16375,43 @@ case $host_os in
 		as_fn_error $? "Your platform is not currently supported" "$LINENO" 5
 		;;
 esac
+
+# check for compiler flags
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libstdc++" >&5
+$as_echo_n "checking whether C++ compiler accepts -stdlib=libstdc++... " >&6; }
+if ${ax_cv_check_cxxflags___stdlib_libstdcpp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS  -stdlib=libstdc++"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_check_cxxflags___stdlib_libstdcpp=yes
+else
+  ax_cv_check_cxxflags___stdlib_libstdcpp=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___stdlib_libstdcpp" >&5
+$as_echo "$ax_cv_check_cxxflags___stdlib_libstdcpp" >&6; }
+if test x"$ax_cv_check_cxxflags___stdlib_libstdcpp" = xyes; then :
+  CPPFLAGS="$CPPFLAGS -stdlib=libstdc++"
+else
+  :
+fi
+
 
 # create links for demo script
 ac_config_links="$ac_config_links demoapp/rundemo.sh:demoapp/rundemo.sh"
@@ -17274,12 +17311,6 @@ LDFLAGS=$SAVED_LDFLAGS
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
 
-# AC_MSG_NOTICE([----------------------------------------
-# 	   Checking for WebRTC headers and libraries
-# 	   WEBRTCDIR:$WEBRTCDIR
-# 	   WEBRTCSRC:$WEBRTCSRC
-# 	   WEBRTCLIB:$WEBRTCLIB
-# 	   ----------------------------------------])
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for WebRTC header files:" >&5
 $as_echo "$as_me: checking for WebRTC header files:" >&6;}
 for ac_header in common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h video_engine/vie_impl.h modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h

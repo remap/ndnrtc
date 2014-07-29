@@ -140,12 +140,12 @@ case $host_os in
 			if test -d /opt/local ; then
 				CFLAGS="$CFLAGS -I/opt/local/include"
 				CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-				CPPFLAGS="$CPPFLAGS -I/opt/local/include -stdlib=libstdc++"
+				CPPFLAGS="$CPPFLAGS -I/opt/local/include"
 				LDFLAGS="$LDFLAGS -L/opt/local/lib"
 			elif test -d /sw ; then
 				CFLAGS="$CFLAGS -I/sw/include"
 				CXXFLAGS="$CXXFLAGS -I/sw/include"
-				CPPFLAGS="$CPPFLAGS -I/sw/include -stdlib=libstdc++"
+				CPPFLAGS="$CPPFLAGS -I/sw/include"
 				LDFLAGS="$LDFLAGS -L/sw/lib"
 			fi
 			;;
@@ -166,6 +166,9 @@ case $host_os in
 		AC_MSG_ERROR([Your platform is not currently supported])
 		;;
 esac
+
+# check for compiler flags
+AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS -stdlib=libstdc++"])
 
 # create links for demo script
 AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])
@@ -273,6 +276,8 @@ AC_CHECK_LIB([openfec], [of_create_codec_instance], ,[AC_MSG_FAILURE([can't find
 
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
+AC_MSG_NOTICE([*************** $CPPFLAGS - $SAVED_CPPFLAGS ])
+AC_MSG_NOTICE([******** $LDFLAGS - $SAVED_LDFLAGS])
 
 # Check for pthread library
 SAVED_CPPFLAGS=$CPPFLAGS
@@ -290,12 +295,6 @@ LDFLAGS=$SAVED_LDFLAGS
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
 
-# AC_MSG_NOTICE([----------------------------------------
-# 	   Checking for WebRTC headers and libraries
-# 	   WEBRTCDIR:$WEBRTCDIR 
-# 	   WEBRTCSRC:$WEBRTCSRC 
-# 	   WEBRTCLIB:$WEBRTCLIB
-# 	   ----------------------------------------])
 AC_MSG_NOTICE([checking for WebRTC header files:])
 AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h video_engine/vie_impl.h modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h], 
 [],
