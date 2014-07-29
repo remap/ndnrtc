@@ -21,6 +21,7 @@ cpp/ndnrtc-demo
 
 # Autoconf
 cpp/Makefile
+cpp/src/objc/Makefile
 cpp/include/Makefile
 cpp/autom4te.cache
 cpp/config.log

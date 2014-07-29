@@ -270,26 +270,28 @@ SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${OPENFECSRC}"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDLFAGS -L$OPENFECLIB"
+SAVED_LIBS="$LIBS"
 
 AC_CHECK_HEADERS([lib_common/of_openfec_api.h],,[AC_MSG_FAILURE([can't find OpenFEC headers])])
-AC_CHECK_LIB([openfec], [of_create_codec_instance], ,[AC_MSG_FAILURE([can't find OpenFEC library])])
+AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find OpenFEC library])])
 
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
-AC_MSG_NOTICE([*************** $CPPFLAGS - $SAVED_CPPFLAGS ])
-AC_MSG_NOTICE([******** $LDFLAGS - $SAVED_LDFLAGS])
+LIBS=$SAVED_LIBS
 
 # Check for pthread library
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${PTHREADDIR}"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDLFAGS -L$PTHREADLIB"
+SAVED_LIBS="$LIBS"
 
 AC_CHECK_HEADERS([pthread.h],,[AC_MSG_FAILURE([can't find pthread headers])])
-AC_CHECK_LIB([pthread], [pthread_atfork], ,[AC_MSG_FAILURE([can't find pthread library])])
+AC_CHECK_LIB([pthread], [pthread_atfork],,[AC_MSG_FAILURE([can't find pthread library])])
 
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
 
 # Check for WebRTC headers
 SAVED_CPPFLAGS=$CPPFLAGS
