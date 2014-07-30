@@ -202,31 +202,38 @@ ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
 {
     unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
     
-    switch (event.type_) {
-        case FrameBuffer::Event::Timeout:
-            handleTimeout(event);
-            break;
-            
-        case FrameBuffer::Event::FirstSegment:
-        {
-            reconnectNum_ = 0;
-            
-            if (state_ == StateBuffering)
-                requestMissing(event.slot_,
-                               getInterestLifetime(event.slot_->getPlaybackDeadline(),
+    if (event.type_ == FrameBuffer::Event::FirstSegment)
+        reconnectNum_ = 0;
+    
+    if (activeSlotsNum == 1) // we're expecting initial data
+    {
+        if (event.type_ != FrameBuffer::Event::Timeout)
+            initialDataArrived(event.slot_);
+    }
+    else
+    {
+        switch (event.type_) {
+            case FrameBuffer::Event::Timeout:
+            {
+                handleTimeout(event);
+            }
+                break;
+                
+            case FrameBuffer::Event::FirstSegment:
+            {
+                if (state_ == StateBuffering)
+                    requestMissing(event.slot_,
+                                   getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                                    event.slot_->getNamespace()),
                                0);
-        } // fall through
         default:
         {
-            if (activeSlotsNum == 1)
-                initialDataArrived(event.slot_);
+            }
+                break;
+            default:
+                break;
         }
-            break;
-    }
-    
-    if (activeSlotsNum > 1)
-    {
+        
         if (state_ == StateBuffering)
             handleBuffering(event);
         
