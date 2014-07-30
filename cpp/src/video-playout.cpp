@@ -79,12 +79,14 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     pushFrameFurther = true;
                     currentKeyNo_ = sequencePacketNo;
                     validGop_ = true;
+                    
                     LogTraceC << "new GOP with key: "
                     << sequencePacketNo << endl;
                 }
                 else
                 {
                     validGop_ = false;
+                    
                     LogTraceC << "GOP failed - key incomplete: "
                     << sequencePacketNo << endl;
                 }
@@ -92,10 +94,14 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             else
             {
                 if (pairedPacketNo != currentKeyNo_)
+                {
+                    nWrongOrder_++;
+                    
                     LogTraceC
                     << playbackPacketNo << " is unexpected: "
                     << " current key " << currentKeyNo_
                     << " got " << pairedPacketNo << endl;
+                }
                 
                 validGop_ &= (assembledLevel >= 1);
                 pushFrameFurther = validGop_ && (pairedPacketNo == currentKeyNo_);
@@ -111,14 +117,16 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         }
         else
         {
+            nSkipped_++;
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
             << " isKey: " << (isKey?"YES":"NO")
             << " level: " << assembledLevel << endl;
-            nMissed_++;
         }
         
         res = true;
     } // if data
+    else
+        nSkipped_ = (data)?nSkipped_:nSkipped_+1;
     
     return res;
 }

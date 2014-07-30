@@ -33,14 +33,19 @@
 #define SYMBOL_NREBUFFER "nreb"
 #define SYMBOL_NRECEIVED "nrecv"
 #define SYMBOL_NPLAYED "npbck"
-#define SYMBOL_NMISSED "nmiss"
+#define SYMBOL_NSKIPPED "nskip"
+#define SYMBOL_NORDER "nord"
 #define SYMBOL_NINCOMPLETE "ninc"
+#define SYMBOL_NINCKEY "ninck"
 #define SYMBOL_NRESCUED "nresc"
 #define SYMBOL_NRECOVERED "nrec"
 #define SYMBOL_NRTX "nrtx"
 #define SYMBOL_AVG_DELTA "ndelta"
 #define SYMBOL_AVG_KEY "nkey"
 #define SYMBOL_RTT_EST "rtt"
+#define SYMBOL_NINTRST "nint"
+#define SYMBOL_NDATA "ndata"
+#define SYMBOL_NTIMEOUT "nto"
 
 namespace ndnrtc {
     class AudioVideoSynchronizer;
@@ -241,6 +246,8 @@ namespace ndnrtc {
             boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
+            // statistics
+            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
             
             virtual OnData
             getOnDataHandler()

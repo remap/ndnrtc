@@ -29,8 +29,6 @@ namespace ndnrtc {
     typedef struct _ReceiverChannelPerformance {
         double nBytesPerSec_, interestFrequency_, segmentsFrequency_;
 
-        // RTT values for packets
-        double srtt_;
         // playback latency (reliable only if consumer and producer are
         // ntp-synchronized)
         double latency_;
@@ -41,11 +39,9 @@ namespace ndnrtc {
         unsigned int jitterPlayableMs_, jitterEstimationMs_, jitterTargetMs_;
         double actualProducerRate_;
         
-        // buffer stat
-        unsigned int nSent_, nAssembling_;
-        
         // frames
-        unsigned int nPlayed_, nMissed_, nLost_, nReceived_, nRescued_, nIncomplete_, nRecovered_;
+        unsigned int nPlayed_, nSkipped_, nWrongOrder_, /*nLost_,*/ nReceived_, nRescued_, nIncompleteTotal_, nIncompleteKey_, nRecovered_;
+        unsigned int nInterestSent_, nDataReceived_, nTimeouts_;
         
         double segNumDelta_, segNumKey_;
         
@@ -63,22 +59,7 @@ namespace ndnrtc {
         // consume statistics:
         // current producer index (as we fetch video seamlessly)
         const char *producerId_;
-#if 0
-        // recent frame numbers:
-        unsigned int nPlayback_, nPipeline_, nFetched_, nLate_;
-        
-        // errors - number of total skipped frames and timeouts
-        unsigned int nTimeouts_, nTotalTimeouts_, nSkipped_;
-        
-        // frame buffer info
-        unsigned int nFree_, nLocked_, nAssembling_, nNew_;
-        
-        // produce statistics
-        unsigned int sentNo_;
-        double sendingFramesFreq_, capturingFreq_; // latest sent frame number
-        
-        double inFramesFreq_, inDataFreq_, playoutFreq_;
-#endif
+
         SenderChannelStatistics sendStat_;
         ReceiverChannelStatistics receiveStat_;
         

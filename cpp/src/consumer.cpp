@@ -137,6 +137,10 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
 {
     memset(&stat, 0, sizeof(stat));
     
+    stat.nInterestSent_ = pipeliner_->getInterestNum();
+    stat.nDataReceived_ = nDataReceived_;
+    stat.nTimeouts_ = nTimeouts_;
+    
     stat.segNumDelta_ = pipeliner_->getAvgSegNum(false);
     stat.segNumKey_ = pipeliner_->getAvgSegNum(true);
     stat.rtxNum_ = pipeliner_->getRtxNum();
@@ -221,7 +225,7 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
 void
 Consumer::dumpStat(ReceiverChannelPerformance stat) const
 {
-    LogStatC
+    LogStatC << STAT_DIV
     << SYMBOL_SEG_RATE << STAT_DIV << stat.segmentsFrequency_ << STAT_DIV
     << SYMBOL_INTEREST_RATE << STAT_DIV << stat.interestFrequency_ << STAT_DIV
     << SYMBOL_PRODUCER_RATE << STAT_DIV << stat.actualProducerRate_ << STAT_DIV
@@ -232,14 +236,19 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << SYMBOL_NREBUFFER << STAT_DIV << stat.rebufferingEvents_ << STAT_DIV
     << SYMBOL_NRECEIVED << STAT_DIV << stat.nReceived_ << STAT_DIV
     << SYMBOL_NPLAYED << STAT_DIV << stat.nPlayed_ << STAT_DIV
-    << SYMBOL_NMISSED << STAT_DIV << stat.nMissed_ << STAT_DIV
-    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.nIncomplete_ << STAT_DIV
+    << SYMBOL_NSKIPPED << STAT_DIV << stat.nSkipped_ << STAT_DIV
+    << SYMBOL_NORDER << STAT_DIV << stat.nWrongOrder_ << STAT_DIV
+    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.nIncompleteTotal_ << STAT_DIV
+    << SYMBOL_NINCKEY << STAT_DIV << stat.nIncompleteKey_ << STAT_DIV
     << SYMBOL_NRESCUED << STAT_DIV << stat.nRescued_ << STAT_DIV
     << SYMBOL_NRECOVERED << STAT_DIV << stat.nRecovered_ << STAT_DIV
     << SYMBOL_NRTX << STAT_DIV << stat.rtxNum_ << STAT_DIV
     << SYMBOL_AVG_DELTA << STAT_DIV << stat.segNumDelta_ << STAT_DIV
     << SYMBOL_AVG_KEY << STAT_DIV << stat.segNumKey_ << STAT_DIV
-    << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_
+    << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_ << STAT_DIV
+    << SYMBOL_NINTRST << STAT_DIV << stat.nInterestSent_ << STAT_DIV
+    << SYMBOL_NDATA << STAT_DIV << stat.nDataReceived_ << STAT_DIV
+    << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_
     << std::endl;
 }
 
@@ -249,6 +258,7 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
             const shared_ptr<Data>& data)
 {
     LogTraceC << "data " << data->getName() << std::endl;
+    nDataReceived_++;
     
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getContent().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
@@ -257,5 +267,6 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
 }
 void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
+    nTimeouts_++;
     frameBuffer_->interestTimeout(*interest);
 }

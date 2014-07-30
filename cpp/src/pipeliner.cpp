@@ -158,8 +158,6 @@ ndnrtc::new_api::Pipeliner::processEvents()
             updateSegnumEstimation(event.slot_->getNamespace(),
                                    event.slot_->getParitySegmentsNumber(),
                                    true);
-            
-//            consumer_->dumpStat(SYMBOL_AVG_KEY+std::string("/")+SYMBOL_AVG_DELTA);
         } // fall through
         default:
         {
@@ -304,10 +302,6 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     int targetSize = frameBuffer_->getTargetSize();
     int estimatedSize = frameBuffer_->getEstimatedBufferSize();
     int playableSize = frameBuffer_->getPlayableBufferSize();
-    
-//    consumer_->dumpStat(SYMBOL_JITTER_TARGET + std::string("/") +
-//                        SYMBOL_JITTER_ESTIMATE + std::string("/")+
-//                        SYMBOL_JITTER_PLAYABLE);
     
     int nRequested = keepBuffer();
     
@@ -505,6 +499,7 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
         {
             shared_ptr<Interest> interestPtr = *it;
             
+            nInterestSent_++;
             consumer_->getInterestQueue()->enqueueInterest(*interestPtr,
                                                                Priority::fromArrivalDelay(priority),
                                                                ndnAssembler_->getOnDataHandler(),
@@ -517,6 +512,8 @@ void
 ndnrtc::new_api::Pipeliner::express(Interest &interest, int64_t priority)
 {
     frameBuffer_->interestIssued(interest);
+    
+    nInterestSent_++;
     consumer_->getInterestQueue()->enqueueInterest(interest,
                                                        Priority::fromArrivalDelay(priority),
                                                        ndnAssembler_->getOnDataHandler(),
@@ -629,7 +626,6 @@ ndnrtc::new_api::Pipeliner::requestMissing
             slot->incremenrRtxNum();
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             rtxNum_++;
-//            consumer_->dumpStat(SYMBOL_NRTX);
         }
     }
     
@@ -705,8 +701,6 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
     frameBuffer_->getPlayableBufferSize();
     
-//    consumer_->dumpStat((useEstimatedSize?SYMBOL_JITTER_ESTIMATE:SYMBOL_JITTER_PLAYABLE));
-    
     int nRequested = 0;
     while (bufferSize < frameBuffer_->getTargetSize())
     {
@@ -726,8 +720,6 @@ ndnrtc::new_api::Pipeliner::resetData()
     keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey);
     deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta);
     keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey);
-    rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
-    rtxNum_ = 0;
     rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
     reconnectNum_ = 0;
@@ -789,6 +781,4 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     << " reconnect " << reconnectNum_
     << " exclusion " << exclusionFilter_
     << std::endl;
-    
-//    consumer_->dumpStat(SYMBOL_NREBUFFER);
 }

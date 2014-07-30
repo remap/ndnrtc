@@ -46,6 +46,8 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     
     NdnAudioData::AudioPacket audioSample;
     
+    nSkipped_ = (data)?nSkipped_:nSkipped_+1;
+    
     if (data && frameConsumer_)
     {
         ((NdnAudioData*)data)->getAudioPacket(audioSample);

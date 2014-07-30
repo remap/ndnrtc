@@ -61,9 +61,6 @@ Playout::start()
     jitterTiming_.flush();
     
     startPacketNo_ = 0;
-    nPlayed_ = 0;
-    nMissed_ = 0;
-    latency_ = 0;
     isRunning_ = true;
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
@@ -108,7 +105,8 @@ void
 Playout::getStatistics(ReceiverChannelPerformance& stat)
 {
     stat.nPlayed_ = nPlayed_;
-    stat.nMissed_ = nMissed_;
+    stat.nSkipped_ = nSkipped_;
+    stat.nWrongOrder_ = nWrongOrder_;
     stat.latency_ = latency_;
 }
 
@@ -154,15 +152,6 @@ Playout::processPlayout()
                 
                 nPlayed_++;
                 updatePlaybackAdjustment();
-//                consumer_->dumpStat(SYMBOL_NPLAYED);
-            }
-            else
-            {
-                nMissed_++;
-//                consumer_->dumpStat(SYMBOL_NMISSED);
-//                LogStatC
-//                << "\tskipping\t" << sequencePacketNo
-//                << "\ttotal\t" << nMissed_ << endl;
             }
 
             double frameUnixTimestamp = 0;

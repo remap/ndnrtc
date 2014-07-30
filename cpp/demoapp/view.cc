@@ -307,19 +307,14 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     mvwprintw(stat_win, y++, x, "%10.3f", stat.latency_);
     
     mvwprintw(stat_win, y++, x, "%10.2f", stat.nBytesPerSec_*8./1000.);
-    
-    double loss = (stat.nReceived_ == 0)?0.:
-    ((double)stat.nLost_/(double)stat.nReceived_);
 
     mvwprintw(stat_win, y++, x, "%10d", stat.rebufferingEvents_);
     mvwprintw(stat_win, y++, x, "%10d", stat.nReceived_);
     mvwprintw(stat_win, y++, x, "%10d", stat.nPlayed_);
-    mvwprintw(stat_win, y++, x, "%5d %4.1f%%", stat.nMissed_,
-              ((double)stat.nMissed_/(double)stat.nPlayed_)*100);
-    mvwprintw(stat_win, y++, x, "%10d", stat.nIncomplete_);
-//    mvwprintw(stat_win, y++, x, "%5d %4.1f%%",
-//              stat.nLost_,
-//              ((double)stat.nLost_/(double)stat.nReceived_)*100);
+    mvwprintw(stat_win, y++, x, "%5d %4.1f%%", stat.nSkipped_,
+              ((double)stat.nSkipped_/(double)stat.nPlayed_)*100);
+    mvwprintw(stat_win, y++, x, "%10d", stat.nIncompleteTotal_);
+
     mvwprintw(stat_win, y++, x, "%10d", stat.nRescued_);
     mvwprintw(stat_win, y++, x, "%10d", stat.nRecovered_);
     mvwprintw(stat_win, y++, x, "%10d", stat.rtxNum_);
@@ -368,9 +363,8 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     mvwprintw(stat_win, y++, x, "# rebufferings: ");
     mvwprintw(stat_win, y++, x, "# received frames: ");
     mvwprintw(stat_win, y++, x, "# played frames: ");
-    mvwprintw(stat_win, y++, x, "# missed frames: ");
+    mvwprintw(stat_win, y++, x, "# skipped frames: ");
     mvwprintw(stat_win, y++, x, "# incomplete : ");
-//    mvwprintw(stat_win, y++, x, "# late frames: ");
     
     mvwprintw(stat_win, y++, x, "# rescued frames: ");
     mvwprintw(stat_win, y++, x, "# recovered frames: ");

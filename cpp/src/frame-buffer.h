@@ -954,8 +954,9 @@ namespace ndnrtc
             State state_;
             PacketNumber playbackNo_;
             int nKeyFrames_;
-            unsigned int nReceivedFrames_, nRescuedFrames_,
-                nIncomplete_, nRecovered_;
+            // statistics
+            unsigned int nReceivedFrames_ = 0, nRescuedFrames_ = 0,
+                nIncompleteTotal_ = 0, nIncompleteKey_ = 0, nRecovered_ = 0;
             
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
@@ -1032,7 +1033,6 @@ namespace ndnrtc
                 {
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
-//                    consumer_->dumpStat(SYMBOL_PRODUCER_RATE);
                 }
             }
             

@@ -19,6 +19,9 @@ cpp/ndnrtc-demo
 *.toc
 *.out
 
+# dev folders
+cpp/debug
+
 # Autoconf
 cpp/Makefile
 cpp/src/objc/Makefile

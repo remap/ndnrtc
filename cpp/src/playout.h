@@ -62,8 +62,8 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            unsigned int nPlayed_, nMissed_;
-            double latency_;
+            unsigned int nPlayed_ = 0, nSkipped_ = 0, nWrongOrder_ = 0;
+            double latency_ = 0.;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;

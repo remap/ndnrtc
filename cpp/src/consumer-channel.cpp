@@ -125,9 +125,7 @@ ConsumerChannel::stopTransmission()
 
 void
 ConsumerChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
-{
-    stat.videoStat_.srtt_ = rttEstimation_->getCurrentEstimation();
-    
+{   
     if (params_.useVideo)
         videoConsumer_->getStatistics(stat.videoStat_);
     

@@ -876,7 +876,8 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::getPlaybackDuration(bool estimate)
                 slot1->getPlaybackNumber() + 1 == slot2->getPlaybackNumber())
             {
                 lastFrameDuration_ = (slot2->getProducerTimestamp() - slot1->getProducerTimestamp());
-                assert(lastFrameDuration_ != 0);
+                // duration can be 0 if we got RTCP and RTP packets
+                assert(lastFrameDuration_ >= 0);
                 playbackDurationMs += lastFrameDuration_;
             }
             else
@@ -936,7 +937,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::pushSlot
     this->push_back(slot);
 
     updatePlaybackDeadlines();
-//    dumpQueue();
+    dumpQueue();
 }
 
 ndnrtc::new_api::FrameBuffer::Slot*
@@ -958,7 +959,7 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         this->erase(this->begin());
         updatePlaybackDeadlines();
         
-//        dumpQueue();
+        dumpQueue();
 //        LogStatC << "▲pop " << dumpShort() << std::endl;
     }
 }
@@ -1537,13 +1538,11 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             if (assembledLevel > 0 &&
                 assembledLevel < 1.)
             {
-                nIncomplete_++;
+                nIncompleteTotal_++;
+                if (isKey)
+                    nIncompleteKey_++;
+                
                 LogDebugC << "incomplete [" << slot->dump() << "]" << std::endl;
-//                consumer_->dumpStat(SYMBOL_NINCOMPLETE);
-//                LogStatC
-//                << "\tincomplete\t" << nIncomplete_  << "\t"
-//                << (isKey?"K":"D") << "\t"
-//                << packetNo << "\t" << std::endl;
                 
                 if (consumer_->getParameters().useFec)
                 {
@@ -1554,7 +1553,6 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                         LogDebugC << "recovered [" << slot->dump() << "]" << std::endl;
                         assembledLevel = 1.;
                         nRecovered_++;
-//                        consumer_->dumpStat(SYMBOL_NRECOVERED);
                     }
                 }
             }
@@ -1673,7 +1671,8 @@ ndnrtc::new_api::FrameBuffer::getStatistics(ReceiverChannelPerformance &stat)
 {
     stat.nReceived_ = nReceivedFrames_;
     stat.nRescued_ = nRescuedFrames_;
-    stat.nIncomplete_ = nIncomplete_;
+    stat.nIncompleteTotal_ = nIncompleteTotal_;
+    stat.nIncompleteKey_ = nIncompleteKey_;
     stat.nRecovered_ = nRecovered_;
 }
 
@@ -1744,10 +1743,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     skipFrame_ = false;
     playbackSlot_.reset();
     nKeyFrames_ = 0;
-    nReceivedFrames_ = 0;
-    nRescuedFrames_ = 0;
-    nIncomplete_ = 0;
-    nRecovered_ = 0;
+    
     forcedRelease_ = false;
     
     setTargetSize(consumer_->getParameters().jitterSize);

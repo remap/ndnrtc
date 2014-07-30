@@ -75,7 +75,7 @@ AudioConsumer::stop()
 void
 AudioConsumer::reset()
 {
-    
+    Consumer::reset();
 }
 
 void

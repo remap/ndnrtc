@@ -92,6 +92,9 @@ namespace ndnrtc {
             void
             switchToStream(unsigned int streamId);
             
+            unsigned int
+            getInterestNum() { return nInterestSent_; }
+            
         private:
             // this events masks are used in different moments during pipeliner
             // and used for filtering buffer events
@@ -148,6 +151,8 @@ namespace ndnrtc {
             int bufferEventsMask_;
             bool useKeyNamespace_;
             unsigned int streamId_; // currently fetched stream id
+            // statistics
+            unsigned int nInterestSent_;
             
             static bool
             mainThreadRoutine(void *pipeliner){
