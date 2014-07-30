@@ -226,8 +226,6 @@ ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
                                    getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                                    event.slot_->getNamespace()),
                                0);
-        default:
-        {
             }
                 break;
             default:
@@ -491,11 +489,6 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
 {
     Name prefix = interest.getName();
     
-//    LogTraceC
-//    << "express range "
-//    << interest.getName() << ((isParity)?"/parity":"/data")
-//    << "/[" << startNo << ", " << endNo << "]"<< std::endl;
-    
     std::vector<shared_ptr<Interest> > segmentInterests;
     frameBuffer_->interestRangeIssued(interest, startNo, endNo, segmentInterests, isParity);
     
@@ -645,25 +638,34 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
                                                 bool rtx)
 {
     int64_t interestLifetime = 0;
-    int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
     
     if (playbackDeadline <= 0)
         playbackDeadline = params_.interestTimeout;
-
-    if (halfBufferSize <= 0)
-        halfBufferSize = playbackDeadline;
     
     if (rtx || nspc != FrameBuffer::Slot::Key)
     {
+        int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
+        
+        if (halfBufferSize <= 0)
+            halfBufferSize = playbackDeadline;
+        
         interestLifetime = std::min(playbackDeadline, halfBufferSize);
     }
     else
     { // only key frames
+        int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
         double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
-        interestLifetime = gopInterval-2*halfBufferSize;
+        interestLifetime = gopInterval-playbackBufSize;
+        
+        LogTrace("key-life.log") << "wanted " << interestLifetime
+        << " gop " << gopInterval
+        << " -playSize" << playbackBufSize
+        << std::endl;
         
         if (interestLifetime <= 0)
-            interestLifetime = params_.interestTimeout;
+            interestLifetime = gopInterval;
+        
+        LogTrace("key-life.log") << "got " << interestLifetime << std::endl;
     }
     
     assert(interestLifetime > 0);
@@ -764,7 +766,6 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     rebufferingNum_++;
     
     resetData();
-    consumer_->reset();
     
     bufferEventsMask_ = StartupEventsMask;
     switchToState(StateChasing);
