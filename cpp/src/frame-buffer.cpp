@@ -1276,15 +1276,19 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // track rtt value
 //                if (slot->getRecentSegment()->isOriginal())
+                if (slot->getRtxNum() == 0)
                 {
                     consumer_->getRttEstimation()->
                     updateEstimation(slot->getRecentSegment()->getRoundTripDelayUsec()/1000,
                                      slot->getRecentSegment()->getMetadata().generationDelayMs_);
                     // now update target size
                     int64_t targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
-                    setTargetSize(targetBufferSize);
+
+                    LogTraceC
+                    << "new target buffer size "
+                    << targetBufferSize << std::endl;
                     
-//                    consumer_->dumpStat(SYMBOL_RTT_EST+std::string("/")+SYMBOL_JITTER_TARGET);
+                    setTargetSize(targetBufferSize);
                 }
 
                 if (rateControl_.get())
