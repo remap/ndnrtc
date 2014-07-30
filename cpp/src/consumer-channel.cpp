@@ -44,17 +44,24 @@ faceProcessor_(faceProcessor)
         faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
     }
     
-    interestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
-    interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
-    
     if (params.useVideo)
-        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_,
+    {
+        videoInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        videoInterestQueue_->setDescription(std::string("video-iqueue"));
+        videoConsumer_.reset(new VideoConsumer(params_, videoInterestQueue_,
                                                rttEstimation_, videoRenderer));
+    }
     
     if (params_.useAudio)
-        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
+    {
+        audioInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        audioInterestQueue_->setDescription(std::string("audio-iqueue"));
+        audioConsumer_.reset(new AudioConsumer(audioParams_, audioInterestQueue_, rttEstimation_));
+    }
     
-    serviceChannel_.reset(new ServiceChannel(this, interestQueue_));
+    serviceInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+    serviceInterestQueue_->setDescription(std::string("service-iqueue"));
+    serviceChannel_.reset(new ServiceChannel(this, serviceInterestQueue_));
     
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
@@ -147,7 +154,13 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
     
     rttEstimation_->setLogger(logger);
     faceProcessor_->setLogger(logger);
-    interestQueue_->setLogger(logger);
+
+    if (videoInterestQueue_.get())
+        videoInterestQueue_->setLogger(logger);
+    
+    if (audioInterestQueue_.get())
+        audioInterestQueue_->setLogger(logger);
+    
     serviceChannel_->setLogger(logger);
     
     ILoggingObject::setLogger(logger);

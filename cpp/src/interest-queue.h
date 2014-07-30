@@ -64,10 +64,17 @@ namespace ndnrtc {
             InterestQueue(const boost::shared_ptr<FaceWrapper> &face);
             ~InterestQueue();
             
-            void enqueueInterest(const ndn::Interest& interest,
-                                 const boost::shared_ptr<IPriority>& priority,
-                                 const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
-                                 const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            void
+            enqueueInterest(const ndn::Interest& interest,
+                            const boost::shared_ptr<IPriority>& priority,
+                            const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
+                            const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            
+            /**
+             * Flushes current interest queue
+             */
+            void
+            reset();
             
             void
             getStatistics(ReceiverChannelPerformance& stat);

@@ -69,6 +69,25 @@ InterestQueue::enqueueInterest(const Interest& interest,
     queueAccess_.ReleaseLockExclusive();
     
     queueEvent_.Set();
+    
+    LogDebugC
+    << "enqueue\t" << entry.interest_->getName()
+    << "\texclude: " << entry.interest_->getExclude().toUri()
+    << "\tpri: "
+    << entry.getValue() << "\tlifetime: "
+    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
+    << queue_.size()
+    << std::endl;
+}
+
+void
+InterestQueue::reset()
+{
+    queueAccess_.AcquireLockExclusive();
+    queue_ = PriorityQueue(IPriority::Comparator(true));
+    queueAccess_.ReleaseLockExclusive();
+
+    LogDebugC << "interest queue flushed" << std::endl;
 }
 
 void
@@ -128,7 +147,9 @@ void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {    
     LogDebugC
-    << "express\t" << entry.interest_->getName() << "\tpri: "
+    << "express\t" << entry.interest_->getName()
+    << "\texclude: " << entry.interest_->getExclude().toUri()
+    << "\tpri: "
     << entry.getValue() << "\tlifetime: "
     << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
     << queue_.size()

@@ -49,7 +49,9 @@ namespace ndnrtc {
             boost::shared_ptr<AudioConsumer> audioConsumer_;
             boost::shared_ptr<RttEstimation> rttEstimation_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
-            boost::shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<InterestQueue> serviceInterestQueue_;
+            boost::shared_ptr<InterestQueue> videoInterestQueue_;
+            boost::shared_ptr<InterestQueue> audioInterestQueue_;
             boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             // ndn-cpp callbacks

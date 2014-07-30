@@ -108,6 +108,7 @@ Consumer::stop()
 void
 Consumer::reset()
 {
+    interestQueue_->reset();
 }
 
 void
@@ -212,7 +213,8 @@ Consumer::onBufferingEnded()
 void
 Consumer::onRebufferingOccurred()
 {
-    playout_->stop();
+    reset();
+
     renderer_->stopRendering();
     rttEstimation_->reset();
 }
