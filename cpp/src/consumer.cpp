@@ -21,6 +21,8 @@ using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
+#define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
+
 //******************************************************************************
 #pragma mark - construction/destruction
 Consumer::Consumer(const ParamsStruct& params,
@@ -157,9 +159,9 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
     stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
     stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
     
-    playout_->getStatistics(stat);
     interestQueue_->getStatistics(stat);
-    frameBuffer_->getStatistics(stat);
+    stat.playoutStat_ = playout_->getStatistics();
+    stat.bufferStat_ = frameBuffer_->getStatistics();
     
     dumpStat(stat);
 }
@@ -236,14 +238,27 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << SYMBOL_JITTER_PLAYABLE << STAT_DIV << stat.jitterPlayableMs_ << STAT_DIV
     << SYMBOL_INRATE << STAT_DIV << stat.nBytesPerSec_*8/1000 << STAT_DIV
     << SYMBOL_NREBUFFER << STAT_DIV << stat.rebufferingEvents_ << STAT_DIV
-    << SYMBOL_NRECEIVED << STAT_DIV << stat.nReceived_ << STAT_DIV
-    << SYMBOL_NPLAYED << STAT_DIV << stat.nPlayed_ << STAT_DIV
-    << SYMBOL_NSKIPPED << STAT_DIV << stat.nSkipped_ << STAT_DIV
-    << SYMBOL_NORDER << STAT_DIV << stat.nWrongOrder_ << STAT_DIV
-    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.nIncompleteTotal_ << STAT_DIV
-    << SYMBOL_NINCKEY << STAT_DIV << stat.nIncompleteKey_ << STAT_DIV
-    << SYMBOL_NRESCUED << STAT_DIV << stat.nRescued_ << STAT_DIV
-    << SYMBOL_NRECOVERED << STAT_DIV << stat.nRecovered_ << STAT_DIV
+    // playout stat
+    << SYMBOL_NPLAYED << STAT_DIV << stat.playoutStat_.nPlayed_ << STAT_DIV
+    << SYMBOL_NPLAYEDKEY << STAT_DIV << stat.playoutStat_.nPlayedKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDNOKEY << STAT_DIV << stat.playoutStat_.nSkippedNoKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDINC << STAT_DIV << stat.playoutStat_.nSkippedIncomplete_ << STAT_DIV
+    << SYMBOL_NSKIPPEDINCKEY << STAT_DIV << stat.playoutStat_.nSkippedIncompleteKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDGOP << STAT_DIV << stat.playoutStat_.nSkippedInvalidGop_ << STAT_DIV
+    // buffer stat
+    << SYMBOL_NACQUIRED << STAT_DIV << stat.bufferStat_.nAcquired_ << STAT_DIV
+    << SYMBOL_NACQUIREDKEY << STAT_DIV << stat.bufferStat_.nAcquiredKey_ << STAT_DIV
+    << SYMBOL_NDROPPED << STAT_DIV << stat.bufferStat_.nDropped_ << STAT_DIV
+    << SYMBOL_NDROPPEDKEY << STAT_DIV << stat.bufferStat_.nDroppedKey_ << STAT_DIV
+    << SYMBOL_NASSEMBLED << STAT_DIV << stat.bufferStat_.nAssembled_ << STAT_DIV
+    << SYMBOL_NASSEMBLEDKEY << STAT_DIV << stat.bufferStat_.nAssembledKey_ << STAT_DIV
+    << SYMBOL_NRESCUED << STAT_DIV << stat.bufferStat_.nRescued_ << STAT_DIV
+    << SYMBOL_NRESCUEDKEY << STAT_DIV << stat.bufferStat_.nRescuedKey_ << STAT_DIV
+    << SYMBOL_NRECOVERED << STAT_DIV << stat.bufferStat_.nRecovered_ << STAT_DIV
+    << SYMBOL_NRECOVEREDKEY << STAT_DIV << stat.bufferStat_.nRecoveredKey_ << STAT_DIV
+    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.bufferStat_.nIncomplete_ << STAT_DIV
+    << SYMBOL_NINCOMPLETEKEY << STAT_DIV << stat.bufferStat_.nIncompleteKey_ << STAT_DIV
+
     << SYMBOL_NRTX << STAT_DIV << stat.rtxNum_ << STAT_DIV
     << SYMBOL_AVG_DELTA << STAT_DIV << stat.segNumDelta_ << STAT_DIV
     << SYMBOL_AVG_KEY << STAT_DIV << stat.segNumKey_ << STAT_DIV

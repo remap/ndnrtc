@@ -49,8 +49,8 @@ namespace ndnrtc{
             void
             setDescription(const std::string& desc);
             
-            void
-            getStatistics(ReceiverChannelPerformance& stat);
+            PlayoutStatistics
+            getStatistics() { return stat_; };
             
             void
             setStartPacketNo(PacketNumber packetNo)
@@ -62,8 +62,7 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            unsigned int nPlayed_ = 0, nSkipped_ = 0, nWrongOrder_ = 0;
-            double latency_ = 0.;
+            PlayoutStatistics stat_;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;

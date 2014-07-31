@@ -293,7 +293,6 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     mvwprintw(stat_win, y++, x, "%10.2f", sendStat.encodingRate_);
     mvwprintw(stat_win, y++, x, "%10d", sendStat.nDroppedByEncoder_);
     mvwprintw(stat_win, y++, x, "%10.2f", sendStat.nBytesPerSec_*8./1000.);
-    mvwprintw(stat_win, y++, x, "%10.2f", sendStat.nBytesPerSec_*8./1000./sendStat.encodingRate_*25.);
     
     mvwprintw(stat_win, y++, x, "");
     mvwprintw(stat_win, y++, x, "");
@@ -304,19 +303,29 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     mvwprintw(stat_win, y++, x, "%10d", stat.jitterTargetMs_);
     mvwprintw(stat_win, y++, x, "%10d", stat.jitterEstimationMs_);
     mvwprintw(stat_win, y++, x, "%10d", stat.jitterPlayableMs_);
-    mvwprintw(stat_win, y++, x, "%10.3f", stat.latency_);
+    mvwprintw(stat_win, y++, x, "%10.3f", stat.playoutStat_.latency_);
     
     mvwprintw(stat_win, y++, x, "%10.2f", stat.nBytesPerSec_*8./1000.);
 
     mvwprintw(stat_win, y++, x, "%10d", stat.rebufferingEvents_);
-    mvwprintw(stat_win, y++, x, "%10d", stat.nReceived_);
-    mvwprintw(stat_win, y++, x, "%10d", stat.nPlayed_);
-    mvwprintw(stat_win, y++, x, "%5d %4.1f%%", stat.nSkipped_,
-              ((double)stat.nSkipped_/(double)stat.nPlayed_)*100);
-    mvwprintw(stat_win, y++, x, "%10d", stat.nIncompleteTotal_);
+    
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nAssembled_,
+              stat.bufferStat_.nAssembledKey_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nRescued_,
+              stat.bufferStat_.nRescuedKey_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nRecovered_,
+              stat.bufferStat_.nRecoveredKey_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nIncomplete_,
+              stat.bufferStat_.nIncompleteKey_);
 
-    mvwprintw(stat_win, y++, x, "%10d", stat.nRescued_);
-    mvwprintw(stat_win, y++, x, "%10d", stat.nRecovered_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.playoutStat_.nPlayed_, stat.playoutStat_.nPlayedKey_);
+    mvwprintw(stat_win, y++, x, "%10d", stat.playoutStat_.nSkippedNoKey_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.playoutStat_.nSkippedIncomplete_, stat.playoutStat_.nSkippedIncompleteKey_);
+    mvwprintw(stat_win, y++, x, "%10d", stat.playoutStat_.nSkippedInvalidGop_);
+    
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nAcquired_, stat.bufferStat_.nAcquiredKey_);
+    mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nDropped_, stat.bufferStat_.nDroppedKey_);
+    
     mvwprintw(stat_win, y++, x, "%10d", stat.rtxNum_);
     mvwprintw(stat_win, y++, x, "%10.2f", stat.rtxFreq_);
     
@@ -344,7 +353,6 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     mvwprintw(stat_win, y++, x, "encoding (FPS): ");
     mvwprintw(stat_win, y++, x, "encoder dropped: ");
     mvwprintw(stat_win, y++, x, "OUT rate (kbit/s): ");
-    mvwprintw(stat_win, y++, x, "OUT rate (25fps): ");
     
     mvwprintw(stat_win, y++, x, "");
     mvwprintw(stat_win, y++, x, "> fetching: %s", fetchPrefix.c_str());
@@ -361,13 +369,20 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     mvwprintw(stat_win, y++, x, "IN rate (kbit/s): ");
     
     mvwprintw(stat_win, y++, x, "# rebufferings: ");
-    mvwprintw(stat_win, y++, x, "# received frames: ");
-    mvwprintw(stat_win, y++, x, "# played frames: ");
-    mvwprintw(stat_win, y++, x, "# skipped frames: ");
-    mvwprintw(stat_win, y++, x, "# incomplete : ");
     
-    mvwprintw(stat_win, y++, x, "# rescued frames: ");
-    mvwprintw(stat_win, y++, x, "# recovered frames: ");
+    mvwprintw(stat_win, y++, x, "# assembled frames/key: ");
+    mvwprintw(stat_win, y++, x, "# rescued frames/key: ");
+    mvwprintw(stat_win, y++, x, "# recovered frames/key: ");
+    mvwprintw(stat_win, y++, x, "# incomplete frames/key: ");
+    
+    mvwprintw(stat_win, y++, x, "# played frames/key: ");
+    mvwprintw(stat_win, y++, x, "# skipped no key: ");
+    mvwprintw(stat_win, y++, x, "# skipped incomplete/key: ");
+    mvwprintw(stat_win, y++, x, "# skipped bad gop: ");
+    
+    mvwprintw(stat_win, y++, x, "# acquired : ");
+    mvwprintw(stat_win, y++, x, "# outdated : ");
+    
     mvwprintw(stat_win, y++, x, "rtx #: ");
     mvwprintw(stat_win, y++, x, "rtx freq: ");
 

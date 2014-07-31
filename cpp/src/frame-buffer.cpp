@@ -381,6 +381,7 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
         // clear rightmost segment if any
         if (rightmostSegment_.get())
         {
+            rightmostSegment_->discard();
             freeSegments_.push_back(rightmostSegment_);
             rightmostSegment_.reset();
         }
@@ -393,27 +394,20 @@ int
 ndnrtc::new_api::FrameBuffer::Slot::recover()
 {
     int nRecovered  = 0;
+    double assembledLevel = getAssembledLevel();
     
-    if (getAssembledLevel() < 1.)
+    if (assembledLevel > 0. && assembledLevel < 1.)
     {        
         Rs28Decoder dec(nSegmentsTotal_, nSegmentsParity_, segmentSize_);
         
         if (nSegmentsParity_ > 0)
+        {
             nRecovered = dec.decode(slotData_,
                                     slotData_+nSegmentsTotal_*segmentSize_,
                                     fecSegmentList_);
-        
-//        LogTraceC << "recovery: "
-//        << "level " << getAssembledLevel()
-//        << " total " << nSegmentsTotal_
-//        << " fetched " << nSegmentsReady_
-//        << " parity " << nSegmentsParity_
-//        << " fetched " << nSegmentsParityReady_
-//        << " recovered " << nRecovered << " segments from "
-//        << slotPrefix_ << std::endl;
+            isRecovered_ = ((nRecovered + nSegmentsReady_) >= nSegmentsTotal_);
+        }
     }
-    
-    isRecovered_ = ((nRecovered + nSegmentsReady_) >= nSegmentsTotal_);
     
     return nRecovered;
 }
@@ -1252,10 +1246,22 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 // check for ready event
                 if (newState == Slot::StateReady)
                 {
-                    if (slot->getRtxNum() > 0)
-                        nRescuedFrames_++;
+                    // update stat
+                    if (slot->getRtxNum() == 0)
+                    {
+                        stat_.nAssembled_++;
+                        
+                        if (slot->getNamespace() == Slot::Key)
+                            stat_.nAssembledKey_++;
+                    }
+                    else
+                    {
+                        stat_.nRescued_++;
+                        
+                        if (slot->getNamespace() == Slot::Key)
+                            stat_.nRescuedKey_++;
+                    }
                     
-                    nReceivedFrames_++;
                     addBufferEvent(Event::Ready, slot);
                     
 #if RECORD
@@ -1523,6 +1529,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         isKey = (slot->getNamespace() == Slot::Key);
         assembledLevel = slot->getAssembledLevel();
         
+#warning why is this here???
         if (playbackNo_ >= 0 &&
             slot->getPlaybackNumber() >= 0 &&
             playbackNo_+1 != slot->getPlaybackNumber())
@@ -1539,34 +1546,52 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         {
             playbackNo_ = slot->getPlaybackNumber();
             
-            if (assembledLevel > 0 &&
-                assembledLevel < 1.)
+            if (assembledLevel >= 0. &&
+                assembledLevel < 1. &&
+                consumer_->getParameters().useFec)
             {
-                nIncompleteTotal_++;
-                if (isKey)
-                    nIncompleteKey_++;
+                slot->recover();
                 
+                if (slot->isRecovered())
+                {
+                    LogDebugC << "recovered [" << slot->dump() << "]" << std::endl;
+                    assembledLevel = 1.;
+                    
+                    // update stat
+                    stat_.nRecovered_++;
+                    if (isKey)
+                        stat_.nRecoveredKey_++;
+                }
+            }
+            
+            if (assembledLevel < 1.)
+            {
                 LogDebugC << "incomplete [" << slot->dump() << "]" << std::endl;
                 
-                if (consumer_->getParameters().useFec)
-                {
-                    slot->recover();
-                    
-                    if (slot->isRecovered())
-                    {
-                        LogDebugC << "recovered [" << slot->dump() << "]" << std::endl;
-                        assembledLevel = 1.;
-                        nRecovered_++;
-                    }
-                }
+                // update stat
+                stat_.nIncomplete_++;
+                if (isKey)
+                    stat_.nIncompleteKey_++;
             }
             
             slot->getPacketData(packetData);
             addBufferEvent(Event::Playout, slot);
             
+            // update stat
+            stat_.nAcquired_++;
+            if (isKey)
+                stat_.nAcquiredKey_++;
+            
             LogDebugC
             << "lock [" << slot->dump() << "]" << std::endl;
-        } // if (!skipFrame_)
+        } // if (!skip)
+        else
+        {
+            // update stat
+            stat_.nDropped_++;
+            if (isKey)
+                stat_.nDroppedKey_++;
+        }
     } // if (slot.get())
     else
     {
@@ -1625,6 +1650,12 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
             isInferredDuration = false;
         }
         
+        // each time we release key frame - cleanup buffer for old frames
+        if (lockedSlot->getNamespace() == Slot::Key)
+            cleanBuffer(lockedSlot->getPairedFrameNumber(),
+                        lockedSlot->getSequentialNumber(),
+                        lockedSlot->getPlaybackNumber());
+        
         LogDebugC << "unlock [" << lockedSlot->dump() << "]" << std::endl;
         lockedSlot->unlock();
         freeSlot(lockedSlot->getPrefix());
@@ -1668,16 +1699,6 @@ ndnrtc::new_api::FrameBuffer::setLogger(ndnlog::new_api::Logger *logger)
 {
     playbackQueue_.setLogger(logger);
     ILoggingObject::setLogger(logger);
-}
-
-void
-ndnrtc::new_api::FrameBuffer::getStatistics(ReceiverChannelPerformance &stat)
-{
-    stat.nReceived_ = nReceivedFrames_;
-    stat.nRescued_ = nRescuedFrames_;
-    stat.nIncompleteTotal_ = nIncompleteTotal_;
-    stat.nIncompleteKey_ = nIncompleteKey_;
-    stat.nRecovered_ = nRecovered_;
 }
 
 //******************************************************************************
@@ -1727,6 +1748,52 @@ ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
+}
+
+void
+ndnrtc::new_api::FrameBuffer::cleanBuffer(PacketNumber deltaPacketNo,
+                                            PacketNumber keyPacketNo,
+                                            PacketNumber absolutePacketNo)
+{
+    int nRecycledSlots = 0;
+    
+    PlaybackQueue::iterator it = playbackQueue_.begin();
+
+    while (it != playbackQueue_.end())
+    {
+        Slot* slot = *it;
+        bool erase = false;
+        
+        if (slot->getSequentialNumber() != -1)
+        {
+            erase = ((slot->getNamespace() == Slot::Delta &&
+                      slot->getSequentialNumber() < deltaPacketNo) ||
+                     (slot->getNamespace() == Slot::Key &&
+                      slot->getSequentialNumber() < keyPacketNo));
+        }
+        
+        if (slot->getPlaybackNumber() != -1)
+            erase = (slot->getPlaybackNumber() < absolutePacketNo);
+        
+        if (erase)
+        {
+            // update stat
+            stat_.nDropped_++;
+            if (slot->getNamespace() == Slot::Key)
+                stat_.nDroppedKey_++;
+            
+            nRecycledSlots++;
+            it = playbackQueue_.erase(it);
+            freeSlot(slot->getPrefix());
+        }
+        else
+            it++;
+    }
+    
+    isEstimationNeeded_ = true;
+    
+    LogTraceC << "purged " << nRecycledSlots << " "
+    << playbackQueue_.dumpShort() << std::endl;
 }
 
 void

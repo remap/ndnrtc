@@ -46,7 +46,8 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     
     NdnAudioData::AudioPacket audioSample;
     
-    nSkipped_ = (data)?nSkipped_:nSkipped_+1;
+    if (!data)
+        stat_.nSkippedIncomplete_++;
     
     if (data && frameConsumer_)
     {
@@ -62,6 +63,11 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             ((AudioRenderer*)frameConsumer_)->onDeliverRtpFrame(audioSample.length_,
                                                                       audioSample.data_);
         }
+        
+        // update stat
+        stat_.nPlayed_++;
+        if (isKey)
+            stat_.nPlayedKey_++;
         
         res = true;
     }

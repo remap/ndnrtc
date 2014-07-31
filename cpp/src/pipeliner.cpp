@@ -355,6 +355,18 @@ ndnrtc::new_api::Pipeliner::handleValidState
             break;
         case FrameBuffer::Event::Playout:
         {
+            // check if frame counters are outdated
+            if (event.slot_->getNamespace() == FrameBuffer::Slot::Key)
+            {
+                if (deltaFrameSeqNo_ < event.slot_->getPairedFrameNumber())
+                {
+                    deltaFrameSeqNo_ = event.slot_->getPairedFrameNumber();
+                    
+                    LogDebugC
+                    << "pipeliner pointer updated " << deltaFrameSeqNo_
+                    << std::endl;
+                }
+            }
         }
             break;
         default:
@@ -657,15 +669,8 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
         double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
         interestLifetime = gopInterval-playbackBufSize;
         
-        LogTrace("key-life.log") << "wanted " << interestLifetime
-        << " gop " << gopInterval
-        << " -playSize" << playbackBufSize
-        << std::endl;
-        
         if (interestLifetime <= 0)
             interestLifetime = gopInterval;
-        
-        LogTrace("key-life.log") << "got " << interestLifetime << std::endl;
     }
     
     assert(interestLifetime > 0);

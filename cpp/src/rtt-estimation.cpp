@@ -46,8 +46,10 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
         
         LogTraceC
-        << "updated estimation. raw " << rawValue
-        << " est" << getCurrentEstimation() << std::endl;
+        << "updated estimation. round " << rountripTimeMs <<
+        " generation " << generationDelay
+        << " raw " << rawValue
+        << " est " << getCurrentEstimation() << std::endl;
     }
     else
     {

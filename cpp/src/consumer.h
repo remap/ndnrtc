@@ -31,14 +31,33 @@
 #define SYMBOL_JITTER_PLAYABLE "jp"
 #define SYMBOL_INRATE "in"
 #define SYMBOL_NREBUFFER "nreb"
-#define SYMBOL_NRECEIVED "nrecv"
-#define SYMBOL_NPLAYED "npbck"
-#define SYMBOL_NSKIPPED "nskip"
-#define SYMBOL_NORDER "nord"
-#define SYMBOL_NINCOMPLETE "ninc"
-#define SYMBOL_NINCKEY "ninck"
+
+#define SYMBOL_NPLAYED "npb"
+#define SYMBOL_NPLAYEDKEY "npbk"
+
+#define SYMBOL_NSKIPPEDNOKEY "nskipk"
+#define SYMBOL_NSKIPPEDINC "nskipi"
+#define SYMBOL_NSKIPPEDINCKEY "nskipik"
+#define SYMBOL_NSKIPPEDGOP "nskipg"
+
+#define SYMBOL_NACQUIRED "nacq"
+#define SYMBOL_NACQUIREDKEY "nacqk"
+
+#define SYMBOL_NDROPPED "ndrop"
+#define SYMBOL_NDROPPEDKEY "ndropk"
+
+#define SYMBOL_NASSEMBLED "nasm"
+#define SYMBOL_NASSEMBLEDKEY "nasmk"
+
 #define SYMBOL_NRESCUED "nresc"
+#define SYMBOL_NRESCUEDKEY "nresck"
+
 #define SYMBOL_NRECOVERED "nrec"
+#define SYMBOL_NRECOVEREDKEY "nreck"
+
+#define SYMBOL_NINCOMPLETE "ninc"
+#define SYMBOL_NINCOMPLETEKEY "ninck"
+
 #define SYMBOL_NRTX "nrtx"
 #define SYMBOL_AVG_DELTA "ndelta"
 #define SYMBOL_AVG_KEY "nkey"

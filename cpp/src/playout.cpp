@@ -101,15 +101,6 @@ Playout::setDescription(const std::string &desc)
                                                        getDescription().c_str()));
 }
 
-void
-Playout::getStatistics(ReceiverChannelPerformance& stat)
-{
-    stat.nPlayed_ = nPlayed_;
-    stat.nSkipped_ = nSkipped_;
-    stat.nWrongOrder_ = nWrongOrder_;
-    stat.latency_ = latency_;
-}
-
 //******************************************************************************
 #pragma mark - private
 bool
@@ -149,8 +140,6 @@ Playout::processPlayout()
                                pairedPacketNo, isKey, assembledLevel))
             {
                 packetValid = true;
-                
-                nPlayed_++;
                 updatePlaybackAdjustment();
             }
 
@@ -159,7 +148,7 @@ Playout::processPlayout()
             if (data_)
             {
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-                latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
+                stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
             }
             
             //******************************************************************
@@ -173,7 +162,7 @@ Playout::processPlayout()
             
             if (playbackDelay < 0)
             {
-#warning this should be fixed with proper rate swithing mechanism
+#warning this should be fixed with proper rate switching mechanism
                 LogErrorC << "playback delay below zero: " << playbackDelay << endl;
                 playbackDelay = 0;
             }

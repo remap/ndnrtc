@@ -14,6 +14,47 @@
 
 namespace ndnrtc {
     
+    // jitter buffer statistics
+    typedef struct _BufferStatistics {
+        unsigned int
+        nAcquired_ = 0,     // number of frames acquired for playback
+        nAcquiredKey_ = 0,  // number of key frames acquired for playback
+        nDropped_ = 0,      // number of outdated frames dropped
+        nDroppedKey_ = 0;   // number of outdated key frames dropped
+        
+        unsigned int
+        nAssembled_ = 0,    // number of frames fully assembled
+        nAssembledKey_ = 0, // number of key frames fully assembled
+        nRescued_ = 0,      // number of frames assembled using interest
+                            // retransmissions
+        nRescuedKey_ = 0,   // number of key frames assembled using interest
+                            // retransmissions
+        nRecovered_ = 0,    // number of frames recovered using FEC
+        nRecoveredKey_ = 0, // number of key frames recovered using FEC
+        nIncomplete_ = 0,   // number of incomplete frames (frames missing some
+                            // segments by the time they should be played out)
+        nIncompleteKey_ = 0;    // number of incomplete key frames
+    } BufferStatistics;
+    
+    // playout statistics
+    typedef struct _PlayoutStatistics {
+        unsigned int
+        nPlayed_ = 0,       // number of frames actually played (rendered)
+        nPlayedKey_ = 0,    // number of key frames played
+        nSkippedNoKey_ = 0, // number of delta frames skipped due to wrong GOP
+                            // (i.e. corresponding key frame has not been used
+                            // yet or has been already used)
+        nSkippedIncomplete_ = 0,    // number of frames skipped due to
+                                    // frame incompleteness
+        nSkippedInvalidGop_ = 0,    // number of frames skipped due to previously
+                                    // broken GOP sequence
+        nSkippedIncompleteKey_ = 0; // number of key frames skipped due to frame
+                                    // incompleteness
+        double latency_ = 0.;   // if consumer and producer are synchronized to
+                                // the same ntp server, this value could make
+                                // sense for debugging
+    } PlayoutStatistics;
+    
     // sending channel statistics
     typedef struct _SenderChannelPerformance {
         double nBytesPerSec_;
@@ -28,10 +69,6 @@ namespace ndnrtc {
     // receiving channel statistics
     typedef struct _ReceiverChannelPerformance {
         double nBytesPerSec_, interestFrequency_, segmentsFrequency_;
-
-        // playback latency (reliable only if consumer and producer are
-        // ntp-synchronized)
-        double latency_;
         double rttEstimation_;
         
         // buffers
@@ -39,8 +76,9 @@ namespace ndnrtc {
         unsigned int jitterPlayableMs_, jitterEstimationMs_, jitterTargetMs_;
         double actualProducerRate_;
         
-        // frames
-        unsigned int nPlayed_, nSkipped_, nWrongOrder_, /*nLost_,*/ nReceived_, nRescued_, nIncompleteTotal_, nIncompleteKey_, nRecovered_;
+        PlayoutStatistics playoutStat_;
+        BufferStatistics bufferStat_;
+        
         unsigned int nInterestSent_, nDataReceived_, nTimeouts_;
         
         double segNumDelta_, segNumKey_;

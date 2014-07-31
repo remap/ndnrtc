@@ -480,7 +480,7 @@ namespace ndnrtc
                 incremenrRtxNum() { nRtx_++; }
                 
                 int64_t
-                getLifetime()
+                getLifetime() DEPRECATED
                 { return (requestTimeUsec_ > 0)?NdnRtcUtils::millisecondTimestamp()-requestTimeUsec_/1000.:0;}
                 
                 int64_t
@@ -878,8 +878,8 @@ namespace ndnrtc
             void
             setLogger(ndnlog::new_api::Logger* logger);
             
-            void
-            getStatistics(ReceiverChannelPerformance& stat);
+            BufferStatistics
+            getStatistics() { return stat_; };
             
             void
             setRateControl(const boost::shared_ptr<RateControl>& rateControl)
@@ -954,10 +954,10 @@ namespace ndnrtc
             State state_;
             PacketNumber playbackNo_;
             int nKeyFrames_;
+
             // statistics
-            unsigned int nReceivedFrames_ = 0, nRescuedFrames_ = 0,
-                nIncompleteTotal_ = 0, nIncompleteKey_ = 0, nRecovered_ = 0;
-            
+            BufferStatistics stat_;
+                        
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
             bool skipFrame_ = false;
@@ -1006,6 +1006,24 @@ namespace ndnrtc
              */
             void
             estimateBufferSize();
+            
+            /**
+             * Removes old frames from the buffer according to these rules:
+             * - delta frames with numbers less than deltaPacketNo
+             * - key frames with numbers less than keyPacketNo
+             * - any frames with absolute numbers less than absolutePacketNo
+             * @param deltaPacketNo Threshold delta packet number, all delta
+             * frames with the number less than this value will be purged
+             * @param keyPacketNo Threshold key packet number, all key
+             * frames with the number less than this value will be purged
+             * @param absolutePacketNo Threshold absolute key packet number, all
+             * frames with the absolute number less than this value will be
+             * purged
+             */
+            void
+            cleanBuffer(PacketNumber deltaPacketNo,
+                        PacketNumber keyPacketNo,
+                        PacketNumber absolutePacketNo);
             
             void
             resetData();

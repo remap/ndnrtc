@@ -175,9 +175,14 @@ int MediaSender::publishPacket(PacketData &packetData,
                 << "published " << segmentName << " "
                 << ndnData.getContent().size() << " bytes" << std::endl;
             }
-
+            
+#if 0   // enable this if you want measuring outgoing bitrate w/o ndn overhead
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getContent().size());
+#else   // enable this if you want measuring outgoing bitrate with ndn overhead
+            NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
+                                               ndnData.getDefaultWireEncoding().size());
+#endif
 #if RECORD
             {
                 SegmentData segData;

@@ -144,7 +144,7 @@ namespace ndnrtc {
             webrtc::ThreadWrapper &queueWatchingThread_;
             PriorityQueue queue_;
             
-            IInterestQueueCallback *callback_;
+            IInterestQueueCallback *callback_ = NULL;
             
             bool isWatchingQueue_ = false;
             
