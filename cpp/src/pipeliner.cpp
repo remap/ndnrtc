@@ -73,7 +73,7 @@ ndnrtc::new_api::Pipeliner::start()
 {
     switchToState(StateChasing);
     bufferEventsMask_ = StartupEventsMask;
-    rebufferingNum_ = 0;
+    stat_.nRebuffer_ = 0;
     reconnectNum_ = 0;
     deltaFrameSeqNo_ = -1;
     
@@ -120,6 +120,18 @@ ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
     keyFramesPrefix_ = Name(keyPrefixString->c_str());
     
     streamId_ = streamId;
+}
+
+PipelinerStatistics
+ndnrtc::new_api::Pipeliner::getStatistics()
+{
+    stat_.avgSegNum_ = NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_);
+    stat_.avgSegNumKey_ = NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_);
+    stat_.avgSegNumParity_ = NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_);
+    stat_.avgSegNumParityKey_ = NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_);
+    stat_.rtxFreq_ = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
+    
+    return stat_;
 }
 
 //******************************************************************************
@@ -476,6 +488,8 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
         return;
         
     LogTraceC << "request key " << keyFrameNo << std::endl;
+    stat_.nRequested_++;
+    stat_.nRequestedKey_++;
     
     prefetchFrame(keyFramesPrefix_,
                   keyFrameNo++,
@@ -487,6 +501,7 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
 void
 ndnrtc::new_api::Pipeliner::requestNextDelta(PacketNumber& deltaFrameNo)
 {
+    stat_.nRequested_++;
     prefetchFrame(deltaFramesPrefix_,
                   deltaFrameNo++,
                   ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_))-1,
@@ -511,7 +526,7 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
         {
             shared_ptr<Interest> interestPtr = *it;
             
-            nInterestSent_++;
+            stat_.nInterestSent_++;
             consumer_->getInterestQueue()->enqueueInterest(*interestPtr,
                                                                Priority::fromArrivalDelay(priority),
                                                                ndnAssembler_->getOnDataHandler(),
@@ -525,7 +540,7 @@ ndnrtc::new_api::Pipeliner::express(Interest &interest, int64_t priority)
 {
     frameBuffer_->interestIssued(interest);
     
-    nInterestSent_++;
+    stat_.nInterestSent_++;
     consumer_->getInterestQueue()->enqueueInterest(interest,
                                                        Priority::fromArrivalDelay(priority),
                                                        ndnAssembler_->getOnDataHandler(),
@@ -637,7 +652,7 @@ ndnrtc::new_api::Pipeliner::requestMissing
         {
             slot->incremenrRtxNum();
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
-            rtxNum_++;
+            stat_.nRtx_++;
         }
     }
     
@@ -768,7 +783,7 @@ void
 ndnrtc::new_api::Pipeliner::rebuffer()
 {
     int nReconnects = reconnectNum_+1;
-    rebufferingNum_++;
+    stat_.nRebuffer_++;
     
     resetData();
     
@@ -790,7 +805,7 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     
     LogWarnC
     << "No data for the last " << MaxInterruptionDelay
-    << " ms. Rebuffering " << rebufferingNum_
+    << " ms. Rebuffering " << stat_.nRebuffer_
     << " reconnect " << reconnectNum_
     << " exclusion " << exclusionFilter_
     << std::endl;

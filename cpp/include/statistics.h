@@ -55,6 +55,25 @@ namespace ndnrtc {
                                 // sense for debugging
     } PlayoutStatistics;
     
+    // pipeliner statistics
+    typedef struct _PipelinerStatistics {
+        double
+        avgSegNum_ = 0.,        // average segments number for delta frames
+        avgSegNumKey_ = 0.,     // average segments number for key frames
+        avgSegNumParity_ = 0.,        // average segments number for delta
+                                      // frames parity data
+        avgSegNumParityKey_ = 0.,     // average segments number for key frames
+                                      // parity data
+        rtxFreq_ = 0.;          // retransmissions frequency
+        
+        unsigned int
+        nRtx_ = 0,              // number of retransmissions
+        nRebuffer_ = 0,         // nubmer of rebuffering events
+        nRequested_ = 0,        // number of requested frames
+        nRequestedKey_ = 0,     // number of requested key frames
+        nInterestSent_ = 0;     // number of interests sent
+    } PipelinerStatistics;
+    
     // sending channel statistics
     typedef struct _SenderChannelPerformance {
         double nBytesPerSec_;
@@ -72,20 +91,13 @@ namespace ndnrtc {
         double rttEstimation_;
         
         // buffers
-        unsigned int rebufferingEvents_;
         unsigned int jitterPlayableMs_, jitterEstimationMs_, jitterTargetMs_;
         double actualProducerRate_;
         
         PlayoutStatistics playoutStat_;
         BufferStatistics bufferStat_;
-        
-        unsigned int nInterestSent_, nDataReceived_, nTimeouts_;
-        
-        double segNumDelta_, segNumKey_;
-        
-        unsigned int rtxNum_;
-        double rtxFreq_;
-        
+        PipelinerStatistics pipelinerStat_;
+        unsigned int nDataReceived_, nTimeouts_;
     } ReceiverChannelPerformance;
     
     typedef struct _ReceiverChannelStatistics {

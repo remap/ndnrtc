@@ -57,25 +57,25 @@ namespace ndnrtc {
             void
             triggerRebuffering();
             
-            double
-            getAvgSegNum(bool isKey) const
-            {
-                return NdnRtcUtils::currentMeanEstimation((isKey)?
-                                                          keySegnumEstimatorId_:
-                                                          deltaSegnumEstimatorId_);
-            }
-            
-            double
-            getRtxFreq() const
-            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
-            
-            unsigned int
-            getRtxNum() const
-            { return rtxNum_; }
-            
-            unsigned int
-            getRebufferingNum()
-            { return rebufferingNum_; }
+//            double
+//            getAvgSegNum(bool isKey) const DEPRECATED
+//            {
+//                return NdnRtcUtils::currentMeanEstimation((isKey)?
+//                                                          keySegnumEstimatorId_:
+//                                                          deltaSegnumEstimatorId_);
+//            }
+//            
+//            double
+//            getRtxFreq() const DEPRECATED
+//            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
+//            
+//            unsigned int
+//            getRtxNum() const DEPRECATED
+//            { return rtxNum_; }
+//            
+//            unsigned int
+//            getRebufferingNum() DEPRECATED
+//            { return rebufferingNum_; }
             
             State
             getState() const
@@ -92,8 +92,10 @@ namespace ndnrtc {
             void
             switchToStream(unsigned int streamId);
             
-            unsigned int
-            getInterestNum() { return nInterestSent_; }
+//            unsigned int
+//            getInterestNum() { return nInterestSent_; }
+            PipelinerStatistics
+            getStatistics();
             
         private:
             // this events masks are used in different moments during pipeliner
@@ -145,14 +147,16 @@ namespace ndnrtc {
             PacketNumber playbackStartFrameNo_;
             
             // --
-            unsigned rebufferingNum_, reconnectNum_;
+//            unsigned rebufferingNum_,
+            unsigned int reconnectNum_;
             PacketNumber exclusionFilter_;
-            unsigned int rtxFreqMeterId_, rtxNum_;
+            unsigned int rtxFreqMeterId_;//, rtxNum_;
             int bufferEventsMask_;
             bool useKeyNamespace_;
             unsigned int streamId_; // currently fetched stream id
             // statistics
-            unsigned int nInterestSent_;
+            PipelinerStatistics stat_;
+//            unsigned int nInterestSent_;
             
             static bool
             mainThreadRoutine(void *pipeliner){

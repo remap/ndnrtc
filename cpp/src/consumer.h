@@ -58,6 +58,9 @@
 #define SYMBOL_NINCOMPLETE "ninc"
 #define SYMBOL_NINCOMPLETEKEY "ninck"
 
+#define SYMBOL_NREQUESTED "nreq"
+#define SYMBOL_NREQUESTEDKEY "nreqk"
+
 #define SYMBOL_NRTX "nrtx"
 #define SYMBOL_AVG_DELTA "ndelta"
 #define SYMBOL_AVG_KEY "nkey"

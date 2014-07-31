@@ -140,16 +140,8 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
 {
     memset(&stat, 0, sizeof(stat));
     
-    stat.nInterestSent_ = pipeliner_->getInterestNum();
     stat.nDataReceived_ = nDataReceived_;
     stat.nTimeouts_ = nTimeouts_;
-    
-    stat.segNumDelta_ = pipeliner_->getAvgSegNum(false);
-    stat.segNumKey_ = pipeliner_->getAvgSegNum(true);
-    stat.rtxNum_ = pipeliner_->getRtxNum();
-    stat.rtxFreq_ = pipeliner_->getRtxFreq();
-    stat.rebufferingEvents_ = pipeliner_->getRebufferingNum();
-    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
     
     stat.jitterPlayableMs_ = frameBuffer_->getPlayableBufferSize();
     stat.jitterEstimationMs_ = frameBuffer_->getEstimatedBufferSize();
@@ -160,8 +152,10 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
     stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
     
     interestQueue_->getStatistics(stat);
+    
     stat.playoutStat_ = playout_->getStatistics();
     stat.bufferStat_ = frameBuffer_->getStatistics();
+    stat.pipelinerStat_ = pipeliner_->getStatistics();
     
     dumpStat(stat);
 }
@@ -237,7 +231,7 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << SYMBOL_JITTER_ESTIMATE << STAT_DIV << stat.jitterEstimationMs_ << STAT_DIV
     << SYMBOL_JITTER_PLAYABLE << STAT_DIV << stat.jitterPlayableMs_ << STAT_DIV
     << SYMBOL_INRATE << STAT_DIV << stat.nBytesPerSec_*8/1000 << STAT_DIV
-    << SYMBOL_NREBUFFER << STAT_DIV << stat.rebufferingEvents_ << STAT_DIV
+    << SYMBOL_NREBUFFER << STAT_DIV << stat.pipelinerStat_.nRebuffer_ << STAT_DIV
     // playout stat
     << SYMBOL_NPLAYED << STAT_DIV << stat.playoutStat_.nPlayed_ << STAT_DIV
     << SYMBOL_NPLAYEDKEY << STAT_DIV << stat.playoutStat_.nPlayedKey_ << STAT_DIV
@@ -259,11 +253,13 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << SYMBOL_NINCOMPLETE << STAT_DIV << stat.bufferStat_.nIncomplete_ << STAT_DIV
     << SYMBOL_NINCOMPLETEKEY << STAT_DIV << stat.bufferStat_.nIncompleteKey_ << STAT_DIV
 
-    << SYMBOL_NRTX << STAT_DIV << stat.rtxNum_ << STAT_DIV
-    << SYMBOL_AVG_DELTA << STAT_DIV << stat.segNumDelta_ << STAT_DIV
-    << SYMBOL_AVG_KEY << STAT_DIV << stat.segNumKey_ << STAT_DIV
+    << SYMBOL_NRTX << STAT_DIV << stat.pipelinerStat_.nRtx_ << STAT_DIV
+    << SYMBOL_AVG_DELTA << STAT_DIV << stat.pipelinerStat_.avgSegNum_ << STAT_DIV
+    << SYMBOL_AVG_KEY << STAT_DIV << stat.pipelinerStat_.avgSegNumKey_ << STAT_DIV
     << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_ << STAT_DIV
-    << SYMBOL_NINTRST << STAT_DIV << stat.nInterestSent_ << STAT_DIV
+    << SYMBOL_NINTRST << STAT_DIV << stat.pipelinerStat_.nInterestSent_ << STAT_DIV
+    << SYMBOL_NREQUESTED << STAT_DIV << stat.pipelinerStat_.nRequested_ << STAT_DIV
+    << SYMBOL_NREQUESTEDKEY << STAT_DIV << stat.pipelinerStat_.nRequestedKey_ << STAT_DIV
     << SYMBOL_NDATA << STAT_DIV << stat.nDataReceived_ << STAT_DIV
     << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_
     << std::endl;

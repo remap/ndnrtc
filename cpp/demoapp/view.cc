@@ -307,7 +307,7 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     
     mvwprintw(stat_win, y++, x, "%10.2f", stat.nBytesPerSec_*8./1000.);
 
-    mvwprintw(stat_win, y++, x, "%10d", stat.rebufferingEvents_);
+    mvwprintw(stat_win, y++, x, "%10d", stat.pipelinerStat_.nRebuffer_);
     
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nAssembled_,
               stat.bufferStat_.nAssembledKey_);
@@ -326,11 +326,11 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nAcquired_, stat.bufferStat_.nAcquiredKey_);
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nDropped_, stat.bufferStat_.nDroppedKey_);
     
-    mvwprintw(stat_win, y++, x, "%10d", stat.rtxNum_);
-    mvwprintw(stat_win, y++, x, "%10.2f", stat.rtxFreq_);
+    mvwprintw(stat_win, y++, x, "%10d", stat.pipelinerStat_.nRtx_);
+    mvwprintw(stat_win, y++, x, "%10.2f", stat.pipelinerStat_.rtxFreq_);
     
-    mvwprintw(stat_win, y++, x, "%10.2f", stat.segNumDelta_);
-    mvwprintw(stat_win, y++, x, "%10.2f", stat.segNumKey_);
+    mvwprintw(stat_win, y++, x, "%10.2f", stat.pipelinerStat_.avgSegNum_);
+    mvwprintw(stat_win, y++, x, "%10.2f", stat.pipelinerStat_.avgSegNumKey_);
     
     mvwprintw(stat_win, y++, x, "%10.3f", stat.rttEstimation_);
 }
