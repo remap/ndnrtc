@@ -18,13 +18,14 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class VideoConsumer : public Consumer
+        class VideoConsumer : public Consumer,
+                              public IInterestQueueCallback
         {
         public:
             VideoConsumer(const ParamsStruct& params,
-                          const shared_ptr<InterestQueue>& interestQueue,
-                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr),
-                          IExternalRenderer* const externalRenderer = nullptr);
+                          const boost::shared_ptr<InterestQueue>& interestQueue,
+                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>(),
+                          IExternalRenderer* const externalRenderer = 0);
             virtual ~VideoConsumer();
             
             int
@@ -42,12 +43,22 @@ namespace ndnrtc {
             void
             setLogger(ndnlog::new_api::Logger* logger);
             
-        private:
-            shared_ptr<NdnVideoDecoder> decoder_;
+            void
+            onInterestIssued(const boost::shared_ptr<const ndn::Interest>& interest);
             
-            shared_ptr<IVideoRenderer>
+            void
+            onStateChanged(const int& oldState, const int& newState);
+            
+        private:
+            boost::shared_ptr<NdnVideoDecoder> decoder_;
+            
+            boost::shared_ptr<IVideoRenderer>
             getRenderer()
-            { return dynamic_pointer_cast<IVideoRenderer>(renderer_); }
+            { return boost::dynamic_pointer_cast<IVideoRenderer>(renderer_); }
+            
+            
+            void
+            onTimeout(const boost::shared_ptr<const Interest>& interest);
         };
     }
 }

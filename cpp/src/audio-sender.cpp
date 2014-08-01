@@ -13,25 +13,24 @@
 
 using namespace ndnrtc;
 using namespace webrtc;
-using namespace std;
+using namespace boost;
 
 //******************************************************************************
 //******************************************************************************
 #pragma mark - static
 int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
-                                           string &prefix)
+                                           std::string &prefix)
 {
     int res = RESULT_OK;
-    shared_ptr<string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
+    shared_ptr<std::string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);
     
-    string streamThread = ParamsStruct::validate(params.streamThread,
-                                                 DefaultParamsAudio.streamThread,
-                                                 res);
+    std::string streamThread = NdnRtcUtils::toString("%d", params.streamsParams[0].startBitrate);
+    
     // RTP and RTCP are published under the same prefix
 #if 0
     string rtcpSuffix = "control";
 #else
-    string rtcpSuffix = NdnRtcNamespace::NameComponentStreamFrames;
+    std::string rtcpSuffix = NdnRtcNamespace::NameComponentStreamFrames;
 #endif
     prefix = *NdnRtcNamespace::buildPath(false,
                                          &(*streamPrefix),
@@ -49,13 +48,13 @@ int NdnAudioSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
                          const shared_ptr<KeyChain>& ndnKeyChain)
 {
     int res = RESULT_OK;
-    
-    res = MediaSender::init(faceProcessor, ndnKeyChain);
+    shared_ptr<std::string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
+    res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
     
     if (RESULT_FAIL(res))
         return res;
     
-    string prefix;
+    std::string prefix;
     
     res = NdnAudioSender::getStreamControlPrefix(params_, prefix);
     
@@ -100,7 +99,7 @@ int NdnAudioSender::publishRTCPAudioPacket(unsigned int len, unsigned char *data
 {
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
     
-    NdnAudioData::AudioPacket packet {true, len, data};
+    NdnAudioData::AudioPacket packet = (NdnAudioData::AudioPacket){true, len, data};
     NdnAudioData adata(packet);
     
     publishPacket(adata);

@@ -18,8 +18,10 @@ using namespace ndnrtc::new_api;
 const unsigned int ChaseEstimation::SampleSize = 0;
 const double ChaseEstimation::ChangeThreshold = .7;
 const double ChaseEstimation::FilterCoeff = 0.07;
-const int ChaseEstimation::InclineEstimatorSample = 4;
-const int ChaseEstimation::MinOccurences = 3;
+const int ChaseEstimation::InclineEstimatorSample = 3;
+const int ChaseEstimation::MinOccurences = 1;
+
+#define RATE_SIMILARITY_LVL 0.7
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -48,9 +50,12 @@ ChaseEstimation::~ChaseEstimation()
 //******************************************************************************
 #pragma mark - public
 void
-ChaseEstimation::trackArrival()
+ChaseEstimation::trackArrival(double currentRate)
 {
     int64_t arrivalTimestamp = NdnRtcUtils::millisecondTimestamp();
+
+    if (currentRate > 0)
+        lastPacketRateUpdate_ = currentRate;
     
     if (startTime_ == 0)
         startTime_ = arrivalTimestamp;
@@ -66,8 +71,36 @@ ChaseEstimation::trackArrival()
         LogStatC
         << "\tdelay\t" << delay << "\tmean\t"
         << NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_)
+        << "\trate\t" << lastPacketRateUpdate_
         << "\tincline\t" << NdnRtcUtils::currentIncline(inclineEstimator_)
         << endl;
+        
+        if (!stabilized_)
+        {
+            double incline = fabs(NdnRtcUtils::currentIncline(inclineEstimator_));
+            double mean = NdnRtcUtils::currentMeanEstimation(arrivalDelayEstimatorId_);
+            
+            if (incline != 0 &&
+                incline < changeThreshold_ &&
+                mean >= RATE_SIMILARITY_LVL*(1000./lastPacketRateUpdate_))
+            {
+                lastCheckedValue_ = incline;
+                nStabilizedOccurences_++;
+                LogStatC << "\tstable sequential occurence #\t" << nStabilizedOccurences_ << endl;
+            }
+            else
+                nStabilizedOccurences_ = 0;
+            
+            if (nStabilizedOccurences_ > MinOccurences*InclineEstimatorSample)
+            {
+                stabilized_ = true;
+                stabilizedValue_ = incline;
+                
+                LogStatC
+                << "\tfinished in\t" << NdnRtcUtils::millisecondTimestamp() - startTime_
+                << "" << endl;
+            }
+        }
     }
     
     lastArrivalTimeMs_ = arrivalTimestamp;
@@ -85,39 +118,17 @@ ChaseEstimation::getArrivalEstimation()
 bool
 ChaseEstimation::isArrivalStable()
 {
-    if (!stabilized_)
-    {
-        double incline = fabs(NdnRtcUtils::currentIncline(inclineEstimator_));
-        
-        if (incline != 0 &&
-            incline < changeThreshold_)
-        {
-            lastCheckedValue_ = incline;
-            nStabilizedOccurences_++;
-        }
-        else
-            nStabilizedOccurences_ = 0;
-        
-        if (nStabilizedOccurences_ > MinOccurences*InclineEstimatorSample)
-        {
-            stabilized_ = true;
-            stabilizedValue_ = incline;
-            
-            LogStatC
-            << "chasing finished in " << NdnRtcUtils::millisecondTimestamp() - startTime_
-            << " msec" << endl;
-        }
-    }
-        
     return stabilized_;
 }
 
 void
-ChaseEstimation::reset()
+ChaseEstimation::reset(bool resetStartTime)
 {
-    LogTraceC << "chase estimation reset" << endl;
+    LogStatC << "\treset" << endl;
     
-    startTime_ = 0;
+    if (resetStartTime)
+        startTime_ = 0;
+    
     lastArrivalTimeMs_ = -1;
     nStabilizedOccurences_ = 0;
     stabilized_ = false;

@@ -49,8 +49,8 @@ namespace ndnrtc{
             void
             setDescription(const std::string& desc);
             
-            void
-            getStatistics(ReceiverChannelPerformance& stat);
+            PlayoutStatistics
+            getStatistics() { return stat_; };
             
             void
             setStartPacketNo(PacketNumber packetNo)
@@ -62,8 +62,7 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            unsigned int nPlayed_, nMissed_;
-            double latency_;
+            PlayoutStatistics stat_;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;
@@ -71,13 +70,8 @@ namespace ndnrtc{
             int playbackAdjustment_;
             PacketNumber startPacketNo_;
             
-#if 1 // left for future testing
-            int test_timelineDiff_ = -1;
-            int test_timelineDiffInclineEst_ = -1;
-#endif
-            
             const Consumer* consumer_;
-            shared_ptr<FrameBuffer> frameBuffer_;
+            boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
             webrtc::ThreadWrapper &playoutThread_;
@@ -113,8 +107,8 @@ namespace ndnrtc{
             void
             updatePlaybackAdjustment();
             
-            void
-            adjustPlaybackDelay(int& playbackDelay);
+            int
+            playbackDelayAdjustment(int playbackDelay);
             
             int
             avSyncAdjustment(int64_t nowTimestamp, int playbackDelay);

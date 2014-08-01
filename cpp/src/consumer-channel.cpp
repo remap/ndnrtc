@@ -16,6 +16,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog::new_api;
+using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -43,15 +44,24 @@ faceProcessor_(faceProcessor)
         faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
     }
     
-    interestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
-    interestQueue_->setDescription(NdnRtcUtils::toString("%s-iqueue", getDescription().c_str()));
-    
     if (params.useVideo)
-        videoConsumer_.reset(new VideoConsumer(params_, interestQueue_,
+    {
+        videoInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        videoInterestQueue_->setDescription(std::string("video-iqueue"));
+        videoConsumer_.reset(new VideoConsumer(params_, videoInterestQueue_,
                                                rttEstimation_, videoRenderer));
+    }
     
     if (params_.useAudio)
-        audioConsumer_.reset(new AudioConsumer(audioParams_, interestQueue_, rttEstimation_));
+    {
+        audioInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        audioInterestQueue_->setDescription(std::string("audio-iqueue"));
+        audioConsumer_.reset(new AudioConsumer(audioParams_, audioInterestQueue_, rttEstimation_));
+    }
+    
+    serviceInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+    serviceInterestQueue_->setDescription(std::string("service-iqueue"));
+    serviceChannel_.reset(new ServiceChannel(this, serviceInterestQueue_));
     
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
@@ -89,6 +99,8 @@ int
 ConsumerChannel::startTransmission()
 {
 #warning handle errors
+    serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
+    
     if (isOwnFace_)
         faceProcessor_->startProcessing();
 
@@ -120,9 +132,7 @@ ConsumerChannel::stopTransmission()
 
 void
 ConsumerChannel::getChannelStatistics(ReceiverChannelStatistics &stat)
-{
-    stat.videoStat_.srtt_ = rttEstimation_->getCurrentEstimation();
-    
+{   
     if (params_.useVideo)
         videoConsumer_->getStatistics(stat.videoStat_);
     
@@ -144,7 +154,14 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
     
     rttEstimation_->setLogger(logger);
     faceProcessor_->setLogger(logger);
-    interestQueue_->setLogger(logger);
+
+    if (videoInterestQueue_.get())
+        videoInterestQueue_->setLogger(logger);
+    
+    if (audioInterestQueue_.get())
+        audioInterestQueue_->setLogger(logger);
+    
+    serviceChannel_->setLogger(logger);
     
     ILoggingObject::setLogger(logger);
 }
@@ -160,9 +177,31 @@ ConsumerChannel::onInterest(const shared_ptr<const Name>& prefix,
 }
 
 void
-ConsumerChannel::onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+ConsumerChannel::onRegisterFailed(const shared_ptr<const Name>&
                               prefix)
 {
     // empty
+}
+
+void
+ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
+                            const ParamsStruct& newAudioParams)
+{
+    LogInfoC << "producer parameters updated" << std::endl;
+    
+}
+
+void
+ConsumerChannel::onUpdateFailedWithTimeout()
+{
+    LogWarnC << "service update failed with timeout" << std::endl;
+    serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
+}
+
+void
+ConsumerChannel::onUpdateFailedWithError(const char* errMsg)
+{
+    LogErrorC << "service update failed with message: "
+    << std::string(errMsg) << std::endl;
 }
 

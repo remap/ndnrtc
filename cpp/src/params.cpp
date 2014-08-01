@@ -64,10 +64,6 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
         strcmp(params.streamName, "") == 0)
         return RESULT_ERR;
     
-    if (params.streamThread == NULL ||
-        strcmp(params.streamThread, "") == 0)
-        return RESULT_ERR;
-    
     if (params.ndnHub == NULL ||
         strcmp(params.ndnHub, "") == 0)
         return RESULT_ERR;
@@ -104,23 +100,9 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     validated.renderHeight = ParamsStruct::validate(params.renderHeight,
                                                     MinHeight, MaxHeight, res,
                                                     DefaultParams.renderHeight);
-    
-    validated.codecFrameRate = ParamsStruct::validate(params.codecFrameRate,
-                                                      MinFrameRate, MaxFrameRate, res,
-                                                      DefaultParams.codecFrameRate);
-    validated.startBitrate = ParamsStruct::validate(params.startBitrate,
-                                                    MinStartBitrate, MaxStartBitrate, res,
-                                                    DefaultParams.startBitrate);
-    validated.maxBitrate = ParamsStruct::validate(params.maxBitrate,
-                                                  MinStartBitrate, MaxBitrate, res,
-                                                  DefaultParams.maxBitrate);
-    validated.encodeWidth = ParamsStruct::validate(params.encodeWidth,
-                                                   MinWidth, MaxWidth, res,
-                                                   DefaultParams.encodeWidth);
-    validated.encodeHeight = ParamsStruct::validate(params.encodeHeight,
-                                                    MinHeight, MaxHeight, res,
-                                                    DefaultParams.encodeHeight);
-    validated.dropFramesOn = params.dropFramesOn;
+    validated.nStreams = params.nStreams;
+    validated.streamsParams = (CodecParams*)malloc(sizeof(CodecParams)*validated.nStreams);
+    memcpy(validated.streamsParams, params.streamsParams, sizeof(CodecParams)*validated.nStreams);
     
     validated.host = params.host;
     validated.portNum = ParamsStruct::validateLE(params.portNum, MaxPortNum, res,
@@ -128,7 +110,6 @@ int _ParamsStruct::validateVideoParams(const struct _ParamsStruct &params,
     
     validated.producerId = params.producerId;
     validated.streamName = params.streamName;
-    validated.streamThread = params.streamThread;
     validated.ndnHub = validatePrefix(params.ndnHub);
     
     validated.segmentSize = ParamsStruct::validate(params.segmentSize,
@@ -180,10 +161,6 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
         strcmp(params.streamName, "") == 0)
         return RESULT_ERR;
     
-    if (params.streamThread == NULL ||
-        strcmp(params.streamThread, "") == 0)
-        return RESULT_ERR;
-    
     if (params.ndnHub == NULL ||
         strcmp(params.ndnHub, "") == 0)
         return RESULT_ERR;
@@ -209,8 +186,11 @@ int _ParamsStruct::validateAudioParams(const struct _ParamsStruct &params,
     
     validated.producerId = params.producerId;
     validated.streamName = params.streamName;
-    validated.streamThread = params.streamThread;
     validated.ndnHub = validatePrefix(params.ndnHub);
+    
+    validated.nStreams = params.nStreams;
+    validated.streamsParams = (CodecParams*)malloc(sizeof(CodecParams)*validated.nStreams);
+    memcpy(validated.streamsParams, params.streamsParams, sizeof(CodecParams)*validated.nStreams);
     
     validated.segmentSize = ParamsStruct::validate(params.segmentSize,
                                                    MinSegmentSize, MaxSegmentSize, res,

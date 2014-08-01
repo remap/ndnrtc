@@ -24,6 +24,7 @@ typedef struct _FrequencyMeter {
     unsigned int nCyclesPerSec_;
     double callsPerSecond_;
     int64_t lastCheckTime_;
+    unsigned int meanEstimatorId_;
 } FrequencyMeter;
 
 typedef struct _DataRateMeter {
@@ -31,11 +32,13 @@ typedef struct _DataRateMeter {
     unsigned int bytesPerCycle_;
     double nBytesPerSec_;
     int64_t lastCheckTime_;
+    unsigned int meanEstimatorId_;
 } DataRateMeter;
 
 typedef struct _MeanEstimator {
     unsigned int sampleSize_;
     int nValues_;
+    double startValue_;
     double prevValue_;
     double valueMean_;
     double valueMeanSq_;
@@ -50,11 +53,20 @@ typedef struct _Filter {
 } Filter;
 
 typedef struct _InclineEstimator {
-    unsigned int meanEstimatorId_;
+    unsigned int avgEstimatorId_;
+    unsigned int nValues_;
     double lastValue_;
     unsigned int sampleSize_;
     unsigned int skipCounter_;
 } InclineEstimator;
+
+typedef struct _SlidingAverage {
+    unsigned int sampleSize_;
+    int nValues_;
+    double accumulatedSum_;
+    double currentAverage_;
+    double* sample_;
+} SlidingAverage;
 
 //********************************************************************************
 #pragma mark - all static
@@ -63,6 +75,7 @@ static std::vector<DataRateMeter> dataMeters_;
 static std::vector<MeanEstimator> meanEstimators_;
 static std::vector<Filter> filters_;
 static std::vector<InclineEstimator> inclineEstimators_;
+static std::vector<SlidingAverage> slidingAverageEstimators_;
 
 static VoiceEngine *VoiceEngineInstance = NULL;
 static Config AudioConfig;
@@ -216,7 +229,8 @@ double NdnRtcUtils::unixTimestamp()
 //******************************************************************************
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
-    FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0};
+    FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
+    meter.meanEstimatorId_ = setupMeanEstimator();
     
     freqMeters_.push_back(meter);
     
@@ -241,6 +255,7 @@ void NdnRtcUtils::frequencyMeterTick(unsigned int meterId)
             {
                 meter.callsPerSecond_ = 1000.*(double)meter.nCyclesPerSec_/(double)(delta);
                 meter.nCyclesPerSec_ = 0;
+                meanEstimatorNewValue(meter.meanEstimatorId_, meter.callsPerSecond_);
             }
             
             meter.lastCheckTime_ = now;
@@ -254,7 +269,7 @@ double NdnRtcUtils::currentFrequencyMeterValue(unsigned int meterId)
     
     FrequencyMeter &meter = freqMeters_[meterId];
     
-    return meter.callsPerSecond_;
+    return currentMeanEstimation(meter.meanEstimatorId_);
 }
 
 void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
@@ -268,7 +283,8 @@ void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
 //******************************************************************************
 unsigned int NdnRtcUtils::setupDataRateMeter(unsigned int granularity)
 {
-    DataRateMeter meter = {1000./(double)granularity, 0, 0., 0};
+    DataRateMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
+    meter.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
     
     dataMeters_.push_back(meter);
     
@@ -294,6 +310,7 @@ void NdnRtcUtils::dataRateMeterMoreData(unsigned int meterId,
             {
                 meter.nBytesPerSec_ = 1000.*meter.bytesPerCycle_/delta;
                 meter.bytesPerCycle_ = 0;
+                meanEstimatorNewValue(meter.meanEstimatorId_, meter.nBytesPerSec_);
             }
             
             meter.lastCheckTime_ = now;
@@ -306,8 +323,7 @@ double NdnRtcUtils::currentDataRateMeterValue(unsigned int meterId)
         return 0.;
     
     DataRateMeter &meter = dataMeters_[meterId];
-    
-    return meter.nBytesPerSec_;
+    return currentMeanEstimation(meter.meanEstimatorId_);
 }
 
 void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
@@ -322,7 +338,7 @@ void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)
 unsigned int NdnRtcUtils::setupMeanEstimator(unsigned int sampleSize,
                                              double startValue)
 {
-    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, 0., 0., startValue, 0.};
+    MeanEstimator meanEstimator = {sampleSize, 0, startValue, startValue, startValue, 0., 0., startValue, 0.};
     
     meanEstimators_.push_back(meanEstimator);
     
@@ -362,7 +378,8 @@ void NdnRtcUtils::meanEstimatorNewValue(unsigned int estimatorId, double value)
     }
     else
     {
-        estimator.valueMean_ = 0;
+        estimator.currentMean_ = value;
+        estimator.valueMean_ = value;
         estimator.valueMeanSq_ = 0;
         estimator.valueVariance_ = 0;
     }
@@ -395,6 +412,68 @@ void NdnRtcUtils::releaseMeanEstimator(unsigned int estimatorId)
     if (estimatorId >= meanEstimators_.size())
         return ;
     
+    // nothing
+}
+
+void NdnRtcUtils::resetMeanEstimator(unsigned int estimatorId)
+{
+    if (estimatorId >= meanEstimators_.size())
+        return ;
+    
+    MeanEstimator& estimator = meanEstimators_[estimatorId];
+
+    estimator = (MeanEstimator){estimator.sampleSize_, 0, estimator.startValue_,
+        estimator.startValue_, estimator.startValue_, 0., 0.,
+        estimator.startValue_, 0.};
+}
+
+//******************************************************************************
+unsigned int NdnRtcUtils::setupSlidingAverageEstimator(unsigned int sampleSize)
+{
+    SlidingAverage slidingAverage;
+    
+    slidingAverage.sampleSize_ = (sampleSize == 0)?2:sampleSize;
+    slidingAverage.nValues_ = 0;
+    slidingAverage.accumulatedSum_ = 0.;
+    slidingAverage.currentAverage_ = 0.;
+    slidingAverage.sample_ = (double*)malloc(sizeof(double)*sampleSize);
+    memset(slidingAverage.sample_, 0, sizeof(double)*sampleSize);
+    
+    slidingAverageEstimators_.push_back(slidingAverage);
+    
+    return slidingAverageEstimators_.size()-1;
+}
+
+void NdnRtcUtils::slidingAverageEstimatorNewValue(unsigned int estimatorId, double value)
+{
+    if (estimatorId >= slidingAverageEstimators_.size())
+        return ;
+    
+    SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
+    
+    estimator.sample_[estimator.nValues_%estimator.sampleSize_] = value;
+    estimator.nValues_++;
+    
+    if (estimator.nValues_ >= estimator.sampleSize_)
+    {
+        estimator.currentAverage_ = (estimator.accumulatedSum_+value)/estimator.sampleSize_;
+        estimator.accumulatedSum_ += value - estimator.sample_[estimator.nValues_%estimator.sampleSize_];
+    }
+    else
+        estimator.accumulatedSum_ += value;
+}
+
+double NdnRtcUtils::currentSlidingAverageValue(unsigned int estimatorId)
+{
+    if (estimatorId >= slidingAverageEstimators_.size())
+        return 0;
+    
+    SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
+    return estimator.currentAverage_;
+}
+
+void NdnRtcUtils::releaseAverageEstimator(unsigned int estimatorID)
+{
     // nothing
 }
 
@@ -441,8 +520,9 @@ unsigned int
 NdnRtcUtils::setupInclineEstimator(unsigned int sampleSize)
 {
     InclineEstimator ie;
-    ie.sampleSize_ = (sampleSize == 0)?1:sampleSize;
-    ie.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
+    ie.sampleSize_ = sampleSize;
+    ie.nValues_ = 0;
+    ie.avgEstimatorId_ = NdnRtcUtils::setupSlidingAverageEstimator(sampleSize);
     ie.lastValue_ = 0.;
     ie.skipCounter_ = 0;
     inclineEstimators_.push_back(ie);
@@ -456,16 +536,18 @@ NdnRtcUtils::inclineEstimatorNewValue(unsigned int estimatorId, double value)
     if (estimatorId < inclineEstimators_.size())
     {
         InclineEstimator& ie = inclineEstimators_[estimatorId];
-        ie.skipCounter_ = (ie.skipCounter_+1)%ie.sampleSize_;
         
-        if (!ie.skipCounter_)
+        if (ie.nValues_ == 0)
+            ie.lastValue_ = value;
+        else
         {
-            // update everything
-            double incline = (value-ie.lastValue_)/(double)ie.sampleSize_;
+            double incline = (value-ie.lastValue_);
             
-            meanEstimatorNewValue(ie.meanEstimatorId_, incline);
+            slidingAverageEstimatorNewValue(ie.avgEstimatorId_, incline);
             ie.lastValue_ = value;
         }
+        
+        ie.nValues_++;
     }
 }
 
@@ -475,7 +557,7 @@ NdnRtcUtils::currentIncline(unsigned int estimatorId)
     if (estimatorId < inclineEstimators_.size())
     {
         InclineEstimator& ie = inclineEstimators_[estimatorId];
-        return currentMeanEstimation(ie.meanEstimatorId_);
+        return currentSlidingAverageValue(ie.avgEstimatorId_);
     }
     
     return 0.;
@@ -491,8 +573,7 @@ webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
     if (!VoiceEngineInstance)
     {
-        AudioConfig.Set<AudioCodingModuleFactory>(new NewAudioCodingModuleFactory());
-        VoiceEngineInstance = VoiceEngine::Create(AudioConfig);
+        VoiceEngineInstance = VoiceEngine::Create();
         
         int res = 0;
         

@@ -36,8 +36,16 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumKey;
             static const int64_t MaxInterruptionDelay;
             static const int64_t MinInterestLifetime;
+            static const int MaxRetryNum; // maximum number of retires when
+                                          // streaming suddenly inerrupts
+            static const int ChaserRateCoefficient; // how faster than producer
+                                                    // rate the chaser should
+                                                    // skim through cached content
+            static const int FullBufferRecycle; // number of slots to recycle if
+                                                // the buffer became full during
+                                                // chasing stage
             
-            Pipeliner(const shared_ptr<Consumer>& consumer);
+            Pipeliner(const boost::shared_ptr<Consumer>& consumer);
             ~Pipeliner();
             
             int
@@ -49,28 +57,29 @@ namespace ndnrtc {
             void
             triggerRebuffering();
             
-            double
-            getAvgSegNum(bool isKey) const
-            {
-                return NdnRtcUtils::currentMeanEstimation((isKey)?
-                                                          keySegnumEstimatorId_:
-                                                          deltaSegnumEstimatorId_);
-            }
-            
-            double
-            getRtxFreq() const
-            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
-            
-            unsigned int
-            getRtxNum() const
-            { return rtxNum_; }
-            
-            unsigned int
-            getRebufferingNum()
-            { return rebufferingNum_; }
+//            double
+//            getAvgSegNum(bool isKey) const DEPRECATED
+//            {
+//                return NdnRtcUtils::currentMeanEstimation((isKey)?
+//                                                          keySegnumEstimatorId_:
+//                                                          deltaSegnumEstimatorId_);
+//            }
+//            
+//            double
+//            getRtxFreq() const DEPRECATED
+//            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
+//            
+//            unsigned int
+//            getRtxNum() const DEPRECATED
+//            { return rtxNum_; }
+//            
+//            unsigned int
+//            getRebufferingNum() DEPRECATED
+//            { return rebufferingNum_; }
             
             State
-            getState() const;
+            getState() const
+            { return state_; }
             
             void
             setUseKeyNamespace(bool useKeyNamespace)
@@ -80,7 +89,38 @@ namespace ndnrtc {
             registerCallback(IPipelinerCallback* callback)
             { callback_ = callback; }
             
+            void
+            switchToStream(unsigned int streamId);
+            
+//            unsigned int
+//            getInterestNum() { return nInterestSent_; }
+            PipelinerStatistics
+            getStatistics();
+            
         private:
+            // this events masks are used in different moments during pipeliner
+            // and used for filtering buffer events
+            // startup events mask is used for pipeline initiation
+            static const int StartupEventsMask = FrameBuffer::Event::StateChanged;
+            // this events mask is used when rightmost interest has been issued
+            // and initial data is awaited
+            static const int WaitForRightmostEventsMask = FrameBuffer::Event::FirstSegment | FrameBuffer::Event::Timeout;
+            // this events mask is used during chasing stage
+            static const int ChasingEventsMask = FrameBuffer::Event::FirstSegment |
+                                                 FrameBuffer::Event::Timeout |
+                                                 FrameBuffer::Event::StateChanged;
+            // this events mask is used during buffering stage
+            static const int BufferingEventsMask = FrameBuffer::Event::FirstSegment |
+                                                FrameBuffer::Event::Ready |
+                                                FrameBuffer::Event::Timeout |
+                                                FrameBuffer::Event::StateChanged |
+                                                FrameBuffer::Event::NeedKey;
+            // this events mask is used during fetching stage
+            static const int FetchingEventsMask = BufferingEventsMask |
+                                                FrameBuffer::Event::Playout;
+            
+            
+            State state_;
             Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
             Consumer* consumer_;
@@ -91,14 +131,14 @@ namespace ndnrtc {
             IPacketAssembler* ndnAssembler_;
             IPipelinerCallback* callback_;
             
-            bool isProcessing_;
             webrtc::ThreadWrapper &mainThread_;
             
-            bool isPipelining_, isPipelinePaused_, isBuffering_;
+            bool isPipelinePaused_, isPipelining_;
             int64_t pipelineIntervalMs_, recoveryCheckpointTimestamp_;
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
             webrtc::EventWrapper &pipelinerPauseEvent_;
+            webrtc::CriticalSectionWrapper &streamSwitchSync_;
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
@@ -107,11 +147,16 @@ namespace ndnrtc {
             PacketNumber playbackStartFrameNo_;
             
             // --
-            unsigned rebufferingNum_, reconnectNum_;
+//            unsigned rebufferingNum_,
+            unsigned int reconnectNum_;
             PacketNumber exclusionFilter_;
-            unsigned int rtxFreqMeterId_, rtxNum_;
+            unsigned int rtxFreqMeterId_;//, rtxNum_;
             int bufferEventsMask_;
             bool useKeyNamespace_;
+            unsigned int streamId_; // currently fetched stream id
+            // statistics
+            PipelinerStatistics stat_;
+//            unsigned int nInterestSent_;
             
             static bool
             mainThreadRoutine(void *pipeliner){
@@ -134,10 +179,10 @@ namespace ndnrtc {
             handleChase(const FrameBuffer::Event& event);
             
             void
-            initialDataArrived(const shared_ptr<FrameBuffer::Slot>& slot);
+            initialDataArrived(const boost::shared_ptr<FrameBuffer::Slot>& slot);
             
             void
-            chaseDataArrived(const FrameBuffer::Event& event);
+            handleChasing(const FrameBuffer::Event& event);
             
             void
             handleBuffering(const FrameBuffer::Event& event);
@@ -151,10 +196,10 @@ namespace ndnrtc {
             int
             initialize();
             
-            shared_ptr<Interest>
+            boost::shared_ptr<Interest>
             getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
             
-            shared_ptr<Interest>
+            boost::shared_ptr<Interest>
             getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
                                     PacketNumber exclude = -1);
             
@@ -186,7 +231,7 @@ namespace ndnrtc {
             stopChasePipeliner();
             
             void
-            requestMissing(const shared_ptr<FrameBuffer::Slot>& slot,
+            requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
                            int64_t lifetime, int64_t priority,
                            bool wasTimedOut = false);
             
@@ -217,6 +262,35 @@ namespace ndnrtc {
             
             void
             rebuffer();
+            
+            void
+            switchToState(State newState)
+            {
+                State oldState = state_;
+                state_ = newState;
+                
+                LogDebugC << "new state " << toString(state_) << std::endl;
+                
+                if (callback_)
+                    callback_->onStateChanged(oldState, state_);
+            }
+            
+            std::string
+            toString(State state)
+            {
+                switch (state) {
+                    case StateInactive:
+                        return "Inactive";
+                    case StateChasing:
+                        return "Chasing";
+                    case StateBuffering:
+                        return "Buffering";
+                    case StateFetching:
+                        return "Fetching";
+                    default:
+                        return "Unknown";
+                }
+            }
         };
     }
 }

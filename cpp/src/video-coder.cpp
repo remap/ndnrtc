@@ -27,12 +27,16 @@ char* plotCodec(webrtc::VideoCodec codec)
     
     sprintf(msg, "\t\tMax Framerate:\t%d\n \
             \tStart Bitrate:\t%d\n \
+            \tMin Bitrate:\t%d\n \
             \tMax Bitrate:\t%d\n \
+            \tTarget Bitrate:\t%d\n \
             \tWidth:\t%d\n \
             \tHeight:\t%d",
             codec.maxFramerate,
             codec.startBitrate,
+            codec.minBitrate,
             codec.maxBitrate,
+            codec.targetBitrate,
             codec.width,
             codec.height);
     
@@ -41,7 +45,7 @@ char* plotCodec(webrtc::VideoCodec codec)
 
 //******************************************************************************
 #pragma mark - static
-int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
+int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
 {
     // setup default params first
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
@@ -68,26 +72,30 @@ int NdnVideoCoder::getCodec(const ParamsStruct &params, VideoCodec &codec)
     int res = RESULT_OK;
     codec.maxFramerate = ParamsStruct::validateLE(params.codecFrameRate,
                                                   MaxFrameRate, res,
-                                                  DefaultParams.codecFrameRate);
+                                                  DefaultCodecParams.codecFrameRate);
     codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
                                                   MaxStartBitrate, res,
-                                                  DefaultParams.startBitrate);
+                                                  DefaultCodecParams.startBitrate);
+    codec.minBitrate = 100;
     codec.maxBitrate = ParamsStruct::validateLE(params.maxBitrate,
                                                 MaxBitrate, res,
-                                                DefaultParams.maxBitrate);
+                                                DefaultCodecParams.maxBitrate);
+    codec.targetBitrate = codec.startBitrate;
     codec.width = ParamsStruct::validateLE(params.encodeWidth,
                                            MaxWidth, res,
-                                           DefaultParams.encodeWidth);
+                                           DefaultCodecParams.encodeWidth);
     codec.height = ParamsStruct::validateLE(params.encodeHeight,
                                             MaxHeight, res,
-                                            DefaultParams.encodeHeight);
+                                            DefaultCodecParams.encodeHeight);
     
     return res;
 }
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params), frameConsumer_(nullptr)
+NdnVideoCoder::NdnVideoCoder(const CodecParams &params) : NdnRtcObject(),
+codecParams_(params),
+frameConsumer_(nullptr)
 {
     description_ = "coder";
     memset(&codec_, 0, sizeof(codec_));
@@ -96,7 +104,7 @@ NdnVideoCoder::NdnVideoCoder(const ParamsStruct &params) : NdnRtcObject(params),
 #pragma mark - public
 int NdnVideoCoder::init()
 {
-    if (RESULT_FAIL(NdnVideoCoder::getCodec(params_, codec_)))
+    if (RESULT_FAIL(NdnVideoCoder::getCodec(codecParams_, codec_)))
         notifyError(-1, "some codec parameters were out of bounds. \
                     actual parameters: %s", plotCodec(codec_));
     
@@ -131,32 +139,8 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 {
     counter_++;
     
-    //    TRACE("got encoded byte length: %d\n"
-    //          "info: \thasReceivedSLI: %d\n\tpictureIdSLI: %d\n\thasReceivedRPSI: %d\n\t"
-    //          "pictureIdRPSI: %ld\n\tpictureId:%d\n\tnonReference:%d\n\tsimulcastIdx:%d\n\t"
-    //          "temporalIdx: %d\n\tlayerSync:%d\n\ttl0PicIdx:%d\n\tkeyIdx:%d\n",
-    //          encodedImage._length,
-    //          codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureIdSLI,
-    //          codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI,
-    //          codecSpecificInfo->codecSpecific.VP8.pictureId,
-    //          codecSpecificInfo->codecSpecific.VP8.nonReference,
-    //          codecSpecificInfo->codecSpecific.VP8.simulcastIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.temporalIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.layerSync,
-    //          codecSpecificInfo->codecSpecific.VP8.tl0PicIdx,
-    //          codecSpecificInfo->codecSpecific.VP8.keyIdx);
-    
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-    
-    encodeTime_ = NdnRtcUtils::microsecondTimestamp()-encodeTime_;
-
-    LogStatC
-    << "encoded\t"
-    << counter_-1 << "\t"
-    << encodeTime_ << endl;
     
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
@@ -179,18 +163,16 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     }
     
     counter_++;
-    
-    encodeTime_ = NdnRtcUtils::microsecondTimestamp();
     deliveredTimestamp_  = timestamp;
     
     int err;
     
-    if (!keyFrameCounter_%(params_.gop))
+    if (keyFrameCounter_%codecParams_.gop == 0)
         err = encoder_->Encode(frame, NULL, &keyFrameType_);
     else
         err = encoder_->Encode(frame, NULL, NULL);
     
-    keyFrameCounter_ = (keyFrameCounter_+1)%(currentFrameRate_);
+    keyFrameCounter_++;
     
     LogTraceC << "encode result " << err << endl;
     

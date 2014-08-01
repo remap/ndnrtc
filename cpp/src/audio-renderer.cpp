@@ -36,13 +36,6 @@ AudioRenderer::~AudioRenderer()
 int
 AudioRenderer::init()
 {
-    if (RESULT_FAIL(WebrtcAudioChannel::init()))
-    {
-        LogErrorC << "can't instantiate WebRTC voice channel \
-        due to error (code: " << voeBase_->LastError() << ")" << endl;
-        return RESULT_ERR;
-    }
-    
     LogInfoC << "initialized" << endl;
     return RESULT_OK;
 }
@@ -50,6 +43,13 @@ AudioRenderer::init()
 int
 AudioRenderer::startRendering(const std::string &name)
 {
+    if (RESULT_FAIL(WebrtcAudioChannel::init()))
+    {
+        LogErrorC << "can't instantiate WebRTC voice channel \
+        due to error (code: " << voeBase_->LastError() << ")" << endl;
+        return RESULT_ERR;
+    }
+    
     // register external transport in order to playback. however, we are not
     // going to set this channel for sending and should not be getting callback
     // on webrtc::Transport callbacks
@@ -79,6 +79,7 @@ AudioRenderer::stopRendering()
     voeBase_->StopReceive(webrtcChannelId_);
     voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
     webrtcChannelId_ = -1;
+    isRendering_ = false;
     
     LogInfoC << "stopped" << endl;
     return RESULT_OK;

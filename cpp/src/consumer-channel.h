@@ -15,16 +15,18 @@
 #include "audio-consumer.h"
 #include "statistics.h"
 #include "face-wrapper.h"
+#include "service-channel.h"
 
 namespace ndnrtc {
     namespace new_api {
-        class ConsumerChannel : public NdnRtcObject
+        class ConsumerChannel : public NdnRtcObject,
+                            public IServiceChannelCallback
         {
         public:
             ConsumerChannel(const ParamsStruct& params,
                             const ParamsStruct& audioParams,
-                            IExternalRenderer* const videoRenderer = nullptr,
-                            const shared_ptr<FaceProcessor>& faceProcessor = shared_ptr<FaceProcessor>(nullptr));
+                            IExternalRenderer* const videoRenderer = 0,
+                            const boost::shared_ptr<FaceProcessor>& faceProcessor = boost::shared_ptr<FaceProcessor>());
             virtual ~ConsumerChannel(){ }
             
             int init();
@@ -43,19 +45,33 @@ namespace ndnrtc {
         protected:
             bool isOwnFace_;
             ParamsStruct audioParams_;
-            shared_ptr<VideoConsumer> videoConsumer_;
-            shared_ptr<AudioConsumer> audioConsumer_;
-            shared_ptr<RttEstimation> rttEstimation_;
-            shared_ptr<FaceProcessor> faceProcessor_;
-            shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<VideoConsumer> videoConsumer_;
+            boost::shared_ptr<AudioConsumer> audioConsumer_;
+            boost::shared_ptr<RttEstimation> rttEstimation_;
+            boost::shared_ptr<FaceProcessor> faceProcessor_;
+            boost::shared_ptr<InterestQueue> serviceInterestQueue_;
+            boost::shared_ptr<InterestQueue> videoInterestQueue_;
+            boost::shared_ptr<InterestQueue> audioInterestQueue_;
+            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             // ndn-cpp callbacks
-            virtual void onInterest(const shared_ptr<const Name>& prefix,
-                                    const shared_ptr<const Interest>& interest,
+            virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
+                                    const boost::shared_ptr<const Interest>& interest,
                                     Transport& transport);
             
-            virtual void onRegisterFailed(const ptr_lib::shared_ptr<const Name>&
+            virtual void onRegisterFailed(const boost::shared_ptr<const Name>&
                                           prefix);
+            
+            // IServiceChannel interface
+            void
+            onProducerParametersUpdated(const ParamsStruct& newVideoParams,
+                                        const ParamsStruct& newAudioParams);
+            
+            void
+            onUpdateFailedWithTimeout();
+            
+            void
+            onUpdateFailedWithError(const char* errMsg);
             
         };
     }

@@ -16,8 +16,7 @@
 namespace ndnrtc {
     namespace new_api {
         using namespace ndn;
-        using namespace ptr_lib;
-        
+
         class IPacketAssembler {
         public:
             virtual ~IPacketAssembler(){}
@@ -33,7 +32,7 @@ namespace ndnrtc {
             ndn::OnTimeout getOnTimeoutHandler();
 
             
-            static shared_ptr<Assembler> getSharedInstance();
+            static boost::shared_ptr<Assembler> getSharedInstance();
             static ndn::OnData defaultOnDataHandler();
             static ndn::OnTimeout defaultOnTimeoutHandler();
         private:

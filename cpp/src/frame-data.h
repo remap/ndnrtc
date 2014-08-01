@@ -13,6 +13,7 @@
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
+#include "params.h"
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
 #define NDNRTC_FRAMEBODY_MRKR 0xfb0d
@@ -20,7 +21,7 @@
 #define NDNRTC_AUDIOBODY_MRKR 0xabad
 #define NDNRTC_SEGHDR_MRKR 0xb4b4
 #define NDNRTC_SEGBODY_MRKR 0xb5b5
-
+#define NDNRTC_SESSION_MRKR 0x1234
 namespace ndnrtc {
     
     /**
@@ -83,7 +84,7 @@ namespace ndnrtc {
         
         SegmentData(){}
         SegmentData(const unsigned char *segmentData, const unsigned int dataSize,
-                    SegmentMetaInfo metadata = {0,0,0});
+                    SegmentMetaInfo metadata = (SegmentMetaInfo){0,0,0});
         
         SegmentMetaInfo
         getMetadata() { return ((SegmentHeader*)(&data_[0]))->metaInfo_; }
@@ -254,6 +255,10 @@ namespace ndnrtc {
         webrtc::EncodedImage frame_;
         unsigned int segmentSize_;
         
+        void
+        initialize(const webrtc::EncodedImage &frame,
+                   unsigned int segmentSize);
+        
         FrameDataHeader
         getHeader()
         {
@@ -307,15 +312,99 @@ namespace ndnrtc {
             bool                isRTCP_;
             PacketMetadata      metadata_;
             uint16_t        bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
-        };
+        } __attribute__((packed));;
         
         AudioPacket packet_;
+        
+        void
+        initialize(AudioPacket &packet);
         
         AudioDataHeader
         getHeader()
         {
             return *((AudioDataHeader*)(&data_[0]));
         }
+    };
+    
+    /**
+     * Session info metadata stores all the necessary information for consumer 
+     * about producer's audio/video streams and its' parameters.
+     * Packed session info structure:
+     *  {   videoSegmentSize;   // size of the video segment in bytes
+     *      nVideoStreams;      // number of video streams
+     *      audioSegmentSize;   // size of the audio segment in bytes
+     *      nAudioStreams;
+     *      [{ // video streams descriptions array
+     *          rate;       // encoding rate FPS
+     *          gop;        // encoding GOP
+     *          bitrate;    // encoding bitrate (kbps)
+     *          width;      // encoding width
+     *          height;     // encoding height
+     *       },
+     *       ...
+     *      ];
+     *      [{ // audio streams descriptions array
+     *          rate;       // audio rate (kbps)
+     *       },
+     *       ...
+     *      ];
+     *  }
+     */
+    class SessionInfo : public NetworkData
+    {
+    public:
+        SessionInfo(const ParamsStruct& videoParams,
+                    const ParamsStruct& audioParams);
+        SessionInfo(unsigned int dataLength, const unsigned char* data);
+        virtual ~SessionInfo() {}
+        
+        /**
+         * This method unpacks data from raw bytes and updates corresponding
+         * audio and video parameters structures
+         * @return RESULT_OK if raw data is correct and unpacking completed 
+         * normally, RESULT_ERR otherwise
+         */
+        int
+        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const;
+        
+        static void
+        updateParams(ParamsStruct& paramsForUpdate,
+                     const ParamsStruct& params);
+
+    private:
+        struct _VideoStreamDescription {
+            double rate_; // FPS
+            unsigned int gop_;
+            unsigned int bitrate_; // kbps
+            unsigned int width_, height_; // pixels
+        } __attribute__((packed));
+        
+        struct _AudioStreamDescription {
+            double rate_;
+            unsigned int bitrate_; // kbps
+        } __attribute__((packed));
+        
+        struct _SessionInfoDataHeader {
+            uint16_t mrkr1_ = NDNRTC_SESSION_MRKR;
+            unsigned int nVideoStreams_;
+            unsigned int videoSegmentSize_;
+            unsigned int nAudioStreams_;
+            unsigned int audioSegmentSize_;
+            uint16_t mrkr2_ = NDNRTC_SESSION_MRKR;
+        } __attribute__((packed));
+        
+        ParamsStruct videoParams_, audioParams_;
+        
+        unsigned int
+        getSessionInfoLength(unsigned int nVideoStreams,
+                             unsigned int nAudioStreams);
+        
+        void
+        packParameters(const ParamsStruct& videoParams,
+                       const ParamsStruct& audioParams);
+        
+        int
+        initFromRawData(unsigned int dataLength, const unsigned char* data);
     };
     
 };

@@ -15,10 +15,15 @@
 
 #include "params.h"
 #include "statistics.h"
-#include "ndnrtc-observer.h"
 #include "external-renderer.h"
 
 namespace ndnrtc {
+    
+    class INdnRtcObjectObserver {
+    public:
+        virtual ~INdnRtcObjectObserver(){}
+        virtual void onErrorOccurred(const char *errorMessage) = 0;
+    };
     
     /**
      * This abstract class declares interface for the library's observer - an
@@ -62,9 +67,9 @@ namespace ndnrtc {
         static NdnRtcLibrary *instantiateLibraryObject(const char *libPath)
         {
             void *libHandle = dlopen(libPath, RTLD_LAZY);
-            
+
             if (libHandle == NULL)
-            {
+            {               
                 LogError("")
                 << "error while loading NdnRTC library: " << dlerror() << std::endl;
                 

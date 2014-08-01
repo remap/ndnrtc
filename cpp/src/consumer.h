@@ -20,13 +20,61 @@
 #include "buffer-estimator.h"
 #include "statistics.h"
 #include "renderer.h"
+#include "rate-control.h"
+#include "service-channel.h"
+
+#define SYMBOL_SEG_RATE "sr"
+#define SYMBOL_INTEREST_RATE "ir"
+#define SYMBOL_PRODUCER_RATE "rate"
+#define SYMBOL_JITTER_TARGET "jt"
+#define SYMBOL_JITTER_ESTIMATE "je"
+#define SYMBOL_JITTER_PLAYABLE "jp"
+#define SYMBOL_INRATE "in"
+#define SYMBOL_NREBUFFER "nreb"
+
+#define SYMBOL_NPLAYED "npb"
+#define SYMBOL_NPLAYEDKEY "npbk"
+
+#define SYMBOL_NSKIPPEDNOKEY "nskipk"
+#define SYMBOL_NSKIPPEDINC "nskipi"
+#define SYMBOL_NSKIPPEDINCKEY "nskipik"
+#define SYMBOL_NSKIPPEDGOP "nskipg"
+
+#define SYMBOL_NACQUIRED "nacq"
+#define SYMBOL_NACQUIREDKEY "nacqk"
+
+#define SYMBOL_NDROPPED "ndrop"
+#define SYMBOL_NDROPPEDKEY "ndropk"
+
+#define SYMBOL_NASSEMBLED "nasm"
+#define SYMBOL_NASSEMBLEDKEY "nasmk"
+
+#define SYMBOL_NRESCUED "nresc"
+#define SYMBOL_NRESCUEDKEY "nresck"
+
+#define SYMBOL_NRECOVERED "nrec"
+#define SYMBOL_NRECOVEREDKEY "nreck"
+
+#define SYMBOL_NINCOMPLETE "ninc"
+#define SYMBOL_NINCOMPLETEKEY "ninck"
+
+#define SYMBOL_NREQUESTED "nreq"
+#define SYMBOL_NREQUESTEDKEY "nreqk"
+
+#define SYMBOL_NRTX "nrtx"
+#define SYMBOL_AVG_DELTA "ndelta"
+#define SYMBOL_AVG_KEY "nkey"
+#define SYMBOL_RTT_EST "rtt"
+#define SYMBOL_NINTRST "nint"
+#define SYMBOL_NDATA "ndata"
+#define SYMBOL_NTIMEOUT "nto"
+#define SYMBOL_LATENCY "lat"
 
 namespace ndnrtc {
     class AudioVideoSynchronizer;
     
     namespace new_api {
         using namespace ndn;
-        using namespace ptr_lib;
         
         class FrameBuffer;
         class Pipeliner;
@@ -45,6 +93,9 @@ namespace ndnrtc {
             
             virtual void
             onRebufferingOccurred() = 0;
+            
+            virtual void
+            onStateChanged(const int& oldState, const int& newState) = 0;
         };
         
         /**
@@ -81,8 +132,8 @@ namespace ndnrtc {
             } State;
             
             Consumer(const ParamsStruct& params,
-                     const shared_ptr<InterestQueue>& interestQueue,
-                     const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+                     const boost::shared_ptr<InterestQueue>& interestQueue,
+                     const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
             virtual ~Consumer();
             
             virtual int
@@ -107,15 +158,15 @@ namespace ndnrtc {
             getParameters() const
             { return params_; }
             
-            virtual shared_ptr<FrameBuffer>
+            virtual boost::shared_ptr<FrameBuffer>
             getFrameBuffer() const
             { return frameBuffer_; }
             
-            virtual shared_ptr<Pipeliner>
+            virtual boost::shared_ptr<Pipeliner>
             getPipeliner() const
             { return pipeliner_; }
             
-            virtual shared_ptr<InterestQueue>
+            virtual boost::shared_ptr<InterestQueue>
             getInterestQueue() const
             { return interestQueue_; }
             
@@ -123,40 +174,44 @@ namespace ndnrtc {
             getPacketAssembler()
             { return this; }
             
-            virtual shared_ptr<Playout>
+            virtual boost::shared_ptr<Playout>
             getPacketPlayout() const
             { return playout_; }
             
-            virtual shared_ptr<RttEstimation>
+            virtual boost::shared_ptr<RttEstimation>
             getRttEstimation() const
             { return rttEstimation_; }
             
-            virtual shared_ptr<ChaseEstimation>
+            virtual boost::shared_ptr<ChaseEstimation>
             getChaseEstimation() const
             { return chaseEstimation_; }
             
-            virtual shared_ptr<BufferEstimator>
+            virtual boost::shared_ptr<BufferEstimator>
             getBufferEstimator() const
             { return bufferEstimator_; }
             
+            virtual boost::shared_ptr<RateControl>
+            getRateControlModule() const
+            { return rateControl_; }
+            
             void
-            setRttEstimator(const shared_ptr<RttEstimation>& rttEstimation)
+            setRttEstimator(const boost::shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_= rttEstimation; }
             
             void
-            setInterestQueue(const shared_ptr<InterestQueue>& interestQueue)
+            setInterestQueue(const boost::shared_ptr<InterestQueue>& interestQueue)
             { interestQueue_ = interestQueue; }
             
             void
-            setAvSynchronizer(const shared_ptr<AudioVideoSynchronizer>& avSync)
+            setAvSynchronizer(const boost::shared_ptr<AudioVideoSynchronizer>& avSync)
             { avSync_ = avSync; };
             
-            shared_ptr<AudioVideoSynchronizer>
+            boost::shared_ptr<AudioVideoSynchronizer>
             getAvSynchronizer() const
             { return avSync_; }
             
             void
-            getStatistics(ReceiverChannelPerformance& stat);
+            getStatistics(ReceiverChannelPerformance& stat) const;
             
             virtual void
             setLogger(ndnlog::new_api::Logger* logger);
@@ -164,26 +219,58 @@ namespace ndnrtc {
             virtual void
             setDescription(const std::string& desc);
             
-            void
+            virtual void
             onBufferingEnded();
             
-            void
+            virtual void
             onRebufferingOccurred();
+            
+            virtual void
+            onStateChanged(const int& oldState, const int& newState);
+            
+            /**
+             * Dumps statistics for the current producer into the log
+             * Statistics are dumped in the following format:
+             *  - incoming data rate (segments/sec) - "sr"
+             *  - interest rate (interests/sec) - "ir"
+             *  - producer rate (frames/sec) - "rate"
+             *  - jitter buffer target size (ms) - "jt"
+             *  - jitter buffer estimate size (ms) - "je"
+             *  - jitter buffer playable size (ms) - "jp"
+             *  - incoming rate (kbit/sec) - "in"
+             *  - number of rebufferings - "nreb"
+             *  - number of received frames - "nrecv"
+             *  - number of played frames - "npbck"
+             *  - number of missed frames - "nmiss"
+             *  - number of incomplete frames - "ninc"
+             *  - number of rescued frames - "nresc"
+             *  - number of recovered frames - "nrec"
+             *  - number of retransmissions - "nrtx"
+             *  - average number of segments for delta frames - "ndelta"
+             *  - average number of segments for key frames - "nkey"
+             *  - current rtt estimation - "rtt"
+             */
+            void
+            dumpStat(ReceiverChannelPerformance stat) const;
             
         protected:
             bool isConsuming_;
             
-            shared_ptr<FrameBuffer> frameBuffer_;
-            shared_ptr<Pipeliner> pipeliner_;
-            shared_ptr<InterestQueue> interestQueue_;
-            shared_ptr<Playout> playout_;
-            shared_ptr<RttEstimation> rttEstimation_;
-            shared_ptr<ChaseEstimation> chaseEstimation_;
-            shared_ptr<BufferEstimator> bufferEstimator_;
-            shared_ptr<IRenderer> renderer_;
-            shared_ptr<AudioVideoSynchronizer> avSync_;
+            boost::shared_ptr<FrameBuffer> frameBuffer_;
+            boost::shared_ptr<Pipeliner> pipeliner_;
+            boost::shared_ptr<InterestQueue> interestQueue_;
+            boost::shared_ptr<Playout> playout_;
+            boost::shared_ptr<RttEstimation> rttEstimation_;
+            boost::shared_ptr<ChaseEstimation> chaseEstimation_;
+            boost::shared_ptr<BufferEstimator> bufferEstimator_;
+            boost::shared_ptr<IRenderer> renderer_;
+            boost::shared_ptr<AudioVideoSynchronizer> avSync_;
+            boost::shared_ptr<RateControl> rateControl_;
+            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
+            // statistics
+            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
             
             virtual OnData
             getOnDataHandler()
@@ -193,10 +280,9 @@ namespace ndnrtc {
             getOnTimeoutHandler()
             { return bind(&Consumer::onTimeout, this, _1); }
             
-            void onData(const shared_ptr<const Interest>& interest,
-                        const shared_ptr<Data>& data);
-            void onTimeout(const shared_ptr<const Interest>& interest);
-
+            void onData(const boost::shared_ptr<const Interest>& interest,
+                        const boost::shared_ptr<Data>& data);
+            void onTimeout(const boost::shared_ptr<const Interest>& interest);
         };
     }
 }

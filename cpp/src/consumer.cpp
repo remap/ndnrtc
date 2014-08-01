@@ -16,10 +16,12 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+
+#define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -32,7 +34,7 @@ interestQueue_(interestQueue),
 rttEstimation_(rttEstimation),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator()),
-dataMeterId_(NdnRtcUtils::setupDataRateMeter(10)),
+dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
     if (!rttEstimation.get())
@@ -72,7 +74,7 @@ Consumer::init()
         notifyError(-1, "can't initialize frame buffer");
     
 #warning error handling!
-    chaseEstimation_.reset(new ChaseEstimation());
+    chaseEstimation_->setLogger(logger_);
     
     pipeliner_.reset(new Pipeliner(shared_from_this()));
     pipeliner_->setLogger(logger_);
@@ -108,6 +110,7 @@ Consumer::stop()
 void
 Consumer::reset()
 {
+    interestQueue_->reset();
 }
 
 void
@@ -133,14 +136,12 @@ Consumer::getState() const
 }
 
 void
-Consumer::getStatistics(ReceiverChannelPerformance& stat)
+Consumer::getStatistics(ReceiverChannelPerformance& stat) const
 {
-    stat.segNumDelta_ = pipeliner_->getAvgSegNum(false);
-    stat.segNumKey_ = pipeliner_->getAvgSegNum(true);
-    stat.rtxNum_ = pipeliner_->getRtxNum();
-    stat.rtxFreq_ = pipeliner_->getRtxFreq();
-    stat.rebufferingEvents_ = pipeliner_->getRebufferingNum();
-    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
+    memset(&stat, 0, sizeof(stat));
+    
+    stat.nDataReceived_ = nDataReceived_;
+    stat.nTimeouts_ = nTimeouts_;
     
     stat.jitterPlayableMs_ = frameBuffer_->getPlayableBufferSize();
     stat.jitterEstimationMs_ = frameBuffer_->getEstimatedBufferSize();
@@ -148,10 +149,15 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat)
     
     stat.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
     stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
+    stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
     
-    playout_->getStatistics(stat);
     interestQueue_->getStatistics(stat);
-    frameBuffer_->getStatistics(stat);
+    
+    stat.playoutStat_ = playout_->getStatistics();
+    stat.bufferStat_ = frameBuffer_->getStatistics();
+    stat.pipelinerStat_ = pipeliner_->getStatistics();
+    
+    dumpStat(stat);
 }
 
 void
@@ -165,6 +171,9 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     
     if (playout_.get())
         playout_->setLogger(logger);
+    
+    if (rateControl_.get())
+        rateControl_->setLogger(logger);
     
     interestQueue_->setLogger(logger);
     rttEstimation_->setLogger(logger);
@@ -189,19 +198,72 @@ Consumer::setDescription(const std::string &desc)
 
 void
 Consumer::onBufferingEnded()
-{
+{   
     if (!playout_->isRunning())
         playout_->start();
     
     if (!renderer_->isRendering())
-        renderer_->startRendering(string(params_.producerId));
+        renderer_->startRendering(std::string(params_.producerId));
 }
 
 void
 Consumer::onRebufferingOccurred()
 {
-    playout_->stop();
+    reset();
+
     renderer_->stopRendering();
+    rttEstimation_->reset();
+}
+
+void
+Consumer::onStateChanged(const int &oldState, const int &newState)
+{
+}
+
+void
+Consumer::dumpStat(ReceiverChannelPerformance stat) const
+{
+    LogStatC << STAT_DIV
+    << SYMBOL_SEG_RATE << STAT_DIV << stat.segmentsFrequency_ << STAT_DIV
+    << SYMBOL_INTEREST_RATE << STAT_DIV << stat.interestFrequency_ << STAT_DIV
+    << SYMBOL_PRODUCER_RATE << STAT_DIV << stat.actualProducerRate_ << STAT_DIV
+    << SYMBOL_JITTER_TARGET << STAT_DIV << stat.jitterTargetMs_ << STAT_DIV
+    << SYMBOL_JITTER_ESTIMATE << STAT_DIV << stat.jitterEstimationMs_ << STAT_DIV
+    << SYMBOL_JITTER_PLAYABLE << STAT_DIV << stat.jitterPlayableMs_ << STAT_DIV
+    << SYMBOL_INRATE << STAT_DIV << stat.nBytesPerSec_*8/1000 << STAT_DIV
+    << SYMBOL_NREBUFFER << STAT_DIV << stat.pipelinerStat_.nRebuffer_ << STAT_DIV
+    // playout stat
+    << SYMBOL_NPLAYED << STAT_DIV << stat.playoutStat_.nPlayed_ << STAT_DIV
+    << SYMBOL_NPLAYEDKEY << STAT_DIV << stat.playoutStat_.nPlayedKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDNOKEY << STAT_DIV << stat.playoutStat_.nSkippedNoKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDINC << STAT_DIV << stat.playoutStat_.nSkippedIncomplete_ << STAT_DIV
+    << SYMBOL_NSKIPPEDINCKEY << STAT_DIV << stat.playoutStat_.nSkippedIncompleteKey_ << STAT_DIV
+    << SYMBOL_NSKIPPEDGOP << STAT_DIV << stat.playoutStat_.nSkippedInvalidGop_ << STAT_DIV
+    // buffer stat
+    << SYMBOL_NACQUIRED << STAT_DIV << stat.bufferStat_.nAcquired_ << STAT_DIV
+    << SYMBOL_NACQUIREDKEY << STAT_DIV << stat.bufferStat_.nAcquiredKey_ << STAT_DIV
+    << SYMBOL_NDROPPED << STAT_DIV << stat.bufferStat_.nDropped_ << STAT_DIV
+    << SYMBOL_NDROPPEDKEY << STAT_DIV << stat.bufferStat_.nDroppedKey_ << STAT_DIV
+    << SYMBOL_NASSEMBLED << STAT_DIV << stat.bufferStat_.nAssembled_ << STAT_DIV
+    << SYMBOL_NASSEMBLEDKEY << STAT_DIV << stat.bufferStat_.nAssembledKey_ << STAT_DIV
+    << SYMBOL_NRESCUED << STAT_DIV << stat.bufferStat_.nRescued_ << STAT_DIV
+    << SYMBOL_NRESCUEDKEY << STAT_DIV << stat.bufferStat_.nRescuedKey_ << STAT_DIV
+    << SYMBOL_NRECOVERED << STAT_DIV << stat.bufferStat_.nRecovered_ << STAT_DIV
+    << SYMBOL_NRECOVEREDKEY << STAT_DIV << stat.bufferStat_.nRecoveredKey_ << STAT_DIV
+    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.bufferStat_.nIncomplete_ << STAT_DIV
+    << SYMBOL_NINCOMPLETEKEY << STAT_DIV << stat.bufferStat_.nIncompleteKey_ << STAT_DIV
+
+    << SYMBOL_NRTX << STAT_DIV << stat.pipelinerStat_.nRtx_ << STAT_DIV
+    << SYMBOL_AVG_DELTA << STAT_DIV << stat.pipelinerStat_.avgSegNum_ << STAT_DIV
+    << SYMBOL_AVG_KEY << STAT_DIV << stat.pipelinerStat_.avgSegNumKey_ << STAT_DIV
+    << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_ << STAT_DIV
+    << SYMBOL_NINTRST << STAT_DIV << stat.pipelinerStat_.nInterestSent_ << STAT_DIV
+    << SYMBOL_NREQUESTED << STAT_DIV << stat.pipelinerStat_.nRequested_ << STAT_DIV
+    << SYMBOL_NREQUESTEDKEY << STAT_DIV << stat.pipelinerStat_.nRequestedKey_ << STAT_DIV
+    << SYMBOL_NDATA << STAT_DIV << stat.nDataReceived_ << STAT_DIV
+    << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_ << STAT_DIV
+    << SYMBOL_LATENCY << STAT_DIV << stat.playoutStat_.latency_
+    << std::endl;
 }
 
 //******************************************************************************
@@ -209,7 +271,8 @@ Consumer::onRebufferingOccurred()
 void Consumer::onData(const shared_ptr<const Interest>& interest,
             const shared_ptr<Data>& data)
 {
-    LogTraceC << "data " << data->getName() << endl;
+    LogTraceC << "data " << data->getName() << std::endl;
+    nDataReceived_++;
     
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getContent().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
@@ -218,7 +281,6 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
 }
 void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    LogTraceC << "timeout " << interest->getName() << endl;
-    
+    nTimeouts_++;
     frameBuffer_->interestTimeout(*interest);
 }

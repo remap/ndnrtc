@@ -16,7 +16,7 @@
 #include "rtt-estimation.h"
 #include "video-playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -28,9 +28,10 @@ VideoConsumer::VideoConsumer(const ParamsStruct& params,
                              const shared_ptr<RttEstimation>& rttEstimation,
                              IExternalRenderer* const externalRenderer):
 Consumer(params, interestQueue, rttEstimation),
-decoder_(new NdnVideoDecoder(params))
+decoder_(new NdnVideoDecoder(params.streamsParams[0]))
 {
     setDescription("vconsumer");
+    interestQueue_->registerCallback(this);
     
     if (externalRenderer)
         renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
@@ -50,19 +51,40 @@ VideoConsumer::~VideoConsumer()
 int
 VideoConsumer::init()
 {
-    LogInfoC << "unix timestamp: " << fixed << setprecision(6) << NdnRtcUtils::unixTimestamp() << endl;    
-#warning error handling!
-    Consumer::init();
+    LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
+    << NdnRtcUtils::unixTimestamp() << std::endl;
 
-    decoder_->init();
+    if (RESULT_GOOD(Consumer::init()))
+    {
+        int res = RESULT_OK;
+        
+        decoder_->init();
+        
+        playout_.reset(new VideoPlayout(this));
+        playout_->setLogger(logger_);
+        playout_->init(decoder_.get());
+        
+#if 0
+        rateControl_.reset(new RateControl(shared_from_this()));
+        
+        if (RESULT_FAIL(rateControl_->initialize(params_)))
+        {
+            res = RESULT_ERR;
+            LogErrorC << "failed to initialize rate control" << std::endl;
+        }
+        else
+        {
+            getFrameBuffer()->setRateControl(rateControl_);
+#endif
+            LogInfoC << "initialized" << std::endl;
+#if 0
+        }
+#endif
+        
+        return res;
+    }
     
-    playout_.reset(new VideoPlayout(this));
-    playout_->setLogger(logger_);
-    playout_->init(decoder_.get());
-    
-    LogInfoC << "initialized" << endl;
-    
-    return RESULT_OK;
+    return RESULT_ERR;
 }
 
 int
@@ -71,7 +93,7 @@ VideoConsumer::start()
 #warning error handling!
     Consumer::start();
     
-    LogInfoC << "started" << endl;
+    LogInfoC << "started" << std::endl;
     return RESULT_OK;
 }
 
@@ -81,7 +103,7 @@ VideoConsumer::stop()
 #warning error handling!
     Consumer::stop();
     
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 
@@ -91,7 +113,6 @@ VideoConsumer::reset()
     Consumer::reset();
     
     playout_->stop();
-    playout_->init(decoder_.get());
 }
 
 void
@@ -103,3 +124,29 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
     Consumer::setLogger(logger);
 }
 
+void
+VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
+{
+    if (rateControl_.get())
+        rateControl_->interestExpressed(interest);
+}
+
+void
+VideoConsumer::onStateChanged(const int& oldState, const int& newState)
+{
+    if (rateControl_.get())
+    {
+        if (newState == Pipeliner::StateFetching)
+            rateControl_->start();
+        
+        if (oldState == Pipeliner::StateFetching)
+            rateControl_->stop();
+    }
+}
+
+void
+VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
+{
+    if (rateControl_.get())
+        rateControl_->interestTimeout(interest);
+}

@@ -12,12 +12,11 @@
 #define __ndnrtc__frame_buffer__
 
 #include <set>
-#include <tr1/unordered_set>
+#include <boost/unordered_set.hpp>
 
 #include "frame-data.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
-
 #include "consumer.h"
 
 namespace ndnrtc
@@ -25,6 +24,9 @@ namespace ndnrtc
     // namespace for new API
     namespace new_api
     {
+        using namespace ndnlog;
+        class RateControl;
+        
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -218,14 +220,14 @@ namespace ndnrtc
                  * Slot can have different states
                  */
                 enum State {
-                    StateFree = 1,  // slot is free for being used
-                    StateNew = 2,   // slot is being used for assembling, but has
+                    StateFree = 1<<0,  // slot is free for being used
+                    StateNew = 1<<1,   // slot is being used for assembling, but has
                                     // not recevied any data segments yet
-                    StateAssembling = 3,    // slot is being used for assembling and
+                    StateAssembling = 1<<2,    // slot is being used for assembling and
                                             // already has some data segments arrived
-                    StateReady = 4, // slot assembled all the data and is ready for
+                    StateReady = 1<<3, // slot assembled all the data and is ready for
                                     // decoding a frame
-                    StateLocked = 5 // slot is locked for decoding
+                    StateLocked = 1<<4 // slot is locked for decoding
                 }; // enum State
                 
                 /**
@@ -433,15 +435,15 @@ namespace ndnrtc
                     return RESULT_ERR;
                 }
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getMissingSegments()
                 { return getSegments(Segment::StateMissing); }
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getPendingSegments()
                 { return getSegments(Segment::StatePending); }
 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getFetchedSegments()
                 { return getSegments(Segment::StateFetched); }
                 
@@ -462,10 +464,10 @@ namespace ndnrtc
                 void
                 setPrefix(const Name& prefix);
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 getSegment(SegmentNumber segNo, bool isParity) const;
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 getRecentSegment() const { return recentSegment_; }
                 
                 bool
@@ -478,7 +480,7 @@ namespace ndnrtc
                 incremenrRtxNum() { nRtx_++; }
                 
                 int64_t
-                getLifetime()
+                getLifetime() DEPRECATED
                 { return (requestTimeUsec_ > 0)?NdnRtcUtils::millisecondTimestamp()-requestTimeUsec_/1000.:0;}
                 
                 int64_t
@@ -553,14 +555,14 @@ namespace ndnrtc
                 nSegmentsMissing_ = 0, nSegmentsTotal_ = 0,
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
                 
-                shared_ptr<Segment> rightmostSegment_, recentSegment_;
-                std::vector<shared_ptr<Segment>> freeSegments_;
-                std::map<SegmentNumber, shared_ptr<Segment>> activeSegments_;
+                boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
+                std::vector<boost::shared_ptr<Segment> > freeSegments_;
+                std::map<SegmentNumber, boost::shared_ptr<Segment> > activeSegments_;
                 
-                shared_ptr<Segment>
+                boost::shared_ptr<Segment>
                 prepareFreeSegment(SegmentNumber segNo, bool isParity);
                 
-                shared_ptr<Segment>&
+                boost::shared_ptr<Segment>&
                 getActiveSegment(SegmentNumber segmentNumber, bool isParity);
                 
                 void
@@ -586,7 +588,7 @@ namespace ndnrtc
                                   SegmentNumber segmentNumber,
                                   bool isParity);
                 
-                std::vector<shared_ptr<Segment>>
+                std::vector<boost::shared_ptr<Segment> >
                 getSegments(int segmentStateMask);
                 
                 void
@@ -635,7 +637,9 @@ namespace ndnrtc
                                            // ! slot attribute is unreliable                    
                     NeedKey        = 1<<7, // frame buffer asks for key frame.
                                            // ! slot attribute is unreliable
-                    Error          = 1<<8  // general error event
+                    Error          = 1<<8, // general error event
+                    Empty          = 1<<9, // no event has occurred during
+                                           // specified time interval
                 };
                 
                 static const int AllEventsMask;
@@ -650,15 +654,16 @@ namespace ndnrtc
                         case Underrun: return "Underrun"; break;
                         case NeedKey: return "NeedKey"; break;
                         case Error: return "Error"; break;
+                        case Empty: return "Empty"; break;
                         default: return "Unknown"; break;
                     }
                 }
                 
                 EventType type_; // type of the event occurred
-                shared_ptr<Slot> slot_;     // corresponding slot pointer
+                boost::shared_ptr<Slot> slot_;     // corresponding slot pointer
             }; // Event
             
-            FrameBuffer(const shared_ptr<const Consumer> &consumer);
+            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer);
             ~FrameBuffer();
             
             int init();
@@ -680,11 +685,43 @@ namespace ndnrtc
             release();
             
             unsigned int
+            getTotalSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return activeSlots_.size();
+            }
+            
+            /**
+             * Returns total number of active slots - assemlbing, ready, locked 
+             * or new slots
+             */
+            unsigned int
             getActiveSlotsNum()
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
+            }
+            
+            /**
+             * Returns total number of slots that have any segments fetched
+             */
+            unsigned int
+            getFetchedSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateAssembling |
+                                Slot::StateReady | Slot::StateLocked).size();
+            }
+            
+            /**
+             * Returns total number of free slots in the buffer
+             */
+            unsigned int
+            getFreeSlotsNum()
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateFree).size();
             }
             
             /**
@@ -707,7 +744,7 @@ namespace ndnrtc
             interestRangeIssued(const Interest &packetInterest,
                                 SegmentNumber startSegmentNo,
                                 SegmentNumber endSegmentNo,
-                                std::vector<shared_ptr<Interest>> &segmentInterests,
+                                std::vector<boost::shared_ptr<Interest> > &segmentInterests,
                                 bool isParity);
             
             /**
@@ -754,6 +791,13 @@ namespace ndnrtc
              */
             void
             recycleOldSlots();
+
+            /**
+             * Recycles specified number of first slots from the buffer
+             * @param nSlotsToRecycle Number of slots to recycle
+             */
+            void
+            recycleOldSlots(int nSlotsToRecycle);
             
             /**
              * Estimates current buffer size based on current active slots
@@ -834,8 +878,12 @@ namespace ndnrtc
             void
             setLogger(ndnlog::new_api::Logger* logger);
             
+            BufferStatistics
+            getStatistics() { return stat_; };
+            
             void
-            getStatistics(ReceiverChannelPerformance& stat);
+            setRateControl(const boost::shared_ptr<RateControl>& rateControl)
+            { rateControl_ = rateControl; }
             
         protected:
             // playback queue contains active slots sorted in ascending
@@ -843,8 +891,8 @@ namespace ndnrtc
             // - each elements is a shared_ptr for the slot in activeSlots_ map
             // - std::vector is used as a container
             // - PlaybackComparator is used for ordering slots in playback order
-            //            typedef std::priority_queue<shared_ptr<FrameBuffer::Slot>,
-            //            std::vector<shared_ptr<FrameBuffer::Slot>>,
+            //            typedef std::priority_queue<boost::shared_ptr<FrameBuffer::Slot>,
+            //            std::vector<boost::shared_ptr<FrameBuffer::Slot>>,
             //            FrameBuffer::Slot::PlaybackComparator>
             typedef
             std::vector<ndnrtc::new_api::FrameBuffer::Slot*>
@@ -906,20 +954,21 @@ namespace ndnrtc
             State state_;
             PacketNumber playbackNo_;
             int nKeyFrames_;
-            unsigned int nReceivedFrames_, nRescuedFrames_,
-                nIncomplete_, nRecovered_;
-            
+
+            // statistics
+            BufferStatistics stat_;
+                        
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
             bool skipFrame_ = false;
-            shared_ptr<Slot> playbackSlot_;
+            boost::shared_ptr<Slot> playbackSlot_;
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
             
-            std::vector<shared_ptr<Slot>> freeSlots_;
-            std::map<Name, shared_ptr<Slot>> activeSlots_;
+            std::vector<boost::shared_ptr<Slot> > freeSlots_;
+            std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
             PlaybackQueue playbackQueue_;
             
             webrtc::CriticalSectionWrapper &syncCs_;
@@ -930,12 +979,14 @@ namespace ndnrtc
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             
-            shared_ptr<Slot>
+            boost::shared_ptr<RateControl> rateControl_;
+            
+            boost::shared_ptr<Slot>
             getSlot(const Name& prefix, bool remove = false,
                     bool shouldMatch = true);
             
             int
-            setSlot(const Name& prefix, shared_ptr<Slot>& slot);
+            setSlot(const Name& prefix, boost::shared_ptr<Slot>& slot);
             
             /**
              * Frees slot for specified name prefix
@@ -947,7 +998,7 @@ namespace ndnrtc
             Slot::State
             freeSlot(const Name &prefix);
             
-            std::vector<shared_ptr<Slot>>
+            std::vector<boost::shared_ptr<Slot> >
             getSlots(int slotStateMask);
             
             /**
@@ -956,6 +1007,24 @@ namespace ndnrtc
             void
             estimateBufferSize();
             
+            /**
+             * Removes old frames from the buffer according to these rules:
+             * - delta frames with numbers less than deltaPacketNo
+             * - key frames with numbers less than keyPacketNo
+             * - any frames with absolute numbers less than absolutePacketNo
+             * @param deltaPacketNo Threshold delta packet number, all delta
+             * frames with the number less than this value will be purged
+             * @param keyPacketNo Threshold key packet number, all key
+             * frames with the number less than this value will be purged
+             * @param absolutePacketNo Threshold absolute key packet number, all
+             * frames with the absolute number less than this value will be
+             * purged
+             */
+            void
+            cleanBuffer(PacketNumber deltaPacketNo,
+                        PacketNumber keyPacketNo,
+                        PacketNumber absolutePacketNo);
+            
             void
             resetData();
             
@@ -963,7 +1032,7 @@ namespace ndnrtc
             getLookupPrefix(const Name& prefix, Name& lookupPrefix);
             
             void
-            addBufferEvent(Event::EventType type, const shared_ptr<Slot>& slot);
+            addBufferEvent(Event::EventType type, const boost::shared_ptr<Slot>& slot);
             
             void
             addStateChangedEvent(State newState);
@@ -971,7 +1040,7 @@ namespace ndnrtc
             void
             initialize();
             
-            shared_ptr<Slot>
+            boost::shared_ptr<Slot>
             reserveSlot(const Interest &interest);
             
             void

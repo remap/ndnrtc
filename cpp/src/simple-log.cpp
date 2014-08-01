@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <mach/mach_time.h>
 #include <fstream>
+#include <iomanip>
 #include "simple-log.h"
 
 #define MAX_BUF_SIZE 4*256 // string buffer
@@ -24,7 +25,7 @@ static char tempBuf[MAX_BUF_SIZE];
 
 ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
 
-ndnlog::new_api::Logger* Logger::sharedInstance_ = nullptr;
+ndnlog::new_api::Logger* Logger::sharedInstance_ = 0;
 
 #if 0
 pthread_mutex_t NdnLogger::logMutex_(PTHREAD_MUTEX_INITIALIZER);
@@ -271,7 +272,7 @@ logLevel_(logLevel),
 logFile_(logFile),
 outStream_(&std::cout),
 isStdOutActive_(true),
-logMutex_(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
+logMutex_((pthread_mutex_t)PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
 {
     if (logFile_ != "")
     {
@@ -284,7 +285,7 @@ logMutex_(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
 }
 new_api::Logger::~Logger()
 {
-    if (getOutStream() != std::cout)
+    if (&getOutStream() != &std::cout)
     {
         getOutFileStream().flush();
         getOutFileStream().close();
@@ -307,7 +308,7 @@ new_api::Logger::log(const NdnLogType& logType,
     
     unlockStream();
     
-    bool shouldIgnore = (loggingInstance != nullptr &&
+    bool shouldIgnore = (loggingInstance != 0 &&
                             !loggingInstance->isLoggingEnabled());
     
     if (!shouldIgnore &&
@@ -324,23 +325,31 @@ new_api::Logger::log(const NdnLogType& logType,
         getOutStream() << getMillisecondTimestamp() << " [" << stringify(logType) << "]";
         
         if (loggingInstance)
-            getOutStream() << "[" << loggingInstance->getDescription() << "]";
+            getOutStream()
+            << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
+            << std::hex << std::setw(15) << loggingInstance << std::dec;
         
-        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
-            locationFile != "" &&
-            locationLine >= 0)
-            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
+//        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
+//            locationFile != "" &&
+//            locationLine >= 0)
+//            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
         
         getOutStream() << ": ";
         
-        if (getOutStream() != std::cout)
+        if (&getOutStream() != &std::cout)
         {
             if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-                getOutStream().flush();
+                flush();
         }
     }
     
     return *this;
+}
+
+void
+new_api::Logger::flush()
+{
+    getOutStream().flush();    
 }
 
 //******************************************************************************

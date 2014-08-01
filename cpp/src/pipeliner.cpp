@@ -13,7 +13,7 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 
-using namespace std;
+using namespace boost;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -23,21 +23,26 @@ const double Pipeliner::SegmentsAvgNumDelta = 8.;
 const double Pipeliner::SegmentsAvgNumKey = 25.;
 const double Pipeliner::ParitySegmentsAvgNumDelta = 2.;
 const double Pipeliner::ParitySegmentsAvgNumKey = 5.;
-const int64_t Pipeliner::MaxInterruptionDelay = 2000;
+const int64_t Pipeliner::MaxInterruptionDelay = 1200;
 const int64_t Pipeliner::MinInterestLifetime = 250;
+const int Pipeliner::MaxRetryNum = 3;
+const int Pipeliner::ChaserRateCoefficient = 4;
+const int Pipeliner::FullBufferRecycle = 1;
+
+#define CHASER_CHUNK_LVL 0.4
+#define CHASER_CHECK_LVL (1-CHASER_CHUNK_LVL)
 
 //******************************************************************************
 #pragma mark - construction/destruction
 ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
 NdnRtcObject(consumer->getParameters()),
+state_(StateInactive),
 consumer_(consumer.get()),
-isProcessing_(false),
-mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this)),
+mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this, kHighPriority, "pipeliner-main")),
 isPipelining_(false),
 isPipelinePaused_(false),
-isBuffering_(false),
 pipelineIntervalMs_(0),
-pipelineThread_(*ThreadWrapper::CreateThread(Pipeliner::pipelineThreadRoutin, this)),
+pipelineThread_(*ThreadWrapper::CreateThread(Pipeliner::pipelineThreadRoutin, this, kHighPriority, "pipeliner-chaser")),
 pipelineTimer_(*EventWrapper::Create()),
 pipelinerPauseEvent_(*EventWrapper::Create()),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta)),
@@ -46,7 +51,9 @@ deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsA
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 exclusionFilter_(-1),
-useKeyNamespace_(true)
+useKeyNamespace_(true),
+streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
+streamId_(0)
 {
     initialize();
 }
@@ -64,31 +71,31 @@ ndnrtc::new_api::Pipeliner::~Pipeliner()
 int
 ndnrtc::new_api::Pipeliner::start()
 {
-    bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
-    isProcessing_ = true;
-    rebufferingNum_ = 0;
+    switchToState(StateChasing);
+    bufferEventsMask_ = StartupEventsMask;
+    stat_.nRebuffer_ = 0;
     reconnectNum_ = 0;
     deltaFrameSeqNo_ = -1;
     
     unsigned int tid;
     mainThread_.Start(tid);
     
-    LogInfoC << "started" << endl;
+    LogInfoC << "started" << std::endl;
     return RESULT_OK;
 }
 
 int
 ndnrtc::new_api::Pipeliner::stop()
 {
-    if (isPipelining_)
+    if (state_ == StateChasing)
         stopChasePipeliner();
     
-    isProcessing_ = false;
+    switchToState(StateInactive);
     frameBuffer_->release();
     mainThread_.SetNotAlive();
     mainThread_.Stop();
     
-    LogInfoC << "stopped" << endl;
+    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 
@@ -98,23 +105,33 @@ ndnrtc::new_api::Pipeliner::triggerRebuffering()
     rebuffer();
 }
 
-Pipeliner::State
-Pipeliner::getState() const
+void
+ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
 {
-    if (isProcessing_)
-    {
-        if (isBuffering_)
-            return StateBuffering;
-        else
-        {
-            if (frameBuffer_->getState() == FrameBuffer::Invalid)
-                return StateChasing;
-            else
-                return StateFetching;
-        }
-    }
-    else
-        return StateInactive;
+    CriticalSectionScoped scopedCs(&streamSwitchSync_);
+    
+    shared_ptr<std::string>
+    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
+    
+    shared_ptr<std::string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
+    
+    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
+    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+    
+    streamId_ = streamId;
+}
+
+PipelinerStatistics
+ndnrtc::new_api::Pipeliner::getStatistics()
+{
+    stat_.avgSegNum_ = NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_);
+    stat_.avgSegNumKey_ = NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_);
+    stat_.avgSegNumParity_ = NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_);
+    stat_.avgSegNumParityKey_ = NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_);
+    stat_.rtxFreq_ = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
+    
+    return stat_;
 }
 
 //******************************************************************************
@@ -126,18 +143,25 @@ bool
 ndnrtc::new_api::Pipeliner::processEvents()
 {
     ndnrtc::new_api::FrameBuffer::Event
-    event = frameBuffer_->waitForEvents(bufferEventsMask_);
+    event = frameBuffer_->waitForEvents(bufferEventsMask_, MaxInterruptionDelay);
     
-    LogTraceC << "event " << FrameBuffer::Event::toString(event) << endl;
+    LogDebugC << "Event " << FrameBuffer::Event::toString(event) << " ["
+    << (event.slot_.get()?event.slot_->dump():"") << "]"
+    << std::endl;
     
     switch (event.type_) {
         case FrameBuffer::Event::Error : {
             
-            LogErrorC << "error on buffer events" << endl;
-            
-            isProcessing_ = false;
+            LogErrorC << "error on buffer events" << std::endl;
+            switchToState(StateInactive);
         }
             break;
+        case FrameBuffer::Event::Empty:
+        {
+            LogWarnC << "no activity in the buffer for " << MaxInterruptionDelay
+            << " milliseconds" << std::endl;
+            
+        } break;
         case FrameBuffer::Event::FirstSegment:
         {
             updateSegnumEstimation(event.slot_->getNamespace(),
@@ -159,15 +183,13 @@ ndnrtc::new_api::Pipeliner::processEvents()
     
     recoveryCheck(event);
     
-    return isProcessing_;
+    return (state_ != StateInactive);
 }
 
 int
 ndnrtc::new_api::Pipeliner::handleInvalidState
 (const ndnrtc::new_api::FrameBuffer::Event &event)
 {
-    LogTraceC << "invalid buffer state" << endl;
-    
     unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
     
     if (activeSlotsNum == 0)
@@ -177,8 +199,7 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
                                             false, exclusionFilter_);
         
         express(*rightmost, getInterestLifetime(params_.interestTimeout));
-        bufferEventsMask_ = FrameBuffer::Event::FirstSegment |
-                            FrameBuffer::Event::Timeout;
+        bufferEventsMask_ = WaitForRightmostEventsMask;
         recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
     }
     else
@@ -191,35 +212,43 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
 int
 ndnrtc::new_api::Pipeliner::handleChase(const FrameBuffer::Event &event)
 {
-    switch (event.type_) {
-        case FrameBuffer::Event::Timeout:
-            handleTimeout(event);
-            break;
-            
-        case FrameBuffer::Event::FirstSegment: //
-        {
-            reconnectNum_ = 0;
-            requestMissing(event.slot_,
-                           getInterestLifetime(event.slot_->getPlaybackDeadline(),
-                                               event.slot_->getNamespace()),
-                           0);
-        } // fall through
-        default:
-        {
-            unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
-            
-            if (activeSlotsNum == 1)
-                initialDataArrived(event.slot_);
-            
-            if (activeSlotsNum > 1)
+    unsigned int activeSlotsNum = frameBuffer_->getActiveSlotsNum();
+    
+    if (event.type_ == FrameBuffer::Event::FirstSegment)
+        reconnectNum_ = 0;
+    
+    if (activeSlotsNum == 1) // we're expecting initial data
+    {
+        if (event.type_ != FrameBuffer::Event::Timeout)
+            initialDataArrived(event.slot_);
+    }
+    else
+    {
+        switch (event.type_) {
+            case FrameBuffer::Event::Timeout:
             {
-                if (isBuffering_)
-                    handleBuffering(event);
-                else
-                    chaseDataArrived(event);
+                handleTimeout(event);
             }
+                break;
+                
+            case FrameBuffer::Event::FirstSegment:
+            {
+                if (state_ == StateBuffering)
+                    requestMissing(event.slot_,
+                                   getInterestLifetime(event.slot_->getPlaybackDeadline(),
+                                                   event.slot_->getNamespace()),
+                               0);
+            }
+                break;
+            default:
+                break;
         }
-            break;
+        
+        if (state_ == StateBuffering)
+            handleBuffering(event);
+        
+        if (state_ == StateChasing)
+            handleChasing(event);
     }
     
     return RESULT_OK;
@@ -229,89 +258,59 @@ void
 ndnrtc::new_api::Pipeliner::initialDataArrived
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slot)
 {
-    LogTraceC << "first data arrived " << slot->getPrefix() << endl;
-    
-    // request next key frame
-    keyFrameSeqNo_ = slot->getPairedFrameNumber()+1;
-    requestNextKey(keyFrameSeqNo_);
+    LogTraceC << "initial data: [" << slot->dump() << "]" << std::endl;
     
     double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
-    bufferEstimator_->setProducerRate(producerRate);
-    startChasePipeliner(slot->getSequentialNumber()+1, 1000./(2*producerRate));
+    startChasePipeliner(slot->getSequentialNumber()+1, 1000./(ChaserRateCoefficient*producerRate));
     
-    bufferEventsMask_ = FrameBuffer::Event::FirstSegment |
-                        FrameBuffer::Event::Ready |
-                        FrameBuffer::Event::Timeout |
-                        FrameBuffer::Event::StateChanged |
-                        FrameBuffer::Event::NeedKey;
+    bufferEventsMask_ = ChasingEventsMask;
 }
 
 void
-ndnrtc::new_api::Pipeliner::chaseDataArrived(const FrameBuffer::Event& event)
+ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
 {
-    switch (event.type_) {
-        case FrameBuffer::Event::NeedKey:
-        {
-            requestNextKey(keyFrameSeqNo_);
-        }
-            break;
-        case FrameBuffer::Event::FirstSegment:
-        {
-            LogTraceC << "chaser track " << endl;
-            
-            chaseEstimation_->trackArrival();
-        } // fall through
-        default:
-        {
-            pipelineIntervalMs_ = chaseEstimation_->getArrivalEstimation();
-
-            int bufferSize = frameBuffer_->getEstimatedBufferSize();
-            assert(bufferSize >= 0);
-            
-            LogTraceC
-            << "buffer size " << bufferSize
-            << " target " << frameBuffer_->getTargetSize() << endl;
-            
-            if (chaseEstimation_->isArrivalStable())
-            {
-                stopChasePipeliner();
-                frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
-                isBuffering_ = true;
-                playbackStartFrameNo_ = deltaFrameSeqNo_;
-                consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);
-                
-                LogTraceC
-                << "[****] arrival stable -> buffering. buf size: " << bufferSize
-                << ". start playback from: "
-                << playbackStartFrameNo_ << endl;
-            }
-            else
-            {
-                if (bufferSize >
-                    frameBuffer_->getTargetSize())
-                {
-                    LogTraceC << "buffer is too large - recycle old frames" << endl;
-                    
-                    setChasePipelinerPaused(true);
-                    frameBuffer_->recycleOldSlots();
-                    
-                    bufferSize = frameBuffer_->getEstimatedBufferSize();
-                    
-                    LogTraceC << "new buffer size " << bufferSize << endl;
-                }
-                else
-                {
-                    if (isPipelinePaused_)
-                    {
-                        LogTraceC << "resuming chase pipeliner" << endl;
-                        
-                        setChasePipelinerPaused(false);
-                    }
-                }
-            }
-        }
-            break;
+    int bufferSize = frameBuffer_->getEstimatedBufferSize();
+    assert(bufferSize >= 0);
+    
+    if (event.type_ == FrameBuffer::Event::FirstSegment)
+    {
+        chaseEstimation_->trackArrival(event.slot_->getPacketRate());
+        
+        if (event.slot_->getPairedFrameNumber() > keyFrameSeqNo_)
+            keyFrameSeqNo_ = event.slot_->getPairedFrameNumber()+1;
     }
+    
+    if (chaseEstimation_->isArrivalStable())
+    {
+        stopChasePipeliner();
+        switchToState(StateBuffering);
+        
+        frameBuffer_->setTargetSize(bufferEstimator_->getTargetSize());
+        frameBuffer_->recycleOldSlots();
+
+        keyFrameSeqNo_++;
+        requestNextKey(keyFrameSeqNo_);
+        
+        bufferEventsMask_ = BufferingEventsMask;
+        playbackStartFrameNo_ = deltaFrameSeqNo_;
+        consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);
+        handleBuffering(event);
+    }
+    else if (bufferSize >= frameBuffer_->getTargetSize() &&
+             frameBuffer_->getFetchedSlotsNum() >= CHASER_CHECK_LVL*(double)frameBuffer_->getTotalSlotsNum())
+    {
+        int framesForRecycle = frameBuffer_->getTotalSlotsNum()*CHASER_CHUNK_LVL;
+        frameBuffer_->recycleOldSlots(framesForRecycle);
+        
+        LogTraceC << "no stabilization after "
+        << bufferSize << "ms has fetched. recycled "
+        << framesForRecycle << " frames" << std::endl;
+        
+        setChasePipelinerPaused(false);
+    }
+    
+    if (bufferSize < frameBuffer_->getTargetSize() && isPipelinePaused_)
+        setChasePipelinerPaused(false);
 }
 
 void
@@ -321,19 +320,14 @@ ndnrtc::new_api::Pipeliner::handleBuffering(const FrameBuffer::Event& event)
     int estimatedSize = frameBuffer_->getEstimatedBufferSize();
     int playableSize = frameBuffer_->getPlayableBufferSize();
     
-    LogTraceC << "buffering. playable size " << playableSize << endl;
-    
     int nRequested = keepBuffer();
     
     if (playableSize >= (targetSize - consumer_->getRttEstimation()->getCurrentEstimation()) ||
         (nRequested == 0 && playableSize >= 0.7*targetSize))
-    {
-        LogTraceC
-        << "[*****] switch to valid state. playable size " << playableSize << endl;
-        
-        isBuffering_ = false;
+    {   
+        switchToState(StateFetching);
         frameBuffer_->setState(FrameBuffer::Valid);
-        bufferEventsMask_ |= FrameBuffer::Event::Playout;
+        bufferEventsMask_ = FetchingEventsMask;
         
         if (callback_)
             callback_->onBufferingEnded();
@@ -345,11 +339,6 @@ ndnrtc::new_api::Pipeliner::handleValidState
 (const ndnrtc::new_api::FrameBuffer::Event &event)
 {
     int bufferSize = frameBuffer_->getEstimatedBufferSize();
-    
-    LogTraceC
-    << "valid buffer state. "
-    << "buf size " << bufferSize
-    << " target " << frameBuffer_->getTargetSize() << endl;
     
     switch (event.type_) {
         case FrameBuffer::Event::FirstSegment:
@@ -368,7 +357,7 @@ ndnrtc::new_api::Pipeliner::handleValidState
             break;
         case FrameBuffer::Event::Ready:
         {
-            LogStatC << "ready\t" << event.slot_->dump() << endl;
+            LogStatC << "ready\t" << event.slot_->dump() << std::endl;
         }
             break;
         case FrameBuffer::Event::NeedKey:
@@ -378,6 +367,18 @@ ndnrtc::new_api::Pipeliner::handleValidState
             break;
         case FrameBuffer::Event::Playout:
         {
+            // check if frame counters are outdated
+            if (event.slot_->getNamespace() == FrameBuffer::Slot::Key)
+            {
+                if (deltaFrameSeqNo_ < event.slot_->getPairedFrameNumber())
+                {
+                    deltaFrameSeqNo_ = event.slot_->getPairedFrameNumber();
+                    
+                    LogDebugC
+                    << "pipeliner pointer updated " << deltaFrameSeqNo_
+                    << std::endl;
+                }
+            }
         }
             break;
         default:
@@ -392,10 +393,6 @@ ndnrtc::new_api::Pipeliner::handleValidState
 void
 ndnrtc::new_api::Pipeliner::handleTimeout(const FrameBuffer::Event &event)
 {
-    LogTraceC
-    << "timeout " << event.slot_->getPrefix()
-    << " deadline " << event.slot_->getPlaybackDeadline() << endl;
-
     if (params_.useRtx)
         requestMissing(event.slot_,
                        getInterestLifetime(event.slot_->getPlaybackDeadline(),
@@ -413,14 +410,14 @@ ndnrtc::new_api::Pipeliner::initialize()
     bufferEstimator_ = consumer_->getBufferEstimator().get();
     ndnAssembler_ = consumer_->getPacketAssembler();
     
-    shared_ptr<string>
+    shared_ptr<std::string>
     streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
     
-    shared_ptr<string>
-    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_);
+    shared_ptr<std::string>
+    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
     
-    shared_ptr<string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    shared_ptr<std::string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0, true);
     
     if (!streamPrefixString.get() || !deltaPrefixString.get() ||
         !keyPrefixString.get())
@@ -490,7 +487,9 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
     if (!useKeyNamespace_)
         return;
         
-    LogTraceC << "request key " << keyFrameNo << endl;
+    LogTraceC << "request key " << keyFrameNo << std::endl;
+    stat_.nRequested_++;
+    stat_.nRequestedKey_++;
     
     prefetchFrame(keyFramesPrefix_,
                   keyFrameNo++,
@@ -502,6 +501,7 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
 void
 ndnrtc::new_api::Pipeliner::requestNextDelta(PacketNumber& deltaFrameNo)
 {
+    stat_.nRequested_++;
     prefetchFrame(deltaFramesPrefix_,
                   deltaFrameNo++,
                   ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_))-1,
@@ -516,21 +516,17 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
 {
     Name prefix = interest.getName();
     
-    LogTraceC
-    << "express range "
-    << interest.getName() << ((isParity)?"/parity":"/data")
-    << "/[" << startNo << ", " << endNo << "]"<< endl;
-    
-    std::vector<shared_ptr<Interest>> segmentInterests;
+    std::vector<shared_ptr<Interest> > segmentInterests;
     frameBuffer_->interestRangeIssued(interest, startNo, endNo, segmentInterests, isParity);
     
     if (segmentInterests.size())
     {
-        std::vector<shared_ptr<Interest>>::iterator it;
+        std::vector<shared_ptr<Interest> >::iterator it;
         for (it = segmentInterests.begin(); it != segmentInterests.end(); ++it)
         {
             shared_ptr<Interest> interestPtr = *it;
             
+            stat_.nInterestSent_++;
             consumer_->getInterestQueue()->enqueueInterest(*interestPtr,
                                                                Priority::fromArrivalDelay(priority),
                                                                ndnAssembler_->getOnDataHandler(),
@@ -542,9 +538,9 @@ ndnrtc::new_api::Pipeliner::expressRange(Interest& interest,
 void
 ndnrtc::new_api::Pipeliner::express(Interest &interest, int64_t priority)
 {
-    LogTraceC << "enqueue " << interest.getName() << endl;
-    
     frameBuffer_->interestIssued(interest);
+    
+    stat_.nInterestSent_++;
     consumer_->getInterestQueue()->enqueueInterest(interest,
                                                        Priority::fromArrivalDelay(priority),
                                                        ndnAssembler_->getOnDataHandler(),
@@ -558,8 +554,8 @@ ndnrtc::new_api::Pipeliner::startChasePipeliner(PacketNumber startPacketNo,
     assert(intervalMs > 0);
     
     LogTraceC
-    << "start pipeline from "
-    << startPacketNo << " interval = " << intervalMs << "ms" << endl;
+    << "chaser started from "
+    << startPacketNo << " interval = " << intervalMs << " ms" << std::endl;
     
     deltaFrameSeqNo_ = startPacketNo;
     pipelineIntervalMs_ = intervalMs;
@@ -586,6 +582,8 @@ ndnrtc::new_api::Pipeliner::stopChasePipeliner()
     pipelineThread_.SetNotAlive();
     pipelinerPauseEvent_.Set();
     pipelineThread_.Stop();
+    
+    LogTraceC << "chaser stopped" << std::endl;
 }
 
 bool
@@ -593,22 +591,24 @@ ndnrtc::new_api::Pipeliner::processPipeline()
 {
     if (isPipelinePaused_)
     {
-        LogTraceC << "pipeliner paused" << endl;
+        LogTraceC << "chaser paused" << std::endl;
         
         pipelinerPauseEvent_.Wait(WEBRTC_EVENT_INFINITE);
         
-        LogTraceC << "pipeliner woke up" << endl;
+        LogTraceC << "chaser resumed" << std::endl;
     }
-    
-    if (isPipelining_)
+    else
     {
-        if (frameBuffer_->getEstimatedBufferSize() <= frameBuffer_->getTargetSize())
-        {
-            requestNextDelta(deltaFrameSeqNo_);
-        }
+        assert(state_ == StateChasing);
         
+        prefetchFrame(deltaFramesPrefix_, deltaFrameSeqNo_++, 0, -1);
         pipelineTimer_.StartTimer(false, pipelineIntervalMs_);
         pipelineTimer_.Wait(pipelineIntervalMs_);
+        
+        if (frameBuffer_->getEstimatedBufferSize() >= frameBuffer_->getTargetSize())
+        {
+            setChasePipelinerPaused(true);
+        }
     }
     
     return isPipelining_;
@@ -622,13 +622,13 @@ ndnrtc::new_api::Pipeliner::requestMissing
     // synchronize with buffer
     frameBuffer_->synchronizeAcquire();
     
-    vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>
+    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >
     missingSegments = slot->getMissingSegments();
     
     if (missingSegments.size() == 0)
-        LogTraceC << "no missing segments for " << slot->getPrefix() << endl;
+        LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
     
-    vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>::iterator it;
+    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
     for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
     {
         shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
@@ -645,7 +645,6 @@ ndnrtc::new_api::Pipeliner::requestMissing
                                                       slot->getNamespace()==FrameBuffer::Slot::Key,
                                                       exclusionFilter_);
         
-        LogTraceC << "enqueue missing " << segmentInterest->getName() << endl;
         express(*segmentInterest, priority);
         segmentInterest->setInterestLifetimeMilliseconds(lifetime);
         
@@ -653,9 +652,7 @@ ndnrtc::new_api::Pipeliner::requestMissing
         {
             slot->incremenrRtxNum();
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
-            rtxNum_++;
-            
-            LogStatC << "\tretransmit\t" << rtxNum_ << endl;
+            stat_.nRtx_++;
         }
     }
     
@@ -668,29 +665,30 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
                                                 bool rtx)
 {
     int64_t interestLifetime = 0;
-    int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
     
     if (playbackDeadline <= 0)
         playbackDeadline = params_.interestTimeout;
-
-    if (halfBufferSize <= 0)
-        halfBufferSize = playbackDeadline;
     
     if (rtx || nspc != FrameBuffer::Slot::Key)
     {
-        interestLifetime = min(playbackDeadline, halfBufferSize);
+        int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
+        
+        if (halfBufferSize <= 0)
+            halfBufferSize = playbackDeadline;
+        
+        interestLifetime = std::min(playbackDeadline, halfBufferSize);
     }
     else
     { // only key frames
-        double gopInterval = params_.gop/frameBuffer_->getCurrentRate()*1000;
-        interestLifetime = gopInterval-2*halfBufferSize;
+        int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
+        double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
+        interestLifetime = gopInterval-playbackBufSize;
         
         if (interestLifetime <= 0)
-            interestLifetime = params_.interestTimeout;
+            interestLifetime = gopInterval;
     }
     
     assert(interestLifetime > 0);
-//    return (interestLifetime < MinInterestLifetime)? MinInterestLifetime : interestLifetime;
     return interestLifetime;
 }
 
@@ -700,7 +698,10 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
                                           int prefetchSize, int parityPrefetchSize,
                                           FrameBuffer::Slot::Namespace nspc)
 {
+    streamSwitchSync_.Enter();
     Name packetPrefix(basePrefix);
+    streamSwitchSync_.Leave();
+    
     packetPrefix.append(NdnRtcUtils::componentFromInt(packetNo));
     
     int64_t playbackDeadline = frameBuffer_->getEstimatedBufferSize();
@@ -729,23 +730,12 @@ ndnrtc::new_api::Pipeliner::keepBuffer(bool useEstimatedSize)
     int bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
     frameBuffer_->getPlayableBufferSize();
     
-    LogTraceC
-    << "frame buffer " << bufferSize
-    << (useEstimatedSize?" (est) ":" (play) ")
-    << " target " << frameBuffer_->getTargetSize()
-    << ((bufferSize < frameBuffer_->getTargetSize())?" KEEP UP":" NO KEEP UP") << endl;
-    
     int nRequested = 0;
     while (bufferSize < frameBuffer_->getTargetSize())
     {
-        LogTraceC
-        << "fill up the buffer with " << deltaFrameSeqNo_ << endl;
-        
         requestNextDelta(deltaFrameSeqNo_);
-        
         bufferSize = (useEstimatedSize)?frameBuffer_->getEstimatedBufferSize():
         frameBuffer_->getPlayableBufferSize();
-        
         nRequested++;
     }
     
@@ -760,16 +750,13 @@ ndnrtc::new_api::Pipeliner::resetData()
     deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta);
     keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey);
     rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
-    rtxNum_ = 0;
-    rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
     reconnectNum_ = 0;
     recoveryCheckpointTimestamp_ = -1;
     isPipelinePaused_ = false;
-    isPipelining_ = false;
-    isBuffering_ = false;
-    isProcessing_ = false;
-    
+    switchToState(StateInactive);
+    stopChasePipeliner();
+    keyFrameSeqNo_ = -1;
     exclusionFilter_ = -1;
     
     frameBuffer_->reset();
@@ -796,18 +783,17 @@ void
 ndnrtc::new_api::Pipeliner::rebuffer()
 {
     int nReconnects = reconnectNum_+1;
-    rebufferingNum_++;
+    stat_.nRebuffer_++;
     
     resetData();
-    consumer_->reset();
     
-    bufferEventsMask_ = ndnrtc::new_api::FrameBuffer::Event::StateChanged;
-    isProcessing_ = true;
+    bufferEventsMask_ = StartupEventsMask;
+    switchToState(StateChasing);
     
-    chaseEstimation_->reset();
+    chaseEstimation_->reset(state_ == StateFetching);
     reconnectNum_ = nReconnects;
     
-    if (reconnectNum_ >= 5 || deltaFrameSeqNo_ == -1)
+    if (reconnectNum_ >= MaxRetryNum || deltaFrameSeqNo_ == -1)
     {
         exclusionFilter_ = -1;
     }
@@ -819,9 +805,8 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     
     LogWarnC
     << "No data for the last " << MaxInterruptionDelay
-    << " ms. Rebuffering " << rebufferingNum_
+    << " ms. Rebuffering " << stat_.nRebuffer_
     << " reconnect " << reconnectNum_
     << " exclusion " << exclusionFilter_
-    << endl;
-    LogStatC << "\tREBUFFERING\t" << rebufferingNum_ << endl;    
+    << std::endl;
 }

@@ -238,34 +238,13 @@ PacketData(length, rawData)
 NdnFrameData::NdnFrameData(const EncodedImage &frame,
                            unsigned int segmentSize)
 {
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
-    
-    length_ = frame._length+headerSize;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(allocSize);
-    memset(data_, 0, allocSize);
-    
-    // copy frame data with offset of header
-    memcpy(data_+headerSize, frame._buffer, frame._length);
-    
-    // setup header
-    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
-    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
-    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
-    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
-    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
-    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
-    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
-    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
-    
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+    initialize(frame, segmentSize);
 }
 
 NdnFrameData::NdnFrameData(const EncodedImage &frame, unsigned int segmentSize,
-                           PacketMetadata &metadata):
-NdnFrameData(frame, segmentSize)
+                           PacketMetadata &metadata)
 {
+    initialize(frame, segmentSize);
     ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
 
@@ -342,6 +321,33 @@ NdnFrameData::metadataFromRaw(unsigned int length, const unsigned char *data)
 
 //******************************************************************************
 #pragma mark - private
+void
+NdnFrameData::initialize(const webrtc::EncodedImage &frame, unsigned int segmentSize)
+{
+    unsigned int headerSize = sizeof(FrameDataHeader);
+    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
+    
+    length_ = frame._length+headerSize;
+    isDataCopied_ = true;
+    data_ = (unsigned char*)malloc(allocSize);
+    memset(data_, 0, allocSize);
+    
+    // copy frame data with offset of header
+    memcpy(data_+headerSize, frame._buffer, frame._length);
+    
+    // setup header
+    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
+    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
+    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
+    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
+    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
+    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
+    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
+    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
+    
+    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+}
+
 int
 NdnFrameData::initFromRawData(unsigned int dataLength,
                               const unsigned char *rawData)
@@ -388,25 +394,12 @@ PacketData(dataLength, rawData)
 
 NdnAudioData::NdnAudioData(AudioPacket &packet)
 {
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    
-    length_ = packet.length_+headerSize;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(length_);
-    
-    memcpy(data_+headerSize, packet.data_, packet.length_);
-    
-    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
-    ((AudioDataHeader*)(&data_[0]))->metadata_ = {0., 0};
-    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
-    
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+    initialize(packet);
 }
 
-NdnAudioData::NdnAudioData(AudioPacket &packet, PacketMetadata &metadata):
-NdnAudioData(packet)
+NdnAudioData::NdnAudioData(AudioPacket &packet, PacketMetadata &metadata)
 {
+    initialize(packet);
     ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
 }
 
@@ -472,6 +465,27 @@ NdnAudioData::metadataFromRaw(unsigned int length, const unsigned char *data)
 
 //******************************************************************************
 #pragma mark - private
+void
+NdnAudioData::initialize(AudioPacket &packet)
+{
+    unsigned int headerSize = sizeof(AudioDataHeader);
+    
+    length_ = packet.length_+headerSize;
+    isDataCopied_ = true;
+    data_ = (unsigned char*)malloc(length_);
+    
+    memcpy(data_+headerSize, packet.data_, packet.length_);
+    
+    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
+    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.packetRate_ = 0.;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.timestamp_ = 0;
+    ((AudioDataHeader*)(&data_[0]))->metadata_.unixTimestamp_ = 0;
+    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
+    
+    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+}
+
 int
 NdnAudioData::initFromRawData(unsigned int dataLength,
                               const unsigned char *rawData)
@@ -488,4 +502,152 @@ NdnAudioData::initFromRawData(unsigned int dataLength,
     packet_.data_ = (unsigned char*)rawData+headerSize;
     
     return RESULT_OK;
+}
+
+//******************************************************************************
+SessionInfo::SessionInfo(const ParamsStruct& videoParams,
+                         const ParamsStruct& audioParams):
+NetworkData()
+{
+    packParameters(videoParams, audioParams);
+}
+
+SessionInfo::SessionInfo(unsigned int dataLength, const unsigned char* data):
+NetworkData(dataLength, data)
+{
+    isValid_ = RESULT_GOOD(initFromRawData(dataLength, data));
+}
+
+int
+SessionInfo::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const
+{
+    if (isValid_)
+    {
+        updateParams(videoParams, videoParams_);
+        updateParams(audioParams, audioParams_);
+        
+        return RESULT_OK;
+    }
+    
+    return RESULT_ERR;
+}
+
+unsigned int
+SessionInfo::getSessionInfoLength(unsigned int nVideoStreams,
+                                  unsigned int nAudioStreams)
+{
+    return sizeof(struct _SessionInfoDataHeader) +
+    sizeof(struct _VideoStreamDescription) * nVideoStreams +
+    sizeof(struct _AudioStreamDescription) * nAudioStreams;
+}
+
+void
+SessionInfo::packParameters(const ParamsStruct& videoParams,
+                            const ParamsStruct& audioParams)
+{
+    isDataCopied_ = true;
+    length_ = getSessionInfoLength(videoParams.nStreams, audioParams.nStreams);
+    
+    data_ = (unsigned char*)malloc(length_);
+    
+    struct _SessionInfoDataHeader header;
+    header.nVideoStreams_ = videoParams.nStreams;
+    header.videoSegmentSize_ = videoParams.segmentSize;
+    header.nAudioStreams_ = audioParams.nStreams;
+    header.audioSegmentSize_ = audioParams.segmentSize;
+    
+    *((struct _SessionInfoDataHeader*)data_) = header;
+    
+    int streamIdx = sizeof(struct _SessionInfoDataHeader);
+    
+    for (int i = 0; i < videoParams.nStreams; i++) {
+        struct _VideoStreamDescription streamDescription;
+        streamDescription.rate_ = videoParams.streamsParams[i].codecFrameRate;
+        streamDescription.gop_ = videoParams.streamsParams[i].gop;
+        streamDescription.bitrate_ = videoParams.streamsParams[i].startBitrate;
+        streamDescription.width_ = videoParams.streamsParams[i].encodeWidth;
+        streamDescription.height_ = videoParams.streamsParams[i].encodeHeight;
+        
+        *((struct _VideoStreamDescription*)&data_[streamIdx]) = streamDescription;
+        
+        streamIdx += sizeof(struct _VideoStreamDescription);
+    }
+    
+    for (int i = 0; i < audioParams.nStreams; i++){
+        struct _AudioStreamDescription streamDescription;
+        streamDescription.rate_ = audioParams.streamsParams[i].codecFrameRate;
+        streamDescription.bitrate_ = audioParams.streamsParams[i].startBitrate;
+        
+        *((struct _AudioStreamDescription*)&data_[streamIdx]) = streamDescription;
+        
+        streamIdx += sizeof(struct _AudioStreamDescription);
+    }
+}
+
+int
+SessionInfo::initFromRawData(unsigned int dataLength, const unsigned char *rawData)
+{
+    unsigned int headerSize = sizeof(struct _SessionInfoDataHeader);
+    struct _SessionInfoDataHeader header = *((struct _SessionInfoDataHeader*)(&rawData[0]));
+    
+    if (header.mrkr1_ != NDNRTC_SESSION_MRKR ||
+        header.mrkr2_ != NDNRTC_SESSION_MRKR ||
+        headerSize > dataLength)
+        return RESULT_ERR;
+    
+    videoParams_.nStreams = header.nVideoStreams_;
+    videoParams_.segmentSize = header.videoSegmentSize_;
+    audioParams_.nStreams = header.nAudioStreams_;
+    audioParams_.segmentSize = header.audioSegmentSize_;
+    
+    if (dataLength < getSessionInfoLength(header.nVideoStreams_, header.nAudioStreams_))
+        return RESULT_ERR;
+    
+    unsigned int streamIdx = headerSize;
+    
+    for (int i = 0; i < header.nVideoStreams_; i++)
+    {
+        struct _VideoStreamDescription streamDescription = *((struct _VideoStreamDescription*)(&data_[streamIdx]));
+        CodecParams codecParams;
+        memset(&codecParams, 0, sizeof(CodecParams));
+        
+        codecParams.idx = i;
+        codecParams.codecFrameRate = streamDescription.rate_;
+        codecParams.gop = streamDescription.gop_;
+        codecParams.startBitrate = streamDescription.bitrate_;
+        codecParams.encodeWidth = streamDescription.width_;
+        codecParams.encodeHeight = streamDescription.height_;
+        
+        videoParams_.addNewStream(codecParams);
+        streamIdx += sizeof(struct _VideoStreamDescription);
+    }
+    
+    for (int i = 0; i < header.nAudioStreams_; i++)
+    {
+        struct _AudioStreamDescription streamDescription = *((struct _AudioStreamDescription*)(&data_[streamIdx]));
+        CodecParams codecParams;
+        memset(&codecParams, 0, sizeof(CodecParams));
+        
+        codecParams.idx = i;
+        codecParams.codecFrameRate = streamDescription.rate_;
+        codecParams.startBitrate = streamDescription.bitrate_;
+        
+        audioParams_.addNewStream(codecParams);
+        streamIdx += sizeof(struct _AudioStreamDescription);
+    }
+    
+    return RESULT_OK;
+}
+
+void
+SessionInfo::updateParams(ParamsStruct& paramsForUpdate,
+                          const ParamsStruct& params)
+{
+    if (paramsForUpdate.nStreams)
+        free(paramsForUpdate.streamsParams);
+    
+    paramsForUpdate.segmentSize = params.segmentSize;
+    paramsForUpdate.nStreams = params.nStreams;
+    for (int i = 0; i < params.nStreams; i++)
+        paramsForUpdate.addNewStream(params.streamsParams[i]);
 }

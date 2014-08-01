@@ -153,7 +153,7 @@ public:
         << "got interest: " << interest->getName() << endl;
     }
     
-    void onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+    void onRegisterFailed(const shared_ptr<const Name>& prefix)
     {
         FAIL();
     }

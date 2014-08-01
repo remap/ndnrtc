@@ -12,30 +12,41 @@
 #include "ndnlib.h"
 #include "ndnrtc-utils.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace webrtc;
 
 const double NdnVideoSender::ParityRatio = 0.2;
 
-NdnVideoSender::NdnVideoSender(const ParamsStruct& params):MediaSender(params)
+NdnVideoSender::NdnVideoSender(const ParamsStruct& params,
+                               const CodecParams& codecParams):
+MediaSender(params),
+codecParams_(codecParams),
+coder_(new NdnVideoCoder(codecParams))
 {
     description_ = "vsender";
+    coder_->setObserver(this);
+    coder_->setFrameConsumer(this);
 }
 
 //******************************************************************************
 #pragma mark - overriden
-int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
-                         const shared_ptr<KeyChain>& ndnKeyChain)
+int
+NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
+                     const shared_ptr<KeyChain>& ndnKeyChain)
 {
-    int res = MediaSender::init(faceProcessor, ndnKeyChain);
+    shared_ptr<std::string> packetPrefix = NdnRtcNamespace::getStreamFramePrefix(params_, codecParams_.idx);
+    int res = MediaSender::init(faceProcessor, ndnKeyChain, packetPrefix);
     
     if (RESULT_FAIL(res))
         return res;
     
-    shared_ptr<string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, true);
+    if (RESULT_FAIL(coder_->init()))
+        return notifyError(RESULT_ERR, "can't initialize video encoder");
+    
+    shared_ptr<std::string>
+    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, codecParams_.idx, true);
     
     keyFramesPrefix_.reset(new Name(*keyPrefixString));
     keyFrameNo_ = -1;
@@ -43,18 +54,27 @@ int NdnVideoSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
     
     registerPrefix(keyFramesPrefix_);
     
-    LogInfoC << "initialized" << endl;
+    LogInfoC << "initialized" << std::endl;
     
     return RESULT_OK;
 }
 
 //******************************************************************************
 #pragma mark - interfaces realization
-void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                             double captureTimestamp)
+void
+NdnVideoSender::onDeliverFrame(webrtc::I420VideoFrame &frame,
+                               double unixTimeStamp)
 {
-    // update packet rate meter
+    coder_->onDeliverFrame(frame, unixTimeStamp);
+}
+
+void
+NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                        double captureTimestamp)
+{
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+    codecParams_.codecFrameRate = NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_);
+    
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
     // determine, whether we should publish under key or delta namespaces
@@ -96,17 +116,8 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
         assert(nSegments == nSegmentsExpected);
         
         publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
-//        INFO("PUBLISHED: \t%d \t%d \t%ld \t%d \t%ld \t%.2f",
-//             getFrameNo(),
-//             isKeyFrame,
-//             publishingTime,
-//             frameData.getLength(),
-//             encodedImage.capture_time_ms_,
-//             getCurrentPacketRate());
-//        webrtc::EncodedImage *eimg = (webrtc::EncodedImage*)(&encodedImage);
-//        ewriter.writeFrame(*eimg, metadata);
         
-        LogStatC
+        LogDebugC
         << "publish\t" << packetNo_ << "\t"
         << deltaFrameNo_ << "\t"
         << keyFrameNo_ << "\t"
@@ -115,14 +126,13 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
         << frameData.getLength() << "\t"
         << encodedImage.capture_time_ms_ << "\t"
         << getCurrentPacketRate() << "\t"
-        << nSegments << endl;
+        << nSegments << std::endl;
         
         if (params_.useFec)
         {
             int nSegmentsParity = publishParityData(frameNo, frameData,
                                                     nSegments, framePrefix,
                                                     prefixMeta);
-//            assert(nSegmentsParity == nSegmentsParityExpected);
         }
         
         if (!isKeyFrame)
@@ -140,14 +150,22 @@ void NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encoded
     }
 }
 
-void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
-                             const shared_ptr<const Interest>& interest,
-                             ndn::Transport& transport)
+void
+NdnVideoSender::setLogger(ndnlog::new_api::Logger *logger)
+{
+    coder_->setLogger(logger);
+    ILoggingObject::setLogger(logger);
+}
+
+void
+NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
+                           const shared_ptr<const Interest>& interest,
+                           ndn::Transport& transport)
 {
     const Name& name = interest->getName();
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
     bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
-
+    
     
     if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
         packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_))
@@ -156,7 +174,7 @@ void NdnVideoSender::onInterest(const shared_ptr<const Name>& prefix,
     }
     
     LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << endl;
+    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
 int
@@ -183,13 +201,13 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
                                         prefixMeta,
                                         NdnRtcUtils::unixTimestamp())) > 0)
         {
-            LogStatC
+            LogDebugC
             << "publish parity\t" << packetNo_ << "\t"
             << deltaFrameNo_ << "\t"
             << keyFrameNo_ << "\t"
             << ((frameNo == keyFrameNo_)?"K":"D") << "\t"
             << frameParityData.getLength() << "\t"
-            << nSegmentsP << endl;
+            << nSegmentsP << std::endl;
         }
         else
         {
@@ -199,7 +217,7 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
     }
     else
     {
-        LogErrorC << "FEC Encoding Failure" << endl;
+        LogErrorC << "FEC Encoding Failure" << std::endl;
     }
     
     

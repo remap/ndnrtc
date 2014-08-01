@@ -1,3 +1,0 @@
-[submodule "cpp/thirdparty/ndn-cpp"]
-	path = cpp/thirdparty/ndn-cpp
-	url = https://github.com/named-data/ndn-cpp.git

@@ -21,6 +21,11 @@ namespace ndnrtc {
     namespace new_api {
         class Consumer;
         
+        class IInterestQueueCallback {
+        public:
+            virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
+        };
+        
         class InterestQueue : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -56,16 +61,27 @@ namespace ndnrtc {
                 virtual void setExpressionTimestamp(int64_t timestamp) = 0;
             };
 
-            InterestQueue(const ndn::ptr_lib::shared_ptr<FaceWrapper> &face);
+            InterestQueue(const boost::shared_ptr<FaceWrapper> &face);
             ~InterestQueue();
             
-            void enqueueInterest(const ndn::Interest& interest,
-                                 const ndn::ptr_lib::shared_ptr<IPriority>& priority,
-                                 const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
-                                 const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            void
+            enqueueInterest(const ndn::Interest& interest,
+                            const boost::shared_ptr<IPriority>& priority,
+                            const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
+                            const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
+            
+            /**
+             * Flushes current interest queue
+             */
+            void
+            reset();
             
             void
             getStatistics(ReceiverChannelPerformance& stat);
+            
+            void
+            registerCallback(IInterestQueueCallback *callback)
+            { callback_ = callback; }
             
         private:
             class QueueEntry : public IPriority
@@ -74,7 +90,7 @@ namespace ndnrtc {
             public:
                 QueueEntry(){}
                 QueueEntry(const ndn::Interest& interest,
-                           const ndn::ptr_lib::shared_ptr<IPriority>& priority,
+                           const boost::shared_ptr<IPriority>& priority,
                            const ndn::OnData& onData,
                            const ndn::OnTimeout& onTimeout);
 
@@ -103,8 +119,8 @@ namespace ndnrtc {
                 }
                 
             private:
-                ndn::ptr_lib::shared_ptr<const ndn::Interest> interest_;
-                ndn::ptr_lib::shared_ptr<IPriority> priority_;
+                boost::shared_ptr<const ndn::Interest> interest_;
+                boost::shared_ptr<IPriority> priority_;
                 ndn::OnData onDataCallback_;
                 ndn::OnTimeout onTimeoutCallback_;
                 
@@ -122,11 +138,13 @@ namespace ndnrtc {
             PriorityQueue;
             
             unsigned int freqMeterId_;
-            ndn::ptr_lib::shared_ptr<FaceWrapper> face_;
+            boost::shared_ptr<FaceWrapper> face_;
             webrtc::RWLockWrapper &queueAccess_;
             webrtc::EventWrapper &queueEvent_;
             webrtc::ThreadWrapper &queueWatchingThread_;
             PriorityQueue queue_;
+            
+            IInterestQueueCallback *callback_ = NULL;
             
             bool isWatchingQueue_ = false;
             
@@ -170,10 +188,16 @@ namespace ndnrtc {
             int64_t getEnqueueTimestamp() const { return enqueuedMs_; }
             int64_t getExpressionTimestamp() const { return expressedMs_; }
             
-            static ndn::ptr_lib::shared_ptr<Priority>
+            static boost::shared_ptr<Priority>
             fromArrivalDelay(int64_t millisecondsFromNow)
             {
-                return ndn::ptr_lib::shared_ptr<Priority>(new Priority(millisecondsFromNow));
+                return boost::shared_ptr<Priority>(new Priority(millisecondsFromNow));
+            }
+            
+            static boost::shared_ptr<Priority>
+            fromAbsolutePriority(int priority)
+            {
+                return boost::shared_ptr<Priority>(new Priority(priority));
             }
             
         private:

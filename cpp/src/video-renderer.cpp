@@ -102,9 +102,6 @@ void VideoRenderer::onDeliverFrame(I420VideoFrame &frame, double timestamp)
         LogTraceC
         << "render frame at " << NdnRtcUtils::millisecondTimestamp() << endl;
         
-        LogStatC
-        << "render\t" << NdnRtcUtils::millisecondTimestamp() << endl;
-        
         int res = frameSink_->RenderFrame(rendererId_, frame);
         
         if (res < 0)

@@ -36,8 +36,8 @@ namespace ndnrtc
     public IMediaReceiverCallback
     {
     public:
-        AudioVideoSynchronizer(const shared_ptr<new_api::VideoConsumer>& videoConsumer,
-                               const shared_ptr<new_api::AudioConsumer>& audioConsumer);
+        AudioVideoSynchronizer(const boost::shared_ptr<new_api::VideoConsumer>& videoConsumer,
+                               const boost::shared_ptr<new_api::AudioConsumer>& audioConsumer);
         ~AudioVideoSynchronizer();
         
         /**

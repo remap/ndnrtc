@@ -17,36 +17,36 @@ using namespace ndnlog::new_api;
 TEST(SimpleLogTests, TestLogToConsole)
 {
     { // log default
-        new_api::Logger logger;
+        Logger logger;
         
         logger.log(NdnLoggerLevelInfo)
             << "you should be able to see this line in the console.";
         logger << " adding number: " << 1234;
-        logger << ". ending line" << endl;
+        logger << ". ending line" << std::endl;
         
-        logger.log(NdnLoggerLevelInfo) << "this is a new logging line and it ends here" << endl;
-        logger.log(NdnLoggerLevelInfo) << "yet another new log line" << endl;
+        logger.log(NdnLoggerLevelInfo) << "this is a new logging line and it ends here" << std::endl;
+        logger.log(NdnLoggerLevelInfo) << "yet another new log line" << std::endl;
     }
     { // log with levels
-        new_api::Logger logger;
+        Logger logger;
         
         logger.log(NdnLoggerLevelTrace) << "trace level";
         logger.log(NdnLoggerLevelDebug) << "debug level";
         logger.log(NdnLoggerLevelInfo) << "info level";
         logger.log(NdnLoggerLevelWarning) << "warning level";
-        logger.log(NdnLoggerLevelError) << "error level" << endl;
+        logger.log(NdnLoggerLevelError) << "error level" << std::endl;
     }
     { // log with default level
-        new_api::Logger logger(NdnLoggerDetailLevelDefault);
+        Logger logger(NdnLoggerDetailLevelDefault);
         
         logger.log(NdnLoggerLevelTrace) << "trace level - should be ignored";
         logger.log(NdnLoggerLevelDebug) << "debug level - should be ignored";
         logger.log(NdnLoggerLevelInfo) << "info level";
         logger.log(NdnLoggerLevelWarning) << "warning level";
-        logger.log(NdnLoggerLevelError) << "error level" << endl;
+        logger.log(NdnLoggerLevelError) << "error level" << std::endl;
     }
     { // logger level none
-        new_api::Logger logger(NdnLoggerDetailLevelNone);
+        Logger logger(NdnLoggerDetailLevelNone);
         
         logger.log(NdnLoggerLevelTrace) << "trace level - should be ignored";
         logger.log(NdnLoggerLevelDebug) << "debug level - should be ignored";
@@ -55,10 +55,10 @@ TEST(SimpleLogTests, TestLogToConsole)
         logger.log(NdnLoggerLevelError) << "error level - should be ignored";
     }
     { // test trace and debug
-        new_api::Logger logger;
+        Logger logger;
         
         logger.log(NdnLoggerLevelTrace, nullptr, __FILE__, __LINE__) << "trace entry at this file and line";
-        logger.log(NdnLoggerLevelDebug, nullptr, __FILE__, __LINE__) << "no info on sources for debug level" << endl;
+        logger.log(NdnLoggerLevelDebug, nullptr, __FILE__, __LINE__) << "no info on sources for debug level" << std::endl;
     }
 }
 
@@ -87,7 +87,7 @@ TEST(SimpleLogTests, TestWithLoggingObject)
 {
     {
         TestLoggingObject obj;
-        new_api::Logger logger;
+        Logger logger;
         
         logger.log(NdnLoggerLevelInfo, &obj) << "logging from object";
         // disable logging
@@ -102,33 +102,33 @@ TEST(SimpleLogTests, TestLogToFile)
         std::string
         fileName = ndnrtc::NdnRtcUtils::toString("logfile-%s-%d.log", "simple", 1);
         
-        new_api::Logger logger(NdnLoggerDetailLevelAll, fileName);
+        Logger logger(NdnLoggerDetailLevelAll, fileName);
         
         EXPECT_TRUE(UnitTestHelper::checkFileExists(fileName.c_str()));
         
         logger.log(NdnLoggerLevelInfo) << "test log to file " << 1234;
         
         TestLoggingObject obj;
-        logger.log(NdnLoggerLevelInfo, &obj) << "log from object" << endl;
+        logger.log(NdnLoggerLevelInfo, &obj) << "log from object" << std::endl;
     }
 }
 
 TEST(SimpleLogTests, TestLogInvalid)
 {
     {
-        new_api::Logger logger;
+        Logger logger;
         
         logger << "this line should be ignored";
-        logger << endl;
+        logger << std::endl;
         logger << "this line should be ignored too";
-        logger.log(NdnLoggerLevelInfo) << "this line should be visible" << endl;
+        logger.log(NdnLoggerLevelInfo) << "this line should be visible" << std::endl;
     }
 }
 
 
 class ThreadLogging {
 public:
-    ThreadLogging(int n, new_api::Logger* logger):
+    ThreadLogging(int n, Logger* logger):
     n_(n),
     logger_(logger),
     logThread_(*webrtc::ThreadWrapper::CreateThread(run, this)),
@@ -153,7 +153,7 @@ private:
     webrtc::ThreadWrapper &logThread_;
     int n_;
     bool isRunning_;
-    new_api::Logger* logger_;
+    Logger* logger_;
     
     static bool run(void *obj)
     {
@@ -161,7 +161,7 @@ private:
     }
     bool logSmth()
     {
-        logger_->log(NdnLoggerLevelInfo) << "thread " << n_ << " is logging" << endl;
+        logger_->log(NdnLoggerLevelInfo) << "thread " << n_ << " is logging" << std::endl;
         usleep(1000);
         return isRunning_;
     }
@@ -228,31 +228,31 @@ TEST(SimpleLogTests, TestLogFactory)
 {
     {
         // log to console
-        Logger::getLogger("").log(NdnLoggerLevelInfo) << "this should be visible" << endl;
+        Logger::getLogger("").log(NdnLoggerLevelInfo) << "this should be visible" << std::endl;
         Logger::destroyLogger("");
     }
     {
         // log to file
-        Logger::log("factory.log", NdnLoggerLevelInfo) << "test logger factory to file" << endl;
+        Logger::log("factory.log", NdnLoggerLevelInfo) << "test logger factory to file" << std::endl;
         Logger::destroyLogger("factory.log");
     }
     {
-        LogTrace("test-macro.log") << "testing macro" << endl;
+        LogTrace("test-macro.log") << "testing macro" << std::endl;
         
         TestLoggingObject obj;
-        LogTrace("test-macro.log", &obj) << "macro logging from object" << endl;
+        LogTrace("test-macro.log", &obj) << "macro logging from object" << std::endl;
         
-        LogDebug("test-macro.log") << "testing macro debug" << endl;
-        LogDebug("test-macro.log", &obj) << "testing macro debug from obj" << endl;
+        LogDebug("test-macro.log") << "testing macro debug" << std::endl;
+        LogDebug("test-macro.log", &obj) << "testing macro debug from obj" << std::endl;
         
-        LogInfo("test-macro.log") << "testing macro info" << endl;
-        LogInfo("test-macro.log", &obj) << "testing macro info from obj" << endl;
+        LogInfo("test-macro.log") << "testing macro info" << std::endl;
+        LogInfo("test-macro.log", &obj) << "testing macro info from obj" << std::endl;
         
-        LogWarn("test-macro.log") << "testing macro warn" << endl;
-        LogWarn("test-macro.log", &obj) << "testing macro warn from obj" << endl;
+        LogWarn("test-macro.log") << "testing macro warn" << std::endl;
+        LogWarn("test-macro.log", &obj) << "testing macro warn from obj" << std::endl;
         
-        LogError("test-macro.log") << "testing macro error" << endl;
-        LogError("test-macro.log", &obj) << "testing macro error from obj" << endl;
+        LogError("test-macro.log") << "testing macro error" << std::endl;
+        LogError("test-macro.log", &obj) << "testing macro error from obj" << std::endl;
         
     }
 }

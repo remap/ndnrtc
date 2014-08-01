@@ -19,6 +19,7 @@
 #import <AppKit/AppKit.h>
 
 using namespace ndnrtc;
+using namespace boost;
 
 //******************************************************************************
 int64_t millisecondTimestamp()
@@ -44,7 +45,8 @@ void CocoaTestEnvironment::TearDown(){
 };
 
 //******************************************************************************
-void UnitTestHelperNdnNetwork::NdnSetUp(string &streamAccessPrefix, string &userPrefix)
+void UnitTestHelperNdnNetwork::NdnSetUp(std::string &streamAccessPrefix,
+                                        std::string &userPrefix)
 {
     nReceivedInterests_ = 0;
     nReceivedData_ = 0;
@@ -88,7 +90,7 @@ void UnitTestHelperNdnNetwork::onInterest(const shared_ptr<const Name>& prefix,
 }
 
 void UnitTestHelperNdnNetwork::
-onRegisterFailed(const ptr_lib::shared_ptr<const Name>& prefix)
+onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
     FAIL();
 }
@@ -103,14 +105,14 @@ void UnitTestHelperNdnNetwork::
 onTimeout(const shared_ptr<const Interest>& interest)
 {
     Logger::sharedInstance().log(NdnLoggerLevelTrace)
-    << "interest timeout " << interest->getName() << endl;
+    << "interest timeout " << interest->getName() << std::endl;
     nReceivedTimeout_++;
 }
 
 void UnitTestHelperNdnNetwork::
 publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
                    unsigned int frameNo, unsigned int segmentSize,
-                   const string &framePrefix, int freshness,
+                   const std::string &framePrefix, int freshness,
                    bool mixedSendOrder)
 {
     unsigned int fullSegmentsNum = dataLen/segmentSize;
@@ -118,10 +120,10 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
         fullSegmentsNum+1:fullSegmentsNum;
     
     unsigned int lastSegmentSize = dataLen - fullSegmentsNum*segmentSize;
-    vector<int> segmentsSendOrder;
+    std::vector<int> segmentsSendOrder;
     
     Name prefix(framePrefix.c_str());
-    shared_ptr<const vector<unsigned char>> frameNumberComponent =
+    shared_ptr<const std::vector<unsigned char>> frameNumberComponent =
         NdnRtcNamespace::getNumberComponent(frameNo);
     
     prefix.addComponent(*frameNumberComponent);
@@ -154,7 +156,7 @@ publishMediaPacket(unsigned int dataLen, unsigned char *dataPacket,
 }
 void UnitTestHelperNdnNetwork::publishData(unsigned int dataLen,
                                            unsigned char *dataPacket,
-                                           const string &prefix, int freshness,
+                                           const std::string &prefix, int freshness,
                                            int64_t totalSegmentsNum)
 {
     Data data(prefix);

@@ -56,18 +56,10 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                              bool isKey, double assembledLevel)
 {
     bool res = false;
-    webrtc::EncodedImage frame;
     
     // render frame if we have one
-    if (data && frameConsumer_)
+    if (frameConsumer_)
     { 
-        ((NdnFrameData*)data)->getFrame(frame);
-        
-#if RECORD
-        PacketData::PacketMetadata meta = data_->getMetadata();
-        frameWriter.writeFrame(frame, meta);
-#endif
-
         bool pushFrameFurther = false;
         
         if (params_.skipIncomplete)
@@ -79,34 +71,79 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     pushFrameFurther = true;
                     currentKeyNo_ = sequencePacketNo;
                     validGop_ = true;
+                    
                     LogTraceC << "new GOP with key: "
                     << sequencePacketNo << endl;
                 }
                 else
                 {
                     validGop_ = false;
-                    LogTraceC << "GOP failed - key incomplete: "
+                    stat_.nSkippedIncomplete_++;
+                    stat_.nSkippedIncompleteKey_++;
+                    
+                    LogTraceC << "GOP failed - key incomplete ("
+                    << assembledLevel << "): "
                     << sequencePacketNo << endl;
                 }
             }
             else
             {
-                if (pairedPacketNo != currentKeyNo_)
+                // update stat
+                if (assembledLevel < 1.)
+                {
+                    stat_.nSkippedIncomplete_++;
+                    
                     LogTraceC
-                    << playbackPacketNo << " is unexpected: "
-                    << " current key " << currentKeyNo_
-                    << " got " << pairedPacketNo << endl;
+                    << playbackPacketNo << " incomplete "
+                    << assembledLevel << endl;
+                }
+                else
+                {
+                    if (pairedPacketNo != currentKeyNo_)
+                    {
+                        stat_.nSkippedNoKey_++;
+                        
+                        LogTraceC
+                        << playbackPacketNo << " is unexpected: "
+                        << " current key " << currentKeyNo_
+                        << " got " << pairedPacketNo << endl;
+                    }
+                    else
+                    {
+                        if (!validGop_)
+                        {
+                            stat_.nSkippedInvalidGop_++;
+                            
+                            LogTraceC
+                            << playbackPacketNo << " bad GOP " << endl;
+                        }
+                    }
+                }
                 
                 validGop_ &= (assembledLevel >= 1);
                 pushFrameFurther = validGop_ && (pairedPacketNo == currentKeyNo_);
             }
         }
         else
-            pushFrameFurther  = true;
+            pushFrameFurther  = true && data;
         
         if (pushFrameFurther)
         {
-            LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << nPlayed_ << endl;
+            webrtc::EncodedImage frame;
+            
+            ((NdnFrameData*)data)->getFrame(frame);
+            
+#if RECORD
+            PacketData::PacketMetadata meta = data_->getMetadata();
+            frameWriter.writeFrame(frame, meta);
+#endif
+            
+            // update stat
+            stat_.nPlayed_++;
+            if (isKey)
+                stat_.nPlayedKey_++;
+            
+            LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << stat_.nPlayed_ << endl;
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
         }
         else
@@ -114,10 +151,9 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
             << " isKey: " << (isKey?"YES":"NO")
             << " level: " << assembledLevel << endl;
-            nMissed_++;
         }
         
-        res = true;
+        res = pushFrameFurther;
     } // if data
     
     return res;

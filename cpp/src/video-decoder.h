@@ -22,7 +22,7 @@ namespace ndnrtc {
     public webrtc::DecodedImageCallback, public NdnRtcObject
     {
     public:
-        NdnVideoDecoder(const ParamsStruct &coderParams);
+        NdnVideoDecoder(const CodecParams &params);
         ~NdnVideoDecoder() { }
         
         void setFrameConsumer(IRawFrameConsumer *frameConsumer)
@@ -37,9 +37,10 @@ namespace ndnrtc {
                                      double timestamp);
 
     private:
+        CodecParams codecParams_;
         IRawFrameConsumer *frameConsumer_;
         webrtc::VideoCodec codec_;
-        shared_ptr<webrtc::VideoDecoder> decoder_;
+        boost::shared_ptr<webrtc::VideoDecoder> decoder_;
         double capturedTimestamp_ = 0;
     };
 }

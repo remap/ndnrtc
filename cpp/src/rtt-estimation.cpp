@@ -45,8 +45,11 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
     {
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
         
-        LogTraceC << "rtt estimate\t" <<
-        NdnRtcUtils::currentMeanEstimation(estimatorId_) << endl;
+        LogTraceC
+        << "updated estimation. round " << rountripTimeMs <<
+        " generation " << generationDelay
+        << " raw " << rawValue
+        << " est " << getCurrentEstimation() << std::endl;
     }
     else
     {
@@ -62,4 +65,11 @@ double
 RttEstimation::getCurrentEstimation() const
 {
     return NdnRtcUtils::currentMeanEstimation(estimatorId_);
+}
+
+void
+RttEstimation::reset()
+{
+    LogTraceC << "reset" << endl;
+    NdnRtcUtils::resetMeanEstimator(estimatorId_);
 }

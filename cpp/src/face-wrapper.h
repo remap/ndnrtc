@@ -14,7 +14,6 @@
 
 namespace ndnrtc {
     using namespace ndn;
-    using namespace ptr_lib;
     
     /**
      * Thread-safe wrapper for NDN face class
@@ -22,12 +21,12 @@ namespace ndnrtc {
     class FaceWrapper : public ndnlog::new_api::ILoggingObject {
     public:
         FaceWrapper();
-        FaceWrapper(shared_ptr<Face> &face_);
+        FaceWrapper(boost::shared_ptr<Face> &face_);
         ~FaceWrapper();
         
         void
-        setFace(shared_ptr<Face> face) { face_ = face; }
-        shared_ptr<Face>
+        setFace(boost::shared_ptr<Face> face) { face_ = face; }
+        boost::shared_ptr<Face>
         getFace() { return face_; }
         
         uint64_t
@@ -61,14 +60,14 @@ namespace ndnrtc {
         synchronizeStop() { faceCs_.Leave(); }
         
     private:
-        shared_ptr<Face> face_;
+        boost::shared_ptr<Face> face_;
         webrtc::CriticalSectionWrapper &faceCs_;
     };
     
     class FaceProcessor : public ndnlog::new_api::ILoggingObject
     {
     public:
-        FaceProcessor(const shared_ptr<FaceWrapper>& faceWrapper);
+        FaceProcessor(const boost::shared_ptr<FaceWrapper>& faceWrapper);
         ~FaceProcessor();
         
         int
@@ -81,33 +80,33 @@ namespace ndnrtc {
         setProcessingInterval(unsigned int usecInterval)
         { usecInterval_ = usecInterval; }
         
-        shared_ptr<FaceWrapper>
+        boost::shared_ptr<FaceWrapper>
         getFaceWrapper()
         { return faceWrapper_; }
         
-        shared_ptr<Transport>
+        boost::shared_ptr<Transport>
         getTransport()
         { return transport_; }
         
         void
-        setTransport(shared_ptr<Transport>& transport)
+        setTransport(boost::shared_ptr<Transport>& transport)
         { transport_ = transport; }
         
         static int
         setupFaceAndTransport(const ParamsStruct &params,
-                              shared_ptr<FaceWrapper>& face,
-                              shared_ptr<Transport>& transport);
+                              boost::shared_ptr<FaceWrapper>& face,
+                              boost::shared_ptr<Transport>& transport);
         
-        static shared_ptr<FaceProcessor>
+        static boost::shared_ptr<FaceProcessor>
         createFaceProcessor(const ParamsStruct& params,
-                            const shared_ptr<ndn::KeyChain>& keyChain = shared_ptr<ndn::KeyChain>(nullptr),
-                            const shared_ptr<Name>& certificateName = shared_ptr<Name>(nullptr));
+                            const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
+                            const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>());
         
     private:
         bool isProcessing_;
         unsigned int usecInterval_;
-        shared_ptr<FaceWrapper> faceWrapper_;
-        shared_ptr<Transport> transport_;
+        boost::shared_ptr<FaceWrapper> faceWrapper_;
+        boost::shared_ptr<Transport> transport_;
         webrtc::ThreadWrapper &processingThread_;
         
         static bool

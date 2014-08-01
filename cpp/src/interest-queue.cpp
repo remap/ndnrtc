@@ -13,7 +13,7 @@
 #include "interest-queue.h"
 #include "consumer.h"
 
-using namespace std;
+using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc::new_api;
 using namespace webrtc;
@@ -69,6 +69,25 @@ InterestQueue::enqueueInterest(const Interest& interest,
     queueAccess_.ReleaseLockExclusive();
     
     queueEvent_.Set();
+    
+    LogDebugC
+    << "enqueue\t" << entry.interest_->getName()
+    << "\texclude: " << entry.interest_->getExclude().toUri()
+    << "\tpri: "
+    << entry.getValue() << "\tlifetime: "
+    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
+    << queue_.size()
+    << std::endl;
+}
+
+void
+InterestQueue::reset()
+{
+    queueAccess_.AcquireLockExclusive();
+    queue_ = PriorityQueue(IPriority::Comparator(true));
+    queueAccess_.ReleaseLockExclusive();
+
+    LogDebugC << "interest queue flushed" << std::endl;
 }
 
 void
@@ -127,13 +146,19 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {    
-    LogStatC
-    << "express\t" << entry.interest_->getName() << "\t"
-    << entry.getValue() << "\t"
-    << queue_.size() << "\t"
-    << entry.interest_->getInterestLifetimeMilliseconds() << endl;
+    LogDebugC
+    << "express\t" << entry.interest_->getName()
+    << "\texclude: " << entry.interest_->getExclude().toUri()
+    << "\tpri: "
+    << entry.getValue() << "\tlifetime: "
+    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
+    << queue_.size()
+    << std::endl;
     
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
     face_->expressInterest(*(entry.interest_),
                            entry.onDataCallback_, entry.onTimeoutCallback_);
+    
+    if (callback_)
+        callback_->onInterestIssued(entry.interest_);
 }

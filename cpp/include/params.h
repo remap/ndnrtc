@@ -28,7 +28,7 @@ namespace ndnrtc
         MinHeight = 100,
         MaxPortNum = 65535,
         MaxStartBitrate = 50000,
-        MinStartBitrate = 100,
+        MinStartBitrate = 0,
         MaxBitrate = 500000,
         MaxFrameRate = 60,
         MinFrameRate = 1,
@@ -40,12 +40,19 @@ namespace ndnrtc
         MinBufferSize = 1,
         MinJitterSize = 150;
     
+    typedef struct _CodecParams {
+        unsigned int idx;
+        unsigned int codecFrameRate, gop;
+        unsigned int startBitrate, maxBitrate;
+        unsigned int encodeWidth, encodeHeight;
+        bool dropFramesOn;
+    } CodecParams;
 
     typedef struct _ParamsStruct {
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
         bool useTlv, useRtx, useFec, useCache, useAudio, useVideo, useAvSync;
-        unsigned int headlessMode;
+        unsigned int headlessMode; // 0 - off, 1 - consumer, 2 - producer
         
         // capture settings
         unsigned int captureDeviceId;
@@ -55,11 +62,9 @@ namespace ndnrtc
         // render
         unsigned int renderWidth, renderHeight;
         
-        // codec
-        unsigned int codecFrameRate, gop;
-        unsigned int startBitrate, maxBitrate;
-        unsigned int encodeWidth, encodeHeight;
-        bool dropFramesOn;
+        // streams
+        unsigned int nStreams;
+        CodecParams* streamsParams;
         
         // network parameters
         const char *host;
@@ -68,7 +73,6 @@ namespace ndnrtc
         // ndn producer
         const char *producerId;
         const char *streamName;
-        const char *streamThread;
         const char *ndnHub;
         unsigned int segmentSize, freshness;
         double producerRate;
@@ -140,7 +144,26 @@ namespace ndnrtc
             memset((void*)this->producerId, 0, strlen(producerId));
             strcpy((char*)this->producerId, producerId);
         }
+        
+        void addNewStream(const CodecParams& streamParams)
+        {
+            this->nStreams++;
+            this->streamsParams = (CodecParams*)realloc(this->streamsParams,
+                                                         this->nStreams*sizeof(CodecParams));
+            this->streamsParams[this->nStreams-1] = streamParams;
+        }
+        
     } ParamsStruct;
+    
+    static CodecParams DefaultCodecParams = {
+        0,      // idx
+        30,     // fps
+        30,     // gop
+        300,    // start bitrate
+        0,      // max bitrate
+        640,    // encode width
+        480     // encode height
+    };
     
     static ParamsStruct DefaultParams = {
         ndnlog::NdnLoggerDetailLevelDebug,    // log level
@@ -162,24 +185,17 @@ namespace ndnrtc
         640,    // render width
         480,    // render height
         
-        30,     // codec framerate
-        30,     // gop
-        1000,   // codec start bitrate
-        10000,  // codec max bitrate
-        640,    // codec encoding width
-        480,    // codec encoding height
-        1,      // instruct encoder to drop frames if cannot keep up with the
-                // maximum bitrate
+        0,      // number of simultaneous streams
+        NULL, // no streams
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
         
         "testuser",     // producer id
         "video0",       // stream name
-        "vp8",          // stream thread name
-        "ndn/edu/ucla/apps",     // ndn hub
+        "ndn/edu/ucla/remap",     // ndn hub
         1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
-        5,      // data freshness (seconds) value
+        1,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         true,   // skip incomplete frames
         
@@ -212,23 +228,17 @@ namespace ndnrtc
         0,      // render width
         0,      // render height
         
-        0,      // codec framerate
-        0,      // gop
-        0,      // codec start bitrate
-        0,      // codec max bitrate
-        0,      // codec encoding width
-        0,      // codec encoding height
-        0,      // drop frames
+        0,
+        NULL,
         
         "localhost",    // network ndnd remote host
         6363,           // default ndnd port number
         
         "testuser",     // producer id
         "audio0",       // stream name
-        "pcmu2",        // stream thread name
-        "ndn/edu/ucla/apps",     // ndn hub
+        "ndn/edu/ucla/remap",     // ndn hub
         1054,   // segment size for media frame
-        5,      // data freshness (seconds) value
+        1,      // data freshness (seconds) value
         50,     // producer rate (currently equal to playback rate)
         false,  // skip incomplete frames
         

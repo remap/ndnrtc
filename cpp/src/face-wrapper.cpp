@@ -11,7 +11,7 @@
 
 using namespace ndnrtc;
 using namespace webrtc;
-using namespace std;
+using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -96,7 +96,7 @@ FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
     
     try
     {
-        string host = string(params.host);
+        std::string host = std::string(params.host);
         int port = params.portNum;
         
         shared_ptr<ndn::Transport::ConnectionInfo>
@@ -121,9 +121,9 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params,
                                    const shared_ptr<ndn::KeyChain>& keyChain,
                                    const shared_ptr<Name>& certificateName)
 {
-    shared_ptr<FaceWrapper> face(nullptr);
-    shared_ptr<ndn::Transport> transport(nullptr);
-    shared_ptr<FaceProcessor> fp(nullptr);
+    shared_ptr<FaceWrapper> face;
+    shared_ptr<ndn::Transport> transport;
+    shared_ptr<FaceProcessor> fp;
     
     if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(params, face, transport)))
     {

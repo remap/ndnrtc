@@ -94,6 +94,8 @@
 #define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
 #define LogStatC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__)
 
+#define STAT_DIV "\t"
+
 namespace ndnlog {
     typedef enum _NdnLoggerLevel {
         NdnLoggerLevelTrace = 0,
@@ -166,9 +168,9 @@ namespace ndnlog {
              * logging is performed
              * @return A refernce to the current Logger instance
              */
-            Logger&
+            virtual Logger&
             log(const NdnLogType& logType,
-                const ILoggingObject* loggingInstance = nullptr,
+                const ILoggingObject* loggingInstance = 0,
                 const std::string& locationFile = "",
                 const int& locationLine = -1);
             
@@ -230,7 +232,7 @@ namespace ndnlog {
                                const NdnLogType& logType,
                                const std::string& locationFile = "",
                                const int& locationLine = -1,
-                               const ILoggingObject* loggingInstance = nullptr)
+                               const ILoggingObject* loggingInstance = 0)
             {
                 return getLogger(logFile).log(logType, loggingInstance,
                                        locationFile, locationLine);
@@ -250,6 +252,9 @@ namespace ndnlog {
             static Logger&
             sharedInstance()
             { return *sharedInstance_; }
+            
+            void
+            flush();
             
         private:
             NdnLoggerDetailLevel logLevel_;
@@ -328,7 +333,7 @@ namespace ndnlog {
             isLoggingEnabled() const
             { return true; }
             
-            ILoggingObject():logger_(nullptr), isLoggerCreated_(false){}
+            ILoggingObject():logger_(0), isLoggerCreated_(false){}
             ILoggingObject(const NdnLoggerDetailLevel& logLevel,
                            const std::string& logFile);
             

@@ -46,7 +46,6 @@ int64_t JitterTiming::startFramePlayout()
     
     if (playoutTimestampUsec_ == 0)
     {
-        LogTraceC << "init jitter timing" << endl;
         playoutTimestampUsec_ = processingStart;
     }
     else
@@ -61,7 +60,16 @@ int64_t JitterTiming::startFramePlayout()
             prevIterationProcTimeUsec -= framePlayoutTimeMs_*1000;
         else
             // should not occur!
+        {
+            LogErrorC << "assertion failed: "
+            << "prevIterationProcTimeUsec ("
+            << prevIterationProcTimeUsec << ") < framePlayoutTimeMs_*1000"
+            << "(" << framePlayoutTimeMs_*1000 << ")" << endl;
+            
+            logger_->flush();
+            
             assert(0);
+        }
         
         LogTraceC << "prev iter proc time " << prevIterationProcTimeUsec << endl;
         

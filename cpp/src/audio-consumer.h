@@ -11,14 +11,15 @@
 
 #include "consumer.h"
 #include "statistics.h"
+#include "audio-renderer.h"
 
 namespace ndnrtc {
     namespace new_api {
         class AudioConsumer : public Consumer {
         public:
             AudioConsumer(const ParamsStruct& params,
-                          const shared_ptr<InterestQueue>& interestQueue,
-                          const shared_ptr<RttEstimation>& rttEstimation = shared_ptr<RttEstimation>(nullptr));
+                          const boost::shared_ptr<InterestQueue>& interestQueue,
+                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
             ~AudioConsumer();
             
             int
@@ -32,6 +33,15 @@ namespace ndnrtc {
             
             void
             reset();
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger);
+            
+        private:
+            boost::shared_ptr<AudioRenderer>
+            getRenderer()
+            { return boost::dynamic_pointer_cast<AudioRenderer>(renderer_); }
+            
         };
     }
 }

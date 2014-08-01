@@ -49,8 +49,7 @@ Playout::~Playout()
 int
 Playout::init(void* frameConsumer)
 {
-    setDescription(description_);    
-    jitterTiming_.flush();
+    setDescription(description_);
     frameConsumer_ = frameConsumer;
     
     return RESULT_OK;
@@ -59,20 +58,15 @@ Playout::init(void* frameConsumer)
 int
 Playout::start()
 {
+    jitterTiming_.flush();
+    
     startPacketNo_ = 0;
-    nPlayed_ = 0;
-    nMissed_ = 0;
-    latency_ = 0;
     isRunning_ = true;
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
     playbackAdjustment_ = 0;
     data_ = nullptr;
-    
-#if 1
-    test_timelineDiff_ = -1;
-#endif
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -107,14 +101,6 @@ Playout::setDescription(const std::string &desc)
                                                        getDescription().c_str()));
 }
 
-void
-Playout::getStatistics(ReceiverChannelPerformance& stat)
-{
-    stat.nPlayed_ = nPlayed_;
-    stat.nMissed_ = nMissed_;
-    stat.latency_ = latency_;
-}
-
 //******************************************************************************
 #pragma mark - private
 bool
@@ -138,9 +124,14 @@ Playout::processPlayout()
             PacketNumber packetNo, sequencePacketNo, pairedPacketNo;
             double assembledLevel = 0;
             bool isKey, packetValid = false;
+            bool skipped = false, missed = false,
+                    outOfOrder = false, noData = false, incomplete = false;
             
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
+            
+            noData = (data_ == nullptr);
+            incomplete = (assembledLevel < 1.);
             
             //******************************************************************
             // next call is overriden by specific playout mechanism - either
@@ -149,83 +140,48 @@ Playout::processPlayout()
                                pairedPacketNo, isKey, assembledLevel))
             {
                 packetValid = true;
-                
-                nPlayed_++;
                 updatePlaybackAdjustment();
             }
-            else
-            {
-                nMissed_++;
-                
-                LogStatC
-                << "\tskipping\t" << sequencePacketNo
-                << "\ttotal\t" << nMissed_ << endl;
-            }
-#if 1
-            // testing
-            if (test_timelineDiff_ == -1 && data_)
-            {
-                test_timelineDiff_ = now-data_->getMetadata().timestamp_;
-                test_timelineDiffInclineEst_ = NdnRtcUtils::setupInclineEstimator();
-                
-                LogTrace("timeslide.log")
-                << "start timeline diff " << test_timelineDiff_ << endl;
-            }
-            else
-            {
-                if (data_)
-                {
-                    int currentDiffDelta = test_timelineDiff_ - (now-data_->getMetadata().timestamp_);
-                    
-                    NdnRtcUtils::inclineEstimatorNewValue(test_timelineDiffInclineEst_, (double)currentDiffDelta);
-                    
-                    
-                    LogTrace("timeslide.log")
-                    << "timeline diff delta for " << sequencePacketNo
-                    << ": " << currentDiffDelta
-                    << " incline " << NdnRtcUtils::currentIncline(test_timelineDiffInclineEst_)
-                    << " now: " << now
-                    << " ts: " << data_->getMetadata().timestamp_
-                    << endl;
-                }
-            }
-            // testing
-#endif
+
             double frameUnixTimestamp = 0;
 
             if (data_)
             {
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-                latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
-                LogStatC
-                << "\tlatency\t" << latency_ << endl;
+                stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
             }
             
             //******************************************************************
             // get playout time (delay) for the rendered frame
             int playbackDelay = frameBuffer_->releaseAcquiredSlot(isInferredPlayback_);
-            
-            adjustPlaybackDelay(playbackDelay);
+            int adjustment = playbackDelayAdjustment(playbackDelay);
+            int avSync = 0;
             
             if (packetValid)
-                playbackDelay += avSyncAdjustment(now, playbackDelay);
+                avSync = avSyncAdjustment(now, playbackDelay+adjustment);
             
+            if (playbackDelay < 0)
+            {
+#warning this should be fixed with proper rate switching mechanism
+                LogErrorC << "playback delay below zero: " << playbackDelay << endl;
+                playbackDelay = 0;
+            }
             assert(playbackDelay >= 0);
             
             LogTraceC
-            << "packet " << sequencePacketNo << " has playout time (inferred "
-            << (isInferredPlayback_?"YES":"NO") << ") "
-            << playbackDelay
-            << " (adjustment " << playbackAdjustment_
-            << ") data: " << (data_?"YES":"NO") << endl;
+            << "packet " << sequencePacketNo
+            << " total " << playbackDelay+adjustment+avSync
+            << ": delay " << playbackDelay
+            << " adjustment " << adjustment
+            << " avsync " << avSync
+            << " inferred " << (isInferredPlayback_?"YES":"NO") << endl;
             
-            if (playbackDelay >= 0)
-            {
-                jitterTiming_.updatePlayoutTime(playbackDelay);
-                
-                // setup and run playout timer for calculated playout interval
-                jitterTiming_.runPlayoutTimer();
-            }
+            playbackDelay += (adjustment + avSync);
+            assert(playbackDelay >= 0);
+            
+            // setup and run playout timer for calculated playout interval            
+            jitterTiming_.updatePlayoutTime(playbackDelay);
+            jitterTiming_.runPlayoutTimer();
         }
     }
     
@@ -244,38 +200,36 @@ Playout::updatePlaybackAdjustment()
         int realPlayback = data_->getMetadata().timestamp_-lastPacketTs_;
         playbackAdjustment_ += (realPlayback-inferredDelay_);
         inferredDelay_ = 0;
-        LogDebugC << "adjustments from previous iterations: " << playbackAdjustment_ << endl;
     }
     
     lastPacketTs_ = data_->getMetadata().timestamp_;
 }
 
-void
-Playout::adjustPlaybackDelay(int& playbackDelay)
+int
+Playout::playbackDelayAdjustment(int playbackDelay)
 {
+    int adjustment = 0;
+    
     if (isInferredPlayback_)
         inferredDelay_ += playbackDelay;
     else
         inferredDelay_ = 0;
     
-    LogDebugC << "inferred delay " << inferredDelay_ << endl;
-    
     if (playbackAdjustment_ < 0 &&
         abs(playbackAdjustment_) > playbackDelay)
     {
         playbackAdjustment_ += playbackDelay;
-        playbackDelay = 0;
+        adjustment = -playbackDelay;
     }
     else
     {
-        LogDebugC
-        << "increased playback by adjustment: " << playbackDelay
-        << " +" << playbackAdjustment_ << endl;
-        
-        playbackDelay += playbackAdjustment_;
+        adjustment = playbackAdjustment_;
         playbackAdjustment_ = 0;
     }
-    LogDebugC << "playback adjustment:  " << playbackAdjustment_ << endl;
+    
+    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
+    
+    return adjustment;
 }
 
 int
@@ -287,13 +241,10 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     {
         syncDriftAdjustment = consumer_->getAvSynchronizer()->synchronizePacket(lastPacketTs_, nowTimestamp, (Consumer*)consumer_);
         
-        LogTraceC << " av-sync adjustment: " << syncDriftAdjustment << endl;
-        
         if (abs(syncDriftAdjustment) > playbackDelay && syncDriftAdjustment < 0)
         {
             playbackAdjustment_ = syncDriftAdjustment+playbackDelay;
             syncDriftAdjustment = -playbackDelay;
-            LogTraceC << " av-sync updated playback adjustment: " << playbackAdjustment_ << endl;
         }
     }
     
