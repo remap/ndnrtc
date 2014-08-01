@@ -261,7 +261,8 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << SYMBOL_NREQUESTED << STAT_DIV << stat.pipelinerStat_.nRequested_ << STAT_DIV
     << SYMBOL_NREQUESTEDKEY << STAT_DIV << stat.pipelinerStat_.nRequestedKey_ << STAT_DIV
     << SYMBOL_NDATA << STAT_DIV << stat.nDataReceived_ << STAT_DIV
-    << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_
+    << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_ << STAT_DIV
+    << SYMBOL_LATENCY << STAT_DIV << stat.playoutStat_.latency_
     << std::endl;
 }
 

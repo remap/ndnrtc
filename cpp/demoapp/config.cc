@@ -46,7 +46,7 @@ int loadParamsFromFile(const string &cfgFileName, ParamsStruct &params,
     
     try{ // setup general settings
         const Setting &general = root["general"];
-        string log_level, log_file;
+        string log_level, log_file, headlessUser;
         bool use_tlv, use_rtx, use_fec, use_cache, use_av_sync, use_audio, use_video;
         unsigned int headless_mode;
         
@@ -89,6 +89,12 @@ int loadParamsFromFile(const string &cfgFileName, ParamsStruct &params,
             params.headlessMode = headless_mode;
         }
 
+        if (general.lookupValue("headless_user", headlessUser))
+        {
+            params.producerId = (char*)malloc(headlessUser.length()+1);
+            memcpy((void*)params.producerId, (void*)headlessUser.c_str(), headlessUser.length()+1);
+        }
+        
         if (general.lookupValue("use_cache", use_cache))
         {
             params.useCache = use_cache;

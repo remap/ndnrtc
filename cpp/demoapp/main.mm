@@ -29,9 +29,28 @@ using namespace std;
 using namespace ndnrtc;
 using namespace ndnlog;
 
-static NdnRtcLibrary *ndnrtcLib = NULL;
 int runNdnRtcApp(int argc, char * argv[]);
 void printStatus(const string &str);
+
+static bool headlessModeOn = false;
+
+class LibraryObserver : public INdnRtcLibraryObserver
+{
+public:
+    void onStateChanged(const char *state, const char *args);
+};
+
+void LibraryObserver::onStateChanged(const char *state, const char *args)
+{
+    if (headlessModeOn)
+        std::cout << state << " - " << args << endl;
+    else
+        printStatus(string(state)+" - "+string(args));
+}
+
+static NdnRtcLibrary *ndnrtcLib = NULL;
+static LibraryObserver observer;
+static RendererStub LocalRenderer;
 
 #ifdef SHOW_STATISTICS
 static int MonitoredProducerIdx = 0;
@@ -40,7 +59,6 @@ static BOOL isMonitored;
 std::vector<std::string> ProducerIds;
 #endif
 
-//******************************************************************************
 // This class passes parameter from main to the worked thread and back.
 @interface WorkerThread : NSObject {
     int    argc_;
@@ -104,42 +122,16 @@ int main(int argc, char * argv[])
         [NSThread detachNewThreadSelector:@selector(run)
                                  toTarget:worker
                                withObject:nil];
-
+        
         AppDelegate *appDelegate = [[AppDelegate alloc] init];
         [NSApplication sharedApplication].delegate = appDelegate;
         [[NSApplication sharedApplication] run];
-
-#if 0
-        NSRunLoop* main_run_loop = [NSRunLoop mainRunLoop];
-        NSDate *loop_until = [NSDate dateWithTimeIntervalSinceNow:0.1];
-        bool runloop_ok = true;
-        while (![worker done] && runloop_ok) {
-            @autoreleasepool {
-                runloop_ok = [main_run_loop runMode:NSDefaultRunLoopMode
-                                         beforeDate:loop_until];
-                loop_until = [NSDate dateWithTimeIntervalSinceNow:0.1];
-            }
-        }
-#endif
+        
         result = [worker result];
     }
     return result;
 }
 
-//******************************************************************************
-//******************************************************************************
-class LibraryObserver : public INdnRtcLibraryObserver
-{
-public:
-    void onStateChanged(const char *state, const char *args);
-};
-
-void LibraryObserver::onStateChanged(const char *state, const char *args)
-{
-    printStatus(string(state)+" - "+string(args));
-}
-
-//******************************************************************************
 //******************************************************************************
 int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
 {
@@ -157,15 +149,18 @@ int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
     return loadParamsFromFile(cfgFileName, videoParams, audioParams);
 }
 
-static RendererStub LocalRenderer;
-
-int start()
+int start(string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
     
-    string username = getInput("please, provide your username: ");
-    string ndnhub = getInput("please, provide hub prefix [%s]: ", p.ndnHub);
+    string ndnhub = "";
+    
+    if (username == "")
+    {
+        username = getInput("please, provide your username: ");
+        ndnhub = getInput("please, provide hub prefix [%s]: ", p.ndnHub);
+    }
     
     if (ndnhub != "")
     {
@@ -178,7 +173,6 @@ int start()
         ndnrtcLib->configure(p, ap);
     }
     
-
     ndnrtcLib->startPublishing(username.c_str());
     
 #ifdef SHOW_STATISTICS
@@ -187,13 +181,18 @@ int start()
     return 0;
 }
 
-int join()
+int join(string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
     
-    string username = getInput("please, provide a producer's username: ");
-    string ndnhub = getInput("please, provide hub prefix [%s]: ", p.ndnHub);
+    string ndnhub = "";
+    
+    if (username == "")
+    {
+        username = getInput("please, provide a producer's username: ");
+        ndnhub = getInput("please, provide hub prefix [%s]: ", p.ndnHub);
+    }
     
     if (ndnhub != "")
     {
@@ -230,7 +229,7 @@ int leave()
     
     if (it != ProducerIds.end())
         ProducerIds.erase(it);
-
+    
     MonitoredProducerIdx = 0;
 #endif
     
@@ -251,7 +250,7 @@ void *monitor(void *var)
         {
             NdnLibStatistics stat;
             string producerId = (ProducerIds.size())?
-                                    ProducerIds[MonitoredProducerIdx]:"no fetching";
+            ProducerIds[MonitoredProducerIdx]:"no fetching";
             
             ndnrtcLib->getStatistics(producerId.c_str(),
                                      stat);
@@ -293,108 +292,144 @@ void showStatsForProducer(int dir)
 }
 #endif
 
+void signalHandler(int signal)
+{
+    observer.onStateChanged("info", "received signal. shutting down.");
+    SignalReceived = true;
+}
+
+void runHeadless(ParamsStruct &params)
+{
+    switch (params.headlessMode) {
+        case 1: // consumer
+        {
+            std::cout << "info - headless mode: fetching from "
+            << string(params.producerId) << endl;
+            
+            join(string(params.producerId));
+        }
+            break;
+        case 2: // producer
+        {
+            std::cout << "info - headless mode: publishing for "
+            << string(params.producerId) << endl;
+            
+            start(string(params.producerId));
+        }
+            break;
+        default:
+            break;
+    }
+    
+    while (!SignalReceived) ;
+}
+
 int runNdnRtcApp(int argc, char * argv[])
 {
     const char *libPath = "libndnrtc.dylib";
     const char *paramsPath = "ndnrtc.cfg";
+    signal(SIGUSR1, signalHandler);
     
     if (argc >= 2)
         libPath = argv[1];
-
+    
     if (argc >= 3)
         paramsPath = argv[2];
     
     if ((ndnrtcLib = NdnRtcLibrary::instantiateLibraryObject(libPath)))
     {
-        initView();
-#ifdef SHOW_STATISTICS
-        if (pthread_create(&monitorThread, NULL, monitor, NULL) != 0)
-            printStatus("can't start statistics monitoring");
-#endif
-  
         ParamsStruct params, audioParams;
-        
         ndnrtcLib->getDefaultParams(params, audioParams);
-        
-        LibraryObserver observer;
         ndnrtcLib->setObserver(&observer);
         
         // load default params
         if ((loadParamsFromFile(string(paramsPath), params, audioParams) == EXIT_SUCCESS))
-            ndnrtcLib->configure(params, audioParams);
-        
-        char input;
-        do {
-            input = plotmenu();
+        {
+            headlessModeOn = (params.headlessMode != 0);
+
+            if (!headlessModeOn)
+                initView();
             
-            switch (input) {
-                case 1:
-                    start();
-                    break;
-                case 2:
-                    ndnrtcLib->stopPublishing();
-                    break;
-                case 3:
-                    join();
-                    break;
-                case 4:
-                    leave();
-                    break;
-                case 5:
-                    if (loadParams(params, audioParams) == EXIT_SUCCESS)
-                        ndnrtcLib->configure(params, audioParams);
-                    else
-                        observer.onStateChanged("error", "couldn't load config file");
-                    
-                    break;
-                case 6: // loopback
-                {
-                    string testuser("loopback");
-                    ndnrtcLib->startPublishing(testuser.c_str());
-                    ndnrtcLib->startFetching(testuser.c_str());
-#ifdef SHOW_STATISTICS
-                    MonitoredProducerIdx = 0;
-                    ProducerIds.push_back(testuser);
-                    isMonitored = TRUE;
-#endif
+            ndnrtcLib->configure(params, audioParams);
+        }
+        
+        pthread_create(&monitorThread, NULL, monitor, NULL);
+        
+        // check for headless mode
+        if (headlessModeOn)
+        {
+            isMonitored = TRUE;
+            runHeadless(params);
+            isMonitored = NO;
+        } // headless mode
+        else
+        {
+            char input;
+            
+            do {
+                input = plotmenu();
+                
+                switch (input) {
+                    case 1:
+                        start();
+                        break;
+                    case 2:
+                        ndnrtcLib->stopPublishing();
+                        break;
+                    case 3:
+                        join();
+                        break;
+                    case 4:
+                        leave();
+                        break;
+                    case 5:
+                        if (loadParams(params, audioParams) == EXIT_SUCCESS)
+                            ndnrtcLib->configure(params, audioParams);
+                        else
+                            observer.onStateChanged("error", "couldn't load config file");
+                        
+                        break;
+                    case 6: // loopback
+                    {
+                        string testuser("loopback");
+                        ndnrtcLib->startPublishing(testuser.c_str());
+                        ndnrtcLib->startFetching(testuser.c_str());
+                        MonitoredProducerIdx = 0;
+                        ProducerIds.push_back(testuser);
+                        isMonitored = TRUE;
+                    }
+                        break;
+                    case 7: // stat on/off
+                    {
+                        toggleStat();
+                    }
+                        break;
+                    case 8:  // arrange windows
+                    {
+                        ndnrtcLib->arrangeWindows();
+                        observer.onStateChanged("info", "windows arranged");
+                    }
+                        break;
+                    case 9: // show stats for previous producer
+                        showStatsForProducer(-1);
+                        break;
+                    case 10: // show stats for next producer
+                        showStatsForProducer(1);
+                        break;
+                    default:
+                        break;
                 }
-                    break;
-                case 7: // stat on/off
-                {
-#ifdef SHOW_STATISTICS
-                    toggleStat();
-#endif
-                }
-                    break;
-                case 8:  // arrange windows
-                {
-                    ndnrtcLib->arrangeWindows();
-                    observer.onStateChanged("info", "windows arranged");
-                }
-                    break;
-                case 9: // show stats for previous producer
-#ifdef SHOW_STATISTICS
-                    showStatsForProducer(-1);
-#endif
-                    break;
-                case 10: // show stats for next producer
-#ifdef SHOW_STATISTICS
-                    showStatsForProducer(1);
-#endif
-                    break;
-                default:
-                    break;
-            }
-        } while (input != 0);
-#ifdef SHOW_STATISTICS
-        isMonitored = NO;
-#endif
+            } while (input != 0);
+
+            isMonitored = NO;
+            
+            freeView();
+        } // interactive mode
+        
         NdnRtcLibrary::destroyLibraryObject(ndnrtcLib);
         ndnrtcLib = NULL;
-        
-        freeView();
-    }
-
+    } // lib loaded
+    
     return 1;
 }
 

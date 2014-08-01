@@ -52,7 +52,7 @@ namespace ndnrtc
         ndnlog::NdnLoggerDetailLevel loggingLevel;
         const char *logFile;
         bool useTlv, useRtx, useFec, useCache, useAudio, useVideo, useAvSync;
-        unsigned int headlessMode;
+        unsigned int headlessMode; // 0 - off, 1 - consumer, 2 - producer
         
         // capture settings
         unsigned int captureDeviceId;

@@ -17,6 +17,8 @@
 #include <string.h>
 #include "ndnrtc-library.h"
 
+extern bool SignalReceived;
+
 void initView();
 void freeView();
 

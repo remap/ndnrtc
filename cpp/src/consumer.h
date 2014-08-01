@@ -68,6 +68,7 @@
 #define SYMBOL_NINTRST "nint"
 #define SYMBOL_NDATA "ndata"
 #define SYMBOL_NTIMEOUT "nto"
+#define SYMBOL_LATENCY "lat"
 
 namespace ndnrtc {
     class AudioVideoSynchronizer;

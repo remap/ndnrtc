@@ -38,6 +38,8 @@ const char *menu[] = {
 
 using namespace std;
 
+bool SignalReceived = false;
+
 ITEM **my_items;
 MENU *my_menu;
 ITEM *cur_item;
@@ -58,8 +60,8 @@ void refreshWindows();
 void initView()
 {
     initscr();
-	raw();
-	keypad(stdscr, TRUE);
+    raw();
+    keypad(stdscr, TRUE);
     
     int w,h;
     getmaxyx(stdscr, h, w);
@@ -123,25 +125,25 @@ void refreshWindows()
 
 void freeView()
 {
-	endwin();
+    endwin();
 }
 
 int plotMainMenu()
 {
     int c;
-	int n_choices, i;
+    int n_choices, i;
     
     n_choices = N_CHOICES;
-	my_items = (ITEM **)calloc(n_choices + 1, sizeof(ITEM *));
+    my_items = (ITEM **)calloc(n_choices + 1, sizeof(ITEM *));
     
-	for(i = 0; i < n_choices; ++i)
+    for(i = 0; i < n_choices; ++i)
         my_items[i] = new_item(menu[i], NULL);
-	my_items[n_choices] = (ITEM *)NULL;
+    my_items[n_choices] = (ITEM *)NULL;
     
     clear();
     mvwprintw(main_menu_win, 1, 1, "%s", "Main menu:");
     
-	my_menu = new_menu((ITEM **)my_items);
+    my_menu = new_menu((ITEM **)my_items);
     
     set_menu_win(my_menu, main_menu_win);
     
@@ -151,25 +153,26 @@ int plotMainMenu()
     set_menu_sub(my_menu, derwin(main_menu_win, winH-2, winW-2, 2, 1));
     set_menu_mark(my_menu, ">");
     
-	mvprintw(LINES - 2, 0, "Esc or '0' to Exit");
+    mvprintw(LINES - 2, 0, "Esc or '0' to Exit");
     refresh();
     
-	post_menu(my_menu);
-	wrefresh(main_menu_win);
+    post_menu(my_menu);
+    wrefresh(main_menu_win);
     refreshWindows();
+    timeout(1);
     
-	while((c = getch()) != 27 && c!= 3 && c != KEY_ENTER && c != '\n' && !(c >= '0' && c <= (n_choices-1+'0')))
-	{
+    while((c = getch()) != 27 && c!= 3 && c != KEY_ENTER && c != '\n' && !(c >= '0' && c <= (n_choices-1+'0')) && !SignalReceived)
+    {
         switch(c)
         {	case KEY_DOWN:
                 menu_driver(my_menu, REQ_DOWN_ITEM);
-				break;
-			case KEY_UP:
-				menu_driver(my_menu, REQ_UP_ITEM);
-				break;
-		}
+                break;
+            case KEY_UP:
+                menu_driver(my_menu, REQ_UP_ITEM);
+                break;
+        }
         refreshWindows();
-	}
+    }
     
     unpost_menu(my_menu);
     int res = 0;
@@ -190,29 +193,30 @@ int plotMainMenu()
     
     refresh();
     
-    return res;
+    return (SignalReceived)?0:res;
 }
 
 int handleStatPanel()
 {
     int c;
     
-	mvprintw(LINES - 2, 0, "'0' to dismiss statistics, arrows - switch between multiple producers");
+    mvprintw(LINES - 2, 0, "'0' to dismiss statistics, arrows - switch between multiple producers");
+    timeout(1);
     
-	while((c = getch()) != '0')
-	{
+    while (((c = getch()) != '0') && !SignalReceived)
+    {
         switch(c)
         {
             case KEY_LEFT:
                 return 9;
-				break;
-			case KEY_RIGHT:
+                break;
+            case KEY_RIGHT:
                 return 10;
-				break;
-		}
+                break;
+        }
         refreshWindows();
-	}
-    return 7;
+    }
+    return (SignalReceived)?0:7;
 }
 
 int plotmenu()
@@ -288,7 +292,7 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
 {
     mvwprintw(stat_win, y++, x, "");
     mvwprintw(stat_win, y++, x, "%10d", sendStat.lastFrameNo_);
-
+    
     mvwprintw(stat_win, y++, x, "%10.2f", sendStat.nFramesPerSec_);
     mvwprintw(stat_win, y++, x, "%10.2f", sendStat.encodingRate_);
     mvwprintw(stat_win, y++, x, "%10d", sendStat.nDroppedByEncoder_);
@@ -306,7 +310,7 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
     mvwprintw(stat_win, y++, x, "%10.3f", stat.playoutStat_.latency_);
     
     mvwprintw(stat_win, y++, x, "%10.2f", stat.nBytesPerSec_*8./1000.);
-
+    
     mvwprintw(stat_win, y++, x, "%10d", stat.pipelinerStat_.nRebuffer_);
     
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nAssembled_,
@@ -317,7 +321,7 @@ void printStat(ndnrtc::SenderChannelPerformance sendStat,
               stat.bufferStat_.nRecoveredKey_);
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.bufferStat_.nIncomplete_,
               stat.bufferStat_.nIncompleteKey_);
-
+    
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.playoutStat_.nPlayed_, stat.playoutStat_.nPlayedKey_);
     mvwprintw(stat_win, y++, x, "%10d", stat.playoutStat_.nSkippedNoKey_);
     mvwprintw(stat_win, y++, x, "%5d/%4d", stat.playoutStat_.nSkippedIncomplete_, stat.playoutStat_.nSkippedIncompleteKey_);
@@ -360,7 +364,7 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     mvwprintw(stat_win, y++, x, "producer rate: ");
     mvwprintw(stat_win, y++, x, "IN data (seg/sec): ");
     mvwprintw(stat_win, y++, x, "OUT intrst (/sec): ");
-
+    
     mvwprintw(stat_win, y++, x, "j target (ms): ");
     mvwprintw(stat_win, y++, x, "j estimate (ms): ");
     mvwprintw(stat_win, y++, x, "j playable (ms): ");
@@ -385,7 +389,7 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     
     mvwprintw(stat_win, y++, x, "rtx #: ");
     mvwprintw(stat_win, y++, x, "rtx freq: ");
-
+    
     mvwprintw(stat_win, y++, x, "avg seg delta: ");
     mvwprintw(stat_win, y++, x, "avg seg key: ");
     
@@ -396,7 +400,7 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
     
     // print audio
     printStat(stat.sendStat_.audioStat_, stat.receiveStat_.audioStat_, w/2, 0);
-   
+    
     pthread_mutex_unlock(&OutputMutex);
     
     refreshWindows();
