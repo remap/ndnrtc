@@ -156,7 +156,7 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
     stat.playoutStat_ = playout_->getStatistics();
     stat.bufferStat_ = frameBuffer_->getStatistics();
     stat.pipelinerStat_ = pipeliner_->getStatistics();
-    
+    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
     dumpStat(stat);
 }
 
