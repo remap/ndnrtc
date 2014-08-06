@@ -145,9 +145,6 @@ namespace ndnrtc {
             virtual int
             stop();
             
-            virtual void
-            reset();
-            
             void
             triggerRebuffering();
             
