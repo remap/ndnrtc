@@ -20,6 +20,9 @@
 #include <sys/time.h>
 #include <math.h>
 
+#include "simple-log.h"
+using namespace ndnlog;
+
 #include "ndnrtc-library.h"
 
 const char *menu[] = {
@@ -345,11 +348,10 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
 {
     int w,h, x = 0, y = 0;
     
-    wclear(stat_box_win);
-    
     getmaxyx(stat_win, h, w);
     
     pthread_mutex_lock(&OutputMutex);
+    wclear(stat_box_win);    
     mvwprintw(stat_win, y++, x, "> publishing: %s", pubPrefix.c_str());
     
     mvwprintw(stat_win, y++, x, "sent frames num: ");
