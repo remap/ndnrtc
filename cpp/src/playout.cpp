@@ -255,6 +255,9 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
             playbackAdjustment_ = syncDriftAdjustment+playbackDelay;
             syncDriftAdjustment = -playbackDelay;
         }
+        if (syncDriftAdjustment > 0 &&
+            syncDriftAdjustment > AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment)
+            syncDriftAdjustment = AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment;
     }
     
     return syncDriftAdjustment;

@@ -14,17 +14,10 @@
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
 #include "simple-log.h"
-#include "audio-consumer.h"
-#include "video-consumer.h"
+#include "consumer.h"
 
 namespace ndnrtc
 {
-    const int64_t TolerableDriftMs = 20;  // packets will be synchronized
-                                          // if their timelines differ more
-                                          // than this value (milliseconds)
-    const int64_t TolerableLeadingDriftMs = 15; // audio should not lead video by more than this value
-    const int64_t TolerableLaggingDriftMs = 45; // audio should not lag video by more than this value
-    
     class IMediaReceiverCallback
     {
     public:
@@ -36,8 +29,12 @@ namespace ndnrtc
     public IMediaReceiverCallback
     {
     public:
-        AudioVideoSynchronizer(const boost::shared_ptr<new_api::VideoConsumer>& videoConsumer,
-                               const boost::shared_ptr<new_api::AudioConsumer>& audioConsumer);
+        static const int64_t TolerableLeadingDriftMs; // audio should not lead video by more than this value
+        static const int64_t TolerableLaggingDriftMs; // audio should not lag video by more than this value
+        static const int64_t MaxAllowableAvSyncAdjustment; // this value should be used when synchronizing stream for sync adjustment control
+        
+        AudioVideoSynchronizer(const boost::shared_ptr<new_api::Consumer>& masterConsumer,
+                               const boost::shared_ptr<new_api::Consumer>& slaveConsumer);
         ~AudioVideoSynchronizer();
         
         /**
@@ -108,7 +105,7 @@ namespace ndnrtc
         bool initialized_;  // indicates, whether synchronizer was initialized
                        // (when both streams has started)
         webrtc::CriticalSectionWrapper &syncCs_;
-        SyncStruct audioSyncData_, videoSyncData_;
+        SyncStruct masterSyncData_, slaveSyncData_;
         ParamsStruct videoParams_, audioParams_;
         
         int syncPacket(SyncStruct& syncData,

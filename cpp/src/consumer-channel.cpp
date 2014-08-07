@@ -70,7 +70,11 @@ faceProcessor_(faceProcessor)
     
     if (params.useAvSync && params.useAudio && params.useVideo)
     {
+#ifdef AV_SYNC_AUDIO_MASTER
+        shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer(audioConsumer_, videoConsumer_));
+#else
         shared_ptr<AudioVideoSynchronizer> avSync(new AudioVideoSynchronizer(videoConsumer_, audioConsumer_));
+#endif
         avSync->setLogger(logger_);
         
         audioConsumer_->setAvSynchronizer(avSync);
