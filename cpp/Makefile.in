@@ -38,11 +38,11 @@ build_triplet = @build@
 host_triplet = @host@
 @OS_DARWIN_TRUE@EXTRA_PROGRAMS = ndnrtc-demo$(EXEEXT)
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(pkginclude_HEADERS) \
+DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/configure $(top_srcdir)/demoapp/rundemo.sh \
-	AUTHORS COPYING ChangeLog INSTALL NEWS compile config.guess \
-	config.sub depcomp install-sh ltmain.sh missing
+	AUTHORS COPYING ChangeLog NEWS compile config.guess config.sub \
+	depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_check_link_flag.m4 \
