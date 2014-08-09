@@ -168,19 +168,28 @@ Playout::processPlayout()
             }
             assert(playbackDelay >= 0);
             
-            LogTraceC
-            << "packet " << sequencePacketNo
-            << " total " << playbackDelay+adjustment+avSync
-            << ": delay " << playbackDelay
-            << " adjustment " << adjustment
-            << " avsync " << avSync
-            << " inferred " << (isInferredPlayback_?"YES":"NO") << endl;
+            LogStatC << STAT_DIV
+            << "packet" << STAT_DIV << sequencePacketNo << STAT_DIV
+            << "lvl" << STAT_DIV << double(int(assembledLevel*10000))/100. << STAT_DIV
+            << "valid" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
+            << "ts" << STAT_DIV << (data_?data_->getMetadata().timestamp_:0) << STAT_DIV
+            << "last ts" << STAT_DIV << lastPacketTs_ << STAT_DIV
+            << "total" << STAT_DIV << playbackDelay+adjustment+avSync << STAT_DIV
+            << "delay" << STAT_DIV << playbackDelay << STAT_DIV
+            << "adjustment" STAT_DIV << adjustment << STAT_DIV
+            << "avsync" << STAT_DIV << avSync << STAT_DIV
+            << "inf delay" << STAT_DIV << inferredDelay_ << STAT_DIV
+            << "inferred" << STAT_DIV << (isInferredPlayback_?"YES":"NO")
+            << endl;
             
-            playbackDelay += (adjustment + avSync);
+            playbackDelay += adjustment;
+            if (!isInferredPlayback_)
+                playbackDelay += avSync;
+            
             assert(playbackDelay >= 0);
             
             // setup and run playout timer for calculated playout interval            
-            jitterTiming_.updatePlayoutTime(playbackDelay);
+            jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
             jitterTiming_.runPlayoutTimer();
         }
     }
@@ -193,7 +202,7 @@ void
 Playout::updatePlaybackAdjustment()
 {
     // check if previous frame playout time was inferred
-    // it so - calculate adjustment
+    // if so - calculate adjustment
     if (lastPacketTs_ > 0 &&
         isInferredPlayback_)
     {
@@ -227,7 +236,7 @@ Playout::playbackDelayAdjustment(int playbackDelay)
         playbackAdjustment_ = 0;
     }
     
-    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
+//    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
     
     return adjustment;
 }
@@ -246,6 +255,9 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
             playbackAdjustment_ = syncDriftAdjustment+playbackDelay;
             syncDriftAdjustment = -playbackDelay;
         }
+        if (syncDriftAdjustment > 0 &&
+            syncDriftAdjustment > AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment)
+            syncDriftAdjustment = AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment;
     }
     
     return syncDriftAdjustment;

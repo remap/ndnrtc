@@ -11,6 +11,7 @@
 
 #include "simple-log.h"
 #include "webrtc.h"
+#include "ndnrtc-common.h"
 
 namespace ndnrtc {
     /**
@@ -45,7 +46,7 @@ namespace ndnrtc {
          * @param framePlayoutTime Playout time meant by producer (difference
          *                         between conqequent frame's timestamps)
          */
-        void updatePlayoutTime(int framePlayoutTime);
+        void updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo);
         
         /**
          * Schedules and runs playout timer for current calculated playout time

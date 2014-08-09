@@ -18,26 +18,30 @@ using namespace boost;
 #define SYNC_INIT(name) ({*CriticalSectionWrapper::CreateCriticalSection(), \
 name, -1, -1, -1, -1, -1, -1})
 
+const int64_t AudioVideoSynchronizer::TolerableLeadingDriftMs = 15;
+const int64_t AudioVideoSynchronizer::TolerableLaggingDriftMs = 45;
+const int64_t AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment = 50;
+
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioVideoSynchronizer::AudioVideoSynchronizer(const shared_ptr<new_api::VideoConsumer>& videoConsumer,
-                       const shared_ptr<new_api::AudioConsumer>& audioConsumer):
+AudioVideoSynchronizer::AudioVideoSynchronizer(const shared_ptr<new_api::Consumer>& masterConsumer,
+                       const shared_ptr<new_api::Consumer>& slaveConsumer):
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
-audioSyncData_("audio"),
-videoSyncData_("video")
+slaveSyncData_("slave"),
+masterSyncData_("master")
 {
     description_ = "av-sync";
     
-    if (videoConsumer.get())
+    if (masterConsumer.get())
     {
-        videoSyncData_.consumer_ = videoConsumer.get();
-        videoParams_ = videoConsumer->getParameters();
+        masterSyncData_.consumer_ = masterConsumer.get();
+        videoParams_ = masterConsumer->getParameters();
     }
     
-    if (audioConsumer.get())
+    if (slaveConsumer.get())
     {
-        audioSyncData_.consumer_ = audioConsumer.get();
-        audioParams_ = audioConsumer->getParameters();
+        slaveSyncData_.consumer_ = slaveConsumer.get();
+        audioParams_ = slaveConsumer->getParameters();
     }
 }
 
@@ -51,12 +55,12 @@ int AudioVideoSynchronizer::synchronizePacket(int64_t remoteTimestamp,
                                               int64_t packetTsLocal,
                                               Consumer *consumer)
 {
-    if (consumer == audioSyncData_.consumer_)
-        return syncPacket(audioSyncData_, videoSyncData_,
+    if (consumer == slaveSyncData_.consumer_)
+        return syncPacket(slaveSyncData_, masterSyncData_,
                           remoteTimestamp, packetTsLocal, consumer);
     
-    if (consumer == videoSyncData_.consumer_)
-        return syncPacket(videoSyncData_, audioSyncData_,
+    if (consumer == masterSyncData_.consumer_)
+        return syncPacket(masterSyncData_, slaveSyncData_,
                           remoteTimestamp, packetTsLocal, consumer);
     
     return 0;
@@ -64,8 +68,8 @@ int AudioVideoSynchronizer::synchronizePacket(int64_t remoteTimestamp,
 
 void AudioVideoSynchronizer::reset()
 {
-    audioSyncData_.reset();
-    videoSyncData_.reset();
+    slaveSyncData_.reset();
+    masterSyncData_.reset();
     
     syncCs_.Enter();
     initialized_ = false;
@@ -94,7 +98,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     int drift = 0;
     
     // we synchronize audio only
-    if (consumer == this->audioSyncData_.consumer_ && initialized_)
+    if (consumer == this->slaveSyncData_.consumer_ && initialized_)
     {
         CriticalSectionScoped scopedCs(&pairedSyncData.cs_);
         
@@ -182,12 +186,13 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         LogTraceC << syncData.name_
         << " drift is " << drift << std::endl;
         
-        // do not allow drift greater than jitter buffer size
+        // check drift value
         if ((drift > 0 && drift < TolerableLeadingDriftMs) ||
             (drift < 0 && drift > -TolerableLaggingDriftMs))
         {
             drift = 0;
         }
+        
     } // critical section
     
     syncData.cs_.Leave();
@@ -197,19 +202,19 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
 
 void AudioVideoSynchronizer::onRebuffer(Consumer *consumer)
 {
-    if (audioSyncData_.consumer_ == consumer)
+    if (slaveSyncData_.consumer_ == consumer)
     {
         LogTraceC << "audio channel encountered rebuffer. "
         "triggering video for rebuffering..." << std::endl;
         
-        videoSyncData_.consumer_->triggerRebuffering();
+        masterSyncData_.consumer_->triggerRebuffering();
     }
     else
     {
         LogTraceC << "video channel encountered rebuffer. "
         "triggering audio for rebuffering..." << std::endl;
         
-        audioSyncData_.consumer_->triggerRebuffering();
+        slaveSyncData_.consumer_->triggerRebuffering();
     }
 }
 
@@ -222,7 +227,7 @@ void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
     LogTraceC << "initalize " << syncData.name_ << std::endl;
     
     syncData.initialized_ = true;
-    initialized_ = audioSyncData_.initialized_ && videoSyncData_.initialized_;
+    initialized_ = slaveSyncData_.initialized_ && masterSyncData_.initialized_;
     
     syncData.consumer_ = consumer;
     syncData.lastPacketTsLocal_ = localTimestamp;

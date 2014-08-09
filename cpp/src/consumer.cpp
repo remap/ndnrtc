@@ -108,12 +108,6 @@ Consumer::stop()
 }
 
 void
-Consumer::reset()
-{
-    interestQueue_->reset();
-}
-
-void
 Consumer::triggerRebuffering()
 {
     pipeliner_->triggerRebuffering();
@@ -156,7 +150,7 @@ Consumer::getStatistics(ReceiverChannelPerformance& stat) const
     stat.playoutStat_ = playout_->getStatistics();
     stat.bufferStat_ = frameBuffer_->getStatistics();
     stat.pipelinerStat_ = pipeliner_->getStatistics();
-    
+    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
     dumpStat(stat);
 }
 
@@ -209,9 +203,9 @@ Consumer::onBufferingEnded()
 void
 Consumer::onRebufferingOccurred()
 {
-    reset();
-
+    playout_->stop();
     renderer_->stopRendering();
+    interestQueue_->reset();
     rttEstimation_->reset();
 }
 

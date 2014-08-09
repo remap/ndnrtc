@@ -42,7 +42,7 @@ void JitterTiming::stop()
 int64_t JitterTiming::startFramePlayout()
 {
     int64_t processingStart = NdnRtcUtils::microsecondTimestamp();
-    LogTraceC << "processing start " << processingStart << endl;
+    LogTraceC << "[ proc start " << processingStart << endl;
     
     if (playoutTimestampUsec_ == 0)
     {
@@ -53,7 +53,7 @@ int64_t JitterTiming::startFramePlayout()
         int64_t prevIterationProcTimeUsec = processingStart -
         playoutTimestampUsec_;
         
-        LogTraceC << "prev iteration time " << prevIterationProcTimeUsec << endl;
+        LogTraceC << ". prev iter full time " << prevIterationProcTimeUsec << endl;
         
         // substract frame playout delay
         if (prevIterationProcTimeUsec >= framePlayoutTimeMs_*1000)
@@ -71,11 +71,11 @@ int64_t JitterTiming::startFramePlayout()
             assert(0);
         }
         
-        LogTraceC << "prev iter proc time " << prevIterationProcTimeUsec << endl;
+        LogTraceC << ". prev iter proc time " << prevIterationProcTimeUsec << endl;
         
         // add this time to the average processing time
         processingTimeUsec_ += prevIterationProcTimeUsec;
-        LogTraceC << "proc time " << processingTimeUsec_ << endl;
+        LogTraceC << ". total proc time " << processingTimeUsec_ << endl;
         
         playoutTimestampUsec_ = processingStart;
     }
@@ -83,25 +83,25 @@ int64_t JitterTiming::startFramePlayout()
     return playoutTimestampUsec_;
 }
 
-void JitterTiming::updatePlayoutTime(int framePlayoutTime)
+void JitterTiming::updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo)
 {
-    LogTraceC << "producer playout time " << framePlayoutTime << endl;
+    LogTraceC << ". packet " << packetNo << " playout time " << framePlayoutTime << endl;
     
     int playoutTimeUsec = framePlayoutTime*1000;
     if (playoutTimeUsec < 0) playoutTimeUsec = 0;
     
     if (processingTimeUsec_ >= 1000)
     {
-        LogTraceC <<"accomodate processing time " << processingTimeUsec_ << endl;
+        LogTraceC << ". absorb proc time " << processingTimeUsec_ << endl;
         
         int processingUsec = (processingTimeUsec_/1000)*1000;
         
-        LogTraceC << "processing " << processingUsec << endl;
+        LogTraceC << ". proc absorb part " << processingUsec << endl;
         
         if (processingUsec > playoutTimeUsec)
         {
             LogTraceC
-            << "skipping frame. processing " << processingUsec
+            << ". skip frame. proc " << processingUsec
             << " playout " << playoutTimeUsec << endl;
             
             processingUsec = playoutTimeUsec;
@@ -112,8 +112,8 @@ void JitterTiming::updatePlayoutTime(int framePlayoutTime)
         
         processingTimeUsec_ = processingTimeUsec_ - processingUsec;
         LogTraceC
-        << "playout usec " << playoutTimeUsec
-        << " processing " << processingTimeUsec_ << endl;
+        << ". playout usec " << playoutTimeUsec
+        << " total proc " << processingTimeUsec_ << endl;
     }
     
     framePlayoutTimeMs_ = playoutTimeUsec/1000;
@@ -124,14 +124,14 @@ void JitterTiming::runPlayoutTimer()
     assert(framePlayoutTimeMs_ >= 0);
     if (framePlayoutTimeMs_ > 0)
     {
-        LogTraceC << "timer wait " << framePlayoutTimeMs_ << endl;
+        LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
         
         playoutTimer_.StartTimer(false, framePlayoutTimeMs_);
         playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
-        LogTraceC << "timer done " << endl;
+        LogTraceC << "timer done]" << endl;
     }
     else
-        LogTraceC << "skipping frame" << endl;
+        LogTraceC << "skipping frame]" << endl;
 }
 
 //******************************************************************************

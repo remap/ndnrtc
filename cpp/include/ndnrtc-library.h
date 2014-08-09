@@ -220,10 +220,11 @@ namespace ndnrtc {
         virtual void* getLibraryHandle(){ return libraryHandle_; };
         
         /**
-         * Returns current build number
-         * @return Current build number
+         * Returns current library version
+         * @param versionString A pointer to the string where the library
+         * version will be stored.
          */
-        virtual int getBuildNumber();
+        virtual void getVersionString(char **versionString);
         
         /**
          * Arranges all app windows on the screen

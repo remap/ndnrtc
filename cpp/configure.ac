@@ -118,6 +118,16 @@ AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in
 	AC_DEFINE([NDN_DEBUG])
 	])
 
+AC_ARG_WITH([libc++], [AS_HELP_STRING([--with-libc++],[use libc++ if available [default=use libstdc++]])], 
+	[
+	STDLIBFLAGS_CPP="-stdlib=libc++" 
+	STDLIBFLAGS_LD="-stdlib=libc++"
+	],
+	[
+	STDLIBFLAGS_CPP="-stdlib=libstdc++" 
+	STDLIBFLAGS_LD="-stdlib=libstdc++"	
+	])
+
 # Checks for programs.
 AC_CANONICAL_HOST
 AC_PROG_CC
@@ -168,10 +178,26 @@ case $host_os in
 esac
 
 # check for compiler flags
-AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS -stdlib=libstdc++"])
+if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
+	AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
+else
+	if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
+		AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+	else
+		AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+	fi
+fi
 
 # check for linker flags
-AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS -stdlib=libstdc++"])
+if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
+	AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
+else
+	if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
+		AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+	else
+		AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+	fi
+fi
 
 # create links for demo script
 AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])

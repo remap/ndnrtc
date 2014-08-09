@@ -26,6 +26,10 @@
 #undef NDN_DEBUG
 #endif
 
+#ifndef BASE_FILE_NAME
+#define BASE_FILE_NAME (__FILE__)
+#endif
+
 // if defined detailed logging - print whole signature of the function.
 #define __NDN_FNAME__ __PRETTY_FUNCTION__
 
