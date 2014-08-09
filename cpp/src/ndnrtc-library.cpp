@@ -8,8 +8,6 @@
 //  Author:  Peter Gusev
 //
 
-#define NDNRTC_BUILD_NUMBER 16
-
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
 #include "consumer-channel.h"
@@ -107,7 +105,10 @@ void NdnRtcLibrary::configure(const ParamsStruct &params,
 {
     ParamsStruct validatedVideoParams, validatedAudioParams;
     
-    notifyObserverWithState("info", "library build number %d", getBuildNumber());
+    char libVersion[255];
+    memset((void*)libVersion, 0, 255);
+    getVersionString((char**)&libVersion);
+    notifyObserverWithState("info", "library version %s", libVersion);
     
     bool wasModified = false;
     int res = ParamsStruct::validateVideoParams(params, validatedVideoParams);
@@ -190,7 +191,7 @@ int NdnRtcLibrary::getStatistics(const char *producerId,
 
 int NdnRtcLibrary::startPublishing(const char *username)
 {
-    startPublishing(username, nullptr);
+    return startPublishing(username, nullptr);
 }
 
 int NdnRtcLibrary::stopPublishing()
@@ -347,10 +348,13 @@ int NdnRtcLibrary::startPublishing(const char* username,
     return RESULT_OK;
 }
 
-int
-NdnRtcLibrary::getBuildNumber()
+void
+NdnRtcLibrary::getVersionString(char **versionString)
 {
-    return NDNRTC_BUILD_NUMBER;
+    if (versionString)
+        memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
+               
+    return;
 }
 
 void
