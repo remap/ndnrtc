@@ -36,12 +36,6 @@ faceProcessor_(faceProcessor)
     {
         isOwnFace_ = true;
         faceProcessor_ = FaceProcessor::createFaceProcessor(params_);
-        faceProcessor_->getFaceWrapper()->registerPrefix(*NdnRtcNamespace::getStreamKeyPrefix(params_),
-                                                  bind(&ConsumerChannel::onInterest,
-                                                       this, _1, _2, _3),
-                                                  bind(&ConsumerChannel::onRegisterFailed,
-                                                       this, _1));
-        faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
     }
     
     if (params.useVideo)
@@ -59,9 +53,7 @@ faceProcessor_(faceProcessor)
         audioConsumer_.reset(new AudioConsumer(audioParams_, audioInterestQueue_, rttEstimation_));
     }
     
-    serviceInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
-    serviceInterestQueue_->setDescription(std::string("service-iqueue"));
-    serviceChannel_.reset(new ServiceChannel(this, serviceInterestQueue_));
+    serviceChannel_.reset(new ServiceChannel(this, faceProcessor_));
     
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
@@ -191,7 +183,26 @@ void
 ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
                             const ParamsStruct& newAudioParams)
 {
-    LogInfoC << "producer parameters updated" << std::endl;
+    std::stringstream ss;
+    
+    ss << "vstreams " << newVideoParams.nStreams << " ";
+    for (int i = 0; i < newVideoParams.nStreams; i++)
+        ss << "[" << i
+        << "| " << newVideoParams.streamsParams[i].codecFrameRate
+        << " " << newVideoParams.streamsParams[i].gop
+        << " " << newVideoParams.streamsParams[i].startBitrate
+        << " " << newVideoParams.streamsParams[i].encodeWidth
+        << " " << newVideoParams.streamsParams[i].encodeHeight
+        << "] ";
+
+    ss << "astreams " << newAudioParams.nStreams;
+    for (int i = 0; i < newAudioParams.nStreams; i++)
+        ss << "[" << i
+        << "| " << newAudioParams.streamsParams[i].codecFrameRate
+        << " " << newAudioParams.streamsParams[i].startBitrate
+        << "] ";
+    
+    LogInfoC << "producer parameters updated: " << ss.str() << std::endl;
     
 }
 

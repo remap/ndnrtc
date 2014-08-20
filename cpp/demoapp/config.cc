@@ -155,11 +155,13 @@ int loadParamsFromFile(const string &cfgFileName, ParamsStruct &params,
         
         for (int i = 0; i < streams.getLength(); i++)
         {
+            int rate = 0;
             CodecParams streamParams;
             memset(&streamParams, 0, sizeof(CodecParams));
             
             streamParams.idx = i;
-            streams[i].lookupValue("frame_rate", streamParams.codecFrameRate);
+            streams[i].lookupValue("frame_rate", rate);
+            streamParams.codecFrameRate = (double)rate;
             streams[i].lookupValue("gop", streamParams.gop);
             streams[i].lookupValue("start_bitrate", streamParams.startBitrate);
             streams[i].lookupValue("max_bitrate", streamParams.maxBitrate);

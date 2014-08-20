@@ -513,7 +513,9 @@ NetworkData()
 }
 
 SessionInfo::SessionInfo(unsigned int dataLength, const unsigned char* data):
-NetworkData(dataLength, data)
+NetworkData(dataLength, data),
+videoParams_(DefaultParams),
+audioParams_(DefaultParamsAudio)
 {
     isValid_ = RESULT_GOOD(initFromRawData(dataLength, data));
 }
@@ -595,9 +597,7 @@ SessionInfo::initFromRawData(unsigned int dataLength, const unsigned char *rawDa
         headerSize > dataLength)
         return RESULT_ERR;
     
-    videoParams_.nStreams = header.nVideoStreams_;
     videoParams_.segmentSize = header.videoSegmentSize_;
-    audioParams_.nStreams = header.nAudioStreams_;
     audioParams_.segmentSize = header.audioSegmentSize_;
     
     if (dataLength < getSessionInfoLength(header.nVideoStreams_, header.nAudioStreams_))
@@ -644,10 +644,13 @@ SessionInfo::updateParams(ParamsStruct& paramsForUpdate,
                           const ParamsStruct& params)
 {
     if (paramsForUpdate.nStreams)
+    {
         free(paramsForUpdate.streamsParams);
+        paramsForUpdate.streamsParams = NULL;
+    }
     
     paramsForUpdate.segmentSize = params.segmentSize;
-    paramsForUpdate.nStreams = params.nStreams;
+    paramsForUpdate.nStreams = 0;
     for (int i = 0; i < params.nStreams; i++)
         paramsForUpdate.addNewStream(params.streamsParams[i]);
 }

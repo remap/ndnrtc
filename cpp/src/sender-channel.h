@@ -59,7 +59,8 @@ namespace ndnrtc
     
     class NdnSenderChannel : public NdnMediaChannel,
                             public IRawFrameConsumer,
-                            public new_api::IAudioFrameConsumer
+                            public new_api::IAudioFrameConsumer,
+                            public new_api::IServiceChannelPublisherCallback
     {
     public:
         NdnSenderChannel(const ParamsStruct &params,
@@ -110,7 +111,7 @@ namespace ndnrtc
         webrtc::I420VideoFrame deliverFrame_;
         double deliveredTimestamp_;
         
-        boost::shared_ptr<FaceProcessor> serviceFaceProcessor_;
+        boost::shared_ptr<new_api::ServiceChannel> serviceChannel_;
         
         // static methods
         static bool
@@ -122,21 +123,15 @@ namespace ndnrtc
         bool
         process();
         
-        // this should reply only to session info interests
         void
-        onInterest(const boost::shared_ptr<const Name>& prefix,
-                   const boost::shared_ptr<const Interest>& interest,
-                   ndn::Transport& transport);
+        initServiceChannel();
         
+        // IServiceChannelPublisherCallback
         void
-        onRegisterFailed(const boost::shared_ptr<const Name>&
-                              prefix);
+        onSessionInfoBroadcastFailed();
         
-        void
-        registerSessionInfoPrefix();
-        
-        void
-        publishSessionInfo(ndn::Transport& transport);
+        boost::shared_ptr<SessionInfo>
+        onPublishSessionInfo();
     };
     
 }

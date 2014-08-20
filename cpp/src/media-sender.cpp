@@ -222,27 +222,7 @@ int MediaSender::publishPacket(PacketData &packetData,
 }
 
 void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
-{
-    // this is a key chain workaround:
-    // media sender is given a key chain upon initialization (@see init method)
-    // this key chain is used for signing individual data segments. this means,
-    // sign method will be invoked >100 times per second. to decrease costs of
-    // retrieving private key while signing, this key chain should be created
-    // using MemoryIdentityStorage. however, the same key chain can not be
-    // used for registering a prefix - in this case, NFD will not recognize the
-    // key, created in app memory. this is why, we are using default key chain
-    // here which talks to OS key chain and provides default certificate for
-    // signing control interest - in this case, NFD can recognize this
-    // certificate
-#ifndef DEFAULT_KEYCHAIN
-    KeyChain keyChain;
-    faceProcessor_->getFaceWrapper()->setCommandSigningInfo(keyChain,
-                                                            keyChain.getDefaultCertificateName());
-#else
-    faceProcessor_->getFaceWrapper()->setCommandSigningInfo(*ndnKeyChain_,
-                                                            ndnKeyChain_->getDefaultCertificateName());
-#endif
-    
+{    
     if (params_.useCache)
     {
         memCache_->registerPrefix(*prefix,

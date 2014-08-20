@@ -42,7 +42,8 @@ namespace ndnrtc
     
     typedef struct _CodecParams {
         unsigned int idx;
-        unsigned int codecFrameRate, gop;
+        double codecFrameRate;
+        unsigned int gop;
         unsigned int startBitrate, maxBitrate;
         unsigned int encodeWidth, encodeHeight;
         bool dropFramesOn;

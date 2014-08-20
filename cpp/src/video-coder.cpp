@@ -70,9 +70,7 @@ int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
     
     // customize parameteres if possible
     int res = RESULT_OK;
-    codec.maxFramerate = ParamsStruct::validateLE(params.codecFrameRate,
-                                                  MaxFrameRate, res,
-                                                  DefaultCodecParams.codecFrameRate);
+    codec.maxFramerate = (int)params.codecFrameRate;
     codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
                                                   MaxStartBitrate, res,
                                                   DefaultCodecParams.startBitrate);
