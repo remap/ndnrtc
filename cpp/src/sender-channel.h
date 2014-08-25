@@ -13,7 +13,7 @@
 #define __ndnrtc__sender_channel__
 
 #include "ndnrtc-common.h"
-#include "camera-capturer.h"
+#include "external-capturer.hpp"
 #include "video-coder.h"
 #include "video-renderer.h"
 #include "video-sender.h"
@@ -65,6 +65,7 @@ namespace ndnrtc
     public:
         NdnSenderChannel(const ParamsStruct &params,
                          const ParamsStruct &audioParams,
+                         bool useCameraCapturer = true,
                          IExternalRenderer *const externalRenderer = nullptr);
         virtual ~NdnSenderChannel();
         
@@ -95,10 +96,13 @@ namespace ndnrtc
         void
         setLogger(ndnlog::new_api::Logger* logger);
         
+        IExternalCapturer*
+        getCapturer() { return (IExternalCapturer*)capturer_.get(); }
+        
     private:
         unsigned int frameFreqMeter_;
         
-        boost::shared_ptr<CameraCapturer> cameraCapturer_;
+        boost::shared_ptr<BaseCapturer> capturer_;
         boost::shared_ptr<IVideoRenderer> localRender_;
         std::vector<boost::shared_ptr<NdnVideoSender> > videoSenders_;
         

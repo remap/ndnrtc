@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 SUBDIRS = src/objc .
 
-pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h
+pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/external-capturer.h
 
 lib_LTLIBRARIES = libndnrtc.la
 
@@ -13,11 +13,13 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-sender.cpp src/audio-sender.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
+  src/base-capturer.cpp src/base-capturer.h \
   src/camera-capturer.cpp src/camera-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
   src/endian.h \
+  src/external-capturer.cpp src/external-capturer.hpp \
   src/face-wrapper.cpp src/face-wrapper.h \
   src/fec.cpp src/fec.h \
   src/frame-buffer.cpp src/frame-buffer.h \

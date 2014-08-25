@@ -129,15 +129,20 @@ NdnMediaChannel::onRegisterFailed(const shared_ptr<const Name>& prefix)
 #pragma mark - construction/destruction
 NdnSenderChannel::NdnSenderChannel(const ParamsStruct &params,
                                    const ParamsStruct &audioParams,
+                                   bool useCameraCapturer,
                                    IExternalRenderer *const externalRenderer):
 NdnMediaChannel(params, audioParams),
-cameraCapturer_(new CameraCapturer(params)),
 audioCapturer_(new AudioCapturer(audioParams, NdnRtcUtils::sharedVoiceEngine())),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                             kHighPriority))
 {
+    if (useCameraCapturer)
+        capturer_.reset(new CameraCapturer(params));
+    else
+        capturer_.reset(new ExternalCapturer(params));
+        
     if (externalRenderer)
         localRender_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
     else
@@ -149,11 +154,11 @@ processThread_(*ThreadWrapper::CreateThread(processDeliveredFrame, this,
                                NdnRtcUtils::toString("producer-%s.log", params.producerId)));
     isLoggerCreated_ = true;
         
-    cameraCapturer_->setObserver(this);
+    capturer_->setObserver(this);
     localRender_->setObserver(this);
     
     // set connection capturer -> this
-    cameraCapturer_->setFrameConsumer(this);
+    capturer_->setFrameConsumer(this);
 
     // set connection audioCapturer -> this
     audioCapturer_->setFrameConsumer(this);
@@ -223,7 +228,7 @@ NdnSenderChannel::init()
             sender->setObserver(this);
         }
         
-        videoInitialized_ = RESULT_NOT_FAIL(cameraCapturer_->init());
+        videoInitialized_ = RESULT_NOT_FAIL(capturer_->init());
         if (!videoInitialized_)
             notifyError(RESULT_WARN, "can't intialize camera capturer");
         
@@ -307,7 +312,7 @@ NdnSenderChannel::startTransmission()
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start render");
         
-        videoTransmitting_ &= RESULT_NOT_FAIL(cameraCapturer_->startCapture());
+        videoTransmitting_ &= RESULT_NOT_FAIL(capturer_->startCapture());
         if (!videoTransmitting_)
             notifyError(RESULT_WARN, "can't start camera capturer");
     }
@@ -348,8 +353,8 @@ NdnSenderChannel::stopTransmission()
     {
         videoTransmitting_ = false;
         
-        if (cameraCapturer_->isCapturing())
-            cameraCapturer_->stopCapture();
+        if (capturer_->isCapturing())
+            capturer_->stopCapture();
         
         processThread_.SetNotAlive();
         deliverEvent_.Set();
@@ -413,7 +418,7 @@ NdnSenderChannel::getChannelStatistics(SenderChannelStatistics &stat)
 void
 NdnSenderChannel::setLogger(ndnlog::new_api::Logger *logger)
 {
-    cameraCapturer_->setLogger(logger);
+    capturer_->setLogger(logger);
     localRender_->setLogger(logger);
     
     for (int i = 0; i < videoSenders_.size(); i++)
