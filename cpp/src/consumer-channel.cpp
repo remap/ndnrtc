@@ -113,6 +113,8 @@ int
 ConsumerChannel::stopTransmission()
 {
 #warning handle errors
+    serviceChannel_->stopMonitor();
+    
 #ifndef AUDIO_OFF
     if (params_.useAudio)
         audioConsumer_->stop();

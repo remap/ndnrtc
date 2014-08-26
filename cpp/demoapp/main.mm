@@ -425,8 +425,10 @@ int runNdnRtcApp(int argc, char * argv[])
                         start();
                         break;
                     case 2:
+                        /*
                         cameraCapturer.delegate = nil;                        
                         [cameraCapturer stopCapturing];
+                         */
                         ndnrtcLib->stopPublishing();
                         break;
                     case 3:
@@ -475,12 +477,13 @@ int runNdnRtcApp(int argc, char * argv[])
             } while (input != 0);
 
             isMonitored = NO;
-            
-            freeView();
         } // interactive mode
         
         NdnRtcLibrary::destroyLibraryObject(ndnrtcLib);
         ndnrtcLib = NULL;
+
+        if (!headlessModeOn)
+            freeView();
     } // lib loaded
     
     return 1;
