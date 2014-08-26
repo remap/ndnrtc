@@ -82,9 +82,12 @@ bool BaseCapturer::process()
 
 void BaseCapturer::deliverCapturedFrame(webrtc::I420VideoFrame& frame)
 {
-    capture_cs_->Enter();
-    capturedFrame_.SwapFrame(&frame);
-    capture_cs_->Leave();
-    
-    captureEvent_.Set();
+    if (isCapturing_)
+    {
+        capture_cs_->Enter();
+        capturedFrame_.SwapFrame(&frame);
+        capture_cs_->Leave();
+        
+        captureEvent_.Set();
+    }
 }

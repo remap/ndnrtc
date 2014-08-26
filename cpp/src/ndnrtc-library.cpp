@@ -12,6 +12,7 @@
 #include "sender-channel.h"
 #include "consumer-channel.h"
 #include "objc/cocoa-renderer.h"
+#include "external-capturer.hpp"
 
 #include <stdlib.h>
 #include <string.h>

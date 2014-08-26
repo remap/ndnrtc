@@ -96,8 +96,8 @@ namespace ndnrtc
         void
         setLogger(ndnlog::new_api::Logger* logger);
         
-        IExternalCapturer*
-        getCapturer() { return (IExternalCapturer*)capturer_.get(); }
+        ExternalCapturer*
+        getCapturer() { return (ExternalCapturer*)(capturer_.get()); }
         
     private:
         unsigned int frameFreqMeter_;

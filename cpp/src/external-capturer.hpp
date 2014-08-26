@@ -15,7 +15,7 @@
 #include "base-capturer.h"
 
 namespace ndnrtc {
-    class ExternalCapturer : public IExternalCapturer, public BaseCapturer
+    class ExternalCapturer : public BaseCapturer, public IExternalCapturer
     {
     public:
         ExternalCapturer(const ParamsStruct& params);
@@ -26,11 +26,10 @@ namespace ndnrtc {
         int stopCapture();
         
         // IExternalCapturer interface
-        int incomingBGRAFrame(unsigned char* bgraFrameData,
-                               unsigned int frameSize);
+        int incomingArgbFrame(unsigned char* argbFrameData,
+                              unsigned int frameSize);
         
     private:
-        IRawFrameConsumer* frameConsumer_ = NULL;
         webrtc::I420VideoFrame convertedFrame_;
     };
 }

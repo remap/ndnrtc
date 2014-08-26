@@ -16,6 +16,7 @@ using namespace ndnrtc;
 ExternalCapturer::ExternalCapturer(const ParamsStruct& params):
 BaseCapturer(params)
 {
+    
 }
 
 ExternalCapturer::~ExternalCapturer()
@@ -43,15 +44,15 @@ int ExternalCapturer::stopCapture()
     return RESULT_OK;
 }
 
-int ExternalCapturer::incomingBGRAFrame(unsigned char* bgraFrameData,
-                                         unsigned int frameSize)
+int ExternalCapturer::incomingArgbFrame(unsigned char* bgraFrameData,
+                                        unsigned int frameSize)
 {
     const int32_t width = params_.captureWidth;
     const int32_t height = params_.captureHeight;
     
     // make conversion to I420
     const VideoType commonVideoType =
-    RawVideoTypeToCommonVideoVideoType(kVideoBGRA);
+    RawVideoTypeToCommonVideoVideoType(kVideoARGB);
     
     int stride_y = width;
     int stride_uv = (width + 1) / 2;

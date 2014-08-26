@@ -22,6 +22,7 @@ namespace ndnrtc
      */
     class IExternalCapturer
     {
+    public:
         /**
          * Calling this methond results in sending new raw frame into library's 
          * video processing pipe which eventually should result in publishing
@@ -31,7 +32,7 @@ namespace ndnrtc
          * @param bgraFramData Frame data in BGRA format
          * @param frameSize Size of the frame data
          */
-        virtual int incomingBGRAFrame(unsigned char* bgraFrameData,
+        virtual int incomingArgbFrame(unsigned char* argbFrameData,
                                       unsigned int frameSize) = 0;
     };
 }

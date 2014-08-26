@@ -17,10 +17,10 @@
 #include <vector>
 
 #import "AppDelegate.h"
+#import "CameraCapturer.h"
 
 #include "simple-log.h"
 #include "ndnrtc-library.h"
-
 #include "view.h"
 #include "config.h"
 #include "renderer-stub.h"
@@ -28,6 +28,8 @@
 using namespace std;
 using namespace ndnrtc;
 using namespace ndnlog;
+
+@class CapturerDelegate;
 
 int runNdnRtcApp(int argc, char * argv[]);
 void printStatus(const string &str);
@@ -52,14 +54,15 @@ static NdnRtcLibrary *ndnrtcLib = NULL;
 static LibraryObserver observer;
 static RendererStub LocalRenderer;
 
-#ifdef SHOW_STATISTICS
 static int MonitoredProducerIdx = 0;
 static pthread_t monitorThread;
 static BOOL isMonitored;
 std::vector<std::string> ProducerIds;
-#endif
 
-// This class passes parameter from main to the worked thread and back.
+static CapturerDelegate* capturerDelegate;
+static CameraCapturer* cameraCapturer;
+
+// This class passes parameter from main to the worker thread and back.
 @interface WorkerThread : NSObject {
     int    argc_;
     char** argv_;
@@ -103,6 +106,41 @@ std::vector<std::string> ProducerIds;
 - (int)result {
     return result_;
 }
+
+@end
+
+//******************************************************************************
+@interface CapturerDelegate : NSObject<CameraCapturerDelegate>
+{
+    void *externalCapturer_;
+}
+
+@end
+
+@implementation CapturerDelegate
+
+-(id)initWithExternalCapturer:(void*)externalCapturer
+{
+    if ((self = [super init]))
+    {
+        externalCapturer_ = externalCapturer;
+    }
+    
+    return self;
+}
+
+-(void)cameraCapturer:(CameraCapturer*)capturer didDeliveredBGRAFrameData:(NSData*)frameData
+{
+    if (externalCapturer_)
+//        ndnrtcLib->incomingFrame(0, (unsigned char*)[frameData bytes], [frameData length]);
+        ((IExternalCapturer*)externalCapturer_)->incomingArgbFrame((unsigned char*)[frameData bytes], [frameData length]);
+}
+
+-(void)cameraCapturer:(CameraCapturer*)capturer didObtainedError:(NSError*)error
+{
+    printStatus(string("capturer error: ") + string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+}
+
 
 @end
 
@@ -174,6 +212,19 @@ int start(string username = "")
     }
     
     ndnrtcLib->startPublishing(username.c_str());
+    /*
+    IExternalCapturer *capturer;
+    ndnrtcLib->initPublishing(username.c_str(), &capturer);
+    
+    capturerDelegate = [[CapturerDelegate alloc] initWithExternalCapturer: capturer];
+    cameraCapturer = [[CameraCapturer alloc] init];
+    
+    cameraCapturer.delegate = capturerDelegate;
+    [cameraCapturer startCapturing];
+    [cameraCapturer selectDeviceWithId:0];
+    [cameraCapturer selectDeviceConfigurationWithIdx: 74];
+     */
+    
     
 #ifdef SHOW_STATISTICS
     isMonitored = TRUE;
@@ -374,6 +425,8 @@ int runNdnRtcApp(int argc, char * argv[])
                         start();
                         break;
                     case 2:
+                        cameraCapturer.delegate = nil;                        
+                        [cameraCapturer stopCapturing];
                         ndnrtcLib->stopPublishing();
                         break;
                     case 3:
