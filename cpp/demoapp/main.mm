@@ -372,7 +372,7 @@ void runHeadless(ParamsStruct &params)
             break;
     }
     
-    while (!SignalReceived) ;
+    while (!SignalReceived) usleep(100);
 }
 
 int runNdnRtcApp(int argc, char * argv[])
@@ -411,7 +411,6 @@ int runNdnRtcApp(int argc, char * argv[])
         {
             isMonitored = TRUE;
             runHeadless(params);
-            isMonitored = NO;
         } // headless mode
         else
         {
@@ -475,10 +474,9 @@ int runNdnRtcApp(int argc, char * argv[])
                         break;
                 }
             } while (input != 0);
-
-            isMonitored = NO;
         } // interactive mode
         
+        isMonitored = NO;
         NdnRtcLibrary::destroyLibraryObject(ndnrtcLib);
         ndnrtcLib = NULL;
 
