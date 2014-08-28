@@ -261,18 +261,19 @@ int start(string username = "")
     
     // set external capturer
     IExternalCapturer *capturer;
-    ndnrtcLib->initPublishing(username.c_str(), &capturer);
+    int res = ndnrtcLib->initPublishing(username.c_str(), &capturer);
     
-    capturerDelegate = [[CapturerDelegate alloc] initWithExternalCapturer: capturer];
-    cameraCapturer = [[CameraCapturer alloc] init];
-    
-    cameraCapturer.delegate = capturerDelegate;
-    
-    [cameraCapturer selectDeviceWithId:selectedDevice];
-    [cameraCapturer startCapturing];
-    [cameraCapturer selectDeviceConfigurationWithIdx: selectedConfiguration];
-    
-    [capturerDelegate startCapturing];
+    if (RESULT_GOOD(res))
+    {
+        capturerDelegate = [[CapturerDelegate alloc] initWithExternalCapturer: capturer];
+        cameraCapturer = [[CameraCapturer alloc] init];
+        cameraCapturer.delegate = capturerDelegate;
+        
+        [cameraCapturer selectDeviceWithId:selectedDevice];
+        [cameraCapturer startCapturing];
+        [cameraCapturer selectDeviceConfigurationWithIdx: selectedConfiguration];
+        [capturerDelegate startCapturing];
+    }
 #endif
     
 #ifdef SHOW_STATISTICS
