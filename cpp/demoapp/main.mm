@@ -114,14 +114,17 @@ static CameraCapturer* cameraCapturer;
 //******************************************************************************
 @interface CapturerDelegate : NSObject<CameraCapturerDelegate>
 {
-    void *externalCapturer_;
+    IExternalCapturer *externalCapturer_;
 }
+
+-(void)startCapturing;
+-(void)stopCapturing;
 
 @end
 
 @implementation CapturerDelegate
 
--(id)initWithExternalCapturer:(void*)externalCapturer
+-(id)initWithExternalCapturer:(IExternalCapturer*)externalCapturer
 {
     if ((self = [super init]))
     {
@@ -134,8 +137,7 @@ static CameraCapturer* cameraCapturer;
 -(void)cameraCapturer:(CameraCapturer*)capturer didDeliveredBGRAFrameData:(NSData*)frameData
 {
     if (externalCapturer_)
-//        ndnrtcLib->incomingFrame(0, (unsigned char*)[frameData bytes], [frameData length]);
-        ((IExternalCapturer*)externalCapturer_)->incomingArgbFrame((unsigned char*)[frameData bytes], [frameData length]);
+        externalCapturer_->incomingArgbFrame((unsigned char*)[frameData bytes], [frameData length]);
 }
 
 -(void)cameraCapturer:(CameraCapturer*)capturer didObtainedError:(NSError*)error
@@ -143,6 +145,15 @@ static CameraCapturer* cameraCapturer;
     printStatus(string("capturer error: ") + string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
 }
 
+-(void)startCapturing
+{
+    externalCapturer_->capturingStarted();
+}
+
+-(void)stopCapturing
+{
+    externalCapturer_->capturingStopped();
+}
 
 @end
 
@@ -260,11 +271,26 @@ int start(string username = "")
     [cameraCapturer selectDeviceWithId:selectedDevice];
     [cameraCapturer startCapturing];
     [cameraCapturer selectDeviceConfigurationWithIdx: selectedConfiguration];
+    
+    [capturerDelegate startCapturing];
 #endif
     
 #ifdef SHOW_STATISTICS
     isMonitored = TRUE;
 #endif
+    return 0;
+}
+
+int stop()
+{
+    if (cameraCapturer)
+    {
+        cameraCapturer.delegate = nil;
+        [cameraCapturer stopCapturing];
+        [capturerDelegate stopCapturing];
+    }
+    
+    ndnrtcLib->stopPublishing();
     return 0;
 }
 
@@ -471,15 +497,7 @@ int runNdnRtcApp(int argc, char * argv[])
                         start();
                         break;
                     case 2:
-                    {
-                        if (cameraCapturer)
-                        {
-                            cameraCapturer.delegate = nil;
-                            [cameraCapturer stopCapturing];
-                        }
-                        
-                        ndnrtcLib->stopPublishing();
-                    }
+                        stop();
                         break;
                     case 3:
                         join();

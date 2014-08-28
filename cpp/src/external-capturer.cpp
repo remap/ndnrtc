@@ -32,7 +32,6 @@ int ExternalCapturer::init()
 int ExternalCapturer::startCapture()
 {
     BaseCapturer::startCapture();
-    isCapturing_ = true;
     
     return RESULT_OK;
 }
@@ -42,6 +41,17 @@ int ExternalCapturer::stopCapture()
     BaseCapturer::stopCapture();
     
     return RESULT_OK;
+}
+
+void ExternalCapturer::capturingStarted()
+{
+    isCapturing_ = true;    
+}
+
+void ExternalCapturer::capturingStopped()
+{
+    BaseCapturer::stopCapture();
+    isCapturing_ = false;
 }
 
 int ExternalCapturer::incomingArgbFrame(unsigned char* bgraFrameData,

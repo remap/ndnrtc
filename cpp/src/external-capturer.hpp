@@ -26,6 +26,8 @@ namespace ndnrtc {
         int stopCapture();
         
         // IExternalCapturer interface
+        void capturingStarted();
+        void capturingStopped();
         int incomingArgbFrame(unsigned char* argbFrameData,
                               unsigned int frameSize);
         
