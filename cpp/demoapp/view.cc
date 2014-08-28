@@ -232,6 +232,75 @@ int plotmenu()
         return plotMainMenu();
 }
 
+int selectFromList(const char** listItems, int listItemsSize, const char* listTitle)
+{
+    ITEM **my_items;
+    int c;
+    MENU *my_menu;
+    WINDOW *my_menu_win;
+    int n_choices = listItemsSize, i;
+    
+    n_choices = listItemsSize;
+    my_items = (ITEM **)calloc(n_choices+1, sizeof(ITEM *));
+    for(i = 0; i < n_choices; ++i)
+      my_items[i] = new_item(listItems[i], NULL);
+    my_items[n_choices] = NULL;
+    
+    my_menu = new_menu((ITEM **)my_items);
+    
+    my_menu_win = newwin(10, 60, 6, 4);
+    keypad(my_menu_win, TRUE);
+    
+    set_menu_win(my_menu, my_menu_win);
+    set_menu_sub(my_menu, derwin(my_menu_win, 6, 58, 3, 1));
+    set_menu_format(my_menu, 5, 1);
+    
+    set_menu_mark(my_menu, " > ");
+    
+    box(my_menu_win, 0, 0);
+    mvwprintw(my_menu_win, 1, 1, "%s", listTitle);
+    mvwaddch(my_menu_win, 2, 0, ACS_LTEE);
+    mvwhline(my_menu_win, 2, 1, ACS_HLINE, 58);
+    mvwaddch(my_menu_win, 2, 59, ACS_RTEE);
+    
+    post_menu(my_menu);
+    wrefresh(my_menu_win);
+    
+    attron(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(2));
+    refresh();
+    
+    while((c = getch()) != KEY_F(1) && c != KEY_ENTER && c != '\n')
+    {
+        switch(c)
+        {
+            case KEY_DOWN:
+                menu_driver(my_menu, REQ_DOWN_ITEM);
+            break;
+            case KEY_UP:
+                menu_driver(my_menu, REQ_UP_ITEM);
+            break;
+            case KEY_NPAGE:
+                menu_driver(my_menu, REQ_SCR_DPAGE);
+            break;
+            case KEY_PPAGE:
+                menu_driver(my_menu, REQ_SCR_UPAGE);
+            break;
+        }
+        wrefresh(my_menu_win);
+    }
+    
+    int menuidx = item_index(current_item(my_menu));
+    
+    unpost_menu(my_menu);
+    free_menu(my_menu);
+    
+    for(i = 0; i < n_choices; ++i)
+        free_item(my_items[i]);
+    
+    return menuidx;
+}
+
 string getInput(const string &hintText)
 {
     char str[256];

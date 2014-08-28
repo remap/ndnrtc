@@ -180,6 +180,7 @@ NdnSenderChannel::onDeliverFrame(webrtc::I420VideoFrame &frame,
     deliver_cs_->Enter();
     deliverFrame_.SwapFrame(&frame);
     deliveredTimestamp_ = timestamp;
+    localRender_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
     deliver_cs_->Leave();
     
     deliverEvent_.Set();
@@ -437,19 +438,10 @@ NdnSenderChannel::process()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled) {
         NdnRtcUtils::frequencyMeterTick(frameFreqMeter_);
-        
         double frameRate = params_.captureFramerate;
-        uint64_t now = NdnRtcUtils::millisecondTimestamp();
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
-            
-            uint64_t t = NdnRtcUtils::microsecondTimestamp();
-            
-            localRender_->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
-            
-            uint64_t t2 = NdnRtcUtils::microsecondTimestamp();
-            
             for (int i = 0; i < videoSenders_.size(); i++)
                 videoSenders_[i]->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
         }

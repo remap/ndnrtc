@@ -25,6 +25,8 @@
 #include "config.h"
 #include "renderer-stub.h"
 
+#define USE_EXTERNAL_CAPTURER
+
 using namespace std;
 using namespace ndnrtc;
 using namespace ndnlog;
@@ -187,10 +189,36 @@ int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
     return loadParamsFromFile(cfgFileName, videoParams, audioParams);
 }
 
+int selectFromStringArray(NSArray* stringArray, const char* listTitle)
+{
+    const char** list = (const char**)malloc(stringArray.count*sizeof(char*));
+    
+    for (int i = 0; i < stringArray.count; i++)
+    {
+        list[i] = (char*)malloc(256);
+        memset((void*)list[i],0,256);
+        strcpy((char*)list[i], [[stringArray objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    
+    int selected = selectFromList(list, stringArray.count, listTitle);
+    
+    for (int i = 0; i < stringArray.count; i++)
+        free((void*)list[i]);
+    free(list);
+    
+    return selected;
+}
+
 int start(string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
+    
+    int selectedDevice = selectFromStringArray([CameraCapturer getDeviceList],
+                                               "Select capturing device:");
+    
+    int selectedConfiguration =  selectFromStringArray([CameraCapturer getDeviceConfigurationsList: selectedDevice],
+                                                       "Select device configuration:");
     
     string ndnhub = "";
     
@@ -211,8 +239,24 @@ int start(string username = "")
         ndnrtcLib->configure(p, ap);
     }
     
+#ifndef USE_EXTERNAL_CAPTURER
     ndnrtcLib->startPublishing(username.c_str());
-    /*
+#else
+    CGSize frameSize = [CameraCapturer frameSizeForConfiguration: selectedConfiguration forDevice: selectedDevice];
+    p.captureWidth = frameSize.width;
+    p.captureHeight = frameSize.height;
+    
+    // set this size for all streams
+    // no dowscaling is supported by encoder
+    for (int i = 0; i < p.nStreams; i++)
+    {
+        p.streamsParams[i].encodeWidth = frameSize.width;
+        p.streamsParams[i].encodeHeight = frameSize.height;
+    }
+    
+    ndnrtcLib->configure(p, ap);
+    
+    // set external capturer
     IExternalCapturer *capturer;
     ndnrtcLib->initPublishing(username.c_str(), &capturer);
     
@@ -220,11 +264,11 @@ int start(string username = "")
     cameraCapturer = [[CameraCapturer alloc] init];
     
     cameraCapturer.delegate = capturerDelegate;
-    [cameraCapturer startCapturing];
-    [cameraCapturer selectDeviceWithId:0];
-    [cameraCapturer selectDeviceConfigurationWithIdx: 74];
-     */
     
+    [cameraCapturer selectDeviceWithId:selectedDevice];
+    [cameraCapturer startCapturing];
+    [cameraCapturer selectDeviceConfigurationWithIdx: selectedConfiguration];
+#endif
     
 #ifdef SHOW_STATISTICS
     isMonitored = TRUE;
@@ -299,6 +343,17 @@ void *monitor(void *var)
     {
         if (isMonitored)
         {
+            // query statistics form other producers
+            for (int i = 0; i < ProducerIds.size(); i++)
+            {
+                NdnLibStatistics tmpStat;
+                
+                if (i != MonitoredProducerIdx)
+                {
+                    ndnrtcLib->getStatistics(ProducerIds[i].c_str(), tmpStat);
+                }
+            }
+         
             NdnLibStatistics stat;
             string producerId = (ProducerIds.size())?
             ProducerIds[MonitoredProducerIdx]:"no fetching";
@@ -424,11 +479,15 @@ int runNdnRtcApp(int argc, char * argv[])
                         start();
                         break;
                     case 2:
-                        /*
-                        cameraCapturer.delegate = nil;                        
-                        [cameraCapturer stopCapturing];
-                         */
+                    {
+                        if (cameraCapturer)
+                        {
+                            cameraCapturer.delegate = nil;
+                            [cameraCapturer stopCapturing];
+                        }
+                        
                         ndnrtcLib->stopPublishing();
+                    }
                         break;
                     case 3:
                         join();

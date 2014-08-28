@@ -312,10 +312,13 @@ int NdnRtcLibrary::startPublishing(const char* username,
 int NdnRtcLibrary::initPublishing(const char* username,
                                   IExternalCapturer** const capturer)
 {
-    preparePublishing(username, true, NULL);
-    *capturer = SenderChannel->getCapturer();
+    if (RESULT_GOOD(preparePublishing(username, true, NULL)))
+    {
+        *capturer = SenderChannel->getCapturer();
+        return RESULT_OK;
+    }
     
-    return RESULT_OK;
+    return RESULT_ERR;
 }
 
 int NdnRtcLibrary::initPublishing(const char* username,
@@ -413,10 +416,10 @@ NdnRtcLibrary::preparePublishing(const char* username,
     sc->setObserver(this);
     
     if (RESULT_FAIL(sc->init()))
-        return -1;
+        return RESULT_ERR;
     
     if (RESULT_FAIL(sc->startTransmission()))
-        return -1;
+        return RESULT_ERR;
     
     SenderChannel = sc;
     shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),

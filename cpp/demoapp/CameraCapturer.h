@@ -15,14 +15,17 @@
 
 @property (nonatomic, weak) id<CameraCapturerDelegate> delegate;
 
--(NSArray*)getDeviceList;
++(NSArray*)getDeviceList;
 -(void)selectDeviceWithId:(NSUInteger)deviceIdx;
 
--(NSArray*)getDeviceConfigurationsListLocalized;
++(NSArray*)getDeviceConfigurationsList:(NSUInteger)deviceIdx;
 -(void)selectDeviceConfigurationWithIdx:(NSUInteger)configurationIdx;
 
 -(void)startCapturing;
 -(void)stopCapturing;
+
++(CGSize)frameSizeForConfiguration:(NSUInteger)configurationIdx
+                         forDevice:(NSUInteger)deviceIdx;
 
 @end
 

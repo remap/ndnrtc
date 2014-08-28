@@ -18,13 +18,17 @@
 @property (assign) AVCaptureDeviceFormat *videoDeviceFormat;
 @property (nonatomic) NSLock *lock;
 
++(NSArray*)getDevices;
+
 @end
 
 @implementation CameraCapturer
 
--(NSArray*)getDeviceList
++(NSArray*)getDeviceList
 {
-    return [[self videoDevices] valueForKeyPath: @"localizedName"];
+    NSArray *devices = [self getDevices];
+    
+    return [devices valueForKeyPath: @"localizedName"];
 }
 
 -(void)selectDeviceWithId:(NSUInteger)deviceIdx
@@ -33,9 +37,14 @@
         [self setSelectedVideoDevice: [[self videoDevices] objectAtIndex:deviceIdx]];
 }
 
--(NSArray*)getDeviceConfigurationsListLocalized
++(NSArray*)getDeviceConfigurationsList:(NSUInteger)deviceIdx
 {
-    return [[self selectedVideoDevice].formats valueForKeyPath: @"localizedName"];
+    NSArray *deviceList = [self getDevices];
+    
+    if (deviceIdx < deviceList.count)
+        return [[[deviceList objectAtIndex:deviceIdx] formats] valueForKeyPath: @"localizedName"];
+    
+    return nil;
 }
 
 -(void)selectDeviceConfigurationWithIdx:(NSUInteger)configurationIdx
@@ -52,6 +61,25 @@
 -(void)stopCapturing
 {
     [[self session] stopRunning];
+}
+
++(CGSize)frameSizeForConfiguration:(NSUInteger)configurationIdx
+                         forDevice:(NSUInteger)deviceIdx
+{
+    CGSize frameSize = CGSizeZero;
+    NSArray *devices = [self getDevices];
+
+    if (deviceIdx < devices.count)
+    {
+        AVCaptureDevice *device = [devices objectAtIndex: deviceIdx];
+        AVCaptureDeviceFormat *format = [device.formats objectAtIndex:configurationIdx];
+        CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions((CMVideoFormatDescriptionRef)[format formatDescription]);
+        
+        frameSize.width = dimensions.width;
+        frameSize.height = dimensions.height;
+    }
+    
+    return frameSize;
 }
 
 //******************************************************************************
@@ -247,6 +275,11 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 {
     if (self.delegate && [self.delegate respondsToSelector:@selector(cameraCapturer:didObtainedError:)])
         [self.delegate cameraCapturer: self didObtainedError: error];
+}
+
++(NSArray*)getDevices
+{
+    return [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo] arrayByAddingObjectsFromArray:[AVCaptureDevice devicesWithMediaType:AVMediaTypeMuxed]];
 }
 
 @end
