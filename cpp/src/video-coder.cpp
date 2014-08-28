@@ -98,6 +98,11 @@ frameConsumer_(nullptr)
     description_ = "coder";
     memset(&codec_, 0, sizeof(codec_));
 }
+
+NdnVideoCoder::~NdnVideoCoder()
+{
+}
+
 //********************************************************************************
 #pragma mark - public
 int NdnVideoCoder::init()
@@ -126,6 +131,8 @@ int NdnVideoCoder::init()
     LogInfoC
     << "initialized. max payload " << maxPayload
     << " parameters: " << plotCodec(codec_) << endl;
+    
+    initScaledFrame();
     
     return 0;
 }
@@ -164,11 +171,29 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     deliveredTimestamp_  = timestamp;
     
     int err;
+    bool scaled = false;
+    
+    if (frame.width() != codecParams_.encodeWidth ||
+        frame.height() != codecParams_.encodeHeight)
+    {
+        frameScaler_.Set(frame.width(),frame.height(),
+                         codecParams_.encodeWidth, codecParams_.encodeHeight,
+                         webrtc::kI420, webrtc::kI420,
+                         webrtc::kScaleBilinear);
+        int res = frameScaler_.Scale(frame, &scaledFrame_);
+        
+        if (res != 0)
+            notifyError(-1, "couldn't scale frame");
+        else
+            scaled = true;
+    }
+    
+    I420VideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
     
     if (keyFrameCounter_%codecParams_.gop == 0)
-        err = encoder_->Encode(frame, NULL, &keyFrameType_);
+        err = encoder_->Encode(processedFrame, NULL, &keyFrameType_);
     else
-        err = encoder_->Encode(frame, NULL, NULL);
+        err = encoder_->Encode(processedFrame, NULL, NULL);
     
     keyFrameCounter_++;
     
@@ -176,4 +201,21 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     
     if (err != WEBRTC_VIDEO_CODEC_OK)
         notifyError(-1, "can't encode frame due to error %d",err);
+}
+
+void NdnVideoCoder::initScaledFrame()
+{
+    int stride_y = codecParams_.encodeWidth;
+    int stride_uv = (codecParams_.encodeWidth + 1) / 2;
+    int target_width = codecParams_.encodeWidth;
+    int target_height = codecParams_.encodeHeight;
+    
+
+    int ret = scaledFrame_.CreateEmptyFrame(target_width,
+                                             abs(target_height),
+                                             stride_y,
+                                             stride_uv, stride_uv);
+    
+    if (ret < 0)
+        notifyError(RESULT_ERR, "failed to allocate scaled frame");
 }

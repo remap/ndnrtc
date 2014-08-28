@@ -246,14 +246,6 @@ int start(string username = "")
     p.captureWidth = frameSize.width;
     p.captureHeight = frameSize.height;
     
-    // set this size for all streams
-    // no dowscaling is supported by encoder
-    for (int i = 0; i < p.nStreams; i++)
-    {
-        p.streamsParams[i].encodeWidth = frameSize.width;
-        p.streamsParams[i].encodeHeight = frameSize.height;
-    }
-    
     ndnrtcLib->configure(p, ap);
     
     // set external capturer

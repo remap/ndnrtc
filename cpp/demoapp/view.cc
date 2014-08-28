@@ -415,66 +415,69 @@ void updateStat(ndnrtc::NdnLibStatistics &stat,
                 const std::string &pubPrefix,
                 const std::string &fetchPrefix)
 {
-    int w,h, x = 0, y = 0;
-    
-    getmaxyx(stat_win, h, w);
-    
-    pthread_mutex_lock(&OutputMutex);
-    wclear(stat_box_win);    
-    mvwprintw(stat_win, y++, x, "> publishing: %s", pubPrefix.c_str());
-    
-    mvwprintw(stat_win, y++, x, "sent frames num: ");
-    mvwprintw(stat_win, y++, x, "capturing (FPS): ");
-    mvwprintw(stat_win, y++, x, "encoding (FPS): ");
-    mvwprintw(stat_win, y++, x, "encoder dropped: ");
-    mvwprintw(stat_win, y++, x, "OUT rate (kbit/s): ");
-    
-    mvwprintw(stat_win, y++, x, "");
-    mvwprintw(stat_win, y++, x, "> fetching: %s", fetchPrefix.c_str());
-    
-    mvwprintw(stat_win, y++, x, "producer rate: ");
-    mvwprintw(stat_win, y++, x, "IN data (seg/sec): ");
-    mvwprintw(stat_win, y++, x, "OUT intrst (/sec): ");
-    
-    mvwprintw(stat_win, y++, x, "j target (ms): ");
-    mvwprintw(stat_win, y++, x, "j estimate (ms): ");
-    mvwprintw(stat_win, y++, x, "j playable (ms): ");
-    mvwprintw(stat_win, y++, x, "plbck latency: ");
-    
-    mvwprintw(stat_win, y++, x, "IN rate (kbit/s): ");
-    
-    mvwprintw(stat_win, y++, x, "# rebufferings: ");
-    
-    mvwprintw(stat_win, y++, x, "# assembled frames/key: ");
-    mvwprintw(stat_win, y++, x, "# rescued frames/key: ");
-    mvwprintw(stat_win, y++, x, "# recovered frames/key: ");
-    mvwprintw(stat_win, y++, x, "# incomplete frames/key: ");
-    
-    mvwprintw(stat_win, y++, x, "# played frames/key: ");
-    mvwprintw(stat_win, y++, x, "# skipped no key: ");
-    mvwprintw(stat_win, y++, x, "# skipped incomplete/key: ");
-    mvwprintw(stat_win, y++, x, "# skipped bad gop: ");
-    
-    mvwprintw(stat_win, y++, x, "# acquired : ");
-    mvwprintw(stat_win, y++, x, "# outdated : ");
-    
-    mvwprintw(stat_win, y++, x, "rtx #: ");
-    mvwprintw(stat_win, y++, x, "rtx freq: ");
-    
-    mvwprintw(stat_win, y++, x, "avg seg delta: ");
-    mvwprintw(stat_win, y++, x, "avg seg key: ");
-    
-    mvwprintw(stat_win, y++, x, "RTT estimation: ");
-    
-    // print video
-    printStat(stat.sendStat_.videoStat_, stat.receiveStat_.videoStat_, w/4, 0);
-    
-    // print audio
-    printStat(stat.sendStat_.audioStat_, stat.receiveStat_.audioStat_, w/2, 0);
-    
-    pthread_mutex_unlock(&OutputMutex);
-    
-    refreshWindows();
+    if (stat_on)
+    {
+        int w,h, x = 0, y = 0;
+        
+        getmaxyx(stat_win, h, w);
+        
+        pthread_mutex_lock(&OutputMutex);
+        wclear(stat_box_win);
+        mvwprintw(stat_win, y++, x, "> publishing: %s", pubPrefix.c_str());
+        
+        mvwprintw(stat_win, y++, x, "sent frames num: ");
+        mvwprintw(stat_win, y++, x, "capturing (FPS): ");
+        mvwprintw(stat_win, y++, x, "encoding (FPS): ");
+        mvwprintw(stat_win, y++, x, "encoder dropped: ");
+        mvwprintw(stat_win, y++, x, "OUT rate (kbit/s): ");
+        
+        mvwprintw(stat_win, y++, x, "");
+        mvwprintw(stat_win, y++, x, "> fetching: %s", fetchPrefix.c_str());
+        
+        mvwprintw(stat_win, y++, x, "producer rate: ");
+        mvwprintw(stat_win, y++, x, "IN data (seg/sec): ");
+        mvwprintw(stat_win, y++, x, "OUT intrst (/sec): ");
+        
+        mvwprintw(stat_win, y++, x, "j target (ms): ");
+        mvwprintw(stat_win, y++, x, "j estimate (ms): ");
+        mvwprintw(stat_win, y++, x, "j playable (ms): ");
+        mvwprintw(stat_win, y++, x, "plbck latency: ");
+        
+        mvwprintw(stat_win, y++, x, "IN rate (kbit/s): ");
+        
+        mvwprintw(stat_win, y++, x, "# rebufferings: ");
+        
+        mvwprintw(stat_win, y++, x, "# assembled frames/key: ");
+        mvwprintw(stat_win, y++, x, "# rescued frames/key: ");
+        mvwprintw(stat_win, y++, x, "# recovered frames/key: ");
+        mvwprintw(stat_win, y++, x, "# incomplete frames/key: ");
+        
+        mvwprintw(stat_win, y++, x, "# played frames/key: ");
+        mvwprintw(stat_win, y++, x, "# skipped no key: ");
+        mvwprintw(stat_win, y++, x, "# skipped incomplete/key: ");
+        mvwprintw(stat_win, y++, x, "# skipped bad gop: ");
+        
+        mvwprintw(stat_win, y++, x, "# acquired : ");
+        mvwprintw(stat_win, y++, x, "# outdated : ");
+        
+        mvwprintw(stat_win, y++, x, "rtx #: ");
+        mvwprintw(stat_win, y++, x, "rtx freq: ");
+        
+        mvwprintw(stat_win, y++, x, "avg seg delta: ");
+        mvwprintw(stat_win, y++, x, "avg seg key: ");
+        
+        mvwprintw(stat_win, y++, x, "RTT estimation: ");
+        
+        // print video
+        printStat(stat.sendStat_.videoStat_, stat.receiveStat_.videoStat_, w/4, 0);
+        
+        // print audio
+        printStat(stat.sendStat_.audioStat_, stat.receiveStat_.audioStat_, w/2, 0);
+        
+        pthread_mutex_unlock(&OutputMutex);
+        
+        refreshWindows();
+    }
 }
 
 #endif

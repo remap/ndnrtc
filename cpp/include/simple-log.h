@@ -38,8 +38,8 @@
 // initialized and use it instead of global logger
 #if defined (NDN_TRACE)
 
-#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-#define LogTraceC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__)
+#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
+#define LogTraceC if (this->logger_) this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__)
 
 #else
 
