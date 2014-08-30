@@ -31,12 +31,13 @@ JitterTiming::~JitterTiming(){
 void JitterTiming::flush()
 {
     resetData();
-    //    stop();
+    LogTraceC << "flushed" << std::endl;
 }
 void JitterTiming::stop()
 {
     playoutTimer_.StopTimer();
     playoutTimer_.Set();
+    LogTraceC << "stopped" << std::endl;
 }
 
 int64_t JitterTiming::startFramePlayout()
