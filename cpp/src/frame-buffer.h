@@ -426,9 +426,7 @@ namespace ndnrtc
                 int
                 getPacketData(PacketData** packetData) const
                 {
-#warning put back checking
-                    if (consistency_&Consistent)// &&
-//                        nSegmentsPending_ == 0)
+                    if (consistency_&Consistent)
                         return PacketData::packetFromRaw(assembledSize_,
                                                          slotData_,
                                                          packetData);

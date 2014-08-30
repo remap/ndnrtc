@@ -60,7 +60,10 @@ bool BaseCapturer::process()
 {
     if (captureEvent_.Wait(100) == kEventSignaled)
     {
-        NdnRtcUtils::frequencyMeterTick(meterId_);
+        if (!capturedFrame_.IsZeroSize())
+        {
+            NdnRtcUtils::frequencyMeterTick(meterId_);
+        }
         
         deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize())
