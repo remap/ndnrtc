@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__consumer_channel__
 #define __ndnrtc__consumer_channel__
 
+//#define SERVICE_CHANNEL
+
 #include "video-consumer.h"
 #include "audio-consumer.h"
 #include "statistics.h"

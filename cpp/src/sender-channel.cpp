@@ -505,8 +505,10 @@ NdnSenderChannel::initServiceChannel()
         serviceFaceProcessor = FaceProcessor::createFaceProcessor(params_,
                                                                   NdnRtcNamespace::defaultKeyChain());
     
+#ifdef SERVICE_CHANNEL
     serviceChannel_.reset(new ServiceChannel(this, serviceFaceProcessor));
     serviceChannel_->startSessionInfoBroadcast(*NdnRtcNamespace::getSessionInfoPrefix(params_),
                                                ndnKeyChain_,
                                                *NdnRtcNamespace::certificateNameForUser(*NdnRtcNamespace::getUserPrefix(params_)));
+#endif
 }
