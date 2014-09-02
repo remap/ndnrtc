@@ -35,8 +35,9 @@ void JitterTiming::flush()
 }
 void JitterTiming::stop()
 {
-    playoutTimer_.StopTimer();
     playoutTimer_.Set();
+    playoutTimer_.StopTimer();
+    playoutTimer_.Reset();
     LogTraceC << "stopped" << std::endl;
 }
 
