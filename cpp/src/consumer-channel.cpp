@@ -35,7 +35,8 @@ faceProcessor_(faceProcessor)
     if (!faceProcessor_.get())
     {
         isOwnFace_ = true;
-        faceProcessor_ = FaceProcessor::createFaceProcessor(params_);
+        faceProcessor_ = FaceProcessor::createFaceProcessor(params_,
+                                                            NdnRtcNamespace::defaultKeyChain());
     }
     
     if (params.useVideo)
