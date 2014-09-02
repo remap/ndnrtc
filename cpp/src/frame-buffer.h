@@ -138,7 +138,11 @@ namespace ndnrtc
                     
                     int64_t
                     getRoundTripDelayUsec()
-                    { return (arrivalTimeUsec_-requestTimeUsec_); }
+                    {
+                        if (arrivalTimeUsec_ <= 0 || requestTimeUsec_ <= 0)
+                            return -1;
+                        return (arrivalTimeUsec_-requestTimeUsec_);
+                    }
                     
                     void
                     setPrefix(const Name& prefix)
