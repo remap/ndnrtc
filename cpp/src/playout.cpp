@@ -80,10 +80,10 @@ Playout::stop()
 {
     if (isRunning_)
     {
-        jitterTiming_.stop();
         playoutThread_.SetNotAlive();
         isRunning_ = false;
         playoutThread_.Stop();
+        jitterTiming_.stop();
         
         LogInfoC << "stopped" << endl;
     }
