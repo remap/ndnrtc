@@ -32,6 +32,8 @@ faceProcessor_(faceProcessor),
 interestQueue_(new InterestQueue(faceProcessor->getFaceWrapper())),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
 {
+    // TBD: set observer for interest queue
+//    interestQueue_->setObserver(this);
     init();
 }
 

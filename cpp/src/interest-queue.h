@@ -16,6 +16,7 @@
 #include "ndnrtc-utils.h"
 #include "face-wrapper.h"
 #include "statistics.h"
+#include "ndnrtc-object.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -26,7 +27,7 @@ namespace ndnrtc {
             virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
         };
         
-        class InterestQueue : public ndnlog::new_api::ILoggingObject
+        class InterestQueue : public ndnrtc::NdnRtcObject//ndnlog::new_api::ILoggingObject
         {
         public:
             

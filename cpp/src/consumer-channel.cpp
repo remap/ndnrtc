@@ -42,6 +42,7 @@ faceProcessor_(faceProcessor)
     if (params.useVideo)
     {
         videoInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        videoInterestQueue_->setObserver(this);
         videoInterestQueue_->setDescription(std::string("video-iqueue"));
         videoConsumer_.reset(new VideoConsumer(params_, videoInterestQueue_,
                                                rttEstimation_, videoRenderer));
@@ -50,6 +51,7 @@ faceProcessor_(faceProcessor)
     if (params_.useAudio)
     {
         audioInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        audioInterestQueue_->setObserver(this);
         audioInterestQueue_->setDescription(std::string("audio-iqueue"));
         audioConsumer_.reset(new AudioConsumer(audioParams_, audioInterestQueue_, rttEstimation_));
     }
