@@ -111,8 +111,20 @@ namespace ndnrtc {
         
         static boost::shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static boost::shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);
+        
+        /**
+         * Returns KeyChain class configured to use MemoryIdentityStorage, 
+         * MemoryPrivateKeyStorage, user-specific key name (@see keyPrefixForUser 
+         * call) and pre-defined private and public keys (see DEFAULT_PUBLIC_KEY_DER 
+         * and DEFAULT_PRIVATE_KEY_DER)
+         */
         static boost::shared_ptr<KeyChain> keyChainForUser(const std::string &userPrefix);
 
+        /**
+         * Returns default KeyChain class
+         */
+        static boost::shared_ptr<KeyChain> defaultKeyChain();
+        
         static void appendStringComponent(Name& prefix,
                                           const std::string& stringComponent);
         static void appendStringComponent(boost::shared_ptr<Name>& prefix,

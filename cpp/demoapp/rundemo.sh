@@ -22,4 +22,4 @@ PARAMSPATH="$(cd $RESDIR && pwd)/ndnrtc.cfg"
 LIBPATH="$(cd $LIBDIR && pwd)/libndnrtc.dylib"
 
 
-$RUNDIR/$APPNAME $LIBPATH $PARAMSPATH 2> /dev/null
+$RUNDIR/$APPNAME $LIBPATH $PARAMSPATH 2> stderr.out

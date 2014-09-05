@@ -64,6 +64,7 @@ static uint8_t DEFAULT_PRIVATE_KEY_DER[] = {
 
 //********************************************************************************
 #pragma mark - all static
+static shared_ptr<KeyChain> DefaultKeyChain(new KeyChain());
 
 const std::string NdnRtcNamespace::NameComponentApp = "ndnrtc";
 const std::string NdnRtcNamespace::NameComponentUser = "user";
@@ -275,6 +276,12 @@ NdnRtcNamespace::keyChainForUser(const std::string &userPrefix)
     shared_ptr<KeyChain> keyChain(new KeyChain());
 #endif
     return keyChain;
+}
+
+shared_ptr<KeyChain>
+NdnRtcNamespace::defaultKeyChain()
+{
+    return DefaultKeyChain;
 }
 
 void

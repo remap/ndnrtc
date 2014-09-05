@@ -13,7 +13,7 @@
 #define __ndnrtc__sender_channel__
 
 #include "ndnrtc-common.h"
-#include "camera-capturer.h"
+#include "external-capturer.hpp"
 #include "video-coder.h"
 #include "video-renderer.h"
 #include "video-sender.h"
@@ -59,11 +59,13 @@ namespace ndnrtc
     
     class NdnSenderChannel : public NdnMediaChannel,
                             public IRawFrameConsumer,
-                            public new_api::IAudioFrameConsumer
+                            public new_api::IAudioFrameConsumer,
+                            public new_api::IServiceChannelPublisherCallback
     {
     public:
         NdnSenderChannel(const ParamsStruct &params,
                          const ParamsStruct &audioParams,
+                         bool useCameraCapturer = true,
                          IExternalRenderer *const externalRenderer = nullptr);
         virtual ~NdnSenderChannel();
         
@@ -94,10 +96,13 @@ namespace ndnrtc
         void
         setLogger(ndnlog::new_api::Logger* logger);
         
+        ExternalCapturer*
+        getCapturer() { return (ExternalCapturer*)(capturer_.get()); }
+        
     private:
         unsigned int frameFreqMeter_;
         
-        boost::shared_ptr<CameraCapturer> cameraCapturer_;
+        boost::shared_ptr<BaseCapturer> capturer_;
         boost::shared_ptr<IVideoRenderer> localRender_;
         std::vector<boost::shared_ptr<NdnVideoSender> > videoSenders_;
         
@@ -110,7 +115,7 @@ namespace ndnrtc
         webrtc::I420VideoFrame deliverFrame_;
         double deliveredTimestamp_;
         
-        boost::shared_ptr<FaceProcessor> serviceFaceProcessor_;
+        boost::shared_ptr<new_api::ServiceChannel> serviceChannel_;
         
         // static methods
         static bool
@@ -122,21 +127,15 @@ namespace ndnrtc
         bool
         process();
         
-        // this should reply only to session info interests
         void
-        onInterest(const boost::shared_ptr<const Name>& prefix,
-                   const boost::shared_ptr<const Interest>& interest,
-                   ndn::Transport& transport);
+        initServiceChannel();
         
+        // IServiceChannelPublisherCallback
         void
-        onRegisterFailed(const boost::shared_ptr<const Name>&
-                              prefix);
+        onSessionInfoBroadcastFailed();
         
-        void
-        registerSessionInfoPrefix();
-        
-        void
-        publishSessionInfo(ndn::Transport& transport);
+        boost::shared_ptr<SessionInfo>
+        onPublishSessionInfo();
     };
     
 }

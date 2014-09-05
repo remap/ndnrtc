@@ -35,18 +35,14 @@ faceProcessor_(faceProcessor)
     if (!faceProcessor_.get())
     {
         isOwnFace_ = true;
-        faceProcessor_ = FaceProcessor::createFaceProcessor(params_);
-        faceProcessor_->getFaceWrapper()->registerPrefix(*NdnRtcNamespace::getStreamKeyPrefix(params_),
-                                                  bind(&ConsumerChannel::onInterest,
-                                                       this, _1, _2, _3),
-                                                  bind(&ConsumerChannel::onRegisterFailed,
-                                                       this, _1));
-        faceProcessor_->setDescription(NdnRtcUtils::toString("%s-faceproc", getDescription().c_str()));
+        faceProcessor_ = FaceProcessor::createFaceProcessor(params_,
+                                                            NdnRtcNamespace::defaultKeyChain());
     }
     
     if (params.useVideo)
     {
         videoInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        videoInterestQueue_->setObserver(this);
         videoInterestQueue_->setDescription(std::string("video-iqueue"));
         videoConsumer_.reset(new VideoConsumer(params_, videoInterestQueue_,
                                                rttEstimation_, videoRenderer));
@@ -55,14 +51,14 @@ faceProcessor_(faceProcessor)
     if (params_.useAudio)
     {
         audioInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
+        audioInterestQueue_->setObserver(this);
         audioInterestQueue_->setDescription(std::string("audio-iqueue"));
         audioConsumer_.reset(new AudioConsumer(audioParams_, audioInterestQueue_, rttEstimation_));
     }
     
-    serviceInterestQueue_.reset(new InterestQueue(faceProcessor_->getFaceWrapper()));
-    serviceInterestQueue_->setDescription(std::string("service-iqueue"));
-    serviceChannel_.reset(new ServiceChannel(this, serviceInterestQueue_));
-    
+#ifdef SERVICE_CHANNEL
+    serviceChannel_.reset(new ServiceChannel(this, faceProcessor_));
+#endif
     this->setLogger(new Logger(params_.loggingLevel,
                                NdnRtcUtils::toString("consumer-%s.log",
                                                      params.producerId)));
@@ -103,8 +99,9 @@ int
 ConsumerChannel::startTransmission()
 {
 #warning handle errors
+#ifdef SERVICE_CHANNEL
     serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
-    
+#endif
     if (isOwnFace_)
         faceProcessor_->startProcessing();
 
@@ -121,6 +118,10 @@ int
 ConsumerChannel::stopTransmission()
 {
 #warning handle errors
+#ifdef SERVICE_CHANNEL
+    serviceChannel_->stopMonitor();
+#endif
+    
 #ifndef AUDIO_OFF
     if (params_.useAudio)
         audioConsumer_->stop();
@@ -165,8 +166,9 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
     if (audioInterestQueue_.get())
         audioInterestQueue_->setLogger(logger);
     
+#ifdef SERVICE_CHANNEL
     serviceChannel_->setLogger(logger);
-    
+#endif
     ILoggingObject::setLogger(logger);
 }
 
@@ -191,21 +193,44 @@ void
 ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
                             const ParamsStruct& newAudioParams)
 {
-    LogInfoC << "producer parameters updated" << std::endl;
+    std::stringstream ss;
+    
+    ss << "vstreams " << newVideoParams.nStreams << " ";
+    for (int i = 0; i < newVideoParams.nStreams; i++)
+        ss << "[" << i
+        << "| " << newVideoParams.streamsParams[i].codecFrameRate
+        << " " << newVideoParams.streamsParams[i].gop
+        << " " << newVideoParams.streamsParams[i].startBitrate
+        << " " << newVideoParams.streamsParams[i].encodeWidth
+        << " " << newVideoParams.streamsParams[i].encodeHeight
+        << "] ";
+
+    ss << "astreams " << newAudioParams.nStreams;
+    for (int i = 0; i < newAudioParams.nStreams; i++)
+        ss << "[" << i
+        << "| " << newAudioParams.streamsParams[i].codecFrameRate
+        << " " << newAudioParams.streamsParams[i].startBitrate
+        << "] ";
+    
+    LogInfoC << "producer parameters updated: " << ss.str() << std::endl;
     
 }
 
 void
 ConsumerChannel::onUpdateFailedWithTimeout()
 {
+#ifdef SERVICE_CHANNEL
     LogWarnC << "service update failed with timeout" << std::endl;
     serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
+#endif
 }
 
 void
 ConsumerChannel::onUpdateFailedWithError(const char* errMsg)
 {
+#ifdef SERVICE_CHANNEL
     LogErrorC << "service update failed with message: "
     << std::string(errMsg) << std::endl;
+#endif
 }
 

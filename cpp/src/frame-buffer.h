@@ -138,7 +138,11 @@ namespace ndnrtc
                     
                     int64_t
                     getRoundTripDelayUsec()
-                    { return (arrivalTimeUsec_-requestTimeUsec_); }
+                    {
+                        if (arrivalTimeUsec_ <= 0 || requestTimeUsec_ <= 0)
+                            return -1;
+                        return (arrivalTimeUsec_-requestTimeUsec_);
+                    }
                     
                     void
                     setPrefix(const Name& prefix)
@@ -426,9 +430,7 @@ namespace ndnrtc
                 int
                 getPacketData(PacketData** packetData) const
                 {
-#warning put back checking
-                    if (consistency_&Consistent)// &&
-//                        nSegmentsPending_ == 0)
+                    if (consistency_&Consistent)
                         return PacketData::packetFromRaw(assembledSize_,
                                                          slotData_,
                                                          packetData);

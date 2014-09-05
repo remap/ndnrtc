@@ -31,15 +31,10 @@ static unsigned char *frameBuffer = nullptr;
 //********************************************************************************
 #pragma mark - construction/destruction
 CameraCapturer::CameraCapturer(const ParamsStruct &params) :
-NdnRtcObject(params),
-vcm_(nullptr),
-frameConsumer_(nullptr),
-capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
-deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
-captureEvent_(*EventWrapper::Create()),
-captureThread_(*ThreadWrapper::CreateThread(deliverCapturedFrame, this,  kHighPriority))
+BaseCapturer(params),
+vcm_(nullptr)
 {
-    description_ = "capturer";
+
 }
 CameraCapturer::~CameraCapturer()
 {
@@ -50,7 +45,7 @@ CameraCapturer::~CameraCapturer()
         
         vcm_->Release();
     }
-};
+}
 
 //********************************************************************************
 #pragma mark - public
@@ -60,10 +55,22 @@ int CameraCapturer::init()
     
     LogTraceC << "acquiring device " << deviceID << endl;
     
+    std::vector<std::string> *availableCaptureDevices;
+    availableCaptureDevices = getAvailableCaptureDevices();
+    
+    if (deviceID >= availableCaptureDevices->size())
+    {
+        printCapturingInfo();
+        LogErrorC << "can't acquire device " << deviceID << std::endl;
+        return notifyError(RESULT_ERR, "can't acquire device %d", deviceID);
+    }
+    else
+        delete availableCaptureDevices;
+    
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(deviceID);
     
     if (!devInfo)
-        return notifyError(-1, "can't get deivce info");
+        return notifyError(RESULT_ERR, "can't get device info");
     
     char deviceName [256];
     char deviceUniqueName [256];
@@ -85,7 +92,25 @@ int CameraCapturer::init()
     capability_.width = params_.captureWidth;
     capability_.height = params_.captureHeight;
     capability_.maxFPS = params_.captureFramerate;
+    
+//    kVideoI420     
+//    kVideoYV12     
+//    kVideoYUY2     
+//    kVideoUYVY     
+//    kVideoIYUV     
+//    kVideoARGB     
+//    kVideoRGB24    
+//    kVideoRGB565   
+//    kVideoARGB4444 
+//    kVideoARGB1555 
+//    kVideoMJPEG    
+//    kVideoNV12     
+//    kVideoNV21     
+//    kVideoBGRA     
+//    kVideoUnknown
+    
     capability_.rawType = webrtc::kVideoI420; //webrtc::kVideoUnknown;
+    capability_.interlaced = false;
     
     vcm_->RegisterCaptureDataCallback(*this);
     
@@ -97,30 +122,26 @@ int CameraCapturer::init()
 }
 int CameraCapturer::startCapture()
 {
-    unsigned int tid = 0;
-    
-    if (!captureThread_.Start(tid))
-        return notifyError(-1, "can't start capturing thread");
+    if (RESULT_FAIL(BaseCapturer::startCapture()))
+        return RESULT_ERR;
     
     if (vcm_->StartCapture(capability_) < 0)
-        return notifyError(-1, "capture failed to start");
+        return notifyError(RESULT_ERR, "capture failed to start");
     
     if (!vcm_->CaptureStarted())
-        return notifyError(-1, "capture failed to start");
+        return notifyError(RESULT_ERR, "capture failed to start");
     
     LogInfoC << "started" << endl;
+    isCapturing_ = true;
     
     return 0;
 }
 int CameraCapturer::stopCapture()
 {
+    BaseCapturer::stopCapture();
+    
     vcm_->DeRegisterCaptureDataCallback();
     vcm_->StopCapture();
-    captureThread_.SetNotAlive();
-    captureEvent_.Set();
-    
-    if (!captureThread_.Stop())
-        return notifyError(-1, "can't stop capturing thread");
     
     LogInfoC << "stopped" << endl;
     
@@ -135,7 +156,7 @@ int CameraCapturer::numberOfCaptureDevices()
     
     return devInfo->NumberOfDevices();
 }
-vector<std::string>* CameraCapturer::availableCaptureDevices()
+vector<std::string>* CameraCapturer::getAvailableCaptureDevices()
 {
     VideoCaptureModule::DeviceInfo *devInfo = VideoCaptureFactory::CreateDeviceInfo(0);
     
@@ -169,11 +190,11 @@ vector<std::string>* CameraCapturer::availableCaptureDevices()
 }
 void CameraCapturer::printCapturingInfo()
 {
-    cout << "*** Capturing info: " << endl;
-    cout << "\tNumber of capture devices: " << numberOfCaptureDevices() << endl;
-    cout << "\tCapture devices: " << endl;
+    LogInfoC << "*** Capturing info: " << endl;
+    LogInfoC << "\tNumber of capture devices: " << numberOfCaptureDevices() << endl;
+    LogInfoC << "\tCapture devices: " << endl;
     
-    vector<std::string> *devices = availableCaptureDevices();
+    vector<std::string> *devices = getAvailableCaptureDevices();
     
     if (devices)
     {
@@ -182,12 +203,12 @@ void CameraCapturer::printCapturingInfo()
         
         for (it = devices->begin(); it != devices->end(); ++it)
         {
-            cout << "\t\t"<< idx++ << ". " << *it << endl;
+            LogInfoC << "\t\t"<< idx++ << ". " << *it << endl;
         }
         delete devices;
     }
     else
-        cout << "\t\t <no capture devices>" << endl;
+        LogInfoC << "\t\t <no capture devices>" << endl;
 }
 
 //********************************************************************************
@@ -195,17 +216,7 @@ void CameraCapturer::printCapturingInfo()
 void CameraCapturer::OnIncomingCapturedFrame(const int32_t id,
                                              I420VideoFrame& videoFrame)
 {
-//    if (videoFrame.render_time_ms() >= NdnRtcUtils::millisecondTimestamp()-30 &&
-//        videoFrame.render_time_ms() <= NdnRtcUtils::millisecondTimestamp())
-//        TRACE("..delayed");
-    NdnRtcUtils::frequencyMeterTick(meterId_);
-    
-    capture_cs_->Enter();
-    capturedFrame_.SwapFrame(&videoFrame);
-    capturedTimeStamp_ = NdnRtcUtils::unixTimestamp();
-    capture_cs_->Leave();
-    
-    captureEvent_.Set();
+    deliverCapturedFrame(videoFrame);
 }
 
 void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay)
@@ -215,23 +226,3 @@ void CameraCapturer::OnCaptureDelayChanged(const int32_t id, const int32_t delay
 
 //********************************************************************************
 #pragma mark - private
-bool CameraCapturer::process()
-{
-    if (captureEvent_.Wait(100) == kEventSignaled) {
-        deliver_cs_->Enter();
-        if (!capturedFrame_.IsZeroSize()) {
-            // New I420 frame.
-            capture_cs_->Enter();
-            double timestamp = capturedTimeStamp_;
-            deliverFrame_.SwapFrame(&capturedFrame_);
-            capturedFrame_.ResetSize();
-            capture_cs_->Leave();
-            
-            if (frameConsumer_)
-                frameConsumer_->onDeliverFrame(deliverFrame_, timestamp);
-        }
-        deliver_cs_->Leave();
-    }
-    // We're done!
-    return true;
-}

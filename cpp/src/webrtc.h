@@ -27,6 +27,7 @@
 #include <modules/video_capture/include/video_capture.h>
 #include <modules/video_capture/include/video_capture_factory.h>
 #include <common_video/libyuv/include/webrtc_libyuv.h>
+#include <common_video/libyuv/include/scaler.h>
 
 // codecs
 #include <modules/video_coding/codecs/vp8/include/vp8.h>

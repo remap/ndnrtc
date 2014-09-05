@@ -17,17 +17,21 @@
 #include <vector>
 
 #import "AppDelegate.h"
+#import "CameraCapturer.h"
 
 #include "simple-log.h"
 #include "ndnrtc-library.h"
-
 #include "view.h"
 #include "config.h"
 #include "renderer-stub.h"
 
+#define USE_EXTERNAL_CAPTURER
+
 using namespace std;
 using namespace ndnrtc;
 using namespace ndnlog;
+
+@class CapturerDelegate;
 
 int runNdnRtcApp(int argc, char * argv[]);
 void printStatus(const string &str);
@@ -52,14 +56,15 @@ static NdnRtcLibrary *ndnrtcLib = NULL;
 static LibraryObserver observer;
 static RendererStub LocalRenderer;
 
-#ifdef SHOW_STATISTICS
 static int MonitoredProducerIdx = 0;
 static pthread_t monitorThread;
 static BOOL isMonitored;
 std::vector<std::string> ProducerIds;
-#endif
 
-// This class passes parameter from main to the worked thread and back.
+static CapturerDelegate* capturerDelegate;
+static CameraCapturer* cameraCapturer;
+
+// This class passes parameter from main to the worker thread and back.
 @interface WorkerThread : NSObject {
     int    argc_;
     char** argv_;
@@ -107,6 +112,52 @@ std::vector<std::string> ProducerIds;
 @end
 
 //******************************************************************************
+@interface CapturerDelegate : NSObject<CameraCapturerDelegate>
+{
+    IExternalCapturer *externalCapturer_;
+}
+
+-(void)startCapturing;
+-(void)stopCapturing;
+
+@end
+
+@implementation CapturerDelegate
+
+-(id)initWithExternalCapturer:(IExternalCapturer*)externalCapturer
+{
+    if ((self = [super init]))
+    {
+        externalCapturer_ = externalCapturer;
+    }
+    
+    return self;
+}
+
+-(void)cameraCapturer:(CameraCapturer*)capturer didDeliveredBGRAFrameData:(NSData*)frameData
+{
+    if (externalCapturer_)
+        externalCapturer_->incomingArgbFrame((unsigned char*)[frameData bytes], [frameData length]);
+}
+
+-(void)cameraCapturer:(CameraCapturer*)capturer didObtainedError:(NSError*)error
+{
+    printStatus(string("capturer error: ") + string([[error localizedDescription] cStringUsingEncoding:NSUTF8StringEncoding]));
+}
+
+-(void)startCapturing
+{
+    externalCapturer_->capturingStarted();
+}
+
+-(void)stopCapturing
+{
+    externalCapturer_->capturingStopped();
+}
+
+@end
+
+//******************************************************************************
 int main(int argc, char * argv[])
 {
     int result = 0;
@@ -149,10 +200,36 @@ int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
     return loadParamsFromFile(cfgFileName, videoParams, audioParams);
 }
 
+int selectFromStringArray(NSArray* stringArray, const char* listTitle)
+{
+    const char** list = (const char**)malloc(stringArray.count*sizeof(char*));
+    
+    for (int i = 0; i < stringArray.count; i++)
+    {
+        list[i] = (char*)malloc(256);
+        memset((void*)list[i],0,256);
+        strcpy((char*)list[i], [[stringArray objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    
+    int selected = selectFromList(list, stringArray.count, listTitle);
+    
+    for (int i = 0; i < stringArray.count; i++)
+        free((void*)list[i]);
+    free(list);
+    
+    return selected;
+}
+
 int start(string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
+    
+    int selectedDevice = selectFromStringArray([CameraCapturer getDeviceList],
+                                               "Select capturing device:");
+    
+    int selectedConfiguration =  selectFromStringArray([CameraCapturer getDeviceConfigurationsList: selectedDevice],
+                                                       "Select device configuration:");
     
     string ndnhub = "";
     
@@ -173,11 +250,48 @@ int start(string username = "")
         ndnrtcLib->configure(p, ap);
     }
     
+#ifndef USE_EXTERNAL_CAPTURER
     ndnrtcLib->startPublishing(username.c_str());
+#else
+    CGSize frameSize = [CameraCapturer frameSizeForConfiguration: selectedConfiguration forDevice: selectedDevice];
+    p.captureWidth = frameSize.width;
+    p.captureHeight = frameSize.height;
+    
+    ndnrtcLib->configure(p, ap);
+    
+    // set external capturer
+    IExternalCapturer *capturer;
+    int res = ndnrtcLib->initPublishing(username.c_str(), &capturer);
+    
+    if (RESULT_GOOD(res))
+    {
+        capturerDelegate = [[CapturerDelegate alloc] initWithExternalCapturer: capturer];
+        cameraCapturer = [[CameraCapturer alloc] init];
+        cameraCapturer.delegate = capturerDelegate;
+        
+        [cameraCapturer selectDeviceWithId:selectedDevice];
+        [cameraCapturer startCapturing];
+        [cameraCapturer selectDeviceConfigurationWithIdx: selectedConfiguration];
+        [capturerDelegate startCapturing];
+    }
+#endif
     
 #ifdef SHOW_STATISTICS
     isMonitored = TRUE;
 #endif
+    return 0;
+}
+
+int stop()
+{
+    if (cameraCapturer)
+    {
+        cameraCapturer.delegate = nil;
+        [cameraCapturer stopCapturing];
+        [capturerDelegate stopCapturing];
+    }
+    
+    ndnrtcLib->stopPublishing();
     return 0;
 }
 
@@ -248,6 +362,17 @@ void *monitor(void *var)
     {
         if (isMonitored)
         {
+            // query statistics form other producers
+            for (int i = 0; i < ProducerIds.size(); i++)
+            {
+                NdnLibStatistics tmpStat;
+                
+                if (i != MonitoredProducerIdx)
+                {
+                    ndnrtcLib->getStatistics(ProducerIds[i].c_str(), tmpStat);
+                }
+            }
+         
             NdnLibStatistics stat;
             string producerId = (ProducerIds.size())?
             ProducerIds[MonitoredProducerIdx]:"no fetching";
@@ -321,7 +446,7 @@ void runHeadless(ParamsStruct &params)
             break;
     }
     
-    while (!SignalReceived) ;
+    while (!SignalReceived) usleep(100);
 }
 
 int runNdnRtcApp(int argc, char * argv[])
@@ -360,7 +485,6 @@ int runNdnRtcApp(int argc, char * argv[])
         {
             isMonitored = TRUE;
             runHeadless(params);
-            isMonitored = NO;
         } // headless mode
         else
         {
@@ -374,7 +498,7 @@ int runNdnRtcApp(int argc, char * argv[])
                         start();
                         break;
                     case 2:
-                        ndnrtcLib->stopPublishing();
+                        stop();
                         break;
                     case 3:
                         join();
@@ -420,14 +544,14 @@ int runNdnRtcApp(int argc, char * argv[])
                         break;
                 }
             } while (input != 0);
-
-            isMonitored = NO;
-            
-            freeView();
         } // interactive mode
         
+        isMonitored = NO;
         NdnRtcLibrary::destroyLibraryObject(ndnrtcLib);
         ndnrtcLib = NULL;
+
+        if (!headlessModeOn)
+            freeView();
     } // lib loaded
     
     return 1;

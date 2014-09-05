@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 SUBDIRS = src/objc .
 
-pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h
+pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/external-capturer.h
 
 lib_LTLIBRARIES = libndnrtc.la
 
@@ -13,11 +13,13 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-sender.cpp src/audio-sender.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
+  src/base-capturer.cpp src/base-capturer.h \
   src/camera-capturer.cpp src/camera-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
   src/endian.h \
+  src/external-capturer.cpp src/external-capturer.hpp \
   src/face-wrapper.cpp src/face-wrapper.h \
   src/fec.cpp src/fec.h \
   src/frame-buffer.cpp src/frame-buffer.h \
@@ -72,11 +74,18 @@ libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -flat_namespac
 if OS_DARWIN
   EXTRA_PROGRAMS = ndnrtc-demo
   ndnrtc_demo_SOURCES = demoapp/config.cc demoapp/config.h \
-    demoapp/main.mm demoapp/AppDelegate.m \
+    demoapp/main.mm demoapp/AppDelegate.h demoapp/AppDelegate.m \
     demoapp/renderer-stub.cc demoapp/renderer-stub.h \
     demoapp/view.cc demoapp/view.h \
-    src/simple-log.cpp include/simple-log.h
+    demoapp/CameraCapturer.h demoapp/CameraCapturer.m \
+    src/simple-log.cpp include/simple-log.h \
+    include/external-renderer.h include/external-capturer.h
+    
   ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
-  ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa
+  
+  ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa -framework AVFoundation -framework CoreVideo -framework CoreMedia
+  
+  ndnrtc_demo_OBJCFLAGS = -fobjc-arc
+  
   noinst_SCRIPTS = demoapp/rundemo.sh resources/ndnrtc.cfg
 endif

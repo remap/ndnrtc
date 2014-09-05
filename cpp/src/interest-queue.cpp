@@ -156,9 +156,15 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     << std::endl;
     
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
-    face_->expressInterest(*(entry.interest_),
-                           entry.onDataCallback_, entry.onTimeoutCallback_);
     
-    if (callback_)
-        callback_->onInterestIssued(entry.interest_);
+    try {
+        face_->expressInterest(*(entry.interest_),
+                               entry.onDataCallback_, entry.onTimeoutCallback_);
+        if (callback_)
+            callback_->onInterestIssued(entry.interest_);
+    }
+    catch (std::exception &e)
+    {
+        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
+    }
 }

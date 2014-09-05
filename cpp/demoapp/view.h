@@ -23,6 +23,7 @@ void initView();
 void freeView();
 
 int plotmenu();
+int selectFromList(const char** listItems, int listItemsSize, const char* listTitle);
 void statusUpdate(const std::string &time, const std::string &text);
 
 #ifdef SHOW_STATISTICS

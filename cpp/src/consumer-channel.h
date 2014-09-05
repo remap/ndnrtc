@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__consumer_channel__
 #define __ndnrtc__consumer_channel__
 
+//#define SERVICE_CHANNEL
+
 #include "video-consumer.h"
 #include "audio-consumer.h"
 #include "statistics.h"
@@ -20,7 +22,7 @@
 namespace ndnrtc {
     namespace new_api {
         class ConsumerChannel : public NdnRtcObject,
-                            public IServiceChannelCallback
+                            public IServiceChannelListenerCallback
         {
         public:
             ConsumerChannel(const ParamsStruct& params,
@@ -49,7 +51,6 @@ namespace ndnrtc {
             boost::shared_ptr<AudioConsumer> audioConsumer_;
             boost::shared_ptr<RttEstimation> rttEstimation_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
-            boost::shared_ptr<InterestQueue> serviceInterestQueue_;
             boost::shared_ptr<InterestQueue> videoInterestQueue_;
             boost::shared_ptr<InterestQueue> audioInterestQueue_;
             boost::shared_ptr<ServiceChannel> serviceChannel_;
@@ -62,7 +63,7 @@ namespace ndnrtc {
             virtual void onRegisterFailed(const boost::shared_ptr<const Name>&
                                           prefix);
             
-            // IServiceChannel interface
+            // IServiceChannelListenerCallback interface
             void
             onProducerParametersUpdated(const ParamsStruct& newVideoParams,
                                         const ParamsStruct& newAudioParams);

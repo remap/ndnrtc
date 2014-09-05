@@ -1,0 +1,16 @@
+# ip 	name	prefix
+128.97.98.7	ndn.aleph	/ndn/edu/ucla/remap
+128.195.4.36	ndn.uci	/ndn/edu/uci
+192.172.226.248	ndn.caida	/ndn/org/caida
+128.196.203.36	ndn.arizona	/ndn/edu/arizona
+129.82.138.48	ndn.colorado	/ndn/edu/colostate
+128.252.153.194	ndn.wash	/ndn/edu/wustl
+141.225.11.173	ndn.memphis	/ndn/edu/memphis
+128.174.239.4	ndn.illinois	/ndn/edu/uiuc
+141.212.108.18	ndn.michigan	/ndn/edu/umich
+129.10.52.193	ndn.northpole	/ndn/edu/neu
+162.105.146.26	ndn.beijing	/ndn/cn/edu/pku
+114.247.165.44	ndn.bupt	/ndn/cn/edu/bupt
+202.120.188.176	ndn.tongji	/ndn/cn/edu/tongji
+132.227.62.163	ndn.lip6	/ndn/fr/lip6
+161.105.194.154	ndn.orange	/ndn/fr/orange1

@@ -258,12 +258,22 @@ void
 ndnrtc::new_api::Pipeliner::initialDataArrived
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>& slot)
 {
-    LogTraceC << "initial data: [" << slot->dump() << "]" << std::endl;
-    
-    double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
-    startChasePipeliner(slot->getSequentialNumber()+1, 1000./(ChaserRateCoefficient*producerRate));
-    
-    bufferEventsMask_ = ChasingEventsMask;
+    // we need to check for exclusion filter explicitly
+    // there could be a case when data stopped coming for some time and
+    // consumer switched to chase mode and re-issued rightmost interest with
+    // EF, however previously sent interests were not cancelled (and there is
+    // no such option currently in API) and old data can still arrive
+    if (exclusionFilter_ == -1  || exclusionFilter_ < slot->getSequentialNumber())
+    {
+        LogTraceC << "initial data: [" << slot->dump() << "]" << std::endl;
+        
+        double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
+        startChasePipeliner(slot->getSequentialNumber()+1, 1000./(ChaserRateCoefficient*producerRate));
+        
+        bufferEventsMask_ = ChasingEventsMask;
+    }
+    else
+        LogWarnC << "got old data after rebuffering" << std::endl;
 }
 
 void

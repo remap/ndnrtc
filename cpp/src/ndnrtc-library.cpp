@@ -12,6 +12,7 @@
 #include "sender-channel.h"
 #include "consumer-channel.h"
 #include "objc/cocoa-renderer.h"
+#include "external-capturer.hpp"
 
 #include <stdlib.h>
 #include <string.h>
@@ -305,45 +306,27 @@ void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
 int NdnRtcLibrary::startPublishing(const char* username,
                                    IExternalRenderer* const renderer)
 {
-    ParamsStruct params = libParams_;
-    ParamsStruct audioParams = libAudioParams_;
-    
-    if (username)
+    return preparePublishing(username, false, renderer);
+}
+
+int NdnRtcLibrary::initPublishing(const char* username,
+                                  IExternalCapturer** const capturer)
+{
+    if (RESULT_GOOD(preparePublishing(username, true, NULL)))
     {
-        if (strcmp(username, "") == 0)
-            return notifyObserverWithError("username cannot be empty string");
-        
-        if (publisherId_)
-            free(publisherId_);
-        
-        publisherId_ = (char*)malloc(strlen(username)+1);
-        memset((void*)publisherId_, 0, strlen(username)+1);
-        memcpy((void*)publisherId_, username, strlen(username));
-        
-        params.producerId = username;
-        audioParams.producerId = username;
+        *capturer = SenderChannel->getCapturer();
+        return RESULT_OK;
     }
     
-    if (SenderChannel.get())
-        stopPublishing();
-    
-    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams,
-                                                         (IExternalRenderer*)renderer));
-    
-    sc->setObserver(this);
-    
-    if (RESULT_FAIL(sc->init()))
-        return -1;
-    
-    if (RESULT_FAIL(sc->startTransmission()))
-        return -1;
-    
-    SenderChannel = sc;
-    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
-    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params, 0);
-    notifyObserverWithState("transmitting",
-                            "started publishing under the user prefix: %s",
-                            producerPrefix->c_str());
+    return RESULT_ERR;
+}
+
+int NdnRtcLibrary::initPublishing(const char* username,
+                                  IExternalCapturer** const capturer,
+                                  IExternalRenderer* const renderer)
+{
+    preparePublishing(username, true, renderer);
+    *capturer = SenderChannel->getCapturer();
     
     return RESULT_OK;
 }
@@ -397,4 +380,53 @@ void NdnRtcLibrary::notifyObserver(const char *state, const char *args) const
 {
     if (observer_)
         observer_->onStateChanged(state, args);
+}
+
+int
+NdnRtcLibrary::preparePublishing(const char* username,
+                                 bool useExternalCapturer,
+                                 IExternalRenderer* const renderer)
+{
+    ParamsStruct params = libParams_;
+    ParamsStruct audioParams = libAudioParams_;
+    
+    if (username)
+    {
+        if (strcmp(username, "") == 0)
+            return notifyObserverWithError("username cannot be empty string");
+        
+        if (publisherId_)
+            free(publisherId_);
+        
+        publisherId_ = (char*)malloc(strlen(username)+1);
+        memset((void*)publisherId_, 0, strlen(username)+1);
+        memcpy((void*)publisherId_, username, strlen(username));
+        
+        params.producerId = username;
+        audioParams.producerId = username;
+    }
+    
+    if (SenderChannel.get())
+        stopPublishing();
+    
+    shared_ptr<NdnSenderChannel> sc(new NdnSenderChannel(params, audioParams,
+                                                         !useExternalCapturer,
+                                                         (IExternalRenderer*)renderer));
+    
+    sc->setObserver(this);
+    
+    if (RESULT_FAIL(sc->init()))
+        return RESULT_ERR;
+    
+    if (RESULT_FAIL(sc->startTransmission()))
+        return RESULT_ERR;
+    
+    SenderChannel = sc;
+    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params),
+    framePrefix = NdnRtcNamespace::getStreamFramePrefix(params, 0);
+    notifyObserverWithState("transmitting",
+                            "started publishing under the user prefix: %s",
+                            producerPrefix->c_str());
+    
+    return RESULT_OK;
 }

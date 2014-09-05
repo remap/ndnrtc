@@ -16,6 +16,7 @@
 #include "params.h"
 #include "statistics.h"
 #include "external-renderer.h"
+#include "external-capturer.h"
 
 namespace ndnrtc {
     
@@ -168,6 +169,32 @@ namespace ndnrtc {
          */
         virtual int startPublishing(const char* username,
                                     IExternalRenderer* const renderer);
+        
+        /**
+         * Initializes local publisher. Publishing starts as soon as user starts
+         * capturing new video frames and delivers them using IExternalCapturer
+         * interface.
+         * @param username Which will be used for publishing media
+         * @param capturer Pointer to an object conforming to IExternalCapturer
+         * @see IExternalCapturer
+         */
+        virtual int initPublishing(const char* username,
+                                   IExternalCapturer** const capturer);
+
+        /**
+         * Initializes local publisher. Publishing starts as soon as user starts
+         * capturing new video frames and delivers them using IExternalCapturer
+         * interface. Rendering is delegated to the external renderer object
+         * which should conform to the IExternalRenderer interface.
+         * @param username Which will be used for publishing media
+         * @param capturer Pointer to an object conforming to IExternalCapturer
+         * @param renderer Pointer to external rendering class which conforms to
+         * @see IExternalRenderer, IExternalCapturer
+         */
+        virtual int initPublishing(const char* username,
+                                   IExternalCapturer** const capturer,
+                                   IExternalRenderer* const renderer);
+        
         /**
          * Stops publishing. If publishing was not started, does nothing.
          */
@@ -243,6 +270,10 @@ namespace ndnrtc {
                                     const char *format, ...) const;
         void notifyObserver(const char *state, const char *args) const;
         virtual void onErrorOccurred(const char *errorMessage);
+        
+        int preparePublishing(const char* username,
+                              bool useExternalCapturer,
+                              IExternalRenderer* const renderer);
     };
 }
 

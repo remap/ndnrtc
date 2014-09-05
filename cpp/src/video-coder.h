@@ -28,7 +28,7 @@ namespace ndnrtc {
     {
     public:
         NdnVideoCoder(const CodecParams& codecParams);//const ParamsStruct &params);
-        ~NdnVideoCoder() {}
+        ~NdnVideoCoder();
         
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
             frameConsumer_ = frameConsumer;
@@ -60,6 +60,12 @@ namespace ndnrtc {
         IEncodedFrameConsumer *frameConsumer_ = nullptr;
         webrtc::VideoCodec codec_;
         boost::shared_ptr<webrtc::VideoEncoder> encoder_;
+        
+        webrtc::Scaler frameScaler_;
+        webrtc::I420VideoFrame scaledFrame_;
+        
+        void
+        initScaledFrame();
     };
     
     class IEncodedFrameConsumer

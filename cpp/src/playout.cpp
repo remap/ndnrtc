@@ -78,11 +78,18 @@ Playout::start()
 int
 Playout::stop()
 {
-    playoutThread_.SetNotAlive();
-    isRunning_ = false;
-    playoutThread_.Stop();
+    if (isRunning_)
+    {
+        playoutThread_.SetNotAlive();
+        isRunning_ = false;
+        playoutThread_.Stop();
+        jitterTiming_.stop();
+        
+        LogInfoC << "stopped" << endl;
+    }
+    else
+        return RESULT_WARN;
     
-    LogInfoC << "stopped" << endl;
     return RESULT_OK;
 }
 

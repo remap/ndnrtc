@@ -133,7 +133,7 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params,
                 face->setCommandSigningInfo(*keyChain, *certificateName);
             else
                 face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
-            }
+        }
             
         fp.reset(new FaceProcessor(face));
         fp->setTransport(transport);
