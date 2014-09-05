@@ -195,7 +195,7 @@ namespace ndnrtc
         "testuser",     // producer id
         "video0",       // stream name
         "ndn/edu/ucla/remap",     // ndn hub
-        1054,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
+        1000,   // segment size for media frame (MTU - NDN header (currently 446 bytes))
         1,      // data freshness (seconds) value
         30,     // producer rate (currently equal to playback rate)
         true,   // skip incomplete frames
@@ -238,7 +238,7 @@ namespace ndnrtc
         "testuser",     // producer id
         "audio0",       // stream name
         "ndn/edu/ucla/remap",     // ndn hub
-        1054,   // segment size for media frame
+        1000,   // segment size for media frame
         1,      // data freshness (seconds) value
         50,     // producer rate (currently equal to playback rate)
         false,  // skip incomplete frames
