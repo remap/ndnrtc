@@ -33,7 +33,7 @@ isConsuming_(false),
 interestQueue_(interestQueue),
 rttEstimation_(rttEstimation),
 chaseEstimation_(new ChaseEstimation()),
-bufferEstimator_(new BufferEstimator()),
+bufferEstimator_(new BufferEstimator(rttEstimation_, params.jitterSize)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
