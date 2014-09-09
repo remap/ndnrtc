@@ -11,6 +11,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
   src/audio-sender.cpp src/audio-sender.h \
+  src/audio-thread.cpp src/audio-thread.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
@@ -27,6 +28,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
   src/media-sender.cpp src/media-sender.h \
+  src/media-thread.cpp src/media-thread.h \  
   src/ndn-assembler.cpp src/ndn-assembler.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
@@ -57,6 +59,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/video-playout.cpp src/video-playout.h \
   src/video-renderer.cpp src/video-renderer.h \
   src/video-sender.cpp src/video-sender.h \
+  src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
 

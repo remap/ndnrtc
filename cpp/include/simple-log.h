@@ -193,7 +193,7 @@ namespace ndnlog {
                 if (isWritingLogEntry_ &&
                     currentEntryLogType_ >= (NdnLogType)logLevel_)
                 {
-                    getOutStream() << data;
+                    getOutStream() << data; 
                 }
                 
                 return *this;
@@ -257,6 +257,9 @@ namespace ndnlog {
             sharedInstance()
             { return *sharedInstance_; }
             
+            static std::string
+            stringify(NdnLoggerLevel lvl);
+            
             void
             flush();
             
@@ -288,9 +291,6 @@ namespace ndnlog {
             
             int64_t
             getMillisecondTimestamp();
-            
-            static std::string
-            stringify(NdnLoggerLevel lvl);
             
             int i = 0;
             

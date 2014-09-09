@@ -170,6 +170,43 @@ void NdnRtcLibrary::getDefaultParams(ParamsStruct &videoParams,
 }
 
 int NdnRtcLibrary::getStatistics(const char *producerId,
+                                 const char* streamName,
+                                 const char* threadName,
+                                 NdnLibStatistics &stat) const
+{
+    
+}
+
+int NdnRtcLibrary::startLocalProducer(const new_api::AppParams& params)
+{
+    LogInfo("test.log") << "Params: " << params;
+    Logger::getLogger("test.log").flush();
+}
+
+int NdnRtcLibrary::startLocalProducer(const new_api::AppParams& params,
+                                      IExternalRenderer* const renderer)
+{
+    
+}
+
+int NdnRtcLibrary::stopLocalProducer()
+{
+    
+}
+
+void NdnRtcLibrary::getLocalProducerParams(new_api::AppParams& params)
+{
+    
+}
+
+void NdnRtcLibrary::getRemoteProducerParams(const char* producerId,
+                             const ParamsStruct* videoParams,
+                             const ParamsStruct* audioParams)
+{
+    
+}
+
+int NdnRtcLibrary::getStatistics(const char *producerId,
                                  NdnLibStatistics &stat) const
 {
     memset((void*)&stat, 0, sizeof(NdnLibStatistics));

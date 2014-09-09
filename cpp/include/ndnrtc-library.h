@@ -108,67 +108,59 @@ namespace ndnrtc {
         ~NdnRtcLibrary();
         
         /**
-         * Configures library object with provided parameters
-         * @param params Video parameters
-         * @param audioParams Audio parameters
-         */
-        virtual void configure(const ParamsStruct &params,
-                               const ParamsStruct &audioParams);
-        /**
-         * Returns current library parameters
-         * @param params Video parameters
-         * @param audioParams Audio parameters
-         */
-        virtual void currentParams(ParamsStruct &params,
-                                   ParamsStruct &audioParams);
-        
-        /**
          * Sets library observer
          * @param observer Refernce to observer object
          */
         virtual void setObserver(INdnRtcLibraryObserver *observer) {
             observer_ = observer;
         }
-        /**
-         * Returns default parameters for audio and video. This method can be 
-         * used as a preparation step before configuring library - after calling 
-         * this method, necessary parameters can be altered and library 
-         * configured using these structures.
-         * @param videoParams Default video parameters will be written into this
-         * structure
-         * @param audioParams Default audio parameters will be written into this
-         * structure
-         */
-        virtual void getDefaultParams(ParamsStruct &videoParams,
-                                      ParamsStruct &audioParams) const;
         
         /**
          * Returns statistics of the producer queried
          * @param producerId Name of the user, which stream statistics are being
          * queried
-         * @param stat Upon return, this structure contains statistics for the 
+         * @param streamName The name of producer's stream
+         * @param threadName The name of the producer's stream thread
+         * @param stat Upon return, this structure contains statistics for the
          * user queried
          */
         virtual int getStatistics(const char *producerId,
+                                  const char* streamName,
+                                  const char* threadName,
                                   NdnLibStatistics &stat) const;
         
+
         /**
-         * Starts publishing media streams under provided username. If video is 
-         * enabled, rendering is performed in separate cocoa window, managed by
-         * the library
-         * @param username Which will be used for publishing media
+         * Starts publishing media streams under provided username configured
+         * according to provided parameters. If video is enabled, rendering is
+         * performed in separate cocoa window, managed by the library
+         * @param params Parameters used for configuring local producer
          */
-        virtual int startPublishing(const char* username);
+        virtual int startLocalProducer(const new_api::AppParams& params);
+        
         /**
-         * Starts publishing media streams under provided username. If video is 
-         * enabled, rendering is delegated to the external renderer object which
-         * should conform to the IExternalRenderer interface.
-         * @param username Which will be used for publishing media
+         * Starts publishing media streams under provided username configured
+         * according to provided parameters. If video is enabled, rendering is
+         * delegated to the external renderer object which should conform to the
+         * IExternalRenderer interface.
+         * @param params Parameters used for configuring local producer
          * @param renderer Pointer to external rendering class which conforms to
          * IExternalRenderer interface.
          */
-        virtual int startPublishing(const char* username,
-                                    IExternalRenderer* const renderer);
+        virtual int startLocalProducer(const new_api::AppParams& params,
+                                       IExternalRenderer* const renderer);
+        
+        /**
+         * Stops local producer. If local producer was not started, does nothing.
+         */
+        virtual int stopLocalProducer();
+        
+        /**
+         * Returns current local producer's parameters, if it's started.
+         * Otherwise - returns zeroed structures.
+         * @param params Parameters, used to configure local producer
+         */
+        virtual void getLocalProducerParams(new_api::AppParams& params);
         
         /**
          * Initializes local publisher. Publishing starts as soon as user starts
@@ -194,11 +186,6 @@ namespace ndnrtc {
         virtual int initPublishing(const char* username,
                                    IExternalCapturer** const capturer,
                                    IExternalRenderer* const renderer);
-        
-        /**
-         * Stops publishing. If publishing was not started, does nothing.
-         */
-        virtual int stopPublishing();
 
         /**
          * Returns full NDN prefix under which publishing is performed
@@ -235,9 +222,22 @@ namespace ndnrtc {
          * @param producerId Remote producer name
          * @param prducerPrefix Upon return, contains full NDN prefix for media 
          * fetching
+         * @deprecated Use getRemoteProducerParams instead
          */
         virtual void getProducerPrefix(const char* producerId,
-                                       const char** producerPrefx);
+                                       const char** producerPrefx) DEPRECATED;
+
+        /**
+         * Returns current remote producer's parameters in ParamsStruct 
+         * structure. This structure has updated parameters, actually fetched 
+         * from remote producer.
+         * @param producerId Remote producer user name
+         * @param remoteProducerParams A pointer to the structure which upon 
+         * return contains actual remote producer's parameters
+         */
+        virtual void getRemoteProducerParams(const char* producerId,
+                                             const ParamsStruct* videoParams,
+                                             const ParamsStruct* audioParams);
         
         /**
          * Returns dynamic library handle
@@ -257,6 +257,82 @@ namespace ndnrtc {
          * Arranges all app windows on the screen
          */
         virtual void arrangeWindows();
+        
+        //**********************************************************************
+        // Deprecated methods
+        //**********************************************************************
+        
+        /**
+         * Returns default parameters for audio and video. This method can be
+         * used as a preparation step before configuring library - after calling
+         * this method, necessary parameters can be altered and library
+         * configured using these structures.
+         * @param videoParams Default video parameters will be written into this
+         * structure
+         * @param audioParams Default audio parameters will be written into this
+         * structure
+         * @deprecated This method is not supported anymore
+         */
+        virtual void getDefaultParams(ParamsStruct &videoParams,
+                                      ParamsStruct &audioParams) const DEPRECATED;
+        
+        /**
+         * Returns statistics of the producer queried
+         * @param producerId Name of the user, which stream statistics are being
+         * queried
+         * @param stat Upon return, this structure contains statistics for the
+         * user queried
+         * @deprecated Use getStatistics(const char*, unsigned int, NdnLibStatistics)
+         * instead
+         */
+        virtual int getStatistics(const char *producerId,
+                                  NdnLibStatistics &stat) const DEPRECATED;
+        
+        /**
+         * Configures library object with provided parameters
+         * @param params Video parameters
+         * @param audioParams Audio parameters
+         * @deprecated Now publishing parameters should be passed into
+         * designated calls (startLocalProducer)
+         * @see startLocalProducer
+         */
+        virtual void configure(const ParamsStruct &params,
+                               const ParamsStruct &audioParams) DEPRECATED;
+        
+        /**
+         * Returns current library parameters
+         * @param params Video parameters
+         * @param audioParams Audio parameters
+         * @deprecated Use getLocalProducerParams instead
+         */
+        virtual void currentParams(ParamsStruct &params,
+                                   ParamsStruct &audioParams) DEPRECATED;
+        
+        /**
+         * Starts publishing media streams under provided username. If video is
+         * enabled, rendering is performed in separate cocoa window, managed by
+         * the library
+         * @param username Which will be used for publishing media
+         * @deprecated Use startLocalProducer calls instead
+         */
+        virtual int startPublishing(const char* username) DEPRECATED;
+        /**
+         * Starts publishing media streams under provided username. If video is
+         * enabled, rendering is delegated to the external renderer object which
+         * should conform to the IExternalRenderer interface.
+         * @param username Which will be used for publishing media
+         * @param renderer Pointer to external rendering class which conforms to
+         * IExternalRenderer interface.
+         * @deprecated Use startLocalProducer calls instead
+         */
+        virtual int startPublishing(const char* username,
+                                    IExternalRenderer* const renderer) DEPRECATED;
+        
+        /**
+         * Stops publishing. If publishing was not started, does nothing.
+         * @deprecated Use stopLocalProducer instead
+         */
+        virtual int stopPublishing() DEPRECATED;
         
     private:
         void *libraryHandle_;
