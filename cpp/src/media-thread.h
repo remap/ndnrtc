@@ -1,6 +1,6 @@
 //
 //  media-thread.h
-//  ndnrtc
+//  libndnrtc
 //
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
@@ -8,8 +8,8 @@
 //  Author:  Peter Gusev
 //
 
-#ifndef __ndnrtc__media_sender__
-#define __ndnrtc__media_sender__
+#ifndef __ndnrtc__media_thread__
+#define __ndnrtc__media_thread__
 
 #define NLOG_COMPONENT_NAME "NdnRtcSender"
 
@@ -21,26 +21,27 @@
 
 namespace ndnrtc
 {
-    namespace new_api {
+    namespace new_api
+    {
         /**
          * This class carries paramteres necessary for establishing and 
          * operating a media stream
          */
         class MediaThreadSettings
         {
-        public:
+        public :
             MediaThreadSettings(){}
             virtual ~MediaThreadSettings(){}
             
-            bool useCache_;
             unsigned int segmentSize_, dataFreshnessMs_;
-            std::string threadName_;
+            MediaThreadParams threadParams_;
             
-            ndn::Name prefix_;
+            std::string streamPrefix_;
             ndn::Name certificateName_;
             
             boost::shared_ptr<ndn::KeyChain> keyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
+            boost::shared_ptr<MemoryContentCache> memoryCache_;
         };
         
         /**
@@ -62,7 +63,7 @@ namespace ndnrtc
             /**
              * Called whenever thread failed to register prefix
              */
-            virtual void onMediaThreadRegistrationFailed() = 0;
+            virtual void onMediaThreadRegistrationFailed(std::string threadName) = 0;
         };
         
         /**
@@ -92,6 +93,10 @@ namespace ndnrtc
             getSettings(MediaThreadSettings& settings)
             { settings = settings_; }
             
+            std::string
+            getPrefix()
+            { return threadPrefix_; }
+            
         protected:
             typedef struct _PitEntry {
                 int64_t arrivalTimestamp_;
@@ -99,7 +104,10 @@ namespace ndnrtc
             } PitEntry;
             
             MediaThreadSettings settings_;
+            std::string threadPrefix_;
+            
             unsigned int segSizeNoHeader_;
+            uint64_t registeredPrefixId_ = 0;
             
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<MemoryContentCache> memCache_;
@@ -153,4 +161,4 @@ namespace ndnrtc
     }
 }
 
-#endif /* defined(__ndnrtc__media_sender__) */
+#endif /* defined(__ndnrtc__media_thread__) */

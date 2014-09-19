@@ -14,7 +14,7 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
-#include "ndnrtc-library.h"
+#include "interfaces.h"
 
 namespace ndnrtc {
     

@@ -87,19 +87,17 @@ namespace ndnrtc
         };
         
         // video thread parameteres
-        class VideoThreadParams : public MediaThreadParams {
+        class VideoCoderParams : public Params {
         public:
-            double codecFrameRate_ = 0;
-            unsigned int gop_ = 0;
-            unsigned int startBitrate_ = 0, maxBitrate_ = 0;
-            unsigned int encodeWidth_ = 0, encodeHeight_ = 0;
-            bool dropFramesOn_ = false;
+            double codecFrameRate_;
+            unsigned int gop_;
+            unsigned int startBitrate_, maxBitrate_;
+            unsigned int encodeWidth_, encodeHeight_;
+            bool dropFramesOn_;
             
             void write(std::ostream& os) const
             {
-                MediaThreadParams::write(os);
-                
-                os << "; "
+                os
                 << codecFrameRate_ << "FPS; GOP: "
                 << gop_ << "; Start bitrate: "
                 << startBitrate_ << "kbit/s; Max bitrate:"
@@ -109,34 +107,21 @@ namespace ndnrtc
             }
         };
         
-        // media stream parameters
-        class MediaStreamParams : public Params {
+        class VideoThreadParams : public MediaThreadParams {
         public:
-            ~MediaStreamParams()
-            {
-                for (int i = 0; i < mediaThreads_.size(); i++) delete mediaThreads_[i];
-                mediaThreads_.clear();
-            }
-            
-            std::string streamName_ = "";
-            CaptureDeviceParams *captureDevice_ = NULL;
-            std::vector<MediaThreadParams*> mediaThreads_;
+            VideoCoderParams coderParams_;
+//            double codecFrameRate_ = 0;
+//            unsigned int gop_ = 0;
+//            unsigned int startBitrate_ = 0, maxBitrate_ = 0;
+//            unsigned int encodeWidth_ = 0, encodeHeight_ = 0;
+//            bool dropFramesOn_ = false;
             
             void write(std::ostream& os) const
             {
-                os << "name: " << streamName_ << "; ";
+                MediaThreadParams::write(os);
                 
-                if (captureDevice_)
-                    os << *captureDevice_;
-                else
-                    os << "no device";
-                
-                os << "; " << mediaThreads_.size() << " threads: " << std::endl;
-                
-                for (int i = 0; i < mediaThreads_.size(); i++)
-                    os << "[" << i << ": " << *(mediaThreads_[i]) << "]" << std::endl;
+                os << "; " << coderParams_;
             }
-            
         };
         
         // general producer parameters
@@ -149,6 +134,37 @@ namespace ndnrtc
                 os << "seg size: " << segmentSize_
                 << "; freshness: " << freshnessMs_;
             }
+        };
+        
+        // media stream parameters
+        class MediaStreamParams : public Params {
+        public:
+            ~MediaStreamParams()
+            {
+                for (int i = 0; i < mediaThreads_.size(); i++) delete mediaThreads_[i];
+                mediaThreads_.clear();
+            }
+            
+            GeneralProducerParams producerParams_;
+            std::string streamName_ = "";
+            CaptureDeviceParams *captureDevice_ = NULL;
+            std::vector<MediaThreadParams*> mediaThreads_;
+            
+            void write(std::ostream& os) const
+            {
+                os << "name: " << streamName_ << "; " << producerParams_ << "; ";
+                
+                if (captureDevice_)
+                    os << *captureDevice_;
+                else
+                    os << "no device";
+                
+                os << "; " << mediaThreads_.size() << " threads: " << std::endl;
+                
+                for (int i = 0; i < mediaThreads_.size(); i++)
+                    os << "[" << i << ": " << *(mediaThreads_[i]) << "]" << std::endl;
+            }
+            
         };
         
         // general consumer parameters
@@ -244,11 +260,6 @@ namespace ndnrtc
             GeneralParams generalParams_;
             HeadlessModeParams headlessModeParams_;
             
-            // producer general params
-            GeneralProducerParams
-            videoProducerParams_,
-            audioProducerParams_;
-            
             // consumer general params
             GeneralConsumerParams
             videoConsumerParams_,
@@ -270,9 +281,6 @@ namespace ndnrtc
                 << "-General:" << std::endl
                 << generalParams_ << std::endl
                 << "-Headless mode: " << headlessModeParams_ << std::endl
-                << "-Producer:" << std::endl
-                << "--Audio: " << audioProducerParams_ << std::endl
-                << "--Video: " << videoProducerParams_ << std::endl
                 << "-Consumer:" << std::endl
                 << "--Audio: " << audioConsumerParams_ << std::endl
                 << "--Video: " << videoConsumerParams_ << std::endl
@@ -298,8 +306,27 @@ namespace ndnrtc
                 
             }
         };
+        
+        class SessionInfo {
+        public:
+            SessionInfo(){}
+            ~SessionInfo()
+            {
+                for (int i = 0; i < audioStreams_.size(); i++) delete audioStreams_[i];
+                audioStreams_.clear();
+                
+                for (int i = 0; i < videoStreams_.size(); i++) delete videoStreams_[i];
+                videoStreams_.clear();
+            }
+            
+            std::vector<MediaStreamParams*> audioStreams_;
+            std::vector<MediaStreamParams*> videoStreams_;
+        };
     }
     
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
     static const unsigned int
         MaxWidth = 5000,
         MinWidth = 100,

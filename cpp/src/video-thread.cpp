@@ -38,12 +38,12 @@ VideoThread::init(const VideoThreadSettings& settings)
     if (RESULT_FAIL(res))
         return res;
     
-    deltaFramesPrefix_ = settings_.prefix_;
+    deltaFramesPrefix_ = Name(threadPrefix_);
     deltaFramesPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesDelta));
-    keyFramesPrefix_ = settings_.prefix_;
+    keyFramesPrefix_ = Name(threadPrefix_);
     keyFramesPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesKey));
     
-    if (RESULT_FAIL(coder_->init(settings_.coderSettings_)))
+    if (RESULT_FAIL(coder_->init(settings_.getVideoParams()->coderParams_)))
         return notifyError(RESULT_ERR, "can't initialize video encoder");
     
     keyFrameNo_ = -1;

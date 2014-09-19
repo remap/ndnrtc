@@ -58,6 +58,14 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
 }
 
 void
+FaceWrapper::unregisterPrefix(uint64_t prefixId)
+{
+    CriticalSectionScoped scopedCs(&faceCs_);
+    
+    face_->removeRegisteredPrefix(prefixId);
+}
+
+void
 FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
                                    const Name& certificateName)
 {
@@ -92,13 +100,18 @@ FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
                                      shared_ptr<ndnrtc::FaceWrapper>& face,
                                      shared_ptr<ndn::Transport>& transport)
 {
+    return setupFaceAndTransport(std::string(params.host), params.portNum, face, transport);
+}
+
+int
+FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
+                                     shared_ptr<ndnrtc::FaceWrapper>& face,
+                                     shared_ptr<ndn::Transport>& transport)
+{
     int res = RESULT_OK;
     
     try
     {
-        std::string host = std::string(params.host);
-        int port = params.portNum;
-        
         shared_ptr<ndn::Transport::ConnectionInfo>
         connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
         
@@ -121,11 +134,19 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params,
                                    const shared_ptr<ndn::KeyChain>& keyChain,
                                    const shared_ptr<Name>& certificateName)
 {
+    return createFaceProcessor(std::string(params.host), params.portNum, keyChain, certificateName);
+}
+
+static boost::shared_ptr<FaceProcessor>
+createFaceProcessor(const std::string host, const int port,
+                    const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
+                    const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>())
+{
     shared_ptr<FaceWrapper> face;
     shared_ptr<ndn::Transport> transport;
     shared_ptr<FaceProcessor> fp;
     
-    if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(params, face, transport)))
+    if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(host, port, face, transport)))
     {
         if (keyChain.get())
         {

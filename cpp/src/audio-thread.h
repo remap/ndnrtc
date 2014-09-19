@@ -8,8 +8,8 @@
 //  Author:  Peter Gusev
 //
 
-#ifndef __ndnrtc__audio_sender__
-#define __ndnrtc__audio_sender__
+#ifndef __ndnrtc__audio_thread__
+#define __ndnrtc__audio_thread__
 
 #include "ndnrtc-common.h"
 #include "media-thread.h"
@@ -81,4 +81,4 @@ namespace ndnrtc
     }
 }
 
-#endif /* defined(__ndnrtc__audio_sender__) */
+#endif /* defined(__ndnrtc__audio_thread__) */

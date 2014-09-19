@@ -27,7 +27,8 @@ namespace ndnrtc {
     
     class BaseCapturer : public NdnRtcObject {
     public:
-        BaseCapturer(const ParamsStruct& params);
+        BaseCapturer();
+        BaseCapturer(const ParamsStruct& params) DEPRECATED;
         virtual ~BaseCapturer();
         
         virtual int init();

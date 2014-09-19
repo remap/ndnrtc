@@ -15,38 +15,9 @@
 
 #include "params.h"
 #include "statistics.h"
-#include "external-renderer.h"
-#include "external-capturer.h"
+#include "interfaces.h"
 
 namespace ndnrtc {
-    
-    class INdnRtcObjectObserver {
-    public:
-        virtual ~INdnRtcObjectObserver(){}
-        virtual void onErrorOccurred(const char *errorMessage) = 0;
-    };
-    
-    /**
-     * This abstract class declares interface for the library's observer - an
-     * instance which can receive status updates from the library.
-     */
-    class INdnRtcLibraryObserver {
-    public:
-        /**
-         * This method is called whenever library encouteres errors or state
-         * transistions (for instance, fetching has started). Arguments provided
-         * work only as a source of additional information about what has 
-         * happened inside the library.
-         * @param state Indicates which state library has encountered (i.e. 
-         * "error" or "info"). Can be used by observer for filtering important 
-         * events. Currently, following states are provided:
-         *      "error"
-         *      "info"
-         * @param args Any additional info that accompany new state (human-
-         * readable text information).
-         */
-        virtual void onStateChanged(const char *state, const char *args) = 0;
-    };
     
     /**
      * This class provides interface to work with NDN-RTC library.
@@ -129,7 +100,76 @@ namespace ndnrtc {
                                   const char* threadName,
                                   NdnLibStatistics &stat) const;
         
-
+        /**
+         * Starts NDN-RTC session with username and prefix provided
+         * @param username NDN-RTC user name
+         * @return User prefix in the following form:
+         *      <prefix>/<ndnrtc_component>/<username>
+         *      where ndnrtc_component is "ndnrtc/user", but may be changed in
+         *      future releases
+         */
+        virtual std::string startSession(const std::string& username,
+                                         const new_api::GeneralParams& generalParams);
+        
+        virtual int stopSession(const std::string& userPrefix);
+        
+        /**
+         * Sets user session observer
+         * @param username
+         * @param prefix
+         */
+        virtual int setSessionObserver(const std::string& username,
+                                       const std::string& prefix,
+                                       ISessionObserver** const sessionObserver);
+        
+        virtual int removeSessionObserver(const std::string& username,
+                                          const std::string& prefix);
+        
+        /**
+         * Adds local stream to the session identified by userPrefix parameter
+         * @param userPrefix User prefix obtained by previous startSession call
+         * @param params
+         * @param capturer
+         * @return Stream prefix in th following form:
+         *      <userPrefix>/<ndnrtc_streams>/<stream_name>
+         *      where ndnrtc_streams is "streams", but may be changed in future 
+         *      releases
+         * @see startSession
+         */
+        virtual std::string addLocalStream(const std::string& userPrefix,
+                                           const new_api::MediaStreamParams& params,
+                                           IExternalCapturer** const capturer);
+        
+        /**
+         * Removes local stream identified by streamPrefix
+         * @param streamPrefix Stream prefix obtained by previous addLocalStream
+         * call
+         * @see addLocalStream
+         */
+        virtual int removeLocalStream(const std::string& streamPrefix);
+        
+        /**
+         * Adds local thread to the existing media stream identified by 
+         * streamPrefix
+         * @param streamPrefix Stream prefix obtained by previous addLocalStream
+         * call
+         * @param params Media thread parameters
+         * @return Thread prefix in the following form:
+         *      <streamPrefix>/<thread_name>
+         *      where thread_name is taken from thread parameters provided
+         * @see addLocalStream
+         */
+        virtual std::string addLocalThread(const std::string& streamPrefix,
+                                           const new_api::MediaThreadParams& params);
+        
+        /**
+         * Removes local thread identified by threadPrefix provided
+         * @param threadPrefix Thread prefix obtained by previous call to 
+         * addLocalThread
+         * @see addLocalThread
+         */
+        virtual int removeLocalThread(const std::string& threadPrefix);
+        
         /**
          * Starts publishing media streams under provided username configured
          * according to provided parameters. If video is enabled, rendering is

@@ -1,0 +1,123 @@
+//
+//  interfaces.h
+//  libndnrtc
+//
+//  Created by Peter Gusev on 9/18/14.
+//  Copyright (c) 2014 REMAP. All rights reserved.
+//
+
+#ifndef libndnrtc_interfaces_h
+#define libndnrtc_interfaces_h
+
+#include <stdint.h>
+
+namespace ndnrtc
+{
+    /**
+     * This interface defines external renderers.
+     * Each time, the frame is ready to be rendered, library calls
+     * getFrameBuffer which should return a pointer to the buffer where library
+     * can copy RGB frame data. Once this data is copied, library makes
+     * renderRGBFrame call and passes the same buffer with additional parameters
+     * so the renderer can perform rendering operations.
+     */
+    class IExternalRenderer
+    {
+    public:
+        /**
+         * Should return allocated buffer big enough to store RGB frame data
+         * (width*height*3) bytes.
+         * @param width Width of the frame (NOTE: width can change during run)
+         * @param height Height of the frame (NOTE: height can change during run)
+         * @return Allocated buffer where library can copy RGB frame data
+         */
+        virtual uint8_t* getFrameBuffer(int width, int height) = 0;
+        
+        /**
+         * This method is called every time new frame is available for rendering
+         * @param timestamp Frame's timestamp
+         * @param width Frame's width (NOTE: width can change during run)
+         * @param height Frame's height (NOTE: height can change during run)
+         * @param buffer Buffer with the RGB frame data (the same that was
+         * returned from getFrameBuffer call)
+         */
+        virtual void renderRGBFrame(int64_t timestamp, int width, int height,
+                                    const uint8_t* buffer) = 0;
+    };
+
+    /**
+     * This class is used for delivering raw ARGB frames to the library.
+     * After calling initPublishing, library returns a pointer of object
+     * confirming this interface to a caller. Caller should use this pointer
+     * for delivering frames into the library.
+     * @see NdnRtcLibrary::initPublishing
+     */
+    class IExternalCapturer
+    {
+    public:
+        /**
+         * This method should be called in order to initiate frame delivery into
+         * the library
+         */
+        virtual void capturingStarted() = 0;
+        
+        /**
+         * This method should be called in order to stop frame delivery into the
+         * library
+         */
+        virtual void capturingStopped() = 0;
+        
+        /**
+         * Calling this methond results in sending new raw frame into library's
+         * video processing pipe which eventually should result in publishing
+         * of encoded frame in NDN.
+         * However, not every frame will be published - some frames are dropped
+         * by the encoder.
+         * @param bgraFramData Frame data in ARGB format
+         * @param frameSize Size of the frame data
+         */
+        virtual int incomingArgbFrame(const unsigned int width,
+                                      const unsigned int height,
+                                      unsigned char* argbFrameData,
+                                      unsigned int frameSize) = 0;
+    };    
+    
+    /**
+     * Session observer
+     */
+    class ISessionObserver
+    {
+    public:
+
+    };
+    
+    class INdnRtcObjectObserver {
+    public:
+        virtual ~INdnRtcObjectObserver(){}
+        virtual void onErrorOccurred(const char *errorMessage) = 0;
+    };
+    
+    /**
+     * This abstract class declares interface for the library's observer - an
+     * instance which can receive status updates from the library.
+     */
+    class INdnRtcLibraryObserver {
+    public:
+        /**
+         * This method is called whenever library encouteres errors or state
+         * transistions (for instance, fetching has started). Arguments provided
+         * work only as a source of additional information about what has
+         * happened inside the library.
+         * @param state Indicates which state library has encountered (i.e.
+         * "error" or "info"). Can be used by observer for filtering important
+         * events. Currently, following states are provided:
+         *      "error"
+         *      "info"
+         * @param args Any additional info that accompany new state (human-
+         * readable text information).
+         */
+        virtual void onStateChanged(const char *state, const char *args) = 0;
+    };
+}
+
+#endif

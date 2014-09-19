@@ -71,7 +71,11 @@ namespace ndnrtc {
          * @see getUserPrefix for more info on form of "user_prefix" component
          */
         static boost::shared_ptr<std::string>
-        getStreamPrefix(const ParamsStruct &params);
+        getStreamPrefix(const ParamsStruct &params) DEPRECATED;
+        
+        static boost::shared_ptr<std::string>
+        getStreamPrefix(const std::string &userPrefix,
+                        const std::string &streamName);
         
         /**
          * Builds stream frame prefix for current parameters
@@ -107,7 +111,10 @@ namespace ndnrtc {
          
          */
         static boost::shared_ptr<std::string>
-        getSessionInfoPrefix(const ParamsStruct &params);
+        getSessionInfoPrefix(const ParamsStruct &params) DEPRECATED;
+        
+        static boost::shared_ptr<std::string>
+        getSessionInfoPrefix(const std::string& userPrefix);
         
         static boost::shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static boost::shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);

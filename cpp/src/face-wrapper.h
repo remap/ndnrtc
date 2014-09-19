@@ -43,6 +43,9 @@ namespace ndnrtc {
                        WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
         void
+        unregisterPrefix(uint64_t prefixId);
+        
+        void
         setCommandSigningInfo(KeyChain& keyChain, const Name& certificateName);
         void
         processEvents();
@@ -95,10 +98,20 @@ namespace ndnrtc {
         static int
         setupFaceAndTransport(const ParamsStruct &params,
                               boost::shared_ptr<FaceWrapper>& face,
+                              boost::shared_ptr<Transport>& transport) DEPRECATED;
+        
+        static int
+        setupFaceAndTransport(const std::string host, const int port,
+                              boost::shared_ptr<FaceWrapper>& face,
                               boost::shared_ptr<Transport>& transport);
         
         static boost::shared_ptr<FaceProcessor>
         createFaceProcessor(const ParamsStruct& params,
+                            const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
+                            const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>()) DEPRECATED;
+        
+        static boost::shared_ptr<FaceProcessor>
+        createFaceProcessor(const std::string host, const int port,
                             const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
                             const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>());
         

@@ -62,9 +62,15 @@ ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixSt
     
     ndnKeyChain_ = keyChain;
     signingCertificateName_ = signingCertificateName;
-    faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
+    registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
                                                             bind(&ServiceChannel::onInterest, this, _1, _2, _3),
                                                             bind(&ServiceChannel::onRegisterFailed, this, _1));
+}
+
+void
+ServiceChannel::stopSessionInfoBroadcast()
+{
+    faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
 }
 
 void
@@ -143,10 +149,15 @@ void
 ServiceChannel::onData(const shared_ptr<const Interest>& interest,
                        const shared_ptr<Data>& data)
 {
-    SessionInfo sessionInfo(data->getContent().size(), data->getContent().buf());
+    SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
     
-    if (sessionInfo.isValid())
+    if (sessionInfoData.isValid())
+    {
+        SessionInfo sessionInfo;
+        
+        sessionInfoData.getSessionInfo(sessionInfo);
         updateParametersFromInfo(sessionInfo);
+    }
     else
         getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
 }
@@ -161,27 +172,28 @@ ServiceChannel::onTimeout(const shared_ptr<const Interest>& interest)
 void
 ServiceChannel::updateParametersFromInfo(const SessionInfo &sessionInfo)
 {
-    ParamsStruct videoParams, audioParams;
-    memset(&videoParams, 0, sizeof(ParamsStruct));
-    memset(&audioParams, 0, sizeof(ParamsStruct));
-    
-    if (RESULT_NOT_FAIL(sessionInfo.getParams(videoParams, audioParams)))
-    {
-        bool needUpdate = false;
-        
-        if ((needUpdate = hasUpdates(videoParams_, videoParams)))
-            SessionInfo::updateParams(videoParams_, videoParams);
-        
-        if ((needUpdate |= hasUpdates(audioParams_, audioParams)))
-            SessionInfo::updateParams(audioParams_, audioParams);
-        
-        if (needUpdate)
-        {
-            getCallbackAsListener()->onProducerParametersUpdated(videoParams_, audioParams_);
-        }
-    }
-    else
-        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
+#warning TBD!
+//    ParamsStruct videoParams, audioParams;
+//    memset(&videoParams, 0, sizeof(ParamsStruct));
+//    memset(&audioParams, 0, sizeof(ParamsStruct));
+//    
+//    if (RESULT_NOT_FAIL(sessionInfo.getParams(videoParams, audioParams)))
+//    {
+//        bool needUpdate = false;
+//        
+//        if ((needUpdate = hasUpdates(videoParams_, videoParams)))
+//            SessionInfo::updateParams(videoParams_, videoParams);
+//        
+//        if ((needUpdate |= hasUpdates(audioParams_, audioParams)))
+//            SessionInfo::updateParams(audioParams_, audioParams);
+//        
+//        if (needUpdate)
+//        {
+//            getCallbackAsListener()->onProducerParametersUpdated(videoParams_, audioParams_);
+//        }
+//    }
+//    else
+//        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
     
     updateCounter_++;
 }
@@ -218,10 +230,11 @@ ServiceChannel::onInterest(const shared_ptr<const Name>& prefix,
     if (callback_)
     {
         shared_ptr<SessionInfo> sessionInfo = getCallbackAsPublisher()->onPublishSessionInfo();
+        SessionInfoData sessionInfoData(*sessionInfo);
         
         Data ndnData(*prefix);
         ndnData.getMetaInfo().setFreshnessPeriod(sessionInfoFreshnessMs_);
-        ndnData.setContent(sessionInfo->getData(), sessionInfo->getLength());
+        ndnData.setContent(sessionInfoData.getData(), sessionInfoData.getLength());
         ndnKeyChain_->sign(ndnData, signingCertificateName_);
         
         SignedBlob encodedData = ndnData.wireEncode();

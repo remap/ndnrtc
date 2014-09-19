@@ -15,7 +15,6 @@
 #include "face-wrapper.h"
 
 namespace ndnrtc {
-    class SessionInfo;
     
     namespace new_api {
         class InterestQueue;
@@ -44,7 +43,7 @@ namespace ndnrtc {
             virtual void
             onSessionInfoBroadcastFailed() = 0;
             
-            virtual boost::shared_ptr<SessionInfo>
+            virtual boost::shared_ptr<new_api::SessionInfo>
             onPublishSessionInfo() = 0;
         };
         
@@ -84,6 +83,9 @@ namespace ndnrtc {
                                       const boost::shared_ptr<KeyChain> keyChain,
                                       const Name& signingCertificateName);
             
+            void
+            stopSessionInfoBroadcast();
+            
             /**
              * Starts monitoring changes in producer's session
              */
@@ -103,6 +105,7 @@ namespace ndnrtc {
             bool isMonitoring_;
             unsigned int updateCounter_, updateIntervalMs_,
             sessionInfoFreshnessMs_ = 1000;
+            uint64_t registeredPrefixId_;
             IServiceChannelCallback *callback_;
             
             Name signingCertificateName_;

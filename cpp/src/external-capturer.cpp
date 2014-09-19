@@ -54,12 +54,11 @@ void ExternalCapturer::capturingStopped()
     isCapturing_ = false;
 }
 
-int ExternalCapturer::incomingArgbFrame(unsigned char* bgraFrameData,
+int ExternalCapturer::incomingArgbFrame(const unsigned int width,
+                                        const unsigned int height,
+                                        unsigned char* argbFrameData,
                                         unsigned int frameSize)
 {
-    const int32_t width = params_.captureWidth;
-    const int32_t height = params_.captureHeight;
-    
     // make conversion to I420
     const VideoType commonVideoType =
     RawVideoTypeToCommonVideoVideoType(kVideoARGB);
@@ -77,7 +76,7 @@ int ExternalCapturer::incomingArgbFrame(unsigned char* bgraFrameData,
         return notifyError(RESULT_ERR, "failed to allocate I420 frame");
     
     const int conversionResult = ConvertToI420(commonVideoType,
-                                               bgraFrameData,
+                                               argbFrameData,
                                                0, 0,  // No cropping
                                                width, height,
                                                frameSize,

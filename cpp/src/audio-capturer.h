@@ -28,8 +28,9 @@ namespace ndnrtc {
         class AudioCapturer : public WebrtcAudioChannel, public NdnRtcObject
         {
         public:
+            AudioCapturer(webrtc::VoiceEngine* voiceEngine);
             AudioCapturer(const ParamsStruct& params,
-                          webrtc::VoiceEngine* voiceEngine);
+                          webrtc::VoiceEngine* voiceEngine) DEPRECATED;
             ~AudioCapturer();
             
             void

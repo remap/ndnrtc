@@ -14,20 +14,12 @@
 
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
+#include "statistics.h"
 
 namespace ndnrtc {
     
     namespace new_api {
         class IEncodedFrameConsumer;
-        
-        class VideoCoderSettings {
-        public:
-            double codecFrameRate_;
-            unsigned int gop_;
-            unsigned int startBitrate_, maxBitrate_;
-            unsigned int encodeWidth_, encodeHeight_;
-            bool dropFramesOn_;
-        };
         
         class VideoCoderStatistics : public ObjectStatistics {
         public:
@@ -51,7 +43,7 @@ namespace ndnrtc {
                 frameConsumer_ = frameConsumer;
             }
             
-            int init(const VideoCoderSettings& settings);
+            int init(const VideoCoderParams& settings);
             
             // interface conformance - webrtc::EncodedImageCallback
             int32_t Encoded(webrtc::EncodedImage& encodedImage,
@@ -67,14 +59,14 @@ namespace ndnrtc {
             { statistics.nDroppedByEncoder = nDroppedByEncoder_; }
 
             void
-            getSettings(VideoCoderSettings& settings)
+            getSettings(VideoCoderParams& settings)
             { settings = settings_; }
             
-            static int getCodecFromSetings(const VideoCoderSettings &settings,
+            static int getCodecFromSetings(const VideoCoderParams &settings,
                                            webrtc::VideoCodec &codec);
             
         private:
-            VideoCoderSettings settings_;
+            VideoCoderParams settings_;
             unsigned int counter_ = 1;
             unsigned int nDroppedByEncoder_ = 0;
             unsigned int rateMeter_;

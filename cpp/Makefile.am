@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 SUBDIRS = src/objc .
 
-pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/external-capturer.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h
 
 lib_LTLIBRARIES = libndnrtc.la
 
@@ -28,14 +28,15 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
   src/media-sender.cpp src/media-sender.h \
-  src/media-thread.cpp src/media-thread.h \  
+  src/media-thread.cpp src/media-thread.h \
+  src/media-stream.cpp src/media-stream.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
   include/ndnrtc-defines.h \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
-  include/external-renderer.h \
+  include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
@@ -51,6 +52,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/sender-channel.cpp src/sender-channel.h \
   src/service-channel.cpp src/service-channel.h \
+  src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
   include/statistics.h \
   src/video-coder.cpp src/video-coder.h \
@@ -82,7 +84,7 @@ if OS_DARWIN
     demoapp/view.cc demoapp/view.h \
     demoapp/CameraCapturer.h demoapp/CameraCapturer.m \
     src/simple-log.cpp include/simple-log.h \
-    include/external-renderer.h include/external-capturer.h
+    include/interfaces.h
     
   ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
   

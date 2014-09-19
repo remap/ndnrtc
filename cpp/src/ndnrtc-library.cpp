@@ -8,15 +8,16 @@
 //  Author:  Peter Gusev
 //
 
+#include <stdlib.h>
+#include <string.h>
+#include <memory>
+
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
 #include "consumer-channel.h"
 #include "objc/cocoa-renderer.h"
 #include "external-capturer.hpp"
-
-#include <stdlib.h>
-#include <string.h>
-#include <memory>
+#include "session.h"
 
 #define CHECK_AND_SET_INT(paramSet, paramName, paramValue){ \
 if ((int)paramValue >= 0) \
@@ -36,8 +37,12 @@ using namespace ndnlog::new_api;
 
 typedef std::map<std::string, shared_ptr<ConsumerChannel> > ProducerMap;
 
-static shared_ptr<NdnSenderChannel> SenderChannel;
-static ProducerMap Producers;
+static shared_ptr<NdnSenderChannel> SenderChannel DEPRECATED;
+static ProducerMap Producers DEPRECATED;
+
+typedef std::map<std::string, shared_ptr<Session> > SessionMap;
+static SessionMap CurrentSessions;
+
 
 //********************************************************************************
 #pragma mark module loading
@@ -101,6 +106,76 @@ NdnRtcLibrary::~NdnRtcLibrary()
 }
 //******************************************************************************
 #pragma mark - public
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+std::string NdnRtcLibrary::startSession(const std::string& username,
+                                 const new_api::GeneralParams& generalParams)
+{
+    std::cout << "start session" << std::endl;
+    std::cout << username << std::endl;
+    std::cout << generalParams << std::endl;
+    
+    return *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
+}
+
+int NdnRtcLibrary::stopSession(const std::string& userPrefix)
+{
+    std::cout << "stopping session " << userPrefix << std::endl;
+    return RESULT_OK;
+}
+
+int NdnRtcLibrary::setSessionObserver(const std::string& username,
+                                      const std::string& prefix,
+                                      ISessionObserver** const sessionObserver)
+{
+    std::cout << "setting session observer for " << prefix << " user " << username << std::endl;
+    return RESULT_OK;
+}
+
+int NdnRtcLibrary::removeSessionObserver(const std::string& username,
+                                         const std::string& prefix)
+{
+    std::cout << "remove session observer " << prefix << " " << username << std::endl;
+    return RESULT_OK;
+}
+
+std::string NdnRtcLibrary::addLocalStream(const std::string& userPrefix,
+                                          const new_api::MediaStreamParams& params,
+                                          IExternalCapturer** const capturer)
+{
+    std::cout << "add local stream " << userPrefix << " + " << params.streamName_ << std::endl;
+    
+    return *NdnRtcNamespace::buildPath(false, &userPrefix,
+                                       &NdnRtcNamespace::NameComponentUserStreams,
+                                       &params.streamName_, 0);
+}
+
+int NdnRtcLibrary::removeLocalStream(const std::string& streamPrefix)
+{
+    std::cout << "removing local stream " << streamPrefix << std::endl;
+    return RESULT_OK;
+}
+
+std::string NdnRtcLibrary::addLocalThread(const std::string& streamPrefix,
+                                          const new_api::MediaThreadParams& params)
+{
+    std::cout << "adding local thread " << streamPrefix << " + " << params.threadName_ << std::endl;
+    return *NdnRtcNamespace::buildPath(false, &streamPrefix, &params.threadName_, 0);
+}
+
+int NdnRtcLibrary::removeLocalThread(const std::string& threadPrefix)
+{
+    std::cout << "removing thread " << threadPrefix << std::endl;
+    
+    return RESULT_OK;
+}
+
+//******************************************************************************
+//******************************************************************************
+//******************************************************************************
+
 void NdnRtcLibrary::configure(const ParamsStruct &params,
                               const ParamsStruct &audioParams)
 {

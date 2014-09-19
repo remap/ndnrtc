@@ -11,28 +11,32 @@
 #ifndef __libndnrtc__external_capturer__
 #define __libndnrtc__external_capturer__
 
-#include "external-capturer.h"
+#include "interfaces.h"
 #include "base-capturer.h"
 
 namespace ndnrtc {
     class ExternalCapturer : public BaseCapturer, public IExternalCapturer
     {
     public:
-        ExternalCapturer(const ParamsStruct& params);
+        ExternalCapturer();
+        ExternalCapturer(const ParamsStruct& params) DEPRECATED;
         virtual ~ExternalCapturer();
         
         int init();
-        int startCapture();
-        int stopCapture();
         
         // IExternalCapturer interface
         void capturingStarted();
         void capturingStopped();
-        int incomingArgbFrame(unsigned char* argbFrameData,
+        int incomingArgbFrame(const unsigned int width,
+                              const unsigned int height,
+                              unsigned char* argbFrameData,
                               unsigned int frameSize);
         
     private:
         webrtc::I420VideoFrame convertedFrame_;
+        
+        int startCapture();
+        int stopCapture();
     };
 }
 

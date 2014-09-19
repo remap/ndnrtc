@@ -16,7 +16,7 @@
 #include "renderer.h"
 #include "ndnrtc-common.h"
 #include "camera-capturer.h"
-#include "external-renderer.h"
+#include "interfaces.h"
 
 namespace ndnrtc
 {

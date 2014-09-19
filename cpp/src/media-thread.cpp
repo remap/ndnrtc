@@ -47,12 +47,14 @@ MediaThread::~MediaThread()
 int MediaThread::init(const MediaThreadSettings &settings)
 {
     settings_ = settings;
-    
-    if (settings_.useCache_)
-        memCache_.reset(new MemoryContentCache(settings_.faceProcessor_->getFaceWrapper()->getFace().get()));
+    threadPrefix_ =  *NdnRtcNamespace::buildPath(false,
+                                                 &settings_.streamPrefix_,
+                                                 &settings_.threadParams_.threadName_, 0);
+    faceProcessor_ = settings_.faceProcessor_;
+    memCache_ = settings_.memoryCache_;
     
     try {
-        registerPrefix(settings_.prefix_);
+        registerPrefix(Name(threadPrefix_));
     }
     catch (std::exception &e)
     {
@@ -68,6 +70,7 @@ int MediaThread::init(const MediaThreadSettings &settings)
 
 void MediaThread::stop()
 {
+    faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
 }
 
 //******************************************************************************
@@ -78,7 +81,7 @@ int MediaThread::publishPacket(PacketData &packetData,
                                PrefixMetaInfo prefixMeta,
                                double captureTimestamp)
 {
-    if (!settings_.faceProcessor_->getTransport()->getIsConnected())
+    if (!faceProcessor_->getTransport()->getIsConnected())
         return notifyError(-1, "transport is not connected");
     
     Name prefix = packetPrefix;
@@ -120,7 +123,7 @@ int MediaThread::publishPacket(PacketData &packetData,
             
             settings_.keyChain_->sign(ndnData, settings_.certificateName_);
             
-            if (settings_.useCache_ && !pitHit)
+            if (memCache_.get() && !pitHit)
             {
                 // according to http://named-data.net/doc/ndn-ccl-api/memory-content-cache.html#memorycontentcache-registerprefix-method
                 // adding content should be synchronized with the processEvents
@@ -164,8 +167,10 @@ int MediaThread::publishPacket(PacketData &packetData,
 
 void MediaThread::registerPrefix(const Name& prefix)
 {
-    if (settings_.useCache_)
+    if (memCache_.get())
     {
+//        TBD: figure out registered prefix ID from memory content cache
+//        registeredPrefixId_ =
         memCache_->registerPrefix(prefix,
                                   bind(&MediaThread::onRegisterFailed,
                                        this, _1),
@@ -174,12 +179,12 @@ void MediaThread::registerPrefix(const Name& prefix)
     }
     else
     {
-        uint64_t prefixId = faceProcessor_->getFaceWrapper()->registerPrefix(prefix,
+        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(prefix,
                                                                              bind(&MediaThread::onInterest,
                                                                                   this, _1, _2, _3),
                                                                              bind(&MediaThread::onRegisterFailed,
                                                                                   this, _1));
-        if (prefixId != 0)
+        if (registeredPrefixId_ != 0)
             LogTraceC << "registered prefix " << prefix << std::endl;
     }
 }
@@ -202,7 +207,7 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
 void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
     if (hasCallback())
-        getCallback()->onMediaThreadRegistrationFailed();
+        getCallback()->onMediaThreadRegistrationFailed(settings_.threadParams_.threadName_);
     
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
 }

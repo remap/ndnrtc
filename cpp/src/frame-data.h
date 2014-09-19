@@ -350,13 +350,12 @@ namespace ndnrtc {
      *      ];
      *  }
      */
-    class SessionInfo : public NetworkData
+    class SessionInfoData : public NetworkData
     {
     public:
-        SessionInfo(const ParamsStruct& videoParams,
-                    const ParamsStruct& audioParams);
-        SessionInfo(unsigned int dataLength, const unsigned char* data);
-        virtual ~SessionInfo() {}
+        SessionInfoData(const new_api::SessionInfo& sessionInfo);
+        SessionInfoData(unsigned int dataLength, const unsigned char* data);
+        virtual ~SessionInfoData() {}
         
         /**
          * This method unpacks data from raw bytes and updates corresponding
@@ -365,7 +364,10 @@ namespace ndnrtc {
          * normally, RESULT_ERR otherwise
          */
         int
-        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const;
+        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const DEPRECATED;
+        
+        int
+        getSessionInfo(new_api::SessionInfo& sessionInfo);
         
         static void
         updateParams(ParamsStruct& paramsForUpdate,

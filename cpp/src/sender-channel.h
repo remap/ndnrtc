@@ -134,7 +134,7 @@ namespace ndnrtc
         void
         onSessionInfoBroadcastFailed();
         
-        boost::shared_ptr<SessionInfo>
+        boost::shared_ptr<new_api::SessionInfo>
         onPublishSessionInfo();
     };
     

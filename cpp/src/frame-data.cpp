@@ -505,37 +505,28 @@ NdnAudioData::initFromRawData(unsigned int dataLength,
 }
 
 //******************************************************************************
-SessionInfo::SessionInfo(const ParamsStruct& videoParams,
-                         const ParamsStruct& audioParams):
+SessionInfoData::SessionInfoData(const new_api::SessionInfo& sessionInfo):
 NetworkData()
 {
-    packParameters(videoParams, audioParams);
+//    packParameters(videoParams, audioParams);
 }
 
-SessionInfo::SessionInfo(unsigned int dataLength, const unsigned char* data):
-NetworkData(dataLength, data),
-videoParams_(DefaultParams),
-audioParams_(DefaultParamsAudio)
+SessionInfoData::SessionInfoData(unsigned int dataLength, const unsigned char* data):
+NetworkData(dataLength, data)
+//videoParams_(DefaultParams),
+//audioParams_(DefaultParamsAudio)
 {
     isValid_ = RESULT_GOOD(initFromRawData(dataLength, data));
 }
 
 int
-SessionInfo::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const
+SessionInfoData::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const
 {
-    if (isValid_)
-    {
-        updateParams(videoParams, videoParams_);
-        updateParams(audioParams, audioParams_);
-        
-        return RESULT_OK;
-    }
-    
     return RESULT_ERR;
 }
 
 unsigned int
-SessionInfo::getSessionInfoLength(unsigned int nVideoStreams,
+SessionInfoData::getSessionInfoLength(unsigned int nVideoStreams,
                                   unsigned int nAudioStreams)
 {
     return sizeof(struct _SessionInfoDataHeader) +
@@ -544,7 +535,7 @@ SessionInfo::getSessionInfoLength(unsigned int nVideoStreams,
 }
 
 void
-SessionInfo::packParameters(const ParamsStruct& videoParams,
+SessionInfoData::packParameters(const ParamsStruct& videoParams,
                             const ParamsStruct& audioParams)
 {
     isDataCopied_ = true;
@@ -587,7 +578,7 @@ SessionInfo::packParameters(const ParamsStruct& videoParams,
 }
 
 int
-SessionInfo::initFromRawData(unsigned int dataLength, const unsigned char *rawData)
+SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *rawData)
 {
     unsigned int headerSize = sizeof(struct _SessionInfoDataHeader);
     struct _SessionInfoDataHeader header = *((struct _SessionInfoDataHeader*)(&rawData[0]));
@@ -640,7 +631,7 @@ SessionInfo::initFromRawData(unsigned int dataLength, const unsigned char *rawDa
 }
 
 void
-SessionInfo::updateParams(ParamsStruct& paramsForUpdate,
+SessionInfoData::updateParams(ParamsStruct& paramsForUpdate,
                           const ParamsStruct& params)
 {
     if (paramsForUpdate.nStreams)

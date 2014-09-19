@@ -8,8 +8,8 @@
 //  Author:  Peter Gusev
 //
 
-#ifndef __ndnrtc__video_sender__
-#define __ndnrtc__video_sender__
+#ifndef __ndnrtc__video_thread__
+#define __ndnrtc__video_thread__
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
@@ -25,7 +25,10 @@ namespace ndnrtc
         {
         public:
             bool useFec_;
-            VideoCoderSettings coderSettings_;
+            
+            VideoThreadParams*
+            getVideoParams()
+            { return (VideoThreadParams*)&threadParams_;}
         };
         
         class VideoThreadStatistics : public MediaThreadStatistics
@@ -63,7 +66,7 @@ namespace ndnrtc
             void
             getSettings(VideoThreadSettings& settings)
             {
-                coder_->getSettings(settings_.coderSettings_);
+                coder_->getSettings(settings_.getVideoParams()->coderParams_);
                 settings = settings_;
             }
             
@@ -98,4 +101,4 @@ namespace ndnrtc
     }
 }
 
-#endif /* defined(__ndnrtc__video_sender__) */
+#endif /* defined(__ndnrtc__video_thread__) */

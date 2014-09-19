@@ -438,7 +438,7 @@ NdnSenderChannel::process()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled) {
         NdnRtcUtils::frequencyMeterTick(frameFreqMeter_);
-        double frameRate = params_.captureFramerate;
+//        double frameRate = params_.captureFramerate;
         
         deliver_cs_->Enter();
         if (!deliverFrame_.IsZeroSize()) {
@@ -487,8 +487,7 @@ NdnSenderChannel::onPublishSessionInfo()
     }
     
     
-    shared_ptr<SessionInfo> sessionInfo(new SessionInfo(publishingVideoParams,
-                                                        publishingAudioParams));
+    shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
     return sessionInfo;
 }
 

@@ -46,7 +46,7 @@ char* plotCodec(webrtc::VideoCodec codec)
 
 //******************************************************************************
 #pragma mark - static
-int VideoCoder::getCodecFromSetings(const VideoCoderSettings &settings,
+int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
                                     webrtc::VideoCodec &codec)
 {
     // setup default params first
@@ -101,7 +101,7 @@ VideoCoder::~VideoCoder()
 
 //********************************************************************************
 #pragma mark - public
-int VideoCoder::init(const VideoCoderSettings& settings)
+int VideoCoder::init(const VideoCoderParams& settings)
 {
     if (RESULT_FAIL(VideoCoder::getCodecFromSetings(settings, codec_)))
         notifyError(-1, "some codec parameters were out of bounds. \
