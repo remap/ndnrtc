@@ -78,6 +78,12 @@ namespace ndnrtc {
             webrtc::VideoCodec codec_;
             std::vector<webrtc::VideoFrameType> keyFrameType_;
             boost::shared_ptr<webrtc::VideoEncoder> encoder_;
+            
+            webrtc::Scaler frameScaler_;
+            webrtc::I420VideoFrame scaledFrame_;
+            
+            void
+            initScaledFrame();
         };
         
         class IEncodedFrameConsumer

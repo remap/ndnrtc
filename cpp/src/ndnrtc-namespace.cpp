@@ -184,8 +184,9 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &par
                                       NULL);
 }
 
-static boost::shared_ptr<std::string>
-getStreamPrefix(const std::string &userPrefix, const std::string &streamName)
+shared_ptr<std::string>
+NdnRtcNamespace::getStreamPrefix(const std::string &userPrefix,
+                                 const std::string &streamName)
 {
     return NdnRtcNamespace::buildPath(false,
                                       &userPrefix,
@@ -244,8 +245,8 @@ shared_ptr<std::string> NdnRtcNamespace::getSessionInfoPrefix(const ParamsStruct
 }
 
 
-static boost::shared_ptr<std::string>
-getSessionInfoPrefix(const std::string& userPrefix)
+shared_ptr<std::string>
+NdnRtcNamespace::getSessionInfoPrefix(const std::string& userPrefix)
 {
     return NdnRtcNamespace::buildPath(false,
                                       &userPrefix,

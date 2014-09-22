@@ -32,8 +32,8 @@ pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 
 MediaThread::~MediaThread()
 {
+    delete settings_;
     stop();
-    
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
 }
 
@@ -46,12 +46,11 @@ MediaThread::~MediaThread()
 #pragma mark - public
 int MediaThread::init(const MediaThreadSettings &settings)
 {
-    settings_ = settings;
     threadPrefix_ =  *NdnRtcNamespace::buildPath(false,
-                                                 &settings_.streamPrefix_,
-                                                 &settings_.threadParams_.threadName_, 0);
-    faceProcessor_ = settings_.faceProcessor_;
-    memCache_ = settings_.memoryCache_;
+                                                 &settings.streamPrefix_,
+                                                 &settings.threadParams_->threadName_, 0);
+    faceProcessor_ = settings.faceProcessor_;
+    memCache_ = settings.memoryCache_;
     
     try {
         registerPrefix(Name(threadPrefix_));
@@ -63,7 +62,7 @@ int MediaThread::init(const MediaThreadSettings &settings)
                            e.what());
     }
     
-    segSizeNoHeader_ = settings_.segmentSize_ - SegmentData::getHeaderSize();
+    segSizeNoHeader_ = settings.segmentSize_ - SegmentData::getHeaderSize();
     
     return RESULT_OK;
 }
@@ -118,10 +117,10 @@ int MediaThread::publishPacket(PacketData &packetData,
             SegmentData segmentData(it->getDataPtr(), it->getPayloadSize(), meta);
             
             Data ndnData(segmentName);
-            ndnData.getMetaInfo().setFreshnessPeriod(settings_.dataFreshnessMs_);
+            ndnData.getMetaInfo().setFreshnessPeriod(settings_->dataFreshnessMs_);
             ndnData.setContent(segmentData.getData(), segmentData.getLength());
             
-            settings_.keyChain_->sign(ndnData, settings_.certificateName_);
+            settings_->keyChain_->sign(ndnData, settings_->certificateName_);
             
             if (memCache_.get() && !pitHit)
             {
@@ -207,7 +206,7 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
 void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
     if (hasCallback())
-        getCallback()->onMediaThreadRegistrationFailed(settings_.threadParams_.threadName_);
+        getCallback()->onMediaThreadRegistrationFailed(settings_->threadParams_->threadName_);
     
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
 }

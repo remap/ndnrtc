@@ -33,6 +33,9 @@ coder_(new VideoCoder())
 int
 VideoThread::init(const VideoThreadSettings& settings)
 {
+    settings_ = new VideoThreadSettings();
+    *settings_ = settings;
+    
     int res = MediaThread::init(settings);
     
     if (RESULT_FAIL(res))
@@ -43,7 +46,7 @@ VideoThread::init(const VideoThreadSettings& settings)
     keyFramesPrefix_ = Name(threadPrefix_);
     keyFramesPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesKey));
     
-    if (RESULT_FAIL(coder_->init(settings_.getVideoParams()->coderParams_)))
+    if (RESULT_FAIL(coder_->init(getSettings().getVideoParams()->coderParams_)))
         return notifyError(RESULT_ERR, "can't initialize video encoder");
     
     keyFrameNo_ = -1;
@@ -91,7 +94,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     int nSegments = 0;
     
     int nSegmentsExpected = Segmentizer::getSegmentsNum(frameData.getLength(), segSizeNoHeader_);
-    int nSegmentsParityExpected = (settings_.useFec_)?FrameParityData::getParitySegmentsNum(nSegmentsExpected, ParityRatio):0;
+    int nSegmentsParityExpected = (getSettings().useFec_)?FrameParityData::getParitySegmentsNum(nSegmentsExpected, ParityRatio):0;
     
     prefixMeta.totalSegmentsNum_ = nSegmentsExpected;
     prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
@@ -117,7 +120,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         << NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_) << "\t"
         << nSegments << std::endl;
         
-        if (settings_.useFec_)
+        if (getSettings().useFec_)
             publishParityData(frameNo, frameData, nSegments, framePrefix,
                               prefixMeta);
         

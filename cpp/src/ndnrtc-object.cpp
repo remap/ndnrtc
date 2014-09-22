@@ -42,7 +42,10 @@ void NdnRtcComponent::onError(const char *errorMessage)
     if (hasCallback())
         callback_->onError(errorMessage);
     else
+    {
         LogErrorC << "error occurred: " << string(errorMessage) << endl;
+        if (logger_) logger_->flush();
+    }
     
     callbackSync_.Leave();
 }

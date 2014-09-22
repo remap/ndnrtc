@@ -34,7 +34,7 @@ namespace ndnrtc
             virtual ~MediaThreadSettings(){}
             
             unsigned int segmentSize_, dataFreshnessMs_;
-            MediaThreadParams threadParams_;
+            const MediaThreadParams *threadParams_;
             
             std::string streamPrefix_;
             ndn::Name certificateName_;
@@ -91,7 +91,7 @@ namespace ndnrtc
             
             void
             getSettings(MediaThreadSettings& settings)
-            { settings = settings_; }
+            { settings = *settings_; }
             
             std::string
             getPrefix()
@@ -103,7 +103,7 @@ namespace ndnrtc
                 boost::shared_ptr<const Interest> interest_;
             } PitEntry;
             
-            MediaThreadSettings settings_;
+            MediaThreadSettings *settings_;
             std::string threadPrefix_;
             
             unsigned int segSizeNoHeader_;

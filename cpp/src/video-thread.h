@@ -27,8 +27,8 @@ namespace ndnrtc
             bool useFec_;
             
             VideoThreadParams*
-            getVideoParams()
-            { return (VideoThreadParams*)&threadParams_;}
+            getVideoParams() const
+            { return (VideoThreadParams*)threadParams_;}
         };
         
         class VideoThreadStatistics : public MediaThreadStatistics
@@ -66,8 +66,8 @@ namespace ndnrtc
             void
             getSettings(VideoThreadSettings& settings)
             {
-                coder_->getSettings(settings_.getVideoParams()->coderParams_);
-                settings = settings_;
+                coder_->getSettings(getSettings().getVideoParams()->coderParams_);
+                settings = getSettings();
             }
             
             // interface conformance
@@ -77,7 +77,6 @@ namespace ndnrtc
             void setLogger(ndnlog::new_api::Logger *logger);
             
         private:
-            VideoThreadSettings settings_;
             int keyFrameNo_ = 0, deltaFrameNo_ = 0;
             
             Name deltaFramesPrefix_, keyFramesPrefix_;
@@ -97,6 +96,10 @@ namespace ndnrtc
             // interface conformance
             void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                          double captureTimestamp);
+            
+            VideoThreadSettings&
+            getSettings() const
+            { return *((VideoThreadSettings*)settings_); }
         };
     }
 }

@@ -79,11 +79,25 @@ namespace ndnrtc
             {
                 os << "name: " << threadName_;
             }
+            
+            virtual MediaThreadParams* copy()
+            {
+                MediaThreadParams *params = new MediaThreadParams();
+                *params = *this;
+                return params;
+            }
         };
         
         // audio thread parameters
         class AudioThreadParams : public MediaThreadParams {
         public:
+            MediaThreadParams*
+            copy()
+            {
+                AudioThreadParams *params = new AudioThreadParams();
+                *params = *this;
+                return params;
+            }
         };
         
         // video thread parameteres
@@ -110,17 +124,19 @@ namespace ndnrtc
         class VideoThreadParams : public MediaThreadParams {
         public:
             VideoCoderParams coderParams_;
-//            double codecFrameRate_ = 0;
-//            unsigned int gop_ = 0;
-//            unsigned int startBitrate_ = 0, maxBitrate_ = 0;
-//            unsigned int encodeWidth_ = 0, encodeHeight_ = 0;
-//            bool dropFramesOn_ = false;
             
             void write(std::ostream& os) const
             {
                 MediaThreadParams::write(os);
                 
                 os << "; " << coderParams_;
+            }
+            MediaThreadParams*
+            copy()
+            {
+                VideoThreadParams *params = new VideoThreadParams();
+                *params = *this;
+                return params;
             }
         };
         
@@ -139,16 +155,39 @@ namespace ndnrtc
         // media stream parameters
         class MediaStreamParams : public Params {
         public:
+            typedef enum _MediaStreamType {
+                MediaStreamTypeAudio = 0,
+                MediaStreamTypeVideo = 1
+            } MediaStreamType;
+            
+            MediaStreamParams(){}
+            MediaStreamParams(const MediaStreamParams& other)
+            {
+                copyFrom(other);
+            }
             ~MediaStreamParams()
             {
-                for (int i = 0; i < mediaThreads_.size(); i++) delete mediaThreads_[i];
+                for (int i = 0; i < mediaThreads_.size(); i++)
+                    delete mediaThreads_[i];
+                
                 mediaThreads_.clear();
+                delete captureDevice_;
+            }
+            
+            MediaStreamParams& operator=(const MediaStreamParams& other)
+            {
+                if (this == &other)
+                    return *this;
+                
+                copyFrom(other);
+                return *this;
             }
             
             GeneralProducerParams producerParams_;
             std::string streamName_ = "";
             CaptureDeviceParams *captureDevice_ = NULL;
             std::vector<MediaThreadParams*> mediaThreads_;
+            MediaStreamType type_;
             
             void write(std::ostream& os) const
             {
@@ -165,6 +204,20 @@ namespace ndnrtc
                     os << "[" << i << ": " << *(mediaThreads_[i]) << "]" << std::endl;
             }
             
+        private:
+            void
+            copyFrom(const MediaStreamParams& other)
+            {
+                streamName_ = other.streamName_;
+                type_ = other.type_;
+                producerParams_ = other.producerParams_;
+                
+                for (int i = 0; i < other.mediaThreads_.size(); i++)
+                    mediaThreads_.push_back(other.mediaThreads_[i]->copy());
+                
+                captureDevice_ = new CaptureDeviceParams();
+                *captureDevice_ = *other.captureDevice_;
+            }
         };
         
         // general consumer parameters

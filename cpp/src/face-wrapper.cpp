@@ -137,10 +137,10 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params,
     return createFaceProcessor(std::string(params.host), params.portNum, keyChain, certificateName);
 }
 
-static boost::shared_ptr<FaceProcessor>
-createFaceProcessor(const std::string host, const int port,
-                    const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
-                    const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>())
+boost::shared_ptr<FaceProcessor>
+FaceProcessor::createFaceProcessor(const std::string host, const int port,
+                                   const boost::shared_ptr<ndn::KeyChain>& keyChain,
+                                   const boost::shared_ptr<Name>& certificateName)
 {
     shared_ptr<FaceWrapper> face;
     shared_ptr<ndn::Transport> transport;

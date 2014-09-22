@@ -24,6 +24,15 @@ MediaStream::MediaStream()
 
 MediaStream::~MediaStream()
 {
+    ThreadMap::iterator it = threads_.begin();
+    
+    while (it != threads_.end())
+    {
+        it->second->stop();
+        it++;
+    }
+    
+    threads_.clear();
 }
 
 int
@@ -31,12 +40,10 @@ MediaStream::init(const MediaStreamSettings& streamSettings)
 {
     settings_ = streamSettings;
     streamName_ = settings_.streamParams_.streamName_;
-    streamPrefix_ = Name(*NdnRtcNamespace::getStreamPrefix(settings_.userPrefix_, streamName_));
+    streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings_.userPrefix_, streamName_);
     
     for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
-    {
         addNewMediaThread(settings_.streamParams_.mediaThreads_[i]);
-    }
     
     return RESULT_OK;
 }
@@ -65,8 +72,11 @@ MediaStream::getCommonThreadSettings(MediaThreadSettings* settings)
 {
     settings->segmentSize_ = settings_.streamParams_.producerParams_.segmentSize_;
     settings->dataFreshnessMs_ = settings_.streamParams_.producerParams_.freshnessMs_;
-    settings->streamPrefix_ = streamPrefix_.toUri();
+    settings->streamPrefix_ = streamPrefix_;
     settings->certificateName_ = *NdnRtcNamespace::certificateNameForUser(settings_.userPrefix_);
+    settings->keyChain_ = settings_.keyChain_;    
+    settings->faceProcessor_ = settings_.faceProcessor_;
+    settings->memoryCache_ = settings_.memoryCache_;
 }
 
 //******************************************************************************
@@ -89,7 +99,18 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
     capturer_.reset(new ExternalCapturer());
     capturer_->setFrameConsumer(this);
     
+    unsigned int tid;
+    processThread_.Start(tid);
+    
     return RESULT_OK;
+}
+
+void
+VideoStream::release()
+{
+    processThread_.SetNotAlive();
+    deliverEvent_.Set();
+    processThread_.Stop();
 }
 
 void
@@ -99,13 +120,16 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     getCommonThreadSettings(&threadSettings);
     
     threadSettings.useFec_ = settings_.useFec_;
-    threadSettings.threadParams_ = *params;
+    threadSettings.threadParams_ = params;
     
     shared_ptr<VideoThread> videoThread(new VideoThread());
-    videoThread->init(threadSettings);
-    
-    threads_[videoThread->getPrefix()] = videoThread;
+    videoThread->registerCallback(this);
     videoThread->setLogger(logger_);
+    
+    if (RESULT_FAIL(videoThread->init(threadSettings)))
+        notifyError(-1, "couldn't add new media thread %s", threadSettings.getVideoParams()->threadName_.c_str());
+    else
+        threads_[videoThread->getPrefix()] = videoThread;
 }
 
 void
@@ -161,6 +185,8 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
     getCommonThreadSettings(&threadSettings);
     
     shared_ptr<AudioThread> audioThread(new AudioThread());
+    audioThread->registerCallback(this);
+    audioThread->setLogger(logger_);
     audioThread->init(threadSettings);
     
     threads_[audioThread->getPrefix()] = audioThread;

@@ -53,24 +53,45 @@ updateIntervalMs_(updateIntervalMs)
     interestQueue_->setDescription(std::string("service-iqueue"));
 }
 
-void
+int
 ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixString,
                                           const boost::shared_ptr<KeyChain> keyChain,
                                           const Name& signingCertificateName)
 {
+    int res = RESULT_ERR;
     Name sessionInfoPrefix(sessionInfoPrefixString.c_str());
     
     ndnKeyChain_ = keyChain;
     signingCertificateName_ = signingCertificateName;
-    registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
-                                                            bind(&ServiceChannel::onInterest, this, _1, _2, _3),
-                                                            bind(&ServiceChannel::onRegisterFailed, this, _1));
+    
+    try {
+        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
+                                                                               bind(&ServiceChannel::onInterest, this, _1, _2, _3),
+                                                                               bind(&ServiceChannel::onRegisterFailed, this, _1));
+        res = RESULT_OK;
+    }
+    catch (std::exception &e)
+    {
+        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
+    }
+    
+    return res;
 }
 
-void
+int
 ServiceChannel::stopSessionInfoBroadcast()
 {
-    faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
+    int res = RESULT_ERR;
+    
+    try {
+        faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
+        res = RESULT_OK;
+    }
+    catch (std::exception &e) {
+        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
+    }
+    
+    return res;
 }
 
 void

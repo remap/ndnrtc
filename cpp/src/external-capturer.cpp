@@ -13,10 +13,14 @@
 using namespace webrtc;
 using namespace ndnrtc;
 
+ExternalCapturer::ExternalCapturer():
+BaseCapturer()
+{
+}
+
 ExternalCapturer::ExternalCapturer(const ParamsStruct& params):
 BaseCapturer(params)
 {
-    
 }
 
 ExternalCapturer::~ExternalCapturer()
@@ -45,12 +49,13 @@ int ExternalCapturer::stopCapture()
 
 void ExternalCapturer::capturingStarted()
 {
-    isCapturing_ = true;    
+    startCapture();    
+    isCapturing_ = true;
 }
 
 void ExternalCapturer::capturingStopped()
 {
-    BaseCapturer::stopCapture();
+    stopCapture();
     isCapturing_ = false;
 }
 

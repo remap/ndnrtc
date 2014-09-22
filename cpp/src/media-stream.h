@@ -26,13 +26,15 @@ namespace ndnrtc
         {
         public:
             MediaStreamSettings(){}
+            MediaStreamSettings(const MediaStreamParams& params):streamParams_(params){}
             ~MediaStreamSettings(){}
             
             bool useFec_;
             std::string userPrefix_;
             MediaStreamParams streamParams_;
-            boost::shared_ptr<FaceProcessor> faceProcessor_;            
             boost::shared_ptr<KeyChain> keyChain_;
+            boost::shared_ptr<FaceProcessor> faceProcessor_;
+            boost::shared_ptr<MemoryContentCache> memoryCache_;
         };
         
         class IMediaStreamCallback : public IMediaThreadCallback
@@ -51,6 +53,9 @@ namespace ndnrtc
             init(const MediaStreamSettings& streamSettings);
             
             virtual void
+            release() = 0;
+            
+            virtual void
             addThread(const MediaThreadParams& threadParams);
             
             virtual void
@@ -63,10 +68,14 @@ namespace ndnrtc
             getSettings()
             { return settings_; }
             
+            std::string
+            getPrefix()
+            { return streamPrefix_; }
+            
         protected:
             MediaStreamSettings settings_;
             std::string streamName_;
-            ndn::Name streamPrefix_;
+            std::string streamPrefix_;
             typedef std::map<std::string, boost::shared_ptr<MediaThread>> ThreadMap;
             ThreadMap threads_;
             
@@ -86,6 +95,9 @@ namespace ndnrtc
             
             int
             init(const MediaStreamSettings& streamSettings);
+            
+            void
+            release();
             
             ExternalCapturer*
             getCapturer() { return (ExternalCapturer*)(capturer_.get()); }
@@ -126,6 +138,9 @@ namespace ndnrtc
             
             int
             init(const MediaStreamSettings& streamSettings);
+            
+            void
+            release(){}
             
         private:
             boost::shared_ptr<AudioCapturer> audioCapturer_;

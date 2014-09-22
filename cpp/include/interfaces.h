@@ -85,10 +85,23 @@ namespace ndnrtc
     /**
      * Session observer
      */
-    class ISessionObserver
-    {
+    typedef enum _SessionStatus {
+        SessionOffline = 0,
+        SessionOnlineNotPublishing = 1,
+        SessionOnlinePublishing = 2
+    } SessionStatus;
+    
+    class ISessionObserver {
     public:
-
+        
+        virtual void
+        onSessionStatusUpdate(const char* username, const char* sessionPrefix,
+                              SessionStatus status) = 0;
+        
+        virtual void
+        onSessionError(const char* username, const char* sessionPrefix,
+                       SessionStatus status, unsigned int errorCode,
+                       const char* errorMessage) = 0;
     };
     
     class INdnRtcObjectObserver {

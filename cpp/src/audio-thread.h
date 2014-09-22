@@ -62,7 +62,6 @@ namespace ndnrtc
             { publishRTCPAudioPacket(len, data); }
             
         private:
-            AudioThreadSettings settings_;
             unsigned int rtpPacketNo_, rtcpPacketNo_;
             Name rtpPacketPrefix_;
             Name rtcpPacketPrefix_;

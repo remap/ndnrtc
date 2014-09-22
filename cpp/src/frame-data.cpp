@@ -525,6 +525,13 @@ SessionInfoData::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams)
     return RESULT_ERR;
 }
 
+int
+SessionInfoData::getSessionInfo(new_api::SessionInfo& sessionInfo)
+{
+    
+    return RESULT_OK;
+}
+
 unsigned int
 SessionInfoData::getSessionInfoLength(unsigned int nVideoStreams,
                                   unsigned int nAudioStreams)

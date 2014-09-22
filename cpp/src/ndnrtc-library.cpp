@@ -41,8 +41,49 @@ static shared_ptr<NdnSenderChannel> SenderChannel DEPRECATED;
 static ProducerMap Producers DEPRECATED;
 
 typedef std::map<std::string, shared_ptr<Session> > SessionMap;
-static SessionMap CurrentSessions;
+static SessionMap ActiveSessions;
 
+//******************************************************************************
+class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
+                                        public INdnRtcObjectObserver,
+                                        public INdnRtcLibraryObserver
+{
+public:
+    NdnRtcLibraryInternalObserver():libObserver_(NULL){}
+    ~NdnRtcLibraryInternalObserver(){}
+    
+    void
+    setLibraryObserver(INdnRtcLibraryObserver* libObserver)
+    {
+        libObserver_ = libObserver;
+    }
+    
+    void onStateChanged(const char *state, const char *args)
+    {
+        if (libObserver_)
+            libObserver_->onStateChanged(state, args);
+    }
+    
+    // INdnRtcObjectObserver
+    void onErrorOccurred(const char *errorMessage)
+    {
+        if (libObserver_)
+            libObserver_->onStateChanged("error", errorMessage);
+    }
+    
+    // INdnRtcComponentCallback
+    void onError(const char *errorMessage)
+    {
+        if (libObserver_)
+            libObserver_->onStateChanged("error", errorMessage);
+    }
+    
+private:
+    INdnRtcLibraryObserver* libObserver_;
+};
+
+static NdnRtcLibraryInternalObserver LibraryInternalObserver;
+//******************************************************************************
 
 //********************************************************************************
 #pragma mark module loading
@@ -92,12 +133,11 @@ static const char *DefaultLogFile = NULL;
 //******************************************************************************
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
-observer_(NULL),
 libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
-    fclose(stderr);    
+//    fclose(stderr);    
     NdnRtcUtils::sharedVoiceEngine();
 }
 NdnRtcLibrary::~NdnRtcLibrary()
@@ -106,24 +146,49 @@ NdnRtcLibrary::~NdnRtcLibrary()
 }
 //******************************************************************************
 #pragma mark - public
+void NdnRtcLibrary::setObserver(INdnRtcLibraryObserver *observer)
+{
+    LibraryInternalObserver.setLibraryObserver(observer);
+}
 
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************
 std::string NdnRtcLibrary::startSession(const std::string& username,
-                                 const new_api::GeneralParams& generalParams)
+                                        const new_api::GeneralParams& generalParams,
+                                        ISessionObserver *sessionObserver)
 {
-    std::cout << "start session" << std::endl;
-    std::cout << username << std::endl;
-    std::cout << generalParams << std::endl;
+    std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
     
-    return *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
+    if (it == ActiveSessions.end())
+    {
+        shared_ptr<Session> session(new Session(username, generalParams));
+        session->setSessionObserver(sessionObserver);
+        session->registerCallback(&LibraryInternalObserver);
+        ActiveSessions[session->getPrefix()] = session;
+        session->start();
+        sessionPrefix = session->getPrefix();
+    }
+    else
+        it->second->start();
+
+    
+    return sessionPrefix;
 }
 
 int NdnRtcLibrary::stopSession(const std::string& userPrefix)
 {
-    std::cout << "stopping session " << userPrefix << std::endl;
-    return RESULT_OK;
+    int res = RESULT_ERR;
+    
+    SessionMap::iterator it = ActiveSessions.find(userPrefix);
+    if (it != ActiveSessions.end())
+    {
+        res = it->second->stop();
+        ActiveSessions.erase(it);        
+    }
+    
+    return res;
 }
 
 int NdnRtcLibrary::setSessionObserver(const std::string& username,
@@ -141,20 +206,31 @@ int NdnRtcLibrary::removeSessionObserver(const std::string& username,
     return RESULT_OK;
 }
 
-std::string NdnRtcLibrary::addLocalStream(const std::string& userPrefix,
+std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
                                           const new_api::MediaStreamParams& params,
                                           IExternalCapturer** const capturer)
 {
-    std::cout << "add local stream " << userPrefix << " + " << params.streamName_ << std::endl;
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
     
-    return *NdnRtcNamespace::buildPath(false, &userPrefix,
-                                       &NdnRtcNamespace::NameComponentUserStreams,
-                                       &params.streamName_, 0);
+    if (it == ActiveSessions.end())
+        return "";
+    
+    std::string streamPrefix = "";
+    it->second->addLocalStream(params, capturer, streamPrefix);
+    
+    return streamPrefix;
 }
 
-int NdnRtcLibrary::removeLocalStream(const std::string& streamPrefix)
+int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
+                                     const std::string& streamPrefix)
 {
-    std::cout << "removing local stream " << streamPrefix << std::endl;
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
+    
+    if (it == ActiveSessions.end())
+        return RESULT_ERR;
+
+    it->second->removeLocalStream(streamPrefix);
+    
     return RESULT_OK;
 }
 
@@ -369,7 +445,7 @@ int NdnRtcLibrary::startFetching(const char *producerId,
                                                                  audioParams,
                                                                  renderer));
         
-        producer->setObserver(this);
+        producer->setObserver(&LibraryInternalObserver);
         
         if (RESULT_FAIL(producer->init()))
             return -1;
@@ -408,11 +484,6 @@ int NdnRtcLibrary::stopFetching(const char *producerId)
     
     return notifyObserverWithState("leave", "stopped fetching from %s",
                                    producerId);
-}
-
-void NdnRtcLibrary::onErrorOccurred(const char *errorMessage)
-{
-    notifyObserverWithError(errorMessage);
 }
 
 int NdnRtcLibrary::startPublishing(const char* username,
@@ -490,8 +561,7 @@ int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *fo
 }
 void NdnRtcLibrary::notifyObserver(const char *state, const char *args) const
 {
-    if (observer_)
-        observer_->onStateChanged(state, args);
+    LibraryInternalObserver.onStateChanged(state, args);
 }
 
 int
@@ -525,7 +595,7 @@ NdnRtcLibrary::preparePublishing(const char* username,
                                                          !useExternalCapturer,
                                                          (IExternalRenderer*)renderer));
     
-    sc->setObserver(this);
+    sc->setObserver(&LibraryInternalObserver);
     
     if (RESULT_FAIL(sc->init()))
         return RESULT_ERR;

@@ -13,6 +13,7 @@
 
 #include "ndnrtc-common.h"
 #include "face-wrapper.h"
+#include "ndnrtc-object.h"
 
 namespace ndnrtc {
     
@@ -51,7 +52,7 @@ namespace ndnrtc {
          * Service channel can be used for fetching any non-media information
          * from network or directly from producer
          */
-        class ServiceChannel : public ndnlog::new_api::ILoggingObject
+        class ServiceChannel :  public NdnRtcComponent
         {
         public:
             static unsigned int DefaultUpdateIntervalMs;
@@ -78,12 +79,12 @@ namespace ndnrtc {
              * for signing session info data
              * @see onPublishSessionInfo call
              */
-            void
+            int
             startSessionInfoBroadcast(const std::string& sessionInfoPrefix,
                                       const boost::shared_ptr<KeyChain> keyChain,
                                       const Name& signingCertificateName);
             
-            void
+            int
             stopSessionInfoBroadcast();
             
             /**

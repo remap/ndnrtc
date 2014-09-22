@@ -20,7 +20,9 @@ Session::Session(const std::string username,
 NdnRtcComponent(),
 username_(username),
 generalParams_(generalParams),
-userPrefix_(*NdnRtcNamespace::getProducerPrefix(generalParams_.prefix_, username_))
+userPrefix_(*NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username_)),
+sessionObserver_(NULL),
+status_(SessionOffline)
 {
     description_ = "session";
     this->setLogger(new Logger(generalParams.loggingLevel_,
@@ -29,11 +31,12 @@ userPrefix_(*NdnRtcNamespace::getProducerPrefix(generalParams_.prefix_, username
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
     
     mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
+    sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
 }
 
 Session::~Session()
 {
-    
+    stop();
 }
 
 
@@ -49,20 +52,98 @@ Session::start()
 int
 Session::stop()
 {
-    serviceChannel_->stopSessionInfoBroadcast();
-    LogInfoC << "session stopped" << std::endl;
+    int res = serviceChannel_->stopSessionInfoBroadcast();
+    
+    if (RESULT_NOT_FAIL(res))
+    {
+        LogInfoC << "session stopped" << std::endl;
+        switchStatus(SessionOffline);
+    }
+    
+    return RESULT_OK;
+}
+
+int
+Session::addLocalStream(const MediaStreamParams& params,
+                        IExternalCapturer** const capturer,
+                        std::string& streamPrefix)
+{
+    MediaStreamSettings mediaStreamSettings(params);
+    
+    mediaStreamSettings.useFec_ = generalParams_.useFec_;
+    mediaStreamSettings.userPrefix_ = getPrefix();
+    mediaStreamSettings.keyChain_ = userKeyChain_;
+    mediaStreamSettings.faceProcessor_ = mainFaceProcessor_;
+    mediaStreamSettings.memoryCache_ = sessionCache_;
+    
+    shared_ptr<MediaStream> mediaStream;
+    StreamMap& streamMap = (params.type_ == MediaStreamParams::MediaStreamTypeAudio)?audioStreams_:videoStreams_;
+    
+    if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
+        mediaStream.reset(new AudioStream());
+    else
+        mediaStream.reset(new VideoStream());
+    
+    if (RESULT_FAIL(mediaStream->init(mediaStreamSettings)))
+        return notifyError(-1, "couldn't initialize media stream");
+    
+    mediaStream->setLogger(logger_);
+    streamMap[mediaStream->getPrefix()] = mediaStream;
+    streamPrefix = mediaStream->getPrefix();
+    
+    if (params.type_ == MediaStreamParams::MediaStreamTypeVideo)
+        *capturer = dynamic_pointer_cast<VideoStream>(mediaStream)->getCapturer();
+    
+    return RESULT_OK;
+}
+
+int
+Session::removeLocalStream(const std::string& streamPrefix)
+{
+    StreamMap::iterator it = audioStreams_.find(streamPrefix);
+    StreamMap* streamMap = &audioStreams_;
+    
+    if (it == audioStreams_.end())
+    {
+        it = videoStreams_.find(streamPrefix);
+        
+        if (it == videoStreams_.end())
+            return RESULT_ERR;
+        
+        streamMap = &videoStreams_;
+    }
+    
+    it->second->release();
+    streamMap->erase(it);
     
     return RESULT_OK;
 }
 
 // private
 void
+Session::switchStatus(SessionStatus status)
+{
+    status_ = status;
+    
+    if (sessionObserver_)
+        sessionObserver_->onSessionStatusUpdate(username_.c_str(),
+                                                userPrefix_.c_str(),
+                                                status_);
+}
+
+void
 Session::startServiceChannel()
 {
     serviceChannel_.reset(new ServiceChannel(this, mainFaceProcessor_));
-    serviceChannel_->startSessionInfoBroadcast(*NdnRtcNamespace::getSessionInfoPrefix(userPrefix_),
+    serviceChannel_->registerCallback(this);
+    
+    if (RESULT_NOT_FAIL(serviceChannel_->startSessionInfoBroadcast(*NdnRtcNamespace::getSessionInfoPrefix(userPrefix_),
                                                userKeyChain_,
-                                               *NdnRtcNamespace::certificateNameForUser(userPrefix_));
+                                               *NdnRtcNamespace::certificateNameForUser(userPrefix_))))
+    {
+        switchStatus(SessionOnlineNotPublishing);
+        
+    }
 }
 
 // IServiceChannelPublisherCallback
@@ -70,6 +151,7 @@ void
 Session::onSessionInfoBroadcastFailed()
 {
     LogErrorC << "failed to register prefix for session info" << std::endl;
+    switchStatus(SessionOffline);
 }
 
 boost::shared_ptr<SessionInfo>
@@ -87,4 +169,17 @@ Session::onPublishSessionInfo()
 //    }
     
     return sessionInfo;
+}
+
+void
+Session::onError(const char *errorMessage)
+{
+    std::string extendedMessage = NdnRtcUtils::toString("[session %s] %s",
+                                                        getPrefix().c_str(),
+                                                        errorMessage);
+    NdnRtcComponent::onError(extendedMessage.c_str());
+    
+    if (sessionObserver_)
+        sessionObserver_->onSessionError(username_.c_str(), userPrefix_.c_str(),
+                                         status_, -1, errorMessage);
 }

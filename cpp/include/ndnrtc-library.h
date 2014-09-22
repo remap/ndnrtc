@@ -28,7 +28,7 @@ namespace ndnrtc {
      * No upper boundary exists for the number of simultaneously fetched 
      * streams. Library is configured using ParamsStruct structure.
      */
-    class NdnRtcLibrary : public INdnRtcObjectObserver {
+    class NdnRtcLibrary {
     public:
         
         /**
@@ -82,9 +82,7 @@ namespace ndnrtc {
          * Sets library observer
          * @param observer Refernce to observer object
          */
-        virtual void setObserver(INdnRtcLibraryObserver *observer) {
-            observer_ = observer;
-        }
+        virtual void setObserver(INdnRtcLibraryObserver *observer) DEPRECATED;
         
         /**
          * Returns statistics of the producer queried
@@ -103,13 +101,14 @@ namespace ndnrtc {
         /**
          * Starts NDN-RTC session with username and prefix provided
          * @param username NDN-RTC user name
-         * @return User prefix in the following form:
+         * @return Session prefix in the following form:
          *      <prefix>/<ndnrtc_component>/<username>
          *      where ndnrtc_component is "ndnrtc/user", but may be changed in
          *      future releases
          */
         virtual std::string startSession(const std::string& username,
-                                         const new_api::GeneralParams& generalParams);
+                                         const new_api::GeneralParams& generalParams,
+                                         ISessionObserver *sessionObserver);
         
         virtual int stopSession(const std::string& userPrefix);
         
@@ -136,7 +135,7 @@ namespace ndnrtc {
          *      releases
          * @see startSession
          */
-        virtual std::string addLocalStream(const std::string& userPrefix,
+        virtual std::string addLocalStream(const std::string& sessionPrefix,
                                            const new_api::MediaStreamParams& params,
                                            IExternalCapturer** const capturer);
         
@@ -146,7 +145,8 @@ namespace ndnrtc {
          * call
          * @see addLocalStream
          */
-        virtual int removeLocalStream(const std::string& streamPrefix);
+        virtual int removeLocalStream(const std::string& sessionPrefix,
+                                      const std::string& streamPrefix);
         
         /**
          * Adds local thread to the existing media stream identified by 
@@ -378,14 +378,12 @@ namespace ndnrtc {
         void *libraryHandle_;
         char *publisherId_ = 0;
         ParamsStruct libParams_, libAudioParams_;
-        INdnRtcLibraryObserver *observer_;
         
         // private methods go here
         int notifyObserverWithError(const char *format, ...) const;
         int notifyObserverWithState(const char *stateName,
                                     const char *format, ...) const;
         void notifyObserver(const char *state, const char *args) const;
-        virtual void onErrorOccurred(const char *errorMessage);
         
         int preparePublishing(const char* username,
                               bool useExternalCapturer,
