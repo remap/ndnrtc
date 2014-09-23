@@ -45,6 +45,14 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
     return iid;
 }
 
+void
+FaceWrapper::removePendingInterest(uint64_t interestId)
+{
+    faceCs_.Enter();
+    face_->removePendingInterest(interestId);
+    faceCs_.Leave();
+}
+
 uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                      const OnInterest& onInterest,
                                      const OnRegisterFailed& onRegisterFailed,

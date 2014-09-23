@@ -35,6 +35,9 @@ namespace ndnrtc {
                         const OnTimeout& onTimeout = OnTimeout(),
                         WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
+        void
+        removePendingInterest(uint64_t interestId);
+        
         uint64_t
         registerPrefix(const Name& prefix,
                        const OnInterest& onInterest,
