@@ -83,20 +83,16 @@ namespace ndnrtc {
             void
             stopMonitor();
             
-            void
-            setLogger(ndnlog::new_api::Logger* logger);
-            
         private:
             bool isMonitoring_;
             unsigned int updateCounter_, updateIntervalMs_,
             sessionInfoFreshnessMs_ = 1000;
-            uint64_t registeredPrefixId_;
+            uint64_t registeredPrefixId_, pendingInterestId_;
             void *callback_;
             
             Name signingCertificateName_;
             boost::shared_ptr<KeyChain> ndnKeyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
-            boost::shared_ptr<InterestQueue> interestQueue_;
             
             boost::shared_ptr<new_api::SessionInfo> sessionInfo_;
             Name sessionInfoPrefix_;

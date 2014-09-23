@@ -30,11 +30,8 @@ monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring
 monitorTimer_(*EventWrapper::Create()),
 callback_(callback),
 faceProcessor_(faceProcessor),
-interestQueue_(new InterestQueue(faceProcessor->getFaceWrapper())),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
 {
-    // TBD: set observer for interest queue
-//    interestQueue_->setObserver(this);
     init();
 }
 
@@ -47,11 +44,9 @@ monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring
 monitorTimer_(*EventWrapper::Create()),
 callback_(callback),
 faceProcessor_(faceProcessor),
-interestQueue_(new InterestQueue(faceProcessor->getFaceWrapper())),
 updateIntervalMs_(updateIntervalMs)
 {
     init();
-    interestQueue_->setDescription(std::string("service-iqueue"));
 }
 
 int
@@ -108,13 +103,6 @@ ServiceChannel::stopMonitor()
     stopMonitorThread();
 }
 
-void
-ServiceChannel::setLogger(ndnlog::new_api::Logger* logger)
-{
-    interestQueue_->setLogger(logger);
-    ILoggingObject::setLogger(logger);
-}
-
 #pragma mark - private
 
 void
@@ -137,6 +125,9 @@ ServiceChannel::stopMonitorThread()
 {
     isMonitoring_ = false;
     
+    faceProcessor_->getFaceWrapper()->removePendingInterest(pendingInterestId_);
+    pendingInterestId_ = 0;
+    
     monitorTimer_.Set();
     monitoringThread_.Stop();
     monitoringThread_.SetNotAlive();
@@ -158,17 +149,18 @@ ServiceChannel::requestSessionInfo()
 {
     ndn::Interest interest(sessionInfoPrefix_, updateIntervalMs_);
     interest.setMustBeFresh(true);
-    
-    interestQueue_->enqueueInterest(interest,
-                                    Priority::fromAbsolutePriority(1),
-                                    bind(&ServiceChannel::onData, this, _1, _2),
-                                    bind(&ServiceChannel::onTimeout, this, _1));
+ 
+    pendingInterestId_ = faceProcessor_->getFaceWrapper()->expressInterest(interest,
+                                                      bind(&ServiceChannel::onData, this, _1, _2),
+                                                      bind(&ServiceChannel::onTimeout, this, _1));
 }
 
 void
 ServiceChannel::onData(const shared_ptr<const Interest>& interest,
                        const shared_ptr<Data>& data)
 {
+    pendingInterestId_ = 0;
+    
     if (callback_)
     {
         SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
