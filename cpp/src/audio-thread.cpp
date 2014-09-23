@@ -19,8 +19,10 @@ using namespace boost;
 #pragma mark - public
 int AudioThread::init(const AudioThreadSettings& settings)
 {
-    int res = RESULT_OK;
-    res = MediaThread::init(settings);
+    settings_ = new AudioThreadSettings();
+    *settings_ = settings;
+    
+    int res = MediaThread::init(settings);
     
     if (RESULT_FAIL(res))
         return res;

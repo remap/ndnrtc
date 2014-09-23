@@ -21,8 +21,7 @@
 
 namespace ndnrtc {
     namespace new_api {
-        class ConsumerChannel : public NdnRtcObject,
-                            public IServiceChannelListenerCallback
+        class ConsumerChannel : public NdnRtcObject
         {
         public:
             ConsumerChannel(const ParamsStruct& params,

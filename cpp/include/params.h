@@ -171,7 +171,9 @@ namespace ndnrtc
                     delete mediaThreads_[i];
                 
                 mediaThreads_.clear();
-                delete captureDevice_;
+
+                if (captureDevice_)
+                    delete captureDevice_;
             }
             
             MediaStreamParams& operator=(const MediaStreamParams& other)
@@ -215,8 +217,11 @@ namespace ndnrtc
                 for (int i = 0; i < other.mediaThreads_.size(); i++)
                     mediaThreads_.push_back(other.mediaThreads_[i]->copy());
                 
-                captureDevice_ = new CaptureDeviceParams();
-                *captureDevice_ = *other.captureDevice_;
+                if (other.captureDevice_)
+                {
+                    captureDevice_ = new CaptureDeviceParams();
+                    *captureDevice_ = *other.captureDevice_;
+                }
             }
         };
         
@@ -360,9 +365,11 @@ namespace ndnrtc
             }
         };
         
-        class SessionInfo {
+        class SessionInfo : public Params {
         public:
             SessionInfo(){}
+            SessionInfo(const SessionInfo& other)
+            { copyFrom(other); }
             ~SessionInfo()
             {
                 for (int i = 0; i < audioStreams_.size(); i++) delete audioStreams_[i];
@@ -371,9 +378,46 @@ namespace ndnrtc
                 for (int i = 0; i < videoStreams_.size(); i++) delete videoStreams_[i];
                 videoStreams_.clear();
             }
+            SessionInfo& operator=(const SessionInfo& other)
+            {
+                if (this == &other)
+                    return *this;
+                
+                copyFrom(other);
+                return *this;
+            }
+            
             
             std::vector<MediaStreamParams*> audioStreams_;
             std::vector<MediaStreamParams*> videoStreams_;
+            
+            void write(std::ostream& os) const
+            {
+                os << "audio streams: " << std::endl;
+                for (int i = 0; i < audioStreams_.size(); i++)
+                    os << i << ": " << *audioStreams_[i] << std::endl;
+                    
+                os << "video streams:" << std::endl;
+                for (int i = 0; i < videoStreams_.size(); i++)
+                    os << i << ": " << *videoStreams_[i] << std::endl;
+            }
+            
+        private:
+            void
+            copyFrom(const SessionInfo& other)
+            {
+                for (int i = 0; i < other.audioStreams_.size(); i++)
+                {
+                    MediaStreamParams* params = new MediaStreamParams(*other.audioStreams_[i]);
+                    audioStreams_.push_back(params);
+                }
+                
+                for (int i = 0; i < other.videoStreams_.size(); i++)
+                {
+                    MediaStreamParams* params = new MediaStreamParams(*other.videoStreams_[i]);
+                    videoStreams_.push_back(params);
+                }
+            }
         };
     }
     

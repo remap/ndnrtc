@@ -506,82 +506,120 @@ NdnAudioData::initFromRawData(unsigned int dataLength,
 
 //******************************************************************************
 SessionInfoData::SessionInfoData(const new_api::SessionInfo& sessionInfo):
-NetworkData()
+NetworkData(),
+sessionInfo_(sessionInfo)
 {
-//    packParameters(videoParams, audioParams);
+    packParameters(sessionInfo_);
 }
 
 SessionInfoData::SessionInfoData(unsigned int dataLength, const unsigned char* data):
 NetworkData(dataLength, data)
-//videoParams_(DefaultParams),
-//audioParams_(DefaultParamsAudio)
 {
     isValid_ = RESULT_GOOD(initFromRawData(dataLength, data));
 }
 
 int
-SessionInfoData::getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const
-{
-    return RESULT_ERR;
-}
-
-int
 SessionInfoData::getSessionInfo(new_api::SessionInfo& sessionInfo)
 {
-    
+    sessionInfo = sessionInfo_;
     return RESULT_OK;
 }
 
 unsigned int
-SessionInfoData::getSessionInfoLength(unsigned int nVideoStreams,
-                                  unsigned int nAudioStreams)
+SessionInfoData::getSessionInfoLength(const new_api::SessionInfo& sessionInfo)
 {
-    return sizeof(struct _SessionInfoDataHeader) +
-    sizeof(struct _VideoStreamDescription) * nVideoStreams +
-    sizeof(struct _AudioStreamDescription) * nAudioStreams;
+    unsigned int dataLength = sizeof(struct _SessionInfoDataHeader) +
+    sizeof(struct _VideoStreamDescription)*sessionInfo.videoStreams_.size() +
+    sizeof(struct _AudioStreamDescription)*sessionInfo.audioStreams_.size();
+    
+    for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
+        dataLength += sizeof(struct _VideoThreadDescription)*sessionInfo.videoStreams_[i]->mediaThreads_.size();
+    
+    for (int i = 0; i < sessionInfo.audioStreams_.size(); i++)
+        dataLength += sizeof(struct _AudioThreadDescription)*sessionInfo.audioStreams_[i]->mediaThreads_.size();
+    
+    return dataLength;
 }
 
 void
-SessionInfoData::packParameters(const ParamsStruct& videoParams,
-                            const ParamsStruct& audioParams)
+SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
 {
     isDataCopied_ = true;
-    length_ = getSessionInfoLength(videoParams.nStreams, audioParams.nStreams);
+    length_ = getSessionInfoLength(sessionInfo);
     
     data_ = (unsigned char*)malloc(length_);
     
     struct _SessionInfoDataHeader header;
-    header.nVideoStreams_ = videoParams.nStreams;
-    header.videoSegmentSize_ = videoParams.segmentSize;
-    header.nAudioStreams_ = audioParams.nStreams;
-    header.audioSegmentSize_ = audioParams.segmentSize;
+    header.nVideoStreams_ = sessionInfo.videoStreams_.size();
+    header.nAudioStreams_ = sessionInfo.audioStreams_.size();
     
     *((struct _SessionInfoDataHeader*)data_) = header;
     
     int streamIdx = sizeof(struct _SessionInfoDataHeader);
     
-    for (int i = 0; i < videoParams.nStreams; i++) {
+    for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
+    {
+        new_api::MediaStreamParams *params = sessionInfo.videoStreams_[i];
         struct _VideoStreamDescription streamDescription;
-        streamDescription.rate_ = videoParams.streamsParams[i].codecFrameRate;
-        streamDescription.gop_ = videoParams.streamsParams[i].gop;
-        streamDescription.bitrate_ = videoParams.streamsParams[i].startBitrate;
-        streamDescription.width_ = videoParams.streamsParams[i].encodeWidth;
-        streamDescription.height_ = videoParams.streamsParams[i].encodeHeight;
         
+        streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
+        memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
+        strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
+        streamDescription.nThreads_  = params->mediaThreads_.size();
         *((struct _VideoStreamDescription*)&data_[streamIdx]) = streamDescription;
         
         streamIdx += sizeof(struct _VideoStreamDescription);
+        int threadIdx = streamIdx;
+        
+        for (int j = 0; j < params->mediaThreads_.size(); j++)
+        {
+            new_api::VideoThreadParams *threadParams = (new_api::VideoThreadParams*)params->mediaThreads_[j];
+            struct _VideoThreadDescription threadDescription;
+            
+#warning should this reflect actual encoding rate of a producer?
+            threadDescription.rate_ = threadParams->coderParams_.codecFrameRate_;
+            threadDescription.gop_ = threadParams->coderParams_.gop_;
+            threadDescription.bitrate_ = threadParams->coderParams_.startBitrate_;
+            threadDescription.width_ = threadParams->coderParams_.encodeWidth_;
+            threadDescription.height_ = threadParams->coderParams_.encodeHeight_;
+            memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
+            strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
+            
+            *((struct _VideoThreadDescription*)&data_[threadIdx]) = threadDescription;
+            threadIdx += sizeof(struct _VideoThreadDescription);
+            streamIdx = threadIdx;
+        }
     }
     
-    for (int i = 0; i < audioParams.nStreams; i++){
+    for (int i = 0; i < sessionInfo.audioStreams_.size(); i++)
+    {
+        new_api::MediaStreamParams *params = sessionInfo_.audioStreams_[i];
         struct _AudioStreamDescription streamDescription;
-        streamDescription.rate_ = audioParams.streamsParams[i].codecFrameRate;
-        streamDescription.bitrate_ = audioParams.streamsParams[i].startBitrate;
         
+        streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
+        memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
+        strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
+        streamDescription.nThreads_  = params->mediaThreads_.size();
         *((struct _AudioStreamDescription*)&data_[streamIdx]) = streamDescription;
         
         streamIdx += sizeof(struct _AudioStreamDescription);
+        int threadIdx = streamIdx;
+        
+        for (int j = 0; j < params->mediaThreads_.size(); j++)
+        {
+            new_api::AudioThreadParams *threadParams = (new_api::AudioThreadParams*)params->mediaThreads_[j];
+            struct _AudioThreadDescription threadDescription;
+            
+            memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
+            strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
+            
+            *((struct _AudioThreadDescription*)&data_[threadIdx]) = threadDescription;
+            threadIdx += sizeof(struct _AudioThreadDescription);
+            streamIdx = threadIdx;
+        }
     }
+    
+    assert(streamIdx == length_);
 }
 
 int
@@ -595,60 +633,71 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
         headerSize > dataLength)
         return RESULT_ERR;
     
-    videoParams_.segmentSize = header.videoSegmentSize_;
-    audioParams_.segmentSize = header.audioSegmentSize_;
-    
-    if (dataLength < getSessionInfoLength(header.nVideoStreams_, header.nAudioStreams_))
-        return RESULT_ERR;
-    
     unsigned int streamIdx = headerSize;
     
     for (int i = 0; i < header.nVideoStreams_; i++)
     {
+        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         struct _VideoStreamDescription streamDescription = *((struct _VideoStreamDescription*)(&data_[streamIdx]));
-        CodecParams codecParams;
-        memset(&codecParams, 0, sizeof(CodecParams));
         
-        codecParams.idx = i;
-        codecParams.codecFrameRate = streamDescription.rate_;
-        codecParams.gop = streamDescription.gop_;
-        codecParams.startBitrate = streamDescription.bitrate_;
-        codecParams.encodeWidth = streamDescription.width_;
-        codecParams.encodeHeight = streamDescription.height_;
+        params->type_ = new_api::MediaStreamParams::MediaStreamTypeVideo;
+        params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
+        params->streamName_ = string((char*)&streamDescription.name_[0]);
         
-        videoParams_.addNewStream(codecParams);
         streamIdx += sizeof(struct _VideoStreamDescription);
+        unsigned int threadIdx = streamIdx;
+        
+        for (int j = 0; j < streamDescription.nThreads_; j++)
+        {
+            struct _VideoThreadDescription threadDescription = *((struct _VideoThreadDescription*)(&data_[threadIdx]));
+            new_api::VideoThreadParams *threadParams = new new_api::VideoThreadParams();
+            
+            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
+            threadParams->coderParams_.codecFrameRate_ = threadDescription.rate_;
+            threadParams->coderParams_.gop_ = threadDescription.gop_;
+            threadParams->coderParams_.startBitrate_ = threadDescription.bitrate_;
+            threadParams->coderParams_.maxBitrate_ = 0;
+            threadParams->coderParams_.encodeWidth_ = threadDescription.width_;
+            threadParams->coderParams_.encodeHeight_ = threadDescription.height_;
+            
+            params->mediaThreads_.push_back(threadParams);
+            
+            threadIdx += sizeof(struct _VideoThreadDescription);
+            streamIdx = threadIdx;
+        }
+        
+        sessionInfo_.videoStreams_.push_back(params);
     }
     
     for (int i = 0; i < header.nAudioStreams_; i++)
     {
+        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         struct _AudioStreamDescription streamDescription = *((struct _AudioStreamDescription*)(&data_[streamIdx]));
-        CodecParams codecParams;
-        memset(&codecParams, 0, sizeof(CodecParams));
         
-        codecParams.idx = i;
-        codecParams.codecFrameRate = streamDescription.rate_;
-        codecParams.startBitrate = streamDescription.bitrate_;
+        params->type_ = new_api::MediaStreamParams::MediaStreamTypeAudio;
+        params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
+        params->streamName_ = string((char*)&streamDescription.name_[0]);
         
-        audioParams_.addNewStream(codecParams);
         streamIdx += sizeof(struct _AudioStreamDescription);
+        unsigned int threadIdx = streamIdx;
+        
+        for (int j = 0; j < streamDescription.nThreads_; j++)
+        {
+            struct _AudioThreadDescription threadDescription = *((struct _AudioThreadDescription*)(&data_[threadIdx]));
+            new_api::AudioThreadParams *threadParams = new new_api::AudioThreadParams();
+            
+            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
+            
+            params->mediaThreads_.push_back(threadParams);
+            
+            threadIdx += sizeof(struct _AudioThreadDescription);
+            streamIdx = threadIdx;
+        }
+        
+        sessionInfo_.audioStreams_.push_back(params);
     }
+    
+    assert(streamIdx == length_);
     
     return RESULT_OK;
-}
-
-void
-SessionInfoData::updateParams(ParamsStruct& paramsForUpdate,
-                          const ParamsStruct& params)
-{
-    if (paramsForUpdate.nStreams)
-    {
-        free(paramsForUpdate.streamsParams);
-        paramsForUpdate.streamsParams = NULL;
-    }
-    
-    paramsForUpdate.segmentSize = params.segmentSize;
-    paramsForUpdate.nStreams = 0;
-    for (int i = 0; i < params.nStreams; i++)
-        paramsForUpdate.addNewStream(params.streamsParams[i]);
 }

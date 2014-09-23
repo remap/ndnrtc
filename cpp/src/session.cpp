@@ -43,6 +43,7 @@ Session::~Session()
 int
 Session::start()
 {
+    mainFaceProcessor_->startProcessing();
     startServiceChannel();
     LogInfoC << "session started" << std::endl;
     
@@ -52,6 +53,8 @@ Session::start()
 int
 Session::stop()
 {
+    mainFaceProcessor_->stopProcessing();
+    
     int res = serviceChannel_->stopSessionInfoBroadcast();
     
     if (RESULT_NOT_FAIL(res))
@@ -84,15 +87,19 @@ Session::addLocalStream(const MediaStreamParams& params,
     else
         mediaStream.reset(new VideoStream());
     
+    mediaStream->registerCallback(this);
+    mediaStream->setLogger(logger_);
+    
     if (RESULT_FAIL(mediaStream->init(mediaStreamSettings)))
         return notifyError(-1, "couldn't initialize media stream");
     
-    mediaStream->setLogger(logger_);
     streamMap[mediaStream->getPrefix()] = mediaStream;
     streamPrefix = mediaStream->getPrefix();
     
     if (params.type_ == MediaStreamParams::MediaStreamTypeVideo)
         *capturer = dynamic_pointer_cast<VideoStream>(mediaStream)->getCapturer();
+    
+    switchStatus(SessionOnlinePublishing);
     
     return RESULT_OK;
 }
@@ -116,6 +123,9 @@ Session::removeLocalStream(const std::string& streamPrefix)
     it->second->release();
     streamMap->erase(it);
     
+    if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
+        switchStatus(SessionOnlineNotPublishing);
+    
     return RESULT_OK;
 }
 
@@ -123,12 +133,15 @@ Session::removeLocalStream(const std::string& streamPrefix)
 void
 Session::switchStatus(SessionStatus status)
 {
-    status_ = status;
-    
-    if (sessionObserver_)
-        sessionObserver_->onSessionStatusUpdate(username_.c_str(),
-                                                userPrefix_.c_str(),
-                                                status_);
+    if (status != status_)
+    {
+        status_ = status;
+        
+        if (sessionObserver_)
+            sessionObserver_->onSessionStatusUpdate(username_.c_str(),
+                                                    userPrefix_.c_str(),
+                                                    status_);
+    }
 }
 
 void
@@ -157,16 +170,23 @@ Session::onSessionInfoBroadcastFailed()
 boost::shared_ptr<SessionInfo>
 Session::onPublishSessionInfo()
 {
-//    LogInfoC << "session info requested" << std::endl;
-//    
+    LogInfoC << "session info requested" << std::endl;
+
     shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
-//
-//    for (StreamMap::iterator it = audioStreams_.begin(); it != audioStreams_.end(); it++)
-//    {
-//        
-//        MediaStreamParams *mediaStreamParams(it->second->getSettings()->getTranslatedToParams());
-//        sessionInfo->
-//    }
+
+    for (StreamMap::iterator it = audioStreams_.begin(); it != audioStreams_.end(); it++)
+    {
+        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getSettings().streamParams_);
+        
+        sessionInfo->audioStreams_.push_back(streamParams);
+    }
+    
+    for (StreamMap::iterator it = videoStreams_.begin(); it != videoStreams_.end(); it++)
+    {
+        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getSettings().streamParams_);
+        
+        sessionInfo->videoStreams_.push_back(streamParams);
+    }
     
     return sessionInfo;
 }

@@ -117,12 +117,13 @@ namespace ndnrtc {
          * @param username
          * @param prefix
          */
-        virtual int setSessionObserver(const std::string& username,
-                                       const std::string& prefix,
-                                       ISessionObserver** const sessionObserver);
+        virtual int setRemoteSessionObserver(const std::string& username,
+                                             const std::string& prefix,
+                                             const new_api::GeneralParams& generalParams,
+                                             IRemoteSessionObserver* sessionObserver);
         
-        virtual int removeSessionObserver(const std::string& username,
-                                          const std::string& prefix);
+        virtual int removeRemoteSessionObserver(const std::string& username,
+                                                const std::string& prefix);
         
         /**
          * Adds local stream to the session identified by userPrefix parameter

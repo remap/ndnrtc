@@ -127,7 +127,7 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     videoThread->setLogger(logger_);
     
     if (RESULT_FAIL(videoThread->init(threadSettings)))
-        notifyError(-1, "couldn't add new media thread %s", threadSettings.getVideoParams()->threadName_.c_str());
+        notifyError(-1, "couldn't add new video thread %s", threadSettings.getVideoParams()->threadName_.c_str());
     else
         threads_[videoThread->getPrefix()] = videoThread;
 }
@@ -166,6 +166,7 @@ MediaStream(),
 audioCapturer_(new AudioCapturer(NdnRtcUtils::sharedVoiceEngine()))
 {
     description_ = "audio-stream";
+    audioCapturer_->registerCallback(this);
     audioCapturer_->setFrameConsumer(this);
 }
 
@@ -173,9 +174,17 @@ int
 AudioStream::init(const MediaStreamSettings& streamSettings)
 {
     MediaStream::init(streamSettings);
+    audioCapturer_->setLogger(logger_);
+    audioCapturer_->init();
     audioCapturer_->startCapture();
     
     return RESULT_OK;
+}
+
+void
+AudioStream::release()
+{
+    audioCapturer_->stopCapture();
 }
 
 void
@@ -183,14 +192,17 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
 {
     AudioThreadSettings threadSettings;
     getCommonThreadSettings(&threadSettings);
+    threadSettings.threadParams_ = params;
     
     shared_ptr<AudioThread> audioThread(new AudioThread());
     audioThread->registerCallback(this);
     audioThread->setLogger(logger_);
-    audioThread->init(threadSettings);
     
-    threads_[audioThread->getPrefix()] = audioThread;
-    audioThread->setLogger(logger_);
+    if (RESULT_FAIL(audioThread->init(threadSettings)))
+        notifyError(-1, "couldn't add new video thread %s",
+                    threadSettings.threadParams_->threadName_.c_str());
+    else
+        threads_[audioThread->getPrefix()] = audioThread;
 }
 
 // interface conformance - IAudioFrameConsumer

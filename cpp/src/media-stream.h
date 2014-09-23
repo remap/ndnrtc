@@ -140,7 +140,7 @@ namespace ndnrtc
             init(const MediaStreamSettings& streamSettings);
             
             void
-            release(){}
+            release();
             
         private:
             boost::shared_ptr<AudioCapturer> audioCapturer_;

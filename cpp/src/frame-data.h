@@ -357,53 +357,50 @@ namespace ndnrtc {
         SessionInfoData(unsigned int dataLength, const unsigned char* data);
         virtual ~SessionInfoData() {}
         
-        /**
-         * This method unpacks data from raw bytes and updates corresponding
-         * audio and video parameters structures
-         * @return RESULT_OK if raw data is correct and unpacking completed 
-         * normally, RESULT_ERR otherwise
-         */
-        int
-        getParams(ParamsStruct& videoParams, ParamsStruct& audioParams) const DEPRECATED;
-        
         int
         getSessionInfo(new_api::SessionInfo& sessionInfo);
-        
-        static void
-        updateParams(ParamsStruct& paramsForUpdate,
-                     const ParamsStruct& params);
 
     private:
-        struct _VideoStreamDescription {
+        struct _VideoThreadDescription {
             double rate_; // FPS
             unsigned int gop_;
             unsigned int bitrate_; // kbps
             unsigned int width_, height_; // pixels
+            char name_[MAX_THREAD_NAME_LENGTH+1];
+        } __attribute__((packed));
+        
+        struct _AudioThreadDescription {
+            double rate_;
+//            unsigned int bitrate_; // kbps
+            char name_[MAX_THREAD_NAME_LENGTH+1];
+        } __attribute__((packed));
+        
+        struct _VideoStreamDescription {
+            unsigned int segmentSize_;
+            char name_[MAX_STREAM_NAME_LENGTH+1];
+            unsigned int nThreads_;
         } __attribute__((packed));
         
         struct _AudioStreamDescription {
-            double rate_;
-            unsigned int bitrate_; // kbps
+            unsigned int segmentSize_;
+            char name_[MAX_STREAM_NAME_LENGTH+1];
+            unsigned int nThreads_;
         } __attribute__((packed));
         
         struct _SessionInfoDataHeader {
             uint16_t mrkr1_ = NDNRTC_SESSION_MRKR;
             unsigned int nVideoStreams_;
-            unsigned int videoSegmentSize_;
             unsigned int nAudioStreams_;
-            unsigned int audioSegmentSize_;
             uint16_t mrkr2_ = NDNRTC_SESSION_MRKR;
         } __attribute__((packed));
         
-        ParamsStruct videoParams_, audioParams_;
+        new_api::SessionInfo sessionInfo_;
         
         unsigned int
-        getSessionInfoLength(unsigned int nVideoStreams,
-                             unsigned int nAudioStreams);
+        getSessionInfoLength(const new_api::SessionInfo& sessionInfo);
         
         void
-        packParameters(const ParamsStruct& videoParams,
-                       const ParamsStruct& audioParams);
+        packParameters(const new_api::SessionInfo& sessionInfo);
         
         int
         initFromRawData(unsigned int dataLength, const unsigned char* data);

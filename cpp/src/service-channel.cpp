@@ -11,6 +11,7 @@
 #include "service-channel.h"
 #include "interest-queue.h"
 #include "frame-data.h"
+#include "ndnrtc-namespace.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -95,9 +96,9 @@ ServiceChannel::stopSessionInfoBroadcast()
 }
 
 void
-ServiceChannel::startMonitor(const std::string& sessionInfoPrefix)
+ServiceChannel::startMonitor(const std::string& sessionPrefix)
 {
-    sessionInfoPrefix_ = Name(sessionInfoPrefix.c_str());
+    sessionInfoPrefix_ = Name(*NdnRtcNamespace::getSessionInfoPrefix(sessionPrefix));
     startMonitorThread();
 }
 
@@ -120,8 +121,6 @@ void
 ServiceChannel::init()
 {
     description_ = "service-channel";
-    memset(&videoParams_, 0, sizeof(ParamsStruct));
-    memset(&audioParams_, 0, sizeof(ParamsStruct));
 }
 
 void
@@ -177,7 +176,8 @@ ServiceChannel::onData(const shared_ptr<const Interest>& interest,
         SessionInfo sessionInfo;
         
         sessionInfoData.getSessionInfo(sessionInfo);
-        updateParametersFromInfo(sessionInfo);
+        getCallbackAsListener()->onSessionInfoUpdate(sessionInfo);
+        updateCounter_++;
     }
     else
         getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
@@ -186,61 +186,7 @@ ServiceChannel::onData(const shared_ptr<const Interest>& interest,
 void
 ServiceChannel::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    stopMonitorThread();
     getCallbackAsListener()->onUpdateFailedWithTimeout();
-}
-
-void
-ServiceChannel::updateParametersFromInfo(const SessionInfo &sessionInfo)
-{
-#warning TBD!
-//    ParamsStruct videoParams, audioParams;
-//    memset(&videoParams, 0, sizeof(ParamsStruct));
-//    memset(&audioParams, 0, sizeof(ParamsStruct));
-//    
-//    if (RESULT_NOT_FAIL(sessionInfo.getParams(videoParams, audioParams)))
-//    {
-//        bool needUpdate = false;
-//        
-//        if ((needUpdate = hasUpdates(videoParams_, videoParams)))
-//            SessionInfo::updateParams(videoParams_, videoParams);
-//        
-//        if ((needUpdate |= hasUpdates(audioParams_, audioParams)))
-//            SessionInfo::updateParams(audioParams_, audioParams);
-//        
-//        if (needUpdate)
-//        {
-//            getCallbackAsListener()->onProducerParametersUpdated(videoParams_, audioParams_);
-//        }
-//    }
-//    else
-//        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
-    
-    updateCounter_++;
-}
-
-bool
-ServiceChannel::hasUpdates(const ParamsStruct& oldParams,
-                           const ParamsStruct& newParams)
-{
-    bool hasUpdated = false;
-    
-    hasUpdated = (oldParams.nStreams != newParams.nStreams);
-    hasUpdated |= (oldParams.segmentSize != newParams.segmentSize);
-    
-    if (!hasUpdated)
-    {
-        for (int i = 0; i < oldParams.nStreams && !hasUpdated; i++)
-        {
-            hasUpdated = (oldParams.streamsParams[i].gop != newParams.streamsParams[i].gop);
-            hasUpdated |= (oldParams.streamsParams[i].codecFrameRate != newParams.streamsParams[i].codecFrameRate);
-            hasUpdated |= (oldParams.streamsParams[i].startBitrate != newParams.streamsParams[i].startBitrate);
-            hasUpdated |= (oldParams.streamsParams[i].encodeWidth != newParams.streamsParams[i].encodeWidth);
-            hasUpdated |= (oldParams.streamsParams[i].encodeHeight != newParams.streamsParams[i].encodeHeight);
-        }
-    }
-    
-    return hasUpdated;
 }
 
 void
@@ -250,8 +196,8 @@ ServiceChannel::onInterest(const shared_ptr<const Name>& prefix,
 {
     if (callback_)
     {
-        shared_ptr<SessionInfo> sessionInfo = getCallbackAsPublisher()->onPublishSessionInfo();
-        SessionInfoData sessionInfoData(*sessionInfo);
+        sessionInfo_ = getCallbackAsPublisher()->onPublishSessionInfo();
+        SessionInfoData sessionInfoData(*sessionInfo_);
         
         Data ndnData(*prefix);
         ndnData.getMetaInfo().setFreshnessPeriod(sessionInfoFreshnessMs_);

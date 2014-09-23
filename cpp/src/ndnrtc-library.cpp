@@ -40,8 +40,12 @@ typedef std::map<std::string, shared_ptr<ConsumerChannel> > ProducerMap;
 static shared_ptr<NdnSenderChannel> SenderChannel DEPRECATED;
 static ProducerMap Producers DEPRECATED;
 
-typedef std::map<std::string, shared_ptr<Session> > SessionMap;
+typedef std::map<std::string, shared_ptr<Session>> SessionMap;
 static SessionMap ActiveSessions;
+
+typedef std::map<std::string, shared_ptr<ServiceChannel>> SessionObserverMap;
+static SessionObserverMap RemoteObservers;
+static shared_ptr<FaceProcessor> RemoteObserverFace;
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -142,6 +146,14 @@ libAudioParams_(DefaultParamsAudio)
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
+    RemoteObserverFace->stopProcessing();
+    
+    for (SessionObserverMap::iterator it = RemoteObservers.begin(); it++;
+         it != RemoteObservers.end())
+    {
+        it->second->stopMonitor();
+    }
+    
     NdnRtcUtils::releaseVoiceEngine();
 }
 //******************************************************************************
@@ -191,18 +203,45 @@ int NdnRtcLibrary::stopSession(const std::string& userPrefix)
     return res;
 }
 
-int NdnRtcLibrary::setSessionObserver(const std::string& username,
-                                      const std::string& prefix,
-                                      ISessionObserver** const sessionObserver)
+int NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
+                                            const std::string& prefix,
+                                            const new_api::GeneralParams& generalParams,
+                                            IRemoteSessionObserver* sessionObserver)
 {
-    std::cout << "setting session observer for " << prefix << " user " << username << std::endl;
+    if (!RemoteObserverFace.get())
+    {
+        RemoteObserverFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
+        RemoteObserverFace->startProcessing();
+    }
+    
+    shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, RemoteObserverFace));
+    
+    std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
+    remoteSessionChannel->startMonitor(sessionPrefix);
+    
+    RemoteObservers[sessionPrefix] = remoteSessionChannel;
+    
     return RESULT_OK;
 }
 
-int NdnRtcLibrary::removeSessionObserver(const std::string& username,
-                                         const std::string& prefix)
+int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& username,
+                                               const std::string& prefix)
 {
-    std::cout << "remove session observer " << prefix << " " << username << std::endl;
+    std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
+    SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
+    
+    if (it == RemoteObservers.end())
+        return RESULT_ERR;
+    
+    it->second->stopMonitor();
+    RemoteObservers.erase(it);
+    
+    if (RemoteObservers.size() == 0)
+    {
+        RemoteObserverFace->stopProcessing();
+        RemoteObserverFace.reset();
+    }
+    
     return RESULT_OK;
 }
 

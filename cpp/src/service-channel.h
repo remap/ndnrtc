@@ -20,25 +20,9 @@ namespace ndnrtc {
     namespace new_api {
         class InterestQueue;
         
-        class IServiceChannelCallback
-        {
-        };
+        typedef IRemoteSessionObserver IServiceChannelListenerCallback;
         
-        class IServiceChannelListenerCallback : public IServiceChannelCallback
-        {
-        public:
-            virtual void
-            onProducerParametersUpdated(const ParamsStruct& newVideoParams,
-                                        const ParamsStruct& newAudioParams) = 0;
-            
-            virtual void
-            onUpdateFailedWithTimeout() = 0;
-            
-            virtual void
-            onUpdateFailedWithError(const char* errMsg) = 0;
-        };
-        
-        class IServiceChannelPublisherCallback : public IServiceChannelCallback
+        class IServiceChannelPublisherCallback
         {
         public:
             virtual void
@@ -91,7 +75,7 @@ namespace ndnrtc {
              * Starts monitoring changes in producer's session
              */
             void
-            startMonitor(const std::string& sessionInfoPrefix);
+            startMonitor(const std::string& sessionPrefix);
             
             /**
              * Stops monitoring changes in producer's session
@@ -107,14 +91,14 @@ namespace ndnrtc {
             unsigned int updateCounter_, updateIntervalMs_,
             sessionInfoFreshnessMs_ = 1000;
             uint64_t registeredPrefixId_;
-            IServiceChannelCallback *callback_;
+            void *callback_;
             
             Name signingCertificateName_;
             boost::shared_ptr<KeyChain> ndnKeyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<InterestQueue> interestQueue_;
             
-            ParamsStruct videoParams_, audioParams_;
+            boost::shared_ptr<new_api::SessionInfo> sessionInfo_;
             Name sessionInfoPrefix_;
             
             webrtc::ThreadWrapper &monitoringThread_;
@@ -139,13 +123,6 @@ namespace ndnrtc {
             
             void
             requestSessionInfo();
-            
-            void
-            updateParametersFromInfo(const SessionInfo& sessionInfo);
-            
-            bool
-            hasUpdates(const ParamsStruct& oldParams,
-                       const ParamsStruct& newParams);
             
             IServiceChannelListenerCallback*
             getCallbackAsListener()

@@ -10,6 +10,7 @@
 #define libndnrtc_interfaces_h
 
 #include <stdint.h>
+#include "params.h"
 
 namespace ndnrtc
 {
@@ -102,6 +103,18 @@ namespace ndnrtc
         onSessionError(const char* username, const char* sessionPrefix,
                        SessionStatus status, unsigned int errorCode,
                        const char* errorMessage) = 0;
+    };
+    
+    class IRemoteSessionObserver {
+    public:
+        virtual void
+        onSessionInfoUpdate(const new_api::SessionInfo& sessionInfo) = 0;
+        
+        virtual void
+        onUpdateFailedWithTimeout() = 0;
+        
+        virtual void
+        onUpdateFailedWithError(const char* errMsg) = 0;
     };
     
     class INdnRtcObjectObserver {
