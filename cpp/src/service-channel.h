@@ -48,7 +48,7 @@ namespace ndnrtc {
             ServiceChannel(IServiceChannelListenerCallback* callback,
                            boost::shared_ptr<FaceProcessor> faceProcessor,
                            unsigned int updateIntervalMs = DefaultUpdateIntervalMs);
-            virtual ~ServiceChannel(){}
+            virtual ~ServiceChannel(){ callback_ = NULL; }
             
             /**
              * Registers a prefix for publishing producer's session info. 

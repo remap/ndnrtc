@@ -148,8 +148,8 @@ NdnRtcLibrary::~NdnRtcLibrary()
 {
     RemoteObserverFace->stopProcessing();
     
-    for (SessionObserverMap::iterator it = RemoteObservers.begin(); it++;
-         it != RemoteObservers.end())
+    for (SessionObserverMap::iterator it = RemoteObservers.begin();
+         it != RemoteObservers.end(); it++)
     {
         it->second->stopMonitor();
     }

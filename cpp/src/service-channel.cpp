@@ -169,24 +169,28 @@ void
 ServiceChannel::onData(const shared_ptr<const Interest>& interest,
                        const shared_ptr<Data>& data)
 {
-    SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
-    
-    if (sessionInfoData.isValid())
+    if (callback_)
     {
-        SessionInfo sessionInfo;
+        SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
         
-        sessionInfoData.getSessionInfo(sessionInfo);
-        getCallbackAsListener()->onSessionInfoUpdate(sessionInfo);
-        updateCounter_++;
+        if (sessionInfoData.isValid())
+        {
+            SessionInfo sessionInfo;
+            
+            sessionInfoData.getSessionInfo(sessionInfo);
+            getCallbackAsListener()->onSessionInfoUpdate(sessionInfo);
+            updateCounter_++;
+        }
+        else
+            getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
     }
-    else
-        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
 }
 
 void
 ServiceChannel::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    getCallbackAsListener()->onUpdateFailedWithTimeout();
+    if (callback_)
+        getCallbackAsListener()->onUpdateFailedWithTimeout();
 }
 
 void
