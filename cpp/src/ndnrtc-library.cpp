@@ -203,10 +203,11 @@ int NdnRtcLibrary::stopSession(const std::string& userPrefix)
     return res;
 }
 
-int NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
-                                            const std::string& prefix,
-                                            const new_api::GeneralParams& generalParams,
-                                            IRemoteSessionObserver* sessionObserver)
+std::string
+NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
+                                        const std::string& prefix,
+                                        const new_api::GeneralParams& generalParams,
+                                        IRemoteSessionObserver* sessionObserver)
 {
     if (!RemoteObserverFace.get())
     {
@@ -221,13 +222,11 @@ int NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
     
     RemoteObservers[sessionPrefix] = remoteSessionChannel;
     
-    return RESULT_OK;
+    return sessionPrefix;
 }
 
-int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& username,
-                                               const std::string& prefix)
+int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& sessionPrefix)
 {
-    std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
     SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
     
     if (it == RemoteObservers.end())

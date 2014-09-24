@@ -213,6 +213,7 @@ namespace ndnrtc
                 streamName_ = other.streamName_;
                 type_ = other.type_;
                 producerParams_ = other.producerParams_;
+                mediaThreads_.clear();
                 
                 for (int i = 0; i < other.mediaThreads_.size(); i++)
                     mediaThreads_.push_back(other.mediaThreads_[i]->copy());
@@ -406,6 +407,9 @@ namespace ndnrtc
             void
             copyFrom(const SessionInfo& other)
             {
+                audioStreams_.clear();
+                videoStreams_.clear();
+                
                 for (int i = 0; i < other.audioStreams_.size(); i++)
                 {
                     MediaStreamParams* params = new MediaStreamParams(*other.audioStreams_[i]);
