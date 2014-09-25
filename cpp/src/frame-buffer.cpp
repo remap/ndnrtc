@@ -1043,7 +1043,6 @@ state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),
 isEstimationNeeded_(true),
-playbackQueue_(consumer_->getParameters().producerRate),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 bufferEvent_(*EventWrapper::Create()),
 forcedRelease_(false),
@@ -1548,7 +1547,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             if (assembledLevel >= 0. &&
                 assembledLevel < 1. &&
-                consumer_->getParameters().useFec)
+                consumer_->getGeneralParameters().useFec_)
             {
                 slot->recover();
                 
@@ -1817,7 +1816,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     
     forcedRelease_ = false;
     
-    setTargetSize(consumer_->getParameters().jitterSize);
+    setTargetSize(consumer_->getParameters().jitterSizeMs_);
 }
 
 bool
@@ -1853,18 +1852,19 @@ ndnrtc::new_api::FrameBuffer::addStateChangedEvent(ndnrtc::new_api::FrameBuffer:
 void
 ndnrtc::new_api::FrameBuffer::initialize()
 {
-    while (freeSlots_.size() < consumer_->getParameters().bufferSize)
+    while (freeSlots_.size() < consumer_->getParameters().bufferSlotsNum_)
     {
-        unsigned int payloadSegmentSize = consumer_->getParameters().segmentSize - SegmentData::getHeaderSize();
+        unsigned int payloadSegmentSize = consumer_->getSettings().streamParams_.producerParams_.segmentSize_ - SegmentData::getHeaderSize();
         
         shared_ptr<Slot> slot(new Slot(payloadSegmentSize,
-                                       consumer_->getParameters().useFec));
+                                       consumer_->getGeneralParameters().useFec_));
         
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
     
-    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
+#warning ???
+//    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
 }
 
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>

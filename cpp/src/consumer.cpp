@@ -25,25 +25,18 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Consumer::Consumer(const ParamsStruct& params,
-                   const shared_ptr<InterestQueue>& interestQueue,
-                   const shared_ptr<RttEstimation>& rttEstimation):
-ndnrtc::NdnRtcObject(params),
+Consumer::Consumer(const GeneralParams& generalParams,
+                   const GeneralConsumerParams& consumerParams):
+generalParams_(generalParams),
+consumerParams_(consumerParams),
 isConsuming_(false),
-interestQueue_(interestQueue),
-rttEstimation_(rttEstimation),
+rttEstimation_(new RttEstimation()),
 chaseEstimation_(new ChaseEstimation()),
-bufferEstimator_(new BufferEstimator(rttEstimation_, params.jitterSize)),
+bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
-    if (!rttEstimation.get())
-    {
-        rttEstimation_.reset(new RttEstimation());
-    }
-    
     bufferEstimator_->setRttEstimation(rttEstimation_);
-    bufferEstimator_->setMinimalBufferSize(params.jitterSize);
 }
 
 Consumer::~Consumer()
@@ -55,15 +48,14 @@ Consumer::~Consumer()
 //******************************************************************************
 #pragma mark - public
 int
-Consumer::init()
+Consumer::init(const ConsumerSettings& settings)
 {
     int res = RESULT_OK;
     
-    if (!interestQueue_.get() ||
-        !rttEstimation_.get())
-        return notifyError(-1, "");
+    settings_ = settings;
+    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper()));
     
-    frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(shared_from_this()));
+    frameBuffer_.reset(new FrameBuffer(shared_from_this()));
     frameBuffer_->setLogger(logger_);
     frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
                                                        getDescription().c_str()));
@@ -197,7 +189,7 @@ Consumer::onBufferingEnded()
         playout_->start();
     
     if (!renderer_->isRendering())
-        renderer_->startRendering(std::string(params_.producerId));
+        renderer_->startRendering(settings_.streamParams_.streamName_);
 }
 
 void

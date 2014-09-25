@@ -21,7 +21,6 @@ using namespace ndnrtc::new_api;
 //******************************************************************************
 #pragma mark - construction/destruction
 Playout::Playout(const Consumer* consumer):
-NdnRtcObject(consumer->getParameters()),
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),

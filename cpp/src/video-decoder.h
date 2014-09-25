@@ -18,31 +18,35 @@
 #include "video-coder.h"
 
 namespace ndnrtc {
-    class NdnVideoDecoder : public IEncodedFrameConsumer,
-    public webrtc::DecodedImageCallback, public NdnRtcObject
-    {
-    public:
-        NdnVideoDecoder(const CodecParams &params);
-        ~NdnVideoDecoder() { }
+    namespace new_api {
         
-        void setFrameConsumer(IRawFrameConsumer *frameConsumer)
-        { frameConsumer_ = frameConsumer; };
-        
-        int init();
-        
-        // interface conformance - webrtc::DecodedImageCallback
-        int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
-        // interface conformance - IEncodedFrameConsumer
-        void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                     double timestamp);
-
-    private:
-        CodecParams codecParams_;
-        IRawFrameConsumer *frameConsumer_;
-        webrtc::VideoCodec codec_;
-        boost::shared_ptr<webrtc::VideoDecoder> decoder_;
-        double capturedTimestamp_ = 0;
-    };
+        class NdnVideoDecoder : public IEncodedFrameConsumer,
+                                public webrtc::DecodedImageCallback,
+                                public NdnRtcComponent
+        {
+        public:
+            NdnVideoDecoder();
+            ~NdnVideoDecoder() { }
+            
+            void setFrameConsumer(IRawFrameConsumer *frameConsumer)
+            { frameConsumer_ = frameConsumer; };
+            
+            int init(const VideoCoderParams& settings);
+            
+            // interface conformance - webrtc::DecodedImageCallback
+            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
+            // interface conformance - IEncodedFrameConsumer
+            void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                         double timestamp);
+            
+        private:
+            VideoCoderParams settings_;
+            IRawFrameConsumer *frameConsumer_;
+            webrtc::VideoCodec codec_;
+            boost::shared_ptr<webrtc::VideoDecoder> decoder_;
+            double capturedTimestamp_ = 0;
+        };
+    }
 }
 
 #endif /* defined(__ndnrtc__video_decoder__) */

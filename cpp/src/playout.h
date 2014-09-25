@@ -28,7 +28,7 @@ namespace ndnrtc{
          * routine each time playout timer fires. Necessary information is 
          * provided as arguments to the method.
          */
-        class Playout : public NdnRtcObject
+        class Playout : public NdnRtcComponent
         {
         public:
             Playout(const Consumer* consumer);

@@ -91,7 +91,15 @@ namespace ndnrtc {
         static boost::shared_ptr<std::string>
         getStreamFramePrefix(const ParamsStruct &params,
                              int streamIdx,
-                             bool isKeyNamespace = false);
+                             bool isKeyNamespace = false) DEPRECATED;
+        
+        static std::string
+        getThreadPrefix(const std::string& streamPrefix,
+                        const std::string& threadName);
+
+        static std::string
+        getThreadFramesPrefix(const std::string& threadPrefix,
+                              bool isKeyNamespace = false);
         
         /**
          * Builds stream key prefix for current paramteres
@@ -101,7 +109,7 @@ namespace ndnrtc {
          * @see getStreamPrefix for more info on form ot "stream_prefix" component
          */
         static boost::shared_ptr<std::string>
-        getStreamKeyPrefix(const ParamsStruct &params);
+        getStreamKeyPrefix(const ParamsStruct &params) DEPRECATED;
         
         /**
          * Builds session info prefix for current parameters

@@ -904,7 +904,7 @@ namespace ndnrtc
             public ndnlog::new_api::ILoggingObject
             {
             public:
-                PlaybackQueue(double playbackRate);
+                PlaybackQueue(double playbackRate = 30.);
                 
                 int64_t
                 getPlaybackDuration(bool estimate = true);

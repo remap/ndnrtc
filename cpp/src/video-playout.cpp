@@ -62,7 +62,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     { 
         bool pushFrameFurther = false;
         
-        if (params_.skipIncomplete)
+        if (consumer_->getGeneralParameters().skipIncomplete_)
         {
             if (isKey)
             {

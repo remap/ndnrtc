@@ -218,6 +218,25 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct
                                       NULL);
 }
 
+std::string
+NdnRtcNamespace::getThreadPrefix(const std::string& streamPrefix,
+                const std::string& threadName)
+{
+    return *NdnRtcNamespace::buildPath(false,
+                                       &streamPrefix,
+                                       &threadName);
+}
+
+std::string
+NdnRtcNamespace::getThreadFramesPrefix(const std::string& threadPrefix,
+                      bool isKeyNamespace)
+{
+    return *NdnRtcNamespace::buildPath(false,
+                                       &threadPrefix,
+                                       (isKeyNamespace)?&NameComponentStreamFramesKey:&NameComponentStreamFramesDelta,
+                                       NULL);
+}
+
 shared_ptr<std::string> NdnRtcNamespace::getStreamKeyPrefix(const ParamsStruct &params)
 {
     shared_ptr<std::string> streamPrefix = NdnRtcNamespace::getStreamPrefix(params);

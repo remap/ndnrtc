@@ -12,6 +12,7 @@
 #include "ndnrtc-namespace.h"
 #include "rtt-estimation.h"
 #include "playout.h"
+#include "params.h"
 
 using namespace boost;
 using namespace webrtc;
@@ -35,7 +36,6 @@ const int Pipeliner::FullBufferRecycle = 1;
 //******************************************************************************
 #pragma mark - construction/destruction
 ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
-NdnRtcObject(consumer->getParameters()),
 state_(StateInactive),
 consumer_(consumer.get()),
 mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this, kHighPriority, "pipeliner-main")),
@@ -109,15 +109,15 @@ void
 ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
 {
     CriticalSectionScoped scopedCs(&streamSwitchSync_);
-    
-    shared_ptr<std::string>
-    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
-    
-    shared_ptr<std::string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
-    
-    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
-    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+#warning fix this
+//    shared_ptr<std::string>
+//    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
+//    
+//    shared_ptr<std::string>
+//    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
+//    
+//    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
+//    keyFramesPrefix_ = Name(keyPrefixString->c_str());
     
     streamId_ = streamId;
 }
@@ -195,10 +195,10 @@ ndnrtc::new_api::Pipeliner::handleInvalidState
     if (activeSlotsNum == 0)
     {
         shared_ptr<Interest>
-        rightmost = getInterestForRightMost(getInterestLifetime(params_.interestTimeout),
+        rightmost = getInterestForRightMost(getInterestLifetime(consumer_->getParameters().interestLifetime_),
                                             false, exclusionFilter_);
         
-        express(*rightmost, getInterestLifetime(params_.interestTimeout));
+        express(*rightmost, getInterestLifetime(consumer_->getParameters().interestLifetime_));
         bufferEventsMask_ = WaitForRightmostEventsMask;
         recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
     }
@@ -267,7 +267,8 @@ ndnrtc::new_api::Pipeliner::initialDataArrived
     {
         LogTraceC << "initial data: [" << slot->dump() << "]" << std::endl;
         
-        double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():params_.producerRate;
+#warning ???
+        double producerRate = (slot->getPacketRate()>0)?slot->getPacketRate():30.;
         startChasePipeliner(slot->getSequentialNumber()+1, 1000./(ChaserRateCoefficient*producerRate));
         
         bufferEventsMask_ = ChasingEventsMask;
@@ -403,7 +404,7 @@ ndnrtc::new_api::Pipeliner::handleValidState
 void
 ndnrtc::new_api::Pipeliner::handleTimeout(const FrameBuffer::Event &event)
 {
-    if (params_.useRtx)
+    if (consumer_->getGeneralParameters().useRtx_)
         requestMissing(event.slot_,
                        getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                            event.slot_->getNamespace(),
@@ -414,29 +415,23 @@ ndnrtc::new_api::Pipeliner::handleTimeout(const FrameBuffer::Event &event)
 int
 ndnrtc::new_api::Pipeliner::initialize()
 {
-    params_ = consumer_->getParameters();
     frameBuffer_ = consumer_->getFrameBuffer().get();
     chaseEstimation_ = consumer_->getChaseEstimation().get();
     bufferEstimator_ = consumer_->getBufferEstimator().get();
     ndnAssembler_ = consumer_->getPacketAssembler();
     
-    shared_ptr<std::string>
-    streamPrefixString = NdnRtcNamespace::getStreamPrefix(params_);
+    std::string
+    threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
     
-    shared_ptr<std::string>
-    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0);
+    std::string
+    deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
     
-    shared_ptr<std::string>
-    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, 0, true);
-    
-    if (!streamPrefixString.get() || !deltaPrefixString.get() ||
-        !keyPrefixString.get())
-        return notifyError(RESULT_ERR, "producer frames prefixes \
-                           were not provided");
+    std::string
+    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
 
-    streamPrefix_ = Name(streamPrefixString->c_str());
-    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
-    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+    threadPrefix_ = Name(threadPrefixString.c_str());
+    deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
+    keyFramesPrefix_ = Name(keyPrefixString.c_str());
     
     return RESULT_OK;
 }
@@ -444,7 +439,7 @@ ndnrtc::new_api::Pipeliner::initialize()
 shared_ptr<Interest>
 ndnrtc::new_api::Pipeliner::getDefaultInterest(const ndn::Name &prefix, int64_t timeoutMs)
 {
-    shared_ptr<Interest> interest(new Interest(prefix, (timeoutMs == 0)?consumer_->getParameters().interestTimeout:timeoutMs));
+    shared_ptr<Interest> interest(new Interest(prefix, (timeoutMs == 0)?consumer_->getParameters().interestLifetime_:timeoutMs));
     interest->setMustBeFresh(true);
     
     return interest;
@@ -677,7 +672,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     int64_t interestLifetime = 0;
     
     if (playbackDeadline <= 0)
-        playbackDeadline = params_.interestTimeout;
+        playbackDeadline = consumer_->getParameters().interestLifetime_;
     
     if (rtx || nspc != FrameBuffer::Slot::Key)
     {
@@ -691,7 +686,7 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     else
     { // only key frames
         int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
-        double gopInterval = params_.streamsParams[streamId_].gop/frameBuffer_->getCurrentRate()*1000;
+        double gopInterval = ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_/frameBuffer_->getCurrentRate()*1000;
         interestLifetime = gopInterval-playbackBufSize;
         
         if (interestLifetime <= 0)
@@ -724,7 +719,7 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
                  playbackDeadline,
                  false);
     
-    if (params_.useFec)
+    if (consumer_->getGeneralParameters().useFec_)
     {
         expressRange(*frameInterest,
                      0,

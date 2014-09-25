@@ -17,13 +17,12 @@ namespace ndnrtc {
     namespace new_api {
         class AudioConsumer : public Consumer {
         public:
-            AudioConsumer(const ParamsStruct& params,
-                          const boost::shared_ptr<InterestQueue>& interestQueue,
-                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
+            AudioConsumer(const GeneralParams& generalParams,
+                          const GeneralConsumerParams& consumerParams);
             ~AudioConsumer();
             
             int
-            init();
+            init(const ConsumerSettings& settings);
             
             int
             start();

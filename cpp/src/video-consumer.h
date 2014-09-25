@@ -22,14 +22,13 @@ namespace ndnrtc {
                               public IInterestQueueCallback
         {
         public:
-            VideoConsumer(const ParamsStruct& params,
-                          const boost::shared_ptr<InterestQueue>& interestQueue,
-                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>(),
+            VideoConsumer(const GeneralParams& generalParams,
+                          const GeneralConsumerParams& consumerParams,
                           IExternalRenderer* const externalRenderer = 0);
             virtual ~VideoConsumer();
             
             int
-            init();
+            init(const ConsumerSettings& settings);
             
             int
             start();

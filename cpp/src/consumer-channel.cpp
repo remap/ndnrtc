@@ -12,7 +12,7 @@
 #include "rtt-estimation.h"
 #include "ndnrtc-namespace.h"
 #include "av-sync.h"
-
+#if 0
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog::new_api;
@@ -174,17 +174,4 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
 
 //******************************************************************************
 #pragma mark - private
-void
-ConsumerChannel::onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
-                        ndn::Transport& transport)
-{
-    // empty
-}
-
-void
-ConsumerChannel::onRegisterFailed(const shared_ptr<const Name>&
-                              prefix)
-{
-    // empty
-}
+#endif

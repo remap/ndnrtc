@@ -98,6 +98,10 @@ namespace ndnrtc {
                                   const char* threadName,
                                   NdnLibStatistics &stat) const;
         
+        //******************************************************************************
+        //******************************************************************************
+        //******************************************************************************
+        
         /**
          * Starts NDN-RTC session with username and prefix provided
          * @param username NDN-RTC user name
@@ -162,8 +166,8 @@ namespace ndnrtc {
          *      where thread_name is taken from thread parameters provided
          * @see addLocalStream
          */
-        virtual std::string addLocalThread(const std::string& streamPrefix,
-                                           const new_api::MediaThreadParams& params);
+//        virtual std::string addLocalThread(const std::string& streamPrefix,
+//                                           const new_api::MediaThreadParams& params);
         
         /**
          * Removes local thread identified by threadPrefix provided
@@ -171,7 +175,20 @@ namespace ndnrtc {
          * addLocalThread
          * @see addLocalThread
          */
-        virtual int removeLocalThread(const std::string& threadPrefix);
+//        virtual int removeLocalThread(const std::string& threadPrefix);
+        
+        /**
+         * Adds new remote stream and starts fetching from its' first thread
+         */
+        virtual std::string addRemoteStream(const std::string& remoteSessionPrefix,
+                                            const new_api::MediaStreamParams& params,
+                                            IExternalRenderer* const renderer);
+        
+        virtual int removeRemoteStream(const std::string& streamPrefix);
+        
+        //******************************************************************************
+        //******************************************************************************
+        //******************************************************************************
         
         /**
          * Starts publishing media streams under provided username configured

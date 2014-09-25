@@ -18,16 +18,17 @@
 #include "statistics.h"
 #include "face-wrapper.h"
 #include "service-channel.h"
-
+#if 0
 namespace ndnrtc {
     namespace new_api {
+        
         class ConsumerChannel : public NdnRtcObject
         {
         public:
             ConsumerChannel(const ParamsStruct& params,
                             const ParamsStruct& audioParams,
                             IExternalRenderer* const videoRenderer = 0,
-                            const boost::shared_ptr<FaceProcessor>& faceProcessor = boost::shared_ptr<FaceProcessor>());
+                            const boost::shared_ptr<FaceProcessor>& faceProcessor = boost::shared_ptr<FaceProcessor>()) DEPRECATED;
             virtual ~ConsumerChannel(){ }
             
             int init();
@@ -52,29 +53,8 @@ namespace ndnrtc {
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<InterestQueue> videoInterestQueue_;
             boost::shared_ptr<InterestQueue> audioInterestQueue_;
-            boost::shared_ptr<ServiceChannel> serviceChannel_;
-            
-            // ndn-cpp callbacks
-            virtual void onInterest(const boost::shared_ptr<const Name>& prefix,
-                                    const boost::shared_ptr<const Interest>& interest,
-                                    Transport& transport);
-            
-            virtual void onRegisterFailed(const boost::shared_ptr<const Name>&
-                                          prefix);
-            
-            // IServiceChannelListenerCallback interface
-            void
-            onProducerParametersUpdated(const ParamsStruct& newVideoParams,
-                                        const ParamsStruct& newAudioParams);
-            
-            void
-            onUpdateFailedWithTimeout();
-            
-            void
-            onUpdateFailedWithError(const char* errMsg);
-            
         };
     }
 }
-
+#endif
 #endif /* defined(__ndnrtc__consumer_channel__) */

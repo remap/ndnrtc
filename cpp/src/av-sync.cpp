@@ -35,13 +35,11 @@ masterSyncData_("master")
     if (masterConsumer.get())
     {
         masterSyncData_.consumer_ = masterConsumer.get();
-        videoParams_ = masterConsumer->getParameters();
     }
     
     if (slaveConsumer.get())
     {
         slaveSyncData_.consumer_ = slaveConsumer.get();
-        audioParams_ = slaveConsumer->getParameters();
     }
 }
 

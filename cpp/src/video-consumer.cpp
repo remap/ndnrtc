@@ -23,20 +23,17 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoConsumer::VideoConsumer(const ParamsStruct& params,
-                             const shared_ptr<InterestQueue>& interestQueue,
-                             const shared_ptr<RttEstimation>& rttEstimation,
+VideoConsumer::VideoConsumer(const GeneralParams& generalParams,
+                             const GeneralConsumerParams& consumerParams,
                              IExternalRenderer* const externalRenderer):
-Consumer(params, interestQueue, rttEstimation),
-decoder_(new NdnVideoDecoder(params.streamsParams[0]))
+Consumer(generalParams, consumerParams),
+decoder_(new NdnVideoDecoder())
 {
     setDescription("vconsumer");
     interestQueue_->registerCallback(this);
     
     if (externalRenderer)
         renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
-    else
-        renderer_.reset(new VideoRenderer(1, params));
     
     decoder_->setFrameConsumer(getRenderer().get());
 }
@@ -49,16 +46,16 @@ VideoConsumer::~VideoConsumer()
 //******************************************************************************
 #pragma mark - public
 int
-VideoConsumer::init()
+VideoConsumer::init(const ConsumerSettings& settings)
 {
     LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
     << NdnRtcUtils::unixTimestamp() << std::endl;
 
-    if (RESULT_GOOD(Consumer::init()))
+    if (RESULT_GOOD(Consumer::init(settings)))
     {
         int res = RESULT_OK;
         
-        decoder_->init();
+        decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
         playout_.reset(new VideoPlayout(this));
         playout_->setLogger(logger_);

@@ -19,7 +19,7 @@
 namespace ndnrtc {
     namespace new_api {
         
-        class Pipeliner : public NdnRtcObject
+        class Pipeliner : public NdnRtcComponent
         {
         public:
             typedef enum _State {
@@ -121,10 +121,9 @@ namespace ndnrtc {
             
             
             State state_;
-            Name streamPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
+            Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
             Consumer* consumer_;
-            ParamsStruct params_;
             ndnrtc::new_api::FrameBuffer* frameBuffer_;
             ChaseEstimation* chaseEstimation_;
             BufferEstimator* bufferEstimator_;

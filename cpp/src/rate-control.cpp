@@ -125,7 +125,7 @@ RateControl::checkArcStatus()
     
     arcModule_->getInterestRate(timestamp, interestRate, streamId);
     
-    if (streamId_ != streamId && streamId < consumer_->getParameters().nStreams)
+    if (streamId_ != streamId && streamId < consumer_->getSettings().streamParams_.mediaThreads_.size())
     {
         LogTrace("arc.log") << "switching "
         << streamId_ << " -> " << streamId << std::endl;

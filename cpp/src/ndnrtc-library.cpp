@@ -35,10 +35,10 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
-typedef std::map<std::string, shared_ptr<ConsumerChannel> > ProducerMap;
+//typedef std::map<std::string, shared_ptr<std::string> > ProducerMap;
 
 static shared_ptr<NdnSenderChannel> SenderChannel DEPRECATED;
-static ProducerMap Producers DEPRECATED;
+//static ProducerMap Producers DEPRECATED;
 
 typedef std::map<std::string, shared_ptr<Session>> SessionMap;
 static SessionMap ActiveSessions;
@@ -103,32 +103,32 @@ __attribute__((destructor))
 static void destructor(){
 }
 
-extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
-{
-    signal(SIGPIPE, SIG_IGN);
-    return new NdnRtcLibrary(libHandle);
-}
+//extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
+//{
+//    signal(SIGPIPE, SIG_IGN);
+//    return new NdnRtcLibrary(libHandle);
+//}
 
-extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
-{
-    if (SenderChannel.get())
-        object->stopPublishing();
-    
-    if (Producers.size())
-    {
-        ProducerMap::iterator it;
-        
-        for (it = Producers.begin(); it != Producers.end(); it++)
-        {
-            shared_ptr<ConsumerChannel> producer = it->second;
-            producer->stopTransmission();
-        }
-        
-        Producers.clear();
-    }
-    
-    delete object;
-}
+//extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
+//{
+//    if (SenderChannel.get())
+//        object->stopPublishing();
+//    
+//    if (Producers.size())
+//    {
+//        ProducerMap::iterator it;
+//        
+//        for (it = Producers.begin(); it != Producers.end(); it++)
+//        {
+////            shared_ptr<ConsumerChannel> producer = it->second;
+////            producer->stopTransmission();
+//        }
+//        
+//        Producers.clear();
+//    }
+//    
+//    delete object;
+//}
 
 //********************************************************************************
 #pragma mark - all static
@@ -272,17 +272,35 @@ int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
     return RESULT_OK;
 }
 
-std::string NdnRtcLibrary::addLocalThread(const std::string& streamPrefix,
-                                          const new_api::MediaThreadParams& params)
+//std::string NdnRtcLibrary::addLocalThread(const std::string& streamPrefix,
+//                                          const new_api::MediaThreadParams& params)
+//{
+//    std::cout << "adding local thread " << streamPrefix << " + " << params.threadName_ << std::endl;
+//    return *NdnRtcNamespace::buildPath(false, &streamPrefix, &params.threadName_, 0);
+//}
+//
+//int NdnRtcLibrary::removeLocalThread(const std::string& threadPrefix)
+//{
+//    std::cout << "removing thread " << threadPrefix << std::endl;
+//    
+//    return RESULT_OK;
+//}
+
+std::string
+NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
+                               const MediaStreamParams& params,
+                               IExternalRenderer* const renderer)
 {
-    std::cout << "adding local thread " << streamPrefix << " + " << params.threadName_ << std::endl;
-    return *NdnRtcNamespace::buildPath(false, &streamPrefix, &params.threadName_, 0);
+    std::string streamPrefix = "";
+    
+    
+    
+    return streamPrefix;
 }
 
-int NdnRtcLibrary::removeLocalThread(const std::string& threadPrefix)
+int
+NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
-    std::cout << "removing thread " << threadPrefix << std::endl;
-    
     return RESULT_OK;
 }
 
@@ -398,20 +416,20 @@ void NdnRtcLibrary::getRemoteProducerParams(const char* producerId,
 int NdnRtcLibrary::getStatistics(const char *producerId,
                                  NdnLibStatistics &stat) const
 {
-    memset((void*)&stat, 0, sizeof(NdnLibStatistics));
-    
-    if (SenderChannel.get())
-    {
-        SenderChannel->getChannelStatistics(stat.sendStat_);
-    }
-    
-    if (!producerId || Producers.find(std::string(producerId)) == Producers.end())
-        return -1; //notifyObserverWithError("producer was not found");
-    
-    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
-    
-    stat.producerId_ = producerId;
-    producer->getChannelStatistics(stat.receiveStat_);
+//    memset((void*)&stat, 0, sizeof(NdnLibStatistics));
+//    
+//    if (SenderChannel.get())
+//    {
+//        SenderChannel->getChannelStatistics(stat.sendStat_);
+//    }
+//    
+//    if (!producerId || Producers.find(std::string(producerId)) == Producers.end())
+//        return -1; //notifyObserverWithError("producer was not found");
+//    
+//    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
+//    
+//    stat.producerId_ = producerId;
+//    producer->getChannelStatistics(stat.receiveStat_);
     
     return 0;
 }
@@ -464,64 +482,64 @@ int NdnRtcLibrary::startFetching(const char *producerId)
 int NdnRtcLibrary::startFetching(const char *producerId,
                                  IExternalRenderer* const renderer)
 {
-    if (strcmp(producerId, "") == 0)
-        return notifyObserverWithError("username cannot be empty string");
-    
-    if (Producers.find(std::string(producerId)) != Producers.end())
-        return notifyObserverWithError("already fetching");
-    
-    // setup params
-    ParamsStruct params = libParams_;
-    ParamsStruct audioParams = libAudioParams_;
-    
-    params.setProducerId(producerId);
-    audioParams.setProducerId(producerId);
-    
-    try
-    {
-        shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
-                                                                 audioParams,
-                                                                 renderer));
-        
-        producer->setObserver(&LibraryInternalObserver);
-        
-        if (RESULT_FAIL(producer->init()))
-            return -1;
-        
-        if (RESULT_FAIL(producer->startTransmission()))
-            return -1;
-        
-        Producers[std::string(producerId)] = producer;
-    }
-    catch (std::exception &e)
-    {
-        return notifyObserverWithError("couldn't initiate fetching due to exception: %s",
-                                       e.what());
-    }
-    
-    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
-    
-    return notifyObserverWithState("fetching",
-                                   "fetching from the user %s",
-                                   producerPrefix->c_str());
+//    if (strcmp(producerId, "") == 0)
+//        return notifyObserverWithError("username cannot be empty string");
+//    
+//    if (Producers.find(std::string(producerId)) != Producers.end())
+//        return notifyObserverWithError("already fetching");
+//    
+//    // setup params
+//    ParamsStruct params = libParams_;
+//    ParamsStruct audioParams = libAudioParams_;
+//    
+//    params.setProducerId(producerId);
+//    audioParams.setProducerId(producerId);
+//    
+//    try
+//    {
+//        shared_ptr<ConsumerChannel> producer(new ConsumerChannel(params,
+//                                                                 audioParams,
+//                                                                 renderer));
+//        
+//        producer->setObserver(&LibraryInternalObserver);
+//        
+//        if (RESULT_FAIL(producer->init()))
+//            return -1;
+//        
+//        if (RESULT_FAIL(producer->startTransmission()))
+//            return -1;
+//        
+//        Producers[std::string(producerId)] = producer;
+//    }
+//    catch (std::exception &e)
+//    {
+//        return notifyObserverWithError("couldn't initiate fetching due to exception: %s",
+//                                       e.what());
+//    }
+//    
+//    shared_ptr<std::string> producerPrefix = NdnRtcNamespace::getUserPrefix(params);
+//    
+//    return notifyObserverWithState("fetching",
+//                                   "fetching from the user %s",
+//                                   producerPrefix->c_str());
 }
 
 int NdnRtcLibrary::stopFetching(const char *producerId)
 {
-    if (Producers.find(std::string(producerId)) == Producers.end())
-        return notifyObserverWithError("fetching from user was not started");
-    
-    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
-    
-    if (producer->stopTransmission() < 0)
-        notifyObserverWithError("can't stop fetching");
-    
-    std::string producerKey = std::string(producerId);
-    
-    Producers.erase(producerKey);
-    
-    return notifyObserverWithState("leave", "stopped fetching from %s",
-                                   producerId);
+//    if (Producers.find(std::string(producerId)) == Producers.end())
+//        return notifyObserverWithError("fetching from user was not started");
+//    
+//    shared_ptr<ConsumerChannel> producer = Producers[std::string(producerId)];
+//    
+//    if (producer->stopTransmission() < 0)
+//        notifyObserverWithError("can't stop fetching");
+//    
+//    std::string producerKey = std::string(producerId);
+//    
+//    Producers.erase(producerKey);
+//    
+//    return notifyObserverWithState("leave", "stopped fetching from %s",
+//                                   producerId);
 }
 
 int NdnRtcLibrary::startPublishing(const char* username,

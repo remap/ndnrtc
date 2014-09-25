@@ -98,6 +98,12 @@ namespace ndnrtc {
             onStateChanged(const int& oldState, const int& newState) = 0;
         };
         
+        class ConsumerSettings {
+        public:
+            MediaStreamParams streamParams_;
+            boost::shared_ptr<FaceProcessor> faceProcessor_;
+        };
+        
         /**
          * Consumer class combines all the necessary components for successful
          * fetching media (audio or video) data from the network. Main 
@@ -118,7 +124,7 @@ namespace ndnrtc {
          * - ChaseEstimator - estimates when the pipeliner should switch to the 
          *      Fetch mode
          */
-        class Consumer : public NdnRtcObject,
+        class Consumer : public NdnRtcComponent,
                          public IPacketAssembler,
                          public IPipelinerCallback,
                          public boost::enable_shared_from_this<Consumer>
@@ -131,13 +137,12 @@ namespace ndnrtc {
                 StateFetching = 1
             } State;
             
-            Consumer(const ParamsStruct& params,
-                     const boost::shared_ptr<InterestQueue>& interestQueue,
-                     const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
+            Consumer(const GeneralParams& generalParams,
+                     const GeneralConsumerParams& consumerParams);
             virtual ~Consumer();
             
             virtual int
-            init();
+            init(const ConsumerSettings& settings);
             
             virtual int
             start();
@@ -151,9 +156,29 @@ namespace ndnrtc {
             State
             getState() const;
             
-            virtual ParamsStruct
+            virtual ConsumerSettings
+            getSettings() const
+            { return settings_; }
+            
+            virtual GeneralConsumerParams
             getParameters() const
-            { return params_; }
+            { return consumerParams_; }
+            
+            virtual GeneralParams
+            getGeneralParameters() const
+            { return generalParams_; }
+            
+            std::string
+            getPrefix() const
+            { return streamPrefix_; }
+            
+            std::string
+            getCurrentThreadName() const
+            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]->threadName_; }
+            
+            MediaThreadParams*
+            getCurrentThreadParameters() const
+            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]; }
             
             virtual boost::shared_ptr<FrameBuffer>
             getFrameBuffer() const
@@ -252,6 +277,11 @@ namespace ndnrtc {
             
         protected:
             bool isConsuming_;
+            GeneralParams generalParams_;
+            GeneralConsumerParams consumerParams_;
+            ConsumerSettings settings_;
+            std::string streamPrefix_;
+            unsigned int currentThreadIdx_ = 0;
             
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             boost::shared_ptr<Pipeliner> pipeliner_;

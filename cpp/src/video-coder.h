@@ -106,7 +106,7 @@ namespace ndnrtc {
     public webrtc::EncodedImageCallback
     {
     public:
-        NdnVideoCoder(const CodecParams& codecParams);//const ParamsStruct &params);
+        NdnVideoCoder(const CodecParams& codecParams) DEPRECATED;//const ParamsStruct &params);
         ~NdnVideoCoder();
         
         void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
