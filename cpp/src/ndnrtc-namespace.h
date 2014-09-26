@@ -29,7 +29,6 @@ namespace ndnrtc {
         static const std::string NameComponentSession;
         static const std::string NameComponentStreamAccess;        
         static const std::string NameComponentStreamKey;
-        static const std::string NameComponentStreamFrames;
         static const std::string NameComponentStreamFramesDelta;
         static const std::string NameComponentStreamFramesKey;
         static const std::string NameComponentStreamInfo;
@@ -158,7 +157,7 @@ namespace ndnrtc {
         static bool isValidPacketDataPrefix(const Name& prefix);
         
         static bool isKeyFramePrefix(const Name &prefix);
-        static bool isDeltaFramesPrefix(const Name &prefix);
+        static bool isDeltaFramePrefix(const Name &prefix);
         static bool isParitySegmentPrefix(const Name &prefix);
         
         static PacketNumber getPacketNumber(const Name &prefix);
@@ -173,10 +172,7 @@ namespace ndnrtc {
                                          Name &trimmedPrefix);
         
         static bool trimmedLookupPrefix(const Name& prefix, Name& lookupPrefix);
-        
-        static int getStreamIdFromPrefix(const Name& prefix,
-                                         const ParamsStruct& params);
-        
+                
     private:
     };
 }

@@ -100,6 +100,7 @@ namespace ndnrtc {
         
         class ConsumerSettings {
         public:
+            std::string userPrefix_;
             MediaStreamParams streamParams_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
         };

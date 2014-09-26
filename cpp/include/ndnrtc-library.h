@@ -182,6 +182,8 @@ namespace ndnrtc {
          */
         virtual std::string addRemoteStream(const std::string& remoteSessionPrefix,
                                             const new_api::MediaStreamParams& params,
+                                            const new_api::GeneralParams& generalParams,
+                                            const new_api::GeneralConsumerParams& consumerParams,
                                             IExternalRenderer* const renderer);
         
         virtual int removeRemoteStream(const std::string& streamPrefix);

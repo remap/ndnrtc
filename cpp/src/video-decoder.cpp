@@ -31,6 +31,7 @@ int NdnVideoDecoder::init(const VideoCoderParams& settings)
 {
     int res = RESULT_OK;
     
+    settings_ = settings;
     res = VideoCoder::getCodecFromSetings(settings_, codec_);
     description_ = NdnRtcUtils::toString("decoder-%d", codec_.startBitrate);
     

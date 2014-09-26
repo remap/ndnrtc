@@ -53,6 +53,7 @@ Consumer::init(const ConsumerSettings& settings)
     int res = RESULT_OK;
     
     settings_ = settings;
+    streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings.userPrefix_, settings_.streamParams_.streamName_);
     interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper()));
     
     frameBuffer_.reset(new FrameBuffer(shared_from_this()));
@@ -161,7 +162,9 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     if (rateControl_.get())
         rateControl_->setLogger(logger);
     
-    interestQueue_->setLogger(logger);
+    if (interestQueue_.get())
+        interestQueue_->setLogger(logger);
+    
     rttEstimation_->setLogger(logger);
     chaseEstimation_->setLogger(logger);
     bufferEstimator_->setLogger(logger);

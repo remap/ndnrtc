@@ -42,8 +42,8 @@ namespace ndnrtc
          * @param buffer Buffer with the RGB frame data (the same that was
          * returned from getFrameBuffer call)
          */
-        virtual void renderRGBFrame(int64_t timestamp, int width, int height,
-                                    const uint8_t* buffer) = 0;
+        virtual void renderBGRAFrame(int64_t timestamp, int width, int height,
+                                     const uint8_t* buffer) = 0;
     };
 
     /**

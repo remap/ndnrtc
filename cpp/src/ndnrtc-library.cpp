@@ -43,9 +43,13 @@ static shared_ptr<NdnSenderChannel> SenderChannel DEPRECATED;
 typedef std::map<std::string, shared_ptr<Session>> SessionMap;
 static SessionMap ActiveSessions;
 
+static shared_ptr<FaceProcessor> LibraryFace;
+
+typedef std::map<std::string, shared_ptr<Consumer>> ConsumerStreamMap;
+static ConsumerStreamMap ActiveStreamsConsumer;
+
 typedef std::map<std::string, shared_ptr<ServiceChannel>> SessionObserverMap;
 static SessionObserverMap RemoteObservers;
-static shared_ptr<FaceProcessor> RemoteObserverFace;
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -103,33 +107,6 @@ __attribute__((destructor))
 static void destructor(){
 }
 
-//extern "C" NdnRtcLibrary* create_ndnrtc(void *libHandle)
-//{
-//    signal(SIGPIPE, SIG_IGN);
-//    return new NdnRtcLibrary(libHandle);
-//}
-
-//extern "C" void destroy_ndnrtc( NdnRtcLibrary* object )
-//{
-//    if (SenderChannel.get())
-//        object->stopPublishing();
-//    
-//    if (Producers.size())
-//    {
-//        ProducerMap::iterator it;
-//        
-//        for (it = Producers.begin(); it != Producers.end(); it++)
-//        {
-////            shared_ptr<ConsumerChannel> producer = it->second;
-////            producer->stopTransmission();
-//        }
-//        
-//        Producers.clear();
-//    }
-//    
-//    delete object;
-//}
-
 //********************************************************************************
 #pragma mark - all static
 static const char *DefaultLogFile = NULL;
@@ -146,7 +123,7 @@ libAudioParams_(DefaultParamsAudio)
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
-    RemoteObserverFace->stopProcessing();
+    LibraryFace->stopProcessing();
     
     for (SessionObserverMap::iterator it = RemoteObservers.begin();
          it != RemoteObservers.end(); it++)
@@ -209,13 +186,13 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         IRemoteSessionObserver* sessionObserver)
 {
-    if (!RemoteObserverFace.get())
+    if (!LibraryFace.get())
     {
-        RemoteObserverFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
-        RemoteObserverFace->startProcessing();
+        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
+        LibraryFace->startProcessing();
     }
     
-    shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, RemoteObserverFace));
+    shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, LibraryFace));
     
     std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
     remoteSessionChannel->startMonitor(sessionPrefix);
@@ -237,8 +214,8 @@ int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& sessionPrefix)
     
     if (RemoteObservers.size() == 0)
     {
-        RemoteObserverFace->stopProcessing();
-        RemoteObserverFace.reset();
+        LibraryFace->stopProcessing();
+        LibraryFace.reset();
     }
     
     return RESULT_OK;
@@ -272,35 +249,66 @@ int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
     return RESULT_OK;
 }
 
-//std::string NdnRtcLibrary::addLocalThread(const std::string& streamPrefix,
-//                                          const new_api::MediaThreadParams& params)
-//{
-//    std::cout << "adding local thread " << streamPrefix << " + " << params.threadName_ << std::endl;
-//    return *NdnRtcNamespace::buildPath(false, &streamPrefix, &params.threadName_, 0);
-//}
-//
-//int NdnRtcLibrary::removeLocalThread(const std::string& threadPrefix)
-//{
-//    std::cout << "removing thread " << threadPrefix << std::endl;
-//    
-//    return RESULT_OK;
-//}
-
 std::string
 NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
-                               const MediaStreamParams& params,
+                               const new_api::MediaStreamParams& params,
+                               const new_api::GeneralParams& generalParams,
+                               const new_api::GeneralConsumerParams& consumerParams,
                                IExternalRenderer* const renderer)
 {
-    std::string streamPrefix = "";
+    if (!LibraryFace.get())
+    {
+        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
+        LibraryFace->startProcessing();
+    }
     
+    std::string streamPrefix = *NdnRtcNamespace::getStreamPrefix(remoteSessionPrefix, params.streamName_);
+    shared_ptr<Consumer> remoteStreamConsumer;
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
+    if (it == ActiveStreamsConsumer.end())
+    {
+        if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
+            remoteStreamConsumer.reset(new AudioConsumer(generalParams, consumerParams));
+        else
+            remoteStreamConsumer.reset(new VideoConsumer(generalParams, consumerParams, renderer));
+    }
+    else
+        remoteStreamConsumer = it->second;
     
-    return streamPrefix;
+    ConsumerSettings settings;
+    settings.userPrefix_ = remoteSessionPrefix;
+    settings.streamParams_ = params;
+    settings.faceProcessor_ = LibraryFace;
+    
+    remoteStreamConsumer->registerCallback(&LibraryInternalObserver);
+    
+    if (RESULT_FAIL(remoteStreamConsumer->init(settings)))
+        return "";
+    
+    remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
+                                               NdnRtcUtils::toString("consumer-%s.log", params.streamName_.c_str())));
+    
+    if (RESULT_FAIL(remoteStreamConsumer->start()))
+        return "";
+    
+    if (it == ActiveStreamsConsumer.end())
+        ActiveStreamsConsumer[remoteStreamConsumer->getPrefix()] = remoteStreamConsumer;
+    
+    return remoteStreamConsumer->getPrefix();
 }
 
 int
 NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+        return RESULT_ERR;
+    
+    it->second->stop();
+//    ActiveStreamsConsumer.erase(it);
+    
     return RESULT_OK;
 }
 

@@ -687,7 +687,9 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
     { // only key frames
         int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
         double gopInterval = ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_/frameBuffer_->getCurrentRate()*1000;
-        interestLifetime = gopInterval-playbackBufSize;
+
+#warning temporary solution!
+        interestLifetime = 300;//gopInterval-playbackBufSize;
         
         if (interestLifetime <= 0)
             interestLifetime = gopInterval;

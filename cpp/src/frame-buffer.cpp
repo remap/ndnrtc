@@ -645,7 +645,7 @@ ndnrtc::new_api::FrameBuffer::Slot::setPrefix(const ndn::Name &prefix)
 {
     if (NdnRtcNamespace::isKeyFramePrefix(prefix))
         packetNamespace_ = Key;
-    else if (NdnRtcNamespace::isDeltaFramesPrefix(prefix))
+    else if (NdnRtcNamespace::isDeltaFramePrefix(prefix))
         packetNamespace_ = Delta;
     else
         packetNamespace_ = Unknown;

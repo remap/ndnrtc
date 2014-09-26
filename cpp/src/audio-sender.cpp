@@ -30,7 +30,7 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
 #if 0
     string rtcpSuffix = "control";
 #else
-    std::string rtcpSuffix = NdnRtcNamespace::NameComponentStreamFrames;
+    std::string rtcpSuffix = "";
 #endif
     prefix = *NdnRtcNamespace::buildPath(false,
                                          &(*streamPrefix),

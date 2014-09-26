@@ -74,7 +74,6 @@ const std::string NdnRtcNamespace::NameComponentDiscovery = "discovery";
 const std::string NdnRtcNamespace::NameComponentUserStreams = "streams";
 const std::string NdnRtcNamespace::NameComponentStreamAccess = "access";
 const std::string NdnRtcNamespace::NameComponentStreamKey = "key";
-const std::string NdnRtcNamespace::NameComponentStreamFrames = "frames";
 const std::string NdnRtcNamespace::NameComponentStreamFramesDelta = "delta";
 const std::string NdnRtcNamespace::NameComponentStreamFramesKey = "key";
 const std::string NdnRtcNamespace::NameComponentStreamInfo = "info";
@@ -213,7 +212,7 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct
     return NdnRtcNamespace::buildPath(false,
                                       &(*streamPrefix),
                                       &streamThread,
-                                      &NdnRtcNamespace::NameComponentStreamFrames,
+//                                      &NdnRtcNamespace::NameComponentStreamFrames,
                                       &frameTypeNamespace,
                                       NULL);
 }
@@ -224,7 +223,8 @@ NdnRtcNamespace::getThreadPrefix(const std::string& streamPrefix,
 {
     return *NdnRtcNamespace::buildPath(false,
                                        &streamPrefix,
-                                       &threadName);
+                                       &threadName,
+                                       NULL);
 }
 
 std::string
@@ -400,7 +400,7 @@ bool NdnRtcNamespace::isValidInterestPrefix(const Name& prefix)
     
     // TBD: use regexp for these checks
     
-    return isKeyFramePrefix(prefix) || isDeltaFramesPrefix(prefix);
+    return isKeyFramePrefix(prefix) || isDeltaFramePrefix(prefix);
 }
 
 bool NdnRtcNamespace::isValidPacketDataPrefix(const Name& prefix)
@@ -419,23 +419,21 @@ bool NdnRtcNamespace::isKeyFramePrefix(const ndn::Name &prefix)
     std::string prefixString = prefix.toUri();
     
     int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFrames);
-    int n3 = prefixString.find(NameComponentStreamFramesKey);
+    int n2 = prefixString.find(NameComponentStreamFramesKey);
     
-    return !(n1 == n2 == n3) &&
-    n1 >= 0 && n1 < n2 && n2 < n3;
+    return !(n1 == n2) &&
+    n1 >= 0 && n1 < n2;
 }
 #warning change name to be consistent with previous call
-bool NdnRtcNamespace::isDeltaFramesPrefix(const ndn::Name &prefix)
+bool NdnRtcNamespace::isDeltaFramePrefix(const ndn::Name &prefix)
 {
     std::string prefixString = prefix.toUri();
     
     int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFrames);
-    int n3 = prefixString.find(NameComponentStreamFramesDelta);
+    int n2 = prefixString.find(NameComponentStreamFramesDelta);
     
-    return !(n1 == n2 == n3) &&
-    n1 >= 0 && n1 < n2 && n2 < n3;
+    return !(n1 == n2) &&
+    n1 >= 0 && n1 < n2;
 }
 
 bool NdnRtcNamespace::isParitySegmentPrefix(const ndn::Name &prefix)
@@ -448,7 +446,7 @@ PacketNumber NdnRtcNamespace::getPacketNumber(const ndn::Name &prefix)
     PacketNumber packetNo = -1;
     int p = -1;
     
-    if (isDeltaFramesPrefix(prefix))
+    if (isDeltaFramePrefix(prefix))
     {
         p = findComponent(prefix, NameComponentStreamFramesDelta);
     }
@@ -473,7 +471,7 @@ SegmentNumber NdnRtcNamespace::getSegmentNumber(const ndn::Name &prefix)
     PacketNumber segmentNo = -1;
     int p = -1;
     
-    if (isDeltaFramesPrefix(prefix))
+    if (isDeltaFramePrefix(prefix))
     {
         p = findComponent(prefix, NameComponentStreamFramesDelta);
     }
@@ -501,7 +499,7 @@ void NdnRtcNamespace::getSegmentationNumbers(const ndn::Name &prefix,
     packetNumber = -1;
     segmentNumber = -1;
     
-    if (isDeltaFramesPrefix(prefix))
+    if (isDeltaFramePrefix(prefix))
     {
         p = findComponent(prefix, NameComponentStreamFramesDelta);
     }
@@ -536,7 +534,7 @@ int NdnRtcNamespace::trimSegmentNumber(const ndn::Name &prefix,
     
     int p = -1;
     
-    if (isDeltaFramesPrefix(prefix))
+    if (isDeltaFramePrefix(prefix))
     {
         p = findComponent(prefix, NameComponentStreamFramesDelta);
     }
@@ -589,7 +587,7 @@ int NdnRtcNamespace::trimPacketNumber(const ndn::Name &prefix,
     
     int p = -1;
     
-    if (isDeltaFramesPrefix(prefix))
+    if (isDeltaFramePrefix(prefix))
     {
         p = findComponent(prefix, NameComponentStreamFramesDelta);
     }
@@ -615,13 +613,11 @@ bool NdnRtcNamespace::trimmedLookupPrefix(const ndn::Name &prefix,
     bool res = false;
     std::string prefixString = prefix.toUri();
     int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFrames);
-    int n3 = prefixString.find(NameComponentStreamFramesKey);
-    int n4 = prefixString.find(NameComponentStreamFramesDelta);
+    int n2 = prefixString.find(NameComponentStreamFramesKey);
+    int n3 = prefixString.find(NameComponentStreamFramesDelta);
     
-    if (!(n1 == n2 == n3 == n4) &&
-        n1 >= 0 && n1 < n2 &&
-        (n2 < n3 || n2 < n4))
+    if (!(n1 == n2 == n3) &&
+        n1 >= 0 && ((n1 < n2) || n1 < n3))
     {
         int p1 = prefixString.find(NameComponentFrameSegmentData);
         int p2 = prefixString.find(NameComponentFrameSegmentParity);
@@ -642,27 +638,6 @@ bool NdnRtcNamespace::trimmedLookupPrefix(const ndn::Name &prefix,
     }
     
     return res;
-}
-
-int NdnRtcNamespace::getStreamIdFromPrefix(const ndn::Name &prefix,
-                                           const ParamsStruct &params)
-{
-    if (params.nStreams == 0)
-        return -1;
-    
-    int p = findComponent(prefix, NameComponentStreamFrames);
-    
-    if (p > 0)
-    {
-        ndn::Name::Component streamRateComp = prefix.get(p-1);
-        int streamRate = NdnRtcUtils::intFromComponent(streamRateComp);
-        
-        for (int i = 0; i < params.nStreams; i++)
-            if (streamRate == params.streamsParams[i].startBitrate)
-                return params.streamsParams[i].idx;
-    }
-    
-    return -1;
 }
 
 //********************************************************************************

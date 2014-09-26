@@ -30,11 +30,7 @@ Consumer(generalParams, consumerParams),
 decoder_(new NdnVideoDecoder())
 {
     setDescription("vconsumer");
-    interestQueue_->registerCallback(this);
-    
-    if (externalRenderer)
-        renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
-    
+    renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
     decoder_->setFrameConsumer(getRenderer().get());
 }
 
@@ -48,13 +44,14 @@ VideoConsumer::~VideoConsumer()
 int
 VideoConsumer::init(const ConsumerSettings& settings)
 {
+    int res = RESULT_OK;
+    
     LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
     << NdnRtcUtils::unixTimestamp() << std::endl;
 
     if (RESULT_GOOD(Consumer::init(settings)))
     {
-        int res = RESULT_OK;
-        
+        interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
         playout_.reset(new VideoPlayout(this));

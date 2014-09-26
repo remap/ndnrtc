@@ -24,7 +24,7 @@ namespace ndnrtc {
         public:
             VideoConsumer(const GeneralParams& generalParams,
                           const GeneralConsumerParams& consumerParams,
-                          IExternalRenderer* const externalRenderer = 0);
+                          IExternalRenderer* const externalRenderer);
             virtual ~VideoConsumer();
             
             int
