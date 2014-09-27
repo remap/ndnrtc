@@ -124,13 +124,21 @@ libAudioParams_(DefaultParamsAudio)
 NdnRtcLibrary::~NdnRtcLibrary()
 {
     LibraryFace->stopProcessing();
+    for (SessionMap::iterator it = ActiveSessions.begin();
+         it != ActiveSessions.end(); it++)
+    {
+        it->second->stop();
+    }
+    ActiveSessions.clear();
     
     for (SessionObserverMap::iterator it = RemoteObservers.begin();
          it != RemoteObservers.end(); it++)
     {
         it->second->stopMonitor();
     }
+    RemoteObservers.clear();
     
+    LibraryFace->stopProcessing();
     NdnRtcUtils::releaseVoiceEngine();
 }
 //******************************************************************************

@@ -345,6 +345,8 @@ namespace ndnlog {
             {
                 if (isLoggerCreated_)
                     delete logger_;
+                    logger_ = NULL;
+                }
             }
             
             virtual void

@@ -185,7 +185,7 @@ processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFac
 FaceProcessor::~FaceProcessor()
 {
     stopProcessing();
-    transport_->close();
+    faceWrapper_->shutdown();
     transport_.reset();
     processingThread_.~ThreadWrapper();
 }

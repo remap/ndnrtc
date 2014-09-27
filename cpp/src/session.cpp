@@ -27,6 +27,7 @@ status_(SessionOffline)
     description_ = "session";
     this->setLogger(new Logger(generalParams.loggingLevel_,
                                NdnRtcUtils::toString("producer-%s.log", username.c_str())));
+    isLoggerCreated_ = true;
 
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
     
@@ -36,9 +37,9 @@ status_(SessionOffline)
 
 Session::~Session()
 {
-    stop();
+    serviceChannel_->stopSessionInfoBroadcast();
+    mainFaceProcessor_->stopProcessing();
 }
-
 
 int
 Session::start()
@@ -53,9 +54,8 @@ Session::start()
 int
 Session::stop()
 {
+    int res = serviceChannel_->stopSessionInfoBroadcast();    
     mainFaceProcessor_->stopProcessing();
-    
-    int res = serviceChannel_->stopSessionInfoBroadcast();
     
     if (RESULT_NOT_FAIL(res))
     {
