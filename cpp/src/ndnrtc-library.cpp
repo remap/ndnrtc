@@ -274,15 +274,13 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     shared_ptr<Consumer> remoteStreamConsumer;
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
-    {
-        if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
-            remoteStreamConsumer.reset(new AudioConsumer(generalParams, consumerParams));
-        else
-            remoteStreamConsumer.reset(new VideoConsumer(generalParams, consumerParams, renderer));
-    }
+    if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
+        remoteStreamConsumer.reset(new AudioConsumer(generalParams, consumerParams));
     else
-        remoteStreamConsumer = it->second;
+        remoteStreamConsumer.reset(new VideoConsumer(generalParams, consumerParams, renderer));
+    
+    if (it != ActiveStreamsConsumer.end())
+        it->second = remoteStreamConsumer;
     
     ConsumerSettings settings;
     settings.userPrefix_ = remoteSessionPrefix;

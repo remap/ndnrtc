@@ -20,6 +20,7 @@
 #include "buffer-estimator.h"
 #include "statistics.h"
 #include "renderer.h"
+#include "video-renderer.h"
 #include "rate-control.h"
 #include "service-channel.h"
 
@@ -241,6 +242,10 @@ namespace ndnrtc {
             
             virtual void
             setDescription(const std::string& desc);
+            
+            virtual void
+            setRenderer(IExternalRenderer* const renderer)
+            { renderer_.reset(new ExternalVideoRendererAdaptor(renderer)); }
             
             virtual void
             onBufferingEnded();
