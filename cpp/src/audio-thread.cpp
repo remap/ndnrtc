@@ -28,7 +28,7 @@ int AudioThread::init(const AudioThreadSettings& settings)
         return res;
     
     rtpPacketPrefix_ = Name(threadPrefix_);
-    rtpPacketPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesDelta));
+    rtpPacketPrefix_.append(Name(NameComponents::NameComponentStreamFramesDelta));
     rtcpPacketPrefix_ = rtpPacketPrefix_;
     
     return res;

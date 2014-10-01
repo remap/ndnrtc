@@ -154,6 +154,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-media-sender.lo \
 	src/libndnrtc_la-media-thread.lo \
 	src/libndnrtc_la-media-stream.lo \
+	src/libndnrtc_la-name-components.lo \
 	src/libndnrtc_la-ndn-assembler.lo \
 	src/libndnrtc_la-ndnrtc-library.lo \
 	src/libndnrtc_la-ndnrtc-namespace.lo \
@@ -525,7 +526,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 SUBDIRS = src/objc .
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
@@ -551,6 +552,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/media-sender.cpp src/media-sender.h \
   src/media-thread.cpp src/media-thread.h \
   src/media-stream.cpp src/media-stream.h \
+  src/name-components.cpp include/name-components.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
@@ -727,6 +729,8 @@ src/libndnrtc_la-media-thread.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-media-stream.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-name-components.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndn-assembler.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-library.lo: src/$(am__dirstamp) \
@@ -841,6 +845,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-sender.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo@am__quote@
@@ -1051,6 +1056,13 @@ src/libndnrtc_la-media-stream.lo: src/media-stream.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-stream.cpp' object='src/libndnrtc_la-media-stream.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+
+src/libndnrtc_la-name-components.lo: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-name-components.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-name-components.Tpo -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-name-components.Tpo src/$(DEPDIR)/libndnrtc_la-name-components.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/libndnrtc_la-name-components.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
 
 src/libndnrtc_la-ndn-assembler.lo: src/ndn-assembler.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndn-assembler.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp

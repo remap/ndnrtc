@@ -66,30 +66,14 @@ static uint8_t DEFAULT_PRIVATE_KEY_DER[] = {
 #pragma mark - all static
 static shared_ptr<KeyChain> DefaultKeyChain(new KeyChain());
 
-const std::string NdnRtcNamespace::NameComponentApp = "ndnrtc";
-const std::string NdnRtcNamespace::NameComponentUser = "user";
-const std::string NdnRtcNamespace::NameComponentSession = "session-info";
-const std::string NdnRtcNamespace::NameComponentBroadcast = "/ndn/broadcast";
-const std::string NdnRtcNamespace::NameComponentDiscovery = "discovery";
-const std::string NdnRtcNamespace::NameComponentUserStreams = "streams";
-const std::string NdnRtcNamespace::NameComponentStreamAccess = "access";
-const std::string NdnRtcNamespace::NameComponentStreamKey = "key";
-const std::string NdnRtcNamespace::NameComponentStreamFramesDelta = "delta";
-const std::string NdnRtcNamespace::NameComponentStreamFramesKey = "key";
-const std::string NdnRtcNamespace::NameComponentStreamInfo = "info";
-const std::string NdnRtcNamespace::NameComponentFrameSegmentData = "data";
-const std::string NdnRtcNamespace::NameComponentFrameSegmentParity = "parity";
-const std::string NdnRtcNamespace::KeyComponent = "DSK-1408";
-const std::string NdnRtcNamespace::CertificateComponent = "ID-CERT/0";
-
 shared_ptr<std::string>
 NdnRtcNamespace::getProducerPrefix(const std::string &hub,
                                    const std::string &producerId)
 {
     return buildPath(hub[0] != '/',
                      &hub,
-                     &NameComponentApp,
-                     &NameComponentUser,
+                     &NameComponents::NameComponentApp,
+                     &NameComponents::NameComponentUser,
                      &producerId,
                      NULL);
 }
@@ -103,7 +87,7 @@ NdnRtcNamespace::getStreamPath(const std::string &hub,
     
     return buildPath(false,
                      producerPrefix.get(),
-                     &NameComponentUserStreams,
+                     &NameComponents::NameComponentUserStreams,
                      &streamName,
                      NULL);
 }
@@ -178,7 +162,7 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamPrefix(const ParamsStruct &par
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*userPrefix),
-                                      &NdnRtcNamespace::NameComponentUserStreams,
+                                      &NameComponents::NameComponents::NameComponents::NameComponentUserStreams,
                                       &streamName,
                                       NULL);
 }
@@ -189,7 +173,7 @@ NdnRtcNamespace::getStreamPrefix(const std::string &userPrefix,
 {
     return NdnRtcNamespace::buildPath(false,
                                       &userPrefix,
-                                      &NdnRtcNamespace::NameComponentUserStreams,
+                                      &NameComponents::NameComponents::NameComponents::NameComponentUserStreams,
                                       &streamName,
                                       NULL);
 }
@@ -206,13 +190,13 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamFramePrefix(const ParamsStruct
     streamThread = NdnRtcUtils::toString("%d", params.streamsParams[streamIdx].startBitrate);
     
     const std::string frameTypeNamespace = (isKeyNamespace)?
-    NdnRtcNamespace::NameComponentStreamFramesKey:
-    NdnRtcNamespace::NameComponentStreamFramesDelta;
+    NameComponents::NameComponents::NameComponents::NameComponentStreamFramesKey:
+    NameComponents::NameComponents::NameComponents::NameComponentStreamFramesDelta;
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*streamPrefix),
                                       &streamThread,
-//                                      &NdnRtcNamespace::NameComponentStreamFrames,
+//                                      &NameComponents::NameComponents::NameComponents::NameComponentStreamFrames,
                                       &frameTypeNamespace,
                                       NULL);
 }
@@ -233,7 +217,7 @@ NdnRtcNamespace::getThreadFramesPrefix(const std::string& threadPrefix,
 {
     return *NdnRtcNamespace::buildPath(false,
                                        &threadPrefix,
-                                       (isKeyNamespace)?&NameComponentStreamFramesKey:&NameComponentStreamFramesDelta,
+                                       (isKeyNamespace)?&NameComponents::NameComponentStreamFramesKey:&NameComponents::NameComponentStreamFramesDelta,
                                        NULL);
 }
 
@@ -246,7 +230,7 @@ shared_ptr<std::string> NdnRtcNamespace::getStreamKeyPrefix(const ParamsStruct &
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*streamPrefix),
-                                      &NdnRtcNamespace::NameComponentStreamKey,
+                                      &NameComponents::NameComponents::NameComponents::NameComponentStreamKey,
                                       NULL);
 }
 
@@ -259,7 +243,7 @@ shared_ptr<std::string> NdnRtcNamespace::getSessionInfoPrefix(const ParamsStruct
     
     return NdnRtcNamespace::buildPath(false,
                                       &(*userPrefix),
-                                      &NdnRtcNamespace::NameComponentSession,
+                                      &NameComponents::NameComponents::NameComponents::NameComponentSession,
                                       NULL);
 }
 
@@ -269,14 +253,14 @@ NdnRtcNamespace::getSessionInfoPrefix(const std::string& userPrefix)
 {
     return NdnRtcNamespace::buildPath(false,
                                       &userPrefix,
-                                      &NdnRtcNamespace::NameComponentSession,
+                                      &NameComponents::NameComponents::NameComponents::NameComponentSession,
                                       NULL);
 }
 
 shared_ptr<Name>
 NdnRtcNamespace::keyPrefixForUser(const std::string &userPrefix)
 {
-    shared_ptr<std::string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NameComponentStreamKey, &KeyComponent, NULL);
+    shared_ptr<std::string> path = NdnRtcNamespace::buildPath(false, &userPrefix, &NameComponents::NameComponentStreamKey, &NameComponents::KeyComponent, NULL);
     shared_ptr<Name> keyName(new Name(path->c_str()));
     
     return keyName;
@@ -287,7 +271,7 @@ NdnRtcNamespace::certificateNameForUser(const std::string &userPrefix)
 {
     shared_ptr<Name> certificateName =
     NdnRtcNamespace::keyPrefixForUser(userPrefix);
-    certificateName->append(Name(CertificateComponent));
+    certificateName->append(Name(NameComponents::CertificateComponent));
     
     return certificateName;
 }
@@ -342,12 +326,12 @@ NdnRtcNamespace::appendStringComponent(shared_ptr<ndn::Name> &prefix,
 void
 NdnRtcNamespace::appendDataKind(Name& prefix, bool shouldAppendParity)
 {
-    appendStringComponent(prefix, ((shouldAppendParity)?NameComponentFrameSegmentParity:NameComponentFrameSegmentData));
+    appendStringComponent(prefix, ((shouldAppendParity)?NameComponents::NameComponentFrameSegmentParity:NameComponents::NameComponentFrameSegmentData));
 }
 void
 NdnRtcNamespace::appendDataKind(shared_ptr<Name>& prefix, bool shouldAppendParity)
 {
-    appendStringComponent(prefix, ((shouldAppendParity)?NameComponentFrameSegmentParity:NameComponentFrameSegmentData));
+    appendStringComponent(prefix, ((shouldAppendParity)?NameComponents::NameComponentFrameSegmentParity:NameComponents::NameComponentFrameSegmentData));
 }
 
 
@@ -418,8 +402,8 @@ bool NdnRtcNamespace::isKeyFramePrefix(const ndn::Name &prefix)
 {
     std::string prefixString = prefix.toUri();
     
-    int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFramesKey);
+    int n1 = prefixString.find(NameComponents::NameComponentUserStreams);
+    int n2 = prefixString.find(NameComponents::NameComponentStreamFramesKey);
     
     return !(n1 == n2) &&
     n1 >= 0 && n1 < n2;
@@ -429,8 +413,8 @@ bool NdnRtcNamespace::isDeltaFramePrefix(const ndn::Name &prefix)
 {
     std::string prefixString = prefix.toUri();
     
-    int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFramesDelta);
+    int n1 = prefixString.find(NameComponents::NameComponentUserStreams);
+    int n2 = prefixString.find(NameComponents::NameComponentStreamFramesDelta);
     
     return !(n1 == n2) &&
     n1 >= 0 && n1 < n2;
@@ -438,7 +422,7 @@ bool NdnRtcNamespace::isDeltaFramePrefix(const ndn::Name &prefix)
 
 bool NdnRtcNamespace::isParitySegmentPrefix(const ndn::Name &prefix)
 {
-    return hasComponent(prefix, NameComponentFrameSegmentParity);
+    return hasComponent(prefix, NameComponents::NameComponentFrameSegmentParity);
 }
 
 PacketNumber NdnRtcNamespace::getPacketNumber(const ndn::Name &prefix)
@@ -448,11 +432,11 @@ PacketNumber NdnRtcNamespace::getPacketNumber(const ndn::Name &prefix)
     
     if (isDeltaFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesDelta);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
     }
     else if (isKeyFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesKey);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
     }
     
     
@@ -473,11 +457,11 @@ SegmentNumber NdnRtcNamespace::getSegmentNumber(const ndn::Name &prefix)
     
     if (isDeltaFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesDelta);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
     }
     else if (isKeyFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesKey);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
     }
     
     
@@ -501,11 +485,11 @@ void NdnRtcNamespace::getSegmentationNumbers(const ndn::Name &prefix,
     
     if (isDeltaFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesDelta);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
     }
     else if (isKeyFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesKey);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
     }
     
     if (p > 0)
@@ -536,11 +520,11 @@ int NdnRtcNamespace::trimSegmentNumber(const ndn::Name &prefix,
     
     if (isDeltaFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesDelta);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
     }
     else if (isKeyFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesKey);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
     }
     
     if (p > 0 &&
@@ -565,11 +549,11 @@ int NdnRtcNamespace::trimDataTypeComponent(const ndn::Name &prefix,
     
     if (isParitySegmentPrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentFrameSegmentParity);
+        p = findComponent(prefix, NameComponents::NameComponentFrameSegmentParity);
     }
     else
     {
-        p = findComponent(prefix, NameComponentFrameSegmentData);
+        p = findComponent(prefix, NameComponents::NameComponentFrameSegmentData);
     }
     
     if (p > 0)
@@ -589,11 +573,11 @@ int NdnRtcNamespace::trimPacketNumber(const ndn::Name &prefix,
     
     if (isDeltaFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesDelta);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
     }
     else if (isKeyFramePrefix(prefix))
     {
-        p = findComponent(prefix, NameComponentStreamFramesKey);
+        p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
     }
     
     if (p > 0)
@@ -612,24 +596,24 @@ bool NdnRtcNamespace::trimmedLookupPrefix(const ndn::Name &prefix,
     
     bool res = false;
     std::string prefixString = prefix.toUri();
-    int n1 = prefixString.find(NameComponentUserStreams);
-    int n2 = prefixString.find(NameComponentStreamFramesKey);
-    int n3 = prefixString.find(NameComponentStreamFramesDelta);
+    int n1 = prefixString.find(NameComponents::NameComponentUserStreams);
+    int n2 = prefixString.find(NameComponents::NameComponentStreamFramesKey);
+    int n3 = prefixString.find(NameComponents::NameComponentStreamFramesDelta);
     
     if (!(n1 == n2 == n3) &&
         n1 >= 0 && ((n1 < n2) || n1 < n3))
     {
-        int p1 = prefixString.find(NameComponentFrameSegmentData);
-        int p2 = prefixString.find(NameComponentFrameSegmentParity);
+        int p1 = prefixString.find(NameComponents::NameComponentFrameSegmentData);
+        int p2 = prefixString.find(NameComponents::NameComponentFrameSegmentParity);
         
         if (!(p1 == p2))
         {
             int p = -1;
             
             if (p1 == std::string::npos)
-                p = findComponent(prefix, NameComponentFrameSegmentParity);
+                p = findComponent(prefix, NameComponents::NameComponentFrameSegmentParity);
             else
-                p = findComponent(prefix, NameComponentFrameSegmentData);
+                p = findComponent(prefix, NameComponents::NameComponentFrameSegmentData);
             
             trimmedPrefix = prefix.getSubName(0, p);
         }

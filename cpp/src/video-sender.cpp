@@ -92,7 +92,7 @@ NdnVideoSender::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage
     
     shared_ptr<Name> framePrefixData(new Name(*framePrefix));
     NdnRtcNamespace::appendStringComponent(framePrefixData,
-                                           NdnRtcNamespace::NameComponentFrameSegmentData);
+                                           NameComponents::NameComponentFrameSegmentData);
     
     PrefixMetaInfo prefixMeta = {0,0,0,0};
     prefixMeta.playbackNo_ = packetNo_;
@@ -193,7 +193,7 @@ NdnVideoSender::publishParityData(PacketNumber frameNo,
         //Prefix
         shared_ptr<Name> framePrefixParity(new Name(*framePrefix));
         NdnRtcNamespace::appendStringComponent(framePrefixParity,
-                                               NdnRtcNamespace::NameComponentFrameSegmentParity);
+                                               NameComponents::NameComponentFrameSegmentParity);
         //Publish Packet of Parity
         if ((nSegmentsP = publishPacket(frameParityData,
                                         framePrefixParity,

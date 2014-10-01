@@ -2,8 +2,10 @@
 //  interfaces.h
 //  libndnrtc
 //
-//  Created by Peter Gusev on 9/18/14.
-//  Copyright (c) 2014 REMAP. All rights reserved.
+//  Copyright 2013 Regents of the University of California
+//  For licensing details see the LICENSE file.
+//
+//  Author:  Peter Gusev
 //
 
 #ifndef libndnrtc_interfaces_h
@@ -35,12 +37,14 @@ namespace ndnrtc
         virtual uint8_t* getFrameBuffer(int width, int height) = 0;
         
         /**
-         * This method is called every time new frame is available for rendering
+         * This method is called every time new frame is available for rendering.
+         * This method is called on the same thread as getFrameBuffer was called.
          * @param timestamp Frame's timestamp
          * @param width Frame's width (NOTE: width can change during run)
          * @param height Frame's height (NOTE: height can change during run)
          * @param buffer Buffer with the RGB frame data (the same that was
          * returned from getFrameBuffer call)
+         * @see getFrameBuffer
          */
         virtual void renderBGRAFrame(int64_t timestamp, int width, int height,
                                      const uint8_t* buffer) = 0;

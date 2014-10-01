@@ -27,9 +27,9 @@ public:
     {
         basePrefix_ = Name(basePrefixString_);
         rightmostDeltaPrefix_ = Name(basePrefix_);
-        rightmostDeltaPrefix_.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
+        rightmostDeltaPrefix_.append(NameComponents::NameComponentStreamFramesDelta);
         rightmostKeyPrefix_ = Name(basePrefix_);
-        rightmostKeyPrefix_.append(NdnRtcNamespace::NameComponentStreamFramesKey);
+        rightmostKeyPrefix_.append(NameComponents::NameComponentStreamFramesKey);
         
         setupData();
         initData(true);
@@ -380,9 +380,9 @@ protected:
             Name packetPrefix(prefix);
             
             if (isKey)
-                packetPrefix.append(NdnRtcNamespace::NameComponentStreamFramesKey);
+                packetPrefix.append(NameComponents::NameComponentStreamFramesKey);
             else
-                packetPrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
+                packetPrefix.append(NameComponents::NameComponentStreamFramesDelta);
             
             std::vector<shared_ptr<Data>> segments =
             NdnRtcObjectTestHelper::packAndSliceFrame(frame, pNo,
@@ -479,11 +479,11 @@ protected:
         
         if (isKey)
         {
-            framePrefix.append(NdnRtcNamespace::NameComponentStreamFramesKey);
+            framePrefix.append(NameComponents::NameComponentStreamFramesKey);
             frameNo /= (int)params_.producerRate;
         }
         else
-            framePrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
+            framePrefix.append(NameComponents::NameComponentStreamFramesDelta);
         
         framePrefix.append(NdnRtcUtils::componentFromInt(frameNo));
 
@@ -1573,7 +1573,7 @@ TEST_F(FrameBufferTests, TestAssembleManyFrames)
                 {
                     // issue rightmost
                     Name rmpref(prefix);
-                    rmpref.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
+                    rmpref.append(NameComponents::NameComponentStreamFramesDelta);
                     shared_ptr<Interest> rightmost(new Interest(rmpref));
                     rightmost->setChildSelector(1);
                     
@@ -1685,7 +1685,7 @@ TEST_F(FrameBufferTests, TestPlaybackQueue)
     
     Name rightmost("/ndn/edu/ucla/apps/ndnrtc/user/testuser/streams/video0/vp8/frames");
     Name rightmostDataPrefix(rightmost);
-    rightmostDataPrefix.append(NdnRtcNamespace::NameComponentStreamFramesDelta);
+    rightmostDataPrefix.append(NameComponents::NameComponentStreamFramesDelta);
     
     std::vector<shared_ptr<Data>> rightmostSegments =
     NdnRtcObjectTestHelper::packAndSliceFrame(frame, 0, segmentSize-SegmentData::getHeaderSize(),

@@ -36,7 +36,7 @@ int NdnAudioSender::getStreamControlPrefix(const ParamsStruct &params,
                                          &(*streamPrefix),
                                          &streamThread,
                                          &rtcpSuffix,
-                                         &NdnRtcNamespace::NameComponentStreamFramesDelta,
+                                         &NameComponents::NameComponentStreamFramesDelta,
                                          NULL);
     
     return res;

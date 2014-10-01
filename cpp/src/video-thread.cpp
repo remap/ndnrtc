@@ -42,9 +42,9 @@ VideoThread::init(const VideoThreadSettings& settings)
         return res;
     
     deltaFramesPrefix_ = Name(threadPrefix_);
-    deltaFramesPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesDelta));
+    deltaFramesPrefix_.append(Name(NameComponents::NameComponentStreamFramesDelta));
     keyFramesPrefix_ = Name(threadPrefix_);
-    keyFramesPrefix_.append(Name(NdnRtcNamespace::NameComponentStreamFramesKey));
+    keyFramesPrefix_.append(Name(NameComponents::NameComponentStreamFramesKey));
     
     if (RESULT_FAIL(coder_->init(getSettings().getVideoParams()->coderParams_)))
         return notifyError(RESULT_ERR, "can't initialize video encoder");
@@ -84,7 +84,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     framePrefix.append(NdnRtcUtils::componentFromInt(frameNo));
     
     Name framePrefixData(framePrefix);
-    framePrefixData.append(NdnRtcNamespace::NameComponentFrameSegmentData);
+    framePrefixData.append(NameComponents::NameComponentFrameSegmentData);
     
     PrefixMetaInfo prefixMeta = {0,0,0,0};
     prefixMeta.playbackNo_ = packetNo_;
@@ -183,7 +183,7 @@ VideoThread::publishParityData(PacketNumber frameNo,
         //Prefix
         Name framePrefixParity(framePrefix);
         NdnRtcNamespace::appendStringComponent(framePrefixParity,
-                                               NdnRtcNamespace::NameComponentFrameSegmentParity);
+                                               NameComponents::NameComponentFrameSegmentParity);
         //Publish Packet of Parity
         if ((nSegmentsP = publishPacket(frameParityData,
                                         framePrefixParity,

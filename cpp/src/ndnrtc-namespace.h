@@ -13,6 +13,7 @@
 #define __ndnrtc__ndn_namespace__
 
 #include "ndnrtc-object.h"
+#include "name-components.h"
 
 namespace ndnrtc {
     using namespace ndn;
@@ -20,23 +21,6 @@ namespace ndnrtc {
     class NdnRtcNamespace
     {
     public:
-        // namespace components
-        static const std::string NameComponentApp;
-        static const std::string NameComponentUser;
-        static const std::string NameComponentBroadcast;
-        static const std::string NameComponentDiscovery;
-        static const std::string NameComponentUserStreams;
-        static const std::string NameComponentSession;
-        static const std::string NameComponentStreamAccess;        
-        static const std::string NameComponentStreamKey;
-        static const std::string NameComponentStreamFramesDelta;
-        static const std::string NameComponentStreamFramesKey;
-        static const std::string NameComponentStreamInfo;
-        static const std::string NameComponentFrameSegmentData;
-        static const std::string NameComponentFrameSegmentParity;
-        static const std::string KeyComponent;
-        static const std::string CertificateComponent;
-        
         // composing URI based on provided components
         static boost::shared_ptr<std::string>
             getProducerPrefix(const std::string &hub,
