@@ -274,6 +274,13 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     shared_ptr<Consumer> remoteStreamConsumer;
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
+    if (it != ActiveStreamsConsumer.end() &&
+        it->second->getIsConsuming())
+    {
+        LibraryInternalObserver.onError("stream is already running");
+        return "";
+    }
+    
     if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
         remoteStreamConsumer.reset(new AudioConsumer(generalParams, consumerParams));
     else

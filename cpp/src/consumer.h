@@ -281,6 +281,9 @@ namespace ndnrtc {
             void
             dumpStat(ReceiverChannelPerformance stat) const;
             
+            bool
+            getIsConsuming() { return isConsuming_; }
+            
         protected:
             bool isConsuming_;
             GeneralParams generalParams_;
