@@ -120,6 +120,8 @@ VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
 void
 VideoConsumer::onStateChanged(const int& oldState, const int& newState)
 {
+    Consumer::onStateChanged(oldState, newState);
+    
     if (rateControl_.get())
     {
         if (newState == Pipeliner::StateFetching)

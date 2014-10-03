@@ -180,13 +180,28 @@ namespace ndnrtc {
         /**
          * Adds new remote stream and starts fetching from its' first thread
          */
-        virtual std::string addRemoteStream(const std::string& remoteSessionPrefix,
-                                            const new_api::MediaStreamParams& params,
-                                            const new_api::GeneralParams& generalParams,
-                                            const new_api::GeneralConsumerParams& consumerParams,
-                                            IExternalRenderer* const renderer);
+        virtual std::string
+        addRemoteStream(const std::string& remoteSessionPrefix,
+                        const new_api::MediaStreamParams& params,
+                        const new_api::GeneralParams& generalParams,
+                        const new_api::GeneralConsumerParams& consumerParams,
+                        IExternalRenderer* const renderer);
         
-        virtual int removeRemoteStream(const std::string& streamPrefix);
+        virtual int
+        removeRemoteStream(const std::string& streamPrefix);
+        
+        virtual int
+        setStreamObserver(const std::string& streamPrefix,
+                          IConsumerObserver* const observer);
+        virtual int
+        removeStreamObserver(const std::string& streamPrefix);
+        
+        virtual std::string
+        getStreamThread(const std::string& streamPrefix);
+        
+        virtual int
+        switchThread(const std::string& streamPrefix,
+                     const std::string& threadName);
         
         //******************************************************************************
         //******************************************************************************

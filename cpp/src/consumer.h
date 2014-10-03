@@ -96,6 +96,9 @@ namespace ndnrtc {
             onRebufferingOccurred() = 0;
             
             virtual void
+            onInitialDataArrived() = 0;
+            
+            virtual void
             onStateChanged(const int& oldState, const int& newState) = 0;
         };
         
@@ -153,6 +156,20 @@ namespace ndnrtc {
             stop();
             
             void
+            registerObserver(IConsumerObserver* const observer)
+            {
+                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                observer_ = observer;
+            }
+
+            void
+            unregisterObserver()
+            {
+                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                observer_ = NULL;
+            }
+            
+            void
             triggerRebuffering();
             
             State
@@ -181,6 +198,9 @@ namespace ndnrtc {
             MediaThreadParams*
             getCurrentThreadParameters() const
             { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]; }
+            
+            void
+            switchThread(const std::string& threadName);
             
             virtual boost::shared_ptr<FrameBuffer>
             getFrameBuffer() const
@@ -256,6 +276,9 @@ namespace ndnrtc {
             virtual void
             onStateChanged(const int& oldState, const int& newState);
             
+            virtual void
+            onInitialDataArrived();
+            
             /**
              * Dumps statistics for the current producer into the log
              * Statistics are dumped in the following format:
@@ -303,6 +326,9 @@ namespace ndnrtc {
             boost::shared_ptr<AudioVideoSynchronizer> avSync_;
             boost::shared_ptr<RateControl> rateControl_;
             boost::shared_ptr<ServiceChannel> serviceChannel_;
+            
+            webrtc::CriticalSectionWrapper& observerCritSec_;
+            IConsumerObserver *observer_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             // statistics

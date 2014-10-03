@@ -325,6 +325,61 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     return RESULT_OK;
 }
 
+int
+NdnRtcLibrary::setStreamObserver(const std::string& streamPrefix,
+                                 IConsumerObserver* const observer)
+{
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+        return RESULT_ERR;
+
+    it->second->registerObserver(observer);
+    
+    return RESULT_OK;
+}
+
+int
+NdnRtcLibrary::removeStreamObserver(const std::string& streamPrefix)
+{
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+        return RESULT_ERR;
+    
+    it->second->unregisterObserver();
+    
+    return RESULT_OK;
+}
+
+std::string
+NdnRtcLibrary::getStreamThread(const std::string& streamPrefix)
+{
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+    {
+        LibraryInternalObserver.onError("stream was not found");
+        return "";
+    }
+    
+    return it->second->getCurrentThreadName();
+}
+
+int
+NdnRtcLibrary::switchThread(const std::string& streamPrefix,
+                            const std::string& threadName)
+{
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+        return RESULT_ERR;
+    
+    it->second->switchThread(threadName);
+    
+    return RESULT_OK;
+}
+
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************

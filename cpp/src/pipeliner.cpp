@@ -106,20 +106,25 @@ ndnrtc::new_api::Pipeliner::triggerRebuffering()
 }
 
 void
-ndnrtc::new_api::Pipeliner::switchToStream(unsigned int streamId)
+ndnrtc::new_api::Pipeliner::threadSwitched()
 {
     CriticalSectionScoped scopedCs(&streamSwitchSync_);
-#warning fix this
-//    shared_ptr<std::string>
-//    deltaPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId);
-//    
-//    shared_ptr<std::string>
-//    keyPrefixString = NdnRtcNamespace::getStreamFramePrefix(params_, streamId, true);
-//    
-//    deltaFramesPrefix_ = Name(deltaPrefixString->c_str());
-//    keyFramesPrefix_ = Name(keyPrefixString->c_str());
+
+    std::string
+    threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
     
-    streamId_ = streamId;
+    std::string
+    deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
+    
+    std::string
+    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
+    
+    threadPrefix_ = Name(threadPrefixString.c_str());
+    deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
+    keyFramesPrefix_ = Name(keyPrefixString.c_str());
+    
+    keyFrameSeqNo_ += 1;
+    deltaFrameSeqNo_ += ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_;
 }
 
 PipelinerStatistics

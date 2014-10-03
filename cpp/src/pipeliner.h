@@ -57,26 +57,6 @@ namespace ndnrtc {
             void
             triggerRebuffering();
             
-//            double
-//            getAvgSegNum(bool isKey) const DEPRECATED
-//            {
-//                return NdnRtcUtils::currentMeanEstimation((isKey)?
-//                                                          keySegnumEstimatorId_:
-//                                                          deltaSegnumEstimatorId_);
-//            }
-//            
-//            double
-//            getRtxFreq() const DEPRECATED
-//            { return NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_); }
-//            
-//            unsigned int
-//            getRtxNum() const DEPRECATED
-//            { return rtxNum_; }
-//            
-//            unsigned int
-//            getRebufferingNum() DEPRECATED
-//            { return rebufferingNum_; }
-            
             State
             getState() const
             { return state_; }
@@ -90,10 +70,8 @@ namespace ndnrtc {
             { callback_ = callback; }
             
             void
-            switchToStream(unsigned int streamId);
+            threadSwitched();
             
-//            unsigned int
-//            getInterestNum() { return nInterestSent_; }
             PipelinerStatistics
             getStatistics();
             
@@ -146,16 +124,14 @@ namespace ndnrtc {
             PacketNumber playbackStartFrameNo_;
             
             // --
-//            unsigned rebufferingNum_,
             unsigned int reconnectNum_;
             PacketNumber exclusionFilter_;
-            unsigned int rtxFreqMeterId_;//, rtxNum_;
+            unsigned int rtxFreqMeterId_;
             int bufferEventsMask_;
             bool useKeyNamespace_;
             unsigned int streamId_; // currently fetched stream id
             // statistics
             PipelinerStatistics stat_;
-//            unsigned int nInterestSent_;
             
             static bool
             mainThreadRoutine(void *pipeliner){

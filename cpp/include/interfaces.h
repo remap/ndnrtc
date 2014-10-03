@@ -148,6 +148,66 @@ namespace ndnrtc
          */
         virtual void onStateChanged(const char *state, const char *args) = 0;
     };
+    
+    /**
+     * Interface for remote stream observer. Gets updates for notable events 
+     * occuring while remote stream is fetched.
+     */
+    typedef enum _ConsumerStatus {
+        ConsumerStatusStopped,
+        ConsumerStatusNoData,   // consumer has started but no data received yet
+        ConsumerStatusChasing,  // consumer received first data and is running
+                                // chasing algorithm
+        ConsumerStatusBuffering,    // consumer has finished chasing and is
+                                    // buffering frames unless buffer reaches
+                                    // target size
+        ConsumerStatusFetching, // consumer has finished buffering and switched
+                                // to normal operating fetching mode
+    } ConsumerStatus;
+    
+    // playback events occur at the moment when frame is taken from the buffer
+    // for playback by playback mechanism. this means, the frame taken has
+    // reached it's deadline and should be played back or skipped due to
+    // different reasons:
+    typedef enum _PlaybackEvent {
+        PlaybackEventDeltaSkipIncomplete, // consumer had to skip frame as it was
+                                          // not fully fetched (incomplete)
+        PlaybackEventDeltaSkipInvalidGop, // consumer had to skip frame due to
+                                          // receiving incomplete frame previously,
+                                          // even if the current frame is complete
+        PlaybackEventDeltaSkipNoKey,      // consumer had to skip frame as there
+                                          // is no key frame for frame's GOP
+        PlaybackEventKeySkipIncomplete    // consumer had to skip key frame as
+                                          // it is incomplete
+    } PlaybackEvent;
+    
+    class IConsumerObserver {
+    public:
+        /**
+         * Called when consumer updates its' status
+         */
+        virtual void
+        onStatusChanged(ConsumerStatus newStatus) = 0;
+        
+        /**
+         * Called each time consumer encounters rebuffering event (no data 
+         * received for ~1200ms)
+         */
+        virtual void
+        onRebufferingOccurred() = 0;
+        
+        /**
+         * Called each time consumer encounters new buffer event
+         */
+        virtual void
+        onPlaybackEventOccurred(PlaybackEvent event, unsigned int frameSeqNo) = 0;
+        
+        /**
+         * Called when stream has switched to another thread
+         */
+        virtual void
+        onThreadSwitched(const std::string& threadName) = 0;
+    };
 }
 
 #endif

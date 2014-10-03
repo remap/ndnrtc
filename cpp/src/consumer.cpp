@@ -20,6 +20,7 @@ using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace webrtc;
 
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
@@ -34,7 +35,9 @@ rttEstimation_(new RttEstimation()),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
+segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
+observerCritSec_(*CriticalSectionWrapper::CreateCriticalSection()),
+observer_(NULL)
 {
     bufferEstimator_->setRttEstimation(rttEstimation_);
 }
@@ -43,6 +46,8 @@ Consumer::~Consumer()
 {
     if (isConsuming_)
         stop();
+    
+    observerCritSec_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -77,6 +82,12 @@ Consumer::init(const ConsumerSettings& settings)
     
     renderer_->init();
     
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusStopped);
+    }
+    
     return res;
 }
 
@@ -85,6 +96,12 @@ Consumer::start()
 {
 #warning error handling!
     pipeliner_->start();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusNoData);
+    }
     
     return RESULT_OK;
 }
@@ -97,6 +114,12 @@ Consumer::stop()
     playout_->stop();
     renderer_->stopRendering();
     
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusStopped);
+    }
+    
     return RESULT_OK;
 }
 
@@ -104,6 +127,27 @@ void
 Consumer::triggerRebuffering()
 {
     pipeliner_->triggerRebuffering();
+}
+
+void
+Consumer::switchThread(const std::string& threadName)
+{
+    std::vector<MediaThreadParams*>::iterator it;
+    
+    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
+        if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
+        {
+            currentThreadIdx_ = i;
+            pipeliner_->threadSwitched();
+            
+            if (observer_)
+            {
+                CriticalSectionScoped scopedCs(&observerCritSec_);
+                observer_->onThreadSwitched(threadName);
+            }
+            
+            break;
+        }
 }
 
 Consumer::State
@@ -202,11 +246,53 @@ Consumer::onRebufferingOccurred()
     renderer_->stopRendering();
     interestQueue_->reset();
     rttEstimation_->reset();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onRebufferingOccurred();
+    }
 }
 
 void
 Consumer::onStateChanged(const int &oldState, const int &newState)
 {
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        ConsumerStatus status;
+        
+        switch (newState) {
+            case Pipeliner::StateChasing:
+                status = ConsumerStatusChasing;
+                break;
+                
+            case Pipeliner::StateBuffering:
+                status = ConsumerStatusBuffering;
+                break;
+                
+            case Pipeliner::StateFetching:
+                status = ConsumerStatusFetching;
+                break;
+                
+            case Pipeliner::StateInactive:
+            default:
+                status = ConsumerStatusStopped;
+                break;
+        }
+        
+        observer_->onStatusChanged(status);
+    }
+}
+
+void
+Consumer::onInitialDataArrived()
+{
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusChasing);
+    }
 }
 
 void

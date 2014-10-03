@@ -57,7 +57,7 @@ RateControl::start()
     LogDebugC
     << "arc thread started" << std::endl;
     
-    consumer_->getPipeliner()->switchToStream(streamId_);
+//    consumer_->getPipeliner()->switchToStream(streamId_);
     
     unsigned int tid;
     arcWatchingThread_.Start(tid);
@@ -131,7 +131,7 @@ RateControl::checkArcStatus()
         << streamId_ << " -> " << streamId << std::endl;
         
         streamId_ = streamId;
-        consumer_->getPipeliner()->switchToStream(streamId_);
+//        consumer_->getPipeliner()->switchToStream(streamId_);
     }
     
     LogTrace("arc.log") << STAT_DIV
