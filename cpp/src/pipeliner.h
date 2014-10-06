@@ -141,7 +141,7 @@ namespace ndnrtc {
             processEvents();
             
             static bool
-            pipelineThreadRoutin(void *pipeliner){
+            pipelineThreadRoutine(void *pipeliner){
                 return ((Pipeliner*)pipeliner)->processPipeline();
             }
             bool

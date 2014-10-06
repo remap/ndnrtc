@@ -42,7 +42,7 @@ mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this, kHi
 isPipelining_(false),
 isPipelinePaused_(false),
 pipelineIntervalMs_(0),
-pipelineThread_(*ThreadWrapper::CreateThread(Pipeliner::pipelineThreadRoutin, this, kHighPriority, "pipeliner-chaser")),
+pipelineThread_(*ThreadWrapper::CreateThread(Pipeliner::pipelineThreadRoutine, this, kHighPriority, "pipeliner-chaser")),
 pipelineTimer_(*EventWrapper::Create()),
 pipelinerPauseEvent_(*EventWrapper::Create()),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta)),
@@ -766,8 +766,8 @@ ndnrtc::new_api::Pipeliner::resetData()
     reconnectNum_ = 0;
     recoveryCheckpointTimestamp_ = -1;
     isPipelinePaused_ = false;
-    switchToState(StateInactive);
     stopChasePipeliner();
+    switchToState(StateInactive);    
     keyFrameSeqNo_ = -1;
     exclusionFilter_ = -1;
     
