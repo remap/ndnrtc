@@ -68,7 +68,9 @@ ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixSt
     }
     catch (std::exception &e)
     {
-        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s\n"
+                    "Make sure your local NDN daemon is running",
+                    e.what());
     }
     
     return res;
@@ -84,7 +86,9 @@ ServiceChannel::stopSessionInfoBroadcast()
         res = RESULT_OK;
     }
     catch (std::exception &e) {
-        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s"
+                    "Make sure your local NDN daemon is running"
+                    , e.what());
     }
     
     return res;
@@ -150,9 +154,15 @@ ServiceChannel::requestSessionInfo()
     ndn::Interest interest(sessionInfoPrefix_, updateIntervalMs_);
     interest.setMustBeFresh(true);
  
-    pendingInterestId_ = faceProcessor_->getFaceWrapper()->expressInterest(interest,
-                                                      bind(&ServiceChannel::onData, this, _1, _2),
-                                                      bind(&ServiceChannel::onTimeout, this, _1));
+    try {
+        pendingInterestId_ = faceProcessor_->getFaceWrapper()->expressInterest(interest,
+                                                                               bind(&ServiceChannel::onData, this, _1, _2),
+                                                                               bind(&ServiceChannel::onTimeout, this, _1));
+    } catch (std::exception &exception) {
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
+                    "Make sure your local NDN daemon is running",
+                    exception.what());
+    }
 }
 
 void

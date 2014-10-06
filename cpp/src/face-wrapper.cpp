@@ -188,6 +188,8 @@ FaceProcessor::~FaceProcessor()
     faceWrapper_->shutdown();
     transport_.reset();
     processingThread_.~ThreadWrapper();
+    
+    std::cout << description_ << " face processor dtor" << std::endl;
 }
 
 //******************************************************************************

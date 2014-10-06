@@ -147,6 +147,13 @@ namespace ndnrtc
          * readable text information).
          */
         virtual void onStateChanged(const char *state, const char *args) = 0;
+        
+        /**
+         * Called when errors occur.
+         * @param errorCode Error code (@see error-codes.h)
+         * @param message Error message
+         */
+        virtual void onErrorOccurred(int errorCode, const char* message) = 0;
     };
     
     /**

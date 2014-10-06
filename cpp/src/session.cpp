@@ -39,6 +39,7 @@ Session::~Session()
 {
     serviceChannel_->stopSessionInfoBroadcast();
     mainFaceProcessor_->stopProcessing();
+    sessionCache_->unregisterAll();
 }
 
 int
@@ -192,14 +193,15 @@ Session::onPublishSessionInfo()
 }
 
 void
-Session::onError(const char *errorMessage)
+Session::onError(const char *errorMessage, const int errorCode)
 {
     std::string extendedMessage = NdnRtcUtils::toString("[session %s] %s",
                                                         getPrefix().c_str(),
                                                         errorMessage);
-    NdnRtcComponent::onError(extendedMessage.c_str());
     
     if (sessionObserver_)
         sessionObserver_->onSessionError(username_.c_str(), userPrefix_.c_str(),
-                                         status_, -1, errorMessage);
+                                         status_, errorCode, errorMessage);
+    else
+        NdnRtcComponent::onError(extendedMessage.c_str(), errorCode);
 }

@@ -91,7 +91,7 @@ namespace ndnrtc
             onPublishSessionInfo();
             
             void
-            onError(const char *errorMessage);
+            onError(const char *errorMessage, const int errorCode);
         };
     }
 }

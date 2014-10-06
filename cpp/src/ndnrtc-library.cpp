@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory>
+#include <signal.h>
 
 #include "ndnrtc-library.h"
 #include "sender-channel.h"
@@ -18,6 +19,7 @@
 #include "objc/cocoa-renderer.h"
 #include "external-capturer.hpp"
 #include "session.h"
+#include "error-codes.h"
 
 #define CHECK_AND_SET_INT(paramSet, paramName, paramValue){ \
 if ((int)paramValue >= 0) \
@@ -61,29 +63,44 @@ public:
     ~NdnRtcLibraryInternalObserver(){}
     
     void
+    errorWithCode(int errCode, const char* message)
+    {
+        if (libObserver_)
+            libObserver_->onErrorOccurred(errCode, message);
+    }
+    
+    void
     setLibraryObserver(INdnRtcLibraryObserver* libObserver)
     {
         libObserver_ = libObserver;
     }
     
+    // INdnRtcLibraryObserver
     void onStateChanged(const char *state, const char *args)
     {
         if (libObserver_)
             libObserver_->onStateChanged(state, args);
     }
     
+    void onErrorOccurred(int errorCode, const char *errorMessage)
+    {
+        if (libObserver_)
+            libObserver_->onErrorOccurred(errorCode, errorMessage);
+    }
+    
     // INdnRtcObjectObserver
     void onErrorOccurred(const char *errorMessage)
     {
         if (libObserver_)
-            libObserver_->onStateChanged("error", errorMessage);
+            libObserver_->onErrorOccurred(-1, errorMessage);
     }
-    
+
     // INdnRtcComponentCallback
-    void onError(const char *errorMessage)
+    void onError(const char *errorMessage,
+                 const int errCode)
     {
         if (libObserver_)
-            libObserver_->onStateChanged("error", errorMessage);
+            libObserver_->onErrorOccurred(errCode, errorMessage);
     }
     
 private:
@@ -112,12 +129,29 @@ static void destructor(){
 static const char *DefaultLogFile = NULL;
 
 //******************************************************************************
+static void signalHandler(int signal, siginfo_t *siginfo, void *context)
+{
+    if (signal == SIGPIPE)
+    {
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_SIGPIPE,
+                                                "Make sure your NDN daemon is running");
+    }
+}
+
+//******************************************************************************
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle):
 libraryHandle_(libHandle),
 libParams_(DefaultParams),
 libAudioParams_(DefaultParamsAudio)
 {
+    struct sigaction act;
+    
+    memset (&act, '\0', sizeof(act));
+    act.sa_sigaction = &signalHandler;
+    act.sa_flags = SA_SIGINFO;
+    
+    sigaction(SIGPIPE, &act, NULL);
 //    fclose(stderr);    
     NdnRtcUtils::sharedVoiceEngine();
 }
@@ -277,7 +311,8 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     if (it != ActiveStreamsConsumer.end() &&
         it->second->getIsConsuming())
     {
-        LibraryInternalObserver.onError("stream is already running");
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_ALREADY_EXISTS,
+                                                "stream is already running");
         return "";
     }
     
@@ -359,7 +394,8 @@ NdnRtcLibrary::getStreamThread(const std::string& streamPrefix)
     
     if (it == ActiveStreamsConsumer.end())
     {
-        LibraryInternalObserver.onError("stream was not found");
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
+                                                "stream was not found");
         return "";
     }
     

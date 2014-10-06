@@ -35,12 +35,12 @@ NdnRtcComponent::~NdnRtcComponent()
     callbackSync_.~CriticalSectionWrapper();
 }
 
-void NdnRtcComponent::onError(const char *errorMessage)
+void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)
 {
     callbackSync_.Enter();
     
     if (hasCallback())
-        callback_->onError(errorMessage);
+        callback_->onError(errorMessage, errorCode);
     else
     {
         LogErrorC << "error occurred: " << string(errorMessage) << endl;
@@ -62,10 +62,12 @@ int NdnRtcComponent::notifyError(const int ecode, const char *format, ...)
     
     if (hasCallback())
     {
-        callback_->onError(emsg);
+        callback_->onError(emsg, ecode);
     }
     else
-        LogErrorC << "error occurred: " << string(emsg) << endl;
+        LogErrorC
+        << "error (" << ecode << ") occurred: "
+        << string(emsg) << endl;
     
     return ecode;
 }

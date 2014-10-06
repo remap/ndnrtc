@@ -11,6 +11,7 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
+#include "ndnrtc-object.h"
 
 namespace ndnrtc {
     using namespace ndn;
@@ -70,7 +71,7 @@ namespace ndnrtc {
         webrtc::CriticalSectionWrapper &faceCs_;
     };
     
-    class FaceProcessor : public ndnlog::new_api::ILoggingObject
+    class FaceProcessor :   public new_api::NdnRtcComponent
     {
     public:
         FaceProcessor(const boost::shared_ptr<FaceWrapper>& faceWrapper);

@@ -22,7 +22,8 @@ namespace ndnrtc {
         class INdnRtcComponentCallback {
         public:
             virtual ~INdnRtcComponentCallback(){}
-            virtual void onError(const char *errorMessage) = 0;
+            virtual void onError(const char *errorMessage,
+                                 const int errorCode = -1) = 0;
         };
         
         class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
@@ -39,7 +40,7 @@ namespace ndnrtc {
             virtual void deregisterCallback()
             { callback_ = NULL; }
             
-            virtual void onError(const char *errorMessage);
+            virtual void onError(const char *errorMessage, const int errorCode);
             
             // ILoggingObject interface conformance
             virtual std::string

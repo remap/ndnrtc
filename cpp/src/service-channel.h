@@ -14,6 +14,7 @@
 #include "ndnrtc-common.h"
 #include "face-wrapper.h"
 #include "ndnrtc-object.h"
+#include "error-codes.h"
 
 namespace ndnrtc {
     
