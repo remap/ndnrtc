@@ -69,7 +69,10 @@ int MediaThread::init(const MediaThreadSettings &settings)
 
 void MediaThread::stop()
 {
-    faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
+    if (memCache_.get())
+        memCache_->unregisterAll();
+    else
+        faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
 }
 
 //******************************************************************************
@@ -168,13 +171,13 @@ void MediaThread::registerPrefix(const Name& prefix)
 {
     if (memCache_.get())
     {
-//        TBD: figure out registered prefix ID from memory content cache
-//        registeredPrefixId_ =
+        // MemoryContentCache does not support providing registered prefixes IDs
+        // registeredPrefixId_ =
         memCache_->registerPrefix(prefix,
-                                  bind(&MediaThread::onRegisterFailed,
-                                       this, _1),
-                                  bind(&MediaThread::onInterest,
-                                       this, _1, _2, _3));
+                                                        bind(&MediaThread::onRegisterFailed,
+                                                             this, _1),
+                                                        bind(&MediaThread::onInterest,
+                                                             this, _1, _2, _3));
     }
     else
     {

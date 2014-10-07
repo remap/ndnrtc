@@ -83,7 +83,14 @@ Session::addLocalStream(const MediaStreamParams& params,
     mediaStreamSettings.userPrefix_ = getPrefix();
     mediaStreamSettings.keyChain_ = userKeyChain_;
     mediaStreamSettings.faceProcessor_ = mainFaceProcessor_;
-    mediaStreamSettings.memoryCache_ = sessionCache_;
+
+    // here we have a choice - use session-level memory cache or create a new
+    // one specifically for the stream
+    // as MemoryContentCache does not support unregistering individual prefixes,
+    // a stream will not be able to "clean" after itself upon removal
+    // that's why a new stream-level content cache is used and it can be purged
+    // by stream painlessly
+    mediaStreamSettings.memoryCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
     
     shared_ptr<MediaStream> mediaStream;
     StreamMap& streamMap = (params.type_ == MediaStreamParams::MediaStreamTypeAudio)?audioStreams_:videoStreams_;
