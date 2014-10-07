@@ -89,7 +89,7 @@ namespace ndnrtc {
             unsigned int updateCounter_, updateIntervalMs_,
             sessionInfoFreshnessMs_ = 1000;
             uint64_t registeredPrefixId_, pendingInterestId_;
-            void *callback_;
+            void *serviceChannelCallback_;
             
             Name signingCertificateName_;
             boost::shared_ptr<KeyChain> ndnKeyChain_;
@@ -123,11 +123,11 @@ namespace ndnrtc {
             
             IServiceChannelListenerCallback*
             getCallbackAsListener()
-            { return (IServiceChannelListenerCallback*)callback_; }
+            { return (IServiceChannelListenerCallback*)serviceChannelCallback_; }
             
             IServiceChannelPublisherCallback*
             getCallbackAsPublisher()
-            { return (IServiceChannelPublisherCallback*)callback_; }
+            { return (IServiceChannelPublisherCallback*)serviceChannelCallback_; }
             
             // NDN-CPP callbacks
             void

@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
 SUBDIRS = src/objc .
 
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
 
 lib_LTLIBRARIES = libndnrtc.la
 

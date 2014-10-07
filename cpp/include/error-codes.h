@@ -21,6 +21,8 @@
 #define NRTC_ERR_NOT_FOUND          (-2000)
 // record already exists
 #define NRTC_ERR_ALREADY_EXISTS     (-2001)
+// malformed data received
+#define NRTC_ERR_MALFORMED          (-2002)
 
 
 #endif

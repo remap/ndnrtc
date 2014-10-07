@@ -28,7 +28,7 @@ isMonitoring_(false),
 updateCounter_(0),
 monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
 monitorTimer_(*EventWrapper::Create()),
-callback_(callback),
+serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
 {
@@ -42,7 +42,7 @@ isMonitoring_(false),
 updateCounter_(0),
 monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
 monitorTimer_(*EventWrapper::Create()),
-callback_(callback),
+serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 updateIntervalMs_(updateIntervalMs)
 {
@@ -71,6 +71,9 @@ ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixSt
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s\n"
                     "Make sure your local NDN daemon is running",
                     e.what());
+        
+        if (serviceChannelCallback_)
+            getCallbackAsPublisher()->onSessionInfoBroadcastFailed();
     }
     
     return res;
@@ -158,7 +161,12 @@ ServiceChannel::requestSessionInfo()
         pendingInterestId_ = faceProcessor_->getFaceWrapper()->expressInterest(interest,
                                                                                bind(&ServiceChannel::onData, this, _1, _2),
                                                                                bind(&ServiceChannel::onTimeout, this, _1));
-    } catch (std::exception &exception) {
+    }
+    catch (std::exception &exception) {
+        if (serviceChannelCallback_)
+            getCallbackAsListener()->onUpdateFailedWithError(NRTC_ERR_LIBERROR,
+                                                             exception.what());
+            
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
                     "Make sure your local NDN daemon is running",
                     exception.what());
@@ -171,7 +179,7 @@ ServiceChannel::onData(const shared_ptr<const Interest>& interest,
 {
     pendingInterestId_ = 0;
     
-    if (callback_)
+    if (serviceChannelCallback_)
     {
         SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
         
@@ -184,14 +192,15 @@ ServiceChannel::onData(const shared_ptr<const Interest>& interest,
             updateCounter_++;
         }
         else
-            getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
+            getCallbackAsListener()->onUpdateFailedWithError(NRTC_ERR_MALFORMED,
+                                                             "got malformed session info data");
     }
 }
 
 void
 ServiceChannel::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    if (callback_)
+    if (serviceChannelCallback_)
         getCallbackAsListener()->onUpdateFailedWithTimeout();
 }
 
@@ -200,7 +209,7 @@ ServiceChannel::onInterest(const shared_ptr<const Name>& prefix,
                            const shared_ptr<const Interest>& interest,
                            ndn::Transport& transport)
 {
-    if (callback_)
+    if (serviceChannelCallback_)
     {
         sessionInfo_ = getCallbackAsPublisher()->onPublishSessionInfo();
         SessionInfoData sessionInfoData(*sessionInfo_);
@@ -227,6 +236,6 @@ ServiceChannel::onRegisterFailed(const shared_ptr<const Name>&
 {
     LogErrorC << "registration failed " << prefix << std::endl;
 
-    if (callback_)
+    if (serviceChannelCallback_)
         getCallbackAsPublisher()->onSessionInfoBroadcastFailed();
 }

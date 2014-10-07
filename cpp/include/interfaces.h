@@ -118,7 +118,7 @@ namespace ndnrtc
         onUpdateFailedWithTimeout() = 0;
         
         virtual void
-        onUpdateFailedWithError(const char* errMsg) = 0;
+        onUpdateFailedWithError(int errCode, const char* errMsg) = 0;
     };
     
     class INdnRtcObjectObserver {
