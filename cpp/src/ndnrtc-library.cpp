@@ -194,16 +194,19 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
     
     if (it == ActiveSessions.end())
     {
-        shared_ptr<Session> session(new Session(username, generalParams));
+        shared_ptr<Session> session(new Session());
         session->setSessionObserver(sessionObserver);
         session->registerCallback(&LibraryInternalObserver);
         ActiveSessions[session->getPrefix()] = session;
+        session->init(username, generalParams);
         session->start();
         sessionPrefix = session->getPrefix();
     }
     else
+    {
+        it->second->init(username, generalParams);
         it->second->start();
-
+    }
     
     return sessionPrefix;
 }

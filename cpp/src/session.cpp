@@ -15,24 +15,12 @@ using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace boost;
 
-Session::Session(const std::string username,
-                 const GeneralParams& generalParams):
+Session::Session():
 NdnRtcComponent(),
-username_(username),
-generalParams_(generalParams),
-userPrefix_(*NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username_)),
 sessionObserver_(NULL),
 status_(SessionOffline)
 {
     description_ = "session";
-    this->setLogger(new Logger(generalParams.loggingLevel_,
-                               NdnRtcUtils::toString("producer-%s.log", username.c_str())));
-    isLoggerCreated_ = true;
-
-    userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
-    
-    mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
-    sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
 }
 
 Session::~Session()
@@ -40,6 +28,23 @@ Session::~Session()
     serviceChannel_->stopSessionInfoBroadcast();
     mainFaceProcessor_->stopProcessing();
     sessionCache_->unregisterAll();
+}
+
+int
+Session::init(const std::string username,
+              const GeneralParams& generalParams)
+{
+    username_ = username;
+    generalParams_ = generalParams;
+    userPrefix_ = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username_);
+    this->setLogger(new Logger(generalParams.loggingLevel_,
+                               NdnRtcUtils::toString("producer-%s.log", username.c_str())));
+    isLoggerCreated_ = true;
+    
+    userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
+    
+    mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
+    sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
 }
 
 int

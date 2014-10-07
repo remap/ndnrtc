@@ -26,9 +26,12 @@ namespace ndnrtc
                         public IServiceChannelPublisherCallback
         {
         public:
-            Session(const std::string username,
-                    const GeneralParams& generalParams);
+            Session();
             ~Session();
+            
+            int
+            init(const std::string username,
+                 const GeneralParams& generalParams);
             
             int
             start();
