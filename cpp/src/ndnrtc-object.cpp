@@ -32,6 +32,7 @@ callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
 
 NdnRtcComponent::~NdnRtcComponent()
 {
+    std::cout << description_ << " component dtor" << std::endl;
     callbackSync_.~CriticalSectionWrapper();
 }
 

@@ -199,6 +199,7 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
         session->registerCallback(&LibraryInternalObserver);
         ActiveSessions[session->getPrefix()] = session;
         session->init(username, generalParams);
+        ActiveSessions[session->getPrefix()] = session;        
         session->start();
         sessionPrefix = session->getPrefix();
     }
@@ -359,7 +360,6 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     
     it->second->stop();
 //    ActiveStreamsConsumer.erase(it);
-    ActiveStreamsConsumer.erase(it);
     
     return RESULT_OK;
 }

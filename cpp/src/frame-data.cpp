@@ -565,6 +565,8 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
         streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
         memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
         strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
+        memset(&streamDescription.syncName_, 0, MAX_STREAM_NAME_LENGTH+1);
+        strcpy((char*)&streamDescription.syncName_, params->synchronizedStreamName_.c_str());
         streamDescription.nThreads_  = params->mediaThreads_.size();
         *((struct _VideoStreamDescription*)&data_[streamIdx]) = streamDescription;
         
@@ -637,12 +639,18 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
     
     for (int i = 0; i < header.nVideoStreams_; i++)
     {
-        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         struct _VideoStreamDescription streamDescription = *((struct _VideoStreamDescription*)(&data_[streamIdx]));
+        
+        if (streamDescription.mrkr1_ != NDNRTC_VSTREAMDESC_MRKR &&
+            streamDescription.mrkr2_ != NDNRTC_VSTREAMDESC_MRKR)
+            return RESULT_ERR;
+        
+        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         
         params->type_ = new_api::MediaStreamParams::MediaStreamTypeVideo;
         params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
         params->streamName_ = string((char*)&streamDescription.name_[0]);
+        params->synchronizedStreamName_ = string((char*)&streamDescription.syncName_[0]);
         
         streamIdx += sizeof(struct _VideoStreamDescription);
         unsigned int threadIdx = streamIdx;
@@ -650,6 +658,14 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
         for (int j = 0; j < streamDescription.nThreads_; j++)
         {
             struct _VideoThreadDescription threadDescription = *((struct _VideoThreadDescription*)(&data_[threadIdx]));
+            
+            if (threadDescription.mrkr1_ != NDNRTC_VTHREADDESC_MRKR &&
+                threadDescription.mrkr2_ != NDNRTC_VTHREADDESC_MRKR)
+            {
+                delete params;
+                return RESULT_ERR;
+            }
+            
             new_api::VideoThreadParams *threadParams = new new_api::VideoThreadParams();
             
             threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
@@ -671,8 +687,13 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
     
     for (int i = 0; i < header.nAudioStreams_; i++)
     {
-        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         struct _AudioStreamDescription streamDescription = *((struct _AudioStreamDescription*)(&data_[streamIdx]));
+        
+        if (streamDescription.mrkr1_ != NDNRTC_ASTREAMDESC_MRKR &&
+            streamDescription.mrkr2_ != NDNRTC_ASTREAMDESC_MRKR)
+            return RESULT_ERR;
+        
+        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
         
         params->type_ = new_api::MediaStreamParams::MediaStreamTypeAudio;
         params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
@@ -684,10 +705,17 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
         for (int j = 0; j < streamDescription.nThreads_; j++)
         {
             struct _AudioThreadDescription threadDescription = *((struct _AudioThreadDescription*)(&data_[threadIdx]));
+            
+            if (threadDescription.mrkr1_ != NDNRTC_ATHREADDESC_MRKR &&
+                threadDescription.mrkr2_ != NDNRTC_ATHREADDESC_MRKR)
+            {
+                delete params;
+                return RESULT_ERR;
+            }
+            
             new_api::AudioThreadParams *threadParams = new new_api::AudioThreadParams();
             
             threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
-            
             params->mediaThreads_.push_back(threadParams);
             
             threadIdx += sizeof(struct _AudioThreadDescription);

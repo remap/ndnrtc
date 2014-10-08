@@ -187,6 +187,7 @@ namespace ndnrtc
             
             GeneralProducerParams producerParams_;
             std::string streamName_ = "";
+            std::string synchronizedStreamName_ = "";
             CaptureDeviceParams *captureDevice_ = NULL;
             std::vector<MediaThreadParams*> mediaThreads_;
             MediaStreamType type_;
@@ -373,10 +374,12 @@ namespace ndnrtc
             { copyFrom(other); }
             ~SessionInfo()
             {
-                for (int i = 0; i < audioStreams_.size(); i++) delete audioStreams_[i];
+                for (int i = 0; i < audioStreams_.size(); i++)
+                    delete audioStreams_[i];
                 audioStreams_.clear();
                 
-                for (int i = 0; i < videoStreams_.size(); i++) delete videoStreams_[i];
+                for (int i = 0; i < videoStreams_.size(); i++)
+                    delete videoStreams_[i];
                 videoStreams_.clear();
             }
             SessionInfo& operator=(const SessionInfo& other)

@@ -22,6 +22,11 @@
 #define NDNRTC_SEGHDR_MRKR 0xb4b4
 #define NDNRTC_SEGBODY_MRKR 0xb5b5
 #define NDNRTC_SESSION_MRKR 0x1234
+#define NDNRTC_VSTREAMDESC_MRKR 0xb1b1
+#define NDNRTC_ASTREAMDESC_MRKR 0xb2b2
+#define NDNRTC_VTHREADDESC_MRKR 0xb3b3
+#define NDNRTC_ATHREADDESC_MRKR 0xb4b4
+
 namespace ndnrtc {
     
     /**
@@ -362,29 +367,38 @@ namespace ndnrtc {
 
     private:
         struct _VideoThreadDescription {
+            uint16_t mrkr1_ = NDNRTC_VTHREADDESC_MRKR;
             double rate_; // FPS
             unsigned int gop_;
             unsigned int bitrate_; // kbps
             unsigned int width_, height_; // pixels
             char name_[MAX_THREAD_NAME_LENGTH+1];
+            uint16_t mrkr2_ = NDNRTC_VTHREADDESC_MRKR;
         } __attribute__((packed));
         
         struct _AudioThreadDescription {
+            uint16_t mrkr1_ = NDNRTC_ATHREADDESC_MRKR;
             double rate_;
 //            unsigned int bitrate_; // kbps
             char name_[MAX_THREAD_NAME_LENGTH+1];
+            uint16_t mrkr2_ = NDNRTC_ATHREADDESC_MRKR;
         } __attribute__((packed));
         
         struct _VideoStreamDescription {
+            uint16_t mrkr1_ = NDNRTC_VSTREAMDESC_MRKR;
             unsigned int segmentSize_;
             char name_[MAX_STREAM_NAME_LENGTH+1];
+            char syncName_[MAX_STREAM_NAME_LENGTH+1];
             unsigned int nThreads_;
+            uint16_t mrkr2_ = NDNRTC_VSTREAMDESC_MRKR;
         } __attribute__((packed));
         
         struct _AudioStreamDescription {
+            uint16_t mrkr1_ = NDNRTC_ASTREAMDESC_MRKR;
             unsigned int segmentSize_;
             char name_[MAX_STREAM_NAME_LENGTH+1];
             unsigned int nThreads_;
+            uint16_t mrkr2_ = NDNRTC_ASTREAMDESC_MRKR;
         } __attribute__((packed));
         
         struct _SessionInfoDataHeader {
