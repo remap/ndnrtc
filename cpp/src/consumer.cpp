@@ -138,6 +138,9 @@ Consumer::switchThread(const std::string& threadName)
         if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
         {
             currentThreadIdx_ = i;
+            
+            LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
+            
             pipeliner_->threadSwitched();
             
             if (observer_)

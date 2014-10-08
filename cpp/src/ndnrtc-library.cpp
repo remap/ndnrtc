@@ -157,7 +157,6 @@ libAudioParams_(DefaultParamsAudio)
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
-    LibraryFace->stopProcessing();
     for (SessionMap::iterator it = ActiveSessions.begin();
          it != ActiveSessions.end(); it++)
     {
@@ -197,7 +196,6 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
         shared_ptr<Session> session(new Session());
         session->setSessionObserver(sessionObserver);
         session->registerCallback(&LibraryInternalObserver);
-        ActiveSessions[session->getPrefix()] = session;
         session->init(username, generalParams);
         ActiveSessions[session->getPrefix()] = session;        
         session->start();

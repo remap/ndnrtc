@@ -110,6 +110,8 @@ ndnrtc::new_api::Pipeliner::threadSwitched()
 {
     CriticalSectionScoped scopedCs(&streamSwitchSync_);
 
+    LogTraceC << "thread switched. rebuffer " << std::endl;
+    
     std::string
     threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
     
@@ -122,9 +124,11 @@ ndnrtc::new_api::Pipeliner::threadSwitched()
     threadPrefix_ = Name(threadPrefixString.c_str());
     deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
     keyFramesPrefix_ = Name(keyPrefixString.c_str());
-    
-    keyFrameSeqNo_ += 1;
-    deltaFrameSeqNo_ += ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_;
+
+    // for now, just rebuffer
+    rebuffer();
+//    keyFrameSeqNo_ += 1;
+//    deltaFrameSeqNo_ += ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_;
 }
 
 PipelinerStatistics
@@ -165,7 +169,6 @@ ndnrtc::new_api::Pipeliner::processEvents()
         {
             LogWarnC << "no activity in the buffer for " << MaxInterruptionDelay
             << " milliseconds" << std::endl;
-            
         } break;
         case FrameBuffer::Event::FirstSegment:
         {
@@ -788,6 +791,13 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
         NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > MaxInterruptionDelay)
     {
         rebuffer();
+        
+        LogWarnC
+        << "No data for the last " << MaxInterruptionDelay
+        << " ms. Rebuffering " << stat_.nRebuffer_
+        << " reconnect " << reconnectNum_
+        << " exclusion " << exclusionFilter_
+        << std::endl;
     }
 }
 
@@ -814,11 +824,4 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     
     if (callback_)
         callback_->onRebufferingOccurred();
-    
-    LogWarnC
-    << "No data for the last " << MaxInterruptionDelay
-    << " ms. Rebuffering " << stat_.nRebuffer_
-    << " reconnect " << reconnectNum_
-    << " exclusion " << exclusionFilter_
-    << std::endl;
 }

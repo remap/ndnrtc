@@ -261,8 +261,13 @@ FaceProcessor::stopProcessing()
 bool
 FaceProcessor::processEvents()
 {
-    faceWrapper_->processEvents();
-    usleep(usecInterval_);
+    try {
+        faceWrapper_->processEvents();
+        usleep(usecInterval_);
+    }
+    catch (std::exception &exception) {
+        // do nothing
+    }
     
     return isProcessing_;
 }

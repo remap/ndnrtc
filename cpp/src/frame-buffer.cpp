@@ -1082,6 +1082,7 @@ ndnrtc::new_api::FrameBuffer::reset()
     // clear all events
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.clear();
+    pendingEventsFlushed_ = true;
     bufferEventsRWLock_.ReleaseLockExclusive();
 
     LogTraceC
@@ -1380,6 +1381,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     Event poppedEvent;
     std::list<Event>::iterator startIt;
     
+    pendingEventsFlushed_ = false;
     memset(&poppedEvent, 0, sizeof(poppedEvent));
     poppedEvent.type_ = Event::Empty;
     
@@ -1387,7 +1389,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     {
         bufferEventsRWLock_.AcquireLockShared();
         
-        if (firstRun)
+        if (firstRun || pendingEventsFlushed_)
             startIt = pendingEvents_.begin();
         else
             startIt++;

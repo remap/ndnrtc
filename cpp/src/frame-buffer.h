@@ -976,8 +976,8 @@ namespace ndnrtc
             webrtc::CriticalSectionWrapper &syncCs_;
             webrtc::EventWrapper &bufferEvent_;
             
-            // lock object for fetching pending buffer events
             bool forcedRelease_ = false;
+            bool pendingEventsFlushed_ = false;
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             
