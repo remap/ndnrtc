@@ -7,6 +7,7 @@
 //
 
 #include "video-playout.h"
+#include "video-consumer.h"
 
 using namespace std;
 using namespace ndnlog;
@@ -81,6 +82,9 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     stat_.nSkippedIncomplete_++;
                     stat_.nSkippedIncompleteKey_++;
                     
+                    getVideoConsumer()->playbackEventOccurred(PlaybackEventKeySkipIncomplete,
+                                                              sequencePacketNo);
+                    
                     LogTraceC << "GOP failed - key incomplete ("
                     << assembledLevel << "): "
                     << sequencePacketNo << endl;
@@ -93,6 +97,9 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 {
                     stat_.nSkippedIncomplete_++;
                     
+                    getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipIncomplete,
+                                                              sequencePacketNo);
+                    
                     LogTraceC
                     << playbackPacketNo << " incomplete "
                     << assembledLevel << endl;
@@ -102,6 +109,8 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     if (pairedPacketNo != currentKeyNo_)
                     {
                         stat_.nSkippedNoKey_++;
+                        
+                        getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipNoKey, sequencePacketNo);
                         
                         LogTraceC
                         << playbackPacketNo << " is unexpected: "
@@ -113,6 +122,8 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                         if (!validGop_)
                         {
                             stat_.nSkippedInvalidGop_++;
+                            
+                            getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipInvalidGop, sequencePacketNo);
                             
                             LogTraceC
                             << playbackPacketNo << " bad GOP " << endl;

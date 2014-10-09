@@ -418,6 +418,23 @@ NdnRtcLibrary::switchThread(const std::string& streamPrefix,
     return RESULT_OK;
 }
 
+int
+NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
+                                         ReceiverChannelPerformance& stat)
+{
+    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    
+    if (it == ActiveStreamsConsumer.end())
+    {
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
+                                                "stream was not found");
+        return NRTC_ERR_NOT_FOUND;
+    }
+    
+    it->second->getStatistics(stat);
+    return RESULT_OK;
+}
+
 //******************************************************************************
 //******************************************************************************
 //******************************************************************************

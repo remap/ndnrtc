@@ -133,8 +133,22 @@ VideoConsumer::onStateChanged(const int& oldState, const int& newState)
 }
 
 void
+VideoConsumer::playbackEventOccurred(PlaybackEvent event,
+                                     unsigned int frameSeqNo)
+{
+    if (observer_)
+    {
+        webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+        observer_->onPlaybackEventOccurred(event, frameSeqNo);
+    }
+}
+
+//******************************************************************************
+void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
     if (rateControl_.get())
         rateControl_->interestTimeout(interest);
 }
+
+

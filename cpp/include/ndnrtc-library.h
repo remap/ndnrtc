@@ -156,28 +156,6 @@ namespace ndnrtc {
                                       const std::string& streamPrefix);
         
         /**
-         * Adds local thread to the existing media stream identified by 
-         * streamPrefix
-         * @param streamPrefix Stream prefix obtained by previous addLocalStream
-         * call
-         * @param params Media thread parameters
-         * @return Thread prefix in the following form:
-         *      <streamPrefix>/<thread_name>
-         *      where thread_name is taken from thread parameters provided
-         * @see addLocalStream
-         */
-//        virtual std::string addLocalThread(const std::string& streamPrefix,
-//                                           const new_api::MediaThreadParams& params);
-        
-        /**
-         * Removes local thread identified by threadPrefix provided
-         * @param threadPrefix Thread prefix obtained by previous call to 
-         * addLocalThread
-         * @see addLocalThread
-         */
-//        virtual int removeLocalThread(const std::string& threadPrefix);
-        
-        /**
          * Adds new remote stream and starts fetching from its' first thread
          */
         virtual std::string
@@ -203,6 +181,9 @@ namespace ndnrtc {
         switchThread(const std::string& streamPrefix,
                      const std::string& threadName);
         
+        virtual int
+        getRemoteStreamStatistics(const std::string& streamPrefix,
+                                  ReceiverChannelPerformance& stat);
         //******************************************************************************
         //******************************************************************************
         //******************************************************************************

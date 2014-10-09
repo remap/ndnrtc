@@ -45,6 +45,13 @@ namespace ndnrtc {
             void
             onStateChanged(const int& oldState, const int& newState);
             
+            /**
+             * Called by video playout mechanism to notify consumer observer 
+             * about new playback events
+             */
+            void
+            playbackEventOccurred(PlaybackEvent event, unsigned int frameSeqNo);
+
         private:
             boost::shared_ptr<NdnVideoDecoder> decoder_;
             
