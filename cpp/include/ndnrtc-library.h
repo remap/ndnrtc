@@ -80,9 +80,9 @@ namespace ndnrtc {
         
         /**
          * Sets library observer
-         * @param observer Refernce to observer object
+         * @param observer Pointer to the observer object
          */
-        virtual void setObserver(INdnRtcLibraryObserver *observer) DEPRECATED;
+        virtual void setObserver(INdnRtcLibraryObserver *observer);
         
         /**
          * Returns statistics of the producer queried

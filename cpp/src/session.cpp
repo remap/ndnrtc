@@ -25,9 +25,16 @@ status_(SessionOffline)
 
 Session::~Session()
 {
-    serviceChannel_->stopSessionInfoBroadcast();
-    mainFaceProcessor_->stopProcessing();
-    sessionCache_->unregisterAll();
+    std::cout << " session dtor begin" << std::endl;
+
+    if (serviceChannel_.get())
+        serviceChannel_->stopSessionInfoBroadcast();
+    
+    if (mainFaceProcessor_.get())
+        mainFaceProcessor_->stopProcessing();
+    
+    if (sessionCache_.get())
+        sessionCache_->unregisterAll();
 }
 
 int
@@ -42,9 +49,20 @@ Session::init(const std::string username,
     isLoggerCreated_ = true;
     
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
-    
-    mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
+
+    try {
+        mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
+    }
+    catch (std::exception& exception) {
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
+                    "Make sure your NDN daemon is running", exception.what());
+        
+        return RESULT_ERR;
+    }
+
     sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
+    
+    return RESULT_OK;
 }
 
 int

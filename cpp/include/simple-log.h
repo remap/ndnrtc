@@ -347,7 +347,6 @@ namespace ndnlog {
                     delete logger_;
                     logger_ = NULL;
                 }
-            }
             
             virtual void
             setLogger(Logger* logger);

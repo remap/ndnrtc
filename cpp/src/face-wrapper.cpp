@@ -39,18 +39,9 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       WireFormat& wireFormat)
 {
     uint64_t iid = 0;
-
-    // try..catch blocks here and further are not excessive - they just for
-    // reminder that NDN-CPP library throws exceptions which can be/should be
-    // handled somwhere in the upper levels
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
-    }
-    catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    
+    CriticalSectionScoped scopedCs(&faceCs_);
+    iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
     
     return iid;
 }
@@ -58,13 +49,8 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
 void
 FaceWrapper::removePendingInterest(uint64_t interestId)
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        face_->removePendingInterest(interestId);
-    } catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->removePendingInterest(interestId);
 }
 
 uint64_t FaceWrapper::registerPrefix(const Name& prefix,
@@ -73,64 +59,36 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                      const ForwardingFlags& flags,
                                      WireFormat& wireFormat)
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        return face_->registerPrefix(prefix, onInterest, onRegisterFailed, flags,
-                                     wireFormat);
-    } catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    return face_->registerPrefix(prefix, onInterest, onRegisterFailed, flags,
+                                 wireFormat);
 }
 
 void
 FaceWrapper::unregisterPrefix(uint64_t prefixId)
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        face_->removeRegisteredPrefix(prefixId);
-    } catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->removeRegisteredPrefix(prefixId);
 }
 
 void
 FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
                                    const Name& certificateName)
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        face_->setCommandSigningInfo(keyChain, certificateName);
-    }
-    catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->setCommandSigningInfo(keyChain, certificateName);
 }
 
 void FaceWrapper::processEvents()
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        face_->processEvents();
-    }
-    catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->processEvents();
 }
 
 void FaceWrapper::shutdown()
 {
-    try {
-        CriticalSectionScoped scopedCs(&faceCs_);
-        face_->shutdown();
-    }
-    catch (std::exception &exception) {
-        // maybe handle this in future
-        throw exception;
-    }
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->shutdown();
 }
 
 //******************************************************************************
@@ -200,7 +158,7 @@ FaceProcessor::createFaceProcessor(const std::string host, const int port,
             else
                 face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
         }
-            
+        
         fp.reset(new FaceProcessor(face));
         fp->setTransport(transport);
     }
