@@ -29,6 +29,7 @@
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace ndnlog;
 
 @class CapturerDelegate;
@@ -184,10 +185,8 @@ int main(int argc, char * argv[])
 }
 
 //******************************************************************************
-int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
+int loadParams(AppParams &params)
 {
-    ndnrtcLib->getDefaultParams(videoParams, audioParams);
-    
     // load params from log file
     string cfgFileName = "ndnrtc.cfg";
     string input;
@@ -197,7 +196,7 @@ int loadParams(ParamsStruct &videoParams, ParamsStruct &audioParams)
     if (input != "")
         cfgFileName = input;
     
-    return loadParamsFromFile(cfgFileName, videoParams, audioParams);
+    return loadParamsFromFile(cfgFileName, params);
 }
 
 int selectFromStringArray(NSArray* stringArray, const char* listTitle)
@@ -220,7 +219,7 @@ int selectFromStringArray(NSArray* stringArray, const char* listTitle)
     return selected;
 }
 
-int start(string username = "")
+int start(AppParams& params, string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
@@ -295,7 +294,7 @@ int stop()
     return 0;
 }
 
-int join(string username = "")
+int join(AppParams& params, string username = "")
 {
     ParamsStruct p, ap;
     ndnrtcLib->currentParams(p, ap);
@@ -331,7 +330,7 @@ int join(string username = "")
     return 0;
 }
 
-int leave()
+int leave(AppParams& params)
 {
     string username = getInput("please, provide a producer's username: ");
 #ifdef SHOW_STATISTICS
@@ -423,23 +422,23 @@ void signalHandler(int signal)
     SignalReceived = true;
 }
 
-void runHeadless(ParamsStruct &params)
+void runHeadless(AppParams &params)
 {
-    switch (params.headlessMode) {
-        case 1: // consumer
+    switch (params.headlessModeParams_.mode_) {
+        case HeadlessModeParams::HeadlessModeConsumer: // consumer
         {
             std::cout << "info - headless mode: fetching from "
-            << string(params.producerId) << endl;
+            << string(params.headlessModeParams_.username_) << endl;
             
-            join(string(params.producerId));
+            join(params, params.headlessModeParams_.username_);
         }
             break;
-        case 2: // producer
+        case HeadlessModeParams::HeadlessModeProducer: // producer
         {
             std::cout << "info - headless mode: publishing for "
-            << string(params.producerId) << endl;
+            << string(params.headlessModeParams_.username_) << endl;
             
-            start(string(params.producerId));
+            start(params, params.headlessModeParams_.username_);
         }
             break;
         default:
@@ -463,19 +462,16 @@ int runNdnRtcApp(int argc, char * argv[])
     
     if ((ndnrtcLib = NdnRtcLibrary::instantiateLibraryObject(libPath)))
     {
-        ParamsStruct params, audioParams;
-        ndnrtcLib->getDefaultParams(params, audioParams);
         ndnrtcLib->setObserver(&observer);
         
-        // load default params
-        if ((loadParamsFromFile(string(paramsPath), params, audioParams) == EXIT_SUCCESS))
+        ndnrtc::new_api::AppParams params;
+        
+        if ((loadParamsFromFile(string(paramsPath), params) == EXIT_SUCCESS))
         {
-            headlessModeOn = (params.headlessMode != 0);
+            headlessModeOn = (params.headlessModeParams_.mode_ != HeadlessModeParams::HeadlessModeOff);
 
             if (!headlessModeOn)
                 initView();
-            
-            ndnrtcLib->configure(params, audioParams);
         }
         
         pthread_create(&monitorThread, NULL, monitor, NULL);
@@ -495,21 +491,19 @@ int runNdnRtcApp(int argc, char * argv[])
                 
                 switch (input) {
                     case 1:
-                        start();
+                        start(params);
                         break;
                     case 2:
                         stop();
                         break;
                     case 3:
-                        join();
+                        join(params);
                         break;
                     case 4:
-                        leave();
+                        leave(params);
                         break;
                     case 5:
-                        if (loadParams(params, audioParams) == EXIT_SUCCESS)
-                            ndnrtcLib->configure(params, audioParams);
-                        else
+                        if (loadParams(params) == EXIT_SUCCESS)
                             observer.onStateChanged("error", "couldn't load config file");
                         
                         break;

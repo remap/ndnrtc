@@ -13,82 +13,68 @@
 
 using namespace webrtc;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace std;
 using namespace ndnlog;
 
-//********************************************************************************
+//******************************************************************************
 /**
- * @name NdnRtcObject class
+ * @name NdnRtcComponent class
  */
-#pragma mark - construction/destruction
-NdnRtcObject::NdnRtcObject(const ParamsStruct &params):
-params_(params),
+NdnRtcComponent::NdnRtcComponent():
 callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
-{
-  
-}
+{}
 
-NdnRtcObject::NdnRtcObject(const ParamsStruct &params,
-                           INdnRtcObjectObserver *observer):
-params_(params),
+NdnRtcComponent::NdnRtcComponent(INdnRtcComponentCallback *callback):
+callback_(callback),
 callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
-{
-  observer_ = observer;
-}
+{}
 
-NdnRtcObject::~NdnRtcObject()
+NdnRtcComponent::~NdnRtcComponent()
 {
+    std::cout << description_ << " component dtor" << std::endl;
     callbackSync_.~CriticalSectionWrapper();
 }
 
-//********************************************************************************
-#pragma mark - intefaces realization - INdnRtcObjectObserver
-void NdnRtcObject::onErrorOccurred(const char *errorMessage)
+void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)
 {
-  callbackSync_.Enter();
+    callbackSync_.Enter();
     
-  if (hasObserver())
-    observer_->onErrorOccurred(errorMessage);
-  else
-    LogErrorC << "error occurred: " << string(errorMessage) << endl;
+    if (hasCallback())
+        callback_->onError(errorMessage, errorCode);
+    else
+    {
+        LogErrorC << "error occurred: " << string(errorMessage) << endl;
+        if (logger_) logger_->flush();
+    }
     
-  callbackSync_.Leave();
+    callbackSync_.Leave();
 }
 
-//********************************************************************************
-#pragma mark - protected
-int NdnRtcObject::notifyError(const int ecode, const char *format, ...)
+int NdnRtcComponent::notifyError(const int ecode, const char *format, ...)
 {
-  va_list args;
-  
-  static char emsg[256];
-  
-  va_start(args, format);
-  vsprintf(emsg, format, args);
-  va_end(args);
-  
-  if (hasObserver())
-  {
-    observer_->onErrorOccurred(emsg);
-  }
-  else
-      LogErrorC << "error occurred: " << string(emsg) << endl;
-  
-  return ecode;
-}
-
-int NdnRtcObject::notifyErrorNoParams()
-{
-  return notifyError(-1, "no parameters provided");
-}
-
-int NdnRtcObject::notifyErrorBadArg(const std::string &paramName)
-{
-  return notifyError(-1, "bad or non-existent argument: %s", paramName.c_str());
+    va_list args;
+    
+    static char emsg[256];
+    
+    va_start(args, format);
+    vsprintf(emsg, format, args);
+    va_end(args);
+    
+    if (hasCallback())
+    {
+        callback_->onError(emsg, ecode);
+    }
+    else
+        LogErrorC
+        << "error (" << ecode << ") occurred: "
+        << string(emsg) << endl;
+    
+    return ecode;
 }
 
 std::string
-NdnRtcObject::getDescription() const
+NdnRtcComponent::getDescription() const
 {
     if (description_ == "")
     {

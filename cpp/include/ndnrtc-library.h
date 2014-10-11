@@ -15,38 +15,9 @@
 
 #include "params.h"
 #include "statistics.h"
-#include "external-renderer.h"
-#include "external-capturer.h"
+#include "interfaces.h"
 
 namespace ndnrtc {
-    
-    class INdnRtcObjectObserver {
-    public:
-        virtual ~INdnRtcObjectObserver(){}
-        virtual void onErrorOccurred(const char *errorMessage) = 0;
-    };
-    
-    /**
-     * This abstract class declares interface for the library's observer - an
-     * instance which can receive status updates from the library.
-     */
-    class INdnRtcLibraryObserver {
-    public:
-        /**
-         * This method is called whenever library encouteres errors or state
-         * transistions (for instance, fetching has started). Arguments provided
-         * work only as a source of additional information about what has 
-         * happened inside the library.
-         * @param state Indicates which state library has encountered (i.e. 
-         * "error" or "info"). Can be used by observer for filtering important 
-         * events. Currently, following states are provided:
-         *      "error"
-         *      "info"
-         * @param args Any additional info that accompany new state (human-
-         * readable text information).
-         */
-        virtual void onStateChanged(const char *state, const char *args) = 0;
-    };
     
     /**
      * This class provides interface to work with NDN-RTC library.
@@ -57,48 +28,8 @@ namespace ndnrtc {
      * No upper boundary exists for the number of simultaneously fetched 
      * streams. Library is configured using ParamsStruct structure.
      */
-    class NdnRtcLibrary : public INdnRtcObjectObserver {
+    class NdnRtcLibrary {
     public:
-        
-        /**
-         * This method loads library from the path provided and creates a
-         * library object.
-         * @param libPath A path to the library's binary
-         */
-        static NdnRtcLibrary *instantiateLibraryObject(const char *libPath)
-        {
-            void *libHandle = dlopen(libPath, RTLD_LAZY);
-
-            if (libHandle == NULL)
-            {               
-                LogError("")
-                << "error while loading NdnRTC library: " << dlerror() << std::endl;
-                
-                return NULL;
-            }
-            
-            NdnRtcLibrary* (*create_ndnrtc)(void *);
-            create_ndnrtc = (NdnRtcLibrary* (*)(void*))
-            dlsym(libHandle, "create_ndnrtc");
-            
-            NdnRtcLibrary *libObject = create_ndnrtc(libHandle);
-            
-            return libObject;
-        }
-        
-        /**
-         * Properly destroys library object
-         * @param libObject Library object to destroy
-         */
-        static void destroyLibraryObject(NdnRtcLibrary *libObject)
-        {
-            void (*destroy_ndnrtc)(NdnRtcLibrary*);
-            destroy_ndnrtc = (void (*)(NdnRtcLibrary*))
-            dlsym(libObject->getLibraryHandle(), "destroy_ndnrtc");
-            
-            destroy_ndnrtc(libObject);
-        }
-        
         /**
          * Creates instance of library object using library handle provided.
          * NOTE: do not use constructor directly, use instantiateLibraryObject 
@@ -108,144 +39,184 @@ namespace ndnrtc {
         ~NdnRtcLibrary();
         
         /**
-         * Configures library object with provided parameters
-         * @param params Video parameters
-         * @param audioParams Audio parameters
-         */
-        virtual void configure(const ParamsStruct &params,
-                               const ParamsStruct &audioParams);
-        /**
-         * Returns current library parameters
-         * @param params Video parameters
-         * @param audioParams Audio parameters
-         */
-        virtual void currentParams(ParamsStruct &params,
-                                   ParamsStruct &audioParams);
-        
-        /**
          * Sets library observer
-         * @param observer Refernce to observer object
+         * @param observer Pointer to the observer object
+         * @see INdnRtcLibraryObserver
          */
-        virtual void setObserver(INdnRtcLibraryObserver *observer) {
-            observer_ = observer;
-        }
-        /**
-         * Returns default parameters for audio and video. This method can be 
-         * used as a preparation step before configuring library - after calling 
-         * this method, necessary parameters can be altered and library 
-         * configured using these structures.
-         * @param videoParams Default video parameters will be written into this
-         * structure
-         * @param audioParams Default audio parameters will be written into this
-         * structure
-         */
-        virtual void getDefaultParams(ParamsStruct &videoParams,
-                                      ParamsStruct &audioParams) const;
-        
-        /**
-         * Returns statistics of the producer queried
-         * @param producerId Name of the user, which stream statistics are being
-         * queried
-         * @param stat Upon return, this structure contains statistics for the 
-         * user queried
-         */
-        virtual int getStatistics(const char *producerId,
-                                  NdnLibStatistics &stat) const;
-        
-        /**
-         * Starts publishing media streams under provided username. If video is 
-         * enabled, rendering is performed in separate cocoa window, managed by
-         * the library
-         * @param username Which will be used for publishing media
-         */
-        virtual int startPublishing(const char* username);
-        /**
-         * Starts publishing media streams under provided username. If video is 
-         * enabled, rendering is delegated to the external renderer object which
-         * should conform to the IExternalRenderer interface.
-         * @param username Which will be used for publishing media
-         * @param renderer Pointer to external rendering class which conforms to
-         * IExternalRenderer interface.
-         */
-        virtual int startPublishing(const char* username,
-                                    IExternalRenderer* const renderer);
-        
-        /**
-         * Initializes local publisher. Publishing starts as soon as user starts
-         * capturing new video frames and delivers them using IExternalCapturer
-         * interface.
-         * @param username Which will be used for publishing media
-         * @param capturer Pointer to an object conforming to IExternalCapturer
-         * @see IExternalCapturer
-         */
-        virtual int initPublishing(const char* username,
-                                   IExternalCapturer** const capturer);
+        virtual void
+        setObserver(INdnRtcLibraryObserver *observer);
 
         /**
-         * Initializes local publisher. Publishing starts as soon as user starts
-         * capturing new video frames and delivers them using IExternalCapturer
-         * interface. Rendering is delegated to the external renderer object
-         * which should conform to the IExternalRenderer interface.
-         * @param username Which will be used for publishing media
-         * @param capturer Pointer to an object conforming to IExternalCapturer
-         * @param renderer Pointer to external rendering class which conforms to
-         * @see IExternalRenderer, IExternalCapturer
+         * Starts NDN-RTC session with username and parameters provided
+         * @param username NDN-RTC user name
+         * @param generalParams General NDN-RTC parameters object
+         * @return Session prefix in the following form:
+         *      <prefix>/<ndnrtc_component>/<username>
+         *      where ndnrtc_component is "ndnrtc/user", but may be changed in
+         *      future releases
+         *      prefix is taken from generalParams object
+         *      If failed - returns empty string and error message is sent to 
+         *      library observer
+         * @see setObserver
          */
-        virtual int initPublishing(const char* username,
-                                   IExternalCapturer** const capturer,
-                                   IExternalRenderer* const renderer);
+        virtual std::string
+        startSession(const std::string& username,
+                     const new_api::GeneralParams& generalParams,
+                     ISessionObserver *sessionObserver);
         
         /**
-         * Stops publishing. If publishing was not started, does nothing.
+         * Stops session started previously
+         * @param sessionPrefix Session prefix returned from startSession call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see startSession
          */
-        virtual int stopPublishing();
+        virtual int
+        stopSession(const std::string& sessionPrefix);
+        
+        /**
+         * Starts observing remote producer and notifying about any changes in
+         * their status via provided observer object
+         * @param username Remote producer's username
+         * @param prefix Remote producer's prefix
+         * @param generalParams General NDN-RTC parameters object
+         * @param sessionObserver Pointer to a remote session observer object 
+         *        which will receive updates
+         * @return Remote user's session prefix
+         */
+        virtual std::string
+        setRemoteSessionObserver(const std::string& username,
+                                 const std::string& prefix,
+                                 const new_api::GeneralParams& generalParams,
+                                 IRemoteSessionObserver* sessionObserver);
+        
+        /**
+         * Stops observing remote producer and notifying about her status 
+         * updates
+         * @param sessionPrefix Remote producer's session prefix returned by 
+         *        previous setRemoteSessionObserver call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see setRemoteSessionObserver
+         */
+        virtual int
+        removeRemoteSessionObserver(const std::string& sessionPrefix);
+        
+        /**
+         * Adds publishing stream to the session
+         * @param sessionPrefix Session prefix returned by previous startSession
+         *                      call
+         * @param params Media stream parameters
+         * @param capturer Upon success, pointer contains a pointer to the object, 
+         *                 which is used as an external video capturing system 
+         *                 (video only). In this case, stream publishing is driven 
+         *                 by this object - whenever new frame is fed to this 
+         *                 object, it gets published
+         * @return Stream prefix in th following form:
+         *         <session_prefix>/<stream_name>
+         *         If failed, returns empty string
+         * @see startSession, IExternalCapturer
+         */
+        virtual std::string
+        addLocalStream(const std::string& sessionPrefix,
+                       const new_api::MediaStreamParams& params,
+                       IExternalCapturer** const capturer);
+        
+        /**
+         * Removes publishing stream
+         * @param sessionPrefix Session prefix returned by previous startSession 
+         *                      call
+         * @param streamPrefix Stream prefix returned by previous addLocalStream 
+         *                     call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see startSession, addLocalStream
+         */
+        virtual int
+        removeLocalStream(const std::string& sessionPrefix,
+                          const std::string& streamPrefix);
+        
+        /**
+         * Adds new remote stream and starts fetching from its' first thread
+         * @param remoteSessionPrefix Remote producer's session prefix returned
+         *                            by previsous setRemoteSessionObserver call
+         * @param params Media stream parameters
+         * @param generalParams General NDN-RTC parameters
+         * @param consumerParams General consumer parameters
+         * @param renderer Pointer to the object which conforms to the 
+         *                 IExternalRenderer interface (video only)
+         * @return Remote stream prefix on success and empty string on failure
+         * @see setRemoteSessionObserver
+         */
+        virtual std::string
+        addRemoteStream(const std::string& remoteSessionPrefix,
+                        const new_api::MediaStreamParams& params,
+                        const new_api::GeneralParams& generalParams,
+                        const new_api::GeneralConsumerParams& consumerParams,
+                        IExternalRenderer* const renderer);
+        
+        /**
+         * Removes remote stream and stops fetching from it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream 
+         *                     call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         */
+        virtual int
+        removeRemoteStream(const std::string& streamPrefix);
+        
+        /**
+         * Sets remote stream obsever and starts sending fetching updates to it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param observer Pointer to an object which conforms to the 
+         *                 IConsumerObserver interface
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         */
+        virtual int
+        setStreamObserver(const std::string& streamPrefix,
+                          IConsumerObserver* const observer);
 
         /**
-         * Returns full NDN prefix under which publishing is performed
-         * @param userPrefix Upon return, contains NDN prefix
+         * Removes remote stream observer and stops sending updates to it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see setStreamObserver
          */
-        virtual void getPublisherPrefix(const char** userPrefix);
+        virtual int
+        removeStreamObserver(const std::string& streamPrefix);
         
         /**
-         * Starts fetching from the remote user. If video is enabled, rendering
-         * is performed in separate cocoa window, managed by the library.
-         * @param producerId Name of the user which streams will be fetched
+         * Returns currently fetched media thread name
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @see addRemoteStream
          */
-        virtual int startFetching(const char* producerId);
-        /**
-         * Starts fetching from the remote user. If video is enabled, rendering
-         * is performed in delegated to the external object which hsould conform
-         * to the IEXternalRenderer interface.
-         * @param producerId Name of the user which streams will be fetched
-         * @param renderer Pointer to external rendering class which conforms to
-         * IExternalRenderer interface.
-         */
-        virtual int startFetching(const char* producerId,
-                                  IExternalRenderer* const renderer);
-        /**
-         * Stops fetching from the remote user. If fetching was not intitated, 
-         * does nothing.
-         * @param producerId Name of the user which streams fetching should be 
-         * stopped
-         */
-        virtual int stopFetching(const char* producerId);
-        /**
-         * Returns full NDN prefix for the remote producer whose streams are 
-         * currently fetched.
-         * @param producerId Remote producer name
-         * @param prducerPrefix Upon return, contains full NDN prefix for media 
-         * fetching
-         */
-        virtual void getProducerPrefix(const char* producerId,
-                                       const char** producerPrefx);
+        virtual std::string
+        getStreamThread(const std::string& streamPrefix);
         
         /**
-         * Returns dynamic library handle
-         * @return Library handle which was used for instantiating library 
-         * object
+         * Forces specified fetching stream to switch active media thread
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param threadName Name of the thread which should be used for 
+         *                   fetching media. All threads are returned in SessionInfo
+         *                   object to remote session observer
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see setRemoteSessionObserver
          */
-        virtual void* getLibraryHandle(){ return libraryHandle_; };
+        virtual int
+        switchThread(const std::string& streamPrefix,
+                     const std::string& threadName);
         
+        /**
+         * Returns statistics of remote fetching stream
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param stat Reference to a receiver statistics object
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         */
+        virtual int
+        getRemoteStreamStatistics(const std::string& streamPrefix,
+                                  ReceiverChannelPerformance& stat);
+
         /**
          * Returns current library version
          * @param versionString A pointer to the string where the library
@@ -257,23 +228,12 @@ namespace ndnrtc {
          * Arranges all app windows on the screen
          */
         virtual void arrangeWindows();
-        
+
     private:
-        void *libraryHandle_;
-        char *publisherId_ = 0;
-        ParamsStruct libParams_, libAudioParams_;
-        INdnRtcLibraryObserver *observer_;
-        
-        // private methods go here
         int notifyObserverWithError(const char *format, ...) const;
         int notifyObserverWithState(const char *stateName,
                                     const char *format, ...) const;
         void notifyObserver(const char *state, const char *args) const;
-        virtual void onErrorOccurred(const char *errorMessage);
-        
-        int preparePublishing(const char* username,
-                              bool useExternalCapturer,
-                              IExternalRenderer* const renderer);
     };
 }
 

@@ -22,14 +22,13 @@ namespace ndnrtc {
                               public IInterestQueueCallback
         {
         public:
-            VideoConsumer(const ParamsStruct& params,
-                          const boost::shared_ptr<InterestQueue>& interestQueue,
-                          const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>(),
-                          IExternalRenderer* const externalRenderer = 0);
+            VideoConsumer(const GeneralParams& generalParams,
+                          const GeneralConsumerParams& consumerParams,
+                          IExternalRenderer* const externalRenderer);
             virtual ~VideoConsumer();
             
             int
-            init();
+            init(const ConsumerSettings& settings);
             
             int
             start();
@@ -46,6 +45,13 @@ namespace ndnrtc {
             void
             onStateChanged(const int& oldState, const int& newState);
             
+            /**
+             * Called by video playout mechanism to notify consumer observer 
+             * about new playback events
+             */
+            void
+            playbackEventOccurred(PlaybackEvent event, unsigned int frameSeqNo);
+
         private:
             boost::shared_ptr<NdnVideoDecoder> decoder_;
             

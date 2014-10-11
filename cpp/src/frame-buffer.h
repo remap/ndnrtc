@@ -904,7 +904,7 @@ namespace ndnrtc
             public ndnlog::new_api::ILoggingObject
             {
             public:
-                PlaybackQueue(double playbackRate);
+                PlaybackQueue(double playbackRate = 30.);
                 
                 int64_t
                 getPlaybackDuration(bool estimate = true);
@@ -976,8 +976,8 @@ namespace ndnrtc
             webrtc::CriticalSectionWrapper &syncCs_;
             webrtc::EventWrapper &bufferEvent_;
             
-            // lock object for fetching pending buffer events
             bool forcedRelease_ = false;
+            bool pendingEventsFlushed_ = false;
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             

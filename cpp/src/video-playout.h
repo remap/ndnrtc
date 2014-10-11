@@ -14,6 +14,8 @@
 
 namespace ndnrtc {
     namespace new_api {
+        class VideoConsumer;
+        
         class VideoPlayout : public Playout
         {
         public:
@@ -35,6 +37,10 @@ namespace ndnrtc {
                            PacketNumber sequencePacketNo,
                            PacketNumber pairedPacketNo,
                            bool isKey, double assembledLevel);
+            
+            VideoConsumer*
+            getVideoConsumer()
+            { return (VideoConsumer*)consumer_; }
         };
     }
 }

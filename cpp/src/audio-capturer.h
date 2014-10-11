@@ -25,11 +25,10 @@ namespace ndnrtc {
             virtual void onDeliverRtcpFrame(unsigned int len, unsigned char *data) = 0;
         };
         
-        class AudioCapturer : public WebrtcAudioChannel, public NdnRtcObject
+        class AudioCapturer : public WebrtcAudioChannel, public NdnRtcComponent
         {
         public:
-            AudioCapturer(const ParamsStruct& params,
-                          webrtc::VoiceEngine* voiceEngine);
+            AudioCapturer(webrtc::VoiceEngine* voiceEngine);
             ~AudioCapturer();
             
             void

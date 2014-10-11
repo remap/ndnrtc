@@ -20,8 +20,7 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioRenderer::AudioRenderer(const ParamsStruct& params):
-NdnRtcObject(params),
+AudioRenderer::AudioRenderer():
 WebrtcAudioChannel(NdnRtcUtils::sharedVoiceEngine())
 {
     description_ = "arenderer";

@@ -13,8 +13,7 @@
 using namespace ndnrtc;
 using namespace webrtc;
 
-BaseCapturer::BaseCapturer(const ParamsStruct& params):
-NdnRtcObject(params),
+BaseCapturer::BaseCapturer():
 capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),

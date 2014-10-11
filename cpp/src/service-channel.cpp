@@ -11,6 +11,7 @@
 #include "service-channel.h"
 #include "interest-queue.h"
 #include "frame-data.h"
+#include "ndnrtc-namespace.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -27,13 +28,10 @@ isMonitoring_(false),
 updateCounter_(0),
 monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
 monitorTimer_(*EventWrapper::Create()),
-callback_(callback),
+serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
-interestQueue_(new InterestQueue(faceProcessor->getFaceWrapper())),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
 {
-    // TBD: set observer for interest queue
-//    interestQueue_->setObserver(this);
     init();
 }
 
@@ -44,33 +42,65 @@ isMonitoring_(false),
 updateCounter_(0),
 monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
 monitorTimer_(*EventWrapper::Create()),
-callback_(callback),
+serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
-interestQueue_(new InterestQueue(faceProcessor->getFaceWrapper())),
 updateIntervalMs_(updateIntervalMs)
 {
     init();
-    interestQueue_->setDescription(std::string("service-iqueue"));
 }
 
-void
+int
 ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixString,
                                           const boost::shared_ptr<KeyChain> keyChain,
                                           const Name& signingCertificateName)
 {
+    int res = RESULT_ERR;
     Name sessionInfoPrefix(sessionInfoPrefixString.c_str());
     
     ndnKeyChain_ = keyChain;
     signingCertificateName_ = signingCertificateName;
-    faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
-                                                            bind(&ServiceChannel::onInterest, this, _1, _2, _3),
-                                                            bind(&ServiceChannel::onRegisterFailed, this, _1));
+    
+    try {
+        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(sessionInfoPrefix,
+                                                                               bind(&ServiceChannel::onInterest, this, _1, _2, _3),
+                                                                               bind(&ServiceChannel::onRegisterFailed, this, _1));
+        res = RESULT_OK;
+    }
+    catch (std::exception &e)
+    {
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s\n"
+                    "Make sure your local NDN daemon is running",
+                    e.what());
+        
+        if (serviceChannelCallback_)
+            getCallbackAsPublisher()->onSessionInfoBroadcastFailed();
+    }
+    
+    return res;
+}
+
+int
+ServiceChannel::stopSessionInfoBroadcast()
+{
+    int res = RESULT_ERR;
+    
+    try {
+        faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
+        res = RESULT_OK;
+    }
+    catch (std::exception &e) {
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s"
+                    "Make sure your local NDN daemon is running"
+                    , e.what());
+    }
+    
+    return res;
 }
 
 void
-ServiceChannel::startMonitor(const std::string& sessionInfoPrefix)
+ServiceChannel::startMonitor(const std::string& sessionPrefix)
 {
-    sessionInfoPrefix_ = Name(sessionInfoPrefix.c_str());
+    sessionInfoPrefix_ = Name(*NdnRtcNamespace::getSessionInfoPrefix(sessionPrefix));
     startMonitorThread();
 }
 
@@ -80,21 +110,12 @@ ServiceChannel::stopMonitor()
     stopMonitorThread();
 }
 
-void
-ServiceChannel::setLogger(ndnlog::new_api::Logger* logger)
-{
-    interestQueue_->setLogger(logger);
-    ILoggingObject::setLogger(logger);
-}
-
 #pragma mark - private
 
 void
 ServiceChannel::init()
 {
     description_ = "service-channel";
-    memset(&videoParams_, 0, sizeof(ParamsStruct));
-    memset(&audioParams_, 0, sizeof(ParamsStruct));
 }
 
 void
@@ -110,6 +131,9 @@ void
 ServiceChannel::stopMonitorThread()
 {
     isMonitoring_ = false;
+    
+    faceProcessor_->getFaceWrapper()->removePendingInterest(pendingInterestId_);
+    pendingInterestId_ = 0;
     
     monitorTimer_.Set();
     monitoringThread_.Stop();
@@ -132,82 +156,52 @@ ServiceChannel::requestSessionInfo()
 {
     ndn::Interest interest(sessionInfoPrefix_, updateIntervalMs_);
     interest.setMustBeFresh(true);
-    
-    interestQueue_->enqueueInterest(interest,
-                                    Priority::fromAbsolutePriority(1),
-                                    bind(&ServiceChannel::onData, this, _1, _2),
-                                    bind(&ServiceChannel::onTimeout, this, _1));
+ 
+    try {
+        pendingInterestId_ = faceProcessor_->getFaceWrapper()->expressInterest(interest,
+                                                                               bind(&ServiceChannel::onData, this, _1, _2),
+                                                                               bind(&ServiceChannel::onTimeout, this, _1));
+    }
+    catch (std::exception &exception) {
+        if (serviceChannelCallback_)
+            getCallbackAsListener()->onUpdateFailedWithError(NRTC_ERR_LIBERROR,
+                                                             exception.what());
+            
+        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
+                    "Make sure your local NDN daemon is running",
+                    exception.what());
+    }
 }
 
 void
 ServiceChannel::onData(const shared_ptr<const Interest>& interest,
                        const shared_ptr<Data>& data)
 {
-    SessionInfo sessionInfo(data->getContent().size(), data->getContent().buf());
+    pendingInterestId_ = 0;
     
-    if (sessionInfo.isValid())
-        updateParametersFromInfo(sessionInfo);
-    else
-        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
+    if (serviceChannelCallback_)
+    {
+        SessionInfoData sessionInfoData(data->getContent().size(), data->getContent().buf());
+        
+        if (sessionInfoData.isValid())
+        {
+            SessionInfo sessionInfo;
+            
+            sessionInfoData.getSessionInfo(sessionInfo);
+            getCallbackAsListener()->onSessionInfoUpdate(sessionInfo);
+            updateCounter_++;
+        }
+        else
+            getCallbackAsListener()->onUpdateFailedWithError(NRTC_ERR_MALFORMED,
+                                                             "got malformed session info data");
+    }
 }
 
 void
 ServiceChannel::onTimeout(const shared_ptr<const Interest>& interest)
 {
-    stopMonitorThread();
-    getCallbackAsListener()->onUpdateFailedWithTimeout();
-}
-
-void
-ServiceChannel::updateParametersFromInfo(const SessionInfo &sessionInfo)
-{
-    ParamsStruct videoParams, audioParams;
-    memset(&videoParams, 0, sizeof(ParamsStruct));
-    memset(&audioParams, 0, sizeof(ParamsStruct));
-    
-    if (RESULT_NOT_FAIL(sessionInfo.getParams(videoParams, audioParams)))
-    {
-        bool needUpdate = false;
-        
-        if ((needUpdate = hasUpdates(videoParams_, videoParams)))
-            SessionInfo::updateParams(videoParams_, videoParams);
-        
-        if ((needUpdate |= hasUpdates(audioParams_, audioParams)))
-            SessionInfo::updateParams(audioParams_, audioParams);
-        
-        if (needUpdate)
-        {
-            getCallbackAsListener()->onProducerParametersUpdated(videoParams_, audioParams_);
-        }
-    }
-    else
-        getCallbackAsListener()->onUpdateFailedWithError("got malformed session info data");
-    
-    updateCounter_++;
-}
-
-bool
-ServiceChannel::hasUpdates(const ParamsStruct& oldParams,
-                           const ParamsStruct& newParams)
-{
-    bool hasUpdated = false;
-    
-    hasUpdated = (oldParams.nStreams != newParams.nStreams);
-    hasUpdated |= (oldParams.segmentSize != newParams.segmentSize);
-    
-    if (!hasUpdated)
-    {
-        for (int i = 0; i < oldParams.nStreams && !hasUpdated; i++)
-        {
-            hasUpdated = (oldParams.streamsParams[i].gop != newParams.streamsParams[i].gop);
-            hasUpdated |= (oldParams.streamsParams[i].codecFrameRate != newParams.streamsParams[i].codecFrameRate);
-            hasUpdated |= (oldParams.streamsParams[i].startBitrate != newParams.streamsParams[i].startBitrate);
-            hasUpdated |= (oldParams.streamsParams[i].encodeWidth != newParams.streamsParams[i].encodeWidth);
-            hasUpdated |= (oldParams.streamsParams[i].encodeHeight != newParams.streamsParams[i].encodeHeight);
-        }
-    }
-    
-    return hasUpdated;
+    if (serviceChannelCallback_)
+        getCallbackAsListener()->onUpdateFailedWithTimeout();
 }
 
 void
@@ -215,13 +209,14 @@ ServiceChannel::onInterest(const shared_ptr<const Name>& prefix,
                            const shared_ptr<const Interest>& interest,
                            ndn::Transport& transport)
 {
-    if (callback_)
+    if (serviceChannelCallback_)
     {
-        shared_ptr<SessionInfo> sessionInfo = getCallbackAsPublisher()->onPublishSessionInfo();
+        sessionInfo_ = getCallbackAsPublisher()->onPublishSessionInfo();
+        SessionInfoData sessionInfoData(*sessionInfo_);
         
         Data ndnData(*prefix);
         ndnData.getMetaInfo().setFreshnessPeriod(sessionInfoFreshnessMs_);
-        ndnData.setContent(sessionInfo->getData(), sessionInfo->getLength());
+        ndnData.setContent(sessionInfoData.getData(), sessionInfoData.getLength());
         ndnKeyChain_->sign(ndnData, signingCertificateName_);
         
         SignedBlob encodedData = ndnData.wireEncode();
@@ -241,6 +236,6 @@ ServiceChannel::onRegisterFailed(const shared_ptr<const Name>&
 {
     LogErrorC << "registration failed " << prefix << std::endl;
 
-    if (callback_)
+    if (serviceChannelCallback_)
         getCallbackAsPublisher()->onSessionInfoBroadcastFailed();
 }

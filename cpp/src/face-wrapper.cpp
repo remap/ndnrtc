@@ -38,11 +38,19 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       const OnTimeout& onTimeout,
                                       WireFormat& wireFormat)
 {
-    faceCs_.Enter();
-    uint64_t iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
-    faceCs_.Leave();
+    uint64_t iid = 0;
+    
+    CriticalSectionScoped scopedCs(&faceCs_);
+    iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
     
     return iid;
+}
+
+void
+FaceWrapper::removePendingInterest(uint64_t interestId)
+{
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->removePendingInterest(interestId);
 }
 
 uint64_t FaceWrapper::registerPrefix(const Name& prefix,
@@ -52,9 +60,15 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                      WireFormat& wireFormat)
 {
     CriticalSectionScoped scopedCs(&faceCs_);
-    
     return face_->registerPrefix(prefix, onInterest, onRegisterFailed, flags,
                                  wireFormat);
+}
+
+void
+FaceWrapper::unregisterPrefix(uint64_t prefixId)
+{
+    CriticalSectionScoped scopedCs(&faceCs_);
+    face_->removeRegisteredPrefix(prefixId);
 }
 
 void
@@ -62,21 +76,18 @@ FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
                                    const Name& certificateName)
 {
     CriticalSectionScoped scopedCs(&faceCs_);
-    
     face_->setCommandSigningInfo(keyChain, certificateName);
 }
 
 void FaceWrapper::processEvents()
 {
-    faceCs_.Enter();
+    CriticalSectionScoped scopedCs(&faceCs_);
     face_->processEvents();
-    faceCs_.Leave();
 }
 
 void FaceWrapper::shutdown()
 {
     CriticalSectionScoped scopedCs(&faceCs_);
-    
     face_->shutdown();
 }
 
@@ -88,7 +99,7 @@ void FaceWrapper::shutdown()
 //******************************************************************************
 #pragma mark - static
 int
-FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
+FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
                                      shared_ptr<ndnrtc::FaceWrapper>& face,
                                      shared_ptr<ndn::Transport>& transport)
 {
@@ -96,9 +107,6 @@ FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
     
     try
     {
-        std::string host = std::string(params.host);
-        int port = params.portNum;
-        
         shared_ptr<ndn::Transport::ConnectionInfo>
         connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
         
@@ -116,16 +124,16 @@ FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
     return res;
 }
 
-shared_ptr<FaceProcessor>
-FaceProcessor::createFaceProcessor(const ParamsStruct& params,
-                                   const shared_ptr<ndn::KeyChain>& keyChain,
-                                   const shared_ptr<Name>& certificateName)
+boost::shared_ptr<FaceProcessor>
+FaceProcessor::createFaceProcessor(const std::string host, const int port,
+                                   const boost::shared_ptr<ndn::KeyChain>& keyChain,
+                                   const boost::shared_ptr<Name>& certificateName)
 {
     shared_ptr<FaceWrapper> face;
     shared_ptr<ndn::Transport> transport;
     shared_ptr<FaceProcessor> fp;
     
-    if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(params, face, transport)))
+    if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(host, port, face, transport)))
     {
         if (keyChain.get())
         {
@@ -134,14 +142,13 @@ FaceProcessor::createFaceProcessor(const ParamsStruct& params,
             else
                 face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
         }
-            
+        
         fp.reset(new FaceProcessor(face));
         fp->setTransport(transport);
     }
     
     return fp;
 }
-
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -156,8 +163,11 @@ processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFac
 FaceProcessor::~FaceProcessor()
 {
     stopProcessing();
-    
+    faceWrapper_->shutdown();
+    transport_.reset();
     processingThread_.~ThreadWrapper();
+    
+    std::cout << description_ << " face processor dtor" << std::endl;
 }
 
 //******************************************************************************
@@ -192,8 +202,13 @@ FaceProcessor::stopProcessing()
 bool
 FaceProcessor::processEvents()
 {
-    faceWrapper_->processEvents();
-    usleep(usecInterval_);
+    try {
+        faceWrapper_->processEvents();
+        usleep(usecInterval_);
+    }
+    catch (std::exception &exception) {
+        // do nothing
+    }
     
     return isProcessing_;
 }

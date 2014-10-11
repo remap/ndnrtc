@@ -17,6 +17,7 @@
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //********************************************************************************
@@ -45,7 +46,8 @@ char* plotCodec(webrtc::VideoCodec codec)
 
 //******************************************************************************
 #pragma mark - static
-int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
+int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
+                                    webrtc::VideoCodec &codec)
 {
     // setup default params first
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
@@ -66,54 +68,49 @@ int NdnVideoCoder::getCodec(const CodecParams &params, VideoCodec &codec)
     }
     
     // dropping frames
-    codec.codecSpecific.VP8.frameDroppingOn = params.dropFramesOn;
+    codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
     
     // customize parameteres if possible
     int res = RESULT_OK;
-    codec.maxFramerate = (int)params.codecFrameRate;
-    codec.startBitrate = ParamsStruct::validateLE(params.startBitrate,
-                                                  MaxStartBitrate, res,
-                                                  DefaultCodecParams.startBitrate);
+    codec.maxFramerate = (int)settings.codecFrameRate_;
+    codec.startBitrate = settings.startBitrate_;
     codec.minBitrate = 100;
-    codec.maxBitrate = ParamsStruct::validateLE(params.maxBitrate,
-                                                MaxBitrate, res,
-                                                DefaultCodecParams.maxBitrate);
-    codec.targetBitrate = codec.startBitrate;
-    codec.width = ParamsStruct::validateLE(params.encodeWidth,
-                                           MaxWidth, res,
-                                           DefaultCodecParams.encodeWidth);
-    codec.height = ParamsStruct::validateLE(params.encodeHeight,
-                                            MaxHeight, res,
-                                            DefaultCodecParams.encodeHeight);
+    codec.maxBitrate = settings.maxBitrate_;
+    codec.targetBitrate = settings.startBitrate_;
+    codec.width = settings.encodeWidth_;
+    codec.height = settings.encodeHeight_;
     
     return res;
 }
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoCoder::NdnVideoCoder(const CodecParams &params) : NdnRtcObject(),
-codecParams_(params),
+VideoCoder::VideoCoder() :
+NdnRtcComponent(),
 frameConsumer_(nullptr)
 {
+    rateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
     description_ = "coder";
     memset(&codec_, 0, sizeof(codec_));
 }
 
-NdnVideoCoder::~NdnVideoCoder()
+VideoCoder::~VideoCoder()
 {
+    NdnRtcUtils::releaseFrequencyMeter(rateMeter_);
 }
 
 //********************************************************************************
 #pragma mark - public
-int NdnVideoCoder::init()
+int VideoCoder::init(const VideoCoderParams& settings)
 {
-    if (RESULT_FAIL(NdnVideoCoder::getCodec(codecParams_, codec_)))
+    settings_ = settings;
+    
+    if (RESULT_FAIL(VideoCoder::getCodecFromSetings(settings, codec_)))
         notifyError(-1, "some codec parameters were out of bounds. \
                     actual parameters: %s", plotCodec(codec_));
     
     encoder_.reset(VP8Encoder::Create());
     
-    currentFrameRate_ = codec_.maxFramerate;
     keyFrameType_.clear();
     keyFrameType_.push_back(webrtc::kKeyFrame);
     
@@ -138,7 +135,7 @@ int NdnVideoCoder::init()
 }
 //********************************************************************************
 #pragma mark - intefaces realization - EncodedImageCallback
-int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
+int32_t VideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
                                const webrtc::CodecSpecificInfo* codecSpecificInfo,
                                const webrtc::RTPFragmentationHeader* fragmentation)
 {
@@ -146,7 +143,7 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
     
     encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
     encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
-    
+    settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
     
@@ -155,7 +152,7 @@ int32_t NdnVideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
 }
 //********************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
-void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
+void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                    double timestamp)
 {
     LogTraceC << "encoding..." << endl;
@@ -173,11 +170,11 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     int err;
     bool scaled = false;
     
-    if (frame.width() != codecParams_.encodeWidth ||
-        frame.height() != codecParams_.encodeHeight)
+    if (frame.width() != settings_.encodeWidth_ ||
+        frame.height() != settings_.encodeHeight_)
     {
         frameScaler_.Set(frame.width(),frame.height(),
-                         codecParams_.encodeWidth, codecParams_.encodeHeight,
+                         settings_.encodeWidth_, settings_.encodeHeight_,
                          webrtc::kI420, webrtc::kI420,
                          webrtc::kScaleBilinear);
         int res = frameScaler_.Scale(frame, &scaledFrame_);
@@ -190,7 +187,7 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     
     I420VideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
     
-    if (keyFrameCounter_%codecParams_.gop == 0)
+    if (keyFrameCounter_%settings_.gop_ == 0)
         err = encoder_->Encode(processedFrame, NULL, &keyFrameType_);
     else
         err = encoder_->Encode(processedFrame, NULL, NULL);
@@ -203,18 +200,18 @@ void NdnVideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
         notifyError(-1, "can't encode frame due to error %d",err);
 }
 
-void NdnVideoCoder::initScaledFrame()
+void VideoCoder::initScaledFrame()
 {
-    int stride_y = codecParams_.encodeWidth;
-    int stride_uv = (codecParams_.encodeWidth + 1) / 2;
-    int target_width = codecParams_.encodeWidth;
-    int target_height = codecParams_.encodeHeight;
+    int stride_y = settings_.encodeWidth_;
+    int stride_uv = (settings_.encodeWidth_ + 1) / 2;
+    int target_width = settings_.encodeWidth_;
+    int target_height = settings_.encodeHeight_;
     
-
+    
     int ret = scaledFrame_.CreateEmptyFrame(target_width,
-                                             abs(target_height),
-                                             stride_y,
-                                             stride_uv, stride_uv);
+                                            abs(target_height),
+                                            stride_y,
+                                            stride_uv, stride_uv);
     
     if (ret < 0)
         notifyError(RESULT_ERR, "failed to allocate scaled frame");

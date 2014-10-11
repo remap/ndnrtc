@@ -21,11 +21,11 @@
 namespace ndnrtc {
     namespace new_api {
         class AudioRenderer : public IRenderer, public IAudioFrameConsumer,
-        public NdnRtcObject,
+        public NdnRtcComponent,
         public WebrtcAudioChannel
         {
         public: 
-            AudioRenderer(const ParamsStruct& params);
+            AudioRenderer();
             ~AudioRenderer();
             
             int

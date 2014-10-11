@@ -40,6 +40,7 @@ queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRout
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {
+    description_ = "iqueue";
     startQueueWatching();
 }
 

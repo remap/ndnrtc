@@ -15,55 +15,54 @@
 #include "buffer-estimator.h"
 #include "rtt-estimation.h"
 #include "playout.h"
+#include "ndnrtc-namespace.h"
 
 using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace webrtc;
 
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Consumer::Consumer(const ParamsStruct& params,
-                   const shared_ptr<InterestQueue>& interestQueue,
-                   const shared_ptr<RttEstimation>& rttEstimation):
-ndnrtc::NdnRtcObject(params),
+Consumer::Consumer(const GeneralParams& generalParams,
+                   const GeneralConsumerParams& consumerParams):
+generalParams_(generalParams),
+consumerParams_(consumerParams),
 isConsuming_(false),
-interestQueue_(interestQueue),
-rttEstimation_(rttEstimation),
+rttEstimation_(new RttEstimation()),
 chaseEstimation_(new ChaseEstimation()),
-bufferEstimator_(new BufferEstimator()),
+bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
+segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
+observerCritSec_(*CriticalSectionWrapper::CreateCriticalSection()),
+observer_(NULL)
 {
-    if (!rttEstimation.get())
-    {
-        rttEstimation_.reset(new RttEstimation());
-    }
-    
     bufferEstimator_->setRttEstimation(rttEstimation_);
-    bufferEstimator_->setMinimalBufferSize(params.jitterSize);
 }
 
 Consumer::~Consumer()
 {
     if (isConsuming_)
         stop();
+    
+    observerCritSec_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
 #pragma mark - public
 int
-Consumer::init()
+Consumer::init(const ConsumerSettings& settings)
 {
     int res = RESULT_OK;
     
-    if (!interestQueue_.get() ||
-        !rttEstimation_.get())
-        return notifyError(-1, "");
+    settings_ = settings;
+    streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings.userPrefix_, settings_.streamParams_.streamName_);
+    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper()));
     
-    frameBuffer_.reset(new ndnrtc::new_api::FrameBuffer(shared_from_this()));
+    frameBuffer_.reset(new FrameBuffer(shared_from_this()));
     frameBuffer_->setLogger(logger_);
     frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
                                                        getDescription().c_str()));
@@ -84,6 +83,12 @@ Consumer::init()
     
     renderer_->init();
     
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusStopped);
+    }
+    
     return res;
 }
 
@@ -92,6 +97,12 @@ Consumer::start()
 {
 #warning error handling!
     pipeliner_->start();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusNoData);
+    }
     
     return RESULT_OK;
 }
@@ -104,6 +115,12 @@ Consumer::stop()
     playout_->stop();
     renderer_->stopRendering();
     
+    if (observer_)
+    {
+        CriticalSectionScoped socpedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusStopped);
+    }
+    
     return RESULT_OK;
 }
 
@@ -111,6 +128,30 @@ void
 Consumer::triggerRebuffering()
 {
     pipeliner_->triggerRebuffering();
+}
+
+void
+Consumer::switchThread(const std::string& threadName)
+{
+    std::vector<MediaThreadParams*>::iterator it;
+    
+    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
+        if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
+        {
+            currentThreadIdx_ = i;
+            
+            LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
+            
+            pipeliner_->threadSwitched();
+            
+            if (observer_)
+            {
+                CriticalSectionScoped scopedCs(&observerCritSec_);
+                observer_->onThreadSwitched(threadName);
+            }
+            
+            break;
+        }
 }
 
 Consumer::State
@@ -169,7 +210,9 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     if (rateControl_.get())
         rateControl_->setLogger(logger);
     
-    interestQueue_->setLogger(logger);
+    if (interestQueue_.get())
+        interestQueue_->setLogger(logger);
+    
     rttEstimation_->setLogger(logger);
     chaseEstimation_->setLogger(logger);
     bufferEstimator_->setLogger(logger);
@@ -197,7 +240,7 @@ Consumer::onBufferingEnded()
         playout_->start();
     
     if (!renderer_->isRendering())
-        renderer_->startRendering(std::string(params_.producerId));
+        renderer_->startRendering(settings_.streamParams_.streamName_);
 }
 
 void
@@ -207,11 +250,53 @@ Consumer::onRebufferingOccurred()
     renderer_->stopRendering();
     interestQueue_->reset();
     rttEstimation_->reset();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onRebufferingOccurred();
+    }
 }
 
 void
 Consumer::onStateChanged(const int &oldState, const int &newState)
 {
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        ConsumerStatus status;
+        
+        switch (newState) {
+            case Pipeliner::StateChasing:
+                status = ConsumerStatusChasing;
+                break;
+                
+            case Pipeliner::StateBuffering:
+                status = ConsumerStatusBuffering;
+                break;
+                
+            case Pipeliner::StateFetching:
+                status = ConsumerStatusFetching;
+                break;
+                
+            case Pipeliner::StateInactive:
+            default:
+                status = ConsumerStatusStopped;
+                break;
+        }
+        
+        observer_->onStatusChanged(status);
+    }
+}
+
+void
+Consumer::onInitialDataArrived()
+{
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onStatusChanged(ConsumerStatusChasing);
+    }
 }
 
 void

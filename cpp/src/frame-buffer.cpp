@@ -645,7 +645,7 @@ ndnrtc::new_api::FrameBuffer::Slot::setPrefix(const ndn::Name &prefix)
 {
     if (NdnRtcNamespace::isKeyFramePrefix(prefix))
         packetNamespace_ = Key;
-    else if (NdnRtcNamespace::isDeltaFramesPrefix(prefix))
+    else if (NdnRtcNamespace::isDeltaFramePrefix(prefix))
         packetNamespace_ = Delta;
     else
         packetNamespace_ = Unknown;
@@ -1043,7 +1043,6 @@ state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),
 isEstimationNeeded_(true),
-playbackQueue_(consumer_->getParameters().producerRate),
 syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 bufferEvent_(*EventWrapper::Create()),
 forcedRelease_(false),
@@ -1083,6 +1082,7 @@ ndnrtc::new_api::FrameBuffer::reset()
     // clear all events
     bufferEventsRWLock_.AcquireLockExclusive();
     pendingEvents_.clear();
+    pendingEventsFlushed_ = true;
     bufferEventsRWLock_.ReleaseLockExclusive();
 
     LogTraceC
@@ -1297,10 +1297,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     setTargetSize(targetBufferSize);
                 }
 
+#if 0
                 if (rateControl_.get())
 #warning RTX should be per segment!
                     rateControl_->dataReceived(data, slot->getRtxNum());
-                
+#endif
                 
                 return newState;
             }
@@ -1381,6 +1382,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     Event poppedEvent;
     std::list<Event>::iterator startIt;
     
+    pendingEventsFlushed_ = false;
     memset(&poppedEvent, 0, sizeof(poppedEvent));
     poppedEvent.type_ = Event::Empty;
     
@@ -1388,7 +1390,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     {
         bufferEventsRWLock_.AcquireLockShared();
         
-        if (firstRun)
+        if (firstRun || pendingEventsFlushed_)
             startIt = pendingEvents_.begin();
         else
             startIt++;
@@ -1548,7 +1550,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             if (assembledLevel >= 0. &&
                 assembledLevel < 1. &&
-                consumer_->getParameters().useFec)
+                consumer_->getGeneralParameters().useFec_)
             {
                 slot->recover();
                 
@@ -1817,7 +1819,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     
     forcedRelease_ = false;
     
-    setTargetSize(consumer_->getParameters().jitterSize);
+    setTargetSize(consumer_->getParameters().jitterSizeMs_);
 }
 
 bool
@@ -1853,18 +1855,19 @@ ndnrtc::new_api::FrameBuffer::addStateChangedEvent(ndnrtc::new_api::FrameBuffer:
 void
 ndnrtc::new_api::FrameBuffer::initialize()
 {
-    while (freeSlots_.size() < consumer_->getParameters().bufferSize)
+    while (freeSlots_.size() < consumer_->getParameters().bufferSlotsNum_)
     {
-        unsigned int payloadSegmentSize = consumer_->getParameters().segmentSize - SegmentData::getHeaderSize();
+        unsigned int payloadSegmentSize = consumer_->getSettings().streamParams_.producerParams_.segmentSize_ - SegmentData::getHeaderSize();
         
         shared_ptr<Slot> slot(new Slot(payloadSegmentSize,
-                                       consumer_->getParameters().useFec));
+                                       consumer_->getGeneralParameters().useFec_));
         
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
     
-    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
+#warning ???
+//    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
 }
 
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>

@@ -137,10 +137,9 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-audio-consumer.lo \
 	src/libndnrtc_la-audio-playout.lo \
 	src/libndnrtc_la-audio-renderer.lo \
-	src/libndnrtc_la-audio-sender.lo src/libndnrtc_la-av-sync.lo \
+	src/libndnrtc_la-audio-thread.lo src/libndnrtc_la-av-sync.lo \
 	src/libndnrtc_la-buffer-estimator.lo \
 	src/libndnrtc_la-base-capturer.lo \
-	src/libndnrtc_la-camera-capturer.lo \
 	src/libndnrtc_la-chase-estimation.lo \
 	src/libndnrtc_la-consumer-channel.lo \
 	src/libndnrtc_la-consumer.lo \
@@ -150,25 +149,26 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-frame-data.lo \
 	src/libndnrtc_la-interest-queue.lo \
 	src/libndnrtc_la-jitter-timing.lo \
-	src/libndnrtc_la-media-sender.lo \
+	src/libndnrtc_la-media-thread.lo \
+	src/libndnrtc_la-media-stream.lo \
+	src/libndnrtc_la-name-components.lo \
 	src/libndnrtc_la-ndn-assembler.lo \
 	src/libndnrtc_la-ndnrtc-library.lo \
 	src/libndnrtc_la-ndnrtc-namespace.lo \
 	src/libndnrtc_la-ndnrtc-object.lo \
-	src/libndnrtc_la-ndnrtc-utils.lo src/libndnrtc_la-params.lo \
-	src/libndnrtc_la-pipeliner.lo src/libndnrtc_la-playout.lo \
-	src/libndnrtc_la-rate-control.lo \
+	src/libndnrtc_la-ndnrtc-utils.lo src/libndnrtc_la-pipeliner.lo \
+	src/libndnrtc_la-playout.lo src/libndnrtc_la-rate-control.lo \
 	src/libndnrtc_la-realtime-arc.lo \
 	src/libndnrtc_la-rtt-estimation.lo \
 	src/libndnrtc_la-segmentizer.lo \
-	src/libndnrtc_la-sender-channel.lo \
 	src/libndnrtc_la-service-channel.lo \
-	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-video-coder.lo \
+	src/libndnrtc_la-session.lo src/libndnrtc_la-simple-log.lo \
+	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-consumer.lo \
 	src/libndnrtc_la-video-decoder.lo \
 	src/libndnrtc_la-video-playout.lo \
 	src/libndnrtc_la-video-renderer.lo \
-	src/libndnrtc_la-video-sender.lo \
+	src/libndnrtc_la-video-thread.lo \
 	src/libndnrtc_la-webrtc-audio-channel.lo
 libndnrtc_la_OBJECTS = $(am_libndnrtc_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -183,8 +183,7 @@ am__ndnrtc_demo_SOURCES_DIST = demoapp/config.cc demoapp/config.h \
 	demoapp/renderer-stub.cc demoapp/renderer-stub.h \
 	demoapp/view.cc demoapp/view.h demoapp/CameraCapturer.h \
 	demoapp/CameraCapturer.m src/simple-log.cpp \
-	include/simple-log.h include/external-renderer.h \
-	include/external-capturer.h
+	include/simple-log.h include/interfaces.h
 @OS_DARWIN_TRUE@am_ndnrtc_demo_OBJECTS =  \
 @OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-config.$(OBJEXT) \
 @OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-main.$(OBJEXT) \
@@ -521,17 +520,16 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 SUBDIRS = src/objc .
-pkginclude_HEADERS = include/external-renderer.h include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/external-capturer.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
-  src/audio-sender.cpp src/audio-sender.h \
+  src/audio-thread.cpp src/audio-thread.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
-  src/camera-capturer.cpp src/camera-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
@@ -543,19 +541,21 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/frame-data.cpp src/frame-data.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
-  src/media-sender.cpp src/media-sender.h \
+  src/media-thread.cpp src/media-thread.h \
+  src/media-stream.cpp src/media-stream.h \
+  src/name-components.cpp include/name-components.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
   include/ndnrtc-defines.h \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
-  include/external-renderer.h \
+  include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
   src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
-  src/params.cpp include/params.h \
+  include/params.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
   src/rate-adaptation-module.h \
@@ -564,8 +564,8 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
-  src/sender-channel.cpp src/sender-channel.h \
   src/service-channel.cpp src/service-channel.h \
+  src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
   include/statistics.h \
   src/video-coder.cpp src/video-coder.h \
@@ -573,7 +573,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
   src/video-renderer.cpp src/video-renderer.h \
-  src/video-sender.cpp src/video-sender.h \
+  src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
 
@@ -587,7 +587,7 @@ libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -flat_namespac
 @OS_DARWIN_TRUE@    demoapp/view.cc demoapp/view.h \
 @OS_DARWIN_TRUE@    demoapp/CameraCapturer.h demoapp/CameraCapturer.m \
 @OS_DARWIN_TRUE@    src/simple-log.cpp include/simple-log.h \
-@OS_DARWIN_TRUE@    include/external-renderer.h include/external-capturer.h
+@OS_DARWIN_TRUE@    include/interfaces.h
 
 @OS_DARWIN_TRUE@ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
 @OS_DARWIN_TRUE@ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa -framework AVFoundation -framework CoreVideo -framework CoreMedia
@@ -680,15 +680,13 @@ src/libndnrtc_la-audio-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-renderer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-sender.lo: src/$(am__dirstamp) \
+src/libndnrtc_la-audio-thread.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-av-sync.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-buffer-estimator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-base-capturer.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-camera-capturer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-chase-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -710,7 +708,11 @@ src/libndnrtc_la-interest-queue.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-jitter-timing.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-media-sender.lo: src/$(am__dirstamp) \
+src/libndnrtc_la-media-thread.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-media-stream.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-name-components.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndn-assembler.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -721,8 +723,6 @@ src/libndnrtc_la-ndnrtc-namespace.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-ndnrtc-object.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-utils.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-params.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-pipeliner.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -736,9 +736,9 @@ src/libndnrtc_la-rtt-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-segmentizer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-sender-channel.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-service-channel.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-session.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-simple-log.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -752,7 +752,7 @@ src/libndnrtc_la-video-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-renderer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-video-sender.lo: src/$(am__dirstamp) \
+src/libndnrtc_la-video-thread.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-webrtc-audio-channel.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -803,11 +803,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-sender.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-av-sync.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-base-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-camera-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-chase-estimation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-consumer-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-consumer.Plo@am__quote@
@@ -818,28 +817,29 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-frame-data.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-sender.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-stream.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-params.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rate-control.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-realtime-arc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-sender-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-service-channel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-simple-log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-renderer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-sender.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ndnrtc_demo-simple-log.Po@am__quote@
 
@@ -895,12 +895,12 @@ src/libndnrtc_la-audio-renderer.lo: src/audio-renderer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
 
-src/libndnrtc_la-audio-sender.lo: src/audio-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-sender.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-sender.Tpo -c -o src/libndnrtc_la-audio-sender.lo `test -f 'src/audio-sender.cpp' || echo '$(srcdir)/'`src/audio-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-sender.Tpo src/$(DEPDIR)/libndnrtc_la-audio-sender.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-sender.cpp' object='src/libndnrtc_la-audio-sender.lo' libtool=yes @AMDEPBACKSLASH@
+src/libndnrtc_la-audio-thread.lo: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-thread.cpp' object='src/libndnrtc_la-audio-thread.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-sender.lo `test -f 'src/audio-sender.cpp' || echo '$(srcdir)/'`src/audio-sender.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
 
 src/libndnrtc_la-av-sync.lo: src/av-sync.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-av-sync.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
@@ -922,13 +922,6 @@ src/libndnrtc_la-base-capturer.lo: src/base-capturer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/base-capturer.cpp' object='src/libndnrtc_la-base-capturer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-base-capturer.lo `test -f 'src/base-capturer.cpp' || echo '$(srcdir)/'`src/base-capturer.cpp
-
-src/libndnrtc_la-camera-capturer.lo: src/camera-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-camera-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-camera-capturer.Tpo -c -o src/libndnrtc_la-camera-capturer.lo `test -f 'src/camera-capturer.cpp' || echo '$(srcdir)/'`src/camera-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-camera-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-camera-capturer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/camera-capturer.cpp' object='src/libndnrtc_la-camera-capturer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-camera-capturer.lo `test -f 'src/camera-capturer.cpp' || echo '$(srcdir)/'`src/camera-capturer.cpp
 
 src/libndnrtc_la-chase-estimation.lo: src/chase-estimation.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-chase-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-chase-estimation.Tpo -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
@@ -1000,12 +993,26 @@ src/libndnrtc_la-jitter-timing.lo: src/jitter-timing.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
 
-src/libndnrtc_la-media-sender.lo: src/media-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-sender.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-sender.Tpo -c -o src/libndnrtc_la-media-sender.lo `test -f 'src/media-sender.cpp' || echo '$(srcdir)/'`src/media-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-sender.Tpo src/$(DEPDIR)/libndnrtc_la-media-sender.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-sender.cpp' object='src/libndnrtc_la-media-sender.lo' libtool=yes @AMDEPBACKSLASH@
+src/libndnrtc_la-media-thread.lo: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo src/$(DEPDIR)/libndnrtc_la-media-thread.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-thread.cpp' object='src/libndnrtc_la-media-thread.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-sender.lo `test -f 'src/media-sender.cpp' || echo '$(srcdir)/'`src/media-sender.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+
+src/libndnrtc_la-media-stream.lo: src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo src/$(DEPDIR)/libndnrtc_la-media-stream.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-stream.cpp' object='src/libndnrtc_la-media-stream.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+
+src/libndnrtc_la-name-components.lo: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-name-components.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-name-components.Tpo -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-name-components.Tpo src/$(DEPDIR)/libndnrtc_la-name-components.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/libndnrtc_la-name-components.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
 
 src/libndnrtc_la-ndn-assembler.lo: src/ndn-assembler.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndn-assembler.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
@@ -1041,13 +1048,6 @@ src/libndnrtc_la-ndnrtc-utils.lo: src/ndnrtc-utils.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/ndnrtc-utils.cpp' object='src/libndnrtc_la-ndnrtc-utils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
-
-src/libndnrtc_la-params.lo: src/params.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-params.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-params.Tpo -c -o src/libndnrtc_la-params.lo `test -f 'src/params.cpp' || echo '$(srcdir)/'`src/params.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-params.Tpo src/$(DEPDIR)/libndnrtc_la-params.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/params.cpp' object='src/libndnrtc_la-params.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-params.lo `test -f 'src/params.cpp' || echo '$(srcdir)/'`src/params.cpp
 
 src/libndnrtc_la-pipeliner.lo: src/pipeliner.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-pipeliner.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
@@ -1091,19 +1091,19 @@ src/libndnrtc_la-segmentizer.lo: src/segmentizer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
 
-src/libndnrtc_la-sender-channel.lo: src/sender-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-sender-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-sender-channel.Tpo -c -o src/libndnrtc_la-sender-channel.lo `test -f 'src/sender-channel.cpp' || echo '$(srcdir)/'`src/sender-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-sender-channel.Tpo src/$(DEPDIR)/libndnrtc_la-sender-channel.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/sender-channel.cpp' object='src/libndnrtc_la-sender-channel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-sender-channel.lo `test -f 'src/sender-channel.cpp' || echo '$(srcdir)/'`src/sender-channel.cpp
-
 src/libndnrtc_la-service-channel.lo: src/service-channel.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-service-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-service-channel.Tpo -c -o src/libndnrtc_la-service-channel.lo `test -f 'src/service-channel.cpp' || echo '$(srcdir)/'`src/service-channel.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-service-channel.Tpo src/$(DEPDIR)/libndnrtc_la-service-channel.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/service-channel.cpp' object='src/libndnrtc_la-service-channel.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-service-channel.lo `test -f 'src/service-channel.cpp' || echo '$(srcdir)/'`src/service-channel.cpp
+
+src/libndnrtc_la-session.lo: src/session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-session.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-session.Tpo -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-session.Tpo src/$(DEPDIR)/libndnrtc_la-session.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/session.cpp' object='src/libndnrtc_la-session.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
 
 src/libndnrtc_la-simple-log.lo: src/simple-log.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-simple-log.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-simple-log.Tpo -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
@@ -1147,12 +1147,12 @@ src/libndnrtc_la-video-renderer.lo: src/video-renderer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-renderer.lo `test -f 'src/video-renderer.cpp' || echo '$(srcdir)/'`src/video-renderer.cpp
 
-src/libndnrtc_la-video-sender.lo: src/video-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-sender.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-sender.Tpo -c -o src/libndnrtc_la-video-sender.lo `test -f 'src/video-sender.cpp' || echo '$(srcdir)/'`src/video-sender.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-sender.Tpo src/$(DEPDIR)/libndnrtc_la-video-sender.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-sender.cpp' object='src/libndnrtc_la-video-sender.lo' libtool=yes @AMDEPBACKSLASH@
+src/libndnrtc_la-video-thread.lo: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo src/$(DEPDIR)/libndnrtc_la-video-thread.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-thread.cpp' object='src/libndnrtc_la-video-thread.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-sender.lo `test -f 'src/video-sender.cpp' || echo '$(srcdir)/'`src/video-sender.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
 
 src/libndnrtc_la-webrtc-audio-channel.lo: src/webrtc-audio-channel.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-webrtc-audio-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp

@@ -86,7 +86,7 @@
 #if defined (NDN_ERROR)
 
 #define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelError, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogErrorC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__)
+#define LogErrorC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__) 
 
 #else
 
@@ -193,7 +193,7 @@ namespace ndnlog {
                 if (isWritingLogEntry_ &&
                     currentEntryLogType_ >= (NdnLogType)logLevel_)
                 {
-                    getOutStream() << data;
+                    getOutStream() << data; 
                 }
                 
                 return *this;
@@ -257,6 +257,9 @@ namespace ndnlog {
             sharedInstance()
             { return *sharedInstance_; }
             
+            static std::string
+            stringify(NdnLoggerLevel lvl);
+            
             void
             flush();
             
@@ -288,9 +291,6 @@ namespace ndnlog {
             
             int64_t
             getMillisecondTimestamp();
-            
-            static std::string
-            stringify(NdnLoggerLevel lvl);
             
             int i = 0;
             
@@ -345,7 +345,8 @@ namespace ndnlog {
             {
                 if (isLoggerCreated_)
                     delete logger_;
-            }
+                    logger_ = NULL;
+                }
             
             virtual void
             setLogger(Logger* logger);
