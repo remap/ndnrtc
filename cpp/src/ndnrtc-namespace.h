@@ -37,44 +37,9 @@ namespace ndnrtc {
         static boost::shared_ptr<const std::vector<unsigned char> >
             getNumberComponent(long unsigned int frameNo);
         
-        /**
-         * Builds user stream prefix for current parameters
-         * @param params Library parameters
-         * @return User prefix (i.e. "<params.ndnHub>/<NameComponentApp>/<NameComponentUser>/<params.producerId>") 
-         * or pointer to null in case of error
-         */
-        static boost::shared_ptr<std::string>
-        getUserPrefix(const ParamsStruct &params);
-        
-        /**
-         * Builds stream prefix for current parameters
-         * @param params Library parameters
-         * @return User's stream prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<params.streamName>"
-         * or pointer to null if an error
-         * @see getUserPrefix for more info on form of "user_prefix" component
-         */
-        static boost::shared_ptr<std::string>
-        getStreamPrefix(const ParamsStruct &params) DEPRECATED;
-        
         static boost::shared_ptr<std::string>
         getStreamPrefix(const std::string &userPrefix,
                         const std::string &streamName);
-        
-        /**
-         * Builds stream frame prefix for current parameters
-         * @param params Library parameters
-         * @param isKeyNamespace indicates for which key types prefix should be 
-         * built
-         * @return User's stream frame prefix in a form of "<stream_prefix>/<params.streamThread>/<NameComponentStreamFrames>/<frame_type>"
-         * where "frame_type" is either NameComponentStreamFramesDelta or 
-         * NameComponentStreamFramesKey depending on isKeyNamespace paramter 
-         * value or pointer to null if an error
-         * @see getStreamPrefix for more info on form of "stream_prefix" component
-         */
-        static boost::shared_ptr<std::string>
-        getStreamFramePrefix(const ParamsStruct &params,
-                             int streamIdx,
-                             bool isKeyNamespace = false) DEPRECATED;
         
         static std::string
         getThreadPrefix(const std::string& streamPrefix,
@@ -83,26 +48,6 @@ namespace ndnrtc {
         static std::string
         getThreadFramesPrefix(const std::string& threadPrefix,
                               bool isKeyNamespace = false);
-        
-        /**
-         * Builds stream key prefix for current paramteres
-         * @param params Library parameters
-         * @return Stream's key prefix in a form of "<stream_prefix>/NameComponentStreamKey" 
-         * or pointer to null if error occured
-         * @see getStreamPrefix for more info on form ot "stream_prefix" component
-         */
-        static boost::shared_ptr<std::string>
-        getStreamKeyPrefix(const ParamsStruct &params) DEPRECATED;
-        
-        /**
-         * Builds session info prefix for current parameters
-         * @param params Library parameters
-         * @return User's session info prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<NameComponentSession>
-         * @see getUserPrefix for more info on form ot "user_prefix" component
-         
-         */
-        static boost::shared_ptr<std::string>
-        getSessionInfoPrefix(const ParamsStruct &params) DEPRECATED;
         
         static boost::shared_ptr<std::string>
         getSessionInfoPrefix(const std::string& userPrefix);

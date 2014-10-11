@@ -25,10 +25,9 @@ namespace ndnrtc {
                                     double unixTimeStamp) = 0;
     };
     
-    class BaseCapturer : public NdnRtcObject {
+    class BaseCapturer : public new_api::NdnRtcComponent {
     public:
         BaseCapturer();
-        BaseCapturer(const ParamsStruct& params) DEPRECATED;
         virtual ~BaseCapturer();
         
         virtual int init();

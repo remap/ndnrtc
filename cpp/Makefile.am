@@ -10,12 +10,10 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
-  src/audio-sender.cpp src/audio-sender.h \
   src/audio-thread.cpp src/audio-thread.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
-  src/camera-capturer.cpp src/camera-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
@@ -27,7 +25,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/frame-data.cpp src/frame-data.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
-  src/media-sender.cpp src/media-sender.h \
   src/media-thread.cpp src/media-thread.h \
   src/media-stream.cpp src/media-stream.h \
   src/name-components.cpp include/name-components.h \
@@ -42,7 +39,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
   src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
-  src/params.cpp include/params.h \
+  include/params.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
   src/rate-adaptation-module.h \
@@ -51,7 +48,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
-  src/sender-channel.cpp src/sender-channel.h \
   src/service-channel.cpp src/service-channel.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
@@ -61,7 +57,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
   src/video-renderer.cpp src/video-renderer.h \
-  src/video-sender.cpp src/video-sender.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h

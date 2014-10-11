@@ -17,7 +17,6 @@
 #include "interfaces.h"
 
 namespace ndnrtc {
-    
     namespace new_api {
         class INdnRtcComponentCallback {
         public:
@@ -60,44 +59,6 @@ namespace ndnrtc {
             bool hasCallback() { return callback_ != NULL; }
         };
     }
-    
-    class NdnRtcObject :    public ndnlog::new_api::ILoggingObject,
-                            public INdnRtcObjectObserver
-    {
-    public:
-        // construction/desctruction
-        NdnRtcObject(const ParamsStruct &params = DefaultParams);
-        NdnRtcObject(const ParamsStruct &params,
-                     INdnRtcObjectObserver *observer);
-        virtual ~NdnRtcObject();
-        
-        // public methods go here
-        void setObserver(INdnRtcObjectObserver *observer) { observer_ = observer; }
-        
-        virtual void onErrorOccurred(const char *errorMessage);
-        
-        // ILoggingObject interface conformance
-        virtual std::string
-        getDescription() const;
-        
-        virtual bool
-        isLoggingEnabled() const
-        {
-            return true;
-        }
-        
-    protected:
-        // critical section for observer's callbacks
-        webrtc::CriticalSectionWrapper &callbackSync_;
-        INdnRtcObjectObserver *observer_ = nullptr;
-        ParamsStruct params_;
-        
-        // protected methods go here
-        int notifyError(const int ecode, const char *format, ...);
-        int notifyErrorNoParams();
-        int notifyErrorBadArg(const std::string &paramName);
-        bool hasObserver() { return observer_ != nullptr; };
-    };
 }
 
 #endif /* defined(__ndnrtc__ndnrtc_object__) */

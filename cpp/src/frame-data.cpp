@@ -363,14 +363,7 @@ NdnFrameData::initFromRawData(unsigned int dataLength,
     
     int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,
                                           header.encodedHeight_);
-    
-    if (header.encodedHeight_ > MaxHeight ||
-        header.encodedWidth_ > MaxWidth ||
-        header.encodedHeight_ < MinHeight ||
-        header.encodedWidth_ < MinWidth)
-        // got suspicious data, return error
-        return RESULT_ERR;
-    
+        
     frame_ = webrtc::EncodedImage(const_cast<uint8_t*>(&rawData[headerSize]),
                                   dataLength-headerSize, size);
     frame_._encodedWidth = header.encodedWidth_;

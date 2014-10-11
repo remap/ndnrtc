@@ -18,11 +18,6 @@ BaseCapturer()
 {
 }
 
-ExternalCapturer::ExternalCapturer(const ParamsStruct& params):
-BaseCapturer(params)
-{
-}
-
 ExternalCapturer::~ExternalCapturer()
 {
 }

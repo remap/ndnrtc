@@ -15,6 +15,7 @@
 #include "buffer-estimator.h"
 #include "rtt-estimation.h"
 #include "playout.h"
+#include "ndnrtc-namespace.h"
 
 using namespace boost;
 using namespace ndnlog;

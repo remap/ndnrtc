@@ -1297,10 +1297,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     setTargetSize(targetBufferSize);
                 }
 
+#if 0
                 if (rateControl_.get())
 #warning RTX should be per segment!
                     rateControl_->dataReceived(data, slot->getRtxNum());
-                
+#endif
                 
                 return newState;
             }

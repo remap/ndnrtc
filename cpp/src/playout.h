@@ -16,7 +16,6 @@
 #include "jitter-timing.h"
 #include "consumer.h"
 #include "frame-buffer.h"
-#include "video-sender.h"
 
 namespace ndnrtc{
     namespace new_api {

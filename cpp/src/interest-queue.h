@@ -27,7 +27,7 @@ namespace ndnrtc {
             virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
         };
         
-        class InterestQueue : public ndnrtc::NdnRtcObject//ndnlog::new_api::ILoggingObject
+        class InterestQueue : public NdnRtcComponent//ndnlog::new_api::ILoggingObject
         {
         public:
             

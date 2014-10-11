@@ -23,13 +23,6 @@ WebrtcAudioChannel(voiceEngine)
     description_ = "audio-capturer";
 }
 
-AudioCapturer::AudioCapturer(const ParamsStruct& params,
-                             webrtc::VoiceEngine* voiceEngine):
-WebrtcAudioChannel(voiceEngine)
-{
-    description_ = "audio-capturer";
-}
-
 AudioCapturer::~AudioCapturer()
 {
 }

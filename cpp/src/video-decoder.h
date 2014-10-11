@@ -14,7 +14,7 @@
 
 #include "ndnrtc-common.h"
 #include "webrtc.h"
-#include "camera-capturer.h"
+#include "base-capturer.h"
 #include "video-coder.h"
 
 namespace ndnrtc {

@@ -17,11 +17,14 @@
 
 namespace ndnrtc {
     namespace new_api {
+// disabled as outdated
+// TODO: update this class to be compatible with the most recent ARC code
+// from Yoneda-san
         class Consumer;
         
         class RateControl : public ndnlog::new_api::ILoggingObject {
         public:
-            
+#if 0
             RateControl(const boost::shared_ptr<Consumer>& consumer);
             ~RateControl(){}
             
@@ -61,6 +64,7 @@ namespace ndnrtc {
             
             bool
             checkArcStatus();
+#endif            
         };
     }
 }

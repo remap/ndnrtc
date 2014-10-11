@@ -99,14 +99,6 @@ void FaceWrapper::shutdown()
 //******************************************************************************
 #pragma mark - static
 int
-FaceProcessor::setupFaceAndTransport(const ParamsStruct& params,
-                                     shared_ptr<ndnrtc::FaceWrapper>& face,
-                                     shared_ptr<ndn::Transport>& transport)
-{
-    return setupFaceAndTransport(std::string(params.host), params.portNum, face, transport);
-}
-
-int
 FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
                                      shared_ptr<ndnrtc::FaceWrapper>& face,
                                      shared_ptr<ndn::Transport>& transport)
@@ -130,14 +122,6 @@ FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
     }
     
     return res;
-}
-
-shared_ptr<FaceProcessor>
-FaceProcessor::createFaceProcessor(const ParamsStruct& params,
-                                   const shared_ptr<ndn::KeyChain>& keyChain,
-                                   const shared_ptr<Name>& certificateName)
-{
-    return createFaceProcessor(std::string(params.host), params.portNum, keyChain, certificateName);
 }
 
 boost::shared_ptr<FaceProcessor>
@@ -165,7 +149,6 @@ FaceProcessor::createFaceProcessor(const std::string host, const int port,
     
     return fp;
 }
-
 
 //******************************************************************************
 #pragma mark - construction/destruction

@@ -10,11 +10,11 @@
 
 #include "rate-control.h"
 #include "realtime-arc.h"
-#include "video-sender.h"
 #include "consumer.h"
 #include "pipeliner.h"
 #include "rtt-estimation.h"
 
+#if 0
 using namespace boost;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -143,3 +143,4 @@ RateControl::checkArcStatus()
     
     return true;
 }
+#endif

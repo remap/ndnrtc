@@ -19,7 +19,6 @@ namespace ndnrtc {
     {
     public:
         ExternalCapturer();
-        ExternalCapturer(const ParamsStruct& params) DEPRECATED;
         virtual ~ExternalCapturer();
         
         int init();

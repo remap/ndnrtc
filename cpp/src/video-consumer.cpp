@@ -113,15 +113,17 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
 void
 VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
 {
+#if 0
     if (rateControl_.get())
         rateControl_->interestExpressed(interest);
+#endif
 }
 
 void
 VideoConsumer::onStateChanged(const int& oldState, const int& newState)
 {
     Consumer::onStateChanged(oldState, newState);
-    
+#if 0
     if (rateControl_.get())
     {
         if (newState == Pipeliner::StateFetching)
@@ -130,6 +132,7 @@ VideoConsumer::onStateChanged(const int& oldState, const int& newState)
         if (oldState == Pipeliner::StateFetching)
             rateControl_->stop();
     }
+#endif
 }
 
 void
@@ -147,8 +150,10 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
 void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
+#if 0
     if (rateControl_.get())
         rateControl_->interestTimeout(interest);
+#endif
 }
 
 
