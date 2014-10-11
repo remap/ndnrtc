@@ -15,6 +15,8 @@
 
 int loadParamsFromFile(const std::string &cfgFileName,
                        ndnrtc::ParamsStruct &params,
-                       ndnrtc::ParamsStruct &audioParams);
+                       ndnrtc::ParamsStruct &audioParams) DEPRECATED;
 
+int loadParamsFromFile(const std::string &cfgFileName,
+                       ndnrtc::new_api::AppParams &params);
 #endif

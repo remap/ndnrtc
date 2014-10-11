@@ -11,6 +11,7 @@
 
 #include "ndnrtc-common.h"
 #include "params.h"
+#include "ndnrtc-object.h"
 
 namespace ndnrtc {
     using namespace ndn;
@@ -35,12 +36,18 @@ namespace ndnrtc {
                         const OnTimeout& onTimeout = OnTimeout(),
                         WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
         
+        void
+        removePendingInterest(uint64_t interestId);
+        
         uint64_t
         registerPrefix(const Name& prefix,
                        const OnInterest& onInterest,
                        const OnRegisterFailed& onRegisterFailed,
                        const ForwardingFlags& flags = ForwardingFlags(),
                        WireFormat& wireFormat = *WireFormat::getDefaultWireFormat());
+        
+        void
+        unregisterPrefix(uint64_t prefixId);
         
         void
         setCommandSigningInfo(KeyChain& keyChain, const Name& certificateName);
@@ -64,7 +71,7 @@ namespace ndnrtc {
         webrtc::CriticalSectionWrapper &faceCs_;
     };
     
-    class FaceProcessor : public ndnlog::new_api::ILoggingObject
+    class FaceProcessor :   public new_api::NdnRtcComponent
     {
     public:
         FaceProcessor(const boost::shared_ptr<FaceWrapper>& faceWrapper);
@@ -93,12 +100,12 @@ namespace ndnrtc {
         { transport_ = transport; }
         
         static int
-        setupFaceAndTransport(const ParamsStruct &params,
+        setupFaceAndTransport(const std::string host, const int port,
                               boost::shared_ptr<FaceWrapper>& face,
                               boost::shared_ptr<Transport>& transport);
         
         static boost::shared_ptr<FaceProcessor>
-        createFaceProcessor(const ParamsStruct& params,
+        createFaceProcessor(const std::string host, const int port,
                             const boost::shared_ptr<ndn::KeyChain>& keyChain = boost::shared_ptr<ndn::KeyChain>(),
                             const boost::shared_ptr<Name>& certificateName = boost::shared_ptr<Name>());
         

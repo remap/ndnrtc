@@ -19,12 +19,11 @@ using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioConsumer::AudioConsumer(const ParamsStruct& params,
-                             const shared_ptr<InterestQueue>& interestQueue,
-                             const shared_ptr<RttEstimation>& rttEstimation):
-Consumer(params, interestQueue, rttEstimation)
+AudioConsumer::AudioConsumer(const GeneralParams& generalParams,
+                             const GeneralConsumerParams& consumerParams):
+Consumer(generalParams, consumerParams)
 {
-    renderer_.reset(new AudioRenderer(params));
+    renderer_.reset(new AudioRenderer());
     setDescription("aconsumer");
 }
 
@@ -35,9 +34,9 @@ AudioConsumer::~AudioConsumer()
 //******************************************************************************
 #pragma mark - public
 int
-AudioConsumer::init()
+AudioConsumer::init(const ConsumerSettings& settings)
 {
-    if (RESULT_GOOD(Consumer::init()))
+    if (RESULT_GOOD(Consumer::init(settings)))
     {
         pipeliner_->setUseKeyNamespace(false);
         

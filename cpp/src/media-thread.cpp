@@ -1,5 +1,5 @@
 //
-//  media-sender.cpp
+//  media-thread.cpp
 //  ndnrtc
 //
 //  Copyright 2013 Regents of the University of California
@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include "media-sender.h"
+#include "media-thread.h"
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 #include "ndnrtc-debug.h"
@@ -16,24 +16,13 @@
 using namespace boost;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
-using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
-
-#define RECORD 0
-#if RECORD
-#include "ndnrtc-testing.h"
-using namespace ndnrtc::testing;
-
-static EncodedFrameWriter frameWriter("encoded.nrtc");
-static unsigned char* frameData = (unsigned char*)malloc(640*480);
-static int dataLength = 0;
-
-#endif
 
 //******************************************************************************
 #pragma mark - construction/destruction
-MediaSender::MediaSender(const ParamsStruct &params) :
-NdnRtcObject(params),
+MediaThread::MediaThread():
+NdnRtcComponent(),
 packetNo_(0),
 pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
 {
@@ -41,11 +30,10 @@ pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(5);
 }
 
-MediaSender::~MediaSender()
+MediaThread::~MediaThread()
 {
+    delete settings_;
     stop();
-    
-    NdnRtcUtils::releaseFrequencyMeter(packetRateMeter_);
     NdnRtcUtils::releaseDataRateMeter(dataRateMeter_);
 }
 
@@ -56,27 +44,16 @@ MediaSender::~MediaSender()
 
 //******************************************************************************
 #pragma mark - public
-int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
-                      const shared_ptr<KeyChain>& ndnKeyChain,
-                      const shared_ptr<std::string>& packetPrefix)
+int MediaThread::init(const MediaThreadSettings &settings)
 {
-    faceProcessor_ = faceProcessor;
-    ndnKeyChain_ = ndnKeyChain;
-    
-#ifndef DEFAULT_KEYCHAIN
-    shared_ptr<std::string> userPrefix = NdnRtcNamespace::getUserPrefix(params_);
-    certificateName_ =  NdnRtcNamespace::certificateNameForUser(*userPrefix);
-#else
-    certificateName_ = shared_ptr<Name>(new Name(ndnKeyChain_->getDefaultCertificateName()));
-#endif
-    
-    if (params_.useCache)
-        memCache_.reset(new MemoryContentCache(faceProcessor_->getFaceWrapper()->getFace().get()));
-    
-    packetPrefix_.reset(new Name(packetPrefix->c_str()));
+    threadPrefix_ =  *NdnRtcNamespace::buildPath(false,
+                                                 &settings.streamPrefix_,
+                                                 &settings.threadParams_->threadName_, 0);
+    faceProcessor_ = settings.faceProcessor_;
+    memCache_ = settings.memoryCache_;
     
     try {
-        registerPrefix(packetPrefix_);
+        registerPrefix(Name(threadPrefix_));
     }
     catch (std::exception &e)
     {
@@ -85,24 +62,23 @@ int MediaSender::init(const shared_ptr<FaceProcessor>& faceProcessor,
                            e.what());
     }
     
-    segmentSize_ = params_.segmentSize - SegmentData::getHeaderSize();
-    freshnessInterval_ = params_.freshness;
-    packetNo_ = 0;
+    segSizeNoHeader_ = settings.segmentSize_ - SegmentData::getHeaderSize();
     
     return RESULT_OK;
 }
 
-void MediaSender::stop()
+void MediaThread::stop()
 {
-#if RECORD
-    frameWriter.synchronize();
-#endif
+    if (memCache_.get())
+        memCache_->unregisterAll();
+    else
+        faceProcessor_->getFaceWrapper()->unregisterPrefix(registeredPrefixId_);
 }
 
 //******************************************************************************
 #pragma mark - private
-int MediaSender::publishPacket(PacketData &packetData,
-                               shared_ptr<Name> packetPrefix,
+int MediaThread::publishPacket(PacketData &packetData,
+                               const Name& packetPrefix,
                                PacketNumber packetNo,
                                PrefixMetaInfo prefixMeta,
                                double captureTimestamp)
@@ -110,19 +86,15 @@ int MediaSender::publishPacket(PacketData &packetData,
     if (!faceProcessor_->getTransport()->getIsConnected())
         return notifyError(-1, "transport is not connected");
     
-    Name prefix = *packetPrefix;
+    Name prefix = packetPrefix;
     Segmentizer::SegmentList segments;
     
-    if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segmentSize_)))
+    if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segSizeNoHeader_)))
         return notifyError(-1, "packet segmentation failed");
     
     try {
-#if RECORD
-        dataLength = 0;
-        memset(frameData, 0, 640*480);
-#endif
         // update metadata for the packet
-        PacketData::PacketMetadata metadata = {getCurrentPacketRate(),
+        PacketData::PacketMetadata metadata = { NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_),
             NdnRtcUtils::millisecondTimestamp(),
             captureTimestamp};
         
@@ -136,7 +108,7 @@ int MediaSender::publishPacket(PacketData &packetData,
             // add segment #
             Name segmentName = prefix;
             segmentName.appendSegment(it-segments.begin());
-
+            
             // lookup for pending interests and construct metaifno accordingly
             SegmentData::SegmentMetaInfo meta = {0,0,0};
             bool pitHit = (lookupPrefixInPit(segmentName, meta) != 0);
@@ -148,12 +120,12 @@ int MediaSender::publishPacket(PacketData &packetData,
             SegmentData segmentData(it->getDataPtr(), it->getPayloadSize(), meta);
             
             Data ndnData(segmentName);
-            ndnData.getMetaInfo().setFreshnessPeriod(params_.freshness*1000);
+            ndnData.getMetaInfo().setFreshnessPeriod(settings_->dataFreshnessMs_);
             ndnData.setContent(segmentData.getData(), segmentData.getLength());
             
-            ndnKeyChain_->sign(ndnData, *certificateName_);
+            settings_->keyChain_->sign(ndnData, settings_->certificateName_);
             
-            if (params_.useCache && !pitHit)
+            if (memCache_.get() && !pitHit)
             {
                 // according to http://named-data.net/doc/ndn-ccl-api/memory-content-cache.html#memorycontentcache-registerprefix-method
                 // adding content should be synchronized with the processEvents
@@ -183,33 +155,7 @@ int MediaSender::publishPacket(PacketData &packetData,
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getDefaultWireEncoding().size());
 #endif
-#if RECORD
-            {
-                SegmentData segData;
-                SegmentData::segmentDataFromRaw(ndnData.getContent().size(),
-                                                ndnData.getContent().buf(),
-                                                segData);
-                SegmentNumber segNo = NdnRtcNamespace::getSegmentNumber(ndnData.getName());
-                memcpy(frameData+segNo*segmentSize_,
-                       segData.getSegmentData(),
-                       segData.getSegmentDataLength());
-                dataLength += segData.getSegmentDataLength();
-            }
-#endif
         }
-        
-#if RECORD
-        PacketData *frame;
-        PacketData::packetFromRaw(dataLength,
-                                  frameData,
-                                  &frame);
-        assert(frame);
-        
-        webrtc::EncodedImage img;
-        ((NdnFrameData*)frame)->getFrame(img);
-        PacketData::PacketMetadata meta = ((NdnFrameData*)frame)->getMetadata();
-        frameWriter.writeFrame(img, meta);
-#endif
     }
     catch (std::exception &e)
     {
@@ -221,29 +167,31 @@ int MediaSender::publishPacket(PacketData &packetData,
     return segments.size();
 }
 
-void MediaSender::registerPrefix(const shared_ptr<Name>& prefix)
-{    
-    if (params_.useCache)
+void MediaThread::registerPrefix(const Name& prefix)
+{
+    if (memCache_.get())
     {
-        memCache_->registerPrefix(*prefix,
-                                  bind(&MediaSender::onRegisterFailed,
-                                       this, _1),
-                                  bind(&MediaSender::onInterest,
-                                       this, _1, _2, _3));
+        // MemoryContentCache does not support providing registered prefixes IDs
+        // registeredPrefixId_ =
+        memCache_->registerPrefix(prefix,
+                                                        bind(&MediaThread::onRegisterFailed,
+                                                             this, _1),
+                                                        bind(&MediaThread::onInterest,
+                                                             this, _1, _2, _3));
     }
     else
     {
-        uint64_t prefixId = faceProcessor_->getFaceWrapper()->registerPrefix(*prefix,
-                                                                             bind(&MediaSender::onInterest,
+        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(prefix,
+                                                                             bind(&MediaThread::onInterest,
                                                                                   this, _1, _2, _3),
-                                                                             bind(&MediaSender::onRegisterFailed,
+                                                                             bind(&MediaThread::onRegisterFailed,
                                                                                   this, _1));
-        if (prefixId != 0)
-            LogTraceC << "registered prefix " << *prefix << std::endl;
+        if (registeredPrefixId_ != 0)
+            LogTraceC << "registered prefix " << prefix << std::endl;
     }
 }
 
-void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
+void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
                              const shared_ptr<const Interest>& interest,
                              ndn::Transport& transport)
 {
@@ -258,12 +206,15 @@ void MediaSender::onInterest(const shared_ptr<const Name>& prefix,
     << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
-void MediaSender::onRegisterFailed(const shared_ptr<const Name>& prefix)
+void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
+    if (hasCallback())
+        getCallback()->onMediaThreadRegistrationFailed(settings_->threadParams_->threadName_);
+    
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
 }
 
-void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
+void MediaThread::addToPit(const shared_ptr<const ndn::Interest> &interest)
 {
     const Name& name = interest->getName();
     PitEntry pitEntry;
@@ -286,7 +237,7 @@ void MediaSender::addToPit(const shared_ptr<const ndn::Interest> &interest)
     }
 }
 
-int MediaSender::lookupPrefixInPit(const ndn::Name &prefix,
+int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
                                    SegmentData::SegmentMetaInfo &metaInfo)
 {
     webrtc::CriticalSectionScoped scopedCs_(&pitCs_);

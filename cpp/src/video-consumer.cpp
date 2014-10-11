@@ -23,21 +23,14 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoConsumer::VideoConsumer(const ParamsStruct& params,
-                             const shared_ptr<InterestQueue>& interestQueue,
-                             const shared_ptr<RttEstimation>& rttEstimation,
+VideoConsumer::VideoConsumer(const GeneralParams& generalParams,
+                             const GeneralConsumerParams& consumerParams,
                              IExternalRenderer* const externalRenderer):
-Consumer(params, interestQueue, rttEstimation),
-decoder_(new NdnVideoDecoder(params.streamsParams[0]))
+Consumer(generalParams, consumerParams),
+decoder_(new NdnVideoDecoder())
 {
     setDescription("vconsumer");
-    interestQueue_->registerCallback(this);
-    
-    if (externalRenderer)
-        renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
-    else
-        renderer_.reset(new VideoRenderer(1, params));
-    
+    renderer_.reset(new ExternalVideoRendererAdaptor(externalRenderer));
     decoder_->setFrameConsumer(getRenderer().get());
 }
 
@@ -49,16 +42,17 @@ VideoConsumer::~VideoConsumer()
 //******************************************************************************
 #pragma mark - public
 int
-VideoConsumer::init()
+VideoConsumer::init(const ConsumerSettings& settings)
 {
+    int res = RESULT_OK;
+    
     LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
     << NdnRtcUtils::unixTimestamp() << std::endl;
 
-    if (RESULT_GOOD(Consumer::init()))
+    if (RESULT_GOOD(Consumer::init(settings)))
     {
-        int res = RESULT_OK;
-        
-        decoder_->init();
+        interestQueue_->registerCallback(this);
+        decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
         playout_.reset(new VideoPlayout(this));
         playout_->setLogger(logger_);
@@ -119,13 +113,17 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
 void
 VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
 {
+#if 0
     if (rateControl_.get())
         rateControl_->interestExpressed(interest);
+#endif
 }
 
 void
 VideoConsumer::onStateChanged(const int& oldState, const int& newState)
 {
+    Consumer::onStateChanged(oldState, newState);
+#if 0
     if (rateControl_.get())
     {
         if (newState == Pipeliner::StateFetching)
@@ -134,11 +132,28 @@ VideoConsumer::onStateChanged(const int& oldState, const int& newState)
         if (oldState == Pipeliner::StateFetching)
             rateControl_->stop();
     }
+#endif
 }
 
 void
+VideoConsumer::playbackEventOccurred(PlaybackEvent event,
+                                     unsigned int frameSeqNo)
+{
+    if (observer_)
+    {
+        webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+        observer_->onPlaybackEventOccurred(event, frameSeqNo);
+    }
+}
+
+//******************************************************************************
+void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
+#if 0
     if (rateControl_.get())
         rateControl_->interestTimeout(interest);
+#endif
 }
+
+

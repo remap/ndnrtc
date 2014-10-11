@@ -28,4 +28,8 @@
 
 #define DEPRECATED __attribute__ ((deprecated))
 
+// name lengths limitations
+#define MAX_STREAM_NAME_LENGTH 20
+#define MAX_THREAD_NAME_LENGTH 20
+
 #endif

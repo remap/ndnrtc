@@ -18,7 +18,7 @@ function assert_dir_access {
 assert_dir_access $RESDIR "    Can't find resources folder"
 assert_dir_access $LIBDIR "    Please, run make && make ndnrtc-demo first"
 
-PARAMSPATH="$(cd $RESDIR && pwd)/ndnrtc.cfg"
+PARAMSPATH="$(cd $RESDIR && pwd)/ndnrtc-new.cfg"
 LIBPATH="$(cd $LIBDIR && pwd)/libndnrtc.dylib"
 
 

@@ -14,27 +14,26 @@
 
 using namespace std;
 using namespace ndnlog;
-using namespace ndnrtc;
+using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoDecoder::NdnVideoDecoder(const CodecParams &codecParams) :
-NdnRtcObject(),
-codecParams_(codecParams),
+NdnVideoDecoder::NdnVideoDecoder() :
 frameConsumer_(NULL)
 {
-    description_ = NdnRtcUtils::toString("decoder-%d", codecParams_.startBitrate);
     memset(&codec_, 0, sizeof(codec_));
 }
 
 //********************************************************************************
 #pragma mark - public
-int NdnVideoDecoder::init()
+int NdnVideoDecoder::init(const VideoCoderParams& settings)
 {
     int res = RESULT_OK;
     
-    res = NdnVideoCoder::getCodec(codecParams_, codec_);
+    settings_ = settings;
+    res = VideoCoder::getCodecFromSetings(settings_, codec_);
+    description_ = NdnRtcUtils::toString("decoder-%d", codec_.startBitrate);
     
     if (RESULT_GOOD(res))
     {

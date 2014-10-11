@@ -106,7 +106,6 @@ namespace ndnrtc
                        // (when both streams has started)
         webrtc::CriticalSectionWrapper &syncCs_;
         SyncStruct masterSyncData_, slaveSyncData_;
-        ParamsStruct videoParams_, audioParams_;
         
         int syncPacket(SyncStruct& syncData,
                        SyncStruct& pairedSyncData,

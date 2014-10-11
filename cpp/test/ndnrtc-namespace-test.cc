@@ -63,8 +63,8 @@ TEST(NdnRtcNamespace, TestUserPrefix)
         memset(str, 0, 256);
         sprintf(str, "/%s/%s/%s/%s",
                 hub.c_str(),
-                NdnRtcNamespace::NameComponentApp.c_str(),
-                NdnRtcNamespace::NameComponentUser.c_str(),
+                NameComponents::NameComponentApp.c_str(),
+                NameComponents::NameComponentUser.c_str(),
                 producerId.c_str());
         
         EXPECT_EQ(str,*(path.get()));
@@ -83,10 +83,10 @@ TEST(NdnRtcNamespace, TestStreamPath)
         
         memset(str, 0, 256);
         sprintf(str, "/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NameComponentApp.c_str(),
-                NdnRtcNamespace::NameComponentUser.c_str(),
+                NameComponents::NameComponentApp.c_str(),
+                NameComponents::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NameComponentUserStreams.c_str(),
+                NameComponents::NameComponentUserStreams.c_str(),
                 stream.c_str());
         
         EXPECT_EQ(str,*(path.get()));
@@ -107,10 +107,10 @@ TEST(NdnRtcNamespace, TestKeyPath)
         memset(str, 0, 256);
         
         sprintf(str, "/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NameComponentApp.c_str(),
-                NdnRtcNamespace::NameComponentUser.c_str(),
+                NameComponents::NameComponentApp.c_str(),
+                NameComponents::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NameComponentStreamKey.c_str(),
+                NameComponents::NameComponentStreamKey.c_str(),
                 NdnRtcNamespace::KeyComponent.c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());
     }
@@ -129,10 +129,10 @@ TEST(NdnRtcNamespace, TestCertPath)
         memset(str, 0, 256);
         
         sprintf(str, "/%s/%s/%s/%s/%s/%s/%s",hub.c_str(),
-                NdnRtcNamespace::NameComponentApp.c_str(),
-                NdnRtcNamespace::NameComponentUser.c_str(),
+                NameComponents::NameComponentApp.c_str(),
+                NameComponents::NameComponentUser.c_str(),
                 producerId.c_str(),
-                NdnRtcNamespace::NameComponentStreamKey.c_str(),
+                NameComponents::NameComponentStreamKey.c_str(),
                 NdnRtcNamespace::KeyComponent.c_str(),
                 NdnRtcNamespace::CertificateComponent.c_str());
         EXPECT_STREQ(str,keyPrefix->toUri().c_str());

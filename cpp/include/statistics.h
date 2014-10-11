@@ -14,6 +14,13 @@
 
 namespace ndnrtc {
     
+    namespace new_api {
+        class ObjectStatistics {
+        public:
+            virtual ~ObjectStatistics(){}
+        };
+    }
+    
     // jitter buffer statistics
     typedef struct _BufferStatistics {
         unsigned int

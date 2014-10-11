@@ -13,6 +13,7 @@
 #define __ndnrtc__ndn_namespace__
 
 #include "ndnrtc-object.h"
+#include "name-components.h"
 
 namespace ndnrtc {
     using namespace ndn;
@@ -20,24 +21,6 @@ namespace ndnrtc {
     class NdnRtcNamespace
     {
     public:
-        // namespace components
-        static const std::string NameComponentApp;
-        static const std::string NameComponentUser;
-        static const std::string NameComponentBroadcast;
-        static const std::string NameComponentDiscovery;
-        static const std::string NameComponentUserStreams;
-        static const std::string NameComponentSession;
-        static const std::string NameComponentStreamAccess;        
-        static const std::string NameComponentStreamKey;
-        static const std::string NameComponentStreamFrames;
-        static const std::string NameComponentStreamFramesDelta;
-        static const std::string NameComponentStreamFramesKey;
-        static const std::string NameComponentStreamInfo;
-        static const std::string NameComponentFrameSegmentData;
-        static const std::string NameComponentFrameSegmentParity;
-        static const std::string KeyComponent;
-        static const std::string CertificateComponent;
-        
         // composing URI based on provided components
         static boost::shared_ptr<std::string>
             getProducerPrefix(const std::string &hub,
@@ -54,60 +37,20 @@ namespace ndnrtc {
         static boost::shared_ptr<const std::vector<unsigned char> >
             getNumberComponent(long unsigned int frameNo);
         
-        /**
-         * Builds user stream prefix for current parameters
-         * @param params Library parameters
-         * @return User prefix (i.e. "<params.ndnHub>/<NameComponentApp>/<NameComponentUser>/<params.producerId>") 
-         * or pointer to null in case of error
-         */
         static boost::shared_ptr<std::string>
-        getUserPrefix(const ParamsStruct &params);
+        getStreamPrefix(const std::string &userPrefix,
+                        const std::string &streamName);
         
-        /**
-         * Builds stream prefix for current parameters
-         * @param params Library parameters
-         * @return User's stream prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<params.streamName>"
-         * or pointer to null if an error
-         * @see getUserPrefix for more info on form of "user_prefix" component
-         */
-        static boost::shared_ptr<std::string>
-        getStreamPrefix(const ParamsStruct &params);
+        static std::string
+        getThreadPrefix(const std::string& streamPrefix,
+                        const std::string& threadName);
+
+        static std::string
+        getThreadFramesPrefix(const std::string& threadPrefix,
+                              bool isKeyNamespace = false);
         
-        /**
-         * Builds stream frame prefix for current parameters
-         * @param params Library parameters
-         * @param isKeyNamespace indicates for which key types prefix should be 
-         * built
-         * @return User's stream frame prefix in a form of "<stream_prefix>/<params.streamThread>/<NameComponentStreamFrames>/<frame_type>"
-         * where "frame_type" is either NameComponentStreamFramesDelta or 
-         * NameComponentStreamFramesKey depending on isKeyNamespace paramter 
-         * value or pointer to null if an error
-         * @see getStreamPrefix for more info on form of "stream_prefix" component
-         */
         static boost::shared_ptr<std::string>
-        getStreamFramePrefix(const ParamsStruct &params,
-                             int streamIdx,
-                             bool isKeyNamespace = false);
-        
-        /**
-         * Builds stream key prefix for current paramteres
-         * @param params Library parameters
-         * @return Stream's key prefix in a form of "<stream_prefix>/NameComponentStreamKey" 
-         * or pointer to null if error occured
-         * @see getStreamPrefix for more info on form ot "stream_prefix" component
-         */
-        static boost::shared_ptr<std::string>
-        getStreamKeyPrefix(const ParamsStruct &params);
-        
-        /**
-         * Builds session info prefix for current parameters
-         * @param params Library parameters
-         * @return User's session info prefix in a form of "<user_prefix>/<NameComponentUserStreams>/<NameComponentSession>
-         * @see getUserPrefix for more info on form ot "user_prefix" component
-         
-         */
-        static boost::shared_ptr<std::string>
-        getSessionInfoPrefix(const ParamsStruct &params);
+        getSessionInfoPrefix(const std::string& userPrefix);
         
         static boost::shared_ptr<Name> keyPrefixForUser(const std::string &userPrefix);
         static boost::shared_ptr<Name> certificateNameForUser(const std::string &userPrefix);
@@ -143,7 +86,7 @@ namespace ndnrtc {
         static bool isValidPacketDataPrefix(const Name& prefix);
         
         static bool isKeyFramePrefix(const Name &prefix);
-        static bool isDeltaFramesPrefix(const Name &prefix);
+        static bool isDeltaFramePrefix(const Name &prefix);
         static bool isParitySegmentPrefix(const Name &prefix);
         
         static PacketNumber getPacketNumber(const Name &prefix);
@@ -158,10 +101,7 @@ namespace ndnrtc {
                                          Name &trimmedPrefix);
         
         static bool trimmedLookupPrefix(const Name& prefix, Name& lookupPrefix);
-        
-        static int getStreamIdFromPrefix(const Name& prefix,
-                                         const ParamsStruct& params);
-        
+                
     private:
     };
 }

@@ -13,38 +13,23 @@
 
 #include "ndnrtc-common.h"
 #include "face-wrapper.h"
+#include "ndnrtc-object.h"
+#include "error-codes.h"
 
 namespace ndnrtc {
-    class SessionInfo;
     
     namespace new_api {
         class InterestQueue;
         
-        class IServiceChannelCallback
-        {
-        };
+        typedef IRemoteSessionObserver IServiceChannelListenerCallback;
         
-        class IServiceChannelListenerCallback : public IServiceChannelCallback
-        {
-        public:
-            virtual void
-            onProducerParametersUpdated(const ParamsStruct& newVideoParams,
-                                        const ParamsStruct& newAudioParams) = 0;
-            
-            virtual void
-            onUpdateFailedWithTimeout() = 0;
-            
-            virtual void
-            onUpdateFailedWithError(const char* errMsg) = 0;
-        };
-        
-        class IServiceChannelPublisherCallback : public IServiceChannelCallback
+        class IServiceChannelPublisherCallback
         {
         public:
             virtual void
             onSessionInfoBroadcastFailed() = 0;
             
-            virtual boost::shared_ptr<SessionInfo>
+            virtual boost::shared_ptr<new_api::SessionInfo>
             onPublishSessionInfo() = 0;
         };
         
@@ -52,7 +37,7 @@ namespace ndnrtc {
          * Service channel can be used for fetching any non-media information
          * from network or directly from producer
          */
-        class ServiceChannel : public ndnlog::new_api::ILoggingObject
+        class ServiceChannel :  public NdnRtcComponent
         {
         public:
             static unsigned int DefaultUpdateIntervalMs;
@@ -64,7 +49,7 @@ namespace ndnrtc {
             ServiceChannel(IServiceChannelListenerCallback* callback,
                            boost::shared_ptr<FaceProcessor> faceProcessor,
                            unsigned int updateIntervalMs = DefaultUpdateIntervalMs);
-            virtual ~ServiceChannel(){}
+            virtual ~ServiceChannel(){ callback_ = NULL; }
             
             /**
              * Registers a prefix for publishing producer's session info. 
@@ -79,16 +64,19 @@ namespace ndnrtc {
              * for signing session info data
              * @see onPublishSessionInfo call
              */
-            void
+            int
             startSessionInfoBroadcast(const std::string& sessionInfoPrefix,
                                       const boost::shared_ptr<KeyChain> keyChain,
                                       const Name& signingCertificateName);
+            
+            int
+            stopSessionInfoBroadcast();
             
             /**
              * Starts monitoring changes in producer's session
              */
             void
-            startMonitor(const std::string& sessionInfoPrefix);
+            startMonitor(const std::string& sessionPrefix);
             
             /**
              * Stops monitoring changes in producer's session
@@ -96,21 +84,18 @@ namespace ndnrtc {
             void
             stopMonitor();
             
-            void
-            setLogger(ndnlog::new_api::Logger* logger);
-            
         private:
             bool isMonitoring_;
             unsigned int updateCounter_, updateIntervalMs_,
             sessionInfoFreshnessMs_ = 1000;
-            IServiceChannelCallback *callback_;
+            uint64_t registeredPrefixId_, pendingInterestId_;
+            void *serviceChannelCallback_;
             
             Name signingCertificateName_;
             boost::shared_ptr<KeyChain> ndnKeyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
-            boost::shared_ptr<InterestQueue> interestQueue_;
             
-            ParamsStruct videoParams_, audioParams_;
+            boost::shared_ptr<new_api::SessionInfo> sessionInfo_;
             Name sessionInfoPrefix_;
             
             webrtc::ThreadWrapper &monitoringThread_;
@@ -136,20 +121,13 @@ namespace ndnrtc {
             void
             requestSessionInfo();
             
-            void
-            updateParametersFromInfo(const SessionInfo& sessionInfo);
-            
-            bool
-            hasUpdates(const ParamsStruct& oldParams,
-                       const ParamsStruct& newParams);
-            
             IServiceChannelListenerCallback*
             getCallbackAsListener()
-            { return (IServiceChannelListenerCallback*)callback_; }
+            { return (IServiceChannelListenerCallback*)serviceChannelCallback_; }
             
             IServiceChannelPublisherCallback*
             getCallbackAsPublisher()
-            { return (IServiceChannelPublisherCallback*)callback_; }
+            { return (IServiceChannelPublisherCallback*)serviceChannelCallback_; }
             
             // NDN-CPP callbacks
             void

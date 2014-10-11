@@ -12,7 +12,7 @@
 #include "rtt-estimation.h"
 #include "ndnrtc-namespace.h"
 #include "av-sync.h"
-
+#if 0
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog::new_api;
@@ -174,63 +174,4 @@ ConsumerChannel::setLogger(ndnlog::new_api::Logger *logger)
 
 //******************************************************************************
 #pragma mark - private
-void
-ConsumerChannel::onInterest(const shared_ptr<const Name>& prefix,
-                        const shared_ptr<const Interest>& interest,
-                        ndn::Transport& transport)
-{
-    // empty
-}
-
-void
-ConsumerChannel::onRegisterFailed(const shared_ptr<const Name>&
-                              prefix)
-{
-    // empty
-}
-
-void
-ConsumerChannel::onProducerParametersUpdated(const ParamsStruct& newVideoParams,
-                            const ParamsStruct& newAudioParams)
-{
-    std::stringstream ss;
-    
-    ss << "vstreams " << newVideoParams.nStreams << " ";
-    for (int i = 0; i < newVideoParams.nStreams; i++)
-        ss << "[" << i
-        << "| " << newVideoParams.streamsParams[i].codecFrameRate
-        << " " << newVideoParams.streamsParams[i].gop
-        << " " << newVideoParams.streamsParams[i].startBitrate
-        << " " << newVideoParams.streamsParams[i].encodeWidth
-        << " " << newVideoParams.streamsParams[i].encodeHeight
-        << "] ";
-
-    ss << "astreams " << newAudioParams.nStreams;
-    for (int i = 0; i < newAudioParams.nStreams; i++)
-        ss << "[" << i
-        << "| " << newAudioParams.streamsParams[i].codecFrameRate
-        << " " << newAudioParams.streamsParams[i].startBitrate
-        << "] ";
-    
-    LogInfoC << "producer parameters updated: " << ss.str() << std::endl;
-    
-}
-
-void
-ConsumerChannel::onUpdateFailedWithTimeout()
-{
-#ifdef SERVICE_CHANNEL
-    LogWarnC << "service update failed with timeout" << std::endl;
-    serviceChannel_->startMonitor(*NdnRtcNamespace::getSessionInfoPrefix(params_));
 #endif
-}
-
-void
-ConsumerChannel::onUpdateFailedWithError(const char* errMsg)
-{
-#ifdef SERVICE_CHANNEL
-    LogErrorC << "service update failed with message: "
-    << std::string(errMsg) << std::endl;
-#endif
-}
-

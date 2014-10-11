@@ -19,7 +19,7 @@
 
 namespace ndnrtc
 {
-    class Segmentizer : public NdnRtcObject
+    class Segmentizer : public new_api::NdnRtcComponent
     {
     public:
         typedef std::vector<ndnrtc::new_api::FrameBuffer::Slot::Segment> SegmentList;

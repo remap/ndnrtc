@@ -16,7 +16,6 @@
 #include "jitter-timing.h"
 #include "consumer.h"
 #include "frame-buffer.h"
-#include "video-sender.h"
 
 namespace ndnrtc{
     namespace new_api {
@@ -28,7 +27,7 @@ namespace ndnrtc{
          * routine each time playout timer fires. Necessary information is 
          * provided as arguments to the method.
          */
-        class Playout : public NdnRtcObject
+        class Playout : public NdnRtcComponent
         {
         public:
             Playout(const Consumer* consumer);

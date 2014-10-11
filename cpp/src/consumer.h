@@ -20,6 +20,7 @@
 #include "buffer-estimator.h"
 #include "statistics.h"
 #include "renderer.h"
+#include "video-renderer.h"
 #include "rate-control.h"
 #include "service-channel.h"
 
@@ -95,7 +96,17 @@ namespace ndnrtc {
             onRebufferingOccurred() = 0;
             
             virtual void
+            onInitialDataArrived() = 0;
+            
+            virtual void
             onStateChanged(const int& oldState, const int& newState) = 0;
+        };
+        
+        class ConsumerSettings {
+        public:
+            std::string userPrefix_;
+            MediaStreamParams streamParams_;
+            boost::shared_ptr<FaceProcessor> faceProcessor_;
         };
         
         /**
@@ -118,7 +129,7 @@ namespace ndnrtc {
          * - ChaseEstimator - estimates when the pipeliner should switch to the 
          *      Fetch mode
          */
-        class Consumer : public NdnRtcObject,
+        class Consumer : public NdnRtcComponent,
                          public IPacketAssembler,
                          public IPipelinerCallback,
                          public boost::enable_shared_from_this<Consumer>
@@ -131,13 +142,12 @@ namespace ndnrtc {
                 StateFetching = 1
             } State;
             
-            Consumer(const ParamsStruct& params,
-                     const boost::shared_ptr<InterestQueue>& interestQueue,
-                     const boost::shared_ptr<RttEstimation>& rttEstimation = boost::shared_ptr<RttEstimation>());
+            Consumer(const GeneralParams& generalParams,
+                     const GeneralConsumerParams& consumerParams);
             virtual ~Consumer();
             
             virtual int
-            init();
+            init(const ConsumerSettings& settings);
             
             virtual int
             start();
@@ -146,14 +156,51 @@ namespace ndnrtc {
             stop();
             
             void
+            registerObserver(IConsumerObserver* const observer)
+            {
+                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                observer_ = observer;
+            }
+
+            void
+            unregisterObserver()
+            {
+                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                observer_ = NULL;
+            }
+            
+            void
             triggerRebuffering();
             
             State
             getState() const;
             
-            virtual ParamsStruct
+            virtual ConsumerSettings
+            getSettings() const
+            { return settings_; }
+            
+            virtual GeneralConsumerParams
             getParameters() const
-            { return params_; }
+            { return consumerParams_; }
+            
+            virtual GeneralParams
+            getGeneralParameters() const
+            { return generalParams_; }
+            
+            std::string
+            getPrefix() const
+            { return streamPrefix_; }
+            
+            std::string
+            getCurrentThreadName() const
+            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]->threadName_; }
+            
+            MediaThreadParams*
+            getCurrentThreadParameters() const
+            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]; }
+            
+            void
+            switchThread(const std::string& threadName);
             
             virtual boost::shared_ptr<FrameBuffer>
             getFrameBuffer() const
@@ -217,6 +264,10 @@ namespace ndnrtc {
             setDescription(const std::string& desc);
             
             virtual void
+            setRenderer(IExternalRenderer* const renderer)
+            { renderer_.reset(new ExternalVideoRendererAdaptor(renderer)); }
+            
+            virtual void
             onBufferingEnded();
             
             virtual void
@@ -224,6 +275,9 @@ namespace ndnrtc {
             
             virtual void
             onStateChanged(const int& oldState, const int& newState);
+            
+            virtual void
+            onInitialDataArrived();
             
             /**
              * Dumps statistics for the current producer into the log
@@ -250,8 +304,16 @@ namespace ndnrtc {
             void
             dumpStat(ReceiverChannelPerformance stat) const;
             
+            bool
+            getIsConsuming() { return isConsuming_; }
+            
         protected:
             bool isConsuming_;
+            GeneralParams generalParams_;
+            GeneralConsumerParams consumerParams_;
+            ConsumerSettings settings_;
+            std::string streamPrefix_;
+            unsigned int currentThreadIdx_ = 0;
             
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             boost::shared_ptr<Pipeliner> pipeliner_;
@@ -264,6 +326,9 @@ namespace ndnrtc {
             boost::shared_ptr<AudioVideoSynchronizer> avSync_;
             boost::shared_ptr<RateControl> rateControl_;
             boost::shared_ptr<ServiceChannel> serviceChannel_;
+            
+            webrtc::CriticalSectionWrapper& observerCritSec_;
+            IConsumerObserver *observer_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
             // statistics

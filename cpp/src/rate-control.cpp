@@ -10,11 +10,11 @@
 
 #include "rate-control.h"
 #include "realtime-arc.h"
-#include "video-sender.h"
 #include "consumer.h"
 #include "pipeliner.h"
 #include "rtt-estimation.h"
 
+#if 0
 using namespace boost;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -57,7 +57,7 @@ RateControl::start()
     LogDebugC
     << "arc thread started" << std::endl;
     
-    consumer_->getPipeliner()->switchToStream(streamId_);
+//    consumer_->getPipeliner()->switchToStream(streamId_);
     
     unsigned int tid;
     arcWatchingThread_.Start(tid);
@@ -125,13 +125,13 @@ RateControl::checkArcStatus()
     
     arcModule_->getInterestRate(timestamp, interestRate, streamId);
     
-    if (streamId_ != streamId && streamId < consumer_->getParameters().nStreams)
+    if (streamId_ != streamId && streamId < consumer_->getSettings().streamParams_.mediaThreads_.size())
     {
         LogTrace("arc.log") << "switching "
         << streamId_ << " -> " << streamId << std::endl;
         
         streamId_ = streamId;
-        consumer_->getPipeliner()->switchToStream(streamId_);
+//        consumer_->getPipeliner()->switchToStream(streamId_);
     }
     
     LogTrace("arc.log") << STAT_DIV
@@ -143,3 +143,4 @@ RateControl::checkArcStatus()
     
     return true;
 }
+#endif
