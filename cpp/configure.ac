@@ -384,7 +384,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lwebrtc_utility \
    -lwebrtc_video_coding \
    -lwebrtc_vp8 \
-   -lwebrtc_base \
+   -lwebrtc_common \
    -lwebrtc \   
    -lyuv"])
 
