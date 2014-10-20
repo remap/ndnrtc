@@ -27,6 +27,7 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
+#define LIB_LOG "ndnrtc.log"
 static shared_ptr<FaceProcessor> LibraryFace;
 
 typedef std::map<std::string, shared_ptr<Session>> SessionMap;
@@ -112,6 +113,8 @@ static void destructor(){
 //******************************************************************************
 static void signalHandler(int signal, siginfo_t *siginfo, void *context)
 {
+    LogInfo(LIB_LOG) << "Received signal " << signal << std::endl;
+    
     if (signal == SIGPIPE)
     {
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_SIGPIPE,
@@ -123,6 +126,8 @@ static void signalHandler(int signal, siginfo_t *siginfo, void *context)
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
 {
+    LogInfo(LIB_LOG) << "NDN-RTC " << PACKAGE_VERSION << std::endl;
+    
     struct sigaction act;
     
     memset (&act, '\0', sizeof(act));
@@ -130,32 +135,56 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
     act.sa_flags = SA_SIGINFO;
     
     sigaction(SIGPIPE, &act, NULL);
-//    fclose(stderr);    
+//    fclose(stderr);
+    
+    LogInfo(LIB_LOG) << "Voice engine initialization..." << std::endl;
     NdnRtcUtils::sharedVoiceEngine();
+    
+    LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
+    
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
+    LogInfo(LIB_LOG) << "NDN-RTC Destructor" << std::endl;
+    LogInfo(LIB_LOG) << "Stopping active sessions..." << std::endl;
+    
     for (SessionMap::iterator it = ActiveSessions.begin();
          it != ActiveSessions.end(); it++)
     {
+        LogInfo(LIB_LOG) << "Stopping " << it->second->getPrefix() << std::endl;
         it->second->stop();
     }
     ActiveSessions.clear();
     
+    LogInfo(LIB_LOG) << "Active sessions cleared" << std::endl;
+    LogInfo(LIB_LOG) << "Stopping remote session observers..." << std::endl;
+    
     for (SessionObserverMap::iterator it = RemoteObservers.begin();
          it != RemoteObservers.end(); it++)
     {
+        LogInfo(LIB_LOG) << "Stopping " << it->second->getPrefix() << std::endl;
         it->second->stopMonitor();
     }
     RemoteObservers.clear();
     
+    LogInfo(LIB_LOG) << "Active remote session observers stopped" << std::endl;
+    LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
+    
     LibraryFace->stopProcessing();
+    
+    LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
+    LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
+    
     NdnRtcUtils::releaseVoiceEngine();
+    
+    LogInfo(LIB_LOG) << "Bye" << std::endl;
 }
 //******************************************************************************
 #pragma mark - public
 void NdnRtcLibrary::setObserver(INdnRtcLibraryObserver *observer)
 {
+    LogInfo(LIB_LOG) << "Set library observer " << observer << std::endl;
+    
     LibraryInternalObserver.setLibraryObserver(observer);
 }
 
@@ -164,14 +193,19 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         ISessionObserver *sessionObserver)
 {
+    LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
+    
     std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
     SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
     
     if (it == ActiveSessions.end())
     {
+        LogInfo(LIB_LOG) << "Creating new session instance..." << std::endl;
+        
         shared_ptr<Session> session(new Session());
         session->setSessionObserver(sessionObserver);
         session->registerCallback(&LibraryInternalObserver);
+        
         if (RESULT_NOT_FAIL(session->init(username, generalParams)))
         {
             ActiveSessions[session->getPrefix()] = session;
@@ -179,27 +213,41 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
             sessionPrefix = session->getPrefix();
         }
         else
+        {
+            LogError(LIB_LOG) << "Session initialization failed" << std::endl;
             return "";
+        }
     }
     else
     {
+        LogInfo(LIB_LOG) << "Old session instance re-used..." << std::endl;
+        
         it->second->init(username, generalParams);
         it->second->start();
     }
+    
+    LogInfo(LIB_LOG) << "Session started (prefix " << sessionPrefix
+    << ")" << std::endl;
     
     return sessionPrefix;
 }
 
 int NdnRtcLibrary::stopSession(const std::string& userPrefix)
 {
+    LogInfo(LIB_LOG) << "Stopping session for prefix " << userPrefix << std::endl;
+    
     int res = RESULT_ERR;
     
     SessionMap::iterator it = ActiveSessions.find(userPrefix);
     if (it != ActiveSessions.end())
     {
         res = it->second->stop();
-        ActiveSessions.erase(it);        
+        ActiveSessions.erase(it);
+        
+        LogInfo(LIB_LOG) << "Session was succesfully stopped" << std::endl;
     }
+    else
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
     
     return res;
 }
@@ -210,10 +258,18 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         IRemoteSessionObserver* sessionObserver)
 {
+    LogInfo(LIB_LOG) << "Setting remote session observer " << sessionObserver
+    << " for username " << username
+    << " and prefix " << prefix << "..." << std::endl;
+    
     if (!LibraryFace.get())
     {
+        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
+        
         LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
         LibraryFace->startProcessing();
+        
+        LogInfo(LIB_LOG) << "Library face created succesfully" << std::endl;
     }
     
     shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, LibraryFace));
@@ -223,23 +279,37 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
     
     RemoteObservers[sessionPrefix] = remoteSessionChannel;
     
+    LogInfo(LIB_LOG) << "Remote observer started for session prefix " << sessionPrefix << std::endl;
+    
     return sessionPrefix;
 }
 
 int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& sessionPrefix)
 {
+    LogInfo(LIB_LOG) << "Removing remote session observer for prefix "
+    << sessionPrefix << "..." << std::endl;
+    
     SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
     
     if (it == RemoteObservers.end())
+    {
+        LogError(LIB_LOG) << "Observer was not found" << std::endl;
         return RESULT_ERR;
+    }
     
     it->second->stopMonitor();
     RemoteObservers.erase(it);
     
+    LogInfo(LIB_LOG) << "Observer stopped" << std::endl;
+    
     if (RemoteObservers.size() == 0)
     {
+        LogInfo(LIB_LOG) << "No more observers. Shutting down library Face..." << std::endl;
+        
         LibraryFace->stopProcessing();
         LibraryFace.reset();
+        
+        LogInfo(LIB_LOG) << "Library Face shut down" << std::endl;
     }
     
     return RESULT_OK;
@@ -249,13 +319,26 @@ std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
                                           const new_api::MediaStreamParams& params,
                                           IExternalCapturer** const capturer)
 {
+    LogInfo(LIB_LOG) << "Adding new stream for session "
+    << sessionPrefix << "..." << std::endl;
+    
     SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
     
     if (it == ActiveSessions.end())
+    {
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
         return "";
+    }
     
     std::string streamPrefix = "";
-    it->second->addLocalStream(params, capturer, streamPrefix);
+
+    if (RESULT_NOT_FAIL(it->second->addLocalStream(params, capturer, streamPrefix)))
+    {
+        LogInfo(LIB_LOG) << "Succesfully added stream with prefix "
+        << streamPrefix << std::endl;
+    }
+    else
+        LogError(LIB_LOG) << "Failed to add new stream" << std::endl;
     
     return streamPrefix;
 }
@@ -263,12 +346,19 @@ std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
 int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
                                      const std::string& streamPrefix)
 {
+    LogInfo(LIB_LOG) << "Removing stream " << streamPrefix
+    << " from session " << sessionPrefix << "..." << std::endl;
+    
     SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
     
     if (it == ActiveSessions.end())
+    {
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
         return RESULT_ERR;
+    }
 
     it->second->removeLocalStream(streamPrefix);
+    LogInfo(LIB_LOG) << "Stream was removed succesfully" << std::endl;
     
     return RESULT_OK;
 }
@@ -280,10 +370,17 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
                                const new_api::GeneralConsumerParams& consumerParams,
                                IExternalRenderer* const renderer)
 {
+    LogInfo(LIB_LOG) << "Adding remote stream for session "
+    << remoteSessionPrefix << "..." << std::endl;
+    
     if (!LibraryFace.get())
     {
+        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
+        
         LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
         LibraryFace->startProcessing();
+        
+        LogInfo(LIB_LOG) << "Library Face created" << std::endl;
     }
     
     std::string streamPrefix = *NdnRtcNamespace::getStreamPrefix(remoteSessionPrefix, params.streamName_);
@@ -293,6 +390,8 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     if (it != ActiveStreamsConsumer.end() &&
         it->second->getIsConsuming())
     {
+        LogWarn(LIB_LOG) << "Stream was already added" << std::endl;
+        
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_ALREADY_EXISTS,
                                                 "stream is already running");
         return "";
@@ -314,7 +413,10 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     remoteStreamConsumer->registerCallback(&LibraryInternalObserver);
     
     if (RESULT_FAIL(remoteStreamConsumer->init(settings)))
+    {
+        LogError(LIB_LOG) << "Failed to initialize fetching from stream" << std::endl;
         return "";
+    }
     
     remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
                                                NdnRtcUtils::toString("consumer-%s.log", params.streamName_.c_str())));
@@ -331,14 +433,20 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
 int
 NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
+    LogInfo(LIB_LOG) << "Removing stream " << streamPrefix << "..." << std::endl;
+    
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
     if (it == ActiveStreamsConsumer.end())
+    {
+        LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
         return RESULT_ERR;
+    }
     
     it->second->stop();
 //    ActiveStreamsConsumer.erase(it);
     
+    LogInfo(LIB_LOG) << "Stream removed succesfully" << std::endl;
     return RESULT_OK;
 }
 
@@ -346,12 +454,19 @@ int
 NdnRtcLibrary::setStreamObserver(const std::string& streamPrefix,
                                  IConsumerObserver* const observer)
 {
+    LogInfo(LIB_LOG) << "Setting stream observer " << observer
+    << " for stream " << streamPrefix << "..." << std::endl;
+    
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
     if (it == ActiveStreamsConsumer.end())
+    {
+        LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
         return RESULT_ERR;
+    }
 
     it->second->registerObserver(observer);
+    LogInfo(LIB_LOG) << "Added observer succesfully" << std::endl;
     
     return RESULT_OK;
 }
@@ -359,12 +474,19 @@ NdnRtcLibrary::setStreamObserver(const std::string& streamPrefix,
 int
 NdnRtcLibrary::removeStreamObserver(const std::string& streamPrefix)
 {
+    LogInfo(LIB_LOG) << "Removing stream observer for prefix " << streamPrefix
+    << "..." << std::endl;
+    
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
     if (it == ActiveStreamsConsumer.end())
+    {
+        LogError(LIB_LOG) << "Couldn't find requested stream" << std::endl;
         return RESULT_ERR;
+    }
     
     it->second->unregisterObserver();
+    LogInfo(LIB_LOG) << "Stream observer was removed succesfully" << std::endl;
     
     return RESULT_OK;
 }
@@ -388,12 +510,19 @@ int
 NdnRtcLibrary::switchThread(const std::string& streamPrefix,
                             const std::string& threadName)
 {
+    LogInfo(LIB_LOG) << "Switching to thread " << threadName
+    << " for stream " << streamPrefix << std::endl;
+    
     ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
     
     if (it == ActiveStreamsConsumer.end())
+    {
+        LogError(LIB_LOG) << "Couldn't find requested stream" << std::endl;
         return RESULT_ERR;
+    }
     
     it->second->switchThread(threadName);
+    LogInfo(LIB_LOG) << "Thread switched succesfully" << std::endl;
     
     return RESULT_OK;
 }

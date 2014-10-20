@@ -84,6 +84,10 @@ namespace ndnrtc {
             void
             stopMonitor();
             
+            std::string
+            getPrefix()
+            { return sessionInfoPrefix_.toUri(); }
+            
         private:
             bool isMonitoring_;
             unsigned int updateCounter_, updateIntervalMs_,
