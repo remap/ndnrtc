@@ -67,6 +67,10 @@ new_api::Logger::log(const NdnLogType& logType,
                      const std::string& locationFile,
                      const int& locationLine)
 {
+    
+    if (logType < (NdnLogType)logLevel_)
+        return NilLogger::get();
+    
     lockStreamExclusively();
     
     if (isWritingLogEntry_ &&

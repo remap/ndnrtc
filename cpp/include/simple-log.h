@@ -203,6 +203,7 @@ namespace ndnlog {
              * Overload for std::endl explicitly
              * Closes current logging entry
              */
+            virtual
             Logger& operator<< (endl_type endl)
             {
                 if (isWritingLogEntry_ &&
@@ -361,7 +362,7 @@ namespace ndnlog {
             std::string description_ = "<no description>";
         };
         
-        class NilLogger {
+        class NilLogger : public Logger {
         private:
             using endl_type = std::ostream&(std::ostream&);
             
