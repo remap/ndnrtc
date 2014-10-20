@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT([NDN-RTC], [0.9.alpha6], [peter@remap.ucla.edu], [ndnrtc], [https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC], [1.0.1], [peter@remap.ucla.edu], [ndnrtc], [https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -363,6 +363,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lprotobuf_lite \
    -lPCM16B \
    -lrtp_rtcp \
+   -lrtc_base_approved \
    -lrbe_components \
    -lsystem_wrappers \
    -lvideo_capture_module \
@@ -372,6 +373,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lvideo_processing_sse2 \
    -lvideo_quality_analysis \
    -lvideo_render_module \
+   -lvideo_render_module_internal_impl \
    -lvoice_engine \
    -lvpx \
    -lvpx_asm_offsets_vp8 \
@@ -384,6 +386,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lwebrtc_utility \
    -lwebrtc_video_coding \
    -lwebrtc_vp8 \
+   -lwebrtc_vp9 \
    -lwebrtc_common \
    -lwebrtc \   
    -lyuv"])
