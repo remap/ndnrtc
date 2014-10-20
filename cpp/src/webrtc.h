@@ -31,7 +31,6 @@
 
 // codecs
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
-#include <modules/video_coding/codecs/vp9/include/vp9.h>
 #include <modules/video_coding/main/interface/video_coding_defines.h>
 #include <modules/video_coding/main/source/codec_database.h>
 #include <modules/video_coding/main/source/internal_defines.h>

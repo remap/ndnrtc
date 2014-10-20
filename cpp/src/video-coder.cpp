@@ -50,25 +50,25 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
                                     webrtc::VideoCodec &codec)
 {
     // setup default params first
-    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP9_IDX, &codec))
+    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
     {
-        strncpy(codec.plName, "VP9", 31);
+        strncpy(codec.plName, "VP8", 31);
         codec.maxFramerate = 30;
         codec.startBitrate  = 300;
         codec.maxBitrate = 4000;
         codec.width = 640;
         codec.height = 480;
-        codec.plType = VCM_VP9_PAYLOAD_TYPE;
+        codec.plType = VCM_VP8_PAYLOAD_TYPE;
         codec.qpMax = 56;
-        codec.codecType = webrtc::kVideoCodecVP9;
-        codec.codecSpecific.VP9.denoisingOn = true;
-        codec.codecSpecific.VP9.complexity = webrtc::kComplexityNormal;
-        codec.codecSpecific.VP9.numberOfTemporalLayers = 1;
-        codec.codecSpecific.VP9.keyFrameInterval = 1000;
+        codec.codecType = webrtc::kVideoCodecVP8;
+        codec.codecSpecific.VP8.denoisingOn = true;
+        codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
+        codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
+        codec.codecSpecific.VP8.keyFrameInterval = 1000;
     }
     
     // dropping frames
-    codec.codecSpecific.VP9.frameDroppingOn = settings.dropFramesOn_;
+    codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
     
     // customize parameteres if possible
     int res = RESULT_OK;
@@ -109,7 +109,7 @@ int VideoCoder::init(const VideoCoderParams& settings)
         notifyError(-1, "some codec parameters were out of bounds. \
                     actual parameters: %s", plotCodec(codec_));
     
-    encoder_.reset(VP9Encoder::Create());
+    encoder_.reset(VP8Encoder::Create());
     
     keyFrameType_.clear();
     keyFrameType_.push_back(webrtc::kKeyFrame);
