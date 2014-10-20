@@ -37,7 +37,7 @@ int NdnVideoDecoder::init(const VideoCoderParams& settings)
     
     if (RESULT_GOOD(res))
     {
-        decoder_.reset(VP8Decoder::Create());
+        decoder_.reset(VP9Decoder::Create());
         
         if (!decoder_.get())
             return notifyError(RESULT_ERR, "can't create VP8 decoder");
