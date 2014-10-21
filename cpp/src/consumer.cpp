@@ -142,6 +142,11 @@ Consumer::switchThread(const std::string& threadName)
             
             LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
             
+            NdnRtcUtils::releaseDataRateMeter(dataMeterId_);
+            NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeterId_);
+            dataMeterId_ = NdnRtcUtils::setupDataRateMeter(5);
+            segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
+
             pipeliner_->threadSwitched();
             
             if (observer_)
@@ -353,7 +358,7 @@ void Consumer::onData(const shared_ptr<const Interest>& interest,
     LogTraceC << "data " << data->getName() << std::endl;
     nDataReceived_++;
     
-    NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getContent().size());
+    NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
     
     frameBuffer_->newData(*data);
