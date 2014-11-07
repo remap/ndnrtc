@@ -168,11 +168,14 @@ NdnRtcLibrary::~NdnRtcLibrary()
     RemoteObservers.clear();
     
     LogInfo(LIB_LOG) << "Active remote session observers stopped" << std::endl;
-    LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
     
-    LibraryFace->stopProcessing();
+    if (LibraryFace.get())
+    {
+        LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
+        LibraryFace->stopProcessing();
+        LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
+    }
     
-    LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
     
     NdnRtcUtils::releaseVoiceEngine();
