@@ -84,6 +84,9 @@ namespace ndnrtc
             
             virtual void
             addNewMediaThread(const MediaThreadParams* params) = 0;
+            
+            void
+            onMediaThreadRegistrationFailed(std::string threadName);
         };
         
         //**********************************************************************

@@ -144,7 +144,7 @@ int MediaThread::publishPacket(PacketData &packetData,
                 faceProcessor_->getTransport()->send(*encodedData);
                 
                 LogTraceC
-                << "published " << segmentName << " "
+                << "sent " << segmentName << " "
                 << ndnData.getContent().size() << " bytes" << std::endl;
             }
             
@@ -208,8 +208,8 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
 
 void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)
 {
-    if (hasCallback())
-        getCallback()->onMediaThreadRegistrationFailed(settings_->threadParams_->threadName_);
+//    if (hasCallback())
+//        getCallback()->onMediaThreadRegistrationFailed(settings_->threadParams_->threadName_);
     
     notifyError(-1, "registration on %s has failed", prefix->toUri().c_str());
 }
@@ -269,7 +269,7 @@ int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
         LogTraceC
         << "pit hit [" << prefix.toUri() << "] -> ["
         << pendingInterest->getName().toUri() << " (size "
-        << pit_.size() << std::endl;
+        << pit_.size()  << ")]" << std::endl;
         
         return 1;
     }
