@@ -385,17 +385,6 @@ PacketData(dataLength, rawData)
     isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
 }
 
-NdnAudioData::NdnAudioData(AudioPacket &packet)
-{
-    initialize(packet);
-}
-
-NdnAudioData::NdnAudioData(AudioPacket &packet, PacketMetadata &metadata)
-{
-    initialize(packet);
-    ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
-}
-
 //******************************************************************************
 #pragma mark - public
 PacketData::PacketMetadata
@@ -414,17 +403,6 @@ NdnAudioData::setMetadata(PacketMetadata &metadata)
 {
     if (isValid())
         ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
-}
-
-int
-NdnAudioData::getAudioPacket(AudioPacket &audioPacket)
-{
-    if (!isValid())
-        return RESULT_ERR;
-    
-    audioPacket = packet_;
-    
-    return RESULT_OK;
 }
 
 bool
@@ -456,29 +434,44 @@ NdnAudioData::metadataFromRaw(unsigned int length, const unsigned char *data)
     return PacketData::BadMetadata;
 }
 
-//******************************************************************************
-#pragma mark - private
 void
-NdnAudioData::initialize(AudioPacket &packet)
+NdnAudioData::addPacket(NdnAudioData::AudioPacket& packet)
 {
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    
-    length_ = packet.length_+headerSize;
     isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(length_);
+    isValid_ = true;
+
+    if (!length_)
+    {
+        length_ = sizeof(AudioDataHeader)+packet.getLength();
+        data_ = (unsigned char*)malloc(length_);
+        ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
+        ((AudioDataHeader*)(&data_[0]))->nPackets_ = 1;
+        ((AudioDataHeader*)(&data_[0]))->metadata_.packetRate_ = 0.;
+        ((AudioDataHeader*)(&data_[0]))->metadata_.timestamp_ = 0;
+        ((AudioDataHeader*)(&data_[0]))->metadata_.unixTimestamp_ = 0;
+        ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
+    }
+    else
+    {
+        ((AudioDataHeader*)(&data_[0]))->nPackets_++;
+        length_ += packet.getLength();
+        data_ = (unsigned char*)realloc((void*)data_, length_);
+    }
     
-    memcpy(data_+headerSize, packet.data_, packet.length_);
+    unsigned char* dataPtr = data_+length_-packet.getLength();
+    ((AudioPacket*)dataPtr)->isRTCP_ = packet.isRTCP_;
+    ((AudioPacket*)dataPtr)->length_ = packet.length_;
     
-    ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-    ((AudioDataHeader*)(&data_[0]))->isRTCP_ = packet.isRTCP_;
-    ((AudioDataHeader*)(&data_[0]))->metadata_.packetRate_ = 0.;
-    ((AudioDataHeader*)(&data_[0]))->metadata_.timestamp_ = 0;
-    ((AudioDataHeader*)(&data_[0]))->metadata_.unixTimestamp_ = 0;
-    ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
+    dataPtr += sizeof(((AudioPacket*)dataPtr)->isRTCP_)+sizeof(((AudioPacket*)dataPtr)->length_);
+    memcpy(dataPtr, packet.data_, packet.length_);
     
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
+    AudioPacket packetCopy = packet;
+    packetCopy.data_ = dataPtr;
+    packets_.push_back(packetCopy);
 }
 
+//******************************************************************************
+#pragma mark - private
 int
 NdnAudioData::initFromRawData(unsigned int dataLength,
                               const unsigned char *rawData)
@@ -490,9 +483,18 @@ NdnAudioData::initFromRawData(unsigned int dataLength,
         header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
         return RESULT_ERR;
     
-    packet_.isRTCP_ = header.isRTCP_;
-    packet_.length_ = dataLength-headerSize;
-    packet_.data_ = (unsigned char*)rawData+headerSize;
+    unsigned char* dataPtr = (unsigned char*)(data_+headerSize);
+    for (int i = 0; i < header.nPackets_; i++)
+    {
+        AudioPacket packet;
+        packet.isRTCP_ = ((AudioPacket*)dataPtr)->isRTCP_;
+        packet.length_ = ((AudioPacket*)dataPtr)->length_;
+        dataPtr += sizeof(((AudioPacket*)dataPtr)->isRTCP_) + sizeof(((AudioPacket*)dataPtr)->length_);
+        packet.data_ = dataPtr;
+        
+        packets_.push_back(packet);
+        dataPtr += packet.length_;
+    }
     
     return RESULT_OK;
 }
