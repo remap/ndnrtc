@@ -44,24 +44,31 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
 {
     bool res = false;
     
-    NdnAudioData::AudioPacket audioSample;
-    
     if (!data)
         stat_.nSkippedIncomplete_++;
     
     if (data && frameConsumer_)
     {
-        ((NdnAudioData*)data)->getAudioPacket(audioSample);
+        // unpack individual audio samples from audio data packet`
+        std::vector<NdnAudioData::AudioPacket> audioSamples =
+        ((NdnAudioData*)data)->getPackets();
         
-        if (audioSample.isRTCP_)
+        std::vector<NdnAudioData::AudioPacket>::iterator it;
+        
+        for (it = audioSamples.begin(); it != audioSamples.end(); ++it)
         {
-            ((AudioRenderer*)frameConsumer_)->onDeliverRtcpFrame(audioSample.length_,
-                                                                       audioSample.data_);
-        }
-        else
-        {
-            ((AudioRenderer*)frameConsumer_)->onDeliverRtpFrame(audioSample.length_,
-                                                                      audioSample.data_);
+            NdnAudioData::AudioPacket audioSample = *it;
+            
+            if (audioSample.isRTCP_)
+            {
+                ((AudioRenderer*)frameConsumer_)->onDeliverRtcpFrame(audioSample.length_,
+                                                                     audioSample.data_);
+            }
+            else
+            {
+                ((AudioRenderer*)frameConsumer_)->onDeliverRtpFrame(audioSample.length_,
+                                                                    audioSample.data_);
+            }
         }
         
         // update stat
