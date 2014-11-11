@@ -46,7 +46,7 @@ namespace ndnrtc {
     class NetworkData
     {
     public:
-        NetworkData() {}
+        NetworkData():length_(0), data_(NULL) {}
         NetworkData(unsigned int dataLength, const unsigned char* rawData)
         {
             length_ = dataLength;
@@ -282,19 +282,19 @@ namespace ndnrtc {
             bool isRTCP_;
             unsigned int length_;
             unsigned char *data_;
-        } AudioPacket;
+            
+            unsigned int
+            getLength() { return sizeof(this->isRTCP_) +
+                            sizeof(this->length_) + length_; }
+            
+        } __attribute__((packed)) AudioPacket;
         
         NdnAudioData(unsigned int dataLength, const unsigned char* rawData);
-        NdnAudioData(AudioPacket &packet);
-        NdnAudioData(AudioPacket &packet, PacketMetadata &metadata);
         NdnAudioData(){}
         ~NdnAudioData(){}
         
         PacketDataType
         getType() { return TypeAudio; }
-        
-        int
-        getAudioPacket(AudioPacket &audioPacket);
         
         PacketMetadata
         getMetadata();
@@ -305,6 +305,24 @@ namespace ndnrtc {
         int
         initFromRawData(unsigned int dataLength, const unsigned char* rawData);
         
+        std::vector<AudioPacket>&
+        getPackets()
+        { return packets_; }
+        
+        void
+        clear()
+        {
+            packets_.clear();
+            length_ = 0;
+            delete data_;
+            data_ = NULL;
+            isDataCopied_ = false;
+            isValid_ = false;
+        }
+        
+        void
+        addPacket(AudioPacket& packet);
+        
         static bool
         isValidHeader(unsigned int length, const unsigned char* data);
         
@@ -314,15 +332,12 @@ namespace ndnrtc {
     private:
         struct AudioDataHeader {
             uint16_t        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-            bool                isRTCP_;
+            uint8_t             nPackets_;
             PacketMetadata      metadata_;
             uint16_t        bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
-        } __attribute__((packed));;
+        } __attribute__((packed));
         
-        AudioPacket packet_;
-        
-        void
-        initialize(AudioPacket &packet);
+        std::vector<AudioPacket> packets_;
         
         AudioDataHeader
         getHeader()

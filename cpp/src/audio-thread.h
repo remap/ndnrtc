@@ -65,6 +65,7 @@ namespace ndnrtc
             unsigned int rtpPacketNo_, rtcpPacketNo_;
             Name rtpPacketPrefix_;
             Name rtcpPacketPrefix_;
+            NdnAudioData adata_;
             
             int publishRTPAudioPacket(unsigned int len, unsigned char *data);
             int publishRTCPAudioPacket(unsigned int len, unsigned char *data);

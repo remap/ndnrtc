@@ -86,6 +86,8 @@ InterestQueue::reset()
 {
     queueAccess_.AcquireLockExclusive();
     queue_ = PriorityQueue(IPriority::Comparator(true));
+    NdnRtcUtils::releaseFrequencyMeter(freqMeterId_);
+    freqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
     queueAccess_.ReleaseLockExclusive();
 
     LogDebugC << "interest queue flushed" << std::endl;

@@ -53,27 +53,38 @@ int AudioThread::publishPacket(PacketData &packetData,
 
 int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
-    // update packet rate meter
-    NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
-    
     NdnAudioData::AudioPacket packet = {false, len, data};
-    NdnAudioData adata(packet);
     
-    publishPacket(adata);
-    packetNo_++;
+    if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
+    {
+        // update packet rate meter
+        NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+        
+        // publish adata and flush
+        publishPacket(adata_);
+        adata_.clear();
+        packetNo_++;
+    }
+
+    adata_.addPacket(packet);
     
     return 0;
 }
 
 int AudioThread::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-    NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
-    
     NdnAudioData::AudioPacket packet = (NdnAudioData::AudioPacket){true, len, data};
-    NdnAudioData adata(packet);
     
-    publishPacket(adata);
-    packetNo_++;
+    if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
+    {
+        NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
+        // publish adata and flush
+        publishPacket(adata_);
+        adata_.clear();
+        packetNo_++;
+    }
+
+    adata_.addPacket(packet);
     
     return 0;
 }

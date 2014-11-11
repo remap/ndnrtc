@@ -79,6 +79,12 @@ MediaStream::getCommonThreadSettings(MediaThreadSettings* settings)
     settings->memoryCache_ = settings_.memoryCache_;
 }
 
+void
+MediaStream::onMediaThreadRegistrationFailed(std::string threadName)
+{
+    LogWarnC << "failed to register thread " << threadName << std::endl;
+}
+
 //******************************************************************************
 VideoStream::VideoStream():
 MediaStream(),
