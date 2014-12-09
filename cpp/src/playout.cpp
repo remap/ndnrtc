@@ -59,7 +59,6 @@ Playout::start()
 {
     jitterTiming_.flush();
     
-    startPacketNo_ = 0;
     isRunning_ = true;
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
@@ -155,6 +154,10 @@ Playout::processPlayout()
             {
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
                 stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
+                
+                // update last packet timestamp if any
+                if (data_->getMetadata().timestamp_ != -1)
+                    lastPacketTs_ = data_->getMetadata().timestamp_;
             }
             
             //******************************************************************
@@ -216,8 +219,6 @@ Playout::updatePlaybackAdjustment()
         playbackAdjustment_ += (realPlayback-inferredDelay_);
         inferredDelay_ = 0;
     }
-    
-    lastPacketTs_ = data_->getMetadata().timestamp_;
 }
 
 int
@@ -242,7 +243,7 @@ Playout::playbackDelayAdjustment(int playbackDelay)
         playbackAdjustment_ = 0;
     }
     
-//    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
+    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
     
     return adjustment;
 }
