@@ -311,8 +311,6 @@ ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
         requestNextKey(keyFrameSeqNo_);
         
         bufferEventsMask_ = BufferingEventsMask;
-        playbackStartFrameNo_ = deltaFrameSeqNo_;
-        consumer_->getPacketPlayout()->setStartPacketNo(deltaFrameSeqNo_);
         handleBuffering(event);
     }
     else if (bufferSize >= frameBuffer_->getTargetSize() &&

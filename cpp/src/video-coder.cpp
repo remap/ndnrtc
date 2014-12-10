@@ -135,14 +135,12 @@ int VideoCoder::init(const VideoCoderParams& settings)
 }
 //********************************************************************************
 #pragma mark - intefaces realization - EncodedImageCallback
-int32_t VideoCoder::Encoded(webrtc::EncodedImage& encodedImage,
-                               const webrtc::CodecSpecificInfo* codecSpecificInfo,
-                               const webrtc::RTPFragmentationHeader* fragmentation)
+int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
+                            const webrtc::CodecSpecificInfo* codecSpecificInfo,
+                            const webrtc::RTPFragmentationHeader* fragmentation)
 {
     counter_++;
     
-    encodedImage._timeStamp = NdnRtcUtils::millisecondTimestamp()/1000;
-    encodedImage.capture_time_ms_ = NdnRtcUtils::millisecondTimestamp();
     settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);

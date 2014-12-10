@@ -17159,6 +17159,13 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
   fi
 
 
+if [[ $OBJCXXFLAGS =~ .*gnu++11.* ]]; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: gnu++11 compiler flag provided" >&5
+$as_echo "$as_me: gnu++11 compiler flag provided" >&6;}
+else
+	OBJCXXFLAGS="$OBJCXXFLAGS -std=gnu++11"
+fi
+
 # Checks for library functions.
 for ac_header in stdlib.h
 do :
@@ -17701,7 +17708,6 @@ WEBRTCLIBS="-laudio_coding_module \
    -lvideo_render_module_internal_impl \
    -lvoice_engine \
    -lvpx \
-   -lvpx_asm_offsets_vp8 \
    -lvpx_intrinsics_mmx \
    -lvpx_intrinsics_sse2 \
    -lvpx_intrinsics_ssse3 \
