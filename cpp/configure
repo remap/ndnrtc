@@ -17666,6 +17666,7 @@ done
 
 
 WEBRTCLIBS="-laudio_coding_module \
+   -laudio_decoder_interface \
    -laudio_conference_mixer \
    -laudioproc_debug_proto \
    -laudio_device \

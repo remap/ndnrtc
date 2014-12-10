@@ -340,6 +340,7 @@ AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h syste
 	   ])])
 
 AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
+   -laudio_decoder_interface \
    -laudio_conference_mixer \
    -laudioproc_debug_proto \
    -laudio_device \
