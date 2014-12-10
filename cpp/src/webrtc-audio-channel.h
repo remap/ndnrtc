@@ -32,11 +32,11 @@ namespace ndnrtc {
             
             // webrtc::Transport interface
             virtual int
-            SendPacket(int channel, const void *data, int len)
+            SendPacket(int channel, const void *data, size_t len)
             { return len; }
             
             virtual int
-            SendRTCPPacket(int channel, const void *data, int len)
+            SendRTCPPacket(int channel, const void *data, size_t len)
             { return len; }
         };
     }

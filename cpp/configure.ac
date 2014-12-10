@@ -224,6 +224,12 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 AX_CXX_COMPILE_STDCXX_11([], optional)
 
+if [[[ $OBJCXXFLAGS =~ .*gnu++11.* ]]]; then
+	AC_MSG_NOTICE([gnu++11 compiler flag provided])	
+else
+	OBJCXXFLAGS="$OBJCXXFLAGS -std=gnu++11"
+fi
+
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
@@ -376,7 +382,6 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lvideo_render_module_internal_impl \
    -lvoice_engine \
    -lvpx \
-   -lvpx_asm_offsets_vp8 \
    -lvpx_intrinsics_mmx \
    -lvpx_intrinsics_sse2 \
    -lvpx_intrinsics_ssse3 \

@@ -275,16 +275,28 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
         LogInfo(LIB_LOG) << "Library face created succesfully" << std::endl;
     }
     
-    shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, LibraryFace));
-    
     std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
-    remoteSessionChannel->startMonitor(sessionPrefix);
+    SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
     
-    RemoteObservers[sessionPrefix] = remoteSessionChannel;
+    if (it == RemoteObservers.end())
+    {
+        shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, LibraryFace));
+        remoteSessionChannel->startMonitor(sessionPrefix);
+        
+        RemoteObservers[sessionPrefix] = remoteSessionChannel;
+        
+        LogInfo(LIB_LOG) << "Remote observer started for session prefix " << sessionPrefix << std::endl;
+        return sessionPrefix;
+    }
+    else
+    {
+        LogError(LIB_LOG) << "Observer already exists" << std::endl;
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_ALREADY_EXISTS,
+                                                NdnRtcUtils::toString("Observer %s:%s already exists",
+                                                                      prefix.c_str(), username.c_str()).c_str());
+    }
     
-    LogInfo(LIB_LOG) << "Remote observer started for session prefix " << sessionPrefix << std::endl;
-    
-    return sessionPrefix;
+    return "";
 }
 
 int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& sessionPrefix)

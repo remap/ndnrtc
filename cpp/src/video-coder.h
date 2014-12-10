@@ -46,7 +46,7 @@ namespace ndnrtc {
             int init(const VideoCoderParams& settings);
             
             // interface conformance - webrtc::EncodedImageCallback
-            int32_t Encoded(webrtc::EncodedImage& encodedImage,
+            int32_t Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
                             const webrtc::RTPFragmentationHeader* fragmentation = NULL);
             

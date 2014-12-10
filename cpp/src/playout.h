@@ -51,10 +51,6 @@ namespace ndnrtc{
             PlayoutStatistics
             getStatistics() { return stat_; };
             
-            void
-            setStartPacketNo(PacketNumber packetNo)
-            { startPacketNo_ = packetNo; }
-            
             bool
             isRunning()
             { return isRunning_; }
@@ -67,7 +63,6 @@ namespace ndnrtc{
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
             int playbackAdjustment_;
-            PacketNumber startPacketNo_;
             
             const Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
