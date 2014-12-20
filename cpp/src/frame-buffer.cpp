@@ -830,6 +830,7 @@ ndnrtc::new_api::FrameBuffer::Slot::dump()
     << "/" << nSegmentsParity_ << " "
     << getLifetime() << " "
     << getAssemblingTime() << " "
+    << assembledSize_ << " "
     << std::hex << this;
     
     return dump.str();
@@ -1048,6 +1049,7 @@ bufferEvent_(*EventWrapper::Create()),
 forcedRelease_(false),
 bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
 {
+    rttFilter_ = NdnRtcUtils::setupFilter(0.05);
 }
 
 ndnrtc::new_api::FrameBuffer::~FrameBuffer()
@@ -1282,6 +1284,21 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // track rtt value
 //                if (slot->getRecentSegment()->isOriginal())
+                if (slot->getNamespace() != Slot::Key)
+                    NdnRtcUtils::filterNewValue(rttFilter_,
+                                                slot->getRecentSegment()->getRoundTripDelayUsec());
+                    
+                LogTrace("waiting.log") << "\t"
+                << ((slot->getNamespace() == Slot::Key) ? "K" : "D") << "\t"
+                << slot->getSequentialNumber() << "\t"
+                << slot->getRecentSegment()->getNumber() << "\t"
+                << slot->getRecentSegment()->getRoundTripDelayUsec() << "\t"
+                << NdnRtcUtils::currentFilteredValue(rttFilter_) << "\t"
+                << getEstimatedBufferSize() - getPlayableBufferSize() << "\t"
+                << std::endl;
+                
+                ndnlog::new_api::Logger::getLogger("waiting.log").flush();
+                
                 if (slot->getRtxNum() == 0)
                 {
                     consumer_->getRttEstimation()->

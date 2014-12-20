@@ -1061,6 +1061,8 @@ namespace ndnrtc
             
             void
             dumpActiveSlots();
+            
+            int rttFilter_;
         };
     }
 }

@@ -311,19 +311,19 @@ ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
         requestNextKey(keyFrameSeqNo_);
         
         bufferEventsMask_ = BufferingEventsMask;
-        handleBuffering(event);
+//        handleBuffering(event);
     }
-    else if (bufferSize >= frameBuffer_->getTargetSize() &&
-             frameBuffer_->getFetchedSlotsNum() >= CHASER_CHECK_LVL*(double)frameBuffer_->getTotalSlotsNum())
+    else if (bufferSize >= frameBuffer_->getTargetSize())// &&
+//             frameBuffer_->getFetchedSlotsNum() >= CHASER_CHECK_LVL*(double)frameBuffer_->getTotalSlotsNum())
     {
-        int framesForRecycle = frameBuffer_->getTotalSlotsNum()*CHASER_CHUNK_LVL;
+        int framesForRecycle = 1;   //frameBuffer_->getTotalSlotsNum()*CHASER_CHUNK_LVL;
         frameBuffer_->recycleOldSlots(framesForRecycle);
         
         LogTraceC << "no stabilization after "
         << bufferSize << "ms has fetched. recycled "
         << framesForRecycle << " frames" << std::endl;
         
-        setChasePipelinerPaused(false);
+//        setChasePipelinerPaused(false);
     }
     
     if (bufferSize < frameBuffer_->getTargetSize() && isPipelinePaused_)
@@ -504,8 +504,8 @@ ndnrtc::new_api::Pipeliner::requestNextKey(PacketNumber& keyFrameNo)
     
     prefetchFrame(keyFramesPrefix_,
                   keyFrameNo++,
-                  ceil(NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_))-1,
-                  ceil(NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_))-1,
+                  ceil(NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_)),
+                  ceil(NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_)),
                   FrameBuffer::Slot::Key);
 }
 
@@ -515,8 +515,8 @@ ndnrtc::new_api::Pipeliner::requestNextDelta(PacketNumber& deltaFrameNo)
     stat_.nRequested_++;
     prefetchFrame(deltaFramesPrefix_,
                   deltaFrameNo++,
-                  ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_))-1,
-                  ceil(NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_))-1);
+                  ceil(NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_)),
+                  ceil(NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_)));
 }
 
 void
@@ -612,7 +612,7 @@ ndnrtc::new_api::Pipeliner::processPipeline()
     {
         assert(state_ == StateChasing);
         
-        prefetchFrame(deltaFramesPrefix_, deltaFrameSeqNo_++, 0, -1);
+        prefetchFrame(deltaFramesPrefix_, deltaFrameSeqNo_++, 1, 0);
         pipelineTimer_.StartTimer(false, pipelineIntervalMs_);
         pipelineTimer_.Wait(pipelineIntervalMs_);
         
@@ -677,28 +677,40 @@ ndnrtc::new_api::Pipeliner::getInterestLifetime(int64_t playbackDeadline,
 {
     int64_t interestLifetime = 0;
     
-    if (playbackDeadline <= 0)
-        playbackDeadline = consumer_->getParameters().interestLifetime_;
-    
-    if (rtx || nspc != FrameBuffer::Slot::Key)
-    {
-        int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
-        
-        if (halfBufferSize <= 0)
-            halfBufferSize = playbackDeadline;
-        
-        interestLifetime = std::min(playbackDeadline, halfBufferSize);
-    }
-    else
-    { // only key frames
-        int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
-        double gopInterval = ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_/frameBuffer_->getCurrentRate()*1000;
-
-#warning temporary solution!
-        interestLifetime = 300;//gopInterval-playbackBufSize;
-        
-        if (interestLifetime <= 0)
-            interestLifetime = gopInterval;
+    switch (state_) {
+        case StateChasing:
+        {
+            interestLifetime = consumer_->getParameters().interestLifetime_;
+        }
+            break;
+        case StateBuffering: // fall through
+        case StateFetching: // fall through
+        default:
+        {
+            if (playbackDeadline <= 0)
+                playbackDeadline = consumer_->getParameters().interestLifetime_;
+            
+            if (rtx || nspc != FrameBuffer::Slot::Key)
+            {
+                int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
+                
+                if (halfBufferSize <= 0)
+                    halfBufferSize = playbackDeadline;
+                
+                interestLifetime = std::min(playbackDeadline, halfBufferSize);
+            }
+            else
+            { // only key frames
+                int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
+                double gopInterval = ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_/frameBuffer_->getCurrentRate()*1000;
+                
+                interestLifetime = gopInterval-playbackBufSize;
+                
+                if (interestLifetime <= 0)
+                    interestLifetime = gopInterval;
+            }
+        }
+            break;
     }
     
     assert(interestLifetime > 0);
@@ -723,7 +735,7 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
     frameInterest->setInterestLifetimeMilliseconds(getInterestLifetime(playbackDeadline, nspc));
     expressRange(*frameInterest,
                  0,
-                 prefetchSize,
+                 prefetchSize-1,
                  playbackDeadline,
                  false);
     
@@ -731,7 +743,7 @@ ndnrtc::new_api::Pipeliner::prefetchFrame(const ndn::Name &basePrefix,
     {
         expressRange(*frameInterest,
                      0,
-                     parityPrefetchSize,
+                     parityPrefetchSize-1,
                      playbackDeadline,
                      true);
     }

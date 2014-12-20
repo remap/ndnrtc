@@ -139,7 +139,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             pushFrameFurther  = true;
         
         // check for valid data
-        pushFrameFurther &= (data_ != NULL);
+        pushFrameFurther &= (data != NULL);
         
         if (pushFrameFurther)
         {

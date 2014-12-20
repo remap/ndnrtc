@@ -181,7 +181,7 @@ Playout::processPlayout()
             << "packet" << STAT_DIV << sequencePacketNo << STAT_DIV
             << "lvl" << STAT_DIV << double(int(assembledLevel*10000))/100. << STAT_DIV
             << "valid" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
-            << "ts" << STAT_DIV << (data_?data_->getMetadata().timestamp_:0) << STAT_DIV
+            << "ts" << STAT_DIV << (noData ? 0 : data_->getMetadata().timestamp_) << STAT_DIV
             << "last ts" << STAT_DIV << lastPacketTs_ << STAT_DIV
             << "total" << STAT_DIV << playbackDelay+adjustment+avSync << STAT_DIV
             << "delay" << STAT_DIV << playbackDelay << STAT_DIV

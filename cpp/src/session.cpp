@@ -85,6 +85,7 @@ Session::stop()
     {
         LogInfoC << "session stopped" << std::endl;
         switchStatus(SessionOffline);
+        logger_->flush();
     }
     
     return RESULT_OK;
