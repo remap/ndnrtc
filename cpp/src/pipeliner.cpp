@@ -324,6 +324,7 @@ ndnrtc::new_api::Pipeliner::handleChasing(const FrameBuffer::Event& event)
         << framesForRecycle << " frames" << std::endl;
         
 //        setChasePipelinerPaused(false);
+        setChasePipelinerPaused(false);
     }
     
     if (bufferSize < frameBuffer_->getTargetSize() && isPipelinePaused_)
@@ -834,4 +835,76 @@ ndnrtc::new_api::Pipeliner::rebuffer()
     
     if (callback_)
         callback_->onRebufferingOccurred();
+}
+
+//******************************************************************************
+PipelinerWindow::PipelinerWindow():
+cs_(*CriticalSectionWrapper::CreateCriticalSection())
+{
+    
+}
+
+PipelinerWindow::~PipelinerWindow()
+{
+}
+
+void
+PipelinerWindow::init(unsigned int windowSize)
+{
+    dw_ = windowSize;
+    w_ = (int)windowSize;
+}
+
+void
+PipelinerWindow::dataArrived(PacketNumber packetNo)
+{
+    webrtc::CriticalSectionScoped scopedCs(&cs_);
+    
+    std::set<PacketNumber>::iterator it = framePool_.find(packetNo);
+    
+    if (it != framePool_.end())
+    {
+        w_++;
+        framePool_.erase(it);
+    }
+}
+
+bool
+PipelinerWindow::canAskForData(PacketNumber packetNo)
+{
+    webrtc::CriticalSectionScoped scopedCs(&cs_);
+    bool added = false;
+    
+    if (w_ > 0)
+    {
+        w_--;
+        framePool_.insert(packetNo);
+        lastAddedToPool_ = packetNo;
+        added = true;
+    }
+    
+    return added;
+}
+
+unsigned int
+PipelinerWindow::getDefaultWindowSize()
+{
+    return dw_;
+}
+
+int
+PipelinerWindow::getCurrentWindowSize()
+{
+    return w_;
+}
+
+void
+PipelinerWindow::changeWindow(int delta)
+{
+    if (dw_+delta > 0)
+    {
+        webrtc::CriticalSectionScoped scopedCs(&cs_);
+        dw_ += delta;
+        w_ += delta;
+    }
 }

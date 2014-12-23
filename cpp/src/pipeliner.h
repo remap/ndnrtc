@@ -19,6 +19,38 @@
 namespace ndnrtc {
     namespace new_api {
         
+        class PipelinerWindow : public NdnRtcComponent
+        {
+        public:
+            PipelinerWindow();
+            ~PipelinerWindow();
+            
+            void
+            init(unsigned int windowSize);
+            
+            void
+            dataArrived(PacketNumber packetNo);
+            
+            bool
+            canAskForData(PacketNumber packetNo);
+            
+            unsigned int
+            getDefaultWindowSize();
+            
+            int
+            getCurrentWindowSize();
+            
+            void
+            changeWindow(int delta);
+            
+        private:
+            unsigned int dw_;
+            int w_;
+            PacketNumber lastAddedToPool_;
+            webrtc::CriticalSectionWrapper& cs_;
+            std::set<PacketNumber> framePool_;
+        };
+        
         class Pipeliner : public NdnRtcComponent
         {
         public:

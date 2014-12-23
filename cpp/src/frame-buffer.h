@@ -984,8 +984,7 @@ namespace ndnrtc
             boost::shared_ptr<RateControl> rateControl_;
             
             boost::shared_ptr<Slot>
-            getSlot(const Name& prefix, bool remove = false,
-                    bool shouldMatch = true);
+            getSlot(const Name& prefix, bool remove = false);
             
             int
             setSlot(const Name& prefix, boost::shared_ptr<Slot>& slot);

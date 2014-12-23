@@ -1123,7 +1123,7 @@ ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
-    shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false, true);
+    shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false);
     
     // check if slot is already reserved
     if (!reservedSlot.get())
@@ -1170,7 +1170,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
     
     CriticalSectionScoped scopedCs_(&syncCs_);
     
-    shared_ptr<Slot> reservedSlot = getSlot(packetInterest.getName(), false, true);
+    shared_ptr<Slot> reservedSlot = getSlot(packetInterest.getName(), false);
     
     // check if slot is already reserved
     if (!reservedSlot.get())
@@ -1214,7 +1214,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
     if (isWaitingForRightmost_)
         fixRightmost(dataName);
     
-    shared_ptr<Slot> slot = getSlot(dataName, false, true);
+    shared_ptr<Slot> slot = getSlot(dataName, false);
     
     if (slot.get())
     {
@@ -1342,7 +1342,7 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
     CriticalSectionScoped scopedCs(&syncCs_);
     const Name& prefix = interest.getName();
     
-    shared_ptr<Slot> slot = getSlot(prefix, false, true);
+    shared_ptr<Slot> slot = getSlot(prefix, false);
     
     if (slot.get())
     {
@@ -1362,7 +1362,7 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
 {
-    shared_ptr<Slot> slot = getSlot(prefix, true/*<=for remove*/, true);
+    shared_ptr<Slot> slot = getSlot(prefix, true/*<=for remove*/);
     
     if (slot.get())
     {
@@ -1723,8 +1723,7 @@ ndnrtc::new_api::FrameBuffer::setLogger(ndnlog::new_api::Logger *logger)
 //******************************************************************************
 #pragma mark - private
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
-ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove,
-                                      bool shouldMatch)
+ndnrtc::new_api::FrameBuffer::getSlot(const Name& prefix, bool remove)
 {
     shared_ptr<Slot> slot;
     Name lookupPrefix;
