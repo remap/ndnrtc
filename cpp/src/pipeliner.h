@@ -40,7 +40,7 @@ namespace ndnrtc {
             int
             getCurrentWindowSize();
             
-            void
+            bool
             changeWindow(int delta);
             
         private:
@@ -51,14 +51,17 @@ namespace ndnrtc {
             std::set<PacketNumber> framePool_;
         };
         
-        class Pipeliner : public NdnRtcComponent
+        
+        class PipelinerBase : public NdnRtcComponent
         {
         public:
             typedef enum _State {
                 StateInactive = -1,
                 StateChasing = 0,
-                StateBuffering = 1,
-                StateFetching = 2
+                StateWaitInitial = 1,
+                StateAdjust = 2,
+                StateBuffering = 3,
+                StateFetching = 4
             } State;
             
             // average number of segments for delta and key frames
@@ -66,6 +69,121 @@ namespace ndnrtc {
             static const double SegmentsAvgNumKey;
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
+            
+            PipelinerBase(const boost::shared_ptr<Consumer>& consumer);
+            ~PipelinerBase();
+            
+            virtual int
+            start() = 0;
+            
+            virtual int
+            stop() = 0;
+            
+            void
+            setUseKeyNamespace(bool useKeyNamespace)
+            { useKeyNamespace_ = useKeyNamespace; }
+            
+            State
+            getState() const
+            { return state_; }
+            
+            void
+            registerCallback(IPipelinerCallback* callback)
+            { callback_ = callback; }
+            
+        protected:
+            State state_;
+            Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
+            
+            Consumer* consumer_;
+            ndnrtc::new_api::FrameBuffer* frameBuffer_;
+            BufferEstimator* bufferEstimator_;
+            IPacketAssembler* ndnAssembler_;
+            IPipelinerCallback* callback_;
+            
+            int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
+            int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
+            PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
+            
+            unsigned int streamId_; // currently fetched stream id
+            webrtc::CriticalSectionWrapper &streamSwitchSync_;
+            PipelinerStatistics stat_;
+            bool useKeyNamespace_;
+            
+            virtual int
+            initialize();
+            
+            
+            void
+            switchToState(State newState)
+            {
+                State oldState = state_;
+                state_ = newState;
+                
+                LogDebugC << "new state " << toString(state_) << std::endl;
+                
+                if (callback_)
+                    callback_->onStateChanged(oldState, state_);
+            }
+            
+            std::string
+            toString(State state)
+            {
+                switch (state) {
+                    case StateInactive:
+                        return "Inactive";
+                    case StateChasing:
+                        return "Chasing";
+                    case StateWaitInitial:
+                        return "WaitingInitial";
+                    case StateAdjust:
+                        return "Adjust";
+                    case StateBuffering:
+                        return "Buffering";
+                    case StateFetching:
+                        return "Fetching";
+                    default:
+                        return "Unknown";
+                }
+            }
+            
+            void
+            updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
+                                   int nSegments, bool isParity);
+            
+            void
+            requestNextKey(PacketNumber& keyFrameNo);
+            
+            void
+            requestNextDelta(PacketNumber& deltaFrameNo);
+            
+            void
+            prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
+                          int prefetchSize, int parityPrefetchSize,
+                          FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
+            
+            
+            void
+            expressRange(Interest& interest, SegmentNumber startNo,
+                         SegmentNumber endNo, int64_t priority, bool isParity);
+            
+            void
+            express(Interest& interest, int64_t priority);
+            
+            boost::shared_ptr<Interest>
+            getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
+            
+            int64_t
+            getInterestLifetime(int64_t playbackDeadline,
+                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
+                                bool rtx = false);            
+        };
+        
+        // chasing pipeliner
+        class Pipeliner : public PipelinerBase
+        {
+        public:
+            
             static const int64_t MaxInterruptionDelay;
             static const int64_t MinInterestLifetime;
             static const int MaxRetryNum; // maximum number of retires when
@@ -87,22 +205,10 @@ namespace ndnrtc {
             stop();
             
             void
-            triggerRebuffering();
-            
-            State
-            getState() const
-            { return state_; }
-            
-            void
-            setUseKeyNamespace(bool useKeyNamespace)
-            { useKeyNamespace_ = useKeyNamespace; }
-            
-            void
-            registerCallback(IPipelinerCallback* callback)
-            { callback_ = callback; }
-            
-            void
             threadSwitched();
+            
+            void
+            triggerRebuffering();
             
             PipelinerStatistics
             getStatistics();
@@ -130,15 +236,7 @@ namespace ndnrtc {
                                                 FrameBuffer::Event::Playout;
             
             
-            State state_;
-            Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
-            
-            Consumer* consumer_;
-            ndnrtc::new_api::FrameBuffer* frameBuffer_;
             ChaseEstimation* chaseEstimation_;
-            BufferEstimator* bufferEstimator_;
-            IPacketAssembler* ndnAssembler_;
-            IPipelinerCallback* callback_;
             
             webrtc::ThreadWrapper &mainThread_;
             
@@ -147,23 +245,12 @@ namespace ndnrtc {
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
             webrtc::EventWrapper &pipelinerPauseEvent_;
-            webrtc::CriticalSectionWrapper &streamSwitchSync_;
-            
-            int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
-            int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
-            
-            PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
-            PacketNumber playbackStartFrameNo_;
             
             // --
             unsigned int reconnectNum_;
             PacketNumber exclusionFilter_;
             unsigned int rtxFreqMeterId_;
             int bufferEventsMask_;
-            bool useKeyNamespace_;
-            unsigned int streamId_; // currently fetched stream id
-            // statistics
-            PipelinerStatistics stat_;
             
             static bool
             mainThreadRoutine(void *pipeliner){
@@ -204,28 +291,8 @@ namespace ndnrtc {
             initialize();
             
             boost::shared_ptr<Interest>
-            getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
-            
-            boost::shared_ptr<Interest>
             getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
                                     PacketNumber exclude = -1);
-            
-            void
-            updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
-                                   int nSegments, bool isParity);
-            
-            void
-            requestNextKey(PacketNumber& keyFrameNo);
-            
-            void
-            requestNextDelta(PacketNumber& deltaFrameNo);
-            
-            void
-            expressRange(Interest& interest, SegmentNumber startNo,
-                         SegmentNumber endNo, int64_t priority, bool isParity);
-            
-            void
-            express(Interest& interest, int64_t priority);
             
             void
             startChasePipeliner(PacketNumber startPacketNo,
@@ -241,16 +308,6 @@ namespace ndnrtc {
             requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
                            int64_t lifetime, int64_t priority,
                            bool wasTimedOut = false);
-            
-            int64_t
-            getInterestLifetime(int64_t playbackDeadline,
-                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
-                                bool rtx = false);
-            
-            void
-            prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
-                          int prefetchSize, int parityPrefetchSize,
-                          FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
             
             /**
              * Requests additional frames to keep buffer meet its target size
@@ -269,35 +326,44 @@ namespace ndnrtc {
             
             void
             rebuffer();
+        };
+        
+        // window-based pipeliner
+        class Pipeliner2 : public PipelinerBase
+        {
+        public:
+            Pipeliner2(const boost::shared_ptr<Consumer>& consumer);
+            ~Pipeliner2();
+            
+            int
+            start();
+            
+            int
+            stop();
+            
+            void onData(const boost::shared_ptr<const Interest>& interest,
+                        const boost::shared_ptr<Data>& data);
+            void onTimeout(const boost::shared_ptr<const Interest>& interest);
+            
+        private:
+            StabilityEstimator stabilityEstimator_;
+            RttChangeEstimator rttChangeEstimator_;
+            PipelinerWindow window_;
+            
+            uint64_t timestamp_;
+            bool waitForChange_, waitForStability_;
+            unsigned int failedWindow_;
+            unsigned int decreaseCount_;
+            
             
             void
-            switchToState(State newState)
-            {
-                State oldState = state_;
-                state_ = newState;
-                
-                LogDebugC << "new state " << toString(state_) << std::endl;
-                
-                if (callback_)
-                    callback_->onStateChanged(oldState, state_);
-            }
+            askForRightmostData();
             
-            std::string
-            toString(State state)
-            {
-                switch (state) {
-                    case StateInactive:
-                        return "Inactive";
-                    case StateChasing:
-                        return "Chasing";
-                    case StateBuffering:
-                        return "Buffering";
-                    case StateFetching:
-                        return "Fetching";
-                    default:
-                        return "Unknown";
-                }
-            }
+            void
+            askForInitialData(const boost::shared_ptr<Data>& data);
+            
+            void
+            askForSubsequentData(const boost::shared_ptr<Data>& data);
         };
     }
 }
