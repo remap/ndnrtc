@@ -54,6 +54,69 @@ namespace ndnrtc {
             bool stabilized_;
             double stabilizedValue_, lastCheckedValue_;
         };
+        
+        class BaseStabilityEstimator : public ndnlog::new_api::ILoggingObject
+        {
+        public:
+            BaseStabilityEstimator(unsigned int sampleSize,
+                                   unsigned int minStableOccurrences,
+                                   double threshold);
+            virtual ~BaseStabilityEstimator(){}
+            
+            double
+            getMeanValue();
+            
+            bool
+            isStable()
+            { return isStable_; }
+
+        protected:
+            unsigned int sampleSize_, minStableOccurrences_;
+            double threshold_;
+            unsigned int meanEstimatorId_;
+            unsigned int nStableOccurrences_;
+            bool isStable_;
+        };
+        
+        class StabilityEstimator : public BaseStabilityEstimator
+        {
+        public:
+            StabilityEstimator(unsigned int sampleSize,
+                               unsigned int minStableOccurrences,
+                               double threshold,
+                               double rateSimilarityLevel);
+            ~StabilityEstimator(){}
+            
+            void
+            trackInterArrival(double currentRate);
+            
+        private:
+            double rateSimilarityLevel_;
+            uint64_t lastTimestamp_;
+        };
+        
+        class RttChangeEstimator : public BaseStabilityEstimator
+        {
+        public:
+            RttChangeEstimator(unsigned int sampleSize,
+                               unsigned int minStableOccurrences,
+                               double threshold);
+            ~RttChangeEstimator(){}
+            
+            void
+            newRttValue(double rtt);
+            
+            bool
+            hasChange();
+            
+            void
+            flush();
+            
+        private:
+            unsigned int nChanges_;
+            unsigned int nMinorConsecutiveChanges_;
+            unsigned int lastCheckedChangeNumber_;
+        };
     }
 }
 

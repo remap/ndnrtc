@@ -141,3 +141,131 @@ ChaseEstimation::reset(bool resetStartTime)
     arrivalDelayEstimatorId_ = NdnRtcUtils::setupMeanEstimator(sampleSize_);
     inclineEstimator_ = NdnRtcUtils::setupInclineEstimator(InclineEstimatorSample);
 }
+
+//******************************************************************************
+//******************************************************************************
+BaseStabilityEstimator::BaseStabilityEstimator(unsigned int sampleSize,
+                                               unsigned int minStableOccurrences,
+                                               double threshold):
+sampleSize_(sampleSize),
+minStableOccurrences_(minStableOccurrences),
+threshold_(threshold),
+meanEstimatorId_(NdnRtcUtils::setupMeanEstimator(sampleSize_)),
+nStableOccurrences_(0),
+isStable_(false)
+{
+}
+
+double
+BaseStabilityEstimator::getMeanValue()
+{
+    return NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+}
+
+//******************************************************************************
+StabilityEstimator::StabilityEstimator(unsigned int sampleSize,
+                                       unsigned int minStableOccurrences,
+                                       double threshold,
+                                       double rateSimilarityLevel):
+BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold),
+rateSimilarityLevel_(rateSimilarityLevel)
+{
+}
+
+void
+StabilityEstimator::trackInterArrival(double currentRate)
+{
+    if (lastTimestamp_ != 0)
+    {
+        unsigned int delta = NdnRtcUtils::millisecondTimestamp() - lastTimestamp_;
+        
+        NdnRtcUtils::meanEstimatorNewValue(meanEstimatorId_, (double)delta);
+        
+        double mean = NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+        
+        if (mean != 0)
+        {
+            double deviationPercentage = NdnRtcUtils::currentDeviationEstimation(meanEstimatorId_)/mean;
+            double targetDelay = 1000./currentRate;
+
+            if (deviationPercentage <= threshold_ &&
+                fabs(mean-targetDelay)/targetDelay <= 1. - rateSimilarityLevel_)
+                nStableOccurrences_++;
+            else
+                nStableOccurrences_ = 0;
+            
+            isStable_ = (nStableOccurrences_ >= minStableOccurrences_);
+        }
+        
+    }
+    
+    lastTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+}
+
+//******************************************************************************
+RttChangeEstimator::RttChangeEstimator(unsigned int sampleSize,
+                   unsigned int minStableOccurrences,
+                   double threshold):
+BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold)
+{
+}
+
+void
+RttChangeEstimator::newRttValue(double rtt)
+{
+    NdnRtcUtils::meanEstimatorNewValue(meanEstimatorId_, rtt);
+    double mean = NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+    
+    if (mean != 0)
+    {
+        double deviationPercentage = NdnRtcUtils::currentDeviationEstimation(meanEstimatorId_)/mean;
+        
+        if (deviationPercentage <= threshold_)
+            nStableOccurrences_++;
+        else
+        {
+            isStable_ = false;
+            nChanges_ = 0;
+            nMinorConsecutiveChanges_ = 0;
+            nStableOccurrences_ = 0;
+        }
+        
+        isStable_ = (nStableOccurrences_ >= minStableOccurrences_);
+        
+        if (isStable_)
+        {
+            double changePercentage = fabs(rtt-mean)/mean;
+            if (changePercentage >= 0.08)
+            {
+                if (changePercentage <= 0.2)
+                    nMinorConsecutiveChanges_++;
+                else
+                    nChanges_++;
+            }
+            else
+                nMinorConsecutiveChanges_ = 0;
+        }
+    }
+}
+
+bool
+RttChangeEstimator::hasChange()
+{
+    bool result = false;
+    
+    if (nChanges_ >= lastCheckedChangeNumber_)
+        result = true;
+    
+    lastCheckedChangeNumber_ = nChanges_;
+    return result;
+}
+
+void
+RttChangeEstimator::flush()
+{
+    isStable_ = false;
+    nStableOccurrences_ = 0;
+    nChanges_ = 0;
+    nMinorConsecutiveChanges_ = 0;
+    lastCheckedChangeNumber_ = 0;
+}
