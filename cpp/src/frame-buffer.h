@@ -751,13 +751,8 @@ namespace ndnrtc
             
             /**
              * Appends data to the slot
-             * @return returns state of the slot after operation:
-             *  - StateFree slot stayed unaffected (was not reserved or not found)
-             *  - StateAssembling slot is in assembling mode - waiting for more segments
-             *  - StateReady slot is assembled and ready for decoding
-             *  - StateLocked slot is locked and was not affected
              */
-            Slot::State
+            Event
             newData(const Data& data);
             
             void

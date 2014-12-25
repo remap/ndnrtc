@@ -1205,10 +1205,12 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
     return Slot::StateFree;
 }
 
-ndnrtc::new_api::FrameBuffer::Slot::State
+ndnrtc::new_api::FrameBuffer::Event
 ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 {
     CriticalSectionScoped scopedCs(&syncCs_);
+    Event event;
+    event.type_ = Event::Error;
     const Name& dataName = data.getName();
     
     if (isWaitingForRightmost_)
@@ -1243,7 +1245,11 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // check for 1st segment
                 if (oldState == Slot::StateNew)
+                {
+                    event.type_ = Event::FirstSegment;
+                    event.slot_ = slot;
                     addBufferEvent(Event::FirstSegment, slot);
+                }
                 
                 // check for ready event
                 if (newState == Slot::StateReady)
@@ -1264,6 +1270,8 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                             stat_.nRescuedKey_++;
                     }
                     
+                    event.type_ = Event::Ready;
+                    event.slot_ = slot;
                     addBufferEvent(Event::Ready, slot);
                     
 #if RECORD
@@ -1284,20 +1292,20 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // track rtt value
 //                if (slot->getRecentSegment()->isOriginal())
-                if (slot->getNamespace() != Slot::Key)
-                    NdnRtcUtils::filterNewValue(rttFilter_,
-                                                slot->getRecentSegment()->getRoundTripDelayUsec());
-                    
-                LogTrace("waiting.log") << "\t"
-                << ((slot->getNamespace() == Slot::Key) ? "K" : "D") << "\t"
-                << slot->getSequentialNumber() << "\t"
-                << slot->getRecentSegment()->getNumber() << "\t"
-                << slot->getRecentSegment()->getRoundTripDelayUsec() << "\t"
-                << NdnRtcUtils::currentFilteredValue(rttFilter_) << "\t"
-                << getEstimatedBufferSize() - getPlayableBufferSize() << "\t"
-                << std::endl;
-                
-                ndnlog::new_api::Logger::getLogger("waiting.log").flush();
+//                if (slot->getNamespace() != Slot::Key)
+//                    NdnRtcUtils::filterNewValue(rttFilter_,
+//                                                slot->getRecentSegment()->getRoundTripDelayUsec());
+//                    
+//                LogTrace("waiting.log") << "\t"
+//                << ((slot->getNamespace() == Slot::Key) ? "K" : "D") << "\t"
+//                << slot->getSequentialNumber() << "\t"
+//                << slot->getRecentSegment()->getNumber() << "\t"
+//                << slot->getRecentSegment()->getRoundTripDelayUsec() << "\t"
+//                << NdnRtcUtils::currentFilteredValue(rttFilter_) << "\t"
+//                << getEstimatedBufferSize() - getPlayableBufferSize() << "\t"
+//                << std::endl;
+//                
+//                ndnlog::new_api::Logger::getLogger("waiting.log").flush();
                 
                 if (slot->getRtxNum() == 0)
                 {
@@ -1320,7 +1328,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     rateControl_->dataReceived(data, slot->getRtxNum());
 #endif
                 
-                return newState;
+                return event;
             }
         }
         else
@@ -1333,7 +1341,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
     << "no reservation for " << data.getName()
     << " state " << FrameBuffer::stateToString(state_) << std::endl;
 
-    return Slot::StateFree;
+    return event;
 }
 
 void
