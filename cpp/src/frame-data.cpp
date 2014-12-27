@@ -579,6 +579,10 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
             threadDescription.bitrate_ = threadParams->coderParams_.startBitrate_;
             threadDescription.width_ = threadParams->coderParams_.encodeWidth_;
             threadDescription.height_ = threadParams->coderParams_.encodeHeight_;
+            threadDescription.deltaAvgSegNum_ = threadParams->deltaAvgSegNum_;
+            threadDescription.deltaAvgParitySegNum_ = threadParams->deltaAvgParitySegNum_;
+            threadDescription.keyAvgSegNum_ = threadParams->keyAvgSegNum_;
+            threadDescription.keyAvgParitySegNum_ = threadParams->keyAvgParitySegNum_;
             memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
             strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
             
@@ -670,7 +674,10 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
             threadParams->coderParams_.maxBitrate_ = 0;
             threadParams->coderParams_.encodeWidth_ = threadDescription.width_;
             threadParams->coderParams_.encodeHeight_ = threadDescription.height_;
-            
+            threadParams->deltaAvgSegNum_ = threadDescription.deltaAvgSegNum_;
+            threadParams->deltaAvgParitySegNum_ = threadDescription.deltaAvgParitySegNum_;
+            threadParams->keyAvgSegNum_ = threadDescription.keyAvgSegNum_;
+            threadParams->keyAvgParitySegNum_ = threadDescription.keyAvgParitySegNum_;
             params->mediaThreads_.push_back(threadParams);
             
             threadIdx += sizeof(struct _VideoThreadDescription);

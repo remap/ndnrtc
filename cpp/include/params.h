@@ -122,7 +122,9 @@ namespace ndnrtc
         class VideoThreadParams : public MediaThreadParams {
         public:
             VideoCoderParams coderParams_;
-            
+            double deltaAvgSegNum_, deltaAvgParitySegNum_;
+            double keyAvgSegNum_, keyAvgParitySegNum_;
+
             void write(std::ostream& os) const
             {
                 MediaThreadParams::write(os);
