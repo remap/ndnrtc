@@ -75,7 +75,13 @@ Consumer::init(const ConsumerSettings& settings)
 #warning error handling!
     chaseEstimation_->setLogger(logger_);
     
+#ifdef USE_WINDOW_PIPELINER
+    pipeliner_.reset(new Pipeliner2(shared_from_this()));
+#else
     pipeliner_.reset(new Pipeliner(shared_from_this()));
+#endif
+    
+    pipeliner_->initialize();
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
@@ -350,6 +356,15 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << std::endl;
 }
 
+IPacketAssembler*
+Consumer::getPacketAssembler()
+{
+#ifdef USE_WINDOW_PIPELINER
+    return (Pipeliner2*)pipeliner_.get();
+#else
+    return this;
+#endif
+}
 //******************************************************************************
 #pragma mark - private
 void Consumer::onData(const shared_ptr<const Interest>& interest,

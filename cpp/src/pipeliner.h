@@ -74,6 +74,9 @@ namespace ndnrtc {
             ~PipelinerBase();
             
             virtual int
+            initialize();
+            
+            virtual int
             start() = 0;
             
             virtual int
@@ -90,6 +93,15 @@ namespace ndnrtc {
             void
             registerCallback(IPipelinerCallback* callback)
             { callback_ = callback; }
+            
+            virtual void
+            triggerRebuffering();
+            
+            virtual PipelinerStatistics
+            getStatistics();
+            
+            void
+            threadSwitched();
             
         protected:
             State state_;
@@ -109,10 +121,6 @@ namespace ndnrtc {
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
             PipelinerStatistics stat_;
             bool useKeyNamespace_;
-            
-            virtual int
-            initialize();
-            
             
             void
             switchToState(State newState)
@@ -176,7 +184,10 @@ namespace ndnrtc {
             int64_t
             getInterestLifetime(int64_t playbackDeadline,
                                 FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
-                                bool rtx = false);            
+                                bool rtx = false);
+            
+            virtual void
+            rebuffer() = 0;
         };
         
         // chasing pipeliner
@@ -203,12 +214,6 @@ namespace ndnrtc {
             
             int
             stop();
-            
-            void
-            threadSwitched();
-            
-            void
-            triggerRebuffering();
             
             PipelinerStatistics
             getStatistics();
@@ -329,7 +334,7 @@ namespace ndnrtc {
         };
         
         // window-based pipeliner
-        class Pipeliner2 : public PipelinerBase
+        class Pipeliner2 : public PipelinerBase, public IPacketAssembler
         {
         public:
             Pipeliner2(const boost::shared_ptr<Consumer>& consumer);
@@ -340,10 +345,6 @@ namespace ndnrtc {
             
             int
             stop();
-            
-            void onData(const boost::shared_ptr<const Interest>& interest,
-                        const boost::shared_ptr<Data>& data);
-            void onTimeout(const boost::shared_ptr<const Interest>& interest);
             
         private:
             StabilityEstimator stabilityEstimator_;
@@ -364,6 +365,21 @@ namespace ndnrtc {
             
             void
             askForSubsequentData(const boost::shared_ptr<Data>& data);
+            
+            void
+            rebuffer();
+            
+            OnData
+            getOnDataHandler()
+            { return bind(&Pipeliner2::onData, this, _1, _2); }
+            
+            OnTimeout
+            getOnTimeoutHandler()
+            { return bind(&Pipeliner2::onTimeout, this, _1); }
+            
+            void onData(const boost::shared_ptr<const Interest>& interest,
+                        const boost::shared_ptr<Data>& data);
+            void onTimeout(const boost::shared_ptr<const Interest>& interest);
         };
     }
 }

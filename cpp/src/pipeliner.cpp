@@ -49,7 +49,6 @@ streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
 frameBuffer_(consumer_->getFrameBuffer().get())
 {
     switchToState(StateInactive);
-    initialize();
 }
 
 ndnrtc::new_api::PipelinerBase::~PipelinerBase()
@@ -59,6 +58,8 @@ ndnrtc::new_api::PipelinerBase::~PipelinerBase()
 int
 ndnrtc::new_api::PipelinerBase::initialize()
 {
+    ndnAssembler_ = consumer_->getPacketAssembler();
+    
     std::string
     threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
     
@@ -73,6 +74,47 @@ ndnrtc::new_api::PipelinerBase::initialize()
     keyFramesPrefix_ = Name(keyPrefixString.c_str());
     
     return RESULT_OK;
+}
+
+PipelinerStatistics
+PipelinerBase::getStatistics()
+{
+    stat_.avgSegNum_ = NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_);
+    stat_.avgSegNumKey_ = NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_);
+    stat_.avgSegNumParity_ = NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_);
+    stat_.avgSegNumParityKey_ = NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_);
+    
+    return stat_;
+}
+
+void
+ndnrtc::new_api::PipelinerBase::triggerRebuffering()
+{
+    rebuffer();
+}
+
+void
+ndnrtc::new_api::PipelinerBase::threadSwitched()
+{
+    CriticalSectionScoped scopedCs(&streamSwitchSync_);
+    
+    LogTraceC << "thread switched. rebuffer " << std::endl;
+    
+    std::string
+    threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
+    
+    std::string
+    deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
+    
+    std::string
+    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
+    
+    threadPrefix_ = Name(threadPrefixString.c_str());
+    deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
+    keyFramesPrefix_ = Name(keyPrefixString.c_str());
+    
+    // for now, just rebuffer
+    rebuffer();
 }
 
 #pragma mark - protected
@@ -266,7 +308,6 @@ pipelinerPauseEvent_(*EventWrapper::Create()),
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 exclusionFilter_(-1)
 {
-    initialize();
 }
 
 ndnrtc::new_api::Pipeliner::~Pipeliner()
@@ -310,45 +351,10 @@ ndnrtc::new_api::Pipeliner::stop()
     return RESULT_OK;
 }
 
-void
-ndnrtc::new_api::Pipeliner::triggerRebuffering()
-{
-    rebuffer();
-}
-
-void
-ndnrtc::new_api::Pipeliner::threadSwitched()
-{
-    CriticalSectionScoped scopedCs(&streamSwitchSync_);
-
-    LogTraceC << "thread switched. rebuffer " << std::endl;
-    
-    std::string
-    threadPrefixString = NdnRtcNamespace::getThreadPrefix(consumer_->getPrefix(), consumer_->getCurrentThreadName());
-    
-    std::string
-    deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
-    
-    std::string
-    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
-    
-    threadPrefix_ = Name(threadPrefixString.c_str());
-    deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
-    keyFramesPrefix_ = Name(keyPrefixString.c_str());
-
-    // for now, just rebuffer
-    rebuffer();
-//    keyFrameSeqNo_ += 1;
-//    deltaFrameSeqNo_ += ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_;
-}
-
 PipelinerStatistics
 ndnrtc::new_api::Pipeliner::getStatistics()
 {
-    stat_.avgSegNum_ = NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_);
-    stat_.avgSegNumKey_ = NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_);
-    stat_.avgSegNumParity_ = NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_);
-    stat_.avgSegNumParityKey_ = NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_);
+    PipelinerBase::getStatistics();
     stat_.rtxFreq_ = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
     
     return stat_;
@@ -637,7 +643,6 @@ ndnrtc::new_api::Pipeliner::initialize()
     
     chaseEstimation_ = consumer_->getChaseEstimation().get();
     bufferEstimator_ = consumer_->getBufferEstimator().get();
-    ndnAssembler_ = consumer_->getPacketAssembler();
     
     return RESULT_OK;
 }
@@ -1036,8 +1041,8 @@ Pipeliner2::askForRightmostData()
     
     consumer_->getInterestQueue()->enqueueInterest(rightmostKeyInterest,
                                                    Priority::fromAbsolutePriority(0),
-                                                   bind(&Pipeliner2::onData, this, _1, _2),
-                                                   bind(&Pipeliner2::onTimeout, this, _1));
+                                                   ndnAssembler_->getOnDataHandler(),
+                                                   ndnAssembler_->getOnTimeoutHandler());
 }
 
 void
@@ -1179,4 +1184,10 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         LogTraceC << "window size " << window_.getCurrentWindowSize();
         requestNextDelta(deltaFrameSeqNo_);
     }
+}
+
+void
+Pipeliner2::rebuffer()
+{
+#warning implement rebuffering here...
 }
