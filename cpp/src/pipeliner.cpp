@@ -30,19 +30,27 @@ const int Pipeliner::MaxRetryNum = 3;
 const int Pipeliner::ChaserRateCoefficient = 4;
 const int Pipeliner::FullBufferRecycle = 1;
 
+const PipelinerBase::FrameSegmentsInfo PipelinerBase::DefaultSegmentsInfo = {
+    PipelinerBase::SegmentsAvgNumDelta,
+    PipelinerBase::ParitySegmentsAvgNumDelta,
+    PipelinerBase::SegmentsAvgNumKey,
+    PipelinerBase::ParitySegmentsAvgNumKey
+};
+
 #define CHASER_CHUNK_LVL 0.4
 #define CHASER_CHECK_LVL (1-CHASER_CHUNK_LVL)
 
 //******************************************************************************
 //******************************************************************************
 #pragma mark - public
-ndnrtc::new_api::PipelinerBase::PipelinerBase(const boost::shared_ptr<Consumer>& consumer):
+ndnrtc::new_api::PipelinerBase::PipelinerBase(const boost::shared_ptr<Consumer>& consumer,
+                                              const FrameSegmentsInfo& frameSegmentsInfo):
 state_(StateInactive),
 consumer_(consumer.get()),
-deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta)),
-keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey)),
-deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta)),
-keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey)),
+deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgSegNum_)),
+keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgSegNum_)),
+deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgParitySegNum_)),
+keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgParitySegNum_)),
 useKeyNamespace_(true),
 streamId_(0),
 streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
@@ -296,8 +304,9 @@ ndnrtc::new_api::PipelinerBase::getInterestLifetime(int64_t playbackDeadline,
 //******************************************************************************
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer):
-PipelinerBase(consumer),
+ndnrtc::new_api::Pipeliner::Pipeliner(const shared_ptr<Consumer> &consumer,
+                                      const FrameSegmentsInfo& frameSegmentsInfo):
+PipelinerBase(consumer, frameSegmentsInfo),
 mainThread_(*ThreadWrapper::CreateThread(Pipeliner::mainThreadRoutine, this, kHighPriority, "pipeliner-main")),
 isPipelining_(false),
 isPipelinePaused_(false),
@@ -947,8 +956,9 @@ PipelinerWindow::changeWindow(int delta)
 
 //******************************************************************************
 //******************************************************************************
-Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer):
-PipelinerBase(consumer),
+Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
+                       const FrameSegmentsInfo& frameSegmentsInfo):
+PipelinerBase(consumer, frameSegmentsInfo),
 stabilityEstimator_(4, 4, 0.08, 0.7),
 rttChangeEstimator_(4, 3, 0.1)
 {

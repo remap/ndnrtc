@@ -64,13 +64,21 @@ namespace ndnrtc {
                 StateFetching = 4
             } State;
             
+            typedef struct _FrameSegmentsInfo {
+                double deltaAvgSegNum_, deltaAvgParitySegNum_;
+                double keyAvgSegNum_, keyAvgParitySegNum_;
+            } FrameSegmentsInfo;
+            
+            static const FrameSegmentsInfo DefaultSegmentsInfo;
+            
             // average number of segments for delta and key frames
             static const double SegmentsAvgNumDelta;
             static const double SegmentsAvgNumKey;
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
             
-            PipelinerBase(const boost::shared_ptr<Consumer>& consumer);
+            PipelinerBase(const boost::shared_ptr<Consumer>& consumer,
+                          const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~PipelinerBase();
             
             virtual int
@@ -206,7 +214,8 @@ namespace ndnrtc {
                                                 // the buffer became full during
                                                 // chasing stage
             
-            Pipeliner(const boost::shared_ptr<Consumer>& consumer);
+            Pipeliner(const boost::shared_ptr<Consumer>& consumer,
+                      const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner();
             
             int
@@ -337,7 +346,8 @@ namespace ndnrtc {
         class Pipeliner2 : public PipelinerBase, public IPacketAssembler
         {
         public:
-            Pipeliner2(const boost::shared_ptr<Consumer>& consumer);
+            Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
+                       const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner2();
             
             int
