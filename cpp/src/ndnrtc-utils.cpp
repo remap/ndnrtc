@@ -65,6 +65,7 @@ typedef struct _SlidingAverage {
     int nValues_;
     double accumulatedSum_;
     double currentAverage_;
+    double currentDeviation_;
     double* sample_;
 } SlidingAverage;
 
@@ -436,6 +437,8 @@ unsigned int NdnRtcUtils::setupSlidingAverageEstimator(unsigned int sampleSize)
     slidingAverage.nValues_ = 0;
     slidingAverage.accumulatedSum_ = 0.;
     slidingAverage.currentAverage_ = 0.;
+    slidingAverage.currentDeviation_ = 0.;
+    
     slidingAverage.sample_ = (double*)malloc(sizeof(double)*sampleSize);
     memset(slidingAverage.sample_, 0, sizeof(double)*sampleSize);
     
@@ -458,6 +461,11 @@ void NdnRtcUtils::slidingAverageEstimatorNewValue(unsigned int estimatorId, doub
     {
         estimator.currentAverage_ = (estimator.accumulatedSum_+value)/estimator.sampleSize_;
         estimator.accumulatedSum_ += value - estimator.sample_[estimator.nValues_%estimator.sampleSize_];
+        
+        estimator.currentDeviation_ = 0.;
+        for (int i = 0; i < estimator.sampleSize_; i++)
+            estimator.currentDeviation_ += (estimator.sample_[i]-estimator.currentAverage_)*(estimator.sample_[i]-estimator.currentAverage_);
+        estimator.currentDeviation_ = sqrt(estimator.currentDeviation_/(double)estimator.nValues_);
     }
     else
         estimator.accumulatedSum_ += value;
@@ -470,6 +478,15 @@ double NdnRtcUtils::currentSlidingAverageValue(unsigned int estimatorId)
     
     SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
     return estimator.currentAverage_;
+}
+
+double NdnRtcUtils::currentSlidingDeviationValue(unsigned int estimatorId)
+{
+    if (estimatorId >= slidingAverageEstimators_.size())
+        return 0;
+    
+    SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
+    return estimator.currentDeviation_;
 }
 
 void NdnRtcUtils::releaseAverageEstimator(unsigned int estimatorID)

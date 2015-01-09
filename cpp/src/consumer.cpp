@@ -76,7 +76,8 @@ Consumer::init(const ConsumerSettings& settings)
     chaseEstimation_->setLogger(logger_);
     
 #ifdef USE_WINDOW_PIPELINER
-    pipeliner_.reset(new Pipeliner2(shared_from_this()));
+    pipeliner_.reset(new Pipeliner2(shared_from_this(),
+                                    getCurrentThreadParameters()->getSegmentsInfo()));
 #else
     pipeliner_.reset(new Pipeliner(shared_from_this()));
 #endif

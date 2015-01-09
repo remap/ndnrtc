@@ -57,17 +57,12 @@ namespace ndnrtc {
         public:
             typedef enum _State {
                 StateInactive = -1,
-                StateChasing = 0,
-                StateWaitInitial = 1,
+                StateWaitInitial = 0,                
+                StateChasing = 1,
                 StateAdjust = 2,
                 StateBuffering = 3,
                 StateFetching = 4
             } State;
-            
-            typedef struct _FrameSegmentsInfo {
-                double deltaAvgSegNum_, deltaAvgParitySegNum_;
-                double keyAvgSegNum_, keyAvgParitySegNum_;
-            } FrameSegmentsInfo;
             
             static const FrameSegmentsInfo DefaultSegmentsInfo;
             
@@ -355,6 +350,14 @@ namespace ndnrtc {
             
             int
             stop();
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger)
+            {
+                PipelinerBase::setLogger(logger);
+                stabilityEstimator_.setLogger(logger);
+                rttChangeEstimator_.setLogger(logger);
+            }
             
         private:
             StabilityEstimator stabilityEstimator_;

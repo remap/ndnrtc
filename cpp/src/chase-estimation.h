@@ -90,9 +90,14 @@ namespace ndnrtc {
             void
             trackInterArrival(double currentRate);
             
+            unsigned int
+            getLastDelta()
+            { return lastDelta_; }
+            
         private:
             double rateSimilarityLevel_;
             uint64_t lastTimestamp_;
+            unsigned int lastDelta_;
         };
         
         class RttChangeEstimator : public BaseStabilityEstimator

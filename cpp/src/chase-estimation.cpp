@@ -150,7 +150,7 @@ BaseStabilityEstimator::BaseStabilityEstimator(unsigned int sampleSize,
 sampleSize_(sampleSize),
 minStableOccurrences_(minStableOccurrences),
 threshold_(threshold),
-meanEstimatorId_(NdnRtcUtils::setupMeanEstimator(sampleSize_)),
+meanEstimatorId_(NdnRtcUtils::setupSlidingAverageEstimator(sampleSize_)),
 nStableOccurrences_(0),
 isStable_(false)
 {
@@ -159,7 +159,7 @@ isStable_(false)
 double
 BaseStabilityEstimator::getMeanValue()
 {
-    return NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+    return NdnRtcUtils::currentSlidingAverageValue(meanEstimatorId_);
 }
 
 //******************************************************************************
@@ -168,8 +168,10 @@ StabilityEstimator::StabilityEstimator(unsigned int sampleSize,
                                        double threshold,
                                        double rateSimilarityLevel):
 BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold),
-rateSimilarityLevel_(rateSimilarityLevel)
+rateSimilarityLevel_(rateSimilarityLevel),
+lastDelta_(0)
 {
+    description_ = "stability-estimator";
 }
 
 void
@@ -178,25 +180,47 @@ StabilityEstimator::trackInterArrival(double currentRate)
     if (lastTimestamp_ != 0)
     {
         unsigned int delta = NdnRtcUtils::millisecondTimestamp() - lastTimestamp_;
+        lastDelta_ = delta;
         
-        NdnRtcUtils::meanEstimatorNewValue(meanEstimatorId_, (double)delta);
+        NdnRtcUtils::slidingAverageEstimatorNewValue(meanEstimatorId_, (double)delta);
         
-        double mean = NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+        double mean = NdnRtcUtils::currentSlidingAverageValue(meanEstimatorId_);
         
         if (mean != 0)
         {
-            double deviationPercentage = NdnRtcUtils::currentDeviationEstimation(meanEstimatorId_)/mean;
+            double deviationPercentage = NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)/mean;
             double targetDelay = 1000./currentRate;
 
             if (deviationPercentage <= threshold_ &&
                 fabs(mean-targetDelay)/targetDelay <= 1. - rateSimilarityLevel_)
+            {
                 nStableOccurrences_++;
+
+                if (!isStable_)
+                    LogTraceC << "stable occurrence #" << nStableOccurrences_ << std::endl;
+            }
             else
                 nStableOccurrences_ = 0;
             
             isStable_ = (nStableOccurrences_ >= minStableOccurrences_);
+            
+            LogTraceC
+            << "delta\t" << delta
+            << "\tmean\t" << mean
+            << "\tdeviation\t" << NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)
+            << "\tdeviation %\t" << deviationPercentage
+            << "\trate\t" << currentRate
+            << "\ttarget delay\t" << targetDelay
+            << "\tsim level\t" << fabs(mean-targetDelay)/targetDelay
+            << "\tstable\t" << (isStable_?"YES":"NO")
+            << std::endl;
         }
-        
+        else
+            LogTraceC
+            << "delta\t" << delta
+            << "\tmean\t" << mean
+            << "\tstable\t" << (isStable_?"YES":"NO")
+            << std::endl;
     }
     
     lastTimestamp_ = NdnRtcUtils::millisecondTimestamp();
@@ -208,17 +232,18 @@ RttChangeEstimator::RttChangeEstimator(unsigned int sampleSize,
                    double threshold):
 BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold)
 {
+    description_ = "rtt-change-estimator";
 }
 
 void
 RttChangeEstimator::newRttValue(double rtt)
 {
-    NdnRtcUtils::meanEstimatorNewValue(meanEstimatorId_, rtt);
-    double mean = NdnRtcUtils::currentMeanEstimation(meanEstimatorId_);
+    NdnRtcUtils::slidingAverageEstimatorNewValue(meanEstimatorId_, rtt);
+    double mean = NdnRtcUtils::currentSlidingAverageValue(meanEstimatorId_);
     
     if (mean != 0)
     {
-        double deviationPercentage = NdnRtcUtils::currentDeviationEstimation(meanEstimatorId_)/mean;
+        double deviationPercentage = NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)/mean;
         
         if (deviationPercentage <= threshold_)
             nStableOccurrences_++;
@@ -238,13 +263,29 @@ RttChangeEstimator::newRttValue(double rtt)
             if (changePercentage >= 0.08)
             {
                 if (changePercentage <= 0.2)
+                {
                     nMinorConsecutiveChanges_++;
+                    if (nMinorConsecutiveChanges_ >= sampleSize_)
+                    {
+                        nMinorConsecutiveChanges_ = 0;
+                        nChanges_++;
+                    }
+                }
                 else
                     nChanges_++;
             }
             else
                 nMinorConsecutiveChanges_ = 0;
         }
+        
+        LogTraceC
+        << "rtt\t" << rtt
+        << "\tmean\t" << mean
+        << "\tdeviation\t" << deviationPercentage
+        << "\tn changes\t" << nChanges_
+        << "\tn minor\t" << nMinorConsecutiveChanges_
+        << "\tstable\t" << (isStable_?"YES":"NO")
+        << std::endl;
     }
 }
 
@@ -253,7 +294,7 @@ RttChangeEstimator::hasChange()
 {
     bool result = false;
     
-    if (nChanges_ >= lastCheckedChangeNumber_)
+    if (nChanges_ > lastCheckedChangeNumber_)
         result = true;
     
     lastCheckedChangeNumber_ = nChanges_;

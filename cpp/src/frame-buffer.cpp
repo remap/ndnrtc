@@ -1229,7 +1229,13 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             Slot::State newState = slot->appendData(data);
             int newConsistency = slot->getConsistencyState();
             
-            LogDebugC << "append: "<< playbackQueue_.dumpShort() << std::endl;
+            event.type_ = Event::Segment;
+            event.slot_ = slot;
+            
+            LogDebugC << "append: ["
+            << slot->getSequentialNumber() << "-"
+            << slot->getRecentSegment()->getNumber() << "] >> "
+            << playbackQueue_.dumpShort() << std::endl;
             
             if (oldState != newState ||
                 newState == Slot::StateAssembling)
@@ -1247,7 +1253,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 if (oldState == Slot::StateNew)
                 {
                     event.type_ = Event::FirstSegment;
-                    event.slot_ = slot;
                     addBufferEvent(Event::FirstSegment, slot);
                 }
                 
@@ -1271,41 +1276,8 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     }
                     
                     event.type_ = Event::Ready;
-                    event.slot_ = slot;
                     addBufferEvent(Event::Ready, slot);
-                    
-#if RECORD
-                    if (slot->getNamespace() == Slot::Key)
-                    {
-                        NdnFrameData *frame;
-                        slot->getPacketData((PacketData**)(&frame));
-                        PacketData::PacketMetadata meta = frame->getMetadata();
-                        
-                        webrtc::EncodedImage img;
-                        frame->getFrame(img);
-                        frameWriter.writeFrame(img, meta);
-                        
-                        delete frame;
-                    }
-#endif
                 }
-                
-                // track rtt value
-//                if (slot->getRecentSegment()->isOriginal())
-//                if (slot->getNamespace() != Slot::Key)
-//                    NdnRtcUtils::filterNewValue(rttFilter_,
-//                                                slot->getRecentSegment()->getRoundTripDelayUsec());
-//                    
-//                LogTrace("waiting.log") << "\t"
-//                << ((slot->getNamespace() == Slot::Key) ? "K" : "D") << "\t"
-//                << slot->getSequentialNumber() << "\t"
-//                << slot->getRecentSegment()->getNumber() << "\t"
-//                << slot->getRecentSegment()->getRoundTripDelayUsec() << "\t"
-//                << NdnRtcUtils::currentFilteredValue(rttFilter_) << "\t"
-//                << getEstimatedBufferSize() - getPlayableBufferSize() << "\t"
-//                << std::endl;
-//                
-//                ndnlog::new_api::Logger::getLogger("waiting.log").flush();
                 
                 if (slot->getRtxNum() == 0)
                 {

@@ -30,7 +30,7 @@ const int Pipeliner::MaxRetryNum = 3;
 const int Pipeliner::ChaserRateCoefficient = 4;
 const int Pipeliner::FullBufferRecycle = 1;
 
-const PipelinerBase::FrameSegmentsInfo PipelinerBase::DefaultSegmentsInfo = {
+const FrameSegmentsInfo PipelinerBase::DefaultSegmentsInfo = {
     PipelinerBase::SegmentsAvgNumDelta,
     PipelinerBase::ParitySegmentsAvgNumDelta,
     PipelinerBase::SegmentsAvgNumKey,
@@ -259,10 +259,14 @@ ndnrtc::new_api::PipelinerBase::getInterestLifetime(int64_t playbackDeadline,
                                                 FrameBuffer::Slot::Namespace nspc,
                                                 bool rtx)
 {
-    int64_t interestLifetime = 0;
+    int64_t interestLifetime = consumer_->getParameters().interestLifetime_;
+    
+    return interestLifetime;
     
     switch (state_) {
-        case StateChasing:
+        case StateChasing: // fall through
+        case StateWaitInitial: // fall through
+        case StateAdjust:
         {
             interestLifetime = consumer_->getParameters().interestLifetime_;
         }
@@ -959,10 +963,9 @@ PipelinerWindow::changeWindow(int delta)
 Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
                        const FrameSegmentsInfo& frameSegmentsInfo):
 PipelinerBase(consumer, frameSegmentsInfo),
-stabilityEstimator_(4, 4, 0.08, 0.7),
-rttChangeEstimator_(4, 3, 0.1)
+stabilityEstimator_(7, 4, 0.15, 0.7),
+rttChangeEstimator_(7, 3, 0.12)
 {
-    window_.init(15);
 }
 
 Pipeliner2::~Pipeliner2(){
@@ -972,14 +975,20 @@ Pipeliner2::~Pipeliner2(){
 int
 Pipeliner2::start()
 {
-    timestamp_ = NdnRtcUtils::millisecondTimestamp();
-    switchToState(StateChasing);
+    stat_.nRebuffer_ = 0;
+    deltaFrameSeqNo_ = -1;
+    failedWindow_ = 0;
+    switchToState(StateWaitInitial);
     askForRightmostData();
 }
 
 int
 Pipeliner2::stop(){
+    switchToState(StateInactive);
+    frameBuffer_->release();
     
+    LogInfoC << "stopped" << std::endl;
+    return RESULT_OK;
 }
 
 void
@@ -987,17 +996,29 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
     switch (state_) {
-        case StateChasing:
+        case StateWaitInitial:
         {
+            LogTraceC << "received rightmost data "
+            << data->getName() << std::endl;
+            
             askForInitialData(data);
         }
             break;
-        case StateWaitInitial:
+        case StateChasing:
         {
             PrefixMetaInfo metaInfo;
             PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
             
-            deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
+            if (deltaFrameSeqNo_ < 0 &&
+                NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+            {
+                deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
+                timestamp_ = NdnRtcUtils::millisecondTimestamp();
+                
+                LogTraceC << "received initial data "
+                << data->getName()
+                << " start fetching delta from " << deltaFrameSeqNo_ << std::endl;
+            }
         } // fall through
         case StateAdjust: // fall through
         case StateFetching:
@@ -1008,7 +1029,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
         default:
         {
             LogWarnC << "got data " << data->getName()
-            << " in state " << state_ << std::endl;
+            << " in state " << toString(state_) << std::endl;
         }
             break;
     }
@@ -1018,22 +1039,22 @@ void
 Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
     switch (state_) {
-        case StateChasing: // fall through
-        case StateWaitInitial:
+        case StateWaitInitial: // fall through
         {
             askForRightmostData();
         }
             break;
+        case StateChasing:
         case StateFetching:
         {
             // do something with timeouts
         }
-            break;
+//            break;
         default:
         {
             // ignore
             LogWarnC << "got timeout for " << interest->getName()
-            << " in state " << state_ << std::endl;
+            << " in state " << toString(state_) << std::endl;
         }
             break;
     }
@@ -1062,16 +1083,17 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 
     if (keyFrameNo >= 0)
     {
-        window_.init(15);
+        window_.init(8);
         frameBuffer_->setState(FrameBuffer::Valid);
         keyFrameSeqNo_ = keyFrameNo+1;
         requestNextKey(keyFrameSeqNo_);
-        switchToState(StateWaitInitial);
+        switchToState(StateChasing);
     }
     else
     {
         LogErrorC << "can't get key frame number from " << data->getName()
         << ". reset to chasing" << std::endl;
+        
         frameBuffer_->reset();
         askForRightmostData();
     }
@@ -1081,119 +1103,195 @@ void
 Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
 {
     FrameBuffer::Event event = frameBuffer_->newData(*data);
+    
+    if (event.type_ == FrameBuffer::Event::Error)
+        return;
+    
     bool needIncreaseWindow = false;
     bool needDecreaseWindow = false;
+    bool isDeltaFrame = NdnRtcNamespace::isDeltaFramePrefix(data->getName());
     const int timeout = 1000;
     uint64_t currentTimestamp = NdnRtcUtils::millisecondTimestamp();
+    bool isTimedOut = (currentTimestamp-timestamp_ >= timeout);
     
-    if (NdnRtcNamespace::isDeltaFramePrefix(data->getName()))
+    // normally, we track inter-arrival delay when we receive first segment of
+    // a frame. however, Event::FirstSegment can be overriden by Event::Ready
+    // if the frame we received consists of just 1 segment. that's why
+    // besides FirstSegment events we have to care about Ready events as
+    // well - for the frames that made up from 1 segment only
+    bool isLegitimateForStabilityTracking =
+        event.type_ == FrameBuffer::Event::FirstSegment ||
+        (event.type_ == FrameBuffer::Event::Ready &&
+         event.slot_->getSegmentsNumber() == 1);
+    
+    if (isLegitimateForStabilityTracking)
     {
-        window_.dataArrived(event.slot_->getSequentialNumber());
-        
-        if (event.type_ == FrameBuffer::Event::FirstSegment)
-            // update stability estimator
-            stabilityEstimator_.trackInterArrival(frameBuffer_->getCurrentRate());
-        
-        if (state_ == StateWaitInitial &&
-            currentTimestamp-timestamp_ >= timeout &&
-            !stabilityEstimator_.isStable())
-        {
-            LogTraceC << "increase during chase" << std::endl;
-            needIncreaseWindow = true;
-            timestamp_ = currentTimestamp;
-            waitForStability_ = true;
-        }
-        
-        if (!stabilityEstimator_.isStable())
-            rttChangeEstimator_.flush();
-        else
-            if (state_ == StateWaitInitial)
-                switchToState(StateAdjust);
-        
-        rttChangeEstimator_.newRttValue(event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.);
+        // update stability estimator
+        stabilityEstimator_.trackInterArrival(frameBuffer_->getCurrentRate());
+
+        // update window if it is a delta frame
+        if (isDeltaFrame)
+            window_.dataArrived(event.slot_->getSequentialNumber());
     }
     
-    if (NdnRtcNamespace::isKeyFramePrefix(data->getName()) &&
-        event.type_ == FrameBuffer::Event::Ready)
-        requestNextKey(keyFrameSeqNo_);
+    // if we're not in stable phase - flush RTT change estimator
+    if (!stabilityEstimator_.isStable())
+        rttChangeEstimator_.flush();
     
-    if (state_ == StateAdjust)
+    if (isDeltaFrame)
     {
-        if (rttChangeEstimator_.isStable())
+        rttChangeEstimator_.newRttValue(event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.);
+    }
+    else // if KEY
+        if (event.type_ == FrameBuffer::Event::Ready)
+            requestNextKey(keyFrameSeqNo_);
+    
+    switch (state_) {
+        case StateChasing:
         {
-            if (waitForChange_)
+            if (stabilityEstimator_.isStable())
             {
-                if (rttChangeEstimator_.hasChange())
-                {
-                    LogTraceC << "RTT has changed. Waiting"
-                    " for RTT stabilization" << std::endl;
-                    
-                    rttChangeEstimator_.flush();
-                    waitForChange_ = false;
-                    waitForStability_ = true;
-                    timestamp_ = currentTimestamp;
-                }
-                else if (currentTimestamp-timestamp_ >= timeout)
-                {
-                    LogTraceC << "timeout waiting for change" << std::endl;
-
-                    needDecreaseWindow = true;
-                    timestamp_ = currentTimestamp;
-                }
+                switchToState(StateAdjust); // should fall through the next
+                                            // case in this switch
             }
             else
             {
-                LogTraceC << "decrease window" << std::endl;
+                if (isTimedOut)
+                {
+                    LogTraceC << "increase during chase" << std::endl;
+                    
+                    needIncreaseWindow = true;
+                    timestamp_ = currentTimestamp;
+                    waitForChange_ = false;
+                }
                 
-                needDecreaseWindow = true;
-                waitForChange_ = true;
-                waitForStability_ = false;
+                waitForStability_ = true;
+                break; // break now
+            }
+        } // this case does not have an explicit break - as it only breaks in
+          // certain conditions (check the code above)
+            
+        case StateAdjust:
+        {
+            if (rttChangeEstimator_.isStable())
+            {
+                if (waitForChange_)
+                {
+                    if (rttChangeEstimator_.hasChange())
+                    {
+                        LogTraceC << "RTT has changed. Waiting"
+                        " for RTT stabilization" << std::endl;
+                        
+                        rttChangeEstimator_.flush();
+                        waitForChange_ = false;
+                        waitForStability_ = true;
+                        timestamp_ = currentTimestamp;
+                    }
+                    else if (currentTimestamp-timestamp_ >= timeout)
+                    {
+                        LogTraceC << "timeout waiting for change" << std::endl;
+                        
+                        needDecreaseWindow = true;
+                        timestamp_ = currentTimestamp;
+                    }
+                }
+                else if (waitForStability_)
+                {
+                    LogTraceC << "decrease window" << std::endl;
+                    
+                    needDecreaseWindow = true;
+                    waitForChange_ = true;
+                    waitForStability_ = false;
+                    timestamp_ = currentTimestamp;
+                }
+            }
+            else if (currentTimestamp-timestamp_ >= timeout)
+            {
+                failedWindow_ = window_.getDefaultWindowSize();
+                
+                LogTraceC << "increase. failed window " << failedWindow_ << std::endl;
+                
+                needIncreaseWindow = true;
+                waitForStability_ = true;
+                waitForChange_ = false;
                 timestamp_ = currentTimestamp;
             }
         }
-        else if (currentTimestamp-timestamp_ >= timeout)
+            break;
+            
+        case StateFetching:
         {
-            failedWindow_ = window_.getDefaultWindowSize();
-            
-            LogTraceC << "increase. failed window " << failedWindow_ << std::endl;
-            
-            needIncreaseWindow = true;
-            timestamp_ = currentTimestamp;
-            waitForStability_ = true;
-            waitForChange_ = false;
+            if (!stabilityEstimator_.isStable())
+            {
+                LogWarnC
+                << "got unstable phase in fetching mode. adjusting" << std::endl;
+                
+                switchToState(StateAdjust);
+                needIncreaseWindow = true;
+                waitForStability_ = true;
+                waitForChange_ = false;
+                timestamp_ = currentTimestamp;
+            }
         }
+            break;
+            
+        default:
+            // nothing
+            break;
     }
     
     if (needDecreaseWindow || needIncreaseWindow)
     {
+        double frac = 0.5;
         int delta = 0;
         if (needIncreaseWindow)
         {
-            if (state_ == StateWaitInitial) // grow faster
+            if (state_ == StateChasing) // grow faster
                 delta = window_.getDefaultWindowSize();
             else
-                delta = int(ceil(0.25*float(window_.getDefaultWindowSize())));
+                delta = int(ceil(frac*float(window_.getDefaultWindowSize())));
         }
         else if (needDecreaseWindow)
         {
-            delta = int(ceil(0.25*float(window_.getDefaultWindowSize())));
+            delta = -int(ceil(frac*float(window_.getDefaultWindowSize())));
 
             if (failedWindow_ >= delta+window_.getDefaultWindowSize())
             {
-                LogTraceC << "trying to decrease lower than fail window" << std::endl;
+                LogTraceC << "trying to decrease lower than fail window "
+                << failedWindow_ << std::endl;
+                
                 switchToState(StateFetching);
                 delta = 0;
             }
         }
         
+        LogTraceC << "change window by " << delta << std::endl;
+        
         window_.changeWindow(delta);
+        
+        LogTraceC << "current default window "
+        << window_.getDefaultWindowSize() << std::endl;
     }
     
+    // start playback whenever chasing phase is over and buffer has enough
+    // size for playback
+    if (state_ > StateChasing &&
+        frameBuffer_->getPlayableBufferSize() >= frameBuffer_->getTargetSize())
+        callback_->onBufferingEnded();
+    
     while (window_.canAskForData(deltaFrameSeqNo_))
-    {
-        LogTraceC << "window size " << window_.getCurrentWindowSize();
         requestNextDelta(deltaFrameSeqNo_);
-    }
+
+    if (isLegitimateForStabilityTracking)
+        LogStatC
+        << "\trtt\t" << event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.
+        << "\trtt stable\t" << rttChangeEstimator_.isStable()
+        << "\twin\t" << window_.getCurrentWindowSize()
+        << "\tdwin\t" << window_.getDefaultWindowSize()
+        << "\tdarr\t" << stabilityEstimator_.getLastDelta()
+        << "\tstable\t" << stabilityEstimator_.isStable()
+        << std::endl;
+    
 }
 
 void

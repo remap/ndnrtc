@@ -529,9 +529,6 @@ namespace ndnrtc
                 std::string
                 dump();
                 
-//                unsigned char*
-//                getDataPtr() { return slotData_; }
-                
             private:
                 unsigned int segmentSize_ = 0;
                 unsigned int allocatedSize_ = 0, assembledSize_ = 0;
@@ -642,6 +639,7 @@ namespace ndnrtc
                     Error          = 1<<8, // general error event
                     Empty          = 1<<9, // no event has occurred during
                                            // specified time interval
+                    Segment        = 1<<10 // new segment arrived
                 };
                 
                 static const int AllEventsMask;

@@ -66,6 +66,14 @@ namespace ndnrtc
         class AudioCaptureParams : public CaptureDeviceParams {
         };
         
+        // frame segments metainformation
+        // average number of segments per frame type
+        // (available for video frames only)
+        typedef struct _FrameSegmentsInfo {
+            double deltaAvgSegNum_, deltaAvgParitySegNum_;
+            double keyAvgSegNum_, keyAvgParitySegNum_;
+        } FrameSegmentsInfo;
+        
         // media thread parameters
         class MediaThreadParams : public Params {
         public:
@@ -84,6 +92,10 @@ namespace ndnrtc
                 *params = *this;
                 return params;
             }
+            
+            virtual FrameSegmentsInfo
+            getSegmentsInfo()
+            { return (FrameSegmentsInfo){0., 0., 0., 0.}; }
         };
         
         // audio thread parameters
@@ -96,6 +108,10 @@ namespace ndnrtc
                 *params = *this;
                 return params;
             }
+            
+            FrameSegmentsInfo
+            getSegmentsInfo()
+            { return (FrameSegmentsInfo){1., 0., 0., 0.}; }
         };
         
         // video thread parameteres
@@ -138,6 +154,11 @@ namespace ndnrtc
                 *params = *this;
                 return params;
             }
+            
+            FrameSegmentsInfo
+            getSegmentsInfo()
+            { return (FrameSegmentsInfo){deltaAvgSegNum_, deltaAvgParitySegNum_,
+                keyAvgSegNum_, keyAvgParitySegNum_}; }
         };
         
         // general producer parameters
