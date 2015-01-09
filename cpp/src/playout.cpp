@@ -55,7 +55,7 @@ Playout::init(void* frameConsumer)
 }
 
 int
-Playout::start()
+Playout::start(int playbackAdjustment)
 {
     jitterTiming_.flush();
     
@@ -63,7 +63,7 @@ Playout::start()
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
-    playbackAdjustment_ = 0;
+    playbackAdjustment_ = playbackAdjustment;
     data_ = nullptr;
     
     unsigned int tid;

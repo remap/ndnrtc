@@ -249,7 +249,24 @@ void
 Consumer::onBufferingEnded()
 {   
     if (!playout_->isRunning())
-        playout_->start();
+    {
+        unsigned int targetBufferSize = bufferEstimator_->getTargetSize();
+        int adjustment = bufferEstimator_->getTargetSize() - frameBuffer_->getPlayableBufferSize();
+        
+        if (adjustment < 0)
+        {
+            LogTraceC
+            << "adjusting playback for " << adjustment << std::endl;
+        }
+        else
+        {
+            adjustment = 0;
+            LogWarnC
+            << "playback adjustment is positive " << adjustment << std::endl;
+        }
+        
+        playout_->start(adjustment);
+    }
     
     if (!renderer_->isRendering())
         renderer_->startRendering(settings_.streamParams_.streamName_);

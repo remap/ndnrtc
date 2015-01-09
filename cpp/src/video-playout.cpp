@@ -37,9 +37,9 @@ VideoPlayout::~VideoPlayout()
 //******************************************************************************
 #pragma mark - public
 int
-VideoPlayout::start()
+VideoPlayout::start(int playbackAdjustment)
 {
-    int res = Playout::start();
+    int res = Playout::start(playbackAdjustment);
     
     validGop_ = false;
     currentKeyNo_ = 0;

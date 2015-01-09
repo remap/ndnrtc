@@ -23,7 +23,7 @@ namespace ndnrtc {
             ~VideoPlayout();
             
             int
-            start();
+            start(int playbackAdjustment = 0);
             
         private:
             // this flags indicates whether frames should be played out (unless

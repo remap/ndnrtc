@@ -37,7 +37,7 @@ namespace ndnrtc{
             init(void* frameConsumer);
             
             virtual int
-            start();
+            start(int playbackAdjustment = 0);
             
             virtual int
             stop();
@@ -54,6 +54,10 @@ namespace ndnrtc{
             bool
             isRunning()
             { return isRunning_; }
+            
+            void
+            setPlaybackAdjustment(int playbackAdjustment)
+            { playbackAdjustment_ = playbackAdjustment; }
             
         protected:
             bool isRunning_;

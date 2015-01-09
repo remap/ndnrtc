@@ -1049,7 +1049,6 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
         {
             // do something with timeouts
         }
-//            break;
         default:
         {
             // ignore
