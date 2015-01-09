@@ -1204,16 +1204,20 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     timestamp_ = currentTimestamp;
                 }
             }
-            else if (currentTimestamp-timestamp_ >= timeout)
+            else
             {
-                failedWindow_ = window_.getDefaultWindowSize();
-                
-                LogTraceC << "increase. failed window " << failedWindow_ << std::endl;
-                
-                needIncreaseWindow = true;
-                waitForStability_ = true;
-                waitForChange_ = false;
-                timestamp_ = currentTimestamp;
+                if (!stabilityEstimator_.isStable() &&
+                    currentTimestamp-timestamp_ >= timeout)
+                {
+                    failedWindow_ = window_.getDefaultWindowSize();
+                    
+                    LogTraceC << "increase. failed window " << failedWindow_ << std::endl;
+                    
+                    needIncreaseWindow = true;
+                    waitForStability_ = true;
+                    waitForChange_ = false;
+                    timestamp_ = currentTimestamp;
+                }
             }
         }
             break;
