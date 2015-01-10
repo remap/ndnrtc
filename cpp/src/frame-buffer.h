@@ -27,6 +27,8 @@ namespace ndnrtc
         using namespace ndnlog;
         class RateControl;
         
+        class IFrameBufferCallback;
+        
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
         public:
@@ -880,6 +882,14 @@ namespace ndnrtc
             setRateControl(const boost::shared_ptr<RateControl>& rateControl)
             { rateControl_ = rateControl; }
             
+            void
+            registerCallback(IFrameBufferCallback* callback)
+            { callback_ = callback; }
+            
+            void
+            setRetransmissionsEnabled(bool retransmissionsEnabled)
+            { retransmissionsEnabled_ = retransmissionsEnabled; }
+            
         protected:
             // playback queue contains active slots sorted in ascending
             // playback order (see PlaybackComparator)
@@ -961,6 +971,7 @@ namespace ndnrtc
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
+            bool retransmissionsEnabled_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -973,6 +984,8 @@ namespace ndnrtc
             bool pendingEventsFlushed_ = false;
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
+            
+            IFrameBufferCallback *callback_;
             
             boost::shared_ptr<RateControl> rateControl_;
             
@@ -1054,7 +1067,17 @@ namespace ndnrtc
             void
             dumpActiveSlots();
             
+            void
+            checkRetransmissions();
+            
             int rttFilter_;
+        };
+        
+        class IFrameBufferCallback
+        {
+        public:
+            virtual void
+            onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
         };
     }
 }

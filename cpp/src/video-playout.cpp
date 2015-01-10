@@ -23,7 +23,7 @@ static EncodedFrameWriter frameWriter("received.nrtc");
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(const Consumer* consumer):
+VideoPlayout::VideoPlayout(Consumer* consumer):
 Playout(consumer)
 {
     description_ = "video-playout";

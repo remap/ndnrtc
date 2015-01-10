@@ -71,10 +71,10 @@ namespace ndnrtc {
             { return isStable_; }
 
         protected:
-            unsigned int sampleSize_, minStableOccurrences_;
+            unsigned int sampleSize_, minOccurrences_;
             double threshold_;
             unsigned int meanEstimatorId_;
-            unsigned int nStableOccurrences_;
+            unsigned int nStableOccurrences_, nUnstableOccurrences_;
             bool isStable_;
         };
         
@@ -93,6 +93,9 @@ namespace ndnrtc {
             unsigned int
             getLastDelta()
             { return lastDelta_; }
+            
+            void
+            flush();
             
         private:
             double rateSimilarityLevel_;

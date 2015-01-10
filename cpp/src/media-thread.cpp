@@ -174,10 +174,10 @@ void MediaThread::registerPrefix(const Name& prefix)
         // MemoryContentCache does not support providing registered prefixes IDs
         // registeredPrefixId_ =
         memCache_->registerPrefix(prefix,
-                                                        bind(&MediaThread::onRegisterFailed,
-                                                             this, _1),
-                                                        bind(&MediaThread::onInterest,
-                                                             this, _1, _2, _3));
+                                  bind(&MediaThread::onRegisterFailed,
+                                       this, _1),
+                                  bind(&MediaThread::onInterest,
+                                       this, _1, _2, _3));
     }
     else
     {

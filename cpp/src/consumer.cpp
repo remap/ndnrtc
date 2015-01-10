@@ -87,6 +87,7 @@ Consumer::init(const ConsumerSettings& settings)
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
     pipeliner_->registerCallback(this);
+    frameBuffer_->registerCallback(pipeliner_.get());
     
     renderer_->init();
     
@@ -135,6 +136,14 @@ void
 Consumer::triggerRebuffering()
 {
     pipeliner_->triggerRebuffering();
+}
+
+void
+Consumer::recoveryCheck()
+{
+#ifdef USE_WINDOW_PIPELINER
+    ((Pipeliner2*)pipeliner_.get())->recoveryCheck();
+#endif
 }
 
 void
@@ -260,10 +269,13 @@ Consumer::onBufferingEnded()
         }
         else
         {
-            adjustment = 0;
             LogWarnC
             << "playback adjustment is positive " << adjustment << std::endl;
+            adjustment = 0;
         }
+        
+        if (getGeneralParameters().useRtx_)
+            frameBuffer_->setRetransmissionsEnabled(true);
         
         playout_->start(adjustment);
     }

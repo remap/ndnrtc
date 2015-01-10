@@ -1612,10 +1612,9 @@ int
 ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
+    int playbackDuration = (skipFrame_)?0:playbackQueue_.getInferredFrameDuration();
     
     isInferredDuration = true;
-    
-    int playbackDuration = (skipFrame_)?0:playbackQueue_.getInferredFrameDuration();
     shared_ptr<FrameBuffer::Slot> lockedSlot = playbackSlot_;
     
     if (lockedSlot.get())
@@ -1663,6 +1662,9 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
     
     // reset skipFrame_ flag
     skipFrame_ = false;
+    
+    if (retransmissionsEnabled_)
+        checkRetransmissions();
     
     return playbackDuration;
 }
@@ -1812,6 +1814,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     skipFrame_ = false;
     playbackSlot_.reset();
     nKeyFrames_ = 0;
+    retransmissionsEnabled_ = false;
     
     forcedRelease_ = false;
     
@@ -1937,5 +1940,31 @@ ndnrtc::new_api::FrameBuffer::dumpActiveSlots()
         << it->first << " " << it->second.get() << std::endl;
         
         i++;
+    }
+}
+
+void
+ndnrtc::new_api::FrameBuffer::checkRetransmissions()
+{
+    int retransmissionDeadline = targetSizeMs_/2;
+    PlaybackQueue::iterator it = playbackQueue_.begin();
+    
+    while ((*it)->getPlaybackDeadline() <= retransmissionDeadline &&
+           it != playbackQueue_.end()) {
+        if ((*it)->getAssembledLevel() < 1.)
+        {
+            // try to recover first
+            if (!(*it)->recover())
+            {
+                if ((*it)->getRtxNum() == 0 &&
+                    callback_)
+                    callback_->onRetransmissionNeeded(*it);
+            }
+            else
+            {
+                LogTraceC << "recovered " << (*it)->dump() << std::endl;
+            }
+        }
+        it++;
     }
 }

@@ -20,7 +20,7 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(const Consumer* consumer):
+Playout::Playout(Consumer* consumer):
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
@@ -200,6 +200,8 @@ Playout::processPlayout()
             // setup and run playout timer for calculated playout interval            
             jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
             jitterTiming_.runPlayoutTimer();
+            
+            consumer_->recoveryCheck();
         }
     }
     

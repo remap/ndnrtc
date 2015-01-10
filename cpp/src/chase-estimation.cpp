@@ -148,10 +148,11 @@ BaseStabilityEstimator::BaseStabilityEstimator(unsigned int sampleSize,
                                                unsigned int minStableOccurrences,
                                                double threshold):
 sampleSize_(sampleSize),
-minStableOccurrences_(minStableOccurrences),
+minOccurrences_(minStableOccurrences),
 threshold_(threshold),
 meanEstimatorId_(NdnRtcUtils::setupSlidingAverageEstimator(sampleSize_)),
 nStableOccurrences_(0),
+nUnstableOccurrences_(0),
 isStable_(false)
 {
 }
@@ -169,7 +170,8 @@ StabilityEstimator::StabilityEstimator(unsigned int sampleSize,
                                        double rateSimilarityLevel):
 BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold),
 rateSimilarityLevel_(rateSimilarityLevel),
-lastDelta_(0)
+lastDelta_(0),
+lastTimestamp_(0)
 {
     description_ = "stability-estimator";
 }
@@ -191,18 +193,18 @@ StabilityEstimator::trackInterArrival(double currentRate)
             double deviationPercentage = NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)/mean;
             double targetDelay = 1000./currentRate;
 
-            if (deviationPercentage <= threshold_ &&
-                fabs(mean-targetDelay)/targetDelay <= 1. - rateSimilarityLevel_)
+            if (deviationPercentage <= threshold_)
             {
+                nUnstableOccurrences_ = 0;
                 nStableOccurrences_++;
 
                 if (!isStable_)
                     LogTraceC << "stable occurrence #" << nStableOccurrences_ << std::endl;
             }
-            else
+            else if (++nUnstableOccurrences_ >= minOccurrences_)
                 nStableOccurrences_ = 0;
             
-            isStable_ = (nStableOccurrences_ >= minStableOccurrences_);
+            isStable_ = (nStableOccurrences_ >= minOccurrences_);
             
             LogTraceC
             << "delta\t" << delta
@@ -224,6 +226,16 @@ StabilityEstimator::trackInterArrival(double currentRate)
     }
     
     lastTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+}
+
+void
+StabilityEstimator::flush()
+{
+    isStable_ = false;
+    nStableOccurrences_ = 0;
+    nUnstableOccurrences_ = 0;
+    lastTimestamp_ = 0;
+    lastDelta_ = 0;
 }
 
 //******************************************************************************
@@ -255,7 +267,7 @@ RttChangeEstimator::newRttValue(double rtt)
             nStableOccurrences_ = 0;
         }
         
-        isStable_ = (nStableOccurrences_ >= minStableOccurrences_);
+        isStable_ = (nStableOccurrences_ >= minOccurrences_);
         
         if (isStable_)
         {

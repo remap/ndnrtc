@@ -19,7 +19,7 @@ namespace ndnrtc {
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(const Consumer* consumer);
+            VideoPlayout(Consumer* consumer);
             ~VideoPlayout();
             
             int

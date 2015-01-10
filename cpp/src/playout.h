@@ -30,7 +30,7 @@ namespace ndnrtc{
         class Playout : public NdnRtcComponent
         {
         public:
-            Playout(const Consumer* consumer);
+            Playout(Consumer* consumer);
             virtual ~Playout();
             
             virtual int
@@ -68,7 +68,7 @@ namespace ndnrtc{
             unsigned int inferredDelay_;
             int playbackAdjustment_;
             
-            const Consumer* consumer_;
+            Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;

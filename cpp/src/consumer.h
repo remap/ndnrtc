@@ -172,6 +172,9 @@ namespace ndnrtc {
             void
             triggerRebuffering();
             
+            void
+            recoveryCheck();
+            
             State
             getState() const;
             

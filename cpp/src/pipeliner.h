@@ -52,7 +52,8 @@ namespace ndnrtc {
         };
         
         
-        class PipelinerBase : public NdnRtcComponent
+        class PipelinerBase : public NdnRtcComponent,
+                                public IFrameBufferCallback
         {
         public:
             typedef enum _State {
@@ -118,12 +119,14 @@ namespace ndnrtc {
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
+            unsigned int rtxFreqMeterId_;
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             
             unsigned int streamId_; // currently fetched stream id
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
             PipelinerStatistics stat_;
             bool useKeyNamespace_;
+            int64_t recoveryCheckpointTimestamp_;
             
             void
             switchToState(State newState)
@@ -184,13 +187,28 @@ namespace ndnrtc {
             boost::shared_ptr<Interest>
             getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
             
+            boost::shared_ptr<Interest>
+            getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
+                                    PacketNumber exclude = -1);
+            
             int64_t
             getInterestLifetime(int64_t playbackDeadline,
                                 FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
                                 bool rtx = false);
             
+            void
+            requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
+                           int64_t lifetime, int64_t priority,
+                           bool wasTimedOut = false);
+            
+            virtual void
+            onRetransmissionNeeded(FrameBuffer::Slot* slot);
+            
             virtual void
             rebuffer() = 0;
+            
+            virtual void
+            resetData();
         };
         
         // chasing pipeliner
@@ -250,7 +268,7 @@ namespace ndnrtc {
             webrtc::ThreadWrapper &mainThread_;
             
             bool isPipelinePaused_, isPipelining_;
-            int64_t pipelineIntervalMs_, recoveryCheckpointTimestamp_;
+            int64_t pipelineIntervalMs_;
             webrtc::ThreadWrapper &pipelineThread_;
             webrtc::EventWrapper &pipelineTimer_;
             webrtc::EventWrapper &pipelinerPauseEvent_;
@@ -258,7 +276,6 @@ namespace ndnrtc {
             // --
             unsigned int reconnectNum_;
             PacketNumber exclusionFilter_;
-            unsigned int rtxFreqMeterId_;
             int bufferEventsMask_;
             
             static bool
@@ -299,10 +316,6 @@ namespace ndnrtc {
             int
             initialize();
             
-            boost::shared_ptr<Interest>
-            getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
-                                    PacketNumber exclude = -1);
-            
             void
             startChasePipeliner(PacketNumber startPacketNo,
                                  int64_t intervalMs);
@@ -312,11 +325,6 @@ namespace ndnrtc {
             
             void
             stopChasePipeliner();
-            
-            void
-            requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
-                           int64_t lifetime, int64_t priority,
-                           bool wasTimedOut = false);
             
             /**
              * Requests additional frames to keep buffer meet its target size
@@ -359,6 +367,9 @@ namespace ndnrtc {
                 rttChangeEstimator_.setLogger(logger);
             }
             
+            void
+            recoveryCheck();
+            
         private:
             StabilityEstimator stabilityEstimator_;
             RttChangeEstimator rttChangeEstimator_;
@@ -367,7 +378,6 @@ namespace ndnrtc {
             uint64_t timestamp_;
             bool waitForChange_, waitForStability_;
             unsigned int failedWindow_;
-            unsigned int decreaseCount_;
             
             
             void
@@ -381,6 +391,9 @@ namespace ndnrtc {
             
             void
             rebuffer();
+            
+            void
+            resetData();
             
             OnData
             getOnDataHandler()
