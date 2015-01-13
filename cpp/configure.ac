@@ -13,6 +13,7 @@ AC_CONFIG_FILES([Makefile
 AM_MAINTAINER_MODE
 
 AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
+AC_ARG_VAR([BOOSTLIB], [Path to the directory which contains Boost library binaries folder (default is /usr/local/lib)])
 AC_ARG_VAR([NDNCPPDIR], [Path to the directory which contains NDN-CPP library headers folder (default is /usr/local/include)])
 AC_ARG_VAR([NDNCPPLIB], [Path to the directory which contains NDN-CPP library binaries (default is /usr/local/lib)])
 AC_ARG_VAR([OPENFECDIR], [Path to the directory which contains OpenFEC library])
@@ -33,6 +34,12 @@ if test ${BOOSTDIR}; then
 	BOOSTDIR=$(cd $BOOSTDIR; pwd)
 else
 	BOOSTDIR="/usr/local/include"
+fi
+
+if test ${BOOSTLIB}; then
+	BOOSTLIB=$(cd $BOOSTLIB; pwd)
+else
+	BOOSTLIB="/usr/local/lib"
 fi
 
 if test ${NDNCPPDIR}; then
@@ -147,12 +154,7 @@ case $host_os in
 		# Special case.
 		case "$host" in
 		  *-darwin* | *-macos10*)
-			if test -d /opt/local ; then
-				CFLAGS="$CFLAGS -I/opt/local/include"
-				CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-				CPPFLAGS="$CPPFLAGS -I/opt/local/include"
-				LDFLAGS="$LDFLAGS -L/opt/local/lib"
-			elif test -d /sw ; then
+			if test -d /sw ; then
 				CFLAGS="$CFLAGS -I/sw/include"
 				CXXFLAGS="$CXXFLAGS -I/sw/include"
 				CPPFLAGS="$CPPFLAGS -I/sw/include"
@@ -238,6 +240,10 @@ AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
 # Check for Boost
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$BOOSTLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lboost_system-mt -lboost_timer-mt"
 
 AC_MSG_CHECKING([for boost::shared_ptr...])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -259,6 +265,8 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_FAILURE([not found])
 ])
 
+LIBS=$SAVED_LIBS
+LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
 
 # Check for NDN-CPP

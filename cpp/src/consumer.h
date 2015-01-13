@@ -172,7 +172,7 @@ namespace ndnrtc {
             void
             triggerRebuffering();
             
-            void
+            bool
             recoveryCheck();
             
             State

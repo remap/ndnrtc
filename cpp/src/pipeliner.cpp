@@ -48,6 +48,7 @@ ndnrtc::new_api::PipelinerBase::PipelinerBase(const boost::shared_ptr<Consumer>&
 callback_(nullptr),
 state_(StateInactive),
 consumer_(consumer.get()),
+frameSegmentsInfo_(frameSegmentsInfo),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgSegNum_)),
 keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgSegNum_)),
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgParitySegNum_)),
@@ -408,10 +409,10 @@ ndnrtc::new_api::PipelinerBase::requestMissing
 void
 ndnrtc::new_api::PipelinerBase::resetData()
 {
-    deltaSegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumDelta);
-    keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, SegmentsAvgNumKey);
-    deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumDelta);
-    keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, ParitySegmentsAvgNumKey);
+    deltaSegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.deltaAvgSegNum_);
+    keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgSegNum_);
+    deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.deltaAvgParitySegNum_);
+    keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgParitySegNum_);
     rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
     recoveryCheckpointTimestamp_ = -1;
@@ -421,8 +422,6 @@ ndnrtc::new_api::PipelinerBase::resetData()
     
     frameBuffer_->reset();
 }
-
-
 
 //******************************************************************************
 //******************************************************************************
@@ -874,7 +873,7 @@ ndnrtc::new_api::Pipeliner::resetData()
     exclusionFilter_ = -1;
 }
 
-void
+bool
 ndnrtc::new_api::Pipeliner::recoveryCheck
 (const ndnrtc::new_api::FrameBuffer::Event& event)
 {
@@ -895,7 +894,11 @@ ndnrtc::new_api::Pipeliner::recoveryCheck
         << " reconnect " << reconnectNum_
         << " exclusion " << exclusionFilter_
         << std::endl;
+        
+        return true;
     }
+    
+    return false;
 }
 
 void
@@ -1045,6 +1048,10 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             LogTraceC << "received rightmost data "
             << data->getName() << std::endl;
             
+            PrefixMetaInfo metaInfo;
+            PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
+
+            seedFrameNo_ = metaInfo.playbackNo_;
             askForInitialData(data);
         }
             break;
@@ -1053,15 +1060,24 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             PrefixMetaInfo metaInfo;
             PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
             
-            if (deltaFrameSeqNo_ < 0 &&
-                NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+            // make sure that we've got what is expected
+            if (metaInfo.playbackNo_ > seedFrameNo_)
             {
-                deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
-                timestamp_ = NdnRtcUtils::millisecondTimestamp();
-                
-                LogTraceC << "received initial data "
-                << data->getName()
-                << " start fetching delta from " << deltaFrameSeqNo_ << std::endl;
+                if (deltaFrameSeqNo_ < 0 &&
+                    NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+                {
+                    deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
+                    timestamp_ = NdnRtcUtils::millisecondTimestamp();
+                    
+                    LogTraceC << "received initial data "
+                    << data->getName()
+                    << " start fetching delta from " << deltaFrameSeqNo_ << std::endl;
+                }
+            }
+            else
+            {
+                LogTraceC << "got outdated data after rebuffering " << data->getName() << std::endl;
+                break;
             }
         } // fall through
         case StateAdjust: // fall through
@@ -1103,7 +1119,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
     }
 }
 
-void
+bool
 Pipeliner2::recoveryCheck()
 {
     int interruptionDelay = 500;
@@ -1111,13 +1127,17 @@ Pipeliner2::recoveryCheck()
     if (recoveryCheckpointTimestamp_ > 0 &&
         NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > interruptionDelay)
     {
-        rebuffer();
-        
         LogWarnC
         << "No data for the last " << interruptionDelay
         << " ms. Rebuffering " << stat_.nRebuffer_
         << std::endl;
+        
+        rebuffer();
+        
+        return true;
     }
+    
+    return false;
 }
 
 //******************************************************************************
@@ -1392,6 +1412,7 @@ Pipeliner2::resetData()
     
     timestamp_ = 0;
     failedWindow_ = 1;
+    seedFrameNo_ = -1;
     waitForChange_ = false;
     waitForStability_ = false;
     rttChangeEstimator_.flush();

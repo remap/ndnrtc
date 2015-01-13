@@ -138,11 +138,11 @@ Consumer::triggerRebuffering()
     pipeliner_->triggerRebuffering();
 }
 
-void
+bool
 Consumer::recoveryCheck()
 {
 #ifdef USE_WINDOW_PIPELINER
-    ((Pipeliner2*)pipeliner_.get())->recoveryCheck();
+    return ((Pipeliner2*)pipeliner_.get())->recoveryCheck();
 #endif
 }
 
@@ -287,7 +287,6 @@ Consumer::onBufferingEnded()
 void
 Consumer::onRebufferingOccurred()
 {
-    playout_->stop();
     renderer_->stopRendering();
     interestQueue_->reset();
     rttEstimation_->reset();

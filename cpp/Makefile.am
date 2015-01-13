@@ -67,7 +67,7 @@ if OS_DARWIN
 endif
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@
 
 .mm.o :
 	$(OBJCXX) -x objective-c++ -c @DEFS@ $(CPPFLAGS) $(ndnrtc_demo_CPPFLAGS) $< -o $@

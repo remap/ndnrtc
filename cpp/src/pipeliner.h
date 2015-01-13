@@ -121,6 +121,7 @@ namespace ndnrtc {
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             unsigned int rtxFreqMeterId_;
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
+            FrameSegmentsInfo frameSegmentsInfo_;
             
             unsigned int streamId_; // currently fetched stream id
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
@@ -338,7 +339,7 @@ namespace ndnrtc {
             void
             resetData();
             
-            void
+            bool
             recoveryCheck(const ndnrtc::new_api::FrameBuffer::Event& event);
             
             void
@@ -367,7 +368,7 @@ namespace ndnrtc {
                 rttChangeEstimator_.setLogger(logger);
             }
             
-            void
+            bool
             recoveryCheck();
             
         private:
@@ -378,7 +379,7 @@ namespace ndnrtc {
             uint64_t timestamp_;
             bool waitForChange_, waitForStability_;
             unsigned int failedWindow_;
-            
+            FrameNumber seedFrameNo_;
             
             void
             askForRightmostData();

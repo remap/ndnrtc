@@ -725,6 +725,7 @@ OPENFECSRC
 OPENFECDIR
 NDNCPPLIB
 NDNCPPDIR
+BOOSTLIB
 BOOSTDIR
 MAINT
 MAINTAINER_MODE_FALSE
@@ -814,6 +815,7 @@ enable_libtool_lock
 host_alias
 target_alias
 BOOSTDIR
+BOOSTLIB
 NDNCPPDIR
 NDNCPPLIB
 OPENFECDIR
@@ -1489,6 +1491,8 @@ Optional Packages:
 Some influential environment variables:
   BOOSTDIR    Path to the directory which contains Boost library headers
               folder (default is /usr/local/include)
+  BOOSTLIB    Path to the directory which contains Boost library binaries
+              folder (default is /usr/local/lib)
   NDNCPPDIR   Path to the directory which contains NDN-CPP library headers
               folder (default is /usr/local/include)
   NDNCPPLIB   Path to the directory which contains NDN-CPP library binaries
@@ -3450,10 +3454,17 @@ fi
 
 
 
+
 if test ${BOOSTDIR}; then
 	BOOSTDIR=$(cd $BOOSTDIR; pwd)
 else
 	BOOSTDIR="/usr/local/include"
+fi
+
+if test ${BOOSTLIB}; then
+	BOOSTLIB=$(cd $BOOSTLIB; pwd)
+else
+	BOOSTLIB="/usr/local/lib"
 fi
 
 if test ${NDNCPPDIR}; then
@@ -16541,12 +16552,13 @@ case $host_os in
 		# Special case.
 		case "$host" in
 		  *-darwin* | *-macos10*)
-			if test -d /opt/local ; then
-				CFLAGS="$CFLAGS -I/opt/local/include"
-				CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-				CPPFLAGS="$CPPFLAGS -I/opt/local/include"
-				LDFLAGS="$LDFLAGS -L/opt/local/lib"
-			elif test -d /sw ; then
+			#if test -d /opt/local ; then
+			#	CFLAGS="$CFLAGS -I/opt/local/include"
+			#	CXXFLAGS="$CXXFLAGS -I/opt/local/include"
+			#	CPPFLAGS="$CPPFLAGS -I/opt/local/include"
+			#	LDFLAGS="$LDFLAGS -L/opt/local/lib"
+			#el
+			if test -d /sw ; then
 				CFLAGS="$CFLAGS -I/sw/include"
 				CXXFLAGS="$CXXFLAGS -I/sw/include"
 				CPPFLAGS="$CPPFLAGS -I/sw/include"
@@ -17317,6 +17329,10 @@ done
 # Check for Boost
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$BOOSTLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lboost_system-mt -lboost_timer-mt"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for boost::shared_ptr..." >&5
 $as_echo_n "checking for boost::shared_ptr...... " >&6; }
@@ -17378,6 +17394,8 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+LIBS=$SAVED_LIBS
+LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
 
 # Check for NDN-CPP

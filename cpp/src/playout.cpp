@@ -201,7 +201,7 @@ Playout::processPlayout()
             jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
             jitterTiming_.runPlayoutTimer();
             
-            consumer_->recoveryCheck();
+            isRunning_ = !consumer_->recoveryCheck();
         }
     }
     
