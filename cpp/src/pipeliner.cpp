@@ -24,11 +24,15 @@ const double PipelinerBase::SegmentsAvgNumDelta = 8.;
 const double PipelinerBase::SegmentsAvgNumKey = 25.;
 const double PipelinerBase::ParitySegmentsAvgNumDelta = 2.;
 const double PipelinerBase::ParitySegmentsAvgNumKey = 5.;
+
 const int64_t Pipeliner::MaxInterruptionDelay = 1200;
 const int64_t Pipeliner::MinInterestLifetime = 250;
 const int Pipeliner::MaxRetryNum = 3;
 const int Pipeliner::ChaserRateCoefficient = 4;
 const int Pipeliner::FullBufferRecycle = 1;
+
+const int Pipeliner2::DefaultWindow = 8;
+const int Pipeliner2::DefaultMinWindow = 2;
 
 const FrameSegmentsInfo PipelinerBase::DefaultSegmentsInfo = {
     PipelinerBase::SegmentsAvgNumDelta,
@@ -350,7 +354,7 @@ ndnrtc::new_api::PipelinerBase::onRetransmissionNeeded(FrameBuffer::Slot* slot)
                 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
                 shared_ptr<Interest> segmentInterest;
 
-                segmentInterest = getDefaultInterest(segment->getPrefix(), slot->getPlaybackDeadline());
+                segmentInterest = getDefaultInterest(segment->getPrefix());
                 slot->markMissing(*segmentInterest);
                 express(*segmentInterest, slot->getPlaybackDeadline());
             }
@@ -1024,7 +1028,7 @@ Pipeliner2::start()
 {
     stat_.nRebuffer_ = 0;
     deltaFrameSeqNo_ = -1;
-    failedWindow_ = 1;
+    failedWindow_ = DefaultMinWindow;
     switchToState(StateWaitInitial);
     askForRightmostData();
 }
@@ -1042,17 +1046,23 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
+    LogTraceC << "data " << data->getName() << std::endl;
+    
     switch (state_) {
         case StateWaitInitial:
         {
-            LogTraceC << "received rightmost data "
-            << data->getName() << std::endl;
-            
-            PrefixMetaInfo metaInfo;
-            PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
-
-            seedFrameNo_ = metaInfo.playbackNo_;
-            askForInitialData(data);
+            // make sure we've got what is expected
+            if (NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+            {
+                LogTraceC << "received rightmost data "
+                << data->getName() << std::endl;
+                
+                PrefixMetaInfo metaInfo;
+                PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
+                
+                seedFrameNo_ = metaInfo.playbackNo_;
+                askForInitialData(data);
+            }
         }
             break;
         case StateChasing:
@@ -1130,6 +1140,8 @@ Pipeliner2::recoveryCheck()
         LogWarnC
         << "No data for the last " << interruptionDelay
         << " ms. Rebuffering " << stat_.nRebuffer_
+        << " curent w " << window_.getCurrentWindowSize()
+        << " default w " << window_.getDefaultWindowSize()
         << std::endl;
         
         rebuffer();
@@ -1145,7 +1157,7 @@ void
 Pipeliner2::askForRightmostData()
 {
     // issue rightmost
-    Interest rightmostKeyInterest(keyFramesPrefix_, consumer_->getParameters().interestLifetime_);
+    Interest rightmostKeyInterest(keyFramesPrefix_, 1000);
     rightmostKeyInterest.setMustBeFresh(true);
     rightmostKeyInterest.setChildSelector(1);
     rightmostKeyInterest.setMinSuffixComponents(2);
@@ -1163,7 +1175,7 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 
     if (keyFrameNo >= 0)
     {
-        window_.init(8);
+        window_.init(DefaultWindow);
         frameBuffer_->setState(FrameBuffer::Valid);
         keyFrameSeqNo_ = keyFrameNo+1;
         requestNextKey(keyFrameSeqNo_);
@@ -1321,7 +1333,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
             {
                 bool unstable = !stabilityEstimator_.isStable();
                 bool lowBuffer = ((double)frameBuffer_->getPlayableBufferSize() / (double)frameBuffer_->getEstimatedBufferSize() < 0.5);
-                bool drainingBuffer = (frameBuffer_->getEstimatedBufferSize() < frameBuffer_->getTargetSize());
+                // disable draining buffer check
+                bool drainingBuffer = false; //(frameBuffer_->getEstimatedBufferSize() < frameBuffer_->getTargetSize());
                 
                 if (unstable || lowBuffer || drainingBuffer)
                 {
@@ -1338,7 +1351,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     timestamp_ = currentTimestamp;
                     
                     if (lowBuffer && !unstable)
-                        failedWindow_ = 1;
+                        failedWindow_ = DefaultMinWindow;
                 }
             }
         }
@@ -1411,7 +1424,7 @@ Pipeliner2::resetData()
     PipelinerBase::resetData();
     
     timestamp_ = 0;
-    failedWindow_ = 1;
+    failedWindow_ = DefaultMinWindow;
     seedFrameNo_ = -1;
     waitForChange_ = false;
     waitForStability_ = false;

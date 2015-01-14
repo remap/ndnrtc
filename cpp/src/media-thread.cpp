@@ -196,14 +196,14 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
                              ndn::Transport& transport)
 {
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
+
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
     
     if (packetNo >= packetNo_)
     {
         addToPit(interest);
     }
-    
-    LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
 void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)

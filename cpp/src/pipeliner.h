@@ -350,6 +350,9 @@ namespace ndnrtc {
         class Pipeliner2 : public PipelinerBase, public IPacketAssembler
         {
         public:
+            static const int DefaultWindow;
+            static const int DefaultMinWindow;
+            
             Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
                        const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner2();
