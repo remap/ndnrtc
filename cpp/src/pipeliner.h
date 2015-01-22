@@ -347,7 +347,9 @@ namespace ndnrtc {
         };
         
         // window-based pipeliner
-        class Pipeliner2 : public PipelinerBase, public IPacketAssembler
+        class Pipeliner2 : public PipelinerBase,
+                            public IPacketAssembler,
+                            public boost::enable_shared_from_this<Pipeliner2>
         {
         public:
             static const int DefaultWindow;
@@ -401,11 +403,30 @@ namespace ndnrtc {
             
             OnData
             getOnDataHandler()
-            { return bind(&Pipeliner2::onData, this, _1, _2); }
+            {
+                boost::weak_ptr<Pipeliner2> weakThis = shared_from_this();
+                return [weakThis, this](const boost::shared_ptr<const Interest>& interest,
+                                        const boost::shared_ptr<Data>& data)
+                {
+                    boost::shared_ptr<Pipeliner2> shared = weakThis.lock();
+                    
+                    if (shared)
+                        this->onData(interest, data);
+                };
+            }
             
             OnTimeout
             getOnTimeoutHandler()
-            { return bind(&Pipeliner2::onTimeout, this, _1); }
+            {
+                boost::weak_ptr<Pipeliner2> weakThis = shared_from_this();
+                return [weakThis, this](const boost::shared_ptr<const Interest>& interest)
+                {
+                    boost::shared_ptr<Pipeliner2> shared = weakThis.lock();
+                    
+                    if (shared)
+                        this->onTimeout(interest);
+                };
+            }
             
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);

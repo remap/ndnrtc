@@ -459,7 +459,7 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     }
     
     it->second->stop();
-//    ActiveStreamsConsumer.erase(it);
+    ActiveStreamsConsumer.erase(it);
     
     LogInfo(LIB_LOG) << "Stream removed succesfully" << std::endl;
     return RESULT_OK;
