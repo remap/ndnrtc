@@ -51,6 +51,9 @@ VideoConsumer::init(const ConsumerSettings& settings)
 
     if (RESULT_GOOD(Consumer::init(settings)))
     {
+        pipeliner_->setUseKeyNamespace(true);
+        pipeliner_->initialize();
+        
         interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         

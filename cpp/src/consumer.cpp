@@ -82,7 +82,6 @@ Consumer::init(const ConsumerSettings& settings)
     pipeliner_.reset(new Pipeliner(shared_from_this()));
 #endif
     
-    pipeliner_->initialize();
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));

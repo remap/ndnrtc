@@ -88,6 +88,7 @@ namespace ndnrtc {
         static bool isKeyFramePrefix(const Name &prefix);
         static bool isDeltaFramePrefix(const Name &prefix);
         static bool isParitySegmentPrefix(const Name &prefix);
+        static bool isPrefix(const Name &name, const Name &prefix);
         
         static PacketNumber getPacketNumber(const Name &prefix);
         static SegmentNumber getSegmentNumber(const Name &prefix);

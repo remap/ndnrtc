@@ -81,8 +81,10 @@ ndnrtc::new_api::PipelinerBase::initialize()
     std::string
     deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
     
+    // NOTE: keyPrefixString might be the same as deltaPrefixString if
+    // key namespace is not used; this is needed for audio pipeliner
     std::string
-    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
+    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, useKeyNamespace_);
     
     threadPrefix_ = Name(threadPrefixString.c_str());
     deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
@@ -122,7 +124,7 @@ ndnrtc::new_api::PipelinerBase::threadSwitched()
     deltaPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString);
     
     std::string
-    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, true);
+    keyPrefixString = NdnRtcNamespace::getThreadFramesPrefix(threadPrefixString, useKeyNamespace_);
     
     threadPrefix_ = Name(threadPrefixString.c_str());
     deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
@@ -157,8 +159,8 @@ void
 ndnrtc::new_api::PipelinerBase::requestNextKey(PacketNumber& keyFrameNo)
 {
     // just ignore if key namespace is not used
-    if (!useKeyNamespace_)
-        return;
+//    if (!useKeyNamespace_)
+//        return;
     
     LogTraceC << "request key " << keyFrameNo << std::endl;
     stat_.nRequested_++;
@@ -1047,12 +1049,14 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
     LogTraceC << "data " << data->getName() << std::endl;
+    bool isKeyPrefix = NdnRtcNamespace::isPrefix(data->getName(), keyFramesPrefix_);
     
     switch (state_) {
         case StateWaitInitial:
         {
             // make sure we've got what is expected
-            if (NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+//            if (NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+            if (isKeyPrefix)
             {
                 LogTraceC << "received rightmost data "
                 << data->getName() << std::endl;
@@ -1074,7 +1078,8 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             if (metaInfo.playbackNo_ > seedFrameNo_)
             {
                 if (deltaFrameSeqNo_ < 0 &&
-                    NdnRtcNamespace::isKeyFramePrefix(data->getName()))
+                    isKeyPrefix)
+//                    NdnRtcNamespace::isKeyFramePrefix(data->getName()))
                 {
                     deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
                     timestamp_ = NdnRtcUtils::millisecondTimestamp();
@@ -1171,14 +1176,22 @@ Pipeliner2::askForRightmostData()
 void
 Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 {
-    PacketNumber keyFrameNo = NdnRtcNamespace::getPacketNumber(data->getName());
+    PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(data->getName());
 
-    if (keyFrameNo >= 0)
+    if (frameNo >= 0)
     {
         window_.init(DefaultWindow);
         frameBuffer_->setState(FrameBuffer::Valid);
-        keyFrameSeqNo_ = keyFrameNo+1;
-        requestNextKey(keyFrameSeqNo_);
+        if (useKeyNamespace_)
+        {
+            keyFrameSeqNo_ = frameNo+1;
+            requestNextKey(keyFrameSeqNo_);
+        }
+        else
+        {
+            deltaFrameSeqNo_ = frameNo+1;
+            requestNextDelta(deltaFrameSeqNo_);
+        }
         switchToState(StateChasing);
     }
     else

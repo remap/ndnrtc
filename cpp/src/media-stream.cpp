@@ -231,7 +231,7 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
     audioThread->setLogger(logger_);
     
     if (RESULT_FAIL(audioThread->init(threadSettings)))
-        notifyError(-1, "couldn't add new video thread %s",
+        notifyError(-1, "couldn't add new audio thread %s",
                     threadSettings.threadParams_->threadName_.c_str());
     else
         threads_[audioThread->getPrefix()] = audioThread;

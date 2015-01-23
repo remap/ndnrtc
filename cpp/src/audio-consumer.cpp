@@ -39,6 +39,7 @@ AudioConsumer::init(const ConsumerSettings& settings)
     if (RESULT_GOOD(Consumer::init(settings)))
     {
         pipeliner_->setUseKeyNamespace(false);
+        pipeliner_->initialize();
         
         playout_.reset(new AudioPlayout(this));
         playout_->setLogger(logger_);
