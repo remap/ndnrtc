@@ -163,6 +163,7 @@ Consumer::switchThread(const std::string& threadName)
             segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
 
             pipeliner_->threadSwitched();
+            playout_->stop();
             
             if (observer_)
             {

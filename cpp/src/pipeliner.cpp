@@ -158,10 +158,6 @@ ndnrtc::new_api::PipelinerBase::updateSegnumEstimation(FrameBuffer::Slot::Namesp
 void
 ndnrtc::new_api::PipelinerBase::requestNextKey(PacketNumber& keyFrameNo)
 {
-    // just ignore if key namespace is not used
-//    if (!useKeyNamespace_)
-//        return;
-    
     LogTraceC << "request key " << keyFrameNo << std::endl;
     stat_.nRequested_++;
     stat_.nRequestedKey_++;
@@ -1417,7 +1413,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     // size for playback
     if (state_ > StateChasing &&
         frameBuffer_->getPlayableBufferSize() >= frameBuffer_->getTargetSize())
-        callback_->onBufferingEnded();
+        if (callback_)
+            callback_->onBufferingEnded();
     
     while (window_.canAskForData(deltaFrameSeqNo_))
         requestNextDelta(deltaFrameSeqNo_);

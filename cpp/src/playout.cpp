@@ -24,6 +24,7 @@ Playout::Playout(Consumer* consumer):
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
+playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
 data_(nullptr)
 {
     setDescription("playout");
@@ -41,6 +42,7 @@ Playout::~Playout()
         stop();
     
     playoutThread_.~ThreadWrapper();
+    playoutCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -57,6 +59,8 @@ Playout::init(void* frameConsumer)
 int
 Playout::start(int playbackAdjustment)
 {
+    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
+    
     jitterTiming_.flush();
     
     isRunning_ = true;
@@ -76,6 +80,7 @@ Playout::start(int playbackAdjustment)
 int
 Playout::stop()
 {
+    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
     if (isRunning_)
     {
         playoutThread_.SetNotAlive();
@@ -111,6 +116,8 @@ Playout::setDescription(const std::string &desc)
 bool
 Playout::processPlayout()
 {
+    playoutCs_.Enter();
+    
     if (isRunning_)
     {
         int64_t now = NdnRtcUtils::millisecondTimestamp();
@@ -196,14 +203,17 @@ Playout::processPlayout()
                 playbackDelay += avSync;
             
             assert(playbackDelay >= 0);
+
+            isRunning_ = !consumer_->recoveryCheck();
+            playoutCs_.Leave();
             
             // setup and run playout timer for calculated playout interval            
             jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
             jitterTiming_.runPlayoutTimer();
-            
-            isRunning_ = !consumer_->recoveryCheck();
         }
     }
+    else
+        playoutCs_.Leave();
     
     return isRunning_;
 }

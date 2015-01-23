@@ -73,6 +73,7 @@ namespace ndnrtc{
             
             JitterTiming jitterTiming_;
             webrtc::ThreadWrapper &playoutThread_;
+            webrtc::CriticalSectionWrapper &playoutCs_;
             
             void* frameConsumer_;
             PacketData *data_;
