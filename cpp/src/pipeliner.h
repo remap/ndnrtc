@@ -403,30 +403,11 @@ namespace ndnrtc {
             
             OnData
             getOnDataHandler()
-            {
-                boost::weak_ptr<Pipeliner2> weakThis = shared_from_this();
-                return [weakThis, this](const boost::shared_ptr<const Interest>& interest,
-                                        const boost::shared_ptr<Data>& data)
-                {
-                    boost::shared_ptr<Pipeliner2> shared = weakThis.lock();
-                    
-                    if (shared)
-                        this->onData(interest, data);
-                };
-            }
+            { return bind(&Pipeliner2::onData, shared_from_this(), _1, _2); }
             
             OnTimeout
             getOnTimeoutHandler()
-            {
-                boost::weak_ptr<Pipeliner2> weakThis = shared_from_this();
-                return [weakThis, this](const boost::shared_ptr<const Interest>& interest)
-                {
-                    boost::shared_ptr<Pipeliner2> shared = weakThis.lock();
-                    
-                    if (shared)
-                        this->onTimeout(interest);
-                };
-            }
+            { return bind(&Pipeliner2::onTimeout, shared_from_this(), _1); }
             
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);
