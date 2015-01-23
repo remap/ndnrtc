@@ -1197,6 +1197,10 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     frameBuffer_->synchronizeAcquire();
     FrameBuffer::Event event = frameBuffer_->newData(*data);
     
+    if (frameBuffer_->getPlayableBufferSize() > frameBuffer_->getTargetSize()/2.)
+        if (consumer_->getGeneralParameters().useRtx_)
+            frameBuffer_->setRetransmissionsEnabled(true);
+    
     if (event.type_ == FrameBuffer::Event::Error)
     {
         frameBuffer_->synchronizeRelease();

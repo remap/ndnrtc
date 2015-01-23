@@ -1300,6 +1300,9 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     rateControl_->dataReceived(data, slot->getRtxNum());
 #endif
                 
+                if (retransmissionsEnabled_)
+                    checkRetransmissions();
+                
                 return event;
             }
         }
