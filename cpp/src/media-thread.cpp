@@ -154,6 +154,8 @@ int MediaThread::publishPacket(PacketData &packetData,
                                                ndnData.getDefaultWireEncoding().size());
 #endif
         }
+        
+        cleanPitForFrame(prefix);
     }
     catch (std::exception &e)
     {
@@ -277,4 +279,22 @@ int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
     }
     
     return 0;
+}
+
+int MediaThread::cleanPitForFrame(const Name framePrefix)
+{
+    webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+    std::vector<Name> keysToDelete;
+    
+    for (auto it:pit_)
+        if (NdnRtcNamespace::isPrefix(it.first, framePrefix))
+            keysToDelete.push_back(it.first);
+    
+    for (auto key : keysToDelete)
+    {
+        LogTraceC << "purge old PIT entry " << key;
+        pit_.erase(key);
+    }
+    
+    return keysToDelete.size();
 }
