@@ -699,7 +699,7 @@ namespace ndnrtc
              * or new slots
              */
             unsigned int
-            getActiveSlotsNum()
+            getActiveSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
@@ -707,10 +707,20 @@ namespace ndnrtc
             }
             
             /**
+             * Returns total number of new slots (i.e. outstanding frames)
+             */
+            unsigned int
+            getNewSlotsNum() const
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateNew).size();
+            }
+            
+            /**
              * Returns total number of slots that have any segments fetched
              */
             unsigned int
-            getFetchedSlotsNum()
+            getFetchedSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateAssembling |
@@ -721,7 +731,7 @@ namespace ndnrtc
              * Returns total number of free slots in the buffer
              */
             unsigned int
-            getFreeSlotsNum()
+            getFreeSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateFree).size();
@@ -1007,7 +1017,7 @@ namespace ndnrtc
             freeSlot(const Name &prefix);
             
             std::vector<boost::shared_ptr<Slot> >
-            getSlots(int slotStateMask);
+            getSlots(int slotStateMask) const;
             
             /**
              * Estimates buffer size based on the current active slots

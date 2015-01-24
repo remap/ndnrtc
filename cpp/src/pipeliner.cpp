@@ -941,8 +941,9 @@ PipelinerWindow::~PipelinerWindow()
 }
 
 void
-PipelinerWindow::init(unsigned int windowSize)
+PipelinerWindow::init(unsigned int windowSize, const FrameBuffer* frameBuffer)
 {
+    frameBuffer_ = frameBuffer;
     framePool_.clear();
     dw_ = windowSize;
     w_ = (int)windowSize;
@@ -991,19 +992,26 @@ PipelinerWindow::getCurrentWindowSize()
     return w_;
 }
 
-bool
+int
 PipelinerWindow::changeWindow(int delta)
 {
+    unsigned int nOutstandingFrames = frameBuffer_->getNewSlotsNum();
+
+    if (delta < 0 &&
+        abs(delta) >= nOutstandingFrames &&
+        nOutstandingFrames > 1)
+        delta = -(nOutstandingFrames-1);
+    
     if (dw_+delta > 0)
     {
         webrtc::CriticalSectionScoped scopedCs(&cs_);
         dw_ += delta;
         w_ += delta;
         
-        return true;
+        return delta;
     }
     
-    return false;
+    return 0;
 }
 
 
@@ -1182,7 +1190,7 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 
     if (frameNo >= 0)
     {
-        window_.init(DefaultWindow);
+        window_.init(DefaultWindow, frameBuffer_);
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
         {
@@ -1404,9 +1412,9 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
             }
         }
         
-        LogTraceC << "change window by " << delta << std::endl;
-        
-        window_.changeWindow(delta);
+        LogTraceC << "attempt to change window by " << delta << std::endl;
+        delta = window_.changeWindow(delta);
+        LogTraceC << "changed window by " << delta << std::endl;
         
         LogTraceC << "current default window "
         << window_.getDefaultWindowSize() << std::endl;

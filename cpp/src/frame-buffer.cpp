@@ -32,7 +32,7 @@ using namespace ndnrtc::testing;
 static EncodedFrameWriter frameWriter("received-key.nrtc");
 #endif
 
-const unsigned int FrameBuffer::MinRetransmissionInterval = 150;
+const unsigned int ndnrtc::new_api::FrameBuffer::MinRetransmissionInterval = 150;
 
 //******************************************************************************
 // FrameBuffer::Slot::Segment
@@ -1894,10 +1894,10 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
 }
 
 std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> >
-ndnrtc::new_api::FrameBuffer::getSlots(int slotStateMask)
+ndnrtc::new_api::FrameBuffer::getSlots(int slotStateMask) const
 {
     std::vector<shared_ptr<FrameBuffer::Slot> > slots;
-    std::map<Name, shared_ptr<Slot> >::iterator it;
+    std::map<Name, shared_ptr<Slot> >::const_iterator it;
     
     for (it = activeSlots_.begin(); it != activeSlots_.end(); ++it)
     {

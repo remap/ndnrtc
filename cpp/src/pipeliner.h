@@ -27,7 +27,7 @@ namespace ndnrtc {
             ~PipelinerWindow();
             
             void
-            init(unsigned int windowSize);
+            init(unsigned int windowSize, const FrameBuffer* frameBuffer);
             
             void
             dataArrived(PacketNumber packetNo);
@@ -41,7 +41,7 @@ namespace ndnrtc {
             int
             getCurrentWindowSize();
             
-            bool
+            int
             changeWindow(int delta);
             
         private:
@@ -50,6 +50,7 @@ namespace ndnrtc {
             PacketNumber lastAddedToPool_;
             webrtc::CriticalSectionWrapper& cs_;
             std::set<PacketNumber> framePool_;
+            const FrameBuffer* frameBuffer_;
         };
         
         
@@ -121,7 +122,7 @@ namespace ndnrtc {
             Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
             
             Consumer* consumer_;
-            ndnrtc::new_api::FrameBuffer* frameBuffer_;
+            FrameBuffer* frameBuffer_;
             BufferEstimator* bufferEstimator_;
             IPacketAssembler* ndnAssembler_;
             IPipelinerCallback* callback_;
