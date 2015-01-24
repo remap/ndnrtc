@@ -88,6 +88,11 @@ void
 VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                         double captureTimestamp)
 {
+    // in order to avoid situations when interest arrives simultaneously
+    // with the data being added to the PIT/cache, we synchronize with
+    // face on this level
+    faceProcessor_->getFaceWrapper()->synchronizeStart();
+    
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
@@ -170,6 +175,8 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
                     getPacketNo(), (isKeyFrame)?"YES":"NO");
     }
+    
+    faceProcessor_->getFaceWrapper()->synchronizeStop();
 }
 
 void
@@ -188,15 +195,14 @@ VideoThread::onInterest(const shared_ptr<const Name>& prefix,
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
     bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
     
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << std::endl;
     
     if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
         packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_))
     {
         addToPit(interest);
     }
-    
-    LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
 int

@@ -129,10 +129,8 @@ int MediaThread::publishPacket(PacketData &packetData,
             {
                 // according to http://named-data.net/doc/ndn-ccl-api/memory-content-cache.html#memorycontentcache-registerprefix-method
                 // adding content should be synchronized with the processEvents
-                // call
-                faceProcessor_->getFaceWrapper()->synchronizeStart();
+                // call; this must be done in calling routines
                 memCache_->add(ndnData);
-                faceProcessor_->getFaceWrapper()->synchronizeStop();
                 
                 LogTraceC
                 << "added to cache " << segmentName << " "

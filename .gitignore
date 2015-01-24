@@ -21,6 +21,7 @@ cpp/ndnrtc-demo
 
 # dev folders
 cpp/debug
+cpp/release
 
 # Autoconf
 cpp/Makefile
