@@ -32,6 +32,8 @@ using namespace ndnrtc::testing;
 static EncodedFrameWriter frameWriter("received-key.nrtc");
 #endif
 
+const unsigned int FrameBuffer::MinRetransmissionInterval = 150;
+
 //******************************************************************************
 // FrameBuffer::Slot::Segment
 //******************************************************************************
@@ -1953,6 +1955,7 @@ ndnrtc::new_api::FrameBuffer::checkRetransmissions()
     PlaybackQueue::iterator it = playbackQueue_.begin();
     
     while ((*it)->getPlaybackDeadline() <= retransmissionDeadline &&
+           (*it)->getLifetime() > MinRetransmissionInterval &&
            it != playbackQueue_.end()) {
         if ((*it)->getAssembledLevel() < 1.)
         {

@@ -32,6 +32,7 @@ namespace ndnrtc
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
         public:
+            static const unsigned int MinRetransmissionInterval;
             /**
              * Buffer state
              */
