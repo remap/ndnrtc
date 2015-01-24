@@ -25,7 +25,8 @@ isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
 playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
-data_(nullptr)
+data_(nullptr),
+observer_(nullptr)
 {
     setDescription("playout");
     jitterTiming_.flush();
@@ -142,6 +143,9 @@ Playout::processPlayout()
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
             
+            if (observer_ && isKey)
+                observer_->keyFrameConsumed();
+            
             noData = (data_ == nullptr);
             incomplete = (assembledLevel < 1.);
             
@@ -204,7 +208,8 @@ Playout::processPlayout()
             
             assert(playbackDelay >= 0);
 
-            isRunning_ = !consumer_->recoveryCheck();
+            if (observer_)
+                isRunning_ = !observer_->recoveryCheck();
             playoutCs_.Leave();
             
             // setup and run playout timer for calculated playout interval            

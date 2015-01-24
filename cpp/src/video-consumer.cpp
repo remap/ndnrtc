@@ -59,6 +59,7 @@ VideoConsumer::init(const ConsumerSettings& settings)
         
         playout_.reset(new VideoPlayout(this));
         playout_->setLogger(logger_);
+        playout_->registerObserver(pipeliner_.get());
         playout_->init(decoder_.get());
         
 #if 0

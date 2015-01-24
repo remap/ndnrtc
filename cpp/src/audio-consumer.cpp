@@ -43,6 +43,7 @@ AudioConsumer::init(const ConsumerSettings& settings)
         
         playout_.reset(new AudioPlayout(this));
         playout_->setLogger(logger_);
+        playout_->registerObserver(pipeliner_.get());
         playout_->init(renderer_.get());
         
         LogInfoC << "initialized" << std::endl;

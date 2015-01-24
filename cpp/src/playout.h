@@ -20,6 +20,7 @@
 namespace ndnrtc{
     namespace new_api {
         
+        class IPlayoutObserver;
         /**
          * Base class for playout mechanisms. The core playout logic is similar 
          * for audio and video streams. Differences must be implemented in 
@@ -59,6 +60,10 @@ namespace ndnrtc{
             setPlaybackAdjustment(int playbackAdjustment)
             { playbackAdjustment_ = playbackAdjustment; }
             
+            void
+            registerObserver(IPlayoutObserver *observer)
+            { observer_ = observer; }
+            
         protected:
             bool isRunning_;
             PlayoutStatistics stat_;
@@ -77,6 +82,8 @@ namespace ndnrtc{
             
             void* frameConsumer_;
             PacketData *data_;
+            
+            IPlayoutObserver *observer_;
             
             /**
              * This method should be overriden by derived classes for 
@@ -114,6 +121,14 @@ namespace ndnrtc{
             
             bool
             processPlayout();
+        };
+        
+        class IPlayoutObserver {
+        public:
+            // must return true if recovery is needed
+            virtual bool recoveryCheck() = 0;
+            // called each time key frame was extracted from the buffer
+            virtual void keyFrameConsumed() = 0;
         };
     }
 }

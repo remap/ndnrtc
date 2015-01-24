@@ -15,6 +15,7 @@
 #include "frame-buffer.h"
 #include "ndnrtc-object.h"
 #include "consumer.h"
+#include "playout.h"
 
 namespace ndnrtc {
     namespace new_api {
@@ -53,7 +54,8 @@ namespace ndnrtc {
         
         
         class PipelinerBase : public NdnRtcComponent,
-                                public IFrameBufferCallback
+                                public IFrameBufferCallback,
+                                public IPlayoutObserver
         {
         public:
             typedef enum _State {
@@ -106,6 +108,13 @@ namespace ndnrtc {
             
             void
             threadSwitched();
+            
+            // IPlayoutObserver interface conformance
+            virtual bool
+            recoveryCheck() { return false; }
+            
+            virtual void
+            keyFrameConsumed() {}
             
         protected:
             State state_;
@@ -373,8 +382,12 @@ namespace ndnrtc {
                 rttChangeEstimator_.setLogger(logger);
             }
             
+            // IPlayoutObserver interface conformance
             bool
             recoveryCheck();
+            
+            void
+            keyFrameConsumed();
             
         private:
             StabilityEstimator stabilityEstimator_;

@@ -137,14 +137,6 @@ Consumer::triggerRebuffering()
     pipeliner_->triggerRebuffering();
 }
 
-bool
-Consumer::recoveryCheck()
-{
-#ifdef USE_WINDOW_PIPELINER
-    return ((Pipeliner2*)pipeliner_.get())->recoveryCheck();
-#endif
-}
-
 void
 Consumer::switchThread(const std::string& threadName)
 {

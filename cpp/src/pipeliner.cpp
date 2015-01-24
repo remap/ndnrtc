@@ -1153,6 +1153,12 @@ Pipeliner2::recoveryCheck()
     return false;
 }
 
+void
+Pipeliner2::keyFrameConsumed()
+{
+    requestNextKey(keyFrameSeqNo_);
+}
+
 //******************************************************************************
 void
 Pipeliner2::askForRightmostData()
@@ -1252,10 +1258,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     if (isDeltaFrame)
     {
         rttChangeEstimator_.newRttValue(event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.);
-    }
-    else // if KEY
-        if (event.type_ == FrameBuffer::Event::Ready)
-            requestNextKey(keyFrameSeqNo_);
+    }   
     
     if (event.type_ == FrameBuffer::Event::FirstSegment)
         requestMissing(event.slot_,
