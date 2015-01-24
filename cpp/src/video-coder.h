@@ -71,6 +71,7 @@ namespace ndnrtc {
             unsigned int nDroppedByEncoder_ = 0;
             unsigned int rateMeter_;
             int keyFrameCounter_ = 0;
+            uint64_t startEncoding_;
             
             double deliveredTimestamp_;
             IEncodedFrameConsumer *frameConsumer_ = NULL;

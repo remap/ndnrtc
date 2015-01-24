@@ -139,6 +139,10 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo,
                             const webrtc::RTPFragmentationHeader* fragmentation)
 {
+    LogTraceC << "encoding time "
+    << NdnRtcUtils::microsecondTimestamp() - startEncoding_
+    << " usec" << std::endl;
+    
     counter_++;
     
     settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
@@ -154,6 +158,7 @@ void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                    double timestamp)
 {
     LogTraceC << "encoding..." << endl;
+    startEncoding_ = NdnRtcUtils::microsecondTimestamp();
     
     if (counter_ %2 == 0)
     {
