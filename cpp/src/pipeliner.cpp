@@ -196,10 +196,11 @@ ndnrtc::new_api::PipelinerBase::expressRange(Interest& interest,
         for (it = segmentInterests.begin(); it != segmentInterests.end(); ++it)
         {
             shared_ptr<Interest> interestPtr = *it;
+            int segmentIdx = it - segmentInterests.begin();
             
             stat_.nInterestSent_++;
             consumer_->getInterestQueue()->enqueueInterest(*interestPtr,
-                                                           Priority::fromArrivalDelay(priority),
+                                                           Priority::fromArrivalDelay(priority+segmentIdx),
                                                            ndnAssembler_->getOnDataHandler(),
                                                            ndnAssembler_->getOnTimeoutHandler());
         }
