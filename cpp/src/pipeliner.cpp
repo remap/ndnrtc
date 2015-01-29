@@ -1060,7 +1060,6 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
         case StateWaitInitial:
         {
             // make sure we've got what is expected
-//            if (NdnRtcNamespace::isKeyFramePrefix(data->getName()))
             if (isKeyPrefix)
             {
                 LogTraceC << "received rightmost data "
@@ -1084,7 +1083,6 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             {
                 if (deltaFrameSeqNo_ < 0 &&
                     isKeyPrefix)
-//                    NdnRtcNamespace::isKeyFramePrefix(data->getName()))
                 {
                     deltaFrameSeqNo_ = metaInfo.pairedSequenceNo_;
                     timestamp_ = NdnRtcUtils::millisecondTimestamp();
@@ -1120,11 +1118,11 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
     switch (state_) {
         case StateWaitInitial: // fall through
+        case StateChasing:
         {
             askForRightmostData();
         }
             break;
-        case StateChasing:
         case StateFetching:
         {
             // do something with timeouts
@@ -1143,9 +1141,10 @@ bool
 Pipeliner2::recoveryCheck()
 {
     int interruptionDelay = 500;
+    int64_t idleTime = NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_;
     
     if (recoveryCheckpointTimestamp_ > 0 &&
-        NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_ > interruptionDelay)
+        idleTime > interruptionDelay)
     {
         LogWarnC
         << "No data for the last " << interruptionDelay
@@ -1158,6 +1157,8 @@ Pipeliner2::recoveryCheck()
         
         return true;
     }
+    else
+        LogTraceC << idleTime << " without incoming data" << std::endl;
     
     return false;
 }
