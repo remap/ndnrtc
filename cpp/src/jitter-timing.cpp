@@ -127,7 +127,7 @@ void JitterTiming::runPlayoutTimer()
     if (framePlayoutTimeMs_ > 0)
     {
         LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
-        
+
         playoutTimer_.StartTimer(false, framePlayoutTimeMs_);
         playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
         LogTraceC << "timer done]" << endl;

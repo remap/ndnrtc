@@ -329,6 +329,22 @@ bool NdnRtcNamespace::isKeyFramePrefix(const ndn::Name &prefix)
     return !(n1 == n2) &&
     n1 >= 0 && n1 < n2;
 }
+
+bool NdnRtcNamespace::isPrefix(const ndn::Name &name, const ndn::Name &prefix)
+{
+    if (prefix == name)
+        return true;
+    
+    if (prefix.size() <= name.size())
+    {
+        for (int i = 0; i < prefix.size(); i++)
+            if (prefix.get(i) != name.get(i))
+                return false;
+    }
+    
+    return true;
+}
+
 #warning change name to be consistent with previous call
 bool NdnRtcNamespace::isDeltaFramePrefix(const ndn::Name &prefix)
 {

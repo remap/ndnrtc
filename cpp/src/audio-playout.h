@@ -18,7 +18,7 @@ namespace ndnrtc {
         class AudioPlayout : public Playout
         {
         public:
-            AudioPlayout(const Consumer* consumer);
+            AudioPlayout(Consumer* consumer);
             ~AudioPlayout();
             
         private:

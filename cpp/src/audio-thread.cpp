@@ -53,6 +53,11 @@ int AudioThread::publishPacket(PacketData &packetData,
 
 int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 {
+    // in order to avoid situations when interest arrives simultaneously
+    // with the data being added to the PIT/cache, we synchronize with
+    // face on this level
+    faceProcessor_->getFaceWrapper()->synchronizeStart();
+    
     NdnAudioData::AudioPacket packet = {false, len, data};
     
     if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
@@ -68,11 +73,17 @@ int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
 
     adata_.addPacket(packet);
     
+    faceProcessor_->getFaceWrapper()->synchronizeStop();
     return 0;
 }
 
 int AudioThread::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
+    // in order to avoid situations when interest arrives simultaneously
+    // with the data being added to the PIT/cache, we synchronize with
+    // face on this level
+    faceProcessor_->getFaceWrapper()->synchronizeStart();
+    
     NdnAudioData::AudioPacket packet = (NdnAudioData::AudioPacket){true, len, data};
     
     if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
@@ -86,11 +97,6 @@ int AudioThread::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 
     adata_.addPacket(packet);
     
+    faceProcessor_->getFaceWrapper()->synchronizeStop();
     return 0;
 }
-//******************************************************************************
-#pragma mark - intefaces realization - <#interface#>
-
-//******************************************************************************
-#pragma mark - private
-

@@ -20,11 +20,13 @@ using namespace ndnrtc::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(const Consumer* consumer):
+Playout::Playout(Consumer* consumer):
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
-data_(nullptr)
+playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
+data_(nullptr),
+observer_(nullptr)
 {
     setDescription("playout");
     jitterTiming_.flush();
@@ -41,6 +43,7 @@ Playout::~Playout()
         stop();
     
     playoutThread_.~ThreadWrapper();
+    playoutCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -55,15 +58,17 @@ Playout::init(void* frameConsumer)
 }
 
 int
-Playout::start()
+Playout::start(int playbackAdjustment)
 {
+    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
+    
     jitterTiming_.flush();
     
     isRunning_ = true;
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
-    playbackAdjustment_ = 0;
+    playbackAdjustment_ = playbackAdjustment;
     data_ = nullptr;
     
     unsigned int tid;
@@ -76,6 +81,7 @@ Playout::start()
 int
 Playout::stop()
 {
+    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
     if (isRunning_)
     {
         playoutThread_.SetNotAlive();
@@ -111,6 +117,8 @@ Playout::setDescription(const std::string &desc)
 bool
 Playout::processPlayout()
 {
+    playoutCs_.Enter();
+    
     if (isRunning_)
     {
         int64_t now = NdnRtcUtils::millisecondTimestamp();
@@ -134,6 +142,9 @@ Playout::processPlayout()
             
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
+            
+            if (observer_ && isKey)
+                observer_->keyFrameConsumed();
             
             noData = (data_ == nullptr);
             incomplete = (assembledLevel < 1.);
@@ -181,7 +192,7 @@ Playout::processPlayout()
             << "packet" << STAT_DIV << sequencePacketNo << STAT_DIV
             << "lvl" << STAT_DIV << double(int(assembledLevel*10000))/100. << STAT_DIV
             << "valid" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
-            << "ts" << STAT_DIV << (data_?data_->getMetadata().timestamp_:0) << STAT_DIV
+            << "ts" << STAT_DIV << (noData ? 0 : data_->getMetadata().timestamp_) << STAT_DIV
             << "last ts" << STAT_DIV << lastPacketTs_ << STAT_DIV
             << "total" << STAT_DIV << playbackDelay+adjustment+avSync << STAT_DIV
             << "delay" << STAT_DIV << playbackDelay << STAT_DIV
@@ -196,12 +207,18 @@ Playout::processPlayout()
                 playbackDelay += avSync;
             
             assert(playbackDelay >= 0);
+
+            if (observer_)
+                isRunning_ = !observer_->recoveryCheck();
+            playoutCs_.Leave();
             
             // setup and run playout timer for calculated playout interval            
             jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
             jitterTiming_.runPlayoutTimer();
         }
     }
+    else
+        playoutCs_.Leave();
     
     return isRunning_;
 }

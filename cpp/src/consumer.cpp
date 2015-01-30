@@ -75,11 +75,18 @@ Consumer::init(const ConsumerSettings& settings)
 #warning error handling!
     chaseEstimation_->setLogger(logger_);
     
+#ifdef USE_WINDOW_PIPELINER
+    pipeliner_.reset(new Pipeliner2(shared_from_this(),
+                                    getCurrentThreadParameters()->getSegmentsInfo()));
+#else
     pipeliner_.reset(new Pipeliner(shared_from_this()));
+#endif
+    
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
     pipeliner_->registerCallback(this);
+    frameBuffer_->registerCallback(pipeliner_.get());
     
     renderer_->init();
     
@@ -148,6 +155,7 @@ Consumer::switchThread(const std::string& threadName)
             segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
 
             pipeliner_->threadSwitched();
+            playout_->stop();
             
             if (observer_)
             {
@@ -242,7 +250,27 @@ void
 Consumer::onBufferingEnded()
 {   
     if (!playout_->isRunning())
-        playout_->start();
+    {
+        unsigned int targetBufferSize = bufferEstimator_->getTargetSize();
+        int adjustment = bufferEstimator_->getTargetSize() - frameBuffer_->getPlayableBufferSize();
+        
+        if (adjustment < 0)
+        {
+            LogTraceC
+            << "adjusting playback for " << adjustment << std::endl;
+        }
+        else
+        {
+            LogWarnC
+            << "playback adjustment is positive " << adjustment << std::endl;
+            adjustment = 0;
+        }
+        
+        if (getGeneralParameters().useRtx_)
+            frameBuffer_->setRetransmissionsEnabled(true);
+        
+        playout_->start(adjustment);
+    }
     
     if (!renderer_->isRendering())
         renderer_->startRendering(settings_.streamParams_.streamName_);
@@ -251,7 +279,6 @@ Consumer::onBufferingEnded()
 void
 Consumer::onRebufferingOccurred()
 {
-    playout_->stop();
     renderer_->stopRendering();
     interestQueue_->reset();
     rttEstimation_->reset();
@@ -350,6 +377,15 @@ Consumer::dumpStat(ReceiverChannelPerformance stat) const
     << std::endl;
 }
 
+IPacketAssembler*
+Consumer::getPacketAssembler()
+{
+#ifdef USE_WINDOW_PIPELINER
+    return (Pipeliner2*)pipeliner_.get();
+#else
+    return this;
+#endif
+}
 //******************************************************************************
 #pragma mark - private
 void Consumer::onData(const shared_ptr<const Interest>& interest,

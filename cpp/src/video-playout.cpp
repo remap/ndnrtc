@@ -23,7 +23,7 @@ static EncodedFrameWriter frameWriter("received.nrtc");
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(const Consumer* consumer):
+VideoPlayout::VideoPlayout(Consumer* consumer):
 Playout(consumer)
 {
     description_ = "video-playout";
@@ -37,9 +37,9 @@ VideoPlayout::~VideoPlayout()
 //******************************************************************************
 #pragma mark - public
 int
-VideoPlayout::start()
+VideoPlayout::start(int playbackAdjustment)
 {
-    int res = Playout::start();
+    int res = Playout::start(playbackAdjustment);
     
     validGop_ = false;
     currentKeyNo_ = 0;
@@ -139,7 +139,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             pushFrameFurther  = true;
         
         // check for valid data
-        pushFrameFurther &= (data_ != NULL);
+        pushFrameFurther &= (data != NULL);
         
         if (pushFrameFurther)
         {

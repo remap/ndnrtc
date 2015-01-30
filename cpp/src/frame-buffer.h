@@ -27,9 +27,12 @@ namespace ndnrtc
         using namespace ndnlog;
         class RateControl;
         
+        class IFrameBufferCallback;
+        
         class FrameBuffer : public ndnlog::new_api::ILoggingObject
         {
         public:
+            static const unsigned int MinRetransmissionInterval;
             /**
              * Buffer state
              */
@@ -529,9 +532,6 @@ namespace ndnrtc
                 std::string
                 dump();
                 
-//                unsigned char*
-//                getDataPtr() { return slotData_; }
-                
             private:
                 unsigned int segmentSize_ = 0;
                 unsigned int allocatedSize_ = 0, assembledSize_ = 0;
@@ -642,6 +642,7 @@ namespace ndnrtc
                     Error          = 1<<8, // general error event
                     Empty          = 1<<9, // no event has occurred during
                                            // specified time interval
+                    Segment        = 1<<10 // new segment arrived
                 };
                 
                 static const int AllEventsMask;
@@ -698,7 +699,7 @@ namespace ndnrtc
              * or new slots
              */
             unsigned int
-            getActiveSlotsNum()
+            getActiveSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
@@ -706,10 +707,20 @@ namespace ndnrtc
             }
             
             /**
+             * Returns total number of new slots (i.e. outstanding frames)
+             */
+            unsigned int
+            getNewSlotsNum() const
+            {
+                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                return getSlots(Slot::StateNew).size();
+            }
+            
+            /**
              * Returns total number of slots that have any segments fetched
              */
             unsigned int
-            getFetchedSlotsNum()
+            getFetchedSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateAssembling |
@@ -720,7 +731,7 @@ namespace ndnrtc
              * Returns total number of free slots in the buffer
              */
             unsigned int
-            getFreeSlotsNum()
+            getFreeSlotsNum() const
             {
                 webrtc::CriticalSectionScoped scopedCs(&syncCs_);
                 return getSlots(Slot::StateFree).size();
@@ -751,13 +762,8 @@ namespace ndnrtc
             
             /**
              * Appends data to the slot
-             * @return returns state of the slot after operation:
-             *  - StateFree slot stayed unaffected (was not reserved or not found)
-             *  - StateAssembling slot is in assembling mode - waiting for more segments
-             *  - StateReady slot is assembled and ready for decoding
-             *  - StateLocked slot is locked and was not affected
              */
-            Slot::State
+            Event
             newData(const Data& data);
             
             void
@@ -887,6 +893,14 @@ namespace ndnrtc
             setRateControl(const boost::shared_ptr<RateControl>& rateControl)
             { rateControl_ = rateControl; }
             
+            void
+            registerCallback(IFrameBufferCallback* callback)
+            { callback_ = callback; }
+            
+            void
+            setRetransmissionsEnabled(bool retransmissionsEnabled)
+            { retransmissionsEnabled_ = retransmissionsEnabled; }
+            
         protected:
             // playback queue contains active slots sorted in ascending
             // playback order (see PlaybackComparator)
@@ -968,6 +982,7 @@ namespace ndnrtc
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
+            bool retransmissionsEnabled_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -981,11 +996,12 @@ namespace ndnrtc
             std::list<Event> pendingEvents_;
             webrtc::RWLockWrapper &bufferEventsRWLock_;
             
+            IFrameBufferCallback *callback_;
+            
             boost::shared_ptr<RateControl> rateControl_;
             
             boost::shared_ptr<Slot>
-            getSlot(const Name& prefix, bool remove = false,
-                    bool shouldMatch = true);
+            getSlot(const Name& prefix, bool remove = false);
             
             int
             setSlot(const Name& prefix, boost::shared_ptr<Slot>& slot);
@@ -1001,7 +1017,7 @@ namespace ndnrtc
             freeSlot(const Name &prefix);
             
             std::vector<boost::shared_ptr<Slot> >
-            getSlots(int slotStateMask);
+            getSlots(int slotStateMask) const;
             
             /**
              * Estimates buffer size based on the current active slots
@@ -1061,6 +1077,18 @@ namespace ndnrtc
             
             void
             dumpActiveSlots();
+            
+            void
+            checkRetransmissions();
+            
+            int rttFilter_;
+        };
+        
+        class IFrameBufferCallback
+        {
+        public:
+            virtual void
+            onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
         };
     }
 }

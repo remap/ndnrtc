@@ -129,10 +129,8 @@ int MediaThread::publishPacket(PacketData &packetData,
             {
                 // according to http://named-data.net/doc/ndn-ccl-api/memory-content-cache.html#memorycontentcache-registerprefix-method
                 // adding content should be synchronized with the processEvents
-                // call
-                faceProcessor_->getFaceWrapper()->synchronizeStart();
+                // call; this must be done in calling routines
                 memCache_->add(ndnData);
-                faceProcessor_->getFaceWrapper()->synchronizeStop();
                 
                 LogTraceC
                 << "added to cache " << segmentName << " "
@@ -156,6 +154,8 @@ int MediaThread::publishPacket(PacketData &packetData,
                                                ndnData.getDefaultWireEncoding().size());
 #endif
         }
+        
+        cleanPitForFrame(prefix);
     }
     catch (std::exception &e)
     {
@@ -174,10 +174,10 @@ void MediaThread::registerPrefix(const Name& prefix)
         // MemoryContentCache does not support providing registered prefixes IDs
         // registeredPrefixId_ =
         memCache_->registerPrefix(prefix,
-                                                        bind(&MediaThread::onRegisterFailed,
-                                                             this, _1),
-                                                        bind(&MediaThread::onInterest,
-                                                             this, _1, _2, _3));
+                                  bind(&MediaThread::onRegisterFailed,
+                                       this, _1),
+                                  bind(&MediaThread::onInterest,
+                                       this, _1, _2, _3));
     }
     else
     {
@@ -196,14 +196,14 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
                              ndn::Transport& transport)
 {
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
+
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
     
     if (packetNo >= packetNo_)
     {
         addToPit(interest);
     }
-    
-    LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
 void MediaThread::onRegisterFailed(const shared_ptr<const Name>& prefix)
@@ -279,4 +279,22 @@ int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
     }
     
     return 0;
+}
+
+int MediaThread::cleanPitForFrame(const Name framePrefix)
+{
+    webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+    std::vector<Name> keysToDelete;
+    
+    for (auto it:pit_)
+        if (NdnRtcNamespace::isPrefix(it.first, framePrefix))
+            keysToDelete.push_back(it.first);
+    
+    for (auto key : keysToDelete)
+    {
+        LogTraceC << "purge old PIT entry " << key;
+        pit_.erase(key);
+    }
+    
+    return keysToDelete.size();
 }

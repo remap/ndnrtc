@@ -36,6 +36,8 @@ namespace ndnrtc
         public:
             VideoCoderStatistics coderStatistics_;
             unsigned int nKeyFramesPublished_, nDeltaFramesPublished_;
+            double deltaAvgSegNum_, keyAvgSegNum_;
+            double deltaAvgParitySegNum_, keyAvgParitySegNum_;
         };
         
         /**
@@ -55,13 +57,7 @@ namespace ndnrtc
             int init(const VideoThreadSettings& settings);
             
             void
-            getStatistics(VideoThreadStatistics& statistics)
-            {
-                MediaThread::getStatistics(statistics);
-                coder_->getStatistics(statistics.coderStatistics_);
-                statistics.nKeyFramesPublished_ = keyFrameNo_;
-                statistics.nDeltaFramesPublished_ = deltaFrameNo_;
-            }
+            getStatistics(VideoThreadStatistics& statistics);
             
             void
             getSettings(VideoThreadSettings& settings)
@@ -78,6 +74,8 @@ namespace ndnrtc
             
         private:
             int keyFrameNo_ = 0, deltaFrameNo_ = 0;
+            unsigned int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
+            unsigned int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             
             Name deltaFramesPrefix_, keyFramesPrefix_;
             boost::shared_ptr<VideoCoder> coder_;
