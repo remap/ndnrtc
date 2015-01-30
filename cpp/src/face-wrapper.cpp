@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Peter Gusev. All rights reserved.
 //
 
+#include <unistd.h>
+
 #include "face-wrapper.h"
 #include "ndnrtc-utils.h"
 
@@ -98,6 +100,38 @@ void FaceWrapper::shutdown()
 //******************************************************************************
 //******************************************************************************
 #pragma mark - static
+static std::string getUnixSocketFilePathForLocalhost()
+{
+    std::string filePath = "/var/run/nfd.sock";
+    if (access(filePath.c_str(), R_OK) == 0)
+        return filePath;
+    else {
+        filePath = "/tmp/.ndnd.sock";
+        if (access(filePath.c_str(), R_OK) == 0)
+            return filePath;
+        else
+            return "";
+    }
+}
+
+static shared_ptr<ndn::Transport> getDefaultTransport()
+{
+    if (getUnixSocketFilePathForLocalhost() == "")
+        return make_shared<TcpTransport>();
+    else
+        return make_shared<UnixTransport>();
+}
+
+static shared_ptr<ndn::Transport::ConnectionInfo> getDefaultConnectionInfo()
+{
+    std::string filePath = getUnixSocketFilePathForLocalhost();
+    if (filePath == "")
+        return make_shared<TcpTransport::ConnectionInfo>("localhost");
+    else
+        return shared_ptr<UnixTransport::ConnectionInfo>
+        (new UnixTransport::ConnectionInfo(filePath.c_str()));
+}
+
 int
 FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
                                      shared_ptr<ndnrtc::FaceWrapper>& face,
@@ -107,12 +141,21 @@ FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
     
     try
     {
-        shared_ptr<ndn::Transport::ConnectionInfo>
-        connInfo(new TcpTransport::ConnectionInfo(host.c_str(), port));
+        shared_ptr<ndn::Transport::ConnectionInfo> connInfo;
+        shared_ptr<Face> ndnFace;
         
-        transport.reset(new TcpTransport());
+        if (host == "127.0.0.1" || host == "0.0.0.0" || host == "localhost")
+        {
+            transport = getDefaultTransport();
+            ndnFace.reset(new Face(transport, getDefaultConnectionInfo()));
+        }
+        else
+        {
+            connInfo.reset(new TcpTransport::ConnectionInfo(host.c_str(), port));
+            transport.reset(new TcpTransport());
+            ndnFace.reset(new Face(transport, connInfo));
+        }
         
-        shared_ptr<Face> ndnFace(new Face(transport, connInfo));
         face.reset(new FaceWrapper(ndnFace));
         
     }

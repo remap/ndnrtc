@@ -16,6 +16,7 @@
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/transport/tcp-transport.hpp>
 #include <ndn-cpp/transport/udp-transport.hpp>
+#include <ndn-cpp/transport/unix-transport.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
