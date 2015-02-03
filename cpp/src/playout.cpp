@@ -156,13 +156,14 @@ Playout::processPlayout()
                                pairedPacketNo, isKey, assembledLevel))
             {
                 packetValid = true;
-                updatePlaybackAdjustment();
             }
 
             double frameUnixTimestamp = 0;
 
             if (data_)
             {
+                updatePlaybackAdjustment();
+                
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
                 stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
                 
