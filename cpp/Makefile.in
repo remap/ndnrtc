@@ -581,7 +581,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 @OS_DARWIN_TRUE@libndnrtc_la_OBJCFLAGS = -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
 @OS_DARWIN_TRUE@libndnrtc_la_LIBADD = src/objc/libcocoa-renderer.a  
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@ -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt
 @OS_DARWIN_TRUE@ndnrtc_demo_SOURCES = demoapp/config.cc demoapp/config.h \
 @OS_DARWIN_TRUE@    demoapp/main.mm demoapp/AppDelegate.h demoapp/AppDelegate.m \
 @OS_DARWIN_TRUE@    demoapp/renderer-stub.cc demoapp/renderer-stub.h \

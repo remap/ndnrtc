@@ -16552,12 +16552,6 @@ case $host_os in
 		# Special case.
 		case "$host" in
 		  *-darwin* | *-macos10*)
-			#if test -d /opt/local ; then
-			#	CFLAGS="$CFLAGS -I/opt/local/include"
-			#	CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-			#	CPPFLAGS="$CPPFLAGS -I/opt/local/include"
-			#	LDFLAGS="$LDFLAGS -L/opt/local/lib"
-			#el
 			if test -d /sw ; then
 				CFLAGS="$CFLAGS -I/sw/include"
 				CXXFLAGS="$CXXFLAGS -I/sw/include"
@@ -17332,7 +17326,7 @@ CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS -L$BOOSTLIB"
 SAVED_LIBS=$LIBS
-LIBS="$LIBS -lboost_system-mt -lboost_timer-mt"
+LIBS="$LIBS -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for boost::shared_ptr..." >&5
 $as_echo_n "checking for boost::shared_ptr...... " >&6; }
@@ -17370,6 +17364,41 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <boost/enable_shared_from_this.hpp>
     class A:public boost::enable_shared_from_this<A>{};
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "not found
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for boost::chrono..." >&5
+$as_echo_n "checking for boost::chrono...... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <boost/chrono.hpp>
+    auto now = boost::chrono::system_clock::now().time_since_epoch();
+  	boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
+  	boost::chrono::microseconds usec = boost::chrono::duration_cast<boost::chrono::microseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::milliseconds msec = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::seconds sec = boost::chrono::duration_cast<boost::chrono::seconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::duration<double> secd = now;
 int
 main ()
 {

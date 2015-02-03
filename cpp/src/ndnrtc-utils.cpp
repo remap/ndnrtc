@@ -10,14 +10,16 @@
 
 //#undef NDN_LOGGING
 
-#include "ndnrtc-utils.h"
-#include <mach/mach_time.h>
+#include <boost/chrono.hpp>
 
+#include "ndnrtc-utils.h"
 #include "endian.h"
 
 using namespace std;
 using namespace ndnrtc;
 using namespace webrtc;
+
+using namespace boost::chrono;
 
 typedef struct _FrequencyMeter {
     double cycleDuration_;
@@ -136,95 +138,33 @@ Name::Component NdnRtcUtils::componentFromInt(unsigned int number)
                            frameNoStr.size());
 }
 
+// monotonic clock
 int64_t NdnRtcUtils::millisecondTimestamp()
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    
-    int64_t ticks = 0;
-
-#if 0
-    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
-#else
-    static mach_timebase_info_data_t timebase;
-    if (timebase.denom == 0) {
-        // Get the timebase if this is the first time we run.
-        // Recommended by Apple's QA1398.
-        kern_return_t retval = mach_timebase_info(&timebase);
-        if (retval != KERN_SUCCESS) {
-            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
-            // Then replace this with a CHECK(retval == KERN_SUCCESS);
-            asm("int3");
-        }
-    }
-    // Use timebase to convert absolute time tick units into nanoseconds.
-    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
-    ticks /= 1000000LL;
-#endif
-    
-    return ticks;
+    milliseconds msec = duration_cast<milliseconds>(steady_clock::now().time_since_epoch());
+    return msec.count();
 };
 
+// monotonic clock
 int64_t NdnRtcUtils::microsecondTimestamp()
 {
-    int64_t ticks = 0;
-    
-#if 0
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    
-    ticks = 1000000LL * static_cast<int64_t>(tv.tv_sec) +
-    static_cast<int64_t>(tv.tv_usec);
-#else
-    static mach_timebase_info_data_t timebase;
-    if (timebase.denom == 0) {
-        // Get the timebase if this is the first time we run.
-        // Recommended by Apple's QA1398.
-        kern_return_t retval = mach_timebase_info(&timebase);
-        if (retval != KERN_SUCCESS) {
-            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
-            // Then replace this with a CHECK(retval == KERN_SUCCESS);
-            asm("int3");
-        }
-    }
-    // Use timebase to convert absolute time tick units into nanoseconds.
-    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
-    ticks /= 1000;
-#endif
-    
-    return ticks;
+    microseconds usec = duration_cast<microseconds>(steady_clock::now().time_since_epoch());
+    return usec.count();
 };
 
+// monotonic clock
 int64_t NdnRtcUtils::nanosecondTimestamp()
 {
-    int64_t ticks = 0;
-    
-    static mach_timebase_info_data_t timebase;
-    if (timebase.denom == 0) {
-        // Get the timebase if this is the first time we run.
-        // Recommended by Apple's QA1398.
-        kern_return_t retval = mach_timebase_info(&timebase);
-        if (retval != KERN_SUCCESS) {
-            // TODO(wu): Implement CHECK similar to chrome for all the platforms.
-            // Then replace this with a CHECK(retval == KERN_SUCCESS);
-            asm("int3");
-        }
-    }
-    // Use timebase to convert absolute time tick units into nanoseconds.
-    ticks = mach_absolute_time() * timebase.numer / timebase.denom;
-    
-    return ticks;
+    boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
+    return nsec.count();
 };
 
+// system clock
 double NdnRtcUtils::unixTimestamp()
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    
-    double ticks = 0;
-    ticks = static_cast<double>(tv.tv_sec)+static_cast<double>(tv.tv_usec)/1000000LL;
-    
-    return ticks;
+    auto now = boost::chrono::system_clock::now().time_since_epoch();
+    boost::chrono::duration<double> sec = now;
+    return sec.count();
 }
 
 //******************************************************************************

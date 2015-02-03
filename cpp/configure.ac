@@ -243,7 +243,7 @@ CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS -L$BOOSTLIB"
 SAVED_LIBS=$LIBS
-LIBS="$LIBS -lboost_system-mt -lboost_timer-mt"
+LIBS="$LIBS -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt"
 
 AC_MSG_CHECKING([for boost::shared_ptr...])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -259,6 +259,21 @@ AC_MSG_CHECKING([for boost::enabled_shared_from_this...])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     [[#include <boost/enable_shared_from_this.hpp>]]
     [[class A:public boost::enable_shared_from_this<A>{};]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
+AC_MSG_CHECKING([for boost::chrono...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/chrono.hpp>]]
+    [[auto now = boost::chrono::system_clock::now().time_since_epoch();
+  	boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
+  	boost::chrono::microseconds usec = boost::chrono::duration_cast<boost::chrono::microseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::milliseconds msec = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::seconds sec = boost::chrono::duration_cast<boost::chrono::seconds>(boost::chrono::steady_clock::now().time_since_epoch());
+    boost::chrono::duration<double> secd = now;]])
 ], [
     AC_MSG_RESULT([yes])
 ], [
