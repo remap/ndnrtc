@@ -291,9 +291,6 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
     else
     {
         LogError(LIB_LOG) << "Observer already exists" << std::endl;
-        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_ALREADY_EXISTS,
-                                                NdnRtcUtils::toString("Observer %s:%s already exists",
-                                                                      prefix.c_str(), username.c_str()).c_str());
     }
     
     return "";
