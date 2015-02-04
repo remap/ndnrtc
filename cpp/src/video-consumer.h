@@ -51,6 +51,9 @@ namespace ndnrtc {
              */
             void
             playbackEventOccurred(PlaybackEvent event, unsigned int frameSeqNo);
+            
+            void
+            onRebufferingOccurred();
 
         private:
             boost::shared_ptr<NdnVideoDecoder> decoder_;
