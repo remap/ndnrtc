@@ -150,6 +150,13 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
     }
 }
 
+void
+VideoConsumer::onRebufferingOccurred()
+{
+    Consumer::onRebufferingOccurred();
+    decoder_->reset();
+}
+
 //******************************************************************************
 void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
