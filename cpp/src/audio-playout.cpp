@@ -19,7 +19,7 @@ using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioPlayout::AudioPlayout(const Consumer* consumer):
+AudioPlayout::AudioPlayout(Consumer* consumer):
 Playout(consumer)
 {
     description_ = "audio-playout";

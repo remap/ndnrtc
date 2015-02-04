@@ -360,6 +360,10 @@ namespace ndnrtc {
      *          bitrate;    // encoding bitrate (kbps)
      *          width;      // encoding width
      *          height;     // encoding height
+     *          deltaAvgSegNum;         // average number of segments per delta frame
+     *          deltaAvgParitySegNum;   // average number of segments for parity data per delta frame
+     *          keyAvgSegNum;           // average number of segments per key frame
+     *          keyAvgParitySegNum;     // average number of segments for parity data per key frame
      *       },
      *       ...
      *      ];
@@ -387,6 +391,8 @@ namespace ndnrtc {
             unsigned int gop_;
             unsigned int bitrate_; // kbps
             unsigned int width_, height_; // pixels
+            double deltaAvgSegNum_, deltaAvgParitySegNum_;
+            double keyAvgSegNum_, keyAvgParitySegNum_;
             char name_[MAX_THREAD_NAME_LENGTH+1];
             uint16_t mrkr2_ = NDNRTC_VTHREADDESC_MRKR;
         } __attribute__((packed));

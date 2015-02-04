@@ -51,11 +51,15 @@ VideoConsumer::init(const ConsumerSettings& settings)
 
     if (RESULT_GOOD(Consumer::init(settings)))
     {
+        pipeliner_->setUseKeyNamespace(true);
+        pipeliner_->initialize();
+        
         interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
         playout_.reset(new VideoPlayout(this));
         playout_->setLogger(logger_);
+        playout_->registerObserver(pipeliner_.get());
         playout_->init(decoder_.get());
         
 #if 0
@@ -144,6 +148,13 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
         webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
         observer_->onPlaybackEventOccurred(event, frameSeqNo);
     }
+}
+
+void
+VideoConsumer::onRebufferingOccurred()
+{
+    Consumer::onRebufferingOccurred();
+    decoder_->reset();
 }
 
 //******************************************************************************

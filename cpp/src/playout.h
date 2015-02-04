@@ -20,6 +20,7 @@
 namespace ndnrtc{
     namespace new_api {
         
+        class IPlayoutObserver;
         /**
          * Base class for playout mechanisms. The core playout logic is similar 
          * for audio and video streams. Differences must be implemented in 
@@ -30,14 +31,14 @@ namespace ndnrtc{
         class Playout : public NdnRtcComponent
         {
         public:
-            Playout(const Consumer* consumer);
+            Playout(Consumer* consumer);
             virtual ~Playout();
             
             virtual int
             init(void* frameConsumer);
             
             virtual int
-            start();
+            start(int playbackAdjustment = 0);
             
             virtual int
             stop();
@@ -55,6 +56,14 @@ namespace ndnrtc{
             isRunning()
             { return isRunning_; }
             
+            void
+            setPlaybackAdjustment(int playbackAdjustment)
+            { playbackAdjustment_ = playbackAdjustment; }
+            
+            void
+            registerObserver(IPlayoutObserver *observer)
+            { observer_ = observer; }
+            
         protected:
             bool isRunning_;
             PlayoutStatistics stat_;
@@ -64,14 +73,17 @@ namespace ndnrtc{
             unsigned int inferredDelay_;
             int playbackAdjustment_;
             
-            const Consumer* consumer_;
+            Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
             webrtc::ThreadWrapper &playoutThread_;
+            webrtc::CriticalSectionWrapper &playoutCs_;
             
             void* frameConsumer_;
             PacketData *data_;
+            
+            IPlayoutObserver *observer_;
             
             /**
              * This method should be overriden by derived classes for 
@@ -109,6 +121,14 @@ namespace ndnrtc{
             
             bool
             processPlayout();
+        };
+        
+        class IPlayoutObserver {
+        public:
+            // must return true if recovery is needed
+            virtual bool recoveryCheck() = 0;
+            // called each time key frame was extracted from the buffer
+            virtual void keyFrameConsumed() = 0;
         };
     }
 }

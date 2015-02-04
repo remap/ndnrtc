@@ -78,7 +78,7 @@ namespace ndnrtc {
         using namespace ndn;
         
         class FrameBuffer;
-        class Pipeliner;
+        class PipelinerBase;
         class InterestQueue;
         class Playout;
         
@@ -206,7 +206,7 @@ namespace ndnrtc {
             getFrameBuffer() const
             { return frameBuffer_; }
             
-            virtual boost::shared_ptr<Pipeliner>
+            virtual boost::shared_ptr<PipelinerBase>
             getPipeliner() const
             { return pipeliner_; }
             
@@ -215,8 +215,7 @@ namespace ndnrtc {
             { return interestQueue_; }
             
             virtual IPacketAssembler*
-            getPacketAssembler()
-            { return this; }
+            getPacketAssembler();
             
             virtual boost::shared_ptr<Playout>
             getPacketPlayout() const
@@ -316,7 +315,7 @@ namespace ndnrtc {
             unsigned int currentThreadIdx_ = 0;
             
             boost::shared_ptr<FrameBuffer> frameBuffer_;
-            boost::shared_ptr<Pipeliner> pipeliner_;
+            boost::shared_ptr<PipelinerBase> pipeliner_;
             boost::shared_ptr<InterestQueue> interestQueue_;
             boost::shared_ptr<Playout> playout_;
             boost::shared_ptr<RttEstimation> rttEstimation_;

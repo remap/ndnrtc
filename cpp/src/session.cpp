@@ -85,6 +85,7 @@ Session::stop()
     {
         LogInfoC << "session stopped" << std::endl;
         switchStatus(SessionOffline);
+        logger_->flush();
     }
     
     return RESULT_OK;
@@ -207,14 +208,14 @@ Session::onPublishSessionInfo()
 
     for (StreamMap::iterator it = audioStreams_.begin(); it != audioStreams_.end(); it++)
     {
-        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getSettings().streamParams_);
+        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getStreamParameters());
         
         sessionInfo->audioStreams_.push_back(streamParams);
     }
     
     for (StreamMap::iterator it = videoStreams_.begin(); it != videoStreams_.end(); it++)
     {
-        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getSettings().streamParams_);
+        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getStreamParameters());
         
         sessionInfo->videoStreams_.push_back(streamParams);
     }

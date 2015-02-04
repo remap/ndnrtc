@@ -19,11 +19,11 @@ namespace ndnrtc {
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(const Consumer* consumer);
+            VideoPlayout(Consumer* consumer);
             ~VideoPlayout();
             
             int
-            start();
+            start(int playbackAdjustment = 0);
             
         private:
             // this flags indicates whether frames should be played out (unless

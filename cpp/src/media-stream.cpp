@@ -111,6 +111,32 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
     return RESULT_OK;
 }
 
+MediaStreamParams
+VideoStream::getStreamParameters()
+{
+    MediaStreamParams params(settings_.streamParams_);
+    
+    // update average segments numbers for frames
+    for (int i = 0; i < params.mediaThreads_.size(); i++)
+    {
+        VideoThreadParams* threadParams = ((VideoThreadParams*)params.mediaThreads_[i]);
+        std::string threadKey = *NdnRtcNamespace::buildPath(false,
+                                                            &streamPrefix_,
+                                                            &threadParams->threadName_,
+                                                            0);
+        VideoThreadStatistics stat;
+        shared_ptr<VideoThread> thread = dynamic_pointer_cast<VideoThread>(threads_[threadKey]);
+        
+        thread->getStatistics(stat);
+        threadParams->deltaAvgSegNum_ = stat.deltaAvgSegNum_;
+        threadParams->deltaAvgParitySegNum_ = stat.deltaAvgParitySegNum_;
+        threadParams->keyAvgSegNum_ = stat.keyAvgSegNum_;
+        threadParams->keyAvgParitySegNum_ = stat.keyAvgParitySegNum_;
+    }
+    
+    return params;
+}
+
 void
 VideoStream::release()
 {
@@ -205,7 +231,7 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
     audioThread->setLogger(logger_);
     
     if (RESULT_FAIL(audioThread->init(threadSettings)))
-        notifyError(-1, "couldn't add new video thread %s",
+        notifyError(-1, "couldn't add new audio thread %s",
                     threadSettings.threadParams_->threadName_.c_str());
     else
         threads_[audioThread->getPrefix()] = audioThread;

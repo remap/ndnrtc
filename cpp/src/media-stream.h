@@ -72,6 +72,9 @@ namespace ndnrtc
             getPrefix()
             { return streamPrefix_; }
             
+            virtual MediaStreamParams
+            getStreamParameters() = 0;
+            
         protected:
             MediaStreamSettings settings_;
             std::string streamName_;
@@ -104,6 +107,9 @@ namespace ndnrtc
             
             ExternalCapturer*
             getCapturer() { return (ExternalCapturer*)(capturer_.get()); }
+            
+            MediaStreamParams
+            getStreamParameters();
             
         private:
             boost::shared_ptr<BaseCapturer> capturer_;
@@ -144,6 +150,10 @@ namespace ndnrtc
             
             void
             release();
+            
+            MediaStreamParams
+            getStreamParameters()
+            { return MediaStreamParams(settings_.streamParams_); }
             
         private:
             boost::shared_ptr<AudioCapturer> audioCapturer_;

@@ -21,7 +21,11 @@ const double VideoThread::ParityRatio = 0.2;
 
 VideoThread::VideoThread():
 MediaThread(),
-coder_(new VideoCoder())
+coder_(new VideoCoder()),
+deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
+keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
+deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
+keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0))
 {
     description_ = "vthread";
     coder_->registerCallback(this);
@@ -57,6 +61,20 @@ VideoThread::init(const VideoThreadSettings& settings)
     return RESULT_OK;
 }
 
+void
+VideoThread::getStatistics(VideoThreadStatistics& statistics)
+{
+    MediaThread::getStatistics(statistics);
+    coder_->getStatistics(statistics.coderStatistics_);
+    statistics.nKeyFramesPublished_ = keyFrameNo_;
+    statistics.nDeltaFramesPublished_ = deltaFrameNo_;
+    statistics.deltaAvgSegNum_ = NdnRtcUtils::currentMeanEstimation(deltaSegnumEstimatorId_);
+    statistics.keyAvgSegNum_ = NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_);
+    statistics.deltaAvgParitySegNum_ = NdnRtcUtils::currentMeanEstimation(deltaParitySegnumEstimatorId_);
+    statistics.keyAvgParitySegNum_ = NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_);
+}
+
+
 //******************************************************************************
 #pragma mark - interfaces realization
 void
@@ -70,6 +88,11 @@ void
 VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                         double captureTimestamp)
 {
+    // in order to avoid situations when interest arrives simultaneously
+    // with the data being added to the PIT/cache, we synchronize with
+    // face on this level
+    faceProcessor_->getFaceWrapper()->synchronizeStart();
+    
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
     uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
@@ -120,13 +143,27 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         << NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_) << "\t"
         << nSegments << std::endl;
         
+        int nSegmentsParity = -1;
         if (getSettings().useFec_)
-            publishParityData(frameNo, frameData, nSegments, framePrefix,
+            nSegmentsParity = publishParityData(frameNo, frameData, nSegments, framePrefix,
                               prefixMeta);
         
         
         if (!isKeyFrame)
             deltaFrameNo_++;
+        
+        if (isKeyFrame)
+            NdnRtcUtils::meanEstimatorNewValue(keySegnumEstimatorId_, nSegments);
+        else
+            NdnRtcUtils::meanEstimatorNewValue(deltaSegnumEstimatorId_, nSegments);
+        
+        if (getSettings().useFec_ && nSegmentsParity > 0)
+        {
+            if (isKeyFrame)
+                NdnRtcUtils::meanEstimatorNewValue(keyParitySegnumEstimatorId_, nSegmentsParity);
+            else
+                NdnRtcUtils::meanEstimatorNewValue(deltaParitySegnumEstimatorId_, nSegmentsParity);
+        }
         
         // increment packet number regardless of key/delta condition
         // in this case we can preserve that key frames can have numbers in
@@ -138,6 +175,8 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
                     getPacketNo(), (isKeyFrame)?"YES":"NO");
     }
+    
+    faceProcessor_->getFaceWrapper()->synchronizeStop();
 }
 
 void
@@ -156,15 +195,14 @@ VideoThread::onInterest(const shared_ptr<const Name>& prefix,
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
     bool isKeyNamespace = NdnRtcNamespace::isKeyFramePrefix(name);
     
+    LogTraceC << "incoming interest for " << interest->getName()
+    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << std::endl;
     
     if ((NdnRtcNamespace::isValidInterestPrefix(name) && packetNo == -1) ||
         packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_))
     {
         addToPit(interest);
     }
-    
-    LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= ((isKeyNamespace)?keyFrameNo_:deltaFrameNo_) || packetNo == -1)?" (new)":" (old)") << std::endl;
 }
 
 int

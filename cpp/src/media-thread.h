@@ -148,6 +148,7 @@ namespace ndnrtc
             void addToPit(const boost::shared_ptr<const Interest>& interest);
             int lookupPrefixInPit(const Name &prefix,
                                   SegmentData::SegmentMetaInfo &metaInfo);
+            int cleanPitForFrame(const Name framePrefix);
             
             // ndn-cpp callbacks
             virtual void

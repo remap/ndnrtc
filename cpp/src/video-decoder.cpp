@@ -51,6 +51,13 @@ int NdnVideoDecoder::init(const VideoCoderParams& settings)
     return 0;
 }
 
+void NdnVideoDecoder::reset()
+{
+    LogTraceC << "resetting decoder..." << std::endl;
+    decoder_->Reset();
+    LogTraceC << "decoder reset" << std::endl;
+}
+
 //********************************************************************************
 #pragma mark - intefaces realization webrtc::DecodedImageCallback
 int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)

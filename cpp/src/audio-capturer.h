@@ -49,10 +49,10 @@ namespace ndnrtc {
             IAudioFrameConsumer* frameConsumer_ = nullptr;
             
             int
-            SendPacket(int channel, const void *data, int len);
+            SendPacket(int channel, const void *data, size_t len);
             
             int
-            SendRTCPPacket(int channel, const void *data, int len);
+            SendRTCPPacket(int channel, const void *data, size_t len);
         };
     }
 }

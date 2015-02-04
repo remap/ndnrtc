@@ -56,7 +56,7 @@ int AudioCapturer::stopCapture()
 
 //******************************************************************************
 #pragma mark - private
-int AudioCapturer::SendPacket(int channel, const void *data, int len)
+int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
 {
     if (frameConsumer_)
         frameConsumer_->onDeliverRtpFrame(len, (unsigned char*)data);
@@ -64,7 +64,7 @@ int AudioCapturer::SendPacket(int channel, const void *data, int len)
     return len;
 }
 
-int AudioCapturer::SendRTCPPacket(int channel, const void *data, int len)
+int AudioCapturer::SendRTCPPacket(int channel, const void *data, size_t len)
 {
     if (frameConsumer_)
         frameConsumer_->onDeliverRtcpFrame(len, (unsigned char*)data);

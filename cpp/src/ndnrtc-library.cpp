@@ -34,7 +34,7 @@ typedef std::map<std::string, shared_ptr<Session>> SessionMap;
 static SessionMap ActiveSessions;
 
 typedef std::map<std::string, shared_ptr<Consumer>> ConsumerStreamMap;
-static ConsumerStreamMap ActiveStreamsConsumer;
+static ConsumerStreamMap ActiveStreamConsumers;
 
 typedef std::map<std::string, shared_ptr<ServiceChannel>> SessionObserverMap;
 static SessionObserverMap RemoteObservers;
@@ -291,9 +291,6 @@ NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
     else
     {
         LogError(LIB_LOG) << "Observer already exists" << std::endl;
-        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_ALREADY_EXISTS,
-                                                NdnRtcUtils::toString("Observer %s:%s already exists",
-                                                                      prefix.c_str(), username.c_str()).c_str());
     }
     
     return "";
@@ -400,9 +397,9 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     
     std::string streamPrefix = *NdnRtcNamespace::getStreamPrefix(remoteSessionPrefix, params.streamName_);
     shared_ptr<Consumer> remoteStreamConsumer;
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it != ActiveStreamsConsumer.end() &&
+    if (it != ActiveStreamConsumers.end() &&
         it->second->getIsConsuming())
     {
         LogWarn(LIB_LOG) << "Stream was already added" << std::endl;
@@ -417,7 +414,7 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     else
         remoteStreamConsumer.reset(new VideoConsumer(generalParams, consumerParams, renderer));
     
-    if (it != ActiveStreamsConsumer.end())
+    if (it != ActiveStreamConsumers.end())
         it->second = remoteStreamConsumer;
     
     ConsumerSettings settings;
@@ -439,8 +436,8 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     if (RESULT_FAIL(remoteStreamConsumer->start()))
         return "";
     
-    if (it == ActiveStreamsConsumer.end())
-        ActiveStreamsConsumer[remoteStreamConsumer->getPrefix()] = remoteStreamConsumer;
+    if (it == ActiveStreamConsumers.end())
+        ActiveStreamConsumers[remoteStreamConsumer->getPrefix()] = remoteStreamConsumer;
     
     return remoteStreamConsumer->getPrefix();
 }
@@ -450,16 +447,16 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
     LogInfo(LIB_LOG) << "Removing stream " << streamPrefix << "..." << std::endl;
     
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
         return RESULT_ERR;
     }
     
     it->second->stop();
-//    ActiveStreamsConsumer.erase(it);
+    ActiveStreamConsumers.erase(it);
     
     LogInfo(LIB_LOG) << "Stream removed succesfully" << std::endl;
     return RESULT_OK;
@@ -472,9 +469,9 @@ NdnRtcLibrary::setStreamObserver(const std::string& streamPrefix,
     LogInfo(LIB_LOG) << "Setting stream observer " << observer
     << " for stream " << streamPrefix << "..." << std::endl;
     
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
         return RESULT_ERR;
@@ -492,9 +489,9 @@ NdnRtcLibrary::removeStreamObserver(const std::string& streamPrefix)
     LogInfo(LIB_LOG) << "Removing stream observer for prefix " << streamPrefix
     << "..." << std::endl;
     
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Couldn't find requested stream" << std::endl;
         return RESULT_ERR;
@@ -509,9 +506,9 @@ NdnRtcLibrary::removeStreamObserver(const std::string& streamPrefix)
 std::string
 NdnRtcLibrary::getStreamThread(const std::string& streamPrefix)
 {
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
                                                 "stream was not found");
@@ -528,9 +525,9 @@ NdnRtcLibrary::switchThread(const std::string& streamPrefix,
     LogInfo(LIB_LOG) << "Switching to thread " << threadName
     << " for stream " << streamPrefix << std::endl;
     
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Couldn't find requested stream" << std::endl;
         return RESULT_ERR;
@@ -546,9 +543,9 @@ int
 NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
                                          ReceiverChannelPerformance& stat)
 {
-    ConsumerStreamMap::iterator it = ActiveStreamsConsumer.find(streamPrefix);
+    ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
-    if (it == ActiveStreamsConsumer.end())
+    if (it == ActiveStreamConsumers.end())
     {
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
                                                 "stream was not found");

@@ -344,10 +344,12 @@ namespace ndnlog {
             
             virtual ~ILoggingObject()
             {
+                if (logger_)
+                    logger_->flush();
                 if (isLoggerCreated_)
                     delete logger_;
-                    logger_ = NULL;
-                }
+                logger_ = NULL;
+            }
             
             virtual void
             setLogger(Logger* logger);
