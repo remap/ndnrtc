@@ -1118,9 +1118,27 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
     switch (state_) {
         case StateWaitInitial: // fall through
-        case StateChasing:
         {
             askForRightmostData();
+        }
+            break;
+        case StateChasing:
+        {
+            bool isKeyPrefix = NdnRtcNamespace::isPrefix(interest->getName(), keyFramesPrefix_);
+
+            if (isKeyPrefix)
+            {
+                PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
+
+                if (packetNo == keyFrameSeqNo_)
+                {
+                    consumer_->getInterestQueue()->enqueueInterest(*interest,
+                                                                   Priority::fromAbsolutePriority(0),
+                                                                   ndnAssembler_->getOnDataHandler(),
+                                                                   ndnAssembler_->getOnTimeoutHandler());
+                }
+            }
+                
         }
             break;
         case StateFetching:
