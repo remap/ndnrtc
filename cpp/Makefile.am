@@ -15,7 +15,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
-  src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
   src/endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \

@@ -15,7 +15,8 @@
 
 #include "ndnrtc-library.h"
 #include "ndnrtc-namespace.h"
-#include "consumer-channel.h"
+#include "audio-consumer.h"
+#include "video-consumer.h"
 #include "objc/cocoa-renderer.h"
 #include "external-capturer.hpp"
 #include "session.h"

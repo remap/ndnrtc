@@ -29,37 +29,6 @@ namespace ndnrtc
     };
     
     /**
-     * This class is used for rendering incoming video frames in default
-     * rendering (cocoa) window. Incoming frames are of type I420VideoFrame
-     * (WebRTC-specific) and represent graphical data int YUV format.
-     */
-//    class VideoRenderer : public IVideoRenderer
-//    {
-//    public:
-//        VideoRenderer(int rendererId, const ParamsStruct &params);
-//        virtual ~VideoRenderer();
-//        
-//        int
-//        init();
-//        
-//        int
-//        startRendering(const std::string &windowName = "Renderer");
-//        
-//        int
-//        stopRendering();
-//        
-//        void
-//        onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
-//        
-//    protected:
-//        int rendererId_;
-//        void *renderWindow_ = NULL;
-//        
-//        webrtc::VideoRender *render_ = nullptr;
-//        webrtc::VideoRenderCallback *frameSink_ = nullptr;
-//    };
-    
-    /**
      * This class is used for sending RGB buffers to the external renderer. 
      * It conforms to the internal library interfaces (i.e. IRawFrameConsumer) 
      * and can be used as a normal renderer. However, internally it does not 

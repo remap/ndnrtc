@@ -141,7 +141,6 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-buffer-estimator.lo \
 	src/libndnrtc_la-base-capturer.lo \
 	src/libndnrtc_la-chase-estimation.lo \
-	src/libndnrtc_la-consumer-channel.lo \
 	src/libndnrtc_la-consumer.lo \
 	src/libndnrtc_la-external-capturer.lo \
 	src/libndnrtc_la-face-wrapper.lo src/libndnrtc_la-fec.lo \
@@ -532,7 +531,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
-  src/consumer-channel.cpp src/consumer-channel.h \
   src/consumer.cpp src/consumer.h \
   src/endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \
@@ -691,8 +689,6 @@ src/libndnrtc_la-base-capturer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-chase-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-consumer-channel.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-consumer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-external-capturer.lo: src/$(am__dirstamp) \
@@ -809,7 +805,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-base-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-chase-estimation.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-consumer-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-external-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-face-wrapper.Plo@am__quote@
@@ -930,13 +925,6 @@ src/libndnrtc_la-chase-estimation.lo: src/chase-estimation.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/chase-estimation.cpp' object='src/libndnrtc_la-chase-estimation.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
-
-src/libndnrtc_la-consumer-channel.lo: src/consumer-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-consumer-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-consumer-channel.Tpo -c -o src/libndnrtc_la-consumer-channel.lo `test -f 'src/consumer-channel.cpp' || echo '$(srcdir)/'`src/consumer-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-consumer-channel.Tpo src/$(DEPDIR)/libndnrtc_la-consumer-channel.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/consumer-channel.cpp' object='src/libndnrtc_la-consumer-channel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-consumer-channel.lo `test -f 'src/consumer-channel.cpp' || echo '$(srcdir)/'`src/consumer-channel.cpp
 
 src/libndnrtc_la-consumer.lo: src/consumer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-consumer.Tpo -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
