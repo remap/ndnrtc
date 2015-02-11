@@ -390,6 +390,9 @@ namespace ndnrtc {
             void
             keyFrameConsumed();
             
+            PipelinerStatistics
+            getStatistics();
+            
         private:
             StabilityEstimator stabilityEstimator_;
             RttChangeEstimator rttChangeEstimator_;

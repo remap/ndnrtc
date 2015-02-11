@@ -79,6 +79,10 @@ namespace ndnrtc {
         nRequested_ = 0,        // number of requested frames
         nRequestedKey_ = 0,     // number of requested key frames
         nInterestSent_ = 0;     // number of interests sent
+        
+        unsigned int
+        w_ = 0, dw_ = 0;        // W and DW parameters for Pipeliner2
+        double RTTprime_;       // RTT* for Pipeliner2
     } PipelinerStatistics;
     
     // sending channel statistics

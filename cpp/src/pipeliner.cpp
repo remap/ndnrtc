@@ -63,6 +63,7 @@ streamId_(0),
 streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
 frameBuffer_(consumer_->getFrameBuffer().get())
 {
+    memset(&stat_, 0, sizeof(stat_));
     switchToState(StateInactive);
 }
 
@@ -1185,6 +1186,16 @@ void
 Pipeliner2::keyFrameConsumed()
 {
     requestNextKey(keyFrameSeqNo_);
+}
+
+PipelinerStatistics
+Pipeliner2::getStatistics()
+{
+    PipelinerBase::getStatistics();
+    
+    stat_.w_ = window_.getCurrentWindowSize();
+    stat_.dw_ = window_.getDefaultWindowSize();
+    stat_.RTTprime_ = rttChangeEstimator_.getMeanValue();
 }
 
 //******************************************************************************
