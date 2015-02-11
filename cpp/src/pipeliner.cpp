@@ -1120,7 +1120,14 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
     switch (state_) {
         case StateWaitInitial: // fall through
         {
-            askForRightmostData();
+            // make sure that we allow retransmission only when rightmost
+            // interest is timed out, not interests from previous runs (in
+            // case rebuffering happened)
+            if (NdnRtcNamespace::isKeyFramePrefix(interest->getName()) &&
+                NdnRtcNamespace::getPacketNumber(interest->getName()) == -1)
+                {
+                askForRightmostData();
+                }
         }
             break;
         case StateChasing:
