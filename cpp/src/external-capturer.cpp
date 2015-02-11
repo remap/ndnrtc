@@ -30,6 +30,7 @@ int ExternalCapturer::init()
 
 int ExternalCapturer::startCapture()
 {
+    incomingTimestampMs_ = 0;
     BaseCapturer::startCapture();
     
     return RESULT_OK;
@@ -59,6 +60,19 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
                                         unsigned char* argbFrameData,
                                         unsigned int frameSize)
 {
+    LogTraceC << "incoming ARGB frame" << std::endl;
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    
+    if (incomingTimestampMs_ != 0)
+    {
+        int64_t delay = timestamp - incomingTimestampMs_;
+        
+        ((delay > FRAME_DELAY_DEADLINE)? LogWarnC : LogTraceC)
+        << "incoming frame delay " << delay << std::endl;
+    }
+    
+    incomingTimestampMs_ = timestamp;
+    
     // make conversion to I420
     const VideoType commonVideoType =
     RawVideoTypeToCommonVideoVideoType(kVideoARGB);
@@ -68,6 +82,7 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
     int target_width = width;
     int target_height = height;
     
+    LogTraceC << "creating I420 frame..." << std::endl;
     int ret = convertedFrame_.CreateEmptyFrame(target_width,
                                              abs(target_height),
                                              stride_y,
@@ -75,6 +90,7 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
     if (ret < 0)
         return notifyError(RESULT_ERR, "failed to allocate I420 frame");
     
+    LogTraceC << "converting RGB to I420..." << std::endl;
     const int conversionResult = ConvertToI420(commonVideoType,
                                                argbFrameData,
                                                0, 0,  // No cropping
@@ -85,6 +101,7 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
     if (conversionResult < 0)
         return notifyError(RESULT_ERR, "Failed to convert capture frame to I420");
     
+    LogTraceC << "delivering frame..." << std::endl;
     deliverCapturedFrame(convertedFrame_);
     
     return RESULT_OK;

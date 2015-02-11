@@ -32,6 +32,7 @@ namespace ndnrtc {
                               unsigned int frameSize);
         
     private:
+        int64_t incomingTimestampMs_;
         webrtc::I420VideoFrame convertedFrame_;
         
         int startCapture();

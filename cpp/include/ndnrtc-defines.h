@@ -34,4 +34,6 @@
 
 #define USE_WINDOW_PIPELINER
 
+#define FRAME_DELAY_DEADLINE    150
+
 #endif

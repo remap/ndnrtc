@@ -139,17 +139,12 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo,
                             const webrtc::RTPFragmentationHeader* fragmentation)
 {
-    LogTraceC << "encoding time "
-    << NdnRtcUtils::microsecondTimestamp() - startEncoding_
-    << " usec" << std::endl;
-    
     counter_++;
-    
     settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
+
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
     
-#warning need to handle return value
     return 0;
 }
 //********************************************************************************
@@ -158,13 +153,14 @@ void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                    double timestamp)
 {
     LogTraceC << "encoding..." << endl;
-    startEncoding_ = NdnRtcUtils::microsecondTimestamp();
     
     if (counter_ %2 == 0)
     {
-        LogTraceC << "previous frame was dropped" << endl;
         nDroppedByEncoder_++;
         counter_++;
+        
+        if (frameConsumer_)
+            frameConsumer_->onFrameDropped();
     }
     
     counter_++;

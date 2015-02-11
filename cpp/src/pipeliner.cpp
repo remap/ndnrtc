@@ -1177,7 +1177,10 @@ Pipeliner2::recoveryCheck()
         return true;
     }
     else
-        LogTraceC << idleTime << " without incoming data" << std::endl;
+    {
+        ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+        << idleTime << " without incoming data" << std::endl;
+    }
     
     return false;
 }

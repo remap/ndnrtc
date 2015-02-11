@@ -20,6 +20,7 @@ namespace ndnrtc {
     
     namespace new_api {
         class IEncodedFrameConsumer;
+        class IEncoderDelegate;
         
         class VideoCoderStatistics : public ObjectStatistics {
         public:
@@ -39,7 +40,7 @@ namespace ndnrtc {
             VideoCoder();
             ~VideoCoder();
             
-            void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
+            void setFrameConsumer(IEncoderDelegate *frameConsumer) {
                 frameConsumer_ = frameConsumer;
             }
             
@@ -71,10 +72,9 @@ namespace ndnrtc {
             unsigned int nDroppedByEncoder_ = 0;
             unsigned int rateMeter_;
             int keyFrameCounter_ = 0;
-            uint64_t startEncoding_;
             
             double deliveredTimestamp_;
-            IEncodedFrameConsumer *frameConsumer_ = NULL;
+            IEncoderDelegate *frameConsumer_ = NULL;
             
             webrtc::VideoCodec codec_;
             std::vector<webrtc::VideoFrameType> keyFrameType_;
@@ -93,6 +93,16 @@ namespace ndnrtc {
             virtual void
             onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                     double captureTimestamp) = 0;
+        };
+        
+        class IEncoderDelegate : public IEncodedFrameConsumer
+        {
+        public:
+            virtual void
+            onEncodingStarted() = 0;
+            
+            virtual void
+            onFrameDropped() = 0;
         };
     }
         

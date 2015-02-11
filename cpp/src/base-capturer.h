@@ -42,6 +42,7 @@ namespace ndnrtc {
     protected:
         bool isCapturing_ = false;
         IRawFrameConsumer *frameConsumer_ = nullptr;
+        double lastFrameTimestamp_;
         
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
         webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;

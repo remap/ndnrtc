@@ -17,7 +17,8 @@ BaseCapturer::BaseCapturer():
 capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),
-captureThread_(*ThreadWrapper::CreateThread(processCapturedFrame, this,  kHighPriority))
+captureThread_(*ThreadWrapper::CreateThread(processCapturedFrame, this,  kHighPriority)),
+lastFrameTimestamp_(0)
 {
     description_ = "capturer";
 }
@@ -57,6 +58,7 @@ int BaseCapturer::stopCapture()
 
 bool BaseCapturer::process()
 {
+    LogTraceC << "check captured frame" << std::endl;
     if (captureEvent_.Wait(100) == kEventSignaled)
     {
         if (!capturedFrame_.IsZeroSize())
@@ -67,14 +69,28 @@ bool BaseCapturer::process()
         deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize())
         {
+            LogTraceC << "swapping frames" << std::endl;
             capture_cs_->Enter();
-            double timestamp = NdnRtcUtils::unixTimestamp();
+            int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
             deliverFrame_.SwapFrame(&capturedFrame_);
             capturedFrame_.ResetSize();
             capture_cs_->Leave();
+            LogTraceC << "checking frame consumer" << std::endl;
             
             if (frameConsumer_)
+            {
+                if (lastFrameTimestamp_)
+                {
+                    int64_t delay = timestamp - lastFrameTimestamp_;
+
+                    ((delay > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+                    << "captured frame delivery delay " << delay << std::endl;
+                }
+                
+                lastFrameTimestamp_ = timestamp;
                 frameConsumer_->onDeliverFrame(deliverFrame_, timestamp);
+                LogTraceC << "frame consumed" << std::endl;
+            }
         }
         deliver_cs_->Leave();
     }

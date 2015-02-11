@@ -46,6 +46,7 @@ MediaThread::~MediaThread()
 #pragma mark - public
 int MediaThread::init(const MediaThreadSettings &settings)
 {
+    publishingTimestampMs_ = 0;
     threadPrefix_ =  *NdnRtcNamespace::buildPath(false,
                                                  &settings.streamPrefix_,
                                                  &settings.threadParams_->threadName_, 0);
@@ -163,6 +164,19 @@ int MediaThread::publishPacket(PacketData &packetData,
                            "got error from ndn library while sending data: %s",
                            e.what());
     }
+    
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    
+    if (publishingTimestampMs_)
+    {
+        int64_t delay = timestamp-publishingTimestampMs_;
+
+        ((delay > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+        << "frame publishing delay " << delay
+        << " (" << packetPrefix << ")" << std::endl;
+    }
+    
+    publishingTimestampMs_ = timestamp;
     
     return segments.size();
 }
