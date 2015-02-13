@@ -50,25 +50,51 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
                                     webrtc::VideoCodec &codec)
 {
     // setup default params first
+#ifdef USE_VP9
+    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP9_IDX, &codec))
+#else
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
+#endif
     {
-        strncpy(codec.plName, "VP8", 31);
         codec.maxFramerate = 30;
         codec.startBitrate  = 300;
         codec.maxBitrate = 4000;
         codec.width = 640;
         codec.height = 480;
-        codec.plType = VCM_VP8_PAYLOAD_TYPE;
         codec.qpMax = 56;
+        
+#ifdef USE_VP9
+        strncpy(codec.plName, "VP9", 4);
+        codec.plType = VCM_VP9_PAYLOAD_TYPE;
+        codec.codecType = webrtc::kVideoCodecVP9;
+        codec.codecSpecific.VP9.denoisingOn = true;
+        codec.codecSpecific.VP9.complexity = webrtc::kComplexityNormal;
+        codec.codecSpecific.VP9.numberOfTemporalLayers = 1;
+        codec.codecSpecific.VP9.keyFrameInterval = 1000;
+#else
+        strncpy(codec.plName, "VP8", 4);
+        codec.plType = VCM_VP8_PAYLOAD_TYPE;
+        codec.codecSpecific.VP8.resilience = kResilienceOff;
         codec.codecType = webrtc::kVideoCodecVP8;
         codec.codecSpecific.VP8.denoisingOn = true;
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
         codec.codecSpecific.VP8.keyFrameInterval = 1000;
+#endif
     }
     
     // dropping frames
+#ifdef USE_VP9
+    codec.codecSpecific.VP9.resilience = 0;
+    codec.codecSpecific.VP9.frameDroppingOn = settings.dropFramesOn_;
+    codec.codecSpecific.VP9.keyFrameInterval = 1000;
+    codec.codecSpecific.VP9.feedbackModeOn = false;
+#else
+    codec.codecSpecific.VP8.resilience = kResilienceOff;
     codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
+    codec.codecSpecific.VP8.keyFrameInterval = 1000;
+    codec.codecSpecific.VP8.feedbackModeOn = false;
+#endif
     
     // customize parameteres if possible
     int res = RESULT_OK;
@@ -87,7 +113,8 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
 #pragma mark - construction/destruction
 VideoCoder::VideoCoder() :
 NdnRtcComponent(),
-frameConsumer_(nullptr)
+frameConsumer_(nullptr),
+codecSpecificInfo_(nullptr)
 {
     rateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
     description_ = "coder";
@@ -109,13 +136,17 @@ int VideoCoder::init(const VideoCoderParams& settings)
         notifyError(-1, "some codec parameters were out of bounds. \
                     actual parameters: %s", plotCodec(codec_));
     
+#ifdef USE_VP9
+    encoder_.reset(VP9Encoder::Create());
+#else
     encoder_.reset(VP8Encoder::Create());
+#endif
     
     keyFrameType_.clear();
     keyFrameType_.push_back(webrtc::kKeyFrame);
     
     if (!encoder_.get())
-        return notifyError(-1, "can't create VP8 encoder");
+        return notifyError(-1, "can't create encoder");
     
     encoder_->RegisterEncodeCompleteCallback(this);
     
@@ -123,7 +154,7 @@ int VideoCoder::init(const VideoCoderParams& settings)
     int maxPayload = 1440;
     
     if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
-        return notifyError(-1, "can't initialize VP8 encoder");
+        return notifyError(-1, "can't initialize encoder");
     
     LogInfoC
     << "initialized. max payload " << maxPayload
@@ -139,8 +170,26 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo,
                             const webrtc::RTPFragmentationHeader* fragmentation)
 {
+    /*
+    LogInfoC << "encoded"
+    << " type " << ((encodedImage._frameType == webrtc::kKeyFrame) ? "KEY":((encodedImage._frameType == webrtc::kSkipFrame)?"SKIP":"DELTA"))
+    << " complete " << encodedImage._completeFrame << "\n"
+    << " has Received SLI " << codecSpecificInfo->codecSpecific.VP8.hasReceivedSLI
+    << " picture Id SLI " << (int)codecSpecificInfo->codecSpecific.VP8.pictureIdSLI
+    << " has Received RPSI " << codecSpecificInfo->codecSpecific.VP8.hasReceivedRPSI
+    << " picture Id RPSI " << codecSpecificInfo->codecSpecific.VP8.pictureIdRPSI
+    << " picture Id " << codecSpecificInfo->codecSpecific.VP8.pictureId
+    << " non Reference " << codecSpecificInfo->codecSpecific.VP8.nonReference
+    << " temporalIdx " << (int)codecSpecificInfo->codecSpecific.VP8.temporalIdx
+    << " layerSync " << codecSpecificInfo->codecSpecific.VP8.layerSync
+    << " tl0PicIdx " << codecSpecificInfo->codecSpecific.VP8.tl0PicIdx
+    << " keyIdx " << (int)codecSpecificInfo->codecSpecific.VP8.keyIdx
+    << std::endl;
+     */
+    
     counter_++;
     settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
+    codecSpecificInfo_ = codecSpecificInfo;
 
     if (frameConsumer_)
         frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
@@ -153,6 +202,9 @@ void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                    double timestamp)
 {
     LogTraceC << "encoding..." << endl;
+
+    if (frameConsumer_)
+        frameConsumer_->onEncodingStarted();
     
     if (counter_ %2 == 0)
     {
@@ -187,9 +239,9 @@ void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
     I420VideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
     
     if (keyFrameCounter_%settings_.gop_ == 0)
-        err = encoder_->Encode(processedFrame, NULL, &keyFrameType_);
+        err = encoder_->Encode(processedFrame, codecSpecificInfo_, &keyFrameType_);
     else
-        err = encoder_->Encode(processedFrame, NULL, NULL);
+        err = encoder_->Encode(processedFrame, codecSpecificInfo_, NULL);
     
     keyFrameCounter_++;
     

@@ -150,32 +150,44 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         // check for valid data
         pushFrameFurther &= (data != NULL);
         
-        if (pushFrameFurther)
-        {
-            webrtc::EncodedImage frame;
-            
+        webrtc::EncodedImage frame;
+        
+        if (data)
             ((NdnFrameData*)data)->getFrame(frame);
-            
+        
 #if RECORD
-            PacketData::PacketMetadata meta = data_->getMetadata();
-            frameWriter.writeFrame(frame, meta);
+        PacketData::PacketMetadata meta = data_->getMetadata();
+        frameWriter.writeFrame(frame, meta);
 #endif
+        
+        // update stat
+        stat_.nPlayed_++;
+        if (isKey)
+            stat_.nPlayedKey_++;
+        
+        if (!pushFrameFurther)
+        {
+            if (onFrameSkipped_)
+                onFrameSkipped_(playbackPacketNo, sequencePacketNo,
+                                pairedPacketNo, isKey, assembledLevel);
             
-            // update stat
-            stat_.nPlayed_++;
-            if (isKey)
-                stat_.nPlayedKey_++;
-            
-            LogStatC << "\tplay\t" << playbackPacketNo << "\ttotal\t" << stat_.nPlayed_ << endl;
-            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp());
+            LogWarnC << "bad frame."
+            << " type " << (isKey?"K":"D")
+            << " lvl " << assembledLevel
+            << " seq " << sequencePacketNo
+            << " abs " << playbackPacketNo
+            << endl;
         }
         else
-        {
-            LogWarnC << "skipping incomplete/out of order frame " << playbackPacketNo
-            << " isKey: " << (isKey?"YES":"NO")
-            << " level: " << assembledLevel << endl;
-        }
+            LogDebugC << "playback."
+            << " type " << (isKey?"K":"D")
+            << " seq " << sequencePacketNo
+            << " abs " << playbackPacketNo
+            << " total " << stat_.nPlayed_
+            << endl;
         
+        ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
+
         res = pushFrameFurther;
     } // if data
     

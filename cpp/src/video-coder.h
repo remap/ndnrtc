@@ -77,6 +77,7 @@ namespace ndnrtc {
             IEncoderDelegate *frameConsumer_ = NULL;
             
             webrtc::VideoCodec codec_;
+            const webrtc::CodecSpecificInfo* codecSpecificInfo_;
             std::vector<webrtc::VideoFrameType> keyFrameType_;
             boost::shared_ptr<webrtc::VideoEncoder> encoder_;
             
@@ -92,7 +93,8 @@ namespace ndnrtc {
         public:
             virtual void
             onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                    double captureTimestamp) = 0;
+                                    double captureTimestamp,
+                                    bool completeFrame = true) = 0;
         };
         
         class IEncoderDelegate : public IEncodedFrameConsumer
@@ -105,14 +107,6 @@ namespace ndnrtc {
             onFrameDropped() = 0;
         };
     }
-        
-    class IEncodedFrameConsumer
-    {
-    public:
-        virtual void
-        onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                double captureTimestamp) = 0;
-    };
 }
 
 #endif /* defined(__ndnrtc__video_coder__) */

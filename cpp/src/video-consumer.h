@@ -62,6 +62,10 @@ namespace ndnrtc {
             getRenderer()
             { return boost::dynamic_pointer_cast<IVideoRenderer>(renderer_); }
             
+            void
+            onFrameSkipped(PacketNumber playbackNo, PacketNumber sequenceNo,
+                           PacketNumber pairedNo, bool isKey,
+                           double assembledLevel);
             
             void
             onTimeout(const boost::shared_ptr<const Interest>& interest);

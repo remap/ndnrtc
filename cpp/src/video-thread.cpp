@@ -92,7 +92,8 @@ VideoThread::onEncodingStarted()
 
 void
 VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                     double captureTimestamp)
+                                     double captureTimestamp,
+                                     bool completeFrame)
 {
     int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
     

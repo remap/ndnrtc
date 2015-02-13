@@ -79,7 +79,7 @@ namespace ndnrtc
             int keyFrameNo_ = 0, deltaFrameNo_ = 0, gopCount_ = 0;
             unsigned int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             unsigned int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
-            uint64_t encodingTimestampMs_;
+            int64_t encodingTimestampMs_;
             
             Name deltaFramesPrefix_, keyFramesPrefix_;
             boost::shared_ptr<VideoCoder> coder_;
@@ -102,7 +102,8 @@ namespace ndnrtc
             
             void
             onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                    double captureTimestamp);
+                                    double captureTimestamp,
+                                    bool completeFrame);
             
             void
             onFrameDropped();
