@@ -118,8 +118,8 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     
     (encodingDelay > FRAME_DELAY_DEADLINE ? LogWarnC : LogTraceC)
     << "encoding delay " << encodingDelay
-    << (isKeyFrame?" key":" delta")
-    << " delta " << deltaFrameNo_
+    << " type " << (isKeyFrame?" key":" delta")
+    << ". delta " << deltaFrameNo_
     << " key " << keyFrameNo_
     << " abs " << packetNo_
     << " gop count " << gopCount_

@@ -85,9 +85,11 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     getVideoConsumer()->playbackEventOccurred(PlaybackEventKeySkipIncomplete,
                                                               sequencePacketNo);
                     
-                    LogTraceC << "GOP failed - key incomplete ("
-                    << assembledLevel << "): "
-                    << sequencePacketNo << endl;
+                    LogWarnC << "key incomplete."
+                    << " lvl " << assembledLevel
+                    << " seq " << sequencePacketNo
+                    << " abs " << playbackPacketNo
+                    << endl;
                 }
             }
             else
@@ -100,9 +102,11 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipIncomplete,
                                                               sequencePacketNo);
                     
-                    LogTraceC
-                    << playbackPacketNo << " incomplete "
-                    << assembledLevel << endl;
+                    LogWarnC << "delta incomplete."
+                    << " lvl " << assembledLevel
+                    << " seq " << sequencePacketNo
+                    << " abs " << playbackPacketNo
+                    << endl;
                 }
                 else
                 {
@@ -112,10 +116,12 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                         
                         getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipNoKey, sequencePacketNo);
                         
-                        LogTraceC
-                        << playbackPacketNo << " is unexpected: "
-                        << " current key " << currentKeyNo_
-                        << " got " << pairedPacketNo << endl;
+                        LogWarnC << "delta gop mismatch."
+                        << " current " << currentKeyNo_
+                        << " received " << pairedPacketNo
+                        << " seq " << sequencePacketNo
+                        << " abs " << playbackPacketNo
+                        << endl;
                     }
                     else
                     {
@@ -125,8 +131,11 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                             
                             getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipInvalidGop, sequencePacketNo);
                             
-                            LogTraceC
-                            << playbackPacketNo << " bad GOP " << endl;
+                            LogWarnC << "invalid gop."
+                            << " seq " << sequencePacketNo
+                            << " abs " << playbackPacketNo
+                            << " key " << currentKeyNo_
+                            << endl;
                         }
                     }
                 }

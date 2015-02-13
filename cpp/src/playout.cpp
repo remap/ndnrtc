@@ -189,10 +189,10 @@ Playout::processPlayout()
             }
             assert(playbackDelay >= 0);
             
-            LogStatC << STAT_DIV
+            LogTraceC << STAT_DIV
             << "packet" << STAT_DIV << sequencePacketNo << STAT_DIV
             << "lvl" << STAT_DIV << double(int(assembledLevel*10000))/100. << STAT_DIV
-            << "valid" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
+            << "played" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
             << "ts" << STAT_DIV << (noData ? 0 : data_->getMetadata().timestamp_) << STAT_DIV
             << "last ts" << STAT_DIV << lastPacketTs_ << STAT_DIV
             << "total" << STAT_DIV << playbackDelay+adjustment+avSync << STAT_DIV

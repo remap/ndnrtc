@@ -348,6 +348,11 @@ ndnrtc::new_api::PipelinerBase::onRetransmissionNeeded(FrameBuffer::Slot* slot)
         }
         else
         {
+            LogWarnC << "retransmit "
+            << slot->dump()
+            << " total " << missingSegments.size() << " interests"
+            << std::endl;
+            
             std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment>>::iterator it;
             for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
             {
@@ -379,7 +384,12 @@ ndnrtc::new_api::PipelinerBase::requestMissing
     
     if (missingSegments.size() == 0)
         LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
-    
+    else
+        LogWarnC << "request missing "
+        << slot->getPrefix()
+        << " total " << missingSegments.size() << " interests"
+        << std::endl;
+        
     std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
     for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
     {
@@ -1117,6 +1127,8 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
 void
 Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
+    LogDebugC << "got timeout for " << interest->getName()
+    << " in state " << toString(state_) << std::endl;
     switch (state_) {
         case StateWaitInitial: // fall through
         {
@@ -1126,7 +1138,11 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             if (NdnRtcNamespace::isKeyFramePrefix(interest->getName()) &&
                 NdnRtcNamespace::getPacketNumber(interest->getName()) == -1)
                 {
-                askForRightmostData();
+                    LogWarnC << "timeout "
+                    << interest->getName()
+                    << std::endl;
+                    
+                    askForRightmostData();
                 }
         }
             break;
@@ -1140,6 +1156,10 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 
                 if (packetNo == keyFrameSeqNo_)
                 {
+                    LogWarnC << "timeout "
+                    << interest->getName()
+                    << std::endl;
+                    
                     consumer_->getInterestQueue()->enqueueInterest(*interest,
                                                                    Priority::fromAbsolutePriority(0),
                                                                    ndnAssembler_->getOnDataHandler(),
@@ -1156,8 +1176,6 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
         default:
         {
             // ignore
-            LogWarnC << "got timeout for " << interest->getName()
-            << " in state " << toString(state_) << std::endl;
         }
             break;
     }
@@ -1172,9 +1190,11 @@ Pipeliner2::recoveryCheck()
     if (recoveryCheckpointTimestamp_ > 0 &&
         idleTime > interruptionDelay)
     {
-        LogWarnC
-        << "No data for the last " << interruptionDelay
-        << " ms. Rebuffering " << stat_.nRebuffer_
+        LogWarnC << "rebuffering #" << stat_.nRebuffer_
+        << " idle time " << idleTime
+        << " seed " << seedFrameNo_
+        << " key " << keyFrameSeqNo_
+        << " delta " << deltaFrameSeqNo_
         << " curent w " << window_.getCurrentWindowSize()
         << " default w " << window_.getDefaultWindowSize()
         << std::endl;
@@ -1186,7 +1206,8 @@ Pipeliner2::recoveryCheck()
     else
     {
         ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
-        << idleTime << " without incoming data" << std::endl;
+        << "idle time " << idleTime
+        << std::endl;
     }
     
     return false;
@@ -1327,7 +1348,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
             {
                 if (isTimedOut)
                 {
-                    LogTraceC << "increase during chase" << std::endl;
+                    LogDebugC << "increase during chase" << std::endl;
                     
                     needIncreaseWindow = true;
                     timestamp_ = currentTimestamp;
@@ -1348,7 +1369,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 {
                     if (rttChangeEstimator_.hasChange())
                     {
-                        LogTraceC << "RTT has changed. Waiting"
+                        LogDebugC << "RTT has changed. Waiting"
                         " for RTT stabilization" << std::endl;
                         
                         rttChangeEstimator_.flush();
@@ -1358,7 +1379,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     }
                     else if (currentTimestamp-timestamp_ >= timeout)
                     {
-                        LogTraceC << "timeout waiting for change" << std::endl;
+                        LogDebugC << "timeout waiting for change" << std::endl;
                         
                         needDecreaseWindow = true;
                         timestamp_ = currentTimestamp;
@@ -1366,7 +1387,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 }
                 else if (waitForStability_)
                 {
-                    LogTraceC << "decrease window" << std::endl;
+                    LogDebugC << "decrease window" << std::endl;
                     
                     needDecreaseWindow = true;
                     waitForChange_ = true;
@@ -1381,7 +1402,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 {
                     failedWindow_ = window_.getDefaultWindowSize();
                     
-                    LogTraceC << "increase. failed window " << failedWindow_ << std::endl;
+                    LogDebugC << "increase. failed window " << failedWindow_ << std::endl;
                     
                     needIncreaseWindow = true;
                     waitForStability_ = true;
@@ -1405,7 +1426,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 {
                     LogWarnC
                     << "something wrong in fetching mode. unstable: " << unstable
-                    << " draining buffer: " << drainingBuffer
                     << " low buffer: " << lowBuffer
                     << ". adjusting" << std::endl;
                     
@@ -1444,7 +1464,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
 
             if (failedWindow_ >= delta+window_.getDefaultWindowSize())
             {
-                LogTraceC << "trying to decrease lower than fail window "
+                LogDebugC << "trying to decrease lower than fail window "
                 << failedWindow_ << std::endl;
                 
                 switchToState(StateFetching);
@@ -1454,10 +1474,13 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         }
         
         LogTraceC << "attempt to change window by " << delta << std::endl;
-        delta = window_.changeWindow(delta);
-        LogTraceC << "changed window by " << delta << std::endl;
         
-        LogTraceC << "current default window "
+        delta = window_.changeWindow(delta);
+        
+        (delta ? LogDebugC : LogTraceC)
+        << "changed window by " << delta << std::endl;
+        
+        LogDebugC << "current default window "
         << window_.getDefaultWindowSize() << std::endl;
     }
     
@@ -1471,6 +1494,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     while (window_.canAskForData(deltaFrameSeqNo_))
         requestNextDelta(deltaFrameSeqNo_);
 
+    /*
     if (isLegitimateForStabilityTracking)
         LogStatC
         << "\trtt\t" << event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.
@@ -1480,6 +1504,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         << "\tdarr\t" << stabilityEstimator_.getLastDelta()
         << "\tstable\t" << stabilityEstimator_.isStable()
         << std::endl;
+     */
     
     frameBuffer_->synchronizeRelease();
 }

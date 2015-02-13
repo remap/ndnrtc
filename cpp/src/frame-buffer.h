@@ -862,8 +862,18 @@ namespace ndnrtc
             void
             synchronizeRelease() { syncCs_.Leave(); }
     
+            /**
+             * Dumps buffer state to a log file
+             */
             void
             dump();
+            
+            /**
+             * Dumps buffer stat to a string with shortened info: only key 
+             * numbers (sequential) and assembled levels are printed.
+             */
+            std::string
+            shortDump();
             
             static std::string
             stateToString(State s)

@@ -957,7 +957,6 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::popSlot()
         updatePlaybackDeadlines();
         
         dumpQueue();
-//        LogStatC << "▲pop " << dumpShort() << std::endl;
     }
 }
 
@@ -1135,7 +1134,7 @@ ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
     {
       if (RESULT_GOOD(reservedSlot->addInterest(interest)))
       {
-          LogDebugC << "request: " << playbackQueue_.dumpShort() << std::endl;
+          LogTraceC << "request: " << playbackQueue_.dumpShort() << std::endl;
           
           isEstimationNeeded_ = true;
           return reservedSlot->getState();
@@ -1195,7 +1194,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
             }
         }
         
-        LogDebugC << "requested range (" << segmentInterests.size()
+        LogTraceC << "requested range (" << segmentInterests.size()
         << "): " << playbackQueue_.dumpShort() << std::endl;
         
         isEstimationNeeded_ = true;
@@ -1309,14 +1308,18 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             }
         }
         else
-            LogErrorC
-            << "error appending " << data.getName()
-            << " state: " << Slot::stateToString(oldState) << std::endl;
+        {
+            ((oldState == Slot::StateReady) ? LogDebugC : LogErrorC)
+            << "excessive data appending "
+            << data.getName()
+            << " slot state " << Slot::stateToString(oldState)
+            << std::endl;
+        }
     }
-    
-    LogWarnC
-    << "no reservation for " << data.getName()
-    << " state " << FrameBuffer::stateToString(state_) << std::endl;
+    else
+        LogWarnC
+        << "no reservation for " << data.getName()
+        << " buffer state " << FrameBuffer::stateToString(state_) << std::endl;
 
     return event;
 }
@@ -1558,7 +1561,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 
                 if (slot->isRecovered())
                 {
-                    LogDebugC << "recovered [" << slot->dump() << "]" << std::endl;
+                    LogTraceC << "recovered [" << slot->dump() << "]" << std::endl;
                     assembledLevel = 1.;
                     
                     // update stat
@@ -1570,7 +1573,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             if (assembledLevel < 1.)
             {
-                LogDebugC << "incomplete [" << slot->dump() << "]" << std::endl;
+                LogTraceC << "incomplete [" << slot->dump() << "]" << std::endl;
                 
                 // update stat
                 stat_.nIncomplete_++;
@@ -1586,7 +1589,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             if (isKey)
                 stat_.nAcquiredKey_++;
             
-            LogDebugC
+            LogTraceC
             << "lock [" << slot->dump() << "]" << std::endl;
         } // if (!skip)
         else
@@ -1596,6 +1599,16 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             if (isKey)
                 stat_.nDroppedKey_++;
         }
+        
+        int64_t playableSize = getPlayableBufferSize();
+        
+        ((playableSize < (int64_t)((double)getTargetSize()/2.)) ? LogWarnC : LogTraceC)
+        << "playable buffer level:"
+        << " duration " << playableSize
+        << " frames " << playbackQueue_.size()
+        << " dump " << shortDump()
+        << std::endl;
+        
     } // if (slot.get())
     else
     {
@@ -1636,20 +1649,21 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
                 playbackDuration = nextSlot->getProducerTimestamp() - lockedSlot->getProducerTimestamp();
                 isInferredDuration = false;
                 
-                LogDebugC << "delay "  << playbackDuration << " ["
+                LogTraceC << "delay "  << playbackDuration << " ["
                 << lockedSlot->dump() << "]-" << std::endl;
             }
             else
             {
-                LogDebugC << "delay inferred " << playbackDuration << " ["
-                << lockedSlot->dump() << "]-" << std::endl;
+                LogWarnC << "delay inferred "
+                << playbackDuration << " [" << lockedSlot->dump() << "]"
+                << std::endl;
             }
             
             isEstimationNeeded_ = true;
         }
         else
         {
-            LogDebugC << "skip old [" << lockedSlot->dump() << "]" << std::endl;
+            LogWarnC << "skip old [" << lockedSlot->dump() << "]" << std::endl;
             isInferredDuration = false;
         }
         
@@ -1659,7 +1673,7 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
                         lockedSlot->getSequentialNumber(),
                         lockedSlot->getPlaybackNumber());
         
-        LogDebugC << "unlock [" << lockedSlot->dump() << "]" << std::endl;
+        LogTraceC << "unlock [" << lockedSlot->dump() << "]" << std::endl;
         lockedSlot->unlock();
         freeSlot(lockedSlot->getPrefix());
         playbackSlot_.reset();
@@ -1690,6 +1704,26 @@ ndnrtc::new_api::FrameBuffer::dump()
     << " playable " << getPlayableBufferSize() << ")" << std::endl;
     
     playbackQueue_.dumpQueue();
+}
+
+std::string
+ndnrtc::new_api::FrameBuffer::shortDump()
+{
+    std::stringstream ss;
+    ss.precision(2);
+    
+    ss << "[ ";
+    
+    PlaybackQueueBase::iterator it;
+    for (it = playbackQueue_.begin(); it != playbackQueue_.end(); ++it)
+    {
+        ss << (*it)->getSequentialNumber()
+        << "(" << (*it)->getAssembledLevel() << ") ";
+    }
+    
+    ss << "]";
+    
+    return ss.str();
 }
 
 void
@@ -1869,9 +1903,6 @@ ndnrtc::new_api::FrameBuffer::initialize()
         freeSlots_.push_back(slot);
         addBufferEvent(Event::FreeSlot, slot);
     }
-    
-#warning ???
-//    playbackQueue_.updatePlaybackRate(consumer_->getParameters().producerRate);
 }
 
 shared_ptr<ndnrtc::new_api::FrameBuffer::Slot>
