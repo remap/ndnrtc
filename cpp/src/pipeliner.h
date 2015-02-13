@@ -403,6 +403,10 @@ namespace ndnrtc {
             unsigned int failedWindow_;
             FrameNumber seedFrameNo_;
             
+            // incoming data statistics
+            unsigned int dataMeterId_, segmentFreqMeterId_;
+            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
+            
             void
             askForRightmostData();
             

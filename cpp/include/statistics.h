@@ -83,6 +83,9 @@ namespace ndnrtc {
         unsigned int
         w_ = 0, dw_ = 0;        // W and DW parameters for Pipeliner2
         double RTTprime_;       // RTT* for Pipeliner2
+        
+        double nBytesPerSec_, segmentsFrequency_;
+        unsigned int nDataReceived_, nTimeouts_;
     } PipelinerStatistics;
     
     // sending channel statistics

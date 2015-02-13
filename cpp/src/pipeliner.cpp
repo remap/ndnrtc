@@ -1033,7 +1033,9 @@ Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
                        const FrameSegmentsInfo& frameSegmentsInfo):
 PipelinerBase(consumer, frameSegmentsInfo),
 stabilityEstimator_(7, 4, 0.15, 0.7),
-rttChangeEstimator_(7, 3, 0.12)
+rttChangeEstimator_(7, 3, 0.12),
+dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
+segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
 {
 }
 
@@ -1064,7 +1066,12 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
-    LogTraceC << "data " << data->getName() << std::endl;
+    LogDebugC << "data " << data->getName() << std::endl;
+    
+    nDataReceived_++;
+    NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
+    NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
+    
     bool isKeyPrefix = NdnRtcNamespace::isPrefix(data->getName(), keyFramesPrefix_);
     
     switch (state_) {
@@ -1129,6 +1136,9 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
     LogDebugC << "got timeout for " << interest->getName()
     << " in state " << toString(state_) << std::endl;
+    
+    nTimeouts_++;
+    
     switch (state_) {
         case StateWaitInitial: // fall through
         {
@@ -1227,6 +1237,13 @@ Pipeliner2::getStatistics()
     stat_.w_ = window_.getCurrentWindowSize();
     stat_.dw_ = window_.getDefaultWindowSize();
     stat_.RTTprime_ = rttChangeEstimator_.getMeanValue();
+    
+    stat_.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
+    stat_.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
+    stat_.nDataReceived_ = nDataReceived_;
+    stat_.nTimeouts_ = nTimeouts_;
+    
+    return stat_;
 }
 
 //******************************************************************************
