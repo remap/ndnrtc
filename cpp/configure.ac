@@ -280,6 +280,19 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_FAILURE([not found])
 ])
 
+AC_MSG_CHECKING([for boost::asio::steady_timer...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/asio.hpp>
+	  #include <boost/asio/steady_timer.hpp>]]
+    [[
+    boost::asio::io_service io_service_;
+    boost::asio::steady_timer timer_(io_service_);]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS

@@ -9,6 +9,9 @@
 #ifndef __ndnrtc__jitter_timing__
 #define __ndnrtc__jitter_timing__
 
+#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
+
 #include "simple-log.h"
 #include "webrtc.h"
 #include "ndnrtc-common.h"
@@ -54,7 +57,8 @@ namespace ndnrtc {
         void runPlayoutTimer();
         
     private:
-        webrtc::EventWrapper &playoutTimer_;
+        boost::asio::io_service io_service_;
+        boost::asio::steady_timer playoutTimer_;
         
         int framePlayoutTimeMs_ = 0;
         int processingTimeUsec_ = 0;
