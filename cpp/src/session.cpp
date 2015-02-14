@@ -202,7 +202,7 @@ Session::onSessionInfoBroadcastFailed()
 boost::shared_ptr<SessionInfo>
 Session::onPublishSessionInfo()
 {
-    LogInfoC << "session info requested" << std::endl;
+    LogDebugC << "session info requested" << std::endl;
 
     shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
 
