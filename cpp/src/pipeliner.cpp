@@ -1348,10 +1348,19 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     }   
     
     if (event.type_ == FrameBuffer::Event::FirstSegment)
+    {
+        // update average segments numbers
+        updateSegnumEstimation(event.slot_->getNamespace(),
+                               event.slot_->getSegmentsNumber(),
+                               false);
+        updateSegnumEstimation(event.slot_->getNamespace(),
+                               event.slot_->getParitySegmentsNumber(),
+                               true);
         requestMissing(event.slot_,
                        getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                            event.slot_->getNamespace()),
                        event.slot_->getPlaybackDeadline());
+    }
     
     switch (state_) {
         case StateChasing:
