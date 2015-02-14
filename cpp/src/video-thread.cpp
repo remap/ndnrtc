@@ -38,7 +38,7 @@ int
 VideoThread::init(const VideoThreadSettings& settings)
 {
     settings_ = new VideoThreadSettings();
-    *settings_ = settings;
+    *((VideoThreadSettings*)settings_) = settings;
     
     int res = MediaThread::init(settings);
     
