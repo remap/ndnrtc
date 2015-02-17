@@ -88,7 +88,7 @@ MediaStream::onMediaThreadRegistrationFailed(std::string threadName)
 //******************************************************************************
 VideoStream::VideoStream():
 MediaStream(),
-deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
+capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processFrameDelivery, this,
                                             kHighPriority)),
@@ -168,10 +168,10 @@ void
 VideoStream::onDeliverFrame(webrtc::I420VideoFrame &frame,
                                  double timestamp)
 {
-    deliver_cs_->Enter();
-    deliverFrame_.SwapFrame(&frame);
+    capture_cs_->Enter();
+    capturedFrame_.SwapFrame(&frame);
     deliveredTimestamp_ = timestamp;
-    deliver_cs_->Leave();
+    capture_cs_->Leave();
     
     deliverEvent_.Set();
 };
@@ -181,7 +181,10 @@ VideoStream::processDeliveredFrame()
 {
     if (deliverEvent_.Wait(100) == kEventSignaled)
     {
-        deliver_cs_->Enter();
+        capture_cs_->Enter();
+        deliverFrame_.SwapFrame(&capturedFrame_);
+        capture_cs_->Leave();
+        
         if (!deliverFrame_.IsZeroSize()) {
             for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
             {
@@ -192,7 +195,6 @@ VideoStream::processDeliveredFrame()
                 ((VideoThread*)i->second.get())->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
             }
         }
-        deliver_cs_->Leave();
     }
     
     return true;
