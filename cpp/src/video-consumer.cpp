@@ -155,6 +155,7 @@ void
 VideoConsumer::onRebufferingOccurred()
 {
     Consumer::onRebufferingOccurred();
+    decoder_->reset();
 }
 
 //******************************************************************************

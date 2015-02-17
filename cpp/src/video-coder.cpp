@@ -70,7 +70,7 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
         codec.codecSpecific.VP9.denoisingOn = true;
         codec.codecSpecific.VP9.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP9.numberOfTemporalLayers = 1;
-        codec.codecSpecific.VP9.keyFrameInterval = 1000;
+        codec.codecSpecific.VP9.keyFrameInterval = settings.gop_;
 #else
         strncpy(codec.plName, "VP8", 4);
         codec.plType = VCM_VP8_PAYLOAD_TYPE;
@@ -79,7 +79,7 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
         codec.codecSpecific.VP8.denoisingOn = true;
         codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
         codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
-        codec.codecSpecific.VP8.keyFrameInterval = 1000;
+        codec.codecSpecific.VP8.keyFrameInterval = settings.gop_;
 #endif
     }
     
@@ -87,12 +87,12 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
 #ifdef USE_VP9
     codec.codecSpecific.VP9.resilience = 0;
     codec.codecSpecific.VP9.frameDroppingOn = settings.dropFramesOn_;
-    codec.codecSpecific.VP9.keyFrameInterval = 1000;
+    codec.codecSpecific.VP9.keyFrameInterval = settings.gop_;
     codec.codecSpecific.VP9.feedbackModeOn = false;
 #else
     codec.codecSpecific.VP8.resilience = kResilienceOff;
     codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
-    codec.codecSpecific.VP8.keyFrameInterval = 1000;
+    codec.codecSpecific.VP8.keyFrameInterval = settings.gop_;
     codec.codecSpecific.VP8.feedbackModeOn = false;
 #endif
     
