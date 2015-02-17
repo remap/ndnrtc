@@ -385,7 +385,7 @@ ndnrtc::new_api::PipelinerBase::requestMissing
     if (missingSegments.size() == 0)
         LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
     else
-        LogWarnC << "request missing "
+        LogDebugC << "request missing "
         << slot->getPrefix()
         << " total " << missingSegments.size() << " interests"
         << std::endl;
