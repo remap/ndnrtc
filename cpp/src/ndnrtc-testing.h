@@ -174,7 +174,7 @@ namespace ndnrtc {
             FrameWriter(const char *fileName) : PacketWriter(fileName){}
             ~FrameWriter(){}
             
-            void writeFrame(webrtc::I420VideoFrame &frame)
+            void writeFrame(webrtc::I420VideoFrame &frame, bool raw)
             {
                 /*
                  How frame is stored in file:
@@ -197,26 +197,38 @@ namespace ndnrtc {
                 strideU = frame.stride(webrtc::kUPlane),
                 strideV = frame.stride(webrtc::kVPlane);
                 
-                writeData(&renderTime, sizeof(renderTime));
-                writeData(&width, sizeof(width));
-                writeData(&height, sizeof(height));
-                writeData(&strideY, sizeof(strideY));
-                writeData(&strideU, sizeof(strideU));
-                writeData(&strideV, sizeof(strideV));
+                if (!raw)
+                {
+                    writeData(&renderTime, sizeof(renderTime));
+                    writeData(&width, sizeof(width));
+                    writeData(&height, sizeof(height));
+                    writeData(&strideY, sizeof(strideY));
+                    writeData(&strideU, sizeof(strideU));
+                    writeData(&strideV, sizeof(strideV));
+                }
                 
-                int sizeY = frame.allocated_size(webrtc::kYPlane),
-                sizeU = frame.allocated_size(webrtc::kUPlane),
-                sizeV = frame.allocated_size(webrtc::kVPlane);
+                int sizeY = strideY * height;
+                int half_height = (height + 1) / 2;
+                int sizeU = strideU * half_height;
+                int sizeV = strideV * half_height;
                 
-                writeData(&sizeY, sizeof(sizeY));
+                if (!raw)
+                    writeData(&sizeY, sizeof(sizeY));
                 writeData(frame.buffer(webrtc::kYPlane), sizeY);
                 
-                writeData(&sizeU, sizeof(sizeU));
+                if (!raw)
+                    writeData(&sizeU, sizeof(sizeU));
                 writeData(frame.buffer(webrtc::kUPlane), sizeU);
                 
-                writeData(&sizeV, sizeof(sizeV));
+                if (!raw)
+                    writeData(&sizeV, sizeof(sizeV));
                 writeData(frame.buffer(webrtc::kVPlane), sizeV);
-                
+
+//                std::cout << width << "X" << height
+//                << " strideY " << strideY
+//                << " strideU " << strideU
+//                << " strideV " << strideV
+//                << "wrote " << sizeY+sizeU + sizeV << " bytes" << std::endl;
                 synchronize();
             }
         };
@@ -398,7 +410,7 @@ namespace ndnrtc {
                 synchronize();
             }
         };
-        
+#if 0
         class ConsumerMock : public ndnrtc::new_api::Consumer
         {
         public:
@@ -421,6 +433,7 @@ namespace ndnrtc {
             string logFile_;
             ParamsStruct params_;
         };
+#endif
     }
 }
 
