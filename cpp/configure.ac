@@ -293,6 +293,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_FAILURE([not found])
 ])
 
+AC_MSG_CHECKING([for boost::crc...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/crc.hpp>]]
+    [[
+    boost::crc_16_type crc_computer_;]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
