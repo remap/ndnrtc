@@ -610,6 +610,12 @@ namespace ndnrtc
                 bool
                 updateConsistencyFromHeader();
                 
+                /**
+                 * Checks, whether data segment has been already received
+                 */
+                bool
+                hasReceivedSegment(SegmentNumber segNo, bool isParity);
+                
                 SegmentNumber
                 toMapParityIdx(SegmentNumber segNo) const
                 { return -(segNo+1); }

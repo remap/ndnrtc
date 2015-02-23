@@ -259,74 +259,83 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
         packetNumber != packetSequenceNumber_)
         return StateFree;
     
-    PrefixMetaInfo prefixMeta;
-    
-    if (RESULT_GOOD(PrefixMetaInfo::extractMetadata(dataName, prefixMeta)))
+    if (!hasReceivedSegment(segmentNumber, isParity))
     {
-        fixRightmost(packetNumber, segmentNumber, isParity);
-
-        updateConsistencyWithMeta(packetNumber, prefixMeta);
-        assert(prefixMeta.totalSegmentsNum_ == nSegmentsTotal_);
+        PrefixMetaInfo prefixMeta;
         
-        SegmentData segmentData;
-        
-        if (RESULT_GOOD(SegmentData::segmentDataFromRaw(data.getContent().size(),
-                                                        data.getContent().buf(),
-                                                        segmentData)))
+        if (RESULT_GOOD(PrefixMetaInfo::extractMetadata(dataName, prefixMeta)))
         {
-            SegmentData::SegmentMetaInfo segmentMeta = segmentData.getMetadata();
-            addData(segmentData.getSegmentData(), segmentData.getSegmentDataLength(),
-                    segmentNumber, prefixMeta.totalSegmentsNum_,
-                    isParity, nSegmentsParity_);
-
-            if (segmentNumber == 0 && !isParity)
-                updateConsistencyFromHeader();
-
-            shared_ptr<Segment> segment = getActiveSegment(segmentNumber, isParity);
-            segment->setDataPtr(getSegmentDataPtr(segmentData.getSegmentDataLength(),
-                                                  segmentNumber, isParity));
-            segment->setNumber(segmentNumber);
-            segment->setPayloadSize(segmentData.getSegmentDataLength());
-            segment->dataArrived(segmentMeta);
-            segment->setIsParity(isParity);
+            fixRightmost(packetNumber, segmentNumber, isParity);
             
-            nSegmentsPending_--;
-            if (!isParity)
-                nSegmentsReady_++;
-            else
-                nSegmentsParityReady_++;
-            recentSegment_ = segment;
+            updateConsistencyWithMeta(packetNumber, prefixMeta);
+            assert(prefixMeta.totalSegmentsNum_ == nSegmentsTotal_);
             
-            if (segment->isOriginal())
-                hasOriginalSegments_ = true;
+            SegmentData segmentData;
             
-            std::vector<shared_ptr<Segment> > fetchedSegments =
-                getSegments(Segment::StateFetched);
-            
-            if (nSegmentsReady_ == prefixMeta.totalSegmentsNum_)
+            if (RESULT_GOOD(SegmentData::segmentDataFromRaw(data.getContent().size(),
+                                                            data.getContent().buf(),
+                                                            segmentData)))
             {
-                state_ = StateReady;
-                readyTimeUsec_ = segment->getArrivalTimeUsec();
+                SegmentData::SegmentMetaInfo segmentMeta = segmentData.getMetadata();
+                addData(segmentData.getSegmentData(), segmentData.getSegmentDataLength(),
+                        segmentNumber, prefixMeta.totalSegmentsNum_,
+                        isParity, nSegmentsParity_);
+                
+                if (segmentNumber == 0 && !isParity)
+                    updateConsistencyFromHeader();
+                
+                shared_ptr<Segment> segment = getActiveSegment(segmentNumber, isParity);
+                segment->setDataPtr(getSegmentDataPtr(segmentData.getSegmentDataLength(),
+                                                      segmentNumber, isParity));
+                segment->setNumber(segmentNumber);
+                segment->setPayloadSize(segmentData.getSegmentDataLength());
+                segment->dataArrived(segmentMeta);
+                segment->setIsParity(isParity);
+                
+                nSegmentsPending_--;
+                if (!isParity)
+                    nSegmentsReady_++;
+                else
+                    nSegmentsParityReady_++;
+                recentSegment_ = segment;
+                
+                if (segment->isOriginal())
+                    hasOriginalSegments_ = true;
+                
+                std::vector<shared_ptr<Segment> > fetchedSegments =
+                getSegments(Segment::StateFetched);
+                
+                if (nSegmentsReady_ == prefixMeta.totalSegmentsNum_)
+                {
+                    state_ = StateReady;
+                    readyTimeUsec_ = segment->getArrivalTimeUsec();
+                    
+                }
+                else
+                {
+                    if (fetchedSegments.size() < prefixMeta.totalSegmentsNum_)
+                    {
+                        if (state_ == StateNew)
+                            firstSegmentTimeUsec_ = segment->getArrivalTimeUsec();
+                        
+                        state_ = StateAssembling;
+                    }
+                }
             }
             else
             {
-                if (fetchedSegments.size() < prefixMeta.totalSegmentsNum_)
-                {
-                    if (state_ == StateNew)
-                        firstSegmentTimeUsec_ = segment->getArrivalTimeUsec();
-                    
-                    state_ = StateAssembling;
-                }
+                LogError("") << "couldn't get data from segment" << std::endl;
             }
         }
         else
         {
-            LogError("") << "couldn't get data from segment" << std::endl;
+            LogError("") << "couldn't get metadata from packet" << std::endl;
         }
     }
     else
     {
-        LogError("") << "couldn't get metadata from packet" << std::endl;
+        LogWarn("") << "duplicate " << (isParity?"parity":"data") << " segment "
+        << packetNumber << "-" << segmentNumber << std::endl;
     }
     
     return state_;
@@ -338,7 +347,7 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     if (state_ == StateLocked)
         return RESULT_ERR;
     
-    memset(fecSegmentList_, '0', nSegmentsTotal_+nSegmentsParity_);
+    memset(fecSegmentList_, FEC_RLIST_SYMEMPTY, nSegmentsTotal_+nSegmentsParity_);
     
     state_ = StateFree;
     consistency_ = Inconsistent;
@@ -605,7 +614,7 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareStorage(unsigned int segmentSize,
         memset(slotData_, 0, slotSize);
         
         fecSegmentList_ = (unsigned char*)realloc(fecSegmentList_, nSegments+nParitySegments);
-        memset(fecSegmentList_, '0', nSegments+nParitySegments);
+        memset(fecSegmentList_, FEC_RLIST_SYMEMPTY, nSegments+nParitySegments);
         allocatedSize_ = slotSize;
     }
 }
@@ -624,7 +633,7 @@ ndnrtc::new_api::FrameBuffer::Slot::addData(const unsigned char* segmentData,
     
     memcpy(slotData_+segmentIdx*segmentSize_, segmentData, segmentSize);
     
-    fecSegmentList_[segmentIdx] = '1';
+    fecSegmentList_[segmentIdx] = FEC_RLIST_SYMREADY;
     assembledSize_ += segmentSize;
 }
 
@@ -809,6 +818,19 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyFromHeader()
     producerTimestamp_ = metadata.timestamp_;
     
     return true;
+}
+
+bool
+ndnrtc::new_api::FrameBuffer::Slot::hasReceivedSegment
+(SegmentNumber segNo, bool isParity)
+{
+    if (consistency_ & PrefixMeta)
+    {
+        unsigned int segmentIdx = (isParity)? nSegmentsTotal_+segNo : segNo;
+        return fecSegmentList_[segmentIdx] != FEC_RLIST_SYMEMPTY;
+    }
+    
+    return false;
 }
 
 std::string
@@ -1584,6 +1606,19 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             }
             
             slot->getPacketData(packetData);
+            
+            if (*packetData)
+            {
+                int crc = (*packetData)->getCrcValue();
+                if (crc != slot->getCrcValue())
+                {
+                    LogWarnC << "bad packet: CRCs don't match: "
+                    << crc << " and "
+                    << slot->getCrcValue() << " expected"
+                    << std::endl;
+                }
+            }
+            
             addBufferEvent(Event::Playout, slot);
             
             // update stat
