@@ -10,6 +10,15 @@
 
 #include "external-capturer.hpp"
 
+// for tests only
+//#define RECORD
+#ifdef RECORD
+#include "frame-data.h"
+#include "ndnrtc-testing.h"
+using namespace ndnrtc::testing;
+static FrameWriter frameWriter("captured_640x480.i420");
+#endif
+
 using namespace webrtc;
 using namespace ndnrtc;
 
@@ -102,6 +111,9 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
         return notifyError(RESULT_ERR, "Failed to convert capture frame to I420");
     
     LogTraceC << "delivering frame..." << std::endl;
+#ifdef RECORD
+    frameWriter.writeFrame(convertedFrame_, false);
+#endif
     deliverCapturedFrame(convertedFrame_);
     
     return RESULT_OK;
