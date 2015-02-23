@@ -95,7 +95,10 @@ Rs28Decoder::decode(unsigned char* data, unsigned char* parityData,
                 {
                     ret++;
                     if (i < nSourceSymbols_)
+                    {
                         memcpy(&data[i*symbolLength_], decodingSymbolTable[i], symbolLength_);
+                        free(decodingSymbolTable[i]);
+                    }
                 }
         }
     }

@@ -69,7 +69,6 @@ Playout::start(int playbackAdjustment)
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
     playbackAdjustment_ = playbackAdjustment;
-    data_ = nullptr;
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -88,6 +87,12 @@ Playout::stop()
         isRunning_ = false;
         playoutThread_.Stop();
         jitterTiming_.stop();
+        
+        if (data_)
+        {
+            delete data_;
+            data_ = nullptr;
+        }
         
         LogInfoC << "stopped" << endl;
     }
