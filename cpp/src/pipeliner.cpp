@@ -1066,7 +1066,9 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
-    LogDebugC << "data " << data->getName() << std::endl;
+    LogDebugC
+    << "data " << data->getName()
+    << data->getContent().size() << " bytes" << std::endl;
     
     nDataReceived_++;
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
@@ -1097,7 +1099,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
             
             // make sure that we've got what is expected
-            if (metaInfo.playbackNo_ > seedFrameNo_)
+            if (metaInfo.playbackNo_ >= seedFrameNo_)
             {
                 if (deltaFrameSeqNo_ < 0 &&
                     isKeyPrefix)
@@ -1273,7 +1275,7 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
         {
-            keyFrameSeqNo_ = frameNo+1;
+            keyFrameSeqNo_ = frameNo;
             requestNextKey(keyFrameSeqNo_);
         }
         else
