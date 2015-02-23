@@ -89,3 +89,14 @@ if OS_DARWIN
   
   noinst_SCRIPTS = demoapp/rundemo.sh resources/ndnrtc.cfg
 endif
+
+check_PROGRAMS = bin/unit-tests/test-encoder
+
+bin_unit_tests_test_encoder_SOURCES = test/new/test-encoder.cpp contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
+bin_unit_tests_test_encoder_CPPFLAGS = -I$(top_srcdir)/contrib/gtest-1.7.0/fused-src -I$(top_srcdir)/src -I$(top_srcdir)/include -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@
+bin_unit_tests_test_encoder_LDADD = libndnrtc.la
+
+TESTS = $(check_PROGRAMS)
+
+
+
