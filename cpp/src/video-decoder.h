@@ -34,8 +34,6 @@ namespace ndnrtc {
             int init(const VideoCoderParams& settings);
             void reset();
             
-            // interface conformance - webrtc::DecodedImageCallback
-            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
             // interface conformance - IEncodedFrameConsumer
             void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
                                          double timestamp,
@@ -50,6 +48,9 @@ namespace ndnrtc {
             
             int
             resetDecoder();
+            
+            // interface conformance - webrtc::DecodedImageCallback
+            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
         };
     }
 }

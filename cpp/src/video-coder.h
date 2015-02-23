@@ -46,11 +46,6 @@ namespace ndnrtc {
             
             int init(const VideoCoderParams& settings);
             
-            // interface conformance - webrtc::EncodedImageCallback
-            int32_t Encoded(const webrtc::EncodedImage& encodedImage,
-                            const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
-                            const webrtc::RTPFragmentationHeader* fragmentation = NULL);
-            
             // interface conformance - ndnrtc::IRawFrameConsumer
             void onDeliverFrame(webrtc::I420VideoFrame &frame,
                                 double timestamp);
@@ -83,6 +78,11 @@ namespace ndnrtc {
             
             webrtc::Scaler frameScaler_;
             webrtc::I420VideoFrame scaledFrame_;
+            
+            // interface conformance - webrtc::EncodedImageCallback
+            int32_t Encoded(const webrtc::EncodedImage& encodedImage,
+                            const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
+                            const webrtc::RTPFragmentationHeader* fragmentation = NULL);
             
             void
             initScaledFrame();

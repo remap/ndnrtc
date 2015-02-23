@@ -46,6 +46,7 @@ void NdnVideoDecoder::reset()
     if (frameCount_ > 0)
     {
         LogTraceC << "resetting decoder..." << std::endl;
+        int res = decoder_->Release();
         resetDecoder();
         LogTraceC << "decoder reset" << std::endl;
     }

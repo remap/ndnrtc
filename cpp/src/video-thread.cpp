@@ -159,7 +159,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         << deltaFrameNo_ << "\t"
         << keyFrameNo_ << "\t"
         << (isKeyFrame?"K":"D") << "\t"
-        << (timestamp - NdnRtcUtils::millisecondTimestamp()) << "\t"
+        << (NdnRtcUtils::millisecondTimestamp()-timestamp) << "\t"
         << frameData.getLength() << "\t"
         << encodedImage.capture_time_ms_ << "\t"
         << NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_) << "\t"
@@ -168,7 +168,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         int nSegmentsParity = -1;
         if (getSettings().useFec_)
             nSegmentsParity = publishParityData(frameNo, frameData, nSegments, framePrefix,
-                              prefixMeta);
+                                                prefixMeta);
         
         
         if (!isKeyFrame)
@@ -194,10 +194,10 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     }
     else
     {
-        notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
-                    getPacketNo(), (isKeyFrame)?"YES":"NO");
+        LogErrorC << "was not able to publish frame " << getPacketNo()
+        << " KEY: " << ((isKeyFrame)?"YES":"NO") << std::endl;
     }
-    
+
     faceProcessor_->getFaceWrapper()->synchronizeStop();
 }
 

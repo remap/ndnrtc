@@ -85,12 +85,11 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
     
     // dropping frames
 #ifdef USE_VP9
-    codec.codecSpecific.VP9.resilience = 0;
+    codec.codecSpecific.VP9.resilience = 1;
     codec.codecSpecific.VP9.frameDroppingOn = settings.dropFramesOn_;
     codec.codecSpecific.VP9.keyFrameInterval = settings.gop_;
-    codec.codecSpecific.VP9.feedbackModeOn = false;
 #else
-    codec.codecSpecific.VP8.resilience = kResilienceOff;
+    codec.codecSpecific.VP8.resilience = kResilientStream;
     codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
     codec.codecSpecific.VP8.keyFrameInterval = settings.gop_;
     codec.codecSpecific.VP8.feedbackModeOn = false;

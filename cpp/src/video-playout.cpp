@@ -150,20 +150,13 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         // check for valid data
         pushFrameFurther &= (data != NULL);
         
-        webrtc::EncodedImage frame;
-        
-        if (data)
-            ((NdnFrameData*)data)->getFrame(frame);
-        
 #if RECORD
-        PacketData::PacketMetadata meta = data_->getMetadata();
-        frameWriter.writeFrame(frame, meta);
+        if (pushFrameFurther)
+        {
+            PacketData::PacketMetadata meta = data_->getMetadata();
+            frameWriter.writeFrame(frame, meta);
+        }
 #endif
-        
-        // update stat
-        stat_.nPlayed_++;
-        if (isKey)
-            stat_.nPlayedKey_++;
         
         if (!pushFrameFurther)
         {
@@ -179,6 +172,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             << endl;
         }
         else
+        {
             LogDebugC << "playback."
             << " type " << (isKey?"K":"D")
             << " seq " << sequencePacketNo
@@ -186,7 +180,18 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             << " total " << stat_.nPlayed_
             << endl;
         
-        ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
+            webrtc::EncodedImage frame;
+            
+            if (data)
+                ((NdnFrameData*)data)->getFrame(frame);
+            
+            // update stat
+            stat_.nPlayed_++;
+            if (isKey)
+                stat_.nPlayedKey_++;
+            
+            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
+        }
 
         res = pushFrameFurther;
     } // if data
