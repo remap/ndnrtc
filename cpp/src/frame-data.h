@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__frame_slot__
 #define __ndnrtc__frame_slot__
 
+#include <boost/crc.hpp>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 #include "params.h"
@@ -37,6 +39,7 @@ namespace ndnrtc {
         PacketNumber playbackNo_;
         PacketNumber pairedSequenceNo_;
         int paritySegmentsNum_;
+        int crcValue_;
         
         static ndn::Name toName(const _PrefixMetaInfo &meta);
         static int extractMetadata(const ndn::Name& metaComponents, _PrefixMetaInfo &meta);
@@ -68,10 +71,18 @@ namespace ndnrtc {
         bool
         isValid() const { return isValid_; }
         
+        int
+        getCrcValue()
+        {
+            crc_computer_ = std::for_each(data_, data_+length_, crc_computer_);
+            return crc_computer_();
+        }
+        
     protected:
         bool isValid_ = false, isDataCopied_ = false;
         unsigned int length_;
         unsigned char *data_ = NULL;
+        boost::crc_16_type crc_computer_;
         
         virtual int
         initFromRawData(unsigned int dataLength,

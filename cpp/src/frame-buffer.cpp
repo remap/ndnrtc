@@ -355,6 +355,7 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
     nSegmentsMissing_ = 0;
     nSegmentsParity_ = 0;
     nSegmentsParityReady_ = 0;
+    crcValue_ = 0;
     slotPrefix_ = Name();
     recentSegment_.reset();
     assembledSize_ = 0;
@@ -708,6 +709,7 @@ ndnrtc::new_api::FrameBuffer::Slot::updateConsistencyWithMeta(const PacketNumber
     pairedSequenceNumber_ = prefixMeta.pairedSequenceNo_;
     nSegmentsTotal_ = prefixMeta.totalSegmentsNum_;
     nSegmentsParity_ = prefixMeta.paritySegmentsNum_;
+    crcValue_ = prefixMeta.crcValue_;
     
     refineActiveSegments();
     initMissingSegments();

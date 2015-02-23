@@ -12,7 +12,7 @@
 #include "params.h"
 #include "fec.h"
 
-#define PREFIX_META_NCOMP 4
+#define PREFIX_META_NCOMP 5
 
 using namespace std;
 using namespace webrtc;
@@ -28,6 +28,7 @@ PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.playbackNo_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.pairedSequenceNo_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.paritySegmentsNum_));
+    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.crcValue_));
     
     return metaSuffix;
 }
@@ -42,6 +43,7 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
         meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-PREFIX_META_NCOMP]);
         meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-PREFIX_META_NCOMP]);
         meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-PREFIX_META_NCOMP]);
+        meta.crcValue_ = NdnRtcUtils::intFromComponent(prefix[4-PREFIX_META_NCOMP]);
         
         return RESULT_OK;
     }
@@ -50,7 +52,6 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
 }
 
 //******************************************************************************
-
 const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0, 0};
 const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1, -1};
 

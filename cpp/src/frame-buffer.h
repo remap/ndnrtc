@@ -495,6 +495,9 @@ namespace ndnrtc
                 bool
                 hasOriginalSegments() { return hasOriginalSegments_; }
                 
+                int
+                getCrcValue() { return crcValue_; }
+                
                 static std::string
                 stateToString(State s)
                 {
@@ -556,6 +559,7 @@ namespace ndnrtc
                 int nSegmentsReady_ = 0, nSegmentsPending_ = 0,
                 nSegmentsMissing_ = 0, nSegmentsTotal_ = 0,
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
+                int crcValue_ = 0;
                 
                 boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
                 std::vector<boost::shared_ptr<Segment> > freeSegments_;
@@ -570,9 +574,6 @@ namespace ndnrtc
                 void
                 fixRightmost(PacketNumber packetNumber,
                              SegmentNumber segmentNumber, bool isParity);
-                
-                void
-                releaseSegment(SegmentNumber segNum);
                 
                 void
                 prepareStorage(unsigned int segmentSize,

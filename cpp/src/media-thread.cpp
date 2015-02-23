@@ -117,6 +117,8 @@ int MediaThread::publishPacket(PacketData &packetData,
         
         packetData.setMetadata(metadata);
         
+        prefixMeta.crcValue_ = packetData.getCrcValue();
+        
         Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
         for (Segmentizer::SegmentList::iterator it = segments.begin();
