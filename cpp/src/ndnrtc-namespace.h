@@ -102,7 +102,8 @@ namespace ndnrtc {
                                          Name &trimmedPrefix);
         
         static bool trimmedLookupPrefix(const Name& prefix, Name& lookupPrefix);
-                
+        
+        static std::string getUserName(const std::string& prefix);
     private:
     };
 }

@@ -431,8 +431,11 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
         return "";
     }
     
+    std::string username = NdnRtcNamespace::getUserName(remoteSessionPrefix);
     remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
-                                               NdnRtcUtils::toString("consumer-%s.log", params.streamName_.c_str())));
+                                               NdnRtcUtils::toString("consumer-%s-%s.log",
+                                                                     username.c_str(),
+                                                                     params.streamName_.c_str())));
     
     if (RESULT_FAIL(remoteStreamConsumer->start()))
         return "";

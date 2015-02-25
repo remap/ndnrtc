@@ -561,5 +561,22 @@ bool NdnRtcNamespace::trimmedLookupPrefix(const ndn::Name &prefix,
     return res;
 }
 
-//********************************************************************************
-#pragma mark - private
+std::string NdnRtcNamespace::getUserName(const std::string& prefix)
+{
+    size_t userComp = prefix.find(NameComponents::NameComponentUser);
+    
+    if (userComp != std::string::npos)
+    {
+        size_t startPos = userComp+NameComponents::NameComponentUser.size()+1;
+        if (prefix.size() >= startPos)
+        {
+            size_t endPos = prefix.find("/", startPos);
+
+            if (endPos == std::string::npos)
+                endPos = prefix.size();
+            return prefix.substr(startPos, endPos-startPos);
+        }
+    }
+        
+    return "";
+}
