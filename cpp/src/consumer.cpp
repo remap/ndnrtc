@@ -252,7 +252,7 @@ Consumer::onBufferingEnded()
     if (!playout_->isRunning())
     {
         unsigned int targetBufferSize = bufferEstimator_->getTargetSize();
-        int adjustment = bufferEstimator_->getTargetSize() - frameBuffer_->getPlayableBufferSize();
+        int adjustment = targetBufferSize - frameBuffer_->getPlayableBufferSize();
         
         if (adjustment < 0)
         {

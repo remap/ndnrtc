@@ -51,6 +51,7 @@ ndnrtc::new_api::PipelinerBase::PipelinerBase(const boost::shared_ptr<Consumer>&
                                               const FrameSegmentsInfo& frameSegmentsInfo):
 callback_(nullptr),
 state_(StateInactive),
+startPhaseTimestamp_(NdnRtcUtils::millisecondTimestamp()),
 consumer_(consumer.get()),
 frameSegmentsInfo_(frameSegmentsInfo),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgSegNum_)),
@@ -164,7 +165,7 @@ ndnrtc::new_api::PipelinerBase::requestNextKey(PacketNumber& keyFrameNo)
     stat_.nRequestedKey_++;
     
     prefetchFrame(keyFramesPrefix_,
-                  keyFrameNo++,
+                  keyFrameNo++, // increment key frame counter
                   ceil(NdnRtcUtils::currentMeanEstimation(keySegnumEstimatorId_)),
                   ceil(NdnRtcUtils::currentMeanEstimation(keyParitySegnumEstimatorId_)),
                   FrameBuffer::Slot::Key);
@@ -199,9 +200,12 @@ ndnrtc::new_api::PipelinerBase::expressRange(Interest& interest,
             shared_ptr<Interest> interestPtr = *it;
             int segmentIdx = it - segmentInterests.begin();
             
+            // lower priority for parity data
+            int64_t pri = priority + segmentIdx + isParity*100;
+            
             stat_.nInterestSent_++;
             consumer_->getInterestQueue()->enqueueInterest(*interestPtr,
-                                                           Priority::fromArrivalDelay(priority+segmentIdx),
+                                                           Priority::fromArrivalDelay(pri),
                                                            ndnAssembler_->getOnDataHandler(),
                                                            ndnAssembler_->getOnTimeoutHandler());
         }
@@ -368,6 +372,16 @@ ndnrtc::new_api::PipelinerBase::onRetransmissionNeeded(FrameBuffer::Slot* slot)
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             stat_.nRtx_++;
         }
+    }
+}
+
+void
+ndnrtc::new_api::PipelinerBase::onKeyNeeded(PacketNumber seqNo)
+{
+    if (keyFrameSeqNo_ <= seqNo)
+    {
+        keyFrameSeqNo_ = seqNo;
+        requestNextKey(keyFrameSeqNo_);
     }
 }
 
@@ -1150,7 +1164,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             if (NdnRtcNamespace::isKeyFramePrefix(interest->getName()) &&
                 NdnRtcNamespace::getPacketNumber(interest->getName()) == -1)
                 {
-                    LogWarnC << "timeout "
+                    LogDebugC << "timeout "
                     << interest->getName()
                     << std::endl;
                     
@@ -1168,7 +1182,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 
                 if (packetNo == keyFrameSeqNo_)
                 {
-                    LogWarnC << "timeout "
+                    LogDebugC << "timeout "
                     << interest->getName()
                     << std::endl;
                     
@@ -1225,12 +1239,6 @@ Pipeliner2::recoveryCheck()
     return false;
 }
 
-void
-Pipeliner2::keyFrameConsumed()
-{
-    requestNextKey(keyFrameSeqNo_);
-}
-
 PipelinerStatistics
 Pipeliner2::getStatistics()
 {
@@ -1275,7 +1283,7 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
         {
-            keyFrameSeqNo_ = frameNo;
+            keyFrameSeqNo_ = frameNo+1;
             requestNextKey(keyFrameSeqNo_);
         }
         else
@@ -1458,7 +1466,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     << ". adjusting" << std::endl;
                     
                     switchToState(StateAdjust);
-                    needIncreaseWindow = unstable || drainingBuffer;
+                    needIncreaseWindow = unstable || lowBuffer;
                     waitForStability_ = true;
                     waitForChange_ = false;
                     timestamp_ = currentTimestamp;
@@ -1522,9 +1530,9 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     while (window_.canAskForData(deltaFrameSeqNo_))
         requestNextDelta(deltaFrameSeqNo_);
 
-    /*
+
     if (isLegitimateForStabilityTracking)
-        LogStatC
+        LogTraceC
         << "\trtt\t" << event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.
         << "\trtt stable\t" << rttChangeEstimator_.isStable()
         << "\twin\t" << window_.getCurrentWindowSize()
@@ -1532,7 +1540,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         << "\tdarr\t" << stabilityEstimator_.getLastDelta()
         << "\tstable\t" << stabilityEstimator_.isStable()
         << std::endl;
-     */
     
     frameBuffer_->synchronizeRelease();
 }
@@ -1554,11 +1561,11 @@ Pipeliner2::resetData()
 void
 Pipeliner2::rebuffer()
 {
+    if (callback_)
+        callback_->onRebufferingOccurred();
+    
     stat_.nRebuffer_++;
     resetData();
     switchToState(StateWaitInitial);
     askForRightmostData();
-    
-    if (callback_)
-        callback_->onRebufferingOccurred();
 }

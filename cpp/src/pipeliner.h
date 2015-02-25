@@ -114,9 +114,6 @@ namespace ndnrtc {
             virtual bool
             recoveryCheck() { return false; }
             
-            virtual void
-            keyFrameConsumed() {}
-            
         protected:
             State state_;
             Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
@@ -137,7 +134,7 @@ namespace ndnrtc {
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
             PipelinerStatistics stat_;
             bool useKeyNamespace_;
-            int64_t recoveryCheckpointTimestamp_;
+            int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
             
             void
             switchToState(State newState)
@@ -145,10 +142,21 @@ namespace ndnrtc {
                 State oldState = state_;
                 state_ = newState;
                 
-                LogDebugC << "new state " << toString(state_) << std::endl;
-                
-                if (callback_)
-                    callback_->onStateChanged(oldState, state_);
+                if (oldState != newState)
+                {
+                    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+                    int64_t phaseDuration = timestamp - startPhaseTimestamp_;
+                    startPhaseTimestamp_ = timestamp;
+                    
+                    ((oldState == StateChasing) ? LogInfoC : LogDebugC)
+                    << "phase " << toString(oldState) << " finished in "
+                    << phaseDuration << " msec" << std::endl;
+                    
+                    LogDebugC << "new state " << toString(state_) << std::endl;
+                    
+                    if (callback_)
+                        callback_->onStateChanged(oldState, state_);
+                }
             }
             
             std::string
@@ -212,8 +220,12 @@ namespace ndnrtc {
                            int64_t lifetime, int64_t priority,
                            bool wasTimedOut = false);
             
+            // IFrameBufferCallback interface
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot);
+            
+            virtual void
+            onKeyNeeded(PacketNumber seqNo);
             
             virtual void
             rebuffer() = 0;
@@ -386,9 +398,6 @@ namespace ndnrtc {
             // IPlayoutObserver interface conformance
             bool
             recoveryCheck();
-            
-            void
-            keyFrameConsumed();
             
             PipelinerStatistics
             getStatistics();

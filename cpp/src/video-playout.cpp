@@ -164,7 +164,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 onFrameSkipped_(playbackPacketNo, sequencePacketNo,
                                 pairedPacketNo, isKey, assembledLevel);
             
-            LogWarnC << "bad frame."
+            LogDebugC << "bad frame."
             << " type " << (isKey?"K":"D")
             << " lvl " << assembledLevel
             << " seq " << sequencePacketNo
@@ -189,7 +189,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             stat_.nPlayed_++;
             if (isKey)
                 stat_.nPlayedKey_++;
-            
+        
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
         }
 

@@ -36,7 +36,7 @@ freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
-queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this)),
+queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this, ThreadPriority:: kRealtimePriority)),
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {

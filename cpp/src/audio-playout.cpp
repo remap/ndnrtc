@@ -73,8 +73,6 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         
         // update stat
         stat_.nPlayed_++;
-        if (isKey)
-            stat_.nPlayedKey_++;
         
         res = true;
     }

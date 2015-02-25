@@ -985,7 +985,7 @@ namespace ndnrtc
             const Consumer* consumer_;
             
             State state_;
-            PacketNumber playbackNo_;
+            PacketNumber playbackNo_, lastKeySeqNo_;
             int nKeyFrames_;
 
             // statistics
@@ -1000,6 +1000,7 @@ namespace ndnrtc
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
             bool retransmissionsEnabled_;
+            int frameReleaseCount_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -1106,6 +1107,9 @@ namespace ndnrtc
         public:
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
+            
+            virtual void
+            onKeyNeeded(PacketNumber seqNo) = 0;
         };
     }
 }

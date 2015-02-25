@@ -418,6 +418,9 @@ ndnrtc::new_api::FrameBuffer::Slot::recover()
                                     slotData_+nSegmentsTotal_*segmentSize_,
                                     fecSegmentList_);
             isRecovered_ = ((nRecovered + nSegmentsReady_) >= nSegmentsTotal_);
+
+            if (isRecovered_)
+                nSegmentsReady_ = nSegmentsTotal_;
         }
     }
     
@@ -1257,6 +1260,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
             event.type_ = Event::Segment;
             event.slot_ = slot;
             
+            // append data
             LogDebugC << "append: ["
             << slot->getSequentialNumber() << "-"
             << slot->getRecentSegment()->getNumber() << "] >> "
@@ -1272,6 +1276,16 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     
                     playbackQueue_.updatePlaybackDeadlines();
                     isEstimationNeeded_ = true;
+                }
+                
+                // check for key frames
+                if (Slot::PrefixMeta & slot->getConsistencyState())
+                {
+                    if (slot->getNamespace() == Slot::Delta &&
+                        lastKeySeqNo_ < slot->getPairedFrameNumber())
+                    {
+                        callback_->onKeyNeeded(slot->getPairedFrameNumber());
+                    }
                 }
                 
                 // check for 1st segment
@@ -1341,7 +1355,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
         }
     }
     else
-        LogWarnC
+        LogDebugC
         << "no reservation for " << data.getName()
         << " buffer state " << FrameBuffer::stateToString(state_) << std::endl;
 
@@ -1607,14 +1621,15 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             
             slot->getPacketData(packetData);
             
-            if (*packetData)
+            if (*packetData && slot->getAssembledLevel() == 1.)
             {
                 int crc = (*packetData)->getCrcValue();
                 if (crc != slot->getCrcValue())
                 {
-                    LogWarnC << "bad packet: CRCs don't match: "
-                    << crc << " and "
-                    << slot->getCrcValue() << " expected"
+                    LogDebugC << "checksum error "
+                    << slot->getPrefix() << " ("
+                    << crc << " received vs "
+                    << slot->getCrcValue() << " expected)"
                     << std::endl;
                 }
             }
@@ -1676,6 +1691,16 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
     {
         playbackQueue_.popSlot();
         
+        // check for key frames
+        if (Slot::PrefixMeta & lockedSlot->getConsistencyState())
+        {
+            if (lockedSlot->getNamespace() == Slot::Key &&
+                lastKeySeqNo_ <= lockedSlot->getSequentialNumber())
+            {
+                callback_->onKeyNeeded(lockedSlot->getSequentialNumber()+1);
+            }
+        }
+        
         if (!skipFrame_)
         {
             FrameBuffer::Slot* nextSlot = playbackQueue_.peekSlot();
@@ -1704,11 +1729,16 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
             isInferredDuration = false;
         }
         
-        // each time we release key frame - cleanup buffer for old frames
-        if (lockedSlot->getNamespace() == Slot::Key)
-            cleanBuffer(lockedSlot->getPairedFrameNumber(),
-                        lockedSlot->getSequentialNumber(),
+        // cleanup buffer from old frames every 60 frames
+        frameReleaseCount_++;
+        if (frameReleaseCount_%60 == 0)
+        {
+            PacketNumber deltaPacketNo = (lockedSlot->getNamespace() == Slot::Key)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
+            PacketNumber keyPacketNo = (lockedSlot->getNamespace() == Slot::Delta)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
+            cleanBuffer(deltaPacketNo,
+                        lastKeySeqNo_,
                         lockedSlot->getPlaybackNumber());
+        }
         
         LogTraceC << "unlock [" << lockedSlot->dump() << "]" << std::endl;
         lockedSlot->unlock();
@@ -1887,10 +1917,12 @@ ndnrtc::new_api::FrameBuffer::resetData()
     estimatedSizeMs_ = -1;
     isEstimationNeeded_ = true;
     playbackNo_ = -1;
+    lastKeySeqNo_ = -1;
     skipFrame_ = false;
     playbackSlot_.reset();
     nKeyFrames_ = 0;
     retransmissionsEnabled_ = false;
+    frameReleaseCount_ = 0;
     
     forcedRelease_ = false;
     
@@ -1955,7 +1987,11 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
         playbackQueue_.pushSlot(reservedSlot.get());
         
         if (NdnRtcNamespace::isKeyFramePrefix(interest.getName()))
+        {
+            PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(interest.getName());
+            lastKeySeqNo_ = frameNo;
             nKeyFrames_++;
+        }
     }
     
     return reservedSlot;
@@ -2020,6 +2056,12 @@ void
 ndnrtc::new_api::FrameBuffer::checkRetransmissions()
 {
     int retransmissionDeadline = targetSizeMs_/2;
+    
+    if (retransmissionDeadline < consumer_->getRttEstimation()->getCurrentEstimation()/2)
+    {
+        retransmissionDeadline = consumer_->getRttEstimation()->getCurrentEstimation()/2;
+    }
+    
     PlaybackQueue::iterator it = playbackQueue_.begin();
     
     while ((*it)->getPlaybackDeadline() <= retransmissionDeadline &&
@@ -2028,7 +2070,8 @@ ndnrtc::new_api::FrameBuffer::checkRetransmissions()
         if ((*it)->getAssembledLevel() < 1.)
         {
             // try to recover first
-            if (!(*it)->recover())
+            (*it)->recover();
+            if (!(*it)->isRecovered())
             {
                 if ((*it)->getRtxNum() == 0 &&
                     callback_)
