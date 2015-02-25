@@ -18,6 +18,8 @@ using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
+const int Playout::BufferCheckInterval = 2000;
+
 //******************************************************************************
 #pragma mark - construction/destruction
 Playout::Playout(Consumer* consumer):
@@ -58,7 +60,7 @@ Playout::init(void* frameConsumer)
 }
 
 int
-Playout::start(int playbackAdjustment)
+Playout::start(int initialAdjustment)
 {
     webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
     
@@ -68,7 +70,8 @@ Playout::start(int playbackAdjustment)
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
-    playbackAdjustment_ = playbackAdjustment;
+    playbackAdjustment_ = initialAdjustment;
+    bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -81,23 +84,25 @@ int
 Playout::stop()
 {
     webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
+    
+    playoutThread_.SetNotAlive();
+    
     if (isRunning_)
     {
-        playoutThread_.SetNotAlive();
         isRunning_ = false;
         playoutThread_.Stop();
         jitterTiming_.stop();
-        
-        if (data_)
-        {
-            delete data_;
-            data_ = nullptr;
-        }
         
         LogInfoC << "stopped" << endl;
     }
     else
         return RESULT_WARN;
+    
+    if (data_)
+    {
+        delete data_;
+        data_ = nullptr;
+    }
     
     return RESULT_OK;
 }
@@ -130,6 +135,7 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
+            checkBuffer();
             jitterTiming_.startFramePlayout();
             
             // cleanup from previous iteration
@@ -147,9 +153,6 @@ Playout::processPlayout()
             
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
-            
-            if (observer_ && isKey)
-                observer_->keyFrameConsumed();
             
             noData = (data_ == nullptr);
             incomplete = (assembledLevel < 1.);
@@ -204,6 +207,7 @@ Playout::processPlayout()
             << "delay" << STAT_DIV << playbackDelay << STAT_DIV
             << "adjustment" STAT_DIV << adjustment << STAT_DIV
             << "avsync" << STAT_DIV << avSync << STAT_DIV
+            << "total adj" << STAT_DIV << playbackAdjustment_ << STAT_DIV
             << "inf delay" << STAT_DIV << inferredDelay_ << STAT_DIV
             << "inferred" << STAT_DIV << (isInferredPlayback_?"YES":"NO")
             << endl;
@@ -215,7 +219,11 @@ Playout::processPlayout()
             assert(playbackDelay >= 0);
 
             if (observer_)
+            {
                 isRunning_ = !observer_->recoveryCheck();
+                if (!isRunning_)
+                    LogDebugC << "playout stopped. need recovery" << std::endl;
+            }
             playoutCs_.Leave();
             
             // setup and run playout timer for calculated playout interval            
@@ -266,7 +274,7 @@ Playout::playbackDelayAdjustment(int playbackDelay)
         playbackAdjustment_ = 0;
     }
     
-    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
+    LogTraceC << "updated total adj. " << playbackAdjustment_ << endl;
     
     return adjustment;
 }
@@ -291,4 +299,29 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     }
     
     return syncDriftAdjustment;
+}
+
+void
+Playout::checkBuffer()
+{
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    if (timestamp - bufferCheckTs_ > BufferCheckInterval)
+    {
+        bufferCheckTs_ = timestamp;
+        
+        // keeping buffer level at the target size
+        unsigned int targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
+        int playable = consumer_->getFrameBuffer()->getPlayableBufferSize();
+        int adjustment = targetBufferSize - playable;
+        
+        LogInfoC << "buffer size " << playable << std::endl;
+        
+        if (abs(adjustment) > 100 && adjustment < 0)
+        {
+            LogInfoC << "buffer adjustment."
+            << abs(adjustment) << " ms excess" << std::endl;
+            
+            playbackAdjustment_ += adjustment;
+        }
+    }
 }

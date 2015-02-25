@@ -31,6 +31,8 @@ namespace ndnrtc{
         class Playout : public NdnRtcComponent
         {
         public:
+            static const int BufferCheckInterval;
+            
             Playout(Consumer* consumer);
             virtual ~Playout();
             
@@ -38,7 +40,7 @@ namespace ndnrtc{
             init(void* frameConsumer);
             
             virtual int
-            start(int playbackAdjustment = 0);
+            start(int initialAdjustment = 0);
             
             virtual int
             stop();
@@ -72,6 +74,7 @@ namespace ndnrtc{
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
             int playbackAdjustment_;
+            int64_t bufferCheckTs_;
             
             Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
@@ -121,14 +124,15 @@ namespace ndnrtc{
             
             bool
             processPlayout();
+            
+            void
+            checkBuffer();
         };
         
         class IPlayoutObserver {
         public:
             // must return true if recovery is needed
             virtual bool recoveryCheck() = 0;
-            // called each time key frame was extracted from the buffer
-            virtual void keyFrameConsumed() = 0;
         };
     }
 }
