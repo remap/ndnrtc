@@ -18,6 +18,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 #include "consumer.h"
+#include "statistics.h"
 
 namespace ndnrtc
 {
@@ -29,7 +30,8 @@ namespace ndnrtc
         
         class IFrameBufferCallback;
         
-        class FrameBuffer : public ndnlog::new_api::ILoggingObject
+        class FrameBuffer : public ndnlog::new_api::ILoggingObject,
+                            public statistics::StatObject
         {
         public:
             static const unsigned int MinRetransmissionInterval;
@@ -673,7 +675,8 @@ namespace ndnrtc
                 boost::shared_ptr<Slot> slot_;     // corresponding slot pointer
             }; // Event
             
-            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer);
+            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer,
+                        const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~FrameBuffer();
             
             int init();
@@ -794,7 +797,10 @@ namespace ndnrtc
              */
             void
             setTargetSize(int64_t targetSizeMs)
-            { targetSizeMs_ = targetSizeMs; }
+            {
+                targetSizeMs_ = targetSizeMs;
+                statStorage_->updateIndicator(statistics::Indicator::BufferTargetSize, targetSizeMs_);
+            }
 
             int64_t
             getTargetSize() { return targetSizeMs_; }
@@ -903,9 +909,6 @@ namespace ndnrtc
             void
             setLogger(ndnlog::new_api::Logger* logger);
             
-            BufferStatistics
-            getStatistics() { return stat_; };
-            
             void
             setRateControl(const boost::shared_ptr<RateControl>& rateControl)
             { rateControl_ = rateControl; }
@@ -987,9 +990,6 @@ namespace ndnrtc
             State state_;
             PacketNumber playbackNo_, lastKeySeqNo_;
             int nKeyFrames_;
-
-            // statistics
-            BufferStatistics stat_;
                         
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
@@ -1087,6 +1087,7 @@ namespace ndnrtc
                 {
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
+                    statStorage_->updateIndicator(statistics::Indicator::CurrentProducerFramerate, playbackRate);
                 }
             }
             

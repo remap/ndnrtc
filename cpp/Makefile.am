@@ -1,7 +1,5 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-SUBDIRS = src/objc .
-
 pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
 
 lib_LTLIBRARIES = libndnrtc.la
@@ -50,7 +48,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/service-channel.cpp src/service-channel.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
-  include/statistics.h \
+  include/statistics.h src/statistics.cpp\
   src/video-coder.cpp src/video-coder.h \
   src/video-consumer.cpp src/video-consumer.h \
   src/video-decoder.cpp src/video-decoder.h \
@@ -59,11 +57,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
-
-if OS_DARWIN
-  libndnrtc_la_OBJCFLAGS = -framework Cocoa -framework OpenGL -framework CoreVideo -framework QTKit -framework CoreAudio -framework AudioToolbox
-  libndnrtc_la_LIBADD = src/objc/libcocoa-renderer.a  
-endif
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@ -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt

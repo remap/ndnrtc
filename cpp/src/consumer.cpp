@@ -29,10 +29,11 @@ using namespace webrtc;
 #pragma mark - construction/destruction
 Consumer::Consumer(const GeneralParams& generalParams,
                    const GeneralConsumerParams& consumerParams):
+statStorage_(statistics::StatisticsStorage::createConsumerStatistics()),
 generalParams_(generalParams),
 consumerParams_(consumerParams),
 isConsuming_(false),
-rttEstimation_(new RttEstimation()),
+rttEstimation_(new RttEstimation(statStorage_)),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
@@ -60,9 +61,10 @@ Consumer::init(const ConsumerSettings& settings)
     
     settings_ = settings;
     streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings.userPrefix_, settings_.streamParams_.streamName_);
-    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper()));
+    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper(),
+                                           statStorage_));
     
-    frameBuffer_.reset(new FrameBuffer(shared_from_this()));
+    frameBuffer_.reset(new FrameBuffer(shared_from_this(), statStorage_));
     frameBuffer_->setLogger(logger_);
     frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
                                                        getDescription().c_str()));
@@ -77,9 +79,10 @@ Consumer::init(const ConsumerSettings& settings)
     
 #ifdef USE_WINDOW_PIPELINER
     pipeliner_.reset(new Pipeliner2(shared_from_this(),
+                                    statStorage_,
                                     getCurrentThreadParameters()->getSegmentsInfo()));
 #else
-    pipeliner_.reset(new Pipeliner(shared_from_this()));
+    pipeliner_.reset(new Pipeliner(shared_from_this(), statStorage_));
 #endif
     
     pipeliner_->setLogger(logger_);
@@ -183,29 +186,10 @@ Consumer::getState() const
     }
 }
 
-void
-Consumer::getStatistics(ReceiverChannelPerformance& stat) const
+statistics::StatisticsStorage
+Consumer::getStatistics() const
 {
-    memset(&stat, 0, sizeof(stat));
-    
-    stat.nDataReceived_ = nDataReceived_;
-    stat.nTimeouts_ = nTimeouts_;
-    
-    stat.jitterPlayableMs_ = frameBuffer_->getPlayableBufferSize();
-    stat.jitterEstimationMs_ = frameBuffer_->getEstimatedBufferSize();
-    stat.jitterTargetMs_ = frameBuffer_->getTargetSize();
-    
-    stat.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
-    stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
-    stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
-    
-    interestQueue_->getStatistics(stat);
-    
-    stat.playoutStat_ = playout_->getStatistics();
-    stat.bufferStat_ = frameBuffer_->getStatistics();
-    stat.pipelinerStat_ = pipeliner_->getStatistics();
-    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
-    dumpStat(stat);
+    return *statStorage_;
 }
 
 void

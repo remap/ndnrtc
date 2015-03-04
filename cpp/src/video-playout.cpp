@@ -13,6 +13,7 @@ using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;
 
 #define RECORD 0
 #if RECORD
@@ -23,8 +24,9 @@ static EncodedFrameWriter frameWriter("received.nrtc");
 
 //******************************************************************************
 #pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(Consumer* consumer):
-Playout(consumer)
+VideoPlayout::VideoPlayout(Consumer* consumer,
+                           const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+Playout(consumer, statStorage)
 {
     description_ = "video-playout";
 }
@@ -79,8 +81,8 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 else
                 {
                     validGop_ = false;
-                    stat_.nSkippedIncomplete_++;
-                    stat_.nSkippedIncompleteKey_++;
+                    (*statStorage_)[Indicator::SkippedIncompleteNum]++;
+                    (*statStorage_)[Indicator::SkippedIncompleteKeyNum]++;
                     
                     getVideoConsumer()->playbackEventOccurred(PlaybackEventKeySkipIncomplete,
                                                               sequencePacketNo);
@@ -97,7 +99,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 // update stat
                 if (assembledLevel < 1.)
                 {
-                    stat_.nSkippedIncomplete_++;
+                    (*statStorage_)[Indicator::SkippedIncompleteNum]++;
                     
                     getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipIncomplete,
                                                               sequencePacketNo);
@@ -112,7 +114,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 {
                     if (pairedPacketNo != currentKeyNo_)
                     {
-                        stat_.nSkippedNoKey_++;
+                        (*statStorage_)[Indicator::SkippedNoKeyNum]++;
                         
                         getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipNoKey, sequencePacketNo);
                         
@@ -127,7 +129,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     {
                         if (!validGop_)
                         {
-                            stat_.nSkippedInvalidGop_++;
+                            (*statStorage_)[Indicator::SkippedBadGopNum]++;
                             
                             getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipInvalidGop, sequencePacketNo);
                             
@@ -177,7 +179,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
             << " type " << (isKey?"K":"D")
             << " seq " << sequencePacketNo
             << " abs " << playbackPacketNo
-            << " total " << stat_.nPlayed_
+            << " total " << (*statStorage_)[Indicator::PlayedNum]
             << endl;
         
             webrtc::EncodedImage frame;
@@ -186,9 +188,9 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                 ((NdnFrameData*)data)->getFrame(frame);
             
             // update stat
-            stat_.nPlayed_++;
+            (*statStorage_)[Indicator::PlayedNum]++;
             if (isKey)
-                stat_.nPlayedKey_++;
+                (*statStorage_)[Indicator::PlayedKeyNum]++;
         
             ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
         }

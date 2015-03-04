@@ -9,6 +9,7 @@
 //
 
 #include <iostream>
+#include <string.h>
 #include "fec.h"
 
 using namespace fec;

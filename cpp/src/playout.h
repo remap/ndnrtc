@@ -16,6 +16,7 @@
 #include "jitter-timing.h"
 #include "consumer.h"
 #include "frame-buffer.h"
+#include "statistics.h"
 
 namespace ndnrtc{
     namespace new_api {
@@ -28,12 +29,13 @@ namespace ndnrtc{
          * routine each time playout timer fires. Necessary information is 
          * provided as arguments to the method.
          */
-        class Playout : public NdnRtcComponent
+        class Playout : public NdnRtcComponent, public statistics::StatObject
         {
         public:
             static const int BufferCheckInterval;
             
-            Playout(Consumer* consumer);
+            Playout(Consumer* consumer,
+                    const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             virtual ~Playout();
             
             virtual int
@@ -51,9 +53,6 @@ namespace ndnrtc{
             void
             setDescription(const std::string& desc);
             
-            PlayoutStatistics
-            getStatistics() { return stat_; };
-            
             bool
             isRunning()
             { return isRunning_; }
@@ -68,7 +67,6 @@ namespace ndnrtc{
             
         protected:
             bool isRunning_;
-            PlayoutStatistics stat_;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;

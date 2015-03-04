@@ -57,7 +57,7 @@ VideoConsumer::init(const ConsumerSettings& settings)
         interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
-        playout_.reset(new VideoPlayout(this));
+        playout_.reset(new VideoPlayout(this, statStorage_));
         playout_->setLogger(logger_);
         playout_->registerObserver(pipeliner_.get());
         playout_->init(decoder_.get());

@@ -253,8 +253,8 @@ namespace ndnrtc {
             getAvSynchronizer() const
             { return avSync_; }
             
-            void
-            getStatistics(ReceiverChannelPerformance& stat) const;
+            statistics::StatisticsStorage
+            getStatistics() const;
             
             virtual void
             setLogger(ndnlog::new_api::Logger* logger);
@@ -314,6 +314,7 @@ namespace ndnrtc {
             std::string streamPrefix_;
             unsigned int currentThreadIdx_ = 0;
             
+            boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             boost::shared_ptr<PipelinerBase> pipeliner_;
             boost::shared_ptr<InterestQueue> interestQueue_;

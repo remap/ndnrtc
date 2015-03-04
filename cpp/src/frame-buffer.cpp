@@ -24,6 +24,7 @@ using namespace ndnlog;
 using namespace webrtc;
 using namespace ndnrtc;
 using namespace fec;
+using namespace ndnrtc::new_api::statistics;
 
 #define RECORD 0
 #if RECORD
@@ -1066,7 +1067,9 @@ ndnrtc::new_api::FrameBuffer::PlaybackQueue::dumpShort()
 // FrameBuffer
 //******************************************************************************
 #pragma mark - construction/destruction
-ndnrtc::new_api::FrameBuffer::FrameBuffer(const shared_ptr<const ndnrtc::new_api::Consumer> &consumer):
+ndnrtc::new_api::FrameBuffer::FrameBuffer(const shared_ptr<const ndnrtc::new_api::Consumer> &consumer,
+                                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+StatObject(statStorage),
 consumer_(consumer.get()),
 state_(Invalid),
 targetSizeMs_(-1),
@@ -1301,17 +1304,15 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     // update stat
                     if (slot->getRtxNum() == 0)
                     {
-                        stat_.nAssembled_++;
-                        
+                        (*statStorage_)[Indicator::AssembledNum]++;
                         if (slot->getNamespace() == Slot::Key)
-                            stat_.nAssembledKey_++;
+                            (*statStorage_)[Indicator::AssembledKeyNum]++;
                     }
                     else
                     {
-                        stat_.nRescued_++;
-                        
+                        (*statStorage_)[Indicator::RescuedNum]++;
                         if (slot->getNamespace() == Slot::Key)
-                            stat_.nRescuedKey_++;
+                            (*statStorage_)[Indicator::RescuedKeyNum]++;
                     }
                     
                     event.type_ = Event::Ready;
@@ -1326,11 +1327,14 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                     // now update target size
                     int64_t targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
 
-                    LogTraceC
-                    << "new target buffer size "
-                    << targetBufferSize << std::endl;
+                    if (targetSizeMs_ != targetBufferSize)
+                    {
+                        LogTraceC
+                        << "new target buffer size "
+                        << targetBufferSize << std::endl;
                     
-                    setTargetSize(targetBufferSize);
+                        setTargetSize(targetBufferSize);
+                    }
                 }
 
 #if 0
@@ -1551,7 +1555,11 @@ int64_t
 ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 {
     CriticalSectionScoped scopedCs(&syncCs_);
-    return playbackQueue_.getPlaybackDuration(false);
+    int64_t size = playbackQueue_.getPlaybackDuration(false);
+    
+    statStorage_->updateIndicator(statistics::Indicator::BufferPlayableSize, size);
+    
+    return size;
 }
 
 void
@@ -1603,9 +1611,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                     assembledLevel = 1.;
                     
                     // update stat
-                    stat_.nRecovered_++;
+                    (*statStorage_)[Indicator::RecoveredNum]++;
                     if (isKey)
-                        stat_.nRecoveredKey_++;
+                        (*statStorage_)[Indicator::RecoveredKeyNum]++;
                 }
             }
             
@@ -1614,9 +1622,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 LogTraceC << "incomplete [" << slot->dump() << "]" << std::endl;
                 
                 // update stat
-                stat_.nIncomplete_++;
+                (*statStorage_)[Indicator::IncompleteNum]++;
                 if (isKey)
-                    stat_.nIncompleteKey_++;
+                    (*statStorage_)[Indicator::IncompleteKeyNum];
             }
             
             slot->getPacketData(packetData);
@@ -1637,9 +1645,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
             addBufferEvent(Event::Playout, slot);
             
             // update stat
-            stat_.nAcquired_++;
+            (*statStorage_)[Indicator::AcquiredNum]++;
             if (isKey)
-                stat_.nAcquiredKey_++;
+                (*statStorage_)[Indicator::AcquiredKeyNum]++;
             
             LogTraceC
             << "lock [" << slot->dump() << "]" << std::endl;
@@ -1647,9 +1655,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         else
         {
             // update stat
-            stat_.nDropped_++;
+            (*statStorage_)[Indicator::DroppedNum]++;
             if (isKey)
-                stat_.nDroppedKey_++;
+                (*statStorage_)[Indicator::DroppedKeyNum]++;
         }
         
         int64_t playableSize = getPlayableBufferSize();
@@ -1854,6 +1862,8 @@ ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
     CriticalSectionScoped scopedCs_(&syncCs_);
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
+    statStorage_->updateIndicator(statistics::Indicator::BufferEstimatedSize,
+                                  estimatedSizeMs_);
 }
 
 void
@@ -1884,9 +1894,9 @@ ndnrtc::new_api::FrameBuffer::cleanBuffer(PacketNumber deltaPacketNo,
         if (erase)
         {
             // update stat
-            stat_.nDropped_++;
+            (*statStorage_)[Indicator::DroppedNum]++;
             if (slot->getNamespace() == Slot::Key)
-                stat_.nDroppedKey_++;
+                (*statStorage_)[Indicator::DroppedKeyNum]++;
             
             nRecycledSlots++;
             it = playbackQueue_.erase(it);

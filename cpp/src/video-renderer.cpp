@@ -11,7 +11,6 @@
 #undef DEBUG
 
 #include "video-renderer.h"
-#import "objc/cocoa-renderer.h"
 #include "ndnrtc-utils.h"
 
 using namespace std;

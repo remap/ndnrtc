@@ -11,19 +11,19 @@
 #define __ndnrtc__rtt_estimator__
 
 #include "ndnrtc-common.h"
+#include "statistics.h"
 
 namespace ndnrtc {
     namespace new_api {
         
-        class RttEstimation : public ndnlog::new_api::ILoggingObject
+        class RttEstimation : public ndnlog::new_api::ILoggingObject,
+                              public statistics::StatObject
         {
         public:
             static const double RttStartEstimate;
             
-            static RttEstimation&
-            sharedInstance();
-            
-            RttEstimation(const double& startEstimate = RttStartEstimate);
+            RttEstimation(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
+                          const double& startEstimate = RttStartEstimate);
             ~RttEstimation();
             
             /**

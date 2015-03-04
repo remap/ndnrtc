@@ -56,7 +56,8 @@ namespace ndnrtc {
         
         class PipelinerBase : public NdnRtcComponent,
                                 public IFrameBufferCallback,
-                                public IPlayoutObserver
+                                public IPlayoutObserver,
+                                public statistics::StatObject
         {
         public:
             typedef enum _State {
@@ -77,6 +78,7 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumKey;
             
             PipelinerBase(const boost::shared_ptr<Consumer>& consumer,
+                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                           const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~PipelinerBase();
             
@@ -104,9 +106,6 @@ namespace ndnrtc {
             virtual void
             triggerRebuffering();
             
-            virtual PipelinerStatistics
-            getStatistics();
-            
             void
             threadSwitched();
             
@@ -132,7 +131,6 @@ namespace ndnrtc {
             
             unsigned int streamId_; // currently fetched stream id
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
-            PipelinerStatistics stat_;
             bool useKeyNamespace_;
             int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
             
@@ -251,6 +249,7 @@ namespace ndnrtc {
                                                 // chasing stage
             
             Pipeliner(const boost::shared_ptr<Consumer>& consumer,
+                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                       const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner();
             
@@ -259,9 +258,6 @@ namespace ndnrtc {
             
             int
             stop();
-            
-            PipelinerStatistics
-            getStatistics();
             
         private:
             // this events masks are used in different moments during pipeliner
@@ -378,6 +374,7 @@ namespace ndnrtc {
             static const int DefaultMinWindow;
             
             Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
+                       const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                        const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner2();
             
@@ -398,9 +395,6 @@ namespace ndnrtc {
             // IPlayoutObserver interface conformance
             bool
             recoveryCheck();
-            
-            PipelinerStatistics
-            getStatistics();
             
         private:
             StabilityEstimator stabilityEstimator_;

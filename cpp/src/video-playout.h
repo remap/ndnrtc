@@ -21,7 +21,8 @@ namespace ndnrtc {
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(Consumer* consumer);
+            VideoPlayout(Consumer* consumer,
+                         const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~VideoPlayout();
             
             int

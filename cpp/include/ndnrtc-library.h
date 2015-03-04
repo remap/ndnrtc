@@ -213,9 +213,8 @@ namespace ndnrtc {
          * @param stat Reference to a receiver statistics object
          * @return RESULT_OK on success, RESULT_ERR on failure
          */
-        virtual int
-        getRemoteStreamStatistics(const std::string& streamPrefix,
-                                  ReceiverChannelPerformance& stat);
+        virtual new_api::statistics::StatisticsStorage
+        getRemoteStreamStatistics(const std::string& streamPrefix);
 
         /**
          * Returns current library version
@@ -223,11 +222,6 @@ namespace ndnrtc {
          * version will be stored.
          */
         virtual void getVersionString(char **versionString);
-        
-        /**
-         * Arranges all app windows on the screen
-         */
-        virtual void arrangeWindows();
 
     private:
         int notifyObserverWithError(const char *format, ...) const;

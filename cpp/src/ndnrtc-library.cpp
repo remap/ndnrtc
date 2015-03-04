@@ -17,7 +17,6 @@
 #include "ndnrtc-namespace.h"
 #include "audio-consumer.h"
 #include "video-consumer.h"
-#include "objc/cocoa-renderer.h"
 #include "external-capturer.hpp"
 #include "session.h"
 #include "error-codes.h"
@@ -543,9 +542,8 @@ NdnRtcLibrary::switchThread(const std::string& streamPrefix,
     return RESULT_OK;
 }
 
-int
-NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
-                                         ReceiverChannelPerformance& stat)
+statistics::StatisticsStorage
+NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix)
 {
     ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
@@ -553,11 +551,10 @@ NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
     {
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
                                                 "stream was not found");
-        return NRTC_ERR_NOT_FOUND;
+        return *statistics::StatisticsStorage::createConsumerStatistics();
     }
     
-    it->second->getStatistics(stat);
-    return RESULT_OK;
+    return it->second->getStatistics();;
 }
 
 //******************************************************************************
@@ -568,12 +565,6 @@ NdnRtcLibrary::getVersionString(char **versionString)
         memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
                
     return;
-}
-
-void
-NdnRtcLibrary::arrangeWindows()
-{
-    arrangeAllWindows();
 }
 
 //********************************************************************************

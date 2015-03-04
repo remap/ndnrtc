@@ -17,12 +17,15 @@ using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;;
 
 const int Playout::BufferCheckInterval = 2000;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(Consumer* consumer):
+Playout::Playout(Consumer* consumer,
+                 const boost::shared_ptr<StatisticsStorage>& statStorage):
+StatObject(statStorage),
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
@@ -164,6 +167,9 @@ Playout::processPlayout()
                                pairedPacketNo, isKey, assembledLevel))
             {
                 packetValid = true;
+                (*statStorage_)[Indicator::LastPlayedNo] = packetNo;
+                (*statStorage_)[Indicator::LastPlayedDeltaNo] = (isKey)?pairedPacketNo:sequencePacketNo;
+                (*statStorage_)[Indicator::LastPlayedKeyNo] = (isKey)?sequencePacketNo:pairedPacketNo;
             }
 
             double frameUnixTimestamp = 0;
@@ -173,7 +179,7 @@ Playout::processPlayout()
                 updatePlaybackAdjustment();
                 
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-                stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
+                (*statStorage_)[Indicator::LatencyEstimated] = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
                 
                 // update last packet timestamp if any
                 if (data_->getMetadata().timestamp_ != -1)
