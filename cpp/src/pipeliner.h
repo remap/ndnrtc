@@ -405,6 +405,8 @@ namespace ndnrtc {
             bool waitForChange_, waitForStability_;
             unsigned int failedWindow_;
             FrameNumber seedFrameNo_;
+            ndn::Interest rightmostInterest_;
+            PacketNumber exclusionPacket_;
             
             // incoming data statistics
             unsigned int dataMeterId_, segmentFreqMeterId_;

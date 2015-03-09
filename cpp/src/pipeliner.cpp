@@ -132,20 +132,22 @@ void
 ndnrtc::new_api::PipelinerBase::updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
                                                        int nSegments, bool isParity)
 {
+    Indicator statIndicator;
     int estimatorId = 0;
     
     if (isParity)
     {
-        estimatorId = (frameNs == FrameBuffer::Slot::Key)?
-    keyParitySegnumEstimatorId_:deltaParitySegnumEstimatorId_;
+        estimatorId = (frameNs == FrameBuffer::Slot::Key)?keyParitySegnumEstimatorId_:deltaParitySegnumEstimatorId_;
+        statIndicator = (frameNs == FrameBuffer::Slot::Key)?Indicator::SegmentsKeyParityAvgNum : Indicator::SegmentsDeltaParityAvgNum;
     }
     else
     {
-        estimatorId = (frameNs == FrameBuffer::Slot::Key)?
-    keySegnumEstimatorId_:deltaSegnumEstimatorId_;
+        estimatorId = (frameNs == FrameBuffer::Slot::Key)?keySegnumEstimatorId_:deltaSegnumEstimatorId_;
+        statIndicator = (frameNs == FrameBuffer::Slot::Key)?Indicator::SegmentsKeyAvgNum : Indicator::SegmentsDeltaAvgNum;
     }
     
     NdnRtcUtils::meanEstimatorNewValue(estimatorId, (double)nSegments);
+    (*statStorage_)[statIndicator] = nSegments;
 }
 
 void
@@ -1033,7 +1035,8 @@ PipelinerBase(consumer, statStorage, frameSegmentsInfo),
 stabilityEstimator_(7, 4, 0.15, 0.7),
 rttChangeEstimator_(7, 3, 0.12),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10))
+segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
+exclusionPacket_(0)
 {
 }
 
@@ -1079,8 +1082,8 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
     switch (state_) {
         case StateWaitInitial:
         {
-            // make sure we've got what is expected
-            if (isKeyPrefix)
+            // make sure we've got what we expected
+            if (rightmostInterest_.getName() == interest->getName())
             {
                 LogTraceC << "received rightmost data "
                 << data->getName() << std::endl;
@@ -1158,6 +1161,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
                 }
         }
             break;
+        case StateAdjust:
         case StateChasing:
         {
             bool isKeyPrefix = NdnRtcNamespace::isPrefix(interest->getName(), keyFramesPrefix_);
@@ -1178,7 +1182,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
                                                                    ndnAssembler_->getOnTimeoutHandler());
                 }
             }
-                
+            
         }
             break;
         case StateFetching:
@@ -1196,32 +1200,34 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 bool
 Pipeliner2::recoveryCheck()
 {
-    int interruptionDelay = 500;
-    int64_t idleTime = NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_;
-    
-    if (recoveryCheckpointTimestamp_ > 0 &&
-        idleTime > interruptionDelay)
+    if (recoveryCheckpointTimestamp_ > 0)
     {
-        LogWarnC << "rebuffering #" << (*statStorage_)[Indicator::RebufferingsNum]
-        << " idle time " << idleTime
-        << " seed " << seedFrameNo_
-        << " key " << keyFrameSeqNo_
-        << " delta " << deltaFrameSeqNo_
-        << " curent w " << window_.getCurrentWindowSize()
-        << " default w " << window_.getDefaultWindowSize()
-        << std::endl;
+        int64_t interruptionDelay = 500;
+        int64_t idleTime = NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_;
         
-        rebuffer();
-        
-        return true;
+        if (idleTime > interruptionDelay)
+        {
+            LogWarnC << "rebuffering #" << (*statStorage_)[Indicator::RebufferingsNum]
+            << " idle time " << idleTime
+            << " seed " << seedFrameNo_
+            << " key " << keyFrameSeqNo_
+            << " delta " << deltaFrameSeqNo_
+            << " curent w " << window_.getCurrentWindowSize()
+            << " default w " << window_.getDefaultWindowSize()
+            << std::endl;
+            
+            rebuffer();
+            
+            return true;
+        }
+        else
+        {
+            ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+            << "idle time " << idleTime
+            << std::endl;
+        }
     }
-    else
-    {
-        ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
-        << "idle time " << idleTime
-        << std::endl;
-    }
-    
+
     return false;
 }
 
@@ -1230,12 +1236,19 @@ void
 Pipeliner2::askForRightmostData()
 {
     // issue rightmost
-    Interest rightmostKeyInterest(keyFramesPrefix_, 1000);
-    rightmostKeyInterest.setMustBeFresh(true);
-    rightmostKeyInterest.setChildSelector(1);
-    rightmostKeyInterest.setMinSuffixComponents(2);
+    rightmostInterest_ = Interest(keyFramesPrefix_, 1000);
+    rightmostInterest_.setMustBeFresh(true);
+    rightmostInterest_.setChildSelector(1);
+    rightmostInterest_.setMinSuffixComponents(2);
     
-    consumer_->getInterestQueue()->enqueueInterest(rightmostKeyInterest,
+    if (exclusionPacket_)
+    {
+        rightmostInterest_.getExclude().appendAny();
+        rightmostInterest_.getExclude().appendComponent(NdnRtcUtils::componentFromInt(exclusionPacket_));
+        exclusionPacket_ = 0;
+    }
+    
+    consumer_->getInterestQueue()->enqueueInterest(rightmostInterest_,
                                                    Priority::fromAbsolutePriority(0),
                                                    ndnAssembler_->getOnDataHandler(),
                                                    ndnAssembler_->getOnTimeoutHandler());
@@ -1254,13 +1267,18 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
         {
             keyFrameSeqNo_ = frameNo+1;
             requestNextKey(keyFrameSeqNo_);
+            switchToState(StateChasing);
         }
         else
         {
             deltaFrameSeqNo_ = frameNo+1;
             requestNextDelta(deltaFrameSeqNo_);
+            timestamp_ = NdnRtcUtils::millisecondTimestamp();
+            switchToState(StateChasing);
+            // we don'e need chasing stage if we're not using key frames
+            // just ask for subsequent data directly
+            askForSubsequentData(data);
         }
-        switchToState(StateChasing);
     }
     else
     {
@@ -1340,6 +1358,20 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                        getInterestLifetime(event.slot_->getPlaybackDeadline(),
                                            event.slot_->getNamespace()),
                        event.slot_->getPlaybackDeadline());
+    }
+    
+    if (event.type_ == FrameBuffer::Event::Ready && !isDeltaFrame)
+    {
+        // check whether delta frame counter is up-to-date
+        // update it if needed
+        if (deltaFrameSeqNo_ < event.slot_->getPairedFrameNumber())
+        {
+            LogWarnC
+            << "current delta seq " << deltaFrameSeqNo_
+            << " updated to " << event.slot_->getPairedFrameNumber() << std::endl;
+            
+            deltaFrameSeqNo_ = event.slot_->getPairedFrameNumber();
+        }
     }
     
     switch (state_) {
@@ -1539,6 +1571,7 @@ Pipeliner2::rebuffer()
         callback_->onRebufferingOccurred();
     
     (*statStorage_)[Indicator::RebufferingsNum]++;
+    exclusionPacket_ = (useKeyNamespace_)?keyFrameSeqNo_:deltaFrameSeqNo_;
     resetData();
     switchToState(StateWaitInitial);
     askForRightmostData();
