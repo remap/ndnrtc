@@ -232,9 +232,12 @@ Playout::processPlayout()
             }
             playoutCs_.Leave();
             
-            // setup and run playout timer for calculated playout interval            
-            jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
-            jitterTiming_.runPlayoutTimer();
+            if (isRunning_)
+            {
+                // setup and run playout timer for calculated playout interval
+                jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
+                jitterTiming_.runPlayoutTimer();
+            }
         }
     }
     else
