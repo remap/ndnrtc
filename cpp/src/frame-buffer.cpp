@@ -831,7 +831,9 @@ ndnrtc::new_api::FrameBuffer::Slot::hasReceivedSegment
     if (consistency_ & PrefixMeta)
     {
         unsigned int segmentIdx = (isParity)? nSegmentsTotal_+segNo : segNo;
-        return fecSegmentList_[segmentIdx] != FEC_RLIST_SYMEMPTY;
+        // either received or repaired
+        return (fecSegmentList_[segmentIdx] == FEC_RLIST_SYMREADY ||
+                fecSegmentList_[segmentIdx] == FEC_RLIST_SYMREPAIRED);
     }
     
     return false;
@@ -1224,8 +1226,9 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
             }
         }
         
-        LogTraceC << "requested range (" << segmentInterests.size()
-        << "): " << playbackQueue_.dumpShort() << std::endl;
+        if (segmentInterests.size())
+            LogTraceC << "requested range (" << segmentInterests.size()
+            << "): " << playbackQueue_.dumpShort() << std::endl;
         
         isEstimationNeeded_ = true;
         return reservedSlot->getState();

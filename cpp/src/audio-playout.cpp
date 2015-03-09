@@ -51,7 +51,7 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     
     if (data && frameConsumer_)
     {
-        // unpack individual audio samples from audio data packet`
+        // unpack individual audio samples from audio data packet
         std::vector<NdnAudioData::AudioPacket> audioSamples =
         ((NdnAudioData*)data)->getPackets();
         
