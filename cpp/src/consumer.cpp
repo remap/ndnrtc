@@ -25,6 +25,8 @@ using namespace webrtc;
 
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
+const int Consumer::MaxIdleTimeMs = 500;
+
 //******************************************************************************
 #pragma mark - construction/destruction
 Consumer::Consumer(const GeneralParams& generalParams,
@@ -134,10 +136,31 @@ Consumer::stop()
     return RESULT_OK;
 }
 
+int
+Consumer::getIdleTime()
+{
+    return pipeliner_->getIdleTime();
+}
+
 void
 Consumer::triggerRebuffering()
 {
+    LogWarnC
+    << "rebuffering triggered. idle time "
+    << getIdleTime() << std::endl;
+    
+    interestQueue_->reset();
+    playout_->stop();
+    renderer_->stopRendering();
     pipeliner_->triggerRebuffering();
+    rttEstimation_->reset();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onRebufferingOccurred();
+    }
+    
 }
 
 void
@@ -174,11 +197,11 @@ Consumer::State
 Consumer::getState() const
 {
     switch (pipeliner_->getState()) {
-        case Pipeliner::StateBuffering: // fall through
-        case Pipeliner::StateChasing:
+        case PipelinerBase::StateBuffering: // fall through
+        case PipelinerBase::StateChasing:
             return Consumer::StateChasing;
             
-        case Pipeliner::StateFetching:
+        case PipelinerBase::StateFetching:
             return Consumer::StateFetching;
 
         default:
@@ -261,20 +284,6 @@ Consumer::onBufferingEnded()
 }
 
 void
-Consumer::onRebufferingOccurred()
-{
-    renderer_->stopRendering();
-    interestQueue_->reset();
-    rttEstimation_->reset();
-    
-    if (observer_)
-    {
-        CriticalSectionScoped scopedCs(&observerCritSec_);
-        observer_->onRebufferingOccurred();
-    }
-}
-
-void
 Consumer::onStateChanged(const int &oldState, const int &newState)
 {
     if (observer_)
@@ -283,19 +292,21 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
         ConsumerStatus status;
         
         switch (newState) {
-            case Pipeliner::StateChasing:
-                status = ConsumerStatusChasing;
+            case PipelinerBase::StateWaitInitial:
+            case PipelinerBase::StateAdjust:
+            case PipelinerBase::StateChasing:
+                status = ConsumerStatusAdjusting;
                 break;
-                
-            case Pipeliner::StateBuffering:
+            
+            case PipelinerBase::StateBuffering:
                 status = ConsumerStatusBuffering;
                 break;
                 
-            case Pipeliner::StateFetching:
+            case PipelinerBase::StateFetching:
                 status = ConsumerStatusFetching;
                 break;
                 
-            case Pipeliner::StateInactive:
+            case PipelinerBase::StateInactive:
             default:
                 status = ConsumerStatusStopped;
                 break;
@@ -311,7 +322,7 @@ Consumer::onInitialDataArrived()
     if (observer_)
     {
         CriticalSectionScoped scopedCs(&observerCritSec_);
-        observer_->onStatusChanged(ConsumerStatusChasing);
+        observer_->onStatusChanged(ConsumerStatusAdjusting);
     }
 }
 

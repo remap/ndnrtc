@@ -59,7 +59,6 @@ VideoConsumer::init(const ConsumerSettings& settings)
         
         playout_.reset(new VideoPlayout(this, statStorage_));
         playout_->setLogger(logger_);
-        playout_->registerObserver(pipeliner_.get());
         playout_->init(decoder_.get());
         ((VideoPlayout*)playout_.get())->onFrameSkipped_ = boost::bind(&VideoConsumer::onFrameSkipped, this, _1, _2, _3, _4, _5);
         
@@ -152,9 +151,9 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
 }
 
 void
-VideoConsumer::onRebufferingOccurred()
+VideoConsumer::triggerRebuffering()
 {
-    Consumer::onRebufferingOccurred();
+    Consumer::triggerRebuffering();
     decoder_->reset();
 }
 

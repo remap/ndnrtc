@@ -93,9 +93,6 @@ namespace ndnrtc {
             onBufferingEnded() = 0;
             
             virtual void
-            onRebufferingOccurred() = 0;
-            
-            virtual void
             onInitialDataArrived() = 0;
             
             virtual void
@@ -142,6 +139,8 @@ namespace ndnrtc {
                 StateFetching = 1
             } State;
             
+            static const int MaxIdleTimeMs;
+            
             Consumer(const GeneralParams& generalParams,
                      const GeneralConsumerParams& consumerParams);
             virtual ~Consumer();
@@ -169,7 +168,10 @@ namespace ndnrtc {
                 observer_ = NULL;
             }
             
-            void
+            int
+            getIdleTime();
+            
+            virtual void
             triggerRebuffering();
             
             State
@@ -268,9 +270,6 @@ namespace ndnrtc {
             
             virtual void
             onBufferingEnded();
-            
-            virtual void
-            onRebufferingOccurred();
             
             virtual void
             onStateChanged(const int& oldState, const int& newState);

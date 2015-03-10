@@ -30,8 +30,7 @@ isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
 playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
-data_(nullptr),
-observer_(nullptr)
+data_(nullptr)
 {
     setDescription("playout");
     jitterTiming_.flush();
@@ -223,13 +222,6 @@ Playout::processPlayout()
                 playbackDelay += avSync;
             
             assert(playbackDelay >= 0);
-
-            if (observer_)
-            {
-                isRunning_ = !observer_->recoveryCheck();
-                if (!isRunning_)
-                    LogDebugC << "playout stopped. need recovery" << std::endl;
-            }
             playoutCs_.Leave();
             
             if (isRunning_)

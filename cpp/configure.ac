@@ -8,8 +8,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AC_PREFIX_DEFAULT([/usr/local])
 AC_CONFIG_SRCDIR([src/ndnrtc-common.h])
-AC_CONFIG_FILES([Makefile
-				src/objc/Makefile])
+AC_CONFIG_FILES([Makefile])
 AM_MAINTAINER_MODE
 
 AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
@@ -298,6 +297,16 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     [[#include <boost/crc.hpp>]]
     [[
     boost::crc_16_type crc_computer_;]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
+AC_MSG_CHECKING([for boost::thread...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/thread.hpp>]]
+    [[boost::thread thread;]])
 ], [
     AC_MSG_RESULT([yes])
 ], [
