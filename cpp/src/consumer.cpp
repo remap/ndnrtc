@@ -133,6 +133,8 @@ Consumer::stop()
         observer_->onStatusChanged(ConsumerStatusStopped);
     }
     
+    LogStatC << "final statistics:\n" << getStatistics() << std::endl;
+    
     return RESULT_OK;
 }
 

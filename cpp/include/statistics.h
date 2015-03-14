@@ -16,6 +16,8 @@
 #include <map>
 #include <stdexcept>
 #include <boost/shared_ptr.hpp>
+#include <iostream>
+#include <iomanip>
 
 namespace ndnrtc {
     
@@ -136,12 +138,23 @@ namespace ndnrtc {
                 operator[](const statistics::Indicator& indicator)
                 { return indicators_.at(indicator); }
                 
+                friend std::ostream& operator<<(std::ostream& os,
+                                                const StatisticsStorage& storage)
+                {
+                    for (auto& it:storage.indicators_)
+                    {
+                        os << std::fixed
+                        << StatisticsStorage::IndicatorNames.at(it.first) << "\t"
+                        << std::setprecision(2) << it.second << std::endl;
+                    }
+                    
+                    return os;
+                }
             private:
                 StatisticsStorage(const StatRepo& indicators):indicators_(indicators){}
                 
                 static const StatRepo ConsumerStatRepo;
                 static const StatRepo ProducerStatRepo;
-
                 StatRepo indicators_;
             };
 

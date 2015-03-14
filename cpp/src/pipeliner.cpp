@@ -573,6 +573,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
     
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
     NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
+    recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
     
     (*statStorage_)[Indicator::SegmentsReceivedNum]++;
     statStorage_->updateIndicator(Indicator::InRateSegments, NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_));
@@ -778,8 +779,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     const int timeout = 1000;
     uint64_t currentTimestamp = NdnRtcUtils::millisecondTimestamp();
     bool isTimedOut = (currentTimestamp-timestamp_ >= timeout);
-    
-    recoveryCheckpointTimestamp_ = currentTimestamp;
     
     // normally, we track inter-arrival delay when we receive first segment of
     // a frame. however, Event::FirstSegment can be overriden by Event::Ready
