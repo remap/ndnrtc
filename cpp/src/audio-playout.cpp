@@ -13,14 +13,16 @@
 using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioPlayout::AudioPlayout(Consumer* consumer):
-Playout(consumer)
+AudioPlayout::AudioPlayout(Consumer* consumer,
+                           const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+Playout(consumer, statStorage)
 {
     description_ = "audio-playout";
 }
@@ -45,11 +47,11 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     bool res = false;
     
     if (!data)
-        stat_.nSkippedIncomplete_++;
+        (*statStorage_)[Indicator::SkippedIncompleteNum]++;
     
     if (data && frameConsumer_)
     {
-        // unpack individual audio samples from audio data packet`
+        // unpack individual audio samples from audio data packet
         std::vector<NdnAudioData::AudioPacket> audioSamples =
         ((NdnAudioData*)data)->getPackets();
         
@@ -72,9 +74,7 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
         }
         
         // update stat
-        stat_.nPlayed_++;
-        if (isKey)
-            stat_.nPlayedKey_++;
+        (*statStorage_)[Indicator::PlayedNum]++;
         
         res = true;
     }

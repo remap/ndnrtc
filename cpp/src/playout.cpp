@@ -17,16 +17,20 @@ using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;;
+
+const int Playout::BufferCheckInterval = 2000;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-Playout::Playout(Consumer* consumer):
+Playout::Playout(Consumer* consumer,
+                 const boost::shared_ptr<StatisticsStorage>& statStorage):
+StatObject(statStorage),
 isRunning_(false),
 consumer_(consumer),
 playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
 playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
-data_(nullptr),
-observer_(nullptr)
+data_(nullptr)
 {
     setDescription("playout");
     jitterTiming_.flush();
@@ -58,7 +62,7 @@ Playout::init(void* frameConsumer)
 }
 
 int
-Playout::start(int playbackAdjustment)
+Playout::start(int initialAdjustment)
 {
     webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
     
@@ -68,8 +72,8 @@ Playout::start(int playbackAdjustment)
     isInferredPlayback_ = false;
     lastPacketTs_ = 0;
     inferredDelay_ = 0;
-    playbackAdjustment_ = playbackAdjustment;
-    data_ = nullptr;
+    playbackAdjustment_ = initialAdjustment;
+    bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
     
     unsigned int tid;
     playoutThread_.Start(tid);
@@ -82,9 +86,11 @@ int
 Playout::stop()
 {
     webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
+    
+    playoutThread_.SetNotAlive();
+    
     if (isRunning_)
     {
-        playoutThread_.SetNotAlive();
         isRunning_ = false;
         playoutThread_.Stop();
         jitterTiming_.stop();
@@ -93,6 +99,12 @@ Playout::stop()
     }
     else
         return RESULT_WARN;
+    
+    if (data_)
+    {
+        delete data_;
+        data_ = nullptr;
+    }
     
     return RESULT_OK;
 }
@@ -125,6 +137,7 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
+            checkBuffer();
             jitterTiming_.startFramePlayout();
             
             // cleanup from previous iteration
@@ -143,9 +156,6 @@ Playout::processPlayout()
             frameBuffer_->acquireSlot(&data_, packetNo, sequencePacketNo,
                                       pairedPacketNo, isKey, assembledLevel);
             
-            if (observer_ && isKey)
-                observer_->keyFrameConsumed();
-            
             noData = (data_ == nullptr);
             incomplete = (assembledLevel < 1.);
             
@@ -156,6 +166,9 @@ Playout::processPlayout()
                                pairedPacketNo, isKey, assembledLevel))
             {
                 packetValid = true;
+                (*statStorage_)[Indicator::LastPlayedNo] = packetNo;
+                (*statStorage_)[Indicator::LastPlayedDeltaNo] = (isKey)?pairedPacketNo:sequencePacketNo;
+                (*statStorage_)[Indicator::LastPlayedKeyNo] = (isKey)?sequencePacketNo:pairedPacketNo;
             }
 
             double frameUnixTimestamp = 0;
@@ -165,7 +178,7 @@ Playout::processPlayout()
                 updatePlaybackAdjustment();
                 
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
-                stat_.latency_ = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
+                (*statStorage_)[Indicator::LatencyEstimated] = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
                 
                 // update last packet timestamp if any
                 if (data_->getMetadata().timestamp_ != -1)
@@ -189,16 +202,17 @@ Playout::processPlayout()
             }
             assert(playbackDelay >= 0);
             
-            LogStatC << STAT_DIV
+            LogTraceC << STAT_DIV
             << "packet" << STAT_DIV << sequencePacketNo << STAT_DIV
             << "lvl" << STAT_DIV << double(int(assembledLevel*10000))/100. << STAT_DIV
-            << "valid" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
+            << "played" << STAT_DIV << (packetValid?"YES":"NO") << STAT_DIV
             << "ts" << STAT_DIV << (noData ? 0 : data_->getMetadata().timestamp_) << STAT_DIV
             << "last ts" << STAT_DIV << lastPacketTs_ << STAT_DIV
             << "total" << STAT_DIV << playbackDelay+adjustment+avSync << STAT_DIV
             << "delay" << STAT_DIV << playbackDelay << STAT_DIV
             << "adjustment" STAT_DIV << adjustment << STAT_DIV
             << "avsync" << STAT_DIV << avSync << STAT_DIV
+            << "total adj" << STAT_DIV << playbackAdjustment_ << STAT_DIV
             << "inf delay" << STAT_DIV << inferredDelay_ << STAT_DIV
             << "inferred" << STAT_DIV << (isInferredPlayback_?"YES":"NO")
             << endl;
@@ -208,14 +222,14 @@ Playout::processPlayout()
                 playbackDelay += avSync;
             
             assert(playbackDelay >= 0);
-
-            if (observer_)
-                isRunning_ = !observer_->recoveryCheck();
             playoutCs_.Leave();
             
-            // setup and run playout timer for calculated playout interval            
-            jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
-            jitterTiming_.runPlayoutTimer();
+            if (isRunning_)
+            {
+                // setup and run playout timer for calculated playout interval
+                jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
+                jitterTiming_.runPlayoutTimer();
+            }
         }
     }
     else
@@ -261,7 +275,7 @@ Playout::playbackDelayAdjustment(int playbackDelay)
         playbackAdjustment_ = 0;
     }
     
-    LogTraceC << "updated adjustment " << playbackAdjustment_ << endl;
+    LogTraceC << "updated total adj. " << playbackAdjustment_ << endl;
     
     return adjustment;
 }
@@ -286,4 +300,29 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     }
     
     return syncDriftAdjustment;
+}
+
+void
+Playout::checkBuffer()
+{
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    if (timestamp - bufferCheckTs_ > BufferCheckInterval)
+    {
+        bufferCheckTs_ = timestamp;
+        
+        // keeping buffer level at the target size
+        unsigned int targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
+        int playable = consumer_->getFrameBuffer()->getPlayableBufferSize();
+        int adjustment = targetBufferSize - playable;
+        
+        LogInfoC << "buffer size " << playable << std::endl;
+        
+        if (abs(adjustment) > 100 && adjustment < 0)
+        {
+            LogInfoC << "buffer adjustment."
+            << abs(adjustment) << " ms excess" << std::endl;
+            
+            playbackAdjustment_ += adjustment;
+        }
+    }
 }

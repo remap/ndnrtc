@@ -38,7 +38,7 @@ int
 VideoThread::init(const VideoThreadSettings& settings)
 {
     settings_ = new VideoThreadSettings();
-    *settings_ = settings;
+    *((VideoThreadSettings*)settings_) = settings;
     
     int res = MediaThread::init(settings);
     
@@ -85,23 +85,47 @@ VideoThread::onDeliverFrame(webrtc::I420VideoFrame &frame,
 }
 
 void
-VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                        double captureTimestamp)
+VideoThread::onEncodingStarted()
 {
+    encodingTimestampMs_ = NdnRtcUtils::millisecondTimestamp();
+}
+
+void
+VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                     double captureTimestamp,
+                                     bool completeFrame)
+{
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    
     // in order to avoid situations when interest arrives simultaneously
     // with the data being added to the PIT/cache, we synchronize with
     // face on this level
     faceProcessor_->getFaceWrapper()->synchronizeStart();
     
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
-    uint64_t publishingTime = NdnRtcUtils::microsecondTimestamp();
     
     // determine, whether we should publish under key or delta namespaces
     bool isKeyFrame = encodedImage._frameType == webrtc::kKeyFrame;
     
     if (isKeyFrame)
+    {
         keyFrameNo_++;
+        gopCount_ = 0;
+    }
+    else
+        gopCount_++;
     
+    int64_t encodingDelay = timestamp - encodingTimestampMs_;
+    
+    (encodingDelay > FRAME_DELAY_DEADLINE ? LogWarnC : LogTraceC)
+    << "encoding delay " << encodingDelay
+    << " type " << (isKeyFrame?" key":" delta")
+    << ". delta " << deltaFrameNo_
+    << " key " << keyFrameNo_
+    << " abs " << packetNo_
+    << " gop count " << gopCount_
+    << std::endl;
+        
     Name framePrefix((isKeyFrame?keyFramesPrefix_:deltaFramesPrefix_));
     FrameNumber frameNo = (isKeyFrame)?keyFrameNo_:deltaFrameNo_;
     framePrefix.append(NdnRtcUtils::componentFromInt(frameNo));
@@ -130,14 +154,12 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     {
         assert(nSegments == nSegmentsExpected);
         
-        publishingTime = NdnRtcUtils::microsecondTimestamp() - publishingTime;
-        
         LogDebugC
         << "publish\t" << packetNo_ << "\t"
         << deltaFrameNo_ << "\t"
         << keyFrameNo_ << "\t"
         << (isKeyFrame?"K":"D") << "\t"
-        << publishingTime << "\t"
+        << (NdnRtcUtils::millisecondTimestamp()-timestamp) << "\t"
         << frameData.getLength() << "\t"
         << encodedImage.capture_time_ms_ << "\t"
         << NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_) << "\t"
@@ -146,7 +168,7 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
         int nSegmentsParity = -1;
         if (getSettings().useFec_)
             nSegmentsParity = publishParityData(frameNo, frameData, nSegments, framePrefix,
-                              prefixMeta);
+                                                prefixMeta);
         
         
         if (!isKeyFrame)
@@ -172,11 +194,22 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     }
     else
     {
-        notifyError(RESULT_ERR, "were not able to publish frame %d (KEY: %s)",
-                    getPacketNo(), (isKeyFrame)?"YES":"NO");
+        LogErrorC << "was not able to publish frame " << getPacketNo()
+        << " KEY: " << ((isKeyFrame)?"YES":"NO") << std::endl;
     }
-    
+
     faceProcessor_->getFaceWrapper()->synchronizeStop();
+}
+
+void
+VideoThread::onFrameDropped()
+{
+    LogWarnC << "frame dropped by encoder."
+    << " delta " << deltaFrameNo_
+    << " key " << keyFrameNo_
+    << " abs " << packetNo_
+    << " gop count " << gopCount_
+    << std::endl;
 }
 
 void

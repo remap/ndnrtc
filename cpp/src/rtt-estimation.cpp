@@ -14,13 +14,15 @@
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;
 
-RttEstimation RttEstimation::sharedRttEstimation_ = RttEstimation();
 const double RttEstimation::RttStartEstimate = 30; // millseconds
 
 //******************************************************************************
 #pragma mark - construction/destruction
-RttEstimation::RttEstimation(const double& startEstimate):
+RttEstimation::RttEstimation(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
+                             const double& startEstimate):
+StatObject(statStorage),
 estimatorId_(NdnRtcUtils::setupMeanEstimator(0, startEstimate))
 {}
 
@@ -29,12 +31,6 @@ RttEstimation::~RttEstimation()
 
 //******************************************************************************
 #pragma mark - public
-RttEstimation&
-RttEstimation::sharedInstance()
-{
-    return sharedRttEstimation_;
-}
-
 double
 RttEstimation::updateEstimation(int64_t rountripTimeMs,
                                 int64_t generationDelay)
@@ -45,11 +41,14 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
     {
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
         
+        double current = getCurrentEstimation();
+        (*statStorage_)[Indicator::RttEstimation] = current;
+        
         LogTraceC
         << "updated estimation. round " << rountripTimeMs <<
         " generation " << generationDelay
         << " raw " << rawValue
-        << " est " << getCurrentEstimation() << std::endl;
+        << " est " << current << std::endl;
     }
     else
     {

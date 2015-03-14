@@ -57,10 +57,10 @@ VideoConsumer::init(const ConsumerSettings& settings)
         interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
-        playout_.reset(new VideoPlayout(this));
+        playout_.reset(new VideoPlayout(this, statStorage_));
         playout_->setLogger(logger_);
-        playout_->registerObserver(pipeliner_.get());
         playout_->init(decoder_.get());
+        ((VideoPlayout*)playout_.get())->onFrameSkipped_ = boost::bind(&VideoConsumer::onFrameSkipped, this, _1, _2, _3, _4, _5);
         
 #if 0
         rateControl_.reset(new RateControl(shared_from_this()));
@@ -151,13 +151,21 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
 }
 
 void
-VideoConsumer::onRebufferingOccurred()
+VideoConsumer::triggerRebuffering()
 {
-    Consumer::onRebufferingOccurred();
+    Consumer::triggerRebuffering();
     decoder_->reset();
 }
 
 //******************************************************************************
+void
+VideoConsumer::onFrameSkipped(PacketNumber playbackNo, PacketNumber sequenceNo,
+                              PacketNumber pairedNo, bool isKey,
+                              double assembledLevel)
+{
+    // empty
+}
+
 void
 VideoConsumer::onTimeout(const shared_ptr<const Interest>& interest)
 {

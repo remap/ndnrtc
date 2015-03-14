@@ -33,5 +33,12 @@
 #define MAX_THREAD_NAME_LENGTH 20
 
 #define USE_WINDOW_PIPELINER
+#define FRAME_DELAY_DEADLINE    100
+
+//#define USE_VP9
+
+// for tests only
+//#define DROP_FRAMES
+//#define DELAY_FRAMES
 
 #endif

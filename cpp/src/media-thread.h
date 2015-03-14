@@ -108,6 +108,7 @@ namespace ndnrtc
             
             unsigned int segSizeNoHeader_;
             uint64_t registeredPrefixId_ = 0;
+            int64_t publishingTimestampMs_;
             
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<MemoryContentCache> memCache_;

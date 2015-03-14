@@ -27,7 +27,8 @@ namespace ndnrtc {
             virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
         };
         
-        class InterestQueue : public NdnRtcComponent//ndnlog::new_api::ILoggingObject
+        class InterestQueue : public NdnRtcComponent,
+                              public statistics::StatObject
         {
         public:
             
@@ -62,7 +63,8 @@ namespace ndnrtc {
                 virtual void setExpressionTimestamp(int64_t timestamp) = 0;
             };
 
-            InterestQueue(const boost::shared_ptr<FaceWrapper> &face);
+            InterestQueue(const boost::shared_ptr<FaceWrapper> &face,
+                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~InterestQueue();
             
             void
@@ -76,9 +78,6 @@ namespace ndnrtc {
              */
             void
             reset();
-            
-            void
-            getStatistics(ReceiverChannelPerformance& stat);
             
             void
             registerCallback(IInterestQueueCallback *callback)
@@ -105,9 +104,6 @@ namespace ndnrtc {
                 int64_t
                 getExpressionTimestamp() const
                 { return priority_->getExpressionTimestamp(); }
-                
-                IPriority
-                getPriority() { return *priority_; }
                 
                 QueueEntry& operator=(const QueueEntry& entry)
                 {

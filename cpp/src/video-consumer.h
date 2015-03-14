@@ -53,7 +53,7 @@ namespace ndnrtc {
             playbackEventOccurred(PlaybackEvent event, unsigned int frameSeqNo);
             
             void
-            onRebufferingOccurred();
+            triggerRebuffering();
 
         private:
             boost::shared_ptr<NdnVideoDecoder> decoder_;
@@ -62,6 +62,10 @@ namespace ndnrtc {
             getRenderer()
             { return boost::dynamic_pointer_cast<IVideoRenderer>(renderer_); }
             
+            void
+            onFrameSkipped(PacketNumber playbackNo, PacketNumber sequenceNo,
+                           PacketNumber pairedNo, bool isKey,
+                           double assembledLevel);
             
             void
             onTimeout(const boost::shared_ptr<const Interest>& interest);

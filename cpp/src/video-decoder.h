@@ -34,17 +34,23 @@ namespace ndnrtc {
             int init(const VideoCoderParams& settings);
             void reset();
             
-            // interface conformance - webrtc::DecodedImageCallback
-            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
             // interface conformance - IEncodedFrameConsumer
             void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                         double timestamp);
+                                         double timestamp,
+                                         bool completeFrame);
         private:
             VideoCoderParams settings_;
             IRawFrameConsumer *frameConsumer_;
             webrtc::VideoCodec codec_;
             boost::shared_ptr<webrtc::VideoDecoder> decoder_;
             double capturedTimestamp_ = 0;
+            int frameCount_;
+            
+            int
+            resetDecoder();
+            
+            // interface conformance - webrtc::DecodedImageCallback
+            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
         };
     }
 }

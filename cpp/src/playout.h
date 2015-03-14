@@ -16,11 +16,11 @@
 #include "jitter-timing.h"
 #include "consumer.h"
 #include "frame-buffer.h"
+#include "statistics.h"
 
 namespace ndnrtc{
     namespace new_api {
         
-        class IPlayoutObserver;
         /**
          * Base class for playout mechanisms. The core playout logic is similar 
          * for audio and video streams. Differences must be implemented in 
@@ -28,17 +28,20 @@ namespace ndnrtc{
          * routine each time playout timer fires. Necessary information is 
          * provided as arguments to the method.
          */
-        class Playout : public NdnRtcComponent
+        class Playout : public NdnRtcComponent, public statistics::StatObject
         {
         public:
-            Playout(Consumer* consumer);
+            static const int BufferCheckInterval;
+            
+            Playout(Consumer* consumer,
+                    const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             virtual ~Playout();
             
             virtual int
             init(void* frameConsumer);
             
             virtual int
-            start(int playbackAdjustment = 0);
+            start(int initialAdjustment = 0);
             
             virtual int
             stop();
@@ -49,9 +52,6 @@ namespace ndnrtc{
             void
             setDescription(const std::string& desc);
             
-            PlayoutStatistics
-            getStatistics() { return stat_; };
-            
             bool
             isRunning()
             { return isRunning_; }
@@ -60,18 +60,14 @@ namespace ndnrtc{
             setPlaybackAdjustment(int playbackAdjustment)
             { playbackAdjustment_ = playbackAdjustment; }
             
-            void
-            registerObserver(IPlayoutObserver *observer)
-            { observer_ = observer; }
-            
         protected:
             bool isRunning_;
-            PlayoutStatistics stat_;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
             int playbackAdjustment_;
+            int64_t bufferCheckTs_;
             
             Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
@@ -82,8 +78,6 @@ namespace ndnrtc{
             
             void* frameConsumer_;
             PacketData *data_;
-            
-            IPlayoutObserver *observer_;
             
             /**
              * This method should be overriden by derived classes for 
@@ -121,14 +115,9 @@ namespace ndnrtc{
             
             bool
             processPlayout();
-        };
-        
-        class IPlayoutObserver {
-        public:
-            // must return true if recovery is needed
-            virtual bool recoveryCheck() = 0;
-            // called each time key frame was extracted from the buffer
-            virtual void keyFrameConsumed() = 0;
+            
+            void
+            checkBuffer();
         };
     }
 }

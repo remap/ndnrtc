@@ -1,15 +1,14 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.59])
-AC_INIT([NDN-RTC], [1.0.1], [peter@remap.ucla.edu], [ndnrtc], [https://github.com/remap/ndnrtc])
+AC_PREREQ([2.69])
+AC_INIT([NDN-RTC],[1.0.1],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PREFIX_DEFAULT([/usr/local])
 AC_CONFIG_SRCDIR([src/ndnrtc-common.h])
-AC_CONFIG_FILES([Makefile
-				src/objc/Makefile])
+AC_CONFIG_FILES([Makefile])
 AM_MAINTAINER_MODE
 
 AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
@@ -142,7 +141,7 @@ AC_PROG_CXX
 AC_PROG_OBJC
 AC_PROG_OBJCXX
 AM_PROG_CC_C_O
-AC_PROG_LIBTOOL
+LT_INIT
 AC_LANG([C++])
 LT_PREREQ([2.2])
 LT_INIT()
@@ -274,6 +273,40 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     boost::chrono::milliseconds msec = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::steady_clock::now().time_since_epoch());
     boost::chrono::seconds sec = boost::chrono::duration_cast<boost::chrono::seconds>(boost::chrono::steady_clock::now().time_since_epoch());
     boost::chrono::duration<double> secd = now;]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
+AC_MSG_CHECKING([for boost::asio::steady_timer...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/asio.hpp>
+	  #include <boost/asio/steady_timer.hpp>]]
+    [[
+    boost::asio::io_service io_service_;
+    boost::asio::steady_timer timer_(io_service_);]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
+AC_MSG_CHECKING([for boost::crc...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/crc.hpp>]]
+    [[
+    boost::crc_16_type crc_computer_;]])
+], [
+    AC_MSG_RESULT([yes])
+], [
+    AC_MSG_FAILURE([not found])
+])
+
+AC_MSG_CHECKING([for boost::thread...])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <boost/thread.hpp>]]
+    [[boost::thread thread;]])
 ], [
     AC_MSG_RESULT([yes])
 ], [

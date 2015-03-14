@@ -9,6 +9,7 @@
 //
 
 #include <iostream>
+#include <string.h>
 #include "fec.h"
 
 using namespace fec;
@@ -79,7 +80,7 @@ Rs28Decoder::decode(unsigned char* data, unsigned char* parityData,
         if (rList[i] == FEC_RLIST_SYMREADY)
             of_decode_with_new_symbol(session, decodingSymbolTable[i], i);
         else
-            rList[i] = FEC_RLIST_SYMREPAIRED;
+            rList[i] = FEC_RLIST_INPROCESS;
     }
     
     if (of_finish_decoding(coderSession_) != OF_STATUS_OK)
@@ -91,11 +92,15 @@ Rs28Decoder::decode(unsigned char* data, unsigned char* parityData,
         else
         {
             for (int i = 0; i < nSourceSymbols_+nRepairSymbols_; i++)
-                if (rList[i] == FEC_RLIST_SYMREPAIRED)
+                if (rList[i] == FEC_RLIST_INPROCESS)
                 {
+                    rList[i] = FEC_RLIST_SYMREPAIRED;
                     ret++;
                     if (i < nSourceSymbols_)
+                    {
                         memcpy(&data[i*symbolLength_], decodingSymbolTable[i], symbolLength_);
+                        free(decodingSymbolTable[i]);
+                    }
                 }
         }
     }

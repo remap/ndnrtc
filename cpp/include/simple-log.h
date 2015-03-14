@@ -39,7 +39,7 @@
 #if defined (NDN_TRACE)
 
 #define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-#define LogTraceC if (this->logger_) this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__)
+#define LogTraceC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -51,7 +51,7 @@
 #if defined (NDN_DEBUG)
 
 #define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogDebugC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelDebug, this, BASE_FILE_NAME, __LINE__)
+#define LogDebugC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelDebug, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 #else
 
 #define LogDebug(fmt, ...) ndnlog::new_api::NilLogger::get()
@@ -62,7 +62,7 @@
 #if defined (NDN_INFO)
 
 #define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogInfoC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelInfo, this, BASE_FILE_NAME, __LINE__)
+#define LogInfoC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelInfo, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -74,7 +74,7 @@
 #if defined (NDN_WARN)
 
 #define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogWarnC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelWarning, this, BASE_FILE_NAME, __LINE__)
+#define LogWarnC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelWarning, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -86,7 +86,7 @@
 #if defined (NDN_ERROR)
 
 #define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelError, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogErrorC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__) 
+#define LogErrorC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -96,7 +96,7 @@
 #endif
 
 #define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-#define LogStatC if (this->logger_) this->logger_->log((NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__)
+#define LogStatC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #define STAT_DIV "\t"
 
@@ -263,6 +263,10 @@ namespace ndnlog {
             
             void
             flush();
+            
+            std::string
+            getFileName() const
+            { return logFile_; }
             
         private:
             NdnLoggerDetailLevel logLevel_;

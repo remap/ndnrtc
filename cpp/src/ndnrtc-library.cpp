@@ -8,15 +8,20 @@
 //  Author:  Peter Gusev
 //
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <memory>
 #include <signal.h>
+#include <boost/thread/mutex.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/thread.hpp>
+#include <boost/asio.hpp>
 
 #include "ndnrtc-library.h"
 #include "ndnrtc-namespace.h"
-#include "consumer-channel.h"
-#include "objc/cocoa-renderer.h"
+#include "audio-consumer.h"
+#include "video-consumer.h"
 #include "external-capturer.hpp"
 #include "session.h"
 #include "error-codes.h"
@@ -27,7 +32,8 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
-#define LIB_LOG "ndnrtc.log"
+static std::string LIB_LOG = "ndnrtc.log";
+
 static shared_ptr<FaceProcessor> LibraryFace;
 
 typedef std::map<std::string, shared_ptr<Session>> SessionMap;
@@ -38,6 +44,16 @@ static ConsumerStreamMap ActiveStreamConsumers;
 
 typedef std::map<std::string, shared_ptr<ServiceChannel>> SessionObserverMap;
 static SessionObserverMap RemoteObservers;
+
+static boost::thread backgroundThread;
+static boost::asio::io_service io_service;
+static shared_ptr<boost::asio::io_service::work> backgroundWork;
+static boost::asio::steady_timer recoveryCheckTimer(io_service);
+static boost::mutex recoveryCheckMutex;
+typedef boost::lock_guard<boost::mutex> ScopedLock;
+
+void recoveryCheck(const boost::system::error_code& e);
+std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName);
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -126,6 +142,7 @@ static void signalHandler(int signal, siginfo_t *siginfo, void *context)
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
 {
+    Logger::getLogger(LIB_LOG).setLogLevel(NdnLoggerDetailLevelDefault);
     LogInfo(LIB_LOG) << "NDN-RTC " << PACKAGE_VERSION << std::endl;
     
     struct sigaction act;
@@ -139,13 +156,42 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
     
     LogInfo(LIB_LOG) << "Voice engine initialization..." << std::endl;
     NdnRtcUtils::sharedVoiceEngine();
-    
     LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
+    
+    LogInfo(LIB_LOG) << "Starting recovery timer..." << std::endl;
+    recoveryCheckTimer.expires_from_now(boost::chrono::milliseconds(50));
+    recoveryCheckTimer.async_wait(recoveryCheck);
+    LogInfo(LIB_LOG) << "Recovery timer started" << std::endl;
+    
+    LogInfo(LIB_LOG) << "Starting background thread..." << std::endl;
+    backgroundWork.reset(new boost::asio::io_service::work(io_service));
+    backgroundThread = boost::thread([](){
+        LogInfo(LIB_LOG) << "Background thread "
+        << boost::this_thread::get_id() << " started" << std::endl;
+        
+        io_service.run();
+        
+        LogInfo(LIB_LOG) << "Background thread stopped" << std::endl;
+    });
     
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
     LogInfo(LIB_LOG) << "NDN-RTC Destructor" << std::endl;
+    
+    try {
+        LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
+        recoveryCheckTimer.cancel();
+        LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
+        backgroundWork.reset();
+        io_service.stop();
+        backgroundThread.try_join_for(boost::chrono::milliseconds(500));
+    }
+    catch (boost::system::system_error& e) {
+        LogError(LIB_LOG) << "Exception while stopping timer: "
+        << e.what() << std::endl;
+    }
+    
     LogInfo(LIB_LOG) << "Stopping active sessions..." << std::endl;
     
     for (SessionMap::iterator it = ActiveSessions.begin();
@@ -196,6 +242,9 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         ISessionObserver *sessionObserver)
 {
+    LIB_LOG = getFullLogPath(generalParams, generalParams.logFile_);
+    
+    Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
     LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
     
     std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
@@ -430,19 +479,28 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
         return "";
     }
     
+    std::string username = NdnRtcNamespace::getUserName(remoteSessionPrefix);
+    std::string logFile = getFullLogPath(generalParams,
+                                         NdnRtcUtils::toString("consumer-%s-%s.log",
+                                                               username.c_str(),
+                                                               params.streamName_.c_str()));
+    
     remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
-                                               NdnRtcUtils::toString("consumer-%s.log", params.streamName_.c_str())));
+                                               logFile));
     
     if (RESULT_FAIL(remoteStreamConsumer->start()))
         return "";
     
     if (it == ActiveStreamConsumers.end())
+    {
+        ScopedLock lock(recoveryCheckMutex);
         ActiveStreamConsumers[remoteStreamConsumer->getPrefix()] = remoteStreamConsumer;
+    }
     
     return remoteStreamConsumer->getPrefix();
 }
 
-int
+std::string
 NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
     LogInfo(LIB_LOG) << "Removing stream " << streamPrefix << "..." << std::endl;
@@ -452,14 +510,19 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
-        return RESULT_ERR;
+        return "";
     }
     
+    std::string logFileName = it->second->getLogger()->getFileName();
     it->second->stop();
-    ActiveStreamConsumers.erase(it);
+    {
+        ScopedLock lock(recoveryCheckMutex);
+        ActiveStreamConsumers.erase(it);
+    }
     
     LogInfo(LIB_LOG) << "Stream removed succesfully" << std::endl;
-    return RESULT_OK;
+    
+    return logFileName;
 }
 
 int
@@ -539,9 +602,8 @@ NdnRtcLibrary::switchThread(const std::string& streamPrefix,
     return RESULT_OK;
 }
 
-int
-NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
-                                         ReceiverChannelPerformance& stat)
+statistics::StatisticsStorage
+NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix)
 {
     ConsumerStreamMap::iterator it = ActiveStreamConsumers.find(streamPrefix);
     
@@ -549,11 +611,10 @@ NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix,
     {
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
                                                 "stream was not found");
-        return NRTC_ERR_NOT_FOUND;
+        return *statistics::StatisticsStorage::createConsumerStatistics();
     }
     
-    it->second->getStatistics(stat);
-    return RESULT_OK;
+    return it->second->getStatistics();;
 }
 
 //******************************************************************************
@@ -564,12 +625,6 @@ NdnRtcLibrary::getVersionString(char **versionString)
         memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
                
     return;
-}
-
-void
-NdnRtcLibrary::arrangeWindows()
-{
-    arrangeAllWindows();
 }
 
 //********************************************************************************
@@ -588,6 +643,7 @@ int NdnRtcLibrary::notifyObserverWithError(const char *format, ...) const
     
     return RESULT_ERR;
 }
+
 int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *format, ...) const
 {
     va_list args;
@@ -602,7 +658,53 @@ int NdnRtcLibrary::notifyObserverWithState(const char *stateName, const char *fo
     
     return RESULT_OK;
 }
+
 void NdnRtcLibrary::notifyObserver(const char *state, const char *args) const
 {
     LibraryInternalObserver.onStateChanged(state, args);
+}
+
+//******************************************************************************
+void recoveryCheck(const boost::system::error_code& e)
+{
+    if (e != boost::asio::error::operation_aborted)
+    {
+        ScopedLock lock(recoveryCheckMutex);
+        
+        if (ActiveStreamConsumers.size())
+        {
+            for (auto it : ActiveStreamConsumers)
+            {
+                LogDebug(LIB_LOG) << "Recovery check for "
+                << it.second->getPrefix() << std::endl;
+                
+                int idleTime  = it.second->getIdleTime();
+                if (idleTime > Consumer::MaxIdleTimeMs)
+                {
+                    LogWarn(LIB_LOG)
+                    << "Idle time " << idleTime
+                    << ". Rebuffering triggered for "
+                    << it.second->getPrefix() << std::endl;
+                    
+                    it.second->triggerRebuffering();
+                }
+            }
+        }
+        
+        try {
+            recoveryCheckTimer.expires_from_now(boost::chrono::milliseconds(50));
+            recoveryCheckTimer.async_wait(recoveryCheck);
+        } catch (boost::system::system_error& e) {
+            LogError(LIB_LOG) << "Exception while recovery timer reset: "
+            << e.what() << std::endl;
+        }
+    }
+    else
+        LogInfo(LIB_LOG) << "Recovery checks aborted" << std::endl;
+}
+
+std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName)
+{
+    static char logPath[PATH_MAX];
+    return ((generalParams.logPath_ == "")?std::string(getwd(logPath)):generalParams.logPath_) + "/" + fileName;
 }

@@ -18,6 +18,7 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
 #include "consumer.h"
+#include "statistics.h"
 
 namespace ndnrtc
 {
@@ -29,7 +30,8 @@ namespace ndnrtc
         
         class IFrameBufferCallback;
         
-        class FrameBuffer : public ndnlog::new_api::ILoggingObject
+        class FrameBuffer : public ndnlog::new_api::ILoggingObject,
+                            public statistics::StatObject
         {
         public:
             static const unsigned int MinRetransmissionInterval;
@@ -495,6 +497,9 @@ namespace ndnrtc
                 bool
                 hasOriginalSegments() { return hasOriginalSegments_; }
                 
+                int
+                getCrcValue() { return crcValue_; }
+                
                 static std::string
                 stateToString(State s)
                 {
@@ -556,6 +561,7 @@ namespace ndnrtc
                 int nSegmentsReady_ = 0, nSegmentsPending_ = 0,
                 nSegmentsMissing_ = 0, nSegmentsTotal_ = 0,
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
+                int crcValue_ = 0;
                 
                 boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
                 std::vector<boost::shared_ptr<Segment> > freeSegments_;
@@ -570,9 +576,6 @@ namespace ndnrtc
                 void
                 fixRightmost(PacketNumber packetNumber,
                              SegmentNumber segmentNumber, bool isParity);
-                
-                void
-                releaseSegment(SegmentNumber segNum);
                 
                 void
                 prepareStorage(unsigned int segmentSize,
@@ -608,6 +611,12 @@ namespace ndnrtc
                 
                 bool
                 updateConsistencyFromHeader();
+                
+                /**
+                 * Checks, whether data segment has been already received
+                 */
+                bool
+                hasReceivedSegment(SegmentNumber segNo, bool isParity);
                 
                 SegmentNumber
                 toMapParityIdx(SegmentNumber segNo) const
@@ -666,7 +675,8 @@ namespace ndnrtc
                 boost::shared_ptr<Slot> slot_;     // corresponding slot pointer
             }; // Event
             
-            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer);
+            FrameBuffer(const boost::shared_ptr<const Consumer> &consumer,
+                        const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~FrameBuffer();
             
             int init();
@@ -787,7 +797,10 @@ namespace ndnrtc
              */
             void
             setTargetSize(int64_t targetSizeMs)
-            { targetSizeMs_ = targetSizeMs; }
+            {
+                targetSizeMs_ = targetSizeMs;
+                statStorage_->updateIndicator(statistics::Indicator::BufferTargetSize, targetSizeMs_);
+            }
 
             int64_t
             getTargetSize() { return targetSizeMs_; }
@@ -862,8 +875,18 @@ namespace ndnrtc
             void
             synchronizeRelease() { syncCs_.Leave(); }
     
+            /**
+             * Dumps buffer state to a log file
+             */
             void
             dump();
+            
+            /**
+             * Dumps buffer stat to a string with shortened info: only key 
+             * numbers (sequential) and assembled levels are printed.
+             */
+            std::string
+            shortDump();
             
             static std::string
             stateToString(State s)
@@ -885,9 +908,6 @@ namespace ndnrtc
             
             void
             setLogger(ndnlog::new_api::Logger* logger);
-            
-            BufferStatistics
-            getStatistics() { return stat_; };
             
             void
             setRateControl(const boost::shared_ptr<RateControl>& rateControl)
@@ -968,11 +988,8 @@ namespace ndnrtc
             const Consumer* consumer_;
             
             State state_;
-            PacketNumber playbackNo_;
+            PacketNumber playbackNo_, lastKeySeqNo_;
             int nKeyFrames_;
-
-            // statistics
-            BufferStatistics stat_;
                         
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
@@ -983,6 +1000,7 @@ namespace ndnrtc
             bool isEstimationNeeded_;
             bool isWaitingForRightmost_;
             bool retransmissionsEnabled_;
+            int frameReleaseCount_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -1069,6 +1087,7 @@ namespace ndnrtc
                 {
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
+                    statStorage_->updateIndicator(statistics::Indicator::CurrentProducerFramerate, playbackRate);
                 }
             }
             
@@ -1089,6 +1108,9 @@ namespace ndnrtc
         public:
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
+            
+            virtual void
+            onKeyNeeded(PacketNumber seqNo) = 0;
         };
     }
 }

@@ -16,6 +16,7 @@
 using namespace boost;
 using namespace ndnlog;
 using namespace ndnrtc::new_api;
+using namespace ndnrtc::new_api::statistics;
 using namespace webrtc;
 
 //******************************************************************************
@@ -31,12 +32,14 @@ onTimeoutCallback_(onTimeout)
 {
 }
 
-InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face):
+InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face,
+                             const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+StatObject(statStorage),
 freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
-queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this)),
+queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this, ThreadPriority:: kRealtimePriority)),
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {
@@ -91,12 +94,6 @@ InterestQueue::reset()
     queueAccess_.ReleaseLockExclusive();
 
     LogDebugC << "interest queue flushed" << std::endl;
-}
-
-void
-InterestQueue::getStatistics(ReceiverChannelPerformance& stat)
-{
-    stat.interestFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(freqMeterId_);
 }
 
 //******************************************************************************
@@ -159,10 +156,15 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     << std::endl;
     
     NdnRtcUtils::frequencyMeterTick(freqMeterId_);
+    (*statStorage_)[Indicator::InterestRate] = NdnRtcUtils::currentFrequencyMeterValue(freqMeterId_);
+    (*statStorage_)[Indicator::QueueSize] = queue_.size();
+    
     
     try {
         face_->expressInterest(*(entry.interest_),
                                entry.onDataCallback_, entry.onTimeoutCallback_);
+        (*statStorage_)[Indicator::InterestsSentNum]++;
+        
         if (callback_)
             callback_->onInterestIssued(entry.interest_);
     }

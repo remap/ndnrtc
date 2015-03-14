@@ -77,7 +77,7 @@ namespace ndnrtc
         // media thread parameters
         class MediaThreadParams : public Params {
         public:
-            ~MediaThreadParams(){}
+            virtual ~MediaThreadParams(){}
             
             std::string threadName_ = "";
             
@@ -188,10 +188,7 @@ namespace ndnrtc
             }
             ~MediaStreamParams()
             {
-                for (int i = 0; i < mediaThreads_.size(); i++)
-                    delete mediaThreads_[i];
-                
-                mediaThreads_.clear();
+                freeThreads();
 
                 if (captureDevice_)
                     delete captureDevice_;
@@ -235,7 +232,7 @@ namespace ndnrtc
                 streamName_ = other.streamName_;
                 type_ = other.type_;
                 producerParams_ = other.producerParams_;
-                mediaThreads_.clear();
+                freeThreads();
                 
                 for (int i = 0; i < other.mediaThreads_.size(); i++)
                     mediaThreads_.push_back(other.mediaThreads_[i]->copy());
@@ -245,6 +242,15 @@ namespace ndnrtc
                     captureDevice_ = new CaptureDeviceParams();
                     *captureDevice_ = *other.captureDevice_;
                 }
+            }
+            
+            void
+            freeThreads()
+            {
+                for (int i = 0; i < mediaThreads_.size(); i++)
+                    delete mediaThreads_[i];
+                
+                mediaThreads_.clear();
             }
         };
         
@@ -289,6 +295,7 @@ namespace ndnrtc
             // general
             ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelNone;
             std::string logFile_ = "";
+            std::string logPath_ = "";
             bool
             useTlv_ = false,
             useRtx_ = false,
@@ -395,13 +402,8 @@ namespace ndnrtc
             { copyFrom(other); }
             ~SessionInfo()
             {
-                for (int i = 0; i < audioStreams_.size(); i++)
-                    delete audioStreams_[i];
-                audioStreams_.clear();
-                
-                for (int i = 0; i < videoStreams_.size(); i++)
-                    delete videoStreams_[i];
-                videoStreams_.clear();
+                freeAudioStreams();
+                freeVideoStreams();
             }
             SessionInfo& operator=(const SessionInfo& other)
             {
@@ -431,8 +433,8 @@ namespace ndnrtc
             void
             copyFrom(const SessionInfo& other)
             {
-                audioStreams_.clear();
-                videoStreams_.clear();
+                freeAudioStreams();
+                freeVideoStreams();
                 
                 for (int i = 0; i < other.audioStreams_.size(); i++)
                 {
@@ -445,6 +447,23 @@ namespace ndnrtc
                     MediaStreamParams* params = new MediaStreamParams(*other.videoStreams_[i]);
                     videoStreams_.push_back(params);
                 }
+            }
+            
+            void
+            freeAudioStreams()
+            {
+                for (int i = 0; i < audioStreams_.size(); i++)
+                    delete audioStreams_[i];
+                audioStreams_.clear();
+            }
+            
+            void
+            freeVideoStreams()
+            {
+                for (int i = 0; i < videoStreams_.size(); i++)
+                    delete videoStreams_[i];
+                videoStreams_.clear();
+                
             }
         };
     }

@@ -45,7 +45,7 @@ namespace ndnrtc
          */
         class VideoThread : public MediaThread,
                             public IRawFrameConsumer,
-                            public IEncodedFrameConsumer
+                            public IEncoderDelegate
         {
         public:
             VideoThread();
@@ -54,7 +54,8 @@ namespace ndnrtc
             static const double ParityRatio;
             
             // overriden from base class
-            int init(const VideoThreadSettings& settings);
+            int
+            init(const VideoThreadSettings& settings);
             
             void
             getStatistics(VideoThreadStatistics& statistics);
@@ -67,22 +68,26 @@ namespace ndnrtc
             }
             
             // interface conformance
-            void onDeliverFrame(webrtc::I420VideoFrame &frame,
-                                double unixTimeStamp);
+            void
+            onDeliverFrame(webrtc::I420VideoFrame &frame,
+                           double unixTimeStamp);
             
-            void setLogger(ndnlog::new_api::Logger *logger);
+            void
+            setLogger(ndnlog::new_api::Logger *logger);
             
         private:
-            int keyFrameNo_ = 0, deltaFrameNo_ = 0;
+            int keyFrameNo_ = 0, deltaFrameNo_ = 0, gopCount_ = 0;
             unsigned int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             unsigned int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
+            int64_t encodingTimestampMs_;
             
             Name deltaFramesPrefix_, keyFramesPrefix_;
             boost::shared_ptr<VideoCoder> coder_;
             
-            void onInterest(const boost::shared_ptr<const Name>& prefix,
-                            const boost::shared_ptr<const Interest>& interest,
-                            ndn::Transport& transport);
+            void
+            onInterest(const boost::shared_ptr<const Name>& prefix,
+                       const boost::shared_ptr<const Interest>& interest,
+                       ndn::Transport& transport);
             
             int
             publishParityData(PacketNumber frameNo,
@@ -92,8 +97,16 @@ namespace ndnrtc
                               const PrefixMetaInfo& prefixMeta);
             
             // interface conformance
-            void onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                         double captureTimestamp);
+            void
+            onEncodingStarted();
+            
+            void
+            onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                    double captureTimestamp,
+                                    bool completeFrame);
+            
+            void
+            onFrameDropped();
             
             VideoThreadSettings&
             getSettings() const

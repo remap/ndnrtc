@@ -49,7 +49,7 @@ OpenFEC
 --
 Before building OpenFEC, modify **src/CMakeLists.txt** file:
 
-1. Change line `add_library(openfec SHARED ${openfec_sources})` to `add_library(openfec  **STATIC** ${openfec_sources})`
+1. Change line `add_library(openfec SHARED ${openfec_sources})` to `add_library(openfec STATIC ${openfec_sources})`
 2. Change line `target_link_libraries(openfec pthread IL)` to `target_link_libraries(openfec pthread)`
 
 Check OpenFEC's README file for further build instructions.

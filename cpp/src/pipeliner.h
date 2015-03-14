@@ -56,7 +56,7 @@ namespace ndnrtc {
         
         class PipelinerBase : public NdnRtcComponent,
                                 public IFrameBufferCallback,
-                                public IPlayoutObserver
+                                public statistics::StatObject
         {
         public:
             typedef enum _State {
@@ -77,6 +77,7 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumKey;
             
             PipelinerBase(const boost::shared_ptr<Consumer>& consumer,
+                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                           const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~PipelinerBase();
             
@@ -104,18 +105,20 @@ namespace ndnrtc {
             virtual void
             triggerRebuffering();
             
-            virtual PipelinerStatistics
-            getStatistics();
-            
             void
             threadSwitched();
             
-            // IPlayoutObserver interface conformance
-            virtual bool
-            recoveryCheck() { return false; }
-            
-            virtual void
-            keyFrameConsumed() {}
+            int
+            getIdleTime()
+            {
+                int idleTime = (recoveryCheckpointTimestamp_)?(int)(NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_):0;
+                
+                ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+                << "idle time " << idleTime
+                << std::endl;
+                
+                return idleTime;
+            }
             
         protected:
             State state_;
@@ -135,9 +138,8 @@ namespace ndnrtc {
             
             unsigned int streamId_; // currently fetched stream id
             webrtc::CriticalSectionWrapper &streamSwitchSync_;
-            PipelinerStatistics stat_;
             bool useKeyNamespace_;
-            int64_t recoveryCheckpointTimestamp_;
+            int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
             
             void
             switchToState(State newState)
@@ -145,10 +147,21 @@ namespace ndnrtc {
                 State oldState = state_;
                 state_ = newState;
                 
-                LogDebugC << "new state " << toString(state_) << std::endl;
-                
-                if (callback_)
-                    callback_->onStateChanged(oldState, state_);
+                if (oldState != newState)
+                {
+                    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+                    int64_t phaseDuration = timestamp - startPhaseTimestamp_;
+                    startPhaseTimestamp_ = timestamp;
+                    
+                    ((oldState == StateChasing) ? LogInfoC : LogDebugC)
+                    << "phase " << toString(oldState) << " finished in "
+                    << phaseDuration << " msec" << std::endl;
+                    
+                    LogDebugC << "new state " << toString(state_) << std::endl;
+                    
+                    if (callback_)
+                        callback_->onStateChanged(oldState, state_);
+                }
             }
             
             std::string
@@ -212,148 +225,18 @@ namespace ndnrtc {
                            int64_t lifetime, int64_t priority,
                            bool wasTimedOut = false);
             
+            // IFrameBufferCallback interface
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot);
+            
+            virtual void
+            onKeyNeeded(PacketNumber seqNo);
             
             virtual void
             rebuffer() = 0;
             
             virtual void
             resetData();
-        };
-        
-        // chasing pipeliner
-        class Pipeliner : public PipelinerBase
-        {
-        public:
-            
-            static const int64_t MaxInterruptionDelay;
-            static const int64_t MinInterestLifetime;
-            static const int MaxRetryNum; // maximum number of retires when
-                                          // streaming suddenly inerrupts
-            static const int ChaserRateCoefficient; // how faster than producer
-                                                    // rate the chaser should
-                                                    // skim through cached content
-            static const int FullBufferRecycle; // number of slots to recycle if
-                                                // the buffer became full during
-                                                // chasing stage
-            
-            Pipeliner(const boost::shared_ptr<Consumer>& consumer,
-                      const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
-            ~Pipeliner();
-            
-            int
-            start();
-            
-            int
-            stop();
-            
-            PipelinerStatistics
-            getStatistics();
-            
-        private:
-            // this events masks are used in different moments during pipeliner
-            // and used for filtering buffer events
-            // startup events mask is used for pipeline initiation
-            static const int StartupEventsMask = FrameBuffer::Event::StateChanged;
-            // this events mask is used when rightmost interest has been issued
-            // and initial data is awaited
-            static const int WaitForRightmostEventsMask = FrameBuffer::Event::FirstSegment | FrameBuffer::Event::Timeout;
-            // this events mask is used during chasing stage
-            static const int ChasingEventsMask = FrameBuffer::Event::FirstSegment |
-                                                 FrameBuffer::Event::Timeout |
-                                                 FrameBuffer::Event::StateChanged;
-            // this events mask is used during buffering stage
-            static const int BufferingEventsMask = FrameBuffer::Event::FirstSegment |
-                                                FrameBuffer::Event::Ready |
-                                                FrameBuffer::Event::Timeout |
-                                                FrameBuffer::Event::StateChanged |
-                                                FrameBuffer::Event::NeedKey;
-            // this events mask is used during fetching stage
-            static const int FetchingEventsMask = BufferingEventsMask |
-                                                FrameBuffer::Event::Playout;
-            
-            
-            ChaseEstimation* chaseEstimation_;
-            
-            webrtc::ThreadWrapper &mainThread_;
-            
-            bool isPipelinePaused_, isPipelining_;
-            int64_t pipelineIntervalMs_;
-            webrtc::ThreadWrapper &pipelineThread_;
-            webrtc::EventWrapper &pipelineTimer_;
-            webrtc::EventWrapper &pipelinerPauseEvent_;
-            
-            // --
-            unsigned int reconnectNum_;
-            PacketNumber exclusionFilter_;
-            int bufferEventsMask_;
-            
-            static bool
-            mainThreadRoutine(void *pipeliner){
-                return ((Pipeliner*)pipeliner)->processEvents();
-            }
-            bool
-            processEvents();
-            
-            static bool
-            pipelineThreadRoutine(void *pipeliner){
-                return ((Pipeliner*)pipeliner)->processPipeline();
-            }
-            bool
-            processPipeline();
-            
-            int
-            handleInvalidState(const ndnrtc::new_api::FrameBuffer::Event &event);
-            
-            int
-            handleChase(const FrameBuffer::Event& event);
-            
-            void
-            initialDataArrived(const boost::shared_ptr<FrameBuffer::Slot>& slot);
-            
-            void
-            handleChasing(const FrameBuffer::Event& event);
-            
-            void
-            handleBuffering(const FrameBuffer::Event& event);
-            
-            int
-            handleValidState(const FrameBuffer::Event& event);
-            
-            void
-            handleTimeout(const FrameBuffer::Event& event);
-            
-            int
-            initialize();
-            
-            void
-            startChasePipeliner(PacketNumber startPacketNo,
-                                 int64_t intervalMs);
-            
-            void
-            setChasePipelinerPaused(bool isPaused);
-            
-            void
-            stopChasePipeliner();
-            
-            /**
-             * Requests additional frames to keep buffer meet its target size
-             * @param useEstimatedSize Indicates whether estimated buffer size 
-             * or playable buffer size should be used for checking
-             * @return Number of frames requested
-             */
-            int
-            keepBuffer(bool useEstimatedSize = true);
-            
-            void
-            resetData();
-            
-            bool
-            recoveryCheck(const ndnrtc::new_api::FrameBuffer::Event& event);
-            
-            void
-            rebuffer();
         };
         
         // window-based pipeliner
@@ -366,6 +249,7 @@ namespace ndnrtc {
             static const int DefaultMinWindow;
             
             Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
+                       const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                        const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
             ~Pipeliner2();
             
@@ -383,13 +267,6 @@ namespace ndnrtc {
                 rttChangeEstimator_.setLogger(logger);
             }
             
-            // IPlayoutObserver interface conformance
-            bool
-            recoveryCheck();
-            
-            void
-            keyFrameConsumed();
-            
         private:
             StabilityEstimator stabilityEstimator_;
             RttChangeEstimator rttChangeEstimator_;
@@ -399,6 +276,12 @@ namespace ndnrtc {
             bool waitForChange_, waitForStability_;
             unsigned int failedWindow_;
             FrameNumber seedFrameNo_;
+            ndn::Interest rightmostInterest_;
+            PacketNumber exclusionPacket_;
+            
+            // incoming data statistics
+            unsigned int dataMeterId_, segmentFreqMeterId_;
+            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
             
             void
             askForRightmostData();

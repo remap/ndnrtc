@@ -18,7 +18,8 @@ namespace ndnrtc {
         class AudioPlayout : public Playout
         {
         public:
-            AudioPlayout(Consumer* consumer);
+            AudioPlayout(Consumer* consumer,
+                         const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~AudioPlayout();
             
         private:

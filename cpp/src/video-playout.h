@@ -16,14 +16,19 @@ namespace ndnrtc {
     namespace new_api {
         class VideoConsumer;
         
+        typedef boost::function<void (PacketNumber, PacketNumber, PacketNumber, bool, double)> OnFrameSkipped;
+        
         class VideoPlayout : public Playout
         {
         public:
-            VideoPlayout(Consumer* consumer);
+            VideoPlayout(Consumer* consumer,
+                         const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             ~VideoPlayout();
             
             int
             start(int playbackAdjustment = 0);
+            
+            OnFrameSkipped onFrameSkipped_;
             
         private:
             // this flags indicates whether frames should be played out (unless

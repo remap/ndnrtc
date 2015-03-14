@@ -25,14 +25,17 @@ using namespace webrtc;
 
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
+const int Consumer::MaxIdleTimeMs = 500;
+
 //******************************************************************************
 #pragma mark - construction/destruction
 Consumer::Consumer(const GeneralParams& generalParams,
                    const GeneralConsumerParams& consumerParams):
+statStorage_(statistics::StatisticsStorage::createConsumerStatistics()),
 generalParams_(generalParams),
 consumerParams_(consumerParams),
 isConsuming_(false),
-rttEstimation_(new RttEstimation()),
+rttEstimation_(new RttEstimation(statStorage_)),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
@@ -60,9 +63,10 @@ Consumer::init(const ConsumerSettings& settings)
     
     settings_ = settings;
     streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings.userPrefix_, settings_.streamParams_.streamName_);
-    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper()));
+    interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper(),
+                                           statStorage_));
     
-    frameBuffer_.reset(new FrameBuffer(shared_from_this()));
+    frameBuffer_.reset(new FrameBuffer(shared_from_this(), statStorage_));
     frameBuffer_->setLogger(logger_);
     frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
                                                        getDescription().c_str()));
@@ -77,9 +81,10 @@ Consumer::init(const ConsumerSettings& settings)
     
 #ifdef USE_WINDOW_PIPELINER
     pipeliner_.reset(new Pipeliner2(shared_from_this(),
+                                    statStorage_,
                                     getCurrentThreadParameters()->getSegmentsInfo()));
 #else
-    pipeliner_.reset(new Pipeliner(shared_from_this()));
+    pipeliner_.reset(new Pipeliner(shared_from_this(), statStorage_));
 #endif
     
     pipeliner_->setLogger(logger_);
@@ -128,13 +133,36 @@ Consumer::stop()
         observer_->onStatusChanged(ConsumerStatusStopped);
     }
     
+    LogStatC << "final statistics:\n" << getStatistics() << std::endl;
+    
     return RESULT_OK;
+}
+
+int
+Consumer::getIdleTime()
+{
+    return pipeliner_->getIdleTime();
 }
 
 void
 Consumer::triggerRebuffering()
 {
+    LogWarnC
+    << "rebuffering triggered. idle time "
+    << getIdleTime() << std::endl;
+    
+    interestQueue_->reset();
+    playout_->stop();
+    renderer_->stopRendering();
     pipeliner_->triggerRebuffering();
+    rttEstimation_->reset();
+    
+    if (observer_)
+    {
+        CriticalSectionScoped scopedCs(&observerCritSec_);
+        observer_->onRebufferingOccurred();
+    }
+    
 }
 
 void
@@ -171,11 +199,11 @@ Consumer::State
 Consumer::getState() const
 {
     switch (pipeliner_->getState()) {
-        case Pipeliner::StateBuffering: // fall through
-        case Pipeliner::StateChasing:
+        case PipelinerBase::StateBuffering: // fall through
+        case PipelinerBase::StateChasing:
             return Consumer::StateChasing;
             
-        case Pipeliner::StateFetching:
+        case PipelinerBase::StateFetching:
             return Consumer::StateFetching;
 
         default:
@@ -183,29 +211,10 @@ Consumer::getState() const
     }
 }
 
-void
-Consumer::getStatistics(ReceiverChannelPerformance& stat) const
+statistics::StatisticsStorage
+Consumer::getStatistics() const
 {
-    memset(&stat, 0, sizeof(stat));
-    
-    stat.nDataReceived_ = nDataReceived_;
-    stat.nTimeouts_ = nTimeouts_;
-    
-    stat.jitterPlayableMs_ = frameBuffer_->getPlayableBufferSize();
-    stat.jitterEstimationMs_ = frameBuffer_->getEstimatedBufferSize();
-    stat.jitterTargetMs_ = frameBuffer_->getTargetSize();
-    
-    stat.segmentsFrequency_ = NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_);
-    stat.nBytesPerSec_ = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_);
-    stat.actualProducerRate_ = frameBuffer_->getCurrentRate();
-    
-    interestQueue_->getStatistics(stat);
-    
-    stat.playoutStat_ = playout_->getStatistics();
-    stat.bufferStat_ = frameBuffer_->getStatistics();
-    stat.pipelinerStat_ = pipeliner_->getStatistics();
-    stat.rttEstimation_ = rttEstimation_->getCurrentEstimation();
-    dumpStat(stat);
+    return *statStorage_;
 }
 
 void
@@ -252,7 +261,7 @@ Consumer::onBufferingEnded()
     if (!playout_->isRunning())
     {
         unsigned int targetBufferSize = bufferEstimator_->getTargetSize();
-        int adjustment = bufferEstimator_->getTargetSize() - frameBuffer_->getPlayableBufferSize();
+        int adjustment = targetBufferSize - frameBuffer_->getPlayableBufferSize();
         
         if (adjustment < 0)
         {
@@ -277,20 +286,6 @@ Consumer::onBufferingEnded()
 }
 
 void
-Consumer::onRebufferingOccurred()
-{
-    renderer_->stopRendering();
-    interestQueue_->reset();
-    rttEstimation_->reset();
-    
-    if (observer_)
-    {
-        CriticalSectionScoped scopedCs(&observerCritSec_);
-        observer_->onRebufferingOccurred();
-    }
-}
-
-void
 Consumer::onStateChanged(const int &oldState, const int &newState)
 {
     if (observer_)
@@ -299,19 +294,21 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
         ConsumerStatus status;
         
         switch (newState) {
-            case Pipeliner::StateChasing:
-                status = ConsumerStatusChasing;
+            case PipelinerBase::StateWaitInitial:
+            case PipelinerBase::StateAdjust:
+            case PipelinerBase::StateChasing:
+                status = ConsumerStatusAdjusting;
                 break;
-                
-            case Pipeliner::StateBuffering:
+            
+            case PipelinerBase::StateBuffering:
                 status = ConsumerStatusBuffering;
                 break;
                 
-            case Pipeliner::StateFetching:
+            case PipelinerBase::StateFetching:
                 status = ConsumerStatusFetching;
                 break;
                 
-            case Pipeliner::StateInactive:
+            case PipelinerBase::StateInactive:
             default:
                 status = ConsumerStatusStopped;
                 break;
@@ -327,7 +324,7 @@ Consumer::onInitialDataArrived()
     if (observer_)
     {
         CriticalSectionScoped scopedCs(&observerCritSec_);
-        observer_->onStatusChanged(ConsumerStatusChasing);
+        observer_->onStatusChanged(ConsumerStatusAdjusting);
     }
 }
 

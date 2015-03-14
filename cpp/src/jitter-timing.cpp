@@ -17,13 +17,12 @@ using namespace std;
 //******************************************************************************
 #pragma mark - construction/destruction
 JitterTiming::JitterTiming():
-playoutTimer_(*EventWrapper::Create())
+playoutTimer_(io_service_)
 {
     resetData();
 }
 
 JitterTiming::~JitterTiming(){
-    playoutTimer_.~EventWrapper();
 }
 
 //******************************************************************************
@@ -35,9 +34,6 @@ void JitterTiming::flush()
 }
 void JitterTiming::stop()
 {
-    playoutTimer_.Set();
-    playoutTimer_.StopTimer();
-    playoutTimer_.Reset();
     LogTraceC << "stopped" << std::endl;
 }
 
@@ -128,8 +124,8 @@ void JitterTiming::runPlayoutTimer()
     {
         LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
 
-        playoutTimer_.StartTimer(false, framePlayoutTimeMs_);
-        playoutTimer_.Wait(WEBRTC_EVENT_INFINITE);
+        playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
+        playoutTimer_.wait();
         LogTraceC << "timer done]" << endl;
     }
     else

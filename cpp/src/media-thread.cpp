@@ -46,6 +46,7 @@ MediaThread::~MediaThread()
 #pragma mark - public
 int MediaThread::init(const MediaThreadSettings &settings)
 {
+    publishingTimestampMs_ = 0;
     threadPrefix_ =  *NdnRtcNamespace::buildPath(false,
                                                  &settings.streamPrefix_,
                                                  &settings.threadParams_->threadName_, 0);
@@ -92,6 +93,22 @@ int MediaThread::publishPacket(PacketData &packetData,
     if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segSizeNoHeader_)))
         return notifyError(-1, "packet segmentation failed");
     
+#ifdef DROP_FRAMES
+    static int count = 0;
+    count++;
+    bool drop = (count%100 == 0);
+#endif
+#ifdef DELAY_FRAMES
+    static int count2 = 0;
+    count2++;
+    bool delay = (count2 > 200 && count2 % 200 < 10);
+    
+    if (delay)
+    {
+        LogWarnC << "drop frame " << packetPrefix << std::endl;
+        return segments.size();
+    }
+#endif
     try {
         // update metadata for the packet
         PacketData::PacketMetadata metadata = { NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_),
@@ -99,6 +116,8 @@ int MediaThread::publishPacket(PacketData &packetData,
             captureTimestamp};
         
         packetData.setMetadata(metadata);
+        
+        prefixMeta.crcValue_ = packetData.getCrcValue();
         
         Name metaSuffix = PrefixMetaInfo::toName(prefixMeta);
         
@@ -153,7 +172,14 @@ int MediaThread::publishPacket(PacketData &packetData,
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getDefaultWireEncoding().size());
 #endif
-        }
+#ifdef DROP_FRAMES
+            if (drop)
+            {
+                LogWarnC << "drop frame " << packetPrefix << std::endl;
+                break;
+            }
+#endif
+        } // for
         
         cleanPitForFrame(prefix);
     }
@@ -163,6 +189,20 @@ int MediaThread::publishPacket(PacketData &packetData,
                            "got error from ndn library while sending data: %s",
                            e.what());
     }
+    
+    
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    
+    if (publishingTimestampMs_)
+    {
+        int64_t delay = timestamp-publishingTimestampMs_;
+        
+        ((delay > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
+        << "frame publishing delay " << delay
+        << " (" << packetPrefix << ")" << std::endl;
+    }
+    
+    publishingTimestampMs_ = timestamp;
     
     return segments.size();
 }

@@ -16,6 +16,7 @@
 #define FEC_RLIST_SYMREADY '1'
 #define FEC_RLIST_SYMEMPTY '0'
 #define FEC_RLIST_SYMREPAIRED '2'
+#define FEC_RLIST_INPROCESS '3'
 
 extern "C" {
 #include <lib_common/of_openfec_api.h>

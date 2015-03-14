@@ -163,8 +163,7 @@ namespace ndnrtc
     typedef enum _ConsumerStatus {
         ConsumerStatusStopped,
         ConsumerStatusNoData,   // consumer has started but no data received yet
-        ConsumerStatusChasing,  // consumer received first data and is running
-                                // chasing algorithm
+        ConsumerStatusAdjusting,  // consumer re-adjusts interests' window
         ConsumerStatusBuffering,    // consumer has finished chasing and is
                                     // buffering frames unless buffer reaches
                                     // target size

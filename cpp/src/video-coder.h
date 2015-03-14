@@ -20,6 +20,7 @@ namespace ndnrtc {
     
     namespace new_api {
         class IEncodedFrameConsumer;
+        class IEncoderDelegate;
         
         class VideoCoderStatistics : public ObjectStatistics {
         public:
@@ -39,16 +40,11 @@ namespace ndnrtc {
             VideoCoder();
             ~VideoCoder();
             
-            void setFrameConsumer(IEncodedFrameConsumer *frameConsumer) {
+            void setFrameConsumer(IEncoderDelegate *frameConsumer) {
                 frameConsumer_ = frameConsumer;
             }
             
             int init(const VideoCoderParams& settings);
-            
-            // interface conformance - webrtc::EncodedImageCallback
-            int32_t Encoded(const webrtc::EncodedImage& encodedImage,
-                            const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
-                            const webrtc::RTPFragmentationHeader* fragmentation = NULL);
             
             // interface conformance - ndnrtc::IRawFrameConsumer
             void onDeliverFrame(webrtc::I420VideoFrame &frame,
@@ -71,17 +67,22 @@ namespace ndnrtc {
             unsigned int nDroppedByEncoder_ = 0;
             unsigned int rateMeter_;
             int keyFrameCounter_ = 0;
-            uint64_t startEncoding_;
             
             double deliveredTimestamp_;
-            IEncodedFrameConsumer *frameConsumer_ = NULL;
+            IEncoderDelegate *frameConsumer_ = NULL;
             
             webrtc::VideoCodec codec_;
+            const webrtc::CodecSpecificInfo* codecSpecificInfo_;
             std::vector<webrtc::VideoFrameType> keyFrameType_;
             boost::shared_ptr<webrtc::VideoEncoder> encoder_;
             
             webrtc::Scaler frameScaler_;
             webrtc::I420VideoFrame scaledFrame_;
+            
+            // interface conformance - webrtc::EncodedImageCallback
+            int32_t Encoded(const webrtc::EncodedImage& encodedImage,
+                            const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
+                            const webrtc::RTPFragmentationHeader* fragmentation = NULL);
             
             void
             initScaledFrame();
@@ -92,17 +93,20 @@ namespace ndnrtc {
         public:
             virtual void
             onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                    double captureTimestamp) = 0;
+                                    double captureTimestamp,
+                                    bool completeFrame = true) = 0;
+        };
+        
+        class IEncoderDelegate : public IEncodedFrameConsumer
+        {
+        public:
+            virtual void
+            onEncodingStarted() = 0;
+            
+            virtual void
+            onFrameDropped() = 0;
         };
     }
-        
-    class IEncodedFrameConsumer
-    {
-    public:
-        virtual void
-        onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                double captureTimestamp) = 0;
-    };
 }
 
 #endif /* defined(__ndnrtc__video_coder__) */

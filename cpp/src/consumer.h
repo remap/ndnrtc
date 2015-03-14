@@ -93,9 +93,6 @@ namespace ndnrtc {
             onBufferingEnded() = 0;
             
             virtual void
-            onRebufferingOccurred() = 0;
-            
-            virtual void
             onInitialDataArrived() = 0;
             
             virtual void
@@ -142,6 +139,8 @@ namespace ndnrtc {
                 StateFetching = 1
             } State;
             
+            static const int MaxIdleTimeMs;
+            
             Consumer(const GeneralParams& generalParams,
                      const GeneralConsumerParams& consumerParams);
             virtual ~Consumer();
@@ -169,7 +168,10 @@ namespace ndnrtc {
                 observer_ = NULL;
             }
             
-            void
+            int
+            getIdleTime();
+            
+            virtual void
             triggerRebuffering();
             
             State
@@ -253,8 +255,8 @@ namespace ndnrtc {
             getAvSynchronizer() const
             { return avSync_; }
             
-            void
-            getStatistics(ReceiverChannelPerformance& stat) const;
+            statistics::StatisticsStorage
+            getStatistics() const;
             
             virtual void
             setLogger(ndnlog::new_api::Logger* logger);
@@ -268,9 +270,6 @@ namespace ndnrtc {
             
             virtual void
             onBufferingEnded();
-            
-            virtual void
-            onRebufferingOccurred();
             
             virtual void
             onStateChanged(const int& oldState, const int& newState);
@@ -314,6 +313,7 @@ namespace ndnrtc {
             std::string streamPrefix_;
             unsigned int currentThreadIdx_ = 0;
             
+            boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             boost::shared_ptr<PipelinerBase> pipeliner_;
             boost::shared_ptr<InterestQueue> interestQueue_;
