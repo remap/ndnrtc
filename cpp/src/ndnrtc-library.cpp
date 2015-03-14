@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 //
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <memory>
@@ -31,7 +32,7 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
-#define LIB_LOG "ndnrtc.log"
+static std::string LIB_LOG = "ndnrtc.log";
 
 static shared_ptr<FaceProcessor> LibraryFace;
 
@@ -52,6 +53,7 @@ static boost::mutex recoveryCheckMutex;
 typedef boost::lock_guard<boost::mutex> ScopedLock;
 
 void recoveryCheck(const boost::system::error_code& e);
+std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName);
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -240,6 +242,8 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         ISessionObserver *sessionObserver)
 {
+    LIB_LOG = getFullLogPath(generalParams, generalParams.logFile_);
+    
     Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
     LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
     
@@ -476,10 +480,13 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     }
     
     std::string username = NdnRtcNamespace::getUserName(remoteSessionPrefix);
+    std::string logFile = getFullLogPath(generalParams,
+                                         NdnRtcUtils::toString("consumer-%s-%s.log",
+                                                               username.c_str(),
+                                                               params.streamName_.c_str()));
+    
     remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
-                                               NdnRtcUtils::toString("consumer-%s-%s.log",
-                                                                     username.c_str(),
-                                                                     params.streamName_.c_str())));
+                                               logFile));
     
     if (RESULT_FAIL(remoteStreamConsumer->start()))
         return "";
@@ -493,7 +500,7 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     return remoteStreamConsumer->getPrefix();
 }
 
-int
+std::string
 NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
 {
     LogInfo(LIB_LOG) << "Removing stream " << streamPrefix << "..." << std::endl;
@@ -503,9 +510,10 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     if (it == ActiveStreamConsumers.end())
     {
         LogError(LIB_LOG) << "Stream was not added previously" << std::endl;
-        return RESULT_ERR;
+        return "";
     }
     
+    std::string logFileName = it->second->getLogger()->getFileName();
     it->second->stop();
     {
         ScopedLock lock(recoveryCheckMutex);
@@ -513,7 +521,8 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     }
     
     LogInfo(LIB_LOG) << "Stream removed succesfully" << std::endl;
-    return RESULT_OK;
+    
+    return logFileName;
 }
 
 int
@@ -690,4 +699,12 @@ void recoveryCheck(const boost::system::error_code& e)
             << e.what() << std::endl;
         }
     }
+    else
+        LogInfo(LIB_LOG) << "Recovery checks aborted" << std::endl;
+}
+
+std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName)
+{
+    static char logPath[PATH_MAX];
+    return ((generalParams.logPath_ == "")?std::string(getwd(logPath)):generalParams.logPath_) + "/" + fileName;
 }

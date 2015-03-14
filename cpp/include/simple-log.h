@@ -264,6 +264,10 @@ namespace ndnlog {
             void
             flush();
             
+            std::string
+            getFileName() const
+            { return logFile_; }
+            
         private:
             NdnLoggerDetailLevel logLevel_;
             std::string logFile_;

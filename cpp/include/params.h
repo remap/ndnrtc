@@ -295,6 +295,7 @@ namespace ndnrtc
             // general
             ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelNone;
             std::string logFile_ = "";
+            std::string logPath_ = "";
             bool
             useTlv_ = false,
             useRtx_ = false,

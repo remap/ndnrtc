@@ -156,9 +156,9 @@ namespace ndnrtc {
          * Removes remote stream and stops fetching from it
          * @param streamPrefix Stream prefix returned by previous addRemoteStream 
          *                     call
-         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @return Full log file path on success, empty string on failure
          */
-        virtual int
+        virtual std::string
         removeRemoteStream(const std::string& streamPrefix);
         
         /**
