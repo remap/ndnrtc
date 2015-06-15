@@ -9,6 +9,7 @@
 //
 
 #include "frame-data.h"
+#include "ndnrtc-utils.h"
 #include "params.h"
 #include "fec.h"
 
@@ -541,6 +542,7 @@ void
 SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
 {
     isDataCopied_ = true;
+    isValid_ = true;
     length_ = getSessionInfoLength(sessionInfo);
     
     data_ = (unsigned char*)malloc(length_);

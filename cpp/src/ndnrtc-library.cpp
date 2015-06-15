@@ -25,6 +25,7 @@
 #include "external-capturer.hpp"
 #include "session.h"
 #include "error-codes.h"
+#include "frame-data.h"
 
 using namespace boost;
 using namespace ndnrtc;
@@ -573,8 +574,6 @@ NdnRtcLibrary::getStreamThread(const std::string& streamPrefix)
     
     if (it == ActiveStreamConsumers.end())
     {
-        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
-                                                "stream was not found");
         return "";
     }
     
@@ -609,8 +608,6 @@ NdnRtcLibrary::getRemoteStreamStatistics(const std::string& streamPrefix)
     
     if (it == ActiveStreamConsumers.end())
     {
-        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_NOT_FOUND,
-                                                "stream was not found");
         return *statistics::StatisticsStorage::createConsumerStatistics();
     }
     
@@ -625,6 +622,39 @@ NdnRtcLibrary::getVersionString(char **versionString)
         memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
                
     return;
+}
+
+void
+NdnRtcLibrary::serializeSessionInfo(const SessionInfo &sessionInfo,
+                                    unsigned int &length,
+                                    unsigned char **bytes)
+{
+    SessionInfoData sessionInfoData(sessionInfo);
+
+    if (sessionInfoData.isValid())
+    {
+        length = sessionInfoData.getLength();
+        *bytes = (unsigned char*)malloc(length*sizeof(unsigned char));
+        memcpy(*bytes, sessionInfoData.getData(), length*sizeof(unsigned char));
+    }
+    else
+        length = 0;
+}
+
+bool
+NdnRtcLibrary::deserializeSessionInfo(const unsigned int length,
+                                      const unsigned char *bytes,
+                                      SessionInfo &sessionInfo)
+{
+    SessionInfoData sessionInfoData(length, bytes);
+    
+    if (sessionInfoData.isValid())
+    {
+        sessionInfoData.getSessionInfo(sessionInfo);
+        return true;
+    }
+    
+    return false;
 }
 
 //********************************************************************************

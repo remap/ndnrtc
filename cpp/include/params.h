@@ -414,7 +414,6 @@ namespace ndnrtc
                 return *this;
             }
             
-            
             std::vector<MediaStreamParams*> audioStreams_;
             std::vector<MediaStreamParams*> videoStreams_;
             

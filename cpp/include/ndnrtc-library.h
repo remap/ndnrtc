@@ -222,6 +222,31 @@ namespace ndnrtc {
          * version will be stored.
          */
         virtual void getVersionString(char **versionString);
+        
+        /**
+         * Serializes session info structure into an array of bytes.
+         * @param sessionInfo Session info structure to serialize
+         * @param length Upon succesfull serialization, contains lenght of the
+         *   byte array, otherwise - 0
+         * @param bytes Contains serialized bytes array for session info structure
+         * @note Bytes array is allocated inside this function. One should check
+         * length parameter - if it's greater than 0, deallocation of bytes array 
+         * is the responsibility of the caller.
+         */
+        virtual void serializeSessionInfo(const new_api::SessionInfo &sessionInfo,
+                                          unsigned int &length,
+                                          unsigned char **bytes);
+        
+        /**
+         * Deserializes bytes array into a session info structure
+         * @param length Length of the bytes array
+         * @param btyes Bytes array containing session info strcture bytes
+         * @param sessionInfo Deserialized session info structure
+         * @return true if deserialization was successeful, false otherwise
+         */
+        virtual bool deserializeSessionInfo(const unsigned int length,
+                                            const unsigned char *bytes,
+                                            new_api::SessionInfo &sessionInfo);
 
     private:
         int notifyObserverWithError(const char *format, ...) const;

@@ -69,7 +69,7 @@ ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixSt
     catch (std::exception &e)
     {
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s\n"
-                    "Make sure your local NDN daemon is running",
+                    "Make sure your local NDN daemon is configured and running",
                     e.what());
         
         if (serviceChannelCallback_)
@@ -90,7 +90,7 @@ ServiceChannel::stopSessionInfoBroadcast()
     }
     catch (std::exception &e) {
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s"
-                    "Make sure your local NDN daemon is running"
+                    "Make sure your local NDN daemon is configured and running"
                     , e.what());
     }
     
@@ -168,7 +168,7 @@ ServiceChannel::requestSessionInfo()
                                                              exception.what());
             
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
-                    "Make sure your local NDN daemon is running",
+                    "Make sure your local NDN daemon is configured and running",
                     exception.what());
     }
 }

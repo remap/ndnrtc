@@ -14,7 +14,6 @@
 #include <boost/crc.hpp>
 
 #include "ndnrtc-common.h"
-#include "ndnrtc-utils.h"
 #include "params.h"
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
