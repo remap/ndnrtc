@@ -6,10 +6,10 @@ Prerequisites
 These are prerequisites to build NDN-RTC.
 
 **Required:**
-* [NDN-CPP](https://github.com/named-data/ndn-cpp)
-* [WebRTC](https://code.google.com/p/webrtc/)
+* [NDN-CPP v0.7](https://github.com/named-data/ndn-cpp)
+* [WebRTC branch-heads/44](https://code.google.com/p/webrtc/)
 * [OpenFEC](http://openfec.org/downloads.html)
-* [Boost](http://www.boost.org/users/download/)
+* [Boost v1.54.0](http://www.boost.org/users/download/)
 * pthread
 
 **Optional (for demo app only)**
@@ -24,18 +24,18 @@ MacOS build considerations
 
 NDN-RTC library is statically linked to its prerequisites. Therefore it's important to verify that all prerequisites which are C++ libraries were built using the same standard c++ library (either libc++ or libstdc++) - otherwise, linking stage will fail. This can be ensured by passing flag `-stdlib=libc++` or `-stdlib=libstdc++` to the compiler. Please, make sure that all prerequisites were built against the same version of standard library (especially WebRTC and NDN-CPP). WebRTC is usually built against libstdc++. In general it makes sense to pass `-stdlib=libstdc++` flag while building other prerequisites. In further instructions the preference is given to libstdc++ library.
 
-NDN-CPP
+NDN-CPP (v0.7)
 --
 NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
 
-In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to the standard shared pointers. Therefore, to build NDN-CPP static library using Boost and libstdc++, one should configure NDN-CPP like this (given that the Boost library is installed on the system):
+In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to the standard shared pointers. Therefore, to build NDN-CPP static library using Boost and libstdc++, one should configure NDN-CPP like this:
 <pre>
-$ ./configure --with-std-shared-ptr=no --with-std-function=no CXXFLAGS="-stdlib=libstdc++" --enable-shared=no
+$ ./configure --with-std-shared-ptr=no --with-std-function=no CXXFLAGS="-stdlib=libstdc++ -I &lt;path_to_Boost_1.54.0_folder&gt;" --enable-shared=no BOOST_LDFLAGS="-L &lt;path_to_Boost_1.54.0._stage_lib_folder&gt;"
 </pre>
 
-WebRTC
+WebRTC (branch-heads/44)
 --
-Here are the detailed instructions on [how to build WebRTC](http://www.webrtc.org/reference/getting-started).
+Here are the detailed instructions on [how to build WebRTC](http://www.webrtc.org/native-code/development).
 
 By default, WebRTC is built for 32-bit architecture (event on 64-bit machines). To override this behavior run:
 <pre>
@@ -87,4 +87,5 @@ $ ./configure WEBRTCDIR=&lt;path to WebRTC trunk folder> OPENFECDIR=&lt;path to 
 $ make
 $ sudo make install
 </pre>
+
 
