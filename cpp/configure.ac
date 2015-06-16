@@ -313,6 +313,16 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_FAILURE([not found])
 ])
 
+AC_MSG_CHECKING([check linking with libs $LIBS...])
+AC_LINK_IFELSE(
+ 	[AC_LANG_PROGRAM([#include <boost/asio.hpp>
+	  #include <boost/asio/steady_timer.hpp>],
+ 		[boost::asio::io_service io_service_;
+    boost::asio::steady_timer timer_(io_service_);])],
+ 		[AC_MSG_RESULT([yes])],
+ 		[AC_MSG_FAILURE([can't find required boost libraries (boost_system-mt, boost_timer-mt, boost_chrono-mt)])]
+)
+
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
