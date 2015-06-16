@@ -199,7 +199,7 @@ FaceProcessor::FaceProcessor(const shared_ptr<FaceWrapper>& faceWrapper):
 isProcessing_(false),
 usecInterval_(100),
 faceWrapper_(faceWrapper),
-processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFaceEventsRoutine, this))
+processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFaceEventsRoutine, this, "face-processing"))
 {
 }
 
@@ -222,9 +222,7 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
     {
         usecInterval_ = usecInterval;
         isProcessing_ = true;
-        
-        unsigned int tid;
-        processingThread_.Start(tid);
+        processingThread_.Start();
     }
     return RESULT_OK;
 }
@@ -234,7 +232,7 @@ FaceProcessor::stopProcessing()
 {
     if (isProcessing_)
     {
-        processingThread_.SetNotAlive();
+//        processingThread_.SetNotAlive();
         isProcessing_ = false;
         processingThread_.Stop();
     }

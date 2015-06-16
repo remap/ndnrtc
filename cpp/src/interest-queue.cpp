@@ -39,7 +39,7 @@ freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
 queueAccess_(*RWLockWrapper::CreateRWLock()),
 queueEvent_(*EventWrapper::Create()),
-queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this, ThreadPriority:: kRealtimePriority)),
+queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this, "interest-queue")),
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {
@@ -102,15 +102,13 @@ void
 InterestQueue::startQueueWatching()
 {
     isWatchingQueue_ = true;
-    
-    unsigned int tid;
-    queueWatchingThread_.Start(tid);
+    queueWatchingThread_.Start();
 }
 
 void
 InterestQueue::stopQueueWatching()
 {
-    queueWatchingThread_.SetNotAlive();
+//    queueWatchingThread_.SetNotAlive();
     isWatchingQueue_ = false;
     queueEvent_.Set();
     queueWatchingThread_.Stop();

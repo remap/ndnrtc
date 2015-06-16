@@ -217,23 +217,25 @@ void MediaThread::registerPrefix(const Name& prefix)
                                   bind(&MediaThread::onRegisterFailed,
                                        this, _1),
                                   bind(&MediaThread::onInterest,
-                                       this, _1, _2, _3));
+                                       this, _1, _2, _3, _4, _5));
     }
     else
     {
-        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(prefix,
-                                                                             bind(&MediaThread::onInterest,
-                                                                                  this, _1, _2, _3),
-                                                                             bind(&MediaThread::onRegisterFailed,
-                                                                                  this, _1));
-        if (registeredPrefixId_ != 0)
-            LogTraceC << "registered prefix " << prefix << std::endl;
+//        registeredPrefixId_ = faceProcessor_->getFaceWrapper()->registerPrefix(prefix,
+//                                                                             bind(&MediaThread::onInterest,
+//                                                                                  this, _1, _2, _3, _4, _5),
+//                                                                             bind(&MediaThread::onRegisterFailed,
+//                                                                                  this, _1));
+//        if (registeredPrefixId_ != 0)
+//            LogTraceC << "registered prefix " << prefix << std::endl;
     }
 }
 
 void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
                              const shared_ptr<const Interest>& interest,
-                             ndn::Transport& transport)
+                             ndn::Face& face,
+                             uint64_t ts,
+                             const shared_ptr<const InterestFilter>& filter)
 {
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
 

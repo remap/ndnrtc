@@ -26,8 +26,8 @@ ServiceChannel::ServiceChannel(IServiceChannelPublisherCallback* callback,
                                unsigned int freshnessIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
-monitorTimer_(*EventWrapper::Create()),
+monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
+monitorTimer_(*EventTimerWrapper::Create()),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
@@ -40,8 +40,8 @@ ServiceChannel::ServiceChannel(IServiceChannelListenerCallback* callback,
                                unsigned int updateIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
-monitorTimer_(*EventWrapper::Create()),
+monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
+monitorTimer_(*EventTimerWrapper::Create()),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 updateIntervalMs_(updateIntervalMs)
@@ -122,9 +122,7 @@ void
 ServiceChannel::startMonitorThread()
 {
     isMonitoring_ = true;
-    
-    unsigned int tid;
-    monitoringThread_.Start(tid);
+    monitoringThread_.Start();
 }
 
 void
@@ -137,7 +135,7 @@ ServiceChannel::stopMonitorThread()
     
     monitorTimer_.Set();
     monitoringThread_.Stop();
-    monitoringThread_.SetNotAlive();
+//    monitoringThread_.SetNotAlive();
 }
 
 bool

@@ -33,7 +33,7 @@ namespace ndnrtc {
         
     private:
         int64_t incomingTimestampMs_;
-        webrtc::I420VideoFrame convertedFrame_;
+        WebRtcVideoFrame convertedFrame_;
         
         int startCapture();
         int stopCapture();

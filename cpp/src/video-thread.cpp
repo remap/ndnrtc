@@ -78,7 +78,7 @@ VideoThread::getStatistics(VideoThreadStatistics& statistics)
 //******************************************************************************
 #pragma mark - interfaces realization
 void
-VideoThread::onDeliverFrame(webrtc::I420VideoFrame &frame,
+VideoThread::onDeliverFrame(WebRtcVideoFrame &frame,
                                double unixTimeStamp)
 {
     coder_->onDeliverFrame(frame, unixTimeStamp);

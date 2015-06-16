@@ -69,7 +69,7 @@ namespace ndnrtc
             
             // interface conformance
             void
-            onDeliverFrame(webrtc::I420VideoFrame &frame,
+            onDeliverFrame(WebRtcVideoFrame &frame,
                            double unixTimeStamp);
             
             void

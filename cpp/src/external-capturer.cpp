@@ -105,7 +105,7 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
                                                0, 0,  // No cropping
                                                width, height,
                                                frameSize,
-                                               kRotateNone,
+                                               kVideoRotation_0,
                                                &convertedFrame_);
     if (conversionResult < 0)
         return notifyError(RESULT_ERR, "Failed to convert capture frame to I420");

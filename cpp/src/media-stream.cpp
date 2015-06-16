@@ -91,7 +91,7 @@ MediaStream(),
 capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliverEvent_(*EventWrapper::Create()),
 processThread_(*ThreadWrapper::CreateThread(processFrameDelivery, this,
-                                            kHighPriority)),
+                                            "video-stream-processing")),
 capturer_(new ExternalCapturer())
 {
     description_ = "video-stream";
@@ -105,8 +105,7 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
     
     capturer_->setLogger(logger_);
     
-    unsigned int tid;
-    processThread_.Start(tid);
+    processThread_.Start();
     
     return RESULT_OK;
 }
@@ -140,7 +139,7 @@ VideoStream::getStreamParameters()
 void
 VideoStream::release()
 {
-    processThread_.SetNotAlive();
+//    processThread_.SetNotAlive();
     deliverEvent_.Set();
     processThread_.Stop();
 }
@@ -165,11 +164,11 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
 }
 
 void
-VideoStream::onDeliverFrame(webrtc::I420VideoFrame &frame,
+VideoStream::onDeliverFrame(WebRtcVideoFrame &frame,
                                  double timestamp)
 {
     capture_cs_->Enter();
-    capturedFrame_.SwapFrame(&frame);
+    capturedFrame_.CopyFrame(frame);
     deliveredTimestamp_ = timestamp;
     capture_cs_->Leave();
     
@@ -182,7 +181,8 @@ VideoStream::processDeliveredFrame()
     if (deliverEvent_.Wait(100) == kEventSignaled)
     {
         capture_cs_->Enter();
-        deliverFrame_.SwapFrame(&capturedFrame_);
+        deliverFrame_.CopyFrame(capturedFrame_);
+//        deliverFrame_.SwapFrame(&capturedFrame_);
         capture_cs_->Leave();
         
         if (!deliverFrame_.IsZeroSize()) {

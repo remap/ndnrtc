@@ -17,7 +17,7 @@ BaseCapturer::BaseCapturer():
 capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
 captureEvent_(*EventWrapper::Create()),
-captureThread_(*ThreadWrapper::CreateThread(processCapturedFrame, this,  kHighPriority)),
+captureThread_(*ThreadWrapper::CreateThread(processCapturedFrame, this, "capture-thread")),
 lastFrameTimestamp_(0)
 {
     description_ = "capturer";
@@ -35,9 +35,7 @@ int BaseCapturer::init()
 
 int BaseCapturer::startCapture()
 {
-    unsigned int tid = 0;
-    
-    if (!captureThread_.Start(tid))
+    if (!captureThread_.Start())
         return notifyError(RESULT_ERR, "can't start capturing thread");
 
     return RESULT_OK;
@@ -47,7 +45,7 @@ int BaseCapturer::stopCapture()
 {
     isCapturing_ = false;
     
-    captureThread_.SetNotAlive();
+//    captureThread_.SetNotAlive();
     captureEvent_.Set();
     
     if (!captureThread_.Stop())
@@ -72,8 +70,9 @@ bool BaseCapturer::process()
             LogTraceC << "swapping frames" << std::endl;
             capture_cs_->Enter();
             int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
-            deliverFrame_.SwapFrame(&capturedFrame_);
-            capturedFrame_.ResetSize();
+            deliverFrame_.CopyFrame(capturedFrame_);
+            //deliverFrame_.SwapFrame(&capturedFrame_);
+            //capturedFrame_.ResetSize();
             capture_cs_->Leave();
             LogTraceC << "checking frame consumer" << std::endl;
             
@@ -98,12 +97,13 @@ bool BaseCapturer::process()
     return true;
 }
 
-void BaseCapturer::deliverCapturedFrame(webrtc::I420VideoFrame& frame)
+void BaseCapturer::deliverCapturedFrame(WebRtcVideoFrame& frame)
 {
     if (isCapturing_)
     {
         capture_cs_->Enter();
-        capturedFrame_.SwapFrame(&frame);
+        capturedFrame_.CopyFrame(frame);
+//        capturedFrame_.SwapFrame(&frame);
         capture_cs_->Leave();
         
         captureEvent_.Set();

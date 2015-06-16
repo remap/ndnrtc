@@ -56,7 +56,7 @@ public:
             delete sampleFrame_;
     }
     
-    void onDeliverFrame(webrtc::I420VideoFrame &frame)
+    void onDeliverFrame(WebRtcVideoFrame &frame)
     {
         decodedFrame_.CopyFrame(frame);
         obtainedFramesCount_ ++;
@@ -65,7 +65,7 @@ public:
     
 protected:
     webrtc::VideoCodec codec_;
-    webrtc::I420VideoFrame decodedFrame_;
+    WebRtcVideoFrame decodedFrame_;
     int obtainedFramesCount_ = 0;
     bool obtainedFrame_ = false;
     

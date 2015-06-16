@@ -197,7 +197,7 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
 }
 //********************************************************************************
 #pragma mark - intefaces realization - IRawFrameConsumer
-void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
+void VideoCoder::onDeliverFrame(WebRtcVideoFrame &frame,
                                    double timestamp)
 {
     LogTraceC << "encoding..." << endl;
@@ -235,7 +235,7 @@ void VideoCoder::onDeliverFrame(webrtc::I420VideoFrame &frame,
             scaled = true;
     }
     
-    I420VideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
+    WebRtcVideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
     
     if (keyFrameCounter_%settings_.gop_ == 0)
         err = encoder_->Encode(processedFrame, codecSpecificInfo_, &keyFrameType_);

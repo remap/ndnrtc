@@ -54,7 +54,7 @@ void NdnVideoDecoder::reset()
 
 //********************************************************************************
 #pragma mark - intefaces realization webrtc::DecodedImageCallback
-int32_t NdnVideoDecoder::Decoded(I420VideoFrame &decodedImage)
+int32_t NdnVideoDecoder::Decoded(WebRtcVideoFrame &decodedImage)
 {
     decodedImage.set_render_time_ms(NdnRtcUtils::millisecondTimestamp());
     

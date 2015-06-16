@@ -112,7 +112,7 @@ protected:
     webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
     webrtc::ThreadWrapper &processThread_;
     webrtc::EventWrapper &deliverEvent_;
-    webrtc::I420VideoFrame deliverFrame_;
+    WebRtcVideoFrame deliverFrame_;
     
     static bool processDeliveredFrame(void *obj) {
         return ((VideoRendererTester*)obj)->process();
@@ -217,7 +217,7 @@ TEST_F(VideoRendererTester, TestRender)
     r.startRendering("sample");
     WAIT(1000);
     
-    webrtc::I420VideoFrame frame, nextFrame;
+    WebRtcVideoFrame frame, nextFrame;
     unsigned int nFrames = 0;
     
     if (fr.readFrame(frame) >= 0)

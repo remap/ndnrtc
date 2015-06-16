@@ -77,7 +77,7 @@ namespace ndnrtc
         static webrtc::VoiceEngine *sharedVoiceEngine();
         static void releaseVoiceEngine();
         
-        static std::string stringFromFrameType(const webrtc::VideoFrameType &frameType);
+        static std::string stringFromFrameType(const WebRtcVideoFrameType &frameType);
         
         static unsigned int toFrames(unsigned int intervalMs,
                                      double fps);

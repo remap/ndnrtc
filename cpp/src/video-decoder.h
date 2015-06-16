@@ -50,7 +50,7 @@ namespace ndnrtc {
             resetDecoder();
             
             // interface conformance - webrtc::DecodedImageCallback
-            int32_t Decoded(webrtc::I420VideoFrame& decodedImage);
+            int32_t Decoded(WebRtcVideoFrame& decodedImage);
         };
     }
 }

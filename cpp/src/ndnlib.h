@@ -13,6 +13,7 @@
 #define ndnrtc_ndnlib_h
 
 #include <ndn-cpp/interest.hpp>
+#include <ndn-cpp/interest-filter.hpp>
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/transport/tcp-transport.hpp>
 #include <ndn-cpp/transport/udp-transport.hpp>

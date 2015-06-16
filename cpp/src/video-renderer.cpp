@@ -47,7 +47,7 @@ ExternalVideoRendererAdaptor::stopRendering()
 
 //******************************************************************************
 void
-ExternalVideoRendererAdaptor::onDeliverFrame(webrtc::I420VideoFrame &frame,
+ExternalVideoRendererAdaptor::onDeliverFrame(WebRtcVideoFrame &frame,
                                              double timestamp)
 {
     uint8_t *rgbFrameBuffer = externalRenderer_->getFrameBuffer(frame.width(),
