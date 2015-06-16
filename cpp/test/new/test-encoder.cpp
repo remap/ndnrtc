@@ -80,7 +80,7 @@ public:
     }
     
     void
-    onDeliverFrame(webrtc::I420VideoFrame &frame,
+    onDeliverFrame(WebRtcVideoFrame &frame,
                    double unixTimeStamp)
     {
         nDecodedFrames_++;
@@ -96,7 +96,7 @@ public:
     int nDrop = 60;
     int nSimulatedDropped_ = 0, nDroppedDelta_ = 0;
     
-    webrtc::I420VideoFrame frame_;
+    WebRtcVideoFrame frame_;
     FrameWriter writer;
     NdnVideoDecoder decoder;
     VideoCoder coder;
@@ -110,7 +110,7 @@ TEST_F(EncoderTests, Test1)
     decoder.setFrameConsumer(this);
     
     FrameReader frameReader("bin/unit-tests/captured_640x480.i420");
-    webrtc::I420VideoFrame frame;
+    WebRtcVideoFrame frame;
     int i = 0;
     
     std::cout << "start reading file " << std::endl;

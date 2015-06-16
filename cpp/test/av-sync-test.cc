@@ -58,7 +58,7 @@ public:
         obtainedFramesCount_ = 0;
     }
     
-    void onDeliverFrame(webrtc::I420VideoFrame &frame)
+    void onDeliverFrame(WebRtcVideoFrame &frame)
     {
         deliver_cs_->Enter();
         obtainedFramesCount_++;
@@ -96,7 +96,7 @@ protected:
     webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
     webrtc::ThreadWrapper &processThread_;
     webrtc::EventWrapper &deliverEvent_, &completionEvent_;
-    webrtc::I420VideoFrame deliverFrame_;
+    WebRtcVideoFrame deliverFrame_;
     
     uint64_t startTime_, grabbingDuration_;
     int obtainedFramesCount_ = 0, byteCounter_ = 0;
@@ -502,7 +502,7 @@ protected:
     
     bool videoProc()
     {
-        webrtc::I420VideoFrame frame, nextFrame;
+        WebRtcVideoFrame frame, nextFrame;
         unsigned int nFrames = 0;
         
         if (videoOffsetMs_)
@@ -556,7 +556,7 @@ public:
     
     void testSync()
     {
-        webrtc::I420VideoFrame frame, nextFrame;
+        WebRtcVideoFrame frame, nextFrame;
         NdnAudioData::AudioPacket audioSample, nextSample;
         
         audioSample.data_ = (unsigned char*)malloc(500);

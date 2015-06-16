@@ -389,7 +389,7 @@ SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
 
 AC_MSG_NOTICE([checking for WebRTC header files:])
-AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h video_engine/vie_impl.h modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h], 
+AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h  modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h], 
 [],
 [AC_MSG_FAILURE([
 	   can't find WebRTC header files
@@ -404,7 +404,6 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -laudio_processing_sse2 \
    -lbitrate_controller \
    -lchannel_transport \
-   -lCNG \
    -lcommon_audio \
    -lcommon_audio_sse2 \
    -lcommon_video \
@@ -412,22 +411,14 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -ldesktop_capture_differ_sse2 \
    -lframe_editing_lib \
    -lframe_generator \
-   -lG711 \
-   -lG722 \
-   -liLBC \
-   -liSAC \
-   -liSACFix \
    -ljpeg_turbo \
    -lmedia_file \
    -lmetrics \
-   -lNetEq \
    -lopus \
    -lpaced_sender \
    -lprotobuf_lite \
-   -lPCM16B \
    -lrtp_rtcp \
    -lrtc_base_approved \
-   -lrbe_components \
    -lsystem_wrappers \
    -lvideo_capture_module \
    -lvideo_coding_utility \

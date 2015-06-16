@@ -26,8 +26,8 @@ ServiceChannel::ServiceChannel(IServiceChannelPublisherCallback* callback,
                                unsigned int freshnessIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
-monitorTimer_(*EventWrapper::Create()),
+monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
+monitorTimer_(*EventTimerWrapper::Create()),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
@@ -40,8 +40,8 @@ ServiceChannel::ServiceChannel(IServiceChannelListenerCallback* callback,
                                unsigned int updateIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this)),
-monitorTimer_(*EventWrapper::Create()),
+monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
+monitorTimer_(*EventTimerWrapper::Create()),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 updateIntervalMs_(updateIntervalMs)
@@ -69,7 +69,7 @@ ServiceChannel::startSessionInfoBroadcast(const std::string& sessionInfoPrefixSt
     catch (std::exception &e)
     {
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s\n"
-                    "Make sure your local NDN daemon is running",
+                    "Make sure your local NDN daemon is configured and running",
                     e.what());
         
         if (serviceChannelCallback_)
@@ -90,7 +90,7 @@ ServiceChannel::stopSessionInfoBroadcast()
     }
     catch (std::exception &e) {
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN library: %s"
-                    "Make sure your local NDN daemon is running"
+                    "Make sure your local NDN daemon is configured and running"
                     , e.what());
     }
     
@@ -122,9 +122,7 @@ void
 ServiceChannel::startMonitorThread()
 {
     isMonitoring_ = true;
-    
-    unsigned int tid;
-    monitoringThread_.Start(tid);
+    monitoringThread_.Start();
 }
 
 void
@@ -137,7 +135,7 @@ ServiceChannel::stopMonitorThread()
     
     monitorTimer_.Set();
     monitoringThread_.Stop();
-    monitoringThread_.SetNotAlive();
+//    monitoringThread_.SetNotAlive();
 }
 
 bool
@@ -168,7 +166,7 @@ ServiceChannel::requestSessionInfo()
                                                              exception.what());
             
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
-                    "Make sure your local NDN daemon is running",
+                    "Make sure your local NDN daemon is configured and running",
                     exception.what());
     }
 }

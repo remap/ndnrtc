@@ -107,6 +107,9 @@ namespace ndnrtc
         onSessionError(const char* username, const char* sessionPrefix,
                        SessionStatus status, unsigned int errorCode,
                        const char* errorMessage) = 0;
+        
+        virtual void
+        onSessionInfoUpdate(const new_api::SessionInfo& sessionInfo) = 0;
     };
     
     class IRemoteSessionObserver {

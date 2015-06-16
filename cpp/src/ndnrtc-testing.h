@@ -84,7 +84,7 @@ namespace ndnrtc {
             FrameReader(const char *fileName) : PacketReader(fileName){}
             ~FrameReader(){}
             
-            int readFrame(webrtc::I420VideoFrame &frame)
+            int readFrame(WebRtcVideoFrame &frame)
             {
                 if (!f_)
                     return -1;
@@ -174,7 +174,7 @@ namespace ndnrtc {
             FrameWriter(const char *fileName) : PacketWriter(fileName){}
             ~FrameWriter(){}
             
-            void writeFrame(webrtc::I420VideoFrame &frame, bool raw)
+            void writeFrame(WebRtcVideoFrame &frame, bool raw)
             {
                 /*
                  How frame is stored in file:
@@ -345,7 +345,7 @@ namespace ndnrtc {
                 frame._encodedHeight = height;
                 frame._timeStamp = timestamp;
                 frame.capture_time_ms_ = captureTime;
-                frame._frameType = (webrtc::VideoFrameType)frameType;
+                frame._frameType = (WebRtcVideoFrameType)frameType;
                 frame._completeFrame = completeFrame;
                 
                 return 0;

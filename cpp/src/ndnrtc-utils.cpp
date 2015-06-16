@@ -81,7 +81,6 @@ static std::vector<InclineEstimator> inclineEstimators_;
 static std::vector<SlidingAverage> slidingAverageEstimators_;
 
 static VoiceEngine *VoiceEngineInstance = NULL;
-static Config AudioConfig;
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
@@ -560,7 +559,7 @@ void NdnRtcUtils::releaseVoiceEngine()
     VoiceEngine::Delete(VoiceEngineInstance);
 }
 
-string NdnRtcUtils::stringFromFrameType(const webrtc::VideoFrameType &frameType)
+string NdnRtcUtils::stringFromFrameType(const WebRtcVideoFrameType &frameType)
 {
     switch (frameType) {
         case webrtc::kDeltaFrame:

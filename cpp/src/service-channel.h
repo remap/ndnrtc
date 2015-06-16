@@ -103,7 +103,7 @@ namespace ndnrtc {
             Name sessionInfoPrefix_;
             
             webrtc::ThreadWrapper &monitoringThread_;
-            webrtc::EventWrapper &monitorTimer_;
+            webrtc::EventTimerWrapper &monitorTimer_;
             
             static bool
             processMonitoring(void *obj)

@@ -69,7 +69,8 @@ int
 Session::start()
 {
     mainFaceProcessor_->startProcessing();
-    startServiceChannel();
+//    startServiceChannel();
+    switchStatus(SessionOnlineNotPublishing);
     LogInfoC << "session started" << std::endl;
     
     return RESULT_OK;
@@ -78,7 +79,7 @@ Session::start()
 int
 Session::stop()
 {
-    int res = serviceChannel_->stopSessionInfoBroadcast();    
+    int res = RESULT_OK; //serviceChannel_->stopSessionInfoBroadcast();
     mainFaceProcessor_->stopProcessing();
     
     if (RESULT_NOT_FAIL(res))
@@ -133,6 +134,9 @@ Session::addLocalStream(const MediaStreamParams& params,
     
     switchStatus(SessionOnlinePublishing);
     
+    if (sessionObserver_)
+        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+    
     return RESULT_OK;
 }
 
@@ -157,6 +161,10 @@ Session::removeLocalStream(const std::string& streamPrefix)
     
     if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
         switchStatus(SessionOnlineNotPublishing);
+
+    if (sessionObserver_)
+        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+
     
     return RESULT_OK;
 }

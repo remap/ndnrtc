@@ -28,7 +28,7 @@ Playout::Playout(Consumer* consumer,
 StatObject(statStorage),
 isRunning_(false),
 consumer_(consumer),
-playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this)),
+playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this, "playback")),
 playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
 data_(nullptr)
 {
@@ -75,8 +75,7 @@ Playout::start(int initialAdjustment)
     playbackAdjustment_ = initialAdjustment;
     bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
     
-    unsigned int tid;
-    playoutThread_.Start(tid);
+    playoutThread_.Start();
     
     LogInfoC << "started" << endl;
     return RESULT_OK;
@@ -87,7 +86,7 @@ Playout::stop()
 {
     webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
     
-    playoutThread_.SetNotAlive();
+//    playoutThread_.SetNotAlive();
     
     if (isRunning_)
     {

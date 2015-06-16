@@ -14,7 +14,6 @@
 #include <boost/crc.hpp>
 
 #include "ndnrtc-common.h"
-#include "ndnrtc-utils.h"
 #include "params.h"
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
@@ -259,7 +258,7 @@ namespace ndnrtc {
             uint32_t                    encodedHeight_;                         // 10
             uint32_t                    timeStamp_;                             // 14
             int64_t                     capture_time_ms_;                       // 22
-            webrtc::VideoFrameType      frameType_;                             // 26
+            WebRtcVideoFrameType      frameType_;                             // 26
                                                                                 //            uint8_t*                    _buffer;
                                                                                 //            uint32_t                    _length;
                                                                                 //            uint32_t                    _size;

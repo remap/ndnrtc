@@ -21,7 +21,7 @@ namespace ndnrtc {
     class IRawFrameConsumer
     {
     public:
-        virtual void onDeliverFrame(webrtc::I420VideoFrame &frame,
+        virtual void onDeliverFrame(WebRtcVideoFrame &frame,
                                     double unixTimeStamp) = 0;
     };
     
@@ -44,11 +44,11 @@ namespace ndnrtc {
         IRawFrameConsumer *frameConsumer_ = nullptr;
         double lastFrameTimestamp_;
         
-        webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
-        webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
+        rtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
+        rtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
         webrtc::ThreadWrapper &captureThread_;
         webrtc::EventWrapper &captureEvent_;
-        webrtc::I420VideoFrame capturedFrame_, deliverFrame_;
+        WebRtcVideoFrame capturedFrame_, deliverFrame_;
 
         // statistics
         unsigned int meterId_;
@@ -56,7 +56,7 @@ namespace ndnrtc {
         static bool processCapturedFrame(void *obj) { return ((BaseCapturer*)obj)->process(); }
         
         bool process();
-        void deliverCapturedFrame(webrtc::I420VideoFrame& frame);
+        void deliverCapturedFrame(WebRtcVideoFrame& frame);
     };
 }
 

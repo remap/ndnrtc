@@ -46,7 +46,7 @@ public:
         NdnRtcObjectTestHelper::TearDown();
     }
     
-    void onDeliverFrame(webrtc::I420VideoFrame &frame)
+    void onDeliverFrame(WebRtcVideoFrame &frame)
     {
         obtainedFrame_ = true;
         obtainedFramesCount_++;

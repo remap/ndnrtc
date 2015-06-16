@@ -47,7 +47,7 @@ namespace ndnrtc {
             int init(const VideoCoderParams& settings);
             
             // interface conformance - ndnrtc::IRawFrameConsumer
-            void onDeliverFrame(webrtc::I420VideoFrame &frame,
+            void onDeliverFrame(WebRtcVideoFrame &frame,
                                 double timestamp);
             
             void
@@ -73,11 +73,11 @@ namespace ndnrtc {
             
             webrtc::VideoCodec codec_;
             const webrtc::CodecSpecificInfo* codecSpecificInfo_;
-            std::vector<webrtc::VideoFrameType> keyFrameType_;
+            std::vector<WebRtcVideoFrameType> keyFrameType_;
             boost::shared_ptr<webrtc::VideoEncoder> encoder_;
             
             webrtc::Scaler frameScaler_;
-            webrtc::I420VideoFrame scaledFrame_;
+            WebRtcVideoFrame scaledFrame_;
             
             // interface conformance - webrtc::EncodedImageCallback
             int32_t Encoded(const webrtc::EncodedImage& encodedImage,

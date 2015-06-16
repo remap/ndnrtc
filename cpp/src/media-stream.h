@@ -114,10 +114,10 @@ namespace ndnrtc
         private:
             boost::shared_ptr<BaseCapturer> capturer_;
             
-            webrtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
+            rtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
             webrtc::ThreadWrapper &processThread_;
             webrtc::EventWrapper &deliverEvent_;
-            webrtc::I420VideoFrame capturedFrame_, deliverFrame_;
+            WebRtcVideoFrame capturedFrame_, deliverFrame_;
             double deliveredTimestamp_;
             
             void
@@ -134,7 +134,7 @@ namespace ndnrtc
             
             // IRawFrameConsumer
             void
-            onDeliverFrame(webrtc::I420VideoFrame &frame,
+            onDeliverFrame(WebRtcVideoFrame &frame,
                            double timestamp);
         };
         

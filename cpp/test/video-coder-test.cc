@@ -72,7 +72,7 @@ protected:
     bool obtainedFrame_ = false;
     int receivedBytes_ = 0, frameNo_;
     ParamsStruct coderParams_ = DefaultParams;
-    webrtc::I420VideoFrame *sampleFrame_;
+    WebRtcVideoFrame *sampleFrame_;
     int bitrateMeter_;
     
     void loadFrame()
@@ -92,7 +92,7 @@ protected:
         
         int size_y = width * height;
         int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
-        sampleFrame_ = new webrtc::I420VideoFrame();
+        sampleFrame_ = new WebRtcVideoFrame();
         
         ASSERT_EQ(sampleFrame_->CreateFrame(size_y, frameData,
                           size_uv,frameData + size_y,
@@ -169,7 +169,7 @@ TEST(TestCodec, TestEncodeSampleFrame)
     
     int size_y = width * height;
     int size_uv = ((width + 1) / 2)  * ((height + 1) / 2);
-    webrtc::I420VideoFrame *sampleFrame_ = new webrtc::I420VideoFrame();
+    WebRtcVideoFrame *sampleFrame_ = new WebRtcVideoFrame();
     
     sampleFrame_->CreateFrame(size_y, frameData,
                               size_uv,frameData + size_y,
@@ -229,7 +229,7 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequence)
     vc->init();
     
     flushFlags();
-    webrtc::I420VideoFrame frame;
+    WebRtcVideoFrame frame;
     int nFrames = 0, delayedFrames = 0;
     uint64_t lostTime = 0;
     
@@ -275,7 +275,7 @@ TEST_F(NdnVideoCoderTest, TestEncodeSequenceDropping)
     vc->init();
     
     flushFlags();
-    webrtc::I420VideoFrame frame, nextFrame;
+    WebRtcVideoFrame frame, nextFrame;
     int nFrames = 0, droppedFrames = 0;
     int64_t lostTime = 0;
     int64_t totalTime = 0;

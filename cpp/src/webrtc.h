@@ -12,8 +12,6 @@
 #ifndef ndnrtc_webrtc_h
 #define ndnrtc_webrtc_h
 
-#include <video_engine/vie_impl.h>
-
 // other
 #include <common_types.h>
 #include <system_wrappers/interface/event_wrapper.h>
@@ -41,5 +39,8 @@
 #include <voice_engine/include/voe_network.h>
 #include <voice_engine/include/voe_audio_processing.h>
 #include <modules/audio_coding/main/interface/audio_coding_module.h>
+
+typedef webrtc::I420VideoFrame WebRtcVideoFrame;
+typedef webrtc::VideoFrameType WebRtcVideoFrameType;
 
 #endif

@@ -153,12 +153,14 @@ namespace ndnrtc
             
             // ndn-cpp callbacks
             virtual void
-            onInterest(const boost::shared_ptr<const Name>& prefix,
-                       const boost::shared_ptr<const Interest>& interest,
-                       ndn::Transport& transport);
+            onInterest(const boost::shared_ptr<const ndn::Name>& prefix,
+                       const boost::shared_ptr<const ndn::Interest>& interest,
+                       ndn::Face& face,
+                       uint64_t ts,
+                       const boost::shared_ptr<const ndn::InterestFilter>& filter);
             
             virtual void
-            onRegisterFailed(const boost::shared_ptr<const Name>& prefix);
+            onRegisterFailed(const boost::shared_ptr<const ndn::Name>& prefix);
         };
     }
 }

@@ -52,7 +52,7 @@ namespace ndnrtc
         stopRendering();
         
         void
-        onDeliverFrame(webrtc::I420VideoFrame &frame, double timestamp);
+        onDeliverFrame(WebRtcVideoFrame &frame, double timestamp);
         
     private:
         IExternalRenderer* externalRenderer_;
