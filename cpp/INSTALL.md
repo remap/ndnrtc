@@ -81,9 +81,12 @@ Use these variables for NDN-RTC configure script for providing custom paths to t
 * **NCURSESDIR** - Path to the directory which contains ncurses library headers (default is /usr/local/include)
 * **NCURSESLIB** - Path to the directory which contains ncurses library binaries (default is /usr/local/lib)
 
+Provide this flags while configuring:
+* **CPPFLAGS="-DWEBRTC_POSIX"**
+
 In case if prerequisites were built, but not installed, the build process for NDN-RTC may look like this:
 <pre>
-$ ./configure WEBRTCDIR=&lt;path to WebRTC trunk folder> OPENFECDIR=&lt;path to OpenFEC folder> NDNCPPDIR=&lt;path to NDN-CPP checkout folder>/include NDNCPPLIB=&lt;path to NDN-CPP checkout folder>/.libs
+$ ./configure CPPFLAGS="-DWEBRTC_POSIX" WEBRTCDIR=&lt;path to WebRTC trunk folder> OPENFECDIR=&lt;path to OpenFEC folder> NDNCPPDIR=&lt;path to NDN-CPP checkout folder>/include NDNCPPLIB=&lt;path to NDN-CPP checkout folder>/.libs
 $ make
 $ sudo make install
 </pre>
