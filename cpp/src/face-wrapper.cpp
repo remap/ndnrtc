@@ -7,6 +7,8 @@
 //
 
 #include <unistd.h>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/chrono.hpp>
 
 #include "face-wrapper.h"
 #include "ndnrtc-utils.h"
@@ -17,20 +19,9 @@ using namespace boost;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-FaceWrapper::FaceWrapper():
-faceCs_(*CriticalSectionWrapper::CreateCriticalSection())
-{
-}
-
 FaceWrapper::FaceWrapper(shared_ptr<Face> &face):
-faceCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 face_(face)
 {
-}
-
-FaceWrapper::~FaceWrapper()
-{
-    faceCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -41,8 +32,8 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       WireFormat& wireFormat)
 {
     uint64_t iid = 0;
-    
-    CriticalSectionScoped scopedCs(&faceCs_);
+
+    lock_guard<mutex> scopedLock(faceMutex_);
     iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
     
     return iid;
@@ -51,7 +42,7 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
 void
 FaceWrapper::removePendingInterest(uint64_t interestId)
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     face_->removePendingInterest(interestId);
 }
 
@@ -61,7 +52,7 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                      const ForwardingFlags& flags,
                                      WireFormat& wireFormat)
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     return face_->registerPrefix(prefix, onInterest, onRegisterFailed, flags,
                                  wireFormat);
 }
@@ -69,7 +60,7 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
 void
 FaceWrapper::unregisterPrefix(uint64_t prefixId)
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     face_->removeRegisteredPrefix(prefixId);
 }
 
@@ -77,19 +68,19 @@ void
 FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
                                    const Name& certificateName)
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     face_->setCommandSigningInfo(keyChain, certificateName);
 }
 
 void FaceWrapper::processEvents()
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     face_->processEvents();
 }
 
 void FaceWrapper::shutdown()
 {
-    CriticalSectionScoped scopedCs(&faceCs_);
+    lock_guard<mutex> scopedLock(faceMutex_);
     face_->shutdown();
 }
 
@@ -198,8 +189,7 @@ FaceProcessor::createFaceProcessor(const std::string host, const int port,
 FaceProcessor::FaceProcessor(const shared_ptr<FaceWrapper>& faceWrapper):
 isProcessing_(false),
 usecInterval_(100),
-faceWrapper_(faceWrapper),
-processingThread_(*webrtc::ThreadWrapper::CreateThread(FaceProcessor::processFaceEventsRoutine, this, "face-processing"))
+faceWrapper_(faceWrapper)
 {
 }
 
@@ -208,7 +198,6 @@ FaceProcessor::~FaceProcessor()
     stopProcessing();
     faceWrapper_->shutdown();
     transport_.reset();
-    processingThread_.~ThreadWrapper();
     
     std::cout << description_ << " face processor dtor" << std::endl;
 }
@@ -222,7 +211,21 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
     {
         usecInterval_ = usecInterval;
         isProcessing_ = true;
-        processingThread_.Start();
+        processEventsThread_ = thread([this](){
+            while(isProcessing_){
+                try {
+                    faceWrapper_->processEvents();
+                    this_thread::sleep_for(chrono::microseconds(usecInterval_));
+                }
+                catch (thread_interrupted &interruption)
+                {
+                    return;
+                }
+                catch (std::exception &exception) {
+                    // do nothing
+                }
+            }
+        });
     }
     return RESULT_OK;
 }
@@ -232,25 +235,12 @@ FaceProcessor::stopProcessing()
 {
     if (isProcessing_)
     {
-//        processingThread_.SetNotAlive();
         isProcessing_ = false;
-        processingThread_.Stop();
+        
+        processEventsThread_.interrupt();
+        if (processEventsThread_.joinable())
+            if (!processEventsThread_.try_join_for(chrono::milliseconds(500)))
+                processEventsThread_.detach();
     }
-}
-
-//******************************************************************************
-#pragma mark - private
-bool
-FaceProcessor::processEvents()
-{
-    try {
-        faceWrapper_->processEvents();
-        usleep(usecInterval_);
-    }
-    catch (std::exception &exception) {
-        // do nothing
-    }
-    
-    return isProcessing_;
 }
 
