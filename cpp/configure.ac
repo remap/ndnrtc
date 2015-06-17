@@ -407,6 +407,7 @@ AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h syste
 
 AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -laudio_decoder_interface \
+   -laudio_encoder_interface \
    -laudio_conference_mixer \
    -laudioproc_debug_proto \
    -laudio_device \
@@ -421,9 +422,12 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -ldesktop_capture_differ_sse2 \
    -lframe_editing_lib \
    -lframe_generator \
+   -lhistogram \
    -ljpeg_turbo \
+   -liSAC \
    -lmedia_file \
    -lmetrics \
+   -lneteq \
    -lopus \
    -lpaced_sender \
    -lprotobuf_lite \
@@ -440,6 +444,7 @@ AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
    -lvideo_render_module_internal_impl \
    -lvoice_engine \
    -lvpx \
+   -lvpx_intrinsics_avx2 \
    -lvpx_intrinsics_mmx \
    -lvpx_intrinsics_sse2 \
    -lvpx_intrinsics_ssse3 \
