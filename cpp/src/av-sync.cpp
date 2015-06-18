@@ -26,7 +26,6 @@ const int64_t AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment = 50;
 #pragma mark - construction/destruction
 AudioVideoSynchronizer::AudioVideoSynchronizer(const shared_ptr<new_api::Consumer>& masterConsumer,
                        const shared_ptr<new_api::Consumer>& slaveConsumer):
-syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
 slaveSyncData_("slave"),
 masterSyncData_("master")
 {
@@ -44,7 +43,6 @@ masterSyncData_("master")
 }
 
 AudioVideoSynchronizer::~AudioVideoSynchronizer(){
-    syncCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -69,9 +67,10 @@ void AudioVideoSynchronizer::reset()
     slaveSyncData_.reset();
     masterSyncData_.reset();
     
-    syncCs_.Enter();
-    initialized_ = false;
-    syncCs_.Leave();
+    {
+        lock_guard<mutex> scopedLock(syncMutex_);
+        initialized_ = false;
+    }
 }
 
 //******************************************************************************
@@ -82,9 +81,9 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
                                        int64_t packetTsLocal,
                                        Consumer *consumer)
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<mutex> scopedLock(syncMutex_);
  
-    syncData.cs_.Enter();
+    syncData.mutex_.lock();
     
     // check if it's a first call
     if (syncData.lastPacketTsLocal_ < 0)
@@ -98,8 +97,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
     // we synchronize audio only
     if (consumer == this->slaveSyncData_.consumer_ && initialized_)
     {
-        CriticalSectionScoped scopedCs(&pairedSyncData.cs_);
-        
+        lock_guard<mutex> scopedLock2(pairedSyncData.mutex_);
         int64_t hitTime = packetTsLocal;
         
         // packet synchroniztation comes from the idea of strem timelines:
@@ -193,7 +191,7 @@ int AudioVideoSynchronizer::syncPacket(SyncStruct& syncData,
         
     } // critical section
     
-    syncData.cs_.Leave();
+    syncData.mutex_.unlock();
     
     return drift;
 }

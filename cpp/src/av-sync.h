@@ -10,6 +10,8 @@
 #ifndef __ndnrtc__av_sync__
 #define __ndnrtc__av_sync__
 
+#include <boost/thread/mutex.hpp>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
@@ -69,7 +71,6 @@ namespace ndnrtc
         class SyncStruct {
         public:
             SyncStruct(const char *name):
-            cs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
             name_(name),
             initialized_(false),
             lastPacketTsLocal_(-1),
@@ -78,10 +79,9 @@ namespace ndnrtc
             
             ~SyncStruct()
             {
-                cs_.~CriticalSectionWrapper();
             }
             
-            webrtc::CriticalSectionWrapper &cs_;
+            boost::mutex mutex_;
             new_api::Consumer *consumer_;
             const char *name_;
             bool initialized_;
@@ -95,7 +95,7 @@ namespace ndnrtc
             
             // resets sync data strcuture
             void reset(){
-                webrtc::CriticalSectionScoped scopedCs(&cs_);
+                boost::lock_guard<boost::mutex> scopedLock(mutex_);
                 initialized_ = false;
                 lastPacketTsLocal_ = -1;
                 lastPacketTsRemote_ = -1;
@@ -104,7 +104,7 @@ namespace ndnrtc
         
         bool initialized_;  // indicates, whether synchronizer was initialized
                        // (when both streams has started)
-        webrtc::CriticalSectionWrapper &syncCs_;
+        boost::mutex syncMutex_;
         SyncStruct masterSyncData_, slaveSyncData_;
         
         int syncPacket(SyncStruct& syncData,
