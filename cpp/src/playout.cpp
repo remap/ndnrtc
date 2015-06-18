@@ -13,6 +13,7 @@
 #include "ndnrtc-utils.h"
 #include "av-sync.h"
 
+using namespace boost;
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
@@ -28,8 +29,6 @@ Playout::Playout(Consumer* consumer,
 StatObject(statStorage),
 isRunning_(false),
 consumer_(consumer),
-playoutThread_(*webrtc::ThreadWrapper::CreateThread(Playout::playoutThreadRoutine, this, "playback")),
-playoutCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection()),
 data_(nullptr)
 {
     setDescription("playout");
@@ -45,9 +44,6 @@ Playout::~Playout()
 {
     if (isRunning_)
         stop();
-    
-    playoutThread_.~ThreadWrapper();
-    playoutCs_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -64,7 +60,7 @@ Playout::init(void* frameConsumer)
 int
 Playout::start(int initialAdjustment)
 {
-    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
+    lock_guard<mutex> scopeLock(playoutMutex_);
     
     jitterTiming_.flush();
     
@@ -75,7 +71,9 @@ Playout::start(int initialAdjustment)
     playbackAdjustment_ = initialAdjustment;
     bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
     
-    playoutThread_.Start();
+    playoutThread_ = startThread([this]()->bool{
+        return processPlayout();
+    });
     
     LogInfoC << "started" << endl;
     return RESULT_OK;
@@ -84,14 +82,12 @@ Playout::start(int initialAdjustment)
 int
 Playout::stop()
 {
-    webrtc::CriticalSectionScoped scopedCs_(&playoutCs_);
-    
-//    playoutThread_.SetNotAlive();
+    lock_guard<mutex> scopeLock(playoutMutex_);
     
     if (isRunning_)
     {
         isRunning_ = false;
-        playoutThread_.Stop();
+        stopThread(playoutThread_);
         jitterTiming_.stop();
         
         LogInfoC << "stopped" << endl;
@@ -128,7 +124,7 @@ Playout::setDescription(const std::string &desc)
 bool
 Playout::processPlayout()
 {
-    playoutCs_.Enter();
+    playoutMutex_.lock();
     
     if (isRunning_)
     {
@@ -221,7 +217,7 @@ Playout::processPlayout()
                 playbackDelay += avSync;
             
             assert(playbackDelay >= 0);
-            playoutCs_.Leave();
+            playoutMutex_.unlock();
             
             if (isRunning_)
             {
@@ -232,7 +228,7 @@ Playout::processPlayout()
         }
     }
     else
-        playoutCs_.Leave();
+        playoutMutex_.unlock();
     
     return isRunning_;
 }
