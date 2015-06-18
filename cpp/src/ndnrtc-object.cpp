@@ -24,34 +24,30 @@ using namespace boost;
 /**
  * @name NdnRtcComponent class
  */
-NdnRtcComponent::NdnRtcComponent():
-callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
+NdnRtcComponent::NdnRtcComponent()
 {}
 
 NdnRtcComponent::NdnRtcComponent(INdnRtcComponentCallback *callback):
-callback_(callback),
-callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
+callback_(callback)
 {}
 
 NdnRtcComponent::~NdnRtcComponent()
 {
     std::cout << description_ << " component dtor" << std::endl;
-    callbackSync_.~CriticalSectionWrapper();
 }
 
 void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)
 {
-    callbackSync_.Enter();
-    
     if (hasCallback())
+    {
+        lock_guard<mutex> scopedLock(callbackMutex_);
         callback_->onError(errorMessage, errorCode);
+    }
     else
     {
         LogErrorC << "error occurred: " << string(errorMessage) << endl;
         if (logger_) logger_->flush();
     }
-    
-    callbackSync_.Leave();
 }
 
 int NdnRtcComponent::notifyError(const int ecode, const char *format, ...)

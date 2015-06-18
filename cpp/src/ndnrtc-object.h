@@ -53,7 +53,7 @@ namespace ndnrtc {
             
         protected:
             // critical section for observer's callbacks
-            webrtc::CriticalSectionWrapper &callbackSync_;
+            boost::mutex callbackMutex_;
             INdnRtcComponentCallback *callback_ = nullptr;
             
             // protected methods go here
