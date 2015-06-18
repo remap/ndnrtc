@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__pipeliner__
 #define __ndnrtc__pipeliner__
 
+#include <boost/thread/mutex.hpp>
+
 #include "ndnrtc-common.h"
 #include "frame-buffer.h"
 #include "ndnrtc-object.h"
@@ -48,7 +50,7 @@ namespace ndnrtc {
             unsigned int dw_;
             int w_;
             PacketNumber lastAddedToPool_;
-            webrtc::CriticalSectionWrapper& cs_;
+            boost::mutex mutex_;
             std::set<PacketNumber> framePool_;
             const FrameBuffer* frameBuffer_;
         };
@@ -137,7 +139,7 @@ namespace ndnrtc {
             FrameSegmentsInfo frameSegmentsInfo_;
             
             unsigned int streamId_; // currently fetched stream id
-            webrtc::CriticalSectionWrapper &streamSwitchSync_;
+            boost::mutex streamSwitchMutex_;
             bool useKeyNamespace_;
             int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
             

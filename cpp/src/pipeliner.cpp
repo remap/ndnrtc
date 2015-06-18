@@ -58,7 +58,6 @@ keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo
 rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 useKeyNamespace_(true),
 streamId_(0),
-streamSwitchSync_(*CriticalSectionWrapper::CreateCriticalSection()),
 frameBuffer_(consumer_->getFrameBuffer().get()),
 recoveryCheckpointTimestamp_(0)
 {
@@ -101,7 +100,7 @@ ndnrtc::new_api::PipelinerBase::triggerRebuffering()
 void
 ndnrtc::new_api::PipelinerBase::threadSwitched()
 {
-    CriticalSectionScoped scopedCs(&streamSwitchSync_);
+    lock_guard<mutex> scopedLock(streamSwitchMutex_);
     
     LogTraceC << "thread switched. rebuffer " << std::endl;
     
@@ -216,9 +215,9 @@ ndnrtc::new_api::PipelinerBase::prefetchFrame(const ndn::Name &basePrefix,
                                               int prefetchSize, int parityPrefetchSize,
                                               FrameBuffer::Slot::Namespace nspc)
 {
-    streamSwitchSync_.Enter();
+    streamSwitchMutex_.lock();
     Name packetPrefix(basePrefix);
-    streamSwitchSync_.Leave();
+    streamSwitchMutex_.unlock();
     
     packetPrefix.append(NdnRtcUtils::componentFromInt(packetNo));
     
@@ -442,10 +441,8 @@ ndnrtc::new_api::PipelinerBase::resetData()
 
 //******************************************************************************
 //******************************************************************************
-PipelinerWindow::PipelinerWindow():
-cs_(*CriticalSectionWrapper::CreateCriticalSection())
+PipelinerWindow::PipelinerWindow()
 {
-    
 }
 
 PipelinerWindow::~PipelinerWindow()
@@ -464,7 +461,7 @@ PipelinerWindow::init(unsigned int windowSize, const FrameBuffer* frameBuffer)
 void
 PipelinerWindow::dataArrived(PacketNumber packetNo)
 {
-    webrtc::CriticalSectionScoped scopedCs(&cs_);
+    lock_guard<mutex> scopedLock(mutex_);
     
     std::set<PacketNumber>::iterator it = framePool_.find(packetNo);
     
@@ -478,7 +475,7 @@ PipelinerWindow::dataArrived(PacketNumber packetNo)
 bool
 PipelinerWindow::canAskForData(PacketNumber packetNo)
 {
-    webrtc::CriticalSectionScoped scopedCs(&cs_);
+    lock_guard<mutex> scopedLock(mutex_);
     bool added = false;
     
     if (w_ > 0)
@@ -516,7 +513,7 @@ PipelinerWindow::changeWindow(int delta)
     
     if (dw_+delta > 0)
     {
-        webrtc::CriticalSectionScoped scopedCs(&cs_);
+        lock_guard<mutex> scopedLock(mutex_);
         dw_ += delta;
         w_ += delta;
         
