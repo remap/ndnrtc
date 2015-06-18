@@ -12,6 +12,7 @@
 #define __ndnrtc__fetch_channel__
 
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
@@ -157,14 +158,14 @@ namespace ndnrtc {
             void
             registerObserver(IConsumerObserver* const observer)
             {
-                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                boost::lock_guard<boost::mutex> scopedLock(observerMutex_);
                 observer_ = observer;
             }
 
             void
             unregisterObserver()
             {
-                webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+                boost::lock_guard<boost::mutex> scopedLock(observerMutex_);
                 observer_ = NULL;
             }
             
@@ -326,7 +327,7 @@ namespace ndnrtc {
             boost::shared_ptr<RateControl> rateControl_;
             boost::shared_ptr<ServiceChannel> serviceChannel_;
             
-            webrtc::CriticalSectionWrapper& observerCritSec_;
+            boost::mutex observerMutex_;
             IConsumerObserver *observer_;
             
             unsigned int dataMeterId_, segmentFreqMeterId_;
