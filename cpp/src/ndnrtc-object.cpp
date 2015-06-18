@@ -9,6 +9,8 @@
 //  Created: 8/21/13
 //
 
+#include <boost/chrono.hpp>
+
 #include "ndnrtc-object.h"
 
 using namespace webrtc;
@@ -16,6 +18,7 @@ using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace std;
 using namespace ndnlog;
+using namespace boost;
 
 //******************************************************************************
 /**
@@ -84,4 +87,42 @@ NdnRtcComponent::getDescription() const
     }
     
     return description_;
+}
+
+thread
+NdnRtcComponent::startThread(function<bool ()> threadFunc)
+{
+    thread threadObject = thread([threadFunc](){
+        bool result = false;
+        do {
+            try
+            {
+                this_thread::interruption_point();
+                {
+                    this_thread::disable_interruption di;
+                    result = threadFunc();
+                }
+            }
+            catch (thread_interrupted &interruption)
+            {
+                result = false;
+            }
+        } while (result);
+    });
+    
+    return threadObject;
+}
+
+void
+NdnRtcComponent::stopThread(thread &threadObject)
+{
+    threadObject.interrupt();
+    
+    if (threadObject.joinable())
+    {
+        bool res = threadObject.try_join_for(chrono::milliseconds(500));
+                                             
+        if (!res)
+            threadObject.detach();
+    }
 }
