@@ -15,9 +15,6 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace boost;
 
-#define SYNC_INIT(name) ({*CriticalSectionWrapper::CreateCriticalSection(), \
-name, -1, -1, -1, -1, -1, -1})
-
 const int64_t AudioVideoSynchronizer::TolerableLeadingDriftMs = 15;
 const int64_t AudioVideoSynchronizer::TolerableLaggingDriftMs = 45;
 const int64_t AudioVideoSynchronizer::MaxAllowableAvSyncAdjustment = 50;
