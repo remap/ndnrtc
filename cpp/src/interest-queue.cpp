@@ -37,9 +37,6 @@ InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face,
 StatObject(statStorage),
 freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
-queueAccess_(*RWLockWrapper::CreateRWLock()),
-queueEvent_(*EventWrapper::Create()),
-queueWatchingThread_(*ThreadWrapper::CreateThread(InterestQueue::watchThreadRoutine, this, "interest-queue")),
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {
@@ -50,10 +47,6 @@ isWatchingQueue_(false)
 InterestQueue::~InterestQueue()
 {
     stopQueueWatching();
-    
-    queueWatchingThread_.~ThreadWrapper();
-    queueAccess_.~RWLockWrapper();
-    queueEvent_.~EventWrapper();
 }
 
 
@@ -68,11 +61,10 @@ InterestQueue::enqueueInterest(const Interest& interest,
     QueueEntry entry(interest, priority, onData, onTimeout);
     entry.setEnqueueTimestamp(NdnRtcUtils::millisecondTimestamp());
     
-    queueAccess_.AcquireLockExclusive();
+    queueAccess_.lock();
     queue_.push(entry);
-    queueAccess_.ReleaseLockExclusive();
-    
-    queueEvent_.Set();
+    queueAccess_.unlock();
+    queueEvent_.notify_one();
     
     LogDebugC
     << "enqueue\t" << entry.interest_->getName()
@@ -87,11 +79,11 @@ InterestQueue::enqueueInterest(const Interest& interest,
 void
 InterestQueue::reset()
 {
-    queueAccess_.AcquireLockExclusive();
+    queueAccess_.lock();
     queue_ = PriorityQueue(IPriority::Comparator(true));
     NdnRtcUtils::releaseFrequencyMeter(freqMeterId_);
     freqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
-    queueAccess_.ReleaseLockExclusive();
+    queueAccess_.unlock();
 
     LogDebugC << "interest queue flushed" << std::endl;
 }
@@ -102,16 +94,17 @@ void
 InterestQueue::startQueueWatching()
 {
     isWatchingQueue_ = true;
-    queueWatchingThread_.Start();
+    queueWatchingThread_ = startThread([this]()->bool{
+        return watchQueue();
+    });
 }
 
 void
 InterestQueue::stopQueueWatching()
 {
-//    queueWatchingThread_.SetNotAlive();
     isWatchingQueue_ = false;
-    queueEvent_.Set();
-    queueWatchingThread_.Stop();
+    queueEvent_.notify_one();
+    stopThread(queueWatchingThread_);
 }
 
 bool
@@ -119,24 +112,27 @@ InterestQueue::watchQueue()
 {
     QueueEntry entry;
     
-    queueAccess_.AcquireLockExclusive();
+    queueAccess_.lock();
     if (queue_.size() > 0)
     {
         entry = queue_.top();
         queue_.pop();
     }
-    queueAccess_.ReleaseLockExclusive();
+    queueAccess_.unlock();
     
     if (entry.interest_.get())
         processEntry(entry);
     
     bool isQueueEmpty = false;
-    queueAccess_.AcquireLockShared();
+    queueAccess_.lock_shared();
     isQueueEmpty = (queue_.size() == 0);
-    queueAccess_.ReleaseLockShared();
+    queueAccess_.unlock_shared();
     
-    if (isQueueEmpty)
-        queueEvent_.Wait(WEBRTC_EVENT_INFINITE);
+    {
+        unique_lock<mutex> lock(queueEventMutex_);
+        while (isQueueEmpty)
+            queueEvent_.wait(queueEventMutex_);
+    }
     
     return isWatchingQueue_;
 }

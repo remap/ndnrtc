@@ -136,9 +136,11 @@ namespace ndnrtc {
             
             unsigned int freqMeterId_;
             boost::shared_ptr<FaceWrapper> face_;
-            webrtc::RWLockWrapper &queueAccess_;
-            webrtc::EventWrapper &queueEvent_;
-            webrtc::ThreadWrapper &queueWatchingThread_;
+            boost::shared_mutex queueAccess_;
+            boost::mutex queueEventMutex_;
+            boost::condition_variable_any queueEvent_;
+            boost::thread queueWatchingThread_;
+
             PriorityQueue queue_;
             
             IInterestQueueCallback *callback_ = NULL;
