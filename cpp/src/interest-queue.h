@@ -147,12 +147,6 @@ namespace ndnrtc {
             
             bool isWatchingQueue_ = false;
             
-            static bool
-            watchThreadRoutine(void* interestQueue)
-            {
-                return ((InterestQueue*)interestQueue)->watchQueue();
-            }
-            
             bool
             watchQueue();
             
