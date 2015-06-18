@@ -23,8 +23,7 @@ using namespace webrtc;
 #pragma mark - construction/destruction
 MediaThread::MediaThread():
 NdnRtcComponent(),
-packetNo_(0),
-pitCs_(*webrtc::CriticalSectionWrapper::CreateCriticalSection())
+packetNo_(0)
 {
     packetRateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
     dataRateMeter_ = NdnRtcUtils::setupDataRateMeter(5);
@@ -265,7 +264,7 @@ void MediaThread::addToPit(const shared_ptr<const ndn::Interest> &interest)
     pitEntry.interest_ = interest;
     
     {
-        webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+        lock_guard<mutex> scopedLock(pitMutex_);
         
         if (pit_.find(name) != pit_.end())
         {
@@ -282,7 +281,7 @@ void MediaThread::addToPit(const shared_ptr<const ndn::Interest> &interest)
 int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
                                    SegmentData::SegmentMetaInfo &metaInfo)
 {
-    webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+    lock_guard<mutex> scopedLock(pitMutex_);
     
     std::map<Name, PitEntry>::iterator pitHit = pit_.find(prefix);
     
@@ -325,7 +324,7 @@ int MediaThread::lookupPrefixInPit(const ndn::Name &prefix,
 
 int MediaThread::cleanPitForFrame(const Name framePrefix)
 {
-    webrtc::CriticalSectionScoped scopedCs_(&pitCs_);
+    lock_guard<mutex> scopedLock(pitMutex_);
     std::vector<Name> keysToDelete;
     
     for (auto it:pit_)

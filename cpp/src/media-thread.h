@@ -119,7 +119,7 @@ namespace ndnrtc
             unsigned int dataRateMeter_;
             
             std::map<Name, PitEntry> pit_;
-            webrtc::CriticalSectionWrapper &pitCs_;
+            boost::mutex pitMutex_;
             
             IMediaThreadCallback*
             getCallback()
