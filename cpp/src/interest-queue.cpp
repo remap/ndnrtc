@@ -130,7 +130,7 @@ InterestQueue::watchQueue()
     
     {
         unique_lock<mutex> lock(queueEventMutex_);
-        while (isQueueEmpty)
+        if (isQueueEmpty)
             queueEvent_.wait(queueEventMutex_);
     }
     

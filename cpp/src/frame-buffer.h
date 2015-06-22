@@ -702,7 +702,7 @@ namespace ndnrtc
             unsigned int
             getTotalSlotsNum()
             {
-                boost::lock_guard<boost::mutex> scopedLock(syncMutex_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return activeSlots_.size();
             }
             
@@ -713,7 +713,7 @@ namespace ndnrtc
             unsigned int
             getActiveSlotsNum() const
             {
-                boost::lock_guard<boost::mutex> scopedLock(syncMutex_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
             }
@@ -724,7 +724,7 @@ namespace ndnrtc
             unsigned int
             getNewSlotsNum() const
             {
-                boost::lock_guard<boost::mutex> scopedLock(syncMutex_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew).size();
             }
             
@@ -734,7 +734,7 @@ namespace ndnrtc
             unsigned int
             getFetchedSlotsNum() const
             {
-                boost::lock_guard<boost::mutex> scopedLock(syncMutex_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
             }
@@ -745,7 +745,7 @@ namespace ndnrtc
             unsigned int
             getFreeSlotsNum() const
             {
-                boost::lock_guard<boost::mutex> scopedLock(syncMutex_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateFree).size();
             }
             
@@ -1008,7 +1008,7 @@ namespace ndnrtc
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
             PlaybackQueue playbackQueue_;
             
-            mutable boost::mutex syncMutex_;
+            mutable boost::recursive_mutex syncMutex_;
             mutable boost::mutex bufferMutex_;
             boost::condition_variable_any bufferEvent_;
             boost::shared_mutex bufferSharedMutex_;

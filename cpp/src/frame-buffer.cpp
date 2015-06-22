@@ -1093,7 +1093,7 @@ ndnrtc::new_api::FrameBuffer::init()
     reset();
     
     {
-        lock_guard<mutex> scopedLock(syncMutex_);
+        lock_guard<recursive_mutex> scopedLock(syncMutex_);
         initialize();
     }
     
@@ -1104,7 +1104,7 @@ ndnrtc::new_api::FrameBuffer::init()
 int
 ndnrtc::new_api::FrameBuffer::reset()
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     // clear all events
     {
@@ -1149,7 +1149,7 @@ ndnrtc::new_api::FrameBuffer::release()
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false);
     
     // check if slot is already reserved
@@ -1181,7 +1181,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
                                                   std::vector<shared_ptr<Interest> > &segmentInterests,
                                                   bool isParity)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(packetInterest.getName());
     
     if (packetNo < 0)
@@ -1235,7 +1235,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
 ndnrtc::new_api::FrameBuffer::Event
 ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     Event event;
     event.type_ = Event::Error;
     const Name& dataName = data.getName();
@@ -1365,7 +1365,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 void
 ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     const Name& prefix = interest.getName();
     
     shared_ptr<Slot> slot = getSlot(prefix, false);
@@ -1486,7 +1486,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
 void
 ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State &state)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     state_ = state;
     shared_ptr<Slot> nullSlot;
@@ -1496,7 +1496,7 @@ ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State
 void
 ndnrtc::new_api::FrameBuffer::recycleOldSlots()
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     double playbackDuration = getEstimatedBufferSize();
     double targetSize = getTargetSize();
@@ -1520,7 +1520,7 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots()
 void
 ndnrtc::new_api::FrameBuffer::recycleOldSlots(int nSlotsToRecycle)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
     int nRecycledSlots_ = 0;
     
@@ -1544,7 +1544,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
 {
     if (isEstimationNeeded_)
     {
-        lock_guard<mutex> scopedLock(syncMutex_);
+        lock_guard<recursive_mutex> scopedLock(syncMutex_);
         estimateBufferSize();
         isEstimationNeeded_ = false;
 //        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
@@ -1556,7 +1556,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
 int64_t
 ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     int64_t size = playbackQueue_.getPlaybackDuration(false);
     
     statStorage_->updateIndicator(statistics::Indicator::BufferPlayableSize, size);
@@ -1571,7 +1571,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                                           PacketNumber& pairedPacketNo,
                                           bool& isKey, double& assembledLevel)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     FrameBuffer::Slot* slotRaw = playbackQueue_.peekSlot();
     
     if (slotRaw)
@@ -1691,7 +1691,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
 int
 ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
     int playbackDuration = (skipFrame_)?0:playbackQueue_.getInferredFrameDuration();
     
@@ -1775,7 +1775,7 @@ ndnrtc::new_api::FrameBuffer::recycleEvent(const ndnrtc::new_api::FrameBuffer::E
 void
 ndnrtc::new_api::FrameBuffer::dump()
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     LogTraceC
     << "buffer dump (duration est " << getEstimatedBufferSize()
@@ -1863,7 +1863,7 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
 void
 ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
-    lock_guard<mutex> scopedLock(syncMutex_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
 
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
     statStorage_->updateIndicator(statistics::Indicator::BufferEstimatedSize,

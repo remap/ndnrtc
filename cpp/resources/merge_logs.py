@@ -193,7 +193,7 @@ class BufferState:
     
     @staticmethod
     def getBufferDumpRegex(logEntry, component, token):
-        "Compiles regular expression for parsing buffer dumps form the log file"
+        "Compiles regular expression for parsing buffer dumps from the log file"
         pattern = '(?P<ts>[0-9]+) \['+logEntry+'\]\['+component+'\].*'+token+'\s'+'('+BufferState.bufferDumpPattern+')'
         return pattern
 
