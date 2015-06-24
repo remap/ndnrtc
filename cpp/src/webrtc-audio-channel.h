@@ -19,7 +19,7 @@ namespace ndnrtc {
         class WebrtcAudioChannel : public webrtc::Transport
         {
         public:
-            WebrtcAudioChannel(webrtc::VoiceEngine* voiceEngine);
+            WebrtcAudioChannel();
             virtual ~WebrtcAudioChannel();
             
             virtual int

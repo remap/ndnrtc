@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__ndnrtc_utils__
 #define __ndnrtc__ndnrtc_utils__
 
+#include <boost/function.hpp>
+
 #include "ndnrtc-common.h"
 #include "webrtc.h"
 
@@ -19,6 +21,8 @@
 namespace ndnrtc
 {
     using namespace ndn;
+    
+    extern std::string LIB_LOG;
     
     class NdnRtcUtils {
     public:
@@ -75,7 +79,12 @@ namespace ndnrtc
         static Name::Component componentFromInt(unsigned int number);
         
         static webrtc::VoiceEngine *sharedVoiceEngine();
+        static void initVoiceEngine();
         static void releaseVoiceEngine();
+        static void startVoiceThread();
+        static void stopVoiceThread();
+        static void dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
+                                          boost::function<void(void)> onCompletion);
         
         static std::string stringFromFrameType(const WebRtcVideoFrameType &frameType);
         

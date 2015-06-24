@@ -17,8 +17,7 @@ using namespace ndnlog::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioCapturer::AudioCapturer(webrtc::VoiceEngine* voiceEngine):
-WebrtcAudioChannel(voiceEngine)
+AudioCapturer::AudioCapturer()
 {
     description_ = "audio-capturer";
 }

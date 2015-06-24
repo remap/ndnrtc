@@ -204,7 +204,7 @@ VideoStream::processDeliveredFrame()
 //******************************************************************************
 AudioStream::AudioStream():
 MediaStream(),
-audioCapturer_(new AudioCapturer(NdnRtcUtils::sharedVoiceEngine()))
+audioCapturer_(new AudioCapturer())
 {
     description_ = "audio-stream";
     audioCapturer_->registerCallback(this);
