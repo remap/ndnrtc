@@ -118,6 +118,9 @@ namespace ndnrtc {
         boost::shared_ptr<FaceWrapper> faceWrapper_;
         boost::shared_ptr<Transport> transport_;
         boost::thread processEventsThread_;
+        
+        bool
+        processEvents();
     };
 };
 

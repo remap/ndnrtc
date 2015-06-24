@@ -7,8 +7,6 @@
 //
 
 #include <unistd.h>
-#include <boost/thread/lock_guard.hpp>
-#include <boost/chrono.hpp>
 
 #include "face-wrapper.h"
 #include "ndnrtc-utils.h"
@@ -32,7 +30,7 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
                                       WireFormat& wireFormat)
 {
     uint64_t iid = 0;
-
+    
     lock_guard<mutex> scopedLock(faceMutex_);
     iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
     
@@ -233,8 +231,25 @@ FaceProcessor::stopProcessing()
 {
     if (isProcessing_)
     {
+//        processingThread_.SetNotAlive();
         isProcessing_ = false;
         stopThread(processEventsThread_);
     }
+}
+
+//******************************************************************************
+#pragma mark - private
+bool
+FaceProcessor::processEvents()
+{
+    try {
+        faceWrapper_->processEvents();
+        usleep(usecInterval_);
+    }
+    catch (std::exception &exception) {
+        // do nothing
+    }
+    
+    return isProcessing_;
 }
 
