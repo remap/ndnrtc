@@ -71,7 +71,7 @@ namespace ndnrtc {
         
     private:
         boost::shared_ptr<Face> face_;
-        boost::mutex faceMutex_;
+        boost::recursive_mutex faceMutex_;
     };
     
     class FaceProcessor :   public new_api::NdnRtcComponent
@@ -118,9 +118,6 @@ namespace ndnrtc {
         boost::shared_ptr<FaceWrapper> faceWrapper_;
         boost::shared_ptr<Transport> transport_;
         boost::thread processEventsThread_;
-        
-        bool
-        processEvents();
     };
 };
 

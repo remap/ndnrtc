@@ -31,7 +31,7 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
 {
     uint64_t iid = 0;
     
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     iid = face_->expressInterest(interest, onData, onTimeout, wireFormat);
     
     return iid;
@@ -40,7 +40,7 @@ uint64_t FaceWrapper::expressInterest(const Interest &interest,
 void
 FaceWrapper::removePendingInterest(uint64_t interestId)
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     face_->removePendingInterest(interestId);
 }
 
@@ -50,7 +50,7 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
                                      const ForwardingFlags& flags,
                                      WireFormat& wireFormat)
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     return face_->registerPrefix(prefix, onInterest, onRegisterFailed, flags,
                                  wireFormat);
 }
@@ -58,7 +58,7 @@ uint64_t FaceWrapper::registerPrefix(const Name& prefix,
 void
 FaceWrapper::unregisterPrefix(uint64_t prefixId)
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     face_->removeRegisteredPrefix(prefixId);
 }
 
@@ -66,19 +66,19 @@ void
 FaceWrapper::setCommandSigningInfo(KeyChain& keyChain,
                                    const Name& certificateName)
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     face_->setCommandSigningInfo(keyChain, certificateName);
 }
 
 void FaceWrapper::processEvents()
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     face_->processEvents();
 }
 
 void FaceWrapper::shutdown()
 {
-    lock_guard<mutex> scopedLock(faceMutex_);
+    lock_guard<recursive_mutex> scopedLock(faceMutex_);
     face_->shutdown();
 }
 
@@ -231,25 +231,7 @@ FaceProcessor::stopProcessing()
 {
     if (isProcessing_)
     {
-//        processingThread_.SetNotAlive();
         isProcessing_ = false;
         stopThread(processEventsThread_);
     }
 }
-
-//******************************************************************************
-#pragma mark - private
-bool
-FaceProcessor::processEvents()
-{
-    try {
-        faceWrapper_->processEvents();
-        usleep(usecInterval_);
-    }
-    catch (std::exception &exception) {
-        // do nothing
-    }
-    
-    return isProcessing_;
-}
-

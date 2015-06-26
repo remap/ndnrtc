@@ -69,7 +69,7 @@ int
 Session::start()
 {
     mainFaceProcessor_->startProcessing();
-//    startServiceChannel();
+    startServiceChannel();
     switchStatus(SessionOnlineNotPublishing);
     LogInfoC << "session started" << std::endl;
     
