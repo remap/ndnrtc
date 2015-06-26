@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__frame_buffer__
 #define __ndnrtc__frame_buffer__
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 #include <set>
 #include <boost/unordered_set.hpp>
 
@@ -700,7 +702,7 @@ namespace ndnrtc
             unsigned int
             getTotalSlotsNum()
             {
-                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return activeSlots_.size();
             }
             
@@ -711,7 +713,7 @@ namespace ndnrtc
             unsigned int
             getActiveSlotsNum() const
             {
-                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew | Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
             }
@@ -722,7 +724,7 @@ namespace ndnrtc
             unsigned int
             getNewSlotsNum() const
             {
-                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew).size();
             }
             
@@ -732,7 +734,7 @@ namespace ndnrtc
             unsigned int
             getFetchedSlotsNum() const
             {
-                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateAssembling |
                                 Slot::StateReady | Slot::StateLocked).size();
             }
@@ -743,7 +745,7 @@ namespace ndnrtc
             unsigned int
             getFreeSlotsNum() const
             {
-                webrtc::CriticalSectionScoped scopedCs(&syncCs_);
+                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateFree).size();
             }
             
@@ -870,10 +872,10 @@ namespace ndnrtc
             recycleEvent(const Event& event);
             
             void
-            synchronizeAcquire() { syncCs_.Enter(); }
+            synchronizeAcquire() { syncMutex_.lock(); }
             
             void
-            synchronizeRelease() { syncCs_.Leave(); }
+            synchronizeRelease() { syncMutex_.unlock(); }
     
             /**
              * Dumps buffer state to a log file
@@ -1006,13 +1008,14 @@ namespace ndnrtc
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
             PlaybackQueue playbackQueue_;
             
-            webrtc::CriticalSectionWrapper &syncCs_;
-            webrtc::EventWrapper &bufferEvent_;
+            mutable boost::recursive_mutex syncMutex_;
+            mutable boost::mutex bufferMutex_;
+            boost::condition_variable_any bufferEvent_;
+            boost::shared_mutex bufferSharedMutex_;
             
             bool forcedRelease_ = false;
             bool pendingEventsFlushed_ = false;
             std::list<Event> pendingEvents_;
-            webrtc::RWLockWrapper &bufferEventsRWLock_;
             
             IFrameBufferCallback *callback_;
             

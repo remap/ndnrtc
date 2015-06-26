@@ -145,7 +145,7 @@ VideoConsumer::playbackEventOccurred(PlaybackEvent event,
 {
     if (observer_)
     {
-        webrtc::CriticalSectionScoped scopedCs_(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onPlaybackEventOccurred(event, frameSeqNo);
     }
 }

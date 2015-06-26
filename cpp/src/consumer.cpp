@@ -40,7 +40,6 @@ chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
-observerCritSec_(*CriticalSectionWrapper::CreateCriticalSection()),
 observer_(NULL)
 {
     bufferEstimator_->setRttEstimation(rttEstimation_);
@@ -50,8 +49,6 @@ Consumer::~Consumer()
 {
     if (isConsuming_)
         stop();
-    
-    observerCritSec_.~CriticalSectionWrapper();
 }
 
 //******************************************************************************
@@ -97,7 +94,7 @@ Consumer::init(const ConsumerSettings& settings)
     
     if (observer_)
     {
-        CriticalSectionScoped socpedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onStatusChanged(ConsumerStatusStopped);
     }
     
@@ -112,7 +109,7 @@ Consumer::start()
     
     if (observer_)
     {
-        CriticalSectionScoped socpedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onStatusChanged(ConsumerStatusNoData);
     }
     
@@ -129,7 +126,7 @@ Consumer::stop()
     
     if (observer_)
     {
-        CriticalSectionScoped socpedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onStatusChanged(ConsumerStatusStopped);
     }
     
@@ -159,7 +156,7 @@ Consumer::triggerRebuffering()
     
     if (observer_)
     {
-        CriticalSectionScoped scopedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onRebufferingOccurred();
     }
     
@@ -187,7 +184,7 @@ Consumer::switchThread(const std::string& threadName)
             
             if (observer_)
             {
-                CriticalSectionScoped scopedCs(&observerCritSec_);
+                lock_guard<mutex> scopedLock(observerMutex_);
                 observer_->onThreadSwitched(threadName);
             }
             
@@ -290,7 +287,7 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
 {
     if (observer_)
     {
-        CriticalSectionScoped scopedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         ConsumerStatus status;
         
         switch (newState) {
@@ -323,7 +320,7 @@ Consumer::onInitialDataArrived()
 {
     if (observer_)
     {
-        CriticalSectionScoped scopedCs(&observerCritSec_);
+        lock_guard<mutex> scopedLock(observerMutex_);
         observer_->onStatusChanged(ConsumerStatusAdjusting);
     }
 }

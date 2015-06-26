@@ -1077,19 +1077,13 @@ state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),
 isEstimationNeeded_(true),
-syncCs_(*CriticalSectionWrapper::CreateCriticalSection()),
-bufferEvent_(*EventWrapper::Create()),
-forcedRelease_(false),
-bufferEventsRWLock_(*RWLockWrapper::CreateRWLock())
+forcedRelease_(false)
 {
     rttFilter_ = NdnRtcUtils::setupFilter(0.05);
 }
 
 ndnrtc::new_api::FrameBuffer::~FrameBuffer()
 {
-    syncCs_.~CriticalSectionWrapper();
-    bufferEvent_.~EventWrapper();
-    bufferEventsRWLock_.~RWLockWrapper();
 }
 //******************************************************************************
 #pragma mark - public
@@ -1099,7 +1093,7 @@ ndnrtc::new_api::FrameBuffer::init()
     reset();
     
     {
-        CriticalSectionScoped scopedCs(&syncCs_);
+        lock_guard<recursive_mutex> scopedLock(syncMutex_);
         initialize();
     }
     
@@ -1110,15 +1104,15 @@ ndnrtc::new_api::FrameBuffer::init()
 int
 ndnrtc::new_api::FrameBuffer::reset()
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
-    // look through all active slots and release them if they're not locked
-
     // clear all events
-    bufferEventsRWLock_.AcquireLockExclusive();
-    pendingEvents_.clear();
-    pendingEventsFlushed_ = true;
-    bufferEventsRWLock_.ReleaseLockExclusive();
+    {
+        lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
+
+        pendingEvents_.clear();
+        pendingEventsFlushed_ = true;
+    }
 
     LogTraceC
     << "flushed. active "
@@ -1149,13 +1143,13 @@ void
 ndnrtc::new_api::FrameBuffer::release()
 {
     forcedRelease_ = true;
-    bufferEvent_.Set();
+    bufferEvent_.notify_one();
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     shared_ptr<Slot> reservedSlot = getSlot(interest.getName(), false);
     
     // check if slot is already reserved
@@ -1187,6 +1181,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
                                                   std::vector<shared_ptr<Interest> > &segmentInterests,
                                                   bool isParity)
 {
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(packetInterest.getName());
     
     if (packetNo < 0)
@@ -1200,8 +1195,6 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
     
     if (startSegmentNo > endSegmentNo)
         return Slot::StateFree;
-    
-    CriticalSectionScoped scopedCs_(&syncCs_);
     
     shared_ptr<Slot> reservedSlot = getSlot(packetInterest.getName(), false);
     
@@ -1242,7 +1235,7 @@ ndnrtc::new_api::FrameBuffer::interestRangeIssued(const ndn::Interest &packetInt
 ndnrtc::new_api::FrameBuffer::Event
 ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     Event event;
     event.type_ = Event::Error;
     const Name& dataName = data.getName();
@@ -1372,7 +1365,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 void
 ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     const Name& prefix = interest.getName();
     
     shared_ptr<Slot> slot = getSlot(prefix, false);
@@ -1438,7 +1431,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
     
     while (!(stop || forcedRelease_))
     {
-        bufferEventsRWLock_.AcquireLockShared();
+        bufferSharedMutex_.lock_shared();
         
         if (firstRun || pendingEventsFlushed_)
             startIt = pendingEvents_.begin();
@@ -1462,18 +1455,22 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
         if (startIt == end)
             startIt--;
         
-        bufferEventsRWLock_.ReleaseLockShared();
+        bufferSharedMutex_.unlock_shared();
         
         if (stop)
         {
-            bufferEventsRWLock_.AcquireLockExclusive();
+            lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
             pendingEvents_.erase(startIt);
-            bufferEventsRWLock_.ReleaseLockExclusive();
         }
         else
         {
+            unique_lock<mutex> scopedLock(bufferMutex_);
+            
             firstRun = false;
-            stop = (bufferEvent_.Wait(webrtcTimeout) != kEventSignaled);
+            if (WEBRTC_EVENT_INFINITE == webrtcTimeout)
+                bufferEvent_.wait(bufferMutex_);
+            else
+                stop = (bufferEvent_.wait_for(bufferMutex_, chrono::milliseconds(webrtcTimeout)) == cv_status::timeout);
 
             if (forcedRelease_)
             {
@@ -1489,7 +1486,7 @@ ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout
 void
 ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State &state)
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     state_ = state;
     shared_ptr<Slot> nullSlot;
@@ -1499,7 +1496,8 @@ ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State
 void
 ndnrtc::new_api::FrameBuffer::recycleOldSlots()
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+    
     double playbackDuration = getEstimatedBufferSize();
     double targetSize = getTargetSize();
     int nRecycledSlots_ = 0;
@@ -1522,7 +1520,8 @@ ndnrtc::new_api::FrameBuffer::recycleOldSlots()
 void
 ndnrtc::new_api::FrameBuffer::recycleOldSlots(int nSlotsToRecycle)
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+
     int nRecycledSlots_ = 0;
     
     while (nRecycledSlots_ < nSlotsToRecycle && playbackQueue_.size() != 0)
@@ -1545,7 +1544,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
 {
     if (isEstimationNeeded_)
     {
-        CriticalSectionScoped scopedCs(&syncCs_);
+        lock_guard<recursive_mutex> scopedLock(syncMutex_);
         estimateBufferSize();
         isEstimationNeeded_ = false;
 //        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
@@ -1557,7 +1556,7 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
 int64_t
 ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     int64_t size = playbackQueue_.getPlaybackDuration(false);
     
     statStorage_->updateIndicator(statistics::Indicator::BufferPlayableSize, size);
@@ -1572,7 +1571,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                                           PacketNumber& pairedPacketNo,
                                           bool& isKey, double& assembledLevel)
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     FrameBuffer::Slot* slotRaw = playbackQueue_.peekSlot();
     
     if (slotRaw)
@@ -1692,7 +1691,8 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
 int
 ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+
     int playbackDuration = (skipFrame_)?0:playbackQueue_.getInferredFrameDuration();
     
     isInferredDuration = true;
@@ -1775,7 +1775,7 @@ ndnrtc::new_api::FrameBuffer::recycleEvent(const ndnrtc::new_api::FrameBuffer::E
 void
 ndnrtc::new_api::FrameBuffer::dump()
 {
-    CriticalSectionScoped scopedCs(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
     LogTraceC
     << "buffer dump (duration est " << getEstimatedBufferSize()
@@ -1863,7 +1863,8 @@ ndnrtc::new_api::FrameBuffer::setSlot(const ndn::Name &prefix,
 void
 ndnrtc::new_api::FrameBuffer::estimateBufferSize()
 {
-    CriticalSectionScoped scopedCs_(&syncCs_);
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
     statStorage_->updateIndicator(statistics::Indicator::BufferEstimatedSize,
                                   estimatedSizeMs_);
@@ -1958,11 +1959,12 @@ ndnrtc::new_api::FrameBuffer::addBufferEvent(Event::EventType type,
     ev.type_ = type;
     ev.slot_ = slot;
     
-    bufferEventsRWLock_.AcquireLockExclusive();
-    pendingEvents_.push_back(ev);
-    bufferEventsRWLock_.ReleaseLockExclusive();
-    
-    bufferEvent_.Set();
+    {
+        lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
+        pendingEvents_.push_back(ev);
+    }
+
+    bufferEvent_.notify_all();
 }
 
 void

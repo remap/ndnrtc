@@ -11,6 +11,9 @@
 #ifndef __ndnrtc__service_channel__
 #define __ndnrtc__service_channel__
 
+#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
+
 #include "ndnrtc-common.h"
 #include "face-wrapper.h"
 #include "ndnrtc-object.h"
@@ -102,12 +105,9 @@ namespace ndnrtc {
             boost::shared_ptr<new_api::SessionInfo> sessionInfo_;
             Name sessionInfoPrefix_;
             
-            webrtc::ThreadWrapper &monitoringThread_;
-            webrtc::EventTimerWrapper &monitorTimer_;
-            
-            static bool
-            processMonitoring(void *obj)
-            { return ((ServiceChannel*)obj)->monitor(); }
+            boost::asio::io_service io_service_;
+            boost::asio::steady_timer monitorTimer_;
+            boost::thread monitoringThread_;
             
             // private
             void

@@ -26,14 +26,13 @@
 #include "session.h"
 #include "error-codes.h"
 #include "frame-data.h"
+#include "ndnrtc-utils.h"
 
 using namespace boost;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
-
-static std::string LIB_LOG = "ndnrtc.log";
 
 static shared_ptr<FaceProcessor> LibraryFace;
 
@@ -154,11 +153,7 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
     
     sigaction(SIGPIPE, &act, NULL);
 //    fclose(stderr);
-    
-    LogInfo(LIB_LOG) << "Voice engine initialization..." << std::endl;
-    NdnRtcUtils::sharedVoiceEngine();
-    LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
-    
+        
     LogInfo(LIB_LOG) << "Starting recovery timer..." << std::endl;
     recoveryCheckTimer.expires_from_now(boost::chrono::milliseconds(50));
     recoveryCheckTimer.async_wait(recoveryCheck);
@@ -175,12 +170,22 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
         LogInfo(LIB_LOG) << "Background thread stopped" << std::endl;
     });
     
+    LogInfo(LIB_LOG) << "Starting voice thread..." << std::endl;
+    NdnRtcUtils::startVoiceThread();
+    NdnRtcUtils::initVoiceEngine();
+    LogInfo(LIB_LOG) << "Voice thread started" << std::endl;
+    
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
     LogInfo(LIB_LOG) << "NDN-RTC Destructor" << std::endl;
     
     try {
+        LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
+        NdnRtcUtils::releaseVoiceEngine();
+        NdnRtcUtils::stopVoiceThread();
+        LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
+        
         LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
         recoveryCheckTimer.cancel();
         LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;

@@ -12,6 +12,8 @@
 #ifndef __ndnrtc__ndnrtc_object__
 #define __ndnrtc__ndnrtc_object__
 
+#include <boost/thread.hpp>
+
 #include "ndnrtc-common.h"
 #include "params.h"
 #include "interfaces.h"
@@ -51,12 +53,15 @@ namespace ndnrtc {
             
         protected:
             // critical section for observer's callbacks
-            webrtc::CriticalSectionWrapper &callbackSync_;
+            boost::mutex callbackMutex_;
             INdnRtcComponentCallback *callback_ = nullptr;
             
             // protected methods go here
             int notifyError(const int ecode, const char *format, ...);
             bool hasCallback() { return callback_ != NULL; }
+            
+            boost::thread startThread(boost::function<bool ()> threadFunc);
+            void stopThread(boost::thread &thread);
         };
     }
 }

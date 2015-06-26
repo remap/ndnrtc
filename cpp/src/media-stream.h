@@ -11,6 +11,9 @@
 #ifndef __libndnrtc__media_stream__
 #define __libndnrtc__media_stream__
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
+
 #include "params.h"
 #include "ndnrtc-common.h"
 #include "media-thread.h"
@@ -112,21 +115,18 @@ namespace ndnrtc
             getStreamParameters();
             
         private:
+            bool isProcessing_;
             boost::shared_ptr<BaseCapturer> capturer_;
             
-            rtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
-            webrtc::ThreadWrapper &processThread_;
-            webrtc::EventWrapper &deliverEvent_;
+            boost::mutex captureMutex_, deliverMutex_;
+            boost::condition_variable_any deliverEvent_;
+            boost::thread processThread_;
+            
             WebRtcVideoFrame capturedFrame_, deliverFrame_;
             double deliveredTimestamp_;
             
             void
             addNewMediaThread(const MediaThreadParams* params);
-            
-            static bool
-            processFrameDelivery(void *obj) {
-                return ((VideoStream*)obj)->processDeliveredFrame();
-            }
             
             // private methods
             bool

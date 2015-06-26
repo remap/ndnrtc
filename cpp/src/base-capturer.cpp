@@ -8,16 +8,16 @@
 //  Author:  Peter Gusev
 //
 
+#include <boost/thread/lock_guard.hpp>
+#include <boost/chrono.hpp>
+
 #include "base-capturer.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
+using namespace boost;
 
 BaseCapturer::BaseCapturer():
-capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
-deliver_cs_(CriticalSectionWrapper::CreateCriticalSection()),
-captureEvent_(*EventWrapper::Create()),
-captureThread_(*ThreadWrapper::CreateThread(processCapturedFrame, this, "capture-thread")),
 lastFrameTimestamp_(0)
 {
     description_ = "capturer";
@@ -35,8 +35,9 @@ int BaseCapturer::init()
 
 int BaseCapturer::startCapture()
 {
-    if (!captureThread_.Start())
-        return notifyError(RESULT_ERR, "can't start capturing thread");
+    captureThread_ = startThread([this]()->bool{
+        return process();
+    });
 
     return RESULT_OK;
 }
@@ -44,12 +45,8 @@ int BaseCapturer::startCapture()
 int BaseCapturer::stopCapture()
 {
     isCapturing_ = false;
-    
-//    captureThread_.SetNotAlive();
-    captureEvent_.Set();
-    
-    if (!captureThread_.Stop())
-        return notifyError(-1, "can't stop capturing thread");
+    deliverEvent_.notify_one();
+    stopThread(captureThread_);
     
     return RESULT_OK;
 }
@@ -57,23 +54,24 @@ int BaseCapturer::stopCapture()
 bool BaseCapturer::process()
 {
     LogTraceC << "check captured frame" << std::endl;
-    if (captureEvent_.Wait(100) == kEventSignaled)
+    unique_lock<mutex> captureLock(deliverMutex_);
+    
+    if (deliverEvent_.wait_for(deliverMutex_, chrono::milliseconds(100)) == cv_status::no_timeout)
     {
         if (!capturedFrame_.IsZeroSize())
         {
             NdnRtcUtils::frequencyMeterTick(meterId_);
         }
         
-        deliver_cs_->Enter();
         if (!capturedFrame_.IsZeroSize())
         {
             LogTraceC << "swapping frames" << std::endl;
-            capture_cs_->Enter();
+            captureMutex_.lock();
             int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
             deliverFrame_.CopyFrame(capturedFrame_);
             //deliverFrame_.SwapFrame(&capturedFrame_);
             //capturedFrame_.ResetSize();
-            capture_cs_->Leave();
+            captureMutex_.unlock();
             LogTraceC << "checking frame consumer" << std::endl;
             
             if (frameConsumer_)
@@ -91,21 +89,19 @@ bool BaseCapturer::process()
                 LogTraceC << "frame consumed" << std::endl;
             }
         }
-        deliver_cs_->Leave();
     }
 
-    return true;
+    return isCapturing_;
 }
 
 void BaseCapturer::deliverCapturedFrame(WebRtcVideoFrame& frame)
 {
     if (isCapturing_)
     {
-        capture_cs_->Enter();
-        capturedFrame_.CopyFrame(frame);
-//        capturedFrame_.SwapFrame(&frame);
-        capture_cs_->Leave();
-        
-        captureEvent_.Set();
+        {
+            lock_guard<mutex> scopedLock(captureMutex_);
+            capturedFrame_.CopyFrame(frame);
+        }
+        deliverEvent_.notify_one();
     }
 }

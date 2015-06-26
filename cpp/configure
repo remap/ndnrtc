@@ -17658,6 +17658,11 @@ done
 
 WEBRTCLIBS="-laudio_coding_module \
    -laudio_decoder_interface \
+   -lCNG \
+   -lG711 \
+   -lG722 \
+   -liLBC \
+   -lPCM16B \
    -laudio_encoder_interface \
    -laudio_conference_mixer \
    -laudioproc_debug_proto \

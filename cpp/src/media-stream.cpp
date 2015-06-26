@@ -88,10 +88,6 @@ MediaStream::onMediaThreadRegistrationFailed(std::string threadName)
 //******************************************************************************
 VideoStream::VideoStream():
 MediaStream(),
-capture_cs_(CriticalSectionWrapper::CreateCriticalSection()),
-deliverEvent_(*EventWrapper::Create()),
-processThread_(*ThreadWrapper::CreateThread(processFrameDelivery, this,
-                                            "video-stream-processing")),
 capturer_(new ExternalCapturer())
 {
     description_ = "video-stream";
@@ -104,8 +100,10 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
     MediaStream::init(streamSettings);
     
     capturer_->setLogger(logger_);
-    
-    processThread_.Start();
+    isProcessing_ = true;
+    processThread_ = startThread([this]()->bool{
+        return processDeliveredFrame();
+    });
     
     return RESULT_OK;
 }
@@ -139,9 +137,9 @@ VideoStream::getStreamParameters()
 void
 VideoStream::release()
 {
-//    processThread_.SetNotAlive();
-    deliverEvent_.Set();
-    processThread_.Stop();
+    deliverEvent_.notify_one();
+    isProcessing_ = false;
+    stopThread(processThread_);
 }
 
 void
@@ -167,23 +165,26 @@ void
 VideoStream::onDeliverFrame(WebRtcVideoFrame &frame,
                                  double timestamp)
 {
-    capture_cs_->Enter();
-    capturedFrame_.CopyFrame(frame);
-    deliveredTimestamp_ = timestamp;
-    capture_cs_->Leave();
+    {
+        lock_guard<mutex> scopedLock(captureMutex_);
+        capturedFrame_.CopyFrame(frame);
+        deliveredTimestamp_ = timestamp;
+    }
     
-    deliverEvent_.Set();
+    deliverEvent_.notify_one();
 };
 
 bool
 VideoStream::processDeliveredFrame()
 {
-    if (deliverEvent_.Wait(100) == kEventSignaled)
+    unique_lock<mutex> lock(deliverMutex_);
+    
+    if (deliverEvent_.wait_for(deliverMutex_, chrono::milliseconds(100)) == cv_status::no_timeout)
     {
-        capture_cs_->Enter();
-        deliverFrame_.CopyFrame(capturedFrame_);
-//        deliverFrame_.SwapFrame(&capturedFrame_);
-        capture_cs_->Leave();
+        {
+            lock_guard<mutex> scopedLock(captureMutex_);
+            deliverFrame_.CopyFrame(capturedFrame_);
+        }
         
         if (!deliverFrame_.IsZeroSize()) {
             for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
@@ -197,13 +198,13 @@ VideoStream::processDeliveredFrame()
         }
     }
     
-    return true;
+    return isProcessing_;
 }
 
 //******************************************************************************
 AudioStream::AudioStream():
 MediaStream(),
-audioCapturer_(new AudioCapturer(NdnRtcUtils::sharedVoiceEngine()))
+audioCapturer_(new AudioCapturer())
 {
     description_ = "audio-stream";
     audioCapturer_->registerCallback(this);

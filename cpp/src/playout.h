@@ -73,8 +73,8 @@ namespace ndnrtc{
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
-            webrtc::ThreadWrapper &playoutThread_;
-            webrtc::CriticalSectionWrapper &playoutCs_;
+            boost::thread playoutThread_;
+            boost::mutex playoutMutex_;
             
             void* frameConsumer_;
             PacketData *data_;
@@ -97,12 +97,6 @@ namespace ndnrtc{
                            PacketNumber sequencePacketNo,
                            PacketNumber pairedPacketNo,
                            bool isKey, double assembledLevel) = 0;
-            
-            static bool
-            playoutThreadRoutine(void *obj)
-            {
-                return ((Playout*)obj)->processPlayout();
-            }
             
             void
             updatePlaybackAdjustment();

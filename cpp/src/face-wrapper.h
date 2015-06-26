@@ -9,6 +9,9 @@
 #ifndef __ndnrtc__face_wrapper__
 #define __ndnrtc__face_wrapper__
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
+
 #include "ndnrtc-common.h"
 #include "params.h"
 #include "ndnrtc-object.h"
@@ -21,9 +24,9 @@ namespace ndnrtc {
      */
     class FaceWrapper : public ndnlog::new_api::ILoggingObject {
     public:
-        FaceWrapper();
+        FaceWrapper(){}
         FaceWrapper(boost::shared_ptr<Face> &face_);
-        ~FaceWrapper();
+        ~FaceWrapper(){}
         
         void
         setFace(boost::shared_ptr<Face> face) { face_ = face; }
@@ -62,13 +65,13 @@ namespace ndnrtc {
          * memory cache and calling processEvents should be on one thread)
          */
         void
-        synchronizeStart() { faceCs_.Enter(); }
+        synchronizeStart() { faceMutex_.lock(); }
         void
-        synchronizeStop() { faceCs_.Leave(); }
+        synchronizeStop() { faceMutex_.unlock(); }
         
     private:
         boost::shared_ptr<Face> face_;
-        webrtc::CriticalSectionWrapper &faceCs_;
+        boost::recursive_mutex faceMutex_;
     };
     
     class FaceProcessor :   public new_api::NdnRtcComponent
@@ -114,16 +117,7 @@ namespace ndnrtc {
         unsigned int usecInterval_;
         boost::shared_ptr<FaceWrapper> faceWrapper_;
         boost::shared_ptr<Transport> transport_;
-        webrtc::ThreadWrapper &processingThread_;
-        
-        static bool
-        processFaceEventsRoutine(void *processor)
-        {
-            return ((FaceProcessor*)processor)->processEvents();
-        }
-        
-        bool
-        processEvents();
+        boost::thread processEventsThread_;
     };
 };
 

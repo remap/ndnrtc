@@ -28,7 +28,7 @@ namespace ndnrtc {
         class AudioCapturer : public WebrtcAudioChannel, public NdnRtcComponent
         {
         public:
-            AudioCapturer(webrtc::VoiceEngine* voiceEngine);
+            AudioCapturer();
             ~AudioCapturer();
             
             void

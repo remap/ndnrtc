@@ -9,6 +9,8 @@
 //  Created: 8/21/13
 //
 
+#include <boost/chrono.hpp>
+
 #include "ndnrtc-object.h"
 
 using namespace webrtc;
@@ -16,39 +18,36 @@ using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace std;
 using namespace ndnlog;
+using namespace boost;
 
 //******************************************************************************
 /**
  * @name NdnRtcComponent class
  */
-NdnRtcComponent::NdnRtcComponent():
-callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
+NdnRtcComponent::NdnRtcComponent()
 {}
 
 NdnRtcComponent::NdnRtcComponent(INdnRtcComponentCallback *callback):
-callback_(callback),
-callbackSync_(*CriticalSectionWrapper::CreateCriticalSection())
+callback_(callback)
 {}
 
 NdnRtcComponent::~NdnRtcComponent()
 {
     std::cout << description_ << " component dtor" << std::endl;
-    callbackSync_.~CriticalSectionWrapper();
 }
 
 void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)
 {
-    callbackSync_.Enter();
-    
     if (hasCallback())
+    {
+        lock_guard<mutex> scopedLock(callbackMutex_);
         callback_->onError(errorMessage, errorCode);
+    }
     else
     {
         LogErrorC << "error occurred: " << string(errorMessage) << endl;
         if (logger_) logger_->flush();
     }
-    
-    callbackSync_.Leave();
 }
 
 int NdnRtcComponent::notifyError(const int ecode, const char *format, ...)
@@ -84,4 +83,42 @@ NdnRtcComponent::getDescription() const
     }
     
     return description_;
+}
+
+thread
+NdnRtcComponent::startThread(function<bool ()> threadFunc)
+{
+    thread threadObject = thread([threadFunc](){
+        bool result = false;
+        do {
+            try
+            {
+                this_thread::interruption_point();
+                {
+                    this_thread::disable_interruption di;
+                    result = threadFunc();
+                }
+            }
+            catch (thread_interrupted &interruption)
+            {
+                result = false;
+            }
+        } while (result);
+    });
+    
+    return threadObject;
+}
+
+void
+NdnRtcComponent::stopThread(thread &threadObject)
+{
+    threadObject.interrupt();
+    
+    if (threadObject.joinable())
+    {
+        bool res = threadObject.try_join_for(chrono::milliseconds(500));
+                                             
+        if (!res)
+            threadObject.detach();
+    }
 }

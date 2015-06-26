@@ -11,6 +11,9 @@
 #ifndef __libndnrtc__capturer__
 #define __libndnrtc__capturer__
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
+
 #include "webrtc.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
@@ -44,10 +47,9 @@ namespace ndnrtc {
         IRawFrameConsumer *frameConsumer_ = nullptr;
         double lastFrameTimestamp_;
         
-        rtc::scoped_ptr<webrtc::CriticalSectionWrapper> capture_cs_;
-        rtc::scoped_ptr<webrtc::CriticalSectionWrapper> deliver_cs_;
-        webrtc::ThreadWrapper &captureThread_;
-        webrtc::EventWrapper &captureEvent_;
+        boost::mutex captureMutex_, deliverMutex_;
+        boost::thread captureThread_;
+        boost::condition_variable_any deliverEvent_;
         WebRtcVideoFrame capturedFrame_, deliverFrame_;
 
         // statistics

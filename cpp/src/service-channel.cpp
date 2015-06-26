@@ -26,8 +26,7 @@ ServiceChannel::ServiceChannel(IServiceChannelPublisherCallback* callback,
                                unsigned int freshnessIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
-monitorTimer_(*EventTimerWrapper::Create()),
+monitorTimer_(io_service_),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 sessionInfoFreshnessMs_(freshnessIntervalMs)
@@ -40,8 +39,7 @@ ServiceChannel::ServiceChannel(IServiceChannelListenerCallback* callback,
                                unsigned int updateIntervalMs):
 isMonitoring_(false),
 updateCounter_(0),
-monitoringThread_(*ThreadWrapper::CreateThread(ServiceChannel::processMonitoring, this, "service-channel")),
-monitorTimer_(*EventTimerWrapper::Create()),
+monitorTimer_(io_service_),
 serviceChannelCallback_(callback),
 faceProcessor_(faceProcessor),
 updateIntervalMs_(updateIntervalMs)
@@ -122,7 +120,9 @@ void
 ServiceChannel::startMonitorThread()
 {
     isMonitoring_ = true;
-    monitoringThread_.Start();
+    monitoringThread_ = startThread([this]()->bool{
+        return monitor();
+    });
 }
 
 void
@@ -133,9 +133,8 @@ ServiceChannel::stopMonitorThread()
     faceProcessor_->getFaceWrapper()->removePendingInterest(pendingInterestId_);
     pendingInterestId_ = 0;
     
-    monitorTimer_.Set();
-    monitoringThread_.Stop();
-//    monitoringThread_.SetNotAlive();
+    monitorTimer_.cancel();
+    stopThread(monitoringThread_);
 }
 
 bool
@@ -143,8 +142,8 @@ ServiceChannel::monitor()
 {
     requestSessionInfo();
     
-    monitorTimer_.StartTimer(false, updateIntervalMs_);
-    monitorTimer_.Wait(WEBRTC_EVENT_INFINITE);
+    monitorTimer_.expires_from_now(boost::chrono::milliseconds(updateIntervalMs_));
+    monitorTimer_.wait();
     
     return isMonitoring_;
 }

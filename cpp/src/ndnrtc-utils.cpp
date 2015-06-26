@@ -11,6 +11,9 @@
 //#undef NDN_LOGGING
 
 #include <boost/chrono.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/asio.hpp>
 
 #include "ndnrtc-utils.h"
 #include "endian.h"
@@ -73,6 +76,8 @@ typedef struct _SlidingAverage {
 
 //********************************************************************************
 #pragma mark - all static
+std::string ndnrtc::LIB_LOG = "ndnrtc.log";
+
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
 static std::vector<MeanEstimator> meanEstimators_;
@@ -80,6 +85,10 @@ static std::vector<Filter> filters_;
 static std::vector<InclineEstimator> inclineEstimators_;
 static std::vector<SlidingAverage> slidingAverageEstimators_;
 
+static boost::atomic<bool> VoiceThreadRunning(false);
+static boost::thread VoiceThread;
+static boost::asio::io_service io_voice;
+static boost::shared_ptr<boost::asio::io_service::work> VoiceWork;
 static VoiceEngine *VoiceEngineInstance = NULL;
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
@@ -529,34 +538,81 @@ webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
 {
     if (!VoiceEngineInstance)
     {
-        VoiceEngineInstance = VoiceEngine::Create();
-        
-        int res = 0;
-        
-        {// init engine
-            VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
-            
-            res = voe_base->Init();
-            
-            voe_base->Release();
-        }
-        {// configure
-            VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(VoiceEngineInstance);
-            
-            voe_proc->SetEcStatus(true, kEcConference);
-            voe_proc->Release();
-        }
-        
-        if (res < 0)
-            return NULL;
+        NdnRtcUtils::initVoiceEngine();
     }
     
     return VoiceEngineInstance;
 }
 
+void NdnRtcUtils::initVoiceEngine()
+{
+    boost::mutex m;
+    boost::unique_lock<boost::mutex> lock(m);
+    boost::condition_variable initialized;
+    
+    NdnRtcUtils::dispatchOnVoiceThread(
+                                       [&initialized](){
+                                           LogInfo(LIB_LOG) << "Iinitializing voice engine..." << std::endl;
+                                           VoiceEngineInstance = VoiceEngine::Create();
+                                           
+                                           int res = 0;
+                                           
+                                           {// init engine
+                                               VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
+                                               
+                                               res = voe_base->Init();
+                                               
+                                               voe_base->Release();
+                                           }
+                                           {// configure
+                                               VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(VoiceEngineInstance);
+                                               
+                                               voe_proc->SetEcStatus(true, kEcConference);
+                                               voe_proc->Release();
+                                           }
+                                           
+                                           LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
+                                           initialized.notify_one();
+                                       },
+                                       boost::function<void()>());
+    initialized.wait(lock);
+}
+
 void NdnRtcUtils::releaseVoiceEngine()
 {
-    VoiceEngine::Delete(VoiceEngineInstance);
+    NdnRtcUtils::dispatchOnVoiceThread([](){
+                                           VoiceEngine::Delete(VoiceEngineInstance);
+                                       },
+                                       boost::function<void()>());
+}
+
+void NdnRtcUtils::startVoiceThread()
+{
+    VoiceWork.reset(new boost::asio::io_service::work(io_voice));
+    VoiceThread = boost::thread([](){
+        LogInfo(LIB_LOG) << "Voice thread "
+        << boost::this_thread::get_id() << " started" << std::endl;
+        
+        io_voice.run();
+        
+        LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
+    });
+}
+
+void NdnRtcUtils::stopVoiceThread()
+{
+    VoiceWork.reset();
+    io_voice.stop();
+}
+
+void NdnRtcUtils::dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
+                           boost::function<void(void)> onCompletion)
+{
+    io_voice.post([=]{
+        dispatchBlock();
+        if (onCompletion)
+            onCompletion();
+    });
 }
 
 string NdnRtcUtils::stringFromFrameType(const WebRtcVideoFrameType &frameType)
