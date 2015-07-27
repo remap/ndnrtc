@@ -42,10 +42,11 @@ MediaStream::init(const MediaStreamSettings& streamSettings)
     streamName_ = settings_.streamParams_.streamName_;
     streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings_.userPrefix_, streamName_);
     
-    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
-        addNewMediaThread(settings_.streamParams_.mediaThreads_[i]);
+    int res = RESULT_OK;
+    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size() && RESULT_GOOD(res); i++)
+        res = addNewMediaThread(settings_.streamParams_.mediaThreads_[i]);
     
-    return RESULT_OK;
+    return res;
 }
 
 void
@@ -97,15 +98,16 @@ capturer_(new ExternalCapturer())
 int
 VideoStream::init(const MediaStreamSettings& streamSettings)
 {
-    MediaStream::init(streamSettings);
-    
-    capturer_->setLogger(logger_);
-    isProcessing_ = true;
-    processThread_ = startThread([this]()->bool{
-        return processDeliveredFrame();
-    });
-    
-    return RESULT_OK;
+    if (RESULT_GOOD(MediaStream::init(streamSettings)))
+    {
+        capturer_->setLogger(logger_);
+        isProcessing_ = true;
+        processThread_ = startThread([this]()->bool{
+            return processDeliveredFrame();
+        });
+        return RESULT_OK;
+    }
+    return RESULT_ERR;
 }
 
 MediaStreamParams
@@ -142,7 +144,7 @@ VideoStream::release()
     stopThread(processThread_);
 }
 
-void
+int
 VideoStream::addNewMediaThread(const MediaThreadParams* params)
 {
     VideoThreadSettings threadSettings;
@@ -156,9 +158,14 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     videoThread->setLogger(logger_);
     
     if (RESULT_FAIL(videoThread->init(threadSettings)))
+    {
         notifyError(-1, "couldn't add new video thread %s", threadSettings.getVideoParams()->threadName_.c_str());
+        return RESULT_ERR;
+    }
     else
         threads_[videoThread->getPrefix()] = videoThread;
+
+    return RESULT_OK;
 }
 
 void
@@ -214,12 +221,16 @@ audioCapturer_(new AudioCapturer())
 int
 AudioStream::init(const MediaStreamSettings& streamSettings)
 {
-    MediaStream::init(streamSettings);
-    audioCapturer_->setLogger(logger_);
-    audioCapturer_->init();
-    audioCapturer_->startCapture();
+    if (RESULT_GOOD(MediaStream::init(streamSettings)))
+    {
+        audioCapturer_->setLogger(logger_);
+        audioCapturer_->init();
+        audioCapturer_->startCapture();
+        
+        return RESULT_OK;
+    }
     
-    return RESULT_OK;
+    return RESULT_ERR;
 }
 
 void
@@ -228,7 +239,7 @@ AudioStream::release()
     audioCapturer_->stopCapture();
 }
 
-void
+int
 AudioStream::addNewMediaThread(const MediaThreadParams* params)
 {
     AudioThreadSettings threadSettings;
@@ -240,10 +251,15 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
     audioThread->setLogger(logger_);
     
     if (RESULT_FAIL(audioThread->init(threadSettings)))
+    {
         notifyError(-1, "couldn't add new audio thread %s",
                     threadSettings.threadParams_->threadName_.c_str());
+        return RESULT_ERR;
+    }
     else
         threads_[audioThread->getPrefix()] = audioThread;
+    
+    return RESULT_OK;
 }
 
 // interface conformance - IAudioFrameConsumer
