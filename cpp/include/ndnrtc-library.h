@@ -74,33 +74,6 @@ namespace ndnrtc {
         stopSession(const std::string& sessionPrefix);
         
         /**
-         * Starts observing remote producer and notifying about any changes in
-         * their status via provided observer object
-         * @param username Remote producer's username
-         * @param prefix Remote producer's prefix
-         * @param generalParams General NDN-RTC parameters object
-         * @param sessionObserver Pointer to a remote session observer object 
-         *        which will receive updates
-         * @return Remote user's session prefix
-         */
-        virtual std::string
-        setRemoteSessionObserver(const std::string& username,
-                                 const std::string& prefix,
-                                 const new_api::GeneralParams& generalParams,
-                                 IRemoteSessionObserver* sessionObserver);
-        
-        /**
-         * Stops observing remote producer and notifying about her status 
-         * updates
-         * @param sessionPrefix Remote producer's session prefix returned by 
-         *        previous setRemoteSessionObserver call
-         * @return RESULT_OK on success, RESULT_ERR on failure
-         * @see setRemoteSessionObserver
-         */
-        virtual int
-        removeRemoteSessionObserver(const std::string& sessionPrefix);
-        
-        /**
          * Adds publishing stream to the session
          * @param sessionPrefix Session prefix returned by previous startSession
          *                      call
@@ -137,6 +110,7 @@ namespace ndnrtc {
          * Adds new remote stream and starts fetching from its' first thread
          * @param remoteSessionPrefix Remote producer's session prefix returned
          *                            by previsous setRemoteSessionObserver call
+         * @param threadName Thread name to fetch from
          * @param params Media stream parameters
          * @param generalParams General NDN-RTC parameters
          * @param consumerParams General consumer parameters
@@ -147,6 +121,7 @@ namespace ndnrtc {
          */
         virtual std::string
         addRemoteStream(const std::string& remoteSessionPrefix,
+                        const std::string& threadName,
                         const new_api::MediaStreamParams& params,
                         const new_api::GeneralParams& generalParams,
                         const new_api::GeneralConsumerParams& consumerParams,

@@ -22,7 +22,8 @@ namespace ndnrtc {
             ~AudioConsumer();
             
             int
-            init(const ConsumerSettings& settings);
+            init(const ConsumerSettings& settings,
+                 const std::string& threadName);
             
             int
             start();

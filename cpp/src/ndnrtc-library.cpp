@@ -42,18 +42,14 @@ static SessionMap ActiveSessions;
 typedef std::map<std::string, shared_ptr<Consumer>> ConsumerStreamMap;
 static ConsumerStreamMap ActiveStreamConsumers;
 
-typedef std::map<std::string, shared_ptr<ServiceChannel>> SessionObserverMap;
-static SessionObserverMap RemoteObservers;
-
-static boost::thread backgroundThread;
-static boost::asio::io_service io_service;
-static shared_ptr<boost::asio::io_service::work> backgroundWork;
-static boost::asio::steady_timer recoveryCheckTimer(io_service);
-static boost::mutex recoveryCheckMutex;
 typedef boost::lock_guard<boost::mutex> ScopedLock;
 
 void recoveryCheck(const boost::system::error_code& e);
 std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName);
+
+boost::asio::io_service libIoService;
+boost::asio::steady_timer recoveryCheckTimer(libIoService);
+boost::mutex recoveryCheckMutex;
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -119,6 +115,7 @@ static void initializer(int argc, char** argv, char** envp) {
     static int initialized = 0;
     if (!initialized) {
         initialized = 1;
+        NdnRtcUtils::setIoService(libIoService);
     }
 }
 
@@ -153,22 +150,13 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
     
     sigaction(SIGPIPE, &act, NULL);
 //    fclose(stderr);
-        
+    
+    NdnRtcUtils::startBackgroundThread();
+    
     LogInfo(LIB_LOG) << "Starting recovery timer..." << std::endl;
     recoveryCheckTimer.expires_from_now(boost::chrono::milliseconds(50));
     recoveryCheckTimer.async_wait(recoveryCheck);
     LogInfo(LIB_LOG) << "Recovery timer started" << std::endl;
-    
-    LogInfo(LIB_LOG) << "Starting background thread..." << std::endl;
-    backgroundWork.reset(new boost::asio::io_service::work(io_service));
-    backgroundThread = boost::thread([](){
-        LogInfo(LIB_LOG) << "Background thread "
-        << boost::this_thread::get_id() << " started" << std::endl;
-        
-        io_service.run();
-        
-        LogInfo(LIB_LOG) << "Background thread stopped" << std::endl;
-    });
     
     LogInfo(LIB_LOG) << "Starting voice thread..." << std::endl;
     NdnRtcUtils::startVoiceThread();
@@ -189,9 +177,8 @@ NdnRtcLibrary::~NdnRtcLibrary()
         LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
         recoveryCheckTimer.cancel();
         LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
-        backgroundWork.reset();
-        io_service.stop();
-        backgroundThread.try_join_for(boost::chrono::milliseconds(500));
+        
+        NdnRtcUtils::stopBackgroundThread();
     }
     catch (boost::system::system_error& e) {
         LogError(LIB_LOG) << "Exception while stopping timer: "
@@ -209,17 +196,6 @@ NdnRtcLibrary::~NdnRtcLibrary()
     ActiveSessions.clear();
     
     LogInfo(LIB_LOG) << "Active sessions cleared" << std::endl;
-    LogInfo(LIB_LOG) << "Stopping remote session observers..." << std::endl;
-    
-    for (SessionObserverMap::iterator it = RemoteObservers.begin();
-         it != RemoteObservers.end(); it++)
-    {
-        LogInfo(LIB_LOG) << "Stopping " << it->second->getPrefix() << std::endl;
-        it->second->stopMonitor();
-    }
-    RemoteObservers.clear();
-    
-    LogInfo(LIB_LOG) << "Active remote session observers stopped" << std::endl;
     
     if (LibraryFace.get())
     {
@@ -310,78 +286,6 @@ int NdnRtcLibrary::stopSession(const std::string& userPrefix)
     return res;
 }
 
-std::string
-NdnRtcLibrary::setRemoteSessionObserver(const std::string& username,
-                                        const std::string& prefix,
-                                        const new_api::GeneralParams& generalParams,
-                                        IRemoteSessionObserver* sessionObserver)
-{
-    LogInfo(LIB_LOG) << "Setting remote session observer " << sessionObserver
-    << " for username " << username
-    << " and prefix " << prefix << "..." << std::endl;
-    
-    if (!LibraryFace.get())
-    {
-        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
-        
-        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
-        LibraryFace->startProcessing();
-        
-        LogInfo(LIB_LOG) << "Library face created succesfully" << std::endl;
-    }
-    
-    std::string sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
-    SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
-    
-    if (it == RemoteObservers.end())
-    {
-        shared_ptr<ServiceChannel> remoteSessionChannel(new ServiceChannel(sessionObserver, LibraryFace));
-        remoteSessionChannel->startMonitor(sessionPrefix);
-        
-        RemoteObservers[sessionPrefix] = remoteSessionChannel;
-        
-        LogInfo(LIB_LOG) << "Remote observer started for session prefix " << sessionPrefix << std::endl;
-        return sessionPrefix;
-    }
-    else
-    {
-        LogError(LIB_LOG) << "Observer already exists" << std::endl;
-    }
-    
-    return "";
-}
-
-int NdnRtcLibrary::removeRemoteSessionObserver(const std::string& sessionPrefix)
-{
-    LogInfo(LIB_LOG) << "Removing remote session observer for prefix "
-    << sessionPrefix << "..." << std::endl;
-    
-    SessionObserverMap::iterator it = RemoteObservers.find(sessionPrefix);
-    
-    if (it == RemoteObservers.end())
-    {
-        LogError(LIB_LOG) << "Observer was not found" << std::endl;
-        return RESULT_ERR;
-    }
-    
-    it->second->stopMonitor();
-    RemoteObservers.erase(it);
-    
-    LogInfo(LIB_LOG) << "Observer stopped" << std::endl;
-    
-    if (RemoteObservers.size() == 0)
-    {
-        LogInfo(LIB_LOG) << "No more observers. Shutting down library Face..." << std::endl;
-        
-        LibraryFace->stopProcessing();
-        LibraryFace.reset();
-        
-        LogInfo(LIB_LOG) << "Library Face shut down" << std::endl;
-    }
-    
-    return RESULT_OK;
-}
-
 std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
                                           const new_api::MediaStreamParams& params,
                                           IExternalCapturer** const capturer)
@@ -432,6 +336,7 @@ int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
 
 std::string
 NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
+                               const std::string& threadName,
                                const new_api::MediaStreamParams& params,
                                const new_api::GeneralParams& generalParams,
                                const new_api::GeneralConsumerParams& consumerParams,
@@ -479,7 +384,7 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     
     remoteStreamConsumer->registerCallback(&LibraryInternalObserver);
     
-    if (RESULT_FAIL(remoteStreamConsumer->init(settings)))
+    if (RESULT_FAIL(remoteStreamConsumer->init(settings, threadName)))
     {
         LogError(LIB_LOG) << "Failed to initialize fetching from stream" << std::endl;
         return "";

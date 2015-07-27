@@ -42,14 +42,15 @@ VideoConsumer::~VideoConsumer()
 //******************************************************************************
 #pragma mark - public
 int
-VideoConsumer::init(const ConsumerSettings& settings)
+VideoConsumer::init(const ConsumerSettings& settings,
+                    const std::string& threadName)
 {
     int res = RESULT_OK;
     
     LogInfoC << "unix timestamp: " << std::fixed << std::setprecision(6)
     << NdnRtcUtils::unixTimestamp() << std::endl;
 
-    if (RESULT_GOOD(Consumer::init(settings)))
+    if (RESULT_GOOD(Consumer::init(settings, threadName)))
     {
         pipeliner_->setUseKeyNamespace(true);
         pipeliner_->initialize();

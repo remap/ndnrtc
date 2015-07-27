@@ -54,7 +54,8 @@ Consumer::~Consumer()
 //******************************************************************************
 #pragma mark - public
 int
-Consumer::init(const ConsumerSettings& settings)
+Consumer::init(const ConsumerSettings& settings,
+               const std::string& threadName)
 {
     int res = RESULT_OK;
     
@@ -72,6 +73,14 @@ Consumer::init(const ConsumerSettings& settings)
 
     if (RESULT_FAIL(res))
         notifyError(-1, "can't initialize frame buffer");
+    
+    currentThreadIdx_ = getThreadIdx(threadName);
+    
+    if (currentThreadIdx_ < 0)
+    {
+        notifyError(-1, "couldn't find thread with name %s", threadName.c_str());
+        currentThreadIdx_ = 0;
+    }
     
 #warning error handling!
     chaseEstimation_->setLogger(logger_);
@@ -105,6 +114,7 @@ int
 Consumer::start()
 {
 #warning error handling!
+    isConsuming_ = true;
     pipeliner_->start();
     
     if (observer_)
@@ -120,6 +130,7 @@ int
 Consumer::stop()
 {
 #warning error handling!
+    isConsuming_ = false;
     pipeliner_->stop();
     playout_->stop();
     renderer_->stopRendering();
@@ -166,30 +177,28 @@ void
 Consumer::switchThread(const std::string& threadName)
 {
     std::vector<MediaThreadParams*>::iterator it;
+    int idx = getThreadIdx(threadName);
     
-    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
-        if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
+    if (idx >= 0)
+    {
+        currentThreadIdx_ = idx;
+        
+        LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
+        
+        NdnRtcUtils::releaseDataRateMeter(dataMeterId_);
+        NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeterId_);
+        dataMeterId_ = NdnRtcUtils::setupDataRateMeter(5);
+        segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
+        
+        pipeliner_->threadSwitched();
+        playout_->stop();
+        
+        if (observer_)
         {
-            currentThreadIdx_ = i;
-            
-            LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
-            
-            NdnRtcUtils::releaseDataRateMeter(dataMeterId_);
-            NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeterId_);
-            dataMeterId_ = NdnRtcUtils::setupDataRateMeter(5);
-            segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
-
-            pipeliner_->threadSwitched();
-            playout_->stop();
-            
-            if (observer_)
-            {
-                lock_guard<mutex> scopedLock(observerMutex_);
-                observer_->onThreadSwitched(threadName);
-            }
-            
-            break;
+            lock_guard<mutex> scopedLock(observerMutex_);
+            observer_->onThreadSwitched(threadName);
         }
+    }
 }
 
 Consumer::State
@@ -254,7 +263,12 @@ Consumer::setDescription(const std::string &desc)
 
 void
 Consumer::onBufferingEnded()
-{   
+{
+    // start rendering first, as playout may supply frames
+    // right after "start playout" has been called
+    if (!renderer_->isRendering())
+        renderer_->startRendering(settings_.streamParams_.streamName_);
+    
     if (!playout_->isRunning())
     {
         unsigned int targetBufferSize = bufferEstimator_->getTargetSize();
@@ -277,9 +291,6 @@ Consumer::onBufferingEnded()
         
         playout_->start(adjustment);
     }
-    
-    if (!renderer_->isRendering())
-        renderer_->startRendering(settings_.streamParams_.streamName_);
 }
 
 void
@@ -292,8 +303,10 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
         
         switch (newState) {
             case PipelinerBase::StateWaitInitial:
-            case PipelinerBase::StateAdjust:
             case PipelinerBase::StateChasing:
+                status = ConsumerStatusNoData;
+                break;
+            case PipelinerBase::StateAdjust:
                 status = ConsumerStatusAdjusting;
                 break;
             
@@ -397,4 +410,18 @@ void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
 {
     nTimeouts_++;
     frameBuffer_->interestTimeout(*interest);
+}
+
+int
+Consumer::getThreadIdx(const std::string& threadName)
+{
+    int idx = -1;
+    
+    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
+        if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
+        {
+            idx = i;
+        }
+    
+    return idx;
 }

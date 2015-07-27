@@ -34,9 +34,10 @@ AudioConsumer::~AudioConsumer()
 //******************************************************************************
 #pragma mark - public
 int
-AudioConsumer::init(const ConsumerSettings& settings)
+AudioConsumer::init(const ConsumerSettings& settings,
+                    const std::string& threadName)
 {
-    if (RESULT_GOOD(Consumer::init(settings)))
+    if (RESULT_GOOD(Consumer::init(settings, threadName)))
     {
         pipeliner_->setUseKeyNamespace(false);
         pipeliner_->initialize();
