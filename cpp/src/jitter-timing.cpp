@@ -6,8 +6,11 @@
 //  Copyright (c) 2014 Peter Gusev. All rights reserved.
 //
 
+#include <boost/thread/lock_guard.hpp>
+
 #include "jitter-timing.h"
 #include "ndnrtc-utils.h"
+
 
 using namespace ndnrtc;
 using namespace webrtc;
@@ -17,7 +20,7 @@ using namespace std;
 //******************************************************************************
 #pragma mark - construction/destruction
 JitterTiming::JitterTiming():
-playoutTimer_(io_service_)
+playoutTimer_(NdnRtcUtils::getIoService())
 {
     resetData();
 }
@@ -34,7 +37,9 @@ void JitterTiming::flush()
 }
 void JitterTiming::stop()
 {
+    boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
     LogTraceC << "stopped" << std::endl;
+    playoutTimer_.cancel();
 }
 
 int64_t JitterTiming::startFramePlayout()
@@ -122,6 +127,7 @@ void JitterTiming::runPlayoutTimer()
     assert(framePlayoutTimeMs_ >= 0);
     if (framePlayoutTimeMs_ > 0)
     {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
         LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
 
         playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
@@ -130,6 +136,25 @@ void JitterTiming::runPlayoutTimer()
     }
     else
         LogTraceC << "skipping frame]" << endl;
+}
+
+void JitterTiming::run(boost::function<void()> callback)
+{
+    assert(framePlayoutTimeMs_ >= 0);
+    
+    LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
+    
+    boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
+    playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
+    playoutTimer_.async_wait([this, callback](const boost::system::error_code& code){
+        if (code == boost::asio::error::operation_aborted)
+            LogTraceC << "timer cancelled]" << endl;
+        else
+        {
+            LogTraceC << "timer done]" << endl;
+            callback();
+        }
+    });
 }
 
 //******************************************************************************
