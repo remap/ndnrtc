@@ -77,6 +77,7 @@ typedef struct _SlidingAverage {
 //********************************************************************************
 #pragma mark - all static
 std::string ndnrtc::LIB_LOG = "ndnrtc.log";
+boost::asio::io_service* NdnRtcIoService;
 
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
@@ -85,11 +86,71 @@ static std::vector<Filter> filters_;
 static std::vector<InclineEstimator> inclineEstimators_;
 static std::vector<SlidingAverage> slidingAverageEstimators_;
 
-static boost::atomic<bool> VoiceThreadRunning(false);
-static boost::thread VoiceThread;
-static boost::asio::io_service io_voice;
-static boost::shared_ptr<boost::asio::io_service::work> VoiceWork;
 static VoiceEngine *VoiceEngineInstance = NULL;
+
+static boost::thread backgroundThread;
+static boost::shared_ptr<boost::asio::io_service::work> backgroundWork;
+
+//******************************************************************************
+void NdnRtcUtils::setIoService(boost::asio::io_service& ioService)
+{
+    NdnRtcIoService = &ioService;
+}
+
+boost::asio::io_service& NdnRtcUtils::getIoService()
+{
+    return *NdnRtcIoService;
+}
+
+void NdnRtcUtils::startBackgroundThread()
+{
+    if (!NdnRtcIoService)
+        return;
+    
+    if (!backgroundWork.get() &&
+        backgroundThread.get_id() == boost::thread::id())
+    {
+        LogInfo(LIB_LOG) << "Starting background thread..." << std::endl;
+        backgroundWork.reset(new boost::asio::io_service::work(*NdnRtcIoService));
+        backgroundThread = boost::thread([](){
+            LogInfo(LIB_LOG) << "Background thread "
+            << boost::this_thread::get_id() << " started" << std::endl;
+            
+            (*NdnRtcIoService).run();
+            
+            LogInfo(LIB_LOG) << "Background thread stopped" << std::endl;
+        });
+    }
+}
+
+void NdnRtcUtils::stopBackgroundThread()
+{
+    if (backgroundWork.get())
+    {
+        backgroundWork.reset();
+        (*NdnRtcIoService).stop();
+        backgroundThread.try_join_for(boost::chrono::milliseconds(500));
+    }
+}
+
+void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                        boost::function<void(void)> onCompletion)
+{
+    if (boost::this_thread::get_id() == backgroundThread.get_id())
+    {
+        dispatchBlock();
+        if (onCompletion)
+            onCompletion();
+    }
+    else
+    {
+        (*NdnRtcIoService).post([=]{
+            dispatchBlock();
+            if (onCompletion)
+                onCompletion();
+        });
+    }
+}
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
@@ -588,31 +649,18 @@ void NdnRtcUtils::releaseVoiceEngine()
 
 void NdnRtcUtils::startVoiceThread()
 {
-    VoiceWork.reset(new boost::asio::io_service::work(io_voice));
-    VoiceThread = boost::thread([](){
-        LogInfo(LIB_LOG) << "Voice thread "
-        << boost::this_thread::get_id() << " started" << std::endl;
-        
-        io_voice.run();
-        
-        LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
-    });
+    startBackgroundThread();
 }
 
 void NdnRtcUtils::stopVoiceThread()
 {
-    VoiceWork.reset();
-    io_voice.stop();
+    stopBackgroundThread();
 }
 
 void NdnRtcUtils::dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
                            boost::function<void(void)> onCompletion)
 {
-    io_voice.post([=]{
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
-    });
+    dispatchOnBackgroundThread(dispatchBlock, onCompletion);
 }
 
 string NdnRtcUtils::stringFromFrameType(const WebRtcVideoFrameType &frameType)
