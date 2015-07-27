@@ -526,6 +526,7 @@ unsigned int
 SessionInfoData::getSessionInfoLength(const new_api::SessionInfo& sessionInfo)
 {
     unsigned int dataLength = sizeof(struct _SessionInfoDataHeader) +
+    sessionInfo.sessionPrefix_.size()+1+
     sizeof(struct _VideoStreamDescription)*sessionInfo.videoStreams_.size() +
     sizeof(struct _AudioStreamDescription)*sessionInfo.audioStreams_.size();
     
@@ -552,8 +553,13 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
     header.nAudioStreams_ = sessionInfo.audioStreams_.size();
     
     *((struct _SessionInfoDataHeader*)data_) = header;
+    int idx = sizeof(struct _SessionInfoDataHeader);
     
-    int streamIdx = sizeof(struct _SessionInfoDataHeader);
+    memcpy((void*)&data_[idx], sessionInfo.sessionPrefix_.c_str(), sessionInfo.sessionPrefix_.size());
+    idx += sessionInfo.sessionPrefix_.size();
+    data_[idx] = '\0';
+    
+    int streamIdx = idx+1;
     
     for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
     {
@@ -638,6 +644,9 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
         return RESULT_ERR;
     
     unsigned int streamIdx = headerSize;
+    sessionInfo_.sessionPrefix_ = std::string((const char*)&rawData[streamIdx]);
+
+    streamIdx += sessionInfo_.sessionPrefix_.size()+1;
     
     for (int i = 0; i < header.nVideoStreams_; i++)
     {

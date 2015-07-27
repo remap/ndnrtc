@@ -414,6 +414,7 @@ namespace ndnrtc
                 return *this;
             }
             
+            std::string sessionPrefix_;
             std::vector<MediaStreamParams*> audioStreams_;
             std::vector<MediaStreamParams*> videoStreams_;
             
@@ -432,6 +433,7 @@ namespace ndnrtc
             void
             copyFrom(const SessionInfo& other)
             {
+                sessionPrefix_ = other.sessionPrefix_;
                 freeAudioStreams();
                 freeVideoStreams();
                 
