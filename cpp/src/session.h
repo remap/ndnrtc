@@ -9,6 +9,8 @@
 #ifndef __libndnrtc__session__
 #define __libndnrtc__session__
 
+#include <boost/asio/steady_timer.hpp>
+
 #include "ndnrtc-common.h"
 #include "interfaces.h"
 #include "params.h"
@@ -70,6 +72,7 @@ namespace ndnrtc
             GeneralParams generalParams_;
             SessionStatus status_;
             ISessionObserver *sessionObserver_;
+            boost::asio::steady_timer sessionUpdateTimer_;
             
             boost::shared_ptr<KeyChain> userKeyChain_;
             boost::shared_ptr<FaceProcessor> mainFaceProcessor_;
@@ -85,6 +88,9 @@ namespace ndnrtc
             
             void
             startServiceChannel();
+            
+            void
+            updateSessionInfo(const boost::system::error_code& e);
             
             // IServiceChannelPublisherCallback
             void
