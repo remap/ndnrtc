@@ -728,13 +728,13 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
         window_.init(DefaultWindow, frameBuffer_);
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
-        {
+        { // for video consumer
             keyFrameSeqNo_ = frameNo+1;
             requestNextKey(keyFrameSeqNo_);
             switchToState(StateChasing);
         }
         else
-        {
+        { // for audio consumer
             deltaFrameSeqNo_ = frameNo+1;
             requestNextDelta(deltaFrameSeqNo_);
             timestamp_ = NdnRtcUtils::millisecondTimestamp();
@@ -987,18 +987,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
             (*statStorage_)[Indicator::DW] = window_.getDefaultWindowSize();
     }
     
-    // start playback whenever chasing phase is over and buffer has enough
-    // size for playback
-    if (state_ > StateChasing &&
-        frameBuffer_->getPlayableBufferSize() >= frameBuffer_->getTargetSize())
-        if (callback_)
-            callback_->onBufferingEnded();
-    
-    while (window_.canAskForData(deltaFrameSeqNo_))
-        requestNextDelta(deltaFrameSeqNo_);
-    (*statStorage_)[Indicator::W] = window_.getCurrentWindowSize();
-
-
     if (isLegitimateForStabilityTracking)
         LogTraceC
         << "\trtt\t" << event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.
@@ -1010,6 +998,17 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         << std::endl;
     
     frameBuffer_->synchronizeRelease();
+    
+    // start playback whenever chasing phase is over and buffer has enough
+    // size for playback
+    if (state_ > StateChasing &&
+        frameBuffer_->getPlayableBufferSize() >= frameBuffer_->getTargetSize())
+        if (callback_)
+            callback_->onBufferingEnded();
+    
+    while (window_.canAskForData(deltaFrameSeqNo_))
+        requestNextDelta(deltaFrameSeqNo_);
+    (*statStorage_)[Indicator::W] = window_.getCurrentWindowSize();
 }
 
 void
