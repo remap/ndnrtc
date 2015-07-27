@@ -221,8 +221,10 @@ VideoThread::setLogger(ndnlog::new_api::Logger *logger)
 
 void
 VideoThread::onInterest(const shared_ptr<const Name>& prefix,
-                           const shared_ptr<const Interest>& interest,
-                           ndn::Transport& transport)
+                        const shared_ptr<const Interest>& interest,
+                        ndn::Face& face,
+                        uint64_t ts,
+                        const shared_ptr<const InterestFilter>& filter)
 {
     const Name& name = interest->getName();
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(name);
