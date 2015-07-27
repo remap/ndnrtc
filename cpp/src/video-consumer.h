@@ -28,7 +28,8 @@ namespace ndnrtc {
             virtual ~VideoConsumer();
             
             int
-            init(const ConsumerSettings& settings);
+            init(const ConsumerSettings& settings,
+                 const std::string& threadName);
             
             int
             start();

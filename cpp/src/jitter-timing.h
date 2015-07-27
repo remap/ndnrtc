@@ -11,6 +11,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "simple-log.h"
 #include "webrtc.h"
@@ -56,8 +57,14 @@ namespace ndnrtc {
          */
         void runPlayoutTimer();
         
+        /**
+         * Sets up playback timer asynchronously.
+         * @param callback A callback to call when timer is fired
+         */
+        void run(boost::function<void()> callback);
+        
     private:
-        boost::asio::io_service io_service_;
+        boost::recursive_mutex timerMutex_;
         boost::asio::steady_timer playoutTimer_;
         
         int framePlayoutTimeMs_ = 0;

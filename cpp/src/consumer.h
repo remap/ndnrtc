@@ -147,7 +147,8 @@ namespace ndnrtc {
             virtual ~Consumer();
             
             virtual int
-            init(const ConsumerSettings& settings);
+            init(const ConsumerSettings& settings,
+                 const std::string& threadName);
             
             virtual int
             start();
@@ -345,6 +346,10 @@ namespace ndnrtc {
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);
             void onTimeout(const boost::shared_ptr<const Interest>& interest);
+
+        private:
+            int
+            getThreadIdx(const std::string& threadName);
         };
     }
 }

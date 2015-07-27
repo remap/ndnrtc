@@ -73,7 +73,6 @@ namespace ndnrtc{
             boost::shared_ptr<FrameBuffer> frameBuffer_;
             
             JitterTiming jitterTiming_;
-            boost::thread playoutThread_;
             boost::mutex playoutMutex_;
             
             void* frameConsumer_;

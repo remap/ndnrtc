@@ -87,7 +87,9 @@ namespace ndnrtc
             void
             onInterest(const boost::shared_ptr<const Name>& prefix,
                        const boost::shared_ptr<const Interest>& interest,
-                       ndn::Transport& transport);
+                       ndn::Face& face,
+                       uint64_t ts,
+                       const boost::shared_ptr<const InterestFilter>& filter);
             
             int
             publishParityData(PacketNumber frameNo,

@@ -8,6 +8,7 @@
 
 #include "session.h"
 #include "ndnrtc-namespace.h"
+#include "ndnrtc-utils.h"
 
 using namespace ndnlog;
 using namespace ndnlog::new_api;
@@ -18,7 +19,8 @@ using namespace boost;
 Session::Session():
 NdnRtcComponent(),
 sessionObserver_(NULL),
-status_(SessionOffline)
+status_(SessionOffline),
+sessionUpdateTimer_(NdnRtcUtils::getIoService())
 {
     description_ = "session";
 }
@@ -69,8 +71,11 @@ int
 Session::start()
 {
     mainFaceProcessor_->startProcessing();
-    startServiceChannel();
     switchStatus(SessionOnlineNotPublishing);
+    
+    sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
+    sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    
     LogInfoC << "session started" << std::endl;
     
     return RESULT_OK;
@@ -80,6 +85,7 @@ int
 Session::stop()
 {
     int res = RESULT_OK;
+    sessionUpdateTimer_.cancel();
     mainFaceProcessor_->stopProcessing();
     
     if (RESULT_NOT_FAIL(res))
@@ -199,6 +205,16 @@ Session::startServiceChannel()
     }
 }
 
+void
+Session::updateSessionInfo(const boost::system::error_code& e)
+{
+    if (sessionObserver_)
+        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+    
+    sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
+    sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+}
+
 // IServiceChannelPublisherCallback
 void
 Session::onSessionInfoBroadcastFailed()
@@ -213,6 +229,7 @@ Session::onPublishSessionInfo()
     LogDebugC << "session info requested" << std::endl;
 
     shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
+    sessionInfo->sessionPrefix_ = userPrefix_;
 
     for (StreamMap::iterator it = audioStreams_.begin(); it != audioStreams_.end(); it++)
     {

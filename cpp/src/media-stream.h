@@ -88,7 +88,7 @@ namespace ndnrtc
             void
             getCommonThreadSettings(MediaThreadSettings* settings);
             
-            virtual void
+            virtual int
             addNewMediaThread(const MediaThreadParams* params) = 0;
             
             void
@@ -125,7 +125,7 @@ namespace ndnrtc
             WebRtcVideoFrame capturedFrame_, deliverFrame_;
             double deliveredTimestamp_;
             
-            void
+            int
             addNewMediaThread(const MediaThreadParams* params);
             
             // private methods
@@ -158,7 +158,7 @@ namespace ndnrtc
         private:
             boost::shared_ptr<AudioCapturer> audioCapturer_;
             
-            void
+            int
             addNewMediaThread(const MediaThreadParams* params);
             
             // IAudioFrameConsumer

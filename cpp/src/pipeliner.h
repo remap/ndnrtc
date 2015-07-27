@@ -119,7 +119,7 @@ namespace ndnrtc {
                 << "idle time " << idleTime
                 << std::endl;
                 
-                return idleTime;
+                return (state_ >= StateAdjust) ? idleTime : 0;
             }
             
         protected:

@@ -60,20 +60,23 @@ Playout::init(void* frameConsumer)
 int
 Playout::start(int initialAdjustment)
 {
-    lock_guard<mutex> scopeLock(playoutMutex_);
+    {
+        lock_guard<mutex> scopeLock(playoutMutex_);
+        
+        jitterTiming_.flush();
+        
+        isRunning_ = true;
+        isInferredPlayback_ = false;
+        lastPacketTs_ = 0;
+        inferredDelay_ = 0;
+        playbackAdjustment_ = initialAdjustment;
+        bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
+    }
     
-    jitterTiming_.flush();
-    
-    isRunning_ = true;
-    isInferredPlayback_ = false;
-    lastPacketTs_ = 0;
-    inferredDelay_ = 0;
-    playbackAdjustment_ = initialAdjustment;
-    bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
-    
-    playoutThread_ = startThread([this]()->bool{
-        return processPlayout();
-    });
+    NdnRtcUtils::dispatchOnBackgroundThread([this](){
+        processPlayout();
+    },
+                                            boost::function<void(void)>());
     
     LogInfoC << "started" << endl;
     return RESULT_OK;
@@ -87,7 +90,6 @@ Playout::stop()
     if (isRunning_)
     {
         isRunning_ = false;
-        stopThread(playoutThread_);
         jitterTiming_.stop();
         
         LogInfoC << "stopped" << endl;
@@ -223,7 +225,8 @@ Playout::processPlayout()
             {
                 // setup and run playout timer for calculated playout interval
                 jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
-                jitterTiming_.runPlayoutTimer();
+//                jitterTiming_.runPlayoutTimer();
+                jitterTiming_.run(boost::bind(&Playout::processPlayout, this));
             }
         }
     }
@@ -232,7 +235,6 @@ Playout::processPlayout()
     
     return isRunning_;
 }
-
 
 void
 Playout::updatePlaybackAdjustment()

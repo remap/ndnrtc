@@ -9,6 +9,7 @@
 //
 
 #include "name-components.h"
+#include "ndnrtc-namespace.h"
 
 using namespace ndnrtc;
 
@@ -26,4 +27,28 @@ const std::string NameComponents::NameComponentStreamInfo = "info";
 const std::string NameComponents::NameComponentFrameSegmentData = "data";
 const std::string NameComponents::NameComponentFrameSegmentParity = "parity";
 const std::string NameComponents::KeyComponent = "DSK-1408";
-const std::string NameComponents::CertificateComponent = "ID-CERT/0";
+const std::string NameComponents::CertificateComponent = "KEY/ID-CERT/0";
+
+std::string
+NameComponents::getUserPrefix(const std::string& username,
+                              const std::string& prefix)
+{
+    return *NdnRtcNamespace::getProducerPrefix(prefix, username);
+}
+
+std::string
+NameComponents::getStreamPrefix(const std::string& streamName,
+                                const std::string& username,
+                                const std::string& prefix)
+{
+    return *NdnRtcNamespace::getStreamPath(prefix, username, streamName);
+}
+
+std::string
+NameComponents::getThreadPrefix(const std::string& threadName,
+                                const std::string& streamName,
+                                const std::string& username,
+                                const std::string& prefix)
+{
+    return NdnRtcNamespace::getThreadPrefix(*NdnRtcNamespace::getStreamPath(prefix, username, streamName), threadName);
+}

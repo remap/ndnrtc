@@ -360,29 +360,60 @@ namespace ndnrtc {
      * Session info metadata stores all the necessary information for consumer 
      * about producer's audio/video streams and its' parameters.
      * Packed session info structure:
-     *  {   videoSegmentSize;   // size of the video segment in bytes
-     *      nVideoStreams;      // number of video streams
-     *      audioSegmentSize;   // size of the audio segment in bytes
-     *      nAudioStreams;
-     *      [{ // video streams descriptions array
-     *          rate;       // encoding rate FPS
-     *          gop;        // encoding GOP
-     *          bitrate;    // encoding bitrate (kbps)
-     *          width;      // encoding width
-     *          height;     // encoding height
-     *          deltaAvgSegNum;         // average number of segments per delta frame
-     *          deltaAvgParitySegNum;   // average number of segments for parity data per delta frame
-     *          keyAvgSegNum;           // average number of segments per key frame
-     *          keyAvgParitySegNum;     // average number of segments for parity data per key frame
-     *       },
-     *       ...
-     *      ];
-     *      [{ // audio streams descriptions array
-     *          rate;       // audio rate (kbps)
-     *       },
-     *       ...
-     *      ];
-     *  }
+     * {
+     *      <header marker - 2 bytes>
+     *      <number of video streams - 4 bytes>
+     *      <number of audio streams - 4 bytes>
+     *      <session prefix string>\0
+     *      <header marker - 2 bytes>
+     *      [
+     *          {
+     *              <video stream marker - 2 bytes>
+     *              <segment size - 4 bytes>
+     *              <stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
+     *              <synchronized stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
+     *              <number of threads - 4 bytes>
+     *              <video stream marker - 2 bytes>
+     *              [
+     *                  {
+     *                      <video thread marker - 2 bytes>
+     *                      <FPS - 4 bytes>
+     *                      <GOP - 4 bytes>
+     *                      <bitrate - 4 bytes>
+     *                      <width - 4 bytes>
+     *                      <height - 4 bytes>
+     *                      <average number of delta frames - 4 bytes>
+     *                      <average number of delta parity frames - 4 bytes>
+     *                      <average number of key frames - 4 bytes>
+     *                      <average number of key parity frames - 4 bytes>
+     *                      <thread name - MAX_THREAD_NAME_LENGTH+1 bytes>
+     *                      <video thread marker - 2 bytes>
+     *                  },
+     *                  ...
+     *              ]
+     *          },
+     *          ...
+     *      ],
+     *      [
+     *          {
+     *              <audio stream marker - 2 bytes>
+     *              <segment size - 4 bytes>
+     *              <stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
+     *              <number of threads - 4 bytes>
+     *              <audio stream marker - 2 bytes>
+     *              [
+     *                  {
+     *                      <audio thread marker - 2 bytes>
+     *                      <FPS - 4 bytes>
+     *                      <thread name - MAX_THREAD_NAME_LENGTH+1 bytes>
+     *                      <audio thread marker - 2 bytes>
+     *                  },
+     *                  ...
+     *              ]
+     *          },
+     *          ...
+     *      ]
+     * }
      */
     class SessionInfoData : public NetworkData
     {
@@ -410,7 +441,6 @@ namespace ndnrtc {
         struct _AudioThreadDescription {
             uint16_t mrkr1_ = NDNRTC_ATHREADDESC_MRKR;
             double rate_;
-//            unsigned int bitrate_; // kbps
             char name_[MAX_THREAD_NAME_LENGTH+1];
             uint16_t mrkr2_ = NDNRTC_ATHREADDESC_MRKR;
         } __attribute__((packed));

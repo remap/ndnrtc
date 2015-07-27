@@ -53,8 +53,7 @@ AudioRenderer::startRendering(const std::string &name)
     boost::unique_lock<boost::mutex> lock(m);
     boost::condition_variable var;
     
-    NdnRtcUtils::dispatchOnVoiceThread(
-                                       [this](){
+    NdnRtcUtils::dispatchOnVoiceThread([this](){
                                            // register external transport in order to playback. however, we are not
                                            // going to set this channel for sending and should not be getting callback
                                            // on webrtc::Transport callbacks

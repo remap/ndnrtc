@@ -12,6 +12,8 @@
 #define __ndnrtc__ndnrtc_utils__
 
 #include <boost/function.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 #include "ndnrtc-common.h"
 #include "webrtc.h"
@@ -31,6 +33,13 @@ namespace ndnrtc
         static double timestamp() {
             return time(NULL) * 1000.0;
         }
+
+        static void setIoService(boost::asio::io_service& ioService);
+        static boost::asio::io_service& getIoService();
+        static void startBackgroundThread();
+        static void stopBackgroundThread();
+        static void dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                          boost::function<void(void)> onCompletion);
         
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();

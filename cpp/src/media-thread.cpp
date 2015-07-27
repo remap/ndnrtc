@@ -239,7 +239,7 @@ void MediaThread::onInterest(const shared_ptr<const Name>& prefix,
     PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
 
     LogTraceC << "incoming interest for " << interest->getName()
-    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << std::endl;
+    << ((packetNo >= packetNo_ || packetNo == -1)?" (new)":" (old)") << ", current #" << packetNo_ << std::endl;
     
     if (packetNo >= packetNo_)
     {
