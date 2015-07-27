@@ -242,7 +242,7 @@ CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS -L$BOOSTLIB"
 SAVED_LIBS=$LIBS
-LIBS="$LIBS -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt"
+LIBS="$LIBS -lboost_system -lboost_timer -lboost_chrono"
 
 AC_MSG_CHECKING([for boost::shared_ptr...])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
