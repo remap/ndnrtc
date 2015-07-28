@@ -219,14 +219,21 @@ Session::startServiceChannel()
 void
 Session::updateSessionInfo(const boost::system::error_code& e)
 {
-    if (sessionObserver_)
+    if (e == boost::asio::error::operation_aborted)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+        LogInfoC << "session update cancelled" << std::endl;
     }
-    
-    sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
-    sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    else
+    {
+        if (sessionObserver_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+            sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+        }
+        
+        sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
+        sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    }
 }
 
 // IServiceChannelPublisherCallback
