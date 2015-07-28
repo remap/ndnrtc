@@ -47,9 +47,9 @@ typedef boost::lock_guard<boost::mutex> ScopedLock;
 void recoveryCheck(const boost::system::error_code& e);
 std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName);
 
-boost::asio::io_service libIoService;
-boost::asio::steady_timer recoveryCheckTimer(libIoService);
-boost::mutex recoveryCheckMutex;
+static boost::asio::io_service libIoService;
+static boost::asio::steady_timer recoveryCheckTimer(libIoService);
+static boost::mutex recoveryCheckMutex;
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -121,6 +121,7 @@ static void initializer(int argc, char** argv, char** envp) {
 
 __attribute__((destructor))
 static void destructor(){
+    NdnRtcUtils::stopBackgroundThread();
 }
 
 //******************************************************************************
@@ -149,7 +150,6 @@ NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
     act.sa_flags = SA_SIGINFO;
     
     sigaction(SIGPIPE, &act, NULL);
-//    fclose(stderr);
     
     NdnRtcUtils::startBackgroundThread();
     
