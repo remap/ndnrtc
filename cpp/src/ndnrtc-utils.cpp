@@ -76,8 +76,8 @@ typedef struct _SlidingAverage {
 
 //********************************************************************************
 #pragma mark - all static
-std::string ndnrtc::LIB_LOG = "ndnrtc.log";
-boost::asio::io_service* NdnRtcIoService;
+std::string ndnrtc::LIB_LOG = "ndnrtc-startup.log";
+static boost::asio::io_service* NdnRtcIoService;
 
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
@@ -110,15 +110,9 @@ void NdnRtcUtils::startBackgroundThread()
     if (!backgroundWork.get() &&
         backgroundThread.get_id() == boost::thread::id())
     {
-        LogInfo(LIB_LOG) << "Starting background thread..." << std::endl;
         backgroundWork.reset(new boost::asio::io_service::work(*NdnRtcIoService));
         backgroundThread = boost::thread([](){
-            LogInfo(LIB_LOG) << "Background thread "
-            << boost::this_thread::get_id() << " started" << std::endl;
-            
             (*NdnRtcIoService).run();
-            
-            LogInfo(LIB_LOG) << "Background thread stopped" << std::endl;
         });
     }
 }

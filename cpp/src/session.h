@@ -10,6 +10,7 @@
 #define __libndnrtc__session__
 
 #include <boost/asio/steady_timer.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "ndnrtc-common.h"
 #include "interfaces.h"
@@ -71,6 +72,7 @@ namespace ndnrtc
             std::string userPrefix_;
             GeneralParams generalParams_;
             SessionStatus status_;
+            boost::recursive_mutex observerMutex_;
             ISessionObserver *sessionObserver_;
             boost::asio::steady_timer sessionUpdateTimer_;
             

@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 REMAP. All rights reserved.
 //
 
+#include <boost/thread/lock_guard.hpp>
+
 #include "session.h"
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
@@ -141,7 +143,10 @@ Session::addLocalStream(const MediaStreamParams& params,
     switchStatus(SessionOnlinePublishing);
     
     if (sessionObserver_)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
         sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+    }
     
     return RESULT_OK;
 }
@@ -169,7 +174,10 @@ Session::removeLocalStream(const std::string& streamPrefix)
         switchStatus(SessionOnlineNotPublishing);
 
     if (sessionObserver_)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
         sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+    }
 
     
     return RESULT_OK;
@@ -184,9 +192,12 @@ Session::switchStatus(SessionStatus status)
         status_ = status;
         
         if (sessionObserver_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
             sessionObserver_->onSessionStatusUpdate(username_.c_str(),
                                                     userPrefix_.c_str(),
                                                     status_);
+        }
     }
 }
 
@@ -208,11 +219,21 @@ Session::startServiceChannel()
 void
 Session::updateSessionInfo(const boost::system::error_code& e)
 {
-    if (sessionObserver_)
-        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
-    
-    sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
-    sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    if (e == boost::asio::error::operation_aborted)
+    {
+        LogInfoC << "session update cancelled" << std::endl;
+    }
+    else
+    {
+        if (sessionObserver_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+            sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+        }
+        
+        sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
+        sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    }
 }
 
 // IServiceChannelPublisherCallback
@@ -256,8 +277,11 @@ Session::onError(const char *errorMessage, const int errorCode)
                                                         errorMessage);
     
     if (sessionObserver_)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
         sessionObserver_->onSessionError(username_.c_str(), userPrefix_.c_str(),
                                          status_, errorCode, errorMessage);
+    }
     else
         NdnRtcComponent::onError(extendedMessage.c_str(), errorCode);
 }
