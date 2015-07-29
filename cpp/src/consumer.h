@@ -141,6 +141,7 @@ namespace ndnrtc {
             } State;
             
             static const int MaxIdleTimeMs;
+            static const int MaxChasingTimeMs;
             
             Consumer(const GeneralParams& generalParams,
                      const GeneralConsumerParams& consumerParams);

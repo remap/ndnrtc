@@ -26,6 +26,7 @@ using namespace webrtc;
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
 const int Consumer::MaxIdleTimeMs = 500;
+const int Consumer::MaxChasingTimeMs = 10*Consumer::MaxIdleTimeMs;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -209,6 +210,7 @@ Consumer::getState() const
         case PipelinerBase::StateChasing:
             return Consumer::StateChasing;
             
+        case PipelinerBase::StateAdjust:
         case PipelinerBase::StateFetching:
             return Consumer::StateFetching;
 

@@ -616,13 +616,19 @@ void recoveryCheck(const boost::system::error_code& e)
             for (auto it : ActiveStreamConsumers)
             {
                 LogDebug(LIB_LOG) << "Recovery check for "
-                << it.second->getPrefix() << std::endl;
+                << it.second->getPrefix() << "(state "
+                << it.second->getState() << ")" << std::endl;
                 
                 int idleTime  = it.second->getIdleTime();
-                if (idleTime > Consumer::MaxIdleTimeMs)
+                
+                if ((it.second->getState() == Consumer::StateFetching &&
+                    idleTime > Consumer::MaxIdleTimeMs) ||
+                    (it.second->getState() != Consumer::StateFetching &&
+                     idleTime > Consumer::MaxChasingTimeMs))
                 {
                     LogWarn(LIB_LOG)
                     << "Idle time " << idleTime
+                    << " (consumer state " << it.second->getState() << ") "
                     << ". Rebuffering triggered for "
                     << it.second->getPrefix() << std::endl;
                     
