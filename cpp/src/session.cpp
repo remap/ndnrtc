@@ -11,6 +11,7 @@
 #include "session.h"
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
+#include "error-codes.h"
 
 using namespace ndnlog;
 using namespace ndnlog::new_api;
@@ -30,9 +31,6 @@ sessionUpdateTimer_(NdnRtcUtils::getIoService())
 Session::~Session()
 {
     std::cout << " session dtor begin" << std::endl;
-
-    if (serviceChannel_.get())
-        serviceChannel_->stopSessionInfoBroadcast();
     
     if (sessionCache_.get())
         sessionCache_->unregisterAll();
@@ -150,7 +148,7 @@ Session::addLocalStream(const MediaStreamParams& params,
     if (sessionObserver_)
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
     }
     
     return RESULT_OK;
@@ -181,7 +179,7 @@ Session::removeLocalStream(const std::string& streamPrefix)
     if (sessionObserver_)
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
     }
 
     
@@ -207,21 +205,6 @@ Session::switchStatus(SessionStatus status)
 }
 
 void
-Session::startServiceChannel()
-{
-    serviceChannel_.reset(new ServiceChannel(this, mainFaceProcessor_));
-    serviceChannel_->registerCallback(this);
-    
-    if (RESULT_NOT_FAIL(serviceChannel_->startSessionInfoBroadcast(*NdnRtcNamespace::getSessionInfoPrefix(userPrefix_),
-                                               userKeyChain_,
-                                               *NdnRtcNamespace::certificateNameForUser(userPrefix_))))
-    {
-        switchStatus(SessionOnlineNotPublishing);
-        
-    }
-}
-
-void
 Session::updateSessionInfo(const boost::system::error_code& e)
 {
     if (e == boost::asio::error::operation_aborted)
@@ -233,7 +216,7 @@ Session::updateSessionInfo(const boost::system::error_code& e)
         if (sessionObserver_)
         {
             boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-            sessionObserver_->onSessionInfoUpdate(*this->onPublishSessionInfo());
+            sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
         }
         
         sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
@@ -241,16 +224,8 @@ Session::updateSessionInfo(const boost::system::error_code& e)
     }
 }
 
-// IServiceChannelPublisherCallback
-void
-Session::onSessionInfoBroadcastFailed()
-{
-    LogErrorC << "failed to register prefix for session info" << std::endl;
-    switchStatus(SessionOffline);
-}
-
 boost::shared_ptr<SessionInfo>
-Session::onPublishSessionInfo()
+Session::getSessionInfo()
 {
     LogDebugC << "session info requested" << std::endl;
 

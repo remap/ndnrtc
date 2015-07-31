@@ -23,7 +23,6 @@
 #include "renderer.h"
 #include "video-renderer.h"
 #include "rate-control.h"
-#include "service-channel.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -323,7 +322,6 @@ namespace ndnrtc {
             boost::shared_ptr<IRenderer> renderer_;
             boost::shared_ptr<AudioVideoSynchronizer> avSync_;
             boost::shared_ptr<RateControl> rateControl_;
-            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             boost::mutex observerMutex_;
             IConsumerObserver *observer_;

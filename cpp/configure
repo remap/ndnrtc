@@ -17148,7 +17148,7 @@ CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS -L$BOOSTLIB"
 SAVED_LIBS=$LIBS
-LIBS="$LIBS -lboost_system-mt -lboost_timer-mt -lboost_chrono-mt"
+LIBS="$LIBS -lboost_system -lboost_timer -lboost_chrono"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for boost::shared_ptr..." >&5
 $as_echo_n "checking for boost::shared_ptr...... " >&6; }
