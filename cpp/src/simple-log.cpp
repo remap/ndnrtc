@@ -21,6 +21,14 @@ using namespace ndnlog;
 using namespace new_api;
 
 static char tempBuf[MAX_BUF_SIZE];
+static std::string lvlToString[] = {
+    [NdnLoggerLevelTrace] =     "TRACE",
+    [NdnLoggerLevelDebug] =     "DEBUG",
+    [NdnLoggerLevelInfo] =      "INFO ",
+    [NdnLoggerLevelWarning] =   "WARN ",
+    [NdnLoggerLevelError] =     "ERROR",
+    [NdnLoggerLevelStat] =      "STAT "
+};
 
 ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
 
@@ -153,15 +161,6 @@ void new_api::Logger::destroyLogger(const std::string &logFile)
 #pragma mark - private
 std::string new_api::Logger::stringify(NdnLoggerLevel lvl)
 {
-    static std::string lvlToString[] = {
-        [NdnLoggerLevelTrace] =     "TRACE",
-        [NdnLoggerLevelDebug] =     "DEBUG",
-        [NdnLoggerLevelInfo] =      "INFO ",
-        [NdnLoggerLevelWarning] =   "WARN ",
-        [NdnLoggerLevelError] =     "ERROR",
-        [NdnLoggerLevelStat] =      "STAT "
-    };
-    
     return lvlToString[lvl];
 }
 

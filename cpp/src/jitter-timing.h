@@ -11,6 +11,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "simple-log.h"
@@ -66,6 +67,8 @@ namespace ndnrtc {
     private:
         boost::recursive_mutex timerMutex_;
         boost::asio::steady_timer playoutTimer_;
+        boost::condition_variable_any timerCancelEvent_;
+        bool isTimerScheduled_;
         
         int framePlayoutTimeMs_ = 0;
         int processingTimeUsec_ = 0;

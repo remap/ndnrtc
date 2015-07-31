@@ -136,14 +136,8 @@ Consumer::stop()
     playout_->stop();
     renderer_->stopRendering();
     
-    if (observer_)
-    {
-        lock_guard<mutex> scopedLock(observerMutex_);
-        observer_->onStatusChanged(ConsumerStatusStopped);
-    }
-    
     LogStatC << "final statistics:\n" << getStatistics() << std::endl;
-    
+
     return RESULT_OK;
 }
 

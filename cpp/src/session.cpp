@@ -48,8 +48,10 @@ Session::init(const std::string username,
     username_ = username;
     generalParams_ = generalParams;
     userPrefix_ = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username_);
+    
+    std::string logFileName = NdnRtcUtils::toString("producer-%s.log", username.c_str());
     this->setLogger(new Logger(generalParams.loggingLevel_,
-                               NdnRtcUtils::toString("producer-%s.log", username.c_str())));
+                               NdnRtcUtils::getFullLogPath(generalParams, logFileName)));
     isLoggerCreated_ = true;
     
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
@@ -89,6 +91,14 @@ Session::stop()
     int res = RESULT_OK;
     sessionUpdateTimer_.cancel();
     mainFaceProcessor_->stopProcessing();
+    
+    for (auto audioStream:audioStreams_)
+        audioStream.second->release();
+    for (auto videoStream:videoStreams_)
+        videoStream.second->release();
+    
+    audioStreams_.clear();
+    videoStreams_.clear();
     
     if (RESULT_NOT_FAIL(res))
     {

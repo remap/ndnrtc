@@ -45,7 +45,6 @@ static ConsumerStreamMap ActiveStreamConsumers;
 typedef boost::lock_guard<boost::mutex> ScopedLock;
 
 void recoveryCheck(const boost::system::error_code& e);
-std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName);
 
 static boost::asio::io_service libIoService;
 static boost::asio::steady_timer recoveryCheckTimer(libIoService);
@@ -224,7 +223,7 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         ISessionObserver *sessionObserver)
 {
-    LIB_LOG = getFullLogPath(generalParams, generalParams.logFile_);
+    LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
     
     Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
     LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
@@ -391,10 +390,10 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     }
     
     std::string username = NdnRtcNamespace::getUserName(remoteSessionPrefix);
-    std::string logFile = getFullLogPath(generalParams,
-                                         NdnRtcUtils::toString("consumer-%s-%s.log",
-                                                               username.c_str(),
-                                                               params.streamName_.c_str()));
+    std::string logFile = NdnRtcUtils::getFullLogPath(generalParams,
+                                                      NdnRtcUtils::toString("consumer-%s-%s.log",
+                                                                            username.c_str(),
+                                                                            params.streamName_.c_str()));
     
     remoteStreamConsumer->setLogger(new Logger(generalParams.loggingLevel_,
                                                logFile));
@@ -647,10 +646,4 @@ void recoveryCheck(const boost::system::error_code& e)
     }
     else
         LogInfo(LIB_LOG) << "Recovery checks aborted" << std::endl;
-}
-
-std::string getFullLogPath(const GeneralParams& generalParams, std::string fileName)
-{
-    static char logPath[PATH_MAX];
-    return ((generalParams.logPath_ == "")?std::string(getwd(logPath)):generalParams.logPath_) + "/" + fileName;
 }

@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Peter Gusev. All rights reserved.
 //
 
+#include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
 
 #include "jitter-timing.h"
@@ -37,9 +38,19 @@ void JitterTiming::flush()
 }
 void JitterTiming::stop()
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
+    boost::unique_lock<boost::recursive_mutex> lock(timerMutex_);
+    
+    if (isTimerScheduled_)
+    {
+        LogTraceC << "cancelling timer..." << std::endl;
+        
+        playoutTimer_.cancel();
+        timerCancelEvent_.wait(lock);
+    }
+    else
+        LogTraceC << "timer is not scheduled" << std::endl;
+    
     LogTraceC << "stopped" << std::endl;
-    playoutTimer_.cancel();
 }
 
 int64_t JitterTiming::startFramePlayout()
@@ -145,15 +156,24 @@ void JitterTiming::run(boost::function<void()> callback)
     LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
     
     boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
+    
     playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
+    isTimerScheduled_ = true;
+    
+#warning "this" is captured by lambda...
     playoutTimer_.async_wait([this, callback](const boost::system::error_code& code){
+        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
         if (code == boost::asio::error::operation_aborted)
+        {
+            this->timerCancelEvent_.notify_one();
             LogTraceC << "timer cancelled]" << endl;
+        }
         else
         {
             LogTraceC << "timer done]" << endl;
             callback();
         }
+        isTimerScheduled_ = false;
     });
 }
 

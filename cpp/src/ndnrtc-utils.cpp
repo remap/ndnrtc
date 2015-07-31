@@ -710,6 +710,14 @@ uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
     return be32toh(beValue);
 }
 
+std::string NdnRtcUtils::getFullLogPath(const new_api::GeneralParams& generalParams,
+                                  const std::string& fileName)
+{
+    static char logPath[PATH_MAX];
+    return ((generalParams.logPath_ == "")?std::string(getwd(logPath)):generalParams.logPath_) + "/" + fileName;
+}
+
+
 std::string NdnRtcUtils::toString(const char *format, ...)
 {
     std::string str = "";

@@ -268,10 +268,6 @@ namespace ndnrtc {
             setDescription(const std::string& desc);
             
             virtual void
-            setRenderer(IExternalRenderer* const renderer)
-            { renderer_.reset(new ExternalVideoRendererAdaptor(renderer)); }
-            
-            virtual void
             onBufferingEnded();
             
             virtual void

@@ -17,6 +17,7 @@
 
 #include "ndnrtc-common.h"
 #include "webrtc.h"
+#include "params.h"
 
 #define STR(exp) (#exp)
 
@@ -106,6 +107,8 @@ namespace ndnrtc
         static Blob nonceToBlob(const uint32_t nonceValue);
         static uint32_t blobToNonce(const Blob &blob);
         
+        static std::string getFullLogPath(const new_api::GeneralParams& generalParams,
+                                          const std::string& fileName);
         static std::string toString(const char *format, ...);
     };
 }
