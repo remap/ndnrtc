@@ -34,7 +34,8 @@ namespace ndnrtc
             
             int
             init(const std::string username,
-                 const GeneralParams& generalParams);
+                 const GeneralParams& generalParams,
+                 boost::shared_ptr<FaceProcessor> mainFaceProcessor);
             
             int
             start();

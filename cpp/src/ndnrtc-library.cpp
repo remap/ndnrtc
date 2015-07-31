@@ -34,8 +34,6 @@ using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 
-static shared_ptr<FaceProcessor> LibraryFace;
-
 typedef std::map<std::string, shared_ptr<Session>> SessionMap;
 static SessionMap ActiveSessions;
 
@@ -196,12 +194,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
     
     LogInfo(LIB_LOG) << "Active sessions cleared" << std::endl;
     
-    if (LibraryFace.get())
-    {
-        LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
-        LibraryFace->stopProcessing();
-        LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
-    }
+    NdnRtcUtils::destroyLibFace();
     
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
     
@@ -224,6 +217,8 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
                                         ISessionObserver *sessionObserver)
 {
     LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
+
+    NdnRtcUtils::createLibFace(generalParams);
     
     Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
     LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
@@ -239,7 +234,7 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
         session->setSessionObserver(sessionObserver);
         session->registerCallback(&LibraryInternalObserver);
         
-        if (RESULT_NOT_FAIL(session->init(username, generalParams)))
+        if (RESULT_NOT_FAIL(session->init(username, generalParams, NdnRtcUtils::getLibFace())))
         {
             ActiveSessions[session->getPrefix()] = session;
             session->start();
@@ -255,7 +250,7 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
     {
         LogInfo(LIB_LOG) << "Old session instance re-used..." << std::endl;
         
-        it->second->init(username, generalParams);
+        it->second->init(username, generalParams, NdnRtcUtils::getLibFace());
         it->second->start();
     }
     
@@ -341,18 +336,11 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
                                const new_api::GeneralConsumerParams& consumerParams,
                                IExternalRenderer* const renderer)
 {
+    LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
+    NdnRtcUtils::createLibFace(generalParams);
+    
     LogInfo(LIB_LOG) << "Adding remote stream for session "
     << remoteSessionPrefix << "..." << std::endl;
-    
-    if (!LibraryFace.get())
-    {
-        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
-        
-        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_);
-        LibraryFace->startProcessing();
-        
-        LogInfo(LIB_LOG) << "Library Face created" << std::endl;
-    }
     
     std::string streamPrefix = *NdnRtcNamespace::getStreamPrefix(remoteSessionPrefix, params.streamName_);
     shared_ptr<Consumer> remoteStreamConsumer;
@@ -379,7 +367,7 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     ConsumerSettings settings;
     settings.userPrefix_ = remoteSessionPrefix;
     settings.streamParams_ = params;
-    settings.faceProcessor_ = LibraryFace;
+    settings.faceProcessor_ = NdnRtcUtils::getLibFace();
     
     remoteStreamConsumer->registerCallback(&LibraryInternalObserver);
     

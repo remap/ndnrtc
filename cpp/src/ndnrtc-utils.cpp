@@ -17,6 +17,7 @@
 
 #include "ndnrtc-utils.h"
 #include "endian.h"
+#include "ndnrtc-namespace.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -78,6 +79,7 @@ typedef struct _SlidingAverage {
 #pragma mark - all static
 std::string ndnrtc::LIB_LOG = "ndnrtc-startup.log";
 static boost::asio::io_service* NdnRtcIoService;
+static boost::shared_ptr<FaceProcessor> LibraryFace;
 
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
@@ -145,6 +147,36 @@ void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatc
         });
     }
 }
+
+void NdnRtcUtils::createLibFace(const new_api::GeneralParams& generalParams)
+{
+    if (!LibraryFace.get())
+    {
+        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
+        
+        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_, NdnRtcNamespace::defaultKeyChain());
+        LibraryFace->startProcessing();
+        
+        LogInfo(LIB_LOG) << "Library Face created" << std::endl;
+    }
+}
+
+boost::shared_ptr<FaceProcessor> NdnRtcUtils::getLibFace()
+{
+    return LibraryFace;
+}
+
+void NdnRtcUtils::destroyLibFace()
+{
+    if (LibraryFace.get())
+    {
+        LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
+        LibraryFace->stopProcessing();
+        LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
+    }
+}
+
+//******************************************************************************
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {

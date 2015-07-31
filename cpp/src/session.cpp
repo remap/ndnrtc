@@ -34,16 +34,14 @@ Session::~Session()
     if (serviceChannel_.get())
         serviceChannel_->stopSessionInfoBroadcast();
     
-    if (mainFaceProcessor_.get())
-        mainFaceProcessor_->stopProcessing();
-    
     if (sessionCache_.get())
         sessionCache_->unregisterAll();
 }
 
 int
 Session::init(const std::string username,
-              const GeneralParams& generalParams)
+              const GeneralParams& generalParams,
+              boost::shared_ptr<FaceProcessor> mainFaceProcessor)
 {
     username_ = username;
     generalParams_ = generalParams;
@@ -57,7 +55,7 @@ Session::init(const std::string username,
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
 
     try {
-        mainFaceProcessor_ = FaceProcessor::createFaceProcessor(generalParams_.host_, generalParams_.portNum_, NdnRtcNamespace::defaultKeyChain());
+        mainFaceProcessor_ = mainFaceProcessor;
     }
     catch (std::exception& exception) {
         notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
@@ -74,9 +72,7 @@ Session::init(const std::string username,
 int
 Session::start()
 {
-    mainFaceProcessor_->startProcessing();
     switchStatus(SessionOnlineNotPublishing);
-    
     sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
     sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
     
@@ -90,7 +86,6 @@ Session::stop()
 {
     int res = RESULT_OK;
     sessionUpdateTimer_.cancel();
-    mainFaceProcessor_->stopProcessing();
     
     for (auto audioStream:audioStreams_)
         audioStream.second->release();
