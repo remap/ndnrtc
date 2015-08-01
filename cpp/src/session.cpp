@@ -22,8 +22,7 @@ using namespace boost;
 Session::Session():
 NdnRtcComponent(),
 sessionObserver_(NULL),
-status_(SessionOffline),
-sessionUpdateTimer_(NdnRtcUtils::getIoService())
+status_(SessionOffline)
 {
     description_ = "session";
 }
@@ -31,9 +30,7 @@ sessionUpdateTimer_(NdnRtcUtils::getIoService())
 Session::~Session()
 {
     std::cout << " session dtor begin" << std::endl;
-    
-    if (sessionCache_.get())
-        sessionCache_->unregisterAll();
+    stop();
 }
 
 int
@@ -71,8 +68,8 @@ int
 Session::start()
 {
     switchStatus(SessionOnlineNotPublishing);
-    sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
-    sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
+    
+    scheduleJob(500000, boost::bind(&Session::updateSessionInfo, this));
     
     LogInfoC << "session started" << std::endl;
     
@@ -83,7 +80,6 @@ int
 Session::stop()
 {
     int res = RESULT_OK;
-    sessionUpdateTimer_.cancel();
     
     for (auto audioStream:audioStreams_)
         audioStream.second->release();
@@ -92,6 +88,11 @@ Session::stop()
     
     audioStreams_.clear();
     videoStreams_.clear();
+    
+    NdnRtcUtils::performOnBackgroundThread([this]()->void{
+        if (sessionCache_.get())
+            sessionCache_->unregisterAll();
+    });
     
     if (RESULT_NOT_FAIL(res))
     {
@@ -204,24 +205,16 @@ Session::switchStatus(SessionStatus status)
     }
 }
 
-void
-Session::updateSessionInfo(const boost::system::error_code& e)
+bool
+Session::updateSessionInfo()
 {
-    if (e == boost::asio::error::operation_aborted)
+    if (sessionObserver_)
     {
-        LogInfoC << "session update cancelled" << std::endl;
+        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
     }
-    else
-    {
-        if (sessionObserver_)
-        {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-            sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
-        }
-        
-        sessionUpdateTimer_.expires_from_now(boost::chrono::milliseconds(500));
-        sessionUpdateTimer_.async_wait(boost::bind(&Session::updateSessionInfo, this, _1));
-    }
+    
+    return true;
 }
 
 boost::shared_ptr<SessionInfo>

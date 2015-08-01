@@ -9,9 +9,11 @@
 //  Created: 8/21/13
 //
 
+#include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
 
 #include "ndnrtc-object.h"
+#include "ndnrtc-utils.h"
 
 using namespace webrtc;
 using namespace ndnrtc;
@@ -24,16 +26,20 @@ using namespace boost;
 /**
  * @name NdnRtcComponent class
  */
-NdnRtcComponent::NdnRtcComponent()
+NdnRtcComponent::NdnRtcComponent():
+watchdogTimer_(NdnRtcUtils::getIoService()),
+isJobScheduled_(false)
 {}
 
 NdnRtcComponent::NdnRtcComponent(INdnRtcComponentCallback *callback):
-callback_(callback)
+callback_(callback),
+watchdogTimer_(NdnRtcUtils::getIoService()),
+isJobScheduled_(false)
 {}
 
 NdnRtcComponent::~NdnRtcComponent()
 {
-    std::cout << description_ << " component dtor" << std::endl;
+    stopJob();
 }
 
 void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)
@@ -120,5 +126,49 @@ NdnRtcComponent::stopThread(thread &threadObject)
                                              
         if (!res)
             threadObject.detach();
+    }
+}
+
+void NdnRtcComponent::scheduleJob(const unsigned int usecInterval,
+                                  boost::function<bool()> jobCallback)
+{
+    if (!thisShared_)
+        thisShared_ = shared_from_this();
+    
+    boost::lock_guard<boost::recursive_mutex> scopedLock(this->timerMutex_);
+    
+    watchdogTimer_.expires_from_now(boost::chrono::microseconds(usecInterval));
+    isJobScheduled_ = true;
+    
+    watchdogTimer_.async_wait([this, usecInterval, jobCallback](const boost::system::error_code& code){
+        boost::lock_guard<boost::recursive_mutex> scopedLock(this->timerMutex_);
+        isJobScheduled_ = false;
+        
+        if (code == boost::asio::error::operation_aborted)
+        {
+            timerDone_.notify_one();
+        }
+        else
+        {
+            bool res = jobCallback();
+            if (res)
+                this->scheduleJob(usecInterval, jobCallback);
+        }
+    });
+
+}
+
+void NdnRtcComponent::stopJob()
+{
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
+        watchdogTimer_.cancel();
+    }
+    
+    if (isJobScheduled_ && !NdnRtcUtils::isBackgroundThread())
+    {
+        boost::mutex m;
+        boost::unique_lock<boost::mutex> lock(m);
+        timerDone_.wait(lock);
     }
 }

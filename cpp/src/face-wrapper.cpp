@@ -209,18 +209,17 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
     {
         usecInterval_ = usecInterval;
         isProcessing_ = true;
-        processEventsThread_ = startThread([this]()->bool{
+        
+        scheduleJob(usecInterval, [this]()->bool{
             try
             {
                 faceWrapper_->processEvents();
-                this_thread::sleep_for(chrono::microseconds(usecInterval_));
             }
             catch (std::exception &exception)
             {
                 // do nothing
-                this_thread::sleep_for(chrono::microseconds(usecInterval_));
             }
-            return isProcessing_;
+            return this->isProcessing_;
         });
     }
     return RESULT_OK;
@@ -232,6 +231,6 @@ FaceProcessor::stopProcessing()
     if (isProcessing_)
     {
         isProcessing_ = false;
-        stopThread(processEventsThread_);
+        stopJob();
     }
 }

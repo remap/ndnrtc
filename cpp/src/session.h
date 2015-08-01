@@ -73,7 +73,6 @@ namespace ndnrtc
             SessionStatus status_;
             boost::recursive_mutex observerMutex_;
             ISessionObserver *sessionObserver_;
-            boost::asio::steady_timer sessionUpdateTimer_;
             
             boost::shared_ptr<KeyChain> userKeyChain_;
             boost::shared_ptr<FaceProcessor> mainFaceProcessor_;
@@ -86,8 +85,8 @@ namespace ndnrtc
             void
             switchStatus(SessionStatus status);
             
-            void
-            updateSessionInfo(const boost::system::error_code& e);
+            bool
+            updateSessionInfo();
             
             boost::shared_ptr<SessionInfo>
             getSessionInfo();

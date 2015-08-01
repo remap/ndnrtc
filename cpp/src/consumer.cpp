@@ -65,7 +65,7 @@ Consumer::init(const ConsumerSettings& settings,
     interestQueue_.reset(new InterestQueue(settings_.faceProcessor_->getFaceWrapper(),
                                            statStorage_));
     
-    frameBuffer_.reset(new FrameBuffer(shared_from_this(), statStorage_));
+    frameBuffer_.reset(new FrameBuffer(dynamic_pointer_cast<Consumer>(shared_from_this()), statStorage_));
     frameBuffer_->setLogger(logger_);
     frameBuffer_->setDescription(NdnRtcUtils::toString("%s-buffer",
                                                        getDescription().c_str()));
@@ -85,15 +85,9 @@ Consumer::init(const ConsumerSettings& settings,
     
 #warning error handling!
     chaseEstimation_->setLogger(logger_);
-    
-#ifdef USE_WINDOW_PIPELINER
-    pipeliner_.reset(new Pipeliner2(shared_from_this(),
+    pipeliner_.reset(new Pipeliner2(dynamic_pointer_cast<Consumer>(shared_from_this()),
                                     statStorage_,
                                     getCurrentThreadParameters()->getSegmentsInfo()));
-#else
-    pipeliner_.reset(new Pipeliner(shared_from_this(), statStorage_));
-#endif
-    
     pipeliner_->setLogger(logger_);
     pipeliner_->setDescription(NdnRtcUtils::toString("%s-pipeliner",
                                                      getDescription().c_str()));
@@ -130,11 +124,13 @@ Consumer::start()
 int
 Consumer::stop()
 {
+    NdnRtcUtils::performOnBackgroundThread([this]()->void{
 #warning error handling!
-    isConsuming_ = false;
-    pipeliner_->stop();
-    playout_->stop();
-    renderer_->stopRendering();
+        isConsuming_ = false;
+        pipeliner_->stop();
+        playout_->stop();
+        renderer_->stopRendering();
+    });
     
     LogStatC << "final statistics:\n" << getStatistics() << std::endl;
 

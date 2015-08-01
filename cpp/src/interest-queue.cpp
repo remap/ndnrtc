@@ -8,10 +8,11 @@
 //  Author:  Peter Gusev
 //
 
-//#undef NDN_LOGGING
+#include <boost/thread/lock_guard.hpp>
 
 #include "interest-queue.h"
 #include "consumer.h"
+#include "ndnrtc-utils.h"
 
 using namespace boost;
 using namespace ndnlog;
@@ -41,7 +42,6 @@ queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
 {
     description_ = "iqueue";
-    startQueueWatching();
 }
 
 InterestQueue::~InterestQueue()
@@ -63,8 +63,12 @@ InterestQueue::enqueueInterest(const Interest& interest,
     
     queueAccess_.lock();
     queue_.push(entry);
+    
+    if (!isWatchingQueue_)
+        scheduleJob(10, boost::bind(&InterestQueue::watchQueue, this));
+    
+    isWatchingQueue_ = true;
     queueAccess_.unlock();
-    queueEvent_.notify_one();
     
     LogDebugC
     << "enqueue\t" << entry.interest_->getName()
@@ -91,20 +95,10 @@ InterestQueue::reset()
 //******************************************************************************
 #pragma mark - private
 void
-InterestQueue::startQueueWatching()
-{
-    isWatchingQueue_ = true;
-    queueWatchingThread_ = startThread([this]()->bool{
-        return watchQueue();
-    });
-}
-
-void
 InterestQueue::stopQueueWatching()
 {
+    stopJob();
     isWatchingQueue_ = false;
-    queueEvent_.notify_one();
-    stopThread(queueWatchingThread_);
 }
 
 bool
@@ -118,21 +112,11 @@ InterestQueue::watchQueue()
         entry = queue_.top();
         queue_.pop();
     }
+    isWatchingQueue_ = (queue_.size() > 0);
     queueAccess_.unlock();
     
     if (entry.interest_.get())
         processEntry(entry);
-    
-    bool isQueueEmpty = false;
-    queueAccess_.lock_shared();
-    isQueueEmpty = (queue_.size() == 0);
-    queueAccess_.unlock_shared();
-    
-    {
-        unique_lock<mutex> lock(queueEventMutex_);
-        if (isQueueEmpty)
-            queueEvent_.wait(queueEventMutex_);
-    }
     
     return isWatchingQueue_;
 }

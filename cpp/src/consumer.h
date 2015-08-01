@@ -128,8 +128,7 @@ namespace ndnrtc {
          */
         class Consumer : public NdnRtcComponent,
                          public IPacketAssembler,
-                         public IPipelinerCallback,
-                         public boost::enable_shared_from_this<Consumer>
+                         public IPipelinerCallback
         {
         public:
             

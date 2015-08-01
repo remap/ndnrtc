@@ -129,8 +129,23 @@ void NdnRtcUtils::stopBackgroundThread()
     }
 }
 
+bool NdnRtcUtils::isBackgroundThread()
+{
+    return (boost::this_thread::get_id() == backgroundThread.get_id());
+}
+
 void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                         boost::function<void(void)> onCompletion)
+{
+    (*NdnRtcIoService).dispatch([=]{
+        dispatchBlock();
+        if (onCompletion)
+            onCompletion();
+    });
+}
+
+void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                             boost::function<void(void)> onCompletion)
 {
     if (boost::this_thread::get_id() == backgroundThread.get_id())
     {
@@ -140,11 +155,18 @@ void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatc
     }
     else
     {
-        (*NdnRtcIoService).post([=]{
+        boost::mutex m;
+        boost::unique_lock<boost::mutex> lock(m);
+        boost::condition_variable isDone;
+        
+        (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
             dispatchBlock();
             if (onCompletion)
                 onCompletion();
+            isDone.notify_one();
         });
+        
+        isDone.wait(lock);
     }
 }
 

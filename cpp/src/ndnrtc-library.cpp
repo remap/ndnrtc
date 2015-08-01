@@ -110,7 +110,8 @@ static NdnRtcLibraryInternalObserver LibraryInternalObserver;
 __attribute__((constructor))
 static void initializer(int argc, char** argv, char** envp) {
     static int initialized = 0;
-    if (!initialized) {
+    if (!initialized)
+    {
         initialized = 1;
         NdnRtcUtils::setIoService(libIoService);
     }
@@ -135,7 +136,7 @@ static void signalHandler(int signal, siginfo_t *siginfo, void *context)
 
 //******************************************************************************
 #pragma mark - construction/destruction
-NdnRtcLibrary::NdnRtcLibrary(void *libHandle)
+NdnRtcLibrary::NdnRtcLibrary()
 {
     Logger::getLogger(LIB_LOG).setLogLevel(NdnLoggerDetailLevelDefault);
     LogInfo(LIB_LOG) << "NDN-RTC " << PACKAGE_VERSION << std::endl;
@@ -165,25 +166,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
 {
     LogInfo(LIB_LOG) << "NDN-RTC Destructor" << std::endl;
     
-    try {
-        LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
-        NdnRtcUtils::releaseVoiceEngine();
-        NdnRtcUtils::stopVoiceThread();
-        LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
-        
-        LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
-        recoveryCheckTimer.cancel();
-        LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
-        
-        NdnRtcUtils::stopBackgroundThread();
-    }
-    catch (boost::system::system_error& e) {
-        LogError(LIB_LOG) << "Exception while stopping timer: "
-        << e.what() << std::endl;
-    }
-    
     LogInfo(LIB_LOG) << "Stopping active sessions..." << std::endl;
-    
     for (SessionMap::iterator it = ActiveSessions.begin();
          it != ActiveSessions.end(); it++)
     {
@@ -191,19 +174,39 @@ NdnRtcLibrary::~NdnRtcLibrary()
         it->second->stop();
     }
     ActiveSessions.clear();
-    
     LogInfo(LIB_LOG) << "Active sessions cleared" << std::endl;
+    
+    LogInfo(LIB_LOG) << "Stopping active consumers..." << std::endl;
+    for (auto consumerIt:ActiveStreamConsumers)
+        consumerIt.second->stop();
+    ActiveStreamConsumers.clear();
+    LogInfo(LIB_LOG) << "Active consumers cleared" << std::endl;
     
     NdnRtcUtils::destroyLibFace();
     
-    LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
-    
+    LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
     NdnRtcUtils::releaseVoiceEngine();
+    NdnRtcUtils::stopVoiceThread();
+    LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
+    NdnRtcUtils::releaseVoiceEngine();
+    LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
     
+    LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
+    recoveryCheckTimer.cancel();
+    LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
+    
+    NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;
 }
+
 //******************************************************************************
 #pragma mark - public
+NdnRtcLibrary& NdnRtcLibrary::getSharedInstance()
+{
+    static NdnRtcLibrary NdnRtcLib;
+    return NdnRtcLib;
+}
+
 void NdnRtcLibrary::setObserver(INdnRtcLibraryObserver *observer)
 {
     LogInfo(LIB_LOG) << "Set library observer " << observer << std::endl;

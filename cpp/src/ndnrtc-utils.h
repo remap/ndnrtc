@@ -45,8 +45,12 @@ namespace ndnrtc
         static boost::asio::io_service& getIoService();
         static void startBackgroundThread();
         static void stopBackgroundThread();
+        static bool isBackgroundThread();
         static void dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
-                                               boost::function<void(void)> onCompletion);
+                                               boost::function<void(void)> onCompletion = boost::function<void(void)>());
+        // synchronous version of dispatchOnBackgroundThread
+        static void performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                               boost::function<void(void)> onCompletion = boost::function<void(void)>());
         
         static void createLibFace(const new_api::GeneralParams& params);
         static boost::shared_ptr<FaceProcessor> getLibFace();

@@ -20,13 +20,13 @@ using namespace std;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-JitterTiming::JitterTiming():
-playoutTimer_(NdnRtcUtils::getIoService())
+JitterTiming::JitterTiming()
 {
     resetData();
 }
 
-JitterTiming::~JitterTiming(){
+JitterTiming::~JitterTiming()
+{
 }
 
 //******************************************************************************
@@ -38,18 +38,7 @@ void JitterTiming::flush()
 }
 void JitterTiming::stop()
 {
-    boost::unique_lock<boost::recursive_mutex> lock(timerMutex_);
-    
-    if (isTimerScheduled_)
-    {
-        LogTraceC << "cancelling timer..." << std::endl;
-        
-        playoutTimer_.cancel();
-        timerCancelEvent_.wait(lock);
-    }
-    else
-        LogTraceC << "timer is not scheduled" << std::endl;
-    
+    stopJob();
     LogTraceC << "stopped" << std::endl;
 }
 
@@ -133,47 +122,15 @@ void JitterTiming::updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo
     framePlayoutTimeMs_ = playoutTimeUsec/1000;
 }
 
-void JitterTiming::runPlayoutTimer()
-{
-    assert(framePlayoutTimeMs_ >= 0);
-    if (framePlayoutTimeMs_ > 0)
-    {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
-        LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
-
-        playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
-        playoutTimer_.wait();
-        LogTraceC << "timer done]" << endl;
-    }
-    else
-        LogTraceC << "skipping frame]" << endl;
-}
-
 void JitterTiming::run(boost::function<void()> callback)
 {
     assert(framePlayoutTimeMs_ >= 0);
     
     LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
     
-    boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
-    
-    playoutTimer_.expires_from_now(boost::chrono::milliseconds(framePlayoutTimeMs_));
-    isTimerScheduled_ = true;
-    
-#warning "this" is captured by lambda...
-    playoutTimer_.async_wait([this, callback](const boost::system::error_code& code){
-        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
-        if (code == boost::asio::error::operation_aborted)
-        {
-            this->timerCancelEvent_.notify_one();
-            LogTraceC << "timer cancelled]" << endl;
-        }
-        else
-        {
-            LogTraceC << "timer done]" << endl;
-            callback();
-        }
-        isTimerScheduled_ = false;
+    scheduleJob(framePlayoutTimeMs_*1000, [this, callback]()->bool{
+        callback();
+        return false;
     });
 }
 
