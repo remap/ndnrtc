@@ -46,7 +46,7 @@ void recoveryCheck(const boost::system::error_code& e);
 
 static boost::asio::io_service libIoService;
 static boost::asio::steady_timer recoveryCheckTimer(libIoService);
-static boost::mutex recoveryCheckMutex;
+static boost::mutex LibAccessMutex;
 
 //******************************************************************************
 class NdnRtcLibraryInternalObserver :   public INdnRtcComponentCallback,
@@ -164,6 +164,8 @@ NdnRtcLibrary::NdnRtcLibrary()
 }
 NdnRtcLibrary::~NdnRtcLibrary()
 {
+    ScopedLock lock(LibAccessMutex);
+    
     LogInfo(LIB_LOG) << "NDN-RTC Destructor" << std::endl;
     
     LogInfo(LIB_LOG) << "Stopping active sessions..." << std::endl;
@@ -176,10 +178,16 @@ NdnRtcLibrary::~NdnRtcLibrary()
     ActiveSessions.clear();
     LogInfo(LIB_LOG) << "Active sessions cleared" << std::endl;
     
+    LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
+    recoveryCheckTimer.cancel();
+    LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
+    
     LogInfo(LIB_LOG) << "Stopping active consumers..." << std::endl;
-    for (auto consumerIt:ActiveStreamConsumers)
-        consumerIt.second->stop();
-    ActiveStreamConsumers.clear();
+    {
+        for (auto consumerIt:ActiveStreamConsumers)
+            consumerIt.second->stop();
+        ActiveStreamConsumers.clear();
+    }
     LogInfo(LIB_LOG) << "Active consumers cleared" << std::endl;
     
     NdnRtcUtils::destroyLibFace();
@@ -190,10 +198,6 @@ NdnRtcLibrary::~NdnRtcLibrary()
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
     NdnRtcUtils::releaseVoiceEngine();
     LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
-    
-    LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
-    recoveryCheckTimer.cancel();
-    LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
     
     NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;
@@ -239,6 +243,7 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
         
         if (RESULT_NOT_FAIL(session->init(username, generalParams, NdnRtcUtils::getLibFace())))
         {
+            ScopedLock lock(LibAccessMutex);
             ActiveSessions[session->getPrefix()] = session;
             session->start();
             sessionPrefix = session->getPrefix();
@@ -272,6 +277,7 @@ int NdnRtcLibrary::stopSession(const std::string& userPrefix)
     SessionMap::iterator it = ActiveSessions.find(userPrefix);
     if (it != ActiveSessions.end())
     {
+        ScopedLock lock(LibAccessMutex);
         res = it->second->stop();
         ActiveSessions.erase(it);
         
@@ -287,6 +293,8 @@ std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
                                           const new_api::MediaStreamParams& params,
                                           IExternalCapturer** const capturer)
 {
+    ScopedLock lock(LibAccessMutex);
+    
     LogInfo(LIB_LOG) << "Adding new stream for session "
     << sessionPrefix << "..." << std::endl;
     
@@ -314,6 +322,8 @@ std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
 int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
                                      const std::string& streamPrefix)
 {
+    ScopedLock lock(LibAccessMutex);
+    
     LogInfo(LIB_LOG) << "Removing stream " << streamPrefix
     << " from session " << sessionPrefix << "..." << std::endl;
     
@@ -394,7 +404,7 @@ NdnRtcLibrary::addRemoteStream(const std::string& remoteSessionPrefix,
     
     if (it == ActiveStreamConsumers.end())
     {
-        ScopedLock lock(recoveryCheckMutex);
+        ScopedLock lock(LibAccessMutex);
         ActiveStreamConsumers[remoteStreamConsumer->getPrefix()] = remoteStreamConsumer;
     }
     
@@ -417,7 +427,7 @@ NdnRtcLibrary::removeRemoteStream(const std::string& streamPrefix)
     std::string logFileName = it->second->getLogger()->getFileName();
     it->second->stop();
     {
-        ScopedLock lock(recoveryCheckMutex);
+        ScopedLock lock(LibAccessMutex);
         ActiveStreamConsumers.erase(it);
     }
     
@@ -484,6 +494,8 @@ int
 NdnRtcLibrary::switchThread(const std::string& streamPrefix,
                             const std::string& threadName)
 {
+    ScopedLock lock(LibAccessMutex);
+    
     LogInfo(LIB_LOG) << "Switching to thread " << threadName
     << " for stream " << streamPrefix << std::endl;
     
@@ -599,7 +611,7 @@ void recoveryCheck(const boost::system::error_code& e)
 {
     if (e != boost::asio::error::operation_aborted)
     {
-        ScopedLock lock(recoveryCheckMutex);
+        ScopedLock lock(LibAccessMutex);
         
         if (ActiveStreamConsumers.size())
         {
