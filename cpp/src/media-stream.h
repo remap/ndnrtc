@@ -118,19 +118,8 @@ namespace ndnrtc
             bool isProcessing_;
             boost::shared_ptr<BaseCapturer> capturer_;
             
-            boost::mutex captureMutex_, deliverMutex_;
-            boost::condition_variable_any deliverEvent_;
-            boost::thread processThread_;
-            
-            WebRtcVideoFrame capturedFrame_, deliverFrame_;
-            double deliveredTimestamp_;
-            
             int
             addNewMediaThread(const MediaThreadParams* params);
-            
-            // private methods
-            bool
-            processDeliveredFrame();
             
             // IRawFrameConsumer
             void

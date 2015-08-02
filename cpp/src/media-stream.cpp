@@ -102,9 +102,7 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
     {
         capturer_->setLogger(logger_);
         isProcessing_ = true;
-        processThread_ = startThread([this]()->bool{
-            return processDeliveredFrame();
-        });
+        
         return RESULT_OK;
     }
     return RESULT_ERR;
@@ -139,9 +137,7 @@ VideoStream::getStreamParameters()
 void
 VideoStream::release()
 {
-    deliverEvent_.notify_one();
     isProcessing_ = false;
-    stopThread(processThread_);
 }
 
 int
@@ -170,42 +166,21 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
 
 void
 VideoStream::onDeliverFrame(WebRtcVideoFrame &frame,
-                                 double timestamp)
+                            double timestamp)
 {
-    {
-        lock_guard<mutex> scopedLock(captureMutex_);
-        capturedFrame_.CopyFrame(frame);
-        deliveredTimestamp_ = timestamp;
-    }
-    
-    deliverEvent_.notify_one();
-};
-
-bool
-VideoStream::processDeliveredFrame()
-{
-    unique_lock<mutex> lock(deliverMutex_);
-    
-    if (deliverEvent_.wait_for(deliverMutex_, chrono::milliseconds(100)) == cv_status::no_timeout)
-    {
-        {
-            lock_guard<mutex> scopedLock(captureMutex_);
-            deliverFrame_.CopyFrame(capturedFrame_);
-        }
-        
-        if (!deliverFrame_.IsZeroSize()) {
+    if (isProcessing_)
+    {   
+        if (!frame.IsZeroSize()) {
             for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
             {
                 VideoThreadSettings set;
                 ((VideoThread*)i->second.get())->getSettings(set);
                 
                 LogTraceC << "delivering frame to " << set.getVideoParams()->threadName_ << std::endl;
-                ((VideoThread*)i->second.get())->onDeliverFrame(deliverFrame_, deliveredTimestamp_);
+                ((VideoThread*)i->second.get())->onDeliverFrame(frame, timestamp);
             }
         }
     }
-    
-    return isProcessing_;
 }
 
 //******************************************************************************
