@@ -40,22 +40,13 @@ WebrtcAudioChannel::~WebrtcAudioChannel()
 int WebrtcAudioChannel::init()
 {
     int res = RESULT_OK;
-    boost::mutex m;
-    boost::unique_lock<boost::mutex> lock(m);
-    boost::condition_variable initialized;
-    
-    NdnRtcUtils::dispatchOnVoiceThread(
-                                       [this](){
+    NdnRtcUtils::performOnBackgroundThread(
+                                       [this, &res](){
                                            voeBase_ = VoEBase::GetInterface(NdnRtcUtils::sharedVoiceEngine());
                                            voeNetwork_ = VoENetwork::GetInterface(NdnRtcUtils::sharedVoiceEngine());
-                                           
                                            webrtcChannelId_ = voeBase_->CreateChannel();
-                                       },
-                                       [this, &res, &initialized](){
                                            if (webrtcChannelId_ < 0)
                                                res = RESULT_ERR;
-                                           initialized.notify_one();
                                        });
-    initialized.wait(lock);
     return res;
 }
