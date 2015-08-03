@@ -56,8 +56,9 @@ namespace ndnrtc {
             { return true; }
             
         protected:
-            // critical section for observer's callbacks
+            boost::atomic<bool> isJobScheduled_;
             boost::mutex callbackMutex_;
+            boost::recursive_mutex jobMutex_;
             INdnRtcComponentCallback *callback_ = nullptr;
             
             // protected methods go here
@@ -72,11 +73,8 @@ namespace ndnrtc {
             void stopJob();
             
         private:
-            bool isJobScheduled_;
-            boost::condition_variable timerDone_;
-            boost::recursive_mutex timerMutex_;
+            bool isTimerCancelled_;
             boost::asio::steady_timer watchdogTimer_;
-            boost::shared_ptr<NdnRtcComponent> thisShared_;
         };
     }
 }

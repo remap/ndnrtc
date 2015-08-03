@@ -194,6 +194,7 @@ void NdnRtcUtils::destroyLibFace()
     {
         LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
         LibraryFace->stopProcessing();
+        LibraryFace.reset();
         LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
     }
 }

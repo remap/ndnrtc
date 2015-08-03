@@ -28,13 +28,15 @@ using namespace boost;
  */
 NdnRtcComponent::NdnRtcComponent():
 watchdogTimer_(NdnRtcUtils::getIoService()),
-isJobScheduled_(false)
+isJobScheduled_(false),
+isTimerCancelled_(false)
 {}
 
 NdnRtcComponent::NdnRtcComponent(INdnRtcComponentCallback *callback):
 callback_(callback),
 watchdogTimer_(NdnRtcUtils::getIoService()),
-isJobScheduled_(false)
+isJobScheduled_(false),
+isTimerCancelled_(false)
 {}
 
 NdnRtcComponent::~NdnRtcComponent()
@@ -131,28 +133,24 @@ NdnRtcComponent::stopThread(thread &threadObject)
 
 void NdnRtcComponent::scheduleJob(const unsigned int usecInterval,
                                   boost::function<bool()> jobCallback)
-{
-    if (!thisShared_)
-        thisShared_ = shared_from_this();
-    
-    boost::lock_guard<boost::recursive_mutex> scopedLock(this->timerMutex_);
+{   
+    boost::lock_guard<boost::recursive_mutex> scopedLock(this->jobMutex_);
     
     watchdogTimer_.expires_from_now(boost::chrono::microseconds(usecInterval));
     isJobScheduled_ = true;
+    isTimerCancelled_ = false;
     
     watchdogTimer_.async_wait([this, usecInterval, jobCallback](const boost::system::error_code& code){
-        boost::lock_guard<boost::recursive_mutex> scopedLock(this->timerMutex_);
-        isJobScheduled_ = false;
-        
-        if (code == boost::asio::error::operation_aborted)
+        if (code != boost::asio::error::operation_aborted)
         {
-            timerDone_.notify_one();
-        }
-        else
-        {
-            bool res = jobCallback();
-            if (res)
-                this->scheduleJob(usecInterval, jobCallback);
+            if (!isTimerCancelled_)
+            {
+                isJobScheduled_ = false;
+                boost::lock_guard<boost::recursive_mutex> scopedLock(this->jobMutex_);
+                bool res = jobCallback();
+                if (res)
+                    this->scheduleJob(usecInterval, jobCallback);
+            }
         }
     });
 
@@ -160,15 +158,11 @@ void NdnRtcComponent::scheduleJob(const unsigned int usecInterval,
 
 void NdnRtcComponent::stopJob()
 {
-    {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(timerMutex_);
+    NdnRtcUtils::performOnBackgroundThread([this]()->void{
+        boost::lock_guard<boost::recursive_mutex> scopedLock(jobMutex_);
         watchdogTimer_.cancel();
-    }
+        isTimerCancelled_ = true;
+    });
     
-    if (isJobScheduled_ && !NdnRtcUtils::isBackgroundThread())
-    {
-        boost::mutex m;
-        boost::unique_lock<boost::mutex> lock(m);
-        timerDone_.wait(lock);
-    }
+    isJobScheduled_ = false;
 }
