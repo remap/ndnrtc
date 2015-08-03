@@ -85,7 +85,21 @@ namespace ndnrtc
                                       const unsigned int height,
                                       unsigned char* argbFrameData,
                                       unsigned int frameSize) = 0;
-    };    
+        
+        /**
+         * Alternative method for delivering YUV frames (I420 or y420 or 
+         * Y'CbCr 8-bit 4:2:0) inside the library. Either of two "incoming"
+         * calls should be used.
+         */
+        virtual int incomingI420Frame(const unsigned int width,
+                                      const unsigned int height,
+                                      const unsigned int strideY,
+                                      const unsigned int strideU,
+                                      const unsigned int strideV,
+                                      const unsigned char* yBuffer,
+                                      const unsigned char* uBuffer,
+                                      const unsigned char* vBuffer) = 0;
+    };
     
     /**
      * Session observer
