@@ -22,7 +22,7 @@ using namespace webrtc;
 //******************************************************************************
 ExternalVideoRendererAdaptor::ExternalVideoRendererAdaptor(IExternalRenderer* externalRenderer): externalRenderer_(externalRenderer)
 {
-    
+    description_ = "external-renderer";
 }
 
 int

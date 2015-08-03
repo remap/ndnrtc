@@ -17,6 +17,8 @@
 
 #include "ndnrtc-common.h"
 #include "webrtc.h"
+#include "params.h"
+#include "face-wrapper.h"
 
 #define STR(exp) (#exp)
 
@@ -33,18 +35,26 @@ namespace ndnrtc
         static double timestamp() {
             return time(NULL) * 1000.0;
         }
-
-        static void setIoService(boost::asio::io_service& ioService);
-        static boost::asio::io_service& getIoService();
-        static void startBackgroundThread();
-        static void stopBackgroundThread();
-        static void dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
-                                          boost::function<void(void)> onCompletion);
         
         static int64_t millisecondTimestamp();
         static int64_t microsecondTimestamp();
         static int64_t nanosecondTimestamp();
         static double unixTimestamp();
+        
+        static void setIoService(boost::asio::io_service& ioService);
+        static boost::asio::io_service& getIoService();
+        static void startBackgroundThread();
+        static void stopBackgroundThread();
+        static bool isBackgroundThread();
+        static void dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                               boost::function<void(void)> onCompletion = boost::function<void(void)>());
+        // synchronous version of dispatchOnBackgroundThread
+        static void performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                               boost::function<void(void)> onCompletion = boost::function<void(void)>());
+        
+        static void createLibFace(const new_api::GeneralParams& params);
+        static boost::shared_ptr<FaceProcessor> getLibFace();
+        static void destroyLibFace();
         
         static unsigned int setupFrequencyMeter(unsigned int granularity = 1);
         static void frequencyMeterTick(unsigned int meterId);
@@ -106,6 +116,8 @@ namespace ndnrtc
         static Blob nonceToBlob(const uint32_t nonceValue);
         static uint32_t blobToNonce(const Blob &blob);
         
+        static std::string getFullLogPath(const new_api::GeneralParams& generalParams,
+                                          const std::string& fileName);
         static std::string toString(const char *format, ...);
     };
 }

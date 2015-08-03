@@ -137,9 +137,6 @@ namespace ndnrtc {
             unsigned int freqMeterId_;
             boost::shared_ptr<FaceWrapper> face_;
             boost::shared_mutex queueAccess_;
-            boost::mutex queueEventMutex_;
-            boost::condition_variable_any queueEvent_;
-            boost::thread queueWatchingThread_;
 
             PriorityQueue queue_;
             
@@ -149,9 +146,6 @@ namespace ndnrtc {
             
             bool
             watchQueue();
-            
-            void
-            startQueueWatching();
             
             void
             stopQueueWatching();

@@ -23,7 +23,6 @@
 #include "renderer.h"
 #include "video-renderer.h"
 #include "rate-control.h"
-#include "service-channel.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -129,8 +128,7 @@ namespace ndnrtc {
          */
         class Consumer : public NdnRtcComponent,
                          public IPacketAssembler,
-                         public IPipelinerCallback,
-                         public boost::enable_shared_from_this<Consumer>
+                         public IPipelinerCallback
         {
         public:
             
@@ -141,6 +139,7 @@ namespace ndnrtc {
             } State;
             
             static const int MaxIdleTimeMs;
+            static const int MaxChasingTimeMs;
             
             Consumer(const GeneralParams& generalParams,
                      const GeneralConsumerParams& consumerParams);
@@ -267,10 +266,6 @@ namespace ndnrtc {
             setDescription(const std::string& desc);
             
             virtual void
-            setRenderer(IExternalRenderer* const renderer)
-            { renderer_.reset(new ExternalVideoRendererAdaptor(renderer)); }
-            
-            virtual void
             onBufferingEnded();
             
             virtual void
@@ -326,7 +321,6 @@ namespace ndnrtc {
             boost::shared_ptr<IRenderer> renderer_;
             boost::shared_ptr<AudioVideoSynchronizer> avSync_;
             boost::shared_ptr<RateControl> rateControl_;
-            boost::shared_ptr<ServiceChannel> serviceChannel_;
             
             boost::mutex observerMutex_;
             IConsumerObserver *observer_;

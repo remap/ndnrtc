@@ -552,7 +552,8 @@ Pipeliner2::start()
 }
 
 int
-Pipeliner2::stop(){
+Pipeliner2::stop()
+{
     switchToState(StateInactive);
     frameBuffer_->release();
     

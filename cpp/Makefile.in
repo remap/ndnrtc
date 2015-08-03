@@ -109,10 +109,9 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-playout.lo src/libndnrtc_la-rate-control.lo \
 	src/libndnrtc_la-realtime-arc.lo \
 	src/libndnrtc_la-rtt-estimation.lo \
-	src/libndnrtc_la-segmentizer.lo \
-	src/libndnrtc_la-service-channel.lo \
-	src/libndnrtc_la-session.lo src/libndnrtc_la-simple-log.lo \
-	src/libndnrtc_la-statistics.lo src/libndnrtc_la-video-coder.lo \
+	src/libndnrtc_la-segmentizer.lo src/libndnrtc_la-session.lo \
+	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-statistics.lo \
+	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-consumer.lo \
 	src/libndnrtc_la-video-decoder.lo \
 	src/libndnrtc_la-video-playout.lo \
@@ -389,7 +388,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
-  src/service-channel.cpp src/service-channel.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
   include/statistics.h src/statistics.cpp\
@@ -557,8 +555,6 @@ src/libndnrtc_la-rtt-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-segmentizer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-service-channel.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-session.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-simple-log.lo: src/$(am__dirstamp) \
@@ -708,8 +704,6 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-rtt-estimation.lo
 	-rm -f src/libndnrtc_la-segmentizer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-segmentizer.lo
-	-rm -f src/libndnrtc_la-service-channel.$(OBJEXT)
-	-rm -f src/libndnrtc_la-service-channel.lo
 	-rm -f src/libndnrtc_la-session.$(OBJEXT)
 	-rm -f src/libndnrtc_la-session.lo
 	-rm -f src/libndnrtc_la-simple-log.$(OBJEXT)
@@ -773,7 +767,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-realtime-arc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-service-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-simple-log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-statistics.Plo@am__quote@
@@ -1027,13 +1020,6 @@ src/libndnrtc_la-segmentizer.lo: src/segmentizer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segmentizer.cpp' object='src/libndnrtc_la-segmentizer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
-
-src/libndnrtc_la-service-channel.lo: src/service-channel.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-service-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-service-channel.Tpo -c -o src/libndnrtc_la-service-channel.lo `test -f 'src/service-channel.cpp' || echo '$(srcdir)/'`src/service-channel.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-service-channel.Tpo src/$(DEPDIR)/libndnrtc_la-service-channel.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/service-channel.cpp' object='src/libndnrtc_la-service-channel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-service-channel.lo `test -f 'src/service-channel.cpp' || echo '$(srcdir)/'`src/service-channel.cpp
 
 src/libndnrtc_la-session.lo: src/session.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-session.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-session.Tpo -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp

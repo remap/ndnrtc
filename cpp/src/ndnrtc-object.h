@@ -13,6 +13,9 @@
 #define __ndnrtc__ndnrtc_object__
 
 #include <boost/thread.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include "ndnrtc-common.h"
 #include "params.h"
@@ -27,8 +30,9 @@ namespace ndnrtc {
                                  const int errorCode = -1) = 0;
         };
         
-        class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
-                                public INdnRtcComponentCallback
+        class NdnRtcComponent :public ndnlog::new_api::ILoggingObject,
+        public INdnRtcComponentCallback,
+        public boost::enable_shared_from_this<NdnRtcComponent>
         {
         public:
             // construction/desctruction
@@ -52,16 +56,25 @@ namespace ndnrtc {
             { return true; }
             
         protected:
-            // critical section for observer's callbacks
+            boost::atomic<bool> isJobScheduled_;
             boost::mutex callbackMutex_;
+            boost::recursive_mutex jobMutex_;
             INdnRtcComponentCallback *callback_ = nullptr;
             
             // protected methods go here
             int notifyError(const int ecode, const char *format, ...);
             bool hasCallback() { return callback_ != NULL; }
             
-            boost::thread startThread(boost::function<bool ()> threadFunc);
+            boost::thread startThread(boost::function<bool()> threadFunc);
             void stopThread(boost::thread &thread);
+            
+            void scheduleJob(const unsigned int usecInterval,
+                             boost::function<bool()> jobCallback);
+            void stopJob();
+            
+        private:
+            bool isTimerCancelled_;
+            boost::asio::steady_timer watchdogTimer_;
         };
     }
 }

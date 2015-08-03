@@ -11,11 +11,13 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "simple-log.h"
 #include "webrtc.h"
 #include "ndnrtc-common.h"
+#include "ndnrtc-object.h"
 
 namespace ndnrtc {
     /**
@@ -28,7 +30,7 @@ namespace ndnrtc {
      * (extracting frame from the jitter buffer, rendering frame on the canvas,
      * etc.).
      */
-    class JitterTiming : public ndnlog::new_api::ILoggingObject
+    class JitterTiming : public new_api::NdnRtcComponent
     {
     public:
         JitterTiming();
@@ -53,20 +55,12 @@ namespace ndnrtc {
         void updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo);
         
         /**
-         * Schedules and runs playout timer for current calculated playout time
-         */
-        void runPlayoutTimer();
-        
-        /**
          * Sets up playback timer asynchronously.
          * @param callback A callback to call when timer is fired
          */
         void run(boost::function<void()> callback);
         
     private:
-        boost::recursive_mutex timerMutex_;
-        boost::asio::steady_timer playoutTimer_;
-        
         int framePlayoutTimeMs_ = 0;
         int processingTimeUsec_ = 0;
         int64_t playoutTimestampUsec_ = 0;

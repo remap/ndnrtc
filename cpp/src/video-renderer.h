@@ -40,7 +40,7 @@ namespace ndnrtc
     {
     public:
         ExternalVideoRendererAdaptor(IExternalRenderer* externalRenderer);
-        virtual ~ExternalVideoRendererAdaptor() {}
+        virtual ~ExternalVideoRendererAdaptor(){}
         
         int
         init();

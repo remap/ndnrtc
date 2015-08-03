@@ -116,7 +116,9 @@ namespace ndnrtc {
                 createProducerStatistics()
                 { return new StatisticsStorage(StatisticsStorage::ProducerStatRepo); }
                 
-                StatisticsStorage(const StatisticsStorage& statisticsStorage):indicators_(statisticsStorage.getIndicators()){}
+                StatisticsStorage(const StatisticsStorage& statisticsStorage):
+                inidicatorNames_(StatisticsStorage::IndicatorNames),
+                indicators_(statisticsStorage.getIndicators()){}
                 ~StatisticsStorage(){}
                 
                 // may throw an exception if indicator is not present in the repo
@@ -144,7 +146,7 @@ namespace ndnrtc {
                     for (auto& it:storage.indicators_)
                     {
                         os << std::fixed
-                        << StatisticsStorage::IndicatorNames.at(it.first) << "\t"
+                        << storage.inidicatorNames_.at(it.first) << "\t"
                         << std::setprecision(2) << it.second << std::endl;
                     }
                     
@@ -153,6 +155,7 @@ namespace ndnrtc {
             private:
                 StatisticsStorage(const StatRepo& indicators):indicators_(indicators){}
                 
+                const std::map<Indicator, std::string> inidicatorNames_;
                 static const StatRepo ConsumerStatRepo;
                 static const StatRepo ProducerStatRepo;
                 StatRepo indicators_;

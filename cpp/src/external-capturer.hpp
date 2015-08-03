@@ -26,10 +26,22 @@ namespace ndnrtc {
         // IExternalCapturer interface
         void capturingStarted();
         void capturingStopped();
+        
+        // either of incomingArgbFrame or incomingYuvFrame calls should be used
         int incomingArgbFrame(const unsigned int width,
                               const unsigned int height,
                               unsigned char* argbFrameData,
                               unsigned int frameSize);
+
+        // I420 or y420 or Y'CbCr 8-bit 4:2:0 format
+        int incomingI420Frame(const unsigned int width,
+                              const unsigned int height,
+                              const unsigned int strideY,
+                              const unsigned int strideU,
+                              const unsigned int strideV,
+                              const unsigned char* yBuffer,
+                              const unsigned char* uBuffer,
+                              const unsigned char* vBuffer);
         
     private:
         int64_t incomingTimestampMs_;

@@ -17,6 +17,7 @@
 
 #include "ndnrtc-utils.h"
 #include "endian.h"
+#include "ndnrtc-namespace.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -78,6 +79,7 @@ typedef struct _SlidingAverage {
 #pragma mark - all static
 std::string ndnrtc::LIB_LOG = "ndnrtc-startup.log";
 static boost::asio::io_service* NdnRtcIoService;
+static boost::shared_ptr<FaceProcessor> LibraryFace;
 
 static std::vector<FrequencyMeter> freqMeters_;
 static std::vector<DataRateMeter> dataMeters_;
@@ -127,8 +129,23 @@ void NdnRtcUtils::stopBackgroundThread()
     }
 }
 
+bool NdnRtcUtils::isBackgroundThread()
+{
+    return (boost::this_thread::get_id() == backgroundThread.get_id());
+}
+
 void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                         boost::function<void(void)> onCompletion)
+{
+    (*NdnRtcIoService).dispatch([=]{
+        dispatchBlock();
+        if (onCompletion)
+            onCompletion();
+    });
+}
+
+void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                             boost::function<void(void)> onCompletion)
 {
     if (boost::this_thread::get_id() == backgroundThread.get_id())
     {
@@ -138,13 +155,51 @@ void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatc
     }
     else
     {
-        (*NdnRtcIoService).post([=]{
+        boost::mutex m;
+        boost::unique_lock<boost::mutex> lock(m);
+        boost::condition_variable isDone;
+        
+        (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
             dispatchBlock();
             if (onCompletion)
                 onCompletion();
+            isDone.notify_one();
         });
+        
+        isDone.wait(lock);
     }
 }
+
+void NdnRtcUtils::createLibFace(const new_api::GeneralParams& generalParams)
+{
+    if (!LibraryFace.get())
+    {
+        LogInfo(LIB_LOG) << "Creating library Face..." << std::endl;
+        
+        LibraryFace = FaceProcessor::createFaceProcessor(generalParams.host_, generalParams.portNum_, NdnRtcNamespace::defaultKeyChain());
+        LibraryFace->startProcessing();
+        
+        LogInfo(LIB_LOG) << "Library Face created" << std::endl;
+    }
+}
+
+boost::shared_ptr<FaceProcessor> NdnRtcUtils::getLibFace()
+{
+    return LibraryFace;
+}
+
+void NdnRtcUtils::destroyLibFace()
+{
+    if (LibraryFace.get())
+    {
+        LogInfo(LIB_LOG) << "Stopping library Face..." << std::endl;
+        LibraryFace->stopProcessing();
+        LibraryFace.reset();
+        LogInfo(LIB_LOG) << "Library face stopped" << std::endl;
+    }
+}
+
+//******************************************************************************
 
 unsigned int NdnRtcUtils::getSegmentsNumber(unsigned int segmentSize, unsigned int dataSize)
 {
@@ -709,6 +764,14 @@ uint32_t NdnRtcUtils::blobToNonce(const ndn::Blob &blob)
     uint32_t beValue = *(uint32_t *)blob.buf();
     return be32toh(beValue);
 }
+
+std::string NdnRtcUtils::getFullLogPath(const new_api::GeneralParams& generalParams,
+                                  const std::string& fileName)
+{
+    static char logPath[PATH_MAX];
+    return ((generalParams.logPath_ == "")?std::string(getwd(logPath)):generalParams.logPath_) + "/" + fileName;
+}
+
 
 std::string NdnRtcUtils::toString(const char *format, ...)
 {

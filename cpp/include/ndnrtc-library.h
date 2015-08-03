@@ -30,13 +30,11 @@ namespace ndnrtc {
      */
     class NdnRtcLibrary {
     public:
+
         /**
-         * Creates instance of library object using library handle provided.
-         * NOTE: do not use constructor directly, use instantiateLibraryObject 
-         * static method instead, as it performs all necessary initializations.
+         * Returns a pointer to the singleton instance of NdnRtcLirary class
          */
-        NdnRtcLibrary(void *libHandle);
-        ~NdnRtcLibrary();
+        static NdnRtcLibrary& getSharedInstance();
         
         /**
          * Sets library observer
@@ -223,11 +221,19 @@ namespace ndnrtc {
                                             const unsigned char *bytes,
                                             new_api::SessionInfo &sessionInfo);
 
+        ~NdnRtcLibrary();
+        
     private:
+        NdnRtcLibrary();
+        NdnRtcLibrary(NdnRtcLibrary const&) = delete;
+        void operator=(NdnRtcLibrary const&) = delete;
+
         int notifyObserverWithError(const char *format, ...) const;
         int notifyObserverWithState(const char *stateName,
                                     const char *format, ...) const;
         void notifyObserver(const char *state, const char *args) const;
+        
+        
     };
 }
 

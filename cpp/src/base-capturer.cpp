@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#define TEST_USE_THREAD
+
 #include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
 
@@ -35,9 +37,11 @@ int BaseCapturer::init()
 
 int BaseCapturer::startCapture()
 {
+#ifdef TEST_USE_THREAD
     captureThread_ = startThread([this]()->bool{
         return process();
     });
+#endif
 
     return RESULT_OK;
 }
@@ -45,8 +49,12 @@ int BaseCapturer::startCapture()
 int BaseCapturer::stopCapture()
 {
     isCapturing_ = false;
+#ifdef TEST_USE_THREAD
     deliverEvent_.notify_one();
     stopThread(captureThread_);
+#else
+    stopJob();
+#endif
     
     return RESULT_OK;
 }
@@ -54,26 +62,21 @@ int BaseCapturer::stopCapture()
 bool BaseCapturer::process()
 {
     LogTraceC << "check captured frame" << std::endl;
+#ifdef TEST_USE_THREAD
     unique_lock<mutex> captureLock(deliverMutex_);
-    
     if (deliverEvent_.wait_for(deliverMutex_, chrono::milliseconds(100)) == cv_status::no_timeout)
+#endif
     {
         if (!capturedFrame_.IsZeroSize())
         {
             NdnRtcUtils::frequencyMeterTick(meterId_);
-        }
-        
-        if (!capturedFrame_.IsZeroSize())
-        {
-            LogTraceC << "swapping frames" << std::endl;
-            captureMutex_.lock();
             int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+#ifdef TEST_USE_THREAD
+            captureMutex_.lock();
             deliverFrame_.CopyFrame(capturedFrame_);
-            //deliverFrame_.SwapFrame(&capturedFrame_);
-            //capturedFrame_.ResetSize();
             captureMutex_.unlock();
-            LogTraceC << "checking frame consumer" << std::endl;
-            
+#endif
+
             if (frameConsumer_)
             {
                 if (lastFrameTimestamp_)
@@ -85,13 +88,21 @@ bool BaseCapturer::process()
                 }
                 
                 lastFrameTimestamp_ = timestamp;
+#ifdef TEST_USE_THREAD
                 frameConsumer_->onDeliverFrame(deliverFrame_, timestamp);
+#else
+                frameConsumer_->onDeliverFrame(capturedFrame_, timestamp);
+#endif
                 LogTraceC << "frame consumed" << std::endl;
             }
         }
     }
 
+#ifdef TEST_USE_THREAD
     return isCapturing_;
+#else
+    return false;
+#endif
 }
 
 void BaseCapturer::deliverCapturedFrame(WebRtcVideoFrame& frame)
@@ -99,9 +110,19 @@ void BaseCapturer::deliverCapturedFrame(WebRtcVideoFrame& frame)
     if (isCapturing_)
     {
         {
+#ifdef TEST_USE_THREAD
             lock_guard<mutex> scopedLock(captureMutex_);
+#else
+            lock_guard<recursive_mutex> scopedLock(jobMutex_);
+#endif
             capturedFrame_.CopyFrame(frame);
+#ifndef TEST_USE_THREAD
+            if (!isJobScheduled_)
+                scheduleJob(0, boost::bind(&BaseCapturer::process, this));
+#endif
         }
+#ifdef TEST_USE_THREAD
         deliverEvent_.notify_one();
+#endif
     }
 }

@@ -27,12 +27,13 @@ const int Playout::BufferCheckInterval = 2000;
 Playout::Playout(Consumer* consumer,
                  const boost::shared_ptr<StatisticsStorage>& statStorage):
 StatObject(statStorage),
+jitterTiming_(new JitterTiming()),
 isRunning_(false),
 consumer_(consumer),
 data_(nullptr)
 {
     setDescription("playout");
-    jitterTiming_.flush();
+    jitterTiming_->flush();
     
     if (consumer_)
     {
@@ -63,7 +64,7 @@ Playout::start(int initialAdjustment)
     {
         lock_guard<mutex> scopeLock(playoutMutex_);
         
-        jitterTiming_.flush();
+        jitterTiming_->flush();
         
         isRunning_ = true;
         isInferredPlayback_ = false;
@@ -75,8 +76,7 @@ Playout::start(int initialAdjustment)
     
     NdnRtcUtils::dispatchOnBackgroundThread([this](){
         processPlayout();
-    },
-                                            boost::function<void(void)>());
+    });
     
     LogInfoC << "started" << endl;
     return RESULT_OK;
@@ -90,7 +90,7 @@ Playout::stop()
     if (isRunning_)
     {
         isRunning_ = false;
-        jitterTiming_.stop();
+        jitterTiming_->stop();
         
         LogInfoC << "stopped" << endl;
     }
@@ -109,7 +109,7 @@ Playout::stop()
 void
 Playout::setLogger(ndnlog::new_api::Logger *logger)
 {
-    jitterTiming_.setLogger(logger);
+    jitterTiming_->setLogger(logger);
     ILoggingObject::setLogger(logger);
 }
 
@@ -117,7 +117,7 @@ void
 Playout::setDescription(const std::string &desc)
 {
     ILoggingObject::setDescription(desc);
-    jitterTiming_.setDescription(NdnRtcUtils::toString("%s-timing",
+    jitterTiming_->setDescription(NdnRtcUtils::toString("%s-timing",
                                                        getDescription().c_str()));
 }
 
@@ -135,7 +135,7 @@ Playout::processPlayout()
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
             checkBuffer();
-            jitterTiming_.startFramePlayout();
+            jitterTiming_->startFramePlayout();
             
             // cleanup from previous iteration
             if (data_)
@@ -224,9 +224,8 @@ Playout::processPlayout()
             if (isRunning_)
             {
                 // setup and run playout timer for calculated playout interval
-                jitterTiming_.updatePlayoutTime(playbackDelay, sequencePacketNo);
-//                jitterTiming_.runPlayoutTimer();
-                jitterTiming_.run(boost::bind(&Playout::processPlayout, this));
+                jitterTiming_->updatePlayoutTime(playbackDelay, sequencePacketNo);
+                jitterTiming_->run(boost::bind(&Playout::processPlayout, this));
             }
         }
     }

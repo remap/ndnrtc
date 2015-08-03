@@ -118,3 +118,37 @@ int ExternalCapturer::incomingArgbFrame(const unsigned int width,
     
     return RESULT_OK;
 }
+
+int ExternalCapturer::incomingI420Frame(const unsigned int width,
+                                        const unsigned int height,
+                                        const unsigned int strideY,
+                                        const unsigned int strideU,
+                                        const unsigned int strideV,
+                                        const unsigned char* yBuffer,
+                                        const unsigned char* uBuffer,
+                                        const unsigned char* vBuffer)
+{
+    LogTraceC << "incoming YUV frame" << std::endl;
+    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+    
+    if (incomingTimestampMs_ != 0)
+    {
+        int64_t delay = timestamp - incomingTimestampMs_;
+        
+        ((delay > FRAME_DELAY_DEADLINE)? LogWarnC : LogTraceC)
+        << "incoming frame delay " << delay << std::endl;
+    }
+    
+    incomingTimestampMs_ = timestamp;
+    
+    convertedFrame_.CreateFrame(yBuffer, uBuffer, vBuffer,
+                                width, height,
+                                strideY, strideU, strideV);
+    
+    LogTraceC << "delivering frame..." << std::endl;
+#ifdef RECORD
+    frameWriter.writeFrame(convertedFrame_, false);
+#endif
+    deliverCapturedFrame(convertedFrame_);
+    return RESULT_OK;
+}

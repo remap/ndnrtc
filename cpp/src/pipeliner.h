@@ -119,7 +119,7 @@ namespace ndnrtc {
                 << "idle time " << idleTime
                 << std::endl;
                 
-                return (state_ >= StateAdjust) ? idleTime : 0;
+                return idleTime;
             }
             
         protected:
@@ -243,8 +243,7 @@ namespace ndnrtc {
         
         // window-based pipeliner
         class Pipeliner2 : public PipelinerBase,
-                            public IPacketAssembler,
-                            public boost::enable_shared_from_this<Pipeliner2>
+                            public IPacketAssembler
         {
         public:
             static const int DefaultWindow;
@@ -302,11 +301,11 @@ namespace ndnrtc {
             
             OnData
             getOnDataHandler()
-            { return bind(&Pipeliner2::onData, shared_from_this(), _1, _2); }
+            { return bind(&Pipeliner2::onData, boost::dynamic_pointer_cast<Pipeliner2>(shared_from_this()), _1, _2); }
             
             OnTimeout
             getOnTimeoutHandler()
-            { return bind(&Pipeliner2::onTimeout, shared_from_this(), _1); }
+            { return bind(&Pipeliner2::onTimeout, boost::dynamic_pointer_cast<Pipeliner2>(shared_from_this()), _1); }
             
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);

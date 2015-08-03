@@ -49,11 +49,7 @@ AudioRenderer::startRendering(const std::string &name)
         return RESULT_ERR;
     }
     
-    boost::mutex m;
-    boost::unique_lock<boost::mutex> lock(m);
-    boost::condition_variable var;
-    
-    NdnRtcUtils::dispatchOnVoiceThread([this](){
+    NdnRtcUtils::performOnBackgroundThread([this](){
                                            // register external transport in order to playback. however, we are not
                                            // going to set this channel for sending and should not be getting callback
                                            // on webrtc::Transport callbacks
@@ -71,35 +67,26 @@ AudioRenderer::startRendering(const std::string &name)
                                            else
                                                isRendering_ = true;
                                            LogInfoC << "started" << endl;
-                                       },
-                                       [&var](){
-                                           var.notify_one();
                                        });
     
-    var.wait(lock);
     return (isRendering_)?RESULT_OK:RESULT_ERR;
 }
 
 int
 AudioRenderer::stopRendering()
 {
-    boost::mutex m;
-    boost::unique_lock<boost::mutex> lock(m);
-    boost::condition_variable var;
-    
-    NdnRtcUtils::dispatchOnVoiceThread(
+    NdnRtcUtils::performOnBackgroundThread(
                                        [this](){
-                                           voeBase_->StopPlayout(webrtcChannelId_);
-                                           voeBase_->StopReceive(webrtcChannelId_);
-                                           voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
+                                           if (isRendering_)
+                                           {
+                                               voeBase_->StopPlayout(webrtcChannelId_);
+                                               voeBase_->StopReceive(webrtcChannelId_);
+                                               voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
+                                           }
                                            webrtcChannelId_ = -1;
                                            isRendering_ = false;
-                                       },
-                                       [&var](){
-                                           var.notify_one();
                                        });
     
-    var.wait(lock);
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
 }

@@ -45,7 +45,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
-  src/service-channel.cpp src/service-channel.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp include/simple-log.h \
   include/statistics.h src/statistics.cpp\
