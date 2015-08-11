@@ -565,7 +565,7 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
-    LogDebugC
+    LogStatC
     << "data " << data->getName()
     << data->getContent().size() << " bytes" << std::endl;
     
@@ -782,16 +782,22 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     // a frame. however, Event::FirstSegment can be overriden by Event::Ready
     // if the frame we received consists of just 1 segment. that's why
     // besides FirstSegment events we have to care about Ready events as
-    // well - for the frames that made up from 1 segment only
+    // well - for the frames that made up of 1 segment only
     bool isLegitimateForStabilityTracking =
         event.type_ == FrameBuffer::Event::FirstSegment ||
         (event.type_ == FrameBuffer::Event::Ready &&
          event.slot_->getSegmentsNumber() == 1);
     
+    LogStatC << "Dgen" << STAT_DIV
+    << event.slot_->getRecentSegment()->getMetadata().generationDelayMs_ << std::endl;
+    
     if (isLegitimateForStabilityTracking)
     {
         // update stability estimator
         stabilityEstimator_.trackInterArrival(frameBuffer_->getCurrentRate());
+        (*statStorage_)[Indicator::Darr] = stabilityEstimator_.getLastDelta();
+        LogStatC << "Darr"
+        << STAT_DIV << (*statStorage_)[Indicator::Darr] << std::endl;
 
         // update window if it is a delta frame
         if (isDeltaFrame)
@@ -806,6 +812,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     {
         rttChangeEstimator_.newRttValue(event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.);
         (*statStorage_)[Indicator::RttPrime] = rttChangeEstimator_.getMeanValue();
+        LogStatC << "rtt prime"
+        << STAT_DIV << (*statStorage_)[Indicator::RttPrime] << std::endl;
     }   
     
     if (event.type_ == FrameBuffer::Event::FirstSegment)
@@ -985,15 +993,21 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         << window_.getDefaultWindowSize() << std::endl;
         
         if (delta)
+        {
             (*statStorage_)[Indicator::DW] = window_.getDefaultWindowSize();
+            LogStatC << "lambda d"
+            << STAT_DIV << (*statStorage_)[Indicator::DW]
+            << STAT_DIV << "lambda" << STAT_DIV << (*statStorage_)[Indicator::W]
+            << std::endl;
+        }
     }
     
     if (isLegitimateForStabilityTracking)
         LogTraceC
         << "\trtt\t" << event.slot_->getRecentSegment()->getRoundTripDelayUsec()/1000.
         << "\trtt stable\t" << rttChangeEstimator_.isStable()
-        << "\twin\t" << window_.getCurrentWindowSize()
-        << "\tdwin\t" << window_.getDefaultWindowSize()
+        << "\tlambda\t" << window_.getCurrentWindowSize()
+        << "\tlambda_d\t" << window_.getDefaultWindowSize()
         << "\tdarr\t" << stabilityEstimator_.getLastDelta()
         << "\tstable\t" << stabilityEstimator_.isStable()
         << std::endl;

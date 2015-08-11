@@ -1560,6 +1560,8 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
     int64_t size = playbackQueue_.getPlaybackDuration(false);
     
     statStorage_->updateIndicator(statistics::Indicator::BufferPlayableSize, size);
+    LogStatC << "buf play" << STAT_DIV <<
+    size << std::endl;
     
     return size;
 }
@@ -1868,6 +1870,8 @@ ndnrtc::new_api::FrameBuffer::estimateBufferSize()
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
     statStorage_->updateIndicator(statistics::Indicator::BufferEstimatedSize,
                                   estimatedSizeMs_);
+    LogStatC << "buf est" << STAT_DIV
+    << estimatedSizeMs_ << std::endl;
 }
 
 void

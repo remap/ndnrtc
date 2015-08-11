@@ -43,6 +43,7 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
         
         double current = getCurrentEstimation();
         (*statStorage_)[Indicator::RttEstimation] = current;
+        LogStatC << "rtt est" << STAT_DIV << current << std::endl;
         
         LogTraceC
         << "updated estimation. round " << rountripTimeMs <<

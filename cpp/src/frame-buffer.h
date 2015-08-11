@@ -802,6 +802,8 @@ namespace ndnrtc
             {
                 targetSizeMs_ = targetSizeMs;
                 statStorage_->updateIndicator(statistics::Indicator::BufferTargetSize, targetSizeMs_);
+                LogStatC << "buf tar" << STAT_DIV
+                << targetSizeMs_ << std::endl;
             }
 
             int64_t
