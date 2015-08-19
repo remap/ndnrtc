@@ -255,46 +255,24 @@ ndnrtc::new_api::PipelinerBase::getInterestLifetime(int64_t playbackDeadline,
                                                 FrameBuffer::Slot::Namespace nspc,
                                                 bool rtx)
 {
-    int64_t interestLifetime = consumer_->getParameters().interestLifetime_;
-    
-    return interestLifetime;
-    
-    switch (state_) {
+//    StateChasing, StateWaitInitial 5000msec; StateAdjust,StateBuffering,StateFetching 2000msec
+    int64_t interestLifetime = 0;
+
+    switch (state_){
         case StateChasing: // fall through
-        case StateWaitInitial: // fall through
-        case StateAdjust:
+        case StateWaitInitial:
         {
-            interestLifetime = consumer_->getParameters().interestLifetime_;
+            interestLifetime = Consumer::MaxChasingTimeMs;
         }
-            break;
+        break;
+        case StateAdjust: // fall through
         case StateBuffering: // fall through
         case StateFetching: // fall through
         default:
         {
-            if (playbackDeadline <= 0)
-                playbackDeadline = consumer_->getParameters().interestLifetime_;
-            
-            if (rtx || nspc != FrameBuffer::Slot::Key)
-            {
-                int64_t halfBufferSize = frameBuffer_->getEstimatedBufferSize()/2;
-                
-                if (halfBufferSize <= 0)
-                    halfBufferSize = playbackDeadline;
-                
-                interestLifetime = std::min(playbackDeadline, halfBufferSize);
-            }
-            else
-            { // only key frames
-                int64_t playbackBufSize = frameBuffer_->getPlayableBufferSize();
-                double gopInterval = ((VideoThreadParams*)consumer_->getCurrentThreadParameters())->coderParams_.gop_/frameBuffer_->getCurrentRate()*1000;
-                
-                interestLifetime = gopInterval-playbackBufSize;
-                
-                if (interestLifetime <= 0)
-                    interestLifetime = gopInterval;
-            }
+            interestLifetime = consumer_->getParameters().interestLifetime_;
         }
-            break;
+        break;
     }
     
     assert(interestLifetime > 0);
