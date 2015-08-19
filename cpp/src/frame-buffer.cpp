@@ -1742,9 +1742,9 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
             isInferredDuration = false;
         }
         
-        // cleanup buffer from old frames every 60 frames
+        // cleanup buffer from old frames every 5 frames
         frameReleaseCount_++;
-        if (frameReleaseCount_%60 == 0)
+        if (frameReleaseCount_%5 == 0)
         {
             PacketNumber deltaPacketNo = (lockedSlot->getNamespace() == Slot::Key)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
             PacketNumber keyPacketNo = (lockedSlot->getNamespace() == Slot::Delta)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
@@ -1901,6 +1901,11 @@ ndnrtc::new_api::FrameBuffer::cleanBuffer(PacketNumber deltaPacketNo,
         
         if (erase)
         {
+            if (callback_)
+                callback_->onFrameDropped(slot->getSequentialNumber(),
+                                          slot->getPlaybackNumber(),
+                                          slot->getNamespace());
+                
             // update stat
             (*statStorage_)[Indicator::DroppedNum]++;
             if (slot->getNamespace() == Slot::Key)

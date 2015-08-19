@@ -1115,6 +1115,11 @@ namespace ndnrtc
             onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
             
             virtual void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc) = 0;
+            
+            virtual void
             onKeyNeeded(PacketNumber seqNo) = 0;
         };
     }

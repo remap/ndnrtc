@@ -696,6 +696,23 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
     }
 }
 
+void
+Pipeliner2::onFrameDropped(PacketNumber sequenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc)
+{
+    
+    if (nspc == FrameBuffer::Slot::Delta)
+        window_.dataArrived(sequenceNo);
+    
+    LogWarnC << "frame dropped (possibly lost) seq " << sequenceNo
+    << " play " << playbackNo
+    << (nspc == FrameBuffer::Slot::Delta ? "DELTA" : "KEY")
+    << " lambda " << window_.getCurrentWindowSize()
+    << " lambda_d " << window_.getDefaultWindowSize()
+    << std::endl;
+}
+
 //******************************************************************************
 void
 Pipeliner2::askForRightmostData()

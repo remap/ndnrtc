@@ -232,6 +232,11 @@ namespace ndnrtc {
             onRetransmissionNeeded(FrameBuffer::Slot* slot);
             
             virtual void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc) = 0;
+            
+            virtual void
             onKeyNeeded(PacketNumber seqNo);
             
             virtual void
@@ -310,6 +315,11 @@ namespace ndnrtc {
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);
             void onTimeout(const boost::shared_ptr<const Interest>& interest);
+            
+            void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc);
         };
     }
 }
