@@ -134,6 +134,17 @@ VideoStream::getStreamParameters()
     return params;
 }
 
+bool
+VideoStream::isStreamStatReady()
+{
+    bool statReady = true;
+    
+    for (auto it:threads_)
+        statReady &= dynamic_pointer_cast<VideoThread>(it.second)->isThreadStatReady();
+    
+    return statReady;
+}
+
 void
 VideoStream::release()
 {
