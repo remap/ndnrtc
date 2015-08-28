@@ -335,6 +335,9 @@ ndnrtc::new_api::PipelinerBase::onRetransmissionNeeded(FrameBuffer::Slot* slot)
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             (*statStorage_)[Indicator::RtxFrequency] = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
             (*statStorage_)[Indicator::RtxNum]++;
+            
+            LogStatC << "rtx"
+            << STAT_DIV << (*statStorage_)[Indicator::RtxNum] << std::endl;
         }
     }
 }
@@ -352,7 +355,7 @@ ndnrtc::new_api::PipelinerBase::onKeyNeeded(PacketNumber seqNo)
 void
 ndnrtc::new_api::PipelinerBase::requestMissing
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot,
- int64_t lifetime, int64_t priority, bool wasTimedOut)
+ int64_t lifetime, int64_t priority)
 {
     // synchronize with buffer
     frameBuffer_->synchronizeAcquire();
@@ -386,15 +389,6 @@ ndnrtc::new_api::PipelinerBase::requestMissing
         
         express(*segmentInterest, priority);
         segmentInterest->setInterestLifetimeMilliseconds(lifetime);
-
-#warning check this code
-        if (wasTimedOut)
-        {
-            slot->incremenrRtxNum();
-            NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
-            (*statStorage_)[Indicator::RtxFrequency] = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
-            (*statStorage_)[Indicator::RtxNum]++;
-        }
     }
     
     frameBuffer_->synchronizeRelease();

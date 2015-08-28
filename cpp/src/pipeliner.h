@@ -224,8 +224,7 @@ namespace ndnrtc {
             
             void
             requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
-                           int64_t lifetime, int64_t priority,
-                           bool wasTimedOut = false);
+                           int64_t lifetime, int64_t priority);
             
             // IFrameBufferCallback interface
             virtual void

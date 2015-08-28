@@ -1309,6 +1309,9 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                         (*statStorage_)[Indicator::RescuedNum]++;
                         if (slot->getNamespace() == Slot::Key)
                             (*statStorage_)[Indicator::RescuedKeyNum]++;
+                        
+                        LogStatC << "resc"
+                        << STAT_DIV << (*statStorage_)[Indicator::RescuedNum] << std::endl;
                     }
                     
                     event.type_ = Event::Ready;
@@ -1618,6 +1621,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                     (*statStorage_)[Indicator::RecoveredNum]++;
                     if (isKey)
                         (*statStorage_)[Indicator::RecoveredKeyNum]++;
+
+                    LogStatC << "recover"
+                    << STAT_DIV << (*statStorage_)[Indicator::RecoveredNum] << std::endl;
                 }
             }
             
@@ -2103,7 +2109,14 @@ ndnrtc::new_api::FrameBuffer::checkRetransmissions()
             }
             else
             {
-                LogTraceC << "recovered " << (*it)->dump() << std::endl;
+                // update stat
+                (*statStorage_)[Indicator::RecoveredNum]++;
+                if (((*it)->getNamespace() == Slot::Key))
+                    (*statStorage_)[Indicator::RecoveredKeyNum]++;
+                
+                LogTraceC << "recovered [" << (*it)->dump() << "]" << std::endl;
+                LogStatC << "recover"
+                << STAT_DIV << (*statStorage_)[Indicator::RecoveredNum] << std::endl;
             }
         }
         it++;
