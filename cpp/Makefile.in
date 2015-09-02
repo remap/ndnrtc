@@ -357,7 +357,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer.cpp src/consumer.h \
-  src/endian.h \
+  src/ndnrtc-endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \
   src/face-wrapper.cpp src/face-wrapper.h \
   src/fec.cpp src/fec.h \
