@@ -870,7 +870,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                         LogDebugC << "RTT has changed. Waiting"
                         " for RTT stabilization" << std::endl;
                         
-                        rttChangeEstimator_.flush();
                         waitForChange_ = false;
                         waitForStability_ = true;
                         timestamp_ = currentTimestamp;
@@ -883,12 +882,14 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                         timestamp_ = currentTimestamp;
                     }
                 }
-                else if (waitForStability_)
+                else //if (waitForStability_)
                 {
                     LogDebugC << "decrease window" << std::endl;
                     
                     needDecreaseWindow = true;
                     waitForChange_ = true;
+                    rttChangeEstimator_.flush();
+                    
                     waitForStability_ = false;
                     timestamp_ = currentTimestamp;
                 }
@@ -930,6 +931,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     switchToState(StateAdjust);
                     needIncreaseWindow = unstable || lowBuffer;
                     waitForStability_ = true;
+                    rttChangeEstimator_.flush();
+                    
                     waitForChange_ = false;
                     timestamp_ = currentTimestamp;
                     
