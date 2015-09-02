@@ -16,7 +16,7 @@
 #include <boost/asio.hpp>
 
 #include "ndnrtc-utils.h"
-#include "endian.h"
+#include "ndnrtc-endian.h"
 #include "ndnrtc-namespace.h"
 
 using namespace std;
