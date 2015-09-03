@@ -20,7 +20,8 @@ using namespace webrtc;
 using namespace boost;
 
 BaseCapturer::BaseCapturer():
-lastFrameTimestamp_(0)
+lastFrameTimestamp_(0),
+meterId_(NdnRtcUtils::setupFrequencyMeter(4))
 {
     description_ = "capturer";
 }

@@ -972,6 +972,24 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 timestamp_ = currentTimestamp;
                 delta = 0;
             }
+            else
+            {
+                // estimate decrease in milliseconds
+                double packetDelay = stabilityEstimator_.getMeanValue();
+                double lamdaDecreaseMs = (delta-1)*packetDelay;
+                double meanGenerationDelay = consumer_->getRttEstimation()->getMeanGenerationDelay();
+                
+                if (fabs(lamdaDecreaseMs) > meanGenerationDelay)
+                {
+                    LogWarnC
+                    << "attempt to decrease lambda more than avg generation delay: "
+                    << fabs(lamdaDecreaseMs) << " vs "
+                    << meanGenerationDelay << ". will adjust decrease"
+                    << std::endl;
+                    
+                    delta = -(int)(meanGenerationDelay / packetDelay);
+                }
+            }
         }
         
         LogTraceC << "attempt to change window by " << delta << std::endl;

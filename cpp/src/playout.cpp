@@ -134,7 +134,7 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
-            checkBuffer();
+//            checkBuffer();
             jitterTiming_->startFramePlayout();
             
             // cleanup from previous iteration

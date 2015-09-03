@@ -192,8 +192,10 @@ StabilityEstimator::trackInterArrival(double currentRate)
         {
             double deviationPercentage = NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)/mean;
             double targetDelay = 1000./currentRate;
+            double similarityLevel = 1 - fabs(mean-targetDelay)/targetDelay;
 
-            if (deviationPercentage <= threshold_)
+            if (deviationPercentage <= threshold_&&
+                similarityLevel >= rateSimilarityLevel_)
             {
                 nUnstableOccurrences_ = 0;
                 nStableOccurrences_++;
@@ -210,10 +212,10 @@ StabilityEstimator::trackInterArrival(double currentRate)
             << "delta\t" << delta
             << "\tmean\t" << mean
             << "\tdeviation\t" << NdnRtcUtils::currentSlidingDeviationValue(meanEstimatorId_)
-            << "\tdeviation %\t" << deviationPercentage
+            << "\tdeviation %\t" << deviationPercentage*100
             << "\trate\t" << currentRate
             << "\ttarget delay\t" << targetDelay
-            << "\tsim level\t" << fabs(mean-targetDelay)/targetDelay
+            << "\tsim level\t" << similarityLevel
             << "\tstable\t" << (isStable_?"YES":"NO")
             << std::endl;
         }

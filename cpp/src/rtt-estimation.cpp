@@ -23,7 +23,8 @@ const double RttEstimation::RttStartEstimate = 30; // millseconds
 RttEstimation::RttEstimation(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                              const double& startEstimate):
 StatObject(statStorage),
-estimatorId_(NdnRtcUtils::setupMeanEstimator(0, startEstimate))
+estimatorId_(NdnRtcUtils::setupMeanEstimator(0, startEstimate)),
+generationDelayEstimatorId_(NdnRtcUtils::setupSlidingAverageEstimator(4))
 {}
 
 RttEstimation::~RttEstimation()
@@ -37,10 +38,12 @@ RttEstimation::updateEstimation(int64_t rountripTimeMs,
 {
     double rawValue = rountripTimeMs-generationDelay;
     
+    NdnRtcUtils::slidingAverageEstimatorNewValue(generationDelayEstimatorId_, generationDelay);
+    
     if (rawValue > 0)
     {
         NdnRtcUtils::meanEstimatorNewValue(estimatorId_, rawValue);
-        
+
         double current = getCurrentEstimation();
         (*statStorage_)[Indicator::RttEstimation] = current;
         LogStatC << "rtt est" << STAT_DIV << current << std::endl;
@@ -65,6 +68,12 @@ double
 RttEstimation::getCurrentEstimation() const
 {
     return NdnRtcUtils::currentMeanEstimation(estimatorId_);
+}
+
+double
+RttEstimation::getMeanGenerationDelay() const
+{
+    return NdnRtcUtils::currentSlidingAverageValue(generationDelayEstimatorId_);
 }
 
 void
