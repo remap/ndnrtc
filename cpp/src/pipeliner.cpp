@@ -834,6 +834,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         }
     }
     
+    //**************************************************************************
+    int currentMinimalLambda = getCurrentMinimalLambda();
     switch (state_) {
         case StateChasing:
         {
@@ -916,6 +918,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         {
             if (isTimedOut)
             {
+                bool lambdaTooSmall = (currentMinimalLambda > window_.getDefaultWindowSize());
                 bool unstable = !stabilityEstimator_.isStable();
                 bool lowBuffer = ((double)frameBuffer_->getPlayableBufferSize() / (double)frameBuffer_->getEstimatedBufferSize() < 0.5);
                 // disable draining buffer check
@@ -926,6 +929,8 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     LogWarnC
                     << "something wrong in fetching mode. unstable: " << unstable
                     << " low buffer: " << lowBuffer
+                    << " lambda too small: " << lambdaTooSmall
+                    << "(" << currentMinimalLambda  << " vs " << window_.getDefaultWindowSize() << ")"
                     << ". adjusting" << std::endl;
                     
                     switchToState(StateAdjust);
@@ -952,18 +957,20 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     {
         double frac = 0.5;
         int delta = 0;
+        unsigned int currentLambda = window_.getDefaultWindowSize();
+        
         if (needIncreaseWindow)
         {
             if (state_ == StateChasing) // grow faster
-                delta = window_.getDefaultWindowSize();
+                delta = currentLambda;
             else
-                delta = int(ceil(frac*float(window_.getDefaultWindowSize())));
+                delta = int(ceil(frac*float(currentLambda)));
         }
         else if (needDecreaseWindow)
         {
-            delta = -int(ceil(frac*float(window_.getDefaultWindowSize())));
+            delta = -int(ceil(frac*float(currentLambda)));
 
-            if (failedWindow_ >= delta+window_.getDefaultWindowSize())
+            if (failedWindow_ >= delta+currentLambda)
             {
                 LogDebugC << "trying to decrease lower than fail window "
                 << failedWindow_ << std::endl;
@@ -974,20 +981,23 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
             }
             else
             {
-                // estimate decrease in milliseconds
-                double packetDelay = stabilityEstimator_.getMeanValue();
-                double lamdaDecreaseMs = (delta-1)*packetDelay;
-                double meanGenerationDelay = consumer_->getRttEstimation()->getMeanGenerationDelay();
-                
-                if (fabs(lamdaDecreaseMs) > meanGenerationDelay)
+                if (delta+currentLambda < currentMinimalLambda)
                 {
                     LogWarnC
-                    << "attempt to decrease lambda more than avg generation delay: "
-                    << fabs(lamdaDecreaseMs) << " vs "
-                    << meanGenerationDelay << ". will adjust decrease"
-                    << std::endl;
+                    << "attempt to decrease lambda more (by " << delta
+                    << ") than current minimal lambda allows (" << currentMinimalLambda
+                    << "). will set lambda to minimal" << std::endl;
+                    delta = currentMinimalLambda - currentLambda;
                     
-                    delta = -(int)(meanGenerationDelay / packetDelay);
+                    if (delta > 0)
+                        LogWarnC << "current lambda "
+                        << currentLambda
+                        << " was smaller than allowed minimal "
+                        << currentMinimalLambda
+                        << std::endl;
+                    
+                    switchToState(StateFetching);
+                    timestamp_ = currentTimestamp;
                 }
             }
         }
@@ -1048,6 +1058,18 @@ Pipeliner2::resetData()
     waitForStability_ = false;
     rttChangeEstimator_.flush();
     stabilityEstimator_.flush();
+}
+
+unsigned int
+Pipeliner2::getCurrentMinimalLambda()
+{
+    double currentRttEstimation = consumer_->getRttEstimation()->getCurrentEstimation();
+    double packetDelay = stabilityEstimator_.getMeanValue();
+    int minimalLambda = (int)round(currentRttEstimation/packetDelay);
+    
+    if (minimalLambda == 0) minimalLambda = DefaultMinWindow;
+    
+    return (unsigned int)minimalLambda;
 }
 
 void

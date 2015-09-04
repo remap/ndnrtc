@@ -297,6 +297,9 @@ namespace ndnrtc {
             void
             askForSubsequentData(const boost::shared_ptr<Data>& data);
             
+            unsigned int
+            getCurrentMinimalLambda();
+            
             void
             rebuffer();
             
