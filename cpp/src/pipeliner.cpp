@@ -786,7 +786,10 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         stabilityEstimator_.trackInterArrival(frameBuffer_->getCurrentRate());
         (*statStorage_)[Indicator::Darr] = stabilityEstimator_.getLastDelta();
         LogStatC << "Darr"
-        << STAT_DIV << (*statStorage_)[Indicator::Darr] << std::endl;
+        << STAT_DIV << (*statStorage_)[Indicator::Darr]
+        << STAT_DIV << "Darr mean"
+        << STAT_DIV << stabilityEstimator_.getMeanValue()
+        << std::endl;
 
         // update window if it is a delta frame
         if (isDeltaFrame)
