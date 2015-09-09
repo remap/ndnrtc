@@ -127,7 +127,7 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {    
-    LogStatC
+    LogDebugC
     << "express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "

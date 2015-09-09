@@ -537,7 +537,7 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
-    LogStatC
+    LogDebugC
     << "data " << data->getName()
     << data->getContent().size() << " bytes" << std::endl;
     
@@ -777,7 +777,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         (event.type_ == FrameBuffer::Event::Ready &&
          event.slot_->getSegmentsNumber() == 1);
     
-    LogStatC << "Dgen" << STAT_DIV
+    LogTraceC << "Dgen" << STAT_DIV
     << event.slot_->getRecentSegment()->getMetadata().generationDelayMs_ << std::endl;
     
     if (isLegitimateForStabilityTracking)
