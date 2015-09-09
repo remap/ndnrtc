@@ -21,15 +21,16 @@ namespace ndnlog {
     typedef enum _NdnLoggerLevel {
         NdnLoggerLevelTrace = 0,
         NdnLoggerLevelDebug = 1,
-        NdnLoggerLevelInfo = 2,
-        NdnLoggerLevelWarning = 3,
-        NdnLoggerLevelError = 4,
-        NdnLoggerLevelStat = 5
+        NdnLoggerLevelStat = 2,
+        NdnLoggerLevelInfo = 3,
+        NdnLoggerLevelWarning = 4,
+        NdnLoggerLevelError = 5
     } NdnLoggerLevel;
     
     typedef enum _NdnLoggerDetailLevel {
-        NdnLoggerDetailLevelNone = NdnLoggerLevelStat+1,
+        NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
         NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
+        NdnLoggerDetailLevelStat = NdnLoggerLevelStat,
         NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
         NdnLoggerDetailLevelAll = NdnLoggerLevelTrace
     } NdnLoggerDetailLevel;
