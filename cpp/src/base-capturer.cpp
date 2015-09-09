@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#define TEST_USE_THREAD
+//#define TEST_USE_THREAD
 
 #include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
