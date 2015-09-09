@@ -634,6 +634,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             break;
         case StateAdjust:
         case StateChasing:
+        case StateFetching:
         {
             bool isKeyPrefix = NdnRtcNamespace::isPrefix(interest->getName(), keyFramesPrefix_);
 
@@ -643,7 +644,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 
                 if (packetNo == keyFrameSeqNo_)
                 {
-                    LogDebugC << "timeout "
+                    LogDebugC << "re-express "
                     << interest->getName()
                     << std::endl;
                     
@@ -656,10 +657,6 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             
         }
             break;
-        case StateFetching:
-        {
-            // do something with timeouts
-        }
         default:
         {
             // ignore
