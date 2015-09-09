@@ -502,7 +502,7 @@ Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
                        const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                        const FrameSegmentsInfo& frameSegmentsInfo):
 PipelinerBase(consumer, statStorage, frameSegmentsInfo),
-stabilityEstimator_(7, 4, 0.15, 0.7),
+stabilityEstimator_(10, 4, 0.3, 0.7),
 rttChangeEstimator_(7, 3, 0.12),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),

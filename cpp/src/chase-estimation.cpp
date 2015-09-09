@@ -241,6 +241,86 @@ StabilityEstimator::flush()
 }
 
 //******************************************************************************
+StabilityEstimator2::StabilityEstimator2(unsigned int sampleSize,
+                                         unsigned int minStableOccurrences,
+                                         double threshold,
+                                         double rateSimilarityLevel):
+BaseStabilityEstimator(sampleSize, minStableOccurrences, threshold),
+meanEstimator2Id_(NdnRtcUtils::setupSlidingAverageEstimator(sampleSize_)),
+rateSimilarityLevel_(rateSimilarityLevel),
+lastDelta_(0),
+lastTimestamp_(0)
+{
+    description_ = "stability-estimator2";
+}
+
+void
+StabilityEstimator2::trackInterArrival(double currentRate)
+{
+    if (lastTimestamp_ != 0)
+    {
+        unsigned int delta = NdnRtcUtils::millisecondTimestamp() - lastTimestamp_;
+        lastDelta_ = delta;
+        
+        double oldValue = NdnRtcUtils::slidingAverageEstimatorNewValue(meanEstimatorId_, (double)delta);
+        NdnRtcUtils::slidingAverageEstimatorNewValue(meanEstimator2Id_, oldValue);
+        double mean = NdnRtcUtils::currentSlidingAverageValue(meanEstimatorId_);
+        double mean2 = NdnRtcUtils::currentSlidingAverageValue(meanEstimator2Id_);
+        
+        if (mean != 0 && mean2 != 0)
+        {
+            double ratio = (mean2/mean);
+            double targetDelay = 1000./currentRate;
+            double similarityLevel = 1 - fabs(mean-targetDelay)/targetDelay;
+            
+            if (fabs(ratio-1) <= threshold_&&
+                similarityLevel >= rateSimilarityLevel_)
+            {
+                nUnstableOccurrences_ = 0;
+                nStableOccurrences_++;
+                
+                if (!isStable_)
+                    LogTraceC << "stable occurrence #" << nStableOccurrences_ << std::endl;
+            }
+            else if (++nUnstableOccurrences_ >= minOccurrences_)
+                nStableOccurrences_ = 0;
+            
+            isStable_ = (nStableOccurrences_ >= minOccurrences_);
+            
+            LogTraceC
+            << "delta\t" << delta
+            << "\tmean\t" << mean
+            << "\tmean2\t" << mean2
+            << "\tratio\t" << ratio
+            << "\trate\t" << currentRate
+            << "\ttarget delay\t" << targetDelay
+            << "\tsim level\t" << similarityLevel
+            << "\tstable\t" << (isStable_?"YES":"NO")
+            << std::endl;
+        }
+        else
+            LogTraceC
+            << "delta\t" << delta
+            << "\tmean\t" << mean
+            << "\tmean2\t" << mean2
+            << "\tstable\t" << (isStable_?"YES":"NO")
+            << std::endl;
+    }
+    
+    lastTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+}
+
+void
+StabilityEstimator2::flush()
+{
+    isStable_ = false;
+    nStableOccurrences_ = 0;
+    nUnstableOccurrences_ = 0;
+    lastTimestamp_ = 0;
+    lastDelta_ = 0;
+}
+
+//******************************************************************************
 RttChangeEstimator::RttChangeEstimator(unsigned int sampleSize,
                    unsigned int minStableOccurrences,
                    double threshold):

@@ -505,19 +505,22 @@ unsigned int NdnRtcUtils::setupSlidingAverageEstimator(unsigned int sampleSize)
     return slidingAverageEstimators_.size()-1;
 }
 
-void NdnRtcUtils::slidingAverageEstimatorNewValue(unsigned int estimatorId, double value)
+double NdnRtcUtils::slidingAverageEstimatorNewValue(unsigned int estimatorId, double value)
 {
     if (estimatorId >= slidingAverageEstimators_.size())
-        return ;
+        return 0.;
     
+    double oldValue = 0;
     SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
     
+    oldValue = estimator.sample_[estimator.nValues_%estimator.sampleSize_];
     estimator.sample_[estimator.nValues_%estimator.sampleSize_] = value;
     estimator.nValues_++;
     
     if (estimator.nValues_ >= estimator.sampleSize_)
     {
         estimator.currentAverage_ = (estimator.accumulatedSum_+value)/estimator.sampleSize_;
+        
         estimator.accumulatedSum_ += value - estimator.sample_[estimator.nValues_%estimator.sampleSize_];
         
         estimator.currentDeviation_ = 0.;
@@ -527,6 +530,8 @@ void NdnRtcUtils::slidingAverageEstimatorNewValue(unsigned int estimatorId, doub
     }
     else
         estimator.accumulatedSum_ += value;
+    
+    return oldValue;
 }
 
 double NdnRtcUtils::currentSlidingAverageValue(unsigned int estimatorId)

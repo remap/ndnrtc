@@ -273,7 +273,7 @@ namespace ndnrtc {
             }
             
         private:
-            StabilityEstimator stabilityEstimator_;
+            StabilityEstimator2 stabilityEstimator_;
             RttChangeEstimator rttChangeEstimator_;
             PipelinerWindow window_;
             

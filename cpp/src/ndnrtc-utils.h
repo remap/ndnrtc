@@ -76,7 +76,7 @@ namespace ndnrtc
         static void resetMeanEstimator(unsigned int estimatorId);
         
         static unsigned int setupSlidingAverageEstimator(unsigned int sampleSize = 2);
-        static void slidingAverageEstimatorNewValue(unsigned int estimatorId, double value);
+        static double slidingAverageEstimatorNewValue(unsigned int estimatorId, double value);
         static double currentSlidingAverageValue(unsigned int estimatorId);
         static double currentSlidingDeviationValue(unsigned int estimatorId);
         static void releaseAverageEstimator(unsigned int estimatorID);
