@@ -32,6 +32,9 @@ namespace ndnrtc {
             init(unsigned int windowSize, const FrameBuffer* frameBuffer);
             
             void
+            reset();
+            
+            void
             dataArrived(PacketNumber packetNo);
             
             bool
@@ -46,9 +49,14 @@ namespace ndnrtc {
             int
             changeWindow(int delta);
             
+            bool
+            isInitialized()
+            { return isInitialized_; }
+            
         private:
             unsigned int dw_;
             int w_;
+            bool isInitialized_;
             PacketNumber lastAddedToPool_;
             boost::mutex mutex_;
             std::set<PacketNumber> framePool_;
@@ -299,6 +307,9 @@ namespace ndnrtc {
             
             unsigned int
             getCurrentMinimalLambda();
+            
+            unsigned int
+            getCurrentMaximumLambda();
             
             void
             rebuffer();

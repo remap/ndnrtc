@@ -1169,7 +1169,7 @@ ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
           LogWarnC << "error requesting " << interest.getName() << std::endl;
     }
     else
-        LogWarnC << "no free slots" << std::endl;
+        LogErrorC << "no free slots" << std::endl;
 
     return Slot::StateFree;
 }

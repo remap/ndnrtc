@@ -413,7 +413,8 @@ ndnrtc::new_api::PipelinerBase::resetData()
 
 //******************************************************************************
 //******************************************************************************
-PipelinerWindow::PipelinerWindow()
+PipelinerWindow::PipelinerWindow():
+isInitialized_(false)
 {
 }
 
@@ -424,10 +425,17 @@ PipelinerWindow::~PipelinerWindow()
 void
 PipelinerWindow::init(unsigned int windowSize, const FrameBuffer* frameBuffer)
 {
+    isInitialized_ = true;
     frameBuffer_ = frameBuffer;
     framePool_.clear();
     dw_ = windowSize;
     w_ = (int)windowSize;
+}
+
+void
+PipelinerWindow::reset()
+{
+    isInitialized_ = false;
 }
 
 void
@@ -528,6 +536,7 @@ Pipeliner2::stop()
 {
     switchToState(StateInactive);
     frameBuffer_->release();
+    window_.reset();
     
     LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
@@ -712,7 +721,6 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 
     if (frameNo >= 0)
     {
-        window_.init(DefaultWindow, frameBuffer_);
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
         { // for video consumer
@@ -836,6 +844,20 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     
     //**************************************************************************
     int currentMinimalLambda = getCurrentMinimalLambda();
+    int currentMaximumLambda = getCurrentMaximumLambda();
+    
+    if (!window_.isInitialized())
+    {
+        unsigned int startLambda = (unsigned int)round((double)(currentMaximumLambda + currentMinimalLambda)/2.);
+        window_.init(startLambda, frameBuffer_);
+        
+        LogTraceC
+        << "interest demand was initialized with value " << startLambda
+        << " (min " << currentMinimalLambda
+        << " max " << currentMaximumLambda
+        << "). good luck." << std::endl;
+    }
+    
     switch (state_) {
         case StateChasing:
         {
@@ -961,10 +983,16 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         
         if (needIncreaseWindow)
         {
-            if (state_ == StateChasing) // grow faster
-                delta = currentLambda;
-            else
-                delta = int(ceil(frac*float(currentLambda)));
+            delta = int(ceil(frac*float(currentLambda)));
+            
+            if (delta + currentLambda > currentMaximumLambda)
+            {
+                LogWarnC << "attempt to increase lambda more (by " << delta
+                << ") than current maximum lambda allows (" << currentMaximumLambda
+                << "). will set lambda to maximum" << std::endl;
+                
+                delta = currentMaximumLambda - currentLambda;
+            }
         }
         else if (needDecreaseWindow)
         {
@@ -1058,6 +1086,7 @@ Pipeliner2::resetData()
     waitForStability_ = false;
     rttChangeEstimator_.flush();
     stabilityEstimator_.flush();
+    window_.reset();
 }
 
 unsigned int
@@ -1071,6 +1100,14 @@ Pipeliner2::getCurrentMinimalLambda()
     if (minimalLambda == 0) minimalLambda = DefaultMinWindow;
     
     return (unsigned int)minimalLambda;
+}
+
+unsigned int
+Pipeliner2::getCurrentMaximumLambda()
+{
+    // we just assume that max lambda should be 4 times
+    // bigger than current min lambda
+    return 4*getCurrentMinimalLambda();
 }
 
 void
