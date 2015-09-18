@@ -3,7 +3,7 @@
 //  ndnrtc
 //
 //  Created by Peter Gusev on 5/8/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013-2015 Regents of the University of California
 //
 
 #include <boost/thread/mutex.hpp>
