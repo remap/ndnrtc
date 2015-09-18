@@ -289,7 +289,7 @@ double NdnRtcUtils::unixTimestamp()
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
     FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
-    meter.meanEstimatorId_ = setupMeanEstimator();
+    meter.meanEstimatorId_ = setupSlidingAverageEstimator(10*granularity);
     
     freqMeters_.push_back(meter);
     
@@ -314,7 +314,7 @@ void NdnRtcUtils::frequencyMeterTick(unsigned int meterId)
             {
                 meter.callsPerSecond_ = 1000.*(double)meter.nCyclesPerSec_/(double)(delta);
                 meter.nCyclesPerSec_ = 0;
-                meanEstimatorNewValue(meter.meanEstimatorId_, meter.callsPerSecond_);
+                slidingAverageEstimatorNewValue(meter.meanEstimatorId_, meter.callsPerSecond_);
             }
             
             meter.lastCheckTime_ = now;
@@ -328,7 +328,7 @@ double NdnRtcUtils::currentFrequencyMeterValue(unsigned int meterId)
     
     FrequencyMeter &meter = freqMeters_[meterId];
     
-    return currentMeanEstimation(meter.meanEstimatorId_);
+    return currentSlidingAverageValue(meter.meanEstimatorId_);
 }
 
 void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
@@ -550,6 +550,19 @@ double NdnRtcUtils::currentSlidingDeviationValue(unsigned int estimatorId)
     
     SlidingAverage& estimator = slidingAverageEstimators_[estimatorId];
     return estimator.currentDeviation_;
+}
+
+void NdnRtcUtils::resetSlidingAverageEstimator(unsigned int estimatorID)
+{
+    if (estimatorID >= slidingAverageEstimators_.size())
+        return ;
+    
+    SlidingAverage& estimator = slidingAverageEstimators_[estimatorID];
+    estimator.nValues_ = 0;
+    estimator.accumulatedSum_ = 0.;
+    estimator.currentAverage_ = 0.;
+    estimator.currentDeviation_ = 0.;
+    memset(estimator.sample_, 0, sizeof(double)*estimator.sampleSize_);
 }
 
 void NdnRtcUtils::releaseAverageEstimator(unsigned int estimatorID)

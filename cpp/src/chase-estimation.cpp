@@ -238,6 +238,7 @@ StabilityEstimator::flush()
     nUnstableOccurrences_ = 0;
     lastTimestamp_ = 0;
     lastDelta_ = 0;
+    NdnRtcUtils::resetSlidingAverageEstimator(meanEstimatorId_);
 }
 
 //******************************************************************************
@@ -318,6 +319,8 @@ StabilityEstimator2::flush()
     nUnstableOccurrences_ = 0;
     lastTimestamp_ = 0;
     lastDelta_ = 0;
+    NdnRtcUtils::resetSlidingAverageEstimator(meanEstimatorId_);
+    NdnRtcUtils::resetSlidingAverageEstimator(meanEstimator2Id_);
 }
 
 //******************************************************************************

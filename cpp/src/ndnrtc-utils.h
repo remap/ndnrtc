@@ -79,6 +79,7 @@ namespace ndnrtc
         static double slidingAverageEstimatorNewValue(unsigned int estimatorId, double value);
         static double currentSlidingAverageValue(unsigned int estimatorId);
         static double currentSlidingDeviationValue(unsigned int estimatorId);
+        static void resetSlidingAverageEstimator(unsigned int estimatorID);
         static void releaseAverageEstimator(unsigned int estimatorID);
         
         static unsigned int setupFilter(double coeff = 1.);
