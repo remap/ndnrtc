@@ -665,13 +665,29 @@ void NdnRtcUtils::initVoiceEngine()
                                            LogInfo(LIB_LOG) << "Iinitializing voice engine..." << std::endl;
                                            VoiceEngineInstance = VoiceEngine::Create();
                                            
+                                           VoECodec* veCodec; 
+                                           veCodec = VoECodec::GetInterface(VoiceEngineInstance);
+                                           //initalize codec parameter struct
+                                           CodecInst cinst;  
+                                           //set parameters  
+                                           strcpy(cinst.plname, "ISAC");  
+                                           cinst.plfreq   = 16000; // iSAC wideband sample rate
+                                           cinst.pltype   = 103;   
+                                           cinst.pacsize  = 480;   //use 30ms packet size，480kbps  
+                                           cinst.channels = 2;     // stereo  
+                                           cinst.rate     = -1;    // network condition self-adapt  
+                                           
                                            int res = 0;
                                            
                                            {// init engine
                                                VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
                                                
                                                res = voe_base->Init();
-                                               
+                                               int audioChannel = voe_base->CreateChannel();
+                                               //tell codec parameters
+                                               veCodec->SetSendCodec(audioChannel, cinst);
+                                               veCodec->Release();
+                                               voe_base->DeleteChannel(audioChannel);
                                                voe_base->Release();
                                            }
                                            {// configure
