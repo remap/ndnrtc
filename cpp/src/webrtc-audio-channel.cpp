@@ -22,7 +22,8 @@ using namespace ndnlog::new_api;
 #pragma mark - construction/destruction
 WebrtcAudioChannel::WebrtcAudioChannel():
 voeBase_(nullptr),
-voeNetwork_(nullptr)
+voeNetwork_(nullptr),
+voeCodec_(nullptr)
 {
 }
 
@@ -33,6 +34,9 @@ WebrtcAudioChannel::~WebrtcAudioChannel()
     
     if (voeNetwork_)
         voeNetwork_->Release();
+    
+    if (voeCodec_)
+        voeCodec_->Release();
 }
 
 //******************************************************************************
@@ -44,9 +48,23 @@ int WebrtcAudioChannel::init()
                                        [this, &res](){
                                            voeBase_ = VoEBase::GetInterface(NdnRtcUtils::sharedVoiceEngine());
                                            voeNetwork_ = VoENetwork::GetInterface(NdnRtcUtils::sharedVoiceEngine());
+                                           voeCodec_ = VoECodec::GetInterface(NdnRtcUtils::sharedVoiceEngine());
+
+                                           //initalize codec parameter struct
+                                           CodecInst cinst;
+                                           //set parameters
+                                           strcpy(cinst.plname, "opus");
+                                           cinst.plfreq   = 48000;
+                                           cinst.pltype   = 120;
+                                           cinst.pacsize  = 960;
+                                           cinst.channels = 2;
+                                           cinst.rate     = 128000;
+                                           
                                            webrtcChannelId_ = voeBase_->CreateChannel();
                                            if (webrtcChannelId_ < 0)
                                                res = RESULT_ERR;
+                                           
+                                           voeCodec_->SetSendCodec(webrtcChannelId_, cinst);
                                        });
     return res;
 }
