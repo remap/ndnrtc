@@ -682,16 +682,15 @@ void NdnRtcUtils::initVoiceEngine()
                                        [&initialized](){
                                            LogInfo(LIB_LOG) << "Iinitializing voice engine..." << std::endl;
                                            VoiceEngineInstance = VoiceEngine::Create();
-                                           
+                                                                                      
                                            int res = 0;
                                            
                                            {// init engine
                                                VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
                                                
                                                res = voe_base->Init();
-                                               
                                                voe_base->Release();
-                                           }
+                                            }
                                            {// configure
                                                VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(VoiceEngineInstance);
                                                

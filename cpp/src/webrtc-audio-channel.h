@@ -14,6 +14,17 @@
 #include "ndnrtc-object.h"
 #include "params.h"
 
+//webrtc audio codec parameter struct
+/*struct CodecInst 
+{ 
+    int pltype; 
+    char plname[32]; 
+    int plfreq; 
+    int pacsize; 
+    int channels; 
+    int rate; 
+};
+*/
 namespace ndnrtc {
     namespace new_api {
         class WebrtcAudioChannel : public webrtc::Transport
@@ -29,7 +40,8 @@ namespace ndnrtc {
             int webrtcChannelId_;
             webrtc::VoEBase* voeBase_;
             webrtc::VoENetwork* voeNetwork_;
-            
+            webrtc::VoECodec* voeCodec_;
+            webrtc::CodecInst cinst;
             // webrtc::Transport interface
             virtual int
             SendPacket(int channel, const void *data, size_t len)
