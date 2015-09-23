@@ -32,6 +32,9 @@ namespace ndnrtc {
             init(unsigned int windowSize, const FrameBuffer* frameBuffer);
             
             void
+            reset();
+            
+            void
             dataArrived(PacketNumber packetNo);
             
             bool
@@ -46,9 +49,14 @@ namespace ndnrtc {
             int
             changeWindow(int delta);
             
+            bool
+            isInitialized()
+            { return isInitialized_; }
+            
         private:
             unsigned int dw_;
             int w_;
+            bool isInitialized_;
             PacketNumber lastAddedToPool_;
             boost::mutex mutex_;
             std::set<PacketNumber> framePool_;
@@ -224,12 +232,16 @@ namespace ndnrtc {
             
             void
             requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
-                           int64_t lifetime, int64_t priority,
-                           bool wasTimedOut = false);
+                           int64_t lifetime, int64_t priority);
             
             // IFrameBufferCallback interface
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot);
+            
+            virtual void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc) = 0;
             
             virtual void
             onKeyNeeded(PacketNumber seqNo);
@@ -269,7 +281,7 @@ namespace ndnrtc {
             }
             
         private:
-            StabilityEstimator stabilityEstimator_;
+            StabilityEstimator2 stabilityEstimator_;
             RttChangeEstimator rttChangeEstimator_;
             PipelinerWindow window_;
             
@@ -293,6 +305,12 @@ namespace ndnrtc {
             void
             askForSubsequentData(const boost::shared_ptr<Data>& data);
             
+            unsigned int
+            getCurrentMinimalLambda();
+            
+            unsigned int
+            getCurrentMaximumLambda();
+            
             void
             rebuffer();
             
@@ -310,6 +328,11 @@ namespace ndnrtc {
             void onData(const boost::shared_ptr<const Interest>& interest,
                         const boost::shared_ptr<Data>& data);
             void onTimeout(const boost::shared_ptr<const Interest>& interest);
+            
+            void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc);
         };
     }
 }

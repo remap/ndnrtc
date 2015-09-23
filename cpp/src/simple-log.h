@@ -12,11 +12,17 @@
 #ifndef __ndnrtc__simple__
 #define __ndnrtc__simple__
 
+#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
+
 #include <iostream>
 #include <pthread.h>
 #include <string>
 #include <map>
 #include <fstream>
+
+#include "params.h"
 
 #if !defined(NDN_LOGGING)
 #undef NDN_TRACE
@@ -101,23 +107,7 @@
 #define STAT_DIV "\t"
 
 namespace ndnlog {
-    typedef enum _NdnLoggerLevel {
-        NdnLoggerLevelTrace = 0,
-        NdnLoggerLevelDebug = 1,
-        NdnLoggerLevelInfo = 2,
-        NdnLoggerLevelWarning = 3,
-        NdnLoggerLevelError = 4,
-        NdnLoggerLevelStat = 5
-    } NdnLoggerLevel;
-    
     typedef NdnLoggerLevel NdnLogType;
-    
-    typedef enum _NdnLoggerDetailLevel {
-        NdnLoggerDetailLevelNone = NdnLoggerLevelStat+1,
-        NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
-        NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
-        NdnLoggerDetailLevelAll = NdnLoggerLevelTrace
-    } NdnLoggerDetailLevel;
 
     /**
      * Thread-safe logger class to stdout or file
@@ -125,10 +115,6 @@ namespace ndnlog {
      */
     namespace new_api
     {
-        // interval at which logger is flushing data on disk (if file logging
-        // was chosen)
-        const unsigned int FlushIntervalMs = 10;
-        
         class ILoggingObject;
         class NilLogger;
         
@@ -142,6 +128,10 @@ namespace ndnlog {
             using endl_type = std::ostream&(std::ostream&);
             
         public:
+            // interval at which logger is flushing data on disk (if file logging
+            // was chosen)
+            static unsigned int FlushIntervalMs;
+            
             /**
              * Creates an instance of logger with specified logging level and 
              * file name. By default, creates logger wich logs everything into 
@@ -193,7 +183,7 @@ namespace ndnlog {
                 if (isWritingLogEntry_ &&
                     currentEntryLogType_ >= (NdnLogType)logLevel_)
                 {
-                    getOutStream() << data; 
+                    currentLogRecord_ << data;
                 }
                 
                 return *this;
@@ -212,7 +202,8 @@ namespace ndnlog {
                     isWritingLogEntry_ = false;
                     currentEntryLogType_ = NdnLoggerLevelTrace;
                     
-                    getOutStream() << endl;
+                    currentLogRecord_ << endl;
+                    finalizeLogRecord();
                     unlockStream();
                 }
                 
@@ -226,6 +217,12 @@ namespace ndnlog {
             NdnLoggerDetailLevel
             getLogLevel()
             { return logLevel_; }
+            
+            static void
+            initAsyncLogging();
+            
+            static void
+            releaseAsyncLogging();
             
             static Logger&
             getLogger(const std::string &logFile);
@@ -283,6 +280,20 @@ namespace ndnlog {
             static pthread_mutex_t stdOutMutex_;
             static std::map<std::string, Logger*> loggers_;
             static Logger* sharedInstance_;
+            
+            boost::atomic<bool> isProcessing_;
+            std::stringstream currentLogRecord_;
+            typedef boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> LogRecordQueue;
+            LogRecordQueue recordsQueue_;
+            
+            void
+            processLogRecords();
+            
+            void
+            startLogRecord();
+            
+            void
+            finalizeLogRecord();
             
             std::ostream&
             getOutStream() { return *outStream_; }

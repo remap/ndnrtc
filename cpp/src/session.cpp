@@ -3,7 +3,7 @@
 //  libndnrtc
 //
 //  Created by Peter Gusev on 9/18/14.
-//  Copyright (c) 2014 REMAP. All rights reserved.
+//  Copyright 2013-2015 Regents of the University of California.
 //
 
 #include <boost/thread/lock_guard.hpp>
@@ -234,9 +234,12 @@ Session::getSessionInfo()
     
     for (StreamMap::iterator it = videoStreams_.begin(); it != videoStreams_.end(); it++)
     {
-        MediaStreamParams* streamParams = new MediaStreamParams(it->second->getStreamParameters());
-        
-        sessionInfo->videoStreams_.push_back(streamParams);
+        if (dynamic_pointer_cast<VideoStream>(it->second)->isStreamStatReady())
+        {
+            MediaStreamParams* streamParams = new MediaStreamParams(it->second->getStreamParameters());
+            
+            sessionInfo->videoStreams_.push_back(streamParams);
+        }
     }
     
     return sessionInfo;

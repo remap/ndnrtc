@@ -335,6 +335,9 @@ ndnrtc::new_api::PipelinerBase::onRetransmissionNeeded(FrameBuffer::Slot* slot)
             NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
             (*statStorage_)[Indicator::RtxFrequency] = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
             (*statStorage_)[Indicator::RtxNum]++;
+            
+            LogStatC << "rtx"
+            << STAT_DIV << (*statStorage_)[Indicator::RtxNum] << std::endl;
         }
     }
 }
@@ -352,7 +355,7 @@ ndnrtc::new_api::PipelinerBase::onKeyNeeded(PacketNumber seqNo)
 void
 ndnrtc::new_api::PipelinerBase::requestMissing
 (const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot,
- int64_t lifetime, int64_t priority, bool wasTimedOut)
+ int64_t lifetime, int64_t priority)
 {
     // synchronize with buffer
     frameBuffer_->synchronizeAcquire();
@@ -386,15 +389,6 @@ ndnrtc::new_api::PipelinerBase::requestMissing
         
         express(*segmentInterest, priority);
         segmentInterest->setInterestLifetimeMilliseconds(lifetime);
-
-#warning check this code
-        if (wasTimedOut)
-        {
-            slot->incremenrRtxNum();
-            NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
-            (*statStorage_)[Indicator::RtxFrequency] = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
-            (*statStorage_)[Indicator::RtxNum]++;
-        }
     }
     
     frameBuffer_->synchronizeRelease();
@@ -419,7 +413,8 @@ ndnrtc::new_api::PipelinerBase::resetData()
 
 //******************************************************************************
 //******************************************************************************
-PipelinerWindow::PipelinerWindow()
+PipelinerWindow::PipelinerWindow():
+isInitialized_(false)
 {
 }
 
@@ -430,10 +425,17 @@ PipelinerWindow::~PipelinerWindow()
 void
 PipelinerWindow::init(unsigned int windowSize, const FrameBuffer* frameBuffer)
 {
+    isInitialized_ = true;
     frameBuffer_ = frameBuffer;
     framePool_.clear();
     dw_ = windowSize;
     w_ = (int)windowSize;
+}
+
+void
+PipelinerWindow::reset()
+{
+    isInitialized_ = false;
 }
 
 void
@@ -508,7 +510,7 @@ Pipeliner2::Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
                        const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
                        const FrameSegmentsInfo& frameSegmentsInfo):
 PipelinerBase(consumer, statStorage, frameSegmentsInfo),
-stabilityEstimator_(7, 4, 0.15, 0.7),
+stabilityEstimator_(10, 4, 0.3, 0.7),
 rttChangeEstimator_(7, 3, 0.12),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
@@ -534,6 +536,7 @@ Pipeliner2::stop()
 {
     switchToState(StateInactive);
     frameBuffer_->release();
+    window_.reset();
     
     LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
@@ -543,7 +546,7 @@ void
 Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
-    LogStatC
+    LogDebugC
     << "data " << data->getName()
     << data->getContent().size() << " bytes" << std::endl;
     
@@ -640,6 +643,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             break;
         case StateAdjust:
         case StateChasing:
+        case StateFetching:
         {
             bool isKeyPrefix = NdnRtcNamespace::isPrefix(interest->getName(), keyFramesPrefix_);
 
@@ -649,7 +653,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
 
                 if (packetNo == keyFrameSeqNo_)
                 {
-                    LogDebugC << "timeout "
+                    LogDebugC << "re-express "
                     << interest->getName()
                     << std::endl;
                     
@@ -662,16 +666,29 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             
         }
             break;
-        case StateFetching:
-        {
-            // do something with timeouts
-        }
         default:
         {
             // ignore
         }
             break;
     }
+}
+
+void
+Pipeliner2::onFrameDropped(PacketNumber sequenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc)
+{
+    
+    if (nspc == FrameBuffer::Slot::Delta)
+        window_.dataArrived(sequenceNo);
+    
+    LogWarnC << "frame dropped (possibly lost) seq " << sequenceNo
+    << " play " << playbackNo
+    << (nspc == FrameBuffer::Slot::Delta ? "DELTA" : "KEY")
+    << " lambda " << window_.getCurrentWindowSize()
+    << " lambda_d " << window_.getDefaultWindowSize()
+    << std::endl;
 }
 
 //******************************************************************************
@@ -704,7 +721,6 @@ Pipeliner2::askForInitialData(const boost::shared_ptr<Data>& data)
 
     if (frameNo >= 0)
     {
-        window_.init(DefaultWindow, frameBuffer_);
         frameBuffer_->setState(FrameBuffer::Valid);
         if (useKeyNamespace_)
         { // for video consumer
@@ -766,7 +782,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         (event.type_ == FrameBuffer::Event::Ready &&
          event.slot_->getSegmentsNumber() == 1);
     
-    LogStatC << "Dgen" << STAT_DIV
+    LogTraceC << "Dgen" << STAT_DIV
     << event.slot_->getRecentSegment()->getMetadata().generationDelayMs_ << std::endl;
     
     if (isLegitimateForStabilityTracking)
@@ -775,7 +791,10 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         stabilityEstimator_.trackInterArrival(frameBuffer_->getCurrentRate());
         (*statStorage_)[Indicator::Darr] = stabilityEstimator_.getLastDelta();
         LogStatC << "Darr"
-        << STAT_DIV << (*statStorage_)[Indicator::Darr] << std::endl;
+        << STAT_DIV << (*statStorage_)[Indicator::Darr]
+        << STAT_DIV << "Darr mean"
+        << STAT_DIV << stabilityEstimator_.getMeanValue()
+        << std::endl;
 
         // update window if it is a delta frame
         if (isDeltaFrame)
@@ -823,6 +842,22 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         }
     }
     
+    //**************************************************************************
+    int currentMinimalLambda = getCurrentMinimalLambda();
+    int currentMaximumLambda = getCurrentMaximumLambda();
+    
+    if (!window_.isInitialized())
+    {
+        unsigned int startLambda = (unsigned int)round((double)(currentMaximumLambda + currentMinimalLambda)/2.);
+        window_.init(startLambda, frameBuffer_);
+        
+        LogTraceC
+        << "interest demand was initialized with value " << startLambda
+        << " (min " << currentMinimalLambda
+        << " max " << currentMaximumLambda
+        << "). good luck." << std::endl;
+    }
+    
     switch (state_) {
         case StateChasing:
         {
@@ -859,7 +894,6 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                         LogDebugC << "RTT has changed. Waiting"
                         " for RTT stabilization" << std::endl;
                         
-                        rttChangeEstimator_.flush();
                         waitForChange_ = false;
                         waitForStability_ = true;
                         timestamp_ = currentTimestamp;
@@ -872,12 +906,14 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                         timestamp_ = currentTimestamp;
                     }
                 }
-                else if (waitForStability_)
+                else //if (waitForStability_)
                 {
                     LogDebugC << "decrease window" << std::endl;
                     
                     needDecreaseWindow = true;
                     waitForChange_ = true;
+                    rttChangeEstimator_.flush();
+                    
                     waitForStability_ = false;
                     timestamp_ = currentTimestamp;
                 }
@@ -904,6 +940,7 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
         {
             if (isTimedOut)
             {
+                bool lambdaTooSmall = (currentMinimalLambda > window_.getDefaultWindowSize());
                 bool unstable = !stabilityEstimator_.isStable();
                 bool lowBuffer = ((double)frameBuffer_->getPlayableBufferSize() / (double)frameBuffer_->getEstimatedBufferSize() < 0.5);
                 // disable draining buffer check
@@ -914,11 +951,15 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                     LogWarnC
                     << "something wrong in fetching mode. unstable: " << unstable
                     << " low buffer: " << lowBuffer
+                    << " lambda too small: " << lambdaTooSmall
+                    << "(" << currentMinimalLambda  << " vs " << window_.getDefaultWindowSize() << ")"
                     << ". adjusting" << std::endl;
                     
                     switchToState(StateAdjust);
                     needIncreaseWindow = unstable || lowBuffer;
                     waitForStability_ = true;
+                    rttChangeEstimator_.flush();
+                    
                     waitForChange_ = false;
                     timestamp_ = currentTimestamp;
                     
@@ -938,18 +979,26 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
     {
         double frac = 0.5;
         int delta = 0;
+        unsigned int currentLambda = window_.getDefaultWindowSize();
+        
         if (needIncreaseWindow)
         {
-            if (state_ == StateChasing) // grow faster
-                delta = window_.getDefaultWindowSize();
-            else
-                delta = int(ceil(frac*float(window_.getDefaultWindowSize())));
+            delta = int(ceil(frac*float(currentLambda)));
+            
+            if (delta + currentLambda > currentMaximumLambda)
+            {
+                LogWarnC << "attempt to increase lambda more (by " << delta
+                << ") than current maximum lambda allows (" << currentMaximumLambda
+                << "). will set lambda to maximum" << std::endl;
+                
+                delta = currentMaximumLambda - currentLambda;
+            }
         }
         else if (needDecreaseWindow)
         {
-            delta = -int(ceil(frac*float(window_.getDefaultWindowSize())));
+            delta = -int(ceil(frac*float(currentLambda)));
 
-            if (failedWindow_ >= delta+window_.getDefaultWindowSize())
+            if (failedWindow_ >= delta+currentLambda)
             {
                 LogDebugC << "trying to decrease lower than fail window "
                 << failedWindow_ << std::endl;
@@ -957,6 +1006,27 @@ Pipeliner2::askForSubsequentData(const boost::shared_ptr<Data>& data)
                 switchToState(StateFetching);
                 timestamp_ = currentTimestamp;
                 delta = 0;
+            }
+            else
+            {
+                if (delta+currentLambda < currentMinimalLambda)
+                {
+                    LogWarnC
+                    << "attempt to decrease lambda more (by " << delta
+                    << ") than current minimal lambda allows (" << currentMinimalLambda
+                    << "). will set lambda to minimal" << std::endl;
+                    delta = currentMinimalLambda - currentLambda;
+                    
+                    if (delta > 0)
+                        LogWarnC << "current lambda "
+                        << currentLambda
+                        << " was smaller than allowed minimal "
+                        << currentMinimalLambda
+                        << std::endl;
+                    
+                    switchToState(StateFetching);
+                    timestamp_ = currentTimestamp;
+                }
             }
         }
         
@@ -1016,6 +1086,28 @@ Pipeliner2::resetData()
     waitForStability_ = false;
     rttChangeEstimator_.flush();
     stabilityEstimator_.flush();
+    window_.reset();
+}
+
+unsigned int
+Pipeliner2::getCurrentMinimalLambda()
+{
+    double currentRttEstimation = consumer_->getRttEstimation()->getCurrentEstimation();
+    double producerRate = consumer_->getFrameBuffer()->getCurrentRate();
+    double packetDelay = (producerRate == 0) ? stabilityEstimator_.getMeanValue() : (1000./producerRate);
+    int minimalLambda = (int)round(currentRttEstimation/packetDelay);
+    
+    if (minimalLambda == 0) minimalLambda = DefaultMinWindow;
+    
+    return (unsigned int)minimalLambda;
+}
+
+unsigned int
+Pipeliner2::getCurrentMaximumLambda()
+{
+    // we just assume that max lambda should be 4 times
+    // bigger than current min lambda
+    return 4*getCurrentMinimalLambda();
 }
 
 void

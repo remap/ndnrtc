@@ -107,24 +107,27 @@ InterestQueue::watchQueue()
     QueueEntry entry;
     
     queueAccess_.lock();
-    if (queue_.size() > 0)
+    while (queue_.size() > 0)
     {
-        entry = queue_.top();
-        queue_.pop();
+        //    if (queue_.size() > 0)
+        {
+            entry = queue_.top();
+            queue_.pop();
+        }
+        isWatchingQueue_ = (queue_.size() > 0);
+        
+        if (entry.interest_.get())
+            processEntry(entry);
     }
-    isWatchingQueue_ = (queue_.size() > 0);
     queueAccess_.unlock();
-    
-    if (entry.interest_.get())
-        processEntry(entry);
-    
+
     return isWatchingQueue_;
 }
 
 void
 InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
 {    
-    LogStatC
+    LogDebugC
     << "express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
