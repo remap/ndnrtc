@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/simple-log.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
 
 lib_LTLIBRARIES = libndnrtc.la
 
@@ -46,7 +46,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/session.cpp src/session.h \
-  src/simple-log.cpp include/simple-log.h \
+  src/simple-log.cpp src/simple-log.h \
   include/statistics.h src/statistics.cpp\
   src/video-coder.cpp src/video-coder.h \
   src/video-consumer.cpp src/video-consumer.h \

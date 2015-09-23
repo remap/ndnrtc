@@ -1093,6 +1093,8 @@ namespace ndnrtc
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
                     statStorage_->updateIndicator(statistics::Indicator::CurrentProducerFramerate, playbackRate);
+                    
+                    LogStatC << "prod rate\t" << playbackRate << std::endl;
                 }
             }
             
@@ -1113,6 +1115,11 @@ namespace ndnrtc
         public:
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
+            
+            virtual void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc) = 0;
             
             virtual void
             onKeyNeeded(PacketNumber seqNo) = 0;

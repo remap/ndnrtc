@@ -104,6 +104,10 @@ VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
     
     NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
     
+    LogDebugC
+    << "producing rate " << NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_)
+    << std::endl;
+    
     // determine, whether we should publish under key or delta namespaces
     bool isKeyFrame = encodedImage._frameType == webrtc::kKeyFrame;
     

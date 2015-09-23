@@ -15,8 +15,26 @@
 #include <sstream>
 #include <vector>
 
-#include "simple-log.h"
 #include "ndnrtc-defines.h"
+
+namespace ndnlog {
+    typedef enum _NdnLoggerLevel {
+        NdnLoggerLevelTrace = 0,
+        NdnLoggerLevelDebug = 1,
+        NdnLoggerLevelStat = 2,
+        NdnLoggerLevelInfo = 3,
+        NdnLoggerLevelWarning = 4,
+        NdnLoggerLevelError = 5
+    } NdnLoggerLevel;
+    
+    typedef enum _NdnLoggerDetailLevel {
+        NdnLoggerDetailLevelNone = NdnLoggerLevelError+1,
+        NdnLoggerDetailLevelDefault = NdnLoggerLevelInfo,
+        NdnLoggerDetailLevelStat = NdnLoggerLevelStat,
+        NdnLoggerDetailLevelDebug = NdnLoggerLevelDebug,
+        NdnLoggerDetailLevelAll = NdnLoggerLevelTrace
+    } NdnLoggerDetailLevel;
+}
 
 namespace ndnrtc
 {
@@ -312,7 +330,7 @@ namespace ndnrtc
             
             void write(std::ostream& os) const
             {
-                os << "log level: " << ndnlog::new_api::Logger::stringify((ndnlog::NdnLoggerLevel)loggingLevel_)
+                os << "log level: " << loggingLevel_
                 << "; log file: " << logFile_
                 << "; TLV: " << (useTlv_?"ON":"OFF")
                 << "; RTX: " << (useRtx_?"ON":"OFF")

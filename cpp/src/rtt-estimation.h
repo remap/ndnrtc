@@ -40,12 +40,14 @@ namespace ndnrtc {
                                     int64_t generationDelay);
             
             double getCurrentEstimation() const;
+            double getMeanGenerationDelay() const;
             
             void reset();
             
         private:
             static RttEstimation sharedRttEstimation_;
             unsigned int estimatorId_;
+            unsigned int generationDelayEstimatorId_;
         };
     }
 }
