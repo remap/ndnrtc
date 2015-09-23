@@ -29,6 +29,7 @@ namespace ndnrtc {
             int webrtcChannelId_;
             webrtc::VoEBase* voeBase_;
             webrtc::VoENetwork* voeNetwork_;
+            webrtc::VoECodec* voeCodec_;
             
             // webrtc::Transport interface
             virtual int
