@@ -50,15 +50,26 @@ int WebrtcAudioChannel::init()
                                            voeNetwork_ = VoENetwork::GetInterface(NdnRtcUtils::sharedVoiceEngine());
                                            voeCodec_ = VoECodec::GetInterface(NdnRtcUtils::sharedVoiceEngine());
 
-                                           //initalize codec parameter struct
                                            CodecInst cinst;
-                                           //set parameters
-                                           strcpy(cinst.plname, "opus");
-                                           cinst.plfreq   = 48000;
-                                           cinst.pltype   = 120;
-                                           cinst.pacsize  = 960;
+                                           
+                                           // this will give us HD quality audio
+                                           // and ~380Kbit/s stream
+//                                           strcpy(cinst.plname, "opus");
+//                                           cinst.plfreq   = 48000;
+//                                           cinst.pltype   = 120;
+//                                           cinst.pacsize  = 960;
+//                                           cinst.channels = 2;
+//                                           cinst.rate     = 64000;
+//                                           cinst.rate     = 128000;
+
+                                           // this will give us decent quality (better than pcmu)
+                                           // and ~200Kbit/s stream (same like PCMU)
+                                           strcpy(cinst.plname, "G722");
+                                           cinst.plfreq   = 16000;
+                                           cinst.pltype   = 119;
+                                           cinst.pacsize  = 320;
                                            cinst.channels = 2;
-                                           cinst.rate     = 128000;
+                                           cinst.rate     = 64000;
                                            
                                            webrtcChannelId_ = voeBase_->CreateChannel();
                                            if (webrtcChannelId_ < 0)
