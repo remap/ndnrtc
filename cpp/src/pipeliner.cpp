@@ -535,7 +535,6 @@ int
 Pipeliner2::stop()
 {
     switchToState(StateInactive);
-    frameBuffer_->release();
     window_.reset();
     
     LogInfoC << "stopped" << std::endl;

@@ -684,20 +684,11 @@ namespace ndnrtc
             int init();
             int reset();
             
-            Event
-            waitForEvents(int eventMask, unsigned int timeout = 0xffffffff);
-            
             State
             getState() { return state_; }
             
             void
             setState(const State &state);
-            
-            /**
-             * Releases all threads awaiting for buffer events
-             */
-            void
-            release();
             
             unsigned int
             getTotalSlotsNum()
@@ -871,9 +862,6 @@ namespace ndnrtc
             releaseAcquiredSlot(bool& isInferredPlayback);
             
             void
-            recycleEvent(const Event& event);
-            
-            void
             synchronizeAcquire() { syncMutex_.lock(); }
             
             void
@@ -1011,13 +999,6 @@ namespace ndnrtc
             PlaybackQueue playbackQueue_;
             
             mutable boost::recursive_mutex syncMutex_;
-            mutable boost::mutex bufferMutex_;
-            boost::condition_variable_any bufferEvent_;
-            boost::shared_mutex bufferSharedMutex_;
-            
-            bool forcedRelease_ = false;
-            bool pendingEventsFlushed_ = false;
-            std::list<Event> pendingEvents_;
             
             IFrameBufferCallback *callback_;
             
@@ -1071,12 +1052,6 @@ namespace ndnrtc
             
             bool
             getLookupPrefix(const Name& prefix, Name& lookupPrefix);
-            
-            void
-            addBufferEvent(Event::EventType type, const boost::shared_ptr<Slot>& slot);
-            
-            void
-            addStateChangedEvent(State newState);
             
             void
             initialize();
