@@ -684,20 +684,11 @@ namespace ndnrtc
             int init();
             int reset();
             
-            Event
-            waitForEvents(int eventMask, unsigned int timeout = 0xffffffff);
-            
             State
             getState() { return state_; }
             
             void
             setState(const State &state);
-            
-            /**
-             * Releases all threads awaiting for buffer events
-             */
-            void
-            release();
             
             unsigned int
             getTotalSlotsNum()
@@ -802,6 +793,8 @@ namespace ndnrtc
             {
                 targetSizeMs_ = targetSizeMs;
                 statStorage_->updateIndicator(statistics::Indicator::BufferTargetSize, targetSizeMs_);
+                LogStatC << "buf tar" << STAT_DIV
+                << targetSizeMs_ << std::endl;
             }
 
             int64_t
@@ -867,9 +860,6 @@ namespace ndnrtc
              */
             virtual int
             releaseAcquiredSlot(bool& isInferredPlayback);
-            
-            void
-            recycleEvent(const Event& event);
             
             void
             synchronizeAcquire() { syncMutex_.lock(); }
@@ -1009,13 +999,6 @@ namespace ndnrtc
             PlaybackQueue playbackQueue_;
             
             mutable boost::recursive_mutex syncMutex_;
-            mutable boost::mutex bufferMutex_;
-            boost::condition_variable_any bufferEvent_;
-            boost::shared_mutex bufferSharedMutex_;
-            
-            bool forcedRelease_ = false;
-            bool pendingEventsFlushed_ = false;
-            std::list<Event> pendingEvents_;
             
             IFrameBufferCallback *callback_;
             
@@ -1071,12 +1054,6 @@ namespace ndnrtc
             getLookupPrefix(const Name& prefix, Name& lookupPrefix);
             
             void
-            addBufferEvent(Event::EventType type, const boost::shared_ptr<Slot>& slot);
-            
-            void
-            addStateChangedEvent(State newState);
-            
-            void
             initialize();
             
             boost::shared_ptr<Slot>
@@ -1091,6 +1068,8 @@ namespace ndnrtc
                     isEstimationNeeded_ = true;
                     playbackQueue_.updatePlaybackRate(playbackRate);
                     statStorage_->updateIndicator(statistics::Indicator::CurrentProducerFramerate, playbackRate);
+                    
+                    LogStatC << "prod rate\t" << playbackRate << std::endl;
                 }
             }
             
@@ -1111,6 +1090,11 @@ namespace ndnrtc
         public:
             virtual void
             onRetransmissionNeeded(FrameBuffer::Slot* slot) = 0;
+            
+            virtual void
+            onFrameDropped(PacketNumber seguenceNo,
+                           PacketNumber playbackNo,
+                           FrameBuffer::Slot::Namespace nspc) = 0;
             
             virtual void
             onKeyNeeded(PacketNumber seqNo) = 0;

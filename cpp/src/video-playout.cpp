@@ -3,7 +3,7 @@
 //  ndnrtc
 //
 //  Created by Peter Gusev on 3/19/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013-2015 Regents of the University of California
 //
 
 #include "video-playout.h"
@@ -41,10 +41,10 @@ VideoPlayout::~VideoPlayout()
 int
 VideoPlayout::start(int playbackAdjustment)
 {
-    int res = Playout::start(playbackAdjustment);
-    
     validGop_ = false;
     currentKeyNo_ = 0;
+    
+    int res = Playout::start(playbackAdjustment);
     
     return res;
 }
@@ -76,7 +76,7 @@ VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
                     validGop_ = true;
                     
                     LogTraceC << "new GOP with key: "
-                    << sequencePacketNo << endl;
+                    << currentKeyNo_ << endl;
                 }
                 else
                 {

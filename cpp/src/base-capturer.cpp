@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#define TEST_USE_THREAD
+//#define TEST_USE_THREAD
 
 #include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
@@ -20,7 +20,8 @@ using namespace webrtc;
 using namespace boost;
 
 BaseCapturer::BaseCapturer():
-lastFrameTimestamp_(0)
+lastFrameTimestamp_(0),
+meterId_(NdnRtcUtils::setupFrequencyMeter(4))
 {
     description_ = "capturer";
 }

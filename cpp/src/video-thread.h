@@ -75,6 +75,10 @@ namespace ndnrtc
             void
             setLogger(ndnlog::new_api::Logger *logger);
             
+            bool
+            isThreadStatReady()
+            { return keyFrameNo_ > 0 && deltaFrameNo_ > 0; }
+            
         private:
             int keyFrameNo_ = 0, deltaFrameNo_ = 0, gopCount_ = 0;
             unsigned int deltaSegnumEstimatorId_, keySegnumEstimatorId_;

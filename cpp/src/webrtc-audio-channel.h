@@ -3,7 +3,7 @@
 //  ndnrtc
 //
 //  Created by Peter Gusev on 4/14/14.
-//  Copyright (c) 2014 Peter Gusev. All rights reserved.
+//  Copyright 2013-2015 Regents of the University of California
 //
 
 #ifndef __ndnrtc__webrtc_audio_channel__
@@ -29,6 +29,7 @@ namespace ndnrtc {
             int webrtcChannelId_;
             webrtc::VoEBase* voeBase_;
             webrtc::VoENetwork* voeNetwork_;
+            webrtc::VoECodec* voeCodec_;
             
             // webrtc::Transport interface
             virtual int

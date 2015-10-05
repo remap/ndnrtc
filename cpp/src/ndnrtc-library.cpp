@@ -113,12 +113,12 @@ static void initializer(int argc, char** argv, char** envp) {
     {
         initialized = 1;
         NdnRtcUtils::setIoService(libIoService);
+
     }
 }
 
 __attribute__((destructor))
 static void destructor(){
-    
 }
 
 //******************************************************************************
@@ -137,6 +137,7 @@ static void signalHandler(int signal, siginfo_t *siginfo, void *context)
 #pragma mark - construction/destruction
 NdnRtcLibrary::NdnRtcLibrary()
 {
+    Logger::initAsyncLogging();
     Logger::getLogger(LIB_LOG).setLogLevel(NdnLoggerDetailLevelDefault);
     LogInfo(LIB_LOG) << "NDN-RTC " << PACKAGE_VERSION << std::endl;
     
@@ -198,6 +199,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
     
     NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;
+    Logger::releaseAsyncLogging();
 }
 
 //******************************************************************************
@@ -565,7 +567,7 @@ void
 NdnRtcLibrary::getVersionString(char **versionString)
 {
     if (versionString)
-        memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
+        memcpy((void*)(*versionString), PACKAGE_VERSION, strlen(PACKAGE_VERSION));
     
     return;
 }

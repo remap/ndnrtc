@@ -420,14 +420,10 @@ void NdnRtcNamespace::getSegmentationNumbers(const ndn::Name &prefix,
     packetNumber = -1;
     segmentNumber = -1;
     
-    if (isDeltaFramePrefix(prefix))
-    {
-        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
-    }
-    else if (isKeyFramePrefix(prefix))
-    {
+    p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
+
+    if (p < 0)
         p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
-    }
     
     if (p > 0)
     {
@@ -508,14 +504,10 @@ int NdnRtcNamespace::trimPacketNumber(const ndn::Name &prefix,
     
     int p = -1;
     
-    if (isDeltaFramePrefix(prefix))
-    {
-        p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
-    }
-    else if (isKeyFramePrefix(prefix))
-    {
+    p = findComponent(prefix, NameComponents::NameComponentStreamFramesDelta);
+
+    if (p < 0)
         p = findComponent(prefix, NameComponents::NameComponentStreamFramesKey);
-    }
     
     if (p > 0)
     {

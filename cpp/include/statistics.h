@@ -77,6 +77,7 @@ namespace ndnrtc {
                 InRateSegments,
                 SegmentsReceivedNum,
                 TimeoutsNum,
+                Darr,
                 
                 // RTT estimator
                 RttEstimation,
