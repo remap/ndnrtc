@@ -567,7 +567,7 @@ void
 NdnRtcLibrary::getVersionString(char **versionString)
 {
     if (versionString)
-        memcpy((void*)versionString, PACKAGE_VERSION, strlen(PACKAGE_VERSION));
+        memcpy((void*)(*versionString), PACKAGE_VERSION, strlen(PACKAGE_VERSION));
     
     return;
 }
