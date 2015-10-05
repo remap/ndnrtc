@@ -30,7 +30,7 @@ NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types o
 
 In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to the standard shared pointers. Therefore, to build NDN-CPP static library using Boost and libstdc++, one should configure NDN-CPP like this:
 <pre>
-$ ./configure --with-std-shared-ptr=no --with-std-function=no CXXFLAGS="-stdlib=libstdc++ -I &lt;path_to_Boost_1.54.0_folder&gt;" --enable-shared=no BOOST_LDFLAGS="-L &lt;path_to_Boost_1.54.0._stage_lib_folder&gt;"
+$ ./configure --with-std-shared-ptr=no --with-std-function=no CXXFLAGS="-stdlib=libstdc++ -I &lt;path_to_Boost_1.54.0_folder&gt;" BOOST_LDFLAGS="-L &lt;path_to_Boost_1.54.0._stage_lib_folder&gt;"
 </pre>
 
 WebRTC (branch-heads/44)
