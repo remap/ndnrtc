@@ -9,6 +9,10 @@
 //  Created: 8/8/13
 //
 
+#include <boost/chrono.hpp>
+#include <boost/thread.hpp>
+#include <boost/asio.hpp>
+
 #include <sys/time.h>
 #include <mach/mach_time.h>
 #include <fstream>
@@ -30,13 +34,21 @@ static std::string lvlToString[] = {
     [NdnLoggerLevelStat] =      "STAT "
 };
 
-ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_ = ndnlog::new_api::NilLogger();
+boost::asio::io_service LogIoService;
+boost::thread LogThread;
+boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
+ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_;
 ndnlog::new_api::Logger* Logger::sharedInstance_ = 0;
+
+void startLogThread();
+void stopLogThread();
 
 //******************************************************************************
 pthread_mutex_t new_api::Logger::stdOutMutex_ = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 std::map<std::string, new_api::Logger*> new_api::Logger::loggers_;
+
+unsigned int new_api::Logger::FlushIntervalMs = 100;
 
 #pragma mark - construction/destruction
 new_api::Logger::Logger(const NdnLoggerDetailLevel& logLevel,
@@ -56,15 +68,14 @@ logMutex_((pthread_mutex_t)PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
         getOutFileStream().open(logFile_.c_str(),
                                 std::ofstream::out | std::ofstream::trunc);
         lastFlushTimestampMs_ = getMillisecondTimestamp();
-    }    
+    }
+    
+    isProcessing_ = true;
 }
+
 new_api::Logger::~Logger()
 {
-    if (&getOutStream() != &std::cout)
-    {
-        getOutFileStream().flush();
-        getOutFileStream().close();
-    }
+    isProcessing_ = false;
 }
 
 //******************************************************************************
@@ -94,6 +105,7 @@ new_api::Logger::log(const NdnLogType& logType,
         logType >= (NdnLogType)logLevel_)
     {
         lockStreamExclusively();
+        startLogRecord();
         
         isWritingLogEntry_ = true;
         currentEntryLogType_ = logType;
@@ -101,10 +113,10 @@ new_api::Logger::log(const NdnLogType& logType,
         // LogEntry header has the following format:
         // <timestamp> <log_level> - <logging_instance> [<location_file>:<location_line>] ":"
         // log location info is enabled only for debug levels less than INFO
-        getOutStream() << getMillisecondTimestamp() << "\t[" << stringify(logType) << "]";
+        currentLogRecord_ << getMillisecondTimestamp() << "\t[" << stringify(logType) << "]";
         
         if (loggingInstance)
-            getOutStream()
+            currentLogRecord_
             << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
             << std::hex << std::setw(15) << loggingInstance << std::dec;
         
@@ -113,13 +125,7 @@ new_api::Logger::log(const NdnLogType& logType,
 //            locationLine >= 0)
 //            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
         
-        getOutStream() << ": ";
-        
-        if (&getOutStream() != &std::cout)
-        {
-            if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-                flush();
-        }
+        currentLogRecord_ << ": ";
     }
     
     return *this;
@@ -133,7 +139,20 @@ new_api::Logger::flush()
 
 //******************************************************************************
 #pragma mark - static
-new_api::Logger& new_api::Logger::getLogger(const std::string &logFile)
+void
+new_api::Logger::initAsyncLogging()
+{
+    startLogThread();
+}
+
+void
+new_api::Logger::releaseAsyncLogging()
+{
+    stopLogThread();
+}
+
+new_api::Logger&
+new_api::Logger::getLogger(const std::string &logFile)
 {
     std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
     Logger *logger;
@@ -149,7 +168,8 @@ new_api::Logger& new_api::Logger::getLogger(const std::string &logFile)
     return *logger;
 }
 
-void new_api::Logger::destroyLogger(const std::string &logFile)
+void
+new_api::Logger::destroyLogger(const std::string &logFile)
 {
     std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
     
@@ -159,12 +179,14 @@ void new_api::Logger::destroyLogger(const std::string &logFile)
 
 //******************************************************************************
 #pragma mark - private
-std::string new_api::Logger::stringify(NdnLoggerLevel lvl)
+std::string
+new_api::Logger::stringify(NdnLoggerLevel lvl)
 {
     return lvlToString[lvl];
 }
 
-int64_t new_api::Logger::getMillisecondTimestamp()
+int64_t
+new_api::Logger::getMillisecondTimestamp()
 {
 #if 0
     struct timeval tv;
@@ -202,6 +224,49 @@ int64_t new_api::Logger::getMillisecondTimestamp()
     return ticks;
 }
 
+void
+new_api::Logger::processLogRecords()
+{
+    if (isProcessing_)
+    {
+        bool queueEmpty = false;
+        std::string record;
+        
+        while (recordsQueue_.pop(record))
+            getOutFileStream() << record;
+        
+        if (&getOutStream() != &std::cout)
+        {
+            if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
+                flush();
+        }
+    }
+    else
+    {
+        if (&getOutStream() != &std::cout)
+        {
+            getOutFileStream().flush();
+            getOutFileStream().close();
+        }
+    }
+}
+
+void
+new_api::Logger::startLogRecord()
+{
+    currentLogRecord_.str( std::string() );
+    currentLogRecord_.clear();
+}
+
+void
+new_api::Logger::finalizeLogRecord()
+{
+    if (!recordsQueue_.push(currentLogRecord_.str()))
+        getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
+    else
+        LogIoService.post(boost::bind(&new_api::Logger::processLogRecords, this));
+}
+
 //******************************************************************************
 //******************************************************************************
 ILoggingObject::ILoggingObject(const NdnLoggerDetailLevel& logLevel,
@@ -220,5 +285,26 @@ ILoggingObject::setLogger(ndnlog::new_api::Logger *logger)
     logger_ = logger;
 }
 
+//******************************************************************************
+void startLogThread()
+{
+    if (!LogThreadWork.get() &&
+        LogThread.get_id() == boost::thread::id())
+    {
+        LogThreadWork.reset(new boost::asio::io_service::work(LogIoService));
+        LogThread = boost::thread([](){
+            LogIoService.run();
+        });
+    }
+}
 
+void stopLogThread()
+{
+    if (LogThreadWork.get())
+    {
+        LogThreadWork.reset();
+        LogIoService.stop();
+        LogThread.try_join_for(boost::chrono::milliseconds(100));
+    }
+}
 

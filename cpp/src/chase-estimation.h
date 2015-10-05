@@ -103,6 +103,32 @@ namespace ndnrtc {
             unsigned int lastDelta_;
         };
         
+        class StabilityEstimator2 : public BaseStabilityEstimator
+        {
+        public:
+            StabilityEstimator2(unsigned int sampleSize,
+                                unsigned int minStableOccurrences,
+                                double threshold,
+                                double rateSimilarityLevel);
+            ~StabilityEstimator2(){}
+            
+            void
+            trackInterArrival(double currentRate);
+            
+            unsigned int
+            getLastDelta()
+            { return lastDelta_; }
+            
+            void
+            flush();
+            
+        private:
+            unsigned int meanEstimator2Id_;
+            double rateSimilarityLevel_;
+            uint64_t lastTimestamp_;
+            unsigned int lastDelta_;
+        };
+        
         class RttChangeEstimator : public BaseStabilityEstimator
         {
         public:

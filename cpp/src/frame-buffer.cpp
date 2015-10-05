@@ -1076,8 +1076,7 @@ consumer_(consumer.get()),
 state_(Invalid),
 targetSizeMs_(-1),
 estimatedSizeMs_(-1),
-isEstimationNeeded_(true),
-forcedRelease_(false)
+isEstimationNeeded_(true)
 {
     rttFilter_ = NdnRtcUtils::setupFilter(0.05);
 }
@@ -1106,20 +1105,6 @@ ndnrtc::new_api::FrameBuffer::reset()
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
     
-    // clear all events
-    {
-        lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
-
-        pendingEvents_.clear();
-        pendingEventsFlushed_ = true;
-    }
-
-    LogTraceC
-    << "flushed. active "
-    << activeSlots_.size()
-    << ". pending " << pendingEvents_.size()
-    << ". free " << freeSlots_.size() << std::endl;
-    
     for (std::map<Name, shared_ptr<Slot> >::iterator it = activeSlots_.begin();
          it != activeSlots_.end(); ++it)
     {
@@ -1128,7 +1113,6 @@ ndnrtc::new_api::FrameBuffer::reset()
         {
             slot->reset();
             freeSlots_.push_back(slot);
-            addBufferEvent(Event::FreeSlot, slot);
         }
         else
             LogWarnC << "slot locked " << it->first << std::endl;
@@ -1137,13 +1121,6 @@ ndnrtc::new_api::FrameBuffer::reset()
     resetData();
     
     return RESULT_OK;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::release()
-{
-    forcedRelease_ = true;
-    bufferEvent_.notify_one();
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State
@@ -1169,7 +1146,7 @@ ndnrtc::new_api::FrameBuffer::interestIssued(ndn::Interest &interest)
           LogWarnC << "error requesting " << interest.getName() << std::endl;
     }
     else
-        LogWarnC << "no free slots" << std::endl;
+        LogErrorC << "no free slots" << std::endl;
 
     return Slot::StateFree;
 }
@@ -1289,10 +1266,7 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 // check for 1st segment
                 if (oldState == Slot::StateNew)
-                {
                     event.type_ = Event::FirstSegment;
-                    addBufferEvent(Event::FirstSegment, slot);
-                }
                 
                 // check for ready event
                 if (newState == Slot::StateReady)
@@ -1309,10 +1283,12 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                         (*statStorage_)[Indicator::RescuedNum]++;
                         if (slot->getNamespace() == Slot::Key)
                             (*statStorage_)[Indicator::RescuedKeyNum]++;
+                        
+                        LogStatC << "resc"
+                        << STAT_DIV << (*statStorage_)[Indicator::RescuedNum] << std::endl;
                     }
                     
                     event.type_ = Event::Ready;
-                    addBufferEvent(Event::Ready, slot);
                 }
                 
                 if (slot->getRtxNum() == 0)
@@ -1374,7 +1350,6 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
     {
         if (RESULT_GOOD(slot->markMissing(interest)))
         {
-            addBufferEvent(Event::Timeout, slot);
         }
         else
         {
@@ -1399,17 +1374,11 @@ ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
                 nKeyFrames_--;
                 
                 if (nKeyFrames_ <= 0)
-                {
                     nKeyFrames_ = 0;
-                    addBufferEvent(Event::NeedKey, slot);
-                }
             }
             
             slot->reset();
             freeSlots_.push_back(slot);
-            
-            addBufferEvent(Event::FreeSlot, slot);
-            
             return slot->getState();
         }
     }
@@ -1417,80 +1386,11 @@ ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
     return Slot::StateFree;
 }
 
-ndnrtc::new_api::FrameBuffer::Event
-ndnrtc::new_api::FrameBuffer::waitForEvents(int eventsMask, unsigned int timeout)
-{
-    unsigned int webrtcTimeout = (timeout == 0xffffffff)?WEBRTC_EVENT_INFINITE:timeout;
-    bool stop = false, firstRun = true;
-    Event poppedEvent;
-    std::list<Event>::iterator startIt;
-    
-    pendingEventsFlushed_ = false;
-    memset(&poppedEvent, 0, sizeof(poppedEvent));
-    poppedEvent.type_ = Event::Empty;
-    
-    while (!(stop || forcedRelease_))
-    {
-        bufferSharedMutex_.lock_shared();
-        
-        if (firstRun || pendingEventsFlushed_)
-            startIt = pendingEvents_.begin();
-        else
-            startIt++;
-        
-        std::list<Event>::iterator end = pendingEvents_.end();
-        
-        // iterate through pending events
-        while (!(stop || startIt == end))
-        {
-            if ((*startIt).type_ & eventsMask) // questioned event type found in pending events
-            {
-                poppedEvent = *startIt;
-                stop = true;
-            }
-            else
-                startIt++;
-        }
-        
-        if (startIt == end)
-            startIt--;
-        
-        bufferSharedMutex_.unlock_shared();
-        
-        if (stop)
-        {
-            lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
-            pendingEvents_.erase(startIt);
-        }
-        else
-        {
-            unique_lock<mutex> scopedLock(bufferMutex_);
-            
-            firstRun = false;
-            if (WEBRTC_EVENT_INFINITE == webrtcTimeout)
-                bufferEvent_.wait(bufferMutex_);
-            else
-                stop = (bufferEvent_.wait_for(bufferMutex_, chrono::milliseconds(webrtcTimeout)) == cv_status::timeout);
-
-            if (forcedRelease_)
-            {
-                LogWarnC << "buffering interrupted" << std::endl;
-                poppedEvent.type_ = Event::Error;
-            }
-        }
-    }
-    
-    return poppedEvent;
-}
-
 void
 ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State &state)
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
-    
     state_ = state;
-    shared_ptr<Slot> nullSlot;
-    addBufferEvent(Event::StateChanged, nullSlot);
 }
 
 void
@@ -1560,6 +1460,8 @@ ndnrtc::new_api::FrameBuffer::getPlayableBufferSize()
     int64_t size = playbackQueue_.getPlaybackDuration(false);
     
     statStorage_->updateIndicator(statistics::Indicator::BufferPlayableSize, size);
+    LogStatC << "buf play" << STAT_DIV <<
+    size << std::endl;
     
     return size;
 }
@@ -1616,6 +1518,9 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                     (*statStorage_)[Indicator::RecoveredNum]++;
                     if (isKey)
                         (*statStorage_)[Indicator::RecoveredKeyNum]++;
+
+                    LogStatC << "recover"
+                    << STAT_DIV << (*statStorage_)[Indicator::RecoveredNum] << std::endl;
                 }
             }
             
@@ -1643,8 +1548,6 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                     << std::endl;
                 }
             }
-            
-            addBufferEvent(Event::Playout, slot);
             
             // update stat
             (*statStorage_)[Indicator::AcquiredNum]++;
@@ -1740,9 +1643,9 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
             isInferredDuration = false;
         }
         
-        // cleanup buffer from old frames every 60 frames
+        // cleanup buffer from old frames every frame
         frameReleaseCount_++;
-        if (frameReleaseCount_%60 == 0)
+        //if (frameReleaseCount_%5 == 0)
         {
             PacketNumber deltaPacketNo = (lockedSlot->getNamespace() == Slot::Key)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
             PacketNumber keyPacketNo = (lockedSlot->getNamespace() == Slot::Delta)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
@@ -1764,12 +1667,6 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
         checkRetransmissions();
     
     return playbackDuration;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::recycleEvent(const ndnrtc::new_api::FrameBuffer::Event &event)
-{
-    addBufferEvent(event.type_, event.slot_);
 }
 
 void
@@ -1868,6 +1765,8 @@ ndnrtc::new_api::FrameBuffer::estimateBufferSize()
     estimatedSizeMs_ = playbackQueue_.getPlaybackDuration();
     statStorage_->updateIndicator(statistics::Indicator::BufferEstimatedSize,
                                   estimatedSizeMs_);
+    LogStatC << "buf est" << STAT_DIV
+    << estimatedSizeMs_ << std::endl;
 }
 
 void
@@ -1897,6 +1796,11 @@ ndnrtc::new_api::FrameBuffer::cleanBuffer(PacketNumber deltaPacketNo,
         
         if (erase)
         {
+            if (callback_)
+                callback_->onFrameDropped(slot->getSequentialNumber(),
+                                          slot->getPlaybackNumber(),
+                                          slot->getNamespace());
+                
             // update stat
             (*statStorage_)[Indicator::DroppedNum]++;
             if (slot->getNamespace() == Slot::Key)
@@ -1924,7 +1828,6 @@ ndnrtc::new_api::FrameBuffer::resetData()
     playbackQueue_.clear();
     
     state_ = Invalid;
-    addStateChangedEvent(state_);
     
     isWaitingForRightmost_ = true;
     targetSizeMs_ = -1;
@@ -1938,8 +1841,6 @@ ndnrtc::new_api::FrameBuffer::resetData()
     retransmissionsEnabled_ = false;
     frameReleaseCount_ = 0;
     
-    forcedRelease_ = false;
-    
     setTargetSize(consumer_->getParameters().jitterSizeMs_);
 }
 
@@ -1948,30 +1849,6 @@ ndnrtc::new_api::FrameBuffer::getLookupPrefix(const Name& prefix,
                                               Name& lookupPrefix)
 {
     return NdnRtcNamespace::trimmedLookupPrefix(prefix, lookupPrefix);
-}
-
-void
-ndnrtc::new_api::FrameBuffer::addBufferEvent(Event::EventType type,
-                                             const shared_ptr<ndnrtc::new_api::FrameBuffer::Slot> &slot)
-{
-    Event ev;
-    
-    ev.type_ = type;
-    ev.slot_ = slot;
-    
-    {
-        lock_guard<shared_mutex> scopedLock(bufferSharedMutex_);
-        pendingEvents_.push_back(ev);
-    }
-
-    bufferEvent_.notify_all();
-}
-
-void
-ndnrtc::new_api::FrameBuffer::addStateChangedEvent(ndnrtc::new_api::FrameBuffer::State newState)
-{
-    shared_ptr<Slot> nullPtr;
-    addBufferEvent(Event::StateChanged, nullPtr);
 }
 
 void
@@ -1985,7 +1862,6 @@ ndnrtc::new_api::FrameBuffer::initialize()
                                        consumer_->getGeneralParameters().useFec_));
         
         freeSlots_.push_back(slot);
-        addBufferEvent(Event::FreeSlot, slot);
     }
 }
 
@@ -2094,7 +1970,14 @@ ndnrtc::new_api::FrameBuffer::checkRetransmissions()
             }
             else
             {
-                LogTraceC << "recovered " << (*it)->dump() << std::endl;
+                // update stat
+                (*statStorage_)[Indicator::RecoveredNum]++;
+                if (((*it)->getNamespace() == Slot::Key))
+                    (*statStorage_)[Indicator::RecoveredKeyNum]++;
+                
+                LogTraceC << "recovered [" << (*it)->dump() << "]" << std::endl;
+                LogStatC << "recover"
+                << STAT_DIV << (*statStorage_)[Indicator::RecoveredNum] << std::endl;
             }
         }
         it++;

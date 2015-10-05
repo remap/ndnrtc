@@ -114,6 +114,9 @@ namespace ndnrtc
             MediaStreamParams
             getStreamParameters();
             
+            bool
+            isStreamStatReady();
+            
         private:
             bool isProcessing_;
             boost::shared_ptr<BaseCapturer> capturer_;
