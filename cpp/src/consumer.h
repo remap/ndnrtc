@@ -22,7 +22,6 @@
 #include "statistics.h"
 #include "renderer.h"
 #include "video-renderer.h"
-#include "rate-control.h"
 
 #define SYMBOL_SEG_RATE "sr"
 #define SYMBOL_INTEREST_RATE "ir"
@@ -236,10 +235,6 @@ namespace ndnrtc {
             getBufferEstimator() const
             { return bufferEstimator_; }
             
-            virtual boost::shared_ptr<RateControl>
-            getRateControlModule() const
-            { return rateControl_; }
-            
             void
             setRttEstimator(const boost::shared_ptr<RttEstimation>& rttEstimation)
             { rttEstimation_= rttEstimation; }
@@ -308,7 +303,7 @@ namespace ndnrtc {
             GeneralConsumerParams consumerParams_;
             ConsumerSettings settings_;
             std::string streamPrefix_;
-            unsigned int currentThreadIdx_ = 0;
+            int currentThreadIdx_ = 0;
             
             boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
@@ -320,7 +315,6 @@ namespace ndnrtc {
             boost::shared_ptr<BufferEstimator> bufferEstimator_;
             boost::shared_ptr<IRenderer> renderer_;
             boost::shared_ptr<AudioVideoSynchronizer> avSync_;
-            boost::shared_ptr<RateControl> rateControl_;
             
             boost::mutex observerMutex_;
             IConsumerObserver *observer_;

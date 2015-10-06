@@ -193,7 +193,7 @@ Playout::processPlayout()
             
             if (playbackDelay < 0)
             {
-#warning this should be fixed with proper rate switching mechanism
+                // should never happen
                 LogErrorC << "playback delay below zero: " << playbackDelay << endl;
                 playbackDelay = 0;
             }

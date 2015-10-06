@@ -83,7 +83,6 @@ Consumer::init(const ConsumerSettings& settings,
         currentThreadIdx_ = 0;
     }
     
-#warning error handling!
     chaseEstimation_->setLogger(logger_);
     pipeliner_.reset(new Pipeliner2(dynamic_pointer_cast<Consumer>(shared_from_this()),
                                     statStorage_,
@@ -108,9 +107,13 @@ Consumer::init(const ConsumerSettings& settings,
 int
 Consumer::start()
 {
-#warning error handling!
     isConsuming_ = true;
-    pipeliner_->start();
+
+    if (RESULT_FAIL(pipeliner_->start()))
+    {
+        isConsuming_ = false;
+        return RESULT_ERR;
+    }
     
     if (observer_)
     {
@@ -125,7 +128,6 @@ int
 Consumer::stop()
 {
     NdnRtcUtils::performOnBackgroundThread([this]()->void{
-#warning error handling!
         isConsuming_ = false;
         pipeliner_->stop();
         playout_->stop();
@@ -226,9 +228,6 @@ Consumer::setLogger(ndnlog::new_api::Logger *logger)
     
     if (playout_.get())
         playout_->setLogger(logger);
-    
-    if (rateControl_.get())
-        rateControl_->setLogger(logger);
     
     if (interestQueue_.get())
         interestQueue_->setLogger(logger);

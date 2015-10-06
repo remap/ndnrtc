@@ -582,7 +582,6 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
             new_api::VideoThreadParams *threadParams = (new_api::VideoThreadParams*)params->mediaThreads_[j];
             struct _VideoThreadDescription threadDescription;
             
-#warning should this reflect actual encoding rate of a producer?
             threadDescription.rate_ = threadParams->coderParams_.codecFrameRate_;
             threadDescription.gop_ = threadParams->coderParams_.gop_;
             threadDescription.bitrate_ = threadParams->coderParams_.startBitrate_;

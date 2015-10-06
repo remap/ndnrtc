@@ -16,7 +16,6 @@
 @SET_MAKE@
 
 
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -36,8 +35,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@OS_DARWIN_TRUE@EXTRA_PROGRAMS = ndnrtc-demo$(EXEEXT)
-check_PROGRAMS = bin/unit-tests/test-encoder$(EXEEXT)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -106,9 +103,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-ndnrtc-namespace.lo \
 	src/libndnrtc_la-ndnrtc-object.lo \
 	src/libndnrtc_la-ndnrtc-utils.lo src/libndnrtc_la-pipeliner.lo \
-	src/libndnrtc_la-playout.lo src/libndnrtc_la-rate-control.lo \
-	src/libndnrtc_la-realtime-arc.lo \
-	src/libndnrtc_la-rtt-estimation.lo \
+	src/libndnrtc_la-playout.lo src/libndnrtc_la-rtt-estimation.lo \
 	src/libndnrtc_la-segmentizer.lo src/libndnrtc_la-session.lo \
 	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-statistics.lo \
 	src/libndnrtc_la-video-coder.lo \
@@ -119,76 +114,59 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-video-thread.lo \
 	src/libndnrtc_la-webrtc-audio-channel.lo
 libndnrtc_la_OBJECTS = $(am_libndnrtc_la_OBJECTS)
-libndnrtc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libndnrtc_la_LDFLAGS) $(LDFLAGS) -o $@
-am_bin_unit_tests_test_encoder_OBJECTS =  \
-	test/new/bin_unit_tests_test_encoder-test-encoder.$(OBJEXT) \
-	contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.$(OBJEXT)
-bin_unit_tests_test_encoder_OBJECTS =  \
-	$(am_bin_unit_tests_test_encoder_OBJECTS)
-bin_unit_tests_test_encoder_DEPENDENCIES = libndnrtc.la
-am__ndnrtc_demo_SOURCES_DIST = demoapp/config.cc demoapp/config.h \
-	demoapp/main.mm demoapp/AppDelegate.h demoapp/AppDelegate.m \
-	demoapp/renderer-stub.cc demoapp/renderer-stub.h \
-	demoapp/view.cc demoapp/view.h demoapp/CameraCapturer.h \
-	demoapp/CameraCapturer.m src/simple-log.cpp \
-	include/simple-log.h include/interfaces.h
-@OS_DARWIN_TRUE@am_ndnrtc_demo_OBJECTS =  \
-@OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-config.$(OBJEXT) \
-@OS_DARWIN_TRUE@	demoapp/main.$(OBJEXT) \
-@OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-AppDelegate.$(OBJEXT) \
-@OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-renderer-stub.$(OBJEXT) \
-@OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-view.$(OBJEXT) \
-@OS_DARWIN_TRUE@	demoapp/ndnrtc_demo-CameraCapturer.$(OBJEXT) \
-@OS_DARWIN_TRUE@	src/ndnrtc_demo-simple-log.$(OBJEXT)
-ndnrtc_demo_OBJECTS = $(am_ndnrtc_demo_OBJECTS)
-ndnrtc_demo_LDADD = $(LDADD)
-ndnrtc_demo_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(ndnrtc_demo_LDFLAGS) $(LDFLAGS) -o $@
-SCRIPTS = $(noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-OBJCCOMPILE = $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS)
-LTOBJCCOMPILE = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS)
-OBJCLD = $(OBJC)
-OBJCLINK = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(OBJCLD) $(AM_OBJCFLAGS) $(OBJCFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-SOURCES = $(libndnrtc_la_SOURCES) \
-	$(bin_unit_tests_test_encoder_SOURCES) $(ndnrtc_demo_SOURCES)
-DIST_SOURCES = $(libndnrtc_la_SOURCES) \
-	$(bin_unit_tests_test_encoder_SOURCES) \
-	$(am__ndnrtc_demo_SOURCES_DIST)
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
+SOURCES = $(libndnrtc_la_SOURCES)
+DIST_SOURCES = $(libndnrtc_la_SOURCES)
 HEADERS = $(pkginclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
-am__tty_colors = \
-red=; grn=; lgn=; blu=; std=
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -202,6 +180,7 @@ distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -237,8 +216,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LCONFIGDIR = @LCONFIGDIR@
-LCONFIGLIB = @LCONFIGLIB@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -251,8 +228,6 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-NCURSESDIR = @NCURSESDIR@
-NCURSESLIB = @NCURSESLIB@
 NDNCPPDIR = @NDNCPPDIR@
 NDNCPPLIB = @NDNCPPLIB@
 NM = @NM@
@@ -277,8 +252,6 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-PTHREADDIR = @PTHREADDIR@
-PTHREADLIB = @PTHREADLIB@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -345,7 +318,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
@@ -372,7 +345,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
-  include/ndnrtc-defines.h \
+  src/ndnrtc-defines.h \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
   include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
@@ -382,9 +355,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   include/params.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
-  src/rate-adaptation-module.h \
-  src/rate-control.cpp src/rate-control.h \
-  src/realtime-arc.cpp src/realtime-arc.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
@@ -402,26 +372,10 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@ -lboost_system -lboost_timer -lboost_chrono -lboost_thread
-@OS_DARWIN_TRUE@ndnrtc_demo_SOURCES = demoapp/config.cc demoapp/config.h \
-@OS_DARWIN_TRUE@    demoapp/main.mm demoapp/AppDelegate.h demoapp/AppDelegate.m \
-@OS_DARWIN_TRUE@    demoapp/renderer-stub.cc demoapp/renderer-stub.h \
-@OS_DARWIN_TRUE@    demoapp/view.cc demoapp/view.h \
-@OS_DARWIN_TRUE@    demoapp/CameraCapturer.h demoapp/CameraCapturer.m \
-@OS_DARWIN_TRUE@    src/simple-log.cpp include/simple-log.h \
-@OS_DARWIN_TRUE@    include/interfaces.h
-
-@OS_DARWIN_TRUE@ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
-@OS_DARWIN_TRUE@ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa -framework AVFoundation -framework CoreVideo -framework CoreMedia
-@OS_DARWIN_TRUE@ndnrtc_demo_OBJCFLAGS = -fobjc-arc
-@OS_DARWIN_TRUE@noinst_SCRIPTS = demoapp/rundemo.sh resources/ndnrtc.cfg
-bin_unit_tests_test_encoder_SOURCES = test/new/test-encoder.cpp contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-bin_unit_tests_test_encoder_CPPFLAGS = -I$(top_srcdir)/contrib/gtest-1.7.0/fused-src -I$(top_srcdir)/src -I$(top_srcdir)/include -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@
-bin_unit_tests_test_encoder_LDADD = libndnrtc.la
-TESTS = $(check_PROGRAMS)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .cc .cpp .lo .m .mm .o .obj
+.SUFFIXES: .cpp .lo .o .obj
 am--refresh:
 	@:
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -547,10 +501,6 @@ src/libndnrtc_la-pipeliner.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-rate-control.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-realtime-arc.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-rtt-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-segmentizer.lo: src/$(am__dirstamp) \
@@ -576,72 +526,10 @@ src/libndnrtc_la-video-thread.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-webrtc-audio-channel.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 libndnrtc.la: $(libndnrtc_la_OBJECTS) $(libndnrtc_la_DEPENDENCIES) 
-	$(libndnrtc_la_LINK) -rpath $(libdir) $(libndnrtc_la_OBJECTS) $(libndnrtc_la_LIBADD) $(LIBS)
-
-clean-checkPROGRAMS:
-	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-test/new/$(am__dirstamp):
-	@$(MKDIR_P) test/new
-	@: > test/new/$(am__dirstamp)
-test/new/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) test/new/$(DEPDIR)
-	@: > test/new/$(DEPDIR)/$(am__dirstamp)
-test/new/bin_unit_tests_test_encoder-test-encoder.$(OBJEXT):  \
-	test/new/$(am__dirstamp) test/new/$(DEPDIR)/$(am__dirstamp)
-contrib/gtest-1.7.0/fused-src/gtest/$(am__dirstamp):
-	@$(MKDIR_P) contrib/gtest-1.7.0/fused-src/gtest
-	@: > contrib/gtest-1.7.0/fused-src/gtest/$(am__dirstamp)
-contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)
-	@: > contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/$(am__dirstamp)
-contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.$(OBJEXT):  \
-	contrib/gtest-1.7.0/fused-src/gtest/$(am__dirstamp) \
-	contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/$(am__dirstamp)
-bin/unit-tests/$(am__dirstamp):
-	@$(MKDIR_P) bin/unit-tests
-	@: > bin/unit-tests/$(am__dirstamp)
-bin/unit-tests/test-encoder$(EXEEXT): $(bin_unit_tests_test_encoder_OBJECTS) $(bin_unit_tests_test_encoder_DEPENDENCIES) bin/unit-tests/$(am__dirstamp)
-	@rm -f bin/unit-tests/test-encoder$(EXEEXT)
-	$(CXXLINK) $(bin_unit_tests_test_encoder_OBJECTS) $(bin_unit_tests_test_encoder_LDADD) $(LIBS)
-demoapp/$(am__dirstamp):
-	@$(MKDIR_P) demoapp
-	@: > demoapp/$(am__dirstamp)
-demoapp/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) demoapp/$(DEPDIR)
-	@: > demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/ndnrtc_demo-config.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/main.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/ndnrtc_demo-AppDelegate.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/ndnrtc_demo-renderer-stub.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/ndnrtc_demo-view.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-demoapp/ndnrtc_demo-CameraCapturer.$(OBJEXT): demoapp/$(am__dirstamp) \
-	demoapp/$(DEPDIR)/$(am__dirstamp)
-src/ndnrtc_demo-simple-log.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-ndnrtc-demo$(EXEEXT): $(ndnrtc_demo_OBJECTS) $(ndnrtc_demo_DEPENDENCIES) 
-	@rm -f ndnrtc-demo$(EXEEXT)
-	$(ndnrtc_demo_LINK) $(ndnrtc_demo_OBJECTS) $(ndnrtc_demo_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(libndnrtc_la_LINK) -rpath $(libdir) $(libndnrtc_la_OBJECTS) $(libndnrtc_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.$(OBJEXT)
-	-rm -f demoapp/main.$(OBJEXT)
-	-rm -f demoapp/ndnrtc_demo-AppDelegate.$(OBJEXT)
-	-rm -f demoapp/ndnrtc_demo-CameraCapturer.$(OBJEXT)
-	-rm -f demoapp/ndnrtc_demo-config.$(OBJEXT)
-	-rm -f demoapp/ndnrtc_demo-renderer-stub.$(OBJEXT)
-	-rm -f demoapp/ndnrtc_demo-view.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.lo
 	-rm -f src/libndnrtc_la-audio-consumer.$(OBJEXT)
@@ -696,10 +584,6 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-pipeliner.lo
 	-rm -f src/libndnrtc_la-playout.$(OBJEXT)
 	-rm -f src/libndnrtc_la-playout.lo
-	-rm -f src/libndnrtc_la-rate-control.$(OBJEXT)
-	-rm -f src/libndnrtc_la-rate-control.lo
-	-rm -f src/libndnrtc_la-realtime-arc.$(OBJEXT)
-	-rm -f src/libndnrtc_la-realtime-arc.lo
 	-rm -f src/libndnrtc_la-rtt-estimation.$(OBJEXT)
 	-rm -f src/libndnrtc_la-rtt-estimation.lo
 	-rm -f src/libndnrtc_la-segmentizer.$(OBJEXT)
@@ -724,18 +608,10 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-video-thread.lo
 	-rm -f src/libndnrtc_la-webrtc-audio-channel.$(OBJEXT)
 	-rm -f src/libndnrtc_la-webrtc-audio-channel.lo
-	-rm -f src/ndnrtc_demo-simple-log.$(OBJEXT)
-	-rm -f test/new/bin_unit_tests_test_encoder-test-encoder.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@demoapp/$(DEPDIR)/ndnrtc_demo-config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@demoapp/$(DEPDIR)/ndnrtc_demo-view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo@am__quote@
@@ -763,8 +639,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rate-control.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-realtime-arc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-session.Plo@am__quote@
@@ -777,486 +651,351 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-renderer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/ndnrtc_demo-simple-log.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Po@am__quote@
-
-.cc.o:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
-
-.cc.obj:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.cc.lo:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
-
-src/libndnrtc_la-audio-capturer.lo: src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-capturer.cpp' object='src/libndnrtc_la-audio-capturer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-
-src/libndnrtc_la-audio-consumer.lo: src/audio-consumer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-consumer.Tpo -c -o src/libndnrtc_la-audio-consumer.lo `test -f 'src/audio-consumer.cpp' || echo '$(srcdir)/'`src/audio-consumer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-consumer.cpp' object='src/libndnrtc_la-audio-consumer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-consumer.lo `test -f 'src/audio-consumer.cpp' || echo '$(srcdir)/'`src/audio-consumer.cpp
-
-src/libndnrtc_la-audio-playout.lo: src/audio-playout.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-playout.cpp' object='src/libndnrtc_la-audio-playout.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
-
-src/libndnrtc_la-audio-renderer.lo: src/audio-renderer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-renderer.cpp' object='src/libndnrtc_la-audio-renderer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
-
-src/libndnrtc_la-audio-thread.lo: src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/libndnrtc_la-audio-thread.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-
-src/libndnrtc_la-av-sync.lo: src/av-sync.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-av-sync.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo src/$(DEPDIR)/libndnrtc_la-av-sync.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/av-sync.cpp' object='src/libndnrtc_la-av-sync.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
-
-src/libndnrtc_la-buffer-estimator.lo: src/buffer-estimator.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-buffer-estimator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Tpo -c -o src/libndnrtc_la-buffer-estimator.lo `test -f 'src/buffer-estimator.cpp' || echo '$(srcdir)/'`src/buffer-estimator.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Tpo src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/buffer-estimator.cpp' object='src/libndnrtc_la-buffer-estimator.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-buffer-estimator.lo `test -f 'src/buffer-estimator.cpp' || echo '$(srcdir)/'`src/buffer-estimator.cpp
-
-src/libndnrtc_la-base-capturer.lo: src/base-capturer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-base-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-base-capturer.Tpo -c -o src/libndnrtc_la-base-capturer.lo `test -f 'src/base-capturer.cpp' || echo '$(srcdir)/'`src/base-capturer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-base-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-base-capturer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/base-capturer.cpp' object='src/libndnrtc_la-base-capturer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-base-capturer.lo `test -f 'src/base-capturer.cpp' || echo '$(srcdir)/'`src/base-capturer.cpp
-
-src/libndnrtc_la-chase-estimation.lo: src/chase-estimation.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-chase-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-chase-estimation.Tpo -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-chase-estimation.Tpo src/$(DEPDIR)/libndnrtc_la-chase-estimation.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/chase-estimation.cpp' object='src/libndnrtc_la-chase-estimation.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
-
-src/libndnrtc_la-consumer.lo: src/consumer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-consumer.Tpo -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-consumer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/consumer.cpp' object='src/libndnrtc_la-consumer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
-
-src/libndnrtc_la-external-capturer.lo: src/external-capturer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-external-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-external-capturer.Tpo -c -o src/libndnrtc_la-external-capturer.lo `test -f 'src/external-capturer.cpp' || echo '$(srcdir)/'`src/external-capturer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-external-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-external-capturer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/external-capturer.cpp' object='src/libndnrtc_la-external-capturer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-external-capturer.lo `test -f 'src/external-capturer.cpp' || echo '$(srcdir)/'`src/external-capturer.cpp
-
-src/libndnrtc_la-face-wrapper.lo: src/face-wrapper.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-face-wrapper.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-face-wrapper.Tpo -c -o src/libndnrtc_la-face-wrapper.lo `test -f 'src/face-wrapper.cpp' || echo '$(srcdir)/'`src/face-wrapper.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-face-wrapper.Tpo src/$(DEPDIR)/libndnrtc_la-face-wrapper.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/face-wrapper.cpp' object='src/libndnrtc_la-face-wrapper.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-face-wrapper.lo `test -f 'src/face-wrapper.cpp' || echo '$(srcdir)/'`src/face-wrapper.cpp
-
-src/libndnrtc_la-fec.lo: src/fec.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-fec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-fec.Tpo -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-fec.Tpo src/$(DEPDIR)/libndnrtc_la-fec.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/libndnrtc_la-fec.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-
-src/libndnrtc_la-frame-buffer.lo: src/frame-buffer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-frame-buffer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-frame-buffer.Tpo -c -o src/libndnrtc_la-frame-buffer.lo `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-frame-buffer.Tpo src/$(DEPDIR)/libndnrtc_la-frame-buffer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/libndnrtc_la-frame-buffer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-frame-buffer.lo `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
-
-src/libndnrtc_la-frame-data.lo: src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-frame-data.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-frame-data.Tpo -c -o src/libndnrtc_la-frame-data.lo `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-frame-data.Tpo src/$(DEPDIR)/libndnrtc_la-frame-data.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/libndnrtc_la-frame-data.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-frame-data.lo `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-
-src/libndnrtc_la-interest-queue.lo: src/interest-queue.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-interest-queue.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-interest-queue.Tpo -c -o src/libndnrtc_la-interest-queue.lo `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-interest-queue.Tpo src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/libndnrtc_la-interest-queue.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-interest-queue.lo `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
-
-src/libndnrtc_la-jitter-timing.lo: src/jitter-timing.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-jitter-timing.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-jitter-timing.Tpo -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-jitter-timing.Tpo src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/jitter-timing.cpp' object='src/libndnrtc_la-jitter-timing.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
-
-src/libndnrtc_la-media-thread.lo: src/media-thread.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo src/$(DEPDIR)/libndnrtc_la-media-thread.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/libndnrtc_la-media-thread.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
-
-src/libndnrtc_la-media-stream.lo: src/media-stream.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo src/$(DEPDIR)/libndnrtc_la-media-stream.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream.cpp' object='src/libndnrtc_la-media-stream.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
-
-src/libndnrtc_la-name-components.lo: src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-name-components.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-name-components.Tpo -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-name-components.Tpo src/$(DEPDIR)/libndnrtc_la-name-components.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/libndnrtc_la-name-components.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-
-src/libndnrtc_la-ndn-assembler.lo: src/ndn-assembler.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndn-assembler.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndn-assembler.cpp' object='src/libndnrtc_la-ndn-assembler.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
-
-src/libndnrtc_la-ndnrtc-library.lo: src/ndnrtc-library.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-library.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-library.cpp' object='src/libndnrtc_la-ndnrtc-library.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
-
-src/libndnrtc_la-ndnrtc-namespace.lo: src/ndnrtc-namespace.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-namespace.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Tpo -c -o src/libndnrtc_la-ndnrtc-namespace.lo `test -f 'src/ndnrtc-namespace.cpp' || echo '$(srcdir)/'`src/ndnrtc-namespace.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-namespace.cpp' object='src/libndnrtc_la-ndnrtc-namespace.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-namespace.lo `test -f 'src/ndnrtc-namespace.cpp' || echo '$(srcdir)/'`src/ndnrtc-namespace.cpp
-
-src/libndnrtc_la-ndnrtc-object.lo: src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-object.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Tpo -c -o src/libndnrtc_la-ndnrtc-object.lo `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/libndnrtc_la-ndnrtc-object.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-object.lo `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-
-src/libndnrtc_la-ndnrtc-utils.lo: src/ndnrtc-utils.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-utils.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Tpo -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-utils.cpp' object='src/libndnrtc_la-ndnrtc-utils.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
-
-src/libndnrtc_la-pipeliner.lo: src/pipeliner.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-pipeliner.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/libndnrtc_la-pipeliner.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
-
-src/libndnrtc_la-playout.lo: src/playout.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-playout.Tpo -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-playout.Tpo src/$(DEPDIR)/libndnrtc_la-playout.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/playout.cpp' object='src/libndnrtc_la-playout.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
-
-src/libndnrtc_la-rate-control.lo: src/rate-control.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-rate-control.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-rate-control.Tpo -c -o src/libndnrtc_la-rate-control.lo `test -f 'src/rate-control.cpp' || echo '$(srcdir)/'`src/rate-control.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-rate-control.Tpo src/$(DEPDIR)/libndnrtc_la-rate-control.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/rate-control.cpp' object='src/libndnrtc_la-rate-control.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-rate-control.lo `test -f 'src/rate-control.cpp' || echo '$(srcdir)/'`src/rate-control.cpp
-
-src/libndnrtc_la-realtime-arc.lo: src/realtime-arc.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-realtime-arc.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-realtime-arc.Tpo -c -o src/libndnrtc_la-realtime-arc.lo `test -f 'src/realtime-arc.cpp' || echo '$(srcdir)/'`src/realtime-arc.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-realtime-arc.Tpo src/$(DEPDIR)/libndnrtc_la-realtime-arc.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/realtime-arc.cpp' object='src/libndnrtc_la-realtime-arc.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-realtime-arc.lo `test -f 'src/realtime-arc.cpp' || echo '$(srcdir)/'`src/realtime-arc.cpp
-
-src/libndnrtc_la-rtt-estimation.lo: src/rtt-estimation.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-rtt-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo -c -o src/libndnrtc_la-rtt-estimation.lo `test -f 'src/rtt-estimation.cpp' || echo '$(srcdir)/'`src/rtt-estimation.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/rtt-estimation.cpp' object='src/libndnrtc_la-rtt-estimation.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-rtt-estimation.lo `test -f 'src/rtt-estimation.cpp' || echo '$(srcdir)/'`src/rtt-estimation.cpp
-
-src/libndnrtc_la-segmentizer.lo: src/segmentizer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-segmentizer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-segmentizer.Tpo -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-segmentizer.Tpo src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segmentizer.cpp' object='src/libndnrtc_la-segmentizer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
-
-src/libndnrtc_la-session.lo: src/session.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-session.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-session.Tpo -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-session.Tpo src/$(DEPDIR)/libndnrtc_la-session.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/session.cpp' object='src/libndnrtc_la-session.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
-
-src/libndnrtc_la-simple-log.lo: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-simple-log.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-simple-log.Tpo -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-simple-log.Tpo src/$(DEPDIR)/libndnrtc_la-simple-log.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/libndnrtc_la-simple-log.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-
-src/libndnrtc_la-statistics.lo: src/statistics.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-statistics.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-statistics.Tpo -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-statistics.Tpo src/$(DEPDIR)/libndnrtc_la-statistics.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/statistics.cpp' object='src/libndnrtc_la-statistics.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
-
-src/libndnrtc_la-video-coder.lo: src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-coder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-coder.cpp' object='src/libndnrtc_la-video-coder.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-
-src/libndnrtc_la-video-consumer.lo: src/video-consumer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-consumer.Tpo -c -o src/libndnrtc_la-video-consumer.lo `test -f 'src/video-consumer.cpp' || echo '$(srcdir)/'`src/video-consumer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-video-consumer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-consumer.cpp' object='src/libndnrtc_la-video-consumer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-consumer.lo `test -f 'src/video-consumer.cpp' || echo '$(srcdir)/'`src/video-consumer.cpp
-
-src/libndnrtc_la-video-decoder.lo: src/video-decoder.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-decoder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-decoder.cpp' object='src/libndnrtc_la-video-decoder.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
-
-src/libndnrtc_la-video-playout.lo: src/video-playout.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-playout.cpp' object='src/libndnrtc_la-video-playout.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
-
-src/libndnrtc_la-video-renderer.lo: src/video-renderer.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-renderer.Tpo -c -o src/libndnrtc_la-video-renderer.lo `test -f 'src/video-renderer.cpp' || echo '$(srcdir)/'`src/video-renderer.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-renderer.Tpo src/$(DEPDIR)/libndnrtc_la-video-renderer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-renderer.cpp' object='src/libndnrtc_la-video-renderer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-renderer.lo `test -f 'src/video-renderer.cpp' || echo '$(srcdir)/'`src/video-renderer.cpp
-
-src/libndnrtc_la-video-thread.lo: src/video-thread.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo src/$(DEPDIR)/libndnrtc_la-video-thread.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/libndnrtc_la-video-thread.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
-
-src/libndnrtc_la-webrtc-audio-channel.lo: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-webrtc-audio-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/webrtc-audio-channel.cpp' object='src/libndnrtc_la-webrtc-audio-channel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-
-test/new/bin_unit_tests_test_encoder-test-encoder.o: test/new/test-encoder.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test/new/bin_unit_tests_test_encoder-test-encoder.o -MD -MP -MF test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Tpo -c -o test/new/bin_unit_tests_test_encoder-test-encoder.o `test -f 'test/new/test-encoder.cpp' || echo '$(srcdir)/'`test/new/test-encoder.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Tpo test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='test/new/test-encoder.cpp' object='test/new/bin_unit_tests_test_encoder-test-encoder.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test/new/bin_unit_tests_test_encoder-test-encoder.o `test -f 'test/new/test-encoder.cpp' || echo '$(srcdir)/'`test/new/test-encoder.cpp
-
-test/new/bin_unit_tests_test_encoder-test-encoder.obj: test/new/test-encoder.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test/new/bin_unit_tests_test_encoder-test-encoder.obj -MD -MP -MF test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Tpo -c -o test/new/bin_unit_tests_test_encoder-test-encoder.obj `if test -f 'test/new/test-encoder.cpp'; then $(CYGPATH_W) 'test/new/test-encoder.cpp'; else $(CYGPATH_W) '$(srcdir)/test/new/test-encoder.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Tpo test/new/$(DEPDIR)/bin_unit_tests_test_encoder-test-encoder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='test/new/test-encoder.cpp' object='test/new/bin_unit_tests_test_encoder-test-encoder.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test/new/bin_unit_tests_test_encoder-test-encoder.obj `if test -f 'test/new/test-encoder.cpp'; then $(CYGPATH_W) 'test/new/test-encoder.cpp'; else $(CYGPATH_W) '$(srcdir)/test/new/test-encoder.cpp'; fi`
-
-contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.o: contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.o -MD -MP -MF contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Tpo -c -o contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.o `test -f 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(am__mv) contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Tpo contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc' object='contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.o `test -f 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-
-contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.obj: contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.obj -MD -MP -MF contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Tpo -c -o contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.obj `if test -f 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Tpo contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/bin_unit_tests_test_encoder-gtest-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc' object='contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_unit_tests_test_encoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest-1.7.0/fused-src/gtest/bin_unit_tests_test_encoder-gtest-all.obj `if test -f 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc'; fi`
-
-demoapp/ndnrtc_demo-config.o: demoapp/config.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-config.o -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-config.Tpo -c -o demoapp/ndnrtc_demo-config.o `test -f 'demoapp/config.cc' || echo '$(srcdir)/'`demoapp/config.cc
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-config.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/config.cc' object='demoapp/ndnrtc_demo-config.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-config.o `test -f 'demoapp/config.cc' || echo '$(srcdir)/'`demoapp/config.cc
-
-demoapp/ndnrtc_demo-config.obj: demoapp/config.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-config.obj -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-config.Tpo -c -o demoapp/ndnrtc_demo-config.obj `if test -f 'demoapp/config.cc'; then $(CYGPATH_W) 'demoapp/config.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/config.cc'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-config.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/config.cc' object='demoapp/ndnrtc_demo-config.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-config.obj `if test -f 'demoapp/config.cc'; then $(CYGPATH_W) 'demoapp/config.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/config.cc'; fi`
-
-demoapp/ndnrtc_demo-renderer-stub.o: demoapp/renderer-stub.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-renderer-stub.o -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Tpo -c -o demoapp/ndnrtc_demo-renderer-stub.o `test -f 'demoapp/renderer-stub.cc' || echo '$(srcdir)/'`demoapp/renderer-stub.cc
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/renderer-stub.cc' object='demoapp/ndnrtc_demo-renderer-stub.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-renderer-stub.o `test -f 'demoapp/renderer-stub.cc' || echo '$(srcdir)/'`demoapp/renderer-stub.cc
-
-demoapp/ndnrtc_demo-renderer-stub.obj: demoapp/renderer-stub.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-renderer-stub.obj -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Tpo -c -o demoapp/ndnrtc_demo-renderer-stub.obj `if test -f 'demoapp/renderer-stub.cc'; then $(CYGPATH_W) 'demoapp/renderer-stub.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/renderer-stub.cc'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-renderer-stub.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/renderer-stub.cc' object='demoapp/ndnrtc_demo-renderer-stub.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-renderer-stub.obj `if test -f 'demoapp/renderer-stub.cc'; then $(CYGPATH_W) 'demoapp/renderer-stub.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/renderer-stub.cc'; fi`
-
-demoapp/ndnrtc_demo-view.o: demoapp/view.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-view.o -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-view.Tpo -c -o demoapp/ndnrtc_demo-view.o `test -f 'demoapp/view.cc' || echo '$(srcdir)/'`demoapp/view.cc
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-view.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-view.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/view.cc' object='demoapp/ndnrtc_demo-view.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-view.o `test -f 'demoapp/view.cc' || echo '$(srcdir)/'`demoapp/view.cc
-
-demoapp/ndnrtc_demo-view.obj: demoapp/view.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT demoapp/ndnrtc_demo-view.obj -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-view.Tpo -c -o demoapp/ndnrtc_demo-view.obj `if test -f 'demoapp/view.cc'; then $(CYGPATH_W) 'demoapp/view.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/view.cc'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-view.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-view.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='demoapp/view.cc' object='demoapp/ndnrtc_demo-view.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o demoapp/ndnrtc_demo-view.obj `if test -f 'demoapp/view.cc'; then $(CYGPATH_W) 'demoapp/view.cc'; else $(CYGPATH_W) '$(srcdir)/demoapp/view.cc'; fi`
-
-src/ndnrtc_demo-simple-log.o: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/ndnrtc_demo-simple-log.o -MD -MP -MF src/$(DEPDIR)/ndnrtc_demo-simple-log.Tpo -c -o src/ndnrtc_demo-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/ndnrtc_demo-simple-log.Tpo src/$(DEPDIR)/ndnrtc_demo-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/ndnrtc_demo-simple-log.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/ndnrtc_demo-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-
-src/ndnrtc_demo-simple-log.obj: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/ndnrtc_demo-simple-log.obj -MD -MP -MF src/$(DEPDIR)/ndnrtc_demo-simple-log.Tpo -c -o src/ndnrtc_demo-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) src/$(DEPDIR)/ndnrtc_demo-simple-log.Tpo src/$(DEPDIR)/ndnrtc_demo-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/ndnrtc_demo-simple-log.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/ndnrtc_demo-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
 @am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
 @am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
 @am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
 @am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
-.m.o:
-@am__fastdepOBJC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepOBJC_TRUE@	$(OBJCCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepOBJC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJCCOMPILE) -c -o $@ $<
+src/libndnrtc_la-audio-capturer.lo: src/audio-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-capturer.cpp' object='src/libndnrtc_la-audio-capturer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
 
-.m.obj:
-@am__fastdepOBJC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepOBJC_TRUE@	$(OBJCCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepOBJC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+src/libndnrtc_la-audio-consumer.lo: src/audio-consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-consumer.Tpo -c -o src/libndnrtc_la-audio-consumer.lo `test -f 'src/audio-consumer.cpp' || echo '$(srcdir)/'`src/audio-consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-consumer.cpp' object='src/libndnrtc_la-audio-consumer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-consumer.lo `test -f 'src/audio-consumer.cpp' || echo '$(srcdir)/'`src/audio-consumer.cpp
 
-.m.lo:
-@am__fastdepOBJC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepOBJC_TRUE@	$(LTOBJCCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepOBJC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(LTOBJCCOMPILE) -c -o $@ $<
+src/libndnrtc_la-audio-playout.lo: src/audio-playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-playout.cpp' object='src/libndnrtc_la-audio-playout.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
 
-demoapp/ndnrtc_demo-AppDelegate.o: demoapp/AppDelegate.m
-@am__fastdepOBJC_TRUE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -MT demoapp/ndnrtc_demo-AppDelegate.o -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Tpo -c -o demoapp/ndnrtc_demo-AppDelegate.o `test -f 'demoapp/AppDelegate.m' || echo '$(srcdir)/'`demoapp/AppDelegate.m
-@am__fastdepOBJC_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='demoapp/AppDelegate.m' object='demoapp/ndnrtc_demo-AppDelegate.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -c -o demoapp/ndnrtc_demo-AppDelegate.o `test -f 'demoapp/AppDelegate.m' || echo '$(srcdir)/'`demoapp/AppDelegate.m
+src/libndnrtc_la-audio-renderer.lo: src/audio-renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-renderer.cpp' object='src/libndnrtc_la-audio-renderer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
 
-demoapp/ndnrtc_demo-AppDelegate.obj: demoapp/AppDelegate.m
-@am__fastdepOBJC_TRUE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -MT demoapp/ndnrtc_demo-AppDelegate.obj -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Tpo -c -o demoapp/ndnrtc_demo-AppDelegate.obj `if test -f 'demoapp/AppDelegate.m'; then $(CYGPATH_W) 'demoapp/AppDelegate.m'; else $(CYGPATH_W) '$(srcdir)/demoapp/AppDelegate.m'; fi`
-@am__fastdepOBJC_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-AppDelegate.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='demoapp/AppDelegate.m' object='demoapp/ndnrtc_demo-AppDelegate.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -c -o demoapp/ndnrtc_demo-AppDelegate.obj `if test -f 'demoapp/AppDelegate.m'; then $(CYGPATH_W) 'demoapp/AppDelegate.m'; else $(CYGPATH_W) '$(srcdir)/demoapp/AppDelegate.m'; fi`
+src/libndnrtc_la-audio-thread.lo: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/libndnrtc_la-audio-thread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
 
-demoapp/ndnrtc_demo-CameraCapturer.o: demoapp/CameraCapturer.m
-@am__fastdepOBJC_TRUE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -MT demoapp/ndnrtc_demo-CameraCapturer.o -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Tpo -c -o demoapp/ndnrtc_demo-CameraCapturer.o `test -f 'demoapp/CameraCapturer.m' || echo '$(srcdir)/'`demoapp/CameraCapturer.m
-@am__fastdepOBJC_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='demoapp/CameraCapturer.m' object='demoapp/ndnrtc_demo-CameraCapturer.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -c -o demoapp/ndnrtc_demo-CameraCapturer.o `test -f 'demoapp/CameraCapturer.m' || echo '$(srcdir)/'`demoapp/CameraCapturer.m
+src/libndnrtc_la-av-sync.lo: src/av-sync.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-av-sync.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo src/$(DEPDIR)/libndnrtc_la-av-sync.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/av-sync.cpp' object='src/libndnrtc_la-av-sync.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
 
-demoapp/ndnrtc_demo-CameraCapturer.obj: demoapp/CameraCapturer.m
-@am__fastdepOBJC_TRUE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -MT demoapp/ndnrtc_demo-CameraCapturer.obj -MD -MP -MF demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Tpo -c -o demoapp/ndnrtc_demo-CameraCapturer.obj `if test -f 'demoapp/CameraCapturer.m'; then $(CYGPATH_W) 'demoapp/CameraCapturer.m'; else $(CYGPATH_W) '$(srcdir)/demoapp/CameraCapturer.m'; fi`
-@am__fastdepOBJC_TRUE@	$(am__mv) demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Tpo demoapp/$(DEPDIR)/ndnrtc_demo-CameraCapturer.Po
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	source='demoapp/CameraCapturer.m' object='demoapp/ndnrtc_demo-CameraCapturer.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_demo_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_demo_OBJCFLAGS) $(OBJCFLAGS) -c -o demoapp/ndnrtc_demo-CameraCapturer.obj `if test -f 'demoapp/CameraCapturer.m'; then $(CYGPATH_W) 'demoapp/CameraCapturer.m'; else $(CYGPATH_W) '$(srcdir)/demoapp/CameraCapturer.m'; fi`
+src/libndnrtc_la-buffer-estimator.lo: src/buffer-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-buffer-estimator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Tpo -c -o src/libndnrtc_la-buffer-estimator.lo `test -f 'src/buffer-estimator.cpp' || echo '$(srcdir)/'`src/buffer-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Tpo src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/buffer-estimator.cpp' object='src/libndnrtc_la-buffer-estimator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-buffer-estimator.lo `test -f 'src/buffer-estimator.cpp' || echo '$(srcdir)/'`src/buffer-estimator.cpp
+
+src/libndnrtc_la-base-capturer.lo: src/base-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-base-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-base-capturer.Tpo -c -o src/libndnrtc_la-base-capturer.lo `test -f 'src/base-capturer.cpp' || echo '$(srcdir)/'`src/base-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-base-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-base-capturer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/base-capturer.cpp' object='src/libndnrtc_la-base-capturer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-base-capturer.lo `test -f 'src/base-capturer.cpp' || echo '$(srcdir)/'`src/base-capturer.cpp
+
+src/libndnrtc_la-chase-estimation.lo: src/chase-estimation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-chase-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-chase-estimation.Tpo -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-chase-estimation.Tpo src/$(DEPDIR)/libndnrtc_la-chase-estimation.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/chase-estimation.cpp' object='src/libndnrtc_la-chase-estimation.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-chase-estimation.lo `test -f 'src/chase-estimation.cpp' || echo '$(srcdir)/'`src/chase-estimation.cpp
+
+src/libndnrtc_la-consumer.lo: src/consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-consumer.Tpo -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-consumer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/consumer.cpp' object='src/libndnrtc_la-consumer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
+
+src/libndnrtc_la-external-capturer.lo: src/external-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-external-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-external-capturer.Tpo -c -o src/libndnrtc_la-external-capturer.lo `test -f 'src/external-capturer.cpp' || echo '$(srcdir)/'`src/external-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-external-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-external-capturer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/external-capturer.cpp' object='src/libndnrtc_la-external-capturer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-external-capturer.lo `test -f 'src/external-capturer.cpp' || echo '$(srcdir)/'`src/external-capturer.cpp
+
+src/libndnrtc_la-face-wrapper.lo: src/face-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-face-wrapper.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-face-wrapper.Tpo -c -o src/libndnrtc_la-face-wrapper.lo `test -f 'src/face-wrapper.cpp' || echo '$(srcdir)/'`src/face-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-face-wrapper.Tpo src/$(DEPDIR)/libndnrtc_la-face-wrapper.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/face-wrapper.cpp' object='src/libndnrtc_la-face-wrapper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-face-wrapper.lo `test -f 'src/face-wrapper.cpp' || echo '$(srcdir)/'`src/face-wrapper.cpp
+
+src/libndnrtc_la-fec.lo: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-fec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-fec.Tpo -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-fec.Tpo src/$(DEPDIR)/libndnrtc_la-fec.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/libndnrtc_la-fec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+
+src/libndnrtc_la-frame-buffer.lo: src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-frame-buffer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-frame-buffer.Tpo -c -o src/libndnrtc_la-frame-buffer.lo `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-frame-buffer.Tpo src/$(DEPDIR)/libndnrtc_la-frame-buffer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/libndnrtc_la-frame-buffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-frame-buffer.lo `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+
+src/libndnrtc_la-frame-data.lo: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-frame-data.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-frame-data.Tpo -c -o src/libndnrtc_la-frame-data.lo `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-frame-data.Tpo src/$(DEPDIR)/libndnrtc_la-frame-data.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/libndnrtc_la-frame-data.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-frame-data.lo `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+
+src/libndnrtc_la-interest-queue.lo: src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-interest-queue.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-interest-queue.Tpo -c -o src/libndnrtc_la-interest-queue.lo `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-interest-queue.Tpo src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/libndnrtc_la-interest-queue.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-interest-queue.lo `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+
+src/libndnrtc_la-jitter-timing.lo: src/jitter-timing.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-jitter-timing.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-jitter-timing.Tpo -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-jitter-timing.Tpo src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/jitter-timing.cpp' object='src/libndnrtc_la-jitter-timing.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
+
+src/libndnrtc_la-media-thread.lo: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo src/$(DEPDIR)/libndnrtc_la-media-thread.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/libndnrtc_la-media-thread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+
+src/libndnrtc_la-media-stream.lo: src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo src/$(DEPDIR)/libndnrtc_la-media-stream.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream.cpp' object='src/libndnrtc_la-media-stream.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+
+src/libndnrtc_la-name-components.lo: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-name-components.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-name-components.Tpo -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-name-components.Tpo src/$(DEPDIR)/libndnrtc_la-name-components.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/libndnrtc_la-name-components.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+
+src/libndnrtc_la-ndn-assembler.lo: src/ndn-assembler.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndn-assembler.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Tpo src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndn-assembler.cpp' object='src/libndnrtc_la-ndn-assembler.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
+
+src/libndnrtc_la-ndnrtc-library.lo: src/ndnrtc-library.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-library.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-library.cpp' object='src/libndnrtc_la-ndnrtc-library.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
+
+src/libndnrtc_la-ndnrtc-namespace.lo: src/ndnrtc-namespace.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-namespace.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Tpo -c -o src/libndnrtc_la-ndnrtc-namespace.lo `test -f 'src/ndnrtc-namespace.cpp' || echo '$(srcdir)/'`src/ndnrtc-namespace.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-namespace.cpp' object='src/libndnrtc_la-ndnrtc-namespace.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-namespace.lo `test -f 'src/ndnrtc-namespace.cpp' || echo '$(srcdir)/'`src/ndnrtc-namespace.cpp
+
+src/libndnrtc_la-ndnrtc-object.lo: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-object.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Tpo -c -o src/libndnrtc_la-ndnrtc-object.lo `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/libndnrtc_la-ndnrtc-object.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-object.lo `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/libndnrtc_la-ndnrtc-utils.lo: src/ndnrtc-utils.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-utils.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Tpo -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-utils.cpp' object='src/libndnrtc_la-ndnrtc-utils.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
+
+src/libndnrtc_la-pipeliner.lo: src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-pipeliner.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/libndnrtc_la-pipeliner.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+
+src/libndnrtc_la-playout.lo: src/playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-playout.Tpo -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-playout.Tpo src/$(DEPDIR)/libndnrtc_la-playout.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/playout.cpp' object='src/libndnrtc_la-playout.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
+
+src/libndnrtc_la-rtt-estimation.lo: src/rtt-estimation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-rtt-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo -c -o src/libndnrtc_la-rtt-estimation.lo `test -f 'src/rtt-estimation.cpp' || echo '$(srcdir)/'`src/rtt-estimation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/rtt-estimation.cpp' object='src/libndnrtc_la-rtt-estimation.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-rtt-estimation.lo `test -f 'src/rtt-estimation.cpp' || echo '$(srcdir)/'`src/rtt-estimation.cpp
+
+src/libndnrtc_la-segmentizer.lo: src/segmentizer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-segmentizer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-segmentizer.Tpo -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-segmentizer.Tpo src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segmentizer.cpp' object='src/libndnrtc_la-segmentizer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-segmentizer.lo `test -f 'src/segmentizer.cpp' || echo '$(srcdir)/'`src/segmentizer.cpp
+
+src/libndnrtc_la-session.lo: src/session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-session.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-session.Tpo -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-session.Tpo src/$(DEPDIR)/libndnrtc_la-session.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/session.cpp' object='src/libndnrtc_la-session.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-session.lo `test -f 'src/session.cpp' || echo '$(srcdir)/'`src/session.cpp
+
+src/libndnrtc_la-simple-log.lo: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-simple-log.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-simple-log.Tpo -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-simple-log.Tpo src/$(DEPDIR)/libndnrtc_la-simple-log.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/libndnrtc_la-simple-log.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/libndnrtc_la-statistics.lo: src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-statistics.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-statistics.Tpo -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-statistics.Tpo src/$(DEPDIR)/libndnrtc_la-statistics.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/statistics.cpp' object='src/libndnrtc_la-statistics.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+
+src/libndnrtc_la-video-coder.lo: src/video-coder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-coder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-coder.cpp' object='src/libndnrtc_la-video-coder.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
+
+src/libndnrtc_la-video-consumer.lo: src/video-consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-consumer.Tpo -c -o src/libndnrtc_la-video-consumer.lo `test -f 'src/video-consumer.cpp' || echo '$(srcdir)/'`src/video-consumer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-consumer.Tpo src/$(DEPDIR)/libndnrtc_la-video-consumer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-consumer.cpp' object='src/libndnrtc_la-video-consumer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-consumer.lo `test -f 'src/video-consumer.cpp' || echo '$(srcdir)/'`src/video-consumer.cpp
+
+src/libndnrtc_la-video-decoder.lo: src/video-decoder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-decoder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-decoder.cpp' object='src/libndnrtc_la-video-decoder.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
+
+src/libndnrtc_la-video-playout.lo: src/video-playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-playout.cpp' object='src/libndnrtc_la-video-playout.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
+
+src/libndnrtc_la-video-renderer.lo: src/video-renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-renderer.Tpo -c -o src/libndnrtc_la-video-renderer.lo `test -f 'src/video-renderer.cpp' || echo '$(srcdir)/'`src/video-renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-renderer.Tpo src/$(DEPDIR)/libndnrtc_la-video-renderer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-renderer.cpp' object='src/libndnrtc_la-video-renderer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-renderer.lo `test -f 'src/video-renderer.cpp' || echo '$(srcdir)/'`src/video-renderer.cpp
+
+src/libndnrtc_la-video-thread.lo: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-thread.Tpo src/$(DEPDIR)/libndnrtc_la-video-thread.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/libndnrtc_la-video-thread.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+
+src/libndnrtc_la-webrtc-audio-channel.lo: src/webrtc-audio-channel.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-webrtc-audio-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/webrtc-audio-channel.cpp' object='src/libndnrtc_la-webrtc-audio-channel.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
-	-rm -rf bin/unit-tests/.libs bin/unit-tests/_libs
 	-rm -rf src/.libs src/_libs
 
 distclean-libtool:
@@ -1333,98 +1072,6 @@ GTAGS:
 
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
-
-check-TESTS: $(TESTS)
-	@failed=0; all=0; xfail=0; xpass=0; skip=0; \
-	srcdir=$(srcdir); export srcdir; \
-	list=' $(TESTS) '; \
-	$(am__tty_colors); \
-	if test -n "$$list"; then \
-	  for tst in $$list; do \
-	    if test -f ./$$tst; then dir=./; \
-	    elif test -f $$tst; then dir=; \
-	    else dir="$(srcdir)/"; fi; \
-	    if $(TESTS_ENVIRONMENT) $${dir}$$tst; then \
-	      all=`expr $$all + 1`; \
-	      case " $(XFAIL_TESTS) " in \
-	      *[\ \	]$$tst[\ \	]*) \
-		xpass=`expr $$xpass + 1`; \
-		failed=`expr $$failed + 1`; \
-		col=$$red; res=XPASS; \
-	      ;; \
-	      *) \
-		col=$$grn; res=PASS; \
-	      ;; \
-	      esac; \
-	    elif test $$? -ne 77; then \
-	      all=`expr $$all + 1`; \
-	      case " $(XFAIL_TESTS) " in \
-	      *[\ \	]$$tst[\ \	]*) \
-		xfail=`expr $$xfail + 1`; \
-		col=$$lgn; res=XFAIL; \
-	      ;; \
-	      *) \
-		failed=`expr $$failed + 1`; \
-		col=$$red; res=FAIL; \
-	      ;; \
-	      esac; \
-	    else \
-	      skip=`expr $$skip + 1`; \
-	      col=$$blu; res=SKIP; \
-	    fi; \
-	    echo "$${col}$$res$${std}: $$tst"; \
-	  done; \
-	  if test "$$all" -eq 1; then \
-	    tests="test"; \
-	    All=""; \
-	  else \
-	    tests="tests"; \
-	    All="All "; \
-	  fi; \
-	  if test "$$failed" -eq 0; then \
-	    if test "$$xfail" -eq 0; then \
-	      banner="$$All$$all $$tests passed"; \
-	    else \
-	      if test "$$xfail" -eq 1; then failures=failure; else failures=failures; fi; \
-	      banner="$$All$$all $$tests behaved as expected ($$xfail expected $$failures)"; \
-	    fi; \
-	  else \
-	    if test "$$xpass" -eq 0; then \
-	      banner="$$failed of $$all $$tests failed"; \
-	    else \
-	      if test "$$xpass" -eq 1; then passes=pass; else passes=passes; fi; \
-	      banner="$$failed of $$all $$tests did not behave as expected ($$xpass unexpected $$passes)"; \
-	    fi; \
-	  fi; \
-	  dashes="$$banner"; \
-	  skipped=""; \
-	  if test "$$skip" -ne 0; then \
-	    if test "$$skip" -eq 1; then \
-	      skipped="($$skip test was not run)"; \
-	    else \
-	      skipped="($$skip tests were not run)"; \
-	    fi; \
-	    test `echo "$$skipped" | wc -c` -le `echo "$$banner" | wc -c` || \
-	      dashes="$$skipped"; \
-	  fi; \
-	  report=""; \
-	  if test "$$failed" -ne 0 && test -n "$(PACKAGE_BUGREPORT)"; then \
-	    report="Please report to $(PACKAGE_BUGREPORT)"; \
-	    test `echo "$$report" | wc -c` -le `echo "$$banner" | wc -c` || \
-	      dashes="$$report"; \
-	  fi; \
-	  dashes=`echo "$$dashes" | sed s/./=/g`; \
-	  if test "$$failed" -eq 0; then \
-	    echo "$$grn$$dashes"; \
-	  else \
-	    echo "$$red$$dashes"; \
-	  fi; \
-	  echo "$$banner"; \
-	  test -z "$$skipped" || echo "$$skipped"; \
-	  test -z "$$report" || echo "$$report"; \
-	  echo "$$dashes$$std"; \
-	  test "$$failed" -eq 0; \
-	else :; fi
 
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
@@ -1573,10 +1220,8 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -1602,27 +1247,20 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f bin/unit-tests/$(am__dirstamp)
-	-rm -f contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR)/$(am__dirstamp)
-	-rm -f contrib/gtest-1.7.0/fused-src/gtest/$(am__dirstamp)
-	-rm -f demoapp/$(DEPDIR)/$(am__dirstamp)
-	-rm -f demoapp/$(am__dirstamp)
 	-rm -f src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/$(am__dirstamp)
-	-rm -f test/new/$(DEPDIR)/$(am__dirstamp)
-	-rm -f test/new/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR) demoapp/$(DEPDIR) src/$(DEPDIR) test/new/$(DEPDIR)
+	-rm -rf src/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -1670,7 +1308,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf contrib/gtest-1.7.0/fused-src/gtest/$(DEPDIR) demoapp/$(DEPDIR) src/$(DEPDIR) test/new/$(DEPDIR)
+	-rm -rf src/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1689,29 +1327,26 @@ ps-am:
 
 uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 
-.MAKE: check-am install-am install-strip
+.MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
-	clean clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool ctags dist dist-all dist-bzip2 dist-gzip \
-	dist-lzma dist-shar dist-tarZ dist-xz dist-zip distcheck \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
-	install-pkgincludeHEADERS install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
+.PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
+	clean-generic clean-libLTLIBRARIES clean-libtool ctags dist \
+	dist-all dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES install-man install-pdf \
+	install-pdf-am install-pkgincludeHEADERS install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-libLTLIBRARIES \
+	uninstall-pkgincludeHEADERS
 
-
-.mm.o :
-	$(OBJCXX) -x objective-c++ -c @DEFS@ $(CPPFLAGS) $(ndnrtc_demo_CPPFLAGS) $< -o $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
