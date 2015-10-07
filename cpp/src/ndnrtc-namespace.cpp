@@ -283,7 +283,7 @@ int NdnRtcNamespace::findComponent(const ndn::Name &prefix,
     Name::Component searchComponent((const uint8_t*)componentString.c_str(),
                                     componentString.size());
     
-    for (int i = nComponents; i >= 0; i--)
+    for (int i = nComponents-1; i >= 0; i--)
     {
         Name::Component c = prefix.get(i);
         
