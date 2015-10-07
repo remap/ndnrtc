@@ -14,7 +14,11 @@
 #include <boost/asio.hpp>
 
 #include <sys/time.h>
+
+#if defined __APPLE__
 #include <mach/mach_time.h>
+#endif
+
 #include <fstream>
 #include <iomanip>
 #include "simple-log.h"
@@ -45,7 +49,7 @@ void startLogThread();
 void stopLogThread();
 
 //******************************************************************************
-pthread_mutex_t new_api::Logger::stdOutMutex_ = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+boost::recursive_mutex new_api::Logger::stdOutMutex_;
 std::map<std::string, new_api::Logger*> new_api::Logger::loggers_;
 
 unsigned int new_api::Logger::FlushIntervalMs = 100;
@@ -58,8 +62,7 @@ currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
 logFile_(logFile),
 outStream_(&std::cout),
-isStdOutActive_(true),
-logMutex_((pthread_mutex_t)PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
+isStdOutActive_(true)
 {
     if (logFile_ != "")
     {
@@ -188,23 +191,9 @@ new_api::Logger::stringify(NdnLoggerLevel lvl)
 int64_t
 new_api::Logger::getMillisecondTimestamp()
 {
-#if 0
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    
-    int64_t ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
-    
-    return ticks;
-#endif
-    
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    
     int64_t ticks = 0;
     
-#if 0
-    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
-#else
+#if defined __APPLE__
     static mach_timebase_info_data_t timebase;
     if (timebase.denom == 0) {
         // Get the timebase if this is the first time we run.
@@ -219,6 +208,10 @@ new_api::Logger::getMillisecondTimestamp()
     // Use timebase to convert absolute time tick units into nanoseconds.
     ticks = mach_absolute_time() * timebase.numer / timebase.denom;
     ticks /= 1000000LL;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    ticks = 1000LL*static_cast<int64_t>(tv.tv_sec)+static_cast<int64_t>(tv.tv_usec)/1000LL;
 #endif
     
     return ticks;
