@@ -29,6 +29,7 @@ using namespace ndnlog;
 using namespace new_api;
 
 static char tempBuf[MAX_BUF_SIZE];
+#if defined __APPLE__
 static std::string lvlToString[] = {
     [NdnLoggerLevelTrace] =     "TRACE",
     [NdnLoggerLevelDebug] =     "DEBUG",
@@ -37,6 +38,16 @@ static std::string lvlToString[] = {
     [NdnLoggerLevelError] =     "ERROR",
     [NdnLoggerLevelStat] =      "STAT "
 };
+#else
+static std::string lvlToString[] = {
+    [0] =     "TRACE",
+    [1] =     "DEBUG",
+    [2] =      "STAT ",
+    [3] =      "INFO ",
+    [4] =   "WARN ",
+    [5] =     "ERROR"
+};
+#endif
 
 boost::asio::io_service LogIoService;
 boost::thread LogThread;

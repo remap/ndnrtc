@@ -95,7 +95,7 @@ NdnRtcComponent::getDescription() const
 }
 
 thread
-NdnRtcComponent::startThread(function<bool ()> threadFunc)
+NdnRtcComponent::startThread(boost::function<bool ()> threadFunc)
 {
     thread threadObject = thread([threadFunc](){
         bool result = false;
