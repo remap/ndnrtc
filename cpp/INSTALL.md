@@ -71,15 +71,9 @@ Use these variables for NDN-RTC configure script for providing custom paths to t
 * **OPENFECDIR** - Path to the directory which contains OpenFEC library
 * **OPENFECSRC** - Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)
 * **OPENFECLIB** - Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)
-* **PTHREADDIR** - Path to the directory which contains pthread library headers (default is /usr/local/include)
-* **PTHREADLIB** - Path to the directory which contains pthread library binaries (default is /usr/local/lib)
 * **WEBRTCDIR** - Path to the directory which contains WebRTC trunk
 * **WEBRTCSRC** - Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/wbertc)
 * **WEBRTCLIB** - Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)
-* **LCONFIGDIR** - Path to the directory which contains libconfig library headers (default is /usr/local/include)
-* **LCONFIGLIB** - Path to the directory which contains libconfig library binaries (default is /usr/local/lib)
-* **NCURSESDIR** - Path to the directory which contains ncurses library headers (default is /usr/local/include)
-* **NCURSESLIB** - Path to the directory which contains ncurses library binaries (default is /usr/local/lib)
 
 Provide this flags while configuring:
 * **CPPFLAGS="-DWEBRTC_POSIX"**

@@ -24,31 +24,56 @@ AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header file
 AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
 
 if test ${BOOSTDIR}; then
-	BOOSTDIR=$(cd $BOOSTDIR; pwd)
+	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $BOOSTDIR])
+	fi
+	BOOSTDIR=$DIR
 else
 	BOOSTDIR="/usr/local/include"
 fi
 
 if test ${BOOSTLIB}; then
-	BOOSTLIB=$(cd $BOOSTLIB; pwd)
+	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $BOOSTLIB])
+	fi
+	BOOSTLIB=$DIR
 else
 	BOOSTLIB="/usr/local/lib"
 fi
 
 if test ${NDNCPPDIR}; then
-	NDNCPPDIR=$(cd $NDNCPPDIR; pwd)
+	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $NDNCPPDIR])
+	fi
+	NDNCPPDIR=$DIR
 else
 	NDNCPPDIR="/usr/local/include"
 fi
 
 if test ${NDNCPPLIB}; then
-	NDNCPPLIB=$(cd $NDNCPPLIB; pwd)
+	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $NDNCPPLIB])
+	fi
+	NDNCPPLIB=$DIR
 else
 	NDNCPPLIB="/usr/local/lib"
 fi
 
 if test ${OPENFECDIR}; then
-	OPENFECDIR=$(cd $OPENFECDIR; pwd)
+	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $OPENFECDIR])
+	fi
+	OPENFECDIR=$DIR
 fi
 
 if test "x${OPENFECSRC}" = "x"; then
@@ -60,7 +85,12 @@ if test "x${OPENFECLIB}" = "x"; then
 fi
 
 if test ${WEBRTCDIR}; then
-	WEBRTCDIR=$(cd $WEBRTCDIR; pwd)
+	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $WEBRTCDIR])
+	fi
+	WEBRTCDIR=$DIR
 fi
 
 if test "x${WEBRTCSRC}" = "x"; then
@@ -69,12 +99,6 @@ fi
 
 if test "x${WEBRTCLIB}" = "x"; then
 	WEBRTCLIB="$WEBRTCDIR/out/Release"
-fi
-
-if test ${LCONFIGDIR}; then
-	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
-else
-	LCONFIGDIR="/usr/local/include"
 fi
 
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
@@ -126,7 +150,27 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
+		# check for compiler flags
+		if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
+			AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
+		else
+			if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
+				AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+			else
+				AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+			fi
+		fi
 		
+		# check for linker flags
+		if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
+			AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
+		else
+			if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
+				AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+			else
+				AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+			fi
+		fi
 		;;
   linux*)
 		# Do something specific for linux
@@ -141,28 +185,6 @@ case $host_os in
 		AC_MSG_ERROR([Your platform is not currently supported])
 		;;
 esac
-
-# check for compiler flags
-if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
-	AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
-else
-	if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
-		AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-	else
-		AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-	fi
-fi
-
-# check for linker flags
-if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
-	AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
-else
-	if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
-		AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-	else
-		AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-	fi
-fi
 
 # create links for demo script
 AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])

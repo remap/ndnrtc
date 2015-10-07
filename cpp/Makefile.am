@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h
 
 lib_LTLIBRARIES = libndnrtc.la
 
@@ -29,7 +29,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnlib.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
-  src/ndnrtc-defines.h \
+  include/ndnrtc-defines.h \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
   include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \

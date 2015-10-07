@@ -3328,31 +3328,56 @@ AM_BACKSLASH='\'
 
 
 if test ${BOOSTDIR}; then
-	BOOSTDIR=$(cd $BOOSTDIR; pwd)
+	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $BOOSTDIR" "$LINENO" 5
+	fi
+	BOOSTDIR=$DIR
 else
 	BOOSTDIR="/usr/local/include"
 fi
 
 if test ${BOOSTLIB}; then
-	BOOSTLIB=$(cd $BOOSTLIB; pwd)
+	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $BOOSTLIB" "$LINENO" 5
+	fi
+	BOOSTLIB=$DIR
 else
 	BOOSTLIB="/usr/local/lib"
 fi
 
 if test ${NDNCPPDIR}; then
-	NDNCPPDIR=$(cd $NDNCPPDIR; pwd)
+	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $NDNCPPDIR" "$LINENO" 5
+	fi
+	NDNCPPDIR=$DIR
 else
 	NDNCPPDIR="/usr/local/include"
 fi
 
 if test ${NDNCPPLIB}; then
-	NDNCPPLIB=$(cd $NDNCPPLIB; pwd)
+	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $NDNCPPLIB" "$LINENO" 5
+	fi
+	NDNCPPLIB=$DIR
 else
 	NDNCPPLIB="/usr/local/lib"
 fi
 
 if test ${OPENFECDIR}; then
-	OPENFECDIR=$(cd $OPENFECDIR; pwd)
+	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $OPENFECDIR" "$LINENO" 5
+	fi
+	OPENFECDIR=$DIR
 fi
 
 if test "x${OPENFECSRC}" = "x"; then
@@ -3364,7 +3389,12 @@ if test "x${OPENFECLIB}" = "x"; then
 fi
 
 if test ${WEBRTCDIR}; then
-	WEBRTCDIR=$(cd $WEBRTCDIR; pwd)
+	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $WEBRTCDIR" "$LINENO" 5
+	fi
+	WEBRTCDIR=$DIR
 fi
 
 if test "x${WEBRTCSRC}" = "x"; then
@@ -3373,12 +3403,6 @@ fi
 
 if test "x${WEBRTCLIB}" = "x"; then
 	WEBRTCLIB="$WEBRTCDIR/out/Release"
-fi
-
-if test ${LCONFIGDIR}; then
-	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
-else
-	LCONFIGDIR="/usr/local/include"
 fi
 
 # Check whether --enable-logging was given.
@@ -16339,29 +16363,13 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
-
-		;;
-  linux*)
-		# Do something specific for linux
-		os_module=linux
-		;;
-   *BSD*)
-		# Do something specific for BSD
-		os_module=bsd
-		;;
-    *)
-		#Default Case
-		as_fn_error $? "Your platform is not currently supported" "$LINENO" 5
-		;;
-esac
-
-# check for compiler flags
-if [[ $CPPFLAGS =~ .*stdlib.* ]]; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped" >&5
+		# check for compiler flags
+		if [[ $CPPFLAGS =~ .*stdlib.* ]]; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped" >&5
 $as_echo "$as_me: stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped" >&6;}
-else
-	if [[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libc++" >&5
+		else
+			if [[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]; then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libc++" >&5
 $as_echo_n "checking whether C++ compiler accepts -stdlib=libc++... " >&6; }
 if ${ax_cv_check_cxxflags___stdlib_libcpp+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16396,8 +16404,8 @@ else
   :
 fi
 
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libstdc++" >&5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libstdc++" >&5
 $as_echo_n "checking whether C++ compiler accepts -stdlib=libstdc++... " >&6; }
 if ${ax_cv_check_cxxflags___stdlib_libstdcpp+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16432,16 +16440,16 @@ else
   :
 fi
 
-	fi
-fi
+			fi
+		fi
 
-# check for linker flags
-if [[ $LDFLAGS =~ .*stdlib.* ]]; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped" >&5
+		# check for linker flags
+		if [[ $LDFLAGS =~ .*stdlib.* ]]; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped" >&5
 $as_echo "$as_me: stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped" >&6;}
-else
-	if [[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libc++" >&5
+		else
+			if [[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]; then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libc++" >&5
 $as_echo_n "checking whether the linker accepts -stdlib=libc++... " >&6; }
 if ${ax_cv_check_ldflags___stdlib_libcpp+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16477,8 +16485,8 @@ else
   :
 fi
 
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libstdc++" >&5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libstdc++" >&5
 $as_echo_n "checking whether the linker accepts -stdlib=libstdc++... " >&6; }
 if ${ax_cv_check_ldflags___stdlib_libstdcpp+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16514,8 +16522,22 @@ else
   :
 fi
 
-	fi
-fi
+			fi
+		fi
+		;;
+  linux*)
+		# Do something specific for linux
+		os_module=linux
+		;;
+   *BSD*)
+		# Do something specific for BSD
+		os_module=bsd
+		;;
+    *)
+		#Default Case
+		as_fn_error $? "Your platform is not currently supported" "$LINENO" 5
+		;;
+esac
 
 # create links for demo script
 ac_config_links="$ac_config_links demoapp/rundemo.sh:demoapp/rundemo.sh"
