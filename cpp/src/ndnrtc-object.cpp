@@ -9,6 +9,7 @@
 //  Created: 8/21/13
 //
 
+#include <stdarg.h>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
 

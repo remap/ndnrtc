@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#include <stdarg.h>
+
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"

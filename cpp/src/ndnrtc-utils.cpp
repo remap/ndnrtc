@@ -10,6 +10,7 @@
 
 //#undef NDN_LOGGING
 
+#include <stdarg.h>
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
