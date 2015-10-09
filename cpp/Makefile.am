@@ -3,7 +3,6 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h
 
 lib_LTLIBRARIES = libndnrtc.la
-
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
@@ -54,5 +53,18 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
 
+if OS_LINUX
+libwebrtc-all.a:
+	$(shell mkdir -p tmp && cd tmp && \
+	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
+		ar x $$lib; \
+	done && \
+	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+
+libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+endif
+
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@ -lboost_system -lboost_timer -lboost_chrono -lboost_thread
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lwebrtc-all -lboost_system -lboost_timer -lboost_chrono -lboost_thread 
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error
+
