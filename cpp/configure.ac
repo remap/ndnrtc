@@ -22,6 +22,8 @@ AC_ARG_VAR([OPENFECLIB], [Path to the directory which contains OpenFEC library b
 AC_ARG_VAR([WEBRTCDIR], [Path to the directory which contains WebRTC trunk])
 AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)])
 AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
+AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
+AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
 
 if test ${BOOSTDIR}; then
 	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
@@ -101,6 +103,18 @@ if test "x${WEBRTCLIB}" = "x"; then
 	WEBRTCLIB="$WEBRTCDIR/out/Release"
 fi
 
+if test ${LCONFIGDIR}; then
+	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
+else
+	LCONFIGDIR="/usr/local/include"
+fi
+
+if test ${LCONFIGLIB}; then
+	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
+else
+	LCONFIGLIB="/usr/local/lib"
+fi
+
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
 	[],
 	[
@@ -174,7 +188,7 @@ case $host_os in
 		;;
   linux*)
 		# Do something specific for linux
-		os_module=linux        
+		os_module=linux
 		;;
    *BSD*)
 		# Do something specific for BSD

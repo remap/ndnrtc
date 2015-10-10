@@ -55,10 +55,19 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace 
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread
+
 
 if OS_LINUX
-libwebrtc-all.a:
+
+make-fat-libs:
+	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
+	done && \
+	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+
+libwebrtc-all.a: make-fat-libs
 	$(shell mkdir -p tmp && cd tmp && \
 	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
 		ar x $$lib; \
@@ -66,11 +75,33 @@ libwebrtc-all.a:
 	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread -lwebrtc-all
+#libndnrtc_la_LDFLAGS += -Wl,--no-undefined
+libndnrtc_la_LIBADD += -lwebrtc-all
+
 endif
 
 if OS_DARWIN
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread @WEBRTCLIBS@
+
+#libndnrtc_la_LDFLAGS += -Wl,-undefined,error
+libndnrtc_la_LIBADD += @WEBRTCLIBS@
+
+endif
+
+#################
+# client app	#
+#################
+EXTRA_PROGRAMS = ndnrtc-client
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp #src/config.cpp src/config.h
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I$(includedir)
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
+ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
+noinst_SCRIPTS = client/params.cfg
+
+if OS_LINUX
+
+#ndnrtc_client_LDFLAGS += -Wl,-rpath -Wl,/usr/lib/x86_64-linux-gnu
+ndnrtc_client_LDADD += -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
+
 endif
 
 
