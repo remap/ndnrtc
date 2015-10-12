@@ -92,7 +92,7 @@ endif
 #################
 EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp #src/config.cpp src/config.h
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I$(includedir)
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
 noinst_SCRIPTS = client/params.cfg
