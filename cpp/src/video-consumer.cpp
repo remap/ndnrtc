@@ -63,22 +63,7 @@ VideoConsumer::init(const ConsumerSettings& settings,
         playout_->init(decoder_.get());
         ((VideoPlayout*)playout_.get())->onFrameSkipped_ = boost::bind(&VideoConsumer::onFrameSkipped, this, _1, _2, _3, _4, _5);
         
-#if 0
-        rateControl_.reset(new RateControl(shared_from_this()));
-        
-        if (RESULT_FAIL(rateControl_->initialize(params_)))
-        {
-            res = RESULT_ERR;
-            LogErrorC << "failed to initialize rate control" << std::endl;
-        }
-        else
-        {
-            getFrameBuffer()->setRateControl(rateControl_);
-#endif
-            LogInfoC << "initialized" << std::endl;
-#if 0
-        }
-#endif
+        LogInfoC << "initialized" << std::endl;
         
         return res;
     }
@@ -89,20 +74,22 @@ VideoConsumer::init(const ConsumerSettings& settings,
 int
 VideoConsumer::start()
 {
-#warning error handling!
-    Consumer::start();
+    if (RESULT_GOOD(Consumer::start()))
+        LogInfoC << "started" << std::endl;
+    else
+        return RESULT_ERR;
     
-    LogInfoC << "started" << std::endl;
     return RESULT_OK;
 }
 
 int
 VideoConsumer::stop()
 {
-#warning error handling!
-    Consumer::stop();
+    if (RESULT_GOOD(Consumer::stop()))
+        LogInfoC << "stopped" << std::endl;
+    else
+        return RESULT_ERR;
     
-    LogInfoC << "stopped" << std::endl;
     return RESULT_OK;
 }
 

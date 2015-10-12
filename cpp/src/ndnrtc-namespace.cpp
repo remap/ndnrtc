@@ -8,6 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#include <stdarg.h>
+
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
@@ -281,7 +283,7 @@ int NdnRtcNamespace::findComponent(const ndn::Name &prefix,
     Name::Component searchComponent((const uint8_t*)componentString.c_str(),
                                     componentString.size());
     
-    for (int i = nComponents; i--; i >= 0)
+    for (int i = nComponents-1; i >= 0; i--)
     {
         Name::Component c = prefix.get(i);
         
@@ -345,7 +347,6 @@ bool NdnRtcNamespace::isPrefix(const ndn::Name &name, const ndn::Name &prefix)
     return true;
 }
 
-#warning change name to be consistent with previous call
 bool NdnRtcNamespace::isDeltaFramePrefix(const ndn::Name &prefix)
 {
     std::string prefixString = prefix.toUri();

@@ -40,10 +40,6 @@ Building instructions
 ----
 Please, see the [cpp/INSTALL.md](cpp/INSTALL.md) for build and install instructions.
 
-Demo app (MacOS only)
-----
-This code is shipped with a demo application which loads NDN-RTC library at runtime and provides functionality for establishing many-to-many audiovisual conferences over NDN networks. Please see [cpp/demoapp/README.md](cpp/demoapp/README.md) for more information.
-
 License
 ---
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version, with the additional exemption that compiling, linking, and/or using OpenSSL is allowed.

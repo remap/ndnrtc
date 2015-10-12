@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <memory>
 #include <signal.h>
 #include <boost/thread/mutex.hpp>
@@ -152,7 +153,7 @@ NdnRtcLibrary::NdnRtcLibrary()
     NdnRtcUtils::startBackgroundThread();
     
     LogInfo(LIB_LOG) << "Starting recovery timer..." << std::endl;
-    recoveryCheckTimer.expires_from_now(boost::chrono::milliseconds(50));
+    recoveryCheckTimer.expires_from_now(chrono::milliseconds(50));
     recoveryCheckTimer.async_wait(recoveryCheck);
     LogInfo(LIB_LOG) << "Recovery timer started" << std::endl;
     

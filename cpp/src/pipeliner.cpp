@@ -529,6 +529,8 @@ Pipeliner2::start()
     failedWindow_ = DefaultMinWindow;
     switchToState(StateWaitInitial);
     askForRightmostData();
+    
+    return RESULT_OK;
 }
 
 int

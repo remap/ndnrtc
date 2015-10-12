@@ -575,7 +575,7 @@ ndnrtc::new_api::FrameBuffer::Slot::getActiveSegment(SegmentNumber segmentNumber
     
     // should never happen
     assert(false);
-    shared_ptr<Segment> nullSeg;
+    static shared_ptr<Segment> nullSeg;
     return nullSeg;
 }
 
@@ -1486,7 +1486,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
         isKey = (slot->getNamespace() == Slot::Key);
         assembledLevel = slot->getAssembledLevel();
         
-#warning why is this here???
+        // check for acquisition of old slots
         if (playbackNo_ >= 0 &&
             slot->getPlaybackNumber() >= 0 &&
             playbackNo_+1 != slot->getPlaybackNumber())

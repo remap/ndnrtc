@@ -15,9 +15,9 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include <iostream>
-#include <pthread.h>
 #include <string>
 #include <map>
 #include <fstream>
@@ -275,9 +275,9 @@ namespace ndnlog {
             NdnLogType currentEntryLogType_;
             pthread_t current_;
             
-            pthread_mutex_t logMutex_;
+            boost::recursive_mutex logMutex_;
             
-            static pthread_mutex_t stdOutMutex_;
+            static boost::recursive_mutex stdOutMutex_;
             static std::map<std::string, Logger*> loggers_;
             static Logger* sharedInstance_;
             
@@ -314,17 +314,17 @@ namespace ndnlog {
             lockStreamExclusively()
             {
                 if (isStdOutActive_)
-                    pthread_mutex_lock(&stdOutMutex_);
+                    stdOutMutex_.lock();
                 else
-                    pthread_mutex_lock(&logMutex_);
+                    logMutex_.lock();
             }
             
             void unlockStream()
             {
                 if (isStdOutActive_)
-                    pthread_mutex_unlock(&stdOutMutex_);
+                    stdOutMutex_.unlock();
                 else
-                    pthread_mutex_unlock(&logMutex_);
+                    logMutex_.unlock();
             }
         };
         

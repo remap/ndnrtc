@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([NDN-RTC],[1.0.1],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC],[1.4.0],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -10,6 +10,7 @@ AC_PREFIX_DEFAULT([/usr/local])
 AC_CONFIG_SRCDIR([src/ndnrtc-common.h])
 AC_CONFIG_FILES([Makefile])
 AM_MAINTAINER_MODE
+AM_SILENT_RULES([yes])
 
 AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
 AC_ARG_VAR([BOOSTLIB], [Path to the directory which contains Boost library binaries folder (default is /usr/local/lib)])
@@ -18,43 +19,63 @@ AC_ARG_VAR([NDNCPPLIB], [Path to the directory which contains NDN-CPP library bi
 AC_ARG_VAR([OPENFECDIR], [Path to the directory which contains OpenFEC library])
 AC_ARG_VAR([OPENFECSRC], [Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)])
 AC_ARG_VAR([OPENFECLIB], [Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)])
-AC_ARG_VAR([PTHREADDIR], [Path to the directory which contains pthread library headers (default is /usr/local/include)])
-AC_ARG_VAR([PTHREADLIB], [Path to the directory which contains pthread library binaries (default is /usr/local/lib)])
 AC_ARG_VAR([WEBRTCDIR], [Path to the directory which contains WebRTC trunk])
-AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/wbertc)])
+AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)])
 AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
-
-AC_ARG_VAR([LCONFIGDIR], [Path to the directory which contains libconfig library headers (default is /usr/local/include)])
-AC_ARG_VAR([LCONFIGLIB], [Path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
-AC_ARG_VAR([NCURSESDIR], [Path to the directory which contains ncurses library headers (default is /usr/local/include)])
-AC_ARG_VAR([NCURSESLIB], [Path to the directory which contains ncurses library binaries (default is /usr/local/lib)])
+AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
+AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
 
 if test ${BOOSTDIR}; then
-	BOOSTDIR=$(cd $BOOSTDIR; pwd)
+	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $BOOSTDIR])
+	fi
+	BOOSTDIR=$DIR
 else
 	BOOSTDIR="/usr/local/include"
 fi
 
 if test ${BOOSTLIB}; then
-	BOOSTLIB=$(cd $BOOSTLIB; pwd)
+	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $BOOSTLIB])
+	fi
+	BOOSTLIB=$DIR
 else
 	BOOSTLIB="/usr/local/lib"
 fi
 
 if test ${NDNCPPDIR}; then
-	NDNCPPDIR=$(cd $NDNCPPDIR; pwd)
+	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $NDNCPPDIR])
+	fi
+	NDNCPPDIR=$DIR
 else
 	NDNCPPDIR="/usr/local/include"
 fi
 
 if test ${NDNCPPLIB}; then
-	NDNCPPLIB=$(cd $NDNCPPLIB; pwd)
+	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $NDNCPPLIB])
+	fi
+	NDNCPPLIB=$DIR
 else
 	NDNCPPLIB="/usr/local/lib"
 fi
 
 if test ${OPENFECDIR}; then
-	OPENFECDIR=$(cd $OPENFECDIR; pwd)
+	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $OPENFECDIR])
+	fi
+	OPENFECDIR=$DIR
 fi
 
 if test "x${OPENFECSRC}" = "x"; then
@@ -65,20 +86,13 @@ if test "x${OPENFECLIB}" = "x"; then
 	OPENFECLIB="$OPENFECDIR/bin/Release"
 fi
 
-if test ${PTHREADDIR}; then
-	PTHREADDIR=$(cd $PTHREADDIR; pwd)
-else
-	PTHREADDIR="/usr/local/include"
-fi
-
-if test ${PTHREADLIB}; then
-	PTHREADLIB=$(cd $PTHREADLIB; pwd)
-else
-	PTHREADLIB="/usr/local/lib"
-fi
-
 if test ${WEBRTCDIR}; then
-	WEBRTCDIR=$(cd $WEBRTCDIR; pwd)
+	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $WEBRTCDIR])
+	fi
+	WEBRTCDIR=$DIR
 fi
 
 if test "x${WEBRTCSRC}" = "x"; then
@@ -99,18 +113,6 @@ if test ${LCONFIGLIB}; then
 	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
 else
 	LCONFIGLIB="/usr/local/lib"
-fi
-
-if test ${NCURSESDIR}; then
-	NCURSESDIR=$(cd $NCURSESDIR; pwd)
-else
-	NCURSESDIR="/usr/local/include"
-fi
-
-if test ${NCURSESLIB}; then
-	NCURSESLIB=$(cd $NCURSESLIB; pwd)
-else
-	NCURSESLIB="/usr/local/lib"
 fi
 
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
@@ -162,11 +164,31 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
+		# check for compiler flags
+		if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
+			AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
+		else
+			if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
+				AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+			else
+				AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
+			fi
+		fi
 		
+		# check for linker flags
+		if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
+			AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
+		else
+			if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
+				AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+			else
+				AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
+			fi
+		fi
 		;;
   linux*)
 		# Do something specific for linux
-		os_module=linux        
+		os_module=linux
 		;;
    *BSD*)
 		# Do something specific for BSD
@@ -177,28 +199,6 @@ case $host_os in
 		AC_MSG_ERROR([Your platform is not currently supported])
 		;;
 esac
-
-# check for compiler flags
-if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
-	AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
-else
-	if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
-		AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-	else
-		AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-	fi
-fi
-
-# check for linker flags
-if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
-	AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
-else
-	if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
-		AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-	else
-		AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-	fi
-fi
 
 # create links for demo script
 AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])
@@ -225,17 +225,12 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 AX_CXX_COMPILE_STDCXX_11([], optional)
 
-if [[[ $OBJCXXFLAGS =~ .*gnu++11.* ]]]; then
-	AC_MSG_NOTICE([gnu++11 compiler flag provided])	
-else
-	OBJCXXFLAGS="$OBJCXXFLAGS -std=gnu++11"
-fi
-
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
 
+###############################
 # Check for Boost
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
@@ -327,6 +322,7 @@ LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
 
+###############################
 # Check for NDN-CPP
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I$NDNCPPDIR -I$BOOSTDIR"
@@ -366,6 +362,7 @@ LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
 
+###############################
 # Check for OpenFEC library
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${OPENFECSRC}"
@@ -380,20 +377,7 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
-# Check for pthread library
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${PTHREADDIR}"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDLFAGS -L$PTHREADLIB"
-SAVED_LIBS="$LIBS"
-
-AC_CHECK_HEADERS([pthread.h],,[AC_MSG_FAILURE([can't find pthread headers])])
-AC_CHECK_LIB([pthread], [pthread_atfork],,[AC_MSG_FAILURE([can't find pthread library])])
-
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-LIBS=$SAVED_LIBS
-
+###############################
 # Check for WebRTC headers
 SAVED_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
@@ -405,103 +389,8 @@ AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h syste
 	   can't find WebRTC header files
 	   ])])
 
-AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module \
-   -laudio_decoder_interface \
-   -lCNG \
-   -lG711 \
-   -lG722 \
-   -liLBC \
-   -lPCM16B \
-   -laudio_encoder_interface \
-   -laudio_conference_mixer \
-   -laudioproc_debug_proto \
-   -laudio_device \
-   -laudio_processing \
-   -laudio_processing_sse2 \
-   -lbitrate_controller \
-   -lchannel_transport \
-   -lcommon_audio \
-   -lcommon_audio_sse2 \
-   -lcommon_video \
-   -ldesktop_capture \
-   -ldesktop_capture_differ_sse2 \
-   -lframe_editing_lib \
-   -lframe_generator \
-   -lhistogram \
-   -ljpeg_turbo \
-   -liSAC \
-   -lmedia_file \
-   -lmetrics \
-   -lneteq \
-   -lopus \
-   -lpaced_sender \
-   -lprotobuf_lite \
-   -lrtp_rtcp \
-   -lrtc_base_approved \
-   -lsystem_wrappers \
-   -lvideo_capture_module \
-   -lvideo_coding_utility \
-   -lvideo_engine_core \
-   -lvideo_processing \
-   -lvideo_processing_sse2 \
-   -lvideo_quality_analysis \
-   -lvideo_render_module \
-   -lvideo_render_module_internal_impl \
-   -lvoice_engine \
-   -lvpx \
-   -lvpx_intrinsics_avx2 \
-   -lvpx_intrinsics_mmx \
-   -lvpx_intrinsics_sse2 \
-   -lvpx_intrinsics_ssse3 \
-   -lvpx_intrinsics_sse4_1 \
-   -lwebrtc_i420 \
-   -lwebrtc_opus \
-   -lwebrtc_utility \
-   -lwebrtc_video_coding \
-   -lwebrtc_vp8 \
-   -lwebrtc_vp9 \
-   -lwebrtc_common \
-   -lwebrtc \   
-   -lyuv"])
+AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module -laudio_decoder_interface -lCNG -lG711 -lG722 -liLBC -lPCM16B -laudio_encoder_interface -laudio_conference_mixer -laudioproc_debug_proto -laudio_device -laudio_processing -laudio_processing_sse2 -lbitrate_controller -lchannel_transport -lcommon_audio -lcommon_audio_sse2 -lcommon_video -ldesktop_capture -ldesktop_capture_differ_sse2 -lframe_editing_lib -lframe_generator -lhistogram -ljpeg_turbo -liSAC -lmedia_file -lmetrics -lneteq -lopus -lpaced_sender -lprotobuf_lite -lrtp_rtcp -lrtc_base_approved -lsystem_wrappers -lvideo_capture_module -lvideo_coding_utility -lvideo_engine_core -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvideo_render_module -lvideo_render_module_internal_impl -lvoice_engine -lvpx -lvpx_intrinsics_avx2 -lvpx_intrinsics_mmx -lvpx_intrinsics_sse2 -lvpx_intrinsics_ssse3 -lvpx_intrinsics_sse4_1 -lwebrtc_i420 -lwebrtc_opus -lwebrtc_utility -lwebrtc_video_coding -lwebrtc_vp8 -lwebrtc_vp9 -lwebrtc_common -lwebrtc -lyuv"])
 
 CPPFLAGS=$SAVED_CPPFLAGS
-
-# Check for libconfig library
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${LCONFIGDIR} -std=c++0x -stdlib=libstdc++"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDLFAGS -L$LCONFIGLIB -L$OPENFECLIB"
-SAVED_LIBS=$LIBS
-LIBS="$LIBS -lconfig++"
-
-AC_CHECK_HEADERS([libconfig.h++],,[AC_MSG_WARN([can't find libconfig++ headers. demo app requires libconfig++])])
-AC_MSG_CHECKING([for libconfig++...])
-AC_LINK_IFELSE(
- 	[AC_LANG_PROGRAM([#include <libconfig.h++>],
- 		[libconfig::Config cfg;])],
- 		[AC_MSG_RESULT([yes])],
- 		[AC_MSG_WARN([can't find libconfig. demo app requires libconfig++])]
-)
-
-LIBS=$SAVED_LIBS
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-
-# Check for ncurses library
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${NCURSESDIR}"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDLFAGS -L$NCURSESLIB"
-SAVED_LIBS=$LIBS
-LIBS="$LIBS -lncurses -lpanel -lmenu"
-
-AC_CHECK_HEADERS([menu.h panel.h curses.h],,[AC_MSG_WARN([can't find ncurses headers. demo app requires ncurses])])
-AC_CHECK_LIB([ncurses],[initscr], ,[AC_MSG_WARN([can't find ncurses lib. demo app requires ncurses])])
-AC_CHECK_LIB([panel],[panel_window], ,[AC_MSG_WARN([can't find ncurses lib. demo app requires ncurses])])
-AC_CHECK_LIB([menu],[menu_items], ,[AC_MSG_WARN([can't find ncurses lib. demo app requires ncurses])])
-
-LIBS=$SAVED_LIBS
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
 
 AC_OUTPUT

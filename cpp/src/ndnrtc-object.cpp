@@ -9,6 +9,7 @@
 //  Created: 8/21/13
 //
 
+#include <stdarg.h>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/chrono.hpp>
 
@@ -94,7 +95,7 @@ NdnRtcComponent::getDescription() const
 }
 
 thread
-NdnRtcComponent::startThread(function<bool ()> threadFunc)
+NdnRtcComponent::startThread(boost::function<bool ()> threadFunc)
 {
     thread threadObject = thread([threadFunc](){
         bool result = false;

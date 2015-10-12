@@ -1,9 +1,8 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/ndnrtc-defines.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h
+pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
 
 lib_LTLIBRARIES = libndnrtc.la
-
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
@@ -39,14 +38,11 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   include/params.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
-  src/rate-adaptation-module.h \
-  src/rate-control.cpp src/rate-control.h \
-  src/realtime-arc.cpp src/realtime-arc.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/session.cpp src/session.h \
-  src/simple-log.cpp src/simple-log.h \
+  src/simple-log.cpp \
   include/statistics.h src/statistics.cpp\
   src/video-coder.cpp src/video-coder.h \
   src/video-consumer.cpp src/video-consumer.h \
@@ -57,38 +53,55 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
 
+
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace -undefined error $(libndnrtc_la_OBJCFLAGS) -lndn-cpp -lopenfec @WEBRTCLIBS@ -lboost_system -lboost_timer -lboost_chrono -lboost_thread
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace 
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread
 
-.mm.o :
-	$(OBJCXX) -x objective-c++ -c @DEFS@ $(CPPFLAGS) $(ndnrtc_demo_CPPFLAGS) $< -o $@
 
-if OS_DARWIN
-  EXTRA_PROGRAMS = ndnrtc-demo
-  ndnrtc_demo_SOURCES = demoapp/config.cc demoapp/config.h \
-    demoapp/main.mm demoapp/AppDelegate.h demoapp/AppDelegate.m \
-    demoapp/renderer-stub.cc demoapp/renderer-stub.h \
-    demoapp/view.cc demoapp/view.h \
-    demoapp/CameraCapturer.h demoapp/CameraCapturer.m \
-    src/simple-log.cpp include/simple-log.h \
-    include/interfaces.h
-    
-  ndnrtc_demo_CPPFLAGS = -I$(top_srcdir)/include -I@LCONFIGDIR@ -I@PTHREADDIR@ -I@NCURSESDIR@
-  
-  ndnrtc_demo_LDFLAGS = -all-static -L@LCONFIGLIB@ -L@NCURSESLIB@ -L@PTHREADLIB@ -lconfig++ -lpanel -lmenu -lncurses -lpthread -framework Foundation -framework Cocoa -framework AVFoundation -framework CoreVideo -framework CoreMedia
-  
-  ndnrtc_demo_OBJCFLAGS = -fobjc-arc
-  
-  noinst_SCRIPTS = demoapp/rundemo.sh resources/ndnrtc.cfg
+if OS_LINUX
+
+make-fat-libs:
+	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
+	done && \
+	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+
+libwebrtc-all.a: make-fat-libs
+	$(shell mkdir -p tmp && cd tmp && \
+	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
+		ar x $$lib; \
+	done && \
+	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+
+libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+#libndnrtc_la_LDFLAGS += -Wl,--no-undefined
+libndnrtc_la_LIBADD += -lwebrtc-all
+
 endif
 
-check_PROGRAMS = bin/unit-tests/test-encoder
+if OS_DARWIN
 
-bin_unit_tests_test_encoder_SOURCES = test/new/test-encoder.cpp contrib/gtest-1.7.0/fused-src/gtest/gtest-all.cc
-bin_unit_tests_test_encoder_CPPFLAGS = -I$(top_srcdir)/contrib/gtest-1.7.0/fused-src -I$(top_srcdir)/src -I$(top_srcdir)/include -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@
-bin_unit_tests_test_encoder_LDADD = libndnrtc.la
+#libndnrtc_la_LDFLAGS += -Wl,-undefined,error
+libndnrtc_la_LIBADD += @WEBRTCLIBS@
 
-TESTS = $(check_PROGRAMS)
+endif
 
+#################
+# client app	#
+#################
+EXTRA_PROGRAMS = ndnrtc-client
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp #src/config.cpp src/config.h
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
+ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
+noinst_SCRIPTS = client/params.cfg
+
+if OS_LINUX
+
+#ndnrtc_client_LDFLAGS += -Wl,-rpath -Wl,/usr/lib/x86_64-linux-gnu
+ndnrtc_client_LDADD += -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
+
+endif
 
 
