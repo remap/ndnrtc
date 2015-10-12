@@ -10,7 +10,6 @@ These are prerequisites to build NDN-RTC.
 * [WebRTC branch-heads/44](https://code.google.com/p/webrtc/)
 * [OpenFEC](http://openfec.org/downloads.html)
 * [Boost](http://www.boost.org/users/download/)
-* pthread
 
 **Optional (for ndnrtc-client app only)**
 * [libconfig](http://www.hyperrealm.com/libconfig/)
@@ -35,13 +34,13 @@ NDN-RTC depends on its prerequisites. Paths to these sources and/or libraries ca
 NDN-RTC library is statically linked to its prerequisites. Therefore it's important to verify that all prerequisites which are C++ libraries were built using the same standard c++ library (either libc++ or libstdc++) - otherwise, linking stage will fail. This can be ensured by passing flag `-stdlib=libc++` or `-stdlib=libstdc++` to the compiler. Please, make sure that all prerequisites were built against the same version of standard library (especially WebRTC and NDN-CPP). WebRTC is usually built against libstdc++. In general it makes sense to pass `-stdlib=libstdc++` flag while building other prerequisites. In further instructions the preference is given to libstdc++ library.
 
 ## Environment
-Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where prerequisites code and NDN-RTC code will be stored and copmiled:
+Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled:
 
 <pre>
 $ mkdir ndnrtc-env && cd ndnrtc-env
 </pre>
 
-Future instructions assume everything is happening inside this folder. Console snippets at each step represent general approach taken to build dependencies. It **may** differ for your system.
+Future instructions assume everything is happening inside this folder. Console code blocks at each step represent general approach taken to build dependencies and show flags given used for configuration.
 
 # Build instructions for OS X 10.9, 10.10, 10.11
 ## Prerequisites
@@ -78,8 +77,10 @@ In order to build NDN-CPP with boost shared pointers it's not enough to install 
 <pre>
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build/share
+$ git checkout v0.7
 $ echo CXXFLAGS="-stdlib=libstdc++ -I$(pwd)/../boost_1_54_0/build/include"\n > build/share/config.site
 $ echo BOOST_LDFLAGS="-L$(pwd)/../boost_1_54_0/build/lib" >> build/share/config.site
+$ echo LDFLAGS="-stdlib=libstdc++" >> build/share/config.site
 $ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
 $ make && make install
 </pre>
@@ -102,12 +103,14 @@ $ make
 </pre>
 
 ### Libconfig
+Download it from [here](http://www.hyperrealm.com/libconfig/).
+
 <pre>
 $ cd libconfig
 $ mkdir -p build/share
 $ echo 'CXXFLAGS="-stdlib=libstdc++" CPPFLAGS="-stdlib=libstdc++" LDFLAGS="-stdlib=libstdc++"' > build/share/config.site
 $ ./configure --prefix=$(pwd)/build
-$ make && sudo install
+$ make && make install
 </pre>
 
 ## NDN-RTC
@@ -126,7 +129,7 @@ $ echo WEBRTCDIR=`pwd`/../webrtc/src >> build/share/config.site
 $ echo LCONFIGDIR=`pwd`/../libconfig/build/include >> build/share/config.site
 $ echo LCONFIGLIB=`pwd`/../libconfig/build/bin >> build/share/config.site
 $ ./configure --prefix=$(pwd)/build
-$ make && sudo make install
+$ make && make install
 </pre>
 
 # Build instructions for Ubuntu 12.04, 14.04, 15.04
@@ -154,8 +157,9 @@ Full instructions [here](https://github.com/named-data/ndn-cpp/blob/master/INSTA
 <pre>
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build
+$ git checkout v0.7
 $ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
-$ make && sudo make install
+$ make && make install
 </pre>
 
 ### OpenFEC
@@ -174,11 +178,13 @@ $ make
 </pre>
 
 ### Libconfig
+Download it from [here](http://www.hyperrealm.com/libconfig/).
+
 <pre>
 $ cd libconfig
 $ mkdir -p build/share
 $ ./configure --prefix=$(pwd)/build
-$ make && sudo install
+$ make && make install
 </pre>
 
 ## NDN-RTC
@@ -195,7 +201,7 @@ $ echo WEBRTCDIR=`pwd`/../webrtc/src >> build/share/config.site
 $ echo LCONFIGDIR=`pwd`/../libconfig/build/include >> build/share/config.site
 $ echo LCONFIGLIB=`pwd`/../libconfig/build/bin >> build/share/config.site
 $ ./configure --prefix=$(pwd)/build
-$ make && sudo make install
+$ make && make install
 </pre>
 
 # Headless client
