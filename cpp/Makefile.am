@@ -43,7 +43,8 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp \
-  include/statistics.h src/statistics.cpp\
+  include/statistics.h src/statistics.cpp \
+  src/threading-capability.h src/threading-capability.cpp \
   src/video-coder.cpp src/video-coder.h \
   src/video-consumer.cpp src/video-consumer.h \
   src/video-decoder.cpp src/video-decoder.h \

@@ -11,11 +11,14 @@
 #ifndef __ndnrtc__video_thread__
 #define __ndnrtc__video_thread__
 
+#include <boost/thread/mutex.hpp>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-namespace.h"
 #include "video-coder.h"
 #include "frame-buffer.h"
 #include "media-thread.h"
+#include "threading-capability.h"
 
 namespace ndnrtc
 {
@@ -45,11 +48,12 @@ namespace ndnrtc
          */
         class VideoThread : public MediaThread,
                             public IRawFrameConsumer,
-                            public IEncoderDelegate
+                            public IEncoderDelegate,
+                            public ThreadingCapability
         {
         public:
             VideoThread();
-            ~VideoThread(){}
+            ~VideoThread();
             
             static const double ParityRatio;
             
@@ -88,6 +92,9 @@ namespace ndnrtc
             Name deltaFramesPrefix_, keyFramesPrefix_;
             boost::shared_ptr<VideoCoder> coder_;
             
+            boost::mutex frameProcessingMutex_;
+            WebRtcVideoFrame deliveredFrame_;
+            
             void
             onInterest(const boost::shared_ptr<const Name>& prefix,
                        const boost::shared_ptr<const Interest>& interest,
@@ -113,6 +120,11 @@ namespace ndnrtc
             
             void
             onFrameDropped();
+            
+            void
+            publishFrameData(const webrtc::EncodedImage &encodedImage,
+                             double captureTimestamp,
+                             bool completeFrame);
             
             VideoThreadSettings&
             getSettings() const

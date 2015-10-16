@@ -1531,7 +1531,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 // update stat
                 (*statStorage_)[Indicator::IncompleteNum]++;
                 if (isKey)
-                    (*statStorage_)[Indicator::IncompleteKeyNum];
+                    (*statStorage_)[Indicator::IncompleteKeyNum]++;
             }
             
             slot->getPacketData(packetData);

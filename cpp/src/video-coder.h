@@ -16,6 +16,8 @@
 #include "base-capturer.h"
 #include "statistics.h"
 
+//#define USE_VP9
+
 namespace ndnrtc {
     
     namespace new_api {

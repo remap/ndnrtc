@@ -138,36 +138,54 @@ bool NdnRtcUtils::isBackgroundThread()
 void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                         boost::function<void(void)> onCompletion)
 {
-    (*NdnRtcIoService).dispatch([=]{
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
-    });
-}
-
-void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
-                                             boost::function<void(void)> onCompletion)
-{
-    if (boost::this_thread::get_id() == backgroundThread.get_id())
+    if (backgroundWork.get())
+    {
+        (*NdnRtcIoService).dispatch([=]{
+            dispatchBlock();
+            if (onCompletion)
+                onCompletion();
+        });
+    }
+    else
     {
         dispatchBlock();
         if (onCompletion)
             onCompletion();
     }
-    else
+}
+
+void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
+                                             boost::function<void(void)> onCompletion)
+{
+    if (backgroundWork.get())
     {
-        boost::mutex m;
-        boost::unique_lock<boost::mutex> lock(m);
-        boost::condition_variable isDone;
-        
-        (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
+        if (boost::this_thread::get_id() == backgroundThread.get_id())
+        {
             dispatchBlock();
             if (onCompletion)
                 onCompletion();
-            isDone.notify_one();
-        });
-        
-        isDone.wait(lock);
+        }
+        else
+        {
+            boost::mutex m;
+            boost::unique_lock<boost::mutex> lock(m);
+            boost::condition_variable isDone;
+            
+            (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
+                dispatchBlock();
+                if (onCompletion)
+                    onCompletion();
+                isDone.notify_one();
+            });
+            
+            isDone.wait(lock);
+        }
+    }
+    else
+    {
+        dispatchBlock();
+        if (onCompletion)
+            onCompletion();
     }
 }
 
