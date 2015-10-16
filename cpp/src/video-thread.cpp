@@ -17,6 +17,9 @@ using namespace ndnlog;
 using namespace ndnrtc::new_api;
 using namespace webrtc;
 
+
+
+//******************************************************************************
 const double VideoThread::ParityRatio = 0.2;
 
 VideoThread::VideoThread():
@@ -30,6 +33,13 @@ keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0))
     description_ = "vthread";
     coder_->registerCallback(this);
     coder_->setFrameConsumer(this);
+    startMyThread();
+}
+
+VideoThread::~VideoThread()
+{
+    lock_guard<mutex> processingLock(frameProcessingMutex_);
+    stopMyThread();
 }
 
 //******************************************************************************
@@ -81,7 +91,19 @@ void
 VideoThread::onDeliverFrame(WebRtcVideoFrame &frame,
                                double unixTimeStamp)
 {
-    coder_->onDeliverFrame(frame, unixTimeStamp);
+    if (frameProcessingMutex_.try_lock())
+    {
+        deliveredFrame_.CopyFrame(frame);
+        dispatchOnMyThread([this, unixTimeStamp](){
+            lock_guard<mutex> processingLock(frameProcessingMutex_);
+            coder_->onDeliverFrame(deliveredFrame_, unixTimeStamp);
+        });
+        frameProcessingMutex_.unlock();
+    }
+    else
+        LogWarnC << "delivered new raw frame while previous"
+        " is still being processed" << std::endl;
+
 }
 
 void
@@ -90,10 +112,24 @@ VideoThread::onEncodingStarted()
     encodingTimestampMs_ = NdnRtcUtils::millisecondTimestamp();
 }
 
+void VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
+                                          double captureTimestamp,
+                                          bool completeFrame)
+{
+    // as we're using ThreadsafeFace we need to synchronize with it
+    // the only way to sync is to execute code which accesses Face on
+    // the same thread that ThreadsafeFace is running.
+    // thus, we'll dispatch further work onto main background NDN-RTC
+    // thread synchronously
+    NdnRtcUtils::performOnBackgroundThread([this, &encodedImage, captureTimestamp, completeFrame](){
+        publishFrameData(encodedImage, captureTimestamp, completeFrame);
+    });
+}
+
 void
-VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                     double captureTimestamp,
-                                     bool completeFrame)
+VideoThread::publishFrameData(const webrtc::EncodedImage &encodedImage,
+                              double captureTimestamp,
+                              bool completeFrame)
 {
     int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
     
