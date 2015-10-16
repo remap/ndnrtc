@@ -6,8 +6,7 @@
 
 #include <ndnrtc/interfaces.h>
 
-class RendererInternal : public ndnrtc::IExternalRenderer
-{
+class RendererInternal : public ndnrtc::IExternalRenderer{
 public:
     RendererInternal():renderBuffer_(nullptr), bufferSize_(0) { };
     ~RendererInternal(){ };

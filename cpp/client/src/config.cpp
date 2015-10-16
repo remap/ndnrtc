@@ -11,11 +11,20 @@
 
 #include "config.h"
 
+#define GENERAL_KEY "general"
+#define CONSUMER_KEY "consumer"
+#define CONSUMER_BAISC_KEY "basic"
+#define CONSUMER_BAISC_AUDIO_KEY "audio"
+#define CONSUMER_BAISC_VIDEO_KEY "video"
+#define CONSUMER_BAISC_STAT_KEY "stat"
+#define CONSUMER_STREAMS_KEY "streams"
+
 using namespace std;
 using namespace libconfig;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
+
 
 int getValueIntOrDouble(const Setting &SettingPath,string lookupKey, double &paramToFind){
     int valueInt=0;
@@ -44,10 +53,7 @@ int getValueIntOrDouble(const Setting &SettingPath, string lookupKey, int &param
     return EXIT_SUCCESS;
 }
 
-int loadParamsFromFile(const string &cfgFileName,
-                       ndnrtc::new_api::AppParams &params)
-{
-    Config cfg;
+int loadConfigFile(const string &cfgFileName, Config &cfg){
     
     // Read the file. If there is an error, report it and exit.
     try
@@ -58,7 +64,7 @@ int loadParamsFromFile(const string &cfgFileName,
     {
         LogError("")
         << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     catch(const ParseException &pex)
     {
@@ -69,15 +75,27 @@ int loadParamsFromFile(const string &cfgFileName,
         
         return(EXIT_FAILURE);
     }
+}
+
+int loadParamsFromFile(const string &cfgFileName,
+                       ClientParams &params){
     
+    Config cfg;
+    loadConfigFile(cfgFileName, cfg);
     const Setting &root = cfg.getRoot();
     
+    try{
+        root.lookupValue("app_online_time", params.headlessAppOnlineTime);
+        LogInfo("") << "app_online_time(seconds): " << params.headlessAppOnlineTime << std::endl;
+
+    }catch(const SettingNotFoundException &nfex){
+        // ignore
+    }
+
     try
     { // setup general settings
-        const Setting &general = root["general"];
+        const Setting &general = root[GENERAL_KEY];
         string log_level, log_file, headlessUser;
-        bool use_tlv, use_rtx, use_fec, use_cache, use_av_sync, use_audio, use_video;
-        unsigned int headless_mode;
         
         if (general.lookupValue("log_level", log_level))
         {
@@ -103,8 +121,6 @@ int loadParamsFromFile(const string &cfgFileName,
         general.lookupValue("audio", params.generalParams_.useAudio_);
         general.lookupValue("video", params.generalParams_.useVideo_);
         general.lookupValue("skip_incomplete", params.generalParams_.skipIncomplete_);
-        general.lookupValue("prefix", params.generalParams_.prefix_);
-        LogInfo("") << "prefix: " << params.generalParams_.prefix_ << std::endl;
         
         const Setting &ndnNetwork = general["ndnnetwork"];
         ndnNetwork.lookupValue("connect_host", params.generalParams_.host_);
@@ -114,46 +130,47 @@ int loadParamsFromFile(const string &cfgFileName,
     }
     catch(const SettingNotFoundException &nfex)
     {
-        // ignore.
+        LogInfo("") << "Error when loading general settings!" << std::endl;
     }
-    
-    try
-    {
-        const Setting &headless = root["headless"];
-        unsigned int mode;
-        
-        headless.lookupValue("mode", mode);
-        LogInfo("") << "(headless) mode: " << mode << std::endl;
 
-        if (mode == 1)
-            params.headlessModeParams_.mode_ = HeadlessModeParams::HeadlessModeConsumer;
-        else if (mode == 2)
-            params.headlessModeParams_.mode_ = HeadlessModeParams::HeadlessModeProducer;
-        
-        headless.lookupValue("username", params.headlessModeParams_.username_);
-        LogInfo("") << "params.headlessModeParams_.username_: " << params.headlessModeParams_.username_ << std::endl;
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-    }
-    
+    const Setting &consumerRootSettings = root[CONSUMER_KEY];
+
     try
-    {// setup consumer settings
-        const Setting &consumerAudioSettings = root["consumer"]["audio"];
-        const Setting &consumerVideoSettings = root["consumer"]["video"];
+    {// setup consumer general settings
+        const Setting &consumerBasicSettings = consumerRootSettings[CONSUMER_BAISC_KEY];
+        const Setting &consumerBasicAudioSettings = consumerBasicSettings[CONSUMER_BAISC_AUDIO_KEY];
+        const Setting &consumerBasicVideoSettings = consumerBasicSettings[CONSUMER_BAISC_VIDEO_KEY];
+        const Setting &consumerBasicStatSettings = consumerBasicSettings[CONSUMER_BAISC_STAT_KEY];
         
-        consumerAudioSettings.lookupValue("interest_lifetime", params.audioConsumerParams_.interestLifetime_);
+        consumerBasicAudioSettings.lookupValue("interest_lifetime", params.audioConsumerParams_.interestLifetime_);
         LogInfo("") << "params.audioConsumerParams_.interestLifetime_: " << params.audioConsumerParams_.interestLifetime_ << std::endl;
-        consumerAudioSettings.lookupValue("jitter_size", params.audioConsumerParams_.jitterSizeMs_);
-        consumerAudioSettings.lookupValue("buffer_size", params.audioConsumerParams_.bufferSlotsNum_);
-        consumerAudioSettings.lookupValue("slot_size", params.audioConsumerParams_.slotSize_);
+        consumerBasicAudioSettings.lookupValue("jitter_size", params.audioConsumerParams_.jitterSizeMs_);
+        consumerBasicAudioSettings.lookupValue("buffer_size", params.audioConsumerParams_.bufferSlotsNum_);
+        consumerBasicAudioSettings.lookupValue("slot_size", params.audioConsumerParams_.slotSize_);
         
-        consumerVideoSettings.lookupValue("interest_lifetime", params.videoConsumerParams_.interestLifetime_);
+        consumerBasicVideoSettings.lookupValue("interest_lifetime", params.videoConsumerParams_.interestLifetime_);
         LogInfo("") << "params.videoConsumerParams_.interestLifetime_: " << params.videoConsumerParams_.interestLifetime_ << std::endl;
-        consumerVideoSettings.lookupValue("jitter_size", params.videoConsumerParams_.jitterSizeMs_);
-        consumerVideoSettings.lookupValue("buffer_size", params.videoConsumerParams_.bufferSlotsNum_);
-        consumerVideoSettings.lookupValue("slot_size", params.videoConsumerParams_.slotSize_);
+        consumerBasicVideoSettings.lookupValue("jitter_size", params.videoConsumerParams_.jitterSizeMs_);
+        consumerBasicVideoSettings.lookupValue("buffer_size", params.videoConsumerParams_.bufferSlotsNum_);
+        consumerBasicVideoSettings.lookupValue("slot_size", params.videoConsumerParams_.slotSize_);
+
+        int statEntryNumber=consumerBasicStatSettings.getLength();
+        LogInfo("") << "statEntryNumber: " << statEntryNumber << std::endl;
+        for (int statEntryCount = 0; statEntryCount < statEntryNumber; statEntryCount++){
+            Setting &consumerBasicStatEntrySettings = consumerBasicSettings[CONSUMER_BAISC_STAT_KEY][statEntryCount];
+            Statistics* stat=new Statistics();
+            consumerBasicStatEntrySettings.lookupValue("name",stat->statisticName);
+            LogInfo("") << "stat.statisticName: " << stat->statisticName << std::endl;
+            Setting &consumerBasicStatEntryItemSettings = consumerBasicStatEntrySettings["statistics"];
+            int statItemStatisticsNumber=consumerBasicStatEntryItemSettings.getLength();
+            for (int statItemStatisticsCount = 0; statItemStatisticsCount < statItemStatisticsNumber; statItemStatisticsCount++){
+                string consumerBasicStatEntryItemSetting=consumerBasicStatEntryItemSettings[statItemStatisticsCount];
+                stat->statisticItem.push_back(consumerBasicStatEntryItemSetting);
+                LogInfo("") << "consumerBasicStatEntryItemSettings[" << statItemStatisticsCount << "]: "<< consumerBasicStatEntryItemSetting << std::endl;
+            }
+            params.statistics_.push_back(*stat);
+        }
+        
     }
     catch (const SettingNotFoundException &nfex)
     {
@@ -162,21 +179,75 @@ int loadParamsFromFile(const string &cfgFileName,
 
     
     try
-    {// setup audio stream settings
-        const Setting &audioStreamsSettings = root["allStreams"]["allAudioStreams"];
-        int audioCount = audioStreamsSettings.getLength();
+    {// setup stream settings
+        const Setting &consumerStreamsSettings = consumerRootSettings[CONSUMER_STREAMS_KEY];
+        int streamsNumber=consumerStreamsSettings.getLength();
+        for (int streamsCount = 0; streamsCount < streamsNumber; streamsCount++){
 
-        for(int audiocount=0; audiocount<audioCount; audiocount++){
-            const Setting &audioStreamSettings = audioStreamsSettings[audiocount];
-            std::string prefix;
-            audioStreamSettings.lookupValue("asessionPrefix",prefix);
-            LogInfo("") << "asessionPrefix-"<<audiocount<< ": " << prefix<< std::endl;
+            const Setting &consumerStreamSettings=consumerStreamsSettings[streamsCount];
+            string streamType="";
+            consumerStreamSettings.lookupValue("type", streamType);
+            if(streamType=="audio"){
+                MediaStreamParamsSupplement defaultAudioStream; 
+                defaultAudioStream.mediaStream_.type_ = MediaStreamParams::MediaStreamTypeAudio;
+                consumerStreamSettings.lookupValue("session_prefix", defaultAudioStream.streamPrefix);
+                consumerStreamSettings.lookupValue("threadToFetch", defaultAudioStream.threadToFetch);
+                consumerStreamSettings.lookupValue("sink", defaultAudioStream.mediaStreamSink_);
+                consumerStreamSettings.lookupValue("name", defaultAudioStream.mediaStream_.streamName_);
+                consumerStreamSettings.lookupValue("segment_size", defaultAudioStream.mediaStream_.producerParams_.segmentSize_);
+
+                const Setting &consumerStreamThreadsSettings=consumerStreamSettings["thread"];
+                int audioThreadNumber=consumerStreamThreadsSettings.getLength();
+                
+                for (int audioThreadCount = 0; audioThreadCount < audioThreadNumber; audioThreadCount++){
+                    AudioThreadParams* audioThread=new AudioThreadParams();
+                    consumerStreamThreadsSettings[audioThreadCount].lookupValue("name", audioThread->threadName_);
+                    defaultAudioStream.mediaStream_.mediaThreads_.push_back(audioThread);
+                    LogInfo("") << "consumerStreamThreadsSettings[" << audioThreadCount << "](audio): " << audioThread->threadName_ << std::endl;
+                }
+                 params.defaultAudioStreams_.push_back(defaultAudioStream);
+            }else if(streamType=="video"){
+                MediaStreamParamsSupplement defaultVideoStream;
+                defaultVideoStream.mediaStream_.type_ = MediaStreamParams::MediaStreamTypeVideo;
+                consumerStreamSettings.lookupValue("session_prefix", defaultVideoStream.streamPrefix);
+                consumerStreamSettings.lookupValue("threadToFetch", defaultVideoStream.threadToFetch);
+                consumerStreamSettings.lookupValue("sink", defaultVideoStream.mediaStreamSink_);
+                consumerStreamSettings.lookupValue("name", defaultVideoStream.mediaStream_.streamName_);
+                consumerStreamSettings.lookupValue("segment_size", defaultVideoStream.mediaStream_.producerParams_.segmentSize_);
+
+                const Setting &consumerStreamThreadsSettings=consumerStreamSettings["thread"];
+                int videoThreadNumber=consumerStreamThreadsSettings.getLength();
+                
+                for (int videoThreadCount = 0; videoThreadCount < videoThreadNumber; videoThreadCount++){
+                    VideoThreadParams* videoThread=new VideoThreadParams(); 
+                    consumerStreamThreadsSettings[videoThreadCount].lookupValue("name", videoThread->threadName_);
+                    getValueIntOrDouble(consumerStreamThreadsSettings[videoThreadCount], "average_segnum_delta", videoThread->deltaAvgSegNum_);
+                    getValueIntOrDouble(consumerStreamThreadsSettings[videoThreadCount], "average_segnum_delta_parity", videoThread->deltaAvgParitySegNum_);
+                    getValueIntOrDouble(consumerStreamThreadsSettings[videoThreadCount], "average_segnum_key", videoThread->keyAvgSegNum_);
+                    getValueIntOrDouble(consumerStreamThreadsSettings[videoThreadCount], "average_segnum_key_parity", videoThread->keyAvgParitySegNum_);
+                    LogInfo("") << "consumerStreamThreadsSettings[" << videoThreadCount << "](video): " << videoThread->keyAvgParitySegNum_ << std::endl;
+                    
+                    const Setting &consumerStreamThreadCoderSettings=consumerStreamThreadsSettings[videoThreadCount]["coder"];
+                    getValueIntOrDouble(consumerStreamThreadCoderSettings, "frame_rate", videoThread->coderParams_.codecFrameRate_);
+                    consumerStreamThreadCoderSettings.lookupValue("gop", videoThread->coderParams_.gop_);
+                    consumerStreamThreadCoderSettings.lookupValue("start_bitrate", videoThread->coderParams_.startBitrate_);
+                    consumerStreamThreadCoderSettings.lookupValue("max_bitrate", videoThread->coderParams_.maxBitrate_);
+                    consumerStreamThreadCoderSettings.lookupValue("encode_height", videoThread->coderParams_.encodeWidth_);
+                    consumerStreamThreadCoderSettings.lookupValue("encode_width", videoThread->coderParams_.encodeHeight_);
+
+                    defaultVideoStream.mediaStream_.mediaThreads_.push_back(videoThread);
+                }
+                params.defaultVideoStreams_.push_back(defaultVideoStream);
+            }else{
+                LogInfo("") << "Unknow stream type!" << std::endl;
+                return(EXIT_FAILURE);
+            }
         }
     }
     catch (const SettingNotFoundException &nfex)
     {
         // ignore
-        LogInfo("") << "Error when loading audio stream settings!" << std::endl;
+        LogInfo("") << "Error when loading stream settings!" << std::endl;
     }
     
 ////////////////////////////////////
@@ -276,383 +347,4 @@ int loadParamsFromFile(const string &cfgFileName,
     // }
 
     return EXIT_SUCCESS;
-}
-
-int loadVideoStreamParamsFromFile(const std::string &cfgFileName,
-                       ndnrtc::new_api::MediaStreamParams &videoStreamParams,
-                       std::string &videoStreamPrefix,
-                       std::string &vthreadToFetch,
-                       int videoStreamCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup video stream settings
-        const Setting &videoStreamSettings = root["allStreams"]["allVideoStreams"][videoStreamCount];
-        
-        videoStreamSettings.lookupValue("vsessionPrefix",videoStreamPrefix);
-        LogInfo("") << "videoStreamPrefix: " << videoStreamPrefix<< std::endl;
-        videoStreamSettings.lookupValue("vthreadToFetch",vthreadToFetch);
-        videoStreamSettings.lookupValue("streamName_",videoStreamParams.streamName_ );
-        videoStreamParams.type_ = MediaStreamParams::MediaStreamTypeVideo;
-
-        const Setting &videoStreamProducerSettings = root["allStreams"]["allVideoStreams"][videoStreamCount]["producerParams_"];
-        videoStreamProducerSettings.lookupValue("segmentSize_",videoStreamParams.producerParams_.segmentSize_);
-        LogInfo("") << "videoStreamParams.producerParams_.segmentSize_: "<< videoStreamParams.producerParams_.segmentSize_ << std::endl;
-        videoStreamProducerSettings.lookupValue("freshnessMs_",videoStreamParams.producerParams_.freshnessMs_);
-
-
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
-}
-
-int getVideoStreamsNumberFromFile(const std::string &cfgFileName){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup video stream settings
-        const Setting &videoStreamsSettings = root["allStreams"]["allVideoStreams"];
-        LogInfo("") << "videoStreamsSettings.getLength(): "<< videoStreamsSettings.getLength() << std::endl;
-        return videoStreamsSettings.getLength();
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream number settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-}
-
-int loadVideoStreamThreadParamsFromFile(const std::string &cfgFileName,
-                       ndnrtc::new_api::VideoThreadParams* vthreadParams,
-                       int videoStreamCount,
-                       int videoStreamThreadCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-    
-    try
-    {// setup video stream settings
-        const Setting &videoStreamProducerSettings = root["allStreams"]["allVideoStreams"][videoStreamCount]["vthreadParams"][videoStreamThreadCount];
-
-        videoStreamProducerSettings.lookupValue("threadName_",vthreadParams->threadName_);
-        LogInfo("") << "vthreadParams->threadName_: "<<vthreadParams->threadName_ << std::endl;
-        getValueIntOrDouble(videoStreamProducerSettings, "deltaAvgSegNum_", vthreadParams->deltaAvgSegNum_);
-        LogInfo("") << "vthreadParams->deltaAvgSegNum_: "<<vthreadParams->deltaAvgSegNum_ << std::endl;
-        getValueIntOrDouble(videoStreamProducerSettings, "deltaAvgParitySegNum_", vthreadParams->deltaAvgParitySegNum_);
-        getValueIntOrDouble(videoStreamProducerSettings, "keyAvgSegNum_", vthreadParams->keyAvgSegNum_);
-        getValueIntOrDouble(videoStreamProducerSettings, "keyAvgParitySegNum_", vthreadParams->keyAvgParitySegNum_);
-
-        const Setting &videoStreamProducerCoderSettings = root["allStreams"]["allVideoStreams"][videoStreamCount]["vthreadParams"][videoStreamThreadCount]["coderParams_"];
-
-        getValueIntOrDouble(videoStreamProducerCoderSettings, "codecFrameRate_", vthreadParams->coderParams_.codecFrameRate_);
-        LogInfo("") << "vthreadParams->coderParams_.codecFrameRate_: " << vthreadParams->coderParams_.codecFrameRate_ << std::endl;
-        videoStreamProducerCoderSettings.lookupValue("gop_",vthreadParams->coderParams_.gop_);
-        videoStreamProducerCoderSettings.lookupValue("startBitrate_",vthreadParams->coderParams_.startBitrate_);
-        videoStreamProducerCoderSettings.lookupValue("maxBitrate_",vthreadParams->coderParams_.maxBitrate_);
-        videoStreamProducerCoderSettings.lookupValue("encodeHeight_",vthreadParams->coderParams_.encodeHeight_);
-        videoStreamProducerCoderSettings.lookupValue("encodeWidth_",vthreadParams->coderParams_.encodeWidth_);
-        LogInfo("") << "vthreadParams->coderParams_.encodeHeight_: "<< vthreadParams->coderParams_.encodeHeight_ << std::endl;
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream thread settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
-}
-
-int getVideoStreamThreadNumberFromFile(const std::string &cfgFileName,
-                        int videoStreamCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup video stream settings
-        const Setting &videoStreamThreadSettings = root["allStreams"]["allVideoStreams"][videoStreamCount]["vthreadParams"];
-        LogInfo("") << "videoStreamThreadSettings.getLength(): "<< videoStreamThreadSettings.getLength() << std::endl;
-        return videoStreamThreadSettings.getLength();
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream number settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-}
-
-int loadAudioStreamParamsFromFile(const std::string &cfgFileName,
-                       ndnrtc::new_api::MediaStreamParams &audioStreamParams,
-                       std::string &audioStreamPrefix,
-                       std::string &athreadToFetch,
-                       int audioStreamCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup audio stream settings
-        const Setting &audioStreamSettings = root["allStreams"]["allAudioStreams"][audioStreamCount];
-        
-        audioStreamSettings.lookupValue("asessionPrefix",audioStreamPrefix);
-        LogInfo("") << "audioStreamPrefix: " << audioStreamPrefix<< std::endl;
-        audioStreamSettings.lookupValue("athreadToFetch",athreadToFetch);
-        audioStreamSettings.lookupValue("streamName_",audioStreamParams.streamName_);
-        audioStreamParams.type_ = MediaStreamParams::MediaStreamTypeAudio;
-
-        const Setting &audioStreamProducerSettings = root["allStreams"]["allAudioStreams"][audioStreamCount]["producerParams_"];
-        audioStreamProducerSettings.lookupValue("segmentSize_",audioStreamParams.producerParams_.segmentSize_);
-        LogInfo("") << "audioStreamParams.producerParams_.segmentSize_: "<< audioStreamParams.producerParams_.segmentSize_ << std::endl;
-        audioStreamProducerSettings.lookupValue("freshnessMs_",audioStreamParams.producerParams_.freshnessMs_);
-
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
-}
-
-int getAudioStreamsNumberFromFile(const std::string &cfgFileName){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup audio stream settings
-        const Setting &audioStreamsSettings = root["allStreams"]["allAudioStreams"];
-        LogInfo("") << "audioStreamsSettings.getLength(): "<< audioStreamsSettings.getLength() << std::endl;
-        return audioStreamsSettings.getLength();
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading audio stream number settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-}
-
-int loadAudioStreamThreadParamsFromFile(const std::string &cfgFileName,
-                       ndnrtc::new_api::AudioThreadParams* athreadParams,
-                       int audioStreamCount,
-                       int audioStreamThreadCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-    
-    try
-    {// setup audio stream settings
-        const Setting &audioStreamThreadSettings = root["allStreams"]["allAudioStreams"][audioStreamCount]["athreadParams"][audioStreamThreadCount];
-        
-        audioStreamThreadSettings.lookupValue("threadName_",athreadParams->threadName_);
-        LogInfo("") << "athreadParams->threadName_: "<<athreadParams->threadName_ << std::endl;
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading audio stream thread settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
-}
-
-int getAudioStreamThreadNumberFromFile(const std::string &cfgFileName,
-                        int audioStreamCount){
-    Config cfg;
-    
-    // Read the file. If there is an error, report it and exit.
-    try
-    {
-        cfg.readFile(cfgFileName.c_str());
-    }
-    catch(const FileIOException &fioex)
-    {
-        LogError("")
-        << "I/O error while reading file." << endl;
-        return(EXIT_FAILURE);
-    }
-    catch(const ParseException &pex)
-    {
-        LogError("")
-        << "Parse error at " << pex.getFile()
-        << ":" << pex.getLine()
-        << " - " << pex.getError() << endl;
-        
-        return(EXIT_FAILURE);
-    }
-    
-    const Setting &root = cfg.getRoot();
-
-    try
-    {// setup audio stream settings
-        const Setting &audioStreamThreadSettings = root["allStreams"]["allAudioStreams"][audioStreamCount]["athreadParams"];
-        LogInfo("") << "audioStreamThreadSettings.getLength(): "<< audioStreamThreadSettings.getLength() << std::endl;
-        return audioStreamThreadSettings.getLength();
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        // ignore
-        LogInfo("") << "Error when loading video stream number settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
 }
