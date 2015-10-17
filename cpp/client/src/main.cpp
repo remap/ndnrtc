@@ -22,21 +22,39 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
-void run(const std::string& configFile);
+void removeAudioOrVideoStream(NdnRtcLibrary* &ndnp, std::vector<std::string> &StreamsPrefix){
+	int StreamsPrefixNumber=StreamsPrefix.size();
+
+	for (int StreamsPrefixCount = 0; StreamsPrefixCount < StreamsPrefixNumber; StreamsPrefixCount++)
+	{
+		ndnp->removeRemoteStream(StreamsPrefix[StreamsPrefixCount]);
+	}
+	return;
+	
+}
+void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec);
 
 int main(int argc, char **argv)
 {
 	char *configFile = NULL;
 	int index;
 	int c;
+	unsigned int headlessAppOnlineTimeSec=20;//default app online time
+	ndnlog::NdnLoggerDetailLevel appLoggingLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
 	opterr = 0;
-	while ((c = getopt (argc, argv, "c:")) != -1)
+	while ((c = getopt (argc, argv, "vt:c:")) != -1)
 		switch (c)
 		{
 			case 'c':
 				configFile = optarg;
 				break;
+			case 'v':
+				appLoggingLevel = ndnlog::NdnLoggerDetailLevelAll;
+				break;
+			case 't':
+			headlessAppOnlineTimeSec = (unsigned int)atoi(optarg);
+			break;
 			case '?':
 				if (optopt == 'c')
 					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -51,32 +69,28 @@ int main(int argc, char **argv)
 				abort ();
 		}
 
-	// remove this for now
 #warning implement loading parameters from configuration files
 	#if 1
 	if (!configFile)
 	{
-		std::cout << "usage: " << argv[0] << " -c <config_file>" << std::endl;
+		std::cout << "usage: " << argv[0] << " -c <config_file> -t <app online time in seconds> -v <verbose mode>" << std::endl;
 		exit(1);
 	}
 	#endif
 
-	run(configFile);
+	run(configFile, appLoggingLevel, headlessAppOnlineTimeSec);
 
 	return 0;
 }
 
 //******************************************************************************
-class LibraryObserver : public INdnRtcLibraryObserver
-{
+class LibraryObserver : public INdnRtcLibraryObserver{
 public:
-    void onStateChanged(const char *state, const char *args)
-    {
+    void onStateChanged(const char *state, const char *args){
         LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
     }
     
-    void onErrorOccurred(int errorCode, const char* message)
-    {
+    void onErrorOccurred(int errorCode, const char* message){
        LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
     }
 };
@@ -85,75 +99,54 @@ static NdnRtcLibrary* ndnp = NULL;
 static LibraryObserver libObserver;
 
 //******************************************************************************
-void run(const std::string& configFile){
+void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec){
 	ndnp = &(NdnRtcLibrary::getSharedInstance());
 	ClientParams headlessParams;
-
-	LogInfo("") << "loading params from " << configFile << "..." << std::endl;
-	int flagLoadParamsFromFile = loadParamsFromFile(configFile, headlessParams);
-	LogInfo("") << "flagLoadParamsFromFile: " << flagLoadParamsFromFile << std::endl;
-
-	GeneralParams generalParams=headlessParams.generalParams_;
-	LogInfo("") << "general configuration:\n" << generalParams << std::endl; 
-	GeneralConsumerParams aconsumerParams=headlessParams.audioConsumerParams_;
-	LogInfo("") << "aconsumerParams configuration:\n" << aconsumerParams << std::endl; 
-	GeneralConsumerParams vconsumerParams=headlessParams.videoConsumerParams_;
-	LogInfo("") << "vconsumerParams configuration:\n" << vconsumerParams << std::endl; 
-
-	std::string videoStreamPrefix, audioStreamPrefix;
+	std::vector<std::string> videoStreamsPrefix, audioStreamsPrefix;
 	std::string pub_videoStreamPrefix, pub_audioStreamPrefix;
+	
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(appLoggingLevel);
+	LogInfo("") << "app online time is set to "<< headlessAppOnlineTimeSec <<" seconds, loading params from " << configFile << "..." << std::endl;
 
+	int flagLoadParamsFromFile = loadParamsFromFile(configFile, headlessParams);
+
+	LogDebug("") << "flagLoadParamsFromFile: " << flagLoadParamsFromFile << std::endl;
+	LogDebug("") << "general configuration:\n" << headlessParams.generalParams_ << std::endl; 
+	LogDebug("") << "audioConsumerParams configuration:\n" << headlessParams.audioConsumerParams_ << std::endl; 
+	LogDebug("") << "videoConsumerParams configuration:\n" << headlessParams.videoConsumerParams_ << std::endl; 
 
 	// setup audio fetching
 	const int audioStreamsNumber=headlessParams.defaultAudioStreams_.size();
 
 	for(int audioStreamsCount=0; audioStreamsCount<audioStreamsNumber;audioStreamsCount++){
-		
-		LogInfo("") << "initiating remote audio stream for " << headlessParams.defaultAudioStreams_[audioStreamsCount].streamPrefix << std::endl;
-		audioStreamPrefix = ndnp->addRemoteStream(headlessParams.defaultAudioStreams_[audioStreamsCount].streamPrefix, \
-			headlessParams.defaultAudioStreams_[audioStreamsCount].threadToFetch, headlessParams.defaultAudioStreams_[audioStreamsCount].mediaStream_, generalParams, aconsumerParams, NULL);
-		LogInfo("") << "demo audio fetching " << audioStreamsCount <<" from " << audioStreamPrefix << " initiated:"
-			<<"threadToFetch"<<headlessParams.defaultAudioStreams_[audioStreamsCount].threadToFetch << std::endl;
+		MediaStreamParamsSupplement* audioStream = headlessParams.getMediaStream(headlessParams.defaultAudioStreams_, audioStreamsCount);
+		LogDebug("") << "initiating remote audio stream for " 
+			<<audioStream->streamPrefix_ << std::endl;
+
+		std::string audioStreamPrefix = ndnp->addRemoteStream(audioStream->streamPrefix_ , audioStream->threadToFetch_, (*audioStream), headlessParams.generalParams_, headlessParams.audioConsumerParams_, NULL);
+		audioStreamsPrefix.push_back(audioStreamPrefix);
+		LogInfo("") << "demo audio fetching " << audioStreamsCount <<" from " << audioStreamPrefix << " initiated, "
+			<<"threadToFetch: "<< audioStream->threadToFetch_ << std::endl;
 	}
 	
 	// setup video fetching
 	const int videoStreamsNumber=headlessParams.defaultVideoStreams_.size();
 	RendererInternal renderer[videoStreamsNumber];
-	LogInfo("") << "videoStreamsNumber: " << videoStreamsNumber << std::endl;
 
 	for(int videoStreamsCount=0; videoStreamsCount<videoStreamsNumber;videoStreamsCount++){
+		MediaStreamParamsSupplement* videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
 
-		LogInfo("") << "initiating remote video stream for " << headlessParams.defaultVideoStreams_[videoStreamsCount].streamPrefix << ", vconsumerParams: " << vconsumerParams << std::endl;
-		videoStreamPrefix = ndnp->addRemoteStream(headlessParams.defaultVideoStreams_[videoStreamsCount].streamPrefix, \
-			headlessParams.defaultVideoStreams_[videoStreamsCount].threadToFetch, headlessParams.defaultVideoStreams_[videoStreamsCount].mediaStream_, generalParams, vconsumerParams, &renderer[videoStreamsCount]);
-		LogInfo("") << "demo video fetching " << videoStreamsCount <<" from " << videoStreamPrefix << " initiated..." << std::endl;
-	}
-	
-	
-
-	{
-		std::string pub_username="ubuntundnrtc";
-		std::string pub_sessionPrefix; //= "/ndn/edu/ucla/remap/ndnrtc/user/ubuntundnrtc/streams/camera";
-		//SessionObserver *sessionObserverInstance = new SessionObserver();
-			//ndnrtc::IExternalCapturer* libcapturer;
-		//MediaStreamParams pub_vstreamParams=vstreamParams;
-		//pub_sessionPrefix=ndnp->startSession(pub_username,generalParams,sessionObserverInstance);
-		//LogInfo("") << "pub_sessionPrefix: " << pub_sessionPrefix << std::endl;
-		//pub_videoStreamPrefix=ndnp->addLocalStream(pub_sessionPrefix,pub_vstreamParams, libcapturer);
+		LogDebug("") << "initiating remote video stream for " << videoStream->streamPrefix_ << ", vconsumerParams: " << headlessParams.videoConsumerParams_ << std::endl;
+		std::
+		string videoStreamPrefix = ndnp->addRemoteStream(videoStream->streamPrefix_, videoStream->threadToFetch_, (*videoStream), headlessParams.generalParams_, headlessParams.videoConsumerParams_, &renderer[videoStreamsCount]);
+		videoStreamsPrefix.push_back(videoStreamPrefix);
+		LogInfo("") << "demo video fetching " << videoStreamsCount <<" from " << videoStreamPrefix << " initiated, " 
+			<<"threadToFetch: "<< videoStream->threadToFetch_ << std::endl;
 	}
 
-	//statistics::StatisticsStorage remoteStreamStatistics_audio=ndnp->getRemoteStreamStatistics(audioStreamPrefix);
-	//LogInfo("") << "RemoteStreamStatistics audio: " << remoteStreamStatistics_audio << std::endl;
-	//std::ofstream myfile;
-	//myfile.open ("example.txt");
-	//myfile << RemoteStreamStatistics_audio;
-	
-
-	sleep(headlessParams.headlessAppOnlineTime);
-
-	ndnp->removeRemoteStream(videoStreamPrefix);
-	ndnp->removeRemoteStream(audioStreamPrefix);
-	//myfile.close();
+	sleep(headlessAppOnlineTimeSec);
+	removeAudioOrVideoStream(ndnp,videoStreamsPrefix);
+	removeAudioOrVideoStream(ndnp,audioStreamsPrefix);
 	LogInfo("") << "demo fetching has been completed" << std::endl;
 
 	return;
