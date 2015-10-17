@@ -193,11 +193,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
     
     LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
     NdnRtcUtils::releaseVoiceEngine();
-    NdnRtcUtils::stopVoiceThread();
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
-    NdnRtcUtils::releaseVoiceEngine();
-    LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
-    
     NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;
     Logger::releaseAsyncLogging();

@@ -148,9 +148,7 @@ void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatc
     }
     else
     {
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
     }
 }
 
@@ -183,9 +181,7 @@ void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatch
     }
     else
     {
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
     }
 }
 
