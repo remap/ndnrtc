@@ -11,10 +11,11 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
+#include <ndn-cpp/face.hpp>
 
-#include "ndnrtc-common.h"
-#include "params.h"
+//#include "params.h"
 #include "ndnrtc-object.h"
+#include "simple-log.h"
 
 namespace ndnrtc {
     using namespace ndn;
@@ -74,7 +75,7 @@ namespace ndnrtc {
         boost::recursive_mutex faceMutex_;
     };
     
-    class FaceProcessor :   public new_api::NdnRtcComponent
+    class FaceProcessor : public new_api::NdnRtcComponent
     {
     public:
         FaceProcessor(const boost::shared_ptr<FaceWrapper>& faceWrapper);

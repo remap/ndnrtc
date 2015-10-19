@@ -8,6 +8,9 @@
 //  Author:  Peter Gusev
 //
 
+#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+
+#include "ndnrtc-common.h"
 #include "frame-data.h"
 #include "ndnrtc-utils.h"
 #include "params.h"

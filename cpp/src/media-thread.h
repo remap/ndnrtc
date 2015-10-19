@@ -13,6 +13,8 @@
 
 #define NLOG_COMPONENT_NAME "NdnRtcSender"
 
+#include <ndn-cpp/util/memory-content-cache.hpp>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"

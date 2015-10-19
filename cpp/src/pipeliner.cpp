@@ -13,6 +13,8 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 #include "params.h"
+#include "consumer.h"
+#include "interest-queue.h"
 
 using namespace boost;
 using namespace webrtc;

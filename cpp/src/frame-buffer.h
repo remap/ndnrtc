@@ -13,14 +13,12 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
-#include <set>
-#include <boost/unordered_set.hpp>
+#include <ndn-cpp/name.hpp>
 
 #include "frame-data.h"
-#include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"
-#include "consumer.h"
 #include "statistics.h"
+#include "simple-log.h"
 
 namespace ndnrtc
 {
@@ -29,7 +27,7 @@ namespace ndnrtc
     {
         using namespace ndnlog;
         class RateControl;
-        
+        class Consumer;
         class IFrameBufferCallback;
         
         class FrameBuffer : public ndnlog::new_api::ILoggingObject,

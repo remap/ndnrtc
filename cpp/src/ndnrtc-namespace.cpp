@@ -10,6 +10,10 @@
 
 #include <stdarg.h>
 
+#include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
+#include <ndn-cpp/security/identity/memory-identity-storage.hpp>
+#include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
+
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-utils.h"

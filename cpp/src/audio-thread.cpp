@@ -8,8 +8,8 @@
 //  Author:  Peter Gusev
 //
 
+#include "ndnrtc-namespace.h"
 #include "audio-thread.h"
-#include "frame-buffer.h"
 
 using namespace ndnrtc::new_api;
 using namespace webrtc;

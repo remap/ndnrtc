@@ -12,14 +12,18 @@
 #ifndef __ndnrtc__playout__
 #define __ndnrtc__playout__
 
-#include "ndnrtc-common.h"
-#include "jitter-timing.h"
-#include "consumer.h"
-#include "frame-buffer.h"
 #include "statistics.h"
+#include "ndnrtc-object.h"
+#include "ndnrtc-common.h"
 
 namespace ndnrtc{
+    
+    class PacketData;
+    class JitterTiming;
+    
     namespace new_api {
+        class Consumer;
+        class FrameBuffer;
         
         /**
          * Base class for playout mechanisms. The core playout logic is similar 

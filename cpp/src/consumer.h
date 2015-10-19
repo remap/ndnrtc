@@ -14,89 +14,29 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "ndnrtc-common.h"
+#include "params.h"
 #include "ndnrtc-object.h"
-#include "interest-queue.h"
-#include "chase-estimation.h"
-#include "buffer-estimator.h"
-#include "statistics.h"
-#include "renderer.h"
-#include "video-renderer.h"
-
-#define SYMBOL_SEG_RATE "sr"
-#define SYMBOL_INTEREST_RATE "ir"
-#define SYMBOL_PRODUCER_RATE "rate"
-#define SYMBOL_JITTER_TARGET "jt"
-#define SYMBOL_JITTER_ESTIMATE "je"
-#define SYMBOL_JITTER_PLAYABLE "jp"
-#define SYMBOL_INRATE "in"
-#define SYMBOL_NREBUFFER "nreb"
-
-#define SYMBOL_NPLAYED "npb"
-#define SYMBOL_NPLAYEDKEY "npbk"
-
-#define SYMBOL_NSKIPPEDNOKEY "nskipk"
-#define SYMBOL_NSKIPPEDINC "nskipi"
-#define SYMBOL_NSKIPPEDINCKEY "nskipik"
-#define SYMBOL_NSKIPPEDGOP "nskipg"
-
-#define SYMBOL_NACQUIRED "nacq"
-#define SYMBOL_NACQUIREDKEY "nacqk"
-
-#define SYMBOL_NDROPPED "ndrop"
-#define SYMBOL_NDROPPEDKEY "ndropk"
-
-#define SYMBOL_NASSEMBLED "nasm"
-#define SYMBOL_NASSEMBLEDKEY "nasmk"
-
-#define SYMBOL_NRESCUED "nresc"
-#define SYMBOL_NRESCUEDKEY "nresck"
-
-#define SYMBOL_NRECOVERED "nrec"
-#define SYMBOL_NRECOVEREDKEY "nreck"
-
-#define SYMBOL_NINCOMPLETE "ninc"
-#define SYMBOL_NINCOMPLETEKEY "ninck"
-
-#define SYMBOL_NREQUESTED "nreq"
-#define SYMBOL_NREQUESTEDKEY "nreqk"
-
-#define SYMBOL_NRTX "nrtx"
-#define SYMBOL_AVG_DELTA "ndelta"
-#define SYMBOL_AVG_KEY "nkey"
-#define SYMBOL_RTT_EST "rtt"
-#define SYMBOL_NINTRST "nint"
-#define SYMBOL_NDATA "ndata"
-#define SYMBOL_NTIMEOUT "nto"
-#define SYMBOL_LATENCY "lat"
+#include "face-wrapper.h"
+#include "pipeliner.h"
 
 namespace ndnrtc {
     class AudioVideoSynchronizer;
     
     namespace new_api {
-        using namespace ndn;
+        namespace statistics
+        {
+            class StatisticsStorage;
+        }
         
+        class IPacketAssembler;
+        class IRenderer;
         class FrameBuffer;
         class PipelinerBase;
         class InterestQueue;
         class Playout;
-        
         class RttEstimation;
         class ChaseEstimation;
         class BufferEstimator;
-
-        class IPipelinerCallback
-        {
-        public:
-            virtual void
-            onBufferingEnded() = 0;
-            
-            virtual void
-            onInitialDataArrived() = 0;
-            
-            virtual void
-            onStateChanged(const int& oldState, const int& newState) = 0;
-        };
         
         class ConsumerSettings {
         public:
@@ -126,7 +66,6 @@ namespace ndnrtc {
          *      Fetch mode
          */
         class Consumer : public NdnRtcComponent,
-                         public IPacketAssembler,
                          public IPipelinerCallback
         {
         public:
@@ -269,31 +208,6 @@ namespace ndnrtc {
             virtual void
             onInitialDataArrived();
             
-            /**
-             * Dumps statistics for the current producer into the log
-             * Statistics are dumped in the following format:
-             *  - incoming data rate (segments/sec) - "sr"
-             *  - interest rate (interests/sec) - "ir"
-             *  - producer rate (frames/sec) - "rate"
-             *  - jitter buffer target size (ms) - "jt"
-             *  - jitter buffer estimate size (ms) - "je"
-             *  - jitter buffer playable size (ms) - "jp"
-             *  - incoming rate (kbit/sec) - "in"
-             *  - number of rebufferings - "nreb"
-             *  - number of received frames - "nrecv"
-             *  - number of played frames - "npbck"
-             *  - number of missed frames - "nmiss"
-             *  - number of incomplete frames - "ninc"
-             *  - number of rescued frames - "nresc"
-             *  - number of recovered frames - "nrec"
-             *  - number of retransmissions - "nrtx"
-             *  - average number of segments for delta frames - "ndelta"
-             *  - average number of segments for key frames - "nkey"
-             *  - current rtt estimation - "rtt"
-             */
-            void
-            dumpStat(ReceiverChannelPerformance stat) const;
-            
             bool
             getIsConsuming() { return isConsuming_; }
             
@@ -322,19 +236,6 @@ namespace ndnrtc {
             unsigned int dataMeterId_, segmentFreqMeterId_;
             // statistics
             unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
-            
-            virtual OnData
-            getOnDataHandler()
-            { return bind(&Consumer::onData, this, _1, _2); }
-            
-            virtual OnTimeout
-            getOnTimeoutHandler()
-            { return bind(&Consumer::onTimeout, this, _1); }
-            
-            void onData(const boost::shared_ptr<const Interest>& interest,
-                        const boost::shared_ptr<Data>& data);
-            void onTimeout(const boost::shared_ptr<const Interest>& interest);
-
         private:
             int
             getThreadIdx(const std::string& threadName);

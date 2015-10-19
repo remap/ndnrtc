@@ -9,6 +9,7 @@
 #include "audio-consumer.h"
 #include "audio-playout.h"
 #include "pipeliner.h"
+#include "audio-renderer.h"
 
 using namespace webrtc;
 using namespace ndnrtc;

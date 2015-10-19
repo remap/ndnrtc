@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__interest_queue__
 #define __ndnrtc__interest_queue__
 
+#include <queue>
+
 #include "ndnrtc-common.h"
 #include "ndn-assembler.h"
 #include "ndnrtc-utils.h"

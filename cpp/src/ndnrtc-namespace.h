@@ -12,8 +12,12 @@
 #ifndef __ndnrtc__ndn_namespace__
 #define __ndnrtc__ndn_namespace__
 
+#include <ndn-cpp/name.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
+
 #include "ndnrtc-object.h"
 #include "name-components.h"
+#include "ndnrtc-common.h"
 
 namespace ndnrtc {
     using namespace ndn;

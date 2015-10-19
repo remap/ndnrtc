@@ -15,10 +15,12 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio.hpp>
+#include <voice_engine/include/voe_audio_processing.h>
 
 #include "ndnrtc-utils.h"
 #include "ndnrtc-endian.h"
 #include "ndnrtc-namespace.h"
+#include "face-wrapper.h"
 
 using namespace std;
 using namespace ndnrtc;

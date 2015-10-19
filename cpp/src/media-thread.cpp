@@ -8,10 +8,13 @@
 //  Author:  Peter Gusev
 //
 
+#include <ndn-cpp/security/key-chain.hpp>
+
 #include "media-thread.h"
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 #include "ndnrtc-debug.h"
+#include "face-wrapper.h"
 
 using namespace boost;
 using namespace ndnlog;
