@@ -13,11 +13,11 @@
 
 #include "consumer.h"
 #include "video-renderer.h"
-#include "video-decoder.h"
-#include "statistics.h"
 
 namespace ndnrtc {
     namespace new_api {
+        class NdnVideoDecoder;
+        
         class VideoConsumer : public Consumer
         {
         public:

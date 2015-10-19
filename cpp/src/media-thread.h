@@ -18,13 +18,13 @@
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
-#include "frame-buffer.h"
-#include "segmentizer.h"
+#include "statistics.h"
+#include "frame-data.h"
 
 namespace ndnrtc
 {
     namespace new_api
-    {
+    {   
         /**
          * This class carries paramteres necessary for establishing and 
          * operating a media stream

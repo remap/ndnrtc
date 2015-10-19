@@ -11,9 +11,7 @@
 #ifndef __ndnrtc__audio_renderer__
 #define __ndnrtc__audio_renderer__
 
-#include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
-#include "params.h"
 #include "webrtc-audio-channel.h"
 #include "audio-capturer.h"
 #include "renderer.h"

@@ -11,6 +11,7 @@
 #include "media-stream.h"
 #include "video-thread.h"
 #include "audio-thread.h"
+#include "ndnrtc-namespace.h"
 
 using namespace webrtc;
 using namespace boost;

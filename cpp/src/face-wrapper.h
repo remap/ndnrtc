@@ -13,7 +13,6 @@
 #include <boost/thread.hpp>
 #include <ndn-cpp/face.hpp>
 
-//#include "params.h"
 #include "ndnrtc-object.h"
 #include "simple-log.h"
 

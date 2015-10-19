@@ -11,18 +11,18 @@
 
 #include <boost/asio/steady_timer.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 
-#include "ndnrtc-common.h"
-#include "interfaces.h"
 #include "params.h"
 #include "ndnrtc-object.h"
-#include "media-stream.h"
-#include "face-wrapper.h"
 
 namespace ndnrtc
 {
+    class FaceProcessor;
+    
     namespace new_api
     {
+        class MediaStream;
         
         class Session : public NdnRtcComponent
         {
@@ -74,9 +74,9 @@ namespace ndnrtc
             boost::recursive_mutex observerMutex_;
             ISessionObserver *sessionObserver_;
             
-            boost::shared_ptr<KeyChain> userKeyChain_;
+            boost::shared_ptr<ndn::KeyChain> userKeyChain_;
             boost::shared_ptr<FaceProcessor> mainFaceProcessor_;
-            boost::shared_ptr<MemoryContentCache> sessionCache_;
+            boost::shared_ptr<ndn::MemoryContentCache> sessionCache_;
            
             typedef std::map<std::string, boost::shared_ptr<MediaStream>> StreamMap;
             StreamMap audioStreams_;

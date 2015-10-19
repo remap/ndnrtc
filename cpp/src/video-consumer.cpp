@@ -16,6 +16,7 @@
 #include "rtt-estimation.h"
 #include "video-playout.h"
 #include "interest-queue.h"
+#include "video-decoder.h"
 
 using namespace boost;
 using namespace ndnlog;

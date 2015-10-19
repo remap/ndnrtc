@@ -13,14 +13,17 @@
 
 #include <queue>
 
-#include "ndnrtc-common.h"
+#include <ndn-cpp/face.hpp>
+
 #include "ndn-assembler.h"
 #include "ndnrtc-utils.h"
-#include "face-wrapper.h"
 #include "statistics.h"
 #include "ndnrtc-object.h"
 
 namespace ndnrtc {
+    
+    class FaceWrapper;
+    
     namespace new_api {
         class Consumer;
         

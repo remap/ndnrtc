@@ -11,6 +11,8 @@
 #include "video-thread.h"
 #include "ndnrtc-utils.h"
 #include "face-wrapper.h"
+#include "ndnrtc-namespace.h"
+#include "segmentizer.h"
 
 using namespace boost;
 using namespace ndnlog;

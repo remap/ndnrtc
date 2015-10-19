@@ -15,6 +15,7 @@
 #include "ndnrtc-utils.h"
 #include "ndnrtc-debug.h"
 #include "face-wrapper.h"
+#include "segmentizer.h"
 
 using namespace boost;
 using namespace ndnlog;

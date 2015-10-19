@@ -12,6 +12,8 @@
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 #include "error-codes.h"
+#include "media-stream.h"
+#include "face-wrapper.h"
 
 using namespace ndnlog;
 using namespace ndnlog::new_api;

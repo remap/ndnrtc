@@ -10,6 +10,7 @@
 
 #include "ndnrtc-namespace.h"
 #include "audio-thread.h"
+#include "segmentizer.h"
 
 using namespace ndnrtc::new_api;
 using namespace webrtc;

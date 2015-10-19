@@ -15,7 +15,6 @@
 #include <boost/thread.hpp>
 
 #include "webrtc.h"
-#include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "ndnrtc-utils.h"
 
