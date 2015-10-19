@@ -9,7 +9,6 @@
 //
 
 #include "video-thread.h"
-#include "ndnlib.h"
 #include "ndnrtc-utils.h"
 #include "face-wrapper.h"
 
