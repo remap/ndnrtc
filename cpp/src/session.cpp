@@ -83,15 +83,15 @@ Session::stop()
 {
     int res = RESULT_OK;
     
+    for (auto audioStream:audioStreams_)
+        audioStream.second->release();
+    for (auto videoStream:videoStreams_)
+        videoStream.second->release();
+    
+    audioStreams_.clear();
+    videoStreams_.clear();
+    
     NdnRtcUtils::performOnBackgroundThread([this]()->void{
-        for (auto audioStream:audioStreams_)
-            audioStream.second->release();
-        for (auto videoStream:videoStreams_)
-            videoStream.second->release();
-        
-        audioStreams_.clear();
-        videoStreams_.clear();
-        
         if (sessionCache_.get())
             sessionCache_->unregisterAll();
     });

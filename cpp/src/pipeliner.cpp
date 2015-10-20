@@ -550,7 +550,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                    const boost::shared_ptr<Data>& data)
 {
     LogDebugC
-    << "data " << data->getName()
+    << "data " << data->getName() << " "
     << data->getContent().size() << " bytes" << std::endl;
     
     NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
