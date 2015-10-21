@@ -9,6 +9,7 @@
 #include "audio-playout.h"
 #include "frame-data.h"
 #include "frame-buffer.h"
+#include "audio-renderer.h"
 
 using namespace std;
 using namespace ndnrtc;

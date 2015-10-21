@@ -15,10 +15,12 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio.hpp>
+#include <voice_engine/include/voe_audio_processing.h>
 
 #include "ndnrtc-utils.h"
 #include "ndnrtc-endian.h"
 #include "ndnrtc-namespace.h"
+#include "face-wrapper.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -138,36 +140,50 @@ bool NdnRtcUtils::isBackgroundThread()
 void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                         boost::function<void(void)> onCompletion)
 {
-    (*NdnRtcIoService).dispatch([=]{
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
-    });
+    if (backgroundWork.get())
+    {
+        (*NdnRtcIoService).dispatch([=]{
+            dispatchBlock();
+            if (onCompletion)
+                onCompletion();
+        });
+    }
+    else
+    {
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
+    }
 }
 
 void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatchBlock,
                                              boost::function<void(void)> onCompletion)
 {
-    if (boost::this_thread::get_id() == backgroundThread.get_id())
+    if (backgroundWork.get())
     {
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
-    }
-    else
-    {
-        boost::mutex m;
-        boost::unique_lock<boost::mutex> lock(m);
-        boost::condition_variable isDone;
-        
-        (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
+        if (boost::this_thread::get_id() == backgroundThread.get_id())
+        {
             dispatchBlock();
             if (onCompletion)
                 onCompletion();
-            isDone.notify_one();
-        });
-        
-        isDone.wait(lock);
+        }
+        else
+        {
+            boost::mutex m;
+            boost::unique_lock<boost::mutex> lock(m);
+            boost::condition_variable isDone;
+            
+            (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
+                dispatchBlock();
+                if (onCompletion)
+                    onCompletion();
+                isDone.notify_one();
+            });
+            
+            isDone.wait(lock);
+        }
+    }
+    else
+    {
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
     }
 }
 

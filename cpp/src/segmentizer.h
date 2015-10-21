@@ -11,9 +11,7 @@
 #ifndef __ndnrtc__segmentizer__
 #define __ndnrtc__segmentizer__
 
-#include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
-#include "ndnrtc-utils.h"
 #include "frame-data.h"
 #include "frame-buffer.h"
 

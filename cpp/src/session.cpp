@@ -12,6 +12,8 @@
 #include "ndnrtc-namespace.h"
 #include "ndnrtc-utils.h"
 #include "error-codes.h"
+#include "media-stream.h"
+#include "face-wrapper.h"
 
 using namespace ndnlog;
 using namespace ndnlog::new_api;
@@ -81,15 +83,15 @@ Session::stop()
 {
     int res = RESULT_OK;
     
+    for (auto audioStream:audioStreams_)
+        audioStream.second->release();
+    for (auto videoStream:videoStreams_)
+        videoStream.second->release();
+    
+    audioStreams_.clear();
+    videoStreams_.clear();
+    
     NdnRtcUtils::performOnBackgroundThread([this]()->void{
-        for (auto audioStream:audioStreams_)
-            audioStream.second->release();
-        for (auto videoStream:videoStreams_)
-            videoStream.second->release();
-        
-        audioStreams_.clear();
-        videoStreams_.clear();
-        
         if (sessionCache_.get())
             sessionCache_->unregisterAll();
     });

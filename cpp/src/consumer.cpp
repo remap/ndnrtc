@@ -16,6 +16,8 @@
 #include "rtt-estimation.h"
 #include "playout.h"
 #include "ndnrtc-namespace.h"
+#include "renderer.h"
+#include "interest-queue.h"
 
 using namespace boost;
 using namespace ndnlog;
@@ -26,7 +28,7 @@ using namespace webrtc;
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
 const int Consumer::MaxIdleTimeMs = 500;
-const int Consumer::MaxChasingTimeMs = 10*Consumer::MaxIdleTimeMs;
+const int Consumer::MaxChasingTimeMs = 4*Consumer::MaxIdleTimeMs;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -329,52 +331,6 @@ Consumer::onInitialDataArrived()
     }
 }
 
-void
-Consumer::dumpStat(ReceiverChannelPerformance stat) const
-{
-    LogStatC << STAT_DIV
-    << SYMBOL_SEG_RATE << STAT_DIV << stat.segmentsFrequency_ << STAT_DIV
-    << SYMBOL_INTEREST_RATE << STAT_DIV << stat.interestFrequency_ << STAT_DIV
-    << SYMBOL_PRODUCER_RATE << STAT_DIV << stat.actualProducerRate_ << STAT_DIV
-    << SYMBOL_JITTER_TARGET << STAT_DIV << stat.jitterTargetMs_ << STAT_DIV
-    << SYMBOL_JITTER_ESTIMATE << STAT_DIV << stat.jitterEstimationMs_ << STAT_DIV
-    << SYMBOL_JITTER_PLAYABLE << STAT_DIV << stat.jitterPlayableMs_ << STAT_DIV
-    << SYMBOL_INRATE << STAT_DIV << stat.nBytesPerSec_*8/1000 << STAT_DIV
-    << SYMBOL_NREBUFFER << STAT_DIV << stat.pipelinerStat_.nRebuffer_ << STAT_DIV
-    // playout stat
-    << SYMBOL_NPLAYED << STAT_DIV << stat.playoutStat_.nPlayed_ << STAT_DIV
-    << SYMBOL_NPLAYEDKEY << STAT_DIV << stat.playoutStat_.nPlayedKey_ << STAT_DIV
-    << SYMBOL_NSKIPPEDNOKEY << STAT_DIV << stat.playoutStat_.nSkippedNoKey_ << STAT_DIV
-    << SYMBOL_NSKIPPEDINC << STAT_DIV << stat.playoutStat_.nSkippedIncomplete_ << STAT_DIV
-    << SYMBOL_NSKIPPEDINCKEY << STAT_DIV << stat.playoutStat_.nSkippedIncompleteKey_ << STAT_DIV
-    << SYMBOL_NSKIPPEDGOP << STAT_DIV << stat.playoutStat_.nSkippedInvalidGop_ << STAT_DIV
-    // buffer stat
-    << SYMBOL_NACQUIRED << STAT_DIV << stat.bufferStat_.nAcquired_ << STAT_DIV
-    << SYMBOL_NACQUIREDKEY << STAT_DIV << stat.bufferStat_.nAcquiredKey_ << STAT_DIV
-    << SYMBOL_NDROPPED << STAT_DIV << stat.bufferStat_.nDropped_ << STAT_DIV
-    << SYMBOL_NDROPPEDKEY << STAT_DIV << stat.bufferStat_.nDroppedKey_ << STAT_DIV
-    << SYMBOL_NASSEMBLED << STAT_DIV << stat.bufferStat_.nAssembled_ << STAT_DIV
-    << SYMBOL_NASSEMBLEDKEY << STAT_DIV << stat.bufferStat_.nAssembledKey_ << STAT_DIV
-    << SYMBOL_NRESCUED << STAT_DIV << stat.bufferStat_.nRescued_ << STAT_DIV
-    << SYMBOL_NRESCUEDKEY << STAT_DIV << stat.bufferStat_.nRescuedKey_ << STAT_DIV
-    << SYMBOL_NRECOVERED << STAT_DIV << stat.bufferStat_.nRecovered_ << STAT_DIV
-    << SYMBOL_NRECOVEREDKEY << STAT_DIV << stat.bufferStat_.nRecoveredKey_ << STAT_DIV
-    << SYMBOL_NINCOMPLETE << STAT_DIV << stat.bufferStat_.nIncomplete_ << STAT_DIV
-    << SYMBOL_NINCOMPLETEKEY << STAT_DIV << stat.bufferStat_.nIncompleteKey_ << STAT_DIV
-
-    << SYMBOL_NRTX << STAT_DIV << stat.pipelinerStat_.nRtx_ << STAT_DIV
-    << SYMBOL_AVG_DELTA << STAT_DIV << stat.pipelinerStat_.avgSegNum_ << STAT_DIV
-    << SYMBOL_AVG_KEY << STAT_DIV << stat.pipelinerStat_.avgSegNumKey_ << STAT_DIV
-    << SYMBOL_RTT_EST << STAT_DIV << stat.rttEstimation_ << STAT_DIV
-    << SYMBOL_NINTRST << STAT_DIV << stat.pipelinerStat_.nInterestSent_ << STAT_DIV
-    << SYMBOL_NREQUESTED << STAT_DIV << stat.pipelinerStat_.nRequested_ << STAT_DIV
-    << SYMBOL_NREQUESTEDKEY << STAT_DIV << stat.pipelinerStat_.nRequestedKey_ << STAT_DIV
-    << SYMBOL_NDATA << STAT_DIV << stat.nDataReceived_ << STAT_DIV
-    << SYMBOL_NTIMEOUT << STAT_DIV << stat.nTimeouts_ << STAT_DIV
-    << SYMBOL_LATENCY << STAT_DIV << stat.playoutStat_.latency_
-    << std::endl;
-}
-
 IPacketAssembler*
 Consumer::getPacketAssembler()
 {
@@ -386,23 +342,6 @@ Consumer::getPacketAssembler()
 }
 //******************************************************************************
 #pragma mark - private
-void Consumer::onData(const shared_ptr<const Interest>& interest,
-            const shared_ptr<Data>& data)
-{
-    LogTraceC << "data " << data->getName() << std::endl;
-    nDataReceived_++;
-    
-    NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
-    NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
-    
-    frameBuffer_->newData(*data);
-}
-void Consumer::onTimeout(const shared_ptr<const Interest>& interest)
-{
-    nTimeouts_++;
-    frameBuffer_->interestTimeout(*interest);
-}
-
 int
 Consumer::getThreadIdx(const std::string& threadName)
 {

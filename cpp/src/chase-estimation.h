@@ -11,7 +11,7 @@
 #ifndef __ndnrtc__chase_estimator__
 #define __ndnrtc__chase_estimator__
 
-#include "ndnrtc-common.h"
+#include "simple-log.h"
 
 namespace ndnrtc {
     namespace new_api {

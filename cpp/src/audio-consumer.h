@@ -10,7 +10,6 @@
 #define __ndnrtc__audio_consumer__
 
 #include "consumer.h"
-#include "statistics.h"
 #include "audio-renderer.h"
 
 namespace ndnrtc {

@@ -8,7 +8,10 @@
 //  Author:  Peter Gusev
 //
 
+#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+
 #include "external-capturer.hpp"
+
 
 // for tests only
 //#define RECORD

@@ -9,10 +9,6 @@
 #ifndef __ndnrtc__audio_capturer__
 #define __ndnrtc__audio_capturer__
 
-#include "webrtc.h"
-#include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
-#include "statistics.h"
 #include "webrtc-audio-channel.h"
 
 namespace ndnrtc {
@@ -40,10 +36,6 @@ namespace ndnrtc {
             
             int
             stopCapture();
-            
-            // statistics
-            void
-            getStatistics(SenderChannelPerformance& stat);
             
         protected:
             IAudioFrameConsumer* frameConsumer_ = nullptr;

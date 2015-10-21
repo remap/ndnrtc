@@ -11,6 +11,13 @@
 
 #undef DEBUG
 
+#include <boost/thread.hpp>
+#include <webrtc/modules/video_coding/main/source/codec_database.h>
+#include <webrtc/modules/video_coding/main/interface/video_coding_defines.h>
+#include <modules/video_coding/main/source/internal_defines.h>
+#include <modules/video_coding/codecs/vp8/include/vp8.h>
+#include <modules/video_coding/codecs/vp9/include/vp9.h>
+
 #include "video-coder.h"
 #include "ndnrtc-utils.h"
 
@@ -100,7 +107,7 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
     codec.maxFramerate = (int)settings.codecFrameRate_;
     codec.startBitrate = settings.startBitrate_;
     codec.minBitrate = 100;
-    codec.maxBitrate = settings.maxBitrate_;
+    codec.maxBitrate = 10000;//settings.maxBitrate_;
     codec.targetBitrate = settings.startBitrate_;
     codec.width = settings.encodeWidth_;
     codec.height = settings.encodeHeight_;
@@ -151,7 +158,7 @@ int VideoCoder::init(const VideoCoderParams& settings)
     
     int maxPayload = 1440;
     
-    if (encoder_->InitEncode(&codec_, 1, maxPayload) != WEBRTC_VIDEO_CODEC_OK)
+    if (encoder_->InitEncode(&codec_, boost::thread::hardware_concurrency(), maxPayload) != WEBRTC_VIDEO_CODEC_OK)
         return notifyError(-1, "can't initialize encoder");
     
     LogInfoC

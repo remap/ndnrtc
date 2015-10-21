@@ -9,6 +9,11 @@
 //  Created: 8/21/13
 //
 
+#include <boost/thread.hpp>
+
+#include <modules/video_coding/codecs/vp8/include/vp8.h>
+#include <modules/video_coding/codecs/vp9/include/vp9.h>
+
 #include "video-decoder.h"
 #include "ndnrtc-utils.h"
 
@@ -111,7 +116,7 @@ int NdnVideoDecoder::resetDecoder()
     
     decoder_->RegisterDecodeCompleteCallback(this);
     
-    if (decoder_->InitDecode(&codec_, 1) != WEBRTC_VIDEO_CODEC_OK)
+    if (decoder_->InitDecode(&codec_, boost::thread::hardware_concurrency()) != WEBRTC_VIDEO_CODEC_OK)
         return notifyError(RESULT_ERR, "can't initialize decoder");
     
     return RESULT_OK;

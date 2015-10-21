@@ -14,10 +14,12 @@
 #include "frame-buffer.h"
 #include "ndnrtc-utils.h"
 #include "rtt-estimation.h"
+#include "buffer-estimator.h"
 #include "ndnrtc-debug.h"
 #include "ndnrtc-namespace.h"
 #include "fec.h"
 #include "pipeliner.h"
+#include "consumer.h"
 
 using namespace boost;
 using namespace ndnlog;
@@ -1447,7 +1449,6 @@ ndnrtc::new_api::FrameBuffer::getEstimatedBufferSize()
         lock_guard<recursive_mutex> scopedLock(syncMutex_);
         estimateBufferSize();
         isEstimationNeeded_ = false;
-//        consumer_->dumpStat(SYMBOL_JITTER_ESTIMATE);
     }
 
     return estimatedSizeMs_;
@@ -1531,7 +1532,7 @@ ndnrtc::new_api::FrameBuffer::acquireSlot(ndnrtc::PacketData **packetData,
                 // update stat
                 (*statStorage_)[Indicator::IncompleteNum]++;
                 if (isKey)
-                    (*statStorage_)[Indicator::IncompleteKeyNum];
+                    (*statStorage_)[Indicator::IncompleteKeyNum]++;
             }
             
             slot->getPacketData(packetData);

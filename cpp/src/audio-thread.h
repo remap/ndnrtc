@@ -11,10 +11,9 @@
 #ifndef __ndnrtc__audio_thread__
 #define __ndnrtc__audio_thread__
 
-#include "ndnrtc-common.h"
 #include "media-thread.h"
-#include "ndnrtc-namespace.h"
 #include "audio-capturer.h"
+#include "ndnrtc-common.h"
 
 namespace ndnrtc
 {
@@ -54,12 +53,10 @@ namespace ndnrtc
             
             // IAudioFrameConsumer interface
             void
-            onDeliverRtpFrame(unsigned int len, unsigned char *data)
-            { publishRTPAudioPacket(len, data); }
+            onDeliverRtpFrame(unsigned int len, unsigned char *data);
             
             void
-            onDeliverRtcpFrame(unsigned int len, unsigned char *data)
-            { publishRTCPAudioPacket(len, data); }
+            onDeliverRtcpFrame(unsigned int len, unsigned char *data);
             
         private:
             unsigned int rtpPacketNo_, rtcpPacketNo_;

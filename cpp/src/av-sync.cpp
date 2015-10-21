@@ -8,8 +8,8 @@
 //  Author:  Peter Gusev
 
 #include "av-sync.h"
+#include "consumer.h"
 
-using namespace webrtc;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;

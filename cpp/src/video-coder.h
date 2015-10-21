@@ -12,9 +12,14 @@
 #ifndef __ndnrtc__video_coder__
 #define __ndnrtc__video_coder__
 
+#include <webrtc/modules/video_coding/codecs/interface/video_codec_interface.h>
+#include <webrtc/common_video/libyuv/include/scaler.h>
+
 #include "ndnrtc-common.h"
 #include "base-capturer.h"
 #include "statistics.h"
+
+//#define USE_VP9
 
 namespace ndnrtc {
     

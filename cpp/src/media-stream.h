@@ -13,17 +13,20 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
+#include <ndn-cpp/face.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 
 #include "params.h"
-#include "ndnrtc-common.h"
-#include "media-thread.h"
-#include "face-wrapper.h"
 #include "external-capturer.hpp"
 #include "audio-capturer.h"
 
 namespace ndnrtc
 {
+    class FaceProcessor;
+    
     namespace new_api {
+        class MediaThread;
+        class MediaThreadSettings;
         
         class MediaStreamSettings
         {
@@ -38,12 +41,6 @@ namespace ndnrtc
             boost::shared_ptr<KeyChain> keyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<MemoryContentCache> memoryCache_;
-        };
-        
-        class IMediaStreamCallback : public IMediaThreadCallback
-        {
-        public:
-            
         };
         
         class MediaStream : public NdnRtcComponent

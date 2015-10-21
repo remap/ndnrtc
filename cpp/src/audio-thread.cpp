@@ -8,8 +8,9 @@
 //  Author:  Peter Gusev
 //
 
+#include "ndnrtc-namespace.h"
 #include "audio-thread.h"
-#include "frame-buffer.h"
+#include "segmentizer.h"
 
 using namespace ndnrtc::new_api;
 using namespace webrtc;
@@ -51,13 +52,28 @@ int AudioThread::publishPacket(PacketData &packetData,
                                       prefixMeta, NdnRtcUtils::unixTimestamp());
 }
 
-int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
+void AudioThread::onDeliverRtpFrame(unsigned int len, unsigned char *data)
 {
     // in order to avoid situations when interest arrives simultaneously
     // with the data being added to the PIT/cache, we synchronize with
     // face on this level
-    faceProcessor_->getFaceWrapper()->synchronizeStart();
-    
+    NdnRtcUtils::performOnBackgroundThread([this, data, len](){
+        publishRTPAudioPacket(len, data);
+    });
+}
+
+void AudioThread::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
+{
+    // in order to avoid situations when interest arrives simultaneously
+    // with the data being added to the PIT/cache, we synchronize with
+    // face on this level
+    NdnRtcUtils::performOnBackgroundThread([this, data, len](){
+        publishRTCPAudioPacket(len, data);
+    });
+}
+
+int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
+{
     NdnAudioData::AudioPacket packet = {false, len, data};
     
     if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
@@ -72,18 +88,11 @@ int AudioThread::publishRTPAudioPacket(unsigned int len, unsigned char *data)
     }
 
     adata_.addPacket(packet);
-    
-    faceProcessor_->getFaceWrapper()->synchronizeStop();
     return 0;
 }
 
 int AudioThread::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
 {
-    // in order to avoid situations when interest arrives simultaneously
-    // with the data being added to the PIT/cache, we synchronize with
-    // face on this level
-    faceProcessor_->getFaceWrapper()->synchronizeStart();
-    
     NdnAudioData::AudioPacket packet = (NdnAudioData::AudioPacket){true, len, data};
     
     if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
@@ -96,7 +105,5 @@ int AudioThread::publishRTCPAudioPacket(unsigned int len, unsigned char *data)
     }
 
     adata_.addPacket(packet);
-    
-    faceProcessor_->getFaceWrapper()->synchronizeStop();
     return 0;
 }

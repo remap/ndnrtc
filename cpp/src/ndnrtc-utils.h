@@ -14,19 +14,22 @@
 #include <boost/function.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <ndn-cpp/name.hpp>
+#include <webrtc/voice_engine/include/voe_base.h>
 
-#include "ndnrtc-common.h"
 #include "webrtc.h"
-#include "params.h"
-#include "face-wrapper.h"
 
 #define STR(exp) (#exp)
 
 namespace ndnrtc
 {
-    using namespace ndn;
+    namespace new_api {
+        class GeneralParams;
+    }
     
+    using namespace ndn;
     extern std::string LIB_LOG;
+    class FaceProcessor;
     
     class NdnRtcUtils {
     public:

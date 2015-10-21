@@ -193,11 +193,7 @@ NdnRtcLibrary::~NdnRtcLibrary()
     
     LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
     NdnRtcUtils::releaseVoiceEngine();
-    NdnRtcUtils::stopVoiceThread();
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
-    NdnRtcUtils::releaseVoiceEngine();
-    LogInfo(LIB_LOG) << "Voice thread stopped" << std::endl;
-    
     NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;
     Logger::releaseAsyncLogging();
@@ -225,48 +221,46 @@ std::string NdnRtcLibrary::startSession(const std::string& username,
 {
     std::string sessionPrefix = "";
     
-    NdnRtcUtils::performOnBackgroundThread([=, &sessionPrefix]()->void{
-        LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
+    LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
+    
+    NdnRtcUtils::createLibFace(generalParams);
+    
+    Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
+    LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
+    
+    sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
+    
+    if (it == ActiveSessions.end())
+    {
+        LogInfo(LIB_LOG) << "Creating new session instance..." << std::endl;
         
-        NdnRtcUtils::createLibFace(generalParams);
+        shared_ptr<Session> session(new Session());
+        session->setSessionObserver(sessionObserver);
+        session->registerCallback(&LibraryInternalObserver);
         
-        Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
-        LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
-        
-        sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
-        SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
-        
-        if (it == ActiveSessions.end())
+        if (RESULT_NOT_FAIL(session->init(username, generalParams, NdnRtcUtils::getLibFace())))
         {
-            LogInfo(LIB_LOG) << "Creating new session instance..." << std::endl;
-            
-            shared_ptr<Session> session(new Session());
-            session->setSessionObserver(sessionObserver);
-            session->registerCallback(&LibraryInternalObserver);
-            
-            if (RESULT_NOT_FAIL(session->init(username, generalParams, NdnRtcUtils::getLibFace())))
-            {
-                ActiveSessions[session->getPrefix()] = session;
-                session->start();
-                sessionPrefix = session->getPrefix();
-            }
-            else
-            {
-                LogError(LIB_LOG) << "Session initialization failed" << std::endl;
-                sessionPrefix = "";
-            }
+            ActiveSessions[session->getPrefix()] = session;
+            session->start();
+            sessionPrefix = session->getPrefix();
         }
         else
         {
-            LogInfo(LIB_LOG) << "Old session instance re-used..." << std::endl;
-            
-            it->second->init(username, generalParams, NdnRtcUtils::getLibFace());
-            it->second->start();
+            LogError(LIB_LOG) << "Session initialization failed" << std::endl;
+            sessionPrefix = "";
         }
+    }
+    else
+    {
+        LogInfo(LIB_LOG) << "Old session instance re-used..." << std::endl;
         
-        LogInfo(LIB_LOG) << "Session started (prefix " << sessionPrefix
-        << ")" << std::endl;
-    });
+        it->second->init(username, generalParams, NdnRtcUtils::getLibFace());
+        it->second->start();
+    }
+    
+    LogInfo(LIB_LOG) << "Session started (prefix " << sessionPrefix
+    << ")" << std::endl;
     
     return sessionPrefix;
 }
@@ -275,20 +269,18 @@ int NdnRtcLibrary::stopSession(const std::string& userPrefix)
 {
     int res = RESULT_ERR;
     
-    NdnRtcUtils::performOnBackgroundThread([=, &res]()->void{
-        LogInfo(LIB_LOG) << "Stopping session for prefix " << userPrefix << std::endl;
+    LogInfo(LIB_LOG) << "Stopping session for prefix " << userPrefix << std::endl;
+    
+    SessionMap::iterator it = ActiveSessions.find(userPrefix);
+    if (it != ActiveSessions.end())
+    {
+        res = it->second->stop();
+        ActiveSessions.erase(it);
         
-        SessionMap::iterator it = ActiveSessions.find(userPrefix);
-        if (it != ActiveSessions.end())
-        {
-            res = it->second->stop();
-            ActiveSessions.erase(it);
-            
-            LogInfo(LIB_LOG) << "Session was successfully stopped" << std::endl;
-        }
-        else
-            LogError(LIB_LOG) << "Session was not found" << std::endl;
-    });
+        LogInfo(LIB_LOG) << "Session was successfully stopped" << std::endl;
+    }
+    else
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
     
     return res;
 }
@@ -299,27 +291,26 @@ std::string NdnRtcLibrary::addLocalStream(const std::string& sessionPrefix,
 {
     std::string streamPrefix = "";
     
-    NdnRtcUtils::performOnBackgroundThread([=, &streamPrefix]()->void{
-        LogInfo(LIB_LOG) << "Adding new stream for session "
-        << sessionPrefix << "..." << std::endl;
-        
-        SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
-        
-        if (it == ActiveSessions.end())
+    LogInfo(LIB_LOG) << "Adding new stream for session "
+    << sessionPrefix << "..." << std::endl;
+    
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
+    
+    if (it == ActiveSessions.end())
+    {
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
+    }
+    else
+    {
+        if (RESULT_NOT_FAIL(it->second->addLocalStream(params, capturer, streamPrefix)))
         {
-            LogError(LIB_LOG) << "Session was not found" << std::endl;
+            LogInfo(LIB_LOG) << "successfully added stream with prefix "
+            << streamPrefix << std::endl;
         }
         else
-        {
-            if (RESULT_NOT_FAIL(it->second->addLocalStream(params, capturer, streamPrefix)))
-            {
-                LogInfo(LIB_LOG) << "successfully added stream with prefix "
-                << streamPrefix << std::endl;
-            }
-            else
-                LogError(LIB_LOG) << "Failed to add new stream" << std::endl;
-        }
-    });
+            LogError(LIB_LOG) << "Failed to add new stream" << std::endl;
+    }
+
     
     return streamPrefix;
 }
@@ -329,23 +320,21 @@ int NdnRtcLibrary::removeLocalStream(const std::string& sessionPrefix,
 {
     int res = RESULT_ERR;
     
-    NdnRtcUtils::performOnBackgroundThread([=, &res]()->void{
-        LogInfo(LIB_LOG) << "Removing stream " << streamPrefix
-        << " from session " << sessionPrefix << "..." << std::endl;
-        
-        SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
-        
-        if (it == ActiveSessions.end())
-        {
-            LogError(LIB_LOG) << "Session was not found" << std::endl;
-        }
-        else
-        {
-            it->second->removeLocalStream(streamPrefix);
-            LogInfo(LIB_LOG) << "Stream was removed successfully" << std::endl;
-            res = RESULT_OK;
-        }
-    });
+    LogInfo(LIB_LOG) << "Removing stream " << streamPrefix
+    << " from session " << sessionPrefix << "..." << std::endl;
+    
+    SessionMap::iterator it = ActiveSessions.find(sessionPrefix);
+    
+    if (it == ActiveSessions.end())
+    {
+        LogError(LIB_LOG) << "Session was not found" << std::endl;
+    }
+    else
+    {
+        it->second->removeLocalStream(streamPrefix);
+        LogInfo(LIB_LOG) << "Stream was removed successfully" << std::endl;
+        res = RESULT_OK;
+    }
     
     return res;
 }

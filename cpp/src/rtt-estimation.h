@@ -12,6 +12,7 @@
 
 #include "ndnrtc-common.h"
 #include "statistics.h"
+#include "simple-log.h"
 
 namespace ndnrtc {
     namespace new_api {

@@ -6,7 +6,16 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
+#define USE_TS_FACE
+
 #include <unistd.h>
+#include <ndn-cpp/threadsafe-face.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
+
+#ifdef USE_TS_FACE
+#include <ndn-cpp/transport/async-tcp-transport.hpp>
+#include <ndn-cpp/transport/async-unix-transport.hpp>
+#endif
 
 #include "face-wrapper.h"
 #include "ndnrtc-utils.h"
@@ -103,22 +112,40 @@ static std::string getUnixSocketFilePathForLocalhost()
     }
 }
 
-static shared_ptr<ndn::Transport> getDefaultTransport()
+static shared_ptr<ndn::Transport> getDefaultTransport(asio::io_service& ioService)
 {
     if (getUnixSocketFilePathForLocalhost() == "")
-        return make_shared<TcpTransport>();
+#ifdef USE_TS_FACE
+        return make_shared<AsyncTcpTransport>(ioService);
+#else
+    return make_shared<TcpTransport>();
+#endif
     else
+#ifdef USE_TS_FACE
+        return make_shared<AsyncUnixTransport>(ioService);
+#else
         return make_shared<UnixTransport>();
+#endif
 }
 
 static shared_ptr<ndn::Transport::ConnectionInfo> getDefaultConnectionInfo()
 {
     std::string filePath = getUnixSocketFilePathForLocalhost();
     if (filePath == "")
+#ifdef USE_TS_FACE
+        return make_shared<AsyncTcpTransport::ConnectionInfo>("localhost");
+#else
         return make_shared<TcpTransport::ConnectionInfo>("localhost");
+#endif
     else
-        return shared_ptr<UnixTransport::ConnectionInfo>
-        (new UnixTransport::ConnectionInfo(filePath.c_str()));
+#ifdef USE_TS_FACE
+        return shared_ptr<AsyncUnixTransport::ConnectionInfo>
+        (new AsyncUnixTransport::ConnectionInfo(filePath.c_str()));
+#else
+    return shared_ptr<UnixTransport::ConnectionInfo>
+    (new UnixTransport::ConnectionInfo(filePath.c_str()));
+
+#endif
 }
 
 int
@@ -135,14 +162,24 @@ FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
         
         if (host == "127.0.0.1" || host == "0.0.0.0" || host == "localhost")
         {
-            transport = getDefaultTransport();
+            transport = getDefaultTransport(NdnRtcUtils::getIoService());
+#ifdef USE_TS_FACE
+            ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, getDefaultConnectionInfo()));
+#else
             ndnFace.reset(new Face(transport, getDefaultConnectionInfo()));
+#endif
         }
         else
         {
+#ifdef USE_TS_FACE
+            connInfo.reset(new AsyncTcpTransport::ConnectionInfo(host.c_str(), port));
+            transport.reset(new AsyncTcpTransport(NdnRtcUtils::getIoService()));
+            ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, connInfo));
+#else
             connInfo.reset(new TcpTransport::ConnectionInfo(host.c_str(), port));
             transport.reset(new TcpTransport());
             ndnFace.reset(new Face(transport, connInfo));
+#endif
         }
         
         face.reset(new FaceWrapper(ndnFace));
@@ -210,6 +247,7 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
         usecInterval_ = usecInterval;
         isProcessing_ = true;
         
+#ifndef US_TS_FACE
         scheduleJob(usecInterval, [this]()->bool{
             try
             {
@@ -221,6 +259,7 @@ FaceProcessor::startProcessing(unsigned int usecInterval)
             }
             return this->isProcessing_;
         });
+#endif
     }
     return RESULT_OK;
 }
@@ -231,6 +270,8 @@ FaceProcessor::stopProcessing()
     if (isProcessing_)
     {
         isProcessing_ = false;
+#ifndef USE_TS_FACE
         stopJob();
+#endif
     }
 }

@@ -11,14 +11,19 @@
 #ifndef __ndnrtc__interest_queue__
 #define __ndnrtc__interest_queue__
 
-#include "ndnrtc-common.h"
+#include <queue>
+
+#include <ndn-cpp/face.hpp>
+
 #include "ndn-assembler.h"
 #include "ndnrtc-utils.h"
-#include "face-wrapper.h"
 #include "statistics.h"
 #include "ndnrtc-object.h"
 
 namespace ndnrtc {
+    
+    class FaceWrapper;
+    
     namespace new_api {
         class Consumer;
         
