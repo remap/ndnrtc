@@ -63,7 +63,7 @@ For OS X, only the following Boost library versions are currently compatible wit
 <pre>
 $ wget http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.54.0%2F&ts=1444678642&use_mirror=superb-dca2 -O boost_1_54_0.tar.gz
 $ tar -xvf boost_1_54_0.tar.gz && cd boost_1_54_0
-$ ./bootstrap
+$ ./bootstrap.sh
 $ mkdir -p build && ./b2 cxxflags="-stdlib=libstdc++" linkflags="-stdlib=libstdc++" --prefix=$(pwd)/build
 $ ./b2 install
 </pre>
@@ -80,7 +80,7 @@ $ cd ndn-cpp && mkdir -p build/share
 $ echo CXXFLAGS="-stdlib=libstdc++ -I$(pwd)/../boost_1_54_0/build/include" > build/share/config.site
 $ echo BOOST_LDFLAGS="-L$(pwd)/../boost_1_54_0/build/lib" >> build/share/config.site
 $ echo LDFLAGS="-stdlib=libstdc++" >> build/share/config.site
-$ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
+$ ./configure --with-std-shared-ptr=no --with-std-function=no --with-boost=$(pwd)/../boost_1_54_0/build --prefix=$(pwd)/build
 $ make && make install
 </pre>
 
