@@ -13,10 +13,7 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "ndnrtc-common.h"
-#include "ndnrtc-namespace.h"
 #include "video-coder.h"
-#include "frame-buffer.h"
 #include "media-thread.h"
 #include "threading-capability.h"
 

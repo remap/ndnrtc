@@ -6,7 +6,7 @@ Prerequisites
 These are prerequisites to build NDN-RTC.
 
 **Required:**
-* [NDN-CPP v0.7](https://github.com/named-data/ndn-cpp)
+* [NDN-CPP](https://github.com/named-data/ndn-cpp)
 * [WebRTC branch-heads/44](https://code.google.com/p/webrtc/)
 * [OpenFEC](http://openfec.org/downloads.html)
 * [Boost](http://www.boost.org/users/download/)
@@ -63,7 +63,7 @@ For OS X, only the following Boost library versions are currently compatible wit
 <pre>
 $ wget http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.54.0%2F&ts=1444678642&use_mirror=superb-dca2 -O boost_1_54_0.tar.gz
 $ tar -xvf boost_1_54_0.tar.gz && cd boost_1_54_0
-$ ./bootstrap
+$ ./bootstrap.sh
 $ mkdir -p build && ./b2 cxxflags="-stdlib=libstdc++" linkflags="-stdlib=libstdc++" --prefix=$(pwd)/build
 $ ./b2 install
 </pre>
@@ -77,11 +77,10 @@ In order to build NDN-CPP with boost shared pointers it's not enough to install 
 <pre>
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build/share
-$ git checkout v0.7
-$ echo CXXFLAGS="-stdlib=libstdc++ -I$(pwd)/../boost_1_54_0/build/include"\n > build/share/config.site
+$ echo CXXFLAGS="-stdlib=libstdc++ -I$(pwd)/../boost_1_54_0/build/include" > build/share/config.site
 $ echo BOOST_LDFLAGS="-L$(pwd)/../boost_1_54_0/build/lib" >> build/share/config.site
 $ echo LDFLAGS="-stdlib=libstdc++" >> build/share/config.site
-$ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
+$ ./configure --with-std-shared-ptr=no --with-std-function=no --with-boost=$(pwd)/../boost_1_54_0/build --prefix=$(pwd)/build
 $ make && make install
 </pre>
 
@@ -108,7 +107,6 @@ Download it from [here](http://www.hyperrealm.com/libconfig/).
 <pre>
 $ cd libconfig
 $ mkdir -p build/share
-$ echo 'CXXFLAGS="-stdlib=libstdc++" CPPFLAGS="-stdlib=libstdc++" LDFLAGS="-stdlib=libstdc++"' > build/share/config.site
 $ ./configure --prefix=$(pwd)/build
 $ make && make install
 </pre>
@@ -120,14 +118,14 @@ $ cd ndnrtc/cpp
 $ mkdir -p build/share
 $ touch build/share/config.site
 $ echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/config.site
-$ echo BOOSTDIR=`pwd`/../boost_1_54_0/build/include >> build/share/config.site
-$ echo BOOSTLIB=`pwd`/../boost_1_54_0/build/lib >> build/share/config.site
-$ echo NDNCPPDIR=`pwd`/../ndn-cpp/build/include >> build/share/config.site
-$ echo NDNCPPLIB=`pwd`/../ndn-cpp/build/lib >> build/share/config.site
-$ echo OPENFECDIR=`pwd`/../openfec_v1.4.2 >> build/share/config.site
-$ echo WEBRTCDIR=`pwd`/../webrtc/src >> build/share/config.site
-$ echo LCONFIGDIR=`pwd`/../libconfig/build/include >> build/share/config.site
-$ echo LCONFIGLIB=`pwd`/../libconfig/build/bin >> build/share/config.site
+$ echo BOOSTDIR=`pwd`/../../boost_1_54_0/build/include >> build/share/config.site
+$ echo BOOSTLIB=`pwd`/../../boost_1_54_0/build/lib >> build/share/config.site
+$ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
+$ echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
+$ echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
+$ echo WEBRTCDIR=`pwd`/../../webrtc/src >> build/share/config.site
+$ echo LCONFIGDIR=`pwd`/../../libconfig/build/include >> build/share/config.site
+$ echo LCONFIGLIB=`pwd`/../../libconfig/build/lib >> build/share/config.site
 $ ./configure --prefix=$(pwd)/build
 $ make && make install
 </pre>

@@ -7,6 +7,7 @@
 //
 
 #include "audio-capturer.h"
+#include "ndnrtc-utils.h"
 
 using namespace std;
 using namespace webrtc;

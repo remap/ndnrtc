@@ -15,6 +15,8 @@
 #include "buffer-estimator.h"
 #include "rtt-estimation.h"
 #include "video-playout.h"
+#include "interest-queue.h"
+#include "video-decoder.h"
 
 using namespace boost;
 using namespace ndnlog;
@@ -55,7 +57,6 @@ VideoConsumer::init(const ConsumerSettings& settings,
         pipeliner_->setUseKeyNamespace(true);
         pipeliner_->initialize();
         
-        interestQueue_->registerCallback(this);
         decoder_->init(((VideoThreadParams*)getCurrentThreadParameters())->coderParams_);
         
         playout_.reset(new VideoPlayout(this, statStorage_));
@@ -100,15 +101,6 @@ VideoConsumer::setLogger(ndnlog::new_api::Logger *logger)
     decoder_->setLogger(logger);
     
     Consumer::setLogger(logger);
-}
-
-void
-VideoConsumer::onInterestIssued(const shared_ptr<const ndn::Interest>& interest)
-{
-#if 0
-    if (rateControl_.get())
-        rateControl_->interestExpressed(interest);
-#endif
 }
 
 void

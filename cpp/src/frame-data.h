@@ -12,9 +12,12 @@
 #define __ndnrtc__frame_slot__
 
 #include <boost/crc.hpp>
+#include <webrtc/video_frame.h>
+#include <ndn-cpp/name.hpp>
 
-#include "ndnrtc-common.h"
+#include "webrtc.h"
 #include "params.h"
+#include "ndnrtc-common.h"
 
 #define NDNRTC_FRAMEHDR_MRKR 0xf4d4
 #define NDNRTC_FRAMEBODY_MRKR 0xfb0d

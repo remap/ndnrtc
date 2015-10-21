@@ -42,7 +42,11 @@ isTimerCancelled_(false)
 
 NdnRtcComponent::~NdnRtcComponent()
 {
-    stopJob();
+    try {
+        stopJob();
+    }
+    catch (...) {
+    }
 }
 
 void NdnRtcComponent::onError(const char *errorMessage, const int errorCode)

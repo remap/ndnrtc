@@ -11,13 +11,11 @@
 #ifndef __ndnrtc__buffer_estimator__
 #define __ndnrtc__buffer_estimator__
 
-#include "ndnrtc-common.h"
+#include "simple-log.h"
 
 namespace ndnrtc {
     namespace new_api
     {
-        using namespace ndn;
-        
         class RttEstimation;
         
         class BufferEstimator : public ndnlog::new_api::ILoggingObject

@@ -14,8 +14,6 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-#include "simple-log.h"
-#include "webrtc.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 

@@ -11,7 +11,6 @@
 
 #include "ndnrtc-common.h"
 #include "playout.h"
-#include "audio-renderer.h"
 
 namespace ndnrtc {
     namespace new_api {

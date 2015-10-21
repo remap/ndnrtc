@@ -12,6 +12,10 @@
 #include "playout.h"
 #include "ndnrtc-utils.h"
 #include "av-sync.h"
+#include "audio-renderer.h"
+#include "jitter-timing.h"
+#include "consumer.h"
+#include "buffer-estimator.h"
 
 using namespace boost;
 using namespace std;

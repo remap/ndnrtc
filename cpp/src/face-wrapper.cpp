@@ -10,6 +10,7 @@
 
 #include <unistd.h>
 #include <ndn-cpp/threadsafe-face.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
 
 #ifdef USE_TS_FACE
 #include <ndn-cpp/transport/async-tcp-transport.hpp>

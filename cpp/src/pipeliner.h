@@ -13,14 +13,28 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "ndnrtc-common.h"
+#include "ndn-assembler.h"
+#include "chase-estimation.h"
 #include "frame-buffer.h"
 #include "ndnrtc-object.h"
-#include "consumer.h"
-#include "playout.h"
 
 namespace ndnrtc {
     namespace new_api {
+        
+        class BufferEstimator;
+        
+        class IPipelinerCallback
+        {
+        public:
+            virtual void
+            onBufferingEnded() = 0;
+            
+            virtual void
+            onInitialDataArrived() = 0;
+            
+            virtual void
+            onStateChanged(const int& oldState, const int& newState) = 0;
+        };
         
         class PipelinerWindow : public NdnRtcComponent
         {

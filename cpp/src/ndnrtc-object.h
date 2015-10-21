@@ -17,7 +17,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include "ndnrtc-common.h"
+#include "simple-log.h"
 #include "params.h"
 #include "interfaces.h"
 
@@ -30,7 +30,7 @@ namespace ndnrtc {
                                  const int errorCode = -1) = 0;
         };
         
-        class NdnRtcComponent :public ndnlog::new_api::ILoggingObject,
+        class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
         public INdnRtcComponentCallback,
         public boost::enable_shared_from_this<NdnRtcComponent>
         {

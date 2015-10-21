@@ -11,15 +11,17 @@
 #define __ndnrtc__av_sync__
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
 
-#include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
-#include "frame-buffer.h"
 #include "simple-log.h"
-#include "consumer.h"
 
 namespace ndnrtc
 {
+    namespace new_api
+    {
+        class Consumer;
+    }
+    
     class IMediaReceiverCallback
     {
     public:

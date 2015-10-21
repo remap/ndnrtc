@@ -15,10 +15,12 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio.hpp>
+#include <voice_engine/include/voe_audio_processing.h>
 
 #include "ndnrtc-utils.h"
 #include "ndnrtc-endian.h"
 #include "ndnrtc-namespace.h"
+#include "face-wrapper.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -148,9 +150,7 @@ void NdnRtcUtils::dispatchOnBackgroundThread(boost::function<void(void)> dispatc
     }
     else
     {
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
     }
 }
 
@@ -183,9 +183,7 @@ void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatch
     }
     else
     {
-        dispatchBlock();
-        if (onCompletion)
-            onCompletion();
+        throw std::runtime_error("this is not supposed to happen. bg thread is dead already");
     }
 }
 

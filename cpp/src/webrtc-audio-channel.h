@@ -9,7 +9,11 @@
 #ifndef __ndnrtc__webrtc_audio_channel__
 #define __ndnrtc__webrtc_audio_channel__
 
-#include "webrtc.h"
+#include <webrtc/common_types.h>
+#include <webrtc/voice_engine/include/voe_base.h>
+#include <webrtc/voice_engine/include/voe_network.h>
+#include <webrtc/voice_engine/include/voe_codec.h>
+
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "params.h"

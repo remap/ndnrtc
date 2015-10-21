@@ -13,13 +13,12 @@
 
 #include "consumer.h"
 #include "video-renderer.h"
-#include "video-decoder.h"
-#include "statistics.h"
 
 namespace ndnrtc {
     namespace new_api {
-        class VideoConsumer : public Consumer,
-                              public IInterestQueueCallback
+        class NdnVideoDecoder;
+        
+        class VideoConsumer : public Consumer
         {
         public:
             VideoConsumer(const GeneralParams& generalParams,
@@ -39,9 +38,6 @@ namespace ndnrtc {
             
             void
             setLogger(ndnlog::new_api::Logger* logger);
-            
-            void
-            onInterestIssued(const boost::shared_ptr<const ndn::Interest>& interest);
             
             void
             onStateChanged(const int& oldState, const int& newState);

@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#undef DEBUG
+#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
 #include "video-renderer.h"
 #include "ndnrtc-utils.h"

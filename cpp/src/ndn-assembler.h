@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__ndn_assembler__
 #define __ndnrtc__ndn_assembler__
 
+#include <ndn-cpp/face.hpp>
+
 #include "ndnrtc-common.h"
 
 namespace ndnrtc {
