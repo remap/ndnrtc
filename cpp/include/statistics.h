@@ -30,6 +30,9 @@ namespace ndnrtc {
         
         namespace statistics {
             enum class Indicator {
+                // general
+                Timestamp,  // NDN-RTC timestamp when statistics were captured
+                
                 // consumer
                 // buffer
                 AcquiredNum,

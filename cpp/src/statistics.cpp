@@ -140,7 +140,8 @@ map_list_of    ( Indicator::AcquiredNum, "Acquired frames" )
 */
 
 const StatisticsStorage::StatRepo StatisticsStorage::ConsumerStatRepo =
-map_list_of ( Indicator::AcquiredNum, 0. )
+map_list_of ( Indicator::Timestamp, 0. )
+( Indicator::AcquiredNum, 0. )
 ( Indicator::AcquiredKeyNum, 0. )
 ( Indicator::DroppedNum, 0 )
 ( Indicator::DroppedKeyNum, 0. )
@@ -245,7 +246,8 @@ map_list_of ( Indicator::AcquiredNum, 0. )
 */
 
 const StatisticsStorage::StatRepo StatisticsStorage::ProducerStatRepo =
-map_list_of  ( Indicator::OutBitrateKbps, 0. )
+map_list_of ( Indicator::Timestamp, 0. )
+( Indicator::OutBitrateKbps, 0. )
 ( Indicator::OutRateSegments, 0. )
 ( Indicator::PublishedNum, 0. )
 ( Indicator::PublishedKeyNum, 0. )
