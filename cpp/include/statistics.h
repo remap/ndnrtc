@@ -150,9 +150,13 @@ namespace ndnrtc {
                 {
                     for (auto& it:storage.indicators_)
                     {
-                        os << std::fixed
-                        << storage.inidicatorNames_.at(it.first) << "\t"
-                        << std::setprecision(2) << it.second << std::endl;
+                        try {
+                            os << std::fixed
+                            << storage.inidicatorNames_.at(it.first) << "\t"
+                            << std::setprecision(2) << it.second << std::endl;
+                        }
+                        catch (...) {
+                        }
                     }
                     
                     return os;

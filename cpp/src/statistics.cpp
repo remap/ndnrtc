@@ -18,7 +18,8 @@ using namespace ndnrtc::new_api::statistics;
 using namespace boost::assign;
 
 const std::map<Indicator, std::string> StatisticsStorage::IndicatorNames =
-map_list_of    ( Indicator::AcquiredNum, "Acquired frames" )
+map_list_of ( Indicator::Timestamp, "Timestamp" )
+( Indicator::AcquiredNum, "Acquired frames" )
 ( Indicator::AcquiredKeyNum, "Acquired key frames" ) 
 ( Indicator::DroppedNum, "Dropped frames" ) 
 ( Indicator::DroppedKeyNum, "Dropped key frames" ) 
