@@ -127,7 +127,7 @@ void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLo
 	const int videoStreamsNumber=headlessParams.defaultVideoStreams_.size();
 	
 
-		RendererInternal renderer[videoStreamsNumber];
+		RendererInternal* renderer=new RendererInternal[videoStreamsNumber];
 	
 		for(int videoStreamsCount=0; videoStreamsCount<videoStreamsNumber;videoStreamsCount++){
 			MediaStreamParamsSupplement* videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
@@ -141,6 +141,7 @@ void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLo
 
 	sleep(headlessAppOnlineTimeSec);
 	removeRemoteStreams(ndnp,remoteStreamsPrefix);
+	delete  []renderer;
 	LogInfo("") << "demo fetching has been completed" << std::endl;
 
 	return;
