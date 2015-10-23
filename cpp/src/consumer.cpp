@@ -216,6 +216,7 @@ Consumer::getState() const
 statistics::StatisticsStorage
 Consumer::getStatistics() const
 {
+    (*statStorage_)[statistics::Indicator::Timestamp] = NdnRtcUtils::millisecondTimestamp();
     return *statStorage_;
 }
 

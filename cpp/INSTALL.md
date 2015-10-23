@@ -155,7 +155,6 @@ Full instructions [here](https://github.com/named-data/ndn-cpp/blob/master/INSTA
 <pre>
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build
-$ git checkout v0.7
 $ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
 $ make && make install
 </pre>

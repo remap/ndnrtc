@@ -57,7 +57,7 @@ void AudioThread::onDeliverRtpFrame(unsigned int len, unsigned char *data)
     // in order to avoid situations when interest arrives simultaneously
     // with the data being added to the PIT/cache, we synchronize with
     // face on this level
-    NdnRtcUtils::performOnBackgroundThread([this, data, len](){
+    NdnRtcUtils::dispatchOnBackgroundThread([this, data, len](){
         publishRTPAudioPacket(len, data);
     });
 }
@@ -67,7 +67,7 @@ void AudioThread::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
     // in order to avoid situations when interest arrives simultaneously
     // with the data being added to the PIT/cache, we synchronize with
     // face on this level
-    NdnRtcUtils::performOnBackgroundThread([this, data, len](){
+    NdnRtcUtils::dispatchOnBackgroundThread([this, data, len](){
         publishRTCPAudioPacket(len, data);
     });
 }
