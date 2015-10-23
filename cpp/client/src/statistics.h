@@ -58,7 +58,9 @@ private:
 
    // all statistics indicator names
    const std::map<std::string, ndnrtc::new_api::statistics::Indicator> IndicatorNames =
-      boost::assign::map_list_of ("Acquired frames", ndnrtc::new_api::statistics::Indicator::AcquiredNum)
+      boost::assign::map_list_of 
+      ("Timestamp", ndnrtc::new_api::statistics::Indicator::Timestamp)
+      ("Acquired frames", ndnrtc::new_api::statistics::Indicator::AcquiredNum)
       ("Acquired key frames", ndnrtc::new_api::statistics::Indicator::AcquiredKeyNum)
       ("Dropped frames",  ndnrtc::new_api::statistics::Indicator::DroppedNum)
       ("Dropped key frames",  ndnrtc::new_api::statistics::Indicator::DroppedKeyNum)
