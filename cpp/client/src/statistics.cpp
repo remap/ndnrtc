@@ -102,7 +102,7 @@ void collectStreamsStatictics::createStreamsStatisticsFiles() {
 
             statisticFileName.append(remoteStreamPrefixShort);
             statisticFileName.append(".stat");
-            statisticFilePointer->open(statisticFileName);
+            statisticFilePointer->open(statisticFileName.c_str());
             singleStreamStatisticsFiles.streamStatisticsFilesName_.push_back(statisticFileName);
             singleStreamStatisticsFiles.streamStatisticsFilesPointer_.push_back(statisticFilePointer);
             LogDebug("") << "stream: " << remoteStreamPrefix << "statistics file creates:" << statisticFileName << std::endl;
