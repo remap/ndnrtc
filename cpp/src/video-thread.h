@@ -59,6 +59,9 @@ namespace ndnrtc
             init(const VideoThreadSettings& settings);
             
             void
+            stop();
+            
+            void
             getStatistics(VideoThreadStatistics& statistics);
             
             void

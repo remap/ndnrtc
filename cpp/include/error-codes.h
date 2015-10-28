@@ -24,5 +24,10 @@
 // malformed data received
 #define NRTC_ERR_MALFORMED          (-2002)
 
+// parameters validation error
+#define NRTC_ERR_VALIDATION         (-2003)
+
+// general fatal error
+#define NRTC_ERR_FATAL         (-9999)
 
 #endif

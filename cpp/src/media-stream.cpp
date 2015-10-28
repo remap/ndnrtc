@@ -25,15 +25,6 @@ MediaStream::MediaStream()
 
 MediaStream::~MediaStream()
 {
-    ThreadMap::iterator it = threads_.begin();
-    
-    while (it != threads_.end())
-    {
-        it->second->stop();
-        it++;
-    }
-    
-    threads_.clear();
 }
 
 int
@@ -48,6 +39,20 @@ MediaStream::init(const MediaStreamSettings& streamSettings)
         res = addNewMediaThread(settings_.streamParams_.mediaThreads_[i]);
     
     return res;
+}
+
+void
+MediaStream::release()
+{
+    ThreadMap::iterator it = threads_.begin();
+    
+    while (it != threads_.end())
+    {
+        it->second->stop();
+        it++;
+    }
+    
+    threads_.clear();
 }
 
 void
@@ -149,6 +154,7 @@ VideoStream::isStreamStatReady()
 void
 VideoStream::release()
 {
+    MediaStream::release();
     isProcessing_ = false;
 }
 
@@ -205,6 +211,11 @@ audioCapturer_(new AudioCapturer())
     audioCapturer_->setFrameConsumer(this);
 }
 
+AudioStream::~AudioStream()
+{
+    audioCapturer_->stopCapture();
+}
+
 int
 AudioStream::init(const MediaStreamSettings& streamSettings)
 {
@@ -223,7 +234,8 @@ AudioStream::init(const MediaStreamSettings& streamSettings)
 void
 AudioStream::release()
 {
-    audioCapturer_->stopCapture();
+    MediaStream::release();
+//    audioCapturer_->stopCapture();
 }
 
 int
@@ -253,13 +265,15 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
 void
 AudioStream::onDeliverRtpFrame(unsigned int len, unsigned char *data)
 {
-    for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
-        ((AudioThread*)i->second.get())->onDeliverRtpFrame(len, data);
+    if (isProcessing_)
+        for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
+            ((AudioThread*)i->second.get())->onDeliverRtpFrame(len, data);
 }
 
 void
 AudioStream::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
 {
-    for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
-        ((AudioThread*)i->second.get())->onDeliverRtcpFrame(len, data);
+    if (isProcessing_)
+        for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
+            ((AudioThread*)i->second.get())->onDeliverRtcpFrame(len, data);
 }

@@ -64,21 +64,6 @@ namespace ndnrtc
                 os << "id: " << deviceId_;
             }
         };
-                
-        // video capture device parameters
-        class VideoCaptureParams : public CaptureDeviceParams {
-        public:
-            unsigned int captureWidth_ = 0, captureHeight_ = 0;
-            double framerate_ = 0;
-            
-            void write(std::ostream& os) const
-            {
-                CaptureDeviceParams::write(os);
-                
-                os << "; " << framerate_ << "FPS; "
-                << captureWidth_ << "x" << captureHeight_;
-            }
-        };
         
         // audio capture device parameters
         class AudioCaptureParams : public CaptureDeviceParams {

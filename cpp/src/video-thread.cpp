@@ -40,8 +40,6 @@ keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0))
 
 VideoThread::~VideoThread()
 {
-    lock_guard<mutex> processingLock(frameProcessingMutex_);
-    stopMyThread();
 }
 
 //******************************************************************************
@@ -71,6 +69,14 @@ VideoThread::init(const VideoThreadSettings& settings)
     LogInfoC << "initialized" << std::endl;
     
     return RESULT_OK;
+}
+
+void
+VideoThread::stop()
+{
+    lock_guard<mutex> processingLock(frameProcessingMutex_);
+    MediaThread::stop();
+    stopMyThread();
 }
 
 void

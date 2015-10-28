@@ -53,7 +53,7 @@ namespace ndnrtc
             init(const MediaStreamSettings& streamSettings);
             
             virtual void
-            release() = 0;
+            release();
             
             virtual void
             addThread(const MediaThreadParams& threadParams);
@@ -76,6 +76,7 @@ namespace ndnrtc
             getStreamParameters() = 0;
             
         protected:
+            bool isProcessing_;
             MediaStreamSettings settings_;
             std::string streamName_;
             std::string streamPrefix_;
@@ -115,7 +116,6 @@ namespace ndnrtc
             isStreamStatReady();
             
         private:
-            bool isProcessing_;
             boost::shared_ptr<BaseCapturer> capturer_;
             
             int
@@ -133,6 +133,7 @@ namespace ndnrtc
         {
         public:
             AudioStream();
+            ~AudioStream();
             
             int
             init(const MediaStreamSettings& streamSettings);

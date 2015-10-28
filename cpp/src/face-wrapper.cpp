@@ -153,44 +153,34 @@ FaceProcessor::setupFaceAndTransport(const std::string host, const int port,
                                      shared_ptr<ndnrtc::FaceWrapper>& face,
                                      shared_ptr<ndn::Transport>& transport)
 {
-    int res = RESULT_OK;
+    shared_ptr<ndn::Transport::ConnectionInfo> connInfo;
+    shared_ptr<Face> ndnFace;
     
-    try
+    if (host == "127.0.0.1" || host == "0.0.0.0" || host == "localhost")
     {
-        shared_ptr<ndn::Transport::ConnectionInfo> connInfo;
-        shared_ptr<Face> ndnFace;
-        
-        if (host == "127.0.0.1" || host == "0.0.0.0" || host == "localhost")
-        {
-            transport = getDefaultTransport(NdnRtcUtils::getIoService());
+        transport = getDefaultTransport(NdnRtcUtils::getIoService());
 #ifdef USE_TS_FACE
-            ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, getDefaultConnectionInfo()));
+        ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, getDefaultConnectionInfo()));
 #else
-            ndnFace.reset(new Face(transport, getDefaultConnectionInfo()));
+        ndnFace.reset(new Face(transport, getDefaultConnectionInfo()));
 #endif
-        }
-        else
-        {
-#ifdef USE_TS_FACE
-            connInfo.reset(new AsyncTcpTransport::ConnectionInfo(host.c_str(), port));
-            transport.reset(new AsyncTcpTransport(NdnRtcUtils::getIoService()));
-            ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, connInfo));
-#else
-            connInfo.reset(new TcpTransport::ConnectionInfo(host.c_str(), port));
-            transport.reset(new TcpTransport());
-            ndnFace.reset(new Face(transport, connInfo));
-#endif
-        }
-        
-        face.reset(new FaceWrapper(ndnFace));
-        
     }
-    catch (std::exception &e)
+    else
     {
-        res = RESULT_ERR;
+#ifdef USE_TS_FACE
+        connInfo.reset(new AsyncTcpTransport::ConnectionInfo(host.c_str(), port));
+        transport.reset(new AsyncTcpTransport(NdnRtcUtils::getIoService()));
+        ndnFace.reset(new ThreadsafeFace(NdnRtcUtils::getIoService(), transport, connInfo));
+#else
+        connInfo.reset(new TcpTransport::ConnectionInfo(host.c_str(), port));
+        transport.reset(new TcpTransport());
+        ndnFace.reset(new Face(transport, connInfo));
+#endif
     }
     
-    return res;
+    face.reset(new FaceWrapper(ndnFace));
+    
+    return RESULT_OK;
 }
 
 boost::shared_ptr<FaceProcessor>
@@ -202,19 +192,18 @@ FaceProcessor::createFaceProcessor(const std::string host, const int port,
     shared_ptr<ndn::Transport> transport;
     shared_ptr<FaceProcessor> fp;
     
-    if (RESULT_GOOD(FaceProcessor::setupFaceAndTransport(host, port, face, transport)))
+    FaceProcessor::setupFaceAndTransport(host, port, face, transport);
+    
+    if (keyChain.get())
     {
-        if (keyChain.get())
-        {
-            if (certificateName.get())
-                face->setCommandSigningInfo(*keyChain, *certificateName);
-            else
-                face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
-        }
-        
-        fp.reset(new FaceProcessor(face));
-        fp->setTransport(transport);
+        if (certificateName.get())
+            face->setCommandSigningInfo(*keyChain, *certificateName);
+        else
+            face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
     }
+    
+    fp.reset(new FaceProcessor(face));
+    fp->setTransport(transport);
     
     return fp;
 }

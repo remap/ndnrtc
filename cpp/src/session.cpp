@@ -48,19 +48,8 @@ Session::init(const std::string username,
     this->setLogger(new Logger(generalParams.loggingLevel_,
                                NdnRtcUtils::getFullLogPath(generalParams, logFileName)));
     isLoggerCreated_ = true;
-    
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
-
-    try {
-        mainFaceProcessor_ = mainFaceProcessor;
-    }
-    catch (std::exception& exception) {
-        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
-                    "Make sure your NDN daemon is running", exception.what());
-        
-        return RESULT_ERR;
-    }
-
+    mainFaceProcessor_ = mainFaceProcessor;
     sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
     
     return RESULT_OK;
@@ -70,9 +59,7 @@ int
 Session::start()
 {
     switchStatus(SessionOnlineNotPublishing);
-    
     scheduleJob(500000, boost::bind(&Session::updateSessionInfo, this));
-    
     LogInfoC << "session started" << std::endl;
     
     return RESULT_OK;
@@ -160,6 +147,9 @@ Session::addLocalStream(const MediaStreamParams& params,
 int
 Session::removeLocalStream(const std::string& streamPrefix)
 {
+    if (status_ == SessionInvalidated)
+        return RESULT_ERR;
+        
     StreamMap::iterator it = audioStreams_.find(streamPrefix);
     StreamMap* streamMap = &audioStreams_;
     
@@ -189,6 +179,26 @@ Session::removeLocalStream(const std::string& streamPrefix)
     return RESULT_OK;
 }
 
+void
+Session::invalidate()
+{
+    for (auto audioStream:audioStreams_)
+        audioStream.second->release();
+    
+    for (auto videoStream:videoStreams_)
+    {
+        dynamic_pointer_cast<VideoStream>(videoStream.second)->getCapturer()->capturingStopped();
+        videoStream.second->release();
+    }
+    
+    sessionCache_->unregisterAll();
+    
+    LogWarnC << "session invalidated" << std::endl;
+    
+    switchStatus(SessionInvalidated);
+    logger_->flush();
+}
+
 // private
 void
 Session::switchStatus(SessionStatus status)
@@ -210,20 +220,21 @@ Session::switchStatus(SessionStatus status)
 bool
 Session::updateSessionInfo()
 {
-    if (sessionObserver_)
+    if (status_ != SessionInvalidated)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+        if (sessionObserver_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+            sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+        }
     }
     
-    return true;
+    return (status_ != SessionInvalidated);
 }
 
 boost::shared_ptr<SessionInfo>
 Session::getSessionInfo()
 {
-    LogDebugC << "session info requested" << std::endl;
-
     shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
     sessionInfo->sessionPrefix_ = userPrefix_;
 

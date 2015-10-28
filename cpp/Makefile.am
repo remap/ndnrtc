@@ -28,13 +28,16 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
   include/ndnrtc-defines.h \
+  src/ndnrtc-exception.h src/ndnrtc-exception.cpp \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
+  src/ndnrtc-manager.cpp src/ndnrtc-manager.h \
   include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
   src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
   include/params.h \
+  src/params-validator.h src/params-validator.cpp \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
   src/renderer.h \
