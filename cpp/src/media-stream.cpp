@@ -45,7 +45,6 @@ void
 MediaStream::release()
 {
     ThreadMap::iterator it = threads_.begin();
-    
     while (it != threads_.end())
     {
         it->second->stop();
@@ -221,6 +220,7 @@ AudioStream::init(const MediaStreamSettings& streamSettings)
 {
     if (RESULT_GOOD(MediaStream::init(streamSettings)))
     {
+        isProcessing_ = true;
         audioCapturer_->setLogger(logger_);
         audioCapturer_->init();
         audioCapturer_->startCapture();
@@ -236,6 +236,7 @@ AudioStream::release()
 {
     MediaStream::release();
 //    audioCapturer_->stopCapture();
+    isProcessing_ = false;
 }
 
 int
