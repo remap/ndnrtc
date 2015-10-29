@@ -613,6 +613,7 @@ void init()
 void cleanup()
 {
     LogInfo(LIB_LOG) << "Stopping active session " << ActiveSession->getPrefix() << std::endl;
+    ActiveSession.reset();
     
     LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
     recoveryCheckTimer.cancel();
