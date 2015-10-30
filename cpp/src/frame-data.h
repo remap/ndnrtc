@@ -52,17 +52,9 @@ namespace ndnrtc {
     {
     public:
         NetworkData():length_(0), data_(NULL) {}
-        NetworkData(unsigned int dataLength, const unsigned char* rawData)
-        {
-            length_ = dataLength;
-            data_ = (unsigned char*)malloc(dataLength);
-            memcpy((void*)data_, (void*)rawData, length_);
-            isDataCopied_ = true;
-        }
-        virtual ~NetworkData(){
-            if (data_ && isDataCopied_)
-                free(data_);
-        }
+        NetworkData(unsigned int dataLength, const unsigned char* rawData);
+        NetworkData(const NetworkData& networkData);
+        virtual ~NetworkData();
         
         int
         getLength() const { return length_; }
@@ -89,6 +81,9 @@ namespace ndnrtc {
         virtual int
         initFromRawData(unsigned int dataLength,
                         const unsigned char* rawData) = 0;
+        
+        void
+        copyFromRaw(unsigned int dataLength, const unsigned char* rawData);
     };
     
     class SegmentData : public NetworkData

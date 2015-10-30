@@ -56,6 +56,31 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
 }
 
 //******************************************************************************
+NetworkData::NetworkData(unsigned int dataLength, const unsigned char* rawData)
+{
+    copyFromRaw(dataLength, rawData);
+}
+
+NetworkData::NetworkData(const NetworkData& networkData)
+{
+    copyFromRaw(networkData.getLength(), networkData.getData());
+    isValid_ = networkData.isValid();
+}
+
+NetworkData::~NetworkData(){
+    if (data_ && isDataCopied_)
+        free(data_);
+}
+
+void NetworkData::copyFromRaw(unsigned int dataLength, const unsigned char* rawData)
+{
+    length_ = dataLength;
+    data_ = (unsigned char*)malloc(dataLength);
+    memcpy((void*)data_, (void*)rawData, length_);
+    isDataCopied_ = true;
+}
+
+//******************************************************************************
 const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0, 0};
 const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1, -1};
 
@@ -389,6 +414,12 @@ PacketData(dataLength, rawData)
 {
     isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
 }
+
+//NdnAudioData::NdnAudioData(const NdnAudioData& audioData)
+//{
+//    isDataCopied_ = true;
+//    isValid_ = audioData.getIs
+//}
 
 //******************************************************************************
 #pragma mark - public

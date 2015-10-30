@@ -28,7 +28,7 @@ using namespace webrtc;
 #define STAT_PRINT(symbol, value) ((symbol) << '\t' << (value) << '\t')
 
 const int Consumer::MaxIdleTimeMs = 500;
-const int Consumer::MaxChasingTimeMs = 4*Consumer::MaxIdleTimeMs;
+const int Consumer::MaxChasingTimeMs = 6*Consumer::MaxIdleTimeMs;
 
 //******************************************************************************
 #pragma mark - construction/destruction
