@@ -9,6 +9,8 @@
 
 #include "renderer.h"
 
+using namespace std;
+
 uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 {
     if (!renderBuffer_ || width*height*4 > bufferSize_)
@@ -27,6 +29,24 @@ void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height,
 {
     // do whatever we need, i.e. drop frame, render it, write to file, etc.
     LogInfo("") << "received frame (" << width << "x" << height << ") at " << timestamp << "ms" << std::endl;
+    
+    std::ofstream *videoFrameFilePointer= new std::ofstream;
+    stringstream videoFrameFileNameStream;
+
+    videoFrameFileNameStream << timestamp << "--" << width<<"--" << height <<".frame";
+
+    string videoFrameFileName=videoFrameFileNameStream.str();
+
+    videoFrameFilePointer->open(videoFrameFileName.c_str());
+    for (int i = 0; i < width*height; ++i){
+        (*videoFrameFilePointer) << buffer[i]; 
+        (*videoFrameFilePointer) << buffer[i+1];
+        (*videoFrameFilePointer) << buffer[i+2];
+        (*videoFrameFilePointer) << buffer[i+3];
+        (*videoFrameFilePointer) << "done";
+    }
+    
+    delete videoFrameFilePointer;
     return;
 }
     

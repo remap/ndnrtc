@@ -17,6 +17,7 @@
 #include "config.h"
 #include "renderer.h"
 #include "statistics.h"
+#include "capturer.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
@@ -135,7 +136,6 @@ void run(const std::string &configFile,
     // setup video fetching
     const int videoStreamsNumber = headlessParams.defaultVideoStreams_.size();
 
-
     RendererInternal *renderer = new RendererInternal[videoStreamsNumber];
 
     for (int videoStreamsCount = 0; videoStreamsCount < videoStreamsNumber; videoStreamsCount++) {
@@ -148,6 +148,29 @@ void run(const std::string &configFile,
                     << "threadToFetch: " << videoStream->threadToFetch_ << std::endl;
     }
 
+    // local_session_prefix = "/ndn/edu/ucla/remap/ndnrtc/user/ubuntuHeadless";
+    new_api::MediaStreamParams localMedia;
+    localMedia.type_=MediaStreamParams::MediaStreamTypeAudio;
+    localMedia.producerParams_.segmentSize_ = 1000;
+    localMedia.producerParams_.freshnessMs_ = 1000;
+    localMedia.streamName_ = "audio";
+    localMedia.synchronizedStreamName_ = "audio";
+            // CaptureDeviceParams *captureDevice_ = NULL;
+    MediaThreadParams localMediaThread;
+    localMediaThread.threadName_="pcmu";
+    localMedia.mediaThreads_.push_back(&localMediaThread);
+    SessionObserver *localSessionObserver=new SessionObserver;
+    GeneralParams localMediaGeneralParams=headlessParams.generalParams_;
+    localMediaGeneralParams.prefix_="/ndn/edu/ucla";
+    IExternalCapturer* localCapturer=new ExternalCapturer;
+
+    std::string localStreamsPrefixSession=ndnp->startSession("ubuntuHeadless",
+                                                        localMediaGeneralParams,
+                                                        localSessionObserver);
+    std::string localStreamsPrefix=ndnp->addLocalStream(localStreamsPrefixSession,
+                                                    localMedia,
+                                                    NULL);
+    LogDebug("")<< "localStreamsPrefix: " << localStreamsPrefix<<std::endl;
 
     // collect streams statictics
     boost::asio::io_service staticticsIo;
@@ -157,10 +180,10 @@ void run(const std::string &configFile,
     staticticsIo.stop();
 
     // sleep(headlessAppOnlineTimeSec);
-    removeRemoteStreams(ndnp, remoteStreamsPrefix);
+    // removeRemoteStreams(ndnp, remoteStreamsPrefix);
     LogDebug("") << "remove remote streams... "  << std::endl;
-    delete  []renderer;
-    LogDebug("") << "delete renderers... " << std::endl;
+    // delete  []renderer;
+    // LogDebug("") << "delete renderers... " << std::endl;
     LogInfo("") << "demo fetching has been completed" << std::endl;
 
     return;

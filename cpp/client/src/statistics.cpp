@@ -14,15 +14,16 @@ collectStreamsStatictics::collectStreamsStatictics(boost::asio::io_service &io,
                                                     std::vector<Statistics> statistics,
                                                     std::vector<std::string> remoteStreamsPrefix,
                                                     NdnRtcLibrary *ndnp)
-                                                    : timer_(io, boost::posix_time::seconds(statisticsSampleInterval)) {
-    statisticsSampleInterval_ = statisticsSampleInterval;
+                                                    : timer_(io, boost::posix_time::seconds(statisticsSampleInterval)),
+                                                      statisticsSampleInterval_(statisticsSampleInterval),
+                                                      ndnp_(ndnp),
+                                                      remoteStreamsPrefix_(remoteStreamsPrefix),
+                                                      statistics_ (statistics){
     stoptime_ = headlessAppOnlineTimeSec * 1000; //count in milliseconds
-    statistics_ = statistics;
-    remoteStreamsPrefix_ = remoteStreamsPrefix;
-    ndnp_ = ndnp;
-
+    
     createStreamsStatisticsFiles(); // create all statistics files and write statistics header
     timer_.async_wait(boost::bind(&collectStreamsStatictics::printStatistics, this)); // start statistics sample thread
+
 }
 
 collectStreamsStatictics::~collectStreamsStatictics() {
@@ -47,7 +48,7 @@ void collectStreamsStatictics::printStatistics() {
                 string statisticsFileName = AllStreamsStatisticsFiles_.streamsStatisticsFiles_[remoteStreamsPrefixCount].streamStatisticsFilesName_[singleStreamStatisticsFileCount];
                 string singleStatEntryContent = "";
 
-                LogDebug("") << "stream statistics file name: " << statisticsFileName << std::endl;
+                // LogDebug("") << "stream statistics file name: " << statisticsFileName << std::endl;
 
                 getSingleStatistic(remoteStreamPrefix, remoteStreamStatistics, "Timestamp", singleStatEntryContent, getHeader);// get timestamp 
 
@@ -79,7 +80,7 @@ void collectStreamsStatictics::createStreamsStatisticsFiles() {
 
         int singleStreamStatisticsFileNumber = statistics_.size();
 
-        LogDebug("") << "singleStreamStatisticsFileNumber: " << singleStreamStatisticsFileNumber << std::endl;
+        // LogDebug("") << "singleStreamStatisticsFileNumber: " << singleStreamStatisticsFileNumber << std::endl;
         
         string remoteStreamPrefix = remoteStreamsPrefix_[remoteStreamsPrefixCount];
         string remoteStreamPrefixShort = remoteStreamPrefix;
@@ -92,7 +93,7 @@ void collectStreamsStatictics::createStreamsStatisticsFiles() {
 
             string statisticFileNamePrefix = statistics_[singleStreamStatisticsFileCount].statFileName_;
 
-            LogDebug("") << "statisticFileNamePrefix: " << statisticFileNamePrefix << std::endl;
+            // LogDebug("") << "statisticFileNamePrefix: " << statisticFileNamePrefix << std::endl;
 
             string statisticFileName = "";
 
@@ -105,7 +106,7 @@ void collectStreamsStatictics::createStreamsStatisticsFiles() {
             statisticFilePointer->open(statisticFileName.c_str());
             singleStreamStatisticsFiles.streamStatisticsFilesName_.push_back(statisticFileName);
             singleStreamStatisticsFiles.streamStatisticsFilesPointer_.push_back(statisticFilePointer);
-            LogDebug("") << "stream: " << remoteStreamPrefix << "statistics file creates:" << statisticFileName << std::endl;
+            // LogDebug("") << "stream: " << remoteStreamPrefix << "statistics file creates:" << statisticFileName << std::endl;
 
             int singleStreamStatisticsEntryNumber = statistics_[singleStreamStatisticsFileCount].gatheredStatistcs_.size();
             string singleStatEntryContent = "";
@@ -168,7 +169,7 @@ void collectStreamsStatictics::getSingleStatistic(std::string remoteStreamPrefix
         }
         singleStatEntryContent.append(statisticData.str());
         singleStatEntryContent.append("\t");
-        LogDebug("") << "remoteStreamStatistics with stream prefix" << remoteStreamPrefix << ", stat data: " << statisticData.str() << std::endl;
+        // LogDebug("") << "remoteStreamStatistics with stream prefix" << remoteStreamPrefix << ", stat data: " << statisticData.str() << std::endl;
     }
 }
 
@@ -190,4 +191,6 @@ void collectStreamsStatictics::makeRemoteStreamPrefixNicer(std::string &remoteSt
         remoteStreamPrefixShort.erase(cutRemoteStreamPrefixShortPosition, cutRemoteStreamPrefixShort[cutRemoteStreamPrefixShortCount].length());
     }
 }
+
+
 
