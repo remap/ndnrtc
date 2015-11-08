@@ -115,3 +115,9 @@ private:
       ("Capture rate",    ndnrtc::new_api::statistics::Indicator::CaptureRate)
       ("Captured frames", ndnrtc::new_api::statistics::Indicator::CapturedNum);
 };
+
+void callStatCollector(const unsigned int statisticsSampleInterval,
+                        const unsigned int headlessAppOnlineTimeSec,
+                        std::vector<Statistics> statisticsToCollect,
+                        std::vector<std::string> remoteStreamsPrefix,
+                        ndnrtc::NdnRtcLibrary* ndnp);

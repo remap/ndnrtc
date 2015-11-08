@@ -185,7 +185,8 @@ libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-renderer.$(OBJEXT) \
 	client/src/ndnrtc_client-config.$(OBJEXT) \
-	client/src/ndnrtc_client-statistics.$(OBJEXT)
+	client/src/ndnrtc_client-statistics.$(OBJEXT) \
+	client/src/ndnrtc_client-capturer.$(OBJEXT)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 @OS_LINUX_TRUE@am__DEPENDENCIES_2 =  \
 @OS_LINUX_TRUE@	/usr/lib/x86_64-linux-gnu/libboost_system.so
@@ -494,7 +495,7 @@ libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 	-lboost_chrono -lboost_thread $(am__append_1) $(am__append_2)
 @OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/statistics.cpp client/src/statistics.h client/src/capturer.h
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/statistics.cpp client/src/statistics.h client/src/capturer.h client/src/capturer.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la \
@@ -678,6 +679,9 @@ client/src/ndnrtc_client-config.$(OBJEXT): client/src/$(am__dirstamp) \
 client/src/ndnrtc_client-statistics.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/ndnrtc_client-capturer.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
 
 ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) $(EXTRA_ndnrtc_client_DEPENDENCIES) 
 	@rm -f ndnrtc-client$(EXEEXT)
@@ -692,6 +696,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@
@@ -1096,6 +1101,20 @@ client/src/ndnrtc_client-statistics.obj: client/src/statistics.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/statistics.cpp' object='client/src/ndnrtc_client-statistics.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-statistics.obj `if test -f 'client/src/statistics.cpp'; then $(CYGPATH_W) 'client/src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/statistics.cpp'; fi`
+
+client/src/ndnrtc_client-capturer.o: client/src/capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-capturer.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-capturer.Tpo -c -o client/src/ndnrtc_client-capturer.o `test -f 'client/src/capturer.cpp' || echo '$(srcdir)/'`client/src/capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-capturer.Tpo client/src/$(DEPDIR)/ndnrtc_client-capturer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/capturer.cpp' object='client/src/ndnrtc_client-capturer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-capturer.o `test -f 'client/src/capturer.cpp' || echo '$(srcdir)/'`client/src/capturer.cpp
+
+client/src/ndnrtc_client-capturer.obj: client/src/capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-capturer.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-capturer.Tpo -c -o client/src/ndnrtc_client-capturer.obj `if test -f 'client/src/capturer.cpp'; then $(CYGPATH_W) 'client/src/capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/capturer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-capturer.Tpo client/src/$(DEPDIR)/ndnrtc_client-capturer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/capturer.cpp' object='client/src/ndnrtc_client-capturer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-capturer.obj `if test -f 'client/src/capturer.cpp'; then $(CYGPATH_W) 'client/src/capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/capturer.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

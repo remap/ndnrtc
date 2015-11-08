@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             abort ();
         }
 
-// #warning implement loading parameters from configuration files
+    // #warning implement loading parameters from configuration files
 #if 1
     if (!configFile) {
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
 //******************************************************************************
 class LibraryObserver : public INdnRtcLibraryObserver {
-public:
+  public:
     void onStateChanged(const char *state, const char *args) {
 
         LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
@@ -136,6 +136,10 @@ void run(const std::string &configFile,
     // setup video fetching
     const int videoStreamsNumber = headlessParams.defaultVideoStreams_.size();
 
+<<<<<<< HEAD
+    LogDebug("") << "videoStreamsNumber: " << videoStreamsNumber << std::endl;
+=======
+>>>>>>> 966aab0cd09209af575b31689b3a79cfd89e315d
     RendererInternal *renderer = new RendererInternal[videoStreamsNumber];
 
     for (int videoStreamsCount = 0; videoStreamsCount < videoStreamsNumber; videoStreamsCount++) {
@@ -149,6 +153,84 @@ void run(const std::string &configFile,
     }
 
     // local_session_prefix = "/ndn/edu/ucla/remap/ndnrtc/user/ubuntuHeadless";
+<<<<<<< HEAD
+    // new_api::MediaStreamParams localMedia;
+    // localMedia.type_=MediaStreamParams::MediaStreamTypeAudio;
+    // localMedia.producerParams_.segmentSize_ = 1000;
+    // localMedia.producerParams_.freshnessMs_ = 1000;
+    // localMedia.streamName_ = "audio";
+    // localMedia.synchronizedStreamName_ = "audio";
+    //         // CaptureDeviceParams *captureDevice_ = NULL;
+    // MediaThreadParams localMediaThread;
+    // localMediaThread.threadName_="pcmu";
+    // localMedia.mediaThreads_.push_back(&localMediaThread);
+    // SessionObserver *localSessionObserver=new SessionObserver;
+    // GeneralParams localMediaGeneralParams=headlessParams.generalParams_;
+    // localMediaGeneralParams.prefix_="/ndn/edu/ucla";
+    // IExternalCapturer** localCapturer=NULL;
+
+    // std::string localStreamsPrefixSession=ndnp->startSession("ubuntuHeadless",
+    //                                                     localMediaGeneralParams,
+    //                                                     localSessionObserver);
+    // std::string localStreamsPrefix=ndnp->addLocalStream(localStreamsPrefixSession,
+    //                                                 localMedia,
+    //                                                 NULL);
+    // LogDebug("")<< "localStreamsPrefix: " << localStreamsPrefix<<std::endl;
+
+    new_api::MediaStreamParams localMedia;
+
+    localMedia.type_ = MediaStreamParams::MediaStreamTypeVideo;
+    localMedia.producerParams_.segmentSize_ = 1000;
+    localMedia.producerParams_.freshnessMs_ = 1000;
+    localMedia.streamName_ = "video";
+    localMedia.synchronizedStreamName_ = "video";
+    // CaptureDeviceParams *captureDevice_ = NULL;
+    // MediaThreadParams* localMediaThread = new VideoThreadParams;
+    VideoThreadParams *localMediaThread = new VideoThreadParams;
+
+    localMediaThread->threadName_ = "freec";
+    localMediaThread->deltaAvgSegNum_ = 5;
+    localMediaThread->deltaAvgParitySegNum_ = 2;
+    localMediaThread->keyAvgSegNum_ = 30;
+    localMediaThread->keyAvgParitySegNum_ = 5;
+    localMediaThread->coderParams_.codecFrameRate_ = 30;
+    localMediaThread->coderParams_.gop_ = 30;
+    localMediaThread->coderParams_.startBitrate_ = 100;
+    localMediaThread->coderParams_.maxBitrate_ = 10000;
+    localMediaThread->coderParams_.encodeWidth_ = 720;
+    localMediaThread->coderParams_.encodeHeight_ = 405;
+    localMediaThread->coderParams_.dropFramesOn_ = true;
+    localMedia.mediaThreads_.push_back(localMediaThread);
+
+    SessionObserver *localSessionObserver = new SessionObserver;
+    GeneralParams localMediaGeneralParams = headlessParams.generalParams_;
+
+    localMediaGeneralParams.prefix_ = "/a";
+    // localMediaGeneralParams.prefix_ = "/ndn/edu/ucla";
+
+    IExternalCapturer *localCapturer;
+
+    std::string localStreamsPrefixSession = ndnp->startSession("ubuntuHeadless",
+                                            localMediaGeneralParams,
+                                            localSessionObserver);
+    std::string localStreamsPrefix = ndnp->addLocalStream(localStreamsPrefixSession,
+                                     localMedia,
+                                     &localCapturer);
+    callReaderVideoFromFile(&localCapturer, headlessAppOnlineTimeSec);
+    LogDebug("") << "localStreamsPrefix: " << localStreamsPrefix << std::endl;
+
+    // callStatCollector(statisticsSampleInterval,
+    //                   headlessAppOnlineTimeSec,
+    //                   headlessParams.statistics_,
+    //                   remoteStreamsPrefix,
+    //                   ndnp);
+
+    sleep(headlessAppOnlineTimeSec);
+    removeRemoteStreams(ndnp, remoteStreamsPrefix);
+    LogDebug("") << "remove remote streams... "  << std::endl;
+    // delete  []renderer;
+    LogDebug("") << "delete renderers... " << std::endl;
+=======
     new_api::MediaStreamParams localMedia;
     localMedia.type_=MediaStreamParams::MediaStreamTypeAudio;
     localMedia.producerParams_.segmentSize_ = 1000;
@@ -184,6 +266,7 @@ void run(const std::string &configFile,
     LogDebug("") << "remove remote streams... "  << std::endl;
     // delete  []renderer;
     // LogDebug("") << "delete renderers... " << std::endl;
+>>>>>>> 966aab0cd09209af575b31689b3a79cfd89e315d
     LogInfo("") << "demo fetching has been completed" << std::endl;
 
     return;
