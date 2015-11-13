@@ -32,7 +32,8 @@ status_(SessionOffline)
 Session::~Session()
 {
     std::cout << " session dtor begin" << std::endl;
-    stop();
+    if (status_ == SessionOnlinePublishing)
+        stop();
 }
 
 int

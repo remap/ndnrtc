@@ -28,6 +28,9 @@ namespace ndnrtc {
             
             virtual int
             init();
+            
+            virtual int
+            release();
 
         protected:
             int webrtcChannelId_;

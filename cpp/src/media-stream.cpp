@@ -212,7 +212,7 @@ audioCapturer_(new AudioCapturer())
 
 AudioStream::~AudioStream()
 {
-    audioCapturer_->stopCapture();
+//    audioCapturer_->stopCapture();
 }
 
 int
@@ -222,7 +222,6 @@ AudioStream::init(const MediaStreamSettings& streamSettings)
     {
         isProcessing_ = true;
         audioCapturer_->setLogger(logger_);
-        audioCapturer_->init();
         audioCapturer_->startCapture();
         
         return RESULT_OK;
@@ -234,8 +233,8 @@ AudioStream::init(const MediaStreamSettings& streamSettings)
 void
 AudioStream::release()
 {
+    audioCapturer_->stopCapture();
     MediaStream::release();
-//    audioCapturer_->stopCapture();
     isProcessing_ = false;
 }
 
