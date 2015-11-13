@@ -176,6 +176,7 @@ std::string NdnRtcManager::startSession(const std::string& username,
         ParamsValidator::validateName(username, ParamsValidator::MaxUserNameLen);
         ParamsValidator::validateParams(generalParams);
         
+        Logger::getLogger(LIB_LOG).flush();
         LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
         Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
         
@@ -294,6 +295,7 @@ NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
     std::string streamPrefix = "";
     
     NdnRtcUtils::performOnBackgroundThread([=, &streamPrefix]()->void{
+        Logger::getLogger(LIB_LOG).flush();
         LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
         NdnRtcUtils::createLibFace(generalParams);
         

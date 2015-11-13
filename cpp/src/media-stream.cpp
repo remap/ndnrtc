@@ -105,6 +105,7 @@ VideoStream::init(const MediaStreamSettings& streamSettings)
 {
     if (RESULT_GOOD(MediaStream::init(streamSettings)))
     {
+        encodingBarrier_ = new boost::barrier(threads_.size());
         capturer_->setLogger(logger_);
         isProcessing_ = true;
         
@@ -154,7 +155,12 @@ void
 VideoStream::release()
 {
     MediaStream::release();
-    isProcessing_ = false;
+    
+    if (isProcessing_)
+    {
+        delete encodingBarrier_;
+        isProcessing_ = false;
+    }
 }
 
 int
@@ -165,6 +171,8 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     
     threadSettings.useFec_ = settings_.useFec_;
     threadSettings.threadParams_ = params;
+#warning callback should be this here
+    threadSettings.threadCallback_ = nullptr;
     
     shared_ptr<VideoThread> videoThread(new VideoThread());
     videoThread->registerCallback(this);
@@ -176,7 +184,11 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
         return RESULT_ERR;
     }
     else
+    {
         threads_[videoThread->getPrefix()] = videoThread;
+        deltaFrameSync_[videoThread->getPrefix()] = 0;
+        keyFrameSync_[videoThread->getPrefix()] = 0;
+    }
 
     return RESULT_OK;
 }
@@ -198,6 +210,32 @@ VideoStream::onDeliverFrame(WebRtcVideoFrame &frame,
             }
         }
     }
+}
+
+void
+VideoStream::onFrameDropped(const std::string& threadPrefix)
+{
+    encodingBarrier_->wait();
+}
+
+void
+VideoStream::onFrameEncoded(const std::string& threadPrefix,
+                            const FrameNumber& frameNo,
+                            bool isKey)
+{
+    if (isKey)
+        keyFrameSync_[threadPrefix] = frameNo;
+    else
+        deltaFrameSync_[threadPrefix] = frameNo;
+}
+
+std::map<std::string, FrameNumber>
+VideoStream::getFrameSyncList(bool isKey)
+{
+    if (isKey)
+        return keyFrameSync_;
+    else
+        return deltaFrameSync_;
 }
 
 //******************************************************************************

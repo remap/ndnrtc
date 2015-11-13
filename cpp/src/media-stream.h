@@ -19,6 +19,7 @@
 #include "params.h"
 #include "external-capturer.hpp"
 #include "audio-capturer.h"
+#include "video-thread.h"
 
 namespace ndnrtc
 {
@@ -95,7 +96,8 @@ namespace ndnrtc
         
         //**********************************************************************
         class VideoStream : public MediaStream,
-                            public IRawFrameConsumer
+                            public IRawFrameConsumer,
+                            public IVideoThreadCallback
         {
         public:
             VideoStream();
@@ -117,6 +119,8 @@ namespace ndnrtc
             
         private:
             boost::shared_ptr<BaseCapturer> capturer_;
+            boost::barrier *encodingBarrier_;
+            std::map<std::string, FrameNumber> deltaFrameSync_, keyFrameSync_;
             
             int
             addNewMediaThread(const MediaThreadParams* params);
@@ -125,6 +129,16 @@ namespace ndnrtc
             void
             onDeliverFrame(WebRtcVideoFrame &frame,
                            double timestamp);
+            
+            // IVideoThreadCallback
+            void
+            onFrameDropped(const std::string& threadPrefix);
+            void
+            onFrameEncoded(const std::string& threadPrefix,
+                           const FrameNumber& frameNo,
+                           bool isKey);
+            std::map<std::string, FrameNumber>
+            getFrameSyncList(bool isKey);
         };
         
         //**********************************************************************

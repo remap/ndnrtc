@@ -30,7 +30,8 @@ coder_(new VideoCoder()),
 deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
 keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
-keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0))
+keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, 0)),
+callback_(nullptr)
 {
     description_ = "vthread";
     coder_->registerCallback(this);
@@ -55,6 +56,7 @@ VideoThread::init(const VideoThreadSettings& settings)
     if (RESULT_FAIL(res))
         return res;
     
+    callback_ = settings.threadCallback_;
     deltaFramesPrefix_ = Name(threadPrefix_);
     deltaFramesPrefix_.append(Name(NameComponents::NameComponentStreamFramesDelta));
     keyFramesPrefix_ = Name(threadPrefix_);
@@ -104,7 +106,10 @@ VideoThread::onDeliverFrame(WebRtcVideoFrame &frame,
         deliveredFrame_.CopyFrame(frame);
         dispatchOnMyThread([this, unixTimeStamp](){
             lock_guard<mutex> processingLock(frameProcessingMutex_);
+            encodeFinished_ = false;
             coder_->onDeliverFrame(deliveredFrame_, unixTimeStamp);
+            if (!encodeFinished_ && callback_)
+                callback_->onFrameDropped(threadPrefix_);
         });
         frameProcessingMutex_.unlock();
     }
@@ -124,6 +129,13 @@ void VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedIma
                                           double captureTimestamp,
                                           bool completeFrame)
 {
+    encodeFinished_ = true;
+    if (callback_) {
+        FrameNumber frameNo = (encodedImage._frameType == webrtc::kKeyFrame)? (keyFrameNo_+1):deltaFrameNo_;
+        callback_->onFrameEncoded(threadPrefix_, frameNo,
+                                  encodedImage._frameType == webrtc::kKeyFrame);
+    }
+    
     // as we're using ThreadsafeFace we need to synchronize with it
     // the only way to sync is to execute code which accesses Face on
     // the same thread that ThreadsafeFace is running.
