@@ -148,9 +148,11 @@ Session::addLocalStream(const MediaStreamParams& params,
 int
 Session::removeLocalStream(const std::string& streamPrefix)
 {
+    int res = RESULT_OK;
+    
     if (status_ == SessionInvalidated)
-        return RESULT_ERR;
-        
+        res = RESULT_ERR;
+    
     StreamMap::iterator it = audioStreams_.find(streamPrefix);
     StreamMap* streamMap = &audioStreams_;
     
@@ -159,25 +161,27 @@ Session::removeLocalStream(const std::string& streamPrefix)
         it = videoStreams_.find(streamPrefix);
         
         if (it == videoStreams_.end())
-            return RESULT_ERR;
-        
-        streamMap = &videoStreams_;
+            res = RESULT_ERR;
+        else
+            streamMap = &videoStreams_;
     }
     
-    it->second->release();
-    streamMap->erase(it);
+    if (res == RESULT_OK)
+        NdnRtcUtils::performOnBackgroundThread([this, &it, &streamMap](){
+            it->second->release();
+            streamMap->erase(it);
+            
+            if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
+                switchStatus(SessionOnlineNotPublishing);
+            
+            if (sessionObserver_)
+            {
+                boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+                sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+            }
+        });
     
-    if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
-        switchStatus(SessionOnlineNotPublishing);
-
-    if (sessionObserver_)
-    {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
-    }
-
-    
-    return RESULT_OK;
+    return res;
 }
 
 void
@@ -221,7 +225,8 @@ Session::switchStatus(SessionStatus status)
 bool
 Session::updateSessionInfo()
 {
-    if (status_ != SessionInvalidated)
+    if (status_ != SessionInvalidated &&
+        status_ != SessionOffline)
     {
         if (sessionObserver_)
         {
@@ -230,7 +235,7 @@ Session::updateSessionInfo()
         }
     }
     
-    return (status_ != SessionInvalidated);
+    return (status_ != SessionInvalidated && status_ != SessionOffline);
 }
 
 boost::shared_ptr<SessionInfo>

@@ -849,8 +849,8 @@ void resetThread()
         }
         catch (std::exception &e) // fatal
         {
-            NdnRtcManager::getSharedInstance().fatalException(e);
             NdnRtcIoService->reset();
+            NdnRtcManager::getSharedInstance().fatalException(e);
             VoiceEngine::Delete(VoiceEngineInstance);
             ThreadRecovery = true;
             resetThread();

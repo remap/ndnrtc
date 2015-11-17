@@ -381,7 +381,9 @@ NdnRtcManager::removeRemoteStream(const std::string& streamPrefix)
         logFileName = it->second->getLogger()->getFileName();
         it->second->stop();
         {
-            ActiveStreamConsumers.erase(it);
+            NdnRtcUtils::performOnBackgroundThread([&]()->void{
+                ActiveStreamConsumers.erase(it);
+            });
         }
         
         LogInfo(LIB_LOG) << "Stream removed successfully" << std::endl;
@@ -550,7 +552,10 @@ NdnRtcManager::fatalException(const std::exception& e)
     
     failed_ = true;
     failure();
-    LibraryInternalObserver.onErrorOccurred(NRTC_ERR_FATAL, e.what());
+    
+    NdnRtcUtils::dispatchOnBackgroundThread([&e](){
+        LibraryInternalObserver.onErrorOccurred(NRTC_ERR_FATAL, e.what());
+    });
 }
 
 //********************************************************************************
@@ -657,7 +662,7 @@ void failure()
         consumerIt.second->stop();
     ActiveStreamConsumers.clear();
     
-    // shuting down producing part
+    // shutting down producing part
     ActiveSession->invalidate();
 }
 
