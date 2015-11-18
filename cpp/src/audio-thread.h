@@ -11,6 +11,8 @@
 #ifndef __ndnrtc__audio_thread__
 #define __ndnrtc__audio_thread__
 
+#include <boost/thread/mutex.hpp>
+
 #include "media-thread.h"
 #include "audio-capturer.h"
 #include "ndnrtc-common.h"
@@ -64,8 +66,7 @@ namespace ndnrtc
             Name rtcpPacketPrefix_;
             NdnAudioData adata_;
             
-            int publishRTPAudioPacket(unsigned int len, unsigned char *data);
-            int publishRTCPAudioPacket(unsigned int len, unsigned char *data);
+            int processAudioPacket(NdnAudioData::AudioPacket packet);
             
             /**
              * Publishes specified data under the prefix, determined by the
@@ -73,7 +74,7 @@ namespace ndnrtc
              * number, specified in packetNo_ variable of the class.
              */
             int publishPacket(PacketData &packetData,
-                              PrefixMetaInfo prefixMeta = (PrefixMetaInfo){0,0,0});
+                              PrefixMetaInfo prefixMeta = PrefixMetaInfo::ZeroMetaInfo);
         };
     }
 }

@@ -3,10 +3,10 @@
 //
 // Copyright (c) 2015. Peter Gusev. All rights reserved
 //
-#define FETCH_VIDEO
-#define FETCH_AUDIO
-//#define FETCH_VIDEO_AND_AUDIO
 
+//#define PUB_VIDEO
+
+#include <fstream>
 #include <iostream>
 #include <ctype.h>
 #include <stdio.h>
@@ -16,26 +16,35 @@
 #include <ndnrtc/simple-log.h>
 #include <ndnrtc/ndnrtc-library.h>
 
+#include "config.h"
 #include "renderer.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
-void run(const std::string& configFile);
+void removeRemoteStreams(NdnRtcLibrary* &ndnp, std::vector<std::string> &StreamsPrefix);
 
-int main(int argc, char **argv)
-{
+void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec);
+
+int main(int argc, char **argv){
 	char *configFile = NULL;
 	int index;
 	int c;
+	unsigned int headlessAppOnlineTimeSec=20;//default app online time
+	ndnlog::NdnLoggerDetailLevel appLoggingLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
 	opterr = 0;
-	while ((c = getopt (argc, argv, "c:")) != -1)
-		switch (c)
-		{
+	while ((c = getopt (argc, argv, "vt:c:")) != -1)
+		switch (c){
 			case 'c':
 				configFile = optarg;
 				break;
+			case 'v':
+				appLoggingLevel = ndnlog::NdnLoggerDetailLevelAll;
+				break;
+			case 't':
+			headlessAppOnlineTimeSec = (unsigned int)atoi(optarg);
+			break;
 			case '?':
 				if (optopt == 'c')
 					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -50,32 +59,30 @@ int main(int argc, char **argv)
 				abort ();
 		}
 
-	// remove this for now
 #warning implement loading parameters from configuration files
-	#if 0
-	if (!configFile)
-	{
-		std::cout << "usage: " << argv[0] << " -c <config_file>" << std::endl;
+	#if 1
+	if (!configFile){
+
+		std::cout << "usage: " << argv[0] << " -c <config_file> -t <app online time in seconds> -v <verbose mode>" << std::endl;
 		exit(1);
 	}
 	#endif
 
-	run("");
+	run(configFile, appLoggingLevel, headlessAppOnlineTimeSec);
 
 	return 0;
 }
 
 //******************************************************************************
-class LibraryObserver : public INdnRtcLibraryObserver
-{
+class LibraryObserver : public INdnRtcLibraryObserver{
 public:
-    void onStateChanged(const char *state, const char *args)
-    {
+    void onStateChanged(const char *state, const char *args){
+
         LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
     }
     
-    void onErrorOccurred(int errorCode, const char* message)
-    {
+    void onErrorOccurred(int errorCode, const char* message){
+
        LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
     }
 };
@@ -84,178 +91,69 @@ static NdnRtcLibrary* ndnp = NULL;
 static LibraryObserver libObserver;
 
 //******************************************************************************
-void run(const std::string& configFile)
-{
+void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec){
 	ndnp = &(NdnRtcLibrary::getSharedInstance());
+	ClientParams headlessParams;
+	std::vector<std::string> remoteStreamsPrefix;
 
-	LogInfo("") << "loading params from " << configFile << "..." << std::endl;
-	
-	std::string sessionPrefix = "/ndn/edu/byu/ndnrtc/user/freeculture";
-	GeneralParams generalParams;
-	{
-		// to save performance on VM
-		generalParams.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
-		generalParams.logFile_ = "ndnrtc.log";
-		generalParams.logPath_ = "/tmp";
-		generalParams.useTlv_ = true;
-		generalParams.useRtx_ = true;
-		generalParams.useFec_ = true;
-		generalParams.useAudio_ = true;
-		generalParams.useVideo_ = true;
-		generalParams.useAvSync_ = true;
-		generalParams.skipIncomplete_ = true;
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(appLoggingLevel);
+	LogInfo("") << "app online time is set to "<< headlessAppOnlineTimeSec <<" seconds, loading params from " << configFile << "..." << std::endl;
 
-		// out prefix in case of publishing
-		generalParams.prefix_ = "/ndn/edu/ucla/remap";
-		// NFD host
-		generalParams.host_ = "localhost";
-
-		LogInfo("") << "general configuration:\n" << generalParams << std::endl; 
+	if (loadParamsFromFile(configFile, headlessParams)==EXIT_FAILURE){
+		LogError("") << "loading params from " << configFile << " met error!" << std::endl;
+		return;
 	}
 
-	GeneralConsumerParams consumerParams;
-	{
-		consumerParams.interestLifetime_ = 2000;
-		consumerParams.bufferSlotsNum_ = 200;
-		consumerParams.slotSize_ = 64000;
-		consumerParams.jitterSizeMs_ = 300;
+	LogInfo("") << "All headlessParams:" << headlessParams << std::endl;
+	LogDebug("") << "general configuration:\n" << headlessParams.generalParams_ << std::endl; 
+	LogDebug("") << "audioConsumerParams configuration:\n" << headlessParams.audioConsumerParams_ << std::endl; 
+	LogDebug("") << "videoConsumerParams configuration:\n" << headlessParams.videoConsumerParams_ << std::endl; 
 
-		LogInfo("") << "fetching configuration:\n" << consumerParams << std::endl;
+	// setup audio fetching
+	const int audioStreamsNumber=headlessParams.defaultAudioStreams_.size();
+
+	for(int audioStreamsCount=0; audioStreamsCount<audioStreamsNumber;audioStreamsCount++){
+		MediaStreamParamsSupplement* audioStream = headlessParams.getMediaStream(headlessParams.defaultAudioStreams_, audioStreamsCount);
+		LogDebug("") << "initiating remote audio stream for " 
+			<<audioStream->streamPrefix_ << std::endl;
+
+		std::string audioStreamPrefix = ndnp->addRemoteStream(audioStream->streamPrefix_ , audioStream->threadToFetch_, (*audioStream), headlessParams.generalParams_, headlessParams.audioConsumerParams_, NULL);
+		remoteStreamsPrefix.push_back(audioStreamPrefix);
+		LogInfo("") << "demo audio fetching " << audioStreamsCount <<" from " << audioStreamPrefix << " initiated, "
+			<<"threadToFetch: "<< audioStream->threadToFetch_ << std::endl;
 	}
+	
+	// setup video fetching
+	const int videoStreamsNumber=headlessParams.defaultVideoStreams_.size();
+	
 
-std::string videoStreamPrefix, audioStreamPrefix;
-#ifdef FETCH_AUDIO
-	{// setup audio fetching
-		MediaStreamParams astreamParams;
-		//MediaStreamParams streamParams;
-		{
-			astreamParams.streamName_ = "sound";
-			astreamParams.type_ = MediaStreamParams::MediaStreamTypeAudio;
-			astreamParams.producerParams_.segmentSize_ = 1000;
-			astreamParams.producerParams_.freshnessMs_ = 0; // doesn't matter for fetching
+		RendererInternal* renderer=new RendererInternal[videoStreamsNumber];
+	
+		for(int videoStreamsCount=0; videoStreamsCount<videoStreamsNumber;videoStreamsCount++){
+			MediaStreamParamsSupplement* videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
 
-			// thread params we want to fetch from
-			AudioThreadParams *athreadParams = new AudioThreadParams();
-			athreadParams->threadName_ = "pcmu";
-
-			astreamParams.mediaThreads_.push_back(athreadParams);
-			LogInfo("") << "remote stream configuration:\n" << astreamParams << std::endl;
+			LogDebug("") << "initiating remote video stream for " << videoStream->streamPrefix_ << ", vconsumerParams: " << headlessParams.videoConsumerParams_ << std::endl;
+			std::string videoStreamPrefix = ndnp->addRemoteStream(videoStream->streamPrefix_, videoStream->threadToFetch_, (*videoStream), headlessParams.generalParams_, headlessParams.videoConsumerParams_, &renderer[videoStreamsCount]);
+			remoteStreamsPrefix.push_back(videoStreamPrefix);
+			LogInfo("") << "demo video fetching " << videoStreamsCount <<" from " << videoStreamPrefix << " initiated, " 
+				<<"threadToFetch: "<< videoStream->threadToFetch_ << std::endl;
 		}
 
-		//std::string threadToFetch = "pcmu";
-		std::string athreadToFetch;
-		athreadToFetch = "pcmu";
-	
-		LogInfo("") << "initiating remote audio stream for " << sessionPrefix << std::endl;
-		audioStreamPrefix = ndnp->addRemoteStream(sessionPrefix, athreadToFetch, astreamParams, generalParams, consumerParams, NULL);
-		LogInfo("") << "demo audio fetching from " << audioStreamPrefix << " initiated..." << std::endl;
-	}
-#endif
-
-#ifdef FETCH_VIDEO
-	{// setup video fetching
-		MediaStreamParams vstreamParams;
-		//MediaStreamParams streamParams;
-		{
-			vstreamParams.streamName_ = "movie";
-			vstreamParams.type_ = MediaStreamParams::MediaStreamTypeVideo;
-			vstreamParams.producerParams_.segmentSize_ = 1000;
-			vstreamParams.producerParams_.freshnessMs_ = 0; // doesn't matter for fetching
-	
-			// thread params we want to fetch from
-			VideoThreadParams *vthreadParams = new VideoThreadParams();
-			vthreadParams->threadName_ = "mid";
-			vthreadParams->coderParams_.codecFrameRate_ = 30;
-			vthreadParams->coderParams_.gop_ = 30;
-			vthreadParams->coderParams_.startBitrate_ = 1000;
-			vthreadParams->coderParams_.maxBitrate_ = 10000;
-			vthreadParams->coderParams_.encodeHeight_ = 720;
-			vthreadParams->coderParams_.encodeWidth_ = 1280;
-			vthreadParams->deltaAvgSegNum_ = 5;
-			vthreadParams->deltaAvgParitySegNum_ = 2;
-			vthreadParams->keyAvgSegNum_ = 30;
-			vthreadParams->keyAvgParitySegNum_ = 5;
-	
-			vstreamParams.mediaThreads_.push_back(vthreadParams);
-			LogInfo("") << "remote video stream configuration:\n" << vstreamParams << std::endl;
-		}
-	
-		std::string vthreadToFetch;
-		//std::string threadToFetch = "mid";
-		vthreadToFetch = "mid";
-		RendererInternal renderer;
-	
-		LogInfo("") << "initiating remote video stream for " << sessionPrefix << std::endl;
-		videoStreamPrefix = ndnp->addRemoteStream(sessionPrefix, vthreadToFetch, vstreamParams, generalParams, consumerParams, &renderer);
-		LogInfo("") << "demo video fetching from " << videoStreamPrefix << " initiated..." << std::endl;
-	}
-#endif
-
-#ifdef FETCH_VIDEO_AND_AUDIO
-	{// setup audio fetching
-		MediaStreamParams streamParamsa;
-		{
-			streamParamsa.streamName_ = "sound";
-			streamParamsa.type_ = MediaStreamParams::MediaStreamTypeAudio;
-			streamParamsa.producerParams_.segmentSize_ = 1000;
-			streamParamsa.producerParams_.freshnessMs_ = 0; // doesn't matter for fetching
-
-			// thread params we want to fetch from
-			AudioThreadParams *threadParams = new AudioThreadParams();
-			threadParams->threadName_ = "pcmu";
-
-			streamParamsa.mediaThreads_.push_back(threadParams);
-			LogInfo("") << "remote stream configuration:\n" << streamParamsa << std::endl;
-		}
-
-		std::string threadToFetcha = "pcmu";
-	
-		LogInfo("") << "initiating remote audio stream for " << sessionPrefix << std::endl;
-		audioStreamPrefix = ndnp->addRemoteStream(sessionPrefix, threadToFetcha, streamParamsa, generalParams, consumerParams, NULL);
-		LogInfo("") << "demo audio fetching from " << audioStreamPrefix << " initiated..." << std::endl;
-	
-		MediaStreamParams streamParamsv;
-		{
-			streamParamsv.streamName_ = "movie";
-			streamParamsv.type_ = MediaStreamParams::MediaStreamTypeVideo;
-			streamParamsv.producerParams_.segmentSize_ = 1000;
-			streamParamsv.producerParams_.freshnessMs_ = 0; // doesn't matter for fetching
-	
-			// thread params we want to fetch from
-			VideoThreadParams *threadParams = new VideoThreadParams();
-			threadParams->threadName_ = "mid";
-			threadParams->coderParams_.codecFrameRate_ = 30;
-			threadParams->coderParams_.gop_ = 30;
-			threadParams->coderParams_.startBitrate_ = 1000;
-			threadParams->coderParams_.maxBitrate_ = 10000;
-			threadParams->coderParams_.encodeHeight_ = 720;
-			threadParams->coderParams_.encodeWidth_ = 1280;
-			threadParams->deltaAvgSegNum_ = 5;
-			threadParams->deltaAvgParitySegNum_ = 2;
-			threadParams->keyAvgSegNum_ = 30;
-			threadParams->keyAvgParitySegNum_ = 5;
-	
-			streamParamsv.mediaThreads_.push_back(threadParams);
-			LogInfo("") << "remote video stream configuration:\n" << streamParamsv << std::endl;
-		}
-	
-		
-		std::string threadToFetchv = "mid";
-		RendererInternal renderer;
-	
-		LogInfo("") << "initiating remote video stream for " << sessionPrefix << std::endl;
-		videoStreamPrefix = ndnp->addRemoteStream(sessionPrefix, threadToFetchv, streamParamsv, generalParams, consumerParams, &renderer);
-		LogInfo("") << "demo video fetching from " << videoStreamPrefix << " initiated..." << std::endl;
-}
-#endif
-
-	sleep(30);
-
-	ndnp->removeRemoteStream(videoStreamPrefix);
-	ndnp->removeRemoteStream(audioStreamPrefix);
+	sleep(headlessAppOnlineTimeSec);
+	removeRemoteStreams(ndnp,remoteStreamsPrefix);
+	delete  []renderer;
 	LogInfo("") << "demo fetching has been completed" << std::endl;
 
 	return;
 }
+void removeRemoteStreams(NdnRtcLibrary* &ndnp, std::vector<std::string> &StreamsPrefix){
 
+	int streamsPrefixNumber=StreamsPrefix.size();
+
+	for (int streamsPrefixCount = 0; streamsPrefixCount < streamsPrefixNumber; streamsPrefixCount++){
+		ndnp->removeRemoteStream(StreamsPrefix[streamsPrefixCount]);
+	}
+	return;
+	
+}
 

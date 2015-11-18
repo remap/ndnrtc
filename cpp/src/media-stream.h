@@ -19,6 +19,7 @@
 #include "params.h"
 #include "external-capturer.hpp"
 #include "audio-capturer.h"
+#include "video-thread.h"
 
 namespace ndnrtc
 {
@@ -53,7 +54,7 @@ namespace ndnrtc
             init(const MediaStreamSettings& streamSettings);
             
             virtual void
-            release() = 0;
+            release();
             
             virtual void
             addThread(const MediaThreadParams& threadParams);
@@ -76,6 +77,7 @@ namespace ndnrtc
             getStreamParameters() = 0;
             
         protected:
+            bool isProcessing_;
             MediaStreamSettings settings_;
             std::string streamName_;
             std::string streamPrefix_;
@@ -94,7 +96,8 @@ namespace ndnrtc
         
         //**********************************************************************
         class VideoStream : public MediaStream,
-                            public IRawFrameConsumer
+                            public IRawFrameConsumer,
+                            public IVideoThreadCallback
         {
         public:
             VideoStream();
@@ -115,8 +118,9 @@ namespace ndnrtc
             isStreamStatReady();
             
         private:
-            bool isProcessing_;
             boost::shared_ptr<BaseCapturer> capturer_;
+            boost::barrier *encodingBarrier_;
+            std::map<std::string, PacketNumber> deltaFrameSync_, keyFrameSync_;
             
             int
             addNewMediaThread(const MediaThreadParams* params);
@@ -125,6 +129,16 @@ namespace ndnrtc
             void
             onDeliverFrame(WebRtcVideoFrame &frame,
                            double timestamp);
+            
+            // IVideoThreadCallback
+            void
+            onFrameDropped(const std::string& threadPrefix);
+            void
+            onFrameEncoded(const std::string& threadPrefix,
+                           const FrameNumber& frameNo,
+                           bool isKey);
+            ThreadSyncList
+            getFrameSyncList(bool isKey);
         };
         
         //**********************************************************************
@@ -133,6 +147,7 @@ namespace ndnrtc
         {
         public:
             AudioStream();
+            ~AudioStream();
             
             int
             init(const MediaStreamSettings& streamSettings);

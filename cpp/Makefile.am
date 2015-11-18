@@ -28,13 +28,16 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
   include/ndnrtc-defines.h \
+  src/ndnrtc-exception.h src/ndnrtc-exception.cpp \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
+  src/ndnrtc-manager.cpp src/ndnrtc-manager.h \
   include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
   src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
   include/params.h \
+  src/params-validator.h src/params-validator.cpp \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
   src/renderer.h \
@@ -91,7 +94,7 @@ endif
 # client app	#
 #################
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp #src/config.cpp src/config.h
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 

@@ -21,10 +21,22 @@ namespace ndnrtc
 {
     namespace new_api
     {
+        class IVideoThreadCallback
+        {
+        public:
+            virtual void onFrameDropped(const std::string& threadPrefix) = 0;
+            virtual void onFrameEncoded(const std::string& threadPrefix,
+                                        const FrameNumber& frameNo,
+                                        bool isKey) = 0;
+            virtual ThreadSyncList
+            getFrameSyncList(bool isKey) = 0;
+        };
+        
         class VideoThreadSettings : public MediaThreadSettings
         {
         public:
             bool useFec_;
+            IVideoThreadCallback* threadCallback_;
             
             VideoThreadParams*
             getVideoParams() const
@@ -59,6 +71,9 @@ namespace ndnrtc
             init(const VideoThreadSettings& settings);
             
             void
+            stop();
+            
+            void
             getStatistics(VideoThreadStatistics& statistics);
             
             void
@@ -85,6 +100,8 @@ namespace ndnrtc
             unsigned int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             unsigned int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
             int64_t encodingTimestampMs_;
+            bool encodeFinished_;
+            IVideoThreadCallback *callback_;
             
             Name deltaFramesPrefix_, keyFramesPrefix_;
             boost::shared_ptr<VideoCoder> coder_;

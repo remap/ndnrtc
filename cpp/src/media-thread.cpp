@@ -96,22 +96,6 @@ int MediaThread::publishPacket(PacketData &packetData,
     if (RESULT_FAIL(Segmentizer::segmentize(packetData, segments, segSizeNoHeader_)))
         return notifyError(-1, "packet segmentation failed");
     
-#ifdef DROP_FRAMES
-    static int count = 0;
-    count++;
-    bool drop = (count%100 == 0);
-#endif
-#ifdef DELAY_FRAMES
-    static int count2 = 0;
-    count2++;
-    bool delay = (count2 > 200 && count2 % 200 < 10);
-    
-    if (delay)
-    {
-        LogWarnC << "drop frame " << packetPrefix << std::endl;
-        return segments.size();
-    }
-#endif
     try {
         // update metadata for the packet
         PacketData::PacketMetadata metadata = { NdnRtcUtils::currentFrequencyMeterValue(packetRateMeter_),
@@ -174,13 +158,6 @@ int MediaThread::publishPacket(PacketData &packetData,
 #else   // enable this if you want measuring outgoing bitrate with ndn overhead
             NdnRtcUtils::dataRateMeterMoreData(dataRateMeter_,
                                                ndnData.getDefaultWireEncoding().size());
-#endif
-#ifdef DROP_FRAMES
-            if (drop)
-            {
-                LogWarnC << "drop frame " << packetPrefix << std::endl;
-                break;
-            }
 #endif
         } // for
         

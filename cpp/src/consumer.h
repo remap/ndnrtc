@@ -31,7 +31,7 @@ namespace ndnrtc {
         class IPacketAssembler;
         class IRenderer;
         class FrameBuffer;
-        class PipelinerBase;
+        class Pipeliner2;
         class InterestQueue;
         class Playout;
         class RttEstimation;
@@ -147,7 +147,7 @@ namespace ndnrtc {
             getFrameBuffer() const
             { return frameBuffer_; }
             
-            virtual boost::shared_ptr<PipelinerBase>
+            virtual boost::shared_ptr<Pipeliner2>
             getPipeliner() const
             { return pipeliner_; }
             
@@ -221,7 +221,7 @@ namespace ndnrtc {
             
             boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
-            boost::shared_ptr<PipelinerBase> pipeliner_;
+            boost::shared_ptr<Pipeliner2> pipeliner_;
             boost::shared_ptr<InterestQueue> interestQueue_;
             boost::shared_ptr<Playout> playout_;
             boost::shared_ptr<RttEstimation> rttEstimation_;
@@ -233,9 +233,6 @@ namespace ndnrtc {
             boost::mutex observerMutex_;
             IConsumerObserver *observer_;
             
-            unsigned int dataMeterId_, segmentFreqMeterId_;
-            // statistics
-            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
         private:
             int
             getThreadIdx(const std::string& threadName);

@@ -1362,6 +1362,34 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
     }
 }
 
+void
+ndnrtc::new_api::FrameBuffer::purgeNewSlots(int& nDeltaPurged, int& nKeyPurged)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
+    std::vector<boost::shared_ptr<Slot>> newSlots = getSlots(Slot::StateNew);
+    std::vector<Slot*> slotsToErase(newSlots.size());
+    
+    std::transform(newSlots.begin(), newSlots.end(), slotsToErase.begin(),
+                   [](boost::shared_ptr<Slot>& slot)->Slot*{ return slot.get(); });
+    nDeltaPurged = 0;
+    nKeyPurged = 0;
+    
+    for (auto slot:slotsToErase)
+    {
+        if (slot->getNamespace() == Slot::Key)
+            nKeyPurged++;
+        else
+            nDeltaPurged++;
+        
+        freeSlot(slot->getPrefix());
+    }
+    
+    playbackQueue_.erase(std::remove_if(playbackQueue_.begin(), playbackQueue_.end(),
+                                        [&slotsToErase](Slot* slot){ return std::find(slotsToErase.begin(), slotsToErase.end(),
+                                                                                      slot) != slotsToErase.end();}),
+                         playbackQueue_.end());
+}
+
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
 {

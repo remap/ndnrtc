@@ -9,6 +9,7 @@
 #ifndef __ndnrtc__audio_capturer__
 #define __ndnrtc__audio_capturer__
 
+#include <boost/thread.hpp>
 #include "webrtc-audio-channel.h"
 
 namespace ndnrtc {
@@ -38,6 +39,7 @@ namespace ndnrtc {
             stopCapture();
             
         protected:
+            boost::atomic<bool> capturing_;
             IAudioFrameConsumer* frameConsumer_ = nullptr;
             
             int

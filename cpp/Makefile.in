@@ -111,11 +111,15 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-media-stream.lo \
 	src/libndnrtc_la-name-components.lo \
 	src/libndnrtc_la-ndn-assembler.lo \
+	src/libndnrtc_la-ndnrtc-exception.lo \
 	src/libndnrtc_la-ndnrtc-library.lo \
+	src/libndnrtc_la-ndnrtc-manager.lo \
 	src/libndnrtc_la-ndnrtc-namespace.lo \
 	src/libndnrtc_la-ndnrtc-object.lo \
-	src/libndnrtc_la-ndnrtc-utils.lo src/libndnrtc_la-pipeliner.lo \
-	src/libndnrtc_la-playout.lo src/libndnrtc_la-rtt-estimation.lo \
+	src/libndnrtc_la-ndnrtc-utils.lo \
+	src/libndnrtc_la-params-validator.lo \
+	src/libndnrtc_la-pipeliner.lo src/libndnrtc_la-playout.lo \
+	src/libndnrtc_la-rtt-estimation.lo \
 	src/libndnrtc_la-segmentizer.lo src/libndnrtc_la-session.lo \
 	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-statistics.lo \
 	src/libndnrtc_la-threading-capability.lo \
@@ -134,7 +138,8 @@ libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libndnrtc_la_LDFLAGS) $(LDFLAGS) -o $@
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
-	client/src/ndnrtc_client-renderer.$(OBJEXT)
+	client/src/ndnrtc_client-renderer.$(OBJEXT) \
+	client/src/ndnrtc_client-config.$(OBJEXT)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 @OS_LINUX_TRUE@am__DEPENDENCIES_2 =  \
 @OS_LINUX_TRUE@	/usr/lib/x86_64-linux-gnu/libboost_system.so
@@ -372,13 +377,16 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
   include/ndnrtc-defines.h \
+  src/ndnrtc-exception.h src/ndnrtc-exception.cpp \
   src/ndnrtc-library.cpp include/ndnrtc-library.h \
+  src/ndnrtc-manager.cpp src/ndnrtc-manager.h \
   include/interfaces.h \
   src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
   src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
   include/params.h \
+  src/params-validator.h src/params-validator.cpp \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
   src/renderer.h \
@@ -402,7 +410,7 @@ libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 	-lboost_chrono -lboost_thread $(am__append_1) $(am__append_2)
 @OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp #src/config.cpp src/config.h
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la \
@@ -525,13 +533,19 @@ src/libndnrtc_la-name-components.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndn-assembler.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-ndnrtc-exception.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-library.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-ndnrtc-manager.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-namespace.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-object.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-utils.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-params-validator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-pipeliner.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -576,12 +590,15 @@ client/src/ndnrtc_client-main.$(OBJEXT): client/src/$(am__dirstamp) \
 client/src/ndnrtc_client-renderer.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/ndnrtc_client-config.$(OBJEXT): client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
 ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) 
 	@rm -f ndnrtc-client$(EXEEXT)
 	$(AM_V_CXXLD)$(ndnrtc_client_LINK) $(ndnrtc_client_OBJECTS) $(ndnrtc_client_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f client/src/ndnrtc_client-config.$(OBJEXT)
 	-rm -f client/src/ndnrtc_client-main.$(OBJEXT)
 	-rm -f client/src/ndnrtc_client-renderer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.$(OBJEXT)
@@ -626,14 +643,20 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-name-components.lo
 	-rm -f src/libndnrtc_la-ndn-assembler.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndn-assembler.lo
+	-rm -f src/libndnrtc_la-ndnrtc-exception.$(OBJEXT)
+	-rm -f src/libndnrtc_la-ndnrtc-exception.lo
 	-rm -f src/libndnrtc_la-ndnrtc-library.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndnrtc-library.lo
+	-rm -f src/libndnrtc_la-ndnrtc-manager.$(OBJEXT)
+	-rm -f src/libndnrtc_la-ndnrtc-manager.lo
 	-rm -f src/libndnrtc_la-ndnrtc-namespace.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndnrtc-namespace.lo
 	-rm -f src/libndnrtc_la-ndnrtc-object.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndnrtc-object.lo
 	-rm -f src/libndnrtc_la-ndnrtc-utils.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndnrtc-utils.lo
+	-rm -f src/libndnrtc_la-params-validator.$(OBJEXT)
+	-rm -f src/libndnrtc_la-params-validator.lo
 	-rm -f src/libndnrtc_la-pipeliner.$(OBJEXT)
 	-rm -f src/libndnrtc_la-pipeliner.lo
 	-rm -f src/libndnrtc_la-playout.$(OBJEXT)
@@ -668,6 +691,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
@@ -691,10 +715,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-exception.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-manager.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-params-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo@am__quote@
@@ -906,6 +933,14 @@ src/libndnrtc_la-ndn-assembler.lo: src/ndn-assembler.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndn-assembler.lo `test -f 'src/ndn-assembler.cpp' || echo '$(srcdir)/'`src/ndn-assembler.cpp
 
+src/libndnrtc_la-ndnrtc-exception.lo: src/ndnrtc-exception.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-exception.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-exception.Tpo -c -o src/libndnrtc_la-ndnrtc-exception.lo `test -f 'src/ndnrtc-exception.cpp' || echo '$(srcdir)/'`src/ndnrtc-exception.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-exception.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-exception.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-exception.cpp' object='src/libndnrtc_la-ndnrtc-exception.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-exception.lo `test -f 'src/ndnrtc-exception.cpp' || echo '$(srcdir)/'`src/ndnrtc-exception.cpp
+
 src/libndnrtc_la-ndnrtc-library.lo: src/ndnrtc-library.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-library.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-library.Plo
@@ -913,6 +948,14 @@ src/libndnrtc_la-ndnrtc-library.lo: src/ndnrtc-library.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-library.cpp' object='src/libndnrtc_la-ndnrtc-library.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-library.lo `test -f 'src/ndnrtc-library.cpp' || echo '$(srcdir)/'`src/ndnrtc-library.cpp
+
+src/libndnrtc_la-ndnrtc-manager.lo: src/ndnrtc-manager.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-manager.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-manager.Tpo -c -o src/libndnrtc_la-ndnrtc-manager.lo `test -f 'src/ndnrtc-manager.cpp' || echo '$(srcdir)/'`src/ndnrtc-manager.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-ndnrtc-manager.Tpo src/$(DEPDIR)/libndnrtc_la-ndnrtc-manager.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-manager.cpp' object='src/libndnrtc_la-ndnrtc-manager.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-manager.lo `test -f 'src/ndnrtc-manager.cpp' || echo '$(srcdir)/'`src/ndnrtc-manager.cpp
 
 src/libndnrtc_la-ndnrtc-namespace.lo: src/ndnrtc-namespace.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-namespace.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Tpo -c -o src/libndnrtc_la-ndnrtc-namespace.lo `test -f 'src/ndnrtc-namespace.cpp' || echo '$(srcdir)/'`src/ndnrtc-namespace.cpp
@@ -937,6 +980,14 @@ src/libndnrtc_la-ndnrtc-utils.lo: src/ndnrtc-utils.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-utils.cpp' object='src/libndnrtc_la-ndnrtc-utils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-ndnrtc-utils.lo `test -f 'src/ndnrtc-utils.cpp' || echo '$(srcdir)/'`src/ndnrtc-utils.cpp
+
+src/libndnrtc_la-params-validator.lo: src/params-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-params-validator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-params-validator.Tpo -c -o src/libndnrtc_la-params-validator.lo `test -f 'src/params-validator.cpp' || echo '$(srcdir)/'`src/params-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-params-validator.Tpo src/$(DEPDIR)/libndnrtc_la-params-validator.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/params-validator.cpp' object='src/libndnrtc_la-params-validator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-params-validator.lo `test -f 'src/params-validator.cpp' || echo '$(srcdir)/'`src/params-validator.cpp
 
 src/libndnrtc_la-pipeliner.lo: src/pipeliner.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-pipeliner.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-pipeliner.Tpo -c -o src/libndnrtc_la-pipeliner.lo `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
@@ -1089,6 +1140,22 @@ client/src/ndnrtc_client-renderer.obj: client/src/renderer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/renderer.cpp' object='client/src/ndnrtc_client-renderer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-renderer.obj `if test -f 'client/src/renderer.cpp'; then $(CYGPATH_W) 'client/src/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/renderer.cpp'; fi`
+
+client/src/ndnrtc_client-config.o: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-config.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-config.Tpo -c -o client/src/ndnrtc_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-config.Tpo client/src/$(DEPDIR)/ndnrtc_client-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/ndnrtc_client-config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+
+client/src/ndnrtc_client-config.obj: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-config.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-config.Tpo -c -o client/src/ndnrtc_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-config.Tpo client/src/$(DEPDIR)/ndnrtc_client-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/ndnrtc_client-config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

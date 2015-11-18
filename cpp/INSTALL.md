@@ -78,11 +78,19 @@ In order to build NDN-CPP with boost shared pointers it's not enough to install 
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build/share
 $ echo CXXFLAGS="-stdlib=libstdc++ -I$(pwd)/../boost_1_54_0/build/include" > build/share/config.site
-$ echo BOOST_LDFLAGS="-L$(pwd)/../boost_1_54_0/build/lib" >> build/share/config.site
-$ echo LDFLAGS="-stdlib=libstdc++" >> build/share/config.site
+$ echo LDFLAGS="-stdlib=libstdc++ -L$(pwd)/../boost_1_54_0/build/lib" >> build/share/config.site
 $ ./configure --with-std-shared-ptr=no --with-std-function=no --with-boost=$(pwd)/../boost_1_54_0/build --prefix=$(pwd)/build
 $ make && make install
 </pre>
+
+> **If you plan to use same NDN-CPP build for compiling *ndncon* later, you must have NDN-CPP compiled with dependency on Protobuf as it is used in ChronoSync2013 which is in turn used in [ConferenceDiscovery](https://github.com/zhehaowang/ConferenceDiscovery) library used by *ndncon*.** 
+>
+> In order to do that, download the [latest Protobuf](https://github.com/google/protobuf/releases) and compile it with `-stdlib=libstdc++` flag. Then, add headers and compiled libraries paths to NDN-CPP's `config.site` file:
+<pre>
+CXXFLAGS="... -I<path_to_protobuf_headers_parent_folder>"
+LDFLAGS="... -L<path_to_protobuf_libraries_folder>"
+</pre>
+> After that, configure NDN-CPP and **make sure** it has successfully found protobuf headers and libraries during configuration. **Check configure output! Check config.log!** **This is important: NDN-CPP WILL NOT output error in case if Protobuf was not found as it is considered optional for the library.** So you **MUST** make sure that NDN-CPP has discovered it corectly. If it didn't, check your paths that you've added to `config.site` and try configuring NDN-CPP again. Repeat this until NDN-CPP configuration successfully detects Protobuf.
 
 ### OpenFEC
 Before building OpenFEC, modify **src/CMakeLists.txt** file:
@@ -155,7 +163,6 @@ Full instructions [here](https://github.com/named-data/ndn-cpp/blob/master/INSTA
 <pre>
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build
-$ git checkout v0.7
 $ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
 $ make && make install
 </pre>

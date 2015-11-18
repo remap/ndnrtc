@@ -14,8 +14,16 @@
 #include <stdint.h>
 #include "params.h"
 
+
 namespace ndnrtc
 {
+    namespace new_api
+    {
+        namespace statistics {
+            class StatisticsStorage;
+        }
+    }
+    
     /**
      * This interface defines external renderers.
      * Each time, the frame is ready to be rendered, library calls
@@ -107,7 +115,8 @@ namespace ndnrtc
     typedef enum _SessionStatus {
         SessionOffline = 0,
         SessionOnlineNotPublishing = 1,
-        SessionOnlinePublishing = 2
+        SessionOnlinePublishing = 2,
+        SessionInvalidated = 3
     } SessionStatus;
     
     class ISessionObserver {
@@ -174,7 +183,7 @@ namespace ndnrtc
     };
     
     /**
-     * Interface for remote stream observer. Gets updates for notable events 
+     * Interface for remote stream observer. Gets updates for notable events
      * occuring while remote stream is fetched.
      */
     typedef enum _ConsumerStatus {
@@ -182,10 +191,10 @@ namespace ndnrtc
         ConsumerStatusNoData,   // consumer has started but no data received yet
         ConsumerStatusAdjusting,  // consumer re-adjusts interests' window
         ConsumerStatusBuffering,    // consumer has finished chasing and is
-                                    // buffering frames unless buffer reaches
-                                    // target size
+        // buffering frames unless buffer reaches
+        // target size
         ConsumerStatusFetching, // consumer has finished buffering and switched
-                                // to normal operating fetching mode
+        // to normal operating fetching mode
     } ConsumerStatus;
     
     // playback events occur at the moment when frame is taken from the buffer
@@ -194,14 +203,14 @@ namespace ndnrtc
     // different reasons:
     typedef enum _PlaybackEvent {
         PlaybackEventDeltaSkipIncomplete, // consumer had to skip frame as it was
-                                          // not fully fetched (incomplete)
+        // not fully fetched (incomplete)
         PlaybackEventDeltaSkipInvalidGop, // consumer had to skip frame due to
-                                          // receiving incomplete frame previously,
-                                          // even if the current frame is complete
+        // receiving incomplete frame previously,
+        // even if the current frame is complete
         PlaybackEventDeltaSkipNoKey,      // consumer had to skip frame as there
-                                          // is no key frame for frame's GOP
+        // is no key frame for frame's GOP
         PlaybackEventKeySkipIncomplete    // consumer had to skip key frame as
-                                          // it is incomplete
+        // it is incomplete
     } PlaybackEvent;
     
     class IConsumerObserver {
@@ -213,7 +222,7 @@ namespace ndnrtc
         onStatusChanged(ConsumerStatus newStatus) = 0;
         
         /**
-         * Called each time consumer encounters rebuffering event (no data 
+         * Called each time consumer encounters rebuffering event (no data
          * received for ~1200ms)
          */
         virtual void
@@ -230,6 +239,197 @@ namespace ndnrtc
          */
         virtual void
         onThreadSwitched(const std::string& threadName) = 0;
+    };
+    
+    /******************************************************************************
+     * This is an interface for the NDN-RTC library
+     ******************************************************************************/
+    class INdnRtcLibrary {
+    public:
+        /**
+         * Sets library observer
+         * @param observer Pointer to the observer object
+         * @see INdnRtcLibraryObserver
+         */
+        virtual void
+        setObserver(INdnRtcLibraryObserver *observer) = 0;
+        
+        /**
+         * Starts NDN-RTC session with username and parameters provided
+         * @param username NDN-RTC user name
+         * @param generalParams General NDN-RTC parameters object
+         * @return Session prefix in the following form:
+         *      <prefix>/<ndnrtc_component>/<username>
+         *      where ndnrtc_component is "ndnrtc/user", but may be changed in
+         *      future releases
+         *      prefix is taken from generalParams object
+         *      If failed - returns empty string and error message is sent to
+         *      library observer
+         * @see setObserver
+         */
+        virtual std::string
+        startSession(const std::string& username,
+                     const new_api::GeneralParams& generalParams,
+                     ISessionObserver *sessionObserver) = 0;
+        
+        /**
+         * Stops session started previously
+         * @param sessionPrefix Session prefix returned from startSession call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see startSession
+         */
+        virtual int
+        stopSession(const std::string& sessionPrefix) = 0;
+        
+        /**
+         * Adds publishing stream to the session
+         * @param sessionPrefix Session prefix returned by previous startSession
+         *                      call
+         * @param params Media stream parameters
+         * @param capturer Upon success, pointer contains a pointer to the object,
+         *                 which is used as an external video capturing system
+         *                 (video only). In this case, stream publishing is driven
+         *                 by this object - whenever new frame is fed to this
+         *                 object, it gets published
+         * @return Stream prefix in th following form:
+         *         <session_prefix>/<stream_name>
+         *         If failed, returns empty string
+         * @see startSession, IExternalCapturer
+         */
+        virtual std::string
+        addLocalStream(const std::string& sessionPrefix,
+                       const new_api::MediaStreamParams& params,
+                       IExternalCapturer** const capturer) = 0;
+        
+        /**
+         * Removes publishing stream
+         * @param sessionPrefix Session prefix returned by previous startSession
+         *                      call
+         * @param streamPrefix Stream prefix returned by previous addLocalStream
+         *                     call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see startSession, addLocalStream
+         */
+        virtual int
+        removeLocalStream(const std::string& sessionPrefix,
+                          const std::string& streamPrefix) = 0;
+        
+        /**
+         * Adds new remote stream and starts fetching from its' first thread
+         * @param remoteSessionPrefix Remote producer's session prefix returned
+         *                            by previsous setRemoteSessionObserver call
+         * @param threadName Thread name to fetch from
+         * @param params Media stream parameters
+         * @param generalParams General NDN-RTC parameters
+         * @param consumerParams General consumer parameters
+         * @param renderer Pointer to the object which conforms to the
+         *                 IExternalRenderer interface (video only)
+         * @return Remote stream prefix on success and empty string on failure
+         * @see setRemoteSessionObserver
+         */
+        virtual std::string
+        addRemoteStream(const std::string& remoteSessionPrefix,
+                        const std::string& threadName,
+                        const new_api::MediaStreamParams& params,
+                        const new_api::GeneralParams& generalParams,
+                        const new_api::GeneralConsumerParams& consumerParams,
+                        IExternalRenderer* const renderer) = 0;
+        
+        /**
+         * Removes remote stream and stops fetching from it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @return Full log file path on success, empty string on failure
+         */
+        virtual std::string
+        removeRemoteStream(const std::string& streamPrefix) = 0;
+        
+        /**
+         * Sets remote stream obsever and starts sending fetching updates to it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param observer Pointer to an object which conforms to the
+         *                 IConsumerObserver interface
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         */
+        virtual int
+        setStreamObserver(const std::string& streamPrefix,
+                          IConsumerObserver* const observer) = 0;
+        
+        /**
+         * Removes remote stream observer and stops sending updates to it
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see setStreamObserver
+         */
+        virtual int
+        removeStreamObserver(const std::string& streamPrefix) = 0;
+        
+        /**
+         * Returns currently fetched media thread name
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @see addRemoteStream
+         */
+        virtual std::string
+        getStreamThread(const std::string& streamPrefix) = 0;
+        
+        /**
+         * Forces specified fetching stream to switch active media thread
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param threadName Name of the thread which should be used for
+         *                   fetching media. All threads are returned in SessionInfo
+         *                   object to remote session observer
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         * @see setRemoteSessionObserver
+         */
+        virtual int
+        switchThread(const std::string& streamPrefix,
+                     const std::string& threadName) = 0;
+        
+        /**
+         * Returns statistics of remote fetching stream
+         * @param streamPrefix Stream prefix returned by previous addRemoteStream
+         *                     call
+         * @param stat Reference to a receiver statistics object
+         * @return RESULT_OK on success, RESULT_ERR on failure
+         */
+        virtual new_api::statistics::StatisticsStorage
+        getRemoteStreamStatistics(const std::string& streamPrefix) = 0;
+        
+        /**
+         * Returns current library version
+         * @param versionString A pointer to the string where the library
+         * version will be stored.
+         */
+        virtual void getVersionString(char **versionString) = 0;
+        
+        /**
+         * Serializes session info structure into an array of bytes.
+         * @param sessionInfo Session info structure to serialize
+         * @param length Upon succesfull serialization, contains lenght of the
+         *   byte array, otherwise - 0
+         * @param bytes Contains serialized bytes array for session info structure
+         * @note Bytes array is allocated inside this function. One should check
+         * length parameter - if it's greater than 0, deallocation of bytes array
+         * is the responsibility of the caller.
+         */
+        virtual void serializeSessionInfo(const new_api::SessionInfo &sessionInfo,
+                                          unsigned int &length,
+                                          unsigned char **bytes) = 0;
+        
+        /**
+         * Deserializes bytes array into a session info structure
+         * @param length Length of the bytes array
+         * @param btyes Bytes array containing session info strcture bytes
+         * @param sessionInfo Deserialized session info structure
+         * @return true if deserialization was successeful, false otherwise
+         */
+        virtual bool deserializeSessionInfo(const unsigned int length,
+                                            const unsigned char *bytes,
+                                            new_api::SessionInfo &sessionInfo) = 0;
     };
 }
 
