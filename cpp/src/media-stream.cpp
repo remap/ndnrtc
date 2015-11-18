@@ -171,8 +171,7 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     
     threadSettings.useFec_ = settings_.useFec_;
     threadSettings.threadParams_ = params;
-#warning callback should be this here
-    threadSettings.threadCallback_ = nullptr;
+    threadSettings.threadCallback_ = this;
     
     shared_ptr<VideoThread> videoThread(new VideoThread());
     videoThread->registerCallback(this);
@@ -186,8 +185,8 @@ VideoStream::addNewMediaThread(const MediaThreadParams* params)
     else
     {
         threads_[videoThread->getPrefix()] = videoThread;
-        deltaFrameSync_[videoThread->getPrefix()] = 0;
-        keyFrameSync_[videoThread->getPrefix()] = 0;
+        deltaFrameSync_[params->threadName_] = 0;
+        keyFrameSync_[params->threadName_] = 0;
     }
 
     return RESULT_OK;
@@ -213,20 +212,33 @@ VideoStream::onDeliverFrame(WebRtcVideoFrame &frame,
 }
 
 void
-VideoStream::onFrameDropped(const std::string& threadPrefix)
+VideoStream::onFrameDropped(const std::string& threadName)
 {
     encodingBarrier_->wait();
 }
 
 void
-VideoStream::onFrameEncoded(const std::string& threadPrefix,
+VideoStream::onFrameEncoded(const std::string& threadName,
                             const FrameNumber& frameNo,
                             bool isKey)
 {
     if (isKey)
-        keyFrameSync_[threadPrefix] = frameNo;
+        keyFrameSync_[threadName] = frameNo;
     else
-        deltaFrameSync_[threadPrefix] = frameNo;
+        deltaFrameSync_[threadName] = frameNo;
+    
+    encodingBarrier_->wait();
+    
+#ifdef NDN_TRACE
+    std::stringstream ss1, ss2;
+    ss1 << "K: ";
+    ss2 << "D: ";
+    
+    for (auto it:keyFrameSync_) ss1 << it.first << "-" << it.second << " ";
+    for (auto it:deltaFrameSync_) ss2 << it.first << "-" << it.second << " ";
+        
+    LogDebugC << "thread sync list: " << ss1.str() << ss2.str() << std::endl;
+#endif
 }
 
 std::map<std::string, FrameNumber>

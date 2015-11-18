@@ -109,7 +109,7 @@ VideoThread::onDeliverFrame(WebRtcVideoFrame &frame,
             encodeFinished_ = false;
             coder_->onDeliverFrame(deliveredFrame_, unixTimeStamp);
             if (!encodeFinished_ && callback_)
-                callback_->onFrameDropped(threadPrefix_);
+                callback_->onFrameDropped(settings_->threadParams_->threadName_);
         });
         frameProcessingMutex_.unlock();
     }
@@ -132,7 +132,7 @@ void VideoThread::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedIma
     encodeFinished_ = true;
     if (callback_) {
         FrameNumber frameNo = (encodedImage._frameType == webrtc::kKeyFrame)? (keyFrameNo_+1):deltaFrameNo_;
-        callback_->onFrameEncoded(threadPrefix_, frameNo,
+        callback_->onFrameEncoded(settings_->threadParams_->threadName_, frameNo,
                                   encodedImage._frameType == webrtc::kKeyFrame);
     }
     
