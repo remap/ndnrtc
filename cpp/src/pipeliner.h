@@ -164,6 +164,7 @@ namespace ndnrtc {
             boost::mutex streamSwitchMutex_;
             bool useKeyNamespace_;
             int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
+            std::map<std::string, PacketNumber> deltaSyncList_, keySyncList_;
             
             void
             switchToState(State newState)
@@ -347,6 +348,9 @@ namespace ndnrtc {
             onFrameDropped(PacketNumber seguenceNo,
                            PacketNumber playbackNo,
                            FrameBuffer::Slot::Namespace nspc);
+            
+            void
+            updateThreadSyncList(const PrefixMetaInfo& metaInfo, bool isKey);
         };
     }
 }

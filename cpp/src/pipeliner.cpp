@@ -119,8 +119,24 @@ ndnrtc::new_api::PipelinerBase::threadSwitched()
     deltaFramesPrefix_ = Name(deltaPrefixString.c_str());
     keyFramesPrefix_ = Name(keyPrefixString.c_str());
     
-    // for now, just rebuffer
-    rebuffer();
+    // if thread sycn list is available - use it
+    if (deltaSyncList_.size() && keySyncList_.size())
+    {
+        assert(keySyncList_.find(consumer_->getCurrentThreadName())!= keySyncList_.end());
+        assert(deltaSyncList_.find(consumer_->getCurrentThreadName())!= deltaSyncList_.end());
+        
+        deltaSegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.deltaAvgSegNum_);
+        keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgSegNum_);
+        deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.deltaAvgParitySegNum_);
+        keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgParitySegNum_);
+        
+        keyFrameSeqNo_ = keySyncList_[consumer_->getCurrentThreadName()];
+        deltaFrameSeqNo_ = deltaSyncList_[consumer_->getCurrentThreadName()];
+        
+        requestNextKey(keyFrameSeqNo_);
+    }
+    else // otherwise - rebuffer
+        rebuffer();
 }
 
 #pragma mark - protected
@@ -562,6 +578,8 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
     (*statStorage_)[Indicator::InBitrateKbps] = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_)*8./1000.;
     
     bool isKeyPrefix = NdnRtcNamespace::isPrefix(data->getName(), keyFramesPrefix_);
+    PrefixMetaInfo metaInfo;
+    PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
     
     switch (state_) {
         case StateWaitInitial:
@@ -572,9 +590,6 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
                 LogTraceC << "received rightmost data "
                 << data->getName() << std::endl;
                 
-                PrefixMetaInfo metaInfo;
-                PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
-                
                 seedFrameNo_ = metaInfo.playbackNo_;
                 askForInitialData(data);
             }
@@ -582,9 +597,6 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
             break;
         case StateChasing:
         {
-            PrefixMetaInfo metaInfo;
-            PrefixMetaInfo::extractMetadata(data->getName(), metaInfo);
-            
             // make sure that we've got what is expected
             if (metaInfo.playbackNo_ >= seedFrameNo_)
             {
@@ -608,6 +620,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
         case StateAdjust: // fall through
         case StateFetching:
         {
+            updateThreadSyncList(metaInfo, isKeyPrefix);
             askForSubsequentData(data);
         }
             break;
@@ -1130,4 +1143,17 @@ Pipeliner2::rebuffer()
     resetData();
     switchToState(StateWaitInitial);
     askForRightmostData();
+}
+
+void
+Pipeliner2::updateThreadSyncList(const PrefixMetaInfo& metaInfo, bool isKey)
+{
+    if (metaInfo.syncList_.size())
+    {
+        std::map<std::string, int> &mapList = (isKey)?keySyncList_:deltaSyncList_;
+        std::map<std::string, int> map;
+        
+        map.insert(metaInfo.syncList_.begin(), metaInfo.syncList_.end());
+        mapList = map;
+    }
 }
