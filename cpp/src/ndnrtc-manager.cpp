@@ -553,7 +553,7 @@ NdnRtcManager::fatalException(const std::exception& e)
     failed_ = true;
     failure();
     
-    NdnRtcUtils::dispatchOnBackgroundThread([&e](){
+    NdnRtcUtils::dispatchOnBackgroundThread([e](){
         LibraryInternalObserver.onErrorOccurred(NRTC_ERR_FATAL, e.what());
     });
 }
