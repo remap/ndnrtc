@@ -74,7 +74,7 @@ namespace ndnrtc
              * number, specified in packetNo_ variable of the class.
              */
             int publishPacket(PacketData &packetData,
-                              PrefixMetaInfo prefixMeta = (PrefixMetaInfo){0,0,0});
+                              PrefixMetaInfo prefixMeta = PrefixMetaInfo::ZeroMetaInfo);
         };
     }
 }

@@ -36,15 +36,25 @@ namespace ndnrtc {
     /**
      * This stucture is used for storing meta info carried by data name prefixes
      */
+    typedef std::vector<std::pair<std::string, PacketNumber>> ThreadSyncList;
     typedef struct _PrefixMetaInfo {
         int totalSegmentsNum_;
         PacketNumber playbackNo_;
         PacketNumber pairedSequenceNo_;
         int paritySegmentsNum_;
         int crcValue_;
+        ThreadSyncList syncList_;
+        
+        static const std::string SyncListMarker;
+        static const _PrefixMetaInfo ZeroMetaInfo;
         
         static ndn::Name toName(const _PrefixMetaInfo &meta);
         static int extractMetadata(const ndn::Name& metaComponents, _PrefixMetaInfo &meta);
+        
+        _PrefixMetaInfo();
+        ~_PrefixMetaInfo(){}
+    private:
+        static ThreadSyncList extractSyncList(const ndn::Name &prefix, int markerPos);
         
     } __attribute__((packed)) PrefixMetaInfo;
     

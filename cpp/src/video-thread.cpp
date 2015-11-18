@@ -193,7 +193,7 @@ VideoThread::publishFrameData(const webrtc::EncodedImage &encodedImage,
     Name framePrefixData(framePrefix);
     framePrefixData.append(NameComponents::NameComponentFrameSegmentData);
     
-    PrefixMetaInfo prefixMeta = {0,0,0,0};
+    PrefixMetaInfo prefixMeta = PrefixMetaInfo::ZeroMetaInfo;
     prefixMeta.playbackNo_ = packetNo_;
     prefixMeta.pairedSequenceNo_ = (isKeyFrame)?deltaFrameNo_:keyFrameNo_;
     
@@ -205,6 +205,7 @@ VideoThread::publishFrameData(const webrtc::EncodedImage &encodedImage,
     
     prefixMeta.totalSegmentsNum_ = nSegmentsExpected;
     prefixMeta.paritySegmentsNum_ = nSegmentsParityExpected;
+    prefixMeta.syncList_ = callback_->getFrameSyncList(isKeyFrame);
     
     if ((nSegments = publishPacket(frameData,
                                    framePrefixData,

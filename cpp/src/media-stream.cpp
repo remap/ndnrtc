@@ -241,13 +241,15 @@ VideoStream::onFrameEncoded(const std::string& threadName,
 #endif
 }
 
-std::map<std::string, FrameNumber>
+ThreadSyncList
 VideoStream::getFrameSyncList(bool isKey)
 {
-    if (isKey)
-        return keyFrameSync_;
-    else
-        return deltaFrameSync_;
+    ThreadSyncList sl;
+    std::map<std::string, PacketNumber> &mapList = (isKey)?keyFrameSync_:deltaFrameSync_;
+    
+    copy(mapList.begin(), mapList.end(), std::back_inserter(sl));
+    
+    return sl;
 }
 
 //******************************************************************************

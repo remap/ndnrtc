@@ -120,7 +120,7 @@ namespace ndnrtc
         private:
             boost::shared_ptr<BaseCapturer> capturer_;
             boost::barrier *encodingBarrier_;
-            std::map<std::string, FrameNumber> deltaFrameSync_, keyFrameSync_;
+            std::map<std::string, PacketNumber> deltaFrameSync_, keyFrameSync_;
             
             int
             addNewMediaThread(const MediaThreadParams* params);
@@ -137,7 +137,7 @@ namespace ndnrtc
             onFrameEncoded(const std::string& threadPrefix,
                            const FrameNumber& frameNo,
                            bool isKey);
-            std::map<std::string, FrameNumber>
+            ThreadSyncList
             getFrameSyncList(bool isKey);
         };
         

@@ -28,7 +28,7 @@ namespace ndnrtc
             virtual void onFrameEncoded(const std::string& threadPrefix,
                                         const FrameNumber& frameNo,
                                         bool isKey) = 0;
-            virtual std::map<std::string, FrameNumber>
+            virtual ThreadSyncList
             getFrameSyncList(bool isKey) = 0;
         };
         
