@@ -35,7 +35,7 @@ typedef struct _FrequencyMeter {
     unsigned int nCyclesPerSec_;
     double callsPerSecond_;
     int64_t lastCheckTime_;
-    unsigned int meanEstimatorId_;
+    unsigned int avgEstimatorId_;
 } FrequencyMeter;
 
 typedef struct _DataRateMeter {
@@ -43,7 +43,7 @@ typedef struct _DataRateMeter {
     unsigned int bytesPerCycle_;
     double nBytesPerSec_;
     int64_t lastCheckTime_;
-    unsigned int meanEstimatorId_;
+    unsigned int avgEstimatorId_;
 } DataRateMeter;
 
 typedef struct _MeanEstimator {
@@ -313,7 +313,7 @@ double NdnRtcUtils::unixTimestamp()
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
     FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
-    meter.meanEstimatorId_ = setupSlidingAverageEstimator(10*granularity);
+    meter.avgEstimatorId_ = setupSlidingAverageEstimator(10*granularity);
     
     freqMeters_.push_back(meter);
     
@@ -338,7 +338,7 @@ void NdnRtcUtils::frequencyMeterTick(unsigned int meterId)
             {
                 meter.callsPerSecond_ = 1000.*(double)meter.nCyclesPerSec_/(double)(delta);
                 meter.nCyclesPerSec_ = 0;
-                slidingAverageEstimatorNewValue(meter.meanEstimatorId_, meter.callsPerSecond_);
+                slidingAverageEstimatorNewValue(meter.avgEstimatorId_, meter.callsPerSecond_);
             }
             
             meter.lastCheckTime_ = now;
@@ -352,7 +352,7 @@ double NdnRtcUtils::currentFrequencyMeterValue(unsigned int meterId)
     
     FrequencyMeter &meter = freqMeters_[meterId];
     
-    return currentSlidingAverageValue(meter.meanEstimatorId_);
+    return currentSlidingAverageValue(meter.avgEstimatorId_);
 }
 
 void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
@@ -367,7 +367,7 @@ void NdnRtcUtils::releaseFrequencyMeter(unsigned int meterId)
 unsigned int NdnRtcUtils::setupDataRateMeter(unsigned int granularity)
 {
     DataRateMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
-    meter.meanEstimatorId_ = NdnRtcUtils::setupMeanEstimator();
+    meter.avgEstimatorId_ = NdnRtcUtils::setupSlidingAverageEstimator(10);
     
     dataMeters_.push_back(meter);
     
@@ -393,7 +393,7 @@ void NdnRtcUtils::dataRateMeterMoreData(unsigned int meterId,
             {
                 meter.nBytesPerSec_ = 1000.*meter.bytesPerCycle_/delta;
                 meter.bytesPerCycle_ = 0;
-                meanEstimatorNewValue(meter.meanEstimatorId_, meter.nBytesPerSec_);
+                slidingAverageEstimatorNewValue(meter.avgEstimatorId_, meter.nBytesPerSec_);
             }
             
             meter.lastCheckTime_ = now;
@@ -406,7 +406,7 @@ double NdnRtcUtils::currentDataRateMeterValue(unsigned int meterId)
         return 0.;
     
     DataRateMeter &meter = dataMeters_[meterId];
-    return currentMeanEstimation(meter.meanEstimatorId_);
+    return currentSlidingAverageValue(meter.avgEstimatorId_);
 }
 
 void NdnRtcUtils::releaseDataRateMeter(unsigned int meterId)

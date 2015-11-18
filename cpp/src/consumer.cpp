@@ -41,8 +41,6 @@ isConsuming_(false),
 rttEstimation_(new RttEstimation(statStorage_)),
 chaseEstimation_(new ChaseEstimation()),
 bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
-dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 observer_(NULL)
 {
     bufferEstimator_->setRttEstimation(rttEstimation_);
@@ -178,15 +176,11 @@ Consumer::switchThread(const std::string& threadName)
     {
         currentThreadIdx_ = idx;
         
-        LogInfoC << "thread switched to " << getCurrentThreadName() << std::endl;
+        LogInfoC << "thread switching to " << getCurrentThreadName()
+        << " initiated" << std::endl;
         
-        NdnRtcUtils::releaseDataRateMeter(dataMeterId_);
-        NdnRtcUtils::releaseFrequencyMeter(segmentFreqMeterId_);
-        dataMeterId_ = NdnRtcUtils::setupDataRateMeter(5);
-        segmentFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
-        
-        pipeliner_->threadSwitched();
-        playout_->stop();
+        if (!pipeliner_->threadSwitched())
+            playout_->stop();
         
         if (observer_)
         {
@@ -200,12 +194,12 @@ Consumer::State
 Consumer::getState() const
 {
     switch (pipeliner_->getState()) {
-        case PipelinerBase::StateBuffering: // fall through
-        case PipelinerBase::StateChasing:
+        case Pipeliner2::StateBuffering: // fall through
+        case Pipeliner2::StateChasing:
             return Consumer::StateChasing;
             
-        case PipelinerBase::StateAdjust:
-        case PipelinerBase::StateFetching:
+        case Pipeliner2::StateAdjust:
+        case Pipeliner2::StateFetching:
             return Consumer::StateFetching;
 
         default:
@@ -296,23 +290,23 @@ Consumer::onStateChanged(const int &oldState, const int &newState)
         ConsumerStatus status;
         
         switch (newState) {
-            case PipelinerBase::StateWaitInitial:
-            case PipelinerBase::StateChasing:
+            case Pipeliner2::StateWaitInitial:
+            case Pipeliner2::StateChasing:
                 status = ConsumerStatusNoData;
                 break;
-            case PipelinerBase::StateAdjust:
+            case Pipeliner2::StateAdjust:
                 status = ConsumerStatusAdjusting;
                 break;
             
-            case PipelinerBase::StateBuffering:
+            case Pipeliner2::StateBuffering:
                 status = ConsumerStatusBuffering;
                 break;
                 
-            case PipelinerBase::StateFetching:
+            case Pipeliner2::StateFetching:
                 status = ConsumerStatusFetching;
                 break;
                 
-            case PipelinerBase::StateInactive:
+            case Pipeliner2::StateInactive:
             default:
                 status = ConsumerStatusStopped;
                 break;

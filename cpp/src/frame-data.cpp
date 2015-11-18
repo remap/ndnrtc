@@ -67,10 +67,10 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
         if ((slPos = NdnRtcNamespace::findComponent(prefix, SyncListMarker)) > 0)
         {
             meta.syncList_ = extractSyncList(prefix, slPos);
-            slAdj = meta.syncList_.size()+1;
+            slAdj = meta.syncList_.size()*2+1;
         }
             
-        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-PREFIX_META_NCOMP]);
+        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-(PREFIX_META_NCOMP+slAdj)]);
         meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-(PREFIX_META_NCOMP+slAdj)]);
         meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-(PREFIX_META_NCOMP+slAdj)]);
         meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-(PREFIX_META_NCOMP+slAdj)]);

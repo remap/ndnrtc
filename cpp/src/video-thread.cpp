@@ -108,8 +108,14 @@ VideoThread::onDeliverFrame(WebRtcVideoFrame &frame,
             lock_guard<mutex> processingLock(frameProcessingMutex_);
             encodeFinished_ = false;
             coder_->onDeliverFrame(deliveredFrame_, unixTimeStamp);
+            
             if (!encodeFinished_ && callback_)
+            {
+                // we must continue with packet counter, in order to be
+                // synchronized with other threads
+                packetNo_++;
                 callback_->onFrameDropped(settings_->threadParams_->threadName_);
+            }
         });
         frameProcessingMutex_.unlock();
     }
