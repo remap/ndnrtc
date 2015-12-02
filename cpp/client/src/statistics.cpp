@@ -192,7 +192,6 @@ void collectStreamsStatictics::makeRemoteStreamPrefixNicer(std::string &remoteSt
     }
 }
 
-<<<<<<< HEAD
 void callStatCollector(const unsigned int statisticsSampleInterval,
                         const unsigned int headlessAppOnlineTimeSec,
                         std::vector<Statistics> statisticsToCollect,
@@ -211,7 +210,5 @@ void callStatCollector(const unsigned int statisticsSampleInterval,
     staticticsIo.stop();
 }
 
-=======
->>>>>>> 966aab0cd09209af575b31689b3a79cfd89e315d
 
 

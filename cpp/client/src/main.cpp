@@ -136,12 +136,7 @@ void run(const std::string &configFile,
     // setup video fetching
     const int videoStreamsNumber = headlessParams.defaultVideoStreams_.size();
 
-<<<<<<< HEAD
     LogDebug("") << "videoStreamsNumber: " << videoStreamsNumber << std::endl;
-=======
->>>>>>> 966aab0cd09209af575b31689b3a79cfd89e315d
-    RendererInternal *renderer = new RendererInternal[videoStreamsNumber];
-
     for (int videoStreamsCount = 0; videoStreamsCount < videoStreamsNumber; videoStreamsCount++) {
         MediaStreamParamsSupplement *videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
 
@@ -153,7 +148,6 @@ void run(const std::string &configFile,
     }
 
     // local_session_prefix = "/ndn/edu/ucla/remap/ndnrtc/user/ubuntuHeadless";
-<<<<<<< HEAD
     // new_api::MediaStreamParams localMedia;
     // localMedia.type_=MediaStreamParams::MediaStreamTypeAudio;
     // localMedia.producerParams_.segmentSize_ = 1000;
@@ -230,43 +224,6 @@ void run(const std::string &configFile,
     LogDebug("") << "remove remote streams... "  << std::endl;
     // delete  []renderer;
     LogDebug("") << "delete renderers... " << std::endl;
-=======
-    new_api::MediaStreamParams localMedia;
-    localMedia.type_=MediaStreamParams::MediaStreamTypeAudio;
-    localMedia.producerParams_.segmentSize_ = 1000;
-    localMedia.producerParams_.freshnessMs_ = 1000;
-    localMedia.streamName_ = "audio";
-    localMedia.synchronizedStreamName_ = "audio";
-            // CaptureDeviceParams *captureDevice_ = NULL;
-    MediaThreadParams localMediaThread;
-    localMediaThread.threadName_="pcmu";
-    localMedia.mediaThreads_.push_back(&localMediaThread);
-    SessionObserver *localSessionObserver=new SessionObserver;
-    GeneralParams localMediaGeneralParams=headlessParams.generalParams_;
-    localMediaGeneralParams.prefix_="/ndn/edu/ucla";
-    IExternalCapturer* localCapturer=new ExternalCapturer;
-
-    std::string localStreamsPrefixSession=ndnp->startSession("ubuntuHeadless",
-                                                        localMediaGeneralParams,
-                                                        localSessionObserver);
-    std::string localStreamsPrefix=ndnp->addLocalStream(localStreamsPrefixSession,
-                                                    localMedia,
-                                                    NULL);
-    LogDebug("")<< "localStreamsPrefix: " << localStreamsPrefix<<std::endl;
-
-    // collect streams statictics
-    boost::asio::io_service staticticsIo;
-    LogDebug("") << "statisticsSampleInterval(s): " << statisticsSampleInterval << std::endl;
-    collectStreamsStatictics collectStatictics(staticticsIo, headlessAppOnlineTimeSec, statisticsSampleInterval, headlessParams.statistics_, remoteStreamsPrefix, ndnp);
-    staticticsIo.run();
-    staticticsIo.stop();
-
-    // sleep(headlessAppOnlineTimeSec);
-    // removeRemoteStreams(ndnp, remoteStreamsPrefix);
-    LogDebug("") << "remove remote streams... "  << std::endl;
-    // delete  []renderer;
-    // LogDebug("") << "delete renderers... " << std::endl;
->>>>>>> 966aab0cd09209af575b31689b3a79cfd89e315d
     LogInfo("") << "demo fetching has been completed" << std::endl;
 
     return;
