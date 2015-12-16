@@ -997,7 +997,7 @@ Pipeliner2::getCurrentMinimalLambda()
     double currentRttEstimation = consumer_->getRttEstimation()->getCurrentEstimation();
     double producerRate = consumer_->getFrameBuffer()->getCurrentRate();
     double packetDelay = (producerRate == 0) ? stabilityEstimator_.getMeanValue() : (1000./producerRate);
-    int minimalLambda = (int)round(currentRttEstimation/packetDelay);
+    int minimalLambda = (int)ceil(currentRttEstimation/packetDelay);
     
     if (minimalLambda == 0) minimalLambda = DefaultMinWindow;
     
