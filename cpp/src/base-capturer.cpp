@@ -71,7 +71,7 @@ bool BaseCapturer::process()
         if (!capturedFrame_.IsZeroSize())
         {
             NdnRtcUtils::frequencyMeterTick(meterId_);
-            int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
+            double timestamp = NdnRtcUtils::unixTimestamp();
 #ifdef TEST_USE_THREAD
             captureMutex_.lock();
             deliverFrame_.CopyFrame(capturedFrame_);
