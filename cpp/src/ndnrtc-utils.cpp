@@ -313,7 +313,7 @@ double NdnRtcUtils::unixTimestamp()
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
     FrequencyMeter meter = {1000./(double)granularity, 0, 0., 0, 0};
-    meter.avgEstimatorId_ = setupSlidingAverageEstimator(10*granularity);
+    meter.avgEstimatorId_ = setupSlidingAverageEstimator(granularity);
     
     freqMeters_.push_back(meter);
     
