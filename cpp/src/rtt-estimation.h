@@ -41,6 +41,7 @@ namespace ndnrtc {
                                     int64_t generationDelay);
             
             double getCurrentEstimation() const;
+            double getCurrentVariation() const;
             double getMeanGenerationDelay() const;
             
             void reset();

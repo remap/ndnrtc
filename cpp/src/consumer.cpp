@@ -40,7 +40,7 @@ consumerParams_(consumerParams),
 isConsuming_(false),
 rttEstimation_(new RttEstimation(statStorage_)),
 chaseEstimation_(new ChaseEstimation()),
-bufferEstimator_(new BufferEstimator(rttEstimation_, consumerParams.jitterSizeMs_)),
+bufferEstimator_(new BufferEstimator(1, 2, rttEstimation_, consumerParams.jitterSizeMs_)),
 observer_(NULL)
 {
     bufferEstimator_->setRttEstimation(rttEstimation_);

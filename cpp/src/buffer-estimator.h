@@ -24,8 +24,9 @@ namespace ndnrtc {
             
             static const int64_t MinBufferSizeMs;
             
-            BufferEstimator():minBufferSizeMs_(MinBufferSizeMs){}
-            BufferEstimator(const boost::shared_ptr<RttEstimation>& rttEstimation,
+            BufferEstimator(double alpha, double beta):alpha_(alpha), beta_(beta), minBufferSizeMs_(MinBufferSizeMs){}
+            BufferEstimator(double alpha, double beta,
+                            const boost::shared_ptr<RttEstimation>& rttEstimation,
                             int64_t minBufferSizeMs = MinBufferSizeMs);
             ~BufferEstimator(){}
             
@@ -44,6 +45,7 @@ namespace ndnrtc {
             getTargetSize();
             
         private:
+            double alpha_, beta_;
             boost::shared_ptr<RttEstimation> rttEstimation_;
             int64_t minBufferSizeMs_;
         };

@@ -71,6 +71,12 @@ RttEstimation::getCurrentEstimation() const
 }
 
 double
+RttEstimation::getCurrentVariation() const
+{
+    return NdnRtcUtils::currentDeviationEstimation(estimatorId_);
+}
+
+double
 RttEstimation::getMeanGenerationDelay() const
 {
     return NdnRtcUtils::currentSlidingAverageValue(generationDelayEstimatorId_);
