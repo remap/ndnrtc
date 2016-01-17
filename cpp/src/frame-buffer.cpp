@@ -1250,7 +1250,15 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 if (oldConsistency != newConsistency)
                 {
                     if (newConsistency&Slot::HeaderMeta)
+                    {
+                        LogTraceC << "updating prod rate "
+                        << slot->getPacketRate() << std::endl;
+                        
                         updateCurrentRate(slot->getPacketRate());
+                    }
+                    else
+                        LogTraceC << "couldn't update rate - "
+                        << newConsistency << std::endl;
                     
                     playbackQueue_.updatePlaybackDeadlines();
                     isEstimationNeeded_ = true;
@@ -1322,6 +1330,9 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 return event;
             }
+            else
+                LogTraceC << "suspicious case " << oldState << " "
+                << newState << std::endl;
         }
         else
         {

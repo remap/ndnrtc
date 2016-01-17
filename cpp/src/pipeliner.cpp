@@ -62,7 +62,10 @@ useKeyNamespace_(true),
 streamId_(0),
 frameBuffer_(consumer_->getFrameBuffer().get()),
 recoveryCheckpointTimestamp_(0),
-stabilityEstimator_(10, 4, 0.3, 0.7),
+                //  N   K theta1 theta2
+stabilityEstimator_(10, 4, 0.3, 0.7), // normal
+//stabilityEstimator_(30, 4, 0.1, 0.95), // high
+//stabilityEstimator_(3, 4, 0.6, 0.5), // low
 rttChangeEstimator_(7, 3, 0.12),
 dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
 segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
@@ -997,7 +1000,7 @@ Pipeliner2::getCurrentMinimalLambda()
     double currentRttEstimation = consumer_->getRttEstimation()->getCurrentEstimation();
     double producerRate = consumer_->getFrameBuffer()->getCurrentRate();
     double packetDelay = (producerRate == 0) ? stabilityEstimator_.getMeanValue() : (1000./producerRate);
-    int minimalLambda = (int)round(currentRttEstimation/packetDelay);
+    int minimalLambda = (int)ceil(currentRttEstimation/packetDelay);
     
     if (minimalLambda == 0) minimalLambda = DefaultMinWindow;
     

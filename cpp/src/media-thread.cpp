@@ -102,6 +102,11 @@ int MediaThread::publishPacket(PacketData &packetData,
             NdnRtcUtils::millisecondTimestamp(),
             captureTimestamp};
         
+        LogTraceC << "publish meta" << STAT_DIV
+        << "rate" << STAT_DIV << metadata.packetRate_ << STAT_DIV
+        << "ts" << STAT_DIV << metadata.timestamp_ << STAT_DIV
+        << "uts" << STAT_DIV << std::fixed << std::setprecision(6) << metadata.unixTimestamp_ << STAT_DIV << std::endl;
+        
         packetData.setMetadata(metadata);
         
         prefixMeta.crcValue_ = packetData.getCrcValue();
