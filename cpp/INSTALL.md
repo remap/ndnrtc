@@ -87,8 +87,8 @@ $ make && make install
 >
 > In order to do that, download the [latest Protobuf](https://github.com/google/protobuf/releases) and compile it with `-stdlib=libstdc++` flag. Then, add headers and compiled libraries paths to NDN-CPP's `config.site` file:
 <pre>
-CXXFLAGS="... -I<path_to_protobuf_headers_parent_folder>"
-LDFLAGS="... -L<path_to_protobuf_libraries_folder>"
+CXXFLAGS="... -I&lt;path_to_protobuf_headers_parent_folder&gt;"
+LDFLAGS="... -L&lt;path_to_protobuf_libraries_folder&gt;"
 </pre>
 > After that, configure NDN-CPP and **make sure** it has successfully found protobuf headers and libraries during configuration. **Check configure output! Check config.log!** **This is important: NDN-CPP WILL NOT output error in case if Protobuf was not found as it is considered optional for the library.** So you **MUST** make sure that NDN-CPP has discovered it corectly. If it didn't, check your paths that you've added to `config.site` and try configuring NDN-CPP again. Repeat this until NDN-CPP configuration successfully detects Protobuf.
 
