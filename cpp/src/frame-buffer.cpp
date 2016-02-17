@@ -1250,7 +1250,15 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 if (oldConsistency != newConsistency)
                 {
                     if (newConsistency&Slot::HeaderMeta)
+                    {
+                        LogTraceC << "updating prod rate "
+                        << slot->getPacketRate() << std::endl;
+                        
                         updateCurrentRate(slot->getPacketRate());
+                    }
+                    else
+                        LogTraceC << "couldn't update rate - "
+                        << newConsistency << std::endl;
                     
                     playbackQueue_.updatePlaybackDeadlines();
                     isEstimationNeeded_ = true;
@@ -1322,6 +1330,9 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
                 
                 return event;
             }
+            else
+                LogTraceC << "suspicious case " << oldState << " "
+                << newState << std::endl;
         }
         else
         {
@@ -1360,6 +1371,34 @@ ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
             << " for " << slot->getPrefix() << std::endl;
         }
     }
+}
+
+void
+ndnrtc::new_api::FrameBuffer::purgeNewSlots(int& nDeltaPurged, int& nKeyPurged)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
+    std::vector<boost::shared_ptr<Slot>> newSlots = getSlots(Slot::StateNew);
+    std::vector<Slot*> slotsToErase(newSlots.size());
+    
+    std::transform(newSlots.begin(), newSlots.end(), slotsToErase.begin(),
+                   [](boost::shared_ptr<Slot>& slot)->Slot*{ return slot.get(); });
+    nDeltaPurged = 0;
+    nKeyPurged = 0;
+    
+    for (auto slot:slotsToErase)
+    {
+        if (slot->getNamespace() == Slot::Key)
+            nKeyPurged++;
+        else
+            nDeltaPurged++;
+        
+        freeSlot(slot->getPrefix());
+    }
+    
+    playbackQueue_.erase(std::remove_if(playbackQueue_.begin(), playbackQueue_.end(),
+                                        [&slotsToErase](Slot* slot){ return std::find(slotsToErase.begin(), slotsToErase.end(),
+                                                                                      slot) != slotsToErase.end();}),
+                         playbackQueue_.end());
 }
 
 ndnrtc::new_api::FrameBuffer::Slot::State

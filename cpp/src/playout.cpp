@@ -181,6 +181,9 @@ Playout::processPlayout()
                 frameUnixTimestamp = data_->getMetadata().unixTimestamp_;
                 (*statStorage_)[Indicator::LatencyEstimated] = NdnRtcUtils::unixTimestamp() - frameUnixTimestamp;
                 
+                LogStatC << "lat est" << STAT_DIV << std::fixed << std::setprecision(5)
+                << (*statStorage_)[Indicator::LatencyEstimated] << std::endl;
+                
                 // update last packet timestamp if any
                 if (data_->getMetadata().timestamp_ != -1)
                     lastPacketTs_ = data_->getMetadata().timestamp_;

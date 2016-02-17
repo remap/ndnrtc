@@ -104,8 +104,6 @@ namespace ndnrtc
         static webrtc::VoiceEngine *sharedVoiceEngine();
         static void initVoiceEngine();
         static void releaseVoiceEngine();
-        static void startVoiceThread();
-        static void stopVoiceThread();
         static void dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
                                           boost::function<void(void)> onCompletion);
         

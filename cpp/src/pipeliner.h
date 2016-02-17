@@ -78,9 +78,10 @@ namespace ndnrtc {
         };
         
         
-        class PipelinerBase : public NdnRtcComponent,
-                                public IFrameBufferCallback,
-                                public statistics::StatObject
+        class Pipeliner2 : public NdnRtcComponent,
+                           public IFrameBufferCallback,
+                           public statistics::StatObject,
+                           public IPacketAssembler
         {
         public:
             typedef enum _State {
@@ -100,19 +101,22 @@ namespace ndnrtc {
             static const double ParitySegmentsAvgNumDelta;
             static const double ParitySegmentsAvgNumKey;
             
-            PipelinerBase(const boost::shared_ptr<Consumer>& consumer,
-                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
-                          const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
-            ~PipelinerBase();
+            static const int DefaultWindow;
+            static const int DefaultMinWindow;
             
-            virtual int
+            Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
+                       const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
+                       const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
+            ~Pipeliner2();
+            
+            int
             initialize();
             
-            virtual int
-            start() = 0;
+            int
+            start();
             
-            virtual int
-            stop() = 0;
+            int
+            stop();
             
             void
             setUseKeyNamespace(bool useKeyNamespace)
@@ -126,10 +130,10 @@ namespace ndnrtc {
             registerCallback(IPipelinerCallback* callback)
             { callback_ = callback; }
             
-            virtual void
+            void
             triggerRebuffering();
             
-            void
+            bool
             threadSwitched();
             
             int
@@ -142,6 +146,14 @@ namespace ndnrtc {
                 << std::endl;
                 
                 return idleTime;
+            }
+            
+            void
+            setLogger(ndnlog::new_api::Logger* logger)
+            {
+                NdnRtcComponent::setLogger(logger);
+                stabilityEstimator_.setLogger(logger);
+                rttChangeEstimator_.setLogger(logger);
             }
             
         protected:
@@ -161,9 +173,25 @@ namespace ndnrtc {
             FrameSegmentsInfo frameSegmentsInfo_;
             
             unsigned int streamId_; // currently fetched stream id
-            boost::mutex streamSwitchMutex_;
             bool useKeyNamespace_;
             int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
+            std::map<std::string, PacketNumber> deltaSyncList_, keySyncList_;
+            
+            StabilityEstimator2 stabilityEstimator_;
+            RttChangeEstimator rttChangeEstimator_;
+            PipelinerWindow window_;
+            
+            uint64_t timestamp_;
+            bool waitForChange_, waitForStability_;
+            unsigned int failedWindow_;
+            FrameNumber seedFrameNo_;
+            ndn::Interest rightmostInterest_;
+            PacketNumber exclusionPacket_;
+            bool waitForThreadTransition_;
+            
+            // incoming data statistics
+            unsigned int dataMeterId_, segmentFreqMeterId_;
+            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
             
             void
             switchToState(State newState)
@@ -249,87 +277,23 @@ namespace ndnrtc {
                            int64_t lifetime, int64_t priority);
             
             // IFrameBufferCallback interface
-            virtual void
+            void
             onRetransmissionNeeded(FrameBuffer::Slot* slot);
             
-            virtual void
-            onFrameDropped(PacketNumber seguenceNo,
-                           PacketNumber playbackNo,
-                           FrameBuffer::Slot::Namespace nspc) = 0;
-            
-            virtual void
+            void
             onKeyNeeded(PacketNumber seqNo);
-            
-            virtual void
-            rebuffer() = 0;
-            
-            virtual void
-            resetData();
-        };
-        
-        // window-based pipeliner
-        class Pipeliner2 : public PipelinerBase,
-                            public IPacketAssembler
-        {
-        public:
-            static const int DefaultWindow;
-            static const int DefaultMinWindow;
-            
-            Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
-                       const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
-                       const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
-            ~Pipeliner2();
-            
-            int
-            start();
-            
-            int
-            stop();
-            
-            void
-            setLogger(ndnlog::new_api::Logger* logger)
-            {
-                PipelinerBase::setLogger(logger);
-                stabilityEstimator_.setLogger(logger);
-                rttChangeEstimator_.setLogger(logger);
-            }
-            
-        private:
-            StabilityEstimator2 stabilityEstimator_;
-            RttChangeEstimator rttChangeEstimator_;
-            PipelinerWindow window_;
-            
-            uint64_t timestamp_;
-            bool waitForChange_, waitForStability_;
-            unsigned int failedWindow_;
-            FrameNumber seedFrameNo_;
-            ndn::Interest rightmostInterest_;
-            PacketNumber exclusionPacket_;
-            
-            // incoming data statistics
-            unsigned int dataMeterId_, segmentFreqMeterId_;
-            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
-            
-            void
-            askForRightmostData();
-            
-            void
-            askForInitialData(const boost::shared_ptr<Data>& data);
-            
-            void
-            askForSubsequentData(const boost::shared_ptr<Data>& data);
-            
-            unsigned int
-            getCurrentMinimalLambda();
-            
-            unsigned int
-            getCurrentMaximumLambda();
             
             void
             rebuffer();
             
             void
             resetData();
+            
+            unsigned int
+            getCurrentMinimalLambda();
+            
+            unsigned int
+            getCurrentMaximumLambda();
             
             OnData
             getOnDataHandler()
@@ -347,6 +311,22 @@ namespace ndnrtc {
             onFrameDropped(PacketNumber seguenceNo,
                            PacketNumber playbackNo,
                            FrameBuffer::Slot::Namespace nspc);
+            
+            void
+            askForRightmostData();
+            
+            void
+            askForInitialData(const boost::shared_ptr<Data>& data);
+            
+            void
+            askForSubsequentData(const boost::shared_ptr<Data>& data);
+            
+            void
+            updateThreadSyncList(const PrefixMetaInfo& metaInfo, bool isKey);
+
+            void
+            performThreadTransition();
+            
         };
     }
 }

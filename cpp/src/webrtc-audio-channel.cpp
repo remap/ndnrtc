@@ -29,14 +29,6 @@ voeCodec_(nullptr)
 
 WebrtcAudioChannel::~WebrtcAudioChannel()
 {
-    if (voeBase_)
-        voeBase_->Release();
-    
-    if (voeNetwork_)
-        voeNetwork_->Release();
-    
-    if (voeCodec_)
-        voeCodec_->Release();
 }
 
 //******************************************************************************
@@ -78,4 +70,18 @@ int WebrtcAudioChannel::init()
                                            voeCodec_->SetSendCodec(webrtcChannelId_, cinst);
                                        });
     return res;
+}
+
+int WebrtcAudioChannel::release()
+{
+    NdnRtcUtils::performOnBackgroundThread([this](){
+        if (voeBase_)
+            voeBase_->Release();
+        
+        if (voeNetwork_)
+            voeNetwork_->Release();
+        
+        if (voeCodec_)
+            voeCodec_->Release();
+    });
 }

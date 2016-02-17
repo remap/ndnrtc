@@ -771,15 +771,10 @@ namespace ndnrtc
             interestTimeout(const Interest& interest);
             
             /**
-             * Frees every slot which is less in NDN prefix canonical ordering
-             * @param prefix NDN prefix which is used for comparison. Every slot
-             * which has prefix less than this prefix (in NDN canonical
-             * ordering) will be freed
-             * @return Number of freed slots or -1 if operation couldn't be
-             * performed
+             * Purges all new slots (useful for thread switching)
              */
-            int
-            freeSlotsLessThan(const Name &prefix);
+            void
+            purgeNewSlots(int& nDeltaPurged, int& nKeyPurged);
             
             /**
              * Sets the size of the buffer (in milliseconds).

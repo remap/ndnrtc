@@ -66,6 +66,17 @@ namespace ndnrtc
             setSessionObserver(ISessionObserver* sessionObserver)
             { sessionObserver_ = sessionObserver; }
             
+            /**
+             * Invalidates session and all its streams/threads and makes
+             * them indifferent to any incoming calls (like in ExternalCapturer).
+             * User app should be notified about invalidated sessions and
+             * they should be removed explicitly by the user. Invalidated
+             * sessions can't be used anymore for publishing streams.
+             * This call MUST be called on background thread only.
+             */
+            void
+            invalidate();
+            
         private:
             std::string username_;
             std::string userPrefix_;

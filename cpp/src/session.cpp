@@ -32,7 +32,8 @@ status_(SessionOffline)
 Session::~Session()
 {
     std::cout << " session dtor begin" << std::endl;
-    stop();
+    if (status_ == SessionOnlinePublishing)
+        stop();
 }
 
 int
@@ -48,19 +49,8 @@ Session::init(const std::string username,
     this->setLogger(new Logger(generalParams.loggingLevel_,
                                NdnRtcUtils::getFullLogPath(generalParams, logFileName)));
     isLoggerCreated_ = true;
-    
     userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
-
-    try {
-        mainFaceProcessor_ = mainFaceProcessor;
-    }
-    catch (std::exception& exception) {
-        notifyError(NRTC_ERR_LIBERROR, "Exception from NDN-CPP library: %s\n"
-                    "Make sure your NDN daemon is running", exception.what());
-        
-        return RESULT_ERR;
-    }
-
+    mainFaceProcessor_ = mainFaceProcessor;
     sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
     
     return RESULT_OK;
@@ -70,9 +60,7 @@ int
 Session::start()
 {
     switchStatus(SessionOnlineNotPublishing);
-    
     scheduleJob(500000, boost::bind(&Session::updateSessionInfo, this));
-    
     LogInfoC << "session started" << std::endl;
     
     return RESULT_OK;
@@ -160,6 +148,11 @@ Session::addLocalStream(const MediaStreamParams& params,
 int
 Session::removeLocalStream(const std::string& streamPrefix)
 {
+    int res = RESULT_OK;
+    
+    if (status_ == SessionInvalidated)
+        res = RESULT_ERR;
+    
     StreamMap::iterator it = audioStreams_.find(streamPrefix);
     StreamMap* streamMap = &audioStreams_;
     
@@ -168,25 +161,47 @@ Session::removeLocalStream(const std::string& streamPrefix)
         it = videoStreams_.find(streamPrefix);
         
         if (it == videoStreams_.end())
-            return RESULT_ERR;
-        
-        streamMap = &videoStreams_;
+            res = RESULT_ERR;
+        else
+            streamMap = &videoStreams_;
     }
     
-    it->second->release();
-    streamMap->erase(it);
+    if (res == RESULT_OK)
+        NdnRtcUtils::performOnBackgroundThread([this, &it, &streamMap](){
+            it->second->release();
+            streamMap->erase(it);
+            
+            if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
+                switchStatus(SessionOnlineNotPublishing);
+            
+            if (sessionObserver_)
+            {
+                boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+                sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+            }
+        });
     
-    if (audioStreams_.size() == 0 && videoStreams_.size() == 0)
-        switchStatus(SessionOnlineNotPublishing);
+    return res;
+}
 
-    if (sessionObserver_)
+void
+Session::invalidate()
+{
+    for (auto audioStream:audioStreams_)
+        audioStream.second->release();
+    
+    for (auto videoStream:videoStreams_)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+        dynamic_pointer_cast<VideoStream>(videoStream.second)->getCapturer()->capturingStopped();
+        videoStream.second->release();
     }
-
     
-    return RESULT_OK;
+    sessionCache_->unregisterAll();
+    
+    LogWarnC << "session invalidated" << std::endl;
+    
+    switchStatus(SessionInvalidated);
+    logger_->flush();
 }
 
 // private
@@ -210,20 +225,22 @@ Session::switchStatus(SessionStatus status)
 bool
 Session::updateSessionInfo()
 {
-    if (sessionObserver_)
+    if (status_ != SessionInvalidated &&
+        status_ != SessionOffline)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
-        sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+        if (sessionObserver_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
+            sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
+        }
     }
     
-    return true;
+    return (status_ != SessionInvalidated && status_ != SessionOffline);
 }
 
 boost::shared_ptr<SessionInfo>
 Session::getSessionInfo()
 {
-    LogDebugC << "session info requested" << std::endl;
-
     shared_ptr<SessionInfo> sessionInfo(new SessionInfo());
     sessionInfo->sessionPrefix_ = userPrefix_;
 

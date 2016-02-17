@@ -15,6 +15,7 @@
 #include "ndnrtc-utils.h"
 #include "params.h"
 #include "fec.h"
+#include "ndnrtc-namespace.h"
 
 #define PREFIX_META_NCOMP 5
 
@@ -24,6 +25,16 @@ using namespace ndnrtc;
 using namespace fec;
 
 //******************************************************************************
+const std::string PrefixMetaInfo::SyncListMarker = "sl";
+const PrefixMetaInfo PrefixMetaInfo::ZeroMetaInfo;
+
+PrefixMetaInfo::_PrefixMetaInfo():totalSegmentsNum_(0),
+playbackNo_(0),
+pairedSequenceNo_(0),
+paritySegmentsNum_(0),
+crcValue_(0)
+{}
+
 Name
 PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
 {
@@ -34,6 +45,15 @@ PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.paritySegmentsNum_));
     metaSuffix.append(NdnRtcUtils::componentFromInt(meta.crcValue_));
     
+    if (meta.syncList_.size())
+        metaSuffix.append(SyncListMarker);
+        
+    for (auto pair:meta.syncList_)
+    {
+        metaSuffix.append(pair.first);
+        metaSuffix.append(NdnRtcUtils::componentFromInt(pair.second));
+    }
+    
     return metaSuffix;
 }
 
@@ -43,16 +63,70 @@ PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
 {
     if (prefix.size() >= PREFIX_META_NCOMP)
     {
-        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-PREFIX_META_NCOMP]);
-        meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-PREFIX_META_NCOMP]);
-        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-PREFIX_META_NCOMP]);
-        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-PREFIX_META_NCOMP]);
-        meta.crcValue_ = NdnRtcUtils::intFromComponent(prefix[4-PREFIX_META_NCOMP]);
+        int slPos = 0, slAdj = 0;
+        if ((slPos = NdnRtcNamespace::findComponent(prefix, SyncListMarker)) > 0)
+        {
+            meta.syncList_ = extractSyncList(prefix, slPos);
+            slAdj = meta.syncList_.size()*2+1;
+        }
+            
+        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-(PREFIX_META_NCOMP+slAdj)]);
+        meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-(PREFIX_META_NCOMP+slAdj)]);
+        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-(PREFIX_META_NCOMP+slAdj)]);
+        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-(PREFIX_META_NCOMP+slAdj)]);
+        meta.crcValue_ = NdnRtcUtils::intFromComponent(prefix[4-(PREFIX_META_NCOMP+slAdj)]);
         
         return RESULT_OK;
     }
     
     return RESULT_ERR;
+}
+
+ThreadSyncList PrefixMetaInfo::extractSyncList(const ndn::Name& prefix, int markerPos)
+{
+    assert(markerPos < prefix.size());
+    
+    if (prefix[markerPos].toEscapedString() == SyncListMarker)
+    {
+        ThreadSyncList slList;
+        
+        int p = markerPos+1;
+        while (p+1 < prefix.size())
+        {
+            slList.push_back(pair<string, PacketNumber>(prefix[p].toEscapedString(),
+                                                        NdnRtcUtils::intFromComponent(prefix[p+1])));
+            p += 2;
+        }
+        
+        return slList;
+    }
+    
+    return ThreadSyncList();
+}
+
+//******************************************************************************
+NetworkData::NetworkData(unsigned int dataLength, const unsigned char* rawData)
+{
+    copyFromRaw(dataLength, rawData);
+}
+
+NetworkData::NetworkData(const NetworkData& networkData)
+{
+    copyFromRaw(networkData.getLength(), networkData.getData());
+    isValid_ = networkData.isValid();
+}
+
+NetworkData::~NetworkData(){
+    if (data_ && isDataCopied_)
+        free(data_);
+}
+
+void NetworkData::copyFromRaw(unsigned int dataLength, const unsigned char* rawData)
+{
+    length_ = dataLength;
+    data_ = (unsigned char*)malloc(dataLength);
+    memcpy((void*)data_, (void*)rawData, length_);
+    isDataCopied_ = true;
 }
 
 //******************************************************************************
@@ -389,6 +463,12 @@ PacketData(dataLength, rawData)
 {
     isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
 }
+
+//NdnAudioData::NdnAudioData(const NdnAudioData& audioData)
+//{
+//    isDataCopied_ = true;
+//    isValid_ = audioData.getIs
+//}
 
 //******************************************************************************
 #pragma mark - public

@@ -18,7 +18,8 @@ using namespace ndnlog::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioCapturer::AudioCapturer()
+AudioCapturer::AudioCapturer():
+capturing_(false)
 {
     description_ = "audio-capturer";
 }
@@ -31,24 +32,40 @@ AudioCapturer::~AudioCapturer()
 #pragma mark - public
 int AudioCapturer::startCapture()
 {
-    if (voeNetwork_->RegisterExternalTransport(webrtcChannelId_, *this) < 0)
-        return notifyError(RESULT_ERR, "can't register external transport for "
-                           "WebRTC due to error (code %d)",
-                           voeBase_->LastError());
+    int res = RESULT_OK;
     
-    if (voeBase_->StartSend(webrtcChannelId_) < 0)
-        return notifyError(RESULT_ERR, "can't start send channel due to "
-                           "WebRTC error (code %d)", voeBase_->LastError());
+    init();
     
-    LogInfoC << "started" << endl;
-    return RESULT_OK;
+    NdnRtcUtils::performOnBackgroundThread([this, &res](){
+        if (voeNetwork_->RegisterExternalTransport(webrtcChannelId_, *this) < 0)
+            res = notifyError(RESULT_ERR, "can't register external transport for "
+                               "WebRTC due to error (code %d)",
+                               voeBase_->LastError());
+        
+        if (voeBase_->StartSend(webrtcChannelId_) < 0)
+            res = notifyError(RESULT_ERR, "can't start send channel due to "
+                               "WebRTC error (code %d)", voeBase_->LastError());
+    });
+    
+    if (RESULT_GOOD(res))
+    {
+        capturing_ = true;
+        LogInfoC << "started" << endl;
+    }
+    
+    return res;
 }
 
 int AudioCapturer::stopCapture()
 {
-    voeBase_->StopSend(webrtcChannelId_);
-    voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
-    webrtcChannelId_ = -1;
+    capturing_ = false;
+    release();
+    
+    NdnRtcUtils::performOnBackgroundThread([this](){
+        voeBase_->StopSend(webrtcChannelId_);
+        voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
+        webrtcChannelId_ = -1;
+    });
     
     LogInfoC << "stopped" << endl;
     return RESULT_OK;
@@ -58,7 +75,7 @@ int AudioCapturer::stopCapture()
 #pragma mark - private
 int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
 {
-    if (frameConsumer_)
+    if (capturing_ && frameConsumer_)
         frameConsumer_->onDeliverRtpFrame(len, (unsigned char*)data);
     
     return len;
@@ -66,7 +83,7 @@ int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
 
 int AudioCapturer::SendRTCPPacket(int channel, const void *data, size_t len)
 {
-    if (frameConsumer_)
+    if (capturing_ && frameConsumer_)
         frameConsumer_->onDeliverRtcpFrame(len, (unsigned char*)data);
     
     return len;
