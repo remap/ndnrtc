@@ -13,7 +13,7 @@ collectStreamsStatictics::collectStreamsStatictics(boost::asio::io_service &io,
                                                     unsigned int statisticsSampleInterval,
                                                     std::vector<Statistics> statistics,
                                                     std::vector<std::string> remoteStreamsPrefix,
-                                                    NdnRtcLibrary *ndnp)
+                                                    INdnRtcLibrary *ndnp)
                                                     : timer_(io, boost::posix_time::seconds(statisticsSampleInterval)),
                                                       statisticsSampleInterval_(statisticsSampleInterval),
                                                       ndnp_(ndnp),
@@ -196,7 +196,7 @@ void callStatCollector(const unsigned int statisticsSampleInterval,
                         const unsigned int headlessAppOnlineTimeSec,
                         std::vector<Statistics> statisticsToCollect,
                         std::vector<std::string> remoteStreamsPrefix,
-                        NdnRtcLibrary* ndnp){
+                        INdnRtcLibrary* ndnp){
     // collect streams statictics
     boost::asio::io_service staticticsIo;
     LogDebug("") << "statisticsSampleInterval(s): " << statisticsSampleInterval << std::endl;

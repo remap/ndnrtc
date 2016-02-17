@@ -12,7 +12,7 @@
 #include <boost/asio.hpp>
 
 #include <ndnrtc/simple-log.h>
-#include <ndnrtc/ndnrtc-library.h>
+#include <ndnrtc/interfaces.h>
 
 #include "config.h"
 #include "renderer.h"
@@ -22,7 +22,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
-void removeRemoteStreams(NdnRtcLibrary *&ndnp, std::vector<std::string> &StreamsPrefix);
+void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix);
 
 void run(const std::string &configFile,
          const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
@@ -94,7 +94,7 @@ class LibraryObserver : public INdnRtcLibraryObserver {
     }
 };
 
-static NdnRtcLibrary *ndnp = NULL;
+static INdnRtcLibrary *ndnp = NULL;
 static LibraryObserver libObserver;
 
 //******************************************************************************
@@ -137,6 +137,8 @@ void run(const std::string &configFile,
     const int videoStreamsNumber = headlessParams.defaultVideoStreams_.size();
 
     LogDebug("") << "videoStreamsNumber: " << videoStreamsNumber << std::endl;
+    RendererInternal *renderer = new RendererInternal[videoStreamsNumber];
+
     for (int videoStreamsCount = 0; videoStreamsCount < videoStreamsNumber; videoStreamsCount++) {
         MediaStreamParamsSupplement *videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
 
@@ -228,7 +230,7 @@ void run(const std::string &configFile,
 
     return;
 }
-void removeRemoteStreams(NdnRtcLibrary *&ndnp, std::vector<std::string> &StreamsPrefix) {
+void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix) {
 
     int streamsPrefixNumber = StreamsPrefix.size();
 

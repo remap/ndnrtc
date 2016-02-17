@@ -34,7 +34,7 @@ public:
                             unsigned int statisticsSampleInterval,
                             std::vector<Statistics> statistics,
                             std::vector<std::string> remoteStreamsPrefix,
-                            ndnrtc::NdnRtcLibrary* ndnp);
+                            ndnrtc::INdnRtcLibrary* ndnp);
    ~collectStreamsStatictics();
 private:
    void printStatistics();
@@ -52,7 +52,7 @@ private:
    int statisticsSampleInterval_ = 0; // statistics sample interval in seconds
    std::vector<Statistics> statistics_;
    std::vector<std::string> remoteStreamsPrefix_;
-   ndnrtc::NdnRtcLibrary* ndnp_;
+   ndnrtc::INdnRtcLibrary* ndnp_;
    boost::asio::deadline_timer timer_;
    streamsStatisticsFiles AllStreamsStatisticsFiles_;
 
@@ -120,4 +120,4 @@ void callStatCollector(const unsigned int statisticsSampleInterval,
                         const unsigned int headlessAppOnlineTimeSec,
                         std::vector<Statistics> statisticsToCollect,
                         std::vector<std::string> remoteStreamsPrefix,
-                        ndnrtc::NdnRtcLibrary* ndnp);
+                        ndnrtc::INdnRtcLibrary* ndnp);
