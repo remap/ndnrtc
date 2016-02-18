@@ -29,13 +29,14 @@ void run(const std::string &configFile,
          const unsigned int headlessAppOnlineTimeSecconst,
          const unsigned int statisticsSampleInterval);
 
-int main(int argc, char **argv) {
+//******************************************************************************
+int main(int argc, char **argv) 
+{
     char *configFile = NULL;
-    int index;
     int c;
-    unsigned int headlessAppOnlineTimeSec = 20; //default app online time
-    unsigned int statisticsSampleInterval = 1; //default statistics sample interval
-    ndnlog::NdnLoggerDetailLevel appLoggingLevel = ndnlog::NdnLoggerDetailLevelDefault;
+    unsigned int runTimeSec = 20; // default app run time (sec)
+    unsigned int statSamplePeriodMs = 10;  // default statistics sample interval (ms)
+    ndnlog::NdnLoggerDetailLevel logLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
     opterr = 0;
     while ((c = getopt (argc, argv, "vi:t:c:")) != -1)
@@ -44,13 +45,13 @@ int main(int argc, char **argv) {
             configFile = optarg;
             break;
         case 'v':
-            appLoggingLevel = ndnlog::NdnLoggerDetailLevelAll;
+            logLevel = ndnlog::NdnLoggerDetailLevelAll;
             break;
         case 'i':
-            statisticsSampleInterval = (unsigned int)atoi(optarg);
+            statSamplePeriodMs = (unsigned int)atoi(optarg);
             break;
         case 't':
-            headlessAppOnlineTimeSec = (unsigned int)atoi(optarg);
+            runTimeSec = (unsigned int)atoi(optarg);
             break;
         case '?':
             if (optopt == 'c')
@@ -66,16 +67,14 @@ int main(int argc, char **argv) {
             abort ();
         }
 
-    // #warning implement loading parameters from configuration files
-#if 1
-    if (!configFile) {
-
-        std::cout << "usage: " << argv[0] << " -c <config_file> -t <app online time in seconds> -i <statistics sample interval in seconds> -v <verbose mode>" << std::endl;
+    if (!configFile) 
+    {
+        std::cout << "usage: " << argv[0] << " -c <config_file> -t <app run time in seconds> -i "
+        "<statistics sample interval in milliseconds> [-v <verbose mode>]" << std::endl;
         exit(1);
     }
-#endif
 
-    run(configFile, appLoggingLevel, headlessAppOnlineTimeSec, statisticsSampleInterval);
+    run(configFile, logLevel, runTimeSec, statSamplePeriodMs);
 
     return 0;
 }
@@ -83,13 +82,13 @@ int main(int argc, char **argv) {
 //******************************************************************************
 class LibraryObserver : public INdnRtcLibraryObserver {
   public:
-    void onStateChanged(const char *state, const char *args) {
-
+    void onStateChanged(const char *state, const char *args) 
+    {
         LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
     }
 
-    void onErrorOccurred(int errorCode, const char *message) {
-
+    void onErrorOccurred(int errorCode, const char *message) 
+    {
         LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
     }
 };
@@ -98,27 +97,33 @@ static INdnRtcLibrary *ndnp = NULL;
 static LibraryObserver libObserver;
 
 //******************************************************************************
-void run(const std::string &configFile,
-         const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
-         const unsigned int headlessAppOnlineTimeSec,
-         const unsigned int statisticsSampleInterval) {
+void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
+    const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
+{
     ndnp = &(NdnRtcLibrary::getSharedInstance());
+
     ClientParams headlessParams;
     std::vector<std::string> remoteStreamsPrefix;
 
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(appLoggingLevel);
-    LogInfo("") << "app online time is set to " << headlessAppOnlineTimeSec << " seconds, loading params from " << configFile << "..." << std::endl;
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
 
-    if (loadParamsFromFile(configFile, headlessParams) == EXIT_FAILURE) {
+    LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
+    "params from " << configFile << "..." << std::endl;
+
+    if (loadParamsFromFile(configFile, headlessParams) == EXIT_FAILURE) 
+    {
         LogError("") << "loading params from " << configFile << " met error!" << std::endl;
         return;
     }
 
-    LogInfo("") << "All headlessParams:" << headlessParams << std::endl;
+    LogInfo("") << "Parameters loaded:\n" << headlessParams << std::endl;
     LogDebug("") << "general configuration:\n" << headlessParams.generalParams_ << std::endl;
-    LogDebug("") << "audioConsumerParams configuration:\n" << headlessParams.audioConsumerParams_ << std::endl;
-    LogDebug("") << "videoConsumerParams configuration:\n" << headlessParams.videoConsumerParams_ << std::endl;
+    LogDebug("") << "audioConsumerParams configuration:\n" 
+        << headlessParams.audioConsumerParams_ << std::endl;
+    LogDebug("") << "videoConsumerParams configuration:\n" 
+        << headlessParams.videoConsumerParams_ << std::endl;
 
+#if 0
     // setup audio fetching
     const int audioStreamsNumber = headlessParams.defaultAudioStreams_.size();
 
@@ -227,7 +232,7 @@ void run(const std::string &configFile,
     // delete  []renderer;
     LogDebug("") << "delete renderers... " << std::endl;
     LogInfo("") << "demo fetching has been completed" << std::endl;
-
+#endif
     return;
 }
 void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix) {

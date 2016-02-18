@@ -1,3 +1,10 @@
+//
+//  capturer.cpp
+//  ndnrtc
+//
+//  Copyright (c) 2015 Jiachen Wang. All rights reserved.
+//
+
 #include <fstream>
 #include <iostream>
 #include <boost/asio.hpp>

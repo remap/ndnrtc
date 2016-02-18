@@ -1,8 +1,10 @@
-// 
-// renderer.h
 //
-// Copyright (c) 2015. Peter Gusev. All rights reserved
+//  config.h
+//  ndnrtc
 //
+//  Copyright (c) 2015 Jiachen Wang. All rights reserved.
+//
+
 #include <stdlib.h>
 #include <fstream>
 

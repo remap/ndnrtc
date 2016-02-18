@@ -1,3 +1,10 @@
+//
+//  capturer.h
+//  ndnrtc
+//
+//  Copyright (c) 2015 Jiachen Wang. All rights reserved.
+//
+
 #include <ndnrtc/interfaces.h>
 #include <ndnrtc/simple-log.h>
 

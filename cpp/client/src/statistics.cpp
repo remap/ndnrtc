@@ -1,3 +1,10 @@
+//
+//  statistics.cpp
+//  ndnrtc
+//
+//  Copyright (c) 2015 Jiachen Wang. All rights reserved.
+//
+// 
 #include "statistics.h"
 
 using namespace std;
