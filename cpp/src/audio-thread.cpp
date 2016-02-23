@@ -52,12 +52,8 @@ int AudioThread::processAudioPacket(NdnAudioData::AudioPacket packet)
         // update packet rate meter
         NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
         
-        // publish adata and flush
-        NdnAudioData& audioDataCopy = adata_;
-        NdnRtcUtils::dispatchOnBackgroundThread([this, audioDataCopy](){
-            int nseg = publishPacket((PacketData&)audioDataCopy);
-            packetNo_++;
-        });
+        int nseg = publishPacket((PacketData&)adata_);
+        packetNo_++;
         adata_.clear();
     }
     

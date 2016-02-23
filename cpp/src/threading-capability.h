@@ -8,6 +8,9 @@
 //  Author:  Peter Gusev
 //
 
+#ifndef __threading_capability_h__
+#define __threading_capability_h__
+
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio.hpp>
@@ -34,3 +37,5 @@ namespace ndnrtc {
         };
     }
 }
+
+#endif

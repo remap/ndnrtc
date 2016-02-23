@@ -10,6 +10,7 @@
 #define __ndnrtc__audio_capturer__
 
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include "webrtc-audio-channel.h"
 
 namespace ndnrtc {
@@ -40,6 +41,12 @@ namespace ndnrtc {
             
         protected:
             boost::atomic<bool> capturing_;
+            boost::condition_variable isFrameDelivered_;
+            boost::atomic<bool> isDeliveryScheduled_;
+            size_t rtpDataLen_, rtcpDataLen_;
+            void *rtpData_ = nullptr;
+            void *rtcpData_ = nullptr;
+            
             IAudioFrameConsumer* frameConsumer_ = nullptr;
             
             int
