@@ -15,7 +15,6 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <ndn-cpp/name.hpp>
-#include <webrtc/voice_engine/include/voe_base.h>
 
 #include "webrtc.h"
 
@@ -100,12 +99,6 @@ namespace ndnrtc
         
         static int intFromComponent(const Name::Component &comp);
         static Name::Component componentFromInt(unsigned int number);
-        
-        static webrtc::VoiceEngine *sharedVoiceEngine();
-        static void initVoiceEngine();
-        static void releaseVoiceEngine();
-        static void dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
-                                          boost::function<void(void)> onCompletion);
         
         static std::string stringFromFrameType(const WebRtcVideoFrameType &frameType);
         

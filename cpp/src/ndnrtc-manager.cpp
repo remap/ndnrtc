@@ -29,6 +29,7 @@
 #include "frame-data.h"
 #include "ndnrtc-utils.h"
 #include "params-validator.h"
+#include "audio-controller.h"
 
 using namespace boost;
 using namespace ndnrtc;
@@ -613,7 +614,7 @@ void init()
     reset();
     
     LogInfo(LIB_LOG) << "Init voice engine..." << std::endl;
-    NdnRtcUtils::initVoiceEngine();
+    AudioController::getSharedInstance()->initVoiceEngine();
     LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
 }
 
@@ -637,7 +638,7 @@ void cleanup()
     NdnRtcUtils::destroyLibFace();
     
     LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
-    NdnRtcUtils::releaseVoiceEngine();
+    AudioController::getSharedInstance()->releaseVoiceEngine();
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;
     NdnRtcUtils::stopBackgroundThread();
     LogInfo(LIB_LOG) << "Bye" << std::endl;

@@ -285,9 +285,9 @@ AudioStream::init(const MediaStreamSettings& streamSettings)
 void
 AudioStream::release()
 {
+    isProcessing_ = false;
     audioCapturer_->stopCapture();
     MediaStream::release();
-    isProcessing_ = false;
 }
 
 int
@@ -317,15 +317,13 @@ AudioStream::addNewMediaThread(const MediaThreadParams* params)
 void
 AudioStream::onDeliverRtpFrame(unsigned int len, unsigned char *data)
 {
-    if (isProcessing_)
-        for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
-            ((AudioThread*)i->second.get())->onDeliverRtpFrame(len, data);
+    for (ThreadMap::iterator i = threads_.begin(); i != threads_.end() && isProcessing_; i++)
+        ((AudioThread*)i->second.get())->onDeliverRtpFrame(len, data);
 }
 
 void
 AudioStream::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
 {
-    if (isProcessing_)
-        for (ThreadMap::iterator i = threads_.begin(); i != threads_.end(); i++)
-            ((AudioThread*)i->second.get())->onDeliverRtcpFrame(len, data);
+    for (ThreadMap::iterator i = threads_.begin(); i != threads_.end() && isProcessing_; i++)
+        ((AudioThread*)i->second.get())->onDeliverRtcpFrame(len, data);
 }

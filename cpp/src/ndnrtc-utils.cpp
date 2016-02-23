@@ -15,7 +15,6 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio.hpp>
-#include <voice_engine/include/voe_audio_processing.h>
 
 #include "ndnrtc-utils.h"
 #include "ndnrtc-endian.h"
@@ -23,6 +22,7 @@
 #include "face-wrapper.h"
 #include "ndnrtc-exception.h"
 #include "ndnrtc-manager.h"
+#include "audio-controller.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -686,45 +686,6 @@ void NdnRtcUtils::releaseInclineEstimator(unsigned int estimatorId)
 }
 
 //******************************************************************************
-webrtc::VoiceEngine *NdnRtcUtils::sharedVoiceEngine()
-{
-    if (!VoiceEngineInstance)
-    {
-        NdnRtcUtils::initVoiceEngine();
-    }
-    
-    return VoiceEngineInstance;
-}
-
-void NdnRtcUtils::initVoiceEngine()
-{
-    boost::mutex m;
-    boost::unique_lock<boost::mutex> lock(m);
-    boost::condition_variable initialized;
-    
-    NdnRtcUtils::dispatchOnVoiceThread(
-                                       [&initialized](){
-                                           initVE();
-                                           initialized.notify_one();
-                                       },
-                                       boost::function<void()>());
-    initialized.wait(lock);
-}
-
-void NdnRtcUtils::releaseVoiceEngine()
-{
-    NdnRtcUtils::dispatchOnVoiceThread([](){
-                                           VoiceEngine::Delete(VoiceEngineInstance);
-                                       },
-                                       boost::function<void()>());
-}
-
-void NdnRtcUtils::dispatchOnVoiceThread(boost::function<void(void)> dispatchBlock,
-                           boost::function<void(void)> onCompletion)
-{
-    dispatchOnBackgroundThread(dispatchBlock, onCompletion);
-}
-
 string NdnRtcUtils::stringFromFrameType(const WebRtcVideoFrameType &frameType)
 {
     switch (frameType) {
@@ -809,30 +770,6 @@ std::string NdnRtcUtils::toString(const char *format, ...)
 }
 
 //******************************************************************************
-void initVE()
-{
-    LogInfo(LIB_LOG) << "Initializing voice engine..." << std::endl;
-    VoiceEngineInstance = VoiceEngine::Create();
-    
-    int res = 0;
-    
-    {// init engine
-        VoEBase *voe_base = VoEBase::GetInterface(VoiceEngineInstance);
-        
-        res = voe_base->Init();
-        
-        voe_base->Release();
-    }
-    {// configure
-        VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(VoiceEngineInstance);
-        
-        voe_proc->SetEcStatus(true, kEcConference);
-        voe_proc->Release();
-    }
-    
-    LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
-}
-
 static bool ThreadRecovery = false;
 void resetThread()
 {
@@ -842,7 +779,6 @@ void resetThread()
             if (ThreadRecovery)
             {
                 ThreadRecovery = false;
-                initVE();
             }
             
             NdnRtcIoService->run();
@@ -851,7 +787,6 @@ void resetThread()
         {
             NdnRtcIoService->reset();
             NdnRtcManager::getSharedInstance().fatalException(e);
-            VoiceEngine::Delete(VoiceEngineInstance);
             ThreadRecovery = true;
             resetThread();
         }

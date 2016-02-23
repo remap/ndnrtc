@@ -14,6 +14,7 @@
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_codec.h>
 
+#include "threading-capability.h"
 #include "ndnrtc-common.h"
 #include "ndnrtc-object.h"
 #include "params.h"
