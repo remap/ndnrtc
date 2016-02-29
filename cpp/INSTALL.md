@@ -53,7 +53,7 @@ $ export PATH=`pwd`/depot_tools:"$PATH"
 $ mkdir webrtc-checkout && cd webrtc-checkout
 $ fetch webrtc
 $ git checkout -b head44 refs/remotes/branch-heads/44
-$ ninja -C out/Release
+$ cd src && ninja -C out/Release
 </pre>
 
 ### Boost
@@ -149,7 +149,7 @@ $ export PATH=`pwd`/depot_tools:"$PATH"
 $ mkdir webrtc-checkout && cd webrtc-checkout
 $ fetch webrtc
 $ git checkout -b head44 refs/remotes/branch-heads/44
-$ ninja -C out/Release
+$ cd src && ninja -C out/Release
 </pre>
 
 ### Boost
