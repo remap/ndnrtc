@@ -4,6 +4,7 @@ pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistic
 
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
+  src/audio-controller.cpp src/audio-controller.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \

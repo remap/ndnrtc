@@ -96,6 +96,7 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
+	src/libndnrtc_la-audio-controller.lo \
 	src/libndnrtc_la-audio-consumer.lo \
 	src/libndnrtc_la-audio-playout.lo \
 	src/libndnrtc_la-audio-renderer.lo \
@@ -359,6 +360,7 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
+  src/audio-controller.cpp src/audio-controller.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
@@ -498,6 +500,8 @@ src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-capturer.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-audio-controller.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-consumer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -662,6 +666,8 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-audio-capturer.lo
 	-rm -f src/libndnrtc_la-audio-consumer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-consumer.lo
+	-rm -f src/libndnrtc_la-audio-controller.$(OBJEXT)
+	-rm -f src/libndnrtc_la-audio-controller.lo
 	-rm -f src/libndnrtc_la-audio-playout.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-playout.lo
 	-rm -f src/libndnrtc_la-audio-renderer.$(OBJEXT)
@@ -755,6 +761,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo@am__quote@
@@ -831,6 +838,14 @@ src/libndnrtc_la-audio-capturer.lo: src/audio-capturer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-capturer.cpp' object='src/libndnrtc_la-audio-capturer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
+
+src/libndnrtc_la-audio-controller.lo: src/audio-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-controller.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-controller.Tpo -c -o src/libndnrtc_la-audio-controller.lo `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-controller.Tpo src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-controller.cpp' object='src/libndnrtc_la-audio-controller.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-controller.lo `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
 
 src/libndnrtc_la-audio-consumer.lo: src/audio-consumer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-consumer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-consumer.Tpo -c -o src/libndnrtc_la-audio-consumer.lo `test -f 'src/audio-consumer.cpp' || echo '$(srcdir)/'`src/audio-consumer.cpp

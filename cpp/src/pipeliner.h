@@ -162,7 +162,6 @@ namespace ndnrtc {
             
             Consumer* consumer_;
             FrameBuffer* frameBuffer_;
-            BufferEstimator* bufferEstimator_;
             IPacketAssembler* ndnAssembler_;
             IPipelinerCallback* callback_;
             

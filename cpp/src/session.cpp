@@ -167,7 +167,7 @@ Session::removeLocalStream(const std::string& streamPrefix)
     }
     
     if (res == RESULT_OK)
-        NdnRtcUtils::performOnBackgroundThread([this, &it, &streamMap](){
+    {
             it->second->release();
             streamMap->erase(it);
             
@@ -179,7 +179,7 @@ Session::removeLocalStream(const std::string& streamPrefix)
                 boost::lock_guard<boost::recursive_mutex> scopedLock(observerMutex_);
                 sessionObserver_->onSessionInfoUpdate(*this->getSessionInfo());
             }
-        });
+    }
     
     return res;
 }
