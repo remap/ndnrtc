@@ -51,6 +51,7 @@ BufferEstimator::getTargetSize()
     
     return minBufferSizeMs_;
 #else
-    return alpha_*variation + beta_*rttEstimate;
+    double bufferSize = alpha_*variation + beta_*rttEstimate;
+    return (bufferSize < minBufferSizeMs_)?minBufferSizeMs_:bufferSize;
 #endif
 }
