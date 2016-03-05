@@ -38,9 +38,7 @@ namespace ndnrtc {
             static void validateParams(const GeneralProducerParams& params);
             static void validateParams(const MediaStreamParams& params);
             static void validateParams(const GeneralConsumerParams& params);
-            static void validateParams(const HeadlessModeParams& params);
             static void validateParams(const GeneralParams& params);
-            static void validateParams(const AppParams& params);
             static void validateName(const std::string& name, const int maxLength);
             
         private:

@@ -35,8 +35,8 @@ MediaStream::init(const MediaStreamSettings& streamSettings)
     streamPrefix_ = *NdnRtcNamespace::getStreamPrefix(settings_.userPrefix_, streamName_);
     
     int res = RESULT_OK;
-    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size() && RESULT_GOOD(res); i++)
-        res = addNewMediaThread(settings_.streamParams_.mediaThreads_[i]);
+    for (int i = 0; i < settings_.streamParams_.getThreadNum() && RESULT_GOOD(res); i++)
+        res = addNewMediaThread(settings_.streamParams_.getMediaThread(i));
     
     return res;
 }
@@ -120,9 +120,9 @@ VideoStream::getStreamParameters()
     MediaStreamParams params(settings_.streamParams_);
     
     // update average segments numbers for frames
-    for (int i = 0; i < params.mediaThreads_.size(); i++)
+    for (int i = 0; i < params.getThreadNum(); i++)
     {
-        VideoThreadParams* threadParams = ((VideoThreadParams*)params.mediaThreads_[i]);
+        VideoThreadParams* threadParams = params.getVideoThread(i);
         std::string threadKey = *NdnRtcNamespace::buildPath(false,
                                                             &streamPrefix_,
                                                             &threadParams->threadName_,
@@ -131,10 +131,10 @@ VideoStream::getStreamParameters()
         shared_ptr<VideoThread> thread = dynamic_pointer_cast<VideoThread>(threads_[threadKey]);
         
         thread->getStatistics(stat);
-        threadParams->deltaAvgSegNum_ = stat.deltaAvgSegNum_;
-        threadParams->deltaAvgParitySegNum_ = stat.deltaAvgParitySegNum_;
-        threadParams->keyAvgSegNum_ = stat.keyAvgSegNum_;
-        threadParams->keyAvgParitySegNum_ = stat.keyAvgParitySegNum_;
+        threadParams->segInfo_.deltaAvgSegNum_ = stat.deltaAvgSegNum_;
+        threadParams->segInfo_.deltaAvgParitySegNum_ = stat.deltaAvgParitySegNum_;
+        threadParams->segInfo_.keyAvgSegNum_ = stat.keyAvgSegNum_;
+        threadParams->segInfo_.keyAvgParitySegNum_ = stat.keyAvgParitySegNum_;
     }
     
     return params;

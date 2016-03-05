@@ -2,9 +2,10 @@
 //  statistics.cpp
 //  ndnrtc
 //
-//  Copyright (c) 2015 Jiachen Wang. All rights reserved.
+//  Created by Jiachen Wang on 15 Octboer 2015.
+//  Copyright 2013-2015 Regents of the University of California
 //
-// 
+
 #include "statistics.h"
 
 using namespace std;

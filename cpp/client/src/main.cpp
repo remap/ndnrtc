@@ -1,7 +1,8 @@
-//
+// 
 // main.cpp
 //
-// Copyright (c) 2015. Peter Gusev. All rights reserved
+//  Created by Peter Gusev on 03 March 2016.
+//  Copyright 2013-2016 Regents of the University of California
 //
 
 #include <iostream>

@@ -614,10 +614,10 @@ SessionInfoData::getSessionInfoLength(const new_api::SessionInfo& sessionInfo)
     sizeof(struct _AudioStreamDescription)*sessionInfo.audioStreams_.size();
     
     for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
-        dataLength += sizeof(struct _VideoThreadDescription)*sessionInfo.videoStreams_[i]->mediaThreads_.size();
+        dataLength += sizeof(struct _VideoThreadDescription)*sessionInfo.videoStreams_[i]->getThreadNum();
     
     for (int i = 0; i < sessionInfo.audioStreams_.size(); i++)
-        dataLength += sizeof(struct _AudioThreadDescription)*sessionInfo.audioStreams_[i]->mediaThreads_.size();
+        dataLength += sizeof(struct _AudioThreadDescription)*sessionInfo.audioStreams_[i]->getThreadNum();
     
     return dataLength;
 }
@@ -654,15 +654,15 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
         strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
         memset(&streamDescription.syncName_, 0, MAX_STREAM_NAME_LENGTH+1);
         strcpy((char*)&streamDescription.syncName_, params->synchronizedStreamName_.c_str());
-        streamDescription.nThreads_  = params->mediaThreads_.size();
+        streamDescription.nThreads_  = params->getThreadNum();
         *((struct _VideoStreamDescription*)&data_[streamIdx]) = streamDescription;
         
         streamIdx += sizeof(struct _VideoStreamDescription);
         int threadIdx = streamIdx;
         
-        for (int j = 0; j < params->mediaThreads_.size(); j++)
+        for (int j = 0; j < params->getThreadNum(); j++)
         {
-            new_api::VideoThreadParams *threadParams = (new_api::VideoThreadParams*)params->mediaThreads_[j];
+            new_api::VideoThreadParams *threadParams = params->getVideoThread(j);
             struct _VideoThreadDescription threadDescription;
             
             threadDescription.rate_ = threadParams->coderParams_.codecFrameRate_;
@@ -670,10 +670,10 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
             threadDescription.bitrate_ = threadParams->coderParams_.startBitrate_;
             threadDescription.width_ = threadParams->coderParams_.encodeWidth_;
             threadDescription.height_ = threadParams->coderParams_.encodeHeight_;
-            threadDescription.deltaAvgSegNum_ = threadParams->deltaAvgSegNum_;
-            threadDescription.deltaAvgParitySegNum_ = threadParams->deltaAvgParitySegNum_;
-            threadDescription.keyAvgSegNum_ = threadParams->keyAvgSegNum_;
-            threadDescription.keyAvgParitySegNum_ = threadParams->keyAvgParitySegNum_;
+            threadDescription.deltaAvgSegNum_ = threadParams->segInfo_.deltaAvgSegNum_;
+            threadDescription.deltaAvgParitySegNum_ = threadParams->segInfo_.deltaAvgParitySegNum_;
+            threadDescription.keyAvgSegNum_ = threadParams->segInfo_.keyAvgSegNum_;
+            threadDescription.keyAvgParitySegNum_ = threadParams->segInfo_.keyAvgParitySegNum_;
             memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
             strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
             
@@ -691,15 +691,15 @@ SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
         streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
         memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
         strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
-        streamDescription.nThreads_  = params->mediaThreads_.size();
+        streamDescription.nThreads_  = params->getThreadNum();
         *((struct _AudioStreamDescription*)&data_[streamIdx]) = streamDescription;
         
         streamIdx += sizeof(struct _AudioStreamDescription);
         int threadIdx = streamIdx;
         
-        for (int j = 0; j < params->mediaThreads_.size(); j++)
+        for (int j = 0; j < params->getThreadNum(); j++)
         {
-            new_api::AudioThreadParams *threadParams = (new_api::AudioThreadParams*)params->mediaThreads_[j];
+            new_api::AudioThreadParams *threadParams = params->getAudioThread(j);
             struct _AudioThreadDescription threadDescription;
             
             memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
@@ -759,20 +759,20 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
                 return RESULT_ERR;
             }
             
-            new_api::VideoThreadParams *threadParams = new new_api::VideoThreadParams();
+            new_api::VideoThreadParams threadParams(string((char*)&threadDescription.name_[0]));
             
-            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
-            threadParams->coderParams_.codecFrameRate_ = threadDescription.rate_;
-            threadParams->coderParams_.gop_ = threadDescription.gop_;
-            threadParams->coderParams_.startBitrate_ = threadDescription.bitrate_;
-            threadParams->coderParams_.maxBitrate_ = 0;
-            threadParams->coderParams_.encodeWidth_ = threadDescription.width_;
-            threadParams->coderParams_.encodeHeight_ = threadDescription.height_;
-            threadParams->deltaAvgSegNum_ = threadDescription.deltaAvgSegNum_;
-            threadParams->deltaAvgParitySegNum_ = threadDescription.deltaAvgParitySegNum_;
-            threadParams->keyAvgSegNum_ = threadDescription.keyAvgSegNum_;
-            threadParams->keyAvgParitySegNum_ = threadDescription.keyAvgParitySegNum_;
-            params->mediaThreads_.push_back(threadParams);
+            threadParams.threadName_ = string((char*)&threadDescription.name_[0]);
+            threadParams.coderParams_.codecFrameRate_ = threadDescription.rate_;
+            threadParams.coderParams_.gop_ = threadDescription.gop_;
+            threadParams.coderParams_.startBitrate_ = threadDescription.bitrate_;
+            threadParams.coderParams_.maxBitrate_ = 0;
+            threadParams.coderParams_.encodeWidth_ = threadDescription.width_;
+            threadParams.coderParams_.encodeHeight_ = threadDescription.height_;
+            threadParams.segInfo_.deltaAvgSegNum_ = threadDescription.deltaAvgSegNum_;
+            threadParams.segInfo_.deltaAvgParitySegNum_ = threadDescription.deltaAvgParitySegNum_;
+            threadParams.segInfo_.keyAvgSegNum_ = threadDescription.keyAvgSegNum_;
+            threadParams.segInfo_.keyAvgParitySegNum_ = threadDescription.keyAvgParitySegNum_;
+            params->addMediaThread(threadParams);
             
             threadIdx += sizeof(struct _VideoThreadDescription);
             streamIdx = threadIdx;
@@ -809,10 +809,9 @@ SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *r
                 return RESULT_ERR;
             }
             
-            new_api::AudioThreadParams *threadParams = new new_api::AudioThreadParams();
+            new_api::AudioThreadParams threadParams(string((char*)&threadDescription.name_[0]));
             
-            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
-            params->mediaThreads_.push_back(threadParams);
+            params->addMediaThread(threadParams);
             
             threadIdx += sizeof(struct _AudioThreadDescription);
             streamIdx = threadIdx;

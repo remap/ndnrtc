@@ -342,8 +342,8 @@ Consumer::getThreadIdx(const std::string& threadName)
 {
     int idx = -1;
     
-    for (int i = 0; i < settings_.streamParams_.mediaThreads_.size(); i++)
-        if (settings_.streamParams_.mediaThreads_[i]->threadName_ == threadName)
+    for (int i = 0; i < settings_.streamParams_.getThreadNum(); i++)
+        if (settings_.streamParams_.getMediaThread(i)->threadName_ == threadName)
         {
             idx = i;
         }

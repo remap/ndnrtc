@@ -200,8 +200,6 @@ case $host_os in
 		;;
 esac
 
-# create links for demo script
-AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])
