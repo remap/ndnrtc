@@ -79,15 +79,13 @@ libwebrtc-all.a: make-fat-libs
 	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-#libndnrtc_la_LDFLAGS += -Wl,--no-undefined
 libndnrtc_la_LIBADD += -lwebrtc-all
 
 endif
 
 if OS_DARWIN
 
-#libndnrtc_la_LDFLAGS += -Wl,-undefined,error
-libndnrtc_la_LIBADD += @WEBRTCLIBS@
+  libndnrtc_la_LIBADD += @WEBRTCLIBS@
 
 endif
 
@@ -109,4 +107,30 @@ ndnrtc_client_LDADD += -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -
 
 endif
 
+#################
+# unit tests    #
+#################
+GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
+UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I$(top_srcdir) -I$(includedir) ${ndnrtc_client_CPPFLAGS}
+UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
+UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
+UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc
 
+check_PROGRAMS = bin/tests/test-config-load bin/tests/test-params bin/tests/test-client-params
+
+bin_tests_test_config_load_SOURCES = tests/test-config-load.cc contrib/gtest/googletest/src/gtest-all.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_params_SOURCES = tests/test-params.cc contrib/gtest/googletest/src/gtest-all.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_params_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_client_params_SOURCES = tests/test-client-params.cc contrib/gtest/googletest/src/gtest-all.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
+
+TESTS = ${check_PROGRAMS}

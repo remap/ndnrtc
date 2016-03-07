@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#if 0
 class streamStatisticsFiles {
 public:
    std::vector<std::string> streamStatisticsFilesName_;
@@ -128,3 +129,4 @@ void callStatCollector(const unsigned int statisticsSampleInterval,
                         std::vector<Statistics> statisticsToCollect,
                         std::vector<std::string> remoteStreamsPrefix,
                         ndnrtc::INdnRtcLibrary* ndnp);
+#endif

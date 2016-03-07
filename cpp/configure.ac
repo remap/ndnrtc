@@ -200,6 +200,10 @@ case $host_os in
 		;;
 esac
 
+# create links for client config file
+AC_CONFIG_LINKS([tests/default.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([tests/sample-bad1.cfg:tests/sample-bad1.cfg])
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])

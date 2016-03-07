@@ -116,7 +116,7 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
         LogError("") << "loading params from " << configFile << " met error!" << std::endl;
         return;
     }
-
+#if 0
     LogInfo("") << "Parameters loaded:\n" << headlessParams << std::endl;
     LogDebug("") << "general configuration:\n" << headlessParams.generalParams_ << std::endl;
     LogDebug("") << "audioConsumerParams configuration:\n" 
@@ -124,7 +124,7 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
     LogDebug("") << "videoConsumerParams configuration:\n" 
         << headlessParams.videoConsumerParams_ << std::endl;
 
-#if 0
+
     // setup audio fetching
     const int audioStreamsNumber = headlessParams.defaultAudioStreams_.size();
 

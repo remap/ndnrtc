@@ -330,47 +330,50 @@ namespace ndnrtc
         class GeneralParams : public Params {
         public:
             // general
-            ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelNone;
-            std::string logFile_ = "";
-            std::string logPath_ = "";
-            bool useRtx_ = false,
-            useFec_ = false,
-            useAvSync_ = false,
-            skipIncomplete_ = false;
+            ndnlog::NdnLoggerDetailLevel loggingLevel_;
+            std::string logFile_;
+            std::string logPath_;
+            bool useRtx_,
+            useFec_,
+            useAvSync_,
+            skipIncomplete_;
             
             // network
-            std::string prefix_ = "", host_ = "";
-            unsigned int portNum_ = 0;
+            std::string prefix_ DEPRECATED, host_;
+            unsigned int portNum_;
             
+            GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone), useRtx_(false),
+                useFec_(false), useAvSync_(false), skipIncomplete_(false), portNum_(6363){}
+
             void write(std::ostream& os) const
             {
 #if defined __APPLE__
                 static std::string lvlToString[] = {
-                    [ndnlog::NdnLoggerLevelTrace] =     "TRACE",
-                    [ndnlog::NdnLoggerLevelDebug] =     "DEBUG",
-                    [ndnlog::NdnLoggerLevelInfo] =      "INFO ",
-                    [ndnlog::NdnLoggerLevelWarning] =   "WARN ",
-                    [ndnlog::NdnLoggerLevelError] =     "ERROR",
-                    [ndnlog::NdnLoggerLevelStat] =      "STAT "
+                    [ndnlog::NdnLoggerDetailLevelNone] = "NONE",
+                    [ndnlog::NdnLoggerLevelTrace] =      "TRACE",
+                    [ndnlog::NdnLoggerLevelDebug] =      "DEBUG",
+                    [ndnlog::NdnLoggerLevelInfo] =       "INFO",
+                    [ndnlog::NdnLoggerLevelWarning] =    "WARN",
+                    [ndnlog::NdnLoggerLevelError] =      "ERROR",
+                    [ndnlog::NdnLoggerLevelStat] =       "STAT"
                 };
 #else
                 static std::string lvlToString[] = {
-                    [0] =     "TRACE",
-                    [1] =     "DEBUG",
-                    [2] =      "STAT ",
-                    [3] =      "INFO ",
-                    [4] =   "WARN ",
-                    [5] =     "ERROR"
+                    [0] = "TRACE",
+                    [1] = "DEBUG",
+                    [2] = "STAT",
+                    [3] = "INFO",
+                    [4] = "WARN",
+                    [5] = "ERROR",
+                    [6] = "NONE"
                 };
 #endif
-
                 os << "log level: " << lvlToString[loggingLevel_]
                 << "; log file: " << logFile_ << " (at " << logPath_ << ")"
                 << "; RTX: " << (useRtx_?"ON":"OFF")
                 << "; FEC: " << (useFec_?"ON":"OFF")
                 << "; A/V Sync: " << (useAvSync_?"ON":"OFF")
                 << "; Skipping incomplete frames: " << (skipIncomplete_?"ON":"OFF")
-                << "; Prefix: " << prefix_
                 << "; Host: " << host_
                 << "; Port #: " << portNum_;
             }

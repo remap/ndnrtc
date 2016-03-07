@@ -15,7 +15,7 @@ using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnrtc::new_api::statistics;
-
+#if 0
 collectStreamsStatictics::collectStreamsStatictics(boost::asio::io_service &io,
                                                     unsigned int headlessAppOnlineTimeSec,
                                                     unsigned int statisticsSampleInterval,
@@ -218,5 +218,4 @@ void callStatCollector(const unsigned int statisticsSampleInterval,
     staticticsIo.stop();
 }
 
-
-
+#endif

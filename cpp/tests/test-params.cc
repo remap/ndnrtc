@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "include/params.h"
+#include "tests-helpers.h"
 
 using namespace std;
 using namespace ndnrtc::new_api;
@@ -23,13 +24,13 @@ TEST(TestBase, TestOutput)
 	EXPECT_EQ("", ss.str());
 }
 
-TEST(TestCaptureDviceParams, TestCtor)
+TEST(TestCaptureDeviceParams, TestCtor)
 {
 	CaptureDeviceParams cdp;
 	EXPECT_LT(cdp.deviceId_, 0);
 }
 
-TEST(TestCaptureDviceParams, TestOutput)
+TEST(TestCaptureDeviceParams, TestOutput)
 {
 	CaptureDeviceParams cdp;
 	stringstream ss;
@@ -143,21 +144,6 @@ TEST(TestAudioThreadParams, TestCopy)
 	EXPECT_EQ("audio-thread-original", atpCopy->threadName_);
 
 	delete atpCopy;
-}
-
-VideoCoderParams sampleVideoCoderParams()
-{
-	VideoCoderParams vcp;
-
-	vcp.codecFrameRate_ = 30;
-	vcp.gop_ = 30;
-	vcp.startBitrate_ = 1000;
-	vcp.maxBitrate_ = 3000;
-	vcp.encodeWidth_ = 1920;
-	vcp.encodeHeight_ = 1080;
-	vcp.dropFramesOn_ = true;
-
-	return vcp;
 }
 
 TEST(TestVideoCoderParams, TestOutput)
@@ -391,7 +377,8 @@ TEST(TestMediaStreamParams, TestOutput)
 	stringstream ss;
 
 	ss << msp;
-	EXPECT_EQ("name:  (audio); synced to: ; seg size: 0 bytes; freshness: 0 ms; no device; 0 threads:\n",
+	EXPECT_EQ("name:  (audio); synced to: ; seg size: 0 bytes; freshness: 0 ms; "
+		"no device; 0 threads:\n",
 		ss.str());
 }
 
@@ -413,8 +400,8 @@ TEST(TestMediaStreamParams, TestOutput2)
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	ss << msp;
-	EXPECT_EQ("name: mic (audio); synced to: camera; seg size: 1000 bytes; freshness: 2000 ms; "
-		"capture device id: 10; 2 threads:\n"
+	EXPECT_EQ("name: mic (audio); synced to: camera; seg size: 1000 bytes; "
+		"freshness: 2000 ms; capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu]\n[1: name: g722]\n",
 		ss.str());
 }
@@ -440,8 +427,8 @@ TEST(TestMediaStreamParams, TestOutput3)
 	msp.addMediaThread(atp2);
 
 	ss << msp;
-	EXPECT_EQ("name: camera (video); synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
-		"capture device id: 10; 2 threads:\n"
+	EXPECT_EQ("name: camera (video); synced to: mic; seg size: 1000 bytes; "
+		"freshness: 2000 ms; capture device id: 10; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
 		"[1: name: mid; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
@@ -472,14 +459,15 @@ TEST(TestMediaStreamParams, TestCopy)
 
 	MediaStreamParams mspCopy(msp);
 	ss << mspCopy;
-	EXPECT_EQ("name: camera (video); synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
-		"capture device id: 10; 2 threads:\n"
+	EXPECT_EQ("name: camera (video); synced to: mic; seg size: 1000 bytes; "
+		"freshness: 2000 ms; capture device id: 10; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
 		"[1: name: mid; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n",
 		ss.str());
 }
+
 
 TEST(TestGeneralConsumerParams, TestOutput)
 {
@@ -497,6 +485,32 @@ TEST(TestGeneralConsumerParams, TestOutput)
 		"buffer size: 200 slots; slot size: 16000 bytes", ss.str());
 }
 
+TEST(TestGeneralParams, TestDefault)
+{
+	GeneralParams gp;
+
+	EXPECT_EQ("", gp.logFile_);
+	EXPECT_EQ(ndnlog::NdnLoggerDetailLevelNone, gp.loggingLevel_);
+	EXPECT_EQ("", gp.logPath_);
+	EXPECT_FALSE(gp.useRtx_);
+	EXPECT_FALSE(gp.useFec_);
+	EXPECT_FALSE(gp.useAvSync_);
+	EXPECT_FALSE(gp.skipIncomplete_);
+	EXPECT_EQ("", gp.host_);
+	EXPECT_EQ(6363, gp.portNum_);
+}
+
+TEST(TestGeneralParams, TestOutputEmpty)
+{
+	GeneralParams gp;
+	stringstream ss;
+
+	ss << gp;
+	EXPECT_EQ("log level: NONE; log file:  (at ); RTX: OFF; FEC: OFF; "
+		"A/V Sync: OFF; Skipping incomplete frames: OFF; Host: ; Port #: 6363", 
+		ss.str());
+}
+
 TEST(TestGeneralParams, TestOutput)
 {
 	GeneralParams gp;
@@ -508,15 +522,13 @@ TEST(TestGeneralParams, TestOutput)
 	gp.useFec_ = false;
 	gp.useAvSync_ = true;
 	gp.skipIncomplete_ = true;
-	gp.prefix_ = "/ndn/edu/ucla/remap";
 	gp.host_ = "aleph.ndn.ucla.edu";
 	gp.portNum_ = 6363;
 
 	stringstream ss;
 	ss << gp;
 	EXPECT_EQ("log level: TRACE; log file: ndnrtc.log (at /tmp); RTX: ON; FEC: OFF; "
-		"A/V Sync: ON; Skipping incomplete frames: ON; "
-		"Prefix: /ndn/edu/ucla/remap; Host: aleph.ndn.ucla.edu; Port #: 6363", 
+		"A/V Sync: ON; Skipping incomplete frames: ON; Host: aleph.ndn.ucla.edu; Port #: 6363", 
 		ss.str());
 }
 
