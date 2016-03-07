@@ -37,13 +37,13 @@ Session::~Session()
 }
 
 int
-Session::init(const std::string username,
+Session::init(const std::string username, const std::string prefix,
               const GeneralParams& generalParams,
               boost::shared_ptr<FaceProcessor> mainFaceProcessor)
 {
     username_ = username;
     generalParams_ = generalParams;
-    userPrefix_ = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username_);
+    userPrefix_ = *NdnRtcNamespace::getProducerPrefix(prefix, username_);
     
     std::string logFileName = NdnRtcUtils::toString("producer-%s.log", username.c_str());
     this->setLogger(new Logger(generalParams.loggingLevel_,

@@ -92,9 +92,9 @@ endif
 #################
 # client app	#
 #################
-bin_PROGRAMS = ndnrtc-client
+#bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/statistics.cpp client/src/statistics.h client/src/capturer.h client/src/capturer.cpp
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/statistics.cpp client/src/statistics.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 

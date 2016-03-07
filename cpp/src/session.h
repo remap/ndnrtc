@@ -31,7 +31,7 @@ namespace ndnrtc
             ~Session();
             
             int
-            init(const std::string username,
+            init(const std::string username, const std::string prefix,
                  const GeneralParams& generalParams,
                  boost::shared_ptr<FaceProcessor> mainFaceProcessor);
             

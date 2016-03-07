@@ -468,7 +468,6 @@ int lookupNumber(const Setting &SettingPath,string lookupKey, double &paramToFin
     }
     else
     {
-        LogError("") << "Failed to read this param: "<< lookupKey << std::endl;
         return(EXIT_FAILURE);
     }
 

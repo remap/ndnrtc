@@ -112,6 +112,10 @@ TEST(TestConfigLoad, LoadConsumerParams)
 	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[3].getMediaThread(0)->threadName_);
 	EXPECT_EQ(720, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->coderParams_.encodeWidth_);
 	EXPECT_EQ(405, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->coderParams_.encodeHeight_);
+	EXPECT_EQ(5, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.deltaAvgSegNum_);
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.deltaAvgParitySegNum_);
+	EXPECT_EQ(30, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.keyAvgSegNum_);
+	EXPECT_EQ(5, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.keyAvgParitySegNum_);
 }
 
 
