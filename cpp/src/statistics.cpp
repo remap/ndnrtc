@@ -18,7 +18,8 @@ using namespace ndnrtc::new_api::statistics;
 using namespace boost::assign;
 
 const std::map<Indicator, std::string> StatisticsStorage::IndicatorNames =
-map_list_of ( Indicator::Timestamp, "Timestamp" )
+map_list_of
+( Indicator::Timestamp, "Timestamp" )
 ( Indicator::AcquiredNum, "Acquired frames" )
 ( Indicator::AcquiredKeyNum, "Acquired key frames" ) 
 ( Indicator::DroppedNum, "Dropped frames" ) 
@@ -141,7 +142,8 @@ map_list_of ( Indicator::Timestamp, "Timestamp" )
 */
 
 const StatisticsStorage::StatRepo StatisticsStorage::ConsumerStatRepo =
-map_list_of ( Indicator::Timestamp, 0. )
+map_list_of
+( Indicator::Timestamp, 0. )
 ( Indicator::AcquiredNum, 0. )
 ( Indicator::AcquiredKeyNum, 0. )
 ( Indicator::DroppedNum, 0 )
@@ -274,6 +276,65 @@ map_list_of ( Indicator::Timestamp, 0. )
     { Indicator::CapturedNum, 0. }
 };
 */
+
+// all statistics indicator names
+const std::map<Indicator, std::string> StatisticsStorage::IndicatorKeywords =
+boost::assign::map_list_of
+(Indicator::Timestamp, "timestamp")
+(Indicator::AcquiredNum, "framesAcq")
+(Indicator::AcquiredKeyNum, "framesAcqKey")
+(Indicator::DroppedNum, "framesDrop")
+(Indicator::DroppedKeyNum, "framesDropKey")
+(Indicator::AssembledNum, "framesAsm")
+(Indicator::AssembledKeyNum, "framesAsmKey")
+(Indicator::RecoveredNum, "framesRec")
+(Indicator::RecoveredKeyNum, "framesRecKey")
+(Indicator::RescuedNum, "framesResc")
+(Indicator::RescuedKeyNum, "framesRescKey")
+(Indicator::IncompleteNum, "framesInc")
+(Indicator::IncompleteKeyNum, "framesIncKey")
+(Indicator::BufferTargetSize, "jitterTar")
+(Indicator::BufferPlayableSize, "jitterPlay")
+(Indicator::BufferEstimatedSize, "jitterEst")
+(Indicator::CurrentProducerFramerate, "prodRate")
+(Indicator::LastPlayedNo, "playNo")
+(Indicator::LastPlayedDeltaNo, "deltaNo")
+(Indicator::LastPlayedKeyNo, "keyNo")
+(Indicator::PlayedNum, "framesPlayed")
+(Indicator::PlayedKeyNum, "framesPlayedKey")
+(Indicator::SkippedNoKeyNum, "skipNoKey")
+(Indicator::SkippedIncompleteNum, "skipInc")
+(Indicator::SkippedBadGopNum, "skipBadGop")
+(Indicator::SkippedIncompleteKeyNum, "skipIncKey")
+(Indicator::LatencyEstimated, "latEst")
+(Indicator::SegmentsDeltaAvgNum, "segAvgDelta")
+(Indicator::SegmentsKeyAvgNum, "segAvgKey")
+(Indicator::SegmentsDeltaParityAvgNum, "segAvgDeltaPar")
+(Indicator::SegmentsKeyParityAvgNum, "segAvgKeyPar")
+(Indicator::RtxFrequency, "rtxFreq")
+(Indicator::RtxNum, "rtxNum")
+(Indicator::RebufferingsNum, "rebuf")
+(Indicator::RequestedNum, "framesReq")
+(Indicator::RequestedKeyNum, "framesReqKey")
+(Indicator::DW, "lambdaD")
+(Indicator::W, "lambda")
+(Indicator::RttPrime, "drdPrime")
+(Indicator::InBitrateKbps, "bitrateIn")
+(Indicator::InRateSegments, "segRateIn")
+(Indicator::SegmentsReceivedNum, "segNum")
+(Indicator::TimeoutsNum, "timeouts")
+(Indicator::Darr, "dArr")
+(Indicator::RttEstimation, "drdEst")
+(Indicator::InterestRate, "irate")
+(Indicator::QueueSize, "iqueue")
+(Indicator::InterestsSentNum, "isent")
+(Indicator::OutBitrateKbps, "bitrateOut")
+(Indicator::OutRateSegments, "segRateOut")
+(Indicator::PublishedNum, "framesPub")
+(Indicator::PublishedKeyNum, "framesPubKey")
+(Indicator::EncodingRate, "rateEnc")
+(Indicator::CaptureRate, "rateCapture")
+(Indicator::CapturedNum, "framesCaptured");
 
 StatisticsStorage::StatRepo
 StatisticsStorage::getIndicators() const
