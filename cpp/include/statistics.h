@@ -112,6 +112,7 @@ namespace ndnrtc {
             public:
                 typedef std::map<Indicator, double> StatRepo;
                 static const std::map<Indicator, std::string> IndicatorNames;
+                static const std::map<Indicator, std::string> IndicatorKeywords;
                 
                 static StatisticsStorage*
                 createConsumerStatistics()

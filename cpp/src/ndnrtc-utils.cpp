@@ -309,6 +309,13 @@ double NdnRtcUtils::unixTimestamp()
     return sec.count();
 }
 
+// system clock
+int64_t NdnRtcUtils::millisecSinceEpoch()
+{
+    milliseconds msec = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    return msec.count();
+}
+
 //******************************************************************************
 unsigned int NdnRtcUtils::setupFrequencyMeter(unsigned int granularity)
 {
