@@ -9,14 +9,20 @@
 #define __remote_stream_h__
 
 #include <stdlib.h>
+#include "renderer.h"
 
 class RemoteStream {
 public:
-	RemoteStream(const std::string& prefix):streamPrefix_(prefix) {}
+	// RemoteStream(RemoteStream&& rs){}
+	RemoteStream(std::string& prefix, boost::shared_ptr<RendererInternal>&& renderer):
+		streamPrefix_(boost::move(prefix)), renderer_(boost::move(renderer)) {}
+	~RemoteStream(){}
 
 	std::string getPrefix() { return streamPrefix_; }
+	RendererInternal* getRenderer() { return renderer_.get(); }
 
 private:
+	boost::shared_ptr<RendererInternal> renderer_;
 	std::string streamPrefix_;
 };
 

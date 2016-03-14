@@ -204,6 +204,8 @@ esac
 AC_CONFIG_LINKS([tests/default.cfg:tests/default.cfg])
 AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
 AC_CONFIG_LINKS([tests/sample-bad1.cfg:tests/sample-bad1.cfg])
+AC_CONFIG_LINKS([tests/consumer-audio.cfg:tests/consumer-audio.cfg])
+AC_CONFIG_LINKS([tests/consumer-video.cfg:tests/consumer-video.cfg])
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])

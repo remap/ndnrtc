@@ -12,6 +12,8 @@
 
 #define TEST_CONFIG_FILE "tests/default.cfg"
 #define TEST_CONFIG_FILE_BAD1 "tests/sample-bad1.cfg"
+#define TEST_CONFIG_FILE_CA "tests/consumer-audio.cfg"
+#define TEST_CONFIG_FILE_CV "tests/consumer-video.cfg"
 
 using namespace std;
 
@@ -118,7 +120,6 @@ TEST(TestConfigLoad, LoadConsumerParams)
 	EXPECT_EQ(5, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.keyAvgParitySegNum_);
 }
 
-
 TEST(TestConfigLoad, LoadProducerParams)
 {
 	string fileName(TEST_CONFIG_FILE);
@@ -141,6 +142,98 @@ TEST(TestConfigLoad, LoadProducerParams)
 	EXPECT_EQ("camera", params.getProducerParams().publishedStreams_[0].streamName_);
 	EXPECT_EQ("desktop", params.getProducerParams().publishedStreams_[1].streamName_);
 	EXPECT_EQ("sound", params.getProducerParams().publishedStreams_[2].streamName_);
+}
+
+TEST(TestConfigLoad, LoadAudioConsumerOnly)
+{
+	string fileName(TEST_CONFIG_FILE_CA);
+	
+	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
+
+	ClientParams params;
+
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	EXPECT_EQ(2000, params.getConsumerParams().generalAudioParams_.interestLifetime_);
+	EXPECT_EQ(150, params.getConsumerParams().generalAudioParams_.bufferSlotsNum_);
+	EXPECT_EQ(150, params.getConsumerParams().generalAudioParams_.jitterSizeMs_);
+	EXPECT_EQ(4000, params.getConsumerParams().generalAudioParams_.slotSize_);
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_.size());
+	EXPECT_EQ("buffer", params.getConsumerParams().statGatheringParams_[0].statFileName_);
+	EXPECT_EQ("playback", params.getConsumerParams().statGatheringParams_[1].statFileName_);
+	EXPECT_EQ("play", params.getConsumerParams().statGatheringParams_[2].statFileName_);
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_[0].getStats().size());
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_[1].getStats().size());
+	EXPECT_EQ(4, params.getConsumerParams().statGatheringParams_[2].getStats().size());
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_.size());
+	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeAudio, params.getConsumerParams().fetchedStreams_[0].type_);
+	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeAudio, params.getConsumerParams().fetchedStreams_[1].type_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientB", params.getConsumerParams().fetchedStreams_[0].sessionPrefix_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
+	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[0].streamSink_);
+	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[1].streamSink_);
+	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
+	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[1].threadToFetch_);
+	EXPECT_EQ(1, params.getConsumerParams().fetchedStreams_[0].getThreadNum());
+	EXPECT_EQ(1, params.getConsumerParams().fetchedStreams_[1].getThreadNum());
+	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[0].streamName_);
+	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[1].streamName_);
+	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[0].synchronizedStreamName_);
+	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[1].synchronizedStreamName_);
+	EXPECT_EQ(1000, params.getConsumerParams().fetchedStreams_[0].producerParams_.segmentSize_);
+	EXPECT_EQ(1000, params.getConsumerParams().fetchedStreams_[1].producerParams_.segmentSize_);
+	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[0].getMediaThread(0)->threadName_);
+	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[1].getMediaThread(0)->threadName_);
+}
+
+TEST(TestConfigLoad, LoadVideoConsumerOnly)
+{
+	string fileName(TEST_CONFIG_FILE_CV);
+	
+	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
+
+	ClientParams params;
+
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	EXPECT_EQ(2000, params.getConsumerParams().generalVideoParams_.interestLifetime_);
+	EXPECT_EQ(200, params.getConsumerParams().generalVideoParams_.bufferSlotsNum_);
+	EXPECT_EQ(150, params.getConsumerParams().generalVideoParams_.jitterSizeMs_);
+	EXPECT_EQ(16000, params.getConsumerParams().generalVideoParams_.slotSize_);
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_.size());
+	EXPECT_EQ("buffer", params.getConsumerParams().statGatheringParams_[0].statFileName_);
+	EXPECT_EQ("playback", params.getConsumerParams().statGatheringParams_[1].statFileName_);
+	EXPECT_EQ("play", params.getConsumerParams().statGatheringParams_[2].statFileName_);
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_[0].getStats().size());
+	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_[1].getStats().size());
+	EXPECT_EQ(4, params.getConsumerParams().statGatheringParams_[2].getStats().size());
+
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_.size());
+	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeVideo, params.getConsumerParams().fetchedStreams_[0].type_);
+	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeVideo, params.getConsumerParams().fetchedStreams_[1].type_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientB", params.getConsumerParams().fetchedStreams_[0].sessionPrefix_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
+	EXPECT_EQ("clientB-camera.yuv", params.getConsumerParams().fetchedStreams_[0].streamSink_);
+	EXPECT_EQ("clientC-camera.yuv", params.getConsumerParams().fetchedStreams_[1].streamSink_);
+	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
+	EXPECT_EQ("mid", params.getConsumerParams().fetchedStreams_[1].threadToFetch_);
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_[0].getThreadNum());
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_[1].getThreadNum());
+	EXPECT_EQ("camera", params.getConsumerParams().fetchedStreams_[0].streamName_);
+	EXPECT_EQ("camera", params.getConsumerParams().fetchedStreams_[1].streamName_);
+	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[0].synchronizedStreamName_);
+	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[1].synchronizedStreamName_);
+	EXPECT_EQ(1000, params.getConsumerParams().fetchedStreams_[0].producerParams_.segmentSize_);
+	EXPECT_EQ(1000, params.getConsumerParams().fetchedStreams_[1].producerParams_.segmentSize_);
+	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[0].getMediaThread(0)->threadName_);
+	EXPECT_EQ("hi", params.getConsumerParams().fetchedStreams_[0].getMediaThread(1)->threadName_);
+	EXPECT_EQ("mid", params.getConsumerParams().fetchedStreams_[1].getMediaThread(0)->threadName_);
+	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[1].getMediaThread(1)->threadName_);
+	EXPECT_EQ(720, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->coderParams_.encodeWidth_);
+	EXPECT_EQ(405, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->coderParams_.encodeHeight_);
+	EXPECT_EQ(5, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.deltaAvgSegNum_);
+	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.deltaAvgParitySegNum_);
+	EXPECT_EQ(30, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.keyAvgSegNum_);
+	EXPECT_EQ(5, params.getConsumerParams().fetchedStreams_[0].getVideoThread(0)->segInfo_.keyAvgParitySegNum_);
+
 }
 
 TEST(TestConfigLoad, LoadAndOutput)

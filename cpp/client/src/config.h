@@ -166,6 +166,8 @@ public:
         { return publishedStreamsParams_.publishedStreams_.size() > 0; }
     bool isConsuming() const 
         { return consumedStreamsParams_.fetchedStreams_.size() > 0; }
+    bool isGatheringStats() const
+        { return consumedStreamsParams_.statGatheringParams_.size() > 0;}
     size_t getProducedStreamsNum() const 
         { return publishedStreamsParams_.publishedStreams_.size(); }
     size_t getConsumedStreamsNum() const
@@ -205,7 +207,6 @@ public:
     private:
         ndnrtc::new_api::GeneralParams generalParams_;
         ProducerClientParams publishedStreamsParams_;
-        std::vector<ProducerStreamParams> publishedStreams_ DEPRECATED;
         ConsumerClientParams consumedStreamsParams_;
 };
 

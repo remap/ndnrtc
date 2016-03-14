@@ -16569,6 +16569,10 @@ ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
 
 ac_config_links="$ac_config_links tests/sample-bad1.cfg:tests/sample-bad1.cfg"
 
+ac_config_links="$ac_config_links tests/consumer-audio.cfg:tests/consumer-audio.cfg"
+
+ac_config_links="$ac_config_links tests/consumer-video.cfg:tests/consumer-video.cfg"
+
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])
@@ -18727,6 +18731,8 @@ do
     "tests/default.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/default.cfg:tests/default.cfg" ;;
     "client/params.cfg") CONFIG_LINKS="$CONFIG_LINKS client/params.cfg:tests/default.cfg" ;;
     "tests/sample-bad1.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-bad1.cfg:tests/sample-bad1.cfg" ;;
+    "tests/consumer-audio.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-audio.cfg:tests/consumer-audio.cfg" ;;
+    "tests/consumer-video.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-video.cfg:tests/consumer-video.cfg" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

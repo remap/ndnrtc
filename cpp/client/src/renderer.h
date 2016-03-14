@@ -6,6 +6,9 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
+#ifndef __renderer_h__
+#define __renderer_h__
+
 #include <stdlib.h>
 #include <fstream>
 
@@ -33,3 +36,5 @@ private:
     std::ofstream *videoFrameFilePointer;
     bool firstFrame=true;
 };
+
+#endif

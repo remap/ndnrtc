@@ -13,13 +13,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
-#include <ndnrtc/simple-log.h>
-#include <ndnrtc/interfaces.h>
-
 #include "config.h"
-#include "renderer.h"
-#include "statistics.h"
-#include "capturer.h"
 #include "client.h"
 
 using namespace std;
@@ -44,7 +38,7 @@ int main(int argc, char **argv)
     char *configFile = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)
-    unsigned int statSamplePeriodMs = 10;  // default statistics sample interval (ms)
+    unsigned int statSamplePeriodMs = 100;  // default statistics sample interval (ms)
     ndnlog::NdnLoggerDetailLevel logLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
     opterr = 0;
@@ -89,28 +83,13 @@ int main(int argc, char **argv)
 }
 
 //******************************************************************************
-class LibraryObserver : public INdnRtcLibraryObserver {
-  public:
-    void onStateChanged(const char *state, const char *args) 
-    {
-        LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
-    }
-
-    void onErrorOccurred(int errorCode, const char *message) 
-    {
-        LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
-    }
-};
-
-//******************************************************************************
 void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
             const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
 {
-    LibraryObserver libObserver;
+    INdnRtcLibrary& ndnp = NdnRtcLibrary::getSharedInstance();
     Client& client = Client::getSharedInstance();
     ClientParams params;
 
-    client.setLibraryObserver(libObserver);
     ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
 
     LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
@@ -124,7 +103,7 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
 
     LogInfo("") << "Parameters loaded:\n" << params << std::endl;
 
-    client.run(runTimeSec, statSamplePeriodMs, params);
+    client.run(&ndnp, runTimeSec, statSamplePeriodMs, params);
 
 #warning this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);

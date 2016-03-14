@@ -92,18 +92,28 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
     {
         // setup consumer general settings
         const Setting &consumerBasicSettings = consumerRootSettings[SECTION_BASIC_KEY ];
-        const Setting &consumerBasicAudioSettings = consumerBasicSettings[SECTION_AUDIO_KEY];
-        const Setting &consumerBasicVideoSettings = consumerBasicSettings[SECTION_VIDEO_KEY];
-        const Setting &consumerBasicStatSettings = consumerBasicSettings[CONSUMER_BASIC_STAT_KEY];
+
+        bool hasBasicAudio = consumerBasicSettings.exists(SECTION_AUDIO_KEY);
+
+        if (hasBasicAudio)
+        {
+            const Setting &consumerBasicAudioSettings = consumerBasicSettings[SECTION_AUDIO_KEY];
+            hasBasicAudio = (loadBasicConsumerSettings(consumerBasicAudioSettings, params.generalAudioParams_) == EXIT_SUCCESS);
+        }
+
+        bool hasBasicVideo = consumerBasicSettings.exists(SECTION_VIDEO_KEY);
+
+        if (hasBasicVideo)
+        {
+            const Setting &consumerBasicVideoSettings = consumerBasicSettings[SECTION_VIDEO_KEY];
+            hasBasicVideo = (loadBasicConsumerSettings(consumerBasicVideoSettings, params.generalVideoParams_) == EXIT_SUCCESS);
+        }
+
+        if (consumerBasicSettings.exists(CONSUMER_BASIC_STAT_KEY))
+        {
+            loadBasicStatSettings(consumerBasicSettings[CONSUMER_BASIC_STAT_KEY], params.statGatheringParams_);
+        }
         
-        if (loadBasicConsumerSettings(consumerBasicAudioSettings, params.generalAudioParams_)==EXIT_FAILURE)
-            return (EXIT_FAILURE);
-
-        if (loadBasicConsumerSettings(consumerBasicVideoSettings, params.generalVideoParams_)==EXIT_FAILURE)
-            return (EXIT_FAILURE);
-
-        loadBasicStatSettings(consumerBasicStatSettings,params.statGatheringParams_);
-    
         try{// setup stream settings
             const Setting &streamSettings = consumerRootSettings[SECTION_STREAMS_KEY];
     
@@ -112,7 +122,22 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
                 ConsumerStreamParams csp;
 
                 if (loadStreamParams(streamSettings[i], csp) == EXIT_SUCCESS)
+                {
+                    if (!hasBasicAudio && csp.type_ == ConsumerStreamParams::MediaStreamTypeAudio)
+                    {
+                        LogWarn("") << "Found audio stream to fetch (" << csp.streamName_ 
+                            << "), but no basic audio settings were provided. Skipping." << std::endl;
+                        continue;
+                    }
+                    if (!hasBasicVideo && csp.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
+                    {
+                        LogWarn("") << "Found video stream to fetch (" << csp.streamName_ 
+                            << "), but no basic video settings were provided. Skipping." << std::endl;
+                        continue;
+                    }
+
                     params.fetchedStreams_.push_back(csp);
+                }
             } // for i
         }
         catch (const SettingNotFoundException &nfex){
@@ -122,6 +147,7 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
     }
     catch (const SettingNotFoundException &e)
     {
+        std::cout << "check " << e.getPath() << std::endl;
         LogError("") << "Setting not found at path: " << e.getPath() << std::endl;
     }
 }

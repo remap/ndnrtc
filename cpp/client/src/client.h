@@ -9,28 +9,45 @@
 #define __client_h__
 
 #include <stdlib.h>
+#include <boost/shared_ptr.hpp>
 #include <ndnrtc/interfaces.h>
 
 #include "config.h"
 #include "client-session-observer.h"
 #include "remote-stream.h"
+#include "stat-collector.h"
 
 class Client {
-public:
+public: 
 	static Client& getSharedInstance();
 
-	void setLibraryObserver(ndnrtc::INdnRtcLibraryObserver& ndnrtcLibObserver);
-
 	// blocking call. will return after runTimeSec seconds
-	void run(unsigned int runTimeSec, unsigned int statSamplePeriodMs, 
-		const ClientParams& params);
+	void run(ndnrtc::INdnRtcLibrary* ndnp, unsigned int runTimeSec, 
+		unsigned int statSamplePeriodMs, const ClientParams& params);
 
 	~Client();
+
 private:
+	class LibraryObserver :  public ndnrtc::INdnRtcLibraryObserver {
+		public:
+		void onStateChanged(const char *state, const char *args) 
+		{
+		    LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
+		}
+
+		void onErrorOccurred(int errorCode, const char *message) 
+		{
+		    LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
+		}
+	};
+
+	boost::asio::io_service io_;
 	ndnrtc::INdnRtcLibrary *ndnp_;
+	LibraryObserver libObserver_;
 	unsigned int runTimeSec_, statSampleIntervalMs_;
 	ClientParams params_;
 	ClientSessionObserver clientSessionObserver_;
+	boost::shared_ptr<StatCollector> statCollector_;
 
 	std::vector<RemoteStream> remoteStreams_;
 
@@ -49,7 +66,6 @@ private:
 
 	RemoteStream initRemoteStream(const ConsumerStreamParams& p, 
 		const ndnrtc::new_api::GeneralConsumerParams& generalParams);
-
 };
 
 #endif

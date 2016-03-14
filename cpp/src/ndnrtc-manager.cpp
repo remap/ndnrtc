@@ -629,13 +629,16 @@ void init()
 
 void cleanup()
 {
-    LogInfo(LIB_LOG) << "Stopping active session " << ActiveSession->getPrefix() << std::endl;
-    ActiveSession.reset();
-    
+    if (ActiveSession.get())
+    {
+        LogInfo(LIB_LOG) << "Stopping active session " << ActiveSession->getPrefix() << std::endl;
+        ActiveSession.reset();
+    }
+
     LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
     recoveryCheckTimer.cancel();
     LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
-    
+
     LogInfo(LIB_LOG) << "Stopping active consumers..." << std::endl;
     {
         for (auto consumerIt:ActiveStreamConsumers)
@@ -643,9 +646,9 @@ void cleanup()
         ActiveStreamConsumers.clear();
     }
     LogInfo(LIB_LOG) << "Active consumers cleared" << std::endl;
-    
+
     NdnRtcUtils::destroyLibFace();
-    
+
     LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
     AudioController::getSharedInstance()->releaseVoiceEngine();
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;

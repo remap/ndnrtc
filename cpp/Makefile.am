@@ -94,7 +94,7 @@ endif
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/statistics.cpp client/src/statistics.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
@@ -111,26 +111,37 @@ endif
 # unit tests    #
 #################
 GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
-UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I$(top_srcdir) -I$(includedir) ${ndnrtc_client_CPPFLAGS}
+GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
+UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS}
 UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
-UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc
+UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
-check_PROGRAMS = bin/tests/test-config-load bin/tests/test-params bin/tests/test-client-params
+check_PROGRAMS = bin/tests/test-config-load bin/tests/test-params bin/tests/test-client-params bin/tests/test-client bin/tests/test-stat-collector
 
-bin_tests_test_config_load_SOURCES = tests/test-config-load.cc contrib/gtest/googletest/src/gtest-all.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_params_SOURCES = tests/test-params.cc contrib/gtest/googletest/src/gtest-all.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_params_SOURCES = tests/test-params.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_params_LDADD = ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_client_params_SOURCES = tests/test-client-params.cc contrib/gtest/googletest/src/gtest-all.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_params_SOURCES = tests/test-client-params.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp  ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc client/src/stat-collector.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_stat_collector_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_stat_collector_LDADD = ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}

@@ -30,6 +30,9 @@ uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height,
                      const uint8_t* buffer)
 {
+    // do whatever we need, i.e. drop frame, render it, write to file, etc.
+    LogDebug("") << "received frame (" << width << "x" << height << ") at " << timestamp << "ms"<<", frameCount_: "<<frameCount_ << std::endl;
+#if 0 
     if (firstFrame==true){
         //write file name and info about the video
         std::stringstream videoFrameFileNameStream;
@@ -42,9 +45,6 @@ void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height,
         videoFrameFilePointer->open(videoFrameFileName.c_str());
         firstFrame=false; // for the rest frames we do not need to write file name and open it
     }
-    // do whatever we need, i.e. drop frame, render it, write to file, etc.
-    LogDebug("") << "received frame (" << width << "x" << height << ") at " << timestamp << "ms"<<", frameCount_: "<<frameCount_ << std::endl;
-    
 
     //write the incomming raw video frame to file
     // (*videoFrameFilePointer) << "raw ";//http://wiki.multimedia.cx/index.php?title=Raw_RGB This specification might be wrong 
@@ -66,6 +66,7 @@ void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height,
         }
     }
     frameCount_++;
+#endif
     return;
 }
     
