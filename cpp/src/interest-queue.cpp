@@ -36,7 +36,6 @@ onTimeoutCallback_(onTimeout)
 InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face,
                              const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
 StatObject(statStorage),
-freqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 face_(face),
 queue_(PriorityQueue(IPriority::Comparator(true))),
 isWatchingQueue_(false)
@@ -85,8 +84,6 @@ InterestQueue::reset()
 {
     queueAccess_.lock();
     queue_ = PriorityQueue(IPriority::Comparator(true));
-    NdnRtcUtils::releaseFrequencyMeter(freqMeterId_);
-    freqMeterId_ = NdnRtcUtils::setupFrequencyMeter(10);
     queueAccess_.unlock();
 
     LogDebugC << "interest queue flushed" << std::endl;
@@ -136,10 +133,7 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     << queue_.size()
     << std::endl;
     
-    NdnRtcUtils::frequencyMeterTick(freqMeterId_);
-    (*statStorage_)[Indicator::InterestRate] = NdnRtcUtils::currentFrequencyMeterValue(freqMeterId_);
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
-    
     
     try {
         face_->expressInterest(*(entry.interest_),

@@ -167,7 +167,6 @@ namespace ndnrtc {
             
             int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
             int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
-            unsigned int rtxFreqMeterId_;
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             FrameSegmentsInfo frameSegmentsInfo_;
             
@@ -187,10 +186,6 @@ namespace ndnrtc {
             ndn::Interest rightmostInterest_;
             PacketNumber exclusionPacket_;
             bool waitForThreadTransition_;
-            
-            // incoming data statistics
-            unsigned int dataMeterId_, segmentFreqMeterId_;
-            unsigned int nDataReceived_ = 0, nTimeouts_ = 0;
             
             void
             switchToState(State newState)
