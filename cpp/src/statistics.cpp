@@ -20,6 +20,9 @@ using namespace boost::assign;
 const std::map<Indicator, std::string> StatisticsStorage::IndicatorNames =
 map_list_of
 ( Indicator::Timestamp, "Timestamp" )
+
+// consumer
+// buffer
 ( Indicator::AcquiredNum, "Acquired frames" )
 ( Indicator::AcquiredKeyNum, "Acquired key frames" ) 
 ( Indicator::DroppedNum, "Dropped frames" ) 
@@ -35,7 +38,9 @@ map_list_of
 ( Indicator::BufferTargetSize, "Jitter target size" ) 
 ( Indicator::BufferPlayableSize, "Jitter playable size" ) 
 ( Indicator::BufferEstimatedSize, "Jitter estimated size" ) 
-( Indicator::CurrentProducerFramerate, "Producer rate" ) 
+( Indicator::CurrentProducerFramerate, "Producer rate" )
+
+// playout
 ( Indicator::LastPlayedNo, "Playback #" ) 
 ( Indicator::LastPlayedDeltaNo, "Last delta #" ) 
 ( Indicator::LastPlayedKeyNo, "Last key #" ) 
@@ -45,34 +50,54 @@ map_list_of
 ( Indicator::SkippedIncompleteNum, "Skipped (incomplete)" ) 
 ( Indicator::SkippedBadGopNum, "Skipped (bad GOP)" ) 
 ( Indicator::SkippedIncompleteKeyNum, "Skipped (incomplete key)" ) 
-( Indicator::LatencyEstimated, "Latency (est.)" ) 
+( Indicator::LatencyEstimated, "Latency (est.)" )
+
+// pipeliner
 ( Indicator::SegmentsDeltaAvgNum, "Delta segments average" ) 
 ( Indicator::SegmentsKeyAvgNum, "Key segments average" ) 
 ( Indicator::SegmentsDeltaParityAvgNum, "Delta parity segments average" ) 
 ( Indicator::SegmentsKeyParityAvgNum, "Key parity segments average" ) 
-( Indicator::RtxFrequency, "Retransmission frequency" ) 
-( Indicator::RtxNum, "Retransmissions" ) 
+//( Indicator::RtxFrequency, "Retransmission frequency" )
+( Indicator::RtxNum, "Retransmissions" )
 ( Indicator::RebufferingsNum, "Rebufferings" ) 
 ( Indicator::RequestedNum, "Requested" ) 
 ( Indicator::RequestedKeyNum, "Requested key" ) 
 ( Indicator::DW, "Lambda D" )
 ( Indicator::W, "Lambda" )
 ( Indicator::RttPrime, "RTT'" ) 
-( Indicator::InBitrateKbps, "Incoming bitrate (Kbps)" ) 
-( Indicator::InRateSegments, "Incoming segments rate" ) 
-( Indicator::SegmentsReceivedNum, "Segments received" ) 
+//( Indicator::InBitrateKbps, "Incoming bitrate (Kbps)" ) 
+//( Indicator::InRateSegments, "Incoming segments rate" )
+( Indicator::SegmentsReceivedNum, "Segments received" )
 ( Indicator::TimeoutsNum, "Timeouts" )
 ( Indicator::Darr, "Darr" )
+( Indicator::BytesReceived, "Payload bytes received" )
+( Indicator::RawBytesReceived, "Wire bytes received" )
+
+// RTT estimator
 ( Indicator::RttEstimation, "RTT estimation" ) 
-( Indicator::InterestRate, "Interest rate" ) 
-( Indicator::QueueSize, "Interest queue" ) 
+
+// interest queue
+//( Indicator::InterestRate, "Interest rate" )
+( Indicator::QueueSize, "Interest queue" )
 ( Indicator::InterestsSentNum, "Sent interests" ) 
-( Indicator::OutBitrateKbps, "Outgoing bitarte (Kbps)" ) 
-( Indicator::OutRateSegments, "Outgoing segments rate" ) 
+
+// producer
+// media thread
+//( Indicator::OutBitrateKbps, "Outgoing bitarte (Kbps)" )
+( Indicator::BytesPublished, "Payload published bytes" )
+( Indicator::RawBytesPublished, "Wire published bytes" )
+//( Indicator::OutRateSegments, "Outgoing segments rate" )
+( Indicator::PublishedSegmentsNum, "Published segments")
 ( Indicator::PublishedNum, "Published frames" ) 
-( Indicator::PublishedKeyNum, "Published key frames" ) 
-( Indicator::EncodingRate, "Encoding rate" ) 
-( Indicator::CaptureRate, "Capture rate" ) 
+( Indicator::PublishedKeyNum, "Published key frames" )
+( Indicator::InterestsReceivedNum, "Interests received")
+
+// encoder
+//( Indicator::EncodingRate, "Encoding rate" )
+( Indicator::EncodedNum, "Encoded frames" )
+
+// capturer
+//( Indicator::CaptureRate, "Capture rate" )
 ( Indicator::CapturedNum, "Captured frames" );
 /**
  * Unsupported initalizer list
@@ -144,6 +169,9 @@ map_list_of
 const StatisticsStorage::StatRepo StatisticsStorage::ConsumerStatRepo =
 map_list_of
 ( Indicator::Timestamp, 0. )
+
+// consumer
+// buffer
 ( Indicator::AcquiredNum, 0. )
 ( Indicator::AcquiredKeyNum, 0. )
 ( Indicator::DroppedNum, 0 )
@@ -160,6 +188,8 @@ map_list_of
 ( Indicator::BufferPlayableSize, 0. )
 ( Indicator::BufferEstimatedSize, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
+
+// playout
 ( Indicator::LastPlayedNo, 0. )
 ( Indicator::LastPlayedDeltaNo, 0. )
 ( Indicator::LastPlayedKeyNo, 0. )
@@ -170,11 +200,13 @@ map_list_of
 ( Indicator::SkippedBadGopNum, 0. )
 ( Indicator::SkippedIncompleteKeyNum, 0. )
 ( Indicator::LatencyEstimated, 0. )
+
+// pipeliner
 ( Indicator::SegmentsDeltaAvgNum, 0. )
 ( Indicator::SegmentsKeyAvgNum, 0. )
 ( Indicator::SegmentsDeltaParityAvgNum, 0. )
 ( Indicator::SegmentsKeyParityAvgNum, 0. )
-( Indicator::RtxFrequency, 0. )
+//( Indicator::RtxFrequency, 0. )
 ( Indicator::RtxNum, 0. )
 ( Indicator::RebufferingsNum, 0. )
 ( Indicator::RequestedNum, 0. )
@@ -182,13 +214,19 @@ map_list_of
 ( Indicator::DW, 0. )
 ( Indicator::W, 0. )
 ( Indicator::RttPrime, 0. )
-( Indicator::InBitrateKbps, 0. )
-( Indicator::InRateSegments, 0. )
+//( Indicator::InBitrateKbps, 0. )
+//( Indicator::InRateSegments, 0. )
 ( Indicator::SegmentsReceivedNum, 0. )
 ( Indicator::TimeoutsNum, 0. )
-( Indicator::Darr, 0.)
+( Indicator::Darr, 0. )
+( Indicator::BytesReceived, 0. )
+( Indicator::RawBytesReceived, 0. )
+
+// RTT estimator
 ( Indicator::RttEstimation, 0. )
-( Indicator::InterestRate, 0. )
+
+// interest queue
+//( Indicator::InterestRate, 0. )
 ( Indicator::QueueSize, 0. )
 ( Indicator::InterestsSentNum, 0. );
 /**
@@ -250,14 +288,22 @@ map_list_of
 
 const StatisticsStorage::StatRepo StatisticsStorage::ProducerStatRepo =
 map_list_of ( Indicator::Timestamp, 0. )
-( Indicator::OutBitrateKbps, 0. )
-( Indicator::OutRateSegments, 0. )
+// producer
+// media thread
+//( Indicator::OutBitrateKbps, 0. )
+( Indicator::BytesPublished, 0. )
+( Indicator::RawBytesPublished, 0. )
+//( Indicator::OutRateSegments, 0. )
+( Indicator::PublishedSegmentsNum, 0. )
 ( Indicator::PublishedNum, 0. )
 ( Indicator::PublishedKeyNum, 0. )
-( Indicator::InterestRate, 0. )
+( Indicator::InterestsReceivedNum, 0. )
+
+// encoder
 ( Indicator::DroppedNum, 0. )
-( Indicator::EncodingRate, 0. )
-( Indicator::CaptureRate, 0. )
+( Indicator::EncodedNum, 0. )
+
+// capturer
 ( Indicator::CapturedNum, 0. );
 /**
  * Unsupported initalizer list
@@ -281,6 +327,9 @@ map_list_of ( Indicator::Timestamp, 0. )
 const std::map<Indicator, std::string> StatisticsStorage::IndicatorKeywords =
 boost::assign::map_list_of
 (Indicator::Timestamp, "timestamp")
+
+// consumer
+// buffer
 (Indicator::AcquiredNum, "framesAcq")
 (Indicator::AcquiredKeyNum, "framesAcqKey")
 (Indicator::DroppedNum, "framesDrop")
@@ -297,6 +346,8 @@ boost::assign::map_list_of
 (Indicator::BufferPlayableSize, "jitterPlay")
 (Indicator::BufferEstimatedSize, "jitterEst")
 (Indicator::CurrentProducerFramerate, "prodRate")
+
+// playout
 (Indicator::LastPlayedNo, "playNo")
 (Indicator::LastPlayedDeltaNo, "deltaNo")
 (Indicator::LastPlayedKeyNo, "keyNo")
@@ -307,11 +358,12 @@ boost::assign::map_list_of
 (Indicator::SkippedBadGopNum, "skipBadGop")
 (Indicator::SkippedIncompleteKeyNum, "skipIncKey")
 (Indicator::LatencyEstimated, "latEst")
+
+// pipeliner
 (Indicator::SegmentsDeltaAvgNum, "segAvgDelta")
 (Indicator::SegmentsKeyAvgNum, "segAvgKey")
 (Indicator::SegmentsDeltaParityAvgNum, "segAvgDeltaPar")
 (Indicator::SegmentsKeyParityAvgNum, "segAvgKeyPar")
-(Indicator::RtxFrequency, "rtxFreq")
 (Indicator::RtxNum, "rtxNum")
 (Indicator::RebufferingsNum, "rebuf")
 (Indicator::RequestedNum, "framesReq")
@@ -319,21 +371,30 @@ boost::assign::map_list_of
 (Indicator::DW, "lambdaD")
 (Indicator::W, "lambda")
 (Indicator::RttPrime, "drdPrime")
-(Indicator::InBitrateKbps, "bitrateIn")
-(Indicator::InRateSegments, "segRateIn")
-(Indicator::SegmentsReceivedNum, "segNum")
+(Indicator::SegmentsReceivedNum, "segNumRcvd")
 (Indicator::TimeoutsNum, "timeouts")
 (Indicator::Darr, "dArr")
+(Indicator::BytesReceived, "bytesRcvd")
+(Indicator::RawBytesReceived, "rawBytesRcvd")
+
+// RTT estimator
 (Indicator::RttEstimation, "drdEst")
-(Indicator::InterestRate, "irate")
+
+// interest queue
 (Indicator::QueueSize, "iqueue")
 (Indicator::InterestsSentNum, "isent")
-(Indicator::OutBitrateKbps, "bitrateOut")
-(Indicator::OutRateSegments, "segRateOut")
+
+// producer
+(Indicator::BytesPublished, "bytesPub")
+(Indicator::RawBytesPublished, "rawBytesPub")
+(Indicator::PublishedSegmentsNum, "segPub")
 (Indicator::PublishedNum, "framesPub")
 (Indicator::PublishedKeyNum, "framesPubKey")
-(Indicator::EncodingRate, "rateEnc")
-(Indicator::CaptureRate, "rateCapture")
+
+// encoder
+(Indicator::EncodedNum, "framesEncoded")
+
+// capturer
 (Indicator::CapturedNum, "framesCaptured");
 
 StatisticsStorage::StatRepo

@@ -139,7 +139,6 @@ namespace ndnrtc {
             typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, IPriority::Comparator>
             PriorityQueue;
             
-            unsigned int freqMeterId_;
             boost::shared_ptr<FaceWrapper> face_;
             boost::shared_mutex queueAccess_;
 

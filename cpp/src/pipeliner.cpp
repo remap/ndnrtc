@@ -57,7 +57,6 @@ deltaSegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.del
 keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgSegNum_)),
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgParitySegNum_)),
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgParitySegNum_)),
-rtxFreqMeterId_(NdnRtcUtils::setupFrequencyMeter()),
 useKeyNamespace_(true),
 streamId_(0),
 frameBuffer_(consumer_->getFrameBuffer().get()),
@@ -67,8 +66,6 @@ stabilityEstimator_(10, 4, 0.3, 0.7), // normal
 //stabilityEstimator_(30, 4, 0.1, 0.95), // high
 //stabilityEstimator_(3, 4, 0.6, 0.5), // low
 rttChangeEstimator_(7, 3, 0.12),
-dataMeterId_(NdnRtcUtils::setupDataRateMeter(5)),
-segmentFreqMeterId_(NdnRtcUtils::setupFrequencyMeter(10)),
 exclusionPacket_(0),
 waitForThreadTransition_(false)
 {
@@ -369,8 +366,6 @@ ndnrtc::new_api::Pipeliner2::onRetransmissionNeeded(FrameBuffer::Slot* slot)
             }
 
             slot->incremenrRtxNum();
-            NdnRtcUtils::frequencyMeterTick(rtxFreqMeterId_);
-            (*statStorage_)[Indicator::RtxFrequency] = NdnRtcUtils::currentFrequencyMeterValue(rtxFreqMeterId_);
             (*statStorage_)[Indicator::RtxNum]++;
             
             LogStatC << "rtx"
@@ -438,7 +433,6 @@ ndnrtc::new_api::Pipeliner2::resetData()
     keySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgSegNum_);
     deltaParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.deltaAvgParitySegNum_);
     keyParitySegnumEstimatorId_ = NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo_.keyAvgParitySegNum_);
-    rtxFreqMeterId_ = NdnRtcUtils::setupFrequencyMeter();
     
     recoveryCheckpointTimestamp_ = 0;
     switchToState(StateInactive);
@@ -467,13 +461,11 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
     << "data " << data->getName() << " "
     << data->getContent().size() << " bytes" << std::endl;
     
-    NdnRtcUtils::dataRateMeterMoreData(dataMeterId_, data->getDefaultWireEncoding().size());
-    NdnRtcUtils::frequencyMeterTick(segmentFreqMeterId_);
     recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
     
     (*statStorage_)[Indicator::SegmentsReceivedNum]++;
-    statStorage_->updateIndicator(Indicator::InRateSegments, NdnRtcUtils::currentFrequencyMeterValue(segmentFreqMeterId_));
-    (*statStorage_)[Indicator::InBitrateKbps] = NdnRtcUtils::currentDataRateMeterValue(dataMeterId_)*8./1000.;
+    (*statStorage_)[Indicator::BytesReceived] += data->getContent().size();
+    (*statStorage_)[Indicator::RawBytesReceived] += data->getDefaultWireEncoding().size();
     
     bool isKeyPrefix = NdnRtcNamespace::isPrefix(data->getName(), keyFramesPrefix_);
     PrefixMetaInfo metaInfo;
