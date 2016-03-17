@@ -82,8 +82,8 @@ TEST(TestConfigLoad, LoadConsumerParams)
 	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
 	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientB", params.getConsumerParams().fetchedStreams_[2].sessionPrefix_);
 	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[3].sessionPrefix_);
-	EXPECT_EQ("clientB-camera.yuv", params.getConsumerParams().fetchedStreams_[0].streamSink_);
-	EXPECT_EQ("clientC-camera.yuv", params.getConsumerParams().fetchedStreams_[1].streamSink_);
+	EXPECT_EQ("clientB-camera", params.getConsumerParams().fetchedStreams_[0].streamSink_);
+	EXPECT_EQ("clientC-camera", params.getConsumerParams().fetchedStreams_[1].streamSink_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[2].streamSink_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[3].streamSink_);
 	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
@@ -211,8 +211,8 @@ TEST(TestConfigLoad, LoadVideoConsumerOnly)
 	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeVideo, params.getConsumerParams().fetchedStreams_[1].type_);
 	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientB", params.getConsumerParams().fetchedStreams_[0].sessionPrefix_);
 	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
-	EXPECT_EQ("clientB-camera.yuv", params.getConsumerParams().fetchedStreams_[0].streamSink_);
-	EXPECT_EQ("clientC-camera.yuv", params.getConsumerParams().fetchedStreams_[1].streamSink_);
+	EXPECT_EQ("clientB-camera", params.getConsumerParams().fetchedStreams_[0].streamSink_);
+	EXPECT_EQ("clientC-camera", params.getConsumerParams().fetchedStreams_[1].streamSink_);
 	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
 	EXPECT_EQ("mid", params.getConsumerParams().fetchedStreams_[1].threadToFetch_);
 	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_[0].getThreadNum());
@@ -263,7 +263,7 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"stat file: playback.stat; stats: (framesAcq, lambdaD, drdPrime)\n"
 		"stat file: play.stat; stats: (lambdaD, drdPrime, jitterTar, dArr)\n"
 		"fetching:\n"
-		"[0: stream sink: clientB-camera.yuv; thread to fetch: low; session prefix: "
+		"[0: stream sink: clientB-camera; thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientB; name: camera (video); synced to:"
 		" sound; seg size: 1000 bytes; freshness: 0 ms; no device; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
@@ -271,7 +271,7 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"[1: name: hi; 30FPS; GOP: 30; Start bitrate: 3000 Kbit/s; "
 		"Max bitrate: 10000 Kbit/s; 1920x1080; Drop: NO]\n"
 		"]\n"
-		"[1: stream sink: clientC-camera.yuv; thread to fetch: mid; session prefix: "
+		"[1: stream sink: clientC-camera; thread to fetch: mid; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientC; name: camera (video); "
 		"synced to: sound; seg size: 1000 bytes; freshness: 0 ms; no device; 2 threads:\n"
 		"[0: name: mid; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "

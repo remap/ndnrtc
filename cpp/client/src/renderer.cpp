@@ -14,59 +14,119 @@
 
 using namespace std;
 
+RendererInternal::RendererInternal(const std::string& sinkFileName, bool suppressBadSink)
+:sinkName_(sinkFileName), renderBuffer_(nullptr), bufferSize_(0), frameCount_(0), sink_(nullptr),
+currentWidth_(0), currentHeight_(0), sinkIdx_(0), isDumping_(!suppressBadSink)
+{ 
+};
+
+RendererInternal::~RendererInternal()
+{
+    closeSink();
+    freeBuffer();
+}
+
 uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 {
-    if (!renderBuffer_ || width*height*4 > bufferSize_)
+    if (!renderBuffer_ || getBufferSizeForResolution(width, height) > bufferSize_)
     {
         // init ARGB buffer
-        bufferSize_ = width*height*4;
-        LogInfo("") << "initializing render buffer " << width << "x" << height << "(" << bufferSize_ <<" bytes)..." << std::endl;
-        renderBuffer_ = (char*)realloc(renderBuffer_, bufferSize_);
+        currentWidth_ = width;
+        currentHeight_ = height;
+
+        closeSink();
+        string sinkFullPath = openSink();
+        sinkIdx_++;
+
+        initBuffer();
+        
+        LogInfo("") << "initialized render buffer " << currentWidth_ << "x" << currentHeight_ 
+            << "(" << bufferSize_ <<" bytes)." 
+            <<  (isDumping_? string(" writing to ") + sinkFullPath : "" ) << std::endl;
     }
 
     return (uint8_t*)renderBuffer_;
 }
 
-void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height,
-                     const uint8_t* buffer)
+void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height, 
+    const uint8_t* buffer)
 {
+    if (!renderBuffer_)
+        throw runtime_error("render buffer hasn not been initialized");
+
+    if (width != currentWidth_ || height != currentHeight_)
+        throw runtime_error("wrong frame size supplied");
+
     // do whatever we need, i.e. drop frame, render it, write to file, etc.
-    LogDebug("") << "received frame (" << width << "x" << height << ") at " << timestamp << "ms"<<", frameCount_: "<<frameCount_ << std::endl;
-#if 0 
-    if (firstFrame==true){
-        //write file name and info about the video
-        std::stringstream videoFrameFileNameStream;
+    LogDebug("") << "received frame (" << width << "x" << height << ") at " 
+    << timestamp << " ms"<<", frame count: "<<frameCount_ << std::endl;
 
-        // videoFrameFileNameStream << width << "--"<< height <<"--ts"<< timestamp << "--ARGB-save.frames";
-        videoFrameFileNameStream << width << "--"<< height <<"--ts"<< timestamp << "--ubuntuHeadless--BGRA.frames";
+    dumpFrame(buffer);
 
-        std::string videoFrameFileName=videoFrameFileNameStream.str();
-
-        videoFrameFilePointer->open(videoFrameFileName.c_str());
-        firstFrame=false; // for the rest frames we do not need to write file name and open it
-    }
-
-    //write the incomming raw video frame to file
-    // (*videoFrameFilePointer) << "raw ";//http://wiki.multimedia.cx/index.php?title=Raw_RGB This specification might be wrong 
-    if ((frameCount_ > 550)&&(frameCount_ < 770)){ // debug purpose
-        LogDebug("") << "record frame: " << frameCount_ << " to file..." << std::endl;
-        for (int i = 0; i < width*height*4; i=i+4){// *4 is because it has four channels: Alpha, R, G, B
-            // decoder outputs ARGB somehow, so swap to BGRA format and save
-            // write as BGRA for mplayer
-            (*videoFrameFilePointer) << (unsigned char)buffer[i+3] //B +1, +2, +3ok, 0!ok
-                                     << (unsigned char)buffer[i+2]//G
-                                     << (unsigned char)buffer[i+1]//R
-                                     << (unsigned char)buffer[i];//A
-            // write as ARGB for publisher 
-            // (*videoFrameFilePointer) << (unsigned char)buffer[i]//A
-            //                          << (unsigned char)buffer[i+1]//R
-            //                          << (unsigned char)buffer[i+2]//G
-            //                          << (unsigned char)buffer[i+3];//B +1, +2, +3ok, 0!ok
-
-        }
-    }
     frameCount_++;
-#endif
     return;
 }
     
+string RendererInternal::openSink()
+{
+    if (!isDumping_)
+        return "";
+
+    if (sinkName_ == "")
+        throw runtime_error("invalid sink name provided");
+
+    stringstream sinkPath;
+
+    sinkPath << sinkName_ << "-" << sinkIdx_ << "-" << currentWidth_ << "x" << currentHeight_ << ".argb";
+    sink_ = fopen(sinkPath.str().c_str(), "wb");
+
+    if (!sink_)
+        throw std::runtime_error("couldn't create file at path "+sinkPath.str());
+
+    return sinkPath.str();
+}
+
+void RendererInternal::closeSink()
+{
+    if (isDumping_ && sink_)
+    {
+        fclose(sink_);
+        sink_ = nullptr;
+    }
+}
+
+void RendererInternal::initBuffer()
+{
+    if (currentWidth_ > 0 && currentHeight_ > 0)
+    {
+        bufferSize_ = getBufferSizeForResolution(currentWidth_, currentHeight_);
+        renderBuffer_ = (char*)realloc(renderBuffer_, bufferSize_);
+    }
+    else
+    {
+        stringstream errmsg;
+        errmsg << "incorrect size for the render buffer (" 
+            << currentWidth_ << "x" << currentHeight_ << ")";
+        throw runtime_error(errmsg.str());
+    }
+}
+
+void RendererInternal::freeBuffer()
+{
+    if (renderBuffer_)
+        free(renderBuffer_);
+}
+
+void RendererInternal::dumpFrame(const uint8_t* frame)
+{
+    if (!isDumping_)
+        return;
+    
+    fwrite(frame, sizeof(uint8_t), getBufferSizeForResolution(currentWidth_, currentHeight_), sink_);
+}
+
+unsigned int RendererInternal::getBufferSizeForResolution(unsigned int width, unsigned int height)
+{
+    return width*height*4;
+}
+

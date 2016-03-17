@@ -173,7 +173,7 @@ void Client::initSession()
 RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	const GeneralConsumerParams& gcp)
 {
-	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal() : nullptr);
+	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal(p.streamSink_, true) : nullptr);
 	string streamPrefix = ndnp_->addRemoteStream(p.sessionPrefix_, p.threadToFetch_, p, 
 		params_.getGeneralParameters(), gcp, renderer);
 

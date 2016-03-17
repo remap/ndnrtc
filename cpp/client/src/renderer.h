@@ -10,31 +10,60 @@
 #define __renderer_h__
 
 #include <stdlib.h>
-#include <fstream>
+#include <stdio.h>
 
 #include <ndnrtc/interfaces.h>
 
+/**
+ * This class implements IExternalRendere interface
+ * It saves raw decoded files into a file.
+ * Each frame is an ARGB frame. To watch recorded video, 
+ * one should run ffmpeg and transcode raw sequence into one
+ * of widely used video containers. For example, the following 
+ * command will transcode encoded raw video into mp4 file:
+ *
+ *     $ ffmpeg -f rawvideo -vcodec rawvideo -s 1280x720 \
+ *           -r 15 -pix_fmt argb -i freeculture-video-0-1280x720.argb \
+ *           -c:v libx264 -preset ultrafast -qp 0 freeculture.mp4
+ *
+ * NOTE: raw video files are very heavy and can grow into gigabytes 
+ * rapidly over few tens of seconds of recording
+ *
+ * more info on transcoding raw video can be found at:
+ *      http://stackoverflow.com/questions/15778774/using-ffmpeg-to-losslessly-convert-yuv-to-another-format-for-editing-in-adobe-pr
+ */
 class RendererInternal : public ndnrtc::IExternalRenderer{
 public:
-    RendererInternal():renderBuffer_(nullptr), bufferSize_(0) { 
-        
-    	videoFrameFilePointer = new std::ofstream;
-
-    };
-    ~RendererInternal(){
-    	delete videoFrameFilePointer;
-	};
+    /**
+     * @param sinkFileName File name of video sink
+     * @param suppressBadSink If true, any error during creation of the sink 
+     *  file will be ignored. Video sequence won't be recorder. Othewise, 
+     *  will throw exception on any file creation error.
+     */
+    RendererInternal(const std::string& sinkFileName, 
+        bool suppressBadSink = false);
+    ~RendererInternal();
     
     virtual uint8_t* getFrameBuffer(int width, int height);
     virtual void renderBGRAFrame(int64_t timestamp, int width, int height,
                          const uint8_t* buffer);
     
 private:
+    std::string sinkName_;
     char *renderBuffer_;
-    int bufferSize_;
-    int frameCount_=0;
-    std::ofstream *videoFrameFilePointer;
-    bool firstFrame=true;
+    bool isDumping_;
+    unsigned int bufferSize_;
+    unsigned int frameCount_;
+    unsigned int sinkIdx_;
+    unsigned int currentWidth_, currentHeight_;
+    FILE *sink_;
+
+    std::string openSink();
+    void closeSink();
+    void initBuffer();
+    void freeBuffer();
+    void dumpFrame(const uint8_t* frameBuffer);
+    unsigned int getBufferSizeForResolution(unsigned int width, unsigned int height);
 };
 
 #endif
