@@ -50,32 +50,36 @@ TEST(TestClient, TestConsumer)
 
 	MockNdnRtcLibrary ndnrtcLib;
 	Client& c = Client::getSharedInstance();
-
-	EXPECT_CALL(ndnrtcLib, setObserver(_));
-	EXPECT_CALL(ndnrtcLib, 
-		addRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_,
-		cp.getConsumerParams().fetchedStreams_[0].threadToFetch_, _, _, _, _))
-			.Times(1)
-			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[0].streamName_));
-	EXPECT_CALL(ndnrtcLib, 
-		addRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_,
-		cp.getConsumerParams().fetchedStreams_[1].threadToFetch_, _, _, _, _))
-			.Times(1)
-			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[1].streamName_));
-	EXPECT_CALL(ndnrtcLib,
-		removeRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
-		.Times(1);
-	EXPECT_CALL(ndnrtcLib,
-		removeRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
-		.Times(1);
-
 	boost::shared_ptr<StatisticsStorage> sampleStats = 
 		boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
 
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
+	{
+		InSequence s;
+
+		EXPECT_CALL(ndnrtcLib, setObserver(_));
+		EXPECT_CALL(ndnrtcLib, 
+			addRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_,
+				cp.getConsumerParams().fetchedStreams_[0].threadToFetch_, _, _, _, _))
+			.Times(1)
+			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_));
+		EXPECT_CALL(ndnrtcLib, 
+			addRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_,
+				cp.getConsumerParams().fetchedStreams_[1].threadToFetch_, _, _, _, _))
+			.Times(1)
+			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_));
+
+		EXPECT_CALL(ndnrtcLib,
+			removeRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
+			.Times(1);
+		EXPECT_CALL(ndnrtcLib,
+			removeRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
+			.Times(1);
+	}
+
+	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
 		.Times(AtLeast(28))
 		.WillRepeatedly(ReturnPointee(sampleStats));
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
+	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
 		.Times(AtLeast(28))
 		.WillRepeatedly(ReturnPointee(sampleStats));
 

@@ -15,6 +15,18 @@
 #include <client/src/stat-collector.h>
 #include "tests-helpers.h"
 
+#define PREFIX string("/ndn/edu/ucla/remap/ndnrtc/user")
+#define CLIENT1 string("clientA")
+#define CLIENT1_SESSION_PREFIX (PREFIX + "/" + CLIENT1)
+#define STREAM_AUDIO string("sound")
+#define STREAM_VIDEO1 string("camera")
+#define STREAM_VIDEO2 string("desktop")
+#define STREAM_VIDEO3 string("camera2")
+#define CLIENT1_STREAM_PREFIX_AUDIO (CLIENT1_SESSION_PREFIX + "/streams/" + STREAM_AUDIO)
+#define CLIENT1_STREAM_PREFIX_VIDEO1 (CLIENT1_SESSION_PREFIX + "/streams/" + STREAM_VIDEO1)
+#define CLIENT1_STREAM_PREFIX_VIDEO2 (CLIENT1_SESSION_PREFIX + "/streams/" + STREAM_VIDEO2)
+#define CLIENT1_STREAM_PREFIX_VIDEO3 (CLIENT1_SESSION_PREFIX + "/streams/" + STREAM_VIDEO3)
+
 using ::testing::ReturnPointee;
 using ::testing::AtLeast;
 using ::testing::Invoke;
@@ -245,15 +257,15 @@ TEST(TestStatCollector, TestAddStreams)
 
 	EXPECT_EQ(0, sc.getStreamsNumber());
 
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/desktop");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera2");
+	sc.addStream(CLIENT1_STREAM_PREFIX_AUDIO);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO1);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO2);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO3);
 
 	EXPECT_EQ(4, sc.getStreamsNumber());
 	EXPECT_EQ(0, sc.getWritersNumber());
 
-	EXPECT_ANY_THROW(sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound"));
+	EXPECT_ANY_THROW(sc.addStream(CLIENT1_STREAM_PREFIX_AUDIO));
 }
 
 TEST(TestStatCollector, TestRemoveAllStreams)
@@ -262,10 +274,10 @@ TEST(TestStatCollector, TestRemoveAllStreams)
 	io_service io;
 	StatCollector sc(io, &ndnrtcLib);
 
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/desktop");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera2");
+	sc.addStream(CLIENT1_STREAM_PREFIX_AUDIO);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO1);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO2);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO3);
 	sc.removeAllStreams();
 
 	EXPECT_EQ(0, sc.getStreamsNumber());
@@ -277,15 +289,15 @@ TEST(TestStatCollector, TestRemoveStreams)
 	io_service io;
 	StatCollector sc(io, &ndnrtcLib);
 
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/desktop");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera2");
+	sc.addStream(CLIENT1_STREAM_PREFIX_AUDIO);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO1);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO2);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO3);
 
-	sc.removeStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound");
+	sc.removeStream(CLIENT1_STREAM_PREFIX_AUDIO);
 	EXPECT_EQ(3, sc.getStreamsNumber());
 
-	sc.removeStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera2");
+	sc.removeStream(CLIENT1_STREAM_PREFIX_VIDEO3);
 	EXPECT_EQ(2, sc.getStreamsNumber());
 
 	sc.removeStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/non-existent");
@@ -298,8 +310,8 @@ TEST(TestStatCollector, TestGathering)
 	io_service io;
 	StatCollector sc(io, &ndnrtcLib);
 
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound");
-	sc.addStream("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera");
+	sc.addStream(CLIENT1_STREAM_PREFIX_AUDIO);
+	sc.addStream(CLIENT1_STREAM_PREFIX_VIDEO1);
 
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::deadline_timer runTimer(io);
@@ -343,10 +355,10 @@ TEST(TestStatCollector, TestGathering)
 			return *sampleStats;
 		};
 
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics("/ndn/edu/ucla/remap/ndnrtc/user/clientA/sound"))
+	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(CLIENT1_STREAM_PREFIX_AUDIO))
 		.Times(AtLeast(10))
 		.WillRepeatedly(Invoke(statGenerator));
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics("/ndn/edu/ucla/remap/ndnrtc/user/clientA/camera"))
+	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(CLIENT1_STREAM_PREFIX_VIDEO1))
 		.Times(AtLeast(10))
 		.WillRepeatedly(Invoke(statGenerator));
 
@@ -361,10 +373,10 @@ TEST(TestStatCollector, TestGathering)
     io.run();
     io.stop();
 
-	ASSERT_TRUE(std::ifstream("/tmp/buffer-clientA-sound.stat").good());
-	ASSERT_TRUE(std::ifstream("/tmp/buffer-clientA-camera.stat").good());
-	ASSERT_TRUE(std::ifstream("/tmp/playback-clientA-sound.stat").good());
-	ASSERT_TRUE(std::ifstream("/tmp/playback-clientA-camera.stat").good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/buffer-"+CLIENT1+"-"+STREAM_AUDIO+".stat").c_str()).good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/buffer-"+CLIENT1+"-"+STREAM_VIDEO1+".stat").c_str()).good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/playback-"+CLIENT1+"-"+STREAM_AUDIO+".stat").c_str()).good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/playback-"+CLIENT1+"-"+STREAM_VIDEO1+".stat").c_str()).good());
 
 	std::ifstream t("/tmp/buffer-clientA-sound.stat");
 	std::string statFileContents((std::istreambuf_iterator<char>(t)),
@@ -373,10 +385,10 @@ TEST(TestStatCollector, TestGathering)
 	boost::split(lines, statFileContents, boost::is_any_of("\n"), boost::token_compress_on);
 	EXPECT_GE(lines.size(), 9);
 
-    remove("/tmp/buffer-clientA-sound.stat");
-    remove("/tmp/buffer-clientA-camera.stat");
-    remove("/tmp/playback-clientA-sound.stat");
-    remove("/tmp/playback-clientA-camera.stat");
+    remove(string("/tmp/buffer-"+CLIENT1+"-"+STREAM_AUDIO+".stat").c_str());
+    remove(string("/tmp/buffer-"+CLIENT1+"-"+STREAM_VIDEO1+".stat").c_str());
+    remove(string("/tmp/playback-"+CLIENT1+"-"+STREAM_AUDIO+".stat").c_str());
+    remove(string("/tmp/playback-"+CLIENT1+"-"+STREAM_VIDEO1+".stat").c_str());
 }
 
 //******************************************************************************
