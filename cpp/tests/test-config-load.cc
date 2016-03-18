@@ -133,8 +133,8 @@ TEST(TestConfigLoad, LoadProducerParams)
 	EXPECT_EQ("clientA", params.getProducerParams().username_);
 	EXPECT_EQ("/ndn/edu/ucla/remap", params.getProducerParams().prefix_);
 	EXPECT_EQ(3, params.getProducerParams().publishedStreams_.size());
-	EXPECT_EQ("camera.yuv", params.getProducerParams().publishedStreams_[0].source_);
-	EXPECT_EQ("desktop.yuv", params.getProducerParams().publishedStreams_[1].source_);
+	EXPECT_EQ("camera.argb", params.getProducerParams().publishedStreams_[0].source_);
+	EXPECT_EQ("desktop.argb", params.getProducerParams().publishedStreams_[1].source_);
 	EXPECT_EQ("", params.getProducerParams().publishedStreams_[2].source_);
 	EXPECT_EQ(2, params.getProducerParams().publishedStreams_[0].getThreadNum());
 	EXPECT_EQ(2, params.getProducerParams().publishedStreams_[1].getThreadNum());
@@ -292,14 +292,14 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"-producing:\n"
 		"username: clientA; prefix: /ndn/edu/ucla/remap;\n"
 		"--0:\n"
-		"stream source: camera.yuv; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: camera (video); "
+		"stream source: camera.argb; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: camera (video); "
 		"synced to: sound; seg size: 1000 bytes; freshness: 2000 ms; no device; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 10000 Kbit/s; 720x405; Drop: YES]\n"
 		"[1: name: hi; 30FPS; GOP: 30; Start bitrate: 3000 Kbit/s; "
 		"Max bitrate: 10000 Kbit/s; 1920x1080; Drop: YES]\n"
 		"--1:\n"
-		"stream source: desktop.yuv; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: desktop (video); "
+		"stream source: desktop.argb; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: desktop (video); "
 		"synced to: sound; seg size: 1000 bytes; freshness: 2000 ms; no device; 2 threads:\n"
 		"[0: name: mid; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 10000 Kbit/s; 1080x720; Drop: YES]\n"

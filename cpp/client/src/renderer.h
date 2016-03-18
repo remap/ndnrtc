@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include <ndnrtc/interfaces.h>
+#include "frame-io.h"
 
 /**
  * This class implements IExternalRendere interface
@@ -49,21 +50,16 @@ public:
                          const uint8_t* buffer);
     
 private:
+    boost::shared_ptr<FileSink> sink_;
+    boost::shared_ptr<ArgbFrame> frame_;
     std::string sinkName_;
-    char *renderBuffer_;
-    bool isDumping_;
-    unsigned int bufferSize_;
+    bool isDumping_, suppressBadSink_;
     unsigned int frameCount_;
     unsigned int sinkIdx_;
-    unsigned int currentWidth_, currentHeight_;
-    FILE *sink_;
-
-    std::string openSink();
+    
+    std::string openSink(unsigned int width, unsigned int height);
     void closeSink();
-    void initBuffer();
-    void freeBuffer();
-    void dumpFrame(const uint8_t* frameBuffer);
-    unsigned int getBufferSizeForResolution(unsigned int width, unsigned int height);
+    void dumpFrame();
 };
 
 #endif

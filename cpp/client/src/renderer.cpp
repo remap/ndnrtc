@@ -15,118 +15,91 @@
 using namespace std;
 
 RendererInternal::RendererInternal(const std::string& sinkFileName, bool suppressBadSink)
-:sinkName_(sinkFileName), renderBuffer_(nullptr), bufferSize_(0), frameCount_(0), sink_(nullptr),
-currentWidth_(0), currentHeight_(0), sinkIdx_(0), isDumping_(!suppressBadSink)
-{ 
+:sinkName_(sinkFileName), frameCount_(0), sinkIdx_(0), 
+isDumping_(true), suppressBadSink_(suppressBadSink),
+frame_(new ArgbFrame(0,0))
+{
 };
 
 RendererInternal::~RendererInternal()
 {
     closeSink();
-    freeBuffer();
+    frame_.reset();
 }
 
 uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 {
-    if (!renderBuffer_ || getBufferSizeForResolution(width, height) > bufferSize_)
+    if (frame_->getFrameSizeInBytes() < ArgbFrame(width, height).getFrameSizeInBytes())
     {
-        // init ARGB buffer
-        currentWidth_ = width;
-        currentHeight_ = height;
-
+        frame_.reset(new ArgbFrame(width, height));
         closeSink();
-        string sinkFullPath = openSink();
+        string sinkFullPath = openSink(width, height);
         sinkIdx_++;
-
-        initBuffer();
         
-        LogInfo("") << "initialized render buffer " << currentWidth_ << "x" << currentHeight_ 
-            << "(" << bufferSize_ <<" bytes)." 
+        LogInfo("") << "receiving frame of resolution " << width << "x" << height 
+            << "(" << frame_->getFrameSizeInBytes() <<" bytes per frame)." 
             <<  (isDumping_? string(" writing to ") + sinkFullPath : "" ) << std::endl;
     }
 
-    return (uint8_t*)renderBuffer_;
+    return frame_->getBuffer().get();
 }
 
 void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height, 
     const uint8_t* buffer)
 {
-    if (!renderBuffer_)
+    if (!frame_.get())
         throw runtime_error("render buffer hasn not been initialized");
 
-    if (width != currentWidth_ || height != currentHeight_)
+    if (width != frame_->getWidth() || height != frame_->getHeight())
         throw runtime_error("wrong frame size supplied");
 
     // do whatever we need, i.e. drop frame, render it, write to file, etc.
     LogDebug("") << "received frame (" << width << "x" << height << ") at " 
-    << timestamp << " ms"<<", frame count: "<<frameCount_ << std::endl;
+    << timestamp << " ms"<<", frame count: "<< frameCount_ << std::endl;
 
-    dumpFrame(buffer);
-
+    dumpFrame();
     frameCount_++;
-    return;
 }
     
-string RendererInternal::openSink()
+string RendererInternal::openSink(unsigned int width, unsigned int height)
 {
-    if (!isDumping_)
-        return "";
-
     if (sinkName_ == "")
-        throw runtime_error("invalid sink name provided");
+    {
+        if (suppressBadSink_)
+            isDumping_ = false;
+        else
+            throw runtime_error("invalid sink name provided");
+    }
 
     stringstream sinkPath;
+    sinkPath << sinkName_ << "-" << sinkIdx_ << "-"
+        << width << "x" << height << ".argb";
 
-    sinkPath << sinkName_ << "-" << sinkIdx_ << "-" << currentWidth_ << "x" << currentHeight_ << ".argb";
-    sink_ = fopen(sinkPath.str().c_str(), "wb");
-
-    if (!sink_)
-        throw std::runtime_error("couldn't create file at path "+sinkPath.str());
+    try
+    {
+        sink_.reset(new FileSink(sinkPath.str()));
+    }
+    catch (const std::runtime_error& e)
+    {
+        if (suppressBadSink_)
+            isDumping_ = false;
+        else
+            throw e;
+    }
 
     return sinkPath.str();
 }
 
 void RendererInternal::closeSink()
 {
-    if (isDumping_ && sink_)
-    {
-        fclose(sink_);
-        sink_ = nullptr;
-    }
+    if (isDumping_ && sink_.get())
+        sink_.reset();
 }
 
-void RendererInternal::initBuffer()
-{
-    if (currentWidth_ > 0 && currentHeight_ > 0)
-    {
-        bufferSize_ = getBufferSizeForResolution(currentWidth_, currentHeight_);
-        renderBuffer_ = (char*)realloc(renderBuffer_, bufferSize_);
-    }
-    else
-    {
-        stringstream errmsg;
-        errmsg << "incorrect size for the render buffer (" 
-            << currentWidth_ << "x" << currentHeight_ << ")";
-        throw runtime_error(errmsg.str());
-    }
-}
-
-void RendererInternal::freeBuffer()
-{
-    if (renderBuffer_)
-        free(renderBuffer_);
-}
-
-void RendererInternal::dumpFrame(const uint8_t* frame)
+void RendererInternal::dumpFrame()
 {
     if (!isDumping_)
         return;
     
-    fwrite(frame, sizeof(uint8_t), getBufferSizeForResolution(currentWidth_, currentHeight_), sink_);
+    *sink_ << *frame_;
 }
-
-unsigned int RendererInternal::getBufferSizeForResolution(unsigned int width, unsigned int height)
-{
-    return width*height*4;
-}
-
