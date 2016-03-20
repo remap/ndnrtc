@@ -160,6 +160,9 @@ am_bin_tests_test_client_OBJECTS =  \
 	client/src/bin_tests_test_client-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_client-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_client-frame-io.$(OBJEXT) \
+	client/src/bin_tests_test_client-video-source.$(OBJEXT) \
+	client/src/bin_tests_test_client-precise-generator.$(OBJEXT) \
+	client/src/bin_tests_test_client-config.$(OBJEXT) \
 	$(am__objects_1)
 bin_tests_test_client_OBJECTS = $(am_bin_tests_test_client_OBJECTS)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
@@ -178,6 +181,7 @@ am__objects_2 =  \
 	contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_client_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-test-client-params.$(OBJEXT) \
+	client/src/bin_tests_test_client_params-config.$(OBJEXT) \
 	$(am__objects_2)
 bin_tests_test_client_params_OBJECTS =  \
 	$(am_bin_tests_test_client_params_OBJECTS)
@@ -615,11 +619,11 @@ bin_tests_test_params_SOURCES = tests/test-params.cc ${UNIT_TESTS_COMMON_SOURCES
 bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_params_LDADD = ${UNIT_TESTS_LDADD_}
-bin_tests_test_client_params_SOURCES = tests/test-client-params.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_params_SOURCES = tests/test-client-params.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
-bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}
@@ -843,6 +847,15 @@ client/src/bin_tests_test_client-renderer.$(OBJEXT):  \
 client/src/bin_tests_test_client-frame-io.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-video-source.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-precise-generator.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-config.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_client-tests-helpers.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/$(am__dirstamp):
@@ -871,6 +884,9 @@ bin/tests/test-client$(EXEEXT): $(bin_tests_test_client_OBJECTS) $(bin_tests_tes
 	$(AM_V_CXXLD)$(bin_tests_test_client_LINK) $(bin_tests_test_client_OBJECTS) $(bin_tests_test_client_LDADD) $(LIBS)
 tests/bin_tests_test_client_params-test-client-params.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client_params-config.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT):  \
@@ -1031,9 +1047,13 @@ ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES)
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_client-client.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_client-config.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_client-frame-io.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_client-precise-generator.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_client-renderer.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_client-stat-collector.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_client-video-source.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_client_params-config.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_config_load-config.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_generator-precise-generator.$(OBJEXT)
@@ -1181,9 +1201,13 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-renderer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client_params-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_frame_io-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_generator-precise-generator.Po@am__quote@
@@ -1742,6 +1766,54 @@ client/src/bin_tests_test_client-frame-io.obj: client/src/frame-io.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
 
+client/src/bin_tests_test_client-video-source.o: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-video-source.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo -c -o client/src/bin_tests_test_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/video-source.cpp' object='client/src/bin_tests_test_client-video-source.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+
+client/src/bin_tests_test_client-video-source.obj: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-video-source.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo -c -o client/src/bin_tests_test_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/video-source.cpp' object='client/src/bin_tests_test_client-video-source.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+
+client/src/bin_tests_test_client-precise-generator.o: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo -c -o client/src/bin_tests_test_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_client-precise-generator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+
+client/src/bin_tests_test_client-precise-generator.obj: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo -c -o client/src/bin_tests_test_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_client-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+
+client/src/bin_tests_test_client-config.o: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-config.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo -c -o client/src/bin_tests_test_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/bin_tests_test_client-config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+
+client/src/bin_tests_test_client-config.obj: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-config.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo -c -o client/src/bin_tests_test_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/bin_tests_test_client-config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+
 tests/bin_tests_test_client-tests-helpers.o: tests/tests-helpers.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo -c -o tests/bin_tests_test_client-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po
@@ -1805,6 +1877,22 @@ tests/bin_tests_test_client_params-test-client-params.obj: tests/test-client-par
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-client-params.cc' object='tests/bin_tests_test_client_params-test-client-params.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client_params-test-client-params.obj `if test -f 'tests/test-client-params.cc'; then $(CYGPATH_W) 'tests/test-client-params.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-client-params.cc'; fi`
+
+client/src/bin_tests_test_client_params-config.o: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client_params-config.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client_params-config.Tpo -c -o client/src/bin_tests_test_client_params-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client_params-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client_params-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/bin_tests_test_client_params-config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client_params-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+
+client/src/bin_tests_test_client_params-config.obj: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client_params-config.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client_params-config.Tpo -c -o client/src/bin_tests_test_client_params-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client_params-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client_params-config.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/bin_tests_test_client_params-config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client_params-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
 
 tests/bin_tests_test_client_params-tests-helpers.o: tests/tests-helpers.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client_params-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Tpo -c -o tests/bin_tests_test_client_params-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc

@@ -76,6 +76,8 @@ public:
     ProducerStreamParams(const ProducerStreamParams& params):
         ClientMediaStreamParams(params), source_(params.source_){}
 
+    void getMaxResolution(unsigned int& width, unsigned int& height) const;
+
     void write(std::ostream& os) const {
         os
         << "stream source: " << source_ << "; ";

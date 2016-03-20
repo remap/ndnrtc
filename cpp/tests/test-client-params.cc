@@ -126,6 +126,54 @@ TEST(TestConsumerStreamParams, TestOutput)
 		ss.str());
 }
 
+TEST(TestProducerStreamParams, TestVideoProducerParams)
+{
+	ProducerStreamParams msp;
+
+	msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+	msp.source_ = "camera.argb";
+	msp.streamName_ = "mic";
+	msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
+
+	{
+		VideoThreadParams vp("low", sampleVideoCoderParams());
+		vp.coderParams_.encodeWidth_ = 320;
+		vp.coderParams_.encodeHeight_ = 280;
+
+		msp.addMediaThread(vp);
+	}
+
+	{
+		VideoThreadParams vp("low", sampleVideoCoderParams());
+		vp.coderParams_.encodeWidth_ = 640;
+		vp.coderParams_.encodeHeight_ = 480;
+
+		msp.addMediaThread(vp);
+	}
+	
+	unsigned int height = 0, width = 0;
+	msp.getMaxResolution(width, height);
+	EXPECT_EQ(640, width);
+	EXPECT_EQ(480, height);
+}
+
+TEST(TestProducerStreamParams, TestAudioProducerParams)
+{
+	ProducerStreamParams msp;
+
+	msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+	msp.source_ = "camera.argb";
+	msp.streamName_ = "mic";
+	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
+	msp.addMediaThread(AudioThreadParams("pcmu"));
+	msp.addMediaThread(AudioThreadParams("g722"));
+
+	unsigned int height = 0, width = 0;
+	msp.getMaxResolution(width, height);
+	EXPECT_EQ(0, width);
+	EXPECT_EQ(0, height);
+}
+
 TEST(TestConsumerClientParams, TestOutputEmpty)
 {
 	ConsumerClientParams ccp;

@@ -141,12 +141,12 @@ bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_params_LDADD = ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_client_params_SOURCES = tests/test-client-params.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_params_SOURCES = tests/test-client-params.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}

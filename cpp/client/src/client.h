@@ -14,7 +14,7 @@
 
 #include "config.h"
 #include "client-session-observer.h"
-#include "remote-stream.h"
+#include "stream.h"
 #include "stat-collector.h"
 
 class Client {
@@ -50,6 +50,7 @@ private:
 	boost::shared_ptr<StatCollector> statCollector_;
 
 	std::vector<RemoteStream> remoteStreams_;
+	std::vector<LocalStream> localStreams_;
 
 	Client();
 	Client(Client const&) = delete;
@@ -66,6 +67,8 @@ private:
 
 	RemoteStream initRemoteStream(const ConsumerStreamParams& p, 
 		const ndnrtc::new_api::GeneralConsumerParams& generalParams);
+	LocalStream initLocalStream(const ProducerStreamParams& p);
+	boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams& p);
 };
 
 #endif

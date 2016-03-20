@@ -64,9 +64,11 @@ void Client::setupConsumer()
 		RemoteStream rs = initRemoteStream(p, gp);
 #warning check move semantics
 		remoteStreams_.push_back(boost::move(rs));
+
+		LogInfo("") << "Set up fetching from " << p.streamName_ << endl;
 	}
 
-	LogInfo("") << "Set up fetching " << remoteStreams_.size() << " remote stream(s)" << endl;
+	LogInfo("") << "Fetching " << remoteStreams_.size() << " remote stream(s) total" << endl;
 }
 
 void Client::setupProducer()
@@ -75,6 +77,26 @@ void Client::setupProducer()
 		return;
 
 	initSession();
+
+	ProducerClientParams pcp = params_.getProducerParams();
+
+	for (auto p:pcp.publishedStreams_)
+	{
+		try
+		{
+			LocalStream ls = initLocalStream(p);
+			localStreams_.push_back(boost::move(ls));
+
+			LogInfo("") << "Set up publishing stream " << p.streamName_ << endl;
+		}
+		catch (const runtime_error& e)
+		{
+			LogError("") << "error while trying to publish stream " << p.streamName_
+				<< e.what() << endl;
+		}
+	}
+
+	LogInfo("") << "Publishing " << localStreams_.size() << " streams total" << endl;
 }
 
 void Client::setupStatGathering()
@@ -129,6 +151,14 @@ void Client::tearDownProducer(){
 
 	LogInfo("Tearing down producing...");
 
+	for (auto& ls:localStreams_)
+	{
+		ndnp_->removeLocalStream(clientSessionObserver_.getSessionPrefix(),
+			ls.getPrefix());
+		LogInfo("") << "...stopped publishing " << ls.getPrefix() << std::endl;
+	}
+	localStreams_.clear();
+
 	ndnp_->stopSession(clientSessionObserver_.getSessionPrefix());
 	LogInfo("") << "...stopped session" << std::endl;
 }
@@ -178,4 +208,43 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 		params_.getGeneralParameters(), gcp, renderer);
 
 	return RemoteStream(streamPrefix, boost::shared_ptr<RendererInternal>(renderer));
+}
+
+LocalStream Client::initLocalStream(const ProducerStreamParams& p)
+{
+	boost::shared_ptr<VideoSource> videoSource;
+
+	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
+	{
+		boost::shared_ptr<RawFrame> sampleFrame = sampleFrameForStream(p);
+		videoSource.reset(new VideoSource(io_, p.source_, sampleFrame));
+	}
+
+	IExternalCapturer *capturer = nullptr;
+	string streamPrefix = ndnp_->addLocalStream(clientSessionObserver_.getSessionPrefix(),
+		p, &capturer);
+	
+	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
+	{
+		videoSource->addCapturer(capturer);
+#warning double-check whether FPS should be 30		
+		videoSource->start(30);
+	}
+
+	return LocalStream(streamPrefix, videoSource);
+}
+
+boost::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamParams& p)
+{
+	unsigned int width = 0, height = 0;
+	p.getMaxResolution(width, height);
+
+	if (width == 0 || height == 0)
+	{
+		stringstream ss;
+		ss << "incorrect max resolution for stream " << p.streamName_;
+		throw runtime_error(ss.str());
+	}
+
+	return boost::shared_ptr<RawFrame>(new ArgbFrame(width, height));
 }

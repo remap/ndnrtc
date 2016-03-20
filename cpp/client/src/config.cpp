@@ -28,12 +28,16 @@ using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 using namespace ndnlog;
 
-int lookupNumber(const Setting &SettingPath, string lookupKey, double &paramToFind);
+int lookupNumber(const Setting &SettingPath, string lookupKey,
+    double &paramToFind);
 int lookupNumber(const Setting &SettingPath, string lookupKey, int &paramToFind);
-int lookupNumber(const Setting &SettingPath, string lookupKey, unsigned int &paramToFind);
+int lookupNumber(const Setting &SettingPath, string lookupKey,
+    unsigned int &paramToFind);
 int loadConfigFile(const string &cfgFileName, Config &cfg);
-int loadBasicConsumerSettings(const Setting &settingPath, GeneralConsumerParams& consumerGeneralParams);
-int loadBasicStatSettings(const Setting &consumerBasicStatSettings, std::vector<StatGatheringParams> &statistics);
+int loadBasicConsumerSettings(const Setting &settingPath, 
+    GeneralConsumerParams& consumerGeneralParams);
+int loadBasicStatSettings(const Setting &consumerBasicStatSettings, 
+    std::vector<StatGatheringParams> &statistics);
 int loadGeneralSettings(const Setting &general, GeneralParams &generalParams);
 int loadConsumerSettings(const Setting& root, ConsumerClientParams& params);
 int loadProducerSettings(const Setting& root, ProducerClientParams& params);
@@ -42,6 +46,27 @@ int loadStreamParams(const Setting& s, ProducerStreamParams& params);
 int loadStreamParams(const Setting& s, ClientMediaStreamParams& params);
 int loadThreadParams(const Setting &s, AudioThreadParams& params);
 int loadThreadParams(const Setting &s, VideoThreadParams& params);
+
+//******************************************************************************
+void ProducerStreamParams::getMaxResolution(unsigned int& width, 
+    unsigned int& height) const
+{
+    if (type_ == MediaStreamTypeAudio) return;
+
+    width = 0; height = 0;
+    
+    for (unsigned int i = 0; i < getThreadNum(); ++i)
+    {
+        VideoThreadParams *p = getVideoThread(i);
+        
+        if (p->coderParams_.encodeWidth_ > width)
+        {
+            width = p->coderParams_.encodeWidth_;
+            height = p->coderParams_.encodeHeight_;
+        }
+    }
+}
+
 
 //******************************************************************************
 int loadParamsFromFile(const string &cfgFileName, ClientParams &params)
