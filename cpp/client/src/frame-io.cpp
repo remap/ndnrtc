@@ -71,7 +71,7 @@ FILE* FileSink::openFile_impl(string path)
 
 //******************************************************************************
 FileFrameSource::FileFrameSource(const string& path):FileFrameStorage(path),
-current_(0)
+current_(0), readError_(false)
 { 
     openFile(); 
 }
@@ -81,14 +81,17 @@ IFrameSource& FileFrameSource::operator>>(RawFrame& frame)
     uint8_t *buf = frame.getBuffer().get();
     size_t readBytes = fread(buf, sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
     current_ = ftell(file_);
+    readError_ = (readBytes != frame.getFrameSizeInBytes());
 
-    if (readBytes != frame.getFrameSizeInBytes())
-    {
-        stringstream msg;
-        msg << "error trying to read frame of " << frame.getFrameSizeInBytes()
-            << " bytes from file";
-        throw runtime_error(msg.str());
-    }
+    // {
+    //     stringstream msg;
+    //     msg << "error trying to read frame of " << frame.getFrameSizeInBytes()
+    //         << " bytes from file (read " << readBytes << " bytes): error " 
+    //         << ferror(file_) << " eof: " << feof(file_) 
+    //         << " current " << current_ << " size " << fileSize_ 
+    //         << " ftell " << ftell(file_);
+    //     throw runtime_error(msg.str());
+    // }
 }
 
 bool FileFrameSource::checkSourceForFrame(const std::string& path, 

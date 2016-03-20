@@ -68,7 +68,7 @@ TEST(TestVideoSource, TestVideoSourcing)
 		for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
 			b[i] = (i%256);
 
-		for (int i = 0; i < 30; i++)
+		for (int i = 0; i < 1; i++)
 			sink << frame;
 	}
 
@@ -110,6 +110,7 @@ TEST(TestVideoSource, TestVideoSourcing)
 	GT_PRINTF("mean time to source 1 frame was %.4f ms\n", vs.getMeanSourcingTimeMs());
 	GT_PRINTF("sourced %d frames\n", vs.getSourcedFramesNumber());
 	EXPECT_EQ(3, duration);
+	EXPECT_EQ(90-1, vs.getRewinds());
 	EXPECT_EQ(vs.getSourcedFramesNumber(), 90);
 
 	remove(fname.c_str());

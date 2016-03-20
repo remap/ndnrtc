@@ -99,9 +99,48 @@ TEST(TestSource, TestSource)
 
 	unsigned int frameCount = 0;
 
-	while (!source.isEof())
+	do
 	{
 		source >> frame;
+		if (!source.isEof()) frameCount++;
+
+		for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
+			EXPECT_EQ((i%256), (frame.getBuffer().get())[i]);
+
+	} while (!source.isEof());
+
+	EXPECT_EQ(30, frameCount);
+
+	remove(fname.c_str());
+}
+
+TEST(TestSource, TestRewind)
+{
+	std::string fname = "/tmp/test-sink4.argb";
+	{
+		boost::shared_ptr<FileSink> sink(new FileSink(fname));
+		ArgbFrame frame(640, 480);
+		uint8_t *b = frame.getBuffer().get();
+
+		for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
+			b[i] = (i%256);
+
+		for (int i = 0; i < 2; i++)
+			*sink << frame;
+		sink.reset();
+	}
+	
+	FileFrameSource source(fname);
+	ArgbFrame frame(640,480);
+
+	unsigned int frameCount = 0;
+
+	for (int i = 0; i < 30; i++)
+	{
+		source >> frame;
+		if (source.isEof())
+			source.rewind();
+
 		frameCount ++;
 
 		for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
@@ -109,7 +148,6 @@ TEST(TestSource, TestSource)
 	}
 
 	EXPECT_EQ(30, frameCount);
-	EXPECT_ANY_THROW(source >> frame);
 
 	remove(fname.c_str());
 }

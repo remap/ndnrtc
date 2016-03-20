@@ -79,21 +79,31 @@ private:
 //******************************************************************************
 class IFrameSource {
 public:
-	virtual IFrameSource& operator>>(RawFrame& frame) = 0;
+	virtual IFrameSource& operator>>(RawFrame& frame) noexcept = 0;
 };
 
 class FileFrameSource : public IFrameSource, public FileFrameStorage {
 public:
 	FileFrameSource(const std::string& path);
 
-	IFrameSource& operator>>(RawFrame& frame);
-	bool isEof(){ return (current_ == fileSize_); }
+	IFrameSource& operator>>(RawFrame& frame) noexcept;
+	/**
+	 * NOTE: will always return 'true' before any read call.
+	 * proper use to read frames in a loop:
+	 * do {
+	 *		if (source.isEof()) source.rewind();
+	 *		source >> frame;
+	 * } while(source.isEof() && !source.isError());
+	 */
+	bool isEof(){ return (feof(file_) != 0); }
+	bool isError() { return readError_; }
 	void rewind(){ ::rewind(file_); current_ = 0; }
 
 	static bool checkSourceForFrame(const std::string& path, const RawFrame& frame);
 private:
 	FILE* openFile_impl(std::string path);
 	unsigned long current_;
+	bool readError_;
 };
 
 #endif

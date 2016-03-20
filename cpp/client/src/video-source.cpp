@@ -15,7 +15,8 @@ using namespace boost::asio;
 VideoSource::VideoSource(io_service& io_service, 
 	const std::string& sourcePath, 
 	const boost::shared_ptr<RawFrame>& frame):
-io_(io_service), frame_(frame), isRunning_(false), framesSourced_(0)
+io_(io_service), frame_(frame), isRunning_(false), framesSourced_(0),
+nRewinds_(0)
 {
 	assert(frame.get());
 
@@ -102,16 +103,20 @@ void VideoSource::stopCapturers()
 
 void VideoSource::sourceFrame()
 {
-	if (source_->isEof())
-	{
-		LogDebug("") << "rewound source " << source_->getPath() << endl;
-		source_->rewind();
-	}
-
 	LogDebug("") << "reading " << frame_->getWidth() << "x" << frame_->getHeight() 
 		<< "frame from " << source_->getPath() << endl;
 
-	*source_ >> *frame_;
+	do{
+		if (source_->isEof())
+		{
+			LogDebug("") << "rewound source " << source_->getPath() << endl;
+			source_->rewind();
+			nRewinds_++;
+		}
+		
+		*source_ >> *frame_;
+	} while(source_->isEof());
+	
 	framesSourced_++;
 }
 

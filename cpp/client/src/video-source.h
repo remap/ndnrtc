@@ -38,11 +38,12 @@ public:
 	void start(const double& rate);
 	void stop();
 	unsigned int getSourcedFramesNumber() { return framesSourced_; }
+	unsigned int getRewinds() { return nRewinds_; }
 	double getMeanSourcingTimeMs();
 
 private:
 	bool isRunning_;
-	unsigned int framesSourced_;
+	unsigned int framesSourced_, nRewinds_;
 	boost::shared_ptr<FileFrameSource> source_;
 	boost::shared_ptr<RawFrame> frame_;
 	std::vector<ndnrtc::IExternalCapturer*> capturers_;
