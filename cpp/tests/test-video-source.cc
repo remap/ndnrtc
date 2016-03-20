@@ -17,25 +17,6 @@ using namespace std;
 using namespace ::testing;
 using namespace boost::chrono;
 
-class MockExternalCapturer : public ndnrtc::IExternalCapturer
-{
-public:
-	MOCK_METHOD0(capturingStarted, void(void));
-	MOCK_METHOD0(capturingStopped, void(void));
-	MOCK_METHOD4(incomingArgbFrame, int(const unsigned int width,
-                                      const unsigned int height,
-                                      unsigned char* argbFrameData,
-                                      unsigned int frameSize));
-	MOCK_METHOD8(incomingI420Frame, int(const unsigned int width,
-                                      const unsigned int height,
-                                      const unsigned int strideY,
-                                      const unsigned int strideU,
-                                      const unsigned int strideV,
-                                      const unsigned char* yBuffer,
-                                      const unsigned char* uBuffer,
-                                      const unsigned char* vBuffer));
-};
-
 TEST(TestVideoSource, TestBlank)
 {
 	boost::asio::io_service io;

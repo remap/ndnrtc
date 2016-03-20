@@ -91,6 +91,7 @@ void Client::setupProducer()
 		}
 		catch (const runtime_error& e)
 		{
+			throw e;
 			LogError("") << "error while trying to publish stream " << p.streamName_
 				<< e.what() << endl;
 		}
@@ -153,6 +154,7 @@ void Client::tearDownProducer(){
 
 	for (auto& ls:localStreams_)
 	{
+		ls.stopSource();
 		ndnp_->removeLocalStream(clientSessionObserver_.getSessionPrefix(),
 			ls.getPrefix());
 		LogInfo("") << "...stopped publishing " << ls.getPrefix() << std::endl;
@@ -216,19 +218,35 @@ LocalStream Client::initLocalStream(const ProducerStreamParams& p)
 
 	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
 	{
+		LogDebug("") << "initializing video source at " << p.source_ << endl;
+
 		boost::shared_ptr<RawFrame> sampleFrame = sampleFrameForStream(p);
+		
+		LogDebug("") << "source should support frames of size " 
+			<< sampleFrame->getWidth() << "x" << sampleFrame->getHeight() << endl;
+
 		videoSource.reset(new VideoSource(io_, p.source_, sampleFrame));
+
+		LogDebug("") << "video source initialized" << endl;
 	}
 
 	IExternalCapturer *capturer = nullptr;
 	string streamPrefix = ndnp_->addLocalStream(clientSessionObserver_.getSessionPrefix(),
 		p, &capturer);
 	
+	LogDebug("") << "local stream creation "
+		<< (streamPrefix == "" ? "failure. check log":"success ") << streamPrefix << endl;
+
+	if (streamPrefix == "")
+		throw runtime_error("error adding local stream.");
+
 	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
 	{
 		videoSource->addCapturer(capturer);
-#warning double-check whether FPS should be 30		
+#warning double-check whether FPS should be 30
+		LogDebug("") << "starting video source..." << endl;
 		videoSource->start(30);
+		LogDebug("") << "...video source started" << endl;
 	}
 
 	return LocalStream(streamPrefix, videoSource);

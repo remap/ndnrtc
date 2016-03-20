@@ -102,5 +102,71 @@ ClientParams sampleConsumerParams()
 
 ClientParams sampleProducerParams()
 {
-	return ClientParams();
+	ClientParams cp;
+
+	{
+		GeneralParams gp;
+
+		gp.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
+		gp.logFile_ = "ndnrtc.log";
+		gp.logPath_ = "/tmp";
+		gp.useRtx_ = true;
+		gp.useFec_ = false;
+		gp.useAvSync_ = true;
+		gp.skipIncomplete_ = true;
+		gp.host_ = "aleph.ndn.ucla.edu";
+		gp.portNum_ = 6363;
+		cp.setGeneralParameters(gp);
+	}
+
+	{
+		ProducerClientParams pcp;
+
+		pcp.username_ = "client1";
+		pcp.prefix_ = "/ndn/edu/ucla/remap";
+
+		{
+			ProducerStreamParams msp;
+			stringstream ss;
+	
+			msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+			msp.streamName_ = "mic";
+			msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
+			msp.producerParams_.freshnessMs_ = 2000;
+			msp.producerParams_.segmentSize_ = 1000;
+	
+			CaptureDeviceParams cdp;
+			cdp.deviceId_ = 10;
+			msp.captureDevice_ = cdp;
+			msp.addMediaThread(AudioThreadParams("pcmu"));
+			msp.addMediaThread(AudioThreadParams("g722"));
+	
+			pcp.publishedStreams_.push_back(msp);
+		}
+
+		{
+			ProducerStreamParams msp;
+			stringstream ss;
+	
+			msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+			msp.streamName_ = "camera";
+			msp.source_ = "/tmp/camera.argb";
+			msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
+			msp.synchronizedStreamName_ = "mic";
+			msp.producerParams_.freshnessMs_ = 2000;
+			msp.producerParams_.segmentSize_ = 1000;
+	
+			CaptureDeviceParams cdp;
+			cdp.deviceId_ = 11;
+			msp.captureDevice_ = cdp;
+			msp.addMediaThread(VideoThreadParams("low", sampleVideoCoderParams()));
+			msp.addMediaThread(VideoThreadParams("hi", sampleVideoCoderParams()));
+
+			pcp.publishedStreams_.push_back(msp);
+		}
+
+		cp.setProducerParams(pcp);
+	}
+
+	return cp;
 }

@@ -46,6 +46,7 @@ public:
 	~LocalStream(){}
 
 	boost::shared_ptr<VideoSource> getVideoSource() const { return vsource_; }
+	void stopSource() { if (vsource_.get()) vsource_->stop(); }
 
 private:
 	boost::shared_ptr<VideoSource> vsource_;

@@ -91,6 +91,72 @@ TEST(TestClient, TestConsumer)
 	remove("/tmp/buffer-client1-camera.stat");
 }
 
+TEST(TestClient, TestProducer)
+{
+	// ndnlog::new_api::Logger::initAsyncLogging();
+
+	ClientParams cp = sampleProducerParams();
+	ASSERT_EQ(2, cp.getProducerParams().publishedStreams_.size());
+
+	MockExternalCapturer capturer;
+
+	{
+		unsigned int w,h;
+		cp.getProducerParams().publishedStreams_[1].getMaxResolution(w,h);
+		ArgbFrame frame(w, h);
+
+		InSequence s;
+		EXPECT_CALL(capturer, capturingStarted());
+		EXPECT_CALL(capturer, incomingArgbFrame(w, h, _, frame.getFrameSizeInBytes()))
+			.Times(AtLeast(89));
+		EXPECT_CALL(capturer, capturingStopped());
+	}
+
+	// create frame file source
+	std::string sourceName = cp.getProducerParams().publishedStreams_[1].source_;
+	{
+		unsigned int w,h;
+		cp.getProducerParams().publishedStreams_[1].getMaxResolution(w,h);
+		FileSink sink(sourceName);
+		ArgbFrame frame(w, h);
+		uint8_t *b = frame.getBuffer().get();
+
+		for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
+			b[i] = (i%256);
+
+		for (int i = 0; i < 10; i++)
+			sink << frame;
+	}
+
+	MockNdnRtcLibrary ndnrtcLib;
+	Client& c = Client::getSharedInstance();
+
+	{
+		IExternalCapturer* capPtr = &capturer;
+		InSequence s;
+		std::string sessionPrefix = cp.getProducerParams().prefix_ + "/ndnrtc/user/" +
+			cp.getProducerParams().username_;
+
+		EXPECT_CALL(ndnrtcLib, setObserver(_));
+		EXPECT_CALL(ndnrtcLib, startSession(_, _, _, _)).
+			Times(1)
+			.WillOnce(Return(sessionPrefix));
+		EXPECT_CALL(ndnrtcLib, addLocalStream(sessionPrefix, _, _))
+			.Times(2)
+			.WillOnce(Return(sessionPrefix+"/streams/"+
+				cp.getProducerParams().publishedStreams_[0].streamName_))
+			.WillOnce(DoAll(SetArgPointee<2>(capPtr),
+				Return(sessionPrefix+"/streams/"+
+				cp.getProducerParams().publishedStreams_[1].streamName_)));
+		EXPECT_CALL(ndnrtcLib, removeLocalStream(sessionPrefix, _))
+			.Times(2);
+		EXPECT_CALL(ndnrtcLib, stopSession(sessionPrefix));
+	}
+
+	c.run(&ndnrtcLib, 3, 0, cp);
+	remove(sourceName.c_str());
+}
+
 // TEST(TestClient, TestThrowsAtBadProducerParams)
 // {
 // 	ProducerClientParams pcp;
