@@ -11,6 +11,8 @@
 #include "client/src/config.h"
 
 #define TEST_CONFIG_FILE "tests/default.cfg"
+#define TEST_CONFIG_SAMPLE_CONSUMER_FILE "tests/sample-consumer.cfg"
+#define TEST_CONFIG_SAMPLE_PRODUCER_FILE "tests/sample-producer.cfg"
 #define TEST_CONFIG_FILE_BAD1 "tests/sample-bad1.cfg"
 #define TEST_CONFIG_FILE_CA "tests/consumer-audio.cfg"
 #define TEST_CONFIG_FILE_CV "tests/consumer-video.cfg"
@@ -146,6 +148,7 @@ TEST(TestConfigLoad, LoadProducerParams)
 
 TEST(TestConfigLoad, LoadAudioConsumerOnly)
 {
+	// ndnlog::new_api::Logger::initAsyncLogging();
 	string fileName(TEST_CONFIG_FILE_CA);
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
@@ -167,8 +170,8 @@ TEST(TestConfigLoad, LoadAudioConsumerOnly)
 	EXPECT_EQ(2, params.getConsumerParams().fetchedStreams_.size());
 	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeAudio, params.getConsumerParams().fetchedStreams_[0].type_);
 	EXPECT_EQ(ClientMediaStreamParams::MediaStreamTypeAudio, params.getConsumerParams().fetchedStreams_[1].type_);
-	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientB", params.getConsumerParams().fetchedStreams_[0].sessionPrefix_);
-	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientA", params.getConsumerParams().fetchedStreams_[0].sessionPrefix_);
+	EXPECT_EQ("/ndn/edu/ucla/remap/ndnrtc/user/clientA", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[0].streamSink_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[1].streamSink_);
 	EXPECT_EQ("pcmu", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
@@ -176,7 +179,7 @@ TEST(TestConfigLoad, LoadAudioConsumerOnly)
 	EXPECT_EQ(1, params.getConsumerParams().fetchedStreams_[0].getThreadNum());
 	EXPECT_EQ(1, params.getConsumerParams().fetchedStreams_[1].getThreadNum());
 	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[0].streamName_);
-	EXPECT_EQ("sound", params.getConsumerParams().fetchedStreams_[1].streamName_);
+	EXPECT_EQ("sound2", params.getConsumerParams().fetchedStreams_[1].streamName_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[0].synchronizedStreamName_);
 	EXPECT_EQ("", params.getConsumerParams().fetchedStreams_[1].synchronizedStreamName_);
 	EXPECT_EQ(1000, params.getConsumerParams().fetchedStreams_[0].producerParams_.segmentSize_);
@@ -309,6 +312,82 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); "
 		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "
 		"no device; 1 threads:\n"
+		"[0: name: pcmu]\n",
+		ss.str());
+}
+
+TEST(TestConfigLoad, TestSampleConsumerParams)
+{
+	// ndnlog::new_api::Logger::initAsyncLogging();
+	string fileName(TEST_CONFIG_SAMPLE_CONSUMER_FILE);
+	
+	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
+
+	ClientParams params;
+
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+
+	stringstream ss;
+	ss << params;
+
+	EXPECT_EQ(
+		"-general:\n"
+		"log level: INFO; log file: ndnrtc-client.log (at /tmp); RTX: ON; FEC: ON; "
+		"A/V Sync: ON; Skipping incomplete frames: ON; Host: localhost; Port #: 6363\n"
+		"-consuming:\n"
+		"general audio: interest lifetime: 2000 ms; jitter size: 150 ms; "
+		"buffer size: 150 slots; slot size: 4000 bytes\n"
+		"general video: interest lifetime: 2000 ms; jitter size: 150 ms; "
+		"buffer size: 200 slots; slot size: 16000 bytes\n"
+		"stat gathering:\n"
+		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, dArr)\n"
+		"stat file: playback.stat; stats: (framesAcq, lambdaD, drdPrime)\n"
+		"stat file: play.stat; stats: (lambdaD, drdPrime, jitterTar, dArr)\n"
+		"fetching:\n"
+		"[0: stream sink: ; thread to fetch: pcmu; session prefix: "
+		"/ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); synced to:"
+		" ; seg size: 1000 bytes; freshness: 0 ms; no device; 1 threads:\n"
+		"[0: name: pcmu]\n"
+		"]\n"
+		"[1: stream sink: /tmp/clientA-camera; thread to fetch: low; session prefix: "
+		"/ndn/edu/ucla/remap/ndnrtc/user/clientA; name: camera (video); synced to:"
+		" sound; seg size: 1000 bytes; freshness: 0 ms; no device; 2 threads:\n"
+		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
+		"Max bitrate: 10000 Kbit/s; 720x405; Drop: NO]\n"
+		"[1: name: hi; 30FPS; GOP: 30; Start bitrate: 3000 Kbit/s; "
+		"Max bitrate: 10000 Kbit/s; 1280x720; Drop: NO]\n"
+		"]\n",
+		ss.str());
+}
+
+TEST(TestConfigLoad, TestSampleProducerParams)
+{
+	// ndnlog::new_api::Logger::initAsyncLogging();
+	string fileName(TEST_CONFIG_SAMPLE_PRODUCER_FILE);
+	
+	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
+
+	ClientParams params;
+
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+
+	stringstream ss;
+	ss << params;
+
+	EXPECT_EQ(
+		"-general:\n"
+		"log level: INFO; log file: ndnrtc-client.log (at /tmp); RTX: ON; FEC: ON; A/V Sync: ON; "
+		"Skipping incomplete frames: ON; Host: localhost; Port #: 6363\n"
+		"-producing:\n"
+		"username: clientA; prefix: /ndn/edu/ucla/remap;\n"
+		"--0:\n"
+		"stream source: test-source-1280x720.argb; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; "
+		"name: camera (video); synced to: sound; seg size: 1000 bytes; freshness: 2000 ms; no device; 2 threads:\n"
+		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; Max bitrate: 10000 Kbit/s; 720x405; Drop: YES]\n"
+		"[1: name: hi; 30FPS; GOP: 30; Start bitrate: 3000 Kbit/s; Max bitrate: 10000 Kbit/s; 1280x720; Drop: YES]\n"
+		"--1:\n"
+		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); synced to: ;"
+		" seg size: 1000 bytes; freshness: 2000 ms; no device; 1 threads:\n"
 		"[0: name: pcmu]\n",
 		ss.str());
 }

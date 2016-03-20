@@ -16563,9 +16563,20 @@ fi
 esac
 
 # create links for client config file
+ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
+
+ac_config_links="$ac_config_links client/sample-consumer.cfg:tests/sample-consumer.cfg"
+
+ac_config_links="$ac_config_links client/sample-producer.cfg:tests/sample-producer.cfg"
+
+ac_config_links="$ac_config_links client/test-freeculture.cfg:tests/test-freeculture.cfg"
+
 ac_config_links="$ac_config_links tests/default.cfg:tests/default.cfg"
 
-ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
+ac_config_links="$ac_config_links tests/sample-consumer.cfg:tests/sample-consumer.cfg"
+
+ac_config_links="$ac_config_links tests/sample-producer.cfg:tests/sample-producer.cfg"
+
 
 ac_config_links="$ac_config_links tests/sample-bad1.cfg:tests/sample-bad1.cfg"
 
@@ -18728,8 +18739,13 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
-    "tests/default.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/default.cfg:tests/default.cfg" ;;
     "client/params.cfg") CONFIG_LINKS="$CONFIG_LINKS client/params.cfg:tests/default.cfg" ;;
+    "client/sample-consumer.cfg") CONFIG_LINKS="$CONFIG_LINKS client/sample-consumer.cfg:tests/sample-consumer.cfg" ;;
+    "client/sample-producer.cfg") CONFIG_LINKS="$CONFIG_LINKS client/sample-producer.cfg:tests/sample-producer.cfg" ;;
+    "client/test-freeculture.cfg") CONFIG_LINKS="$CONFIG_LINKS client/test-freeculture.cfg:tests/test-freeculture.cfg" ;;
+    "tests/default.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/default.cfg:tests/default.cfg" ;;
+    "tests/sample-consumer.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-consumer.cfg:tests/sample-consumer.cfg" ;;
+    "tests/sample-producer.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-producer.cfg:tests/sample-producer.cfg" ;;
     "tests/sample-bad1.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-bad1.cfg:tests/sample-bad1.cfg" ;;
     "tests/consumer-audio.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-audio.cfg:tests/consumer-audio.cfg" ;;
     "tests/consumer-video.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-video.cfg:tests/consumer-video.cfg" ;;

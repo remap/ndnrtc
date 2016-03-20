@@ -91,8 +91,7 @@ void Client::setupProducer()
 		}
 		catch (const runtime_error& e)
 		{
-			throw e;
-			LogError("") << "error while trying to publish stream " << p.streamName_
+			LogError("") << "error while trying to publish stream " << p.streamName_ << ": "
 				<< e.what() << endl;
 		}
 	}

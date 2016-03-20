@@ -158,6 +158,30 @@ TEST(TestSource, TestBadSourcePath)
 	EXPECT_ANY_THROW(FileFrameSource("/test-source.argb"));
 }
 
+#if 0
+TEST(TestSource, TestTemp)
+{
+	std::string fname = "/tmp/clientA-camera-0-320x180.argb";
+	FileFrameSource source(fname);
+	ArgbFrame frame(320,180);
+	unsigned int frameCount = 0;
+	boost::shared_ptr<FileSink> sink(new FileSink("/tmp/test-320x180-30frames.argb"));
+
+	for (int i = 0; i < 30; i++)
+	{
+		do
+		{
+			if (source.isEof()) source.rewind();
+			source >> frame;
+		} while (source.isEof());
+
+		*sink << frame;
+	}
+
+	sink.reset();
+}
+#endif
+
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

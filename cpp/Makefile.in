@@ -62,9 +62,12 @@ DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
 	$(top_srcdir)/configure $(top_srcdir)/tests/consumer-audio.cfg \
 	$(top_srcdir)/tests/consumer-video.cfg \
 	$(top_srcdir)/tests/default.cfg \
-	$(top_srcdir)/tests/sample-bad1.cfg AUTHORS COPYING ChangeLog \
-	NEWS compile config.guess config.sub depcomp install-sh \
-	ltmain.sh missing
+	$(top_srcdir)/tests/sample-bad1.cfg \
+	$(top_srcdir)/tests/sample-consumer.cfg \
+	$(top_srcdir)/tests/sample-producer.cfg \
+	$(top_srcdir)/tests/test-freeculture.cfg AUTHORS COPYING \
+	ChangeLog NEWS compile config.guess config.sub depcomp \
+	install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_check_link_flag.m4 \
@@ -77,8 +80,10 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_CLEAN_FILES = client/params.cfg
-CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-bad1.cfg \
+CONFIG_CLEAN_FILES = client/params.cfg client/sample-consumer.cfg \
+	client/sample-producer.cfg client/test-freeculture.cfg
+CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-consumer.cfg \
+	tests/sample-producer.cfg tests/sample-bad1.cfg \
 	tests/consumer-audio.cfg tests/consumer-video.cfg
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
