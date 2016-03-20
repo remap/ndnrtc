@@ -49,6 +49,7 @@ public:
 	FileFrameStorage(std::string path):file_(nullptr), path_(path), fileSize_(0) { }
 	virtual ~FileFrameStorage(){ closeFile(); }
 
+	std::string getPath() { return path_; }
 	unsigned long getSize() { return fileSize_; }
 protected:
 	FILE *file_;

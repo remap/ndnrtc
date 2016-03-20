@@ -94,7 +94,7 @@ endif
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
@@ -104,6 +104,12 @@ if OS_LINUX
 
 #ndnrtc_client_LDFLAGS += -Wl,-rpath -Wl,/usr/lib/x86_64-linux-gnu
 ndnrtc_client_LDADD += -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
+
+endif
+
+if OS_DARWIN
+
+ndnrtc_client_CPPFLAGS += -DOS_DARWIN
 
 endif
 
@@ -117,7 +123,13 @@ UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
 UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
-check_PROGRAMS = bin/tests/test-config-load bin/tests/test-params bin/tests/test-client-params bin/tests/test-client bin/tests/test-stat-collector bin/tests/test-renderer bin/tests/test-frame-io
+if OS_DARWIN
+
+UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
+
+endif
+
+check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
 
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -154,5 +166,14 @@ bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_io_LDADD = ${UNIT_TESTS_LDADD_}
 
+bin_tests_test_video_source_SOURCES = tests/test-video-source.cc client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_source_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_source_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_source_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}

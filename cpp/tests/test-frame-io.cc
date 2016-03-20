@@ -25,7 +25,8 @@ TEST(TestFrame, TestArgFrame)
 
 TEST(TestSink, TestSink)
 {
-	boost::shared_ptr<FileSink> sink(new FileSink("/tmp/test-sink.argb"));
+	std::string fname = "/tmp/test-sink1.argb";
+	boost::shared_ptr<FileSink> sink(new FileSink(fname));
 	ArgbFrame frame(640, 480);
 	uint8_t *b = frame.getBuffer().get();
 
@@ -35,7 +36,7 @@ TEST(TestSink, TestSink)
 	*sink << frame;
 	sink.reset();
 
-	FILE *f = fopen("/tmp/test-sink.argb", "rb");
+	FILE *f = fopen(fname.c_str(), "rb");
 	fseek (f , 0 , SEEK_END);
 	long lSize = ftell(f);
 	rewind (f);
@@ -48,7 +49,7 @@ TEST(TestSink, TestSink)
 	for (int i = 0; i < lSize; ++i)
 		ASSERT_EQ(buf[i], (i%256));
 
-	remove("/tmp/test-sink.argb");
+	remove(fname.c_str());
 }
 
 TEST(TestSink, TestSinkThrowOnCreation)
@@ -59,7 +60,8 @@ TEST(TestSink, TestSinkThrowOnCreation)
 
 TEST(TestSource, TestSourceCheck)
 {
-	boost::shared_ptr<FileSink> sink(new FileSink("/tmp/test-sink.argb"));
+	std::string fname = "/tmp/test-sink2.argb";
+	boost::shared_ptr<FileSink> sink(new FileSink(fname));
 	ArgbFrame frame(640, 480);
 	uint8_t *b = frame.getBuffer().get();
 
@@ -70,14 +72,15 @@ TEST(TestSource, TestSourceCheck)
 		*sink << frame;
 	sink.reset();
 
-	ASSERT_TRUE(FileFrameSource::checkSourceForFrame("/tmp/test-sink.argb", frame));
-	remove("/tmp/test-sink.argb");
+	ASSERT_TRUE(FileFrameSource::checkSourceForFrame(fname, frame));
+	remove(fname.c_str());
 }
 
 TEST(TestSource, TestSource)
 {
+	std::string fname = "/tmp/test-sink3.argb";
 	{
-		boost::shared_ptr<FileSink> sink(new FileSink("/tmp/test-sink.argb"));
+		boost::shared_ptr<FileSink> sink(new FileSink(fname));
 		ArgbFrame frame(640, 480);
 		uint8_t *b = frame.getBuffer().get();
 
@@ -89,7 +92,7 @@ TEST(TestSource, TestSource)
 		sink.reset();
 	}
 	
-	FileFrameSource source("/tmp/test-sink.argb");
+	FileFrameSource source(fname);
 	ArgbFrame frame(640,480);
 
 	EXPECT_EQ(frame.getFrameSizeInBytes()*30, source.getSize());
@@ -108,7 +111,7 @@ TEST(TestSource, TestSource)
 	EXPECT_EQ(30, frameCount);
 	EXPECT_ANY_THROW(source >> frame);
 
-	remove("/tmp/test-sink.argb");
+	remove(fname.c_str());
 }
 
 TEST(TestSource, TestBadSourcePath)
