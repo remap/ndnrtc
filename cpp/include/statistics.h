@@ -69,7 +69,6 @@ namespace ndnrtc {
                 SegmentsKeyAvgNum,
                 SegmentsDeltaParityAvgNum,
                 SegmentsKeyParityAvgNum,
-                RtxFrequency,
                 RtxNum,
                 RebufferingsNum,
                 RequestedNum,
@@ -77,34 +76,33 @@ namespace ndnrtc {
                 DW,
                 W,
                 RttPrime,
-                InBitrateKbps,
-                InRateSegments,
                 SegmentsReceivedNum,
                 TimeoutsNum,
                 Darr,
+                BytesReceived,
+                RawBytesReceived,
                 
                 // RTT estimator
                 RttEstimation,
                 
                 // interest queue
-                InterestRate,
                 QueueSize,
                 InterestsSentNum,
                 
                 // producer
                 //media thread
-                OutBitrateKbps,
-                OutRateSegments,
+                BytesPublished,
+                RawBytesPublished,
+                PublishedSegmentsNum,
                 PublishedNum,
                 PublishedKeyNum,
-                // InterestRate, // borrowed from interest queue (above)
+                InterestsReceivedNum,
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)
-                EncodingRate,
+                EncodedNum,
                 
                 // capturer
-                CaptureRate,
                 CapturedNum
             };
             
@@ -112,6 +110,7 @@ namespace ndnrtc {
             public:
                 typedef std::map<Indicator, double> StatRepo;
                 static const std::map<Indicator, std::string> IndicatorNames;
+                static const std::map<Indicator, std::string> IndicatorKeywords;
                 
                 static StatisticsStorage*
                 createConsumerStatistics()
