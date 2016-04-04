@@ -75,46 +75,62 @@ namespace ndnrtc
         typedef struct _FrameSegmentsInfo {
             double deltaAvgSegNum_, deltaAvgParitySegNum_;
             double keyAvgSegNum_, keyAvgParitySegNum_;
+
+            _FrameSegmentsInfo():deltaAvgSegNum_(0), deltaAvgParitySegNum_(0), keyAvgSegNum_(0),keyAvgParitySegNum_(0){}
+            _FrameSegmentsInfo(double d, double dp, double k, double kp):deltaAvgSegNum_(d), 
+                deltaAvgParitySegNum_(dp), keyAvgSegNum_(k),keyAvgParitySegNum_(kp){}
+            
+            bool operator==(const _FrameSegmentsInfo& rhs) const
+            {
+                return this->deltaAvgSegNum_ == rhs.deltaAvgSegNum_ &&
+                    this->deltaAvgParitySegNum_ == rhs.deltaAvgParitySegNum_ &&
+                    this->keyAvgSegNum_ == rhs.keyAvgSegNum_ &&
+                    this->keyAvgParitySegNum_ == rhs.keyAvgParitySegNum_;
+            }
+
+            bool operator!=(const _FrameSegmentsInfo& rhs) const
+            {
+                return !(*this == rhs);
+            }
         } FrameSegmentsInfo;
         
         // media thread parameters
         class MediaThreadParams : public Params {
         public:
+            MediaThreadParams(){}
+            MediaThreadParams(std::string threadName):threadName_(threadName){}
+            MediaThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
+                threadName_(threadName), segInfo_(segInfo){}
             virtual ~MediaThreadParams(){}
             
             std::string threadName_ = "";
+            FrameSegmentsInfo segInfo_;
             
             virtual void write(std::ostream& os) const
             {
                 os << "name: " << threadName_;
             }
             
-            virtual MediaThreadParams* copy()
-            {
-                MediaThreadParams *params = new MediaThreadParams();
-                *params = *this;
-                return params;
-            }
+            virtual MediaThreadParams* copy() const = 0;
             
-            virtual FrameSegmentsInfo
+            FrameSegmentsInfo
             getSegmentsInfo()
-            { return (FrameSegmentsInfo){0., 0., 0., 0.}; }
+            { return segInfo_; }
         };
         
         // audio thread parameters
         class AudioThreadParams : public MediaThreadParams {
         public:
+            AudioThreadParams():MediaThreadParams("", FrameSegmentsInfo(1., 0., 0., 0.)){}
+            AudioThreadParams(std::string threadName):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)){}
+
             MediaThreadParams*
-            copy()
+            copy() const
             {
                 AudioThreadParams *params = new AudioThreadParams();
                 *params = *this;
                 return params;
             }
-            
-            FrameSegmentsInfo
-            getSegmentsInfo()
-            { return (FrameSegmentsInfo){1., 0., 0., 0.}; }
         };
         
         // video thread parameteres
@@ -126,23 +142,49 @@ namespace ndnrtc
             unsigned int encodeWidth_, encodeHeight_;
             bool dropFramesOn_;
             
+            VideoCoderParams():codecFrameRate_(0),gop_(0),startBitrate_(0),
+                maxBitrate_(0),encodeWidth_(0),encodeHeight_(0),dropFramesOn_(false){}
+
             void write(std::ostream& os) const
             {
                 os
                 << codecFrameRate_ << "FPS; GOP: "
                 << gop_ << "; Start bitrate: "
-                << startBitrate_ << "kbit/s; Max bitrate:"
-                << maxBitrate_ << "kbit/s; "
+                << startBitrate_ << " Kbit/s; Max bitrate: "
+                << maxBitrate_ << " Kbit/s; "
                 << encodeWidth_ << "x" << encodeHeight_ << "; Drop: "
                 << (dropFramesOn_?"YES":"NO");
+            }
+
+            bool operator==(const VideoCoderParams& rhs) const
+            {
+                return this->codecFrameRate_ == rhs.codecFrameRate_ &&
+                    this->gop_ == rhs.gop_ &&
+                    this->startBitrate_ == rhs.startBitrate_ &&
+                    this->maxBitrate_ == rhs.maxBitrate_ &&
+                    this->encodeWidth_ == rhs.encodeWidth_ &&
+                    this->encodeHeight_ == rhs.encodeHeight_ &&
+                    this->dropFramesOn_ == rhs.dropFramesOn_;
+            }
+
+            bool operator!=(const VideoCoderParams& rhs) const
+            {
+                return !(*this == rhs);
             }
         };
         
         class VideoThreadParams : public MediaThreadParams {
         public:
+            VideoThreadParams():MediaThreadParams(){}
+            VideoThreadParams(std::string threadName):MediaThreadParams(threadName){}
+            VideoThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
+                MediaThreadParams(threadName, segInfo){}
+            VideoThreadParams(std::string threadName, VideoCoderParams vcp):
+                MediaThreadParams(threadName),coderParams_(vcp){}
+            VideoThreadParams(std::string threadName, FrameSegmentsInfo segInfo, VideoCoderParams vcp):
+                MediaThreadParams(threadName, segInfo), coderParams_(vcp){}
+
             VideoCoderParams coderParams_;
-            double deltaAvgSegNum_, deltaAvgParitySegNum_;
-            double keyAvgSegNum_, keyAvgParitySegNum_;
 
             void write(std::ostream& os) const
             {
@@ -150,18 +192,14 @@ namespace ndnrtc
                 
                 os << "; " << coderParams_;
             }
+
             MediaThreadParams*
-            copy()
+            copy() const
             {
                 VideoThreadParams *params = new VideoThreadParams();
                 *params = *this;
                 return params;
             }
-            
-            FrameSegmentsInfo
-            getSegmentsInfo()
-            { return (FrameSegmentsInfo){deltaAvgSegNum_, deltaAvgParitySegNum_,
-                keyAvgSegNum_, keyAvgParitySegNum_}; }
         };
         
         // general producer parameters
@@ -172,7 +210,7 @@ namespace ndnrtc
             void write(std::ostream& os) const
             {
                 os << "seg size: " << segmentSize_
-                << "; freshness: " << freshnessMs_;
+                << " bytes; freshness: " << freshnessMs_ << " ms"; 
             }
         };
         
@@ -185,6 +223,7 @@ namespace ndnrtc
             } MediaStreamType;
             
             MediaStreamParams(){}
+            MediaStreamParams(const std::string& name):streamName_(name){}
             MediaStreamParams(const MediaStreamParams& other)
             {
                 copyFrom(other);
@@ -192,9 +231,6 @@ namespace ndnrtc
             ~MediaStreamParams()
             {
                 freeThreads();
-
-                if (captureDevice_)
-                    delete captureDevice_;
             }
             
             MediaStreamParams& operator=(const MediaStreamParams& other)
@@ -209,42 +245,54 @@ namespace ndnrtc
             GeneralProducerParams producerParams_;
             std::string streamName_ = "";
             std::string synchronizedStreamName_ = "";
-            CaptureDeviceParams *captureDevice_ = NULL;
-            std::vector<MediaThreadParams*> mediaThreads_;
-            MediaStreamType type_;
+            CaptureDeviceParams captureDevice_;
+            MediaStreamType type_ = MediaStreamTypeAudio;
             
+            size_t getThreadNum() const { return mediaThreads_.size(); }
+            void addMediaThread(const AudioThreadParams& tp)
+                { if (type_ == MediaStreamTypeAudio) addMediaThread(tp.copy()); }
+            void addMediaThread(const VideoThreadParams& tp)
+                { if (type_ == MediaStreamTypeVideo) addMediaThread(tp.copy()); }
+            MediaThreadParams* getMediaThread(const unsigned int& idx) const
+                { return (idx >= mediaThreads_.size()?nullptr:mediaThreads_[idx]); }
+            AudioThreadParams* getAudioThread(const unsigned int& idx) const
+                { return (type_ == MediaStreamTypeAudio?(AudioThreadParams*)getMediaThread(idx) : nullptr ); }
+            VideoThreadParams* getVideoThread(const unsigned int& idx) const
+                { return (type_ == MediaStreamTypeVideo?(VideoThreadParams*)getMediaThread(idx) : nullptr);}
+
             void write(std::ostream& os) const
             {
-                os << "name: " << streamName_ << "; " << producerParams_ << "; ";
+                os << "name: " << streamName_ << (type_ == MediaStreamTypeAudio ? " (audio)":" (video)")
+                    << "; synced to: " << synchronizedStreamName_
+                    << "; " << producerParams_ << "; ";
                 
-                if (captureDevice_)
-                    os << *captureDevice_;
+                if (captureDevice_.deviceId_ >= 0)
+                    os << "capture device " << captureDevice_;
                 else
                     os << "no device";
                 
-                os << "; " << mediaThreads_.size() << " threads: " << std::endl;
+                os << "; " << mediaThreads_.size() << " threads:" << std::endl;
                 
                 for (int i = 0; i < mediaThreads_.size(); i++)
                     os << "[" << i << ": " << *(mediaThreads_[i]) << "]" << std::endl;
             }
             
         private:
+            std::vector<MediaThreadParams*> mediaThreads_;
+
             void
             copyFrom(const MediaStreamParams& other)
             {
                 streamName_ = other.streamName_;
                 type_ = other.type_;
                 producerParams_ = other.producerParams_;
+                synchronizedStreamName_ = other.synchronizedStreamName_;
                 freeThreads();
                 
                 for (int i = 0; i < other.mediaThreads_.size(); i++)
                     mediaThreads_.push_back(other.mediaThreads_[i]->copy());
                 
-                if (other.captureDevice_)
-                {
-                    captureDevice_ = new CaptureDeviceParams();
-                    *captureDevice_ = *other.captureDevice_;
-                }
+                captureDevice_ = other.captureDevice_;
             }
             
             void
@@ -254,6 +302,11 @@ namespace ndnrtc
                     delete mediaThreads_[i];
                 
                 mediaThreads_.clear();
+            }
+
+            void addMediaThread(MediaThreadParams* const mtp)
+            {
+                mediaThreads_.push_back(mtp);
             }
         };
         
@@ -267,28 +320,9 @@ namespace ndnrtc
             void write(std::ostream& os) const
             {
                 os << "interest lifetime: " << interestLifetime_
-                << "; jitter size: " << jitterSizeMs_ << "ms"
-                << "; buffer size (slots): " << bufferSlotsNum_
-                << "; slot size: " << slotSize_;
-            }
-        };
-        
-        // headless mode parameters
-        class HeadlessModeParams : public Params {
-        public:
-            typedef enum _HeadlessMode {
-                HeadlessModeOff = 0,
-                HeadlessModeConsumer = 1,
-                HeadlessModeProducer = 2
-            } HeadlessMode;
-            
-            HeadlessMode mode_ = HeadlessModeOff;
-            std::string username_ = "";
-            
-            void write(std::ostream& os) const
-            {
-                os << "headless mode: " << (mode_ == HeadlessModeParams::HeadlessModeOff?"OFF":(mode_ == HeadlessModeParams::HeadlessModeConsumer?"CONSUMER":"PRODUCER"))
-                << "; username: " << username_;
+                << " ms; jitter size: " << jitterSizeMs_
+                << " ms; buffer size: " << bufferSlotsNum_
+                << " slots; slot size: " << slotSize_ << " bytes";
             }
         };
         
@@ -296,105 +330,52 @@ namespace ndnrtc
         class GeneralParams : public Params {
         public:
             // general
-            ndnlog::NdnLoggerDetailLevel loggingLevel_ = ndnlog::NdnLoggerDetailLevelNone;
-            std::string logFile_ = "";
-            std::string logPath_ = "";
-            bool
-            useTlv_ = false,
-            useRtx_ = false,
-            useFec_ = false,
-            useCache_ = false,
-            useAudio_ = false,
-            useVideo_ = false,
-            useAvSync_ = false,
-            skipIncomplete_ = false;
+            ndnlog::NdnLoggerDetailLevel loggingLevel_;
+            std::string logFile_;
+            std::string logPath_;
+            bool useRtx_,
+            useFec_,
+            useAvSync_,
+            skipIncomplete_;
             
             // network
-            std::string prefix_ = "", host_ = "";
-            unsigned int portNum_ = 0;
+            std::string prefix_ DEPRECATED, host_;
+            unsigned int portNum_;
             
+            GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone), useRtx_(false),
+                useFec_(false), useAvSync_(false), skipIncomplete_(false), portNum_(6363){}
+
             void write(std::ostream& os) const
             {
-                os << "log level: " << loggingLevel_
-                << "; log file: " << logFile_
-                << "; TLV: " << (useTlv_?"ON":"OFF")
+#if defined __APPLE__
+                static std::string lvlToString[] = {
+                    [ndnlog::NdnLoggerDetailLevelNone] = "NONE",
+                    [ndnlog::NdnLoggerLevelTrace] =      "TRACE",
+                    [ndnlog::NdnLoggerLevelDebug] =      "DEBUG",
+                    [ndnlog::NdnLoggerLevelInfo] =       "INFO",
+                    [ndnlog::NdnLoggerLevelWarning] =    "WARN",
+                    [ndnlog::NdnLoggerLevelError] =      "ERROR",
+                    [ndnlog::NdnLoggerLevelStat] =       "STAT"
+                };
+#else
+                static std::string lvlToString[] = {
+                    [0] = "TRACE",
+                    [1] = "DEBUG",
+                    [2] = "STAT",
+                    [3] = "INFO",
+                    [4] = "WARN",
+                    [5] = "ERROR",
+                    [6] = "NONE"
+                };
+#endif
+                os << "log level: " << lvlToString[loggingLevel_]
+                << "; log file: " << logFile_ << " (at " << logPath_ << ")"
                 << "; RTX: " << (useRtx_?"ON":"OFF")
                 << "; FEC: " << (useFec_?"ON":"OFF")
-                << "; Cache: " << (useCache_?"ON":"OFF")
-                << "; Audio: " << (useAudio_?"ON":"OFF")
-                << "; Video: " << (useVideo_?"ON":"OFF")
                 << "; A/V Sync: " << (useAvSync_?"ON":"OFF")
                 << "; Skipping incomplete frames: " << (skipIncomplete_?"ON":"OFF")
-                << "; Prefix: " << prefix_
                 << "; Host: " << host_
                 << "; Port #: " << portNum_;
-            }
-        };
-        
-        // application parameters
-        // configuration file should be read into this structure
-        class AppParams : public Params {
-        public:
-            AppParams(){}
-            ~AppParams()
-            {
-                for (int i = 0; i < audioDevices_.size(); i++) delete audioDevices_[i];
-                audioDevices_.clear();
-                for (int i = 0; i < videoDevices_.size(); i++) delete videoDevices_[i];
-                videoDevices_.clear();
-                for (int i = 0; i < defaultAudioStreams_.size(); i++) delete defaultAudioStreams_[i];
-                defaultAudioStreams_.clear();
-                for (int i = 0; i < defaultVideoStreams_.size(); i++) delete defaultVideoStreams_[i];
-                defaultVideoStreams_.clear();
-            }
-            
-            GeneralParams generalParams_;
-            HeadlessModeParams headlessModeParams_;
-            
-            // consumer general params
-            GeneralConsumerParams
-            videoConsumerParams_,
-            audioConsumerParams_;
-
-            // capture devices
-            std::vector<CaptureDeviceParams*>
-            audioDevices_,
-            videoDevices_;
-            
-            // default media streams
-            std::vector<MediaStreamParams*>
-            defaultAudioStreams_,
-            defaultVideoStreams_;
-
-            void write(std::ostream& os) const
-            {
-                os
-                << "-General:" << std::endl
-                << generalParams_ << std::endl
-                << "-Headless mode: " << headlessModeParams_ << std::endl
-                << "-Consumer:" << std::endl
-                << "--Audio: " << audioConsumerParams_ << std::endl
-                << "--Video: " << videoConsumerParams_ << std::endl
-                << "-Capture devices:" << std::endl
-                << "--Audio:" << std::endl;
-                
-                for (int i = 0; i < audioDevices_.size(); i++)
-                    os << i << ": " << *audioDevices_[i] << std::endl;
-                
-                os << "--Video:" << std::endl;
-                for (int i = 0; i < videoDevices_.size(); i++)
-                    os << i << ": " << *videoDevices_[i] << std::endl;
-                
-                os << "-Producer streams:" << std::endl
-                << "--Audio:" << std::endl;
-                
-                for (int i = 0; i < defaultAudioStreams_.size(); i++)
-                    os << i << ": " << *defaultAudioStreams_[i] << std::endl;
-                
-                os << "--Video:" << std::endl;
-                for (int i = 0; i < defaultVideoStreams_.size(); i++)
-                    os << i << ": " << *defaultVideoStreams_[i] << std::endl;
-                
             }
         };
         

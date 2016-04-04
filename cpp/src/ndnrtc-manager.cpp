@@ -171,6 +171,14 @@ std::string NdnRtcManager::startSession(const std::string& username,
                                         const new_api::GeneralParams& generalParams,
                                         ISessionObserver *sessionObserver)
 {
+    startSession(username, generalParams.prefix_, generalParams, sessionObserver);
+}
+
+std::string NdnRtcManager::startSession(const std::string& username,
+                                        const std::string& prefix,
+                                        const new_api::GeneralParams& generalParams,
+                                        ISessionObserver *sessionObserver)
+{
     std::string sessionPrefix = "";
     
     try {
@@ -181,19 +189,20 @@ std::string NdnRtcManager::startSession(const std::string& username,
         LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
         Logger::getLogger(LIB_LOG).setLogLevel(generalParams.loggingLevel_);
         
-        LogInfo(LIB_LOG) << "Starting session for user " << username << "..." << std::endl;
+        LogInfo(LIB_LOG) << "Starting session for user " << username
+        << " (prefix " << prefix <<")..." << std::endl;
         
         NdnRtcUtils::createLibFace(generalParams);
         
-        sessionPrefix = *NdnRtcNamespace::getProducerPrefix(generalParams.prefix_, username);
-        
+        sessionPrefix = *NdnRtcNamespace::getProducerPrefix(prefix, username);
+
         LogInfo(LIB_LOG) << "Creating new session instance..." << std::endl;
         
         ActiveSession.reset(new Session());
         ActiveSession->setSessionObserver(sessionObserver);
         ActiveSession->registerCallback(&LibraryInternalObserver);
         
-        if (RESULT_NOT_FAIL(ActiveSession->init(username, generalParams, NdnRtcUtils::getLibFace())))
+        if (RESULT_NOT_FAIL(ActiveSession->init(username, prefix, generalParams, NdnRtcUtils::getLibFace())))
         {
             ActiveSession->start();
             sessionPrefix = ActiveSession->getPrefix();
@@ -620,13 +629,16 @@ void init()
 
 void cleanup()
 {
-    LogInfo(LIB_LOG) << "Stopping active session " << ActiveSession->getPrefix() << std::endl;
-    ActiveSession.reset();
-    
+    if (ActiveSession.get())
+    {
+        LogInfo(LIB_LOG) << "Stopping active session " << ActiveSession->getPrefix() << std::endl;
+        ActiveSession.reset();
+    }
+
     LogInfo(LIB_LOG) << "Stopping recovery timer..." << std::endl;
     recoveryCheckTimer.cancel();
     LogInfo(LIB_LOG) << "Recovery timer stopped" << std::endl;
-    
+
     LogInfo(LIB_LOG) << "Stopping active consumers..." << std::endl;
     {
         for (auto consumerIt:ActiveStreamConsumers)
@@ -634,9 +646,9 @@ void cleanup()
         ActiveStreamConsumers.clear();
     }
     LogInfo(LIB_LOG) << "Active consumers cleared" << std::endl;
-    
+
     NdnRtcUtils::destroyLibFace();
-    
+
     LogInfo(LIB_LOG) << "Stopping voice thread..." << std::endl;
     AudioController::getSharedInstance()->releaseVoiceEngine();
     LogInfo(LIB_LOG) << "Releasing voice engine..." << std::endl;

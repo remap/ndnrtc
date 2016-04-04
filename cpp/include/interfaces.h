@@ -255,6 +255,7 @@ namespace ndnrtc
         setObserver(INdnRtcLibraryObserver *observer) = 0;
         
         /**
+         * DEPRECATED: use startSession with 4 arguments instead
          * Starts NDN-RTC session with username and parameters provided
          * @param username NDN-RTC user name
          * @param generalParams General NDN-RTC parameters object
@@ -270,8 +271,29 @@ namespace ndnrtc
         virtual std::string
         startSession(const std::string& username,
                      const new_api::GeneralParams& generalParams,
-                     ISessionObserver *sessionObserver) = 0;
+                     ISessionObserver *sessionObserver) DEPRECATED = 0;
         
+        /**
+         * Starts NDN-RTC session with username and parameters provided
+         * @param username NDN-RTC user name
+         * @param prefix Home hub prefix
+         * @param generalParams General NDN-RTC parameters object
+         * @param sessionObserver Pointer to the session observer object
+         * @return Session prefix in the following form:
+         *      <prefix>/<ndnrtc_component>/<username>
+         *      where ndnrtc_component is "ndnrtc/user", but may be changed in
+         *      future releases
+         *      prefix is taken from generalParams object
+         *      If failed - returns empty string and error message is sent to
+         *      library observer
+         * @see setObserver
+         */
+        virtual std::string
+        startSession(const std::string& username,
+                     const std::string& prefix,
+                     const new_api::GeneralParams& generalParams,
+                     ISessionObserver *sessionObserver) = 0;
+
         /**
          * Stops session started previously
          * @param sessionPrefix Session prefix returned from startSession call

@@ -26,6 +26,12 @@ namespace ndnrtc {
         startSession(const std::string& username,
                      const new_api::GeneralParams& generalParams,
                      ISessionObserver *sessionObserver);
+
+        std::string
+        startSession(const std::string& username,
+                     const std::string& prefix,
+                     const new_api::GeneralParams& generalParams,
+                     ISessionObserver *sessionObserver);
   
         int
         stopSession(const std::string& sessionPrefix);

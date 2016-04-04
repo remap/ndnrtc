@@ -1,159 +1,125 @@
 // 
 // main.cpp
 //
-// Copyright (c) 2015. Peter Gusev. All rights reserved
+//  Created by Peter Gusev on 03 March 2016.
+//  Copyright 2013-2016 Regents of the University of California
 //
 
-//#define PUB_VIDEO
-
-#include <fstream>
 #include <iostream>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include <ndnrtc/simple-log.h>
-#include <ndnrtc/ndnrtc-library.h>
+#include <boost/asio.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
 #include "config.h"
-#include "renderer.h"
+#include "client.h"
 
+using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
 
-void removeRemoteStreams(NdnRtcLibrary* &ndnp, std::vector<std::string> &StreamsPrefix);
+void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix);
 
-void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec);
+void run(const std::string &configFile,
+         const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
+         const unsigned int headlessAppOnlineTimeSecconst,
+         const unsigned int statisticsSampleInterval);
+void setupConsumer(unsigned int runTimeSec, const ClientParams &params);
+void setupProducer(unsigned int runTimeSec, const ClientParams &params);
+void setupStatGathering(unsigned int runTimeSec, unsigned int statSamplePeriodMs, 
+    const std::vector<StatGatheringParams>& statParams);
+void runProcessLoopFor(unsigned int sec);
 
-int main(int argc, char **argv){
-	char *configFile = NULL;
-	int index;
-	int c;
-	unsigned int headlessAppOnlineTimeSec=20;//default app online time
-	ndnlog::NdnLoggerDetailLevel appLoggingLevel = ndnlog::NdnLoggerDetailLevelDefault;
+//******************************************************************************
+int main(int argc, char **argv) 
+{
+    char *configFile = NULL;
+    int c;
+    unsigned int runTimeSec = 0; // default app run time (sec)
+    unsigned int statSamplePeriodMs = 100;  // default statistics sample interval (ms)
+    ndnlog::NdnLoggerDetailLevel logLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
-	opterr = 0;
-	while ((c = getopt (argc, argv, "vt:c:")) != -1)
-		switch (c){
-			case 'c':
-				configFile = optarg;
-				break;
-			case 'v':
-				appLoggingLevel = ndnlog::NdnLoggerDetailLevelAll;
-				break;
-			case 't':
-			headlessAppOnlineTimeSec = (unsigned int)atoi(optarg);
-			break;
-			case '?':
-				if (optopt == 'c')
-					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-				else if (isprint (optopt))
-					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-				else
-					fprintf (stderr,
-						"Unknown option character `\\x%x'.\n",
-						optopt);
-				return 1;
-			default:
-				abort ();
-		}
+    opterr = 0;
+    while ((c = getopt (argc, argv, "vi:t:c:")) != -1)
+        switch (c) {
+        case 'c':
+            configFile = optarg;
+            break;
+        case 'v':
+            logLevel = ndnlog::NdnLoggerDetailLevelAll;
+            break;
+        case 'i':
+            statSamplePeriodMs = (unsigned int)atoi(optarg);
+            break;
+        case 't':
+            runTimeSec = (unsigned int)atoi(optarg);
+            break;
+        case '?':
+            if (optopt == 'c')
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            else
+                fprintf (stderr,
+                         "Unknown option character `\\x%x'.\n",
+                         optopt);
+            return 1;
+        default:
+            abort ();
+        }
 
-#warning implement loading parameters from configuration files
-	#if 1
-	if (!configFile){
+    if (!configFile || runTimeSec == 0) 
+    {
+        std::cout << "usage: " << argv[0] << " -c <config_file> -t <app run time in seconds> [-i "
+        "<statistics sample interval in milliseconds> -v <verbose mode>]" << std::endl;
+        exit(1);
+    }
 
-		std::cout << "usage: " << argv[0] << " -c <config_file> -t <app online time in seconds> -v <verbose mode>" << std::endl;
-		exit(1);
-	}
-	#endif
+    run(configFile, logLevel, runTimeSec, statSamplePeriodMs);
 
-	run(configFile, appLoggingLevel, headlessAppOnlineTimeSec);
-
-	return 0;
+    return 0;
 }
 
 //******************************************************************************
-class LibraryObserver : public INdnRtcLibraryObserver{
-public:
-    void onStateChanged(const char *state, const char *args){
+void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
+            const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
+{
+    INdnRtcLibrary& ndnp = NdnRtcLibrary::getSharedInstance();
+    Client& client = Client::getSharedInstance();
+    ClientParams params;
 
-        LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
+
+    LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
+    "params from " << configFile << "..." << std::endl;
+
+    if (loadParamsFromFile(configFile, params) == EXIT_FAILURE) 
+    {
+        LogError("") << "error loading params from " << configFile << std::endl;
+        return;
     }
-    
-    void onErrorOccurred(int errorCode, const char* message){
 
-       LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
-    }
-};
+    LogInfo("") << "Parameters loaded:\n" << params << std::endl;
 
-static NdnRtcLibrary* ndnp = NULL;
-static LibraryObserver libObserver;
+    client.run(&ndnp, runTimeSec, statSamplePeriodMs, params);
 
-//******************************************************************************
-void run(const std::string& configFile, const ndnlog::NdnLoggerDetailLevel appLoggingLevel, const unsigned int headlessAppOnlineTimeSec){
-	ndnp = &(NdnRtcLibrary::getSharedInstance());
-	ClientParams headlessParams;
-	std::vector<std::string> remoteStreamsPrefix;
-
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(appLoggingLevel);
-	LogInfo("") << "app online time is set to "<< headlessAppOnlineTimeSec <<" seconds, loading params from " << configFile << "..." << std::endl;
-
-	if (loadParamsFromFile(configFile, headlessParams)==EXIT_FAILURE){
-		LogError("") << "loading params from " << configFile << " met error!" << std::endl;
-		return;
-	}
-
-	LogInfo("") << "All headlessParams:" << headlessParams << std::endl;
-	LogDebug("") << "general configuration:\n" << headlessParams.generalParams_ << std::endl; 
-	LogDebug("") << "audioConsumerParams configuration:\n" << headlessParams.audioConsumerParams_ << std::endl; 
-	LogDebug("") << "videoConsumerParams configuration:\n" << headlessParams.videoConsumerParams_ << std::endl; 
-
-	// setup audio fetching
-	const int audioStreamsNumber=headlessParams.defaultAudioStreams_.size();
-
-	for(int audioStreamsCount=0; audioStreamsCount<audioStreamsNumber;audioStreamsCount++){
-		MediaStreamParamsSupplement* audioStream = headlessParams.getMediaStream(headlessParams.defaultAudioStreams_, audioStreamsCount);
-		LogDebug("") << "initiating remote audio stream for " 
-			<<audioStream->streamPrefix_ << std::endl;
-
-		std::string audioStreamPrefix = ndnp->addRemoteStream(audioStream->streamPrefix_ , audioStream->threadToFetch_, (*audioStream), headlessParams.generalParams_, headlessParams.audioConsumerParams_, NULL);
-		remoteStreamsPrefix.push_back(audioStreamPrefix);
-		LogInfo("") << "demo audio fetching " << audioStreamsCount <<" from " << audioStreamPrefix << " initiated, "
-			<<"threadToFetch: "<< audioStream->threadToFetch_ << std::endl;
-	}
-	
-	// setup video fetching
-	const int videoStreamsNumber=headlessParams.defaultVideoStreams_.size();
-	
-
-		RendererInternal* renderer=new RendererInternal[videoStreamsNumber];
-	
-		for(int videoStreamsCount=0; videoStreamsCount<videoStreamsNumber;videoStreamsCount++){
-			MediaStreamParamsSupplement* videoStream = headlessParams.getMediaStream(headlessParams.defaultVideoStreams_, videoStreamsCount);
-
-			LogDebug("") << "initiating remote video stream for " << videoStream->streamPrefix_ << ", vconsumerParams: " << headlessParams.videoConsumerParams_ << std::endl;
-			std::string videoStreamPrefix = ndnp->addRemoteStream(videoStream->streamPrefix_, videoStream->threadToFetch_, (*videoStream), headlessParams.generalParams_, headlessParams.videoConsumerParams_, &renderer[videoStreamsCount]);
-			remoteStreamsPrefix.push_back(videoStreamPrefix);
-			LogInfo("") << "demo video fetching " << videoStreamsCount <<" from " << videoStreamPrefix << " initiated, " 
-				<<"threadToFetch: "<< videoStream->threadToFetch_ << std::endl;
-		}
-
-	sleep(headlessAppOnlineTimeSec);
-	removeRemoteStreams(ndnp,remoteStreamsPrefix);
-	delete  []renderer;
-	LogInfo("") << "demo fetching has been completed" << std::endl;
-
-	return;
+#warning this is temporary sleep. should fix simple-log for flushing all log records before release
+    sleep(1);
+    ndnlog::new_api::Logger::releaseAsyncLogging();
+    return;
 }
-void removeRemoteStreams(NdnRtcLibrary* &ndnp, std::vector<std::string> &StreamsPrefix){
 
-	int streamsPrefixNumber=StreamsPrefix.size();
+// //******************************************************************************
+// void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix) {
 
-	for (int streamsPrefixCount = 0; streamsPrefixCount < streamsPrefixNumber; streamsPrefixCount++){
-		ndnp->removeRemoteStream(StreamsPrefix[streamsPrefixCount]);
-	}
-	return;
-	
-}
+//     int streamsPrefixNumber = StreamsPrefix.size();
+
+//     for (int streamsPrefixCount = 0; streamsPrefixCount < streamsPrefixNumber; streamsPrefixCount++) {
+//         ndnp->removeRemoteStream(StreamsPrefix[streamsPrefixCount]);
+//     }
+//     return;
+
+// }
 

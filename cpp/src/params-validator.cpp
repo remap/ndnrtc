@@ -59,8 +59,10 @@ void ParamsValidator::validateParams(const MediaStreamParams& params)
     if (params.synchronizedStreamName_.size() > MaxStreamNameLen)
         BOOST_THROW_EXCEPTION(param_validation_exception("stream name is too long") << errmsg_param_name{"synchronizedStreamName"});
     
-    for (auto thread:params.mediaThreads_)
+    for (int i = 0; i < params.getThreadNum(); i++)
     {
+        MediaThreadParams *thread = params.getMediaThread(i);
+
         if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
             validateParams(*thread);
         else
@@ -77,26 +79,8 @@ void ParamsValidator::validateParams(const GeneralConsumerParams& params)
         BOOST_THROW_EXCEPTION(param_validation_exception("buffer slot size can't be zero"));
 }
 
-void ParamsValidator::validateParams(const HeadlessModeParams& params)
-{
-    validateName(params.username_, MaxUserNameLen);
-}
-
 void ParamsValidator::validateParams(const GeneralParams& params)
 {
-}
-
-void ParamsValidator::validateParams(const AppParams& params)
-{
-    validateParams(params.generalParams_);
-    validateParams(params.headlessModeParams_);
-    validateParams(params.audioConsumerParams_);
-    validateParams(params.videoConsumerParams_);
-    
-    for (auto stream:params.defaultAudioStreams_)
-        validateParams(*stream);
-    for (auto stream:params.defaultVideoStreams_)
-        validateParams(*stream);
 }
 
 void ParamsValidator::validateName(const std::string& name, const int maxLength)

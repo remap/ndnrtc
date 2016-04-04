@@ -46,6 +46,15 @@ namespace ndnrtc {
                         const std::string& streamName,
                         const std::string& username,
                         const std::string& prefix);
+
+        static std::string 
+        getUserName(const std::string& prefix);
+
+        static std::string 
+        getStreamName(const std::string& prefix);
+
+        static std::string 
+        getThreadName(const std::string& prefix);
     };
 }
 

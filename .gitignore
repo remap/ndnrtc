@@ -58,3 +58,9 @@ cpp/resources/*.pcmu
 docs
 test_app/suite
 .settings
+tags
+.tags
+.tags_sorted_by_file
+contrib/**/
+*.sublime-project
+*.sublime-workspace
