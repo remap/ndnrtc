@@ -339,7 +339,7 @@ namespace ndnrtc
             skipIncomplete_;
             
             // network
-            std::string prefix_ DEPRECATED, host_;
+            std::string host_;
             unsigned int portNum_;
             
             GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone), useRtx_(false),

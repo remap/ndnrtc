@@ -387,7 +387,6 @@ TEST(TestClientParams, TestOutputEmpty){
 	EXPECT_FALSE(cp.getGeneralParameters().useFec_);
 	EXPECT_FALSE(cp.getGeneralParameters().useAvSync_);
 	EXPECT_FALSE(cp.getGeneralParameters().skipIncomplete_);
-	EXPECT_EQ("", cp.getGeneralParameters().prefix_);
 	EXPECT_EQ("", cp.getGeneralParameters().host_);
 	EXPECT_EQ(6363, cp.getGeneralParameters().portNum_);
 
