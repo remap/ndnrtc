@@ -39,6 +39,7 @@ Session::~Session()
 int
 Session::init(const std::string username, const std::string prefix,
               const GeneralParams& generalParams,
+              ndn::KeyChain* keyChain,
               boost::shared_ptr<FaceProcessor> mainFaceProcessor)
 {
     username_ = username;
@@ -49,7 +50,7 @@ Session::init(const std::string username, const std::string prefix,
     this->setLogger(new Logger(generalParams.loggingLevel_,
                                NdnRtcUtils::getFullLogPath(generalParams, logFileName)));
     isLoggerCreated_ = true;
-    userKeyChain_ = NdnRtcNamespace::keyChainForUser(userPrefix_);
+    keyChain_ = keyChain;
     mainFaceProcessor_ = mainFaceProcessor;
     sessionCache_.reset(new MemoryContentCache(mainFaceProcessor_->getFaceWrapper()->getFace().get()));
     
@@ -103,7 +104,7 @@ Session::addLocalStream(const MediaStreamParams& params,
     
     mediaStreamSettings.useFec_ = generalParams_.useFec_;
     mediaStreamSettings.userPrefix_ = getPrefix();
-    mediaStreamSettings.keyChain_ = userKeyChain_;
+    mediaStreamSettings.keyChain_ = keyChain_;
     mediaStreamSettings.faceProcessor_ = mainFaceProcessor_;
 
     // here we have a choice - use session-level memory cache or create a new

@@ -33,6 +33,7 @@ namespace ndnrtc
             int
             init(const std::string username, const std::string prefix,
                  const GeneralParams& generalParams,
+                 ndn::KeyChain* keyChain,
                  boost::shared_ptr<FaceProcessor> mainFaceProcessor);
             
             int
@@ -85,7 +86,7 @@ namespace ndnrtc
             boost::recursive_mutex observerMutex_;
             ISessionObserver *sessionObserver_;
             
-            boost::shared_ptr<ndn::KeyChain> userKeyChain_;
+            ndn::KeyChain* keyChain_;
             boost::shared_ptr<FaceProcessor> mainFaceProcessor_;
             boost::shared_ptr<ndn::MemoryContentCache> sessionCache_;
            

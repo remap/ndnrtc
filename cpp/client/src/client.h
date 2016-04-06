@@ -48,6 +48,7 @@ private:
 	ClientParams params_;
 	ClientSessionObserver clientSessionObserver_;
 	boost::shared_ptr<StatCollector> statCollector_;
+	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_;
 
 	std::vector<RemoteStream> remoteStreams_;
 	std::vector<LocalStream> localStreams_;
@@ -56,6 +57,7 @@ private:
 	Client(Client const&) = delete;
 	void operator=(Client const&) = delete;
 
+	void initKeyChain();
 	void initSession();
 	void setupConsumer();
 	void setupProducer();

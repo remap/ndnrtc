@@ -39,7 +39,7 @@ namespace ndnrtc
             bool useFec_;
             std::string userPrefix_;
             MediaStreamParams streamParams_;
-            boost::shared_ptr<KeyChain> keyChain_;
+            KeyChain* keyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<MemoryContentCache> memoryCache_;
         };

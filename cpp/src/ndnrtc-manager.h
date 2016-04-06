@@ -21,16 +21,12 @@ namespace ndnrtc {
         
         void
         setObserver(INdnRtcLibraryObserver *observer);
-        
-        std::string
-        startSession(const std::string& username,
-                     const new_api::GeneralParams& generalParams,
-                     ISessionObserver *sessionObserver);
 
         std::string
         startSession(const std::string& username,
                      const std::string& prefix,
                      const new_api::GeneralParams& generalParams,
+                     ndn::KeyChain* keyChain,
                      ISessionObserver *sessionObserver);
   
         int
@@ -44,15 +40,6 @@ namespace ndnrtc {
         int
         removeLocalStream(const std::string& sessionPrefix,
                           const std::string& streamPrefix);
-        
-
-        std::string
-        addRemoteStream(const std::string& remoteSessionPrefix,
-                        const std::string& threadName,
-                        const new_api::MediaStreamParams& params,
-                        const new_api::GeneralParams& generalParams,
-                        const new_api::GeneralConsumerParams& consumerParams,
-                        IExternalRenderer* const renderer);
         
         std::string
         addRemoteStream(const std::string& remoteSessionPrefix,

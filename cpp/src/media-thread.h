@@ -41,7 +41,7 @@ namespace ndnrtc
             std::string streamPrefix_;
             ndn::Name certificateName_;
             
-            boost::shared_ptr<ndn::KeyChain> keyChain_;
+            ndn::KeyChain* keyChain_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
             boost::shared_ptr<MemoryContentCache> memoryCache_;
         };

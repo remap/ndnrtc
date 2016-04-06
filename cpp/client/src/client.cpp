@@ -6,6 +6,9 @@
 //
 
 #include <boost/make_shared.hpp>
+#include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
+#include <ndn-cpp/security/identity/memory-identity-storage.hpp>
+#include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
 
 #include "client.h"
 #include "config.h"
@@ -14,10 +17,12 @@
 using namespace std;
 using namespace ndnrtc::new_api;
 using namespace ndnrtc;
+using namespace ndn;
 
 //******************************************************************************
 Client::Client():ndnp_(nullptr)
 {
+	initKeyChain();
 }
 
 Client::~Client()
@@ -51,6 +56,14 @@ void Client::run(ndnrtc::INdnRtcLibrary* ndnp, unsigned int runTimeSec,
 }
 
 //******************************************************************************
+void Client::initKeyChain()
+{
+    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(new MemoryPrivateKeyStorage());    
+    defaultKeyChain_.reset(new KeyChain(boost::make_shared<IdentityManager>(boost::make_shared<MemoryIdentityStorage>(),
+                                                                            privateKeyStorage),
+                                                    boost::make_shared<NoVerifyPolicyManager>()));
+}
+
 void Client::setupConsumer()
 {
 	if (!params_.isConsuming())
@@ -184,7 +197,7 @@ void Client::initSession()
 	string username = params_.getProducerParams().username_;
 	string prefix = params_.getProducerParams().prefix_;
 	string sessionPrefix = ndnp_->startSession(username, prefix, params_.getGeneralParameters(), 
-		&clientSessionObserver_);
+		defaultKeyChain_.get(), &clientSessionObserver_);
 
 	if (sessionPrefix != "")
 	{
@@ -206,7 +219,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 {
 	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal(p.streamSink_, true) : nullptr);
 	string streamPrefix = ndnp_->addRemoteStream(p.sessionPrefix_, p.threadToFetch_, p, 
-		params_.getGeneralParameters(), gcp, renderer);
+		params_.getGeneralParameters(), gcp, defaultKeyChain_.get(), renderer);
 
 	return RemoteStream(streamPrefix, boost::shared_ptr<RendererInternal>(renderer));
 }

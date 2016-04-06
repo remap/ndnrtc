@@ -257,29 +257,11 @@ namespace ndnrtc
         setObserver(INdnRtcLibraryObserver *observer) = 0;
         
         /**
-         * DEPRECATED: use startSession with 4 arguments instead
-         * Starts NDN-RTC session with username and parameters provided
-         * @param username NDN-RTC user name
-         * @param generalParams General NDN-RTC parameters object
-         * @return Session prefix in the following form:
-         *      <prefix>/<ndnrtc_component>/<username>
-         *      where ndnrtc_component is "ndnrtc/user", but may be changed in
-         *      future releases
-         *      prefix is taken from generalParams object
-         *      If failed - returns empty string and error message is sent to
-         *      library observer
-         * @see setObserver
-         */
-        virtual std::string
-        startSession(const std::string& username,
-                     const new_api::GeneralParams& generalParams,
-                     ISessionObserver *sessionObserver) DEPRECATED = 0;
-        
-        /**
          * Starts NDN-RTC session with username and parameters provided
          * @param username NDN-RTC user name
          * @param prefix Home hub prefix
          * @param generalParams General NDN-RTC parameters object
+         * @param keyChain Key chain used to sign all generated data packets
          * @param sessionObserver Pointer to the session observer object
          * @return Session prefix in the following form:
          *      <prefix>/<ndnrtc_component>/<username>
@@ -294,6 +276,7 @@ namespace ndnrtc
         startSession(const std::string& username,
                      const std::string& prefix,
                      const new_api::GeneralParams& generalParams,
+                     ndn::KeyChain* keyChain,
                      ISessionObserver *sessionObserver) = 0;
 
         /**
@@ -337,27 +320,6 @@ namespace ndnrtc
         virtual int
         removeLocalStream(const std::string& sessionPrefix,
                           const std::string& streamPrefix) = 0;
-        
-        /**
-         * Adds new remote stream and starts fetching from its' first thread
-         * @param remoteSessionPrefix Remote producer's session prefix returned
-         *                            by previsous setRemoteSessionObserver call
-         * @param threadName Thread name to fetch from
-         * @param params Media stream parameters
-         * @param generalParams General NDN-RTC parameters
-         * @param consumerParams General consumer parameters
-         * @param renderer Pointer to the object which conforms to the
-         *                 IExternalRenderer interface (video only)
-         * @return Remote stream prefix on success and empty string on failure
-         * @see setRemoteSessionObserver
-         */
-        virtual std::string
-        addRemoteStream(const std::string& remoteSessionPrefix,
-                        const std::string& threadName,
-                        const new_api::MediaStreamParams& params,
-                        const new_api::GeneralParams& generalParams,
-                        const new_api::GeneralConsumerParams& consumerParams,
-                        IExternalRenderer* const renderer) DEPRECATED = 0;
         
         /**
          * Adds new remote stream and starts fetching from its' first thread

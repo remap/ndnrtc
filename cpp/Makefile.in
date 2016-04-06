@@ -142,7 +142,8 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-pipeliner.lo src/libndnrtc_la-playout.lo \
 	src/libndnrtc_la-rtt-estimation.lo \
 	src/libndnrtc_la-segmentizer.lo src/libndnrtc_la-session.lo \
-	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-statistics.lo \
+	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-slot-buffer.lo \
+	src/libndnrtc_la-statistics.lo \
 	src/libndnrtc_la-threading-capability.lo \
 	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-consumer.lo \
@@ -599,6 +600,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp \
+  src/slot-buffer.cpp src/slot-buffer.h \
   include/statistics.h src/statistics.cpp \
   src/threading-capability.h src/threading-capability.cpp \
   src/video-coder.cpp src/video-coder.h \
@@ -617,7 +619,7 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 @OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
-	-I@BOOSTDIR@ -I$(includedir) $(am__append_4)
+	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_4)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la \
 	$(am__append_3)
@@ -822,6 +824,8 @@ src/libndnrtc_la-segmentizer.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-session.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-simple-log.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-slot-buffer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-statistics.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -1211,6 +1215,8 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-session.lo
 	-rm -f src/libndnrtc_la-simple-log.$(OBJEXT)
 	-rm -f src/libndnrtc_la-simple-log.lo
+	-rm -f src/libndnrtc_la-slot-buffer.$(OBJEXT)
+	-rm -f src/libndnrtc_la-slot-buffer.lo
 	-rm -f src/libndnrtc_la-statistics.$(OBJEXT)
 	-rm -f src/libndnrtc_la-statistics.lo
 	-rm -f src/libndnrtc_la-threading-capability.$(OBJEXT)
@@ -1336,6 +1342,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-segmentizer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-simple-log.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-statistics.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@
@@ -1680,6 +1687,14 @@ src/libndnrtc_la-simple-log.lo: src/simple-log.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/libndnrtc_la-simple-log.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-simple-log.lo `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/libndnrtc_la-slot-buffer.lo: src/slot-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-slot-buffer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-slot-buffer.Tpo -c -o src/libndnrtc_la-slot-buffer.lo `test -f 'src/slot-buffer.cpp' || echo '$(srcdir)/'`src/slot-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-slot-buffer.Tpo src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/slot-buffer.cpp' object='src/libndnrtc_la-slot-buffer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-slot-buffer.lo `test -f 'src/slot-buffer.cpp' || echo '$(srcdir)/'`src/slot-buffer.cpp
 
 src/libndnrtc_la-statistics.lo: src/statistics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-statistics.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-statistics.Tpo -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp

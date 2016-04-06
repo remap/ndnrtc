@@ -25,17 +25,12 @@ class MockNdnRtcLibrary : public ndnrtc::INdnRtcLibrary
 {
 public:
 	MOCK_METHOD1(setObserver, void(ndnrtc::INdnRtcLibraryObserver*));
-	MOCK_METHOD3(startSession, std::string(const std::string&, const ndnrtc::new_api::GeneralParams&, 
-		ndnrtc::ISessionObserver*));
-	MOCK_METHOD4(startSession, std::string(const std::string&, const std::string&, 
-		const ndnrtc::new_api::GeneralParams&, ndnrtc::ISessionObserver*));
+	MOCK_METHOD5(startSession, std::string(const std::string&, const std::string&, 
+		const ndnrtc::new_api::GeneralParams&, ndn::KeyChain*, ndnrtc::ISessionObserver*));
 	MOCK_METHOD1(stopSession, int(const std::string&));
 	MOCK_METHOD3(addLocalStream, std::string(const std::string&, const ndnrtc::new_api::MediaStreamParams&, 
 		ndnrtc::IExternalCapturer** const));
 	MOCK_METHOD2(removeLocalStream, int(const std::string&, const std::string&));
-	MOCK_METHOD6(addRemoteStream, std::string(const std::string&, const std::string&,
-		const ndnrtc::new_api::MediaStreamParams&, const ndnrtc::new_api::GeneralParams&, 
-		const ndnrtc::new_api::GeneralConsumerParams&, ndnrtc::IExternalRenderer* const));
 	MOCK_METHOD7(addRemoteStream, std::string(const std::string&, const std::string&,
 		const ndnrtc::new_api::MediaStreamParams&, const ndnrtc::new_api::GeneralParams&, 
 		const ndnrtc::new_api::GeneralConsumerParams&, ndn::KeyChain* keyChain,

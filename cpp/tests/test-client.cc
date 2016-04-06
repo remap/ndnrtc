@@ -59,12 +59,12 @@ TEST(TestClient, TestConsumer)
 		EXPECT_CALL(ndnrtcLib, setObserver(_));
 		EXPECT_CALL(ndnrtcLib, 
 			addRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_,
-				cp.getConsumerParams().fetchedStreams_[0].threadToFetch_, _, _, _, _))
+				cp.getConsumerParams().fetchedStreams_[0].threadToFetch_, _, _, _, _, _))
 			.Times(1)
 			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_));
 		EXPECT_CALL(ndnrtcLib, 
 			addRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_,
-				cp.getConsumerParams().fetchedStreams_[1].threadToFetch_, _, _, _, _))
+				cp.getConsumerParams().fetchedStreams_[1].threadToFetch_, _, _, _, _, _))
 			.Times(1)
 			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_));
 
@@ -138,7 +138,7 @@ TEST(TestClient, TestProducer)
 			cp.getProducerParams().username_;
 
 		EXPECT_CALL(ndnrtcLib, setObserver(_));
-		EXPECT_CALL(ndnrtcLib, startSession(_, _, _, _)).
+		EXPECT_CALL(ndnrtcLib, startSession(_, _, _, _, _)).
 			Times(1)
 			.WillOnce(Return(sessionPrefix));
 		EXPECT_CALL(ndnrtcLib, addLocalStream(sessionPrefix, _, _))
