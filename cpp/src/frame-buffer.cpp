@@ -244,6 +244,28 @@ ndnrtc::new_api::FrameBuffer::Slot::markMissing(const ndn::Interest &interest)
     return res;
 }
 
+void
+ndnrtc::new_api::FrameBuffer::Slot::markVerified(const std::string& segmentName,
+                                                 bool verified)
+{
+    Name segName(segmentName);
+    PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(segName);
+    SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(segName);
+    bool isParity = NdnRtcNamespace::isParitySegmentPrefix(segName);
+    
+    if (packetNumber < 0 &&
+        segmentNumber < 0 &&
+        rightmostSegment_.get() != nullptr)
+    {
+        rightmostSegment_->setIsVerified(verified);
+    }
+    
+    shared_ptr<Segment> segment = getSegment(segmentNumber, isParity);
+    
+    if (segment.get())
+        segment->setIsVerified(verified);
+}
+
 ndnrtc::new_api::FrameBuffer::Slot::State
 ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
 {
@@ -1352,28 +1374,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 }
 
 void
-ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
-{
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
-    const Name& prefix = interest.getName();
-    
-    shared_ptr<Slot> slot = getSlot(prefix, false);
-    
-    if (slot.get())
-    {
-        if (RESULT_GOOD(slot->markMissing(interest)))
-        {
-        }
-        else
-        {
-            LogTraceC
-            << "timeout error " << interest.getName()
-            << " for " << slot->getPrefix() << std::endl;
-        }
-    }
-}
-
-void
 ndnrtc::new_api::FrameBuffer::purgeNewSlots(int& nDeltaPurged, int& nKeyPurged)
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
@@ -1708,6 +1708,20 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
     
     return playbackDuration;
 }
+
+void ndnrtc::new_api::FrameBuffer::accessSlotExclusively(const std::string& slotName,
+                           const OnSlotAccess& onSlotAccess,
+                           const OnNotFound& onNotFound)
+{
+    lock_guard<recursive_mutex> scopedLock(syncMutex_);
+    shared_ptr<Slot> slot = getSlot(Name(slotName), false);
+    
+    if (slot.get())
+        onSlotAccess(slot);
+    else
+        onNotFound();
+}
+
 
 void
 ndnrtc::new_api::FrameBuffer::dump()

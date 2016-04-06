@@ -14,6 +14,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer.cpp src/consumer.h \
+  src/data-validator.h src/data-validator.cpp \
   src/ndnrtc-endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \
   src/face-wrapper.cpp src/face-wrapper.h \
@@ -46,6 +47,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/segmentizer.cpp src/segmentizer.h \
   src/session.cpp src/session.h \
   src/simple-log.cpp \
+  src/slot-buffer.cpp src/slot-buffer.h \
   include/statistics.h src/statistics.cpp \
   src/threading-capability.h src/threading-capability.cpp \
   src/video-coder.cpp src/video-coder.h \
@@ -118,7 +120,7 @@ endif
 #################
 GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
 GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
-UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS}
+UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS}
 UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
 UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
@@ -129,7 +131,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
+check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-data-validator
 
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -175,5 +177,10 @@ bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-ge
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-validator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_data_validator_LDADD = ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}

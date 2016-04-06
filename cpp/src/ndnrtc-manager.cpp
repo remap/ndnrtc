@@ -300,6 +300,7 @@ NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
                                const new_api::MediaStreamParams& params,
                                const new_api::GeneralParams& generalParams,
                                const new_api::GeneralConsumerParams& consumerParams,
+                               ndn::KeyChain* keyChain,
                                IExternalRenderer* const renderer)
 {
     std::string streamPrefix = "";
@@ -308,6 +309,10 @@ NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
         Logger::getLogger(LIB_LOG).flush();
         LIB_LOG = NdnRtcUtils::getFullLogPath(generalParams, generalParams.logFile_);
         NdnRtcUtils::createLibFace(generalParams);
+        
+#warning this should become obsolete when face will be passed to the library
+        if (keyChain)
+            keyChain->setFace(NdnRtcUtils::getLibFace()->getFaceWrapper()->getFace().get());
         
         LogInfo(LIB_LOG) << "Adding remote stream for session "
         << remoteSessionPrefix << "..." << std::endl;
@@ -339,6 +344,7 @@ NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
             settings.userPrefix_ = remoteSessionPrefix;
             settings.streamParams_ = params;
             settings.faceProcessor_ = NdnRtcUtils::getLibFace();
+            settings.keyChain_ = keyChain;
             
             remoteStreamConsumer->registerCallback(&LibraryInternalObserver);
             
@@ -372,6 +378,24 @@ NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
     
     return streamPrefix;
 }
+
+std::string
+NdnRtcManager::addRemoteStream(const std::string& remoteSessionPrefix,
+                               const std::string& threadName,
+                               const new_api::MediaStreamParams& params,
+                               const new_api::GeneralParams& generalParams,
+                               const new_api::GeneralConsumerParams& consumerParams,
+                               IExternalRenderer* const renderer)
+{
+    return addRemoteStream(remoteSessionPrefix,
+                           threadName,
+                           params,
+                           generalParams,
+                           consumerParams,
+                           nullptr,
+                           renderer);
+}
+
 
 std::string
 NdnRtcManager::removeRemoteStream(const std::string& streamPrefix)

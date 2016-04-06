@@ -45,12 +45,22 @@ namespace ndnrtc {
         removeLocalStream(const std::string& sessionPrefix,
                           const std::string& streamPrefix);
         
+
         std::string
         addRemoteStream(const std::string& remoteSessionPrefix,
                         const std::string& threadName,
                         const new_api::MediaStreamParams& params,
                         const new_api::GeneralParams& generalParams,
                         const new_api::GeneralConsumerParams& consumerParams,
+                        IExternalRenderer* const renderer);
+        
+        std::string
+        addRemoteStream(const std::string& remoteSessionPrefix,
+                        const std::string& threadName,
+                        const new_api::MediaStreamParams& params,
+                        const new_api::GeneralParams& generalParams,
+                        const new_api::GeneralConsumerParams& consumerParams,
+                        ndn::KeyChain* keyChain,
                         IExternalRenderer* const renderer);
 
         std::string

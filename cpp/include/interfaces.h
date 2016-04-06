@@ -12,6 +12,8 @@
 #define libndnrtc_interfaces_h
 
 #include <stdint.h>
+#include <ndn-cpp/security/key-chain.hpp>
+
 #include "params.h"
 
 
@@ -355,6 +357,29 @@ namespace ndnrtc
                         const new_api::MediaStreamParams& params,
                         const new_api::GeneralParams& generalParams,
                         const new_api::GeneralConsumerParams& consumerParams,
+                        IExternalRenderer* const renderer) DEPRECATED = 0;
+        
+        /**
+         * Adds new remote stream and starts fetching from its' first thread
+         * @param remoteSessionPrefix Remote producer's session prefix returned
+         *                            by previsous setRemoteSessionObserver call
+         * @param threadName Thread name to fetch from
+         * @param params Media stream parameters
+         * @param generalParams General NDN-RTC parameters
+         * @param consumerParams General consumer parameters
+         * @param keyChain Key chain used to verify data
+         * @param renderer Pointer to the object which conforms to the
+         *                 IExternalRenderer interface (video only)
+         * @return Remote stream prefix on success and empty string on failure
+         * @see setRemoteSessionObserver
+         */
+        virtual std::string
+        addRemoteStream(const std::string& remoteSessionPrefix,
+                        const std::string& threadName,
+                        const new_api::MediaStreamParams& params,
+                        const new_api::GeneralParams& generalParams,
+                        const new_api::GeneralConsumerParams& consumerParams,
+                        ndn::KeyChain* keyChain,
                         IExternalRenderer* const renderer) = 0;
         
         /**

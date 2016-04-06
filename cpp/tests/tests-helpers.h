@@ -14,6 +14,7 @@
 #include <include/interfaces.h>
 #include <include/statistics.h>
 
+#include "src/slot-buffer.h"
 #include "client/src/config.h"
 
 ndnrtc::new_api::VideoCoderParams sampleVideoCoderParams();
@@ -35,6 +36,10 @@ public:
 	MOCK_METHOD6(addRemoteStream, std::string(const std::string&, const std::string&,
 		const ndnrtc::new_api::MediaStreamParams&, const ndnrtc::new_api::GeneralParams&, 
 		const ndnrtc::new_api::GeneralConsumerParams&, ndnrtc::IExternalRenderer* const));
+	MOCK_METHOD7(addRemoteStream, std::string(const std::string&, const std::string&,
+		const ndnrtc::new_api::MediaStreamParams&, const ndnrtc::new_api::GeneralParams&, 
+		const ndnrtc::new_api::GeneralConsumerParams&, ndn::KeyChain* keyChain,
+		ndnrtc::IExternalRenderer* const));
 	MOCK_METHOD1(removeRemoteStream, std::string(const std::string&));
 	MOCK_METHOD2(setStreamObserver, int(const std::string&, ndnrtc::IConsumerObserver* const));
 	MOCK_METHOD1(removeStreamObserver, int(const std::string&));
@@ -65,6 +70,51 @@ public:
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
                                       const unsigned char* vBuffer));
+};
+
+class MockNdnKeyChain 
+{
+public:
+	MOCK_METHOD3(verifyData, void(const boost::shared_ptr<ndn::Data>& data, 
+		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed));
+
+	void callOnVerifySuccess(const boost::shared_ptr<ndn::Data>& data, 
+		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed)
+
+	{
+		onVerified(data);
+	}
+
+	void callOnVerifyFailed(const boost::shared_ptr<ndn::Data>& data, 
+		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed)
+	{
+		onVerifyFailed(data);
+	}
+};
+
+class MockSlotBuffer : public ndnrtc::ISlotBuffer {
+public:
+	MOCK_METHOD3(accessSlotExclusively, void(const std::string&,
+		const ndnrtc::OnSlotAccess&, const ndnrtc::OnNotFound&));
+
+	void callOnSlotAccess(const std::string&,
+		const ndnrtc::OnSlotAccess& onSlotAccess, const ndnrtc::OnNotFound&)
+	{
+		onSlotAccess(slot_);
+	}
+
+	void callOnSlotNotFound(const std::string&,
+		const ndnrtc::OnSlotAccess&, const ndnrtc::OnNotFound& onNotFound)
+	{
+		onNotFound();
+	}
+
+	boost::shared_ptr<ndnrtc::ISlot> slot_;
+};
+
+class MockSlot : public ndnrtc::ISlot {
+public:
+	MOCK_METHOD2(markVerified, void(const std::string&, bool));
 };
 
 namespace testing

@@ -54,7 +54,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
-	bin/tests/test-client$(EXEEXT)
+	bin/tests/test-client$(EXEEXT) \
+	bin/tests/test-data-validator$(EXEEXT)
 TESTS = $(check_PROGRAMS)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
@@ -120,6 +121,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-base-capturer.lo \
 	src/libndnrtc_la-chase-estimation.lo \
 	src/libndnrtc_la-consumer.lo \
+	src/libndnrtc_la-data-validator.lo \
 	src/libndnrtc_la-external-capturer.lo \
 	src/libndnrtc_la-face-wrapper.lo src/libndnrtc_la-fec.lo \
 	src/libndnrtc_la-frame-buffer.lo \
@@ -210,13 +212,27 @@ bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_config_load_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_4 = tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT) \
+am__objects_4 =  \
+	tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT) \
+	contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
+am_bin_tests_test_data_validator_OBJECTS = tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT) \
+	src/bin_tests_test_data_validator-data-validator.$(OBJEXT) \
+	$(am__objects_4)
+bin_tests_test_data_validator_OBJECTS =  \
+	$(am_bin_tests_test_data_validator_OBJECTS)
+bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_data_validator_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_5 = tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_io_OBJECTS =  \
 	tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT) \
 	client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT) \
-	$(am__objects_4)
+	$(am__objects_5)
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
 bin_tests_test_frame_io_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -224,14 +240,14 @@ bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_5 =  \
+am__objects_6 =  \
 	tests/bin_tests_test_generator-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT)
 am_bin_tests_test_generator_OBJECTS =  \
 	tests/bin_tests_test_generator-test-generator.$(OBJEXT) \
 	client/src/bin_tests_test_generator-precise-generator.$(OBJEXT) \
-	$(am__objects_5)
+	$(am__objects_6)
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
 bin_tests_test_generator_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -239,26 +255,26 @@ bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_6 = tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
+am__objects_7 = tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
-	$(am__objects_6)
+	$(am__objects_7)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_5)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_7 = tests/bin_tests_test_renderer-tests-helpers.$(OBJEXT) \
+am__objects_8 = tests/bin_tests_test_renderer-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT)
 am_bin_tests_test_renderer_OBJECTS =  \
 	tests/bin_tests_test_renderer-test-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-frame-io.$(OBJEXT) \
-	$(am__objects_7)
+	$(am__objects_8)
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -266,13 +282,13 @@ bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_8 =  \
+am__objects_9 =  \
 	tests/bin_tests_test_stat_collector-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT)
 am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-stat-collector.$(OBJEXT) \
-	$(am__objects_8)
+	$(am__objects_9)
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -280,7 +296,7 @@ bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_stat_collector_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_9 =  \
+am__objects_10 =  \
 	tests/bin_tests_test_video_source-tests-helpers.$(OBJEXT) \
 	contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT)
@@ -289,7 +305,7 @@ am_bin_tests_test_video_source_OBJECTS =  \
 	client/src/bin_tests_test_video_source-frame-io.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-precise-generator.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_10)
 bin_tests_test_video_source_OBJECTS =  \
 	$(am_bin_tests_test_video_source_OBJECTS)
 bin_tests_test_video_source_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -359,6 +375,7 @@ am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_client_SOURCES) \
 	$(bin_tests_test_client_params_SOURCES) \
 	$(bin_tests_test_config_load_SOURCES) \
+	$(bin_tests_test_data_validator_SOURCES) \
 	$(bin_tests_test_frame_io_SOURCES) \
 	$(bin_tests_test_generator_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
@@ -370,6 +387,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_tests_test_client_SOURCES) \
 	$(bin_tests_test_client_params_SOURCES) \
 	$(bin_tests_test_config_load_SOURCES) \
+	$(bin_tests_test_data_validator_SOURCES) \
 	$(bin_tests_test_frame_io_SOURCES) \
 	$(bin_tests_test_generator_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
@@ -548,6 +566,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer.cpp src/consumer.h \
+  src/data-validator.h src/data-validator.cpp \
   src/ndnrtc-endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \
   src/face-wrapper.cpp src/face-wrapper.h \
@@ -612,7 +631,8 @@ GMOCK_ROOT = $(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
-	${ndnrtc_client_CPPFLAGS} $(am__append_5)
+	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
+	$(am__append_5)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
 UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
@@ -652,6 +672,10 @@ bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-ge
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-validator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_data_validator_LDADD = ${UNIT_TESTS_LDADD_}
 all: all-am
 
 .SUFFIXES:
@@ -748,6 +772,8 @@ src/libndnrtc_la-base-capturer.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-chase-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-consumer.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-data-validator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-external-capturer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -919,6 +945,21 @@ contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.$(OBJEXT):  \
 bin/tests/test-config-load$(EXEEXT): $(bin_tests_test_config_load_OBJECTS) $(bin_tests_test_config_load_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-config-load$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_config_load_LINK) $(bin_tests_test_config_load_OBJECTS) $(bin_tests_test_config_load_LDADD) $(LIBS)
+tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_data_validator-data-validator.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-data-validator$(EXEEXT): $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-data-validator$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_data_validator_LINK) $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_LDADD) $(LIBS)
 tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT):  \
@@ -1080,6 +1121,7 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT)
@@ -1089,12 +1131,14 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_client_params-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT)
+	-rm -f src/bin_tests_test_data_validator-data-validator.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.lo
 	-rm -f src/libndnrtc_la-audio-consumer.$(OBJEXT)
@@ -1117,6 +1161,8 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-chase-estimation.lo
 	-rm -f src/libndnrtc_la-consumer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-consumer.lo
+	-rm -f src/libndnrtc_la-data-validator.$(OBJEXT)
+	-rm -f src/libndnrtc_la-data-validator.lo
 	-rm -f src/libndnrtc_la-external-capturer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-external-capturer.lo
 	-rm -f src/libndnrtc_la-face-wrapper.$(OBJEXT)
@@ -1189,6 +1235,8 @@ mostlyclean-compile:
 	-rm -f tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_config_load-test-config-load.$(OBJEXT)
 	-rm -f tests/bin_tests_test_config_load-tests-helpers.$(OBJEXT)
+	-rm -f tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT)
+	-rm -f tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT)
 	-rm -f tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_generator-test-generator.$(OBJEXT)
@@ -1234,6 +1282,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_io-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_generator-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_params-gmock-all.Po@am__quote@
@@ -1243,12 +1292,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_io-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_generator-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_params-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_renderer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_stat_collector-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo@am__quote@
@@ -1260,6 +1311,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-estimator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-chase-estimation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-consumer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-data-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-external-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-face-wrapper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-fec.Plo@am__quote@
@@ -1299,6 +1351,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_io-test-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_generator-test-generator.Po@am__quote@
@@ -1426,6 +1480,14 @@ src/libndnrtc_la-consumer.lo: src/consumer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/consumer.cpp' object='src/libndnrtc_la-consumer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-consumer.lo `test -f 'src/consumer.cpp' || echo '$(srcdir)/'`src/consumer.cpp
+
+src/libndnrtc_la-data-validator.lo: src/data-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-data-validator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-data-validator.Tpo -c -o src/libndnrtc_la-data-validator.lo `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-data-validator.Tpo src/$(DEPDIR)/libndnrtc_la-data-validator.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/data-validator.cpp' object='src/libndnrtc_la-data-validator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-data-validator.lo `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
 
 src/libndnrtc_la-external-capturer.lo: src/external-capturer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-external-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-external-capturer.Tpo -c -o src/libndnrtc_la-external-capturer.lo `test -f 'src/external-capturer.cpp' || echo '$(srcdir)/'`src/external-capturer.cpp
@@ -2026,6 +2088,86 @@ contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.obj: contrib/g
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_data_validator-test-data-validator.o: tests/test-data-validator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-test-data-validator.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Tpo -c -o tests/bin_tests_test_data_validator-test-data-validator.o `test -f 'tests/test-data-validator.cc' || echo '$(srcdir)/'`tests/test-data-validator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-data-validator.cc' object='tests/bin_tests_test_data_validator-test-data-validator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-test-data-validator.o `test -f 'tests/test-data-validator.cc' || echo '$(srcdir)/'`tests/test-data-validator.cc
+
+tests/bin_tests_test_data_validator-test-data-validator.obj: tests/test-data-validator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-test-data-validator.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Tpo -c -o tests/bin_tests_test_data_validator-test-data-validator.obj `if test -f 'tests/test-data-validator.cc'; then $(CYGPATH_W) 'tests/test-data-validator.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-data-validator.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-data-validator.cc' object='tests/bin_tests_test_data_validator-test-data-validator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-test-data-validator.obj `if test -f 'tests/test-data-validator.cc'; then $(CYGPATH_W) 'tests/test-data-validator.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-data-validator.cc'; fi`
+
+src/bin_tests_test_data_validator-data-validator.o: src/data-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_data_validator-data-validator.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Tpo -c -o src/bin_tests_test_data_validator-data-validator.o `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Tpo src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/data-validator.cpp' object='src/bin_tests_test_data_validator-data-validator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_data_validator-data-validator.o `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
+
+src/bin_tests_test_data_validator-data-validator.obj: src/data-validator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_data_validator-data-validator.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Tpo -c -o src/bin_tests_test_data_validator-data-validator.obj `if test -f 'src/data-validator.cpp'; then $(CYGPATH_W) 'src/data-validator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/data-validator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Tpo src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/data-validator.cpp' object='src/bin_tests_test_data_validator-data-validator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_data_validator-data-validator.obj `if test -f 'src/data-validator.cpp'; then $(CYGPATH_W) 'src/data-validator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/data-validator.cpp'; fi`
+
+tests/bin_tests_test_data_validator-tests-helpers.o: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo -c -o tests/bin_tests_test_data_validator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_data_validator-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+
+tests/bin_tests_test_data_validator-tests-helpers.obj: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo -c -o tests/bin_tests_test_data_validator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_data_validator-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tests/bin_tests_test_frame_io-test-frame-io.o: tests/test-frame-io.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_frame_io-test-frame-io.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_frame_io-test-frame-io.Tpo -c -o tests/bin_tests_test_frame_io-test-frame-io.o `test -f 'tests/test-frame-io.cc' || echo '$(srcdir)/'`tests/test-frame-io.cc

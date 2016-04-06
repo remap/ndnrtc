@@ -19,6 +19,7 @@
 #include "ndnrtc-utils.h"
 #include "statistics.h"
 #include "simple-log.h"
+#include "slot-buffer.h"
 
 namespace ndnrtc
 {
@@ -30,7 +31,8 @@ namespace ndnrtc
         class Consumer;
         class IFrameBufferCallback;
         
-        class FrameBuffer : public ndnlog::new_api::ILoggingObject,
+        class FrameBuffer : public ISlotBuffer,
+                            public ndnlog::new_api::ILoggingObject,
                             public statistics::StatObject
         {
         public:
@@ -46,7 +48,7 @@ namespace ndnrtc
             /**
              * Buffer slot represents frame/packet which is being assembled
              */
-            class Slot
+            class Slot : public ISlot
             {
             public:
                 /**
@@ -164,6 +166,14 @@ namespace ndnrtc
                     isParity()
                     { return isParity_; }
                     
+                    void
+                    setIsVerified(bool isVerified)
+                    { isVerified_ = isVerified; }
+                    
+                    bool
+                    isVerified()
+                    { return isVerified_; }
+                    
                     static std::string
                     stateToString(State s)
                     {
@@ -210,7 +220,7 @@ namespace ndnrtc
                                                  // an interest and answering it
                                                  // into the segment's meta data
                                                  // header, otherwise - 0
-                    bool isParity_;
+                    bool isParity_, isVerified_;
                     
                     void resetData();
                 }; // class Segment
@@ -303,6 +313,9 @@ namespace ndnrtc
                  */
                 int
                 markMissing(const Interest& interest);
+                
+                void
+                markVerified(const std::string& segmentName, bool verified);
                 
                 /**
                  * Adds data to the slot
@@ -767,9 +780,6 @@ namespace ndnrtc
             Event
             newData(const Data& data);
             
-            void
-            interestTimeout(const Interest& interest);
-            
             /**
              * Purges all new slots (useful for thread switching)
              */
@@ -859,6 +869,11 @@ namespace ndnrtc
             
             void
             synchronizeRelease() { syncMutex_.unlock(); }
+            
+            // ISlotBuffer
+            void accessSlotExclusively(const std::string& slotName,
+                                       const OnSlotAccess& onSlotAccess,
+                                       const OnNotFound& onNotFound);
     
             /**
              * Dumps buffer state to a log file
