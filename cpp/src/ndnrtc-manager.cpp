@@ -171,6 +171,8 @@ std::string NdnRtcManager::startSession(const std::string& username,
                                         const std::string& prefix,
                                         const new_api::GeneralParams& generalParams,
                                         ndn::KeyChain* keyChain,
+                                        ndn::Face* face,
+                                        boost::asio::io_service& io,
                                         ISessionObserver *sessionObserver)
 {
     std::string sessionPrefix = "";
@@ -192,20 +194,12 @@ std::string NdnRtcManager::startSession(const std::string& username,
 
         LogInfo(LIB_LOG) << "Creating new session instance..." << std::endl;
         
-        ActiveSession.reset(new Session());
+        ActiveSession.reset(new Session(username, prefix, generalParams, keyChain, face, io));
         ActiveSession->setSessionObserver(sessionObserver);
         ActiveSession->registerCallback(&LibraryInternalObserver);
         
-        if (RESULT_NOT_FAIL(ActiveSession->init(username, prefix, generalParams, keyChain, NdnRtcUtils::getLibFace())))
-        {
-            ActiveSession->start();
-            sessionPrefix = ActiveSession->getPrefix();
-        }
-        else
-        {
-            LogError(LIB_LOG) << "Session initialization failed" << std::endl;
-            sessionPrefix = "";
-        }
+        ActiveSession->start();
+        sessionPrefix = ActiveSession->getPrefix();
         
         LogInfo(LIB_LOG) << "Session started (prefix " << sessionPrefix
         << ")" << std::endl;

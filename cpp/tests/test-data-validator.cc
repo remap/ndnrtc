@@ -9,6 +9,8 @@
 #include "gtest/gtest.h"
 #include "src/data-validator.h"
 #include "tests-helpers.h"
+#include "mock-objects/slot-buffer-mock.h"
+#include "mock-objects/ndn-cpp-mock.h"
 
 // include .cpp in order to instantiate template with mock class
 #include "src/data-validator.cpp"

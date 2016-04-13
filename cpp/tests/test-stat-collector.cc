@@ -14,6 +14,7 @@
 
 #include <client/src/stat-collector.h>
 #include "tests-helpers.h"
+#include "mock-objects/ndnrtc-library-mock.h"
 
 #define PREFIX string("/ndn/edu/ucla/remap/ndnrtc/user")
 #define CLIENT1 string("clientA")

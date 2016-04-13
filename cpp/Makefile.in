@@ -55,7 +55,11 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
 	bin/tests/test-client$(EXEEXT) \
-	bin/tests/test-data-validator$(EXEEXT)
+	bin/tests/test-data-validator$(EXEEXT) \
+	bin/tests/test-media-stream$(EXEEXT) \
+	bin/tests/test-media-thread$(EXEEXT) \
+	bin/tests/test-network-data$(EXEEXT) \
+	bin/tests/test-packet-publisher$(EXEEXT)
 TESTS = $(check_PROGRAMS)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
@@ -140,6 +144,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-ndnrtc-utils.lo \
 	src/libndnrtc_la-params-validator.lo \
 	src/libndnrtc_la-pipeliner.lo src/libndnrtc_la-playout.lo \
+	src/libndnrtc_la-packet-publisher.lo \
 	src/libndnrtc_la-rtt-estimation.lo \
 	src/libndnrtc_la-segmentizer.lo src/libndnrtc_la-session.lo \
 	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-slot-buffer.lo \
@@ -159,8 +164,7 @@ am__v_lt_0 = --silent
 libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libndnrtc_la_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_1 = tests/bin_tests_test_client-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.$(OBJEXT) \
+am__objects_1 = contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.$(OBJEXT)
 am_bin_tests_test_client_OBJECTS =  \
 	tests/bin_tests_test_client-test-client.$(OBJEXT) \
@@ -184,9 +188,7 @@ bin_tests_test_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_client_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_2 =  \
-	tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT) \
+am__objects_2 = contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_client_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-test-client-params.$(OBJEXT) \
 	client/src/bin_tests_test_client_params-config.$(OBJEXT) \
@@ -198,9 +200,7 @@ bin_tests_test_client_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_client_params_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_3 =  \
-	tests/bin_tests_test_config_load-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT) \
+am__objects_3 = contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.$(OBJEXT)
 am_bin_tests_test_config_load_OBJECTS =  \
 	tests/bin_tests_test_config_load-test-config-load.$(OBJEXT) \
@@ -213,9 +213,7 @@ bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_config_load_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_4 =  \
-	tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT) \
+am__objects_4 = contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
 am_bin_tests_test_data_validator_OBJECTS = tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT) \
 	src/bin_tests_test_data_validator-data-validator.$(OBJEXT) \
@@ -227,8 +225,7 @@ bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_data_validator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_5 = tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
+am__objects_5 = contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_io_OBJECTS =  \
 	tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT) \
@@ -241,9 +238,7 @@ bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_6 =  \
-	tests/bin_tests_test_generator-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
+am__objects_6 = contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT)
 am_bin_tests_test_generator_OBJECTS =  \
 	tests/bin_tests_test_generator-test-generator.$(OBJEXT) \
@@ -256,26 +251,80 @@ bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_7 = tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
+am__objects_7 = contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.$(OBJEXT)
+am_bin_tests_test_media_stream_OBJECTS =  \
+	tests/bin_tests_test_media_stream-test-media-stream.$(OBJEXT) \
+	src/bin_tests_test_media_stream-media-stream.$(OBJEXT) \
+	src/bin_tests_test_media_stream-media-thread.$(OBJEXT) \
+	src/bin_tests_test_media_stream-audio-thread.$(OBJEXT) \
+	src/bin_tests_test_media_stream-video-thread.$(OBJEXT) \
+	$(am__objects_7)
+bin_tests_test_media_stream_OBJECTS =  \
+	$(am_bin_tests_test_media_stream_OBJECTS)
+bin_tests_test_media_stream_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_media_stream_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
+am_bin_tests_test_media_thread_OBJECTS =  \
+	tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT) \
+	src/bin_tests_test_media_thread-media-thread.$(OBJEXT) \
+	src/bin_tests_test_media_thread-audio-thread.$(OBJEXT) \
+	src/bin_tests_test_media_thread-video-thread.$(OBJEXT) \
+	$(am__objects_8)
+bin_tests_test_media_thread_OBJECTS =  \
+	$(am_bin_tests_test_media_thread_OBJECTS)
+bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_media_thread_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_9 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
+am_bin_tests_test_network_data_OBJECTS =  \
+	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
+	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
+	src/bin_tests_test_network_data-fec.$(OBJEXT) $(am__objects_9)
+bin_tests_test_network_data_OBJECTS =  \
+	$(am_bin_tests_test_network_data_OBJECTS)
+bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_network_data_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
+am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
+	src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT) \
+	$(am__objects_10)
+bin_tests_test_packet_publisher_OBJECTS =  \
+	$(am_bin_tests_test_packet_publisher_OBJECTS)
+bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_packet_publisher_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
-	$(am__objects_7)
+	$(am__objects_11)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_5)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_8 = tests/bin_tests_test_renderer-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
+am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT)
 am_bin_tests_test_renderer_OBJECTS =  \
 	tests/bin_tests_test_renderer-test-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-frame-io.$(OBJEXT) \
-	$(am__objects_8)
+	$(am__objects_12)
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -283,13 +332,11 @@ bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_9 =  \
-	tests/bin_tests_test_stat_collector-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
+am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT)
 am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-stat-collector.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_13)
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -297,16 +344,14 @@ bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_stat_collector_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_10 =  \
-	tests/bin_tests_test_video_source-tests-helpers.$(OBJEXT) \
-	contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
+am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_source_OBJECTS =  \
 	tests/bin_tests_test_video_source-test-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-frame-io.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-precise-generator.$(OBJEXT) \
-	$(am__objects_10)
+	$(am__objects_14)
 bin_tests_test_video_source_OBJECTS =  \
 	$(am_bin_tests_test_video_source_OBJECTS)
 bin_tests_test_video_source_DEPENDENCIES = $(am__DEPENDENCIES_5)
@@ -379,6 +424,10 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_client_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
 	$(bin_tests_test_frame_io_SOURCES) \
 	$(bin_tests_test_generator_SOURCES) \
+	$(bin_tests_test_media_stream_SOURCES) \
+	$(bin_tests_test_media_thread_SOURCES) \
+	$(bin_tests_test_network_data_SOURCES) \
+	$(bin_tests_test_packet_publisher_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
 	$(bin_tests_test_renderer_SOURCES) \
 	$(bin_tests_test_stat_collector_SOURCES) \
@@ -391,6 +440,10 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
 	$(bin_tests_test_frame_io_SOURCES) \
 	$(bin_tests_test_generator_SOURCES) \
+	$(bin_tests_test_media_stream_SOURCES) \
+	$(bin_tests_test_media_thread_SOURCES) \
+	$(bin_tests_test_network_data_SOURCES) \
+	$(bin_tests_test_packet_publisher_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
 	$(bin_tests_test_renderer_SOURCES) \
 	$(bin_tests_test_stat_collector_SOURCES) \
@@ -595,6 +648,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/params-validator.h src/params-validator.cpp \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
+  src/packet-publisher.cpp src/packet-publisher.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
@@ -635,9 +689,9 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
 	$(am__append_5)
-UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
+UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
-UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
+UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -678,6 +732,22 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_media_stream_SOURCES = tests/test-media-stream.cc src/media-stream.cpp src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_stream_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_thread_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
+bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp  ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
 all: all-am
 
 .SUFFIXES:
@@ -817,6 +887,8 @@ src/libndnrtc_la-pipeliner.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-packet-publisher.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-rtt-estimation.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-segmentizer.lo: src/$(am__dirstamp) \
@@ -891,8 +963,6 @@ client/src/bin_tests_test_client-precise-generator.$(OBJEXT):  \
 client/src/bin_tests_test_client-config.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_client-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/$(am__dirstamp):
 	@$(MKDIR_P) contrib/gtest/googlemock/src
 	@: > contrib/gtest/googlemock/src/$(am__dirstamp)
@@ -922,8 +992,6 @@ tests/bin_tests_test_client_params-test-client-params.$(OBJEXT):  \
 client/src/bin_tests_test_client_params-config.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -938,8 +1006,6 @@ tests/bin_tests_test_config_load-test-config-load.$(OBJEXT):  \
 client/src/bin_tests_test_config_load-config.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_config_load-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -953,8 +1019,6 @@ tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_data_validator-data-validator.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -969,8 +1033,6 @@ tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT):  \
 client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -985,8 +1047,6 @@ tests/bin_tests_test_generator-test-generator.$(OBJEXT):  \
 client/src/bin_tests_test_generator-precise-generator.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_generator-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -996,9 +1056,71 @@ contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT):  \
 bin/tests/test-generator$(EXEEXT): $(bin_tests_test_generator_OBJECTS) $(bin_tests_test_generator_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-generator$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_generator_LINK) $(bin_tests_test_generator_OBJECTS) $(bin_tests_test_generator_LDADD) $(LIBS)
-tests/bin_tests_test_params-test-params.$(OBJEXT):  \
+tests/bin_tests_test_media_stream-test-media-stream.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_params-tests-helpers.$(OBJEXT):  \
+src/bin_tests_test_media_stream-media-stream.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_stream-media-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_stream-audio-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_stream-video-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-media-stream$(EXEEXT): $(bin_tests_test_media_stream_OBJECTS) $(bin_tests_test_media_stream_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-media-stream$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_media_stream_LINK) $(bin_tests_test_media_stream_OBJECTS) $(bin_tests_test_media_stream_LDADD) $(LIBS)
+tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-media-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-audio-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-video-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-media-thread$(EXEEXT): $(bin_tests_test_media_thread_OBJECTS) $(bin_tests_test_media_thread_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-media-thread$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_media_thread_LINK) $(bin_tests_test_media_thread_OBJECTS) $(bin_tests_test_media_thread_LDADD) $(LIBS)
+tests/bin_tests_test_network_data-test-network-data.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_network_data-frame-data.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_network_data-fec.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-network-data$(EXEEXT): $(bin_tests_test_network_data_OBJECTS) $(bin_tests_test_network_data_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-network-data$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_network_data_LINK) $(bin_tests_test_network_data_OBJECTS) $(bin_tests_test_network_data_LDADD) $(LIBS)
+tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-packet-publisher$(EXEEXT): $(bin_tests_test_packet_publisher_OBJECTS) $(bin_tests_test_packet_publisher_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-packet-publisher$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_packet_publisher_LINK) $(bin_tests_test_packet_publisher_OBJECTS) $(bin_tests_test_packet_publisher_LDADD) $(LIBS)
+tests/bin_tests_test_params-test-params.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
@@ -1017,8 +1139,6 @@ client/src/bin_tests_test_renderer-renderer.$(OBJEXT):  \
 client/src/bin_tests_test_renderer-frame-io.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_renderer-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1033,8 +1153,6 @@ tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT):  \
 client/src/bin_tests_test_stat_collector-stat-collector.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_stat_collector-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1055,8 +1173,6 @@ client/src/bin_tests_test_video_source-video-source.$(OBJEXT):  \
 client/src/bin_tests_test_video_source-precise-generator.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-tests/bin_tests_test_video_source-tests-helpers.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1128,6 +1244,10 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT)
@@ -1138,11 +1258,25 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT)
 	-rm -f src/bin_tests_test_data_validator-data-validator.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_stream-audio-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_stream-media-stream.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_stream-media-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_stream-video-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-audio-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-media-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-video-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_network_data-fec.$(OBJEXT)
+	-rm -f src/bin_tests_test_network_data-frame-data.$(OBJEXT)
+	-rm -f src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.lo
 	-rm -f src/libndnrtc_la-audio-consumer.$(OBJEXT)
@@ -1201,6 +1335,8 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-ndnrtc-object.lo
 	-rm -f src/libndnrtc_la-ndnrtc-utils.$(OBJEXT)
 	-rm -f src/libndnrtc_la-ndnrtc-utils.lo
+	-rm -f src/libndnrtc_la-packet-publisher.$(OBJEXT)
+	-rm -f src/libndnrtc_la-packet-publisher.lo
 	-rm -f src/libndnrtc_la-params-validator.$(OBJEXT)
 	-rm -f src/libndnrtc_la-params-validator.lo
 	-rm -f src/libndnrtc_la-pipeliner.$(OBJEXT)
@@ -1236,25 +1372,19 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-webrtc-audio-channel.$(OBJEXT)
 	-rm -f src/libndnrtc_la-webrtc-audio-channel.lo
 	-rm -f tests/bin_tests_test_client-test-client.$(OBJEXT)
-	-rm -f tests/bin_tests_test_client-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_client_params-test-client-params.$(OBJEXT)
-	-rm -f tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_config_load-test-config-load.$(OBJEXT)
-	-rm -f tests/bin_tests_test_config_load-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT)
-	-rm -f tests/bin_tests_test_data_validator-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT)
-	-rm -f tests/bin_tests_test_frame_io-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_generator-test-generator.$(OBJEXT)
-	-rm -f tests/bin_tests_test_generator-tests-helpers.$(OBJEXT)
+	-rm -f tests/bin_tests_test_media_stream-test-media-stream.$(OBJEXT)
+	-rm -f tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT)
+	-rm -f tests/bin_tests_test_network_data-test-network-data.$(OBJEXT)
+	-rm -f tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT)
 	-rm -f tests/bin_tests_test_params-test-params.$(OBJEXT)
-	-rm -f tests/bin_tests_test_params-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_renderer-test-renderer.$(OBJEXT)
-	-rm -f tests/bin_tests_test_renderer-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT)
-	-rm -f tests/bin_tests_test_stat_collector-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_video_source-test-video-source.$(OBJEXT)
-	-rm -f tests/bin_tests_test_video_source-tests-helpers.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -1291,6 +1421,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_io-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_generator-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_params-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_renderer-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_stat_collector-gmock-all.Po@am__quote@
@@ -1301,11 +1435,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_io-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_generator-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_params-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_renderer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_stat_collector-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-fec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo@am__quote@
@@ -1335,6 +1483,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-namespace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-utils.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-params-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@
@@ -1353,25 +1502,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client-test-client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-test-client-params.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_io-test-frame-io.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_generator-test-generator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-test-params.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_renderer-test-renderer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_stat_collector-test-stat-collector.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1656,6 +1799,14 @@ src/libndnrtc_la-playout.lo: src/playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
 
+src/libndnrtc_la-packet-publisher.lo: src/packet-publisher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-packet-publisher.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-packet-publisher.Tpo -c -o src/libndnrtc_la-packet-publisher.lo `test -f 'src/packet-publisher.cpp' || echo '$(srcdir)/'`src/packet-publisher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-packet-publisher.Tpo src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/packet-publisher.cpp' object='src/libndnrtc_la-packet-publisher.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-packet-publisher.lo `test -f 'src/packet-publisher.cpp' || echo '$(srcdir)/'`src/packet-publisher.cpp
+
 src/libndnrtc_la-rtt-estimation.lo: src/rtt-estimation.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-rtt-estimation.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo -c -o src/libndnrtc_la-rtt-estimation.lo `test -f 'src/rtt-estimation.cpp' || echo '$(srcdir)/'`src/rtt-estimation.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Tpo src/$(DEPDIR)/libndnrtc_la-rtt-estimation.Plo
@@ -1896,22 +2047,6 @@ client/src/bin_tests_test_client-config.obj: client/src/config.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
 
-tests/bin_tests_test_client-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo -c -o tests/bin_tests_test_client-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_client-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_client-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo -c -o tests/bin_tests_test_client-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_client-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Po
@@ -1975,22 +2110,6 @@ client/src/bin_tests_test_client_params-config.obj: client/src/config.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/config.cpp' object='client/src/bin_tests_test_client_params-config.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client_params-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
-
-tests/bin_tests_test_client_params-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client_params-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Tpo -c -o tests/bin_tests_test_client_params-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_client_params-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client_params-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_client_params-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client_params-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Tpo -c -o tests/bin_tests_test_client_params-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_client_params-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client_params-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
@@ -2056,22 +2175,6 @@ client/src/bin_tests_test_config_load-config.obj: client/src/config.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_config_load-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
 
-tests/bin_tests_test_config_load-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_config_load-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Tpo -c -o tests/bin_tests_test_config_load-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_config_load-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_config_load-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_config_load-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_config_load-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Tpo -c -o tests/bin_tests_test_config_load-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_config_load-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_config_load-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_config_load-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_config_load_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po
@@ -2135,22 +2238,6 @@ src/bin_tests_test_data_validator-data-validator.obj: src/data-validator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/data-validator.cpp' object='src/bin_tests_test_data_validator-data-validator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_data_validator-data-validator.obj `if test -f 'src/data-validator.cpp'; then $(CYGPATH_W) 'src/data-validator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/data-validator.cpp'; fi`
-
-tests/bin_tests_test_data_validator-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo -c -o tests/bin_tests_test_data_validator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_data_validator-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_data_validator-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_data_validator-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo -c -o tests/bin_tests_test_data_validator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_data_validator-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_data_validator-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_data_validator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
@@ -2216,22 +2303,6 @@ client/src/bin_tests_test_frame_io-frame-io.obj: client/src/frame-io.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_frame_io-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
 
-tests/bin_tests_test_frame_io-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_frame_io-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Tpo -c -o tests/bin_tests_test_frame_io-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_frame_io-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_frame_io-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_frame_io-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_frame_io-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Tpo -c -o tests/bin_tests_test_frame_io-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_frame_io-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_frame_io-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_frame_io-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_frame_io_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_io-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_io-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_io-gmock-all.Po
@@ -2296,22 +2367,6 @@ client/src/bin_tests_test_generator-precise-generator.obj: client/src/precise-ge
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_generator-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
 
-tests/bin_tests_test_generator-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_generator-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Tpo -c -o tests/bin_tests_test_generator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_generator-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_generator-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_generator-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_generator-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Tpo -c -o tests/bin_tests_test_generator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_generator-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_generator-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_generator-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_generator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_generator-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_generator-gmock-all.Po
@@ -2344,6 +2399,358 @@ contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.obj: contrib/gte
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_generator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
+tests/bin_tests_test_media_stream-test-media-stream.o: tests/test-media-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_media_stream-test-media-stream.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Tpo -c -o tests/bin_tests_test_media_stream-test-media-stream.o `test -f 'tests/test-media-stream.cc' || echo '$(srcdir)/'`tests/test-media-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Tpo tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-media-stream.cc' object='tests/bin_tests_test_media_stream-test-media-stream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_media_stream-test-media-stream.o `test -f 'tests/test-media-stream.cc' || echo '$(srcdir)/'`tests/test-media-stream.cc
+
+tests/bin_tests_test_media_stream-test-media-stream.obj: tests/test-media-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_media_stream-test-media-stream.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Tpo -c -o tests/bin_tests_test_media_stream-test-media-stream.obj `if test -f 'tests/test-media-stream.cc'; then $(CYGPATH_W) 'tests/test-media-stream.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-media-stream.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Tpo tests/$(DEPDIR)/bin_tests_test_media_stream-test-media-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-media-stream.cc' object='tests/bin_tests_test_media_stream-test-media-stream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_media_stream-test-media-stream.obj `if test -f 'tests/test-media-stream.cc'; then $(CYGPATH_W) 'tests/test-media-stream.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-media-stream.cc'; fi`
+
+src/bin_tests_test_media_stream-media-stream.o: src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-media-stream.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Tpo -c -o src/bin_tests_test_media_stream-media-stream.o `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream.cpp' object='src/bin_tests_test_media_stream-media-stream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-media-stream.o `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
+
+src/bin_tests_test_media_stream-media-stream.obj: src/media-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-media-stream.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Tpo -c -o src/bin_tests_test_media_stream-media-stream.obj `if test -f 'src/media-stream.cpp'; then $(CYGPATH_W) 'src/media-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-media-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream.cpp' object='src/bin_tests_test_media_stream-media-stream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-media-stream.obj `if test -f 'src/media-stream.cpp'; then $(CYGPATH_W) 'src/media-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream.cpp'; fi`
+
+src/bin_tests_test_media_stream-media-thread.o: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-media-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Tpo -c -o src/bin_tests_test_media_stream-media-thread.o `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/bin_tests_test_media_stream-media-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-media-thread.o `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+
+src/bin_tests_test_media_stream-media-thread.obj: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-media-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Tpo -c -o src/bin_tests_test_media_stream-media-thread.obj `if test -f 'src/media-thread.cpp'; then $(CYGPATH_W) 'src/media-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/bin_tests_test_media_stream-media-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-media-thread.obj `if test -f 'src/media-thread.cpp'; then $(CYGPATH_W) 'src/media-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-thread.cpp'; fi`
+
+src/bin_tests_test_media_stream-audio-thread.o: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-audio-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Tpo -c -o src/bin_tests_test_media_stream-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_stream-audio-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+
+src/bin_tests_test_media_stream-audio-thread.obj: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-audio-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Tpo -c -o src/bin_tests_test_media_stream-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_stream-audio-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+
+src/bin_tests_test_media_stream-video-thread.o: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-video-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Tpo -c -o src/bin_tests_test_media_stream-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/bin_tests_test_media_stream-video-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+
+src/bin_tests_test_media_stream-video-thread.obj: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_stream-video-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Tpo -c -o src/bin_tests_test_media_stream-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_stream-video-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/bin_tests_test_media_stream-video-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_stream-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_stream-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_media_stream-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_stream-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_media_stream-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_media_thread-test-media-thread.o: tests/test-media-thread.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_media_thread-test-media-thread.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Tpo -c -o tests/bin_tests_test_media_thread-test-media-thread.o `test -f 'tests/test-media-thread.cc' || echo '$(srcdir)/'`tests/test-media-thread.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Tpo tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-media-thread.cc' object='tests/bin_tests_test_media_thread-test-media-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_media_thread-test-media-thread.o `test -f 'tests/test-media-thread.cc' || echo '$(srcdir)/'`tests/test-media-thread.cc
+
+tests/bin_tests_test_media_thread-test-media-thread.obj: tests/test-media-thread.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_media_thread-test-media-thread.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Tpo -c -o tests/bin_tests_test_media_thread-test-media-thread.obj `if test -f 'tests/test-media-thread.cc'; then $(CYGPATH_W) 'tests/test-media-thread.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-media-thread.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Tpo tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-media-thread.cc' object='tests/bin_tests_test_media_thread-test-media-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_media_thread-test-media-thread.obj `if test -f 'tests/test-media-thread.cc'; then $(CYGPATH_W) 'tests/test-media-thread.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-media-thread.cc'; fi`
+
+src/bin_tests_test_media_thread-media-thread.o: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-media-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Tpo -c -o src/bin_tests_test_media_thread-media-thread.o `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/bin_tests_test_media_thread-media-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-media-thread.o `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
+
+src/bin_tests_test_media_thread-media-thread.obj: src/media-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-media-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Tpo -c -o src/bin_tests_test_media_thread-media-thread.obj `if test -f 'src/media-thread.cpp'; then $(CYGPATH_W) 'src/media-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-media-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/bin_tests_test_media_thread-media-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-media-thread.obj `if test -f 'src/media-thread.cpp'; then $(CYGPATH_W) 'src/media-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-thread.cpp'; fi`
+
+src/bin_tests_test_media_thread-audio-thread.o: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo -c -o src/bin_tests_test_media_thread-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_thread-audio-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+
+src/bin_tests_test_media_thread-audio-thread.obj: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo -c -o src/bin_tests_test_media_thread-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_thread-audio-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+
+src/bin_tests_test_media_thread-video-thread.o: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-video-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Tpo -c -o src/bin_tests_test_media_thread-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/bin_tests_test_media_thread-video-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
+
+src/bin_tests_test_media_thread-video-thread.obj: src/video-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-video-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Tpo -c -o src/bin_tests_test_media_thread-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/video-thread.cpp' object='src/bin_tests_test_media_thread-video-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_network_data-test-network-data.o: tests/test-network-data.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_network_data-test-network-data.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Tpo -c -o tests/bin_tests_test_network_data-test-network-data.o `test -f 'tests/test-network-data.cc' || echo '$(srcdir)/'`tests/test-network-data.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Tpo tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-network-data.cc' object='tests/bin_tests_test_network_data-test-network-data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-test-network-data.o `test -f 'tests/test-network-data.cc' || echo '$(srcdir)/'`tests/test-network-data.cc
+
+tests/bin_tests_test_network_data-test-network-data.obj: tests/test-network-data.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_network_data-test-network-data.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Tpo -c -o tests/bin_tests_test_network_data-test-network-data.obj `if test -f 'tests/test-network-data.cc'; then $(CYGPATH_W) 'tests/test-network-data.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-network-data.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Tpo tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-network-data.cc' object='tests/bin_tests_test_network_data-test-network-data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-test-network-data.obj `if test -f 'tests/test-network-data.cc'; then $(CYGPATH_W) 'tests/test-network-data.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-network-data.cc'; fi`
+
+src/bin_tests_test_network_data-frame-data.o: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo -c -o src/bin_tests_test_network_data-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_network_data-frame-data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+
+src/bin_tests_test_network_data-frame-data.obj: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo -c -o src/bin_tests_test_network_data-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_network_data-frame-data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+
+src/bin_tests_test_network_data-fec.o: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-fec.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo -c -o src/bin_tests_test_network_data-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_network_data-fec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+
+src/bin_tests_test_network_data-fec.obj: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-fec.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo -c -o src/bin_tests_test_network_data-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_network_data-fec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_network_data-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_packet_publisher-test-packet-publisher.o: tests/test-packet-publisher.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_packet_publisher-test-packet-publisher.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Tpo -c -o tests/bin_tests_test_packet_publisher-test-packet-publisher.o `test -f 'tests/test-packet-publisher.cc' || echo '$(srcdir)/'`tests/test-packet-publisher.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Tpo tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-packet-publisher.cc' object='tests/bin_tests_test_packet_publisher-test-packet-publisher.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_packet_publisher-test-packet-publisher.o `test -f 'tests/test-packet-publisher.cc' || echo '$(srcdir)/'`tests/test-packet-publisher.cc
+
+tests/bin_tests_test_packet_publisher-test-packet-publisher.obj: tests/test-packet-publisher.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_packet_publisher-test-packet-publisher.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Tpo -c -o tests/bin_tests_test_packet_publisher-test-packet-publisher.obj `if test -f 'tests/test-packet-publisher.cc'; then $(CYGPATH_W) 'tests/test-packet-publisher.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-packet-publisher.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Tpo tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-packet-publisher.cc' object='tests/bin_tests_test_packet_publisher-test-packet-publisher.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_packet_publisher-test-packet-publisher.obj `if test -f 'tests/test-packet-publisher.cc'; then $(CYGPATH_W) 'tests/test-packet-publisher.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-packet-publisher.cc'; fi`
+
+src/bin_tests_test_packet_publisher-packet-publisher.o: src/packet-publisher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-packet-publisher.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Tpo -c -o src/bin_tests_test_packet_publisher-packet-publisher.o `test -f 'src/packet-publisher.cpp' || echo '$(srcdir)/'`src/packet-publisher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/packet-publisher.cpp' object='src/bin_tests_test_packet_publisher-packet-publisher.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-packet-publisher.o `test -f 'src/packet-publisher.cpp' || echo '$(srcdir)/'`src/packet-publisher.cpp
+
+src/bin_tests_test_packet_publisher-packet-publisher.obj: src/packet-publisher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-packet-publisher.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Tpo -c -o src/bin_tests_test_packet_publisher-packet-publisher.obj `if test -f 'src/packet-publisher.cpp'; then $(CYGPATH_W) 'src/packet-publisher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/packet-publisher.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/packet-publisher.cpp' object='src/bin_tests_test_packet_publisher-packet-publisher.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-packet-publisher.obj `if test -f 'src/packet-publisher.cpp'; then $(CYGPATH_W) 'src/packet-publisher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/packet-publisher.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
 tests/bin_tests_test_params-test-params.o: tests/test-params.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_params-test-params.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_params-test-params.Tpo -c -o tests/bin_tests_test_params-test-params.o `test -f 'tests/test-params.cc' || echo '$(srcdir)/'`tests/test-params.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_params-test-params.Tpo tests/$(DEPDIR)/bin_tests_test_params-test-params.Po
@@ -2359,22 +2766,6 @@ tests/bin_tests_test_params-test-params.obj: tests/test-params.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-params.cc' object='tests/bin_tests_test_params-test-params.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_params-test-params.obj `if test -f 'tests/test-params.cc'; then $(CYGPATH_W) 'tests/test-params.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-params.cc'; fi`
-
-tests/bin_tests_test_params-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_params-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Tpo -c -o tests/bin_tests_test_params-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_params-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_params-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_params-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_params-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Tpo -c -o tests/bin_tests_test_params-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_params-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_params-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_params-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
@@ -2456,22 +2847,6 @@ client/src/bin_tests_test_renderer-frame-io.obj: client/src/frame-io.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_renderer-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
 
-tests/bin_tests_test_renderer-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_renderer-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Tpo -c -o tests/bin_tests_test_renderer-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_renderer-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_renderer-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_renderer-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_renderer-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Tpo -c -o tests/bin_tests_test_renderer-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_renderer-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_renderer-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_renderer-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_renderer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_renderer-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_renderer-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_renderer-gmock-all.Po
@@ -2535,22 +2910,6 @@ client/src/bin_tests_test_stat_collector-stat-collector.obj: client/src/stat-col
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/stat-collector.cpp' object='client/src/bin_tests_test_stat_collector-stat-collector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_stat_collector-stat-collector.obj `if test -f 'client/src/stat-collector.cpp'; then $(CYGPATH_W) 'client/src/stat-collector.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/stat-collector.cpp'; fi`
-
-tests/bin_tests_test_stat_collector-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_stat_collector-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Tpo -c -o tests/bin_tests_test_stat_collector-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_stat_collector-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_stat_collector-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_stat_collector-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_stat_collector-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Tpo -c -o tests/bin_tests_test_stat_collector-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_stat_collector-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_stat_collector-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_stat_collector-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_stat_collector_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_stat_collector-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
@@ -2647,22 +3006,6 @@ client/src/bin_tests_test_video_source-precise-generator.obj: client/src/precise
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_video_source-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_video_source-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-
-tests/bin_tests_test_video_source-tests-helpers.o: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_video_source-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Tpo -c -o tests/bin_tests_test_video_source-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_video_source-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_video_source-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
-
-tests/bin_tests_test_video_source-tests-helpers.obj: tests/tests-helpers.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_video_source-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Tpo -c -o tests/bin_tests_test_video_source-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_video_source-tests-helpers.Po
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_video_source-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_video_source-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

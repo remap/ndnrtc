@@ -13,6 +13,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread/mutex.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
 
 #include "params.h"
 #include "ndnrtc-object.h"
@@ -43,6 +44,7 @@ namespace ndnrtc {
             std::string userPrefix_;
             MediaStreamParams streamParams_;
             boost::shared_ptr<FaceProcessor> faceProcessor_;
+            ndn::KeyChain* keyChain_;
         };
         
         /**
@@ -211,6 +213,9 @@ namespace ndnrtc {
             bool
             getIsConsuming() { return isConsuming_; }
             
+            void
+            verifyDataPacket(const boost::shared_ptr<Data>& data);
+            
         protected:
             bool isConsuming_;
             GeneralParams generalParams_;
@@ -232,6 +237,9 @@ namespace ndnrtc {
             
             boost::mutex observerMutex_;
             IConsumerObserver *observer_;
+            
+            void onVerifySuccess(const boost::shared_ptr<Data>& data);
+            void onVerifyFailure(const boost::shared_ptr<Data>& data);
             
         private:
             int

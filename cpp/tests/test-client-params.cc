@@ -11,6 +11,7 @@
 #include "config.h"
 #include "include/params.h"
 #include "tests-helpers.h"
+#include "mock-objects/ndnrtc-library-mock.h"
 
 using namespace std;
 using namespace ndnrtc::new_api;

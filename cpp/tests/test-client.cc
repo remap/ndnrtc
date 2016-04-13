@@ -12,6 +12,8 @@
 #include "client/src/client.h"
 #include "client/src/config.h"
 #include "tests-helpers.h"
+#include "mock-objects/ndnrtc-library-mock.h"
+#include "mock-objects/external-capturer-mock.h"
 
 using namespace ::testing;
 using namespace std;

@@ -462,6 +462,7 @@ Pipeliner2::onData(const boost::shared_ptr<const Interest>& interest,
     << data->getContent().size() << " bytes" << std::endl;
     
     recoveryCheckpointTimestamp_ = NdnRtcUtils::millisecondTimestamp();
+    consumer_->verifyDataPacket(data);
     
     (*statStorage_)[Indicator::SegmentsReceivedNum]++;
     (*statStorage_)[Indicator::BytesReceived] += data->getContent().size();

@@ -335,6 +335,28 @@ Consumer::getPacketAssembler()
     return this;
 #endif
 }
+
+void Consumer::verifyDataPacket(const boost::shared_ptr<Data>& data)
+{
+    if (settings_.keyChain_)
+    {
+        LogDebugC << "verifying data " << data->getName().toUri() << std::endl;
+        settings_.keyChain_->verifyData(data,
+                                        bind(&Consumer::onVerifySuccess, this, _1),
+                                        bind(&Consumer::onVerifyFailure, this, _1));
+    }
+}
+
+void Consumer::onVerifySuccess(const boost::shared_ptr<Data>& data)
+{
+    LogDebugC << "data verified: " << data->getName().toUri() << std::endl;
+}
+
+void Consumer::onVerifyFailure(const boost::shared_ptr<Data>& data)
+{
+    LogDebugC << "failed to verify data: " << data->getName().toUri() << std::endl;
+}
+
 //******************************************************************************
 #pragma mark - private
 int

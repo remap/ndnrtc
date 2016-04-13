@@ -27,6 +27,8 @@ namespace ndnrtc {
                      const std::string& prefix,
                      const new_api::GeneralParams& generalParams,
                      ndn::KeyChain* keyChain,
+                     ndn::Face* face,
+                     boost::asio::io_service& io,
                      ISessionObserver *sessionObserver);
   
         int

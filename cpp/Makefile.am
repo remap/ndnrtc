@@ -42,6 +42,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/params-validator.h src/params-validator.cpp \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout.cpp src/playout.h \
+  src/packet-publisher.cpp src/packet-publisher.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
   src/segmentizer.cpp src/segmentizer.h \
@@ -121,9 +122,9 @@ endif
 GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
 GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS}
-UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
+UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
-UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
+UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
 if OS_DARWIN
 
@@ -131,7 +132,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-data-validator
+check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-data-validator bin/tests/test-media-stream bin/tests/test-media-thread bin/tests/test-network-data bin/tests/test-packet-publisher
 
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -182,5 +183,26 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_media_stream_SOURCES = tests/test-media-stream.cc src/media-stream.cpp src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_stream_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_thread_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
+
+bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp  ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
+
 
 TESTS = ${check_PROGRAMS}

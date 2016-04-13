@@ -10,6 +10,7 @@
 
 #include "gtest/gtest.h"
 #include "tests-helpers.h"
+#include "mock-objects/external-capturer-mock.h"
 #include "client/src/config.h"
 #include "client/src/video-source.h"
 
