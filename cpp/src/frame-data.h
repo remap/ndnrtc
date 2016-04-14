@@ -279,18 +279,19 @@ namespace ndnrtc {
     public:
         class AudioSampleBlob : protected DataPacket::Blob {
         public:
-            AudioSampleBlob(bool isRtcp, size_t sampleLen, const uint8_t* data):
+            AudioSampleBlob(const AudioSampleHeader& hdr, size_t sampleLen, const uint8_t* data):
                 Blob(std::vector<uint8_t>::const_iterator(data), 
                     std::vector<uint8_t>::const_iterator(data+sampleLen)), 
-                header_({isRtcp}), fromBlob_(false){}
+                header_(hdr), fromBlob_(false){}
             AudioSampleBlob(const std::vector<uint8_t>::const_iterator begin,
                 const std::vector<uint8_t>::const_iterator& end);
 
             const AudioSampleHeader& getHeader() const { return header_; }
             size_t size() const;
-            const uint8_t* data() const { return &(*begin_); }
-            uint8_t operator[](size_t pos) const { return Blob::operator[](pos); };
+            const uint8_t* data() const { return (fromBlob_?&(*(begin_+sizeof(AudioSampleHeader))):&(*begin_)); }
+            // uint8_t operator[](size_t pos) const { return Blob::operator[](pos+(fromBlob_?sizeof(AudioSampleHeader):0)); };
 
+            static size_t wireLength(size_t payloadLength);
         private:
             bool fromBlob_;
             AudioSampleHeader header_;
@@ -305,12 +306,32 @@ namespace ndnrtc {
         AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
         size_t getSamplesNum();
         const AudioSampleBlob operator[](size_t pos) const;
-
+        
+        static size_t wireLength(size_t wireLength, size_t sampleSize);
     private:
         size_t wireLength_, remainingSpace_;
 
         static size_t payloadLength(size_t wireLength);
     };
+
+    typedef struct _DataSegmentHeader {
+        int32_t interestNonce_;
+        double interestArrivalMs_;
+        double generationDelayMs_;
+
+        _DataSegmentHeader():interestNonce_(0),
+            interestArrivalMs_(0), generationDelayMs_(0){}
+    } __attribute__((packed)) DataSegmentHeader;
+    
+    typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader {
+        int totalSegmentsNum_;
+        PacketNumber playbackNo_;
+        PacketNumber pairedSequenceNo_;
+        int paritySegmentsNum_;
+
+        _VideoFrameSegmentHeader():totalSegmentsNum_(0), playbackNo_(0),
+            pairedSequenceNo_(0), paritySegmentsNum_(0){}
+    } __attribute__((packed)) VideoFrameSegmentHeader;
 
     /**
      * This class represents data segment used for publishing NDN data. Unlike 
@@ -334,11 +355,11 @@ namespace ndnrtc {
         DataSegment(const std::vector<uint8_t>::const_iterator& begin, 
            const std::vector<uint8_t>::const_iterator& end):Blob(begin, end)
         { memset(&header_, 0, sizeof(header_)); }
-
-        void setHeader(const Header& header) { header_ = header; }
+        
+        void setHeader(const DataSegmentHeader& header) { header_ = reinterpret_cast<const Header&>(header); }
         const Header& getHeader() const { return header_; }
         const DataPacket::Blob& getPayload() const { return *this; }
-        size_t size() const { return size()+DataPacket::wireLength(header_); }
+        size_t size() const { return DataSegment<Header>::wireLength(Blob::size()); }
 
         /**
          * Creates new NetworkData object which has data copied using begin 
@@ -370,6 +391,13 @@ namespace ndnrtc {
             return (payloadLength < 0)?0:payloadLength;
         }
 
+        static size_t numSlices(const NetworkData& nd, 
+            size_t segmentWireLength)
+        {
+            size_t payloadLength = DataSegment<Header>::payloadLength(segmentWireLength);
+            return (nd.getLength()/payloadLength) + (nd.getLength()%payloadLength?1:0);
+        }
+
         static std::vector<DataSegment<Header>> slice(const NetworkData& nd, 
             size_t segmentWireLength)
         {
@@ -396,19 +424,6 @@ namespace ndnrtc {
     private:
         Header header_;
     };
-
-    typedef struct _DataSegmentHeader {
-        int32_t interestNonce_;
-        int64_t interestArrivalMs_;
-        int32_t generationDelayMs_;
-    } __attribute__((packed)) DataSegmentHeader;
-    
-    typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader {
-        int totalSegmentsNum_;
-        PacketNumber playbackNo_;
-        PacketNumber pairedSequenceNo_;
-        int paritySegmentsNum_;
-    } __attribute__((packed)) VideoFrameSegmentHeader;
 
     typedef DataSegment<VideoFrameSegmentHeader> VideoFrameSegment;
     typedef DataSegment<DataSegmentHeader> CommonSegment;

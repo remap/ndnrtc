@@ -444,20 +444,24 @@ TEST(TestAudioBundle, TestBundling)
     EXPECT_EQ(0, bundlePacket.getSamplesNum());
     EXPECT_GE(wire_len, bundlePacket.getRemainingSpace());
     
-    AudioBundlePacket::AudioSampleBlob sample(false, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
 
     EXPECT_FALSE(sample.getHeader().isRtcp_);
-    EXPECT_EQ(data_len+1, sample.size());
+    // EXPECT_EQ(1234, sample.getHeader().dummy_);
+    ASSERT_EQ(AudioBundlePacket::AudioSampleBlob::wireLength(data_len), sample.size());
+    ASSERT_EQ(data_len+sizeof(AudioSampleHeader), sample.size());
 
     while (bundlePacket.hasSpace(sample))
         bundlePacket << sample;
 
-    ASSERT_EQ((wire_len-1)/(data_len+3), bundlePacket.getSamplesNum());
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundlePacket.getSamplesNum());
     for (int i = 0; i < bundlePacket.getSamplesNum(); ++i)
     {
         EXPECT_FALSE(bundlePacket[i].getHeader().isRtcp_);
-        for (int k = 1; k < bundlePacket[i].size(); ++k)
-            EXPECT_EQ(rtpData[k-1], bundlePacket[i][k]);
+        // EXPECT_EQ(1234, bundlePacket[i].getHeader().dummy_);
+        for (int k = 0; k < bundlePacket[i].size()-sizeof(AudioSampleHeader); ++k)
+            EXPECT_EQ(rtpData[k], bundlePacket[i].data()[k]);
     }
 
     bundlePacket.clear();
@@ -466,17 +470,39 @@ TEST(TestAudioBundle, TestBundling)
     while (bundlePacket.hasSpace(sample))
         bundlePacket << sample;
 
-    ASSERT_EQ((wire_len-1)/(data_len+3), bundlePacket.getSamplesNum());
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundlePacket.getSamplesNum());
     ASSERT_FALSE(bundlePacket.isValid());
-    bundlePacket.setHeader({25, 1, 1});
+    bundlePacket.setHeader({25, 1, 2});
     ASSERT_TRUE(bundlePacket.isValid());
     EXPECT_GE(wire_len, bundlePacket.getLength());
+    EXPECT_EQ(AudioBundlePacket::wireLength(wire_len, data_len), bundlePacket.getLength());
 
     NetworkData nd(boost::move(bundlePacket));
     AudioBundlePacket newBundle(boost::move(nd));
+    AudioBundlePacket thirdBundle(wire_len);
 
     ASSERT_FALSE(bundlePacket.isValid());
-    ASSERT_EQ((wire_len-1)/(data_len+3), newBundle.getSamplesNum());
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        newBundle.getSamplesNum());
+    EXPECT_EQ(25, newBundle.getHeader().sampleRate_);
+    EXPECT_EQ(1, newBundle.getHeader().publishTimestampMs_);
+    EXPECT_EQ(2, newBundle.getHeader().publishUnixTimestampMs_);
+
+    for (int i = 0; i < newBundle.getSamplesNum(); ++i)
+    {
+        EXPECT_EQ(AudioBundlePacket::AudioSampleBlob::wireLength(data_len), newBundle[i].size());
+        EXPECT_FALSE(newBundle[i].getHeader().isRtcp_);
+        // EXPECT_EQ(1234, newBundle[i].getHeader().dummy_);
+        for (int k = 0; k < newBundle[i].size()-sizeof(AudioSampleHeader); ++k)
+            EXPECT_EQ(rtpData[k], newBundle[i].data()[k]);
+
+        thirdBundle << newBundle[i];
+    }
+
+    thirdBundle.setHeader(newBundle.getHeader());
+    for (int i = 0; i < thirdBundle.getLength(); ++i)
+        EXPECT_EQ(newBundle.getData()[i], thirdBundle.getData()[i]);
 }
 
 TEST(TestDataSegment, TestSlice)
@@ -491,6 +517,8 @@ TEST(TestDataSegment, TestSlice)
     int wireLength = 1000;
     std::vector<VideoFrameSegment> segments = VideoFrameSegment::slice(nd, wireLength);
     int payloadLength = VideoFrameSegment::payloadLength(wireLength);
+
+    EXPECT_EQ(VideoFrameSegment::numSlices(nd, wireLength), segments.size());
 
     int idx = 0;
     VideoFrameSegmentHeader header;
@@ -525,9 +553,15 @@ TEST(TestDataSegment, TestSlice)
     for (std::vector<VideoFrameSegment>::iterator it = segments.begin(); it < segments.end(); ++it)
     {
         if (it+1 == segments.end())
+        {
             EXPECT_EQ(VideoFrameSegment::wireLength(lastSegmentPayloadSize), it->getNetworkData()->getLength());
+            EXPECT_EQ(VideoFrameSegment::wireLength(lastSegmentPayloadSize), it->size());
+        }
         else
+        {
             EXPECT_EQ(wireLength, it->getNetworkData()->getLength());
+            EXPECT_EQ(wireLength, it->size());
+        }
 
         EXPECT_EQ(header.interestNonce_+idx, it->getHeader().interestNonce_);
         EXPECT_EQ(header.interestArrivalMs_+idx, it->getHeader().interestArrivalMs_);
@@ -747,6 +781,8 @@ TEST(TestVideoFramePacket, TestSliceFrame)
     std::vector<VideoFrameSegment> frameSegments = VideoFrameSegment::slice(vp, 1000);
     std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
 
+    EXPECT_EQ(VideoFrameSegment::numSlices(vp, 1000), frameSegments.size());
+    EXPECT_EQ(CommonSegment::numSlices(*parity, 1000), paritySegments.size());
     EXPECT_EQ(5, frameSegments.size());
     EXPECT_EQ(1, paritySegments.size());
 }

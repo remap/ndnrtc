@@ -299,6 +299,8 @@ am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gm
 	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT) \
+	src/bin_tests_test_packet_publisher-frame-data.$(OBJEXT) \
+	src/bin_tests_test_packet_publisher-fec.$(OBJEXT) \
 	$(am__objects_10)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
@@ -744,7 +746,7 @@ bin_tests_test_network_data_SOURCES = tests/test-network-data.cc src/frame-data.
 bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
-bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp  ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
@@ -1111,6 +1113,10 @@ tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_packet_publisher-frame-data.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_packet_publisher-fec.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1276,6 +1282,8 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_media_thread-video-thread.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-frame-data.$(OBJEXT)
+	-rm -f src/bin_tests_test_packet_publisher-fec.$(OBJEXT)
+	-rm -f src/bin_tests_test_packet_publisher-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.$(OBJEXT)
 	-rm -f src/libndnrtc_la-audio-capturer.lo
@@ -1453,6 +1461,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-packet-publisher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-consumer.Plo@am__quote@
@@ -2718,6 +2728,38 @@ src/bin_tests_test_packet_publisher-packet-publisher.obj: src/packet-publisher.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/packet-publisher.cpp' object='src/bin_tests_test_packet_publisher-packet-publisher.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-packet-publisher.obj `if test -f 'src/packet-publisher.cpp'; then $(CYGPATH_W) 'src/packet-publisher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/packet-publisher.cpp'; fi`
+
+src/bin_tests_test_packet_publisher-frame-data.o: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Tpo -c -o src/bin_tests_test_packet_publisher-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_packet_publisher-frame-data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+
+src/bin_tests_test_packet_publisher-frame-data.obj: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Tpo -c -o src/bin_tests_test_packet_publisher-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_packet_publisher-frame-data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+
+src/bin_tests_test_packet_publisher-fec.o: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-fec.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Tpo -c -o src/bin_tests_test_packet_publisher-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_packet_publisher-fec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+
+src/bin_tests_test_packet_publisher-fec.obj: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_packet_publisher-fec.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Tpo -c -o src/bin_tests_test_packet_publisher-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Tpo src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_packet_publisher-fec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_packet_publisher-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_packet_publisher_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

@@ -199,7 +199,7 @@ bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
 
-bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp  ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 

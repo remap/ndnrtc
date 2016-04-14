@@ -395,6 +395,11 @@ size_t AudioBundlePacket::AudioSampleBlob::size() const
     return Blob::size()+(fromBlob_?0:sizeof(AudioSampleHeader)); 
 }
 
+size_t AudioBundlePacket::AudioSampleBlob::wireLength(size_t payloadLength)
+{
+    return payloadLength+sizeof(AudioSampleHeader); 
+}
+
 AudioBundlePacket::AudioBundlePacket(size_t wireLength):
 CommonSamplePacket(std::vector<uint8_t>()),
 wireLength_(wireLength)
@@ -426,11 +431,14 @@ AudioBundlePacket::operator<<(const AudioBundlePacket::AudioSampleBlob& sampleBl
         payloadBegin_++;
         payloadBegin_ = data_.insert(payloadBegin_, b2);
         payloadBegin_++;
-        payloadBegin_ = data_.insert(payloadBegin_, (uint8_t)sampleBlob.getHeader().isRtcp_);
-        payloadBegin_++;
+        for (int i = 0; i < sizeof(sampleBlob.getHeader()); ++i)
+        {
+            payloadBegin_ = data_.insert(payloadBegin_, ((uint8_t*)&sampleBlob.getHeader())[i]);
+            payloadBegin_++;
+        }
         // insert blob
         data_.insert(payloadBegin_, sampleBlob.data(), 
-            sampleBlob.data()+sampleBlob.size());
+            sampleBlob.data()+(sampleBlob.size()-sizeof(sampleBlob.getHeader())));
         reinit();
         remainingSpace_ -= DataPacket::wireLength(sampleBlob.size());
     }
@@ -454,6 +462,16 @@ const AudioBundlePacket::AudioSampleBlob
 AudioBundlePacket::operator[](size_t pos) const
 {
     return AudioSampleBlob(blobs_[pos].begin(), blobs_[pos].end());
+}
+
+size_t AudioBundlePacket::wireLength(size_t wireLength, size_t sampleSize)
+{
+    size_t sampleWireLength = AudioSampleBlob::wireLength(sampleSize);
+    size_t nSamples = AudioBundlePacket::payloadLength(wireLength)/DataPacket::wireLength(sampleWireLength);
+    std::vector<size_t> sampleSizes(nSamples, sampleWireLength);
+    sampleSizes.push_back(sizeof(CommonHeader));
+
+    return DataPacket::wireLength(0, sampleSizes);
 }
 
 size_t AudioBundlePacket::payloadLength(size_t wireLength)
