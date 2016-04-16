@@ -45,15 +45,14 @@ size_t PacketPublisher<SegmentType, Settings>::publish(const Name& name,
 	for (auto segment:segments)
 	{
 		segment.setHeader(commonHeader);
+		boost::shared_ptr<NetworkData> segmentData = segment.getNetworkData();
 
 		Name segmentName(name);
 		segmentName.appendSegment(segIdx);
-
+		segmentName.append(Name::Component::fromNumber(segmentData->getCrcValue()));
+		
 		Data ndnSegment(segmentName);
 		ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
-
-		boost::shared_ptr<NetworkData> segmentData = segment.getNetworkData();
-
 		ndnSegment.setContent(segmentData->getData(), segment.size());
 		settings_.keyChain_->sign(ndnSegment);
 		settings_.memoryCache_->add(ndnSegment);
