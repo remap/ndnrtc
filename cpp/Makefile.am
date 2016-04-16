@@ -132,7 +132,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-data-validator bin/tests/test-media-stream bin/tests/test-media-thread bin/tests/test-network-data bin/tests/test-packet-publisher
+check_PROGRAMS = bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-data-validator bin/tests/test-media-stream bin/tests/test-media-thread bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-video-coder
 
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -203,6 +203,11 @@ bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/pac
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
+
+bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpers.cc src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
 
 
 TESTS = ${check_PROGRAMS}

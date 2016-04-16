@@ -9,7 +9,7 @@
 //  Created: 8/21/13
 //
 
-#undef DEBUG
+// #define USE_VP9
 
 #include <boost/thread.hpp>
 #include <webrtc/modules/video_coding/main/source/codec_database.h>
@@ -19,7 +19,6 @@
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
 #include "video-coder.h"
-#include "ndnrtc-utils.h"
 
 using namespace std;
 using namespace ndnlog;
@@ -53,9 +52,10 @@ char* plotCodec(webrtc::VideoCodec codec)
 
 //******************************************************************************
 #pragma mark - static
-int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
-                                    webrtc::VideoCodec &codec)
+webrtc::VideoCodec VideoCoder::codecFromSettings(const VideoCoderParams &settings)
 {
+    webrtc::VideoCodec codec;
+
     // setup default params first
 #ifdef USE_VP9
     if (!webrtc::VCMCodecDataBase::Codec(VCM_VP9_IDX, &codec))
@@ -103,7 +103,6 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
 #endif
     
     // customize parameteres if possible
-    int res = RESULT_OK;
     codec.maxFramerate = (int)settings.codecFrameRate_;
     codec.startBitrate = settings.startBitrate_;
     codec.minBitrate = 100;
@@ -112,69 +111,109 @@ int VideoCoder::getCodecFromSetings(const VideoCoderParams &settings,
     codec.width = settings.encodeWidth_;
     codec.height = settings.encodeHeight_;
     
-    return res;
+    return codec;
 }
 
 //********************************************************************************
 #pragma mark - construction/destruction
-VideoCoder::VideoCoder() :
+VideoCoder::VideoCoder(const VideoCoderParams& coderParams, IEncoderDelegate* delegate,
+    KeyEnforcement keyEnforcement) :
 NdnRtcComponent(),
-frameConsumer_(nullptr),
-codecSpecificInfo_(nullptr)
-{
-    rateMeter_ = NdnRtcUtils::setupFrequencyMeter(4);
-    description_ = "coder";
-    memset(&codec_, 0, sizeof(codec_));
-}
-
-VideoCoder::~VideoCoder()
-{
-    NdnRtcUtils::releaseFrequencyMeter(rateMeter_);
-}
-
-//********************************************************************************
-#pragma mark - public
-int VideoCoder::init(const VideoCoderParams& settings)
-{
-    settings_ = settings;
-    
-    if (RESULT_FAIL(VideoCoder::getCodecFromSetings(settings, codec_)))
-        notifyError(-1, "some codec parameters were out of bounds. \
-                    actual parameters: %s", plotCodec(codec_));
-    
+coderParams_(coderParams),
+delegate_(delegate),
+gopCounter_(0),
+codec_(VideoCoder::codecFromSettings(coderParams_)),
+codecSpecificInfo_(nullptr),
+keyEnforcement_(keyEnforcement),
 #ifdef USE_VP9
-    encoder_.reset(VP9Encoder::Create());
+    encoder_(VP9Encoder::Create())
 #else
-    encoder_.reset(VP8Encoder::Create());
+    encoder_(VP8Encoder::Create())
 #endif
-    
-    keyFrameType_.clear();
+{
+    assert(delegate_);
+    description_ = "coder";
     keyFrameType_.push_back(webrtc::kKeyFrame);
-    
+
     if (!encoder_.get())
-        return notifyError(-1, "can't create encoder");
-    
+        throw std::runtime_error("Error creating encoder");
+
     encoder_->RegisterEncodeCompleteCallback(this);
-    
     int maxPayload = 1440;
-    
+
     if (encoder_->InitEncode(&codec_, boost::thread::hardware_concurrency(), maxPayload) != WEBRTC_VIDEO_CODEC_OK)
-        return notifyError(-1, "can't initialize encoder");
+        throw std::runtime_error("Can't initialize encoder");
     
+    initScaledFrame();
+
     LogInfoC
     << "initialized. max payload " << maxPayload
     << " parameters: " << plotCodec(codec_) << endl;
-    
-    initScaledFrame();
-    
-    return 0;
 }
+
+VideoCoder::~VideoCoder()
+{}
+
 //********************************************************************************
-#pragma mark - intefaces realization - EncodedImageCallback
+#pragma mark - public
+void VideoCoder::onRawFrame(WebRtcVideoFrame &frame)
+{
+    LogTraceC << "encoding..." << endl;
+
+    encodeComplete_ = false;
+    delegate_->onEncodingStarted();
+    
+    bool scaled = false;
+    
+    if (frame.width() != coderParams_.encodeWidth_ ||
+        frame.height() != coderParams_.encodeHeight_)
+    {
+        frameScaler_.Set(frame.width(),frame.height(),
+                         coderParams_.encodeWidth_, coderParams_.encodeHeight_,
+                         webrtc::kI420, webrtc::kI420,
+                         webrtc::kScaleBilinear);
+        int res = frameScaler_.Scale(frame, &scaledFrame_);
+        
+        if (res != 0)
+            LogErrorC << "couldn't scale frame" << std::endl;
+        else
+            scaled = true;
+    }
+    
+    WebRtcVideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
+    int err;
+
+    if (gopCounter_%coderParams_.gop_ == 0)
+    {
+        err = encoder_->Encode(processedFrame, codecSpecificInfo_, &keyFrameType_);
+        if (keyEnforcement_ == KeyEnforcement::EncoderDefined) gopCounter_ = 1;
+    }
+    else
+        err = encoder_->Encode(processedFrame, codecSpecificInfo_, NULL);
+    
+    if (keyEnforcement_ == KeyEnforcement::Timed) gopCounter_++;
+
+    if (!encodeComplete_)
+    {
+        LogTraceC << "frame dropped" << endl;
+        delegate_->onDroppedFrame();
+    }
+
+    LogTraceC << "encode result " << err << endl;
+    
+    if (err != WEBRTC_VIDEO_CODEC_OK)
+        LogErrorC <<"can't encode frame due to error " << err << std::endl;
+}
+
+//********************************************************************************
+#pragma mark - interfaces realization - EncodedImageCallback
 int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo,
                             const webrtc::RTPFragmentationHeader* fragmentation)
 {
+    encodeComplete_ = true;
+    if (keyEnforcement_ == KeyEnforcement::Gop) gopCounter_++;
+
     /*
     LogInfoC << "encoded"
     << " type " << ((encodedImage._frameType == webrtc::kKeyFrame) ? "KEY":((encodedImage._frameType == webrtc::kSkipFrame)?"SKIP":"DELTA"))
@@ -189,79 +228,19 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
     << " layerSync " << codecSpecificInfo->codecSpecific.VP8.layerSync
     << " tl0PicIdx " << codecSpecificInfo->codecSpecific.VP8.tl0PicIdx
     << " keyIdx " << (int)codecSpecificInfo->codecSpecific.VP8.keyIdx
-    << std::endl;
-     */
-    
-    counter_++;
-    settings_.codecFrameRate_ = NdnRtcUtils::currentFrequencyMeterValue(rateMeter_);
-    codecSpecificInfo_ = codecSpecificInfo;
-
-    if (frameConsumer_)
-        frameConsumer_->onEncodedFrameDelivered(encodedImage, deliveredTimestamp_);
-    
+    << std::endl; 
+    */
+    delegate_->onEncodedFrame(encodedImage);
     return 0;
 }
-//********************************************************************************
-#pragma mark - intefaces realization - IRawFrameConsumer
-void VideoCoder::onDeliverFrame(WebRtcVideoFrame &frame,
-                                   double timestamp)
-{
-    LogTraceC << "encoding..." << endl;
 
-    if (frameConsumer_)
-        frameConsumer_->onEncodingStarted();
-    
-    if (counter_ %2 == 0)
-    {
-        nDroppedByEncoder_++;
-        counter_++;
-        
-        if (frameConsumer_)
-            frameConsumer_->onFrameDropped();
-    }
-    
-    counter_++;
-    deliveredTimestamp_  = timestamp;
-    
-    int err;
-    bool scaled = false;
-    
-    if (frame.width() != settings_.encodeWidth_ ||
-        frame.height() != settings_.encodeHeight_)
-    {
-        frameScaler_.Set(frame.width(),frame.height(),
-                         settings_.encodeWidth_, settings_.encodeHeight_,
-                         webrtc::kI420, webrtc::kI420,
-                         webrtc::kScaleBilinear);
-        int res = frameScaler_.Scale(frame, &scaledFrame_);
-        
-        if (res != 0)
-            notifyError(-1, "couldn't scale frame");
-        else
-            scaled = true;
-    }
-    
-    WebRtcVideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
-    
-    if (keyFrameCounter_%settings_.gop_ == 0)
-        err = encoder_->Encode(processedFrame, codecSpecificInfo_, &keyFrameType_);
-    else
-        err = encoder_->Encode(processedFrame, codecSpecificInfo_, NULL);
-    
-    keyFrameCounter_++;
-    
-    LogTraceC << "encode result " << err << endl;
-    
-    if (err != WEBRTC_VIDEO_CODEC_OK)
-        notifyError(-1, "can't encode frame due to error %d",err);
-}
-
+//******************************************************************************
 void VideoCoder::initScaledFrame()
 {
-    int stride_y = settings_.encodeWidth_;
-    int stride_uv = (settings_.encodeWidth_ + 1) / 2;
-    int target_width = settings_.encodeWidth_;
-    int target_height = settings_.encodeHeight_;
+    int stride_y = coderParams_.encodeWidth_;
+    int stride_uv = (coderParams_.encodeWidth_ + 1) / 2;
+    int target_width = coderParams_.encodeWidth_;
+    int target_height = coderParams_.encodeHeight_;
     
     
     int ret = scaledFrame_.CreateEmptyFrame(target_width,
@@ -269,6 +248,5 @@ void VideoCoder::initScaledFrame()
                                             stride_y,
                                             stride_uv, stride_uv);
     
-    if (ret < 0)
-        notifyError(RESULT_ERR, "failed to allocate scaled frame");
+    if (ret < 0) throw std::runtime_error("failed to allocate scaled frame");
 }

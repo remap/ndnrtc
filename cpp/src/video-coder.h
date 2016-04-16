@@ -22,11 +22,20 @@
 //#define USE_VP9
 
 namespace ndnrtc {
-    
     namespace new_api {
-        class IEncodedFrameConsumer;
-        class IEncoderDelegate;
-        
+        class IEncoderDelegate
+        {
+        public:
+            virtual void
+            onEncodingStarted() = 0;
+            
+            virtual void
+            onEncodedFrame(const webrtc::EncodedImage &encodedImage) = 0;
+
+            virtual void
+            onDroppedFrame() = 0;
+        };
+
         class VideoCoderStatistics : public ObjectStatistics {
         public:
             unsigned int nDroppedByEncoder;
@@ -42,39 +51,22 @@ namespace ndnrtc {
                             public webrtc::EncodedImageCallback
         {
         public:
-            VideoCoder();
-            ~VideoCoder();
-            
-            void setFrameConsumer(IEncoderDelegate *frameConsumer) {
-                frameConsumer_ = frameConsumer;
-            }
-            
-            int init(const VideoCoderParams& settings);
-            
-            // interface conformance - ndnrtc::IRawFrameConsumer
-            void onDeliverFrame(WebRtcVideoFrame &frame,
-                                double timestamp);
-            
-            void
-            getStatistics(VideoCoderStatistics& statistics)
-            { statistics.nDroppedByEncoder = nDroppedByEncoder_; }
+            enum class KeyEnforcement {
+                Gop,            // enforce Key frame after GOP amount of encoded frames
+                Timed,          // enforce Key frame after GOP amount of raw frames passed to VideoCoder
+                EncoderDefined  // encoder determines when to insert Key frames (default)
+            };
 
-            void
-            getSettings(VideoCoderParams& settings)
-            { settings = settings_; }
-            
-            static int getCodecFromSetings(const VideoCoderParams &settings,
-                                           webrtc::VideoCodec &codec);
-            
+            VideoCoder(const VideoCoderParams& coderParams, IEncoderDelegate* delegate, 
+                KeyEnforcement = KeyEnforcement::EncoderDefined);
+            ~VideoCoder();
+
+            void onRawFrame(WebRtcVideoFrame &frame);
+
         private:
-            VideoCoderParams settings_;
-            unsigned int counter_ = 1;
-            unsigned int nDroppedByEncoder_ = 0;
-            unsigned int rateMeter_;
-            int keyFrameCounter_ = 0;
-            
-            double deliveredTimestamp_;
-            IEncoderDelegate *frameConsumer_ = NULL;
+            VideoCoderParams coderParams_;
+            IEncoderDelegate *delegate_;
+            bool encodeComplete_;
             
             webrtc::VideoCodec codec_;
             const webrtc::CodecSpecificInfo* codecSpecificInfo_;
@@ -83,33 +75,18 @@ namespace ndnrtc {
             
             webrtc::Scaler frameScaler_;
             WebRtcVideoFrame scaledFrame_;
+            int gopCounter_;
+            KeyEnforcement keyEnforcement_;
             
-            // interface conformance - webrtc::EncodedImageCallback
+            // interface webrtc::EncodedImageCallback
             int32_t Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
                             const webrtc::RTPFragmentationHeader* fragmentation = NULL);
             
             void
             initScaledFrame();
-        };
-        
-        class IEncodedFrameConsumer
-        {
-        public:
-            virtual void
-            onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                    double captureTimestamp,
-                                    bool completeFrame = true) = 0;
-        };
-        
-        class IEncoderDelegate : public IEncodedFrameConsumer
-        {
-        public:
-            virtual void
-            onEncodingStarted() = 0;
-            
-            virtual void
-            onFrameDropped() = 0;
+
+            static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
         };
     }
 }
