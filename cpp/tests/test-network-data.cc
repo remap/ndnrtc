@@ -62,6 +62,13 @@ TEST(TestNetworkData, TestCreate2)
     EXPECT_EQ(crcExpected, nd.getCrcValue());
 }
 
+TEST(TestNetworkData, TestCreateWithEmptyVector)
+{
+    std::vector<uint8_t> v;
+    NetworkData nd(v);
+    EXPECT_TRUE(nd.isValid());
+}
+
 TEST(TestNetworkData, TestCopy)
 {
 	uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
@@ -354,6 +361,16 @@ TEST(TestDataPacket, TestMoveNetworkData)
     EXPECT_EQ("123456789", std::string((char*)dp.getPayload().data(), dp.getPayload().size()));
 }
 
+TEST(TestDataPacket, TestCreateEmptyPacket)
+{
+    EXPECT_EQ(1, DataPacket::wireLength(0,0));
+    std::vector<size_t> v = boost::assign::list_of (0);
+    EXPECT_EQ(1, DataPacket::wireLength(0, v));
+
+    DataPacket dp(boost::move(NetworkData(std::vector<uint8_t>())));
+    EXPECT_FALSE(dp.isValid());
+}
+
 TEST(TestDataPacket, TestInvalidRawData)
 {
     uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
@@ -627,6 +644,12 @@ TEST(TestVideoFramePacket, TestCreate)
     EXPECT_EQ(frame._frameType          , fp.getFrame()._frameType      );
     EXPECT_EQ(frame._completeFrame      , fp.getFrame()._completeFrame  );
     for (int i = 0; i < frameLen; ++i) EXPECT_EQ(buffer[i], fp.getFrame()._buffer[i]);
+}
+
+TEST(TestVideoFramePacket, TestCreateEmpty)
+{
+    VideoFramePacket vp(boost::move(NetworkData(std::vector<uint8_t>())));
+    EXPECT_FALSE(vp.isValid());
 }
 
 TEST(TestVideoFramePacket, TestAddSyncList)
