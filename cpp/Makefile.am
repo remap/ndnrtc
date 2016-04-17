@@ -132,19 +132,15 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread 
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread 
 
-#bin/tests/test-params bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
+# bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
 
 #bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
 #bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 #bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 #bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
 #
-#bin_tests_test_params_SOURCES = tests/test-params.cc ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_params_LDADD = ${UNIT_TESTS_LDADD_}
 #
 #bin_tests_test_client_params_SOURCES = tests/test-client-params.cc #client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 #bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -182,6 +178,11 @@ check_PROGRAMS = bin/tests/test-network-data bin/tests/test-packet-publisher bin
 #bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
 
 ### NDN-RTC tests
+
+bin_tests_test_params_SOURCES = tests/test-params.cc tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_params_LDADD = ${libndnrtc_la_LIBADD}
 
 bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-validator.cpp  src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

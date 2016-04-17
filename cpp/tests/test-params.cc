@@ -109,7 +109,12 @@ TEST(TestAudioThreadParams, TestOutput)
 	mtp.threadName_ = "test-thread";
 	ss << mtp;
 
-	EXPECT_EQ("name: test-thread", ss.str());
+	EXPECT_EQ("name: test-thread; codec: g722", ss.str());
+	mtp.codec_ = "opus";
+
+	ss.str("");
+	ss << mtp;
+	EXPECT_EQ("name: test-thread; codec: opus", ss.str());
 }
 
 TEST(TestAudioThreadParams, TestAccessors)
@@ -137,7 +142,7 @@ TEST(TestAudioThreadParams, TestCopy)
 	ss << *atpCopy;
 
 	EXPECT_EQ("audio-thread-original", atpCopy->threadName_);
-	EXPECT_EQ("name: audio-thread-original", ss.str());
+	EXPECT_EQ("name: audio-thread-original; codec: g722", ss.str());
 	EXPECT_EQ(FrameSegmentsInfo(1., 0., 0., 0.), atpCopy->getSegmentsInfo());
 
 	atp.threadName_ = "audio-thread-changed";
@@ -396,13 +401,13 @@ TEST(TestMediaStreamParams, TestOutput2)
 	cdp.deviceId_ = 10;
 	msp.captureDevice_ = cdp;
 
-	msp.addMediaThread(AudioThreadParams("pcmu"));
-	msp.addMediaThread(AudioThreadParams("g722"));
+	msp.addMediaThread(AudioThreadParams("sd"));
+	msp.addMediaThread(AudioThreadParams("hd", "opus"));
 
 	ss << msp;
 	EXPECT_EQ("name: mic (audio); synced to: camera; seg size: 1000 bytes; "
 		"freshness: 2000 ms; capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n",
+		"[0: name: sd; codec: g722]\n[1: name: hd; codec: opus]\n",
 		ss.str());
 }
 

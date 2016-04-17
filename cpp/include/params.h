@@ -121,8 +121,14 @@ namespace ndnrtc
         // audio thread parameters
         class AudioThreadParams : public MediaThreadParams {
         public:
-            AudioThreadParams():MediaThreadParams("", FrameSegmentsInfo(1., 0., 0., 0.)){}
-            AudioThreadParams(std::string threadName):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)){}
+            AudioThreadParams():MediaThreadParams("", FrameSegmentsInfo(1., 0., 0., 0.)),
+                codec_("g722"){}
+            AudioThreadParams(std::string threadName):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
+                codec_("g722"){}
+            AudioThreadParams(std::string threadName, std::string codec):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
+                codec_(codec){}
+
+            std::string codec_; // "g722" (SD) or "opus" (HD)
 
             MediaThreadParams*
             copy() const
@@ -130,6 +136,12 @@ namespace ndnrtc
                 AudioThreadParams *params = new AudioThreadParams();
                 *params = *this;
                 return params;
+            }
+
+            virtual void write(std::ostream& os) const
+            {   
+                MediaThreadParams::write(os);
+                if (threadName_.size()) os << "; codec: " << codec_;
             }
         };
         
