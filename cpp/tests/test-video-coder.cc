@@ -47,7 +47,7 @@ TEST(TestCoder, TestEncode)
 		// make gardient frame (black to white vertically)
 	for (int j = 0; j < height; ++j)
 		for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = (i%4 ? (uint8_t)(255*((double)j/(double)height)) : 255);
+			frameBuffer[i*width+j] = (i%4 ? (uint8_t)(255*((double)j/(double)height)) : 255);
 	{
 		// make conversion to I420
 		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
@@ -85,6 +85,100 @@ TEST(TestCoder, TestEncode)
 		vc.onRawFrame(convertedFrame);
 	}
 
+	{ // try 1 frame downscaled
+		VideoCoderParams vcp(sampleVideoCoderParams());
+		vcp.startBitrate_ = 1000;
+		vcp.maxBitrate_ = 1000;
+		vcp.encodeWidth_ = width/2;
+		vcp.encodeHeight_ = height/2;
+		MockEncoderDelegate coderDelegate;
+		VideoCoder vc(vcp, &coderDelegate);
+		FrameScaler downScale(width/2, height/2);
+
+#ifdef ENABLE_LOGGING
+		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+		const webrtc::EncodedImage *encodedImage;
+		boost::function<void(const webrtc::EncodedImage&)> onEncoded = 
+			[&encodedImage](const webrtc::EncodedImage& img){
+				encodedImage = &img;
+			};
+
+		EXPECT_CALL(coderDelegate, onEncodingStarted())
+		.Times(1);
+		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
+		.Times(1)
+		.WillOnce(Invoke(onEncoded));
+		EXPECT_CALL(coderDelegate, onDroppedFrame())
+		.Times(0);
+
+		vc.onRawFrame(downScale(convertedFrame));
+		EXPECT_EQ(width/2, encodedImage->_encodedWidth);
+		EXPECT_EQ(height/2, encodedImage->_encodedHeight);
+	}
+
+	{ // try 1 frame upscaled
+		VideoCoderParams vcp(sampleVideoCoderParams());
+		vcp.startBitrate_ = 1000;
+		vcp.maxBitrate_ = 1000;
+		vcp.encodeWidth_ = width*2;
+		vcp.encodeHeight_ = height*2;
+		MockEncoderDelegate coderDelegate;
+		VideoCoder vc(vcp, &coderDelegate);
+		FrameScaler upScale(width*2, height*2);
+
+#ifdef ENABLE_LOGGING
+		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+		const webrtc::EncodedImage *encodedImage;
+		boost::function<void(const webrtc::EncodedImage&)> onEncoded = 
+			[&encodedImage](const webrtc::EncodedImage& img){
+				encodedImage = &img;
+			};
+
+		EXPECT_CALL(coderDelegate, onEncodingStarted())
+		.Times(1);
+		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
+		.Times(1)
+		.WillOnce(Invoke(onEncoded));
+		EXPECT_CALL(coderDelegate, onDroppedFrame())
+		.Times(0);
+
+		vc.onRawFrame(upScale(convertedFrame));
+		EXPECT_EQ(width*2, encodedImage->_encodedWidth);
+		EXPECT_EQ(height*2, encodedImage->_encodedHeight);
+	}
+
+	{ // try passing wrong frame
+		VideoCoderParams vcp(sampleVideoCoderParams());
+		vcp.startBitrate_ = 1000;
+		vcp.maxBitrate_ = 1000;
+		vcp.encodeWidth_ = width/2;
+		vcp.encodeHeight_ = height/2;
+		MockEncoderDelegate coderDelegate;
+		VideoCoder vc(vcp, &coderDelegate);
+
+#ifdef ENABLE_LOGGING
+		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+		EXPECT_ANY_THROW(vc.onRawFrame(convertedFrame));
+	}
+
+	{ // try passing wrong frame
+		VideoCoderParams vcp(sampleVideoCoderParams());
+		vcp.startBitrate_ = 1000;
+		vcp.maxBitrate_ = 1000;
+		vcp.encodeWidth_ = width*2;
+		vcp.encodeHeight_ = height*2;
+		MockEncoderDelegate coderDelegate;
+		VideoCoder vc(vcp, &coderDelegate);
+
+#ifdef ENABLE_LOGGING
+		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+		EXPECT_ANY_THROW(vc.onRawFrame(convertedFrame));
+	}
+
 	free(frameBuffer);
 }
 #if 1
@@ -107,7 +201,7 @@ TEST(TestCoder, TestEncode700K)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -190,7 +284,7 @@ TEST(TestCoder, TestEncode1000K)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -273,7 +367,7 @@ TEST(TestCoder, TestEncode2000K)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -356,7 +450,7 @@ TEST(TestCoder, TestEncode3000K)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -438,7 +532,7 @@ TEST(TestCoder, TestEnforceNoDrop)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -520,7 +614,7 @@ TEST(TestCoder, TestEnforceKeyGop)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
@@ -605,7 +699,7 @@ TEST(TestCoder, TestEnforceKeyTimed)
 	{
 		for (int j = 0; j < height; ++j)
 			for (int i = 0; i < width; ++i)
-			frameBuffer[i*640+j] = std::rand()%256; // random noise
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
 
 		webrtc::I420VideoFrame convertedFrame;
 		{
