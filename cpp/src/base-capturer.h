@@ -23,7 +23,7 @@ namespace ndnrtc {
     class IRawFrameConsumer
     {
     public:
-        virtual void onRawFrame(WebRtcVideoFrame &frame) = 0;
+        virtual void onRawFrame(const WebRtcVideoFrame &frame) = 0;
     };
     
     class BaseCapturer : public new_api::NdnRtcComponent {
