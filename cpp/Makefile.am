@@ -184,16 +184,6 @@ bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_media_stream_SOURCES = tests/test-media-stream.cc src/media-stream.cpp src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_media_stream_LDADD = ${UNIT_TESTS_LDADD_}
-
-bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/media-thread.cpp src/audio-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_media_thread_LDADD = ${UNIT_TESTS_LDADD_}
-
 bin_tests_test_network_data_SOURCES = tests/test-network-data.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -209,5 +199,14 @@ bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
 
+bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-thread.cpp tests/tests-helpers.cc src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_media_stream_SOURCES = tests/test-media-stream.cc src/media-stream.cpp src/media-thread.cpp src/video-thread.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_media_stream_LDADD = ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}
