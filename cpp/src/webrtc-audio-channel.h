@@ -9,44 +9,39 @@
 #ifndef __ndnrtc__webrtc_audio_channel__
 #define __ndnrtc__webrtc_audio_channel__
 
-#include <webrtc/common_types.h>
-#include <webrtc/voice_engine/include/voe_base.h>
-#include <webrtc/voice_engine/include/voe_network.h>
-#include <webrtc/voice_engine/include/voe_codec.h>
-
-#include "threading-capability.h"
-#include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
-#include "params.h"
+namespace webrtc {
+    class VoEBase;
+    class VoENetwork;
+    class VoECodec;
+    struct CodecInst;
+}
 
 namespace ndnrtc {
     namespace new_api {
-        class WebrtcAudioChannel : public webrtc::Transport
+        /**
+         * This class is a wrapper around WebRTC's audio channel API.
+         * One should derive from this class in order to register for 
+         * RTP/RTCP audio packet callbacks
+         * @see AudioCapturer
+         */
+        class WebrtcAudioChannel
         {
         public:
-            WebrtcAudioChannel();
+            enum class Codec {
+                Opus,   // HD, ~400 Kbit/s
+                G722    // SD, ~200 Kbit/s
+            };
+
+            WebrtcAudioChannel(const Codec& codec);
             virtual ~WebrtcAudioChannel();
-            
-            virtual int
-            init();
-            
-            virtual int
-            release();
 
         protected:
             int webrtcChannelId_;
             webrtc::VoEBase* voeBase_;
             webrtc::VoENetwork* voeNetwork_;
             webrtc::VoECodec* voeCodec_;
-            
-            // webrtc::Transport interface
-            virtual int
-            SendPacket(int channel, const void *data, size_t len)
-            { return len; }
-            
-            virtual int
-            SendRTCPPacket(int channel, const void *data, size_t len)
-            { return len; }
+
+            webrtc::CodecInst instFromCodec(const Codec& c);
         };
     }
 }

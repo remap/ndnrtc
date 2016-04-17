@@ -11,9 +11,11 @@
 #ifndef __audio_controller_h__
 #define __audio_controller_h__
 
-#include <webrtc/voice_engine/include/voe_base.h>
-
 #include "threading-capability.h"
+
+namespace webrtc {
+    class VoiceEngine;
+}
 
 namespace ndnrtc {
     namespace new_api {
