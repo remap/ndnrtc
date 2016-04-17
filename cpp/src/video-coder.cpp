@@ -27,7 +27,6 @@ using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //********************************************************************************
-//********************************************************************************
 char* plotCodec(webrtc::VideoCodec codec)
 {
     static char msg[256];
@@ -114,6 +113,44 @@ webrtc::VideoCodec VideoCoder::codecFromSettings(const VideoCoderParams &setting
     return codec;
 }
 
+//******************************************************************************
+FrameScaler::FrameScaler(unsigned int dstWidth, unsigned int dstHeight):
+srcWidth_(0), srcHeight_(0), 
+dstWidth_(dstWidth), dstHeight_(dstHeight)
+{
+    initScaledFrame();
+}
+
+const WebRtcVideoFrame&
+FrameScaler::operator()(const WebRtcVideoFrame& frame)
+{
+    if (srcWidth_ != frame.width() || srcHeight_ != frame.height())
+    {
+        srcWidth_ = frame.width(); srcHeight_ = frame.height();
+        scaler_.Set(srcWidth_, srcHeight_, dstWidth_, dstHeight_,
+            webrtc::kI420, webrtc::kI420, webrtc::kScaleBilinear);
+    }
+
+    int res = scaler_.Scale(frame, &scaledFrame_);
+    return (res == 0 ? scaledFrame_ : frame);
+}
+
+void FrameScaler::initScaledFrame()
+{
+    int stride_y = dstWidth_;
+    int stride_uv = (dstWidth_ + 1) / 2;
+    int target_width = dstWidth_;
+    int target_height = dstHeight_;
+    
+    
+    int ret = scaledFrame_.CreateEmptyFrame(target_width,
+                                            abs(target_height),
+                                            stride_y,
+                                            stride_uv, stride_uv);
+    
+    if (ret < 0) throw std::runtime_error("failed to allocate scaled frame");
+}
+
 //********************************************************************************
 #pragma mark - construction/destruction
 VideoCoder::VideoCoder(const VideoCoderParams& coderParams, IEncoderDelegate* delegate,
@@ -143,8 +180,6 @@ keyEnforcement_(keyEnforcement),
 
     if (encoder_->InitEncode(&codec_, boost::thread::hardware_concurrency(), maxPayload) != WEBRTC_VIDEO_CODEC_OK)
         throw std::runtime_error("Can't initialize encoder");
-    
-    initScaledFrame();
 
     LogInfoC
     << "initialized. max payload " << maxPayload
@@ -156,40 +191,25 @@ VideoCoder::~VideoCoder()
 
 //********************************************************************************
 #pragma mark - public
-void VideoCoder::onRawFrame(WebRtcVideoFrame &frame)
+void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 {
     LogTraceC << "encoding..." << endl;
+
+    if (frame.width() != coderParams_.encodeWidth_ || 
+            frame.height() != coderParams_.encodeHeight_)
+        throw std::runtime_error("Frame size does not equal encoding resolution");
 
     encodeComplete_ = false;
     delegate_->onEncodingStarted();
     
-    bool scaled = false;
-    
-    if (frame.width() != coderParams_.encodeWidth_ ||
-        frame.height() != coderParams_.encodeHeight_)
-    {
-        frameScaler_.Set(frame.width(),frame.height(),
-                         coderParams_.encodeWidth_, coderParams_.encodeHeight_,
-                         webrtc::kI420, webrtc::kI420,
-                         webrtc::kScaleBilinear);
-        int res = frameScaler_.Scale(frame, &scaledFrame_);
-        
-        if (res != 0)
-            LogErrorC << "couldn't scale frame" << std::endl;
-        else
-            scaled = true;
-    }
-    
-    WebRtcVideoFrame &processedFrame = (scaled)?scaledFrame_:frame;
     int err;
-
     if (gopCounter_%coderParams_.gop_ == 0)
     {
-        err = encoder_->Encode(processedFrame, codecSpecificInfo_, &keyFrameType_);
+        err = encoder_->Encode(frame, codecSpecificInfo_, &keyFrameType_);
         if (keyEnforcement_ == KeyEnforcement::EncoderDefined) gopCounter_ = 1;
     }
     else
-        err = encoder_->Encode(processedFrame, codecSpecificInfo_, NULL);
+        err = encoder_->Encode(frame, codecSpecificInfo_, NULL);
     
     if (keyEnforcement_ == KeyEnforcement::Timed) gopCounter_++;
 
@@ -232,21 +252,4 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
     */
     delegate_->onEncodedFrame(encodedImage);
     return 0;
-}
-
-//******************************************************************************
-void VideoCoder::initScaledFrame()
-{
-    int stride_y = coderParams_.encodeWidth_;
-    int stride_uv = (coderParams_.encodeWidth_ + 1) / 2;
-    int target_width = coderParams_.encodeWidth_;
-    int target_height = coderParams_.encodeHeight_;
-    
-    
-    int ret = scaledFrame_.CreateEmptyFrame(target_width,
-                                            abs(target_height),
-                                            stride_y,
-                                            stride_uv, stride_uv);
-    
-    if (ret < 0) throw std::runtime_error("failed to allocate scaled frame");
 }

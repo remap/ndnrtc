@@ -15,6 +15,7 @@
 #include <webrtc/modules/video_coding/codecs/interface/video_codec_interface.h>
 #include <webrtc/common_video/libyuv/include/scaler.h>
 
+#include "webrtc.h"
 #include "ndnrtc-common.h"
 #include "base-capturer.h"
 #include "statistics.h"
@@ -41,6 +42,24 @@ namespace ndnrtc {
             unsigned int nDroppedByEncoder;
         };
         
+        class FrameScaler 
+        {
+        public:
+            FrameScaler(unsigned int dstWidth, unsigned int dstHeight);
+            const WebRtcVideoFrame& operator()(const WebRtcVideoFrame& frame);
+        
+        private:
+            FrameScaler(const FrameScaler&) = delete;
+
+            unsigned int srcWidth_, srcHeight_;
+            unsigned int dstWidth_, dstHeight_;
+            webrtc::Scaler scaler_;
+            WebRtcVideoFrame scaledFrame_;
+
+            void
+            initScaledFrame();
+        };
+
         /**
          * This class is a main wrapper for VP8 WebRTC encoder. It consumes raw
          * frames, encodes them using VP8 encoder, configured for specified
@@ -61,9 +80,11 @@ namespace ndnrtc {
                 KeyEnforcement = KeyEnforcement::EncoderDefined);
             ~VideoCoder();
 
-            void onRawFrame(WebRtcVideoFrame &frame);
+            void onRawFrame(const WebRtcVideoFrame &frame);
 
         private:
+            VideoCoder(const VideoCoder&) = delete;
+
             VideoCoderParams coderParams_;
             IEncoderDelegate *delegate_;
             bool encodeComplete_;
@@ -72,9 +93,7 @@ namespace ndnrtc {
             const webrtc::CodecSpecificInfo* codecSpecificInfo_;
             std::vector<WebRtcVideoFrameType> keyFrameType_;
             boost::shared_ptr<webrtc::VideoEncoder> encoder_;
-            
-            webrtc::Scaler frameScaler_;
-            WebRtcVideoFrame scaledFrame_;
+
             int gopCounter_;
             KeyEnforcement keyEnforcement_;
             
@@ -82,9 +101,6 @@ namespace ndnrtc {
             int32_t Encoded(const webrtc::EncodedImage& encodedImage,
                             const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
                             const webrtc::RTPFragmentationHeader* fragmentation = NULL);
-            
-            void
-            initScaledFrame();
 
             static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
         };
