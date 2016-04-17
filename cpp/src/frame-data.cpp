@@ -224,6 +224,8 @@ const DataPacket::Blob DataPacket::getPayload() const
 
 void DataPacket::addBlob(uint16_t dataLength, const uint8_t* data)
 {
+    if (dataLength == 0) return;
+
     // increase blob counter
     data_[0]++;
     // save blob size
@@ -248,7 +250,7 @@ size_t DataPacket::wireLength(size_t payloadLength,
     std::vector<size_t> blobLengths)
 {
     size_t wireLength = 1+payloadLength;
-    for (auto b:blobLengths) wireLength += 2+b;
+    for (auto b:blobLengths) if (b>0) wireLength += 2+b;
     return wireLength;
 }
 
@@ -268,6 +270,7 @@ size_t DataPacket::wireLength(std::vector<size_t>  blobLengths)
 void DataPacket::reinit()
 {
     blobs_.clear();
+    if (!data_.size()) { isValid_ = false; return; }
 
     std::vector<uint8_t>::iterator p1 = (data_.begin()+1), p2;
     uint8_t nBlobs = data_[0];

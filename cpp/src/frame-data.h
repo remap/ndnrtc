@@ -233,6 +233,8 @@ namespace ndnrtc {
     protected:
         bool isHeaderSet() { return isHeaderSet_; }
     private:
+        SamplePacket(const SamplePacket&) = delete;
+        
         bool isHeaderSet_;
     };
 
@@ -251,13 +253,15 @@ namespace ndnrtc {
 
     class VideoFramePacket : public CommonSamplePacket {
     public:
+        typedef std::map<std::string, PacketNumber> ThreadSyncList;
+        
         VideoFramePacket(const webrtc::EncodedImage& frame);
         VideoFramePacket(NetworkData&& networkData);
 
         const webrtc::EncodedImage& getFrame();
         boost::shared_ptr<NetworkData> 
             getParityData(size_t segmentSize, double ratio);
-        void setSyncList(const std::map<std::string, PacketNumber>& syncList);
+        void setSyncList(const ThreadSyncList& syncList);
         const std::map<std::string, PacketNumber> getSyncList() const;
 
     private:

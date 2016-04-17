@@ -197,7 +197,14 @@ void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 
     if (frame.width() != coderParams_.encodeWidth_ || 
             frame.height() != coderParams_.encodeHeight_)
-        throw std::runtime_error("Frame size does not equal encoding resolution");
+    {
+        std::stringstream ss;
+        ss << "Frame size (" << frame.width() << "x" << frame.height()
+            << ") does not equal encoding resolution (" 
+            << coderParams_.encodeWidth_ << "x" << coderParams_.encodeHeight_ 
+            << ")" << std::endl;
+        throw std::runtime_error(ss.str());
+    }
 
     encodeComplete_ = false;
     delegate_->onEncodingStarted();

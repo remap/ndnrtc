@@ -42,6 +42,15 @@ namespace ndnrtc {
             unsigned int nDroppedByEncoder;
         };
         
+        /**
+         * This class performs scaling of raw frames. WebRTC uses frame buffers
+         * pool for allocating frames memory. All frame operations that involve 
+         * memory manipulations must use buffer pool. According to WebRTC design,
+         * access to buffer pool is restricted to only one thread - the one that
+         * was the first to access pool. As frame scaling involves pool access,
+         * one has to ensure that scaling is always performed on the same thread.
+         * This rule affects applies to all FrameScaler instances.
+         */
         class FrameScaler 
         {
         public:
