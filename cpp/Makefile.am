@@ -23,7 +23,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/frame-data.cpp src/frame-data.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
-  src/media-thread.cpp src/media-thread.h \
   src/media-stream.cpp src/media-stream.h \
   src/name-components.cpp include/name-components.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \

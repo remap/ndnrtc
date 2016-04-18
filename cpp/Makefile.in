@@ -126,7 +126,6 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-frame-data.lo \
 	src/libndnrtc_la-interest-queue.lo \
 	src/libndnrtc_la-jitter-timing.lo \
-	src/libndnrtc_la-media-thread.lo \
 	src/libndnrtc_la-media-stream.lo \
 	src/libndnrtc_la-name-components.lo \
 	src/libndnrtc_la-ndn-assembler.lo \
@@ -546,7 +545,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/frame-data.cpp src/frame-data.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
-  src/media-thread.cpp src/media-thread.h \
   src/media-stream.cpp src/media-stream.h \
   src/name-components.cpp include/name-components.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \
@@ -798,8 +796,6 @@ src/libndnrtc_la-frame-data.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-interest-queue.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-jitter-timing.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-media-thread.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-media-stream.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -1174,8 +1170,6 @@ mostlyclean-compile:
 	-rm -f src/libndnrtc_la-jitter-timing.lo
 	-rm -f src/libndnrtc_la-media-stream.$(OBJEXT)
 	-rm -f src/libndnrtc_la-media-stream.lo
-	-rm -f src/libndnrtc_la-media-thread.$(OBJEXT)
-	-rm -f src/libndnrtc_la-media-thread.lo
 	-rm -f src/libndnrtc_la-name-components.$(OBJEXT)
 	-rm -f src/libndnrtc_la-name-components.lo
 	-rm -f src/libndnrtc_la-ndn-assembler.$(OBJEXT)
@@ -1319,7 +1313,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-stream.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndn-assembler.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-exception.Plo@am__quote@
@@ -1537,14 +1530,6 @@ src/libndnrtc_la-jitter-timing.lo: src/jitter-timing.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/jitter-timing.cpp' object='src/libndnrtc_la-jitter-timing.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
-
-src/libndnrtc_la-media-thread.lo: src/media-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-thread.Tpo src/$(DEPDIR)/libndnrtc_la-media-thread.Plo
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-thread.cpp' object='src/libndnrtc_la-media-thread.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-media-thread.lo `test -f 'src/media-thread.cpp' || echo '$(srcdir)/'`src/media-thread.cpp
 
 src/libndnrtc_la-media-stream.lo: src/media-stream.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-stream.Tpo -c -o src/libndnrtc_la-media-stream.lo `test -f 'src/media-stream.cpp' || echo '$(srcdir)/'`src/media-stream.cpp
