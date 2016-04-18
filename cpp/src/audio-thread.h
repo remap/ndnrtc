@@ -11,72 +11,52 @@
 #ifndef __ndnrtc__audio_thread__
 #define __ndnrtc__audio_thread__
 
-#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 
-#include "media-thread.h"
+#include "params.h"
+#include "ndnrtc-object.h"
 #include "audio-capturer.h"
-#include "ndnrtc-common.h"
+#include "frame-data.h"
 
 namespace ndnrtc
 {
-    namespace new_api
-    {
-        class AudioThreadSettings : public MediaThreadSettings
-        {
-        public:
-        };
-        
-        class AudioThreadStatistics : public MediaThreadStatistics
-        {
-        public:
-            unsigned int nRtpPublished_, nRtcpPublished_;
-        };
-        
-        /**
-         * This class is a subclass of MediaThread for audio streams
-         */
-        class AudioThread : public MediaThread,
-                            public IAudioFrameConsumer
-        {
-        public:
-            // construction/desctruction
-            AudioThread():MediaThread(){ description_ = "athread"; }
-            ~AudioThread(){};
-                        
-            int init(const AudioThreadSettings& settings);
-            
-            void
-            getStatistics(AudioThreadStatistics& statistics)
-            {
-                MediaThread::getStatistics(statistics);
-                statistics.nRtcpPublished_ = rtcpPacketNo_;
-                statistics.nRtpPublished_ = rtpPacketNo_;
-            }
-            
-            // IAudioFrameConsumer interface
-            void
-            onDeliverRtpFrame(unsigned int len, unsigned char *data);
-            
-            void
-            onDeliverRtcpFrame(unsigned int len, unsigned char *data);
-            
-        private:
-            unsigned int rtpPacketNo_, rtcpPacketNo_;
-            Name rtpPacketPrefix_;
-            Name rtcpPacketPrefix_;
-            NdnAudioData adata_;
-            
-            int processAudioPacket(NdnAudioData::AudioPacket packet);
-            
-            /**
-             * Publishes specified data under the prefix, determined by the
-             * parameters provided upon callee creation and by the current packet
-             * number, specified in packetNo_ variable of the class.
-             */
-            int publishPacket(PacketData &packetData,
-                              PrefixMetaInfo prefixMeta = PrefixMetaInfo::ZeroMetaInfo);
-        };
-    }
+   class AudioBundlePacket;
+   
+   class IAudioThreadCallback {
+    public:
+       virtual void onSampleBundle(AudioBundlePacket& packet) = 0;
+   };
+
+   class AudioThread :  public NdnRtcComponent,
+                        public IAudioSampleConsumer
+   {
+   public:
+       AudioThread(const AudioThreadParams& params,
+           const AudioCaptureParams& captureParams,
+           IAudioThreadCallback* callback,
+           size_t bundleWireLength = 1000);
+       ~AudioThread();
+
+       void start();
+       void stop();
+
+   private:
+       AudioThread(const AudioThread&) = delete;
+
+       IAudioThreadCallback* callback_;
+       AudioBundlePacket bundle_;
+       AudioCapturer capturer_;
+       boost::atomic<bool> isRunning_;
+
+       void
+       onDeliverRtpFrame(unsigned int len, uint8_t* data);
+
+       void
+       onDeliverRtcpFrame(unsigned int len, uint8_t* data);
+
+       void 
+       deliver(const AudioBundlePacket::AudioSampleBlob& blob);
+   };
 }
 
 #endif /* defined(__ndnrtc__audio_thread__) */

@@ -199,6 +199,11 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-video-coder.$(OBJEXT) \
 	src/bin_tests_test_media_thread-frame-data.$(OBJEXT) \
 	src/bin_tests_test_media_thread-fec.$(OBJEXT) \
+	src/bin_tests_test_media_thread-audio-thread.$(OBJEXT) \
+	src/bin_tests_test_media_thread-audio-capturer.$(OBJEXT) \
+	src/bin_tests_test_media_thread-webrtc-audio-channel.$(OBJEXT) \
+	src/bin_tests_test_media_thread-audio-controller.$(OBJEXT) \
+	src/bin_tests_test_media_thread-threading-capability.$(OBJEXT) \
 	src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_media_thread-simple-log.$(OBJEXT) \
 	$(am__objects_3)
@@ -669,7 +674,7 @@ bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpe
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
-bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-thread.cpp tests/tests-helpers.cc src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-thread.cpp tests/tests-helpers.cc src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD}
@@ -934,6 +939,16 @@ src/bin_tests_test_media_thread-frame-data.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_media_thread-fec.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-audio-thread.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-audio-capturer.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-webrtc-audio-channel.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-audio-controller.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-threading-capability.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_media_thread-simple-log.$(OBJEXT):  \
@@ -1097,12 +1112,17 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_audio_capturer-webrtc-audio-channel.$(OBJEXT)
 	-rm -f src/bin_tests_test_data_validator-data-validator.$(OBJEXT)
 	-rm -f src/bin_tests_test_data_validator-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-audio-capturer.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-audio-controller.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-audio-thread.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-threading-capability.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-video-coder.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-video-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-webrtc-audio-channel.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_packet_publisher-fec.$(OBJEXT)
@@ -1257,12 +1277,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-webrtc-audio-channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-coder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po@am__quote@
@@ -2072,6 +2097,86 @@ src/bin_tests_test_media_thread-fec.obj: src/fec.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_media_thread-fec.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+
+src/bin_tests_test_media_thread-audio-thread.o: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-thread.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo -c -o src/bin_tests_test_media_thread-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_thread-audio-thread.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
+
+src/bin_tests_test_media_thread-audio-thread.obj: src/audio-thread.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo -c -o src/bin_tests_test_media_thread-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-thread.cpp' object='src/bin_tests_test_media_thread-audio-thread.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
+
+src/bin_tests_test_media_thread-audio-capturer.o: src/audio-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-capturer.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Tpo -c -o src/bin_tests_test_media_thread-audio-capturer.o `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-capturer.cpp' object='src/bin_tests_test_media_thread-audio-capturer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-capturer.o `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
+
+src/bin_tests_test_media_thread-audio-capturer.obj: src/audio-capturer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-capturer.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Tpo -c -o src/bin_tests_test_media_thread-audio-capturer.obj `if test -f 'src/audio-capturer.cpp'; then $(CYGPATH_W) 'src/audio-capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-capturer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-capturer.cpp' object='src/bin_tests_test_media_thread-audio-capturer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-capturer.obj `if test -f 'src/audio-capturer.cpp'; then $(CYGPATH_W) 'src/audio-capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-capturer.cpp'; fi`
+
+src/bin_tests_test_media_thread-webrtc-audio-channel.o: src/webrtc-audio-channel.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-webrtc-audio-channel.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Tpo -c -o src/bin_tests_test_media_thread-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/webrtc-audio-channel.cpp' object='src/bin_tests_test_media_thread-webrtc-audio-channel.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
+
+src/bin_tests_test_media_thread-webrtc-audio-channel.obj: src/webrtc-audio-channel.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-webrtc-audio-channel.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Tpo -c -o src/bin_tests_test_media_thread-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/webrtc-audio-channel.cpp' object='src/bin_tests_test_media_thread-webrtc-audio-channel.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
+
+src/bin_tests_test_media_thread-audio-controller.o: src/audio-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-controller.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Tpo -c -o src/bin_tests_test_media_thread-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-controller.cpp' object='src/bin_tests_test_media_thread-audio-controller.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
+
+src/bin_tests_test_media_thread-audio-controller.obj: src/audio-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-audio-controller.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Tpo -c -o src/bin_tests_test_media_thread-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-controller.cpp' object='src/bin_tests_test_media_thread-audio-controller.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
+
+src/bin_tests_test_media_thread-threading-capability.o: src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-threading-capability.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Tpo -c -o src/bin_tests_test_media_thread-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/threading-capability.cpp' object='src/bin_tests_test_media_thread-threading-capability.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
+
+src/bin_tests_test_media_thread-threading-capability.obj: src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-threading-capability.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Tpo -c -o src/bin_tests_test_media_thread-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-threading-capability.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/threading-capability.cpp' object='src/bin_tests_test_media_thread-threading-capability.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
 
 src/bin_tests_test_media_thread-ndnrtc-object.o: src/ndnrtc-object.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-ndnrtc-object.Tpo -c -o src/bin_tests_test_media_thread-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
