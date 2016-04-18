@@ -495,8 +495,11 @@ TEST(TestAudioBundle, TestBundling)
     EXPECT_GE(wire_len, bundlePacket.getLength());
     EXPECT_EQ(AudioBundlePacket::wireLength(wire_len, data_len), bundlePacket.getLength());
 
-    NetworkData nd(boost::move(bundlePacket));
-    AudioBundlePacket newBundle(boost::move(nd));
+    AudioBundlePacket newBundle(boost::move(bundlePacket));
+    EXPECT_EQ(1, bundlePacket.getLength());
+    EXPECT_EQ(0, bundlePacket.getSamplesNum());
+    EXPECT_EQ(0, bundlePacket.getRemainingSpace());
+
     AudioBundlePacket thirdBundle(wire_len);
 
     ASSERT_FALSE(bundlePacket.isValid());
@@ -551,6 +554,51 @@ TEST(TestAudioBundle, TestBundlingUsingOperator)
         // EXPECT_EQ(1234, bundlePacket[i].getHeader().dummy_);
         for (int k = 0; k < bundlePacket[i].size()-sizeof(AudioSampleHeader); ++k)
             EXPECT_EQ(rtpData[k], bundlePacket[i].data()[k]);
+    }
+}
+
+TEST(TestAudioBundle, TestMoveAndReuse)
+{
+    int data_len = 247;
+    std::vector<uint8_t> rtpData;
+    for (int i = 0; i < data_len; ++i)
+        rtpData.push_back((uint8_t)i);
+
+    int wire_len = 1000;
+    AudioBundlePacket bundlePacket(wire_len);
+    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket tempBundle(wire_len);
+
+    for (int j = 0; j < 3; ++j)
+    {
+        bundlePacket << sample << sample << sample;
+
+        ASSERT_EQ(3, bundlePacket.getSamplesNum());
+        for (int i = 0; i < bundlePacket.getSamplesNum(); ++i)
+        {
+            EXPECT_FALSE(bundlePacket[i].getHeader().isRtcp_);
+            // EXPECT_EQ(1234, bundlePacket[i].getHeader().dummy_);
+            bool identical = true;
+            for (int k = 0; k < bundlePacket[i].size()-sizeof(AudioSampleHeader) && identical; ++k)
+                identical = (rtpData[k] == bundlePacket[i].data()[k]);
+            EXPECT_TRUE(identical);
+        }
+        
+        // now move bundle elsewhere
+        tempBundle.swap(boost::move(bundlePacket));
+        EXPECT_FALSE(bundlePacket.isValid());
+        bundlePacket.clear();
+        EXPECT_EQ(1, bundlePacket.getLength());
+        ASSERT_EQ(3, tempBundle.getSamplesNum());
+        for (int i = 0; i < tempBundle.getSamplesNum(); ++i)
+        {
+            EXPECT_FALSE(tempBundle[i].getHeader().isRtcp_);
+            // EXPECT_EQ(1234, tempBundle[i].getHeader().dummy_);
+            bool identical = true;
+            for (int k = 0; k < tempBundle[i].size()-sizeof(AudioSampleHeader) && identical; ++k)
+                identical = (rtpData[k] == tempBundle[i].data()[k]);
+            EXPECT_TRUE(identical);
+        }
     }
 }
 

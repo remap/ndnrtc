@@ -154,6 +154,12 @@ namespace ndnrtc {
 
         const Blob getPayload() const;
 
+        virtual void swap(NetworkData& networkData) 
+        { NetworkData::swap(networkData); reinit(); }
+
+        virtual void swap(DataPacket& dataPacket)
+        { NetworkData::swap(dataPacket); reinit(); dataPacket.reinit(); }
+
         /**
          * This calculates total wire length for a packet with given 
          * payloadLength and one blob (header) of length blobLength
@@ -176,18 +182,16 @@ namespace ndnrtc {
          * in vector blobLengths
          */
         static size_t wireLength(std::vector<size_t>  blobLengths);
-
      protected:
         std::vector<Blob> blobs_;
         std::vector<uint8_t>::iterator payloadBegin_;
-        size_t payloadSize_;
 
         unsigned int getBlobsNum() const { return blobs_.size(); }
         const Blob getBlob(size_t pos) const { return blobs_[pos]; }
 
         // one header can't be bigger than 255 bytes
         void addBlob(uint16_t dataLength, const uint8_t* data);
-        void reinit();
+        virtual void reinit();
     };
 
     template <typename Header>
@@ -207,7 +211,7 @@ namespace ndnrtc {
         SamplePacket(NetworkData&& networkData):
             DataPacket(boost::move(networkData))
             {
-                if (isValid_ && blobs_.size() > 0)
+                if (blobs_.size() > 0)
                 {
                     isValid_ = (blobs_.back().size() == sizeof(Header));
                     isHeaderSet_ = true;
@@ -229,6 +233,9 @@ namespace ndnrtc {
 
         virtual const Header& getHeader() const
         { return *((Header*)blobs_.back().data()); }
+
+        virtual void swap(SamplePacket& packet)
+        { DataPacket::swap(packet); std::swap(isHeaderSet_, packet.isHeaderSet_); }
     
     protected:
         bool isHeaderSet() { return isHeaderSet_; }
@@ -302,7 +309,7 @@ namespace ndnrtc {
         };
 
         AudioBundlePacket(size_t wireLength);
-        AudioBundlePacket(NetworkData&& networkData);
+        AudioBundlePacket(AudioBundlePacket&& bundle);
 
         bool hasSpace(const AudioSampleBlob& sampleBlob) const;
         size_t getRemainingSpace() const { return remainingSpace_; }
@@ -310,6 +317,7 @@ namespace ndnrtc {
         AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
         size_t getSamplesNum();
         const AudioSampleBlob operator[](size_t pos) const;
+        void swap(AudioBundlePacket&& bundle);
         
         static size_t wireLength(size_t wireLength, size_t sampleSize);
     private:
