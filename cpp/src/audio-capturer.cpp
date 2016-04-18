@@ -17,7 +17,6 @@
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace boost;
@@ -80,7 +79,8 @@ AudioCapturer::AudioCapturer(const unsigned int deviceIdx,
                 const WebrtcAudioChannel::Codec& codec):
 WebrtcAudioChannel(codec),
 sampleConsumer_(sampleConsumer),
-capturing_(false)
+capturing_(false),
+nRtp_(0), nRtcp_(0)
 {
     assert(sampleConsumer);
     description_ = "audio-capturer";
@@ -164,6 +164,7 @@ int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
 
     if (capturing_)
     {
+        nRtp_++;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtpFrame(len, (uint8_t*)data);
         });
@@ -178,6 +179,7 @@ int AudioCapturer::SendRTCPPacket(int channel, const void *data, size_t len)
 
     if (capturing_)
     {
+        nRtcp_++;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtcpFrame(len, (uint8_t*)data);
         });

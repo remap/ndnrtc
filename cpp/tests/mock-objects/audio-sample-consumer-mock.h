@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 #include <src/audio-capturer.h>
 
-class MockAudioSampleConsumer : public ndnrtc::new_api::IAudioSampleConsumer
+class MockAudioSampleConsumer : public ndnrtc::IAudioSampleConsumer
 {
 public:
 	MOCK_METHOD2(onDeliverRtpFrame, void(unsigned int, unsigned char*));

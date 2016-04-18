@@ -14,7 +14,7 @@
 #include "audio-controller.h"
 #include "simple-log.h"
 
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 using namespace webrtc;
 
 AudioController::AudioController()

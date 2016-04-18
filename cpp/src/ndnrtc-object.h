@@ -16,25 +16,22 @@
 #include "simple-log.h"
 
 namespace ndnrtc {
-    namespace new_api {
-
-        class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
-                                public boost::enable_shared_from_this<NdnRtcComponent>
-        {
-        public:
+    class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
+                            public boost::enable_shared_from_this<NdnRtcComponent>
+    {
+    public:
             // construction/desctruction
-            NdnRtcComponent(){}
-            virtual ~NdnRtcComponent(){}
-            
+        NdnRtcComponent(){}
+        virtual ~NdnRtcComponent(){}
+
             // ILoggingObject interface conformance
-            virtual std::string
-            getDescription() const;
-            
-            virtual bool
-            isLoggingEnabled() const
-            { return true; }
-        };
-    }
+        virtual std::string
+        getDescription() const;
+
+        virtual bool
+        isLoggingEnabled() const
+        { return true; }
+    };
 }
 
 #endif /* defined(__ndnrtc__ndnrtc_object__) */

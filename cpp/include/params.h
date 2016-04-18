@@ -37,96 +37,94 @@ namespace ndnlog {
 }
 
 namespace ndnrtc
-{
-    namespace new_api {
+{       
+    class Params {
+    public:
+        virtual ~Params(){}
+        virtual void write(std::ostream& os) const {}
         
-        class Params {
-        public:
-            virtual ~Params(){}
-            virtual void write(std::ostream& os) const {}
-            
-            friend std::ostream& operator<<(std::ostream& os, Params const& p)
-            {
-                p.write(os);
-                return os;
-            }
-        };
-        
+        friend std::ostream& operator<<(std::ostream& os, Params const& p)
+        {
+            p.write(os);
+            return os;
+        }
+    };
+    
         // capture device parameters
-        class CaptureDeviceParams : public Params {
-        public:
-            ~CaptureDeviceParams(){}
-            
-            int deviceId_ = -2;
-            
-            virtual void write(std::ostream& os) const
-            {
-                os << "id: " << deviceId_;
-            }
-        };
+    class CaptureDeviceParams : public Params {
+    public:
+        ~CaptureDeviceParams(){}
         
+        int deviceId_ = -2;
+        
+        virtual void write(std::ostream& os) const
+        {
+            os << "id: " << deviceId_;
+        }
+    };
+    
         // audio capture device parameters
-        class AudioCaptureParams : public CaptureDeviceParams {
-        };
-        
+    class AudioCaptureParams : public CaptureDeviceParams {
+    };
+    
         // frame segments metainformation
         // average number of segments per frame type
         // (available for video frames only)
-        typedef struct _FrameSegmentsInfo {
-            double deltaAvgSegNum_, deltaAvgParitySegNum_;
-            double keyAvgSegNum_, keyAvgParitySegNum_;
+    typedef struct _FrameSegmentsInfo {
+        double deltaAvgSegNum_, deltaAvgParitySegNum_;
+        double keyAvgSegNum_, keyAvgParitySegNum_;
 
-            _FrameSegmentsInfo():deltaAvgSegNum_(0), deltaAvgParitySegNum_(0), keyAvgSegNum_(0),keyAvgParitySegNum_(0){}
-            _FrameSegmentsInfo(double d, double dp, double k, double kp):deltaAvgSegNum_(d), 
-                deltaAvgParitySegNum_(dp), keyAvgSegNum_(k),keyAvgParitySegNum_(kp){}
-            
-            bool operator==(const _FrameSegmentsInfo& rhs) const
-            {
-                return this->deltaAvgSegNum_ == rhs.deltaAvgSegNum_ &&
-                    this->deltaAvgParitySegNum_ == rhs.deltaAvgParitySegNum_ &&
-                    this->keyAvgSegNum_ == rhs.keyAvgSegNum_ &&
-                    this->keyAvgParitySegNum_ == rhs.keyAvgParitySegNum_;
-            }
-
-            bool operator!=(const _FrameSegmentsInfo& rhs) const
-            {
-                return !(*this == rhs);
-            }
-        } FrameSegmentsInfo;
+        _FrameSegmentsInfo():deltaAvgSegNum_(0), deltaAvgParitySegNum_(0), keyAvgSegNum_(0),keyAvgParitySegNum_(0){}
+        _FrameSegmentsInfo(double d, double dp, double k, double kp):deltaAvgSegNum_(d), 
+        deltaAvgParitySegNum_(dp), keyAvgSegNum_(k),keyAvgParitySegNum_(kp){}
         
+        bool operator==(const _FrameSegmentsInfo& rhs) const
+        {
+            return this->deltaAvgSegNum_ == rhs.deltaAvgSegNum_ &&
+            this->deltaAvgParitySegNum_ == rhs.deltaAvgParitySegNum_ &&
+            this->keyAvgSegNum_ == rhs.keyAvgSegNum_ &&
+            this->keyAvgParitySegNum_ == rhs.keyAvgParitySegNum_;
+        }
+
+        bool operator!=(const _FrameSegmentsInfo& rhs) const
+        {
+            return !(*this == rhs);
+        }
+    } FrameSegmentsInfo;
+    
         // media thread parameters
-        class MediaThreadParams : public Params {
-        public:
-            MediaThreadParams(){}
-            MediaThreadParams(std::string threadName):threadName_(threadName){}
-            MediaThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
-                threadName_(threadName), segInfo_(segInfo){}
-            virtual ~MediaThreadParams(){}
-            
-            std::string threadName_ = "";
-            FrameSegmentsInfo segInfo_;
-            
-            virtual void write(std::ostream& os) const
-            {
-                os << "name: " << threadName_;
-            }
-            
-            virtual MediaThreadParams* copy() const = 0;
-            
-            FrameSegmentsInfo
-            getSegmentsInfo()
-            { return segInfo_; }
-        };
+    class MediaThreadParams : public Params {
+    public:
+        MediaThreadParams(){}
+        MediaThreadParams(std::string threadName):threadName_(threadName){}
+        MediaThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
+        threadName_(threadName), segInfo_(segInfo){}
+        virtual ~MediaThreadParams(){}
         
+        std::string threadName_ = "";
+        FrameSegmentsInfo segInfo_;
+        
+        virtual void write(std::ostream& os) const
+        {
+            os << "name: " << threadName_;
+        }
+        
+        virtual MediaThreadParams* copy() const = 0;
+        
+        FrameSegmentsInfo
+        getSegmentsInfo()
+        { return segInfo_; }
+    };
+    
         // audio thread parameters
-        class AudioThreadParams : public MediaThreadParams {
-        public:
-            AudioThreadParams():MediaThreadParams("", FrameSegmentsInfo(1., 0., 0., 0.)),
-                codec_("g722"){}
-            AudioThreadParams(std::string threadName):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
-                codec_("g722"){}
-            AudioThreadParams(std::string threadName, std::string codec):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
-                codec_(codec){}
+    class AudioThreadParams : public MediaThreadParams {
+    public:
+        AudioThreadParams():MediaThreadParams("", FrameSegmentsInfo(1., 0., 0., 0.)),
+        codec_("g722"){}
+        AudioThreadParams(std::string threadName):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
+        codec_("g722"){}
+        AudioThreadParams(std::string threadName, std::string codec):MediaThreadParams(threadName, FrameSegmentsInfo(1., 0., 0., 0.)),
+        codec_(codec){}
 
             std::string codec_; // "g722" (SD) or "opus" (HD)
 
@@ -155,7 +153,7 @@ namespace ndnrtc
             bool dropFramesOn_;
             
             VideoCoderParams():codecFrameRate_(0),gop_(0),startBitrate_(0),
-                maxBitrate_(0),encodeWidth_(0),encodeHeight_(0),dropFramesOn_(false){}
+            maxBitrate_(0),encodeWidth_(0),encodeHeight_(0),dropFramesOn_(false){}
 
             void write(std::ostream& os) const
             {
@@ -171,12 +169,12 @@ namespace ndnrtc
             bool operator==(const VideoCoderParams& rhs) const
             {
                 return this->codecFrameRate_ == rhs.codecFrameRate_ &&
-                    this->gop_ == rhs.gop_ &&
-                    this->startBitrate_ == rhs.startBitrate_ &&
-                    this->maxBitrate_ == rhs.maxBitrate_ &&
-                    this->encodeWidth_ == rhs.encodeWidth_ &&
-                    this->encodeHeight_ == rhs.encodeHeight_ &&
-                    this->dropFramesOn_ == rhs.dropFramesOn_;
+                this->gop_ == rhs.gop_ &&
+                this->startBitrate_ == rhs.startBitrate_ &&
+                this->maxBitrate_ == rhs.maxBitrate_ &&
+                this->encodeWidth_ == rhs.encodeWidth_ &&
+                this->encodeHeight_ == rhs.encodeHeight_ &&
+                this->dropFramesOn_ == rhs.dropFramesOn_;
             }
 
             bool operator!=(const VideoCoderParams& rhs) const
@@ -190,11 +188,11 @@ namespace ndnrtc
             VideoThreadParams():MediaThreadParams(){}
             VideoThreadParams(std::string threadName):MediaThreadParams(threadName){}
             VideoThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
-                MediaThreadParams(threadName, segInfo){}
+            MediaThreadParams(threadName, segInfo){}
             VideoThreadParams(std::string threadName, VideoCoderParams vcp):
-                MediaThreadParams(threadName),coderParams_(vcp){}
+            MediaThreadParams(threadName),coderParams_(vcp){}
             VideoThreadParams(std::string threadName, FrameSegmentsInfo segInfo, VideoCoderParams vcp):
-                MediaThreadParams(threadName, segInfo), coderParams_(vcp){}
+            MediaThreadParams(threadName, segInfo), coderParams_(vcp){}
 
             VideoCoderParams coderParams_;
 
@@ -262,21 +260,21 @@ namespace ndnrtc
             
             size_t getThreadNum() const { return mediaThreads_.size(); }
             void addMediaThread(const AudioThreadParams& tp)
-                { if (type_ == MediaStreamTypeAudio) addMediaThread(tp.copy()); }
+            { if (type_ == MediaStreamTypeAudio) addMediaThread(tp.copy()); }
             void addMediaThread(const VideoThreadParams& tp)
-                { if (type_ == MediaStreamTypeVideo) addMediaThread(tp.copy()); }
+            { if (type_ == MediaStreamTypeVideo) addMediaThread(tp.copy()); }
             MediaThreadParams* getMediaThread(const unsigned int& idx) const
-                { return (idx >= mediaThreads_.size()?nullptr:mediaThreads_[idx]); }
+            { return (idx >= mediaThreads_.size()?nullptr:mediaThreads_[idx]); }
             AudioThreadParams* getAudioThread(const unsigned int& idx) const
-                { return (type_ == MediaStreamTypeAudio?(AudioThreadParams*)getMediaThread(idx) : nullptr ); }
+            { return (type_ == MediaStreamTypeAudio?(AudioThreadParams*)getMediaThread(idx) : nullptr ); }
             VideoThreadParams* getVideoThread(const unsigned int& idx) const
-                { return (type_ == MediaStreamTypeVideo?(VideoThreadParams*)getMediaThread(idx) : nullptr);}
+            { return (type_ == MediaStreamTypeVideo?(VideoThreadParams*)getMediaThread(idx) : nullptr);}
 
             void write(std::ostream& os) const
             {
                 os << "name: " << streamName_ << (type_ == MediaStreamTypeAudio ? " (audio)":" (video)")
-                    << "; synced to: " << synchronizedStreamName_
-                    << "; " << producerParams_ << "; ";
+                << "; synced to: " << synchronizedStreamName_
+                << "; " << producerParams_ << "; ";
                 
                 if (captureDevice_.deviceId_ >= 0)
                     os << "capture device " << captureDevice_;
@@ -355,7 +353,7 @@ namespace ndnrtc
             unsigned int portNum_;
             
             GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone), useRtx_(false),
-                useFec_(false), useAvSync_(false), skipIncomplete_(false), portNum_(6363){}
+            useFec_(false), useAvSync_(false), skipIncomplete_(false), portNum_(6363){}
 
             void write(std::ostream& os) const
             {
@@ -419,7 +417,7 @@ namespace ndnrtc
                 os << "audio streams: " << std::endl;
                 for (int i = 0; i < audioStreams_.size(); i++)
                     os << i << ": " << *audioStreams_[i] << std::endl;
-                    
+                
                 os << "video streams:" << std::endl;
                 for (int i = 0; i < videoStreams_.size(); i++)
                     os << i << ": " << *videoStreams_[i] << std::endl;
@@ -463,7 +461,6 @@ namespace ndnrtc
                 
             }
         };
-    }
 }
 
 #endif

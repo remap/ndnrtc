@@ -17,33 +17,31 @@ namespace webrtc {
 }
 
 namespace ndnrtc {
-    namespace new_api {
-        /**
-         * This class is a wrapper around WebRTC's audio channel API.
-         * One should derive from this class in order to register for 
-         * RTP/RTCP audio packet callbacks
-         * @see AudioCapturer
-         */
-        class WebrtcAudioChannel
-        {
-        public:
-            enum class Codec {
-                Opus,   // HD, ~400 Kbit/s
-                G722    // SD, ~200 Kbit/s
-            };
-
-            WebrtcAudioChannel(const Codec& codec);
-            virtual ~WebrtcAudioChannel();
-
-        protected:
-            int webrtcChannelId_;
-            webrtc::VoEBase* voeBase_;
-            webrtc::VoENetwork* voeNetwork_;
-            webrtc::VoECodec* voeCodec_;
-
-            webrtc::CodecInst instFromCodec(const Codec& c);
+    /**
+     * This class is a wrapper around WebRTC's audio channel API.
+     * One should derive from this class in order to register for 
+     * RTP/RTCP audio packet callbacks
+     * @see AudioCapturer
+     */
+     class WebrtcAudioChannel
+     {
+     public:
+        enum class Codec {
+            Opus,   // HD, ~400 Kbit/s
+            G722    // SD, ~200 Kbit/s
         };
-    }
+
+        WebrtcAudioChannel(const Codec& codec);
+        virtual ~WebrtcAudioChannel();
+
+    protected:
+        int webrtcChannelId_;
+        webrtc::VoEBase* voeBase_;
+        webrtc::VoENetwork* voeNetwork_;
+        webrtc::VoECodec* voeCodec_;
+
+        webrtc::CodecInst instFromCodec(const Codec& c);
+    };
 }
 
 #endif /* defined(__ndnrtc__webrtc_audio_channel__) */

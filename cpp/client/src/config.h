@@ -18,7 +18,7 @@
 #include <ndnrtc/params.h>
 #include <ndnrtc/ndnrtc-library.h>
 
-class StatGatheringParams : public ndnrtc::new_api::Params {
+class StatGatheringParams : public ndnrtc::Params {
 public:
     std::string statFileName_;
 
@@ -54,7 +54,7 @@ private:
     std::vector<std::string> gatheredStatistcs_;
 };
 
-class ClientMediaStreamParams : public ndnrtc::new_api::MediaStreamParams {
+class ClientMediaStreamParams : public ndnrtc::MediaStreamParams {
 public:
     std::string sessionPrefix_;
 
@@ -102,9 +102,9 @@ public:
     }
 };
 
-class ConsumerClientParams : public ndnrtc::new_api::Params {
+class ConsumerClientParams : public ndnrtc::Params {
     public:
-        ndnrtc::new_api::GeneralConsumerParams generalAudioParams_, generalVideoParams_;
+        ndnrtc::GeneralConsumerParams generalAudioParams_, generalVideoParams_;
         std::vector<StatGatheringParams> statGatheringParams_;
         std::vector<ConsumerStreamParams> fetchedStreams_;
 
@@ -136,7 +136,7 @@ class ConsumerClientParams : public ndnrtc::new_api::Params {
         }
 };
 
-class ProducerClientParams : public ndnrtc::new_api::Params {
+class ProducerClientParams : public ndnrtc::Params {
 public:
     std::string username_, prefix_;
     std::vector<ProducerStreamParams> publishedStreams_;
@@ -159,7 +159,7 @@ public:
     }
 };  
 
-class ClientParams : public ndnrtc::new_api::Params {
+class ClientParams : public ndnrtc::Params {
 public:
     ClientParams(){}
     ~ClientParams(){}
@@ -174,9 +174,9 @@ public:
         { return publishedStreamsParams_.publishedStreams_.size(); }
     size_t getConsumedStreamsNum() const
         { return consumedStreamsParams_.fetchedStreams_.size(); }
-    void setGeneralParameters(const ndnrtc::new_api::GeneralParams& gp) 
+    void setGeneralParameters(const ndnrtc::GeneralParams& gp) 
         { generalParams_ = gp; }
-    ndnrtc::new_api::GeneralParams getGeneralParameters() const
+    ndnrtc::GeneralParams getGeneralParameters() const
         { return generalParams_; }
     void setConsumerParams(const ConsumerClientParams& consumerParams)
         { consumedStreamsParams_ = consumerParams; }
@@ -207,7 +207,7 @@ public:
     }
 
     private:
-        ndnrtc::new_api::GeneralParams generalParams_;
+        ndnrtc::GeneralParams generalParams_;
         ProducerClientParams publishedStreamsParams_;
         ConsumerClientParams consumedStreamsParams_;
 };

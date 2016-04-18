@@ -16,7 +16,7 @@
 
 #include "client/src/config.h"
 
-ndnrtc::new_api::VideoCoderParams sampleVideoCoderParams();
+ndnrtc::VideoCoderParams sampleVideoCoderParams();
 ClientParams sampleConsumerParams();
 ClientParams sampleProducerParams();
 

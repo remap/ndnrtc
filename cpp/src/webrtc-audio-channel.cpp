@@ -18,7 +18,7 @@
 
 using namespace std;
 using namespace webrtc;
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 
 //******************************************************************************
 #pragma mark - construction/destruction

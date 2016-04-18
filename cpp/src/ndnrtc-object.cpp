@@ -12,7 +12,7 @@
 
 #include "ndnrtc-object.h"
 
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 
 std::string
 NdnRtcComponent::getDescription() const

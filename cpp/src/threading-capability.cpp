@@ -10,7 +10,7 @@
 
 #include "threading-capability.h"
 
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 using namespace boost;
 
 //******************************************************************************

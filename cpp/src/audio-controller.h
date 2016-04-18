@@ -18,28 +18,26 @@ namespace webrtc {
 }
 
 namespace ndnrtc {
-    namespace new_api {
-        class AudioController : public ThreadingCapability {
-        public:
-            static AudioController *getSharedInstance();
-            
-            webrtc::VoiceEngine *getVoiceEngine();
-            void initVoiceEngine();
-            void releaseVoiceEngine();
-            void dispatchOnAudioThread(boost::function<void(void)> dispatchBlock);
-            void performOnAudioThread(boost::function<void(void)> dispatchBlock);
-            
-            ~AudioController();
-        private:
-            AudioController();
-            AudioController(AudioController const&) = delete;
-            void operator=(AudioController const&) = delete;
-            
-            void initVE();
-            
-            webrtc::VoiceEngine *voiceEngine_ = NULL;
-        };
-    }
+    class AudioController : public ThreadingCapability {
+    public:
+        static AudioController *getSharedInstance();
+        
+        webrtc::VoiceEngine *getVoiceEngine();
+        void initVoiceEngine();
+        void releaseVoiceEngine();
+        void dispatchOnAudioThread(boost::function<void(void)> dispatchBlock);
+        void performOnAudioThread(boost::function<void(void)> dispatchBlock);
+        
+        ~AudioController();
+    private:
+        AudioController();
+        AudioController(AudioController const&) = delete;
+        void operator=(AudioController const&) = delete;
+        
+        void initVE();
+        
+        webrtc::VoiceEngine *voiceEngine_ = NULL;
+    };
 }
 
 #endif

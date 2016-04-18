@@ -21,51 +21,55 @@ namespace webrtc {
 }
 
 namespace ndnrtc {
-    namespace new_api {
+    class IAudioSampleConsumer
+    {
+    public:
+        virtual void onDeliverRtpFrame(unsigned int len, uint8_t* data) = 0;
+        virtual void onDeliverRtcpFrame(unsigned int len, uint8_t* data) = 0;
+    };
+    
+    class AudioCapturer : public webrtc::Transport,
+    public WebrtcAudioChannel, 
+    public NdnRtcComponent
+    {
+    public:
+        AudioCapturer(const unsigned int deviceIdx, 
+            IAudioSampleConsumer* sampleConsumer,
+            const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722);
+        ~AudioCapturer();
         
-        class IAudioSampleConsumer
-        {
-        public:
-            virtual void onDeliverRtpFrame(unsigned int len, uint8_t* data) = 0;
-            virtual void onDeliverRtcpFrame(unsigned int len, uint8_t* data) = 0;
-        };
+        void
+        startCapture();
         
-        class AudioCapturer : public webrtc::Transport,
-                              public WebrtcAudioChannel, 
-                              public NdnRtcComponent
-        {
-        public:
-            AudioCapturer(const unsigned int deviceIdx, 
-                IAudioSampleConsumer* sampleConsumer,
-                const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722);
-            ~AudioCapturer();
-            
-            void
-            startCapture();
-            
-            void
-            stopCapture();
+        void
+        stopCapture();
 
-            static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
-            static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
+        unsigned int
+        getRtpNum() { return nRtp_; }
 
-        protected:
-            boost::atomic<bool> capturing_;
-            boost::mutex capturingState_;
-            webrtc::VoEHardware* voeHardware_;
-            
-            IAudioSampleConsumer* sampleConsumer_ = nullptr;
-            
-            int
-            SendPacket(int channel, const void *data, size_t len);
-            
-            int
-            SendRTCPPacket(int channel, const void *data, size_t len);
+        unsigned int
+        getRtcpNum() { return nRtcp_; }
 
-        private:
-            AudioCapturer(const AudioCapturer&) = delete;
-        };
-    }
+        static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
+        static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
+
+    protected:
+        boost::atomic<bool> capturing_;
+        boost::mutex capturingState_;
+        webrtc::VoEHardware* voeHardware_;
+        unsigned int nRtp_, nRtcp_;
+        
+        IAudioSampleConsumer* sampleConsumer_ = nullptr;
+        
+        int
+        SendPacket(int channel, const void *data, size_t len);
+        
+        int
+        SendRTCPPacket(int channel, const void *data, size_t len);
+
+    private:
+        AudioCapturer(const AudioCapturer&) = delete;
+    };
 }
 
 #endif /* defined(__ndnrtc__audio_capturer__) */

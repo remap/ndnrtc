@@ -136,13 +136,13 @@ namespace ndnrtc
                        const char* errorMessage) = 0;
         
         virtual void
-        onSessionInfoUpdate(const new_api::SessionInfo& sessionInfo) = 0;
+        onSessionInfoUpdate(const SessionInfo& sessionInfo) = 0;
     };
     
     class IRemoteSessionObserver {
     public:
         virtual void
-        onSessionInfoUpdate(const new_api::SessionInfo& sessionInfo) = 0;
+        onSessionInfoUpdate(const SessionInfo& sessionInfo) = 0;
         
         virtual void
         onUpdateFailedWithTimeout() = 0;
@@ -277,7 +277,7 @@ namespace ndnrtc
         virtual std::string
         startSession(const std::string& username,
                      const std::string& prefix,
-                     const new_api::GeneralParams& generalParams,
+                     const GeneralParams& generalParams,
                      ndn::KeyChain* keyChain,
                      ndn::Face* face,
                      boost::asio::io_service& io,
@@ -309,7 +309,7 @@ namespace ndnrtc
          */
         virtual std::string
         addLocalStream(const std::string& sessionPrefix,
-                       const new_api::MediaStreamParams& params,
+                       const MediaStreamParams& params,
                        IExternalCapturer** const capturer) = 0;
         
         /**
@@ -342,9 +342,9 @@ namespace ndnrtc
         virtual std::string
         addRemoteStream(const std::string& remoteSessionPrefix,
                         const std::string& threadName,
-                        const new_api::MediaStreamParams& params,
-                        const new_api::GeneralParams& generalParams,
-                        const new_api::GeneralConsumerParams& consumerParams,
+                        const MediaStreamParams& params,
+                        const GeneralParams& generalParams,
+                        const GeneralConsumerParams& consumerParams,
                         ndn::KeyChain* keyChain,
                         IExternalRenderer* const renderer) = 0;
         
@@ -429,7 +429,7 @@ namespace ndnrtc
          * length parameter - if it's greater than 0, deallocation of bytes array
          * is the responsibility of the caller.
          */
-        virtual void serializeSessionInfo(const new_api::SessionInfo &sessionInfo,
+        virtual void serializeSessionInfo(const SessionInfo &sessionInfo,
                                           unsigned int &length,
                                           unsigned char **bytes) = 0;
         
@@ -442,7 +442,7 @@ namespace ndnrtc
          */
         virtual bool deserializeSessionInfo(const unsigned int length,
                                             const unsigned char *bytes,
-                                            new_api::SessionInfo &sessionInfo) = 0;
+                                            SessionInfo &sessionInfo) = 0;
     };
 }
 

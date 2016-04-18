@@ -16,7 +16,7 @@
 
 using namespace ::testing;
 using namespace std;
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 
 TEST(TestAudioCapturer, TestAudioDevices)
 {
