@@ -49,14 +49,10 @@ voeCodec_(nullptr)
 WebrtcAudioChannel::~WebrtcAudioChannel()
 {
   AudioController::getSharedInstance()->performOnAudioThread([this](){
-    if (voeBase_)
-      voeBase_->Release();
-
-    if (voeNetwork_)
-      voeNetwork_->Release();
-
-    if (voeCodec_)
-      voeCodec_->Release();
+    voeBase_->DeleteChannel(webrtcChannelId_);
+    voeBase_->Release();
+    voeNetwork_->Release();
+    voeCodec_->Release();
   });
 }
 
@@ -74,7 +70,6 @@ WebrtcAudioChannel::instFromCodec(const Codec& c)
         cinst.pltype   = 120;
         cinst.pacsize  = 960;
         cinst.channels = 2;
-        cinst.rate     = 64000;
         cinst.rate     = 128000;
       }
       break;
@@ -89,6 +84,6 @@ WebrtcAudioChannel::instFromCodec(const Codec& c)
         cinst.rate     = 64000;
       }
       break;
-    }
-    return cinst;
   }
+  return cinst;
+}
