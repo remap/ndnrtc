@@ -12,7 +12,7 @@
 #include "tests-helpers.h"
 
 using namespace std;
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 
 TEST(TestBase, TestOutput)
 {
