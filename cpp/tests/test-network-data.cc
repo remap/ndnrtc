@@ -522,6 +522,38 @@ TEST(TestAudioBundle, TestBundling)
         EXPECT_EQ(newBundle.getData()[i], thirdBundle.getData()[i]);
 }
 
+TEST(TestAudioBundle, TestBundlingUsingOperator)
+{
+    int data_len = 247;
+    std::vector<uint8_t> rtpData;
+    for (int i = 0; i < data_len; ++i)
+        rtpData.push_back((uint8_t)i);
+
+    int wire_len = 1000;
+    AudioBundlePacket bundlePacket(wire_len);
+    EXPECT_EQ(0, bundlePacket.getSamplesNum());
+    EXPECT_GE(wire_len, bundlePacket.getRemainingSpace());
+    
+    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+
+    EXPECT_FALSE(sample.getHeader().isRtcp_);
+    // EXPECT_EQ(1234, sample.getHeader().dummy_);
+    ASSERT_EQ(AudioBundlePacket::AudioSampleBlob::wireLength(data_len), sample.size());
+    ASSERT_EQ(data_len+sizeof(AudioSampleHeader), sample.size());
+
+    bundlePacket << sample << sample << sample;
+
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundlePacket.getSamplesNum());
+    for (int i = 0; i < bundlePacket.getSamplesNum(); ++i)
+    {
+        EXPECT_FALSE(bundlePacket[i].getHeader().isRtcp_);
+        // EXPECT_EQ(1234, bundlePacket[i].getHeader().dummy_);
+        for (int k = 0; k < bundlePacket[i].size()-sizeof(AudioSampleHeader); ++k)
+            EXPECT_EQ(rtpData[k], bundlePacket[i].data()[k]);
+    }
+}
+
 TEST(TestDataSegment, TestSlice)
 {
     int data_len = 6472;

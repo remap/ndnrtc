@@ -445,6 +445,8 @@ AudioBundlePacket::operator<<(const AudioBundlePacket::AudioSampleBlob& sampleBl
         reinit();
         remainingSpace_ -= DataPacket::wireLength(sampleBlob.size());
     }
+
+    return *this;
 }
 
 void AudioBundlePacket::clear()
