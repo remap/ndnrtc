@@ -206,35 +206,32 @@ void VideoStreamImpl::publishSegments(const string& thread, FramePacketPtr& fp)
 		VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
 		PARITY_RATIO);
 
-	// prepare segment header
 	bool isKey = (fp->getFrame()._frameType == webrtc::kKeyFrame);
-	VideoFrameSegmentHeader segmentHdr;
-	segmentHdr.totalSegmentsNum_ = VideoFrameSegment::numSlices(*fp, 
-		settings_.params_.producerParams_.segmentSize_);
-	segmentHdr.paritySegmentsNum_ = VideoFrameSegment::numSlices(*parityData, 
-		settings_.params_.producerParams_.segmentSize_);
-	segmentHdr.playbackNo_ = playbackCounter_;
-	segmentHdr.pairedSequenceNo_ = (isKey ? 
-		seqCounters_[thread].second : 
-		seqCounters_[thread].first);
-
-	Name frameName(streamPrefix_);
-	frameName.append(thread)
+	Name dataName(streamPrefix_);
+	dataName.append(thread)
 		.append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
 		.append(Name::Component::fromNumber(isKey ? seqCounters_[thread].first : seqCounters_[thread].second));
 
 	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-	async::dispatchSync(settings_.faceIo_,  [me, fp, frameName, &segmentHdr]{
-		size_t nSlices = me->publisher_->publish(frameName, *fp, segmentHdr);
+	async::dispatchAsync(settings_.faceIo_,  [me, thread, fp, parityData, dataName]{
+		bool isKey = (fp->getFrame()._frameType == webrtc::kKeyFrame);
+		VideoFrameSegmentHeader segmentHdr;
+		segmentHdr.totalSegmentsNum_ = VideoFrameSegment::numSlices(*fp, 
+			me->settings_.params_.producerParams_.segmentSize_);
+		segmentHdr.paritySegmentsNum_ = VideoFrameSegment::numSlices(*parityData, 
+			me->settings_.params_.producerParams_.segmentSize_);
+		segmentHdr.playbackNo_ = me->playbackCounter_;
+		segmentHdr.pairedSequenceNo_ = (isKey ? 
+			me->seqCounters_[thread].second : 
+			me->seqCounters_[thread].first);
+		size_t nSlices = me->publisher_->publish(dataName, *fp, segmentHdr);
 		assert(nSlices);
 	});
-	
-	Name parityName(frameName);
-	parityName.append(NameComponents::NameComponentParity);
 
-	async::dispatchSync(settings_.faceIo_, [me, parityData, parityName]{
+	dataName.append(NameComponents::NameComponentParity);
+	async::dispatchAsync(settings_.faceIo_, [me, parityData, dataName]{
 		DataSegmentHeader dummy;
-		size_t nParitySlices = me->parityPublisher_->publish(parityName, *parityData, dummy);
+		size_t nParitySlices = me->parityPublisher_->publish(dataName, *parityData, dummy);
 		assert(nParitySlices);
 	});
 }

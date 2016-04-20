@@ -22,7 +22,7 @@
 #include "src/local-media-stream.h"
 #include "include/name-components.h"
 
-#define ENABLE_LOGGING
+// #define ENABLE_LOGGING
 
 using namespace ndnrtc;
 using namespace ndn;
@@ -273,7 +273,7 @@ TEST(TestVideoStream, TestDeleteThreads)
 
 	EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frameBuffer, frameSize));
 }
-
+#if 1
 TEST(TestVideoStream, TestPublish)
 {
 #ifdef ENABLE_LOGGING
@@ -384,8 +384,168 @@ TEST(TestVideoStream, TestPublish5Sec)
 
 	double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
 	EXPECT_GE(1000/30, avgFramePubTimeMs);
-	GT_PRINTF("publishing took %d milliseconds (avg %.2f ms per frame)\n",
-		pubDuration.count(), avgFramePubTimeMs);
+	GT_PRINTF("publishing took %d milliseconds (avg %.2f ms per frame), %d ms total test\n",
+		pubDuration.count(), avgFramePubTimeMs, duration);
+	
+	work.reset();
+	t.join();
+}
+
+TEST(TestVideoStream, TestPublish3SecOnFaceThread)
+{
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+	int nFrames = 30*3;
+	int width = 1280, height = 720;
+	std::srand(std::time(0));
+	int frameSize = width*height*4*sizeof(uint8_t);
+	std::vector<boost::shared_ptr<uint8_t>> frames;
+
+	uint8_t *frameBuffer = new uint8_t[frameSize];
+	for (int j = 0; j < height; ++j)
+		for (int i = 0; i < width; ++i)
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
+
+	frames.push_back(boost::shared_ptr<uint8_t>(frameBuffer));
+
+	for (int f = 1; f < nFrames; ++f)
+	{
+		// add noise in rectangle in the center of frame
+		uint8_t *buf = new uint8_t[frameSize];
+		memcpy(buf, frameBuffer, frameSize);
+
+		for (int j = height/3; j < 2*height/3; ++j)
+			for (int i = width/3; i < 2*width/3; ++i)
+				frameBuffer[i*width+j] = std::rand()%256; // random noise
+
+		frames.push_back(boost::shared_ptr<uint8_t>(buf));
+	}
+
+	boost::asio::io_service io;
+	boost::asio::deadline_timer runTimer(io);
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+
+	MediaStreamSettings settings(io, getSampleVideoParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalVideoStream s(appPrefix, settings);
+
+#ifdef ENABLE_LOGGING
+	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+	boost::chrono::duration<int, boost::milli> pubDuration;
+	high_resolution_clock::time_point pubStart;
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int i = 0; i < nFrames; ++i)
+	{
+		runTimer.expires_from_now(boost::posix_time::milliseconds(30));
+		pubStart = high_resolution_clock::now();
+		
+		io.dispatch([&frames, i, &s, &width, &height, &frameSize](){
+			EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
+		});
+
+		pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+		runTimer.wait();
+	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+
+	double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+	EXPECT_GE(1000/30, avgFramePubTimeMs);
+
+	work.reset();
+	t.join();
+}
+#endif
+
+TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
+{
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+	int nFrames = 3*30;
+	int width = 1280, height = 720;
+	std::srand(std::time(0));
+	int frameSize = width*height*4*sizeof(uint8_t);
+	std::vector<boost::shared_ptr<uint8_t>> frames;
+
+	uint8_t *frameBuffer = new uint8_t[frameSize];
+	for (int j = 0; j < height; ++j)
+		for (int i = 0; i < width; ++i)
+			frameBuffer[i*width+j] = std::rand()%256; // random noise
+
+	frames.push_back(boost::shared_ptr<uint8_t>(frameBuffer));
+
+	for (int f = 1; f < nFrames; ++f)
+	{
+		// add noise in rectangle in the center of frame
+		uint8_t *buf = new uint8_t[frameSize];
+		memcpy(buf, frameBuffer, frameSize);
+
+		for (int j = height/3; j < 2*height/3; ++j)
+			for (int i = width/3; i < 2*width/3; ++i)
+				frameBuffer[i*width+j] = std::rand()%256; // random noise
+
+		frames.push_back(boost::shared_ptr<uint8_t>(buf));
+	}
+
+	boost::asio::io_service io;
+	boost::asio::deadline_timer runTimer(io);
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+
+	MediaStreamSettings settings(io, getSampleVideoParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalVideoStream s(appPrefix, settings);
+
+#ifdef ENABLE_LOGGING
+	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+	boost::chrono::duration<int, boost::milli> pubDuration;
+	high_resolution_clock::time_point pubStart;
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int i = 0; i < nFrames; ++i)
+	{
+		runTimer.expires_from_now(boost::posix_time::milliseconds(30));
+		pubStart = high_resolution_clock::now();
+		
+		EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
+		
+		if (i == nFrames/2)
+			s.removeThread(s.getThreads().front());
+
+		pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+		runTimer.wait();
+	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+
+	double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+	EXPECT_GE(1000/30, avgFramePubTimeMs);
+	GT_PRINTF("publishing took %d milliseconds (avg %.2f ms per frame), %d ms total test\n",
+		pubDuration.count(), avgFramePubTimeMs, duration);
 	
 	work.reset();
 	t.join();
