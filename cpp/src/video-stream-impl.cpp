@@ -170,14 +170,14 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 				<< " " << f->getLength() << " bytes" << std::endl;
 			}
 		}
-		publishFrames(frames);
+		publish(frames);
 		playbackCounter_++;
 	}
 	else
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
 }
 
-void VideoStreamImpl::publishFrames(map<string, FramePacketPtr>& frames)
+void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 {
 	LogTraceC << "publishing " << frames.size() << " frames" << std::endl;
 
@@ -193,14 +193,14 @@ void VideoStreamImpl::publishFrames(map<string, FramePacketPtr>& frames)
 		it.second->setSyncList(getCurrentSyncList(isKey));
 		it.second->setHeader(packetHdr);
 
-		publishSegments(it.first, it.second);
+		publish(it.first, it.second);
 
 		if (isKey) seqCounters_[it.first].first++;
 		else seqCounters_[it.first].second++;
 	}
 }
 
-void VideoStreamImpl::publishSegments(const string& thread, FramePacketPtr& fp)
+void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 {
 	boost::shared_ptr<NetworkData> parityData = fp->getParityData(
 		VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),

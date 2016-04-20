@@ -68,8 +68,8 @@ namespace ndnrtc {
 		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 
 		void feedFrame(const WebRtcVideoFrame& frame);
-		void publishFrames(std::map<std::string, boost::shared_ptr<VideoFramePacket>>& frames);
-		void publishSegments(const std::string& thread, boost::shared_ptr<VideoFramePacket>& fp);
+		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacket>>& frames);
+		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacket>& fp);
 		std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
 	};
 }
