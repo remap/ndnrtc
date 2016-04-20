@@ -12,10 +12,12 @@
 #define libndnrtc_ndnrtc_name_components_h
 
 #include <string>
+#include <ndn-cpp/name.hpp>
 
 namespace ndnrtc {
     class NameComponents {
     public:
+        #if 0
         static const std::string NameComponentApp;
         static const std::string NameComponentUser;
         static const std::string NameComponentBroadcast;
@@ -55,6 +57,28 @@ namespace ndnrtc {
 
         static std::string 
         getThreadName(const std::string& prefix);
+        #endif
+
+        //****************************************************************************
+        static const std::string NameComponentApp;
+        static const std::string NameComponentAudio;
+        static const std::string NameComponentVideo;
+        static const std::string NameComponentMeta;
+        static const std::string NameComponentDelta;
+        static const std::string NameComponentKey;
+        static const std::string NameComponentParity;
+
+        static unsigned int 
+        nameApiVersion();
+
+        static ndn::Name
+        ndnrtcSuffix();
+
+        static ndn::Name
+        audioStreamPrefix(std::string basePrefix);
+
+        static ndn::Name
+        videoStreamPrefix(std::string basePrefix);
     };
 }
 

@@ -8,64 +8,83 @@
 //  Author:  Peter Gusev
 //
 
+#include <string> 
+#include <sstream>
+#include <algorithm>
+#include <iterator>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 #include "name-components.h"
 #include "ndnrtc-namespace.h"
 
+using namespace std;
 using namespace ndnrtc;
+using namespace ndn;
 
-const std::string NameComponents::NameComponentApp = "ndnrtc";
-const std::string NameComponents::NameComponentUser = "user";
-const std::string NameComponents::NameComponentSession = "session-info";
-const std::string NameComponents::NameComponentBroadcast = "/ndn/broadcast";
-const std::string NameComponents::NameComponentDiscovery = "discovery";
-const std::string NameComponents::NameComponentUserStreams = "streams";
-const std::string NameComponents::NameComponentStreamAccess = "access";
-const std::string NameComponents::NameComponentStreamKey = "key";
-const std::string NameComponents::NameComponentStreamFramesDelta = "delta";
-const std::string NameComponents::NameComponentStreamFramesKey = "key";
-const std::string NameComponents::NameComponentStreamInfo = "info";
-const std::string NameComponents::NameComponentFrameSegmentData = "data";
-const std::string NameComponents::NameComponentFrameSegmentParity = "parity";
-const std::string NameComponents::KeyComponent = "DSK-1408";
-const std::string NameComponents::CertificateComponent = "KEY/ID-CERT/0";
+const string NameComponents::NameComponentApp = "ndnrtc";
+#if 0
+const string NameComponents::NameComponentUser = "user";
+const string NameComponents::NameComponentSession = "session-info";
+const string NameComponents::NameComponentBroadcast = "/ndn/broadcast";
+const string NameComponents::NameComponentDiscovery = "discovery";
+const string NameComponents::NameComponentUserStreams = "streams";
+const string NameComponents::NameComponentStreamAccess = "access";
+const string NameComponents::NameComponentStreamKey = "key";
+const string NameComponents::NameComponentStreamFramesDelta = "delta";
+const string NameComponents::NameComponentStreamFramesKey = "key";
+const string NameComponents::NameComponentStreamInfo = "info";
+const string NameComponents::NameComponentFrameSegmentData = "data";
+const string NameComponents::NameComponentFrameSegmentParity = "parity";
+const string NameComponents::KeyComponent = "DSK-1408";
+const string NameComponents::CertificateComponent = "KEY/ID-CERT/0";
+#endif
 
-std::string
-NameComponents::getUserPrefix(const std::string& username,
-                              const std::string& prefix)
+const string NameComponents::NameComponentAudio = "audio";
+const string NameComponents::NameComponentVideo = "video";
+const string NameComponents::NameComponentMeta = "_meta";
+const string NameComponents::NameComponentDelta = "d";
+const string NameComponents::NameComponentKey = "k";
+const string NameComponents::NameComponentParity = "_parity";
+
+#if 0
+string
+NameComponents::getUserPrefix(const string& username,
+                              const string& prefix)
 {
     return *NdnRtcNamespace::getProducerPrefix(prefix, username);
 }
 
-std::string
-NameComponents::getStreamPrefix(const std::string& streamName,
-                                const std::string& username,
-                                const std::string& prefix)
+string
+NameComponents::getStreamPrefix(const string& streamName,
+                                const string& username,
+                                const string& prefix)
 {
     return *NdnRtcNamespace::getStreamPath(prefix, username, streamName);
 }
 
-std::string
-NameComponents::getThreadPrefix(const std::string& threadName,
-                                const std::string& streamName,
-                                const std::string& username,
-                                const std::string& prefix)
+string
+NameComponents::getThreadPrefix(const string& threadName,
+                                const string& streamName,
+                                const string& username,
+                                const string& prefix)
 {
     return NdnRtcNamespace::getThreadPrefix(*NdnRtcNamespace::getStreamPath(prefix, username, streamName), threadName);
 }
 
-std::string 
-NameComponents::getUserName(const std::string& prefix)
+string 
+NameComponents::getUserName(const string& prefix)
 {
     size_t userComp = prefix.find(NameComponents::NameComponentUser);
     
-    if (userComp != std::string::npos)
+    if (userComp != string::npos)
     {
         size_t startPos = userComp+NameComponents::NameComponentUser.size()+1;
         if (prefix.size() >= startPos)
         {
             size_t endPos = prefix.find("/", startPos);
 
-            if (endPos == std::string::npos)
+            if (endPos == string::npos)
                 endPos = prefix.size();
             return prefix.substr(startPos, endPos-startPos);
         }
@@ -74,26 +93,26 @@ NameComponents::getUserName(const std::string& prefix)
     return "";
 }
 
-std::string 
-NameComponents::getStreamName(const std::string& prefix)
+string 
+NameComponents::getStreamName(const string& prefix)
 {
     size_t userComp = prefix.find(NameComponents::NameComponentUserStreams);
     
-    if (userComp != std::string::npos)
+    if (userComp != string::npos)
     {
         size_t startPos = userComp+NameComponents::NameComponentUserStreams.size()+1;
         if (prefix.size() >= startPos)
         {
             size_t endPos = prefix.find("/", startPos);
 
-            if (endPos == std::string::npos)
+            if (endPos == string::npos)
                 endPos = prefix.size();
             return prefix.substr(startPos, endPos-startPos);
         }
     }
 
 #if 0 // this code if for updated namespace
-	std::string userName = NameComponents::getUserName(prefix);
+	string userName = NameComponents::getUserName(prefix);
 
 	if (userName == "") return "";
 
@@ -104,7 +123,7 @@ NameComponents::getStreamName(const std::string& prefix)
     {
         size_t endPos = prefix.find("/", startPos);
 
-        if (endPos == std::string::npos)
+        if (endPos == string::npos)
             endPos = prefix.size();
         return prefix.substr(startPos, endPos-startPos);
     }
@@ -112,10 +131,10 @@ NameComponents::getStreamName(const std::string& prefix)
     return "";
 }
 
-std::string 
-NameComponents::getThreadName(const std::string& prefix)
+string 
+NameComponents::getThreadName(const string& prefix)
 {
-	std::string streamName = NameComponents::getStreamName(prefix);
+	string streamName = NameComponents::getStreamName(prefix);
 
 	if (streamName == "") return "";
 
@@ -126,10 +145,48 @@ NameComponents::getThreadName(const std::string& prefix)
     {
         size_t endPos = prefix.find("/", startPos);
 
-        if (endPos == std::string::npos)
+        if (endPos == string::npos)
             endPos = prefix.size();
         return prefix.substr(startPos, endPos-startPos);
     }
         
     return "";
+}
+#endif
+
+//******************************************************************************
+vector<string> ndnrtcVersionComponents()
+{
+    string version(PACKAGE_VERSION);
+    std::vector<string> components;
+    
+    boost::split(components, version, boost::is_any_of("."), boost::token_compress_on);
+    
+    return components;
+}
+
+unsigned int
+NameComponents::nameApiVersion()
+{
+    return (unsigned int)atoi(ndnrtcVersionComponents().front().c_str());
+}
+
+Name
+NameComponents::ndnrtcSuffix()
+{
+    return Name(NameComponentApp).appendVersion(nameApiVersion());
+}
+
+Name
+NameComponents::audioStreamPrefix(string basePrefix)
+{
+    Name n = Name(basePrefix);
+    return n.append(ndnrtcSuffix()).append(NameComponentAudio);
+}
+
+Name
+NameComponents::videoStreamPrefix(string basePrefix)
+{
+    Name n = Name(basePrefix);
+    return n.append(ndnrtcSuffix()).append(NameComponentVideo);
 }
