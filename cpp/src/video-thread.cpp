@@ -12,7 +12,6 @@
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
 using namespace webrtc;
 
 //******************************************************************************
