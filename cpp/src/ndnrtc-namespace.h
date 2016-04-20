@@ -15,7 +15,6 @@
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
-#include "ndnrtc-object.h"
 #include "name-components.h"
 #include "ndnrtc-common.h"
 

@@ -73,18 +73,6 @@ namespace ndnrtc
     {
     public:
         /**
-         * This method should be called in order to initiate frame delivery into
-         * the library
-         */
-        virtual void capturingStarted() = 0;
-        
-        /**
-         * This method should be called in order to stop frame delivery into the
-         * library
-         */
-        virtual void capturingStopped() = 0;
-        
-        /**
          * Calling this methond results in sending new raw frame into library's
          * video processing pipe which eventually should result in publishing
          * of encoded frame in NDN.

@@ -21,12 +21,6 @@ namespace ndnrtc {
         ExternalCapturer();
         virtual ~ExternalCapturer();
         
-        int init();
-        
-        // IExternalCapturer interface
-        void capturingStarted();
-        void capturingStopped();
-        
         // either of incomingArgbFrame or incomingYuvFrame calls should be used
         int incomingArgbFrame(const unsigned int width,
                               const unsigned int height,

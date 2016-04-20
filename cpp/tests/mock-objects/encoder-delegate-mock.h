@@ -13,7 +13,7 @@
 
 #include "src/video-coder.h"
 
-class MockEncoderDelegate : public ndnrtc::new_api::IEncoderDelegate
+class MockEncoderDelegate : public ndnrtc::IEncoderDelegate
 {
 public:
 	MOCK_METHOD0(onEncodingStarted, void(void));
@@ -34,7 +34,7 @@ public:
 	int getBytesReceived() { return receivedBytes_; }
 	int getDelta() { return nDelta_; }
 	int getKey() {return nKey_; }
-private:
+
 	int encStarted_ = 0, encComplete_ = 0, dropped_ = 0, receivedBytes_;
 	int nDelta_ = 0, nKey_ = 0;
 
