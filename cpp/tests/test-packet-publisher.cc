@@ -183,7 +183,8 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
 
-	Name filter("/test"), packetName(filter);
+	Name filter("/testpacket");
+	Name packetName(filter);
 	packetName.append("1");
 
 	OnInterestCallback mockCallback(boost::bind(&MockNdnMemoryCache::storePendingInterestCallback, &memoryCache, _1, _2, _3, _4, _5));
@@ -202,10 +203,9 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 	};
 
 	EXPECT_CALL(memoryCache, getStorePendingInterest())
-		.Times(1)
-		.WillOnce(ReturnRef(mockCallback));
+		.Times(0);
 	EXPECT_CALL(memoryCache, setInterestFilter(filter, _))
-		.Times(1);
+		.Times(0); // no filter provided
 	EXPECT_CALL(keyChain, sign(_))
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
@@ -215,7 +215,7 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
 
-	PacketPublisher<CommonSegment, MockSettings> publisher(settings, filter);
+	PacketPublisher<CommonSegment, MockSettings> publisher(settings);
 
 	{
 		CommonHeader hdr;

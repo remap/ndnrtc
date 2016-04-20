@@ -237,10 +237,24 @@ TEST(TestCoder, TestEncode700K)
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
 
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
+
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(AtLeast(nFrames*.1));
+		.Times(AtLeast(nFrames*.1))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(AtLeast(nFrames*.8));
 
@@ -254,11 +268,16 @@ TEST(TestCoder, TestEncode700K)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
 	free(frameBuffer);
@@ -320,10 +339,24 @@ TEST(TestCoder, TestEncode1000K)
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
 
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
+
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(AtLeast(nFrames*.15));
+		.Times(AtLeast(nFrames*.15))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(AtLeast(nFrames*.75));
 
@@ -337,11 +370,16 @@ TEST(TestCoder, TestEncode1000K)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
 	free(frameBuffer);
@@ -402,11 +440,24 @@ TEST(TestCoder, TestEncode2000K)
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
 
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(AtLeast(nFrames*.2));
+		.Times(AtLeast(nFrames*.2))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(AtLeast(nFrames*.5));
 
@@ -420,11 +471,16 @@ TEST(TestCoder, TestEncode2000K)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
 	free(frameBuffer);
@@ -485,11 +541,24 @@ TEST(TestCoder, TestEncode3000K)
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
 
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(AtLeast(nFrames*.3));
+		.Times(AtLeast(nFrames*.3))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(AtLeast(nFrames*.4));
 
@@ -503,11 +572,16 @@ TEST(TestCoder, TestEncode3000K)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
 	free(frameBuffer);
@@ -567,11 +641,24 @@ TEST(TestCoder, TestEnforceNoDrop)
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
 
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(nFrames);
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(0);
 
@@ -585,11 +672,16 @@ TEST(TestCoder, TestEnforceNoDrop)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
 	free(frameBuffer);
@@ -650,10 +742,24 @@ TEST(TestCoder, TestEnforceKeyGop)
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
 
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
+
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(0);
 
@@ -667,12 +773,16 @@ TEST(TestCoder, TestEnforceKeyGop)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
 
+		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
 		EXPECT_EQ(nFrames-nFrames/vcp.gop_, coderDelegate.getDelta());
 	}
@@ -735,10 +845,24 @@ TEST(TestCoder, TestEnforceKeyTimed)
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
 
+		boost::chrono::duration<int, boost::milli> encodingDuration;
+		high_resolution_clock::time_point encStart;
+
+		boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+			coderDelegate.countEncodingStarted();
+			encStart = high_resolution_clock::now();
+		};
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+			coderDelegate.countEncodedFrame(f);
+			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+		};
+
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
-		.Times(nFrames);
+		.Times(nFrames)
+		.WillRepeatedly(Invoke(onEncStart));
 		EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-		.Times(AtLeast(1));
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onEncEnd));
 		EXPECT_CALL(coderDelegate, onDroppedFrame())
 		.Times(AtLeast(1));
 
@@ -752,7 +876,11 @@ TEST(TestCoder, TestEnforceKeyTimed)
 		high_resolution_clock::time_point t2 = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+		double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
 
+		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+			coderDelegate.getEncodedNum(), encodingDuration.count(), 
+			avgFrameEncTimeMs);
 		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 

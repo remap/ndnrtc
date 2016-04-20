@@ -204,10 +204,12 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 
 	std::vector<boost::shared_ptr<VideoThread>> videoThreads;
 	std::vector<boost::shared_ptr<FrameScaler>> scaleFrame;
+	std::vector<std::pair<uint64_t, uint64_t>> seqCounters;
 	for (auto params:coderParams) 
 	{
 		videoThreads.push_back(boost::make_shared<VideoThread>(params));
 		scaleFrame.push_back(boost::make_shared<FrameScaler>(params.encodeWidth_, params.encodeHeight_));
+		seqCounters.push_back(std::pair<uint64_t, uint64_t>(0,0));
 
 #ifdef ENABLE_LOGGING
 		videoThreads.back()->setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -231,16 +233,32 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 					boost::bind(&VideoThread::encode, videoThreads[k].get(), (*scaleFrame[k])(frames[i])))));
 			futureFrames.push_back(ff);
 		}
+
+		int idx = 0;
+		for (auto ff:futureFrames)
+		{
+			boost::shared_ptr<VideoFramePacket> vf(ff->get());
+			if (vf.get())
+			{
+				if (vf->getFrame()._frameType == webrtc::kKeyFrame)
+					seqCounters[idx].first++;
+				else
+					seqCounters[idx].second++;
+			}
+			idx++;
+		}
+		
 		runTimer.wait();
 	}
 
 	for (int i = 0; i < videoThreads.size(); ++i)
 	{
 		EXPECT_LE(0, videoThreads[i]->getEncodedNum());
-		GT_PRINTF("thread %d (%dx%d %d Kbit/s): %d encoded, %d dropped\n", 
+		GT_PRINTF("thread %d (%dx%d %d Kbit/s): %d encoded, %d dropped, %d key, %d delta\n", 
 			i, coderParams[i].encodeWidth_, coderParams[i].encodeHeight_, 
 			coderParams[i].startBitrate_, 
-			videoThreads[i]->getEncodedNum(), videoThreads[i]->getDroppedNum());
+			videoThreads[i]->getEncodedNum(), videoThreads[i]->getDroppedNum(),
+			seqCounters[i].first, seqCounters[i].second);
 	}
 }
 
