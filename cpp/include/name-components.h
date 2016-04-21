@@ -14,6 +14,8 @@
 #include <string>
 #include <ndn-cpp/name.hpp>
 
+#include "params.h"
+
 namespace ndnrtc {
     class NameComponents {
     public:
@@ -73,6 +75,9 @@ namespace ndnrtc {
 
         static ndn::Name
         ndnrtcSuffix();
+
+        static ndn::Name
+        streamPrefix(MediaStreamParams::MediaStreamType type, std::string basePrefix);
 
         static ndn::Name
         audioStreamPrefix(std::string basePrefix);

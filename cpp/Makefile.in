@@ -252,6 +252,8 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-estimators.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-clock.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-async.$(OBJEXT) \
+	src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT) \
+	src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT) \
 	$(am__objects_6)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
@@ -777,7 +779,7 @@ bin_tests_test_async_SOURCES = tests/test-async.cc src/async.cpp ${UNIT_TESTS_CO
 bin_tests_test_async_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_async_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_async_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_local_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_local_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_local_media_stream_LDADD = ${libndnrtc_la_LIBADD}
@@ -1103,6 +1105,10 @@ src/bin_tests_test_local_media_stream-clock.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_local_media_stream-async.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1318,6 +1324,7 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_local_media_stream-async.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-audio-capturer.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-audio-controller.$(OBJEXT)
+	-rm -f src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-audio-thread.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-clock.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-estimators.$(OBJEXT)
@@ -1325,6 +1332,7 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_local_media_stream-frame-converter.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-local-media-stream.$(OBJEXT)
+	-rm -f src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-simple-log.$(OBJEXT)
@@ -1520,6 +1528,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-estimators.Po@am__quote@
@@ -1527,6 +1536,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-frame-converter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-local-media-stream.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-simple-log.Po@am__quote@
@@ -2803,6 +2813,38 @@ src/bin_tests_test_local_media_stream-async.obj: src/async.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/async.cpp' object='src/bin_tests_test_local_media_stream-async.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
+
+src/bin_tests_test_local_media_stream-audio-stream-impl.o: src/audio-stream-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-audio-stream-impl.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Tpo -c -o src/bin_tests_test_local_media_stream-audio-stream-impl.o `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-stream-impl.cpp' object='src/bin_tests_test_local_media_stream-audio-stream-impl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-audio-stream-impl.o `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
+
+src/bin_tests_test_local_media_stream-audio-stream-impl.obj: src/audio-stream-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-audio-stream-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Tpo -c -o src/bin_tests_test_local_media_stream-audio-stream-impl.obj `if test -f 'src/audio-stream-impl.cpp'; then $(CYGPATH_W) 'src/audio-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-stream-impl.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-stream-impl.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/audio-stream-impl.cpp' object='src/bin_tests_test_local_media_stream-audio-stream-impl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-audio-stream-impl.obj `if test -f 'src/audio-stream-impl.cpp'; then $(CYGPATH_W) 'src/audio-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-stream-impl.cpp'; fi`
+
+src/bin_tests_test_local_media_stream-media-stream-base.o: src/media-stream-base.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-media-stream-base.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Tpo -c -o src/bin_tests_test_local_media_stream-media-stream-base.o `test -f 'src/media-stream-base.cpp' || echo '$(srcdir)/'`src/media-stream-base.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream-base.cpp' object='src/bin_tests_test_local_media_stream-media-stream-base.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-media-stream-base.o `test -f 'src/media-stream-base.cpp' || echo '$(srcdir)/'`src/media-stream-base.cpp
+
+src/bin_tests_test_local_media_stream-media-stream-base.obj: src/media-stream-base.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-media-stream-base.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Tpo -c -o src/bin_tests_test_local_media_stream-media-stream-base.obj `if test -f 'src/media-stream-base.cpp'; then $(CYGPATH_W) 'src/media-stream-base.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream-base.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/media-stream-base.cpp' object='src/bin_tests_test_local_media_stream-media-stream-base.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-media-stream-base.obj `if test -f 'src/media-stream-base.cpp'; then $(CYGPATH_W) 'src/media-stream-base.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream-base.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_local_media_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

@@ -178,15 +178,22 @@ NameComponents::ndnrtcSuffix()
 }
 
 Name
-NameComponents::audioStreamPrefix(string basePrefix)
+NameComponents::streamPrefix(MediaStreamParams::MediaStreamType type, std::string basePrefix)
 {
     Name n = Name(basePrefix);
-    return n.append(ndnrtcSuffix()).append(NameComponentAudio);
+    n.append(ndnrtcSuffix());
+    return ((type == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio) ? 
+        n.append(NameComponentAudio) : n.append(NameComponentVideo));
+}
+
+Name
+NameComponents::audioStreamPrefix(string basePrefix)
+{
+    return streamPrefix(MediaStreamParams::MediaStreamType::MediaStreamTypeAudio, basePrefix);
 }
 
 Name
 NameComponents::videoStreamPrefix(string basePrefix)
 {
-    Name n = Name(basePrefix);
-    return n.append(ndnrtcSuffix()).append(NameComponentVideo);
+    return streamPrefix(MediaStreamParams::MediaStreamType::MediaStreamTypeVideo, basePrefix);
 }

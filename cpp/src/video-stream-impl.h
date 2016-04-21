@@ -10,11 +10,9 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <ndn-cpp/name.hpp>
 
-#include "local-media-stream.h"
+#include "media-stream-base.h"
 #include "ndnrtc-object.h"
 #include "packet-publisher.h"
 #include "frame-converter.h"
@@ -35,18 +33,14 @@ namespace ndnrtc {
 	class VideoFramePacket;
 	class VideoThreadParams;
 
-	class VideoStreamImpl : public NdnRtcComponent
+	class VideoStreamImpl : public MediaStreamBase
 	{
 	public:
 		VideoStreamImpl(const std::string& streamPrefix,
 			const MediaStreamSettings& settings, bool useFec);
 		~VideoStreamImpl();
 
-		void addThread(const VideoThreadParams* params);
-		void removeThread(const std::string& threadName);
-
-		std::string getPrefix();
-		std::vector<std::string> getThreads();
+		std::vector<std::string> getThreads() const;
 
 		void incomingFrame(const ArgbRawFrameWrapper&);
 		void incomingFrame(const I420RawFrameWrapper&);
@@ -80,28 +74,22 @@ namespace ndnrtc {
 		};
 
 		bool fecEnabled_;
-		ndn::Name streamPrefix_;
-		MediaStreamSettings settings_;
 		RawFrameConverter conv_;
 		std::map<std::string, boost::shared_ptr<VideoThread>> threads_;
 		std::map<std::string, boost::shared_ptr<FrameScaler>> scalers_;
 		std::map<std::string, std::pair<uint64_t, uint64_t>> seqCounters_;
 		std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
-		uint64_t playbackCounter_, metaVersion_;
+		uint64_t playbackCounter_;
 		boost::shared_ptr<VideoPacketPublisher> publisher_;
-		boost::shared_ptr<CommonPacketPublisher> dataPublisher_;
-		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 		boost::asio::steady_timer metaCheckTimer_;
-		boost::mutex internalMutex_;
 
-		void add(const VideoThreadParams* params);
+		void add(const MediaThreadParams* params);
 		void remove(const std::string& threadName);
 
 		void feedFrame(const WebRtcVideoFrame& frame);
 		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacket>>& frames);
 		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacket>& fp);
 		std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
-		void publishMeta();
 		void setupMetaCheckTimer();
 	};
 }

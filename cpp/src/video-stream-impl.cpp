@@ -40,19 +40,15 @@ typedef boost::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
 
 VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
+MediaStreamBase(streamPrefix, settings),
 playbackCounter_(0),
-metaVersion_(0),
 fecEnabled_(useFec),
-streamPrefix_(NameComponents::videoStreamPrefix(streamPrefix)),
-settings_(settings),
-cache_(boost::make_shared<ndn::MemoryContentCache>(settings.face_)),
 metaCheckTimer_(settings_.faceIo_)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
 	
 	description_ = "vstream-"+settings_.params_.streamName_;
-	streamPrefix_.append(Name(settings_.params_.streamName_));
 
 	for (int i = 0; i < settings_.params_.getThreadNum(); ++i)
 		if (settings_.params_.getVideoThread(i))
@@ -66,8 +62,6 @@ metaCheckTimer_(settings_.faceIo_)
 
 	publisher_ = boost::make_shared<VideoPacketPublisher>(ps, streamPrefix_);
 	publisher_->setDescription("publisher-"+settings_.params_.streamName_);
-	dataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
-	dataPublisher_->setDescription("data-publisher-"+settings_.params_.streamName_);
 }
 
 VideoStreamImpl::~VideoStreamImpl()
@@ -75,25 +69,7 @@ VideoStreamImpl::~VideoStreamImpl()
 	// cleanup
 }
 
-void
-VideoStreamImpl::addThread(const VideoThreadParams* params)
-{
-	add(params);
-	publishMeta();
-}
-
-void VideoStreamImpl::removeThread(const string& threadName)
-{
-	remove(threadName);
-	publishMeta();
-}
-
-string VideoStreamImpl::getPrefix()
-{
-	return streamPrefix_.toUri();
-}
-
-vector<string> VideoStreamImpl::getThreads()
+vector<string> VideoStreamImpl::getThreads() const
 {
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 	std::vector<string> threads;
@@ -128,8 +104,9 @@ void VideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
 
 //******************************************************************************
 void
-VideoStreamImpl::add(const VideoThreadParams* params)
+VideoStreamImpl::add(const MediaThreadParams* mp)
 {
+	const VideoThreadParams* params = static_cast<const VideoThreadParams*>(mp);
 	// check if thread already exists
 	if (threads_.find(params->threadName_) != threads_.end())
 	{
@@ -273,22 +250,6 @@ VideoStreamImpl::getCurrentSyncList(bool forKey)
 	for (auto it:seqCounters_)
 		syncList[it.first] = (forKey ? it.second.first : it.second.second);
 	return syncList;
-}
-
-void 
-VideoStreamImpl::publishMeta()
-{
-	boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>());
-	for (auto t:getThreads()) meta->addThread(t);
-	Name metaName(streamPrefix_);
-	metaName.append(NameComponents::NameComponentMeta).appendVersion(++metaVersion_);
-
-	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-	async::dispatchAsync(settings_.faceIo_, [me, metaName, meta](){
-		me->dataPublisher_->publish(metaName, *meta);
-	});
-
-	LogDebugC << "published stream meta " << metaName << std::endl;
 }
 
 void VideoStreamImpl::setupMetaCheckTimer()
