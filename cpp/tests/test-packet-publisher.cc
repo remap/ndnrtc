@@ -123,6 +123,12 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 			EXPECT_EQ(nonce, segHdr.interestNonce_);
 			EXPECT_EQ(nSlices, dataObjects.size());
 		}
+		{ // test without passing a header
+			dataObjects.clear();
+			
+			size_t nSlices = publisher.publish(packetName, vp);
+			EXPECT_EQ(nSlices, dataObjects.size());
+		}
 		{ // test two pending interests
 			boost::shared_ptr<NetworkData> parityData = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
 			VideoFrameSegmentHeader segHdr;
@@ -250,6 +256,13 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 			EXPECT_GE(ndn_getNowMilliseconds()-pendingInterest->getTimeoutPeriodStart(), segHdr.generationDelayMs_);
 			EXPECT_EQ(pendingInterest->getTimeoutPeriodStart(), segHdr.interestArrivalMs_);
 			EXPECT_EQ(nonce, segHdr.interestNonce_);
+			EXPECT_EQ(nSlices, dataObjects.size());
+		}
+		{ // test without segment header
+			dataObjects.clear();
+			boost::shared_ptr<NetworkData> parityData = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+
+			size_t nSlices = publisher.publish(packetName, *parityData);
 			EXPECT_EQ(nSlices, dataObjects.size());
 		}
 	}

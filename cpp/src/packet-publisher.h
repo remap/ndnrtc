@@ -50,6 +50,16 @@ namespace ndnrtc{
 				settings_.memoryCache_->setInterestFilter(nameFilter, settings_.memoryCache_->getStorePendingInterest());
 		}
 
+		size_t publish(const ndn::Name& name, const NetworkData& data)
+		{
+			// provide dummy memory of the size of the segment header to publish function
+			// we don't care of bytes that will be saved in this memory, so allocate it
+			// as shared_ptr so it's released automatically upon completion
+			boost::shared_ptr<uint8_t[]> dummyHeader(new uint8_t[SegmentType::headerSize()]);
+			memset(dummyHeader.get(), SegmentType::headerSize(), 0);
+			return publish(name, data, (_DataSegmentHeader&)*dummyHeader.get());
+		}
+
 		size_t publish(const ndn::Name& name, const NetworkData& data, 
 			_DataSegmentHeader& commonHeader)
 		{

@@ -289,6 +289,7 @@ am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-a
 	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
+	tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
 	src/bin_tests_test_network_data-fec.$(OBJEXT) $(am__objects_8)
 bin_tests_test_network_data_OBJECTS =  \
@@ -740,7 +741,7 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_network_data_SOURCES = tests/test-network-data.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
@@ -1148,6 +1149,8 @@ bin/tests/test-media-thread$(EXEEXT): $(bin_tests_test_media_thread_OBJECTS) $(b
 	$(AM_V_CXXLD)$(bin_tests_test_media_thread_LINK) $(bin_tests_test_media_thread_OBJECTS) $(bin_tests_test_media_thread_LDADD) $(LIBS)
 tests/bin_tests_test_network_data-test-network-data.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_network_data-frame-data.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_network_data-fec.$(OBJEXT): src/$(am__dirstamp) \
@@ -1458,6 +1461,7 @@ mostlyclean-compile:
 	-rm -f tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT)
 	-rm -f tests/bin_tests_test_media_thread-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_network_data-test-network-data.$(OBJEXT)
+	-rm -f tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT)
 	-rm -f tests/bin_tests_test_params-test-params.$(OBJEXT)
 	-rm -f tests/bin_tests_test_params-tests-helpers.$(OBJEXT)
@@ -1613,6 +1617,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_media_thread-test-media-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_media_thread-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_network_data-test-network-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_packet_publisher-test-packet-publisher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-test-params.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Po@am__quote@
@@ -3086,6 +3091,22 @@ tests/bin_tests_test_network_data-test-network-data.obj: tests/test-network-data
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-network-data.cc' object='tests/bin_tests_test_network_data-test-network-data.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-test-network-data.obj `if test -f 'tests/test-network-data.cc'; then $(CYGPATH_W) 'tests/test-network-data.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-network-data.cc'; fi`
+
+tests/bin_tests_test_network_data-tests-helpers.o: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_network_data-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Tpo -c -o tests/bin_tests_test_network_data-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_network_data-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+
+tests/bin_tests_test_network_data-tests-helpers.obj: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_network_data-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Tpo -c -o tests/bin_tests_test_network_data-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_network_data-tests-helpers.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/tests-helpers.cc' object='tests/bin_tests_test_network_data-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
 src/bin_tests_test_network_data-frame-data.o: src/frame-data.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo -c -o src/bin_tests_test_network_data-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp

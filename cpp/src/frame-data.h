@@ -189,7 +189,6 @@ namespace ndnrtc {
         unsigned int getBlobsNum() const { return blobs_.size(); }
         const Blob getBlob(size_t pos) const { return blobs_[pos]; }
 
-        // one header can't be bigger than 255 bytes
         void addBlob(uint16_t dataLength, const uint8_t* data);
         virtual void reinit();
     };
@@ -432,6 +431,8 @@ namespace ndnrtc {
 
             return segments;
         }
+
+        static size_t headerSize(){ return sizeof(Header); }
 
     private:
         Header header_;
