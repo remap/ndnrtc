@@ -441,6 +441,51 @@ namespace ndnrtc {
     typedef DataSegment<VideoFrameSegmentHeader> VideoFrameSegment;
     typedef DataSegment<DataSegmentHeader> CommonSegment;
 
+    class AudioThreadMeta : public DataPacket
+    {
+    public:
+        AudioThreadMeta(double rate, const std::string& codec);
+        AudioThreadMeta(NetworkData&& data);
+
+        std::string getCodec() const;
+        double getRate() const;
+    };
+
+    class VideoThreadMeta : public DataPacket
+    {
+    public:
+        VideoThreadMeta(double rate, const FrameSegmentsInfo& segInfo,
+            const VideoCoderParams& coder);
+        VideoThreadMeta(NetworkData&& data);
+
+        double getRate() const;
+        FrameSegmentsInfo getSegInfo() const;
+        VideoCoderParams getCoderParams() const;
+
+    private:
+        typedef struct _Meta {
+            double rate_; // FPS
+            unsigned int gop_;
+            unsigned int bitrate_; // kbps
+            unsigned int width_, height_; // pixels
+            double deltaAvgSegNum_, deltaAvgParitySegNum_;
+            double keyAvgSegNum_, keyAvgParitySegNum_;
+        } __attribute__((packed)) Meta;
+    };
+
+    class MediaStreamMeta : public DataPacket
+    {
+    public:
+        MediaStreamMeta();
+        MediaStreamMeta(std::vector<std::string> threads);
+        MediaStreamMeta(NetworkData&& nd):DataPacket(boost::move(nd)){}
+
+        void addThread(const std::string& threadName);
+        void addSyncStream(const std::string& syncStream);
+        std::vector<std::string> getSyncStreams() const;
+        std::vector<std::string> getThreads() const;
+    };
+
     #if 0
     class SegmentData : public NetworkData
     {

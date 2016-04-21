@@ -890,6 +890,133 @@ TEST(TestVideoFramePacket, TestSliceFrame)
     EXPECT_EQ(1, paritySegments.size());
 }
 
+TEST(TestAudioThreadMeta, TestCreate)
+{
+    AudioThreadMeta meta(50, "opus");
+
+    EXPECT_TRUE(meta.isValid());
+    EXPECT_EQ(50, meta.getRate());
+    EXPECT_EQ("opus", meta.getCodec());
+
+    GT_PRINTF("Audio thread meta is %d bytes long\n", meta.getLength());
+
+    NetworkData nd(boost::move(meta));
+    EXPECT_FALSE(meta.isValid());
+
+    AudioThreadMeta meta2(boost::move(nd));
+    EXPECT_TRUE(meta2.isValid());
+    EXPECT_EQ(50, meta2.getRate());
+    EXPECT_EQ("opus", meta2.getCodec());
+}
+
+TEST(TestAudioThreadMeta, TestCreateFail)
+{
+    {
+        AudioThreadMeta meta(50, "");
+    
+        EXPECT_FALSE(meta.isValid());
+    
+        NetworkData nd(boost::move(meta));
+        AudioThreadMeta meta2(boost::move(nd));
+    
+        EXPECT_FALSE(meta2.isValid());
+    }
+    {
+        uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+        std::size_t const data_len = sizeof( data ) / sizeof( data[0] );
+        CommonSamplePacket sp(data_len, data);
+        CommonHeader hdr = {25, 39936287, 1460399362};
+        sp.setHeader(hdr);
+
+        AudioThreadMeta meta(boost::move(sp));
+        EXPECT_FALSE(meta.isValid());
+    }
+}
+
+TEST(TestVideoThreadMeta, TestCreate)
+{
+    FrameSegmentsInfo segInfo({5.6, 2.3, 54.3, 12.3});
+    VideoCoderParams coder = sampleVideoCoderParams();
+    VideoThreadMeta meta(27, segInfo, coder);
+
+    EXPECT_TRUE(meta.isValid());
+    EXPECT_EQ(27, meta.getRate());
+    EXPECT_EQ(segInfo, meta.getSegInfo());
+    {
+        VideoCoderParams c = meta.getCoderParams();
+        EXPECT_EQ(coder.gop_, c.gop_);
+        EXPECT_EQ(coder.encodeWidth_, c.encodeWidth_);
+        EXPECT_EQ(coder.encodeHeight_, c.encodeHeight_);
+        EXPECT_EQ(coder.startBitrate_, c.startBitrate_);
+    }
+    GT_PRINTF("Video thread meta is %d bytes long\n", meta.getLength());
+
+    NetworkData nd(boost::move(meta));
+    VideoThreadMeta meta2(boost::move(nd));
+
+    EXPECT_TRUE(meta2.isValid());
+    EXPECT_EQ(27, meta2.getRate());
+    EXPECT_EQ(segInfo, meta2.getSegInfo());
+    {
+        VideoCoderParams c = meta.getCoderParams();
+        EXPECT_EQ(coder.gop_, c.gop_);
+        EXPECT_EQ(coder.encodeWidth_, c.encodeWidth_);
+        EXPECT_EQ(coder.encodeHeight_, c.encodeHeight_);
+        EXPECT_EQ(coder.startBitrate_, c.startBitrate_);
+    }
+}
+
+TEST(TestVideoThreadMeta, TestCreateFail)
+{
+   uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+   std::size_t const data_len = sizeof( data ) / sizeof( data[0] );
+   CommonSamplePacket sp(data_len, data);
+   CommonHeader hdr = {25, 39936287, 1460399362};
+   sp.setHeader(hdr);
+
+   VideoThreadMeta meta(boost::move(sp));
+   EXPECT_FALSE(meta.isValid());
+}
+
+TEST(TestMediaStreamMeta, TestCreate)
+{
+    MediaStreamMeta meta;
+    meta.addThread("low");
+    meta.addThread("mid");
+    meta.addThread("high");
+    meta.addThread("ultra");
+    meta.addSyncStream("desktop");
+    meta.addSyncStream("mic");
+
+    EXPECT_TRUE(meta.isValid());
+    ASSERT_EQ(4, meta.getThreads().size());
+    EXPECT_EQ("low", meta.getThreads()[0]);
+    EXPECT_EQ("mid", meta.getThreads()[1]);
+    EXPECT_EQ("high", meta.getThreads()[2]);
+    EXPECT_EQ("ultra", meta.getThreads()[3]);
+
+    ASSERT_EQ(2, meta.getSyncStreams().size());
+    EXPECT_EQ("desktop", meta.getSyncStreams()[0]);
+    EXPECT_EQ("mic", meta.getSyncStreams()[1]);
+
+    GT_PRINTF("Media stream meta is %d bytes long\n", meta.getLength());
+
+    NetworkData nd(boost::move(meta));
+    MediaStreamMeta meta2(boost::move(nd));
+
+    EXPECT_TRUE(meta2.isValid());
+    ASSERT_EQ(4, meta2.getThreads().size());
+    EXPECT_EQ("low", meta2.getThreads()[0]);
+    EXPECT_EQ("mid", meta2.getThreads()[1]);
+    EXPECT_EQ("high", meta2.getThreads()[2]);
+    EXPECT_EQ("ultra", meta2.getThreads()[3]);
+
+    ASSERT_EQ(2, meta2.getSyncStreams().size());
+    EXPECT_EQ("desktop", meta2.getSyncStreams()[0]);
+    EXPECT_EQ("mic", meta2.getSyncStreams()[1]);
+}
+
+//******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

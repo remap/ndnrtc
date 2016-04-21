@@ -494,6 +494,127 @@ size_t AudioBundlePacket::payloadLength(size_t wireLength)
     return (payloadLength > 0 ? payloadLength : 0);
 }
 
+//******************************************************************************
+AudioThreadMeta::AudioThreadMeta(double rate, const std::string& codec):
+DataPacket(std::vector<uint8_t>())
+{
+    addBlob(sizeof(rate), (uint8_t*)&rate);
+    if (codec.size()) addBlob(codec.size(), (uint8_t*)codec.c_str());
+    else isValid_ = false;
+}
+
+AudioThreadMeta::AudioThreadMeta(NetworkData&& data):
+DataPacket(boost::move(data))
+{
+    isValid_ = (blobs_.size() == 2 && blobs_[0].size() == sizeof(double));
+}
+
+double 
+AudioThreadMeta::getRate() const
+{
+    return *(const double*)blobs_[0].data();
+}
+
+std::string
+AudioThreadMeta::getCodec() const
+{
+    return std::string((const char*)blobs_[1].data(), blobs_[1].size());
+}
+
+//******************************************************************************
+VideoThreadMeta::VideoThreadMeta(double rate, const FrameSegmentsInfo& segInfo,
+    const VideoCoderParams& coder):
+DataPacket(std::vector<uint8_t>())
+{
+    Meta m({rate, coder.gop_, coder.startBitrate_, coder.encodeWidth_, coder.encodeHeight_, 
+        segInfo.deltaAvgSegNum_, segInfo.deltaAvgParitySegNum_,
+        segInfo.keyAvgSegNum_, segInfo.keyAvgParitySegNum_});
+    addBlob(sizeof(m), (uint8_t*)&m);
+}
+
+VideoThreadMeta::VideoThreadMeta(NetworkData&& data):
+DataPacket(boost::move(data))
+{
+    isValid_ = (blobs_.size() == 1 && blobs_[0].size() == sizeof(Meta));
+}
+
+double VideoThreadMeta::getRate() const
+{
+    return ((Meta*)blobs_[0].data())->rate_;
+}
+
+FrameSegmentsInfo VideoThreadMeta::getSegInfo() const
+{
+    Meta *m = (Meta*)blobs_[0].data();
+    return FrameSegmentsInfo({m->deltaAvgSegNum_, m->deltaAvgParitySegNum_, 
+        m->keyAvgSegNum_, m->keyAvgParitySegNum_});
+}
+
+VideoCoderParams VideoThreadMeta::getCoderParams() const
+{
+    Meta *m = (Meta*)blobs_[0].data();
+    VideoCoderParams c;
+    c.gop_ = m->gop_;
+    c.startBitrate_ = m->bitrate_;
+    c.encodeWidth_ = m->width_;
+    c.encodeHeight_ = m->height_;
+    return c;
+}
+
+//******************************************************************************
+#define SYNC_MARKER "sync:"
+MediaStreamMeta::MediaStreamMeta():
+DataPacket(std::vector<uint8_t>())
+{}
+
+MediaStreamMeta::MediaStreamMeta(std::vector<std::string> threads):
+DataPacket(std::vector<uint8_t>())
+{
+    for (auto t:threads) addThread(t);
+}
+
+void
+MediaStreamMeta::addThread(const std::string& thread)
+{
+     addBlob(thread.size(), (uint8_t*)thread.c_str());
+}
+
+void 
+MediaStreamMeta::addSyncStream(const std::string& stream)
+{
+    addThread("sync:"+stream);
+}
+
+std::vector<std::string>
+MediaStreamMeta::getSyncStreams() const
+{
+    std::vector<std::string> syncStreams;
+    for (auto b:blobs_)
+    {
+        std::string thread = std::string((const char*)b.data(), b.size());
+        size_t p = thread.find(SYNC_MARKER);
+        if (p != std::string::npos)
+            syncStreams.push_back(std::string(thread.begin()+sizeof(SYNC_MARKER)-1, 
+                thread.end()));
+            
+    }
+    return syncStreams;
+}
+
+std::vector<std::string>
+MediaStreamMeta::getThreads() const 
+{
+    std::vector<std::string> threads;
+    for (auto b:blobs_) 
+    {
+        std::string thread = std::string((const char*)b.data(), b.size());
+        if (thread.find("sync:") == std::string::npos)
+            threads.push_back(thread);
+    }
+    return threads;
+}
+
+
 #if 0
 //******************************************************************************
 const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0, 0};
