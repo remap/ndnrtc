@@ -13,6 +13,7 @@
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include "video-stream-impl.h"
 #include "frame-data.h"
@@ -24,8 +25,10 @@
 #include "estimators.h"
 #include "clock.h"
 #include "async.h"
+#include "params.h"
 
 #define PARITY_RATIO 0.2
+#define META_CHECK_INTERVAL_MS 1000
 
 using namespace ndnrtc;
 using namespace std;
@@ -37,10 +40,13 @@ typedef boost::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
 
 VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
+playbackCounter_(0),
+metaVersion_(0),
 fecEnabled_(useFec),
 streamPrefix_(NameComponents::videoStreamPrefix(streamPrefix)),
 settings_(settings),
-cache_(boost::make_shared<ndn::MemoryContentCache>(settings.face_))
+cache_(boost::make_shared<ndn::MemoryContentCache>(settings.face_)),
+metaCheckTimer_(settings_.faceIo_)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
@@ -50,7 +56,7 @@ cache_(boost::make_shared<ndn::MemoryContentCache>(settings.face_))
 
 	for (int i = 0; i < settings_.params_.getThreadNum(); ++i)
 		if (settings_.params_.getVideoThread(i))
-			addThread(settings_.params_.getVideoThread(i));
+			add(settings_.params_.getVideoThread(i));
 
 	PublisherSettings ps;
 	ps.keyChain_  = settings_.keyChain_;
@@ -60,8 +66,8 @@ cache_(boost::make_shared<ndn::MemoryContentCache>(settings.face_))
 
 	publisher_ = boost::make_shared<VideoPacketPublisher>(ps, streamPrefix_);
 	publisher_->setDescription("publisher-"+settings_.params_.streamName_);
-	parityPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
-	parityPublisher_->setDescription("par-publisher-"+settings_.params_.streamName_);
+	dataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
+	dataPublisher_->setDescription("data-publisher-"+settings_.params_.streamName_);
 }
 
 VideoStreamImpl::~VideoStreamImpl()
@@ -72,38 +78,14 @@ VideoStreamImpl::~VideoStreamImpl()
 void
 VideoStreamImpl::addThread(const VideoThreadParams* params)
 {
-	// check if thread already exists
-	if (threads_.find(params->threadName_) != threads_.end())
-	{
-		stringstream ss;
-		ss << "Thread " << params->threadName_ << " has been added already";
-		throw runtime_error(ss.str());
-	}
-
-	threads_[params->threadName_] = boost::make_shared<VideoThread>(params->coderParams_);
-	scalers_[params->threadName_] = boost::make_shared<FrameScaler>(params->coderParams_.encodeWidth_, 
-		params->coderParams_.encodeHeight_);
-	seqCounters_[params->threadName_].first  = 0;
-	seqCounters_[params->threadName_].second = 0;
-
-	rateEstimators_[params->threadName_] = estimators::setupFrequencyMeter(2);
-
-	LogTraceC << "added thread " << params->threadName_ << std::endl;
+	add(params);
+	publishMeta();
 }
 
 void VideoStreamImpl::removeThread(const string& threadName)
 {
-	if (threads_.find(threadName) != threads_.end())
-	{
-		threads_.erase(threadName);
-		scalers_.erase(threadName);
-		seqCounters_.erase(threadName);
-		
-		estimators::releaseFrequencyMeter(rateEstimators_[threadName]);
-		rateEstimators_.erase(threadName);
-
-		LogTraceC << "remove thread " << threadName << std::endl;
-	}
+	remove(threadName);
+	publishMeta();
 }
 
 string VideoStreamImpl::getPrefix()
@@ -113,6 +95,7 @@ string VideoStreamImpl::getPrefix()
 
 vector<string> VideoStreamImpl::getThreads()
 {
+	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 	std::vector<string> threads;
 
 	for (auto it:threads_)
@@ -135,17 +118,61 @@ void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
 
 void VideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
 {
+	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+
 	for (auto t:threads_) t.second->setLogger(logger);
 	publisher_->setLogger(logger);
-	parityPublisher_->setLogger(logger);
+	dataPublisher_->setLogger(logger);
 	ILoggingObject::setLogger(logger);
 }
 
 //******************************************************************************
+void
+VideoStreamImpl::add(const VideoThreadParams* params)
+{
+	// check if thread already exists
+	if (threads_.find(params->threadName_) != threads_.end())
+	{
+		stringstream ss;
+		ss << "Thread " << params->threadName_ << " has been added already";
+		throw runtime_error(ss.str());
+	}
+	else
+	{
+		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+
+		threads_[params->threadName_] = boost::make_shared<VideoThread>(params->coderParams_);
+		scalers_[params->threadName_] = boost::make_shared<FrameScaler>(params->coderParams_.encodeWidth_, 
+			params->coderParams_.encodeHeight_);
+		seqCounters_[params->threadName_].first  = 0;
+		seqCounters_[params->threadName_].second = 0;
+		
+		metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
+	}
+
+	LogTraceC << "added thread " << params->threadName_ << std::endl;
+}
+
+void VideoStreamImpl::remove(const string& threadName)
+{
+	if (threads_.find(threadName) != threads_.end())
+	{
+		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+
+		threads_.erase(threadName);
+		scalers_.erase(threadName);
+		seqCounters_.erase(threadName);
+		metaKeepers_.erase(threadName);
+
+		LogTraceC << "remove thread " << threadName << std::endl;
+	}
+}
+
 void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 {
 	if (threads_.size())
 	{
+		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 		LogTraceC << "feeding frame into threads..." << std::endl;
 
 		map<string,FutureFramePtr> futureFrames;
@@ -186,7 +213,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 		// prepare packet header
 		bool isKey = (it.second->getFrame()._frameType == webrtc::kKeyFrame);
 		CommonHeader packetHdr;
-		packetHdr.sampleRate_ = estimators::currentFrequencyMeterValue(rateEstimators_[it.first]);
+		packetHdr.sampleRate_ = metaKeepers_[it.first]->getRate();
 		packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
 		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
 
@@ -212,26 +239,29 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 		.append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
 		.append(Name::Component::fromNumber(isKey ? seqCounters_[thread].first : seqCounters_[thread].second));
 
+	size_t nDataSeg = VideoFrameSegment::numSlices(*fp, 
+			settings_.params_.producerParams_.segmentSize_);
+	size_t nParitySeg = VideoFrameSegment::numSlices(*parityData, 
+			settings_.params_.producerParams_.segmentSize_);
+	PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
 	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-	async::dispatchAsync(settings_.faceIo_,  [me, thread, fp, parityData, dataName]{
-		bool isKey = (fp->getFrame()._frameType == webrtc::kKeyFrame);
+	boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
+
+	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, pairedSeq, keeper, isKey, thread, fp, parityData, dataName]{
 		VideoFrameSegmentHeader segmentHdr;
-		segmentHdr.totalSegmentsNum_ = VideoFrameSegment::numSlices(*fp, 
-			me->settings_.params_.producerParams_.segmentSize_);
-		segmentHdr.paritySegmentsNum_ = VideoFrameSegment::numSlices(*parityData, 
-			me->settings_.params_.producerParams_.segmentSize_);
+		segmentHdr.totalSegmentsNum_ = nDataSeg;
+		segmentHdr.paritySegmentsNum_ = nParitySeg;
 		segmentHdr.playbackNo_ = me->playbackCounter_;
-		segmentHdr.pairedSequenceNo_ = (isKey ? 
-			me->seqCounters_[thread].second : 
-			me->seqCounters_[thread].first);
+		segmentHdr.pairedSequenceNo_ = pairedSeq;
+
 		size_t nSlices = me->publisher_->publish(dataName, *fp, segmentHdr);
 		assert(nSlices);
+		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
 	});
 
 	dataName.append(NameComponents::NameComponentParity);
 	async::dispatchAsync(settings_.faceIo_, [me, parityData, dataName]{
-		DataSegmentHeader dummy;
-		size_t nParitySlices = me->parityPublisher_->publish(dataName, *parityData, dummy);
+		size_t nParitySlices = me->dataPublisher_->publish(dataName, *parityData);
 		assert(nParitySlices);
 	});
 }
@@ -243,4 +273,109 @@ VideoStreamImpl::getCurrentSyncList(bool forKey)
 	for (auto it:seqCounters_)
 		syncList[it.first] = (forKey ? it.second.first : it.second.second);
 	return syncList;
+}
+
+void 
+VideoStreamImpl::publishMeta()
+{
+	boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>());
+	for (auto t:getThreads()) meta->addThread(t);
+	Name metaName(streamPrefix_);
+	metaName.append(NameComponents::NameComponentMeta).appendVersion(++metaVersion_);
+
+	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
+	async::dispatchAsync(settings_.faceIo_, [me, metaName, meta](){
+		me->dataPublisher_->publish(metaName, *meta);
+	});
+
+	LogDebugC << "published stream meta " << metaName << std::endl;
+}
+
+void VideoStreamImpl::setupMetaCheckTimer()
+{
+	metaCheckTimer_.expires_from_now(boost::chrono::milliseconds(META_CHECK_INTERVAL_MS));
+	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
+	metaCheckTimer_.async_wait([me](const boost::system::error_code& e){
+		if (e != boost::asio::error::operation_aborted)
+		{
+			boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
+
+			for (auto it:me->metaKeepers_)
+			{
+				if (it.second->isNewMetaAvailable())
+				{
+					Name metaName(me->streamPrefix_);
+					metaName.append(it.first).append(NameComponents::NameComponentMeta)
+						.appendVersion(it.second->getVersion());
+					it.second->setVersion(it.second->getVersion()+1);
+					me->dataPublisher_->publish(metaName, boost::move(it.second->getMeta()));
+				}
+			}
+			me->setupMetaCheckTimer();
+		}
+	});
+}
+
+//******************************************************************************
+VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams* params):
+params_(params), metaVersion_(0), newMeta_(false),
+rateId_(estimators::setupFrequencyMeter(2)),
+dId_(estimators::setupSlidingAverageEstimator(10)),
+dpId_(estimators::setupSlidingAverageEstimator(10)),
+kId_(estimators::setupSlidingAverageEstimator(2)),
+kpId_(estimators::setupSlidingAverageEstimator(2))
+{}
+
+VideoStreamImpl::MetaKeeper::~MetaKeeper()
+{
+	estimators::releaseFrequencyMeter(rateId_);
+	estimators::releaseAverageEstimator(dId_);
+	estimators::releaseAverageEstimator(dpId_);
+	estimators::releaseAverageEstimator(kId_);
+	estimators::releaseAverageEstimator(kpId_);
+}
+
+
+bool
+VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg)
+{
+	unsigned int& dataEstId = (isKey ? kId_ : dId_);
+	unsigned int& parityEstId = (isKey ? kpId_ : dpId_);
+
+	double r = estimators::currentFrequencyMeterValue(rateId_);
+	double d = estimators::currentSlidingAverageValue(dId_);
+	double dp = estimators::currentSlidingAverageValue(dpId_);
+	double k = estimators::currentSlidingAverageValue(kId_);
+	double kp = estimators::currentSlidingAverageValue(kpId_);
+
+	estimators::frequencyMeterTick(rateId_);
+	estimators::slidingAverageEstimatorNewValue(dataEstId, nDataSeg);
+	estimators::slidingAverageEstimatorNewValue(parityEstId, nParitySeg);
+
+	newMeta_ = (r != estimators::currentFrequencyMeterValue(rateId_) ||
+		d != estimators::currentSlidingAverageValue(dId_) ||
+		dp != estimators::currentSlidingAverageValue(dpId_) ||
+		k != estimators::currentSlidingAverageValue(kId_) ||
+		kp != estimators::currentSlidingAverageValue(kpId_));
+
+	return newMeta_;
+}
+
+VideoThreadMeta
+VideoStreamImpl::MetaKeeper::getMeta() const
+{
+	FrameSegmentsInfo segInfo;
+	segInfo.deltaAvgSegNum_ = estimators::currentSlidingAverageValue(dId_);
+	segInfo.deltaAvgParitySegNum_ = estimators::currentSlidingAverageValue(dpId_);
+	segInfo.keyAvgSegNum_ = estimators::currentSlidingAverageValue(kId_);
+	segInfo.keyAvgParitySegNum_ = estimators::currentSlidingAverageValue(kpId_);
+
+	return boost::move(VideoThreadMeta(estimators::currentFrequencyMeterValue(rateId_),
+			segInfo, params_->coderParams_));
+}
+
+double
+VideoStreamImpl::MetaKeeper::getRate() const
+{ 
+	return estimators::currentFrequencyMeterValue(rateId_); 
 }

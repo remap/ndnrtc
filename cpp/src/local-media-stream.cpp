@@ -17,10 +17,15 @@ using namespace ndn;
 LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
-{}
+{
+	pimpl_->publishMeta();
+	pimpl_->setupMetaCheckTimer();
+}
 
 LocalVideoStream::~LocalVideoStream()
-{}
+{
+	pimpl_->metaCheckTimer_.cancel();
+}
 
 void
 LocalVideoStream::addThread(const VideoThreadParams* params)

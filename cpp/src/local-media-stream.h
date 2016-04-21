@@ -49,12 +49,32 @@ namespace ndnrtc {
 	 * for different bitrates (depedning on added video threads that represent encoder
 	 * instances) and then added to internal memory content cache. Access to internal 
 	 * content cache is synchronized with Face thread, which is represented by io_service
-	 * object passed to LiveVideoStream at construction.
+	 * object passed to LiveVideoStream at construction. Stream also publishes meta 
+	 * information about itself under <streamPrefix>/_meta namespace and meta information
+	 * about each thread under <streamPrefix>/<threadName>/_meta namespace. This meta 
+	 * objects contain information necessary for consumer to initialize it's structures
+	 * in order to properly decode fetched data.
+	 *
 	 * User should also pass pointers to Face and KeyChain objects. User is responsbile 
 	 * for running Face io_service.
 	 * For more info on thread-safety and thread-safe faces:
 	 * @see boost::asio::io_service
 	 * @see ndn::ThreadsafeFace
+	 *
+	 * NOTE ON THREADING: Usually, one would create an instance of LocalVideoStream on 
+	 * main application thread. Then, frames could be captured on some other thread 
+	 * (other than main application thread - capturing thread). Finally, there is a 
+	 * Face thread, represented by io_service passed at construction time. In this 
+	 * general case, there are three separate threads: main, capture and face (most 
+	 * applications, however, will have capturing callbacks on the main thread). 
+	 * Current LocalVideoStream implementation supports this general setup and works
+	 * properly if:
+	 *  - construction/destruction called on main thread
+	 *  - adding/removing threads called on main or capture thread
+	 *  - incomingArgbFrame/incomingI420Frame called on capture thread
+	 *  - setLogger/getThreads/getPrefix called on main or capture thread
+	 * Consequently, LocalVideoStream ensures that any access to Face/KeyChain is 
+	 * performed on the face thread.
 	 */
 	class LocalVideoStream : public IExternalCapturer
 	{
