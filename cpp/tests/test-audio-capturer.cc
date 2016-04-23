@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <boost/asio.hpp>
+#include <boost/chrono.hpp>
 
 #include "gtest/gtest.h"
 
@@ -17,6 +18,7 @@
 using namespace ::testing;
 using namespace std;
 using namespace ndnrtc;
+using namespace boost::chrono;
 
 TEST(TestAudioCapturer, TestAudioDevices)
 {
@@ -45,7 +47,7 @@ TEST(TestAudioCapturer, TestCreate)
 TEST(TestAudioCapturer, TestCreateThrow)
 {
 	MockAudioSampleConsumer sampleConsumer;
-	EXPECT_ANY_THROW(AudioCapturer capturer(999, &sampleConsumer));
+	EXPECT_ANY_THROW(AudioCapturer(999, &sampleConsumer));
 }
 
 // this code may be used for checking thread deadlocks when stopping capturer
@@ -77,13 +79,16 @@ TEST(TestAudioCapturer, TestCapture)
 	AudioCapturer capturer(0, &sampleConsumer);
 
 	int nRtp = 0, nRtcp = 0, rtpLen = 0, rtcpLen = 0;
-	boost::function<void(unsigned int, unsigned char*)> onRtp = [&nRtp, &rtpLen](unsigned int len, unsigned char*){
+	high_resolution_clock::time_point callbackTs;
+	boost::function<void(unsigned int, unsigned char*)> onRtp = [&nRtp, &callbackTs, &rtpLen](unsigned int len, unsigned char*){
 		nRtp++;
 		rtpLen = len;
+		callbackTs = high_resolution_clock::now();
 	};
-	boost::function<void(unsigned int, unsigned char*)> onRtcp = [&nRtcp, &rtcpLen](unsigned int len, unsigned char*){
+	boost::function<void(unsigned int, unsigned char*)> onRtcp = [&nRtcp, &rtcpLen, &callbackTs](unsigned int len, unsigned char*){
 		nRtcp++;
 		rtcpLen = len;
+		callbackTs = high_resolution_clock::now();
 	};
 
 	EXPECT_CALL(sampleConsumer, onDeliverRtpFrame(_,_))
@@ -102,6 +107,7 @@ TEST(TestAudioCapturer, TestCapture)
 	runTimer.wait();
 
 	capturer.stopCapture();
+	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 
 	GT_PRINTF("Default audio codec: %d RTP packets (%d bytes each), %d RTCP packets (%d bytes each)\n",
 		nRtp, rtpLen, nRtcp, rtcpLen);
@@ -113,13 +119,16 @@ TEST(TestAudioCapturer, TestCaptureOpusCodec)
 	AudioCapturer capturer(0, &sampleConsumer, WebrtcAudioChannel::Codec::Opus);
 
 	int nRtp = 0, nRtcp = 0, rtpLen = 0, rtcpLen = 0;
-	boost::function<void(unsigned int, unsigned char*)> onRtp = [&nRtp, &rtpLen](unsigned int len, unsigned char*){
+	high_resolution_clock::time_point callbackTs;
+	boost::function<void(unsigned int, unsigned char*)> onRtp = [&nRtp, &callbackTs, &rtpLen](unsigned int len, unsigned char*){
 		nRtp++;
 		rtpLen = len;
+		callbackTs = high_resolution_clock::now();
 	};
-	boost::function<void(unsigned int, unsigned char*)> onRtcp = [&nRtcp, &rtcpLen](unsigned int len, unsigned char*){
+	boost::function<void(unsigned int, unsigned char*)> onRtcp = [&nRtcp, &rtcpLen, &callbackTs](unsigned int len, unsigned char*){
 		nRtcp++;
 		rtcpLen = len;
+		callbackTs = high_resolution_clock::now();
 	};
 
 	EXPECT_CALL(sampleConsumer, onDeliverRtpFrame(_,_))
@@ -138,6 +147,7 @@ TEST(TestAudioCapturer, TestCaptureOpusCodec)
 	runTimer.wait();
 
 	capturer.stopCapture();
+	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 
 	GT_PRINTF("Default audio codec: %d RTP packets (%d bytes each), %d RTCP packets (%d bytes each)\n",
 		nRtp, rtpLen, nRtcp, rtcpLen);

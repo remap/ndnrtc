@@ -10,6 +10,7 @@
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <boost/thread/lock_guard.hpp>
+#include <boost/make_shared.hpp>
 
 #include "audio-capturer.h"
 #include "audio-controller.h"
@@ -21,6 +22,52 @@ using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace boost;
 
+//******************************************************************************
+namespace ndnrtc {
+    class AudioCapturerImpl : public webrtc::Transport,
+    public WebrtcAudioChannel, 
+    public NdnRtcComponent
+    {
+    public:
+        AudioCapturerImpl(const unsigned int deviceIdx, 
+            IAudioSampleConsumer* sampleConsumer,
+            const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722);
+        ~AudioCapturerImpl();
+
+        void
+        startCapture();
+
+        void
+        stopCapture();
+
+        unsigned int
+        getRtpNum() { return nRtp_; }
+
+        unsigned int
+        getRtcpNum() { return nRtcp_; }
+
+    protected:
+        friend AudioCapturer;
+
+        boost::atomic<bool> capturing_;
+        boost::mutex capturingState_;
+        webrtc::VoEHardware* voeHardware_;
+        unsigned int nRtp_, nRtcp_;
+
+        IAudioSampleConsumer* sampleConsumer_ = nullptr;
+
+        int
+        SendPacket(int channel, const void *data, size_t len);
+
+        int
+        SendRTCPPacket(int channel, const void *data, size_t len);
+
+    private:
+        AudioCapturerImpl(const AudioCapturerImpl&) = delete;
+    };
+}
+
+//******************************************************************************
 //******************************************************************************
 vector<pair<string,string>>
 AudioCapturer::getRecordingDevices()
@@ -73,8 +120,43 @@ AudioCapturer::getPlayoutDevices()
 }
 
 //******************************************************************************
+AudioCapturer::AudioCapturer(const unsigned int deviceIdx, 
+            IAudioSampleConsumer* sampleConsumer,
+            const WebrtcAudioChannel::Codec& codec):
+pimpl_(boost::make_shared<AudioCapturerImpl>(deviceIdx, sampleConsumer, codec))
+{}
+
+AudioCapturer::~AudioCapturer()
+{
+}
+
+void
+AudioCapturer::startCapture()
+{
+    pimpl_->startCapture();
+}
+
+void
+AudioCapturer::stopCapture()
+{
+    pimpl_->stopCapture();
+}
+
+unsigned int
+AudioCapturer::getRtpNum()
+{
+    return pimpl_->getRtpNum();
+}
+
+unsigned int 
+AudioCapturer::getRtcpNum()
+{
+    return pimpl_->getRtcpNum();
+}
+
+//******************************************************************************
 #pragma mark - construction/destruction
-AudioCapturer::AudioCapturer(const unsigned int deviceIdx,
+AudioCapturerImpl::AudioCapturerImpl(const unsigned int deviceIdx,
                 IAudioSampleConsumer* sampleConsumer,
                 const WebrtcAudioChannel::Codec& codec):
 WebrtcAudioChannel(codec),
@@ -103,7 +185,7 @@ nRtp_(0), nRtcp_(0)
         throw std::runtime_error("Can't initialize audio capturer");
 }
 
-AudioCapturer::~AudioCapturer()
+AudioCapturerImpl::~AudioCapturerImpl()
 {
     if (capturing_) stopCapture();
     voeHardware_->Release();
@@ -111,7 +193,7 @@ AudioCapturer::~AudioCapturer()
 
 //******************************************************************************
 #pragma mark - public
-void AudioCapturer::startCapture()
+void AudioCapturerImpl::startCapture()
 {
     if (capturing_) 
         throw std::runtime_error("Audio capturing is already initiated");
@@ -138,7 +220,8 @@ void AudioCapturer::startCapture()
     }
 }
 
-void AudioCapturer::stopCapture()
+// NOTE: should be called on audio thread
+void AudioCapturerImpl::stopCapture()
 {
     if (!capturing_) return;
 
@@ -157,7 +240,8 @@ void AudioCapturer::stopCapture()
 
 //******************************************************************************
 #pragma mark - private
-int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
+#if 0
+int AudioCapturerImpl::SendPacket(int channel, const void *data, size_t len)
 {
     assert(webrtcChannelId_ == channel);
     boost::lock_guard<mutex> scopedLock(capturingState_);
@@ -165,6 +249,7 @@ int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
     if (capturing_)
     {
         nRtp_++;
+        std::cout << "try deliver rtp" << std::endl;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtpFrame(len, (uint8_t*)data);
         });
@@ -172,7 +257,7 @@ int AudioCapturer::SendPacket(int channel, const void *data, size_t len)
     return len;
 }
 
-int AudioCapturer::SendRTCPPacket(int channel, const void *data, size_t len)
+int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
 {
     assert(webrtcChannelId_ == channel);
     boost::lock_guard<mutex> scopedLock(capturingState_);
@@ -180,9 +265,51 @@ int AudioCapturer::SendRTCPPacket(int channel, const void *data, size_t len)
     if (capturing_)
     {
         nRtcp_++;
+        std::cout << "try deliver rtcp" << std::endl;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtcpFrame(len, (uint8_t*)data);
         });
     }
     return len;
 }
+#else
+int AudioCapturerImpl::SendPacket(int channel, const void *data, size_t len)
+{
+    assert(webrtcChannelId_ == channel);
+    boost::lock_guard<mutex> scopedLock(capturingState_);
+
+    if (capturing_)
+    {
+        // as we are dispatching callback asynchronously, we have to
+        // allocate memory for received data and wrap it in a shared_ptr
+        nRtp_++;
+        boost::shared_ptr<AudioCapturerImpl> me = boost::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
+        boost::shared_ptr<uint8_t[]> dataCopy(new uint8_t[len]);
+        memcpy(dataCopy.get(), data, len);
+
+        AudioController::getSharedInstance()->dispatchOnAudioThread([me, len, dataCopy](){
+            me->sampleConsumer_->onDeliverRtpFrame(len, dataCopy.get());
+        });
+    }
+    return len;
+}
+
+int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
+{
+    assert(webrtcChannelId_ == channel);
+    boost::lock_guard<mutex> scopedLock(capturingState_);
+
+    if (capturing_)
+    {
+        nRtcp_++;
+        boost::shared_ptr<AudioCapturerImpl> me = boost::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
+        boost::shared_ptr<uint8_t[]> dataCopy(new uint8_t[len]);
+        memcpy(dataCopy.get(), data, len);
+
+        AudioController::getSharedInstance()->dispatchOnAudioThread([me, len, dataCopy](){
+            me->sampleConsumer_->onDeliverRtcpFrame(len, dataCopy.get());
+        });
+    }
+    return len;
+}
+#endif
