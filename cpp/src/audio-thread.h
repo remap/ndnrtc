@@ -21,10 +21,12 @@
 namespace ndnrtc
 {
    class AudioBundlePacket;
+   class AudioThread;
    
    class IAudioThreadCallback {
     public:
-       virtual void onSampleBundle(AudioBundlePacket& packet) = 0;
+      virtual void onSampleBundle(std::string threadName, uint64_t bundleNo,
+        boost::shared_ptr<AudioBundlePacket> packet) = 0;
    };
 
    class AudioThread :  public NdnRtcComponent,
@@ -40,11 +42,19 @@ namespace ndnrtc
        void start();
        void stop();
 
+       std::string getName() const { return threadName_; }
+       bool isRunning() const { return isRunning_; }
+       std::string getCodec() const { return codec_; }
+       double getRate() const;
+
    private:
        AudioThread(const AudioThread&) = delete;
 
+       uint64_t bundleNo_;
+       uint32_t rateId_;
+       std::string threadName_, codec_;
        IAudioThreadCallback* callback_;
-       AudioBundlePacket bundle_;
+       boost::shared_ptr<AudioBundlePacket> bundle_;
        AudioCapturer capturer_;
        boost::atomic<bool> isRunning_;
 

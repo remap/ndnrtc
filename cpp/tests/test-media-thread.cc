@@ -8,6 +8,7 @@
 #define BOOST_THREAD_PROVIDES_FUTURE
 #include <boost/thread/future.hpp>
 #include <boost/asio.hpp>
+#include <boost/chrono.hpp>
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
@@ -22,7 +23,9 @@
 using namespace ::testing;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
+using namespace boost::chrono;
 
+#if 1
 TEST(TestVideoThread, TestCreate)
 {
 	VideoThread vt(sampleVideoCoderParams());
@@ -261,26 +264,33 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 			seqCounters[i].first, seqCounters[i].second);
 	}
 }
-
+#endif
+#if 1
 TEST(TestAudioThread, TestRunOpusThread)
 {
 	MockAudioThreadCallback callback;
-	AudioThreadParams ap("mic", "opus");
+	AudioThreadParams ap("hd", "opus");
 	AudioCaptureParams acp;
 	acp.deviceId_ = 0;
 	int wire_length = 1000;
-	AudioBundlePacket bundle(wire_length);
+	boost::shared_ptr<AudioBundlePacket> bundle(boost::make_shared<AudioBundlePacket>(wire_length));
 	AudioThread at(ap, acp, &callback, wire_length);
 	int nBundles = 0;
+	uint64_t bundleNo = 0;
+	high_resolution_clock::time_point callbackTs;
 
-	boost::function<void(AudioBundlePacket& bundle)> onBundle = [wire_length, &bundle, &nBundles](AudioBundlePacket& b){
-		bundle.swap(boost::move(b));
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle = [&callbackTs, wire_length,
+	 &bundle, &nBundles, &bundleNo](std::string, uint64_t n, boost::shared_ptr<AudioBundlePacket> b){
+		bundle->swap(*b);
 		nBundles++;
-		EXPECT_LT(0, b.getRemainingSpace());
-		EXPECT_GE(wire_length, b.getRemainingSpace());
+		if (bundleNo) EXPECT_LT(bundleNo, n);
+		bundleNo = n;
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
+		callbackTs = high_resolution_clock::now();
 	};
 
-	EXPECT_CALL(callback, onSampleBundle(_))
+	EXPECT_CALL(callback, onSampleBundle("hd",_, _))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(onBundle));
 	
@@ -294,32 +304,36 @@ TEST(TestAudioThread, TestRunOpusThread)
 	runTimer.wait();
 	
 	EXPECT_NO_THROW(at.stop());
+	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 	EXPECT_LE(1, nBundles);
-	EXPECT_GE(wire_length, bundle.getLength());
-	EXPECT_LT(1, bundle.getSamplesNum());
+	EXPECT_GE(wire_length, bundle->getLength());
+	EXPECT_LT(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
-		nBundles, bundle.getSamplesNum(), bundle.getLength(), bundle[0].size());
+		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
 
 TEST(TestAudioThread, TestRunG722Thread)
 {
 	MockAudioThreadCallback callback;
-	AudioThreadParams ap("mic");
+	AudioThreadParams ap("g722");
 	AudioCaptureParams acp;
 	acp.deviceId_ = 0;
 	int wire_length = 1000;
-	AudioBundlePacket bundle(wire_length);
+	boost::shared_ptr<AudioBundlePacket> bundle(boost::make_shared<AudioBundlePacket>(wire_length));
 	AudioThread at(ap, acp, &callback, wire_length);
 	int nBundles = 0;
+	uint64_t bundleNo = 0;
 
-	boost::function<void(AudioBundlePacket& bundle)> onBundle = [wire_length, &bundle, &nBundles](AudioBundlePacket& b){
-		bundle.swap(boost::move(b));
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle = [wire_length, &bundle, &nBundles, &bundleNo](std::string, uint64_t n, boost::shared_ptr<AudioBundlePacket> b){
+		bundle->swap(*b);
 		nBundles++;
-		EXPECT_LT(0, b.getRemainingSpace());
-		EXPECT_GE(wire_length, b.getRemainingSpace());
+		if (bundleNo) EXPECT_LT(bundleNo, n);
+		bundleNo = n;
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
 	};
 
-	EXPECT_CALL(callback, onSampleBundle(_))
+	EXPECT_CALL(callback, onSampleBundle("g722", _, _))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(onBundle));
 	
@@ -334,31 +348,34 @@ TEST(TestAudioThread, TestRunG722Thread)
 	
 	EXPECT_NO_THROW(at.stop());
 	EXPECT_LE(1, nBundles);
-	EXPECT_GE(wire_length, bundle.getLength());
-	EXPECT_LT(1, bundle.getSamplesNum());
+	EXPECT_GE(wire_length, bundle->getLength());
+	EXPECT_LT(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
-		nBundles, bundle.getSamplesNum(), bundle.getLength(), bundle[0].size());
+		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
 
 TEST(TestAudioThread, TestRun8kSegment)
 {
 	MockAudioThreadCallback callback;
-	AudioThreadParams ap("mic");
+	AudioThreadParams ap("g722");
 	AudioCaptureParams acp;
 	acp.deviceId_ = 0;
 	int wire_length = 8000;
-	AudioBundlePacket bundle(wire_length);
+	boost::shared_ptr<AudioBundlePacket> bundle(boost::make_shared<AudioBundlePacket>(wire_length));
 	AudioThread at(ap, acp, &callback, wire_length);
 	int nBundles = 0;
+	high_resolution_clock::time_point callbackTs;
 
-	boost::function<void(AudioBundlePacket& bundle)> onBundle = [wire_length, &bundle, &nBundles](AudioBundlePacket& b){
-		bundle.swap(boost::move(b));
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle = [&callbackTs, wire_length,
+	 &bundle, &nBundles](std::string, uint64_t, boost::shared_ptr<AudioBundlePacket> b){
+		bundle->swap(*b);
 		nBundles++;
-		EXPECT_LT(0, b.getRemainingSpace());
-		EXPECT_GE(wire_length, b.getRemainingSpace());
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
+		callbackTs = high_resolution_clock::now();
 	};
 
-	EXPECT_CALL(callback, onSampleBundle(_))
+	EXPECT_CALL(callback, onSampleBundle("g722",_, _))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(onBundle));
 	
@@ -372,12 +389,118 @@ TEST(TestAudioThread, TestRun8kSegment)
 	runTimer.wait();
 	
 	EXPECT_NO_THROW(at.stop());
+	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 	EXPECT_LE(1, nBundles);
-	EXPECT_GE(wire_length, bundle.getLength());
-	EXPECT_LT(1, bundle.getSamplesNum());
+	EXPECT_GE(wire_length, bundle->getLength());
+	EXPECT_LT(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
-		nBundles, bundle.getSamplesNum(), bundle.getLength(), bundle[0].size());
+		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
+
+TEST(TestAudioThread, TestRunMultipleThreads)
+{
+	MockAudioThreadCallback callback1, callback2;
+	AudioThreadParams ap1("sd", "opus");
+	AudioThreadParams ap2("hd");
+	AudioCaptureParams acp;
+	acp.deviceId_ = 0;
+	int wire_length = 1000;
+	AudioBundlePacket bundle1(wire_length);
+	AudioBundlePacket bundle2(wire_length);
+	AudioThread at1(ap1, acp, &callback1, wire_length);
+	AudioThread at2(ap2, acp, &callback2, wire_length);
+	int nBundles1 = 0, nBundles2 = 0;
+
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle1 = [wire_length, &bundle1, &nBundles1](std::string, uint64_t, boost::shared_ptr<AudioBundlePacket> b){
+		bundle1.swap(*b);
+		nBundles1++;
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
+	};
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle2 = [wire_length, &bundle2, &nBundles2](std::string, uint64_t, boost::shared_ptr<AudioBundlePacket> b){
+		bundle2.swap(*b);
+		nBundles2++;
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
+	};
+
+	EXPECT_CALL(callback1, onSampleBundle("sd",_, _))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onBundle1));
+	EXPECT_CALL(callback2, onSampleBundle("hd",_, _))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onBundle2));
+
+	boost::asio::io_service io;
+	boost::asio::deadline_timer runTimer(io);
+	runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+
+	EXPECT_NO_THROW(at1.start());
+	EXPECT_NO_THROW(at2.start());
+
+	runTimer.wait();
+	
+	EXPECT_NO_THROW(at1.stop());
+	EXPECT_NO_THROW(at2.stop());
+	
+	GT_PRINTF("Thread1: received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
+		nBundles1, bundle1.getSamplesNum(), bundle1.getLength(), bundle1[0].size());
+	GT_PRINTF("Thread2: received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
+		nBundles2, bundle2.getSamplesNum(), bundle2.getLength(), bundle2[0].size());
+}
+
+TEST(TestAudioThread, TestRestart)
+{
+	MockAudioThreadCallback callback;
+	AudioThreadParams ap("g722");
+	AudioCaptureParams acp;
+	acp.deviceId_ = 0;
+	int wire_length = 1000;
+	boost::shared_ptr<AudioBundlePacket> bundle(boost::make_shared<AudioBundlePacket>(wire_length));
+	AudioThread at(ap, acp, &callback, wire_length);
+	int nBundles = 0;
+	uint64_t bundleNo = 0;
+
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle = [wire_length, &bundle, &nBundles, &bundleNo](std::string, uint64_t n, boost::shared_ptr<AudioBundlePacket> b){
+		bundle->swap(*b);
+		nBundles++;
+		if (bundleNo) EXPECT_LT(bundleNo, n);
+		bundleNo = n;
+		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_GE(wire_length, b->getRemainingSpace());
+	};
+
+	EXPECT_CALL(callback, onSampleBundle("g722", _, _))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onBundle));
+	
+	boost::asio::io_service io;
+	boost::asio::deadline_timer runTimer(io);
+	runTimer.expires_from_now(boost::posix_time::milliseconds(500));
+
+	EXPECT_NO_THROW(at.start());
+	EXPECT_ANY_THROW(at.start());
+
+	runTimer.wait();
+	
+	EXPECT_NO_THROW(at.stop());
+	int callNo = 0;
+	boost::function<void(std::string, uint64_t, boost::shared_ptr<AudioBundlePacket>)> onBundle2 = [&callNo](std::string, uint64_t n, boost::shared_ptr<AudioBundlePacket> b){
+		if (!callNo++) EXPECT_EQ(0,n);
+	};
+
+	EXPECT_CALL(callback, onSampleBundle("g722", _, _))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(onBundle2));
+
+	runTimer.expires_from_now(boost::posix_time::milliseconds(500));
+
+	EXPECT_NO_THROW(at.start());
+	EXPECT_ANY_THROW(at.start());
+
+	runTimer.wait();
+}
+#endif
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
