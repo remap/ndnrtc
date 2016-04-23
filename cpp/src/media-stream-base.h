@@ -34,16 +34,39 @@ namespace ndnrtc {
 		virtual std::vector<std::string> getThreads() const = 0;
 
 	protected:
+		template<typename Meta>
+		class BaseMetaKeeper {
+		public:
+			BaseMetaKeeper(const MediaThreadParams* params):params_(params), 
+				metaVersion_(0), newMeta_(false){}
+			virtual ~BaseMetaKeeper(){}
+
+			virtual Meta getMeta() const = 0;
+			virtual double getRate() const = 0;
+
+			bool isNewMetaAvailable() { bool f = newMeta_; newMeta_ = false; return f; }
+			unsigned int getVersion() const { return metaVersion_; }
+			void setVersion(unsigned int v) { metaVersion_ = v; }
+
+		protected:
+			bool newMeta_;
+			const MediaThreadParams* params_;
+			unsigned int metaVersion_;
+		};
+
 		mutable boost::mutex internalMutex_;
 		uint64_t metaVersion_;
 		MediaStreamSettings settings_;
 		ndn::Name streamPrefix_;
 		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 		boost::shared_ptr<CommonPacketPublisher> dataPublisher_;
+		boost::asio::steady_timer metaCheckTimer_;
 
 		virtual void add(const MediaThreadParams* params) = 0;
 		virtual void remove(const std::string& threadName) = 0;
 		void publishMeta();
+		void setupMetaCheckTimer();
+		virtual bool checkMeta() = 0;
 	};
 }
 

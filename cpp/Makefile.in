@@ -279,6 +279,8 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-threading-capability.$(OBJEXT) \
 	src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_media_thread-simple-log.$(OBJEXT) \
+	src/bin_tests_test_media_thread-estimators.$(OBJEXT) \
+	src/bin_tests_test_media_thread-clock.$(OBJEXT) \
 	$(am__objects_7)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
@@ -755,7 +757,7 @@ bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpe
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
-bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-thread.cpp tests/tests-helpers.cc src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-thread.cpp tests/tests-helpers.cc src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD}
@@ -1144,6 +1146,10 @@ src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_media_thread-simple-log.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-estimators.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_media_thread-clock.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1344,6 +1350,8 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_media_thread-audio-capturer.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-audio-controller.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-audio-thread.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_media_thread-estimators.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_media_thread-ndnrtc-object.$(OBJEXT)
@@ -1548,6 +1556,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-controller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-audio-thread.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-ndnrtc-object.Po@am__quote@
@@ -3085,6 +3095,38 @@ src/bin_tests_test_media_thread-simple-log.obj: src/simple-log.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_media_thread-simple-log.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+
+src/bin_tests_test_media_thread-estimators.o: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Tpo -c -o src/bin_tests_test_media_thread-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_media_thread-estimators.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/bin_tests_test_media_thread-estimators.obj: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Tpo -c -o src/bin_tests_test_media_thread-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_media_thread-estimators.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+
+src/bin_tests_test_media_thread-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-clock.Tpo -c -o src/bin_tests_test_media_thread-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-clock.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_media_thread-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_media_thread-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_media_thread-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_media_thread-clock.Tpo -c -o src/bin_tests_test_media_thread-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_media_thread-clock.Tpo src/$(DEPDIR)/bin_tests_test_media_thread-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_media_thread-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_media_thread-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_media_thread_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

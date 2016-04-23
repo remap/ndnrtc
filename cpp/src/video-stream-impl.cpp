@@ -28,7 +28,6 @@
 #include "params.h"
 
 #define PARITY_RATIO 0.2
-#define META_CHECK_INTERVAL_MS 1000
 
 using namespace ndnrtc;
 using namespace std;
@@ -42,8 +41,7 @@ VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 MediaStreamBase(streamPrefix, settings),
 playbackCounter_(0),
-fecEnabled_(useFec),
-metaCheckTimer_(settings_.faceIo_)
+fecEnabled_(useFec)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
@@ -123,7 +121,6 @@ VideoStreamImpl::add(const MediaThreadParams* mp)
 			params->coderParams_.encodeHeight_);
 		seqCounters_[params->threadName_].first  = 0;
 		seqCounters_[params->threadName_].second = 0;
-		
 		metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
 	}
 
@@ -224,7 +221,8 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
 	boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
 
-	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, pairedSeq, keeper, isKey, thread, fp, parityData, dataName]{
+	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, pairedSeq, keeper, isKey, 
+		thread, fp, parityData, dataName]{
 		VideoFrameSegmentHeader segmentHdr;
 		segmentHdr.totalSegmentsNum_ = nDataSeg;
 		segmentHdr.paritySegmentsNum_ = nParitySeg;
@@ -252,34 +250,28 @@ VideoStreamImpl::getCurrentSyncList(bool forKey)
 	return syncList;
 }
 
-void VideoStreamImpl::setupMetaCheckTimer()
+bool VideoStreamImpl::checkMeta()
 {
-	metaCheckTimer_.expires_from_now(boost::chrono::milliseconds(META_CHECK_INTERVAL_MS));
-	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-	metaCheckTimer_.async_wait([me](const boost::system::error_code& e){
-		if (e != boost::asio::error::operation_aborted)
-		{
-			boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
+	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
-			for (auto it:me->metaKeepers_)
-			{
-				if (it.second->isNewMetaAvailable())
-				{
-					Name metaName(me->streamPrefix_);
-					metaName.append(it.first).append(NameComponents::NameComponentMeta)
-						.appendVersion(it.second->getVersion());
-					it.second->setVersion(it.second->getVersion()+1);
-					me->dataPublisher_->publish(metaName, boost::move(it.second->getMeta()));
-				}
-			}
-			me->setupMetaCheckTimer();
+	for (auto it:metaKeepers_)
+	{
+		if (it.second->isNewMetaAvailable())
+		{
+			Name metaName(streamPrefix_);
+			metaName.append(it.first).append(NameComponents::NameComponentMeta)
+				.appendVersion(it.second->getVersion());
+			it.second->setVersion(it.second->getVersion()+1);
+			dataPublisher_->publish(metaName, it.second->getMeta());
 		}
-	});
+	}
+
+	return true;
 }
 
 //******************************************************************************
 VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams* params):
-params_(params), metaVersion_(0), newMeta_(false),
+BaseMetaKeeper(params),
 rateId_(estimators::setupFrequencyMeter(2)),
 dId_(estimators::setupSlidingAverageEstimator(10)),
 dpId_(estimators::setupSlidingAverageEstimator(10)),
@@ -332,7 +324,7 @@ VideoStreamImpl::MetaKeeper::getMeta() const
 	segInfo.keyAvgParitySegNum_ = estimators::currentSlidingAverageValue(kpId_);
 
 	return boost::move(VideoThreadMeta(estimators::currentFrequencyMeterValue(rateId_),
-			segInfo, params_->coderParams_));
+			segInfo, ((VideoThreadParams*)params_)->coderParams_));
 }
 
 double

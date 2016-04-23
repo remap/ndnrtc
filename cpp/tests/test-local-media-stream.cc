@@ -176,6 +176,24 @@ boost::shared_ptr<KeyChain> memoryKeyChain(const std::string name)
     return keyChain;
 }
 
+MediaStreamParams getSampleAudioParams()
+{
+	MediaStreamParams msp("mic");
+
+	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
+	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.segmentSize_ = 1000;
+	
+	CaptureDeviceParams cdp;
+	cdp.deviceId_ = 0;
+	msp.captureDevice_ = cdp;
+	msp.addMediaThread(AudioThreadParams("hd", "opus"));
+	msp.addMediaThread(AudioThreadParams("sd", "g722"));
+
+	return msp;
+}
+
+#if 1
 TEST(TestVideoStream, TestCreate)
 {
 	boost::asio::io_service io;
@@ -211,7 +229,6 @@ TEST(TestVideoStream, TestParamsError)
 	EXPECT_ANY_THROW(LocalVideoStream s(streamPrefix, settings));
 }
 
-
 TEST(TestVideoStream, TestAddExistingThread)
 {
 	boost::asio::io_service io;
@@ -223,7 +240,7 @@ TEST(TestVideoStream, TestAddExistingThread)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/app";
 
 	LocalVideoStream s(streamPrefix, settings);
-	EXPECT_ANY_THROW(s.addThread(settings.params_.getVideoThread(0)));
+	EXPECT_ANY_THROW(s.addThread(*settings.params_.getVideoThread(0)));
 }
 
 TEST(TestVideoStream, TestCreateWrongMediaSettings)
@@ -560,6 +577,220 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 	}
 	t.join();
 }
+#endif
+#if 1
+TEST(TestAudioStream, TestCreate)
+{
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	MediaStreamSettings settings(io, getSampleAudioParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalAudioStream s(appPrefix, settings);
+
+	EXPECT_FALSE(s.isRunning());
+	ASSERT_EQ(2, s.getThreads().size());
+	EXPECT_EQ("hd", s.getThreads()[0]);
+	EXPECT_EQ("sd", s.getThreads()[1]);
+	std::stringstream apiV;
+	apiV << "\%FD\%" << std::setw(2) << std::setfill('0') << NameComponents::nameApiVersion();
+
+	EXPECT_EQ(appPrefix+"/ndnrtc/"+apiV.str()+"/audio/mic", s.getPrefix());
+}
+
+TEST(TestAudioStream, TestCreateWrongMediaSettings)
+{
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	ndn::KeyChain keyChain;
+	MediaStreamSettings settings(io, getSampleVideoParams());
+	settings.face_ = &face;
+	settings.keyChain_ = &keyChain;
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	EXPECT_ANY_THROW(LocalAudioStream(appPrefix, settings));
+}
+
+TEST(TestAudioStream, TestAddRemoveThreads)
+{
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	MediaStreamSettings settings(io, getSampleAudioParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalAudioStream s(appPrefix, settings);
+
+	ASSERT_EQ(2, s.getThreads().size());
+	EXPECT_EQ("hd", s.getThreads()[0]);
+	EXPECT_EQ("sd", s.getThreads()[1]);
+	std::stringstream apiV;
+	apiV << "\%FD\%" << std::setw(2) << std::setfill('0') << NameComponents::nameApiVersion();
+
+	EXPECT_EQ(appPrefix+"/ndnrtc/"+apiV.str()+"/audio/mic", s.getPrefix());
+
+	EXPECT_NO_THROW(s.addThread(AudioThreadParams("sd2")));
+	EXPECT_EQ(3, s.getThreads().size());
+	EXPECT_ANY_THROW(s.addThread(AudioThreadParams("sd2")));
+
+	EXPECT_NO_THROW(s.removeThread("sd"));
+	EXPECT_EQ(2, s.getThreads().size());
+	EXPECT_NO_THROW(s.removeThread("hd"));
+	EXPECT_EQ(1, s.getThreads().size());
+	EXPECT_NO_THROW(s.removeThread("sd2"));
+	EXPECT_EQ(0, s.getThreads().size());
+
+	EXPECT_NO_THROW(s.removeThread("sd"));
+	EXPECT_EQ(0, s.getThreads().size());
+}
+
+TEST(TestAudioStream, TestRun5Sec)
+{
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	boost::asio::deadline_timer runTimer(io);
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+	{
+		MediaStreamSettings settings(io, getSampleAudioParams());
+		settings.face_ = &face;
+		settings.keyChain_ = keyChain.get();
+		LocalAudioStream s(appPrefix, settings);
+		EXPECT_FALSE(s.isRunning());
+
+#ifdef ENABLE_LOGGING
+		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+		runTimer.expires_from_now(boost::posix_time::milliseconds(5000));
+		EXPECT_NO_THROW(s.start());
+		EXPECT_TRUE(s.isRunning());
+
+		runTimer.wait();
+		EXPECT_NO_THROW(s.stop());
+		EXPECT_FALSE(s.isRunning());
+	}
+
+	work.reset();
+	t.join();
+}
+#endif
+#if 0
+TEST(TestAudioStream, TestRunAndStopOnDtor)
+{
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	boost::asio::deadline_timer runTimer(io);
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+	{
+		MediaStreamSettings settings(io, getSampleAudioParams());
+		settings.face_ = &face;
+		settings.keyChain_ = keyChain.get();
+		LocalAudioStream s(appPrefix, settings);
+		EXPECT_FALSE(s.isRunning());
+
+#ifdef ENABLE_LOGGING
+		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+		runTimer.expires_from_now(boost::posix_time::milliseconds(500));
+		EXPECT_NO_THROW(s.start());
+		EXPECT_TRUE(s.isRunning());
+
+		runTimer.wait();
+	}
+
+	work.reset();
+	t.join();
+}
+#endif
+#if 1
+TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
+{
+	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+	boost::asio::io_service io;
+	ndn::Face face("aleph.ndn.ucla.edu");
+	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	boost::asio::deadline_timer runTimer(io);
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+	{
+		MediaStreamParams msp("mic");
+		msp.producerParams_.segmentSize_ = 1000;
+		msp.producerParams_.freshnessMs_ = 1000;
+		msp.captureDevice_.deviceId_ = 0;
+		msp.type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeAudio;
+		msp.addMediaThread(AudioThreadParams("sd"));
+		MediaStreamSettings settings(io, msp);
+		settings.face_ = &face;
+		settings.keyChain_ = keyChain.get();
+		LocalAudioStream s(appPrefix, settings);
+		EXPECT_FALSE(s.isRunning());
+
+#ifdef ENABLE_LOGGING
+		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+		runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+		EXPECT_NO_THROW(s.start());
+		EXPECT_TRUE(s.isRunning());
+
+		runTimer.wait();
+		int n = 10;
+		std::srand(std::time(0));
+
+		for (int i = 0; i < n; ++i)
+		{
+			GT_PRINTF("thread added...\n");
+			EXPECT_NO_THROW(s.addThread(AudioThreadParams("hd","opus")));
+			EXPECT_TRUE(s.isRunning());
+			runTimer.expires_from_now(boost::posix_time::milliseconds(std::rand()%1000+500));
+			runTimer.wait();
+	
+			GT_PRINTF("thread removed %d/%d\n", i+1, n);
+			EXPECT_NO_THROW(s.removeThread("hd"));
+			EXPECT_TRUE(s.isRunning());
+			runTimer.expires_from_now(boost::posix_time::milliseconds(std::rand()%1000+500));
+			runTimer.wait();
+		}
+
+		EXPECT_NO_THROW(s.removeThread("sd"));
+		EXPECT_FALSE(s.isRunning());
+	}
+
+	work.reset();
+	t.join();
+}
+#endif
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

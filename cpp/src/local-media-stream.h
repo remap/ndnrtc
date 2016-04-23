@@ -42,7 +42,50 @@ namespace ndnrtc {
 	};
 
 	class VideoStreamImpl;
-	
+	class AudioStreamImpl;
+
+	class LocalAudioStream {
+	public:
+		LocalAudioStream(const std::string& basePrefix, 
+			const MediaStreamSettings& settings);
+		~LocalAudioStream();
+
+		void start();
+		void stop();
+
+		void addThread(const AudioThreadParams params);
+		void removeThread(const std::string& thread);
+
+		bool isRunning() const;
+
+		/**
+		 * Returns full stream prefix used for publishing data
+		 * @return Full stream prefix
+		 */
+		std::string getPrefix() const;
+		
+		/**
+		 * Returns array of current video thread names
+		 * @return Vector of current video thread names
+		 */
+		std::vector<std::string> getThreads() const;
+
+		/**
+		 * Sets logger for current stream
+		 * @param logger Pointer to Logger instance
+		 */
+		void setLogger(ndnlog::new_api::Logger* logger);
+
+		static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
+		static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
+
+	private:
+		LocalAudioStream(const LocalAudioStream&) = delete;
+		LocalAudioStream(LocalAudioStream&&) = delete;
+		
+		boost::shared_ptr<AudioStreamImpl> pimpl_;
+	};
+
 	/**
 	 * LocalVideoStream shall be used for publishing video. It provides interface for 
 	 * feeding raw ARGB or I420 frames. These frames will be encoded asynchronously 
@@ -98,7 +141,7 @@ namespace ndnrtc {
 		 * Add video thread
 		 * @param params Video thread parameters
 		 */
-		void addThread(const VideoThreadParams* params);
+		void addThread(const VideoThreadParams params);
 
 		/**
 		 * Remove video thread

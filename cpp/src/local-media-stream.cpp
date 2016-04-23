@@ -8,12 +8,85 @@
 #include <boost/asio.hpp>
 
 #include "local-media-stream.h"
+#include "audio-stream-impl.h"
 #include "video-stream-impl.h"
+#include "audio-capturer.h"
 
 using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
 
+//******************************************************************************
+std::vector<std::pair<std::string, std::string>> 
+LocalAudioStream::getRecordingDevices()
+{
+	return AudioCapturer::getRecordingDevices();
+}
+
+std::vector<std::pair<std::string, std::string>> 
+LocalAudioStream::getPlayoutDevices()
+{
+	return AudioCapturer::getPlayoutDevices();
+}
+
+//******************************************************************************
+LocalAudioStream::LocalAudioStream(const std::string& basePrefix, 
+			const MediaStreamSettings& settings):
+pimpl_(boost::make_shared<AudioStreamImpl>(basePrefix, settings))
+{
+	pimpl_->publishMeta();
+}
+
+LocalAudioStream::~LocalAudioStream()
+{
+	pimpl_->stop();
+}
+
+void LocalAudioStream::start()
+{
+	pimpl_->start();
+}
+
+void LocalAudioStream::stop()
+{
+	pimpl_->stop();
+}
+
+void
+LocalAudioStream::addThread(const AudioThreadParams params)
+{
+	pimpl_->addThread(&params);
+}
+
+void LocalAudioStream::removeThread(const string& threadName)
+{
+	pimpl_->removeThread(threadName);
+}
+
+bool LocalAudioStream::isRunning() const 
+{
+	return pimpl_->isRunning();
+}
+
+string
+LocalAudioStream::getPrefix() const
+{
+	return pimpl_->getPrefix();
+}
+
+vector<string> 
+LocalAudioStream::getThreads() const
+{
+	return pimpl_->getThreads();
+}
+
+void
+LocalAudioStream::setLogger(ndnlog::new_api::Logger* logger)
+{
+	pimpl_->setLogger(logger);
+}
+
+//******************************************************************************
 LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
@@ -28,9 +101,9 @@ LocalVideoStream::~LocalVideoStream()
 }
 
 void
-LocalVideoStream::addThread(const VideoThreadParams* params)
+LocalVideoStream::addThread(const VideoThreadParams params)
 {
-	pimpl_->addThread(params);
+	pimpl_->addThread(&params);
 }
 
 void LocalVideoStream::removeThread(const string& threadName)
