@@ -191,6 +191,9 @@ namespace ndnrtc {
 
         void addBlob(uint16_t dataLength, const uint8_t* data);
         virtual void reinit();
+
+    private:
+        DataPacket(DataPacket&& dataPacket) = delete;
     };
 
     template <typename Header>
@@ -308,7 +311,7 @@ namespace ndnrtc {
         };
 
         AudioBundlePacket(size_t wireLength);
-        AudioBundlePacket(AudioBundlePacket&& bundle);
+        AudioBundlePacket(NetworkData&& bundle);
 
         bool hasSpace(const AudioSampleBlob& sampleBlob) const;
         size_t getRemainingSpace() const { return remainingSpace_; }
@@ -316,10 +319,12 @@ namespace ndnrtc {
         AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
         size_t getSamplesNum();
         const AudioSampleBlob operator[](size_t pos) const;
-        void swap(AudioBundlePacket&& bundle);
+        void swap(AudioBundlePacket& bundle);
         
         static size_t wireLength(size_t wireLength, size_t sampleSize);
     private:
+        AudioBundlePacket(AudioBundlePacket&& bundle) = delete;
+
         size_t wireLength_, remainingSpace_;
 
         static size_t payloadLength(size_t wireLength);

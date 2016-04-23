@@ -410,12 +410,9 @@ wireLength_(wireLength)
     clear();
 }
 
-AudioBundlePacket::AudioBundlePacket(AudioBundlePacket&& bundle):
-CommonSamplePacket(boost::move(std::vector<uint8_t>())),
-wireLength_(0),
-remainingSpace_(0)
+AudioBundlePacket::AudioBundlePacket(NetworkData&& data):
+CommonSamplePacket(boost::move(data))
 {
-    swap(boost::move(bundle));
 }
 
 bool 
@@ -465,7 +462,7 @@ size_t AudioBundlePacket::getSamplesNum()
     return blobs_.size() - isHeaderSet();
 }
 
-void AudioBundlePacket::swap(AudioBundlePacket&& bundle)
+void AudioBundlePacket::swap(AudioBundlePacket& bundle)
 { 
     CommonSamplePacket::swap(bundle);
     std::swap(wireLength_, bundle.wireLength_);
