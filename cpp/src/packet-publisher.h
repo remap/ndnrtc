@@ -98,7 +98,9 @@ namespace ndnrtc{
 				settings_.keyChain_->sign(ndnSegment);
 				settings_.memoryCache_->add(ndnSegment);
 		
-				LogTraceC << "added to cache " << segmentName << std::endl;
+				LogTraceC << "added to cache " << segmentName << " ("
+						<< ndnSegment.getContent().size() << " bytes payload, "
+						<< ndnSegment.getDefaultWireEncoding().size() << " bytes wire)" << std::endl;
 				++segIdx;
 			}
 
