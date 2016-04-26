@@ -211,7 +211,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 	Name dataName(streamPrefix_);
 	dataName.append(thread)
 		.append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
-		.append(Name::Component::fromNumber(isKey ? seqCounters_[thread].first : seqCounters_[thread].second));
+		.appendSequenceNumber((isKey ? seqCounters_[thread].first : seqCounters_[thread].second));
 
 	size_t nDataSeg = VideoFrameSegment::numSlices(*fp, 
 			settings_.params_.producerParams_.segmentSize_);

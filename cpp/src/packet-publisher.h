@@ -90,10 +90,11 @@ namespace ndnrtc{
 		
 				ndn::Name segmentName(name);
 				segmentName.appendSegment(segIdx);
-				segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
+				// segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
 				
 				ndn::Data ndnSegment(segmentName);
 				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
+				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
 				ndnSegment.setContent(segmentData->getData(), segment.size());
 				settings_.keyChain_->sign(ndnSegment);
 				settings_.memoryCache_->add(ndnSegment);

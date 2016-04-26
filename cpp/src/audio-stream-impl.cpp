@@ -131,7 +131,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 			boost::shared_ptr<AudioBundlePacket> packet)
 {
 	Name n(streamPrefix_);
-	n.append(threadName).append(Name::Component::fromNumber(bundleNo));
+	n.append(threadName).appendSequenceNumber(bundleNo);
 	boost::shared_ptr<AudioStreamImpl> me = boost::static_pointer_cast<AudioStreamImpl>(shared_from_this());
 
 	async::dispatchAsync(settings_.faceIo_, [n, packet, me](){
