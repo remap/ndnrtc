@@ -16,7 +16,6 @@
 #include <boost/algorithm/string/classification.hpp>
 
 #include "name-components.h"
-#include "ndnrtc-namespace.h"
 
 using namespace std;
 using namespace ndnrtc;
@@ -196,4 +195,159 @@ Name
 NameComponents::videoStreamPrefix(string basePrefix)
 {
     return streamPrefix(MediaStreamParams::MediaStreamType::MediaStreamTypeVideo, basePrefix);
+}
+
+//******************************************************************************
+bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
+{
+    if (name.size() >= 2 && name[0].isVersion())
+    {
+        info.metaVersion_ = name[0].toVersion();
+        info.segNo_ = name[1].toSegment();
+        return true;
+    }
+
+    return false;
+}
+
+bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
+{
+    if (name.size() < 4)
+        return false;
+
+    info.streamName_ = name[0].toEscapedString();
+    info.isMeta_ = (name[1] == Name::Component(NameComponents::NameComponentMeta));
+    
+    if (info.isMeta_)
+    {
+        info.threadName_ = "";
+        return extractMeta(name.getSubName(2), info);
+    }
+    else
+    {
+        info.threadName_ = name[1].toEscapedString();
+        info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
+
+        if (info.isMeta_ && extractMeta(name.getSubName(3), info))
+            return true;
+
+        if (name[2] == Name::Component(NameComponents::NameComponentDelta) || 
+            name[2] == Name::Component(NameComponents::NameComponentKey))
+        {
+            info.isDelta_ = (name[2] == Name::Component(NameComponents::NameComponentDelta));
+
+            try{
+                if (name.size() > 3)
+                    info.sampleNo_ = (PacketNumber)name[3].toSequenceNumber();
+            
+                if (name.size() > 4)
+                {
+                    info.isParity_ = (name[4] == Name::Component(NameComponents::NameComponentParity));
+                    if (info.isParity_ && name.size() > 5)
+                    {
+                        info.segNo_ = name[5].toSegment();
+                        return true;
+                    }
+                    else 
+                    {
+                        if (info.isParity_) 
+                            return false;
+                        else
+                            info.segNo_ = name[4].toSegment();
+                        return true;
+                    }
+                }
+            }
+            catch (std::runtime_error& e)
+            {
+                return false;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
+{
+    if (name.size() < 4)
+        return false;
+
+    info.streamName_ = name[0].toEscapedString();
+    info.isMeta_ = (name[1] == Name::Component(NameComponents::NameComponentMeta));
+    
+    if (info.isMeta_)
+    {
+        info.threadName_ = "";
+        return extractMeta(name.getSubName(2), info);;
+    }
+    else
+    {
+        info.threadName_ = name[1].toEscapedString();
+        info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
+
+        if (info.isMeta_ && extractMeta(name.getSubName(3), info))
+            return true;
+
+        info.isDelta_ = true;
+
+        try
+        {
+            if (name.size() > 2)
+                info.sampleNo_ = (PacketNumber)name[2].toSequenceNumber();
+                
+            if (name.size() > 3)
+            {
+                info.segNo_ = name[3].toSegment();
+                return true;
+            }
+        }
+        catch (std::runtime_error& e)
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool
+NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
+{
+    bool goodName = false;
+    static Name ndnrtcSubName(NameComponents::NameComponentApp);
+    Name subName;
+    int i;
+
+    for (i = name.size()-2; i > 0 && !goodName; --i)
+    {
+        subName = name.getSubName(i);
+        goodName = ndnrtcSubName.match(subName);
+    }
+
+    if (goodName)
+    {
+        info.basePrefix_ = name.getSubName(0, i+1);
+
+        if ((goodName = subName[1].isVersion()))
+        {
+            info.apiVersion_ = subName[1].toVersion();
+
+            if (subName.size() > 2 &&
+                (goodName = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ||
+                            subName[2] == Name::Component(NameComponents::NameComponentVideo)))  )
+            {
+                info.streamType_ = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ? 
+                                MediaStreamParams::MediaStreamType::MediaStreamTypeAudio : 
+                                MediaStreamParams::MediaStreamType::MediaStreamTypeVideo );
+
+                if (info.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
+                    return extractAudioStreamInfo(subName.getSubName(3), info);
+                else
+                    return extractVideoStreamInfo(subName.getSubName(3), info);
+            }
+        }
+    }
+
+    return false;
 }

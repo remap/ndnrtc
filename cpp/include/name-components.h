@@ -15,8 +15,25 @@
 #include <ndn-cpp/name.hpp>
 
 #include "params.h"
+#include "ndnrtc-common.h"
 
 namespace ndnrtc {
+    /**
+     * NamespaceInfo represents information that can be extracted from 
+     * legitimate NDN-RTC name (interest or data).
+     */
+    class NamespaceInfo {
+    public:
+        ndn::Name basePrefix_;
+        unsigned int apiVersion_;
+        MediaStreamParams::MediaStreamType streamType_;
+        std::string streamName_, threadName_;
+        bool isMeta_, isParity_, isDelta_;
+        PacketNumber sampleNo_;
+        unsigned int segNo_;
+        unsigned int metaVersion_;
+    };
+
     class NameComponents {
     public:
         #if 0
@@ -84,6 +101,9 @@ namespace ndnrtc {
 
         static ndn::Name
         videoStreamPrefix(std::string basePrefix);
+
+        // static bool doesComply(const std::string& name);
+        static bool extractInfo(const ndn::Name& name, NamespaceInfo& info);
     };
 }
 
