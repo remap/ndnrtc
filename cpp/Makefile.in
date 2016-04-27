@@ -308,7 +308,9 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
 	tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
-	src/bin_tests_test_network_data-fec.$(OBJEXT) $(am__objects_9)
+	src/bin_tests_test_network_data-fec.$(OBJEXT) \
+	src/bin_tests_test_network_data-name-components.$(OBJEXT) \
+	$(am__objects_9)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
 bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -683,8 +685,8 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace 
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_regex -lboost_system \
-	-lboost_timer -lboost_chrono -lboost_thread $(am__append_1) \
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
+	-lboost_chrono -lboost_thread -lboost_regex $(am__append_1) \
 	$(am__append_2)
 @OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp
@@ -761,7 +763,7 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc src/frame-data.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc src/frame-data.cpp src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
@@ -1200,6 +1202,8 @@ src/bin_tests_test_network_data-frame-data.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_network_data-fec.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_network_data-name-components.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -1398,6 +1402,7 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_name_components-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_network_data-frame-data.$(OBJEXT)
+	-rm -f src/bin_tests_test_network_data-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_packet_publisher-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_packet_publisher-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_packet_publisher-ndnrtc-object.$(OBJEXT)
@@ -1608,6 +1613,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_name_components-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-ndnrtc-object.Po@am__quote@
@@ -3328,6 +3334,22 @@ src/bin_tests_test_network_data-fec.obj: src/fec.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_network_data-fec.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+
+src/bin_tests_test_network_data-name-components.o: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-name-components.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo -c -o src/bin_tests_test_network_data-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_network_data-name-components.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+
+src/bin_tests_test_network_data-name-components.obj: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-name-components.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo -c -o src/bin_tests_test_network_data-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_network_data-name-components.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

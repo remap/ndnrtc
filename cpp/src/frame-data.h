@@ -20,48 +20,14 @@
 #include "webrtc.h"
 #include "params.h"
 #include "ndnrtc-common.h"
+#include "name-components.h"
 
-#define NDNRTC_FRAMEHDR_MRKR 0xf4d4
-#define NDNRTC_FRAMEBODY_MRKR 0xfb0d
-#define NDNRTC_AUDIOHDR_MRKR 0xa4a4
-#define NDNRTC_AUDIOBODY_MRKR 0xabad
-#define NDNRTC_SEGHDR_MRKR 0xb4b4
-#define NDNRTC_SEGBODY_MRKR 0xb5b5
-#define NDNRTC_SESSION_MRKR 0x1234
-#define NDNRTC_VSTREAMDESC_MRKR 0xb1b1
-#define NDNRTC_ASTREAMDESC_MRKR 0xb2b2
-#define NDNRTC_VTHREADDESC_MRKR 0xb3b3
-#define NDNRTC_ATHREADDESC_MRKR 0xb4b4
+namespace ndn{
+    class Data;
+};
 
 namespace ndnrtc {
-    
-    #if 0
-    /**
-     * This stucture is used for storing meta info carried by data name prefixes
-     */
-    typedef std::vector<std::pair<std::string, PacketNumber>> ThreadSyncList;
-    typedef struct _PrefixMetaInfo {
-        int totalSegmentsNum_;
-        PacketNumber playbackNo_;
-        PacketNumber pairedSequenceNo_;
-        int paritySegmentsNum_;
-        int crcValue_;
-        ThreadSyncList syncList_;
-        
-        static const std::string SyncListMarker;
-        static const _PrefixMetaInfo ZeroMetaInfo;
-        
-        static ndn::Name toName(const _PrefixMetaInfo &meta);
-        static int extractMetadata(const ndn::Name& metaComponents, _PrefixMetaInfo &meta);
-        
-        _PrefixMetaInfo();
-        ~_PrefixMetaInfo(){}
-    private:
-        static ThreadSyncList extractSyncList(const ndn::Name &prefix, int markerPos);
-        
-    } __attribute__((packed)) PrefixMetaInfo DEPRECATED;
-    #endif
-    
+
     /**
      * Base data class used for network communication
      */
@@ -196,6 +162,12 @@ namespace ndnrtc {
         DataPacket(DataPacket&& dataPacket) = delete;
     };
 
+    /**
+     * SamplePacket represents data packet for storing sample data - video frame
+     * or audio samples. When initialized with proper segment header class, it
+     * provides functionality to prepare sample data for publishing. It is a base
+     * class for VideoFramePacket and AudioBundlePacket classes.
+     */
     template <typename Header>
     class SamplePacket : public DataPacket {
     public:
@@ -240,13 +212,17 @@ namespace ndnrtc {
         { DataPacket::swap(packet); std::swap(isHeaderSet_, packet.isHeaderSet_); }
     
     protected:
-        bool isHeaderSet() { return isHeaderSet_; }
+        bool isHeaderSet() const { return isHeaderSet_; }
     private:
         SamplePacket(const SamplePacket&) = delete;
         
         bool isHeaderSet_;
     };
 
+    /**
+     * Common sample header used as a header for audio sample packets and parity
+     * data packets.
+     */
     typedef struct _CommonHeader {
             double sampleRate_; // current packet production rate
             int64_t publishTimestampMs_; // packet timestamp set by producer
@@ -260,6 +236,10 @@ namespace ndnrtc {
     typedef SamplePacket<CommonHeader> CommonSamplePacket;
     typedef SamplePacket<AudioSampleHeader> AudioSamplePacket;
 
+    /**
+     * VideoFramePacket provides interface for preparing encoded video frame for
+     * publishing as a data packet.
+     */
     class VideoFramePacket : public CommonSamplePacket {
     public:
         typedef std::map<std::string, PacketNumber> ThreadSyncList;
@@ -287,6 +267,10 @@ namespace ndnrtc {
         bool isSyncListSet_;
     };
 
+    /**
+     * AudioBundlePacket provides interface for bundling audio samples and 
+     * preparing them for publishing as a data packet.
+     */
     class AudioBundlePacket : public CommonSamplePacket
     {
     public:
@@ -302,7 +286,6 @@ namespace ndnrtc {
             const AudioSampleHeader& getHeader() const { return header_; }
             size_t size() const;
             const uint8_t* data() const { return (fromBlob_?&(*(begin_+sizeof(AudioSampleHeader))):&(*begin_)); }
-            // uint8_t operator[](size_t pos) const { return Blob::operator[](pos+(fromBlob_?sizeof(AudioSampleHeader):0)); };
 
             static size_t wireLength(size_t payloadLength);
         private:
@@ -317,7 +300,7 @@ namespace ndnrtc {
         size_t getRemainingSpace() const { return remainingSpace_; }
         void clear();
         AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
-        size_t getSamplesNum();
+        size_t getSamplesNum() const;
         const AudioSampleBlob operator[](size_t pos) const;
         void swap(AudioBundlePacket& bundle);
         
@@ -491,401 +474,51 @@ namespace ndnrtc {
         std::vector<std::string> getThreads() const;
     };
 
-    #if 0
-    class SegmentData : public NetworkData
-    {
+    template<typename SegmentType>
+    class WireData {
     public:
-        typedef struct _SegmentMetaInfo {
-            int32_t interestNonce_;
-            int64_t interestArrivalMs_;
-            int32_t generationDelayMs_;
-        } __attribute__((packed)) SegmentMetaInfo;
-        
-        SegmentData(){}
-        SegmentData(const unsigned char *segmentData, const unsigned int dataSize,
-                    SegmentMetaInfo metadata = (SegmentMetaInfo){0,0,0});
-        
-        SegmentMetaInfo
-        getMetadata() { return ((SegmentHeader*)(&data_[0]))->metaInfo_; }
-        
-        unsigned char*
-        getSegmentData() { return data_+SegmentData::getHeaderSize(); }
-        
-        unsigned int
-        getSegmentDataLength() { return length_-SegmentData::getHeaderSize(); }
-        
-        inline static unsigned int
-        getHeaderSize() { return sizeof(SegmentHeader); }
-        
-        int
-        initFromRawData(unsigned int dataLength,
-                        const unsigned char* rawData);
-        
-        static int
-        segmentDataFromRaw(unsigned int dataLength,
-                           const unsigned char* rawData,
-                           SegmentData &segmentData);
-        
-    private:
-        typedef struct _SegmentHeader {
-            uint16_t headerMarker_ = NDNRTC_SEGHDR_MRKR;
-            SegmentMetaInfo metaInfo_;
-            uint16_t bodyMarker_ = NDNRTC_SEGBODY_MRKR;
-        }  __attribute__((packed)) SegmentHeader;
-        
-    };
-
-    
-    /**
-     * Base class for storing media data for publishing in ndn
-     */
-    class PacketData : public NetworkData
-    {
-    public:
-        enum PacketDataType {
-            TypeVideo = 1,
-            TypeAudio = 2,
-            TypeParity = 3
-        };
-        struct PacketMetadata {
-            double packetRate_; // current packet production rate
-            int64_t timestamp_; // packet timestamp set by producer
-            double unixTimestamp_; // unix timestamp set by producer
-        } __attribute__((packed));
-        
-        static const PacketMetadata ZeroMetadata;
-        static const PacketMetadata BadMetadata;
-        
-        PacketData(){}
-        PacketData(unsigned int dataLength, const unsigned char* rawData):
-            NetworkData(dataLength, rawData) {}
-        
-        virtual PacketMetadata
-        getMetadata();
-        
-        virtual void
-        setMetadata(PacketMetadata& metadata) = 0;
-        
-        virtual PacketDataType
-        getType() = 0;
-        
-        static int
-        packetFromRaw(unsigned int length, unsigned char* data,
-                      PacketData **packetData);
-        
-        /**
-         * Retrieves metadata from raw bytes. It is assumed that these bytes 
-         * represent 0 segment of the data (audio or video), i.e. control 
-         * header markers are checked and if they are not satisfy video or audio 
-         * packet, returned value is initialized with -1s.
-         * @param lenght Length of data block
-         * @param data Data block
-         * @return packet metadata of type PacketMetadata
-         */
-        static PacketMetadata
-        metadataFromRaw(unsigned int length, const unsigned char* data);
-    };
-    #if 0
-    class FrameParityData: public PacketData
-    {
-    public:
-        FrameParityData(unsigned int length, const unsigned char* rawData);
-        FrameParityData(){}
-        
-        PacketDataType
-        getType() { return TypeParity; }
-        
-        void
-        setMetadata(PacketMetadata& metadata) {}
-
-        int
-        initFromPacketData(const PacketData& packetData,
-                           double parityRatio,
-                           unsigned int nSegments,
-                           unsigned int segmentSize);
-
-        
-        int
-        initFromRawData(unsigned int dataLength, const unsigned char* rawData);
-        
-        static unsigned int
-        getParitySegmentsNum(unsigned int nSegments, double parityRatio);
-        
-        static unsigned int
-        getParityDataLength(unsigned int nSegments, double parityRatio,
-                            unsigned int segmentSize);
-    };
-    #endif
-    
-    /**
-     * Class is used for packaging encoded frame metadata and actual data for
-     * transferring over the network.
-     * It has also methods for unarchiving this data into an encoded frame.
-     * 
-     */
-    class NdnFrameData : public PacketData
-    {
-    public:
-        NdnFrameData(unsigned int length, const unsigned char* rawData);
-        NdnFrameData(const webrtc::EncodedImage &frame,
-                     unsigned int segmentSize);
-        NdnFrameData(const webrtc::EncodedImage &frame,
-                     unsigned int segmentSize,
-                     PacketMetadata &metadata);
-        NdnFrameData(){}
-        ~NdnFrameData();
-        
-        PacketDataType
-        getType() { return TypeVideo; }
-        
-        int
-        getFrame(webrtc::EncodedImage& frame);
-        
-        PacketMetadata
-        getMetadata();
-        
-        void
-        setMetadata(PacketMetadata& metadata);
-
-        int
-        initFromRawData(unsigned int dataLength, const unsigned char* rawData);
-        
-        static bool
-        isValidHeader(unsigned int length, const unsigned char* data);
-        
-        static PacketMetadata
-        metadataFromRaw(unsigned int length, const unsigned char* data);
-        
-    protected:
-        struct FrameDataHeader {
-            uint16_t                    headerMarker_ = NDNRTC_FRAMEHDR_MRKR;   // 2
-            uint32_t                    encodedWidth_;                          // 6
-            uint32_t                    encodedHeight_;                         // 10
-            uint32_t                    timeStamp_;                             // 14
-            int64_t                     capture_time_ms_;                       // 22
-            WebRtcVideoFrameType      frameType_;                             // 26
-                                                                                //            uint8_t*                    _buffer;
-                                                                                //            uint32_t                    _length;
-                                                                                //            uint32_t                    _size;
-            bool                        completeFrame_;                         // 27
-            PacketMetadata               metadata_;                             // 39
-            uint16_t                    bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;    // 41
-        } __attribute__((packed));
-        
-        webrtc::EncodedImage frame_;
-        unsigned int segmentSize_;
-        
-        void
-        initialize(const webrtc::EncodedImage &frame,
-                   unsigned int segmentSize);
-        
-        FrameDataHeader
-        getHeader()
+        WireData(const boost::shared_ptr<ndn::Data>& data):data_(data),
+            isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
         {
-            return *((FrameDataHeader*)(&data_[0]));
+            if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
+            {
+                std::stringstream ss;
+                ss << "Attempt to create wired data object with "
+                    << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+                throw std::runtime_error(ss.str());
+            }
         }
-    };
-    
-    /**
-     * Class is used for packaging audio samples actual data and metadata for
-     * transferring over the network.
-     */
-    class NdnAudioData : public PacketData
-    {
-    public:
-        typedef struct _AudioPacket {
-            bool isRTCP_;
-            unsigned int length_;
-            unsigned char *data_;
-            
-            unsigned int
-            getLength() { return sizeof(this->isRTCP_) +
-                            sizeof(this->length_) + length_; }
-            
-        } __attribute__((packed)) AudioPacket;
-        
-        NdnAudioData(unsigned int dataLength, const unsigned char* rawData);
-        NdnAudioData(){}
-        ~NdnAudioData(){}
-        
-        PacketDataType
-        getType() { return TypeAudio; }
-        
-        PacketMetadata
-        getMetadata();
-        
-        void
-        setMetadata(PacketMetadata& metadata);
-        
-        int
-        initFromRawData(unsigned int dataLength, const unsigned char* rawData);
-        
-        std::vector<AudioPacket>&
-        getPackets()
-        { return packets_; }
-        
-        void
-        clear()
+
+        WireData(const WireData& data):data_(data.data_),
+            dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_)
+        {}
+
+        ~WireData(){}
+
+        bool isValid() { return isValid_; }
+        size_t getSlicesNum()
         {
-            packets_.clear();
-            length_ = 0;
-            delete data_;
-            data_ = NULL;
-            isDataCopied_ = false;
-            isValid_ = false;
+            return data_->getMetaInfo().getFinalBlockId().toNumber();
         }
-        
-        void
-        addPacket(AudioPacket& packet);
-        
-        static bool
-        isValidHeader(unsigned int length, const unsigned char* data);
-        
-        static PacketMetadata
-        metadataFromRaw(unsigned int length, const unsigned char* data);
-        
-    private:
-        struct AudioDataHeader {
-            uint16_t        headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-            uint8_t             nPackets_;
-            PacketMetadata      metadata_;
-            uint16_t        bodyMarker_  = NDNRTC_AUDIOBODY_MRKR;
-        } __attribute__((packed));
-        
-        std::vector<AudioPacket> packets_;
-        
-        AudioDataHeader
-        getHeader()
-        {
-            return *((AudioDataHeader*)(&data_[0]));
-        }
-    };
-    
-    /**
-     * Session info metadata stores all the necessary information for consumer 
-     * about producer's audio/video streams and its' parameters.
-     * Packed session info structure:
-     * {
-     *      <header marker - 2 bytes>
-     *      <number of video streams - 4 bytes>
-     *      <number of audio streams - 4 bytes>
-     *      <session prefix string>\0
-     *      <header marker - 2 bytes>
-     *      [
-     *          {
-     *              <video stream marker - 2 bytes>
-     *              <segment size - 4 bytes>
-     *              <stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
-     *              <synchronized stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
-     *              <number of threads - 4 bytes>
-     *              <video stream marker - 2 bytes>
-     *              [
-     *                  {
-     *                      <video thread marker - 2 bytes>
-     *                      <FPS - 4 bytes>
-     *                      <GOP - 4 bytes>
-     *                      <bitrate - 4 bytes>
-     *                      <width - 4 bytes>
-     *                      <height - 4 bytes>
-     *                      <average number of delta frames - 4 bytes>
-     *                      <average number of delta parity frames - 4 bytes>
-     *                      <average number of key frames - 4 bytes>
-     *                      <average number of key parity frames - 4 bytes>
-     *                      <thread name - MAX_THREAD_NAME_LENGTH+1 bytes>
-     *                      <video thread marker - 2 bytes>
-     *                  },
-     *                  ...
-     *              ]
-     *          },
-     *          ...
-     *      ],
-     *      [
-     *          {
-     *              <audio stream marker - 2 bytes>
-     *              <segment size - 4 bytes>
-     *              <stream name - MAX_STREAM_NAME_LENGTH+1 bytes>
-     *              <number of threads - 4 bytes>
-     *              <audio stream marker - 2 bytes>
-     *              [
-     *                  {
-     *                      <audio thread marker - 2 bytes>
-     *                      <FPS - 4 bytes>
-     *                      <thread name - MAX_THREAD_NAME_LENGTH+1 bytes>
-     *                      <audio thread marker - 2 bytes>
-     *                  },
-     *                  ...
-     *              ]
-     *          },
-     *          ...
-     *      ]
-     * }
-     */
-    class SessionInfoData : public NetworkData
-    {
-    public:
-        SessionInfoData(const new_api::SessionInfo& sessionInfo);
-        SessionInfoData(unsigned int dataLength, const unsigned char* data);
-        virtual ~SessionInfoData() {}
-        
-        int
-        getSessionInfo(new_api::SessionInfo& sessionInfo);
+
+        boost::shared_ptr<ndn::Data> getData() { return data_; }
+        ndn::Name getBasePrefix() { return dataNameInfo_.basePrefix_; }
+        unsigned int getApiVersion() { return dataNameInfo_.apiVersion_; }
+        MediaStreamParams::MediaStreamType getStreamType() { return dataNameInfo_.streamType_; }
+        std::string getStreamName() { return dataNameInfo_.streamName_; }
+        bool isMeta() { return dataNameInfo_.isMeta_; }
+        PacketNumber getSampleNo() { return dataNameInfo_.sampleNo_; }
+        unsigned int getSegNo() { return dataNameInfo_.segNo_; }
+        bool isParity() { return dataNameInfo_.isParity_; }
+        std::string getThreadName() { return dataNameInfo_.threadName_; }
+
+        const SegmentType& segment() const { return SegmentType(data_); }
 
     private:
-        struct _VideoThreadDescription {
-            uint16_t mrkr1_ = NDNRTC_VTHREADDESC_MRKR;
-            double rate_; // FPS
-            unsigned int gop_;
-            unsigned int bitrate_; // kbps
-            unsigned int width_, height_; // pixels
-            double deltaAvgSegNum_, deltaAvgParitySegNum_;
-            double keyAvgSegNum_, keyAvgParitySegNum_;
-            char name_[MAX_THREAD_NAME_LENGTH+1];
-            uint16_t mrkr2_ = NDNRTC_VTHREADDESC_MRKR;
-        } __attribute__((packed));
-        
-        struct _AudioThreadDescription {
-            uint16_t mrkr1_ = NDNRTC_ATHREADDESC_MRKR;
-            double rate_;
-            char name_[MAX_THREAD_NAME_LENGTH+1];
-            uint16_t mrkr2_ = NDNRTC_ATHREADDESC_MRKR;
-        } __attribute__((packed));
-        
-        struct _VideoStreamDescription {
-            uint16_t mrkr1_ = NDNRTC_VSTREAMDESC_MRKR;
-            unsigned int segmentSize_;
-            char name_[MAX_STREAM_NAME_LENGTH+1];
-            char syncName_[MAX_STREAM_NAME_LENGTH+1];
-            unsigned int nThreads_;
-            uint16_t mrkr2_ = NDNRTC_VSTREAMDESC_MRKR;
-        } __attribute__((packed));
-        
-        struct _AudioStreamDescription {
-            uint16_t mrkr1_ = NDNRTC_ASTREAMDESC_MRKR;
-            unsigned int segmentSize_;
-            char name_[MAX_STREAM_NAME_LENGTH+1];
-            unsigned int nThreads_;
-            uint16_t mrkr2_ = NDNRTC_ASTREAMDESC_MRKR;
-        } __attribute__((packed));
-        
-        struct _SessionInfoDataHeader {
-            uint16_t mrkr1_ = NDNRTC_SESSION_MRKR;
-            unsigned int nVideoStreams_;
-            unsigned int nAudioStreams_;
-            uint16_t mrkr2_ = NDNRTC_SESSION_MRKR;
-        } __attribute__((packed));
-        
-        new_api::SessionInfo sessionInfo_;
-        
-        unsigned int
-        getSessionInfoLength(const new_api::SessionInfo& sessionInfo);
-        
-        void
-        packParameters(const new_api::SessionInfo& sessionInfo);
-        
-        int
-        initFromRawData(unsigned int dataLength, const unsigned char* data);
+        NamespaceInfo dataNameInfo_;
+        bool isValid_;
+        boost::shared_ptr<ndn::Data> data_;
     };
-    #endif
 };
 
 #endif /* defined(__ndnrtc__frame_slot__) */
