@@ -1063,7 +1063,95 @@ TEST(TestMediaStreamMeta, TestCreate)
     EXPECT_EQ("desktop", meta2.getSyncStreams()[0]);
     EXPECT_EQ("mic", meta2.getSyncStreams()[1]);
 }
+#if 0
+TEST(TestWireData, TestVideoFrameSegment)
+{
+    int data_len = 6472;
+    std::vector<uint8_t> data;
 
+    for (int i = 0; i < data_len; ++i)
+        data.push_back((uint8_t)i);
+    
+    NetworkData nd(data);
+    int wireLength = 1000;
+    std::vector<VideoFrameSegment> segments = VideoFrameSegment::slice(nd, wireLength);
+    int payloadLength = VideoFrameSegment::payloadLength(wireLength);
+
+    EXPECT_EQ(VideoFrameSegment::numSlices(nd, wireLength), segments.size());
+
+    int idx = 0;
+    VideoFrameSegmentHeader header;
+    header.interestNonce_ = 0x1234;
+    header.interestArrivalMs_ = 1460399362;
+    header.generationDelayMs_ = 200;
+    header.totalSegmentsNum_ = segments.size();
+    header.playbackNo_ = 0;
+    header.pairedSequenceNo_ = 1;
+    header.paritySegmentsNum_ = 2;
+
+    for (auto& s:segments)
+    {
+        VideoFrameSegmentHeader hdr = header;
+        hdr.interestNonce_ += idx;
+        hdr.interestArrivalMs_ += idx;
+        hdr.playbackNo_ += idx;
+        idx++;
+        s.setHeader(hdr);
+    }
+
+    {
+        std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+        std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+        int segIdx = 0;
+        for (auto& s:segments)
+        {
+            ndn::Name n(frameName);
+            n.appendSegment(segIdx++);
+            boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+            ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+            ds->setContent(s.getNetworkData()->getData(), s.size());
+            dataSegments.push_back(ds);
+        }
+    
+        int idx = 0;
+        for (auto d:dataSegments)
+        {
+            WireData<VideoFrameSegment> wd(d);
+            EXPECT_TRUE(wd.isValid());
+            EXPECT_EQ(segments.size(), wd.getSlicesNum());
+            EXPECT_EQ(ndn::Name("/ndn/edu/ucla/remap/ndncon/instance1"), wd.getBasePrefix());
+            EXPECT_EQ(2, wd.getApiVersion());
+            EXPECT_EQ(MediaStreamParams::MediaStreamType::MediaStreamTypeVideo, wd.getStreamType());
+            EXPECT_EQ("camera", wd.getStreamName());
+            EXPECT_EQ("hi", wd.getThreadName());
+            EXPECT_FALSE(wd.isMeta());
+            EXPECT_EQ(0, wd.getSampleNo());
+            EXPECT_EQ(idx, wd.getSegNo());
+            EXPECT_FALSE(wd.isParity());
+
+            EXPECT_EQ(header.interestNonce_+idx, wd.segment().getHeader().interestNonce_);
+            idx++;
+        }
+    }
+    {
+        std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%00/video/camera/hi/d/%FE%00";
+        std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+        int segIdx = 0;
+        for (auto& s:segments)
+        {
+            ndn::Name n(frameName);
+            n.appendSegment(segIdx++);
+            boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+            ds->setContent(s.getNetworkData()->getData(), s.size());
+            dataSegments.push_back(ds);
+        }
+    
+        for (auto d:dataSegments)
+            EXPECT_ANY_THROW(WireData<VideoFrameSegment> wd(d));
+    }
+
+}
+#endif
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
