@@ -376,7 +376,7 @@ void AudioBundlePacket::clear()
     remainingSpace_ = AudioBundlePacket::payloadLength(wireLength_);
 }
 
-size_t AudioBundlePacket::getSamplesNum()
+size_t AudioBundlePacket::getSamplesNum() const
 {
     return blobs_.size() - isHeaderSet();
 }
