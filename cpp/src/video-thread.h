@@ -14,10 +14,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include "video-coder.h"
-#include "frame-data.h"
 
 namespace ndnrtc
 {
+    class VideoFramePacket;
+    
     class VideoThread : public NdnRtcComponent,
                         public IEncoderDelegate
     {

@@ -17,6 +17,8 @@
 #include "frame-data.h"
 #include "ndnrtc-object.h"
 
+#define ADD_CRC 0
+
 namespace ndn{
 	class Face;
 	class KeyChain;
@@ -27,8 +29,10 @@ namespace ndn{
 }
 
 namespace ndnrtc{
-	class NetworkData;
+	template<typename T>
+	class NetworkDataT;
 	struct _DataSegmentHeader;
+	typedef NetworkDataT<Mutable> MutableNetworkData;
 
 	template<typename KeyChain, typename MemoryCache>
 	struct _PublisherSettings {
@@ -50,7 +54,7 @@ namespace ndnrtc{
 				settings_.memoryCache_->setInterestFilter(nameFilter, settings_.memoryCache_->getStorePendingInterest());
 		}
 
-		size_t publish(const ndn::Name& name, const NetworkData& data)
+		size_t publish(const ndn::Name& name, const MutableNetworkData& data)
 		{
 			// provide dummy memory of the size of the segment header to publish function
 			// we don't care of bytes that will be saved in this memory, so allocate it
@@ -60,7 +64,7 @@ namespace ndnrtc{
 			return publish(name, data, (_DataSegmentHeader&)*dummyHeader.get());
 		}
 
-		size_t publish(const ndn::Name& name, const NetworkData& data, 
+		size_t publish(const ndn::Name& name, const MutableNetworkData& data, 
 			_DataSegmentHeader& commonHeader)
 		{
 			LogDebugC << "publish " << name << std::endl;
@@ -86,11 +90,13 @@ namespace ndnrtc{
 			for (auto segment:segments)
 			{
 				segment.setHeader(commonHeader);
-				boost::shared_ptr<NetworkData> segmentData = segment.getNetworkData();
+				boost::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
 		
 				ndn::Name segmentName(name);
 				segmentName.appendSegment(segIdx);
-				// segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
+				#if ADD_CRC
+				segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
+				#endif
 				
 				ndn::Data ndnSegment(segmentName);
 				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);

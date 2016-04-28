@@ -62,10 +62,13 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 		EXPECT_EQ(freshness, data.getMetaInfo().getFreshnessPeriod());
 		EXPECT_TRUE(packetName.isPrefixOf(data.getName()));
 		dataObjects.push_back(data);
+		
+		#if ADD_CRC
 		// check CRC value
 		NetworkData nd(*data.getContent());
 		uint64_t crcValue = data.getName()[-1].toNumber();
 		EXPECT_EQ(crcValue, nd.getCrcValue());
+		#endif
 	};
 
 	EXPECT_CALL(memoryCache, getStorePendingInterest())

@@ -8,8 +8,12 @@
 //  Author:  Peter Gusev
 //
 
+#include <boost/make_shared.hpp>
+#include <ndn-cpp/data.hpp>
+
 #include "audio-thread.h"
 #include "estimators.h"
+#include "frame-data.h"
 
 using namespace ndnrtc;
 using namespace webrtc;

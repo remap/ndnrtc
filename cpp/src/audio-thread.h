@@ -12,6 +12,7 @@
 #define __ndnrtc__audio_thread__
 
 #include <boost/thread.hpp>
+#include <ndn-cpp/data.hpp>
 
 #include "params.h"
 #include "ndnrtc-object.h"

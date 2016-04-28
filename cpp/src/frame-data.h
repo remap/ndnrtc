@@ -12,6 +12,8 @@
 #define __ndnrtc__frame_slot__
 
 #include <boost/crc.hpp>
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <webrtc/video_frame.h>
 #include <ndn-cpp/name.hpp>
 #include <boost/move/move.hpp>
@@ -28,35 +30,81 @@ namespace ndn{
 
 namespace ndnrtc {
 
-    /**
-     * Base data class used for network communication
-     */
-    class NetworkData
-    {
+    struct Mutable {
+        typedef std::vector<uint8_t> storage;
+        typedef std::vector<uint8_t>::iterator payload_iter;
+    };
+
+    struct Immutable {
+        typedef boost::shared_ptr<const std::vector<uint8_t>> storage;
+        typedef std::vector<uint8_t>::const_iterator payload_iter;
+    };
+
+    #define ENABLE_IF(T, M) template<typename U = T, typename boost::enable_if<typename boost::is_same<M,U>>::type... X>
+    #define ENABLE_FOR(M) typename boost::enable_if<typename boost::is_same<M,U>>::type* dummy = 0
+
+    //******************************************************************************
+    template<typename T = Mutable>
+    class NetworkDataT {
     public:
-        NetworkData(unsigned int dataLength, const uint8_t* rawData);
-        NetworkData(const std::vector<uint8_t>& data);
-        NetworkData(const NetworkData& networkData);
-        NetworkData(NetworkData&& networkData);
-        NetworkData(std::vector<uint8_t>& data);
-        virtual ~NetworkData() {}
+        ENABLE_IF(T,Immutable)
+        NetworkDataT(const boost::shared_ptr<const std::vector<uint8_t>>& data):data_(data){}
 
-        NetworkData& operator=(const NetworkData& networkData);
+        ENABLE_IF(T,Mutable)
+        NetworkDataT(unsigned int dataLength, const uint8_t* rawData):
+            isValid_(true)
+        { copyFromRaw(dataLength, rawData); }
 
-        virtual void 
-        swap(NetworkData& networkData);
-
-        virtual int
-        getLength() const { return data_.size(); }
+        ENABLE_IF(T,Mutable)
+        NetworkDataT(const std::vector<uint8_t>& data):isValid_(true), data_(data){}
         
+        ENABLE_IF(T,Mutable)
+        NetworkDataT(const NetworkDataT& data):data_(data.data_), isValid_(data.isValid_){}
+        
+        ENABLE_IF(T,Mutable)
+        NetworkDataT(NetworkDataT&& data):isValid_(data.isValid())
+        {
+            data_.swap(data.data_);
+            data.isValid_ = false; 
+        }
+
+        ENABLE_IF(T,Mutable)
+        NetworkDataT(std::vector<uint8_t>& data):data_(boost::move(data)), isValid_(true){}
+        
+        virtual ~NetworkDataT() {}
+
+        virtual int 
+        getLength() const { return _data().size(); }
+
         const uint8_t*
-        getData() const { return data_.data(); }
+        getData() const { return _data().data(); }
 
-        virtual const std::vector<uint8_t>& data() const { return data_; }
-        
-        virtual bool
+        const std::vector<uint8_t>& data() const 
+        { return _data(); }
+
+        bool 
         isValid() const { return isValid_; }
-        
+
+        ENABLE_IF(T,Mutable)
+        NetworkDataT& operator=(const NetworkDataT& networkData)
+        {
+            if (this != &networkData)
+            {
+                data_ = networkData.data_;
+                isValid_ = networkData.isValid_;
+            }
+
+            return *this;
+        }
+
+        void 
+        swap(NetworkDataT& networkData)
+        {
+            std::swap(isValid_, networkData.isValid_);
+            data_.swap(networkData.data_);
+        }
+
+        ENABLE_IF(T,Mutable)
         int
         getCrcValue() const
         {
@@ -64,44 +112,60 @@ namespace ndnrtc {
             crc_computer_ = std::for_each(data_.begin(), data_.end(), crc_computer_);
             return crc_computer_();
         }
-        
-    protected:
-        NetworkData() = delete;
 
-        bool isValid_ = false;
-        std::vector<uint8_t> data_;
-        
-        virtual int
-        initFromRawData(unsigned int dataLength,
-                        const uint8_t* rawData) { return 0; };
-        
+    protected:
+        bool isValid_;
+        typename T::storage data_;
+
+        ENABLE_IF(T,Immutable)
+        const std::vector<uint8_t>& _data(ENABLE_FOR(Immutable)) const 
+        { return *data_; }
+
+        ENABLE_IF(T,Mutable)
+        const std::vector<uint8_t>& _data(ENABLE_FOR(Mutable)) const 
+        { return data_; }
+
+        ENABLE_IF(T,Mutable)
+        std::vector<uint8_t>& _data(ENABLE_FOR(Mutable))
+        { return data_; }
+
+        ENABLE_IF(T,Mutable)
         void
-        copyFromRaw(unsigned int dataLength, const uint8_t* rawData);
+        copyFromRaw(unsigned int dataLength, const uint8_t* rawData)
+        { data_.assign(rawData, rawData+dataLength); }
     };
 
-    /**
-     * General data packet used by application to pack binary data into a 
-     * NetworkData object. Provides interface for adding arbitrary number of
-     * data headers (represented by NetworkData objects). Unlike NetworkData,
-     * DataPacket maintains a packet format and if one will construct DataPacket
-     * from arbitrary raw data, calling isValid() on constructed object will 
-     * return false. Data buffer in this case will be empty (getLength will 
-     * return 0). The DataPacket format is simple - headers are separated by 
-     * special markers and the rest of the packet is the DataPacket payload.
-     */
-    class DataPacket : public NetworkData
+    typedef NetworkDataT<Immutable> ImmutableNetworkData;
+    typedef NetworkDataT<> NetworkData;
+
+    //******************************************************************************
+    template<typename T = Mutable>
+    class DataPacketT : public NetworkDataT<T>
     {
+        ENABLE_IF(T,Mutable)
+        DataPacketT(DataPacketT<T>&& dataPacket) = delete;
+
     public:
         class Blob {
         public:
-            size_t size() const;
-            uint8_t operator[](size_t pos) const;
-            const uint8_t* data() const;
+            size_t size() const { return (end_-begin_); }
+            uint8_t operator[](size_t pos) const { return *(begin_+pos); }
+            const uint8_t* data() const { return &(*begin_); }
 
             Blob(const Blob& b):begin_(b.begin_), end_(b.end_){}
             Blob(const std::vector<uint8_t>::const_iterator& begin, 
-                 const std::vector<uint8_t>::const_iterator& end);
-            Blob& operator=(const Blob& b);
+                const std::vector<uint8_t>::const_iterator& end):
+                begin_(begin), end_(end){}
+            Blob& operator=(const Blob& b)
+            {
+                if (this != &b)
+                {
+                    begin_ = b.begin_;
+                    end_ = b.end_;
+                }
+
+                return *this;
+            }
 
             std::vector<uint8_t>::const_iterator begin() const 
             { return begin_; }
@@ -113,91 +177,195 @@ namespace ndnrtc {
             Blob() = delete;
         };
 
-        DataPacket(unsigned int dataLength, const uint8_t* payload);
-        DataPacket(const std::vector<uint8_t>& payload);
-        DataPacket(const DataPacket& dataPacket);
-        DataPacket(NetworkData&& networkData);
+        DataPacketT(const DataPacketT<T>& dataPacket):
+            NetworkDataT<T>(dataPacket.data_)
+        { this->reinit(); }
 
-        const Blob getPayload() const;
+        ENABLE_IF(T,Immutable)
+        DataPacketT(const boost::shared_ptr<const std::vector<uint8_t>>& data):
+            NetworkDataT<T>(data){ this->isValid_ = true; this->reinit(); }
 
-        virtual void swap(NetworkData& networkData) 
-        { NetworkData::swap(networkData); reinit(); }
+        ENABLE_IF(T,Mutable)
+        DataPacketT(unsigned int dataLength, const uint8_t* payload):
+            NetworkDataT<T>(dataLength, payload)
+        {
+            this->_data().insert(this->_data().begin(), 0);
+            payloadBegin_ = this->_data().begin()+1;
+        }
 
-        virtual void swap(DataPacket& dataPacket)
-        { NetworkData::swap(dataPacket); reinit(); dataPacket.reinit(); }
+        ENABLE_IF(T,Mutable)
+        DataPacketT(const std::vector<uint8_t>& payload):
+            NetworkDataT<T>(payload)
+        {
+            this->_data().insert(this->_data().begin(), 0);
+            payloadBegin_ = this->_data().begin()+1;
+        }
+
+        ENABLE_IF(T,Mutable)
+        DataPacketT(NetworkDataT<T>&& networkData):
+            NetworkDataT<T>(boost::move(networkData))
+        { this->reinit(); }
+
+        const Blob getPayload() const
+        { return Blob(payloadBegin_, this->_data().end()); }
+
+        ENABLE_IF(T,Mutable)
+        void swap(NetworkDataT<T>& networkData) 
+        { NetworkDataT<T>::swap(networkData); this->reinit(); }
+
+        void swap(DataPacketT<T>& dataPacket)
+        { this->data_.swap(dataPacket.data_); this->reinit(); dataPacket.reinit(); }
 
         /**
          * This calculates total wire length for a packet with given 
          * payloadLength and one blob (header) of length blobLength
          */
-        static size_t wireLength(size_t payloadLength, size_t blobLength);
+        static size_t wireLength(size_t payloadLength, size_t blobLength)
+        {
+            size_t wireLength = 1+payloadLength;
+            if (blobLength > 0) wireLength += 2+blobLength;
+            return wireLength;
+        }
+
         /**
          * This calculates total wire length for a packet with given
          * payloadLength and arbitrary number of blobs (headers), lengths
          * of which are given in vector blobLengths 
          */
-        static size_t wireLength(size_t payloadLength, std::vector<size_t>  blobLengths);
+        static size_t wireLength(size_t payloadLength, std::vector<size_t>  blobLengths)
+        {
+            size_t wireLength = 1+payloadLength;
+            for (auto b:blobLengths) if (b>0) wireLength += 2+b;
+                return wireLength;
+        }
         /**
          * This calculates length of byte overhead for adding one blob (header)
          * of length blobLength to a data packet
          */
-        static size_t wireLength(size_t blobLength);
+        static size_t wireLength(size_t blobLength)
+        {
+            if (blobLength) return blobLength+2;
+            return 0;
+        }
+
         /**
          * This calculates length of byte overhead for adding arbitrary number
          * of blobs (headers) to a data packet, lenghts of which are given 
          * in vector blobLengths
          */
-        static size_t wireLength(std::vector<size_t>  blobLengths);
-     protected:
+        static size_t wireLength(std::vector<size_t>  blobLengths)
+        {
+            size_t wireLength = 0;
+            for (auto b:blobLengths) wireLength += 2+b;
+                return wireLength;
+        }
+
+    protected:
         std::vector<Blob> blobs_;
-        std::vector<uint8_t>::iterator payloadBegin_;
+        typename T::payload_iter payloadBegin_;
 
         unsigned int getBlobsNum() const { return blobs_.size(); }
         const Blob getBlob(size_t pos) const { return blobs_[pos]; }
 
-        void addBlob(uint16_t dataLength, const uint8_t* data);
-        virtual void reinit();
+        virtual void reinit()
+        {
+            blobs_.clear();
+            if (!this->_data().size()) { this->isValid_ = false; return; }
 
-    private:
-        DataPacket(DataPacket&& dataPacket) = delete;
+            typename T::payload_iter p1 = (this->_data().begin()+1), p2;
+            uint8_t nBlobs = this->_data()[0];
+            bool invalid = false;
+
+            for (int i = 0; i < nBlobs; i++)
+            {
+                uint8_t b1 = *p1++, b2 = *p1;
+                uint16_t blobSize = b1|((uint16_t)b2)<<8;
+
+                if (p1-this->_data().begin()+blobSize > this->_data().size())
+                {
+                    invalid = true;
+                    break;
+                }
+
+                p2 = ++p1+blobSize;
+                blobs_.push_back(Blob(p1,p2));
+                p1 = p2;
+            }
+
+            if (!invalid) payloadBegin_ = p1;
+            else this->isValid_ = false;
+        }
+
+        ENABLE_IF(T,Mutable)
+        void addBlob(uint16_t dataLength, const uint8_t* data)
+        {
+            if (dataLength == 0) return;
+
+            // increase blob counter
+            this->_data()[0]++;
+            // save blob size
+            uint8_t b1 = dataLength&0x00ff, b2 = (dataLength&0xff00)>>8;
+            payloadBegin_ = this->_data().insert(payloadBegin_, b1);
+            payloadBegin_++;
+            payloadBegin_ = this->_data().insert(payloadBegin_, b2);
+            payloadBegin_++;
+            // insert blob
+            this->_data().insert(payloadBegin_, data, data+dataLength);
+            this->reinit();
+        }
     };
 
-    /**
-     * SamplePacket represents data packet for storing sample data - video frame
-     * or audio samples. When initialized with proper segment header class, it
-     * provides functionality to prepare sample data for publishing. It is a base
-     * class for VideoFramePacket and AudioBundlePacket classes.
-     */
-    template <typename Header>
-    class SamplePacket : public DataPacket {
+    typedef DataPacketT<Immutable> ImmutableDataPacket;
+    typedef DataPacketT<> DataPacket;
+
+    //******************************************************************************
+    template<typename Header, typename T>
+    class HeaderPacketT : public DataPacketT<T> {
     public:
-        SamplePacket(unsigned int dataLength, const uint8_t* payload):
-            DataPacket(dataLength, payload),
-            isHeaderSet_(false){ isValid_ = false; }
-        SamplePacket(const std::vector<uint8_t>& payload):
-            DataPacket(payload),
-            isHeaderSet_(false){ isValid_ = false; }
-        SamplePacket(const Header& header, unsigned int dataLength, 
+        ENABLE_IF(T,Immutable)
+        HeaderPacketT(const boost::shared_ptr<const std::vector<uint8_t>>& data):
+            DataPacketT<T>(data)
+        {
+            isHeaderSet_ = this->isValid_ && (this->blobs_.size() >= 1) && 
+                    (this->blobs_.back().size() == sizeof(Header));
+            this->isValid_ = isHeaderSet_;
+        }
+
+        ENABLE_IF(T,Mutable)
+        HeaderPacketT(unsigned int dataLength, const uint8_t* payload):
+            DataPacketT<T>(dataLength, payload),
+                isHeaderSet_(false){ this->isValid_ = false; }
+        
+        ENABLE_IF(T,Mutable)
+        HeaderPacketT(const std::vector<uint8_t>& payload):
+            DataPacketT<T>(payload),
+            isHeaderSet_(false){ this->isValid_ = false; }
+        
+        ENABLE_IF(T,Mutable)
+        HeaderPacketT(const Header& header, unsigned int dataLength, 
             const uint8_t* payload): 
-            DataPacket(dataLength, payload),
+            DataPacketT<T>(dataLength, payload),
             isHeaderSet_(false)
             { setHeader(header); }
-        SamplePacket(NetworkData&& networkData):
+        
+        ENABLE_IF(T,Mutable)
+        HeaderPacketT<T>(NetworkData&& networkData):
             DataPacket(boost::move(networkData))
             {
-                if (blobs_.size() > 0)
+                if (this->blobs_.size() > 0)
                 {
-                    isValid_ = (blobs_.back().size() == sizeof(Header));
+                    this->isValid_ = (this->blobs_.back().size() == sizeof(Header));
                     isHeaderSet_ = true;
                 }
             }
 
-        virtual void setHeader(const Header& header)
+        ENABLE_IF(T,Mutable)
+        void setHeader(const Header& header)
         {
             if (!isHeaderSet_)
             {
-                addBlob(sizeof(header), (uint8_t*)&header);
-                isValid_ = true;
+                this->addBlob(sizeof(header), (uint8_t*)&header);
+                this->isValid_ = true;
                 isHeaderSet_ = true;
             }
             else
@@ -205,21 +373,26 @@ namespace ndnrtc {
                     "added to the packet");
         }
 
-        virtual const Header& getHeader() const
-        { return *((Header*)blobs_.back().data()); }
+        const Header& getHeader() const
+        { return *((Header*)this->blobs_.back().data()); }
 
-        virtual void swap(SamplePacket& packet)
-        { DataPacket::swap(packet); std::swap(isHeaderSet_, packet.isHeaderSet_); }
-    
+        void swap(HeaderPacketT<Header,T>& packet)
+        { DataPacketT<T>::swap((DataPacketT<T>&)packet); std::swap(isHeaderSet_, packet.isHeaderSet_); }
+
     protected:
         bool isHeaderSet() const { return isHeaderSet_; }
+
     private:
-        SamplePacket(const SamplePacket&) = delete;
-        
         bool isHeaderSet_;
     };
 
-    /**
+    template<typename Header>
+    using HeaderPacket = HeaderPacketT<Header, Mutable>;
+
+    template<typename Header>
+    using ImmutableHeaderPacket = HeaderPacketT<Header, Immutable>;
+
+    /*******************************************************************************
      * Common sample header used as a header for audio sample packets and parity
      * data packets.
      */
@@ -233,85 +406,7 @@ namespace ndnrtc {
         bool isRtcp_;
     } __attribute__((packed)) AudioSampleHeader;
 
-    typedef SamplePacket<CommonHeader> CommonSamplePacket;
-    typedef SamplePacket<AudioSampleHeader> AudioSamplePacket;
-
-    /**
-     * VideoFramePacket provides interface for preparing encoded video frame for
-     * publishing as a data packet.
-     */
-    class VideoFramePacket : public CommonSamplePacket {
-    public:
-        typedef std::map<std::string, PacketNumber> ThreadSyncList;
-        
-        VideoFramePacket(const webrtc::EncodedImage& frame);
-        VideoFramePacket(NetworkData&& networkData);
-
-        const webrtc::EncodedImage& getFrame();
-        boost::shared_ptr<NetworkData> 
-            getParityData(size_t segmentSize, double ratio);
-        void setSyncList(const ThreadSyncList& syncList);
-        const std::map<std::string, PacketNumber> getSyncList() const;
-
-    private:
-        typedef struct _Header {
-            uint32_t encodedWidth_;
-            uint32_t encodedHeight_;
-            uint32_t timestamp_;
-            int64_t capture_time_ms_;
-            WebRtcVideoFrameType frameType_;
-            bool completeFrame_;
-        } __attribute__((packed)) Header;
-
-        webrtc::EncodedImage frame_;
-        bool isSyncListSet_;
-    };
-
-    /**
-     * AudioBundlePacket provides interface for bundling audio samples and 
-     * preparing them for publishing as a data packet.
-     */
-    class AudioBundlePacket : public CommonSamplePacket
-    {
-    public:
-        class AudioSampleBlob : protected DataPacket::Blob {
-        public:
-            AudioSampleBlob(const AudioSampleHeader& hdr, size_t sampleLen, const uint8_t* data):
-                Blob(std::vector<uint8_t>::const_iterator(data), 
-                    std::vector<uint8_t>::const_iterator(data+sampleLen)), 
-                header_(hdr), fromBlob_(false){}
-            AudioSampleBlob(const std::vector<uint8_t>::const_iterator begin,
-                const std::vector<uint8_t>::const_iterator& end);
-
-            const AudioSampleHeader& getHeader() const { return header_; }
-            size_t size() const;
-            const uint8_t* data() const { return (fromBlob_?&(*(begin_+sizeof(AudioSampleHeader))):&(*begin_)); }
-
-            static size_t wireLength(size_t payloadLength);
-        private:
-            bool fromBlob_;
-            AudioSampleHeader header_;
-        };
-
-        AudioBundlePacket(size_t wireLength);
-        AudioBundlePacket(NetworkData&& bundle);
-
-        bool hasSpace(const AudioSampleBlob& sampleBlob) const;
-        size_t getRemainingSpace() const { return remainingSpace_; }
-        void clear();
-        AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
-        size_t getSamplesNum() const;
-        const AudioSampleBlob operator[](size_t pos) const;
-        void swap(AudioBundlePacket& bundle);
-        
-        static size_t wireLength(size_t wireLength, size_t sampleSize);
-    private:
-        AudioBundlePacket(AudioBundlePacket&& bundle) = delete;
-
-        size_t wireLength_, remainingSpace_;
-
-        static size_t payloadLength(size_t wireLength);
-    };
+    typedef HeaderPacket<CommonHeader> CommonSamplePacket;
 
     typedef struct _DataSegmentHeader {
         int32_t interestNonce_;
@@ -332,7 +427,7 @@ namespace ndnrtc {
             pairedSequenceNo_(0), paritySegmentsNum_(0){}
     } __attribute__((packed)) VideoFrameSegmentHeader;
 
-    /**
+    /*******************************************************************************
      * This class represents data segment used for publishing NDN data. Unlike 
      * DataPacket, it doesn't have it's own storage - instead, it must be 
      * constructed using existing data. This restriction represents the assumption
@@ -366,8 +461,8 @@ namespace ndnrtc {
          */
         const boost::shared_ptr<NetworkData> getNetworkData() const
         {
-            boost::shared_ptr<SamplePacket<Header>> sp =
-                boost::make_shared<SamplePacket<Header>>(std::vector<uint8_t>(begin_, end_));
+            boost::shared_ptr<HeaderPacket<Header>> sp =
+                boost::make_shared<HeaderPacket<Header>>(std::vector<uint8_t>(begin_, end_));
             sp->setHeader(header_);
             return sp;
         }
@@ -429,6 +524,89 @@ namespace ndnrtc {
     typedef DataSegment<VideoFrameSegmentHeader> VideoFrameSegment;
     typedef DataSegment<DataSegmentHeader> CommonSegment;
 
+    /*******************************************************************************
+     * VideoFramePacket provides interface for preparing encoded video frame for
+     * publishing as a data packet.
+     */
+    class VideoFramePacket : public CommonSamplePacket {
+    public:
+        typedef std::map<std::string, PacketNumber> ThreadSyncList;
+        
+        VideoFramePacket(const webrtc::EncodedImage& frame);
+        VideoFramePacket(NetworkData&& networkData);
+
+        const webrtc::EncodedImage& getFrame();
+        boost::shared_ptr<NetworkData> 
+            getParityData(size_t segmentSize, double ratio);
+        void setSyncList(const ThreadSyncList& syncList);
+        const std::map<std::string, PacketNumber> getSyncList() const;
+
+        static boost::shared_ptr<VideoFramePacket> 
+        merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>>&);
+
+    private:
+        typedef struct _Header {
+            uint32_t encodedWidth_;
+            uint32_t encodedHeight_;
+            uint32_t timestamp_;
+            int64_t capture_time_ms_;
+            WebRtcVideoFrameType frameType_;
+            bool completeFrame_;
+        } __attribute__((packed)) Header;
+
+        webrtc::EncodedImage frame_;
+        bool isSyncListSet_;
+    };
+
+    /*******************************************************************************
+     * AudioBundlePacket provides interface for bundling audio samples and 
+     * preparing them for publishing as a data packet.
+     */
+    class AudioBundlePacket : public CommonSamplePacket
+    {
+    public:
+        class AudioSampleBlob : protected DataPacket::Blob {
+        public:
+            AudioSampleBlob(const AudioSampleHeader& hdr, size_t sampleLen, const uint8_t* data):
+                Blob(std::vector<uint8_t>::const_iterator(data), 
+                    std::vector<uint8_t>::const_iterator(data+sampleLen)), 
+                header_(hdr), fromBlob_(false){}
+            AudioSampleBlob(const std::vector<uint8_t>::const_iterator begin,
+                const std::vector<uint8_t>::const_iterator& end);
+
+            const AudioSampleHeader& getHeader() const { return header_; }
+            size_t size() const;
+            const uint8_t* data() const { return (fromBlob_?&(*(begin_+sizeof(AudioSampleHeader))):&(*begin_)); }
+
+            static size_t wireLength(size_t payloadLength);
+        private:
+            bool fromBlob_;
+            AudioSampleHeader header_;
+        };
+
+        AudioBundlePacket(size_t wireLength);
+        AudioBundlePacket(NetworkData&& bundle);
+
+        bool hasSpace(const AudioSampleBlob& sampleBlob) const;
+        size_t getRemainingSpace() const { return remainingSpace_; }
+        void clear();
+        AudioBundlePacket& operator<<(const AudioSampleBlob& sampleBlob);
+        size_t getSamplesNum() const;
+        const AudioSampleBlob operator[](size_t pos) const;
+        void swap(AudioBundlePacket& bundle);
+        
+        static size_t wireLength(size_t wireLength, size_t sampleSize);
+        static boost::shared_ptr<AudioBundlePacket> merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>>&);
+
+    private:
+        AudioBundlePacket(AudioBundlePacket&& bundle) = delete;
+
+        size_t wireLength_, remainingSpace_;
+
+        static size_t payloadLength(size_t wireLength);
+    };
+
+    //******************************************************************************
     class AudioThreadMeta : public DataPacket
     {
     public:
@@ -474,7 +652,8 @@ namespace ndnrtc {
         std::vector<std::string> getThreads() const;
     };
 
-    template<typename SegmentType>
+    //******************************************************************************
+    template<typename SegmentHeader>
     class WireData {
     public:
         WireData(const boost::shared_ptr<ndn::Data>& data):data_(data),
@@ -512,7 +691,10 @@ namespace ndnrtc {
         bool isParity() { return dataNameInfo_.isParity_; }
         std::string getThreadName() { return dataNameInfo_.threadName_; }
 
-        const SegmentType& segment() const { return SegmentType(data_); }
+        const ImmutableHeaderPacket<SegmentHeader> segment() const
+        {
+            return ImmutableHeaderPacket<SegmentHeader>(data_->getContent());
+        }
 
     private:
         NamespaceInfo dataNameInfo_;

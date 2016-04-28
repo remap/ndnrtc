@@ -10,10 +10,11 @@
 #include <boost/asio.hpp>
 #include <boost/chrono.hpp>
 #include <stdlib.h>
-
+#include <ndn-cpp/data.hpp>
 #include "gtest/gtest.h"
 
 #include "tests-helpers.h"
+#include "frame-data.h"
 #include "src/video-thread.h"
 #include "src/audio-thread.h"
 #include "mock-objects/audio-thread-callback-mock.h"

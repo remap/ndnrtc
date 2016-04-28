@@ -17,207 +17,13 @@
 #include "frame-data.h"
 #include "fec.h"
 
-#define PREFIX_META_NCOMP 5
-
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
 //******************************************************************************
-NetworkData::NetworkData(unsigned int dataLength, const unsigned char* rawData):
-isValid_(true)
-{
-    copyFromRaw(dataLength, rawData);
-}
-
-NetworkData::NetworkData(const std::vector<uint8_t>& data):
-isValid_(true)
-{
-    data_ = data;
-}
-
-NetworkData::NetworkData(const NetworkData& networkData)
-{
-    data_ = networkData.data_;
-    isValid_ = networkData.isValid();
-}
-
-NetworkData::NetworkData(NetworkData&& networkData):
-isValid_(networkData.isValid())
-{
-    data_.swap(networkData.data_);
-    networkData.isValid_ = false;
-}
-
-NetworkData::NetworkData(std::vector<uint8_t>& data):
-data_(boost::move(data)), isValid_(true)
-{
-}
-
-NetworkData& NetworkData::operator=(const NetworkData& networkData)
-{
-    if (this != &networkData)
-    {
-        data_ = networkData.data_;
-        isValid_ = networkData.isValid_;
-    }
-
-    return *this;
-}
-
-void NetworkData::swap(NetworkData& networkData)
-{
-    std::swap(isValid_, networkData.isValid_);
-    data_.swap(networkData.data_);
-}
-
-void NetworkData::copyFromRaw(unsigned int dataLength, const uint8_t* rawData)
-{
-    data_.assign(rawData, rawData+dataLength);
-}
-
-//******************************************************************************
-DataPacket::Blob::Blob(const std::vector<uint8_t>::const_iterator& begin, 
-                    const std::vector<uint8_t>::const_iterator& end):
-begin_(begin), end_(end)
-{
-}
-
-DataPacket::Blob& DataPacket::Blob::operator=(const DataPacket::Blob& b)
-{
-    if (this != &b)
-    {
-        begin_ = b.begin_;
-        end_ = b.end_;
-    }
-
-    return *this;
-}
-
-size_t DataPacket::Blob::size() const
-{
-    return (end_-begin_);
-}
-
-uint8_t DataPacket::Blob::operator[](size_t pos) const
-{
-    return *(begin_+pos);
-}
-
-const uint8_t* DataPacket::Blob::data() const
-{
-    return &(*begin_);
-}
-
-//******************************************************************************
-DataPacket::DataPacket(unsigned int dataLength, const uint8_t* payload):
-NetworkData(dataLength, payload)
-{
-    data_.insert(data_.begin(), 0);
-    payloadBegin_ = ++data_.begin();
-}
-
-DataPacket::DataPacket(const std::vector<uint8_t>& payload):
-NetworkData(payload)
-{
-    data_.insert(data_.begin(), 0);
-    payloadBegin_ = ++data_.begin();
-}
-
-DataPacket::DataPacket(const DataPacket& dataPacket):
-NetworkData(dataPacket.data_)
-{
-    reinit();
-}
-
-DataPacket::DataPacket(NetworkData&& networkData):
-NetworkData(boost::move(networkData))
-{
-    reinit();
-}
-
-const DataPacket::Blob DataPacket::getPayload() const
-{
-    return Blob(payloadBegin_, data_.end());
-}
-
-void DataPacket::addBlob(uint16_t dataLength, const uint8_t* data)
-{
-    if (dataLength == 0) return;
-
-    // increase blob counter
-    data_[0]++;
-    // save blob size
-    uint8_t b1 = dataLength&0x00ff, b2 = (dataLength&0xff00)>>8;
-    payloadBegin_ = data_.insert(payloadBegin_, b1);
-    payloadBegin_++;
-    payloadBegin_ = data_.insert(payloadBegin_, b2);
-    payloadBegin_++;
-    // insert blob
-    data_.insert(payloadBegin_, data, data+dataLength);
-    reinit();
-}
-
-size_t DataPacket::wireLength(size_t payloadLength, size_t blobLength)
-{
-    size_t wireLength = 1+payloadLength;
-    if (blobLength > 0) wireLength += 2+blobLength;
-    return wireLength;
-}
-
-size_t DataPacket::wireLength(size_t payloadLength, 
-    std::vector<size_t> blobLengths)
-{
-    size_t wireLength = 1+payloadLength;
-    for (auto b:blobLengths) if (b>0) wireLength += 2+b;
-    return wireLength;
-}
-
-size_t DataPacket::wireLength(size_t blobLength)
-{
-    if (blobLength) return blobLength+2;
-    return 0;
-}
-
-size_t DataPacket::wireLength(std::vector<size_t>  blobLengths)
-{
-    size_t wireLength = 0;
-    for (auto b:blobLengths) wireLength += 2+b;
-    return wireLength;
-}
-
-void DataPacket::reinit()
-{
-    blobs_.clear();
-    if (!data_.size()) { isValid_ = false; return; }
-
-    std::vector<uint8_t>::iterator p1 = (data_.begin()+1), p2;
-    uint8_t nBlobs = data_[0];
-    bool invalid = false;
-
-    for (int i = 0; i < nBlobs; i++)
-    {
-        uint8_t b1 = *p1++, b2 = *p1;
-        uint16_t blobSize = b1|((uint16_t)b2)<<8;
-
-        if (p1-data_.begin()+blobSize > data_.size())
-        {
-            invalid = true;
-            break;
-        }
-
-        p2 = ++p1+blobSize;
-        blobs_.push_back(Blob(p1,p2));
-        p1 = p2;
-    }
-    
-    if (!invalid) payloadBegin_ = p1;
-    else isValid_ = false;
-}
-
-//******************************************************************************
 VideoFramePacket::VideoFramePacket(const webrtc::EncodedImage& frame):
-SamplePacket(frame._length, frame._buffer), isSyncListSet_(false)
+CommonSamplePacket(frame._length, frame._buffer), isSyncListSet_(false)
 {
     Header hdr;
     hdr.encodedWidth_ = frame._encodedWidth;
@@ -238,7 +44,7 @@ const webrtc::EncodedImage& VideoFramePacket::getFrame()
     Header *hdr = (Header*)blobs_[0].data();
     int32_t size = webrtc::CalcBufferSize(webrtc::kI420, hdr->encodedWidth_, 
         hdr->encodedHeight_);
-    frame_ = webrtc::EncodedImage((uint8_t*)(data_.data()+(payloadBegin_-data_.begin())), getPayload().size(), size);
+    frame_ = webrtc::EncodedImage((uint8_t*)(_data().data()+(payloadBegin_-_data().begin())), getPayload().size(), size);
     frame_._encodedWidth = hdr->encodedWidth_;
     frame_._encodedHeight = hdr->encodedHeight_;
     frame_._timeStamp = hdr->timestamp_;
@@ -265,11 +71,11 @@ VideoFramePacket::getParityData(size_t segmentLength, double ratio)
     boost::shared_ptr<NetworkData> parityData;
 
     // expand data with zeros
-    data_.resize(nDataSegmets*segmentLength, 0);
-    if (enc.encode(data_.data(), fecData.data()) >= 0)
+    _data().resize(nDataSegmets*segmentLength, 0);
+    if (enc.encode(_data().data(), fecData.data()) >= 0)
         parityData = boost::make_shared<NetworkData>(boost::move(fecData));
     // shrink data back
-    data_.resize(getLength()-padding);
+    _data().resize(getLength()-padding);
 
     return parityData;
 }
@@ -301,6 +107,18 @@ VideoFramePacket::getSyncList() const
     }
 
     return boost::move(syncList);
+}
+
+boost::shared_ptr<VideoFramePacket> 
+VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>>& segments)
+{
+    std::vector<uint8_t> packetBytes;
+    for (auto s:segments)
+        packetBytes.insert(packetBytes.end(), 
+            s.getPayload().begin(), s.getPayload().end());
+
+    NetworkData packetData(boost::move(packetBytes));
+    return boost::make_shared<VideoFramePacket>(boost::move(packetData));
 }
 
 //******************************************************************************
@@ -345,20 +163,20 @@ AudioBundlePacket::operator<<(const AudioBundlePacket::AudioSampleBlob& sampleBl
 {
     if (hasSpace(sampleBlob))
     {
-        data_[0]++;
+        _data()[0]++;
 
         uint8_t b1 = sampleBlob.size()&0x00ff, b2 = (sampleBlob.size()&0xff00)>>8; 
-        payloadBegin_ = data_.insert(payloadBegin_, b1);
+        payloadBegin_ = _data().insert(payloadBegin_, b1);
         payloadBegin_++;
-        payloadBegin_ = data_.insert(payloadBegin_, b2);
+        payloadBegin_ = _data().insert(payloadBegin_, b2);
         payloadBegin_++;
         for (int i = 0; i < sizeof(sampleBlob.getHeader()); ++i)
         {
-            payloadBegin_ = data_.insert(payloadBegin_, ((uint8_t*)&sampleBlob.getHeader())[i]);
+            payloadBegin_ = _data().insert(payloadBegin_, ((uint8_t*)&sampleBlob.getHeader())[i]);
             payloadBegin_++;
         }
         // insert blob
-        data_.insert(payloadBegin_, sampleBlob.data(), 
+        _data().insert(payloadBegin_, sampleBlob.data(), 
             sampleBlob.data()+(sampleBlob.size()-sizeof(sampleBlob.getHeader())));
         reinit();
         remainingSpace_ -= DataPacket::wireLength(sampleBlob.size());
@@ -369,9 +187,9 @@ AudioBundlePacket::operator<<(const AudioBundlePacket::AudioSampleBlob& sampleBl
 
 void AudioBundlePacket::clear()
 {
-    data_.clear();
-    data_.insert(data_.begin(),0);
-    payloadBegin_ = data_.begin()+1;
+    _data().clear();
+    _data().insert(_data().begin(),0);
+    payloadBegin_ = _data().begin()+1;
     blobs_.clear();
     remainingSpace_ = AudioBundlePacket::payloadLength(wireLength_);
 }
@@ -383,7 +201,7 @@ size_t AudioBundlePacket::getSamplesNum() const
 
 void AudioBundlePacket::swap(AudioBundlePacket& bundle)
 { 
-    CommonSamplePacket::swap(bundle);
+    CommonSamplePacket::swap((CommonSamplePacket&)bundle);
     std::swap(wireLength_, bundle.wireLength_);
     std::swap(remainingSpace_, bundle.remainingSpace_);
 }
@@ -408,6 +226,18 @@ size_t AudioBundlePacket::payloadLength(size_t wireLength)
 {
     long payloadLength = wireLength-1-DataPacket::wireLength(sizeof(CommonHeader));
     return (payloadLength > 0 ? payloadLength : 0);
+}
+
+boost::shared_ptr<AudioBundlePacket> 
+AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>>& segments)
+{
+    std::vector<uint8_t> packetBytes;
+    for (auto s:segments)
+        packetBytes.insert(packetBytes.end(), 
+            s.getPayload().begin(), s.getPayload().end());
+    
+    NetworkData packetData(boost::move(packetBytes));
+    return boost::make_shared<AudioBundlePacket>(boost::move(packetData));
 }
 
 //******************************************************************************

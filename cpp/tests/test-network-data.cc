@@ -22,7 +22,7 @@ public:
     DataPacketTest(unsigned int dataLength, const uint8_t* payload):
         DataPacket(dataLength, payload){}
     DataPacketTest(const std::vector<uint8_t>& payload):DataPacket(payload){}
-    DataPacketTest(const DataPacket& dataPacket):DataPacket(dataPacket){}
+    DataPacketTest(const DataPacketTest& dataPacket):DataPacket(dataPacket){}
     DataPacketTest(NetworkData&& networkData):DataPacket(boost::move(networkData)){}
 
     unsigned int getBlobsNum() const { return DataPacket::getBlobsNum(); }
@@ -286,17 +286,29 @@ TEST(TestDataPacket, TestDataPacketCopy)
     EXPECT_TRUE(dp.isValid());
     EXPECT_EQ(data_len+header1_data_len+header2_data_len+header3_data_len+sizeof(int)+4*sizeof(uint16_t)+1, dp.getLength());
     EXPECT_EQ(data_len, dp.getPayload().size());
-    for (int i = 0; i < dp.getPayload().size(); ++i)
-        EXPECT_EQ(data[i], dp.getPayload()[i]);
+    bool identical = true;
+    for (int i = 0; i < dp.getPayload().size() && identical; ++i)
+        identical &= (data[i] == dp.getPayload()[i]);
+    EXPECT_TRUE(identical);
+   
+    identical = true;
     EXPECT_EQ(header1_data_len, dp.getBlob(0).size());
-    for (int i = 0; i < dp.getBlob(0).size(); ++i)
-        EXPECT_EQ(header1[i], dp.getBlob(0)[i]);
+    for (int i = 0; i < dp.getBlob(0).size() && identical; ++i)
+        identical &= (header1[i] == dp.getBlob(0)[i]);
+    EXPECT_TRUE(identical);
+
+    identical = true;
     EXPECT_EQ(header2_data_len, dp.getBlob(1).size());
-    for (int i = 0; i < dp.getBlob(1).size(); ++i)
-        EXPECT_EQ(header2[i], dp.getBlob(1)[i]);
+    for (int i = 0; i < dp.getBlob(1).size() && identical; ++i)
+        identical = (header2[i] == dp.getBlob(1)[i]);
+    EXPECT_TRUE(identical);
+
+    identical = true;
     EXPECT_EQ(header3_data_len, dp.getBlob(2).size());
-    for (int i = 0; i < dp.getBlob(2).size(); ++i)
-        EXPECT_EQ(header3[i], dp.getBlob(2)[i]);
+    for (int i = 0; i < dp.getBlob(2).size() && identical; ++i)
+        identical = (header3[i] == dp.getBlob(2)[i]);
+    EXPECT_TRUE(identical);
+
     EXPECT_EQ(sizeof(int), dp.getBlob(3).size());
     int y = *((int*)dp.getBlob(3).data());
     EXPECT_EQ(x, y);
@@ -328,17 +340,29 @@ TEST(TestDataPacket, TestDataPacketAssign)
     EXPECT_TRUE(dp.isValid());
     EXPECT_EQ(data_len+header1_data_len+header2_data_len+header3_data_len+sizeof(int)+4*sizeof(uint16_t)+1, dp.getLength());
     EXPECT_EQ(data_len, dp.getPayload().size());
-    for (int i = 0; i < dp.getPayload().size(); ++i)
-        EXPECT_EQ(data[i], dp.getPayload()[i]);
+        bool identical = true;
+    for (int i = 0; i < dp.getPayload().size() && identical; ++i)
+        identical &= (data[i] == dp.getPayload()[i]);
+    EXPECT_TRUE(identical);
+   
+    identical = true;
     EXPECT_EQ(header1_data_len, dp.getBlob(0).size());
-    for (int i = 0; i < dp.getBlob(0).size(); ++i)
-        EXPECT_EQ(header1[i], dp.getBlob(0)[i]);
+    for (int i = 0; i < dp.getBlob(0).size() && identical; ++i)
+        identical &= (header1[i] == dp.getBlob(0)[i]);
+    EXPECT_TRUE(identical);
+
+    identical = true;
     EXPECT_EQ(header2_data_len, dp.getBlob(1).size());
-    for (int i = 0; i < dp.getBlob(1).size(); ++i)
-        EXPECT_EQ(header2[i], dp.getBlob(1)[i]);
+    for (int i = 0; i < dp.getBlob(1).size() && identical; ++i)
+        identical = (header2[i] == dp.getBlob(1)[i]);
+    EXPECT_TRUE(identical);
+
+    identical = true;
     EXPECT_EQ(header3_data_len, dp.getBlob(2).size());
-    for (int i = 0; i < dp.getBlob(2).size(); ++i)
-        EXPECT_EQ(header3[i], dp.getBlob(2)[i]);
+    for (int i = 0; i < dp.getBlob(2).size() && identical; ++i)
+        identical = (header3[i] == dp.getBlob(2)[i]);
+    EXPECT_TRUE(identical);
+    
     EXPECT_EQ(sizeof(int), dp.getBlob(3).size());
     int y = *((int*)dp.getBlob(3).data());
     EXPECT_EQ(x, y);
@@ -1063,7 +1087,7 @@ TEST(TestMediaStreamMeta, TestCreate)
     EXPECT_EQ("desktop", meta2.getSyncStreams()[0]);
     EXPECT_EQ("mic", meta2.getSyncStreams()[1]);
 }
-#if 0
+
 TEST(TestWireData, TestVideoFrameSegment)
 {
     int data_len = 6472;
@@ -1116,7 +1140,7 @@ TEST(TestWireData, TestVideoFrameSegment)
         int idx = 0;
         for (auto d:dataSegments)
         {
-            WireData<VideoFrameSegment> wd(d);
+            WireData<VideoFrameSegmentHeader> wd(d);
             EXPECT_TRUE(wd.isValid());
             EXPECT_EQ(segments.size(), wd.getSlicesNum());
             EXPECT_EQ(ndn::Name("/ndn/edu/ucla/remap/ndncon/instance1"), wd.getBasePrefix());
@@ -1130,9 +1154,17 @@ TEST(TestWireData, TestVideoFrameSegment)
             EXPECT_FALSE(wd.isParity());
 
             EXPECT_EQ(header.interestNonce_+idx, wd.segment().getHeader().interestNonce_);
+            EXPECT_EQ(header.interestArrivalMs_+idx, wd.segment().getHeader().interestArrivalMs_);
+            EXPECT_EQ(header.playbackNo_+idx, wd.segment().getHeader().playbackNo_);
+            EXPECT_EQ(header.generationDelayMs_, wd.segment().getHeader().generationDelayMs_);
+            EXPECT_EQ(header.totalSegmentsNum_, wd.segment().getHeader().totalSegmentsNum_);
+            EXPECT_EQ(header.pairedSequenceNo_, wd.segment().getHeader().pairedSequenceNo_);
+            EXPECT_EQ(header.paritySegmentsNum_, wd.segment().getHeader().paritySegmentsNum_);
+
             idx++;
         }
     }
+    #if 1
     {
         std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%00/video/camera/hi/d/%FE%00";
         std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
@@ -1149,9 +1181,218 @@ TEST(TestWireData, TestVideoFrameSegment)
         for (auto d:dataSegments)
             EXPECT_ANY_THROW(WireData<VideoFrameSegment> wd(d));
     }
-
+    #endif
 }
-#endif
+
+TEST(TestWireData, TestWrongData)
+{
+    int data_len = 1000;
+
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    ndn::Name n(frameName);
+    n.appendSegment(0);
+    boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+
+    std::vector<uint8_t> data;
+    for (int i = 0; i < data_len; ++i) data.push_back(i);
+
+    ds->setContent(data);
+    
+    WireData<VideoFrameSegmentHeader> wd(ds);
+    EXPECT_TRUE(wd.isValid());
+    EXPECT_FALSE(wd.segment().isValid());
+}
+
+TEST(TestWireData, TestWrongHeader)
+{
+    int data_len = 6472;
+    std::vector<uint8_t> data;
+
+    for (int i = 0; i < data_len; ++i)
+        data.push_back((uint8_t)i);
+    
+    NetworkData nd(data);
+    int wireLength = 1000;
+    std::vector<CommonSegment> segments = CommonSegment::slice(nd, wireLength);
+
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    ndn::Name n(frameName);
+    n.appendSegment(0);
+    boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+    ds->setContent(segments.front().getNetworkData()->getData(), segments.front().size());
+    
+    {
+        WireData<VideoFrameSegmentHeader> wd(ds);
+        EXPECT_TRUE(wd.isValid());
+        EXPECT_FALSE(wd.segment().isValid());
+    }
+
+    {
+        WireData<DataSegmentHeader> wd(ds);
+        EXPECT_TRUE(wd.isValid());
+        EXPECT_TRUE(wd.segment().isValid());
+    }
+}
+
+TEST(TestWireData, TestMergeVideoFramePacket)
+{
+    CommonHeader hdr;
+    hdr.sampleRate_ = 24.7;
+    hdr.publishTimestampMs_ = 488589553;
+    hdr.publishUnixTimestampMs_ = 1460488589;
+
+    size_t frameLen = 4300;
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+    uint8_t *buffer = (uint8_t*)malloc(frameLen);
+    for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+
+    webrtc::EncodedImage frame(buffer, frameLen, size);
+    frame._encodedWidth = 640;
+    frame._encodedHeight = 480;
+    frame._timeStamp = 1460488589;
+    frame.capture_time_ms_ = 1460488569;
+    frame._frameType = webrtc::kKeyFrame;
+    frame._completeFrame = true;
+
+    VideoFramePacket vp(frame);
+    std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+
+    vp.setSyncList(syncList);
+    vp.setHeader(hdr);
+    boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+
+    std::vector<VideoFrameSegment> frameSegments = VideoFrameSegment::slice(vp, 1000);
+    std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
+
+    // pack segments into data objects
+    int idx = 0;
+    VideoFrameSegmentHeader header;
+    header.interestNonce_ = 0x1234;
+    header.interestArrivalMs_ = 1460399362;
+    header.generationDelayMs_ = 200;
+    header.totalSegmentsNum_ = frameSegments.size();
+    header.playbackNo_ = 0;
+    header.pairedSequenceNo_ = 1;
+    header.paritySegmentsNum_ = 2;
+
+    for (auto& s:frameSegments)
+    {
+        VideoFrameSegmentHeader hdr = header;
+        hdr.interestNonce_ += idx;
+        hdr.interestArrivalMs_ += idx;
+        hdr.playbackNo_ += idx;
+        idx++;
+        s.setHeader(hdr);
+    }
+
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    int segIdx = 0;
+    for (auto& s:frameSegments)
+    {
+        ndn::Name n(frameName);
+        n.appendSegment(segIdx++);
+        boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(frameSegments.size()));
+        ds->setContent(s.getNetworkData()->getData(), s.size());
+        dataSegments.push_back(ds);
+    }
+
+    // now, extract segments from data objects
+    std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> videoSegments;
+    for (auto d:dataSegments)
+    {
+        WireData<VideoFrameSegmentHeader> wd(d);
+        videoSegments.push_back(wd.segment());
+    }
+
+    // merge video segments
+    boost::shared_ptr<VideoFramePacket> packet = VideoFramePacket::merge(videoSegments);
+
+    EXPECT_EQ(hdr.sampleRate_, packet->getHeader().sampleRate_);
+    EXPECT_EQ(hdr.publishTimestampMs_, packet->getHeader().publishTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestampMs_, packet->getHeader().publishUnixTimestampMs_);
+
+    EXPECT_EQ(frame._encodedWidth, packet->getFrame()._encodedWidth);
+    EXPECT_EQ(frame._encodedHeight, packet->getFrame()._encodedHeight);
+    EXPECT_EQ(frame._timeStamp, packet->getFrame()._timeStamp);
+    EXPECT_EQ(frame.capture_time_ms_, packet->getFrame().capture_time_ms_);
+    EXPECT_EQ(frame._frameType, packet->getFrame()._frameType);
+    EXPECT_EQ(frame._completeFrame, packet->getFrame()._completeFrame);
+    ASSERT_EQ(frame._length, packet->getFrame()._length);
+
+    bool identical = true;
+    for (int i = 0; i < packet->getFrame()._length && identical; ++i)
+        identical = (frame._buffer[i] == packet->getFrame()._buffer[i]);
+    EXPECT_TRUE(identical);
+
+    EXPECT_EQ(syncList.size(), packet->getSyncList().size());
+    idx = 0;
+    for (auto t:syncList)
+    {
+        ASSERT_NE(packet->getSyncList().end(), packet->getSyncList().find(t.first));
+        EXPECT_EQ(t.second, packet->getSyncList().at(t.first));
+    }
+}
+
+TEST(TestWireData, TestMergeAudioBundle)
+{
+    int data_len = 247;
+    std::vector<uint8_t> rtpData;
+    for (int i = 0; i < data_len; ++i)
+        rtpData.push_back((uint8_t)i);
+
+    int wire_len = 1000;
+    AudioBundlePacket bundlePacket(wire_len);
+    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+
+    while (bundlePacket.hasSpace(sample))
+        bundlePacket << sample;
+
+    CommonHeader hdr;
+    hdr.sampleRate_ = 24.7;
+    hdr.publishTimestampMs_ = 488589553;
+    hdr.publishUnixTimestampMs_ = 1460488589;
+
+    bundlePacket.setHeader(hdr);
+
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundlePacket.getSamplesNum());
+
+    std::vector<CommonSegment> segments = CommonSegment::slice(bundlePacket, wire_len);
+    ASSERT_EQ(1, segments.size());
+
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%00";
+    ndn::Name n(frameName);
+    n.appendSegment(0);
+    boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+    ds->setContent(segments.front().getNetworkData()->data());
+
+    WireData<DataSegmentHeader> wd(ds);
+    EXPECT_TRUE(wd.isValid());
+    EXPECT_TRUE(wd.segment().isValid());
+
+    std::vector<ImmutableHeaderPacket<DataSegmentHeader>> bundleSegments;
+    bundleSegments.push_back(wd.segment());
+
+    boost::shared_ptr<AudioBundlePacket> bundleP = AudioBundlePacket::merge(bundleSegments);
+
+    // check
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundleP->getSamplesNum());
+    for (int i = 0; i < bundleP->getSamplesNum(); ++i)
+    {
+        EXPECT_FALSE((*bundleP)[i].getHeader().isRtcp_);
+        bool identical = true;
+        for (int k = 0; k < (*bundleP)[i].size()-sizeof(AudioSampleHeader); ++k)
+            identical = (rtpData[k], (*bundleP)[i].data()[k]);
+        EXPECT_TRUE(identical);
+    }
+}
+
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
