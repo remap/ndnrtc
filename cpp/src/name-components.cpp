@@ -212,7 +212,7 @@ bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
 
 bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 {
-    if (name.size() < 4)
+    if (name.size() < 3)
         return false;
 
     info.streamName_ = name[0].toEscapedString();
@@ -228,8 +228,12 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         info.threadName_ = name[1].toEscapedString();
         info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
 
-        if (info.isMeta_ && extractMeta(name.getSubName(3), info))
-            return true;
+        if (info.isMeta_)
+        {
+            if(name.size() > 3 && extractMeta(name.getSubName(3), info))
+                return true;
+            return false;
+        }
 
         if (name[2] == Name::Component(NameComponents::NameComponentDelta) || 
             name[2] == Name::Component(NameComponents::NameComponentKey))
@@ -239,7 +243,13 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             try{
                 if (name.size() > 3)
                     info.sampleNo_ = (PacketNumber)name[3].toSequenceNumber();
+                else
+                {
+                    info.hasSeqNo_ = false;
+                    return true;
+                }
             
+                info.hasSeqNo_ = true;
                 if (name.size() > 4)
                 {
                     info.isParity_ = (name[4] == Name::Component(NameComponents::NameComponentParity));
@@ -270,7 +280,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
 bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 {
-    if (name.size() < 4)
+    if (name.size() < 2)
         return false;
 
     info.streamName_ = name[0].toEscapedString();
@@ -278,16 +288,30 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     
     if (info.isMeta_)
     {
+        if (name.size() < 3)
+            return false;
+
         info.threadName_ = "";
         return extractMeta(name.getSubName(2), info);;
     }
     else
     {
         info.threadName_ = name[1].toEscapedString();
+
+        if (name.size() == 2)
+        {
+            info.hasSeqNo_ = false;
+            return true;
+        }
+
         info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
 
-        if (info.isMeta_ && extractMeta(name.getSubName(3), info))
-            return true;
+        if (info.isMeta_)
+        { 
+            if (name.size() > 3 && extractMeta(name.getSubName(3), info))
+                return true;
+            return false;
+        }
 
         info.isDelta_ = true;
 
@@ -295,7 +319,8 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         {
             if (name.size() > 2)
                 info.sampleNo_ = (PacketNumber)name[2].toSequenceNumber();
-                
+            
+            info.hasSeqNo_ = true;
             if (name.size() > 3)
             {
                 info.segNo_ = name[3].toSegment();

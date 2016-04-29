@@ -359,4 +359,3 @@ MediaStreamMeta::getThreads() const
     }
     return threads;
 }
-

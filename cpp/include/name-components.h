@@ -28,7 +28,7 @@ namespace ndnrtc {
         unsigned int apiVersion_;
         MediaStreamParams::MediaStreamType streamType_;
         std::string streamName_, threadName_;
-        bool isMeta_, isParity_, isDelta_;
+        bool isMeta_, isParity_, isDelta_, hasSeqNo_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
         unsigned int metaVersion_;
@@ -102,7 +102,6 @@ namespace ndnrtc {
         static ndn::Name
         videoStreamPrefix(std::string basePrefix);
 
-        // static bool doesComply(const std::string& name);
         static bool extractInfo(const ndn::Name& name, NamespaceInfo& info);
     };
 }

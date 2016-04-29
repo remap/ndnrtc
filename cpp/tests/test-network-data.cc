@@ -1161,6 +1161,10 @@ TEST(TestWireData, TestVideoFrameSegment)
             EXPECT_EQ(header.pairedSequenceNo_, wd.segment().getHeader().pairedSequenceNo_);
             EXPECT_EQ(header.paritySegmentsNum_, wd.segment().getHeader().paritySegmentsNum_);
 
+            EXPECT_EQ(header.interestNonce_+idx, wd.header().interestNonce_);
+            EXPECT_EQ(header.interestArrivalMs_+idx, wd.header().interestArrivalMs_);
+            EXPECT_EQ(header.generationDelayMs_, wd.header().generationDelayMs_);
+
             idx++;
         }
     }
@@ -1221,18 +1225,32 @@ TEST(TestWireData, TestWrongHeader)
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
     ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+
+    DataSegmentHeader header;
+    header.interestNonce_ = 0x1234;
+    header.interestArrivalMs_ = 1460399362;
+    header.generationDelayMs_ = 200;
+    segments.front().setHeader(header);
     ds->setContent(segments.front().getNetworkData()->getData(), segments.front().size());
     
     {
         WireData<VideoFrameSegmentHeader> wd(ds);
         EXPECT_TRUE(wd.isValid());
         EXPECT_FALSE(wd.segment().isValid());
+
+        EXPECT_EQ(header.interestNonce_, wd.header().interestNonce_);
+        EXPECT_EQ(header.interestArrivalMs_, wd.header().interestArrivalMs_);
+        EXPECT_EQ(header.generationDelayMs_, wd.header().generationDelayMs_);
     }
 
     {
         WireData<DataSegmentHeader> wd(ds);
         EXPECT_TRUE(wd.isValid());
         EXPECT_TRUE(wd.segment().isValid());
+
+        EXPECT_EQ(header.interestNonce_, wd.header().interestNonce_);
+        EXPECT_EQ(header.interestArrivalMs_, wd.header().interestArrivalMs_);
+        EXPECT_EQ(header.generationDelayMs_, wd.header().generationDelayMs_);
     }
 }
 
@@ -1374,6 +1392,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     WireData<DataSegmentHeader> wd(ds);
     EXPECT_TRUE(wd.isValid());
     EXPECT_TRUE(wd.segment().isValid());
+    EXPECT_EQ(1, wd.getSlicesNum());
 
     std::vector<ImmutableHeaderPacket<DataSegmentHeader>> bundleSegments;
     bundleSegments.push_back(wd.segment());

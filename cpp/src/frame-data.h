@@ -653,10 +653,9 @@ namespace ndnrtc {
     };
 
     //******************************************************************************
-    template<typename SegmentHeader>
-    class WireData {
+    class WireSegment {
     public:
-        WireData(const boost::shared_ptr<ndn::Data>& data):data_(data),
+        WireSegment(const boost::shared_ptr<ndn::Data>& data):data_(data),
             isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
         {
             if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
@@ -668,11 +667,11 @@ namespace ndnrtc {
             }
         }
 
-        WireData(const WireData& data):data_(data.data_),
+        WireSegment(const WireSegment& data):data_(data.data_),
             dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_)
         {}
 
-        ~WireData(){}
+        virtual ~WireSegment(){}
 
         bool isValid() { return isValid_; }
         size_t getSlicesNum()
@@ -691,16 +690,36 @@ namespace ndnrtc {
         bool isParity() { return dataNameInfo_.isParity_; }
         std::string getThreadName() { return dataNameInfo_.threadName_; }
 
-        const ImmutableHeaderPacket<SegmentHeader> segment() const
+        const NamespaceInfo& getInfo() const { return dataNameInfo_; }
+
+        const DataSegmentHeader header() 
         {
-            return ImmutableHeaderPacket<SegmentHeader>(data_->getContent());
+            // this packet will be invalid for VideoFrameSegment packets,
+            // still casting to DataSegmentHeader is possible, because 
+            // it's a parent class for VideoFrameSegmentHeader
+            ImmutableHeaderPacket<DataSegmentHeader> s(data_->getContent());
+            return s.getHeader();
         }
 
-    private:
+    protected:
         NamespaceInfo dataNameInfo_;
         bool isValid_;
         boost::shared_ptr<ndn::Data> data_;
     };
+
+    template<typename SegmentHeader>
+    class WireData : public WireSegment 
+    {
+    public:
+        WireData(const boost::shared_ptr<ndn::Data>& data):WireSegment(data){}
+        WireData(const WireData<SegmentHeader>& data):WireSegment(data){}
+
+        const ImmutableHeaderPacket<SegmentHeader> segment() const
+        {
+            return ImmutableHeaderPacket<SegmentHeader>(data_->getContent());
+        }
+    };
+
 };
 
 #endif /* defined(__ndnrtc__frame_slot__) */
