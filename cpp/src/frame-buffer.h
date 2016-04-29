@@ -909,7 +909,6 @@ namespace ndnrtc
             
             State state_;
             PacketNumber playbackNo_, lastKeySeqNo_;
-            int nKeyFrames_;
                         
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
@@ -919,7 +918,6 @@ namespace ndnrtc
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
             bool retransmissionsEnabled_;
-            int frameReleaseCount_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -1005,8 +1003,6 @@ namespace ndnrtc
             
             void
             checkRetransmissions();
-            
-            int rttFilter_;
         };
         
         class IFrameBufferCallback

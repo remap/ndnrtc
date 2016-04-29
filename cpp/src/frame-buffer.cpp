@@ -1022,7 +1022,6 @@ targetSizeMs_(-1),
 estimatedSizeMs_(-1),
 isEstimationNeeded_(true)
 {
-    rttFilter_ = NdnRtcUtils::setupFilter(0.05);
 }
 
 ndnrtc::new_api::FrameBuffer::~FrameBuffer()
@@ -1327,14 +1326,6 @@ ndnrtc::new_api::FrameBuffer::freeSlot(const ndn::Name &prefix)
     {
         if (slot->getState() != Slot::StateLocked)
         {
-            if (slot->getNamespace() == Slot::Key)
-            {
-                nKeyFrames_--;
-                
-                if (nKeyFrames_ <= 0)
-                    nKeyFrames_ = 0;
-            }
-            
             slot->reset();
             freeSlots_.push_back(slot);
             return slot->getState();
@@ -1555,8 +1546,6 @@ ndnrtc::new_api::FrameBuffer::releaseAcquiredSlot(bool& isInferredDuration)
         }
         
         // cleanup buffer from old frames every frame
-        frameReleaseCount_++;
-        //if (frameReleaseCount_%5 == 0)
         {
             PacketNumber deltaPacketNo = (lockedSlot->getNamespace() == Slot::Key)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
             PacketNumber keyPacketNo = (lockedSlot->getNamespace() == Slot::Delta)?lockedSlot->getPairedFrameNumber():lockedSlot->getSequentialNumber();
@@ -1747,9 +1736,7 @@ ndnrtc::new_api::FrameBuffer::resetData()
     lastKeySeqNo_ = -1;
     skipFrame_ = false;
     playbackSlot_.reset();
-    nKeyFrames_ = 0;
     retransmissionsEnabled_ = false;
-    frameReleaseCount_ = 0;
     
     setTargetSize(consumer_->getParameters().jitterSizeMs_);
 }
@@ -1791,7 +1778,6 @@ ndnrtc::new_api::FrameBuffer::reserveSlot(const ndn::Interest &interest)
         {
             PacketNumber frameNo = NdnRtcNamespace::getPacketNumber(interest.getName());
             lastKeySeqNo_ = frameNo;
-            nKeyFrames_++;
         }
     }
     
