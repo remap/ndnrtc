@@ -398,24 +398,24 @@ ndnrtc::new_api::Pipeliner2::requestMissing
     if (missingSegments.size() == 0)
         LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
     else
+    {
         LogDebugC << "request missing "
         << slot->getPrefix()
         << " total " << missingSegments.size() << " interests"
         << std::endl;
         
-    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
-    for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
-    {
-        shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
-        
-        shared_ptr<Interest> segmentInterest;
-        assert((segment->getNumber() >= 0));
-        
-        segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
-        express(*segmentInterest, priority);
-        segmentInterest->setInterestLifetimeMilliseconds(lifetime);
+        std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
+        for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
+        {
+            shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
+            
+            shared_ptr<Interest> segmentInterest;
+            assert((segment->getNumber() >= 0));
+            
+            segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
+            express(*segmentInterest, priority);
+        }
     }
-    
     frameBuffer_->synchronizeRelease();
 }
 

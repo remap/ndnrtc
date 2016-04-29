@@ -1291,28 +1291,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
 }
 
 void
-ndnrtc::new_api::FrameBuffer::interestTimeout(const ndn::Interest &interest)
-{
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
-    const Name& prefix = interest.getName();
-    
-    shared_ptr<Slot> slot = getSlot(prefix, false);
-    
-    if (slot.get())
-    {
-        if (RESULT_GOOD(slot->markMissing(interest)))
-        {
-        }
-        else
-        {
-            LogTraceC
-            << "timeout error " << interest.getName()
-            << " for " << slot->getPrefix() << std::endl;
-        }
-    }
-}
-
-void
 ndnrtc::new_api::FrameBuffer::purgeNewSlots(int& nDeltaPurged, int& nKeyPurged)
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
@@ -1371,52 +1349,6 @@ ndnrtc::new_api::FrameBuffer::setState(const ndnrtc::new_api::FrameBuffer::State
 {
     lock_guard<recursive_mutex> scopedLock(syncMutex_);
     state_ = state;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::recycleOldSlots()
-{
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
-    
-    double playbackDuration = getEstimatedBufferSize();
-    double targetSize = getTargetSize();
-    int nRecycledSlots_ = 0;
-
-    while (playbackDuration > getTargetSize()) {
-        Slot* oldSlot = playbackQueue_.peekSlot();
-        playbackQueue_.popSlot();
-        
-        nRecycledSlots_++;
-        freeSlot(oldSlot->getPrefix());
-        playbackDuration = playbackQueue_.getPlaybackDuration();
-    }
-    
-    isEstimationNeeded_ = true;
-    
-    LogTraceC << "recycled " << nRecycledSlots_ << " "
-    << playbackQueue_.dumpShort() << std::endl;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::recycleOldSlots(int nSlotsToRecycle)
-{
-    lock_guard<recursive_mutex> scopedLock(syncMutex_);
-
-    int nRecycledSlots_ = 0;
-    
-    while (nRecycledSlots_ < nSlotsToRecycle && playbackQueue_.size() != 0)
-    {
-        Slot* oldSlot = playbackQueue_.peekSlot();
-        playbackQueue_.popSlot();
-        
-        nRecycledSlots_++;
-        freeSlot(oldSlot->getPrefix());
-    }
-    
-    isEstimationNeeded_ = true;
-    
-    LogTraceC << "recycled " << nRecycledSlots_ << " "
-    << playbackQueue_.dumpShort() << std::endl;
 }
 
 int64_t

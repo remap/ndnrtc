@@ -681,25 +681,6 @@ namespace ndnrtc
             void
             setState(const State &state);
             
-            unsigned int
-            getTotalSlotsNum()
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return activeSlots_.size();
-            }
-            
-            /**
-             * Returns total number of active slots - assemlbing, ready, locked 
-             * or new slots
-             */
-            unsigned int
-            getActiveSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateNew | Slot::StateAssembling |
-                                Slot::StateReady | Slot::StateLocked).size();
-            }
-            
             /**
              * Returns total number of new slots (i.e. outstanding frames)
              */
@@ -708,27 +689,6 @@ namespace ndnrtc
             {
                 boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew).size();
-            }
-            
-            /**
-             * Returns total number of slots that have any segments fetched
-             */
-            unsigned int
-            getFetchedSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateAssembling |
-                                Slot::StateReady | Slot::StateLocked).size();
-            }
-            
-            /**
-             * Returns total number of free slots in the buffer
-             */
-            unsigned int
-            getFreeSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateFree).size();
             }
             
             /**
@@ -760,9 +720,6 @@ namespace ndnrtc
             Event
             newData(const Data& data);
             
-            void
-            interestTimeout(const Interest& interest);
-            
             /**
              * Purges all new slots (useful for thread switching)
              */
@@ -785,21 +742,6 @@ namespace ndnrtc
 
             int64_t
             getTargetSize() { return targetSizeMs_; }
-            
-            /**
-             * Checks estimated buffer size and if it's greater than targetSizeMs
-             * removes frees slots starting from the end of the buffer (the end
-             * contains oldest slots, beginning - newest)
-             */
-            void
-            recycleOldSlots();
-
-            /**
-             * Recycles specified number of first slots from the buffer
-             * @param nSlotsToRecycle Number of slots to recycle
-             */
-            void
-            recycleOldSlots(int nSlotsToRecycle);
             
             /**
              * Estimates current buffer size based on current active slots
