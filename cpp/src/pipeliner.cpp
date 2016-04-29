@@ -58,7 +58,6 @@ keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAv
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgParitySegNum_)),
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgParitySegNum_)),
 useKeyNamespace_(true),
-streamId_(0),
 frameBuffer_(consumer_->getFrameBuffer().get()),
 recoveryCheckpointTimestamp_(0),
                 //  N   K theta1 theta2
