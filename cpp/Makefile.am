@@ -3,27 +3,32 @@ ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
 
 lib_LTLIBRARIES = libndnrtc.la
-libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
+libndnrtc_la_SOURCES = src/async.cpp src/async.h \
+  src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-controller.cpp src/audio-controller.h \
   src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
+  src/audio-stream-impl.cpp src/audio-stream-impl.h \
   src/audio-thread.cpp src/audio-thread.h \
   src/av-sync.cpp src/av-sync.h \
   src/buffer-estimator.cpp src/buffer-estimator.h \
   src/base-capturer.cpp src/base-capturer.h \
   src/chase-estimation.cpp src/chase-estimation.h \
   src/consumer.cpp src/consumer.h \
+  src/clock.cpp src/clock.h \
   src/data-validator.h src/data-validator.cpp \
   src/ndnrtc-endian.h \
   src/external-capturer.cpp src/external-capturer.hpp \
-  src/face-wrapper.cpp src/face-wrapper.h \
+  src/estimators.cpp src/estimators.h \
   src/fec.cpp src/fec.h \
   src/frame-buffer.cpp src/frame-buffer.h \
   src/frame-data.cpp src/frame-data.h \
+  src/frame-converter.cpp src/frame-converter.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
-  src/media-stream.cpp src/media-stream.h \
+  src/local-media-stream.cpp src/local-media-stream.h \
+  src/media-stream-base.cpp src/media-stream-base.h \
   src/name-components.cpp include/name-components.h \
   src/ndn-assembler.cpp src/ndn-assembler.h \
   src/ndnrtc-common.h \
@@ -44,8 +49,6 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/packet-publisher.cpp src/packet-publisher.h \
   src/renderer.h \
   src/rtt-estimation.cpp src/rtt-estimation.h \
-  src/segmentizer.cpp src/segmentizer.h \
-  src/session.cpp src/session.h \
   src/simple-log.cpp \
   src/slot-buffer.cpp src/slot-buffer.h \
   include/statistics.h src/statistics.cpp \
@@ -55,6 +58,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
   src/video-renderer.cpp src/video-renderer.h \
+  src/video-stream-impl.cpp src/video-stream-impl.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
   src/webrtc.h
@@ -130,7 +134,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer
 
 # bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
 
@@ -241,5 +245,10 @@ bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tes
 bin_tests_test_local_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_local_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_local_media_stream_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_frame_buffer_LDADD = ${libndnrtc_la_LIBADD}
 
 TESTS = ${check_PROGRAMS}

@@ -170,7 +170,6 @@ namespace ndnrtc {
             PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
             FrameSegmentsInfo frameSegmentsInfo_;
             
-            unsigned int streamId_; // currently fetched stream id
             bool useKeyNamespace_;
             int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
             std::map<std::string, PacketNumber> deltaSyncList_, keySyncList_;

@@ -13,16 +13,391 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
-#include <ndn-cpp/name.hpp>
 
-#include "frame-data.h"
-#include "ndnrtc-utils.h"
-#include "statistics.h"
-#include "simple-log.h"
+#include "name-components.h"
+
+// #include <ndn-cpp/name.hpp>
+// #include "frame-data.h"
+// #include "ndnrtc-utils.h"
+// #include "statistics.h"
+// #include "simple-log.h"
 #include "slot-buffer.h"
+
+// #define ENABLE_OLD_BUFFER
+
+namespace ndn {
+    class Interest;
+    class Data;
+    class Name;
+}
 
 namespace ndnrtc
 {
+    class WireSegment;
+
+    class SlotSegment {
+    public:
+
+        SlotSegment(const boost::shared_ptr<ndn::Interest>&);
+
+        const NamespaceInfo& getInfo() const;
+        void setData(const boost::shared_ptr<WireSegment>& data) { data_ = data; }
+        const boost::shared_ptr<WireSegment>& getData() const { return data_; }
+        
+        bool isFetched() const { return data_.get(); }
+        bool isPending() const { return !data_.get(); }
+        bool isRightmostRequested() const { return !interestInfo_.hasSeqNo_; }
+        bool isOriginal() const;
+
+        int64_t getRequestTimeUsec() { return requestTimeUsec_; }
+        
+        int64_t getArrivalTimeUsec() { return arrivalTimeUsec_; }
+        
+        int64_t getRoundTripDelayUsec()
+        {
+            if (arrivalTimeUsec_ <= 0) return -1;
+            return (arrivalTimeUsec_-requestTimeUsec_);
+        }
+
+    private:
+        boost::shared_ptr<ndn::Interest> interest_;
+        NamespaceInfo interestInfo_;
+        boost::shared_ptr<WireSegment> data_;
+        int64_t requestTimeUsec_, arrivalTimeUsec_;
+        size_t requestNo_;
+        bool isVerified_;
+    };
+
+#if 0
+    class BufferSlot : public ISlot
+    {
+    public:
+        enum Namespace {
+            Unknown = -1,
+            Key = 0,
+            Delta = 1
+                }; // enum Namespace
+                
+                /**
+                 * Slot can have different states
+                 */
+                 enum State {
+                    StateFree = 1<<0,  // slot is free for being used
+                    StateNew = 1<<1,   // slot is being used for assembling, but has
+                                    // not recevied any data segments yet
+                    StateAssembling = 1<<2,    // slot is being used for assembling and
+                                            // already has some data segments arrived
+                    StateReady = 1<<3, // slot assembled all the data and is ready for
+                                    // decoding a frame
+                    StateLocked = 1<<4 // slot is locked for decoding
+                }; // enum State
+                
+                /**
+                 * Slot can have different data consistency states, i.e. as
+                 * frame meta info is spread over data segments and name
+                 * prefixes, some meta data is available once any segments is
+                 * received (it can be retrieved from the data name prefix),
+                 * other meta data is available only when segment #0 is
+                 * received - as producer adds header to the frame data.
+                 */
+                 typedef enum _Consistency {
+                    Inconsistent = 1<<0,      // slot has no meta info yet
+                    SegmentMeta = 1<<1,       // meta data from arrived segment
+                    PrefixMeta = SegmentMeta,   // slot has meta data from the
+                                                // name prefix (DEPRECATED)
+                    HeaderMeta = 1<<2,    // slot has meta data from the
+                                          // header, provided by producer
+                    Consistent = SegmentMeta|HeaderMeta // all meta data is ready
+                } Consistency;
+                
+                /**
+                 * Slot comparator class used for ordering slots in playback 
+                 * order.
+                 * Playback ordering is mainly based on playback sequence number
+                 * of a frame. Sometimes, playback sequence number is not 
+                 * available - in cases if the interest just has been issued but 
+                 * no data has arrived yet. For such cases, one can use namespace 
+                 * sequence numbers if the frames are from the same namespace 
+                 * (i.e. either both are key or delta frames). Otherwise - 
+                 * comparison based on prefixes is performed - and key frame 
+                 * will always precede
+                 */
+                 class PlaybackComparator {
+                 public:
+                    PlaybackComparator(bool inverted = false):inverted_(inverted){}
+                    bool operator() (const Slot* slot1,
+                       const Slot* slot2) const;
+                    
+                private:
+                    bool inverted_;
+                };
+                
+                Slot(unsigned int segmentSize, bool useFec);
+                ~Slot();
+                
+                /**
+                 * Adds pending segment to the slot
+                 * @param interest Interest for the data segment for the current
+                 * slot. This call will set interest's nonce value
+                 * @return  RESULT_OK if segment was added sucessfully,
+                 *          RESULT_FAIL otherwise
+                 */
+                 int
+                 addInterest(Interest& interest);
+
+                /**
+                 * Marks pending segment as missing
+                 * @param interest Interest used previously in addInterest call
+                 * @return  RESULT_OK   if pending segment was marked as missing
+                 *          RESULT_WARN there is a segment exists for current
+                 *                      interest but it is has state different 
+                 *                      from StatePending
+                 *          RESULT_ERR  there is no segment which satisfies
+                 *                      provided interest
+                 */
+                 int
+                 markMissing(const Interest& interest);
+
+                 void
+                 markVerified(const std::string& segmentName, bool verified);
+
+                /**
+                 * Adds data to the slot
+                 * @param data Data of the segment
+                 * @return  updated slot state
+                 */
+                 State
+                 appendData(const Data &data);
+
+                /**
+                 * Marks slot as free
+                 */
+                 int
+                 reset();
+
+                /**
+                 * Lock slot for playback
+                 */
+                 void
+                 lock()
+                 {
+                    stashedState_ = state_;
+                    state_ = StateLocked;
+                }
+                
+                /**
+                 * Unlocks slot after playback
+                 */
+                 void
+                 unlock() { state_ = stashedState_; }
+
+                /**
+                 * Applies FEC recovering to the frame if it's not fully 
+                 * assembled
+                 * @return number of recovered segments
+                 */
+                 int
+                 recover();
+
+                /**
+                 * Returns slot's current playback deadline. Playback deadline 
+                 * defines how far (in milliseconds) is the frame from the 
+                 * current playhead. In other words - playback deadline defines 
+                 * delay after which current frame should be played out
+                 */
+                 int64_t
+                 getPlaybackDeadline() const { return playbackDeadline_; }
+
+                /**
+                 * Updates slot's playback deadline
+                 */
+                 void
+                 setPlaybackDeadline(int64_t playbackDeadline)
+                 { playbackDeadline_ = playbackDeadline; }
+
+                 int64_t
+                 getProducerTimestamp() const
+                 {
+                    if (consistency_&HeaderMeta)
+                        return producerTimestamp_;
+                    return -1;
+                }
+                
+                double
+                getPacketRate() const { return packetRate_; }
+                
+                /**
+                 * Returns current slot state
+                 */
+                 State
+                 getState() const { return state_; }
+
+                /**
+                 * Returns current data consistency state
+                 */
+                 int
+                 getConsistencyState() const { return consistency_; }
+
+                /**
+                 * Returns playback frame number
+                 * @return Absolute frame number or -1 if necessary data has
+                 * not been received yet
+                 * @see getConsitencyState
+                 */
+                 PacketNumber
+                 getPlaybackNumber() const {
+                    if (consistency_&PrefixMeta)
+                        return packetPlaybackNumber_;
+                    return -1;
+                }
+                
+                /**
+                 * Returns sequential number in the current namespace
+                 */
+                 PacketNumber
+                 getSequentialNumber() const {
+                    return packetSequenceNumber_;
+                }
+                
+                /**
+                 * Returns current slot's namespace
+                 */
+                 Namespace
+                 getNamespace() const { return packetNamespace_; }
+
+                /**
+                 * Returns appropriate frame sequence number from the paired 
+                 * namespace (delta for key frames and vice versa)
+                 * For key frames: sequence number of first delta frame in the 
+                 * gop
+                 * Fro delta frames: returns key frame sequence number from the 
+                 * gop of current delta frame
+                 * @return frame number or -1 if data has not been received yet
+                 * @see getConsistencyState
+                 */
+                 PacketNumber
+                 getPairedFrameNumber() const
+                 {
+                    if (consistency_&PrefixMeta)
+                        return pairedSequenceNumber_;
+                    return -1;
+                }
+                
+                int
+                getSegmentsNumber() const { return nSegmentsTotal_; }
+                
+                int
+                getParitySegmentsNumber() const { return nSegmentsParity_; }
+                
+                int
+                getPacketData(PacketData** packetData) const
+                {
+                    if (consistency_&Consistent)
+                        return PacketData::packetFromRaw(assembledSize_,
+                           slotData_,
+                           packetData);
+                    return RESULT_ERR;
+                }
+                
+                std::vector<boost::shared_ptr<Segment> >
+                getMissingSegments()
+                { return getSegments(Segment::StateMissing); }
+                
+                std::vector<boost::shared_ptr<Segment> >
+                getPendingSegments()
+                { return getSegments(Segment::StatePending); }
+
+                std::vector<boost::shared_ptr<Segment> >
+                getFetchedSegments()
+                { return getSegments(Segment::StateFetched); }
+                
+                double
+                getAssembledLevel()
+                {
+                    if (!nSegmentsTotal_) return 0;
+                    return (double)nSegmentsReady_/(double)nSegmentsTotal_;
+                }
+                
+                bool
+                isRecovered()
+                { return isRecovered_; }
+                
+                const Name&
+                getPrefix() const { return slotPrefix_; }
+                
+                void
+                setPrefix(const Name& prefix);
+                
+                boost::shared_ptr<Segment>
+                getSegment(SegmentNumber segNo, bool isParity) const;
+                
+                boost::shared_ptr<Segment>
+                getRecentSegment() const { return recentSegment_; }
+                
+                bool
+                isRightmost() const { return rightmostSegment_.get() != NULL; }
+                
+                unsigned int
+                getRtxNum(){ return nRtx_; }
+                
+                void
+                incremenrRtxNum() { nRtx_++; }
+                
+                int64_t
+                getLifetime() DEPRECATED
+                { return (requestTimeUsec_ > 0)?NdnRtcUtils::millisecondTimestamp()-requestTimeUsec_/1000.:0;}
+                
+                int64_t
+                getAssemblingTime()
+                { return ((readyTimeUsec_ >= 0) ? (readyTimeUsec_-firstSegmentTimeUsec_)/1000. : 0); }
+                
+                bool
+                hasOriginalSegments() { return hasOriginalSegments_; }
+                
+                int
+                getCrcValue() { return crcValue_; }
+                
+                static std::string
+                stateToString(State s)
+                {
+                    switch (s) {
+                        case StateAssembling: return "Assembling"; break;
+                        case StateFree: return "Free"; break;
+                        case StateLocked: return "Locked"; break;
+                        case StateNew: return "New"; break;
+                        case StateReady: return "Ready"; break;
+                        default: return "Unknown"; break;
+                    }
+                }
+                
+                static std::string
+                toString(int consistency)
+                {
+                    std::stringstream str;
+                    if (consistency == Consistent)
+                        str << "C";
+                    else if (consistency == Inconsistent)
+                        str << "I";
+                    else
+                    {
+                        if (consistency&PrefixMeta)
+                            str << "P";
+                        if (consistency&HeaderMeta)
+                            str << "H";
+                    }
+                    return str.str();
+                }
+                
+                static bool
+                isNextPacket(const Slot& slot, const Slot& nextSlot);
+                
+                std::string
+                dump();
+            protected:
+    };
+    #endif
+
+#ifdef ENABLE_OLD_BUFFER
     // namespace for new API
     namespace new_api
     {
@@ -85,7 +460,7 @@ namespace ndnrtc
                      * - reqCounter
                      */
                     void interestIssued(const uint32_t& nonceValue);
-                    
+                     
                     /**
                      * Moves segment into Missing state if it was in Pending
                      * state before
@@ -490,9 +865,6 @@ namespace ndnrtc
                 boost::shared_ptr<Segment>
                 getRecentSegment() const { return recentSegment_; }
                 
-                bool
-                isRightmost() const { return rightmostSegment_.get() != NULL; }
-                
                 unsigned int
                 getRtxNum(){ return nRtx_; }
                 
@@ -576,7 +948,7 @@ namespace ndnrtc
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
                 int crcValue_ = 0;
                 
-                boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
+                boost::shared_ptr<Segment> recentSegment_;
                 std::vector<boost::shared_ptr<Segment> > freeSegments_;
                 std::map<SegmentNumber, boost::shared_ptr<Segment> > activeSegments_;
                 
@@ -585,10 +957,6 @@ namespace ndnrtc
                 
                 boost::shared_ptr<Segment>&
                 getActiveSegment(SegmentNumber segmentNumber, bool isParity);
-                
-                void
-                fixRightmost(PacketNumber packetNumber,
-                             SegmentNumber segmentNumber, bool isParity);
                 
                 void
                 prepareStorage(unsigned int segmentSize,
@@ -701,25 +1069,6 @@ namespace ndnrtc
             void
             setState(const State &state);
             
-            unsigned int
-            getTotalSlotsNum()
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return activeSlots_.size();
-            }
-            
-            /**
-             * Returns total number of active slots - assemlbing, ready, locked 
-             * or new slots
-             */
-            unsigned int
-            getActiveSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateNew | Slot::StateAssembling |
-                                Slot::StateReady | Slot::StateLocked).size();
-            }
-            
             /**
              * Returns total number of new slots (i.e. outstanding frames)
              */
@@ -728,27 +1077,6 @@ namespace ndnrtc
             {
                 boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
                 return getSlots(Slot::StateNew).size();
-            }
-            
-            /**
-             * Returns total number of slots that have any segments fetched
-             */
-            unsigned int
-            getFetchedSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateAssembling |
-                                Slot::StateReady | Slot::StateLocked).size();
-            }
-            
-            /**
-             * Returns total number of free slots in the buffer
-             */
-            unsigned int
-            getFreeSlotsNum() const
-            {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(syncMutex_);
-                return getSlots(Slot::StateFree).size();
             }
             
             /**
@@ -802,21 +1130,6 @@ namespace ndnrtc
 
             int64_t
             getTargetSize() { return targetSizeMs_; }
-            
-            /**
-             * Checks estimated buffer size and if it's greater than targetSizeMs
-             * removes frees slots starting from the end of the buffer (the end
-             * contains oldest slots, beginning - newest)
-             */
-            void
-            recycleOldSlots();
-
-            /**
-             * Recycles specified number of first slots from the buffer
-             * @param nSlotsToRecycle Number of slots to recycle
-             */
-            void
-            recycleOldSlots(int nSlotsToRecycle);
             
             /**
              * Estimates current buffer size based on current active slots
@@ -989,7 +1302,6 @@ namespace ndnrtc
             
             State state_;
             PacketNumber playbackNo_, lastKeySeqNo_;
-            int nKeyFrames_;
                         
             // flag which determines whether currently acquired packet should
             // be skipped (in case of old slot acquisition)
@@ -998,9 +1310,7 @@ namespace ndnrtc
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
-            bool isWaitingForRightmost_;
             bool retransmissionsEnabled_;
-            int frameReleaseCount_;
             
             std::vector<boost::shared_ptr<Slot> > freeSlots_;
             std::map<Name, boost::shared_ptr<Slot> > activeSlots_;
@@ -1082,15 +1392,10 @@ namespace ndnrtc
             }
             
             void
-            fixRightmost(const Name& prefix);
-            
-            void
             dumpActiveSlots();
             
             void
             checkRetransmissions();
-            
-            int rttFilter_;
         };
         
         class IFrameBufferCallback
@@ -1108,6 +1413,7 @@ namespace ndnrtc
             onKeyNeeded(PacketNumber seqNo) = 0;
         };
     }
+#endif
 }
 
 #endif /* defined(__ndnrtc__frame_buffer__) */

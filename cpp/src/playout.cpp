@@ -22,9 +22,7 @@ using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;;
-
-const int Playout::BufferCheckInterval = 2000;
+using namespace ndnrtc::new_api::statistics;
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -75,7 +73,6 @@ Playout::start(int initialAdjustment)
         lastPacketTs_ = 0;
         inferredDelay_ = 0;
         playbackAdjustment_ = initialAdjustment;
-        bufferCheckTs_ = NdnRtcUtils::millisecondTimestamp();
     }
     
     NdnRtcUtils::dispatchOnBackgroundThread([this](){
@@ -138,7 +135,6 @@ Playout::processPlayout()
         
         if (frameBuffer_->getState() == FrameBuffer::Valid)
         {
-//            checkBuffer();
             jitterTiming_->startFramePlayout();
             
             // cleanup from previous iteration
@@ -303,29 +299,4 @@ Playout::avSyncAdjustment(int64_t nowTimestamp, int playbackDelay)
     }
     
     return syncDriftAdjustment;
-}
-
-void
-Playout::checkBuffer()
-{
-    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
-    if (timestamp - bufferCheckTs_ > BufferCheckInterval)
-    {
-        bufferCheckTs_ = timestamp;
-        
-        // keeping buffer level at the target size
-        unsigned int targetBufferSize = consumer_->getBufferEstimator()->getTargetSize();
-        int playable = consumer_->getFrameBuffer()->getPlayableBufferSize();
-        int adjustment = targetBufferSize - playable;
-        
-        LogInfoC << "buffer size " << playable << std::endl;
-        
-        if (abs(adjustment) > 100 && adjustment < 0)
-        {
-            LogInfoC << "buffer adjustment."
-            << abs(adjustment) << " ms excess" << std::endl;
-            
-            playbackAdjustment_ += adjustment;
-        }
-    }
 }

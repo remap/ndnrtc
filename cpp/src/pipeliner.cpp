@@ -58,7 +58,6 @@ keySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAv
 deltaParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.deltaAvgParitySegNum_)),
 keyParitySegnumEstimatorId_(NdnRtcUtils::setupMeanEstimator(0, frameSegmentsInfo.keyAvgParitySegNum_)),
 useKeyNamespace_(true),
-streamId_(0),
 frameBuffer_(consumer_->getFrameBuffer().get()),
 recoveryCheckpointTimestamp_(0),
                 //  N   K theta1 theta2
@@ -398,31 +397,24 @@ ndnrtc::new_api::Pipeliner2::requestMissing
     if (missingSegments.size() == 0)
         LogTraceC << "no missing segments for " << slot->getPrefix() << std::endl;
     else
+    {
         LogDebugC << "request missing "
         << slot->getPrefix()
         << " total " << missingSegments.size() << " interests"
         << std::endl;
         
-    std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
-    for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
-    {
-        shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
-        
-        shared_ptr<Interest> segmentInterest;
-        
-        if (!slot->isRightmost())
+        std::vector<shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> >::iterator it;
+        for (it = missingSegments.begin(); it != missingSegments.end(); ++it)
         {
+            shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
+            
+            shared_ptr<Interest> segmentInterest;
             assert((segment->getNumber() >= 0));
+            
             segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
+            express(*segmentInterest, priority);
         }
-        else
-            segmentInterest = getInterestForRightMost(lifetime,
-                                                      slot->getNamespace()==FrameBuffer::Slot::Key);
-        
-        express(*segmentInterest, priority);
-        segmentInterest->setInterestLifetimeMilliseconds(lifetime);
     }
-    
     frameBuffer_->synchronizeRelease();
 }
 

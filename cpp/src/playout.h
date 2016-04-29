@@ -35,8 +35,6 @@ namespace ndnrtc{
         class Playout : public NdnRtcComponent, public statistics::StatObject
         {
         public:
-            static const int BufferCheckInterval;
-            
             Playout(Consumer* consumer,
                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
             virtual ~Playout();
@@ -60,18 +58,12 @@ namespace ndnrtc{
             isRunning()
             { return isRunning_; }
             
-            void
-            setPlaybackAdjustment(int playbackAdjustment)
-            { playbackAdjustment_ = playbackAdjustment; }
-            
         protected:
             bool isRunning_;
             
             bool isInferredPlayback_;
             int64_t lastPacketTs_;
             unsigned int inferredDelay_;
-            int playbackAdjustment_;
-            int64_t bufferCheckTs_;
             
             Consumer* consumer_;
             boost::shared_ptr<FrameBuffer> frameBuffer_;
@@ -112,9 +104,6 @@ namespace ndnrtc{
             
             bool
             processPlayout();
-            
-            void
-            checkBuffer();
         };
     }
 }
