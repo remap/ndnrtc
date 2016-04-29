@@ -182,14 +182,8 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(ndn::Interest &interest)
         reservedSegment->setNumber(segmentNumber);
         reservedSegment->setIsParity(isParityPrefix);
         
-        // rightmost child prefix
-        if (packetNumber < 0)
-            rightmostSegment_ = reservedSegment;
-        else
-        {
-            SegmentNumber segIdx = (isParityPrefix)?toMapParityIdx(segmentNumber):segmentNumber;
-            activeSegments_[segIdx] = reservedSegment;
-        }
+        SegmentNumber segIdx = (isParityPrefix)?toMapParityIdx(segmentNumber):segmentNumber;
+        activeSegments_[segIdx] = reservedSegment;
         
         if (state_ == StateFree)
         {
@@ -216,14 +210,6 @@ ndnrtc::new_api::FrameBuffer::Slot::markMissing(const ndn::Interest &interest)
     PacketNumber packetNumber = NdnRtcNamespace::getPacketNumber(interestName);
     SegmentNumber segmentNumber = NdnRtcNamespace::getSegmentNumber(interestName);
     bool isParity = NdnRtcNamespace::isParitySegmentPrefix(interestName);
-    
-    if (packetNumber < 0 &&
-        segmentNumber < 0 &&
-        rightmostSegment_.get() != nullptr)
-    {
-        rightmostSegment_->markMissed();
-        return RESULT_OK;
-    }
 
     int res = RESULT_ERR;
     shared_ptr<Segment> segment = getSegment(segmentNumber, isParity);
@@ -258,8 +244,7 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
     
     bool isParity = NdnRtcNamespace::isParitySegmentPrefix(dataName);
 
-    if (!rightmostSegment_.get() &&
-        packetNumber != packetSequenceNumber_)
+    if (packetNumber != packetSequenceNumber_)
         return StateFree;
     
     if (!hasReceivedSegment(segmentNumber, isParity))
@@ -267,9 +252,7 @@ ndnrtc::new_api::FrameBuffer::Slot::appendData(const ndn::Data &data)
         PrefixMetaInfo prefixMeta;
         
         if (RESULT_GOOD(PrefixMetaInfo::extractMetadata(dataName, prefixMeta)))
-        {
-            fixRightmost(packetNumber, segmentNumber, isParity);
-            
+        {   
             updateConsistencyWithMeta(packetNumber, prefixMeta);
             assert(prefixMeta.totalSegmentsNum_ == nSegmentsTotal_);
             
@@ -391,14 +374,6 @@ ndnrtc::new_api::FrameBuffer::Slot::reset()
                 freeSegments_.push_back(it->second);
             }
             activeSegments_.clear();
-        }
-        
-        // clear rightmost segment if any
-        if (rightmostSegment_.get())
-        {
-            rightmostSegment_->discard();
-            freeSegments_.push_back(rightmostSegment_);
-            rightmostSegment_.reset();
         }
     }
     
@@ -549,16 +524,11 @@ ndnrtc::new_api::FrameBuffer::Slot::prepareFreeSegment(SegmentNumber segNo,
         else
             freeSegment.reset(new Segment());
 
+        assert (segNo >= 0);
         Name segmentPrefix(getPrefix());
-
-        // check for rightmost
-        if (segNo >= 0)
-        {
-            NdnRtcNamespace::appendDataKind(segmentPrefix, isParity);
-            freeSegment->setPrefix(Name(segmentPrefix).appendSegment(segNo));
-        }
-        else
-            freeSegment->setPrefix(Name(segmentPrefix));
+        
+        NdnRtcNamespace::appendDataKind(segmentPrefix, isParity);
+        freeSegment->setPrefix(Name(segmentPrefix).appendSegment(segNo));
     }
     
     return freeSegment;
@@ -579,30 +549,6 @@ ndnrtc::new_api::FrameBuffer::Slot::getActiveSegment(SegmentNumber segmentNumber
     assert(false);
     static shared_ptr<Segment> nullSeg;
     return nullSeg;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::Slot::fixRightmost(PacketNumber packetNumber,
-                                                 SegmentNumber segmentNumber,
-                                                 bool isParity)
-{
-    SegmentNumber segIdx = (isParity)?toMapParityIdx(segmentNumber):segmentNumber;
-    std::map<SegmentNumber, shared_ptr<Segment> >::iterator
-    it = activeSegments_.find(segIdx);
-    
-    if (it == activeSegments_.end() &&
-        rightmostSegment_.get())
-    {
-        setPrefix(slotPrefix_.append(NdnRtcUtils::componentFromInt(packetNumber)));
-
-        Name segmentPrefix(getPrefix());
-        NdnRtcNamespace::appendDataKind(segmentPrefix, isParity);
-
-        rightmostSegment_->setPrefix(segmentPrefix.appendSegment(segmentNumber));
-        
-        activeSegments_[segIdx] = rightmostSegment_;
-        rightmostSegment_.reset();
-    }
 }
 
 void
@@ -683,10 +629,6 @@ ndnrtc::new_api::FrameBuffer::Slot::getSegments(int segmentStateMask)
     for (it = activeSegments_.begin(); it != activeSegments_.end(); ++it)
         if (it->second->getState() & segmentStateMask)
             foundSegments.push_back(it->second);
-    
-    if (rightmostSegment_.get() &&
-        rightmostSegment_->getState()&segmentStateMask)
-        foundSegments.push_back(rightmostSegment_);
     
     return foundSegments;
 }
@@ -1218,9 +1160,6 @@ ndnrtc::new_api::FrameBuffer::newData(const ndn::Data &data)
     Event event;
     event.type_ = Event::Error;
     const Name& dataName = data.getName();
-    
-    if (isWaitingForRightmost_)
-        fixRightmost(dataName);
     
     shared_ptr<Slot> slot = getSlot(dataName, false);
     
@@ -1869,7 +1808,6 @@ ndnrtc::new_api::FrameBuffer::resetData()
     
     state_ = Invalid;
     
-    isWaitingForRightmost_ = true;
     targetSizeMs_ = -1;
     estimatedSizeMs_ = -1;
     isEstimationNeeded_ = true;
@@ -1941,25 +1879,6 @@ ndnrtc::new_api::FrameBuffer::getSlots(int slotStateMask) const
     }
     
     return slots;
-}
-
-void
-ndnrtc::new_api::FrameBuffer::fixRightmost(const Name& dataName)
-{
-    Name rightmostPrefix;
-    NdnRtcNamespace::trimPacketNumber(dataName, rightmostPrefix);
- 
-    if (activeSlots_.find(rightmostPrefix) != activeSlots_.end())
-    {
-        shared_ptr<Slot> slot = activeSlots_[rightmostPrefix];
-        activeSlots_.erase(rightmostPrefix);
-        
-        Name lookupPrefix;
-        getLookupPrefix(dataName, lookupPrefix);
-        
-        activeSlots_[lookupPrefix] = slot;
-        isWaitingForRightmost_ = false;
-    }
 }
 
 void

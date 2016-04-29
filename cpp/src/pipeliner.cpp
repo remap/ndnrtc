@@ -409,16 +409,9 @@ ndnrtc::new_api::Pipeliner2::requestMissing
         shared_ptr<ndnrtc::new_api::FrameBuffer::Slot::Segment> segment = *it;
         
         shared_ptr<Interest> segmentInterest;
+        assert((segment->getNumber() >= 0));
         
-        if (!slot->isRightmost())
-        {
-            assert((segment->getNumber() >= 0));
-            segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
-        }
-        else
-            segmentInterest = getInterestForRightMost(lifetime,
-                                                      slot->getNamespace()==FrameBuffer::Slot::Key);
-        
+        segmentInterest = getDefaultInterest(segment->getPrefix(), lifetime);
         express(*segmentInterest, priority);
         segmentInterest->setInterestLifetimeMilliseconds(lifetime);
     }

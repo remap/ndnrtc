@@ -477,9 +477,6 @@ namespace ndnrtc
                 boost::shared_ptr<Segment>
                 getRecentSegment() const { return recentSegment_; }
                 
-                bool
-                isRightmost() const { return rightmostSegment_.get() != NULL; }
-                
                 unsigned int
                 getRtxNum(){ return nRtx_; }
                 
@@ -563,7 +560,7 @@ namespace ndnrtc
                 nSegmentsParity_ = 0, nSegmentsParityReady_ = 0;
                 int crcValue_ = 0;
                 
-                boost::shared_ptr<Segment> rightmostSegment_, recentSegment_;
+                boost::shared_ptr<Segment> recentSegment_;
                 std::vector<boost::shared_ptr<Segment> > freeSegments_;
                 std::map<SegmentNumber, boost::shared_ptr<Segment> > activeSegments_;
                 
@@ -572,10 +569,6 @@ namespace ndnrtc
                 
                 boost::shared_ptr<Segment>&
                 getActiveSegment(SegmentNumber segmentNumber, bool isParity);
-                
-                void
-                fixRightmost(PacketNumber packetNumber,
-                             SegmentNumber segmentNumber, bool isParity);
                 
                 void
                 prepareStorage(unsigned int segmentSize,
@@ -983,7 +976,6 @@ namespace ndnrtc
             int64_t targetSizeMs_;
             int64_t estimatedSizeMs_;
             bool isEstimationNeeded_;
-            bool isWaitingForRightmost_;
             bool retransmissionsEnabled_;
             int frameReleaseCount_;
             
@@ -1065,9 +1057,6 @@ namespace ndnrtc
                     LogStatC << "prod rate\t" << playbackRate << std::endl;
                 }
             }
-            
-            void
-            fixRightmost(const Name& prefix);
             
             void
             dumpActiveSlots();
