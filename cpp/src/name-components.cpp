@@ -51,6 +51,7 @@ const string NameComponents::NameComponentParity = "_parity";
 Name
 NamespaceInfo::getPrefix(int filter) const
 {
+    using namespace prefix_filter;
     Name prefix(basePrefix_);
 
     if (filter)
@@ -70,7 +71,7 @@ NamespaceInfo::getPrefix(int filter) const
             if (filter&(Segment^Thread))
                 prefix.append(NameComponents::NameComponentMeta);
 
-            if (filter&Meta || filter&(Segment^Sample))
+            if (filter&(Segment^Sample))
             {
                 prefix.appendVersion(metaVersion_).appendSegment(segNo_);
             }
@@ -81,13 +82,61 @@ NamespaceInfo::getPrefix(int filter) const
                 streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
                     prefix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
             if (filter&(Sample^Thread))
+            {
                 prefix.appendSequenceNumber(sampleNo_);
+                if (isParity_)
+                    prefix.append(NameComponents::NameComponentParity);
+            }
             if (filter&(Segment^Sample))
                 prefix.appendSegment(segNo_);
         }
     }
 
     return prefix;
+}
+
+Name
+NamespaceInfo::getSuffix(int filter) const
+{
+    using namespace suffix_filter;
+    Name suffix;
+
+    if (filter)
+    {
+        if (filter&(Library^Stream))
+            suffix.append(Name(NameComponents::NameComponentApp)).appendVersion(apiVersion_);
+        if (filter&(Stream^Thread))
+            suffix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? 
+                NameComponents::NameComponentAudio : NameComponents::NameComponentVideo)).append(streamName_);
+        if (filter&(Thread^Sample) && threadName_ != "")
+            suffix.append(threadName_);
+
+        if (isMeta_)
+        {
+            if (filter&(Thread^Sample) && threadName_ != "" ||
+                filter&(Stream^Thread))
+                suffix.append(NameComponents::NameComponentMeta);
+        }
+
+        if (filter&(Thread^Sample) && threadName_ != "" &&
+            streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo &&
+            !isMeta_)
+            suffix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+        if (filter&(Sample^Segment))
+        {
+            if (isMeta_)
+                suffix.appendVersion(metaVersion_);
+            else
+                suffix.appendSequenceNumber(sampleNo_);
+        }
+        if (filter&(Segment))
+        {
+            if (isParity_)
+                suffix.append(NameComponents::NameComponentParity);
+            suffix.appendSegment(segNo_);
+        }
+    }
+    return suffix;
 }
 
 #if 0
@@ -269,6 +318,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     }
     else
     {
+        info.class_ = SampleClass::Unknown;
         info.threadName_ = name[1].toEscapedString();
         info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
 
@@ -283,6 +333,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             name[2] == Name::Component(NameComponents::NameComponentKey))
         {
             info.isDelta_ = (name[2] == Name::Component(NameComponents::NameComponentDelta));
+            info.class_ = (info.isDelta_ ? SampleClass::Delta : SampleClass::Key);
 
             try{
                 if (name.size() > 3)
@@ -340,6 +391,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     }
     else
     {
+        info.class_ = SampleClass::Unknown;
         info.threadName_ = name[1].toEscapedString();
 
         if (name.size() == 2)
@@ -358,6 +410,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         }
 
         info.isDelta_ = true;
+        info.class_ = SampleClass::Delta;
 
         try
         {

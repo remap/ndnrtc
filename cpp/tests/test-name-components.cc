@@ -167,6 +167,7 @@ TEST(TestNameComponents, TestNameFiltering)
 }
 TEST(TestNameComponents, TestPrefixFiltering)
 {
+	using namespace prefix_filter;
 	{
 		NamespaceInfo info;
 		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00", info));
@@ -174,6 +175,17 @@ TEST(TestNameComponents, TestPrefixFiltering)
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00"), info.getPrefix());
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00"), info.getPrefix(Segment));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07"), info.getPrefix(Sample));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d"), info.getPrefix(Thread));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera"), info.getPrefix(Stream));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02") , info.getPrefix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00", info));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1"), info.getPrefix(0));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00"), info.getPrefix());
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00"), info.getPrefix(Segment));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity"), info.getPrefix(Sample));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d"), info.getPrefix(Thread));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera"), info.getPrefix(Stream));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02") , info.getPrefix(Library));
@@ -235,6 +247,87 @@ TEST(TestNameComponents, TestPrefixFiltering)
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera"), info.getPrefix(Thread));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera"), info.getPrefix(Stream));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02") , info.getPrefix(Library));
+	}
+}
+TEST(TestNameComponents, TestSuffixFiltering)
+{
+	using namespace suffix_filter;
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FE%07/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/hi/d/%FE%07/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/video/camera/hi/d/%FE%07/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/_parity/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/_parity/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FE%07/_parity/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/hi/d/%FE%07/_parity/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/video/camera/hi/d/%FE%07/_parity/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FE%07/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/hd/%FE%07/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/audio/mic/hd/%FE%07/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/audio/mic/hd/%FE%07/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/_meta/%FD%03/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FD%03/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/hd/_meta/%FD%03/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/audio/mic/hd/_meta/%FD%03/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/audio/mic/hd/_meta/%FD%03/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/_meta/%FD%03/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FD%03/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/%FD%03/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/audio/mic/_meta/%FD%03/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/audio/mic/_meta/%FD%03/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/_meta/%FD%05/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FD%05/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/hi/_meta/%FD%05/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/video/camera/hi/_meta/%FD%05/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/video/camera/hi/_meta/%FD%05/%00%00") , info.getSuffix(Library));
+	}
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/_meta/%FD%05/%00%00", info));
+		EXPECT_EQ(Name(), info.getSuffix(0));
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix());
+		EXPECT_EQ(Name("/%00%00"), info.getSuffix(Segment));
+		EXPECT_EQ(Name("/%FD%05/%00%00"), info.getSuffix(Sample));
+		EXPECT_EQ(Name("/%FD%05/%00%00"), info.getSuffix(Thread));
+		EXPECT_EQ(Name("/video/camera/_meta/%FD%05/%00%00"), info.getSuffix(Stream));
+		EXPECT_EQ(Name("/ndnrtc/%FD%02/video/camera/_meta/%FD%05/%00%00") , info.getSuffix(Library));
 	}
 }
 
