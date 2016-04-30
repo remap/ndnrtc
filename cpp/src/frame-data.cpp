@@ -359,3 +359,48 @@ MediaStreamMeta::getThreads() const
     }
     return threads;
 }
+
+//******************************************************************************
+WireSegment::WireSegment(const boost::shared_ptr<ndn::Data>& data):data_(data),
+isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
+{
+    if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
+    {
+        std::stringstream ss;
+        ss << "Attempt to create wired data object with "
+        << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+        throw std::runtime_error(ss.str());
+    }
+}
+
+WireSegment::WireSegment(const WireSegment& data):data_(data.data_),
+dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_){}
+
+size_t WireSegment::getSlicesNum()
+{
+    return data_->getMetaInfo().getFinalBlockId().toNumber();
+}
+
+const DataSegmentHeader
+WireSegment::header() const
+{
+            // this cast will be invalid for VideoFrameSegment packets,
+            // still casting to DataSegmentHeader is possible, because 
+            // it's a parent class for VideoFrameSegmentHeader
+    ImmutableHeaderPacket<DataSegmentHeader> s(data_->getContent());
+    return s.getHeader();
+}
+
+const CommonHeader 
+WireSegment::packetHeader() const
+{
+    if (getSegNo()) throw std::runtime_error("Accessing packet header in "
+        "non-zero segment is not allowed");
+
+        ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
+    boost::shared_ptr<std::vector<uint8_t>> data(boost::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(), 
+        s0.getPayload().end()));
+    ImmutableHeaderPacket<CommonHeader> p0(data);
+    return p0.getHeader();
+}
+

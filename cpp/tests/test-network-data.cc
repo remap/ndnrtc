@@ -1318,11 +1318,21 @@ TEST(TestWireData, TestMergeVideoFramePacket)
         dataSegments.push_back(ds);
     }
 
+    idx = 0;
     // now, extract segments from data objects
     std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> videoSegments;
     for (auto d:dataSegments)
     {
         WireData<VideoFrameSegmentHeader> wd(d);
+        
+        if (wd.getSegNo() == 0)
+        {
+            EXPECT_EQ(hdr.sampleRate_, wd.packetHeader().sampleRate_);
+            EXPECT_EQ(hdr.publishTimestampMs_, wd.packetHeader().publishTimestampMs_);
+            EXPECT_EQ(hdr.publishUnixTimestampMs_, wd.packetHeader().publishUnixTimestampMs_);
+        }
+        else EXPECT_ANY_THROW(wd.packetHeader());
+
         videoSegments.push_back(wd.segment());
     }
 
@@ -1393,6 +1403,9 @@ TEST(TestWireData, TestMergeAudioBundle)
     EXPECT_TRUE(wd.isValid());
     EXPECT_TRUE(wd.segment().isValid());
     EXPECT_EQ(1, wd.getSlicesNum());
+    EXPECT_EQ(hdr.sampleRate_, wd.packetHeader().sampleRate_);
+    EXPECT_EQ(hdr.publishTimestampMs_, wd.packetHeader().publishTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestampMs_, wd.packetHeader().publishUnixTimestampMs_);
 
     std::vector<ImmutableHeaderPacket<DataSegmentHeader>> bundleSegments;
     bundleSegments.push_back(wd.segment());

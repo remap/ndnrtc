@@ -655,51 +655,42 @@ namespace ndnrtc {
     //******************************************************************************
     class WireSegment {
     public:
-        WireSegment(const boost::shared_ptr<ndn::Data>& data):data_(data),
-            isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
-        {
-            if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
-            {
-                std::stringstream ss;
-                ss << "Attempt to create wired data object with "
-                    << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
-                throw std::runtime_error(ss.str());
-            }
-        }
-
-        WireSegment(const WireSegment& data):data_(data.data_),
-            dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_)
-        {}
+        WireSegment(const boost::shared_ptr<ndn::Data>& data);
+        WireSegment(const WireSegment& data);
 
         virtual ~WireSegment(){}
 
         bool isValid() { return isValid_; }
-        size_t getSlicesNum()
-        {
-            return data_->getMetaInfo().getFinalBlockId().toNumber();
-        }
+        size_t getSlicesNum();
 
-        boost::shared_ptr<ndn::Data> getData() { return data_; }
-        ndn::Name getBasePrefix() { return dataNameInfo_.basePrefix_; }
-        unsigned int getApiVersion() { return dataNameInfo_.apiVersion_; }
-        MediaStreamParams::MediaStreamType getStreamType() { return dataNameInfo_.streamType_; }
-        std::string getStreamName() { return dataNameInfo_.streamName_; }
-        bool isMeta() { return dataNameInfo_.isMeta_; }
-        PacketNumber getSampleNo() { return dataNameInfo_.sampleNo_; }
-        unsigned int getSegNo() { return dataNameInfo_.segNo_; }
-        bool isParity() { return dataNameInfo_.isParity_; }
-        std::string getThreadName() { return dataNameInfo_.threadName_; }
+        boost::shared_ptr<ndn::Data> getData() const { return data_; }
+        ndn::Name getBasePrefix() const { return dataNameInfo_.basePrefix_; }
+        unsigned int getApiVersion() const { return dataNameInfo_.apiVersion_; }
+        MediaStreamParams::MediaStreamType getStreamType() const { return dataNameInfo_.streamType_; }
+        std::string getStreamName() const { return dataNameInfo_.streamName_; }
+        bool isMeta() const { return dataNameInfo_.isMeta_; }
+        PacketNumber getSampleNo() const { return dataNameInfo_.sampleNo_; }
+        unsigned int getSegNo() const { return dataNameInfo_.segNo_; }
+        bool isParity() const { return dataNameInfo_.isParity_; }
+        std::string getThreadName() const { return dataNameInfo_.threadName_; }
 
         const NamespaceInfo& getInfo() const { return dataNameInfo_; }
 
-        const DataSegmentHeader header() 
-        {
-            // this packet will be invalid for VideoFrameSegment packets,
-            // still casting to DataSegmentHeader is possible, because 
-            // it's a parent class for VideoFrameSegmentHeader
-            ImmutableHeaderPacket<DataSegmentHeader> s(data_->getContent());
-            return s.getHeader();
-        }
+        /**
+         * Retrieves segment header from data
+         * @return DataSegmentHeader
+         */
+        const DataSegmentHeader header() const;
+
+        /**
+         * Retrieves packet header from data only if it's a segment 0 
+         * (getSegNo() == 0) because only segment 0 contains packet header.
+         * Operation is expensive as it copies data into temporary storage.
+         * One may prefer to extract this information after the whole packet
+         * was assembled.
+         * @return CommonHeader
+         */
+        const CommonHeader packetHeader() const;
 
     protected:
         NamespaceInfo dataNameInfo_;
