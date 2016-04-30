@@ -18,6 +18,16 @@
 #include "ndnrtc-common.h"
 
 namespace ndnrtc {
+    typedef enum _PrefixFilter {
+        Base = 1<<0,
+        Library = 1<<1|Base,
+        Stream = 1<<2|Library,
+        Thread = 1<<3|Stream,
+        Sample = 1<<4|Thread,
+        Segment = 1<<5|Sample,
+        Meta = 1<<6
+    } PrefixFilter;
+
     /**
      * NamespaceInfo represents information that can be extracted from 
      * legitimate NDN-RTC name (interest or data).
@@ -32,6 +42,8 @@ namespace ndnrtc {
         PacketNumber sampleNo_;
         unsigned int segNo_;
         unsigned int metaVersion_;
+
+        ndn::Name getPrefix(int filter = (PrefixFilter::Segment|PrefixFilter::Meta)) const;
     };
 
     class NameComponents {

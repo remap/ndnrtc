@@ -46,6 +46,50 @@ const string NameComponents::NameComponentDelta = "d";
 const string NameComponents::NameComponentKey = "k";
 const string NameComponents::NameComponentParity = "_parity";
 
+#include <bitset>
+
+Name
+NamespaceInfo::getPrefix(int filter) const
+{
+    Name prefix(basePrefix_);
+
+    if (filter)
+    {
+        if (filter&(Library^Base))
+            prefix.append(Name(NameComponents::NameComponentApp)).appendVersion(apiVersion_);
+        if (filter&(Stream^Library))
+            prefix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? 
+                NameComponents::NameComponentAudio : NameComponents::NameComponentVideo)).append(streamName_);
+        if (filter&(Thread^Stream) && threadName_ != "")
+        {
+            prefix.append(threadName_);
+        }
+
+        if (isMeta_)
+        {
+            if (filter&(Segment^Thread))
+                prefix.append(NameComponents::NameComponentMeta);
+
+            if (filter&Meta || filter&(Segment^Sample))
+            {
+                prefix.appendVersion(metaVersion_).appendSegment(segNo_);
+            }
+        }   
+        else
+        {
+            if (filter&(Thread^Stream) && threadName_ != "" &&
+                streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
+                    prefix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+            if (filter&(Sample^Thread))
+                prefix.appendSequenceNumber(sampleNo_);
+            if (filter&(Segment^Sample))
+                prefix.appendSegment(segNo_);
+        }
+    }
+
+    return prefix;
+}
+
 #if 0
 string
 NameComponents::getUserPrefix(const string& username,
