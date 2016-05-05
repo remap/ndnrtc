@@ -17,7 +17,9 @@
 
 namespace ndnrtc
 {
-    class VideoFramePacket;
+    struct Mutable;
+    template<typename T>
+    class VideoFramePacketT;
     
     class VideoThread : public NdnRtcComponent,
                         public IEncoderDelegate
@@ -26,7 +28,7 @@ namespace ndnrtc
         VideoThread(const VideoCoderParams& coderParams);
         ~VideoThread();
         
-        boost::shared_ptr<VideoFramePacket> encode(const WebRtcVideoFrame& frame);
+        boost::shared_ptr<VideoFramePacketT<Mutable>> encode(const WebRtcVideoFrame& frame);
 
         void
         setLogger(ndnlog::new_api::Logger *logger);
@@ -44,7 +46,7 @@ namespace ndnrtc
         
         #warning using shared pointer here as libstdc++ on OSX does not support std::move
         // TODO: update code to use std::move on Ubuntu
-        boost::shared_ptr<VideoFramePacket> videoFramePacket_;
+        boost::shared_ptr<VideoFramePacketT<Mutable>> videoFramePacket_;
         
         void
         onEncodingStarted();

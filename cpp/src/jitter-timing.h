@@ -13,25 +13,32 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/function.hpp>
 
 #include "ndnrtc-common.h"
-#include "ndnrtc-object.h"
+
+namespace ndnlog {
+    namespace new_api {
+        class Logger;
+    }
+}
 
 namespace ndnrtc {
     /**
      * Video jitter buffer timing class
      * Provides interface for managing playout timing in separate playout thread
-     * Playout thread itratively calls function which extracts frames from the
+     * Playout thread iteratively calls function which extracts frames from the
      * jitter buffer, renders them and sets a timer for the frame playout delay,
      * which is calculated from the timestamps, provided by producer and
      * adjusted by this class in order to accomodate processing delays
      * (extracting frame from the jitter buffer, rendering frame on the canvas,
      * etc.).
      */
-    class JitterTiming : public new_api::NdnRtcComponent
+    class JitterTimingImpl;
+    class JitterTiming
     {
     public:
-        JitterTiming();
+        JitterTiming(boost::asio::io_service& io);
         ~JitterTiming();
         
         void flush();
@@ -50,20 +57,21 @@ namespace ndnrtc {
          * @param framePlayoutTime Playout time meant by producer (difference
          *                         between conqequent frame's timestamps)
          */
-        void updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo);
+        void updatePlayoutTime(int framePlayoutTime);
         
         /**
          * Sets up playback timer asynchronously.
          * @param callback A callback to call when timer is fired
          */
         void run(boost::function<void()> callback);
+
+        void setLogger(ndnlog::new_api::Logger* logger);
+        void setDescription(const std::string& desc);
         
     private:
-        int framePlayoutTimeMs_ = 0;
-        int processingTimeUsec_ = 0;
-        int64_t playoutTimestampUsec_ = 0;
-        
-        void resetData();
+        JitterTiming(const JitterTiming&) = delete;
+
+        boost::shared_ptr<JitterTimingImpl> pimpl_;
     };
 }
 

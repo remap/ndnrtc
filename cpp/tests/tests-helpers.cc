@@ -5,10 +5,14 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
+#include <boost/assign.hpp>
+#include <ndn-cpp/interest.hpp>
+
 #include "tests-helpers.h"
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndn;
 
 VideoCoderParams sampleVideoCoderParams()
 {
@@ -169,4 +173,174 @@ ClientParams sampleProducerParams()
 	}
 
 	return cp;
+}
+
+webrtc::EncodedImage encodedImage(size_t frameLen, uint8_t*& buffer, bool delta)
+{
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+    buffer = (uint8_t*)malloc(frameLen);
+    for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+
+    webrtc::EncodedImage frame(buffer, frameLen, size);
+    frame._encodedWidth = 640;
+    frame._encodedHeight = 480;
+    frame._timeStamp = 1460488589;
+    frame.capture_time_ms_ = 1460488569;
+    frame._frameType = (delta ? webrtc::kDeltaFrame : webrtc::kKeyFrame);
+    frame._completeFrame = true;
+
+    return frame;
+}
+
+bool checkVideoFrame(const webrtc::EncodedImage& image)
+{
+	bool identical = true;
+	uint8_t *buf;
+	webrtc::EncodedImage ref = encodedImage(image._length, buf, (image._frameType == webrtc::kDeltaFrame));
+
+	identical = (image._encodedWidth == ref._encodedWidth) &&
+		(image._encodedHeight == ref._encodedHeight) &&
+		(image._timeStamp == ref._timeStamp) &&
+		(image.capture_time_ms_ == ref.capture_time_ms_) &&
+		(image._frameType == ref._frameType) &&
+		(image._completeFrame == ref._completeFrame) &&
+		(image._length == ref._length);
+
+	for (int i = 0; i < image._length && identical; ++i)
+		identical &= (image._buffer[i] == ref._buffer[i]);
+
+	free(buf);
+	return identical;
+}
+
+VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs,
+	int64_t pubUts)
+{
+ 	CommonHeader hdr;
+    hdr.sampleRate_ = rate;
+    hdr.publishTimestampMs_ = pubTs;
+    hdr.publishUnixTimestampMs_ = pubUts;
+
+    uint8_t *buffer;
+
+    webrtc::EncodedImage frame = encodedImage(frameLen, buffer);
+
+    VideoFramePacket vp(frame);
+    std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+
+    vp.setSyncList(syncList);
+    vp.setHeader(hdr);
+    
+    free(buffer);
+
+    return vp;
+}
+
+std::vector<VideoFrameSegment> sliceFrame(VideoFramePacket& vp, 
+	PacketNumber playNo, PacketNumber pairedSeqNo)
+{
+    boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+
+    std::vector<VideoFrameSegment> frameSegments = VideoFrameSegment::slice(vp, 1000);
+    std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
+
+    // pack segments into data objects
+    int idx = 0;
+    VideoFrameSegmentHeader header;
+    header.interestNonce_ = 0x1234;
+    header.interestArrivalMs_ = 1460399362;
+    header.generationDelayMs_ = 200;
+    header.totalSegmentsNum_ = frameSegments.size();
+    header.playbackNo_ = playNo;
+    header.pairedSequenceNo_ = pairedSeqNo;
+    header.paritySegmentsNum_ = paritySegments.size();
+
+    for (auto& s:frameSegments)
+    {
+        VideoFrameSegmentHeader hdr = header;
+        hdr.interestNonce_ += idx;
+        hdr.interestArrivalMs_ += idx;
+        hdr.playbackNo_ += idx;
+        idx++;
+        s.setHeader(hdr);
+    }
+
+    return frameSegments;
+}
+
+std::vector<CommonSegment> sliceParity(VideoFramePacket& vp)
+{
+	DataSegmentHeader header;
+    header.interestNonce_ = 0x1234;
+    header.interestArrivalMs_ = 1460399362;
+    header.generationDelayMs_ = 200;
+	
+	boost::shared_ptr<NetworkData> parity = vp.getParityData(CommonSegment::payloadLength(1000), 0.2);
+	std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
+
+	int idx = 0;
+	for (auto& s:paritySegments)
+	{
+		DataSegmentHeader hdr = header;
+		hdr.interestNonce_ += idx;
+		s.setHeader(hdr);
+	}
+
+	return paritySegments;
+}
+
+std::vector<boost::shared_ptr<ndn::Data>> 
+dataFromSegments(std::string frameName,
+	const std::vector<VideoFrameSegment>& segments)
+{
+    std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    int segIdx = 0;
+    for (auto& s:segments)
+    {
+        ndn::Name n(frameName);
+        n.appendSegment(segIdx++);
+        boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+        ds->setContent(s.getNetworkData()->getData(), s.size());
+        dataSegments.push_back(ds);
+    }
+
+    return dataSegments;
+}
+
+std::vector<boost::shared_ptr<ndn::Data>> 
+dataFromParitySegments(std::string frameName,
+	const std::vector<CommonSegment>& segments)
+{
+    std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    int segIdx = 0;
+    for (auto& s:segments)
+    {
+        ndn::Name n(frameName);
+        n.appendSegment(segIdx++);
+        boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+        ds->setContent(s.getNetworkData()->getData(), s.size());
+        dataSegments.push_back(ds);
+    }
+
+    return dataSegments;
+}
+
+std::vector<boost::shared_ptr<Interest>>
+getInterests(std::string frameName, unsigned int startSeg, size_t nSeg)
+{
+	std::vector<boost::shared_ptr<Interest>> interests;
+
+	int nonce = 0x1234;
+	for (int i = startSeg; i < startSeg+nSeg; ++i)
+	{
+		Name n(frameName);
+		n.appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(n, 1000));
+		interests.back()->setNonce(Blob((uint8_t*)&(nonce), sizeof(int)));
+		nonce++;
+	}
+
+	return interests;
 }

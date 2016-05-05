@@ -6,16 +6,23 @@
 //
 
 #include <stdlib.h>
+#include <algorithm>
+#include <ctime>
 
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/name.hpp>
 
 #include "gtest/gtest.h"
+#include "mock-objects/buffer-observer-mock.h"
+#include "src/frame-data.h"
 #include "src/frame-buffer.h"
+#include "tests-helpers.h"
 
 using namespace ndnrtc;
 using namespace ndn;
+using namespace testing;
 
+//******************************************************************************
 TEST(TestSlotSegment, TestCreate)
 {
 	{
@@ -53,6 +60,683 @@ TEST(TestSlotSegment, TestCreate)
 	}
 }
 
+TEST(TestBufferSlot, TestAddInterests)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::vector<boost::shared_ptr<Interest>> interests;
+	int n = 10;
+
+	for (int i = 0; i < n; ++i)
+	{
+		Name iname(frameName);
+		iname.appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+	}
+
+	BufferSlot slot;
+
+	EXPECT_EQ(BufferSlot::Free, slot.getState());
+	EXPECT_NO_THROW(slot.segmentsRequested(interests));
+	EXPECT_EQ(7, slot.getNameInfo().sampleNo_);
+	EXPECT_EQ(Name(frameName), slot.getPrefix());
+
+	EXPECT_EQ(0, slot.getAssembledLevel());
+	EXPECT_EQ(BufferSlot::New, slot.getState());
+}
+
+TEST(TestBufferSlot, TestAddInterestsTwoTimes)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::vector<boost::shared_ptr<Interest>> interests;
+	int n = 10;
+
+	for (int i = 0; i < n/2; ++i)
+	{
+		Name iname(frameName);
+		iname.appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+	}
+
+	BufferSlot slot;
+
+	EXPECT_EQ(BufferSlot::Free, slot.getState());
+	EXPECT_NO_THROW(slot.segmentsRequested(interests));
+	EXPECT_EQ(7, slot.getNameInfo().sampleNo_);
+	EXPECT_EQ(Name(frameName), slot.getPrefix());
+
+	EXPECT_EQ(0, slot.getAssembledLevel());
+	EXPECT_EQ(BufferSlot::New, slot.getState());
+
+	interests.clear();
+	for (int i = n/2; i < n; ++i)
+	{
+		Name iname(frameName);
+		iname.appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+	}
+
+	EXPECT_EQ(BufferSlot::New, slot.getState());
+	EXPECT_NO_THROW(slot.segmentsRequested(interests));
+	EXPECT_EQ(7, slot.getNameInfo().sampleNo_);
+	EXPECT_EQ(Name(frameName), slot.getPrefix());
+
+	EXPECT_EQ(0, slot.getAssembledLevel());
+	EXPECT_EQ(BufferSlot::New, slot.getState());
+
+}
+
+TEST(TestBufferSlot, TestBadInterestRange)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+
+	{
+		std::vector<boost::shared_ptr<Interest>> interests;
+		Name iname(frameName);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+		iname.appendSegment(0);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+
+		BufferSlot slot;
+		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
+		EXPECT_EQ(BufferSlot::Free, slot.getState());
+	}
+	{
+		std::vector<boost::shared_ptr<Interest>> interests;
+		Name iname(frameName);
+		iname.appendSegment(0);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+		interests.push_back(boost::make_shared<Interest>(Name(frameName), 1000));
+
+		BufferSlot slot;
+		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
+		EXPECT_NE(BufferSlot::Free, slot.getState());
+		slot.clear();
+		EXPECT_EQ(BufferSlot::Free, slot.getState());
+	}
+	{
+		std::vector<boost::shared_ptr<Interest>> interests;
+		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07").appendSegment(0), 1000));
+		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%08").appendSegment(0), 1000));
+
+		BufferSlot slot;
+		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
+		EXPECT_NE(BufferSlot::Free, slot.getState());
+		slot.clear();
+		EXPECT_EQ(BufferSlot::Free, slot.getState());
+	}
+}
+
+TEST(TestBufferSlot, TestAddData)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	VideoFramePacket vp = getVideoFramePacket();
+	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+
+	{ // all data arrived in order 
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+
+		int idx = 0;
+		for (auto d:dataObjects)
+		{
+			boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(d));
+			BufferSlot::State state;
+
+			if (idx == 0) EXPECT_TRUE(slot.getConsistencyState() == BufferSlot::Inconsistent);
+			
+			EXPECT_NO_THROW(slot.segmentReceived(wd));
+			
+			EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::HeaderMeta);
+			EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
+			EXPECT_EQ(slot.getConsistencyState(), BufferSlot::Consistent);
+
+			if (++idx < dataObjects.size()) 
+				EXPECT_EQ(BufferSlot::Assembling, slot.getState());
+			else
+				EXPECT_EQ(BufferSlot::Ready, slot.getState());
+
+			EXPECT_EQ(round((double)idx/(double)dataObjects.size()*100)/100, 
+				round(slot.getAssembledLevel()*100)/100);
+			EXPECT_TRUE(slot.hasOriginalSegments());
+		}
+	}
+
+	{ // all data arrived in random order
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+
+		std::random_shuffle(dataObjects.begin(), dataObjects.end());
+
+		int idx = 0;
+		for (auto d:dataObjects)
+		{
+			boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(d));
+			BufferSlot::State state;
+
+			if (idx == 0) EXPECT_TRUE(slot.getConsistencyState() == BufferSlot::Inconsistent);
+			
+			EXPECT_NO_THROW(slot.segmentReceived(wd));
+			
+			if (wd->getSampleNo() == 0)
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::HeaderMeta);
+			else
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
+
+			if (++idx < dataObjects.size()) 
+				EXPECT_EQ(BufferSlot::Assembling, slot.getState());
+			else
+				EXPECT_EQ(BufferSlot::Ready, slot.getState());
+
+			EXPECT_EQ(round((double)idx/(double)dataObjects.size()*100)/100, 
+				round(slot.getAssembledLevel()*100)/100);
+			EXPECT_TRUE(slot.hasOriginalSegments());
+			EXPECT_LT(0, slot.getShortestDrd());
+			if (idx < dataObjects.size())
+			{
+				EXPECT_EQ(0, slot.getAssemblingTime());
+				EXPECT_EQ(0, slot.getLongestDrd());
+			}
+		}
+		EXPECT_LT(0, slot.getAssemblingTime());
+		EXPECT_LT(0, slot.getLongestDrd());
+		EXPECT_EQ(slot.getConsistencyState(), BufferSlot::Consistent);
+	}
+
+	{ // some data arrived multiple times
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+
+		std::random_shuffle(dataObjects.begin(), dataObjects.end());
+		std::vector<boost::shared_ptr<ndn::Data>> objects(dataObjects);
+		objects.insert(objects.end(), dataObjects.begin(), dataObjects.begin()+3);
+
+		int idx = 0;
+		for (auto d:objects)
+		{
+			boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(d));
+			BufferSlot::State state;
+
+			if (idx == 0) EXPECT_TRUE(slot.getConsistencyState() == BufferSlot::Inconsistent);
+			
+			EXPECT_NO_THROW(slot.segmentReceived(wd));
+			
+			if (wd->getSampleNo() == 0)
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::HeaderMeta);
+			else
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
+
+			if (++idx < dataObjects.size()) 
+				EXPECT_EQ(BufferSlot::Assembling, slot.getState());
+			else
+				EXPECT_EQ(BufferSlot::Ready, slot.getState());
+
+			if (idx <= dataObjects.size())
+				EXPECT_EQ(round((double)idx/(double)dataObjects.size()*100)/100, 
+					round(slot.getAssembledLevel()*100)/100);
+			else
+				EXPECT_EQ(1, slot.getAssembledLevel());
+			EXPECT_TRUE(slot.hasOriginalSegments());
+			EXPECT_LT(0, slot.getShortestDrd());
+			if (idx < dataObjects.size())
+			{
+				EXPECT_EQ(0, slot.getAssemblingTime());
+				EXPECT_EQ(0, slot.getLongestDrd());
+			}
+		}
+		EXPECT_LT(0, slot.getAssemblingTime());
+		EXPECT_LT(0, slot.getLongestDrd());
+		EXPECT_EQ(slot.getConsistencyState(), BufferSlot::Consistent);
+	}
+	{ // add data that was not requested
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+		boost::shared_ptr<Data> dobj = dataObjects.back();
+		dobj->setName(Name(frameName).appendSegment(100));
+		EXPECT_ANY_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj)));
+	}
+	{ // add incorrectly named data
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+		boost::shared_ptr<Data> dobj = dataObjects.back();
+		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/%FE%07/%00%00"));
+		EXPECT_ANY_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj)));
+	}
+	{ // add parity data
+		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
+		std::string parityName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00";
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		BufferSlot slot;
+
+		interests.push_back(boost::make_shared<Interest>(Name(parityName), 1000));
+		int nonce = 0x1234;
+		interests.back()->setNonce(Blob((uint8_t*)&nonce, sizeof(int)));
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+		boost::shared_ptr<Data> dobj = dataObjects.back();
+		EXPECT_NO_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj)));
+
+		dobj->setName(Name(parityName));
+		EXPECT_NO_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj)));
+	}
+}
+
+TEST(TestBufferSlot, TestReuseSlot)
+{
+	BufferSlot slot;
+
+	for (int i = 0; i < 3; ++i)
+	{ // all data arrived in random order
+
+		EXPECT_EQ(BufferSlot::Free, slot.getState());
+		EXPECT_EQ(SampleClass::Unknown, slot.getNameInfo().class_);
+		EXPECT_EQ(0, slot.getAssembledLevel());
+		EXPECT_EQ(Name(), slot.getPrefix());
+		EXPECT_EQ(BufferSlot::Inconsistent, slot.getConsistencyState());
+		EXPECT_EQ(0, slot.getRtxNum());
+		EXPECT_EQ(0, slot.getAssemblingTime());
+		EXPECT_EQ(0, slot.getShortestDrd());
+		EXPECT_EQ(0, slot.getLongestDrd());
+		EXPECT_FALSE(slot.hasOriginalSegments());
+
+		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+		VideoFramePacket vp = getVideoFramePacket();
+		std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+		
+		slot.segmentsRequested(interests);
+		ASSERT_EQ(BufferSlot::New, slot.getState());
+
+		std::random_shuffle(dataObjects.begin(), dataObjects.end());
+
+		int idx = 0;
+		for (auto d:dataObjects)
+		{
+			boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(d));
+			BufferSlot::State state;
+
+			if (idx == 0) EXPECT_TRUE(slot.getConsistencyState() == BufferSlot::Inconsistent);
+			
+			EXPECT_NO_THROW(slot.segmentReceived(wd));
+			
+			if (wd->getSampleNo() == 0)
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::HeaderMeta);
+			else
+				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
+
+			if (++idx < dataObjects.size()) 
+				EXPECT_EQ(BufferSlot::Assembling, slot.getState());
+			else
+				EXPECT_EQ(BufferSlot::Ready, slot.getState());
+
+			EXPECT_EQ(round((double)idx/(double)dataObjects.size()*100)/100, 
+				round(slot.getAssembledLevel()*100)/100);
+			EXPECT_TRUE(slot.hasOriginalSegments());
+			EXPECT_LT(0, slot.getShortestDrd());
+			if (idx < dataObjects.size())
+			{
+				EXPECT_EQ(0, slot.getAssemblingTime());
+				EXPECT_EQ(0, slot.getLongestDrd());
+			}
+		}
+		EXPECT_LT(0, slot.getAssemblingTime());
+		EXPECT_LT(0, slot.getLongestDrd());
+		EXPECT_EQ(slot.getConsistencyState(), BufferSlot::Consistent);
+
+		slot.clear();
+	}
+}
+
+TEST(TestVideoFrameSlot, TestAsembleVideoFrame)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	VideoFramePacket vp = getVideoFramePacket();
+
+	std::vector<VideoFrameSegment> segments = sliceFrame(vp, 734, 1249);
+
+	// all data arrived in random order
+	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+	BufferSlot slot;
+	
+	slot.segmentsRequested(interests);
+	ASSERT_EQ(BufferSlot::New, slot.getState());
+
+	std::random_shuffle(dataObjects.begin(), dataObjects.end());
+
+	int idx = 0;
+	for (auto d:dataObjects)
+	{
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+		BufferSlot::State state;
+		
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+	}
+	
+	VideoFrameSlot videoSlot;
+	bool recovered = false;
+	boost::shared_ptr<ImmutableVideoFramePacket> videoPacket = videoSlot.readPacket(slot, recovered);
+
+	EXPECT_TRUE(recovered);
+	EXPECT_TRUE(checkVideoFrame(videoPacket->getFrame()));
+	EXPECT_EQ(734, videoSlot.readSegmentHeader(slot).playbackNo_);
+	EXPECT_EQ(1249, videoSlot.readSegmentHeader(slot).pairedSequenceNo_);
+}
+
+TEST(TestVideoFrameSlot, TestFailedAssembleNotEnoughData)
+{
+		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	VideoFramePacket vp = getVideoFramePacket();
+
+	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+
+	// all data arrived in random order
+	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+	BufferSlot slot;
+	
+	slot.segmentsRequested(interests);
+	ASSERT_EQ(BufferSlot::New, slot.getState());
+
+	std::random_shuffle(dataObjects.begin(), dataObjects.end());
+
+	int idx = 0;
+	for (auto d:dataObjects)
+	{
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+		if (idx++ == 3) break;
+	}
+	
+	VideoFrameSlot videoSlot;
+	bool recovered = false;
+	boost::shared_ptr<ImmutableVideoFramePacket> videoPacket = videoSlot.readPacket(slot, recovered);
+
+	EXPECT_FALSE(recovered);
+	EXPECT_FALSE(videoPacket.get());
+}
+
+TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	VideoFramePacket vp = getVideoFramePacket(10000);
+
+	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+	std::vector<CommonSegment> paritySegments = sliceParity(vp);
+
+	// all data arrived in random order
+	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName+"/_parity", paritySegments);
+	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+	std::vector<boost::shared_ptr<Interest>> parityInterests = getInterests(frameName+"/_parity", 0, parityObjects.size());
+	BufferSlot slot;
+	
+	slot.segmentsRequested(interests);
+	slot.segmentsRequested(parityInterests);
+	ASSERT_EQ(BufferSlot::New, slot.getState());
+
+	std::random_shuffle(dataObjects.begin(), dataObjects.end());
+	std::random_shuffle(parityObjects.begin(), parityObjects.end());
+
+	int idx = 0;
+	for (auto d:dataObjects)
+	{
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+		BufferSlot::State state;
+		
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+		if (++idx == dataObjects.size()-1) break;
+	}
+
+	for (auto p:parityObjects)
+	{
+		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p));
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+
+		if (slot.getAssembledLevel() > 1) break;
+	}
+	
+	EXPECT_LT(1, slot.getAssembledLevel());
+
+	VideoFrameSlot videoSlot;
+	bool recovered = false;
+	boost::shared_ptr<ImmutableVideoFramePacket> videoPacket = videoSlot.readPacket(slot, recovered);
+
+	EXPECT_TRUE(recovered);
+	EXPECT_TRUE(videoPacket.get());
+}
+
+TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	VideoFramePacket vp = getVideoFramePacket(20000);
+
+	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+	std::vector<CommonSegment> paritySegments = sliceParity(vp);
+
+	// all data arrived in random order
+	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName+"/_parity", paritySegments);
+	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
+	std::vector<boost::shared_ptr<Interest>> parityInterests = getInterests(frameName+"/_parity", 0, parityObjects.size());
+	BufferSlot slot;
+	
+	slot.segmentsRequested(interests);
+	slot.segmentsRequested(parityInterests);
+	ASSERT_EQ(BufferSlot::New, slot.getState());
+
+	std::random_shuffle(dataObjects.begin(), dataObjects.end());
+	std::random_shuffle(parityObjects.begin(), parityObjects.end());
+
+	for (auto p:parityObjects)
+	{
+		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p));
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+	}
+
+	int idx = 0;
+	for (auto d:dataObjects)
+	{
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+		BufferSlot::State state;
+		
+		ASSERT_NO_THROW(slot.segmentReceived(wd));
+		if (++idx == dataObjects.size()-parityObjects.size()/2) break;
+	}
+
+	EXPECT_LT(1, slot.getAssembledLevel());
+
+	VideoFrameSlot videoSlot;
+	bool recovered = false;
+	boost::shared_ptr<ImmutableVideoFramePacket> videoPacket = videoSlot.readPacket(slot, recovered);
+
+	EXPECT_TRUE(recovered);
+	EXPECT_TRUE(videoPacket.get());
+}
+
+TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
+{
+    int data_len = 247;
+    std::vector<uint8_t> rtpData;
+    for (int i = 0; i < data_len; ++i)
+        rtpData.push_back((uint8_t)i);
+
+    int wire_len = 1000;
+    AudioBundlePacket bundlePacket(wire_len);
+    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+
+    while (bundlePacket.hasSpace(sample))
+        bundlePacket << sample;
+
+    CommonHeader hdr;
+    hdr.sampleRate_ = 24.7;
+    hdr.publishTimestampMs_ = 488589553;
+    hdr.publishUnixTimestampMs_ = 1460488589;
+
+    bundlePacket.setHeader(hdr);
+
+    ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
+        bundlePacket.getSamplesNum());
+
+    std::vector<CommonSegment> segments = CommonSegment::slice(bundlePacket, wire_len);
+    ASSERT_EQ(1, segments.size());
+
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%00";
+    ndn::Name n(frameName);
+    n.appendSegment(0);
+    boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+    ds->setContent(segments.front().getNetworkData()->data());
+
+    boost::shared_ptr<WireData<DataSegmentHeader>> wd(new WireData<DataSegmentHeader>(ds));
+	std::vector<boost::shared_ptr<Interest>> interests;
+	boost::shared_ptr<Interest> i(boost::make_shared<Interest>(Name(frameName).appendSegment(0), 1000));
+	int nonce = 0x1234;
+	i->setNonce(ndn::Blob((uint8_t*)&nonce, sizeof(nonce)));
+	interests.push_back(i);
+
+    BufferSlot slot;
+    slot.segmentsRequested(interests);
+    slot.segmentReceived(wd);
+
+    AudioBundleSlot bundleSlot;
+    boost::shared_ptr<ImmutableAudioBundlePacket> p = bundleSlot.readBundle(slot);
+    ASSERT_TRUE(p.get());
+    EXPECT_EQ(bundlePacket.getSamplesNum(), p->getSamplesNum());
+
+    for (int i = 0; i < p->getSamplesNum(); ++i)
+    {
+    	bool identical = true;
+    	for (int j = 0; j < data_len; ++j)
+    		identical &= (rtpData[j] == (*p)[i].data()[j]);
+    	EXPECT_TRUE(identical);
+    }
+}
+
+TEST(TestSlotPool, TestPopPush)
+{
+	SlotPool pool(10);
+
+	for (int i = 0; i < 10; ++i)
+		boost::shared_ptr<BufferSlot> slot = pool.pop();
+	EXPECT_FALSE(pool.pop().get());
+	EXPECT_EQ(0, pool.size());
+	EXPECT_EQ(10, pool.capacity());
+
+	for (int i = 0; i < 10; ++i)
+		EXPECT_TRUE(pool.push(boost::make_shared<BufferSlot>()));
+	
+	EXPECT_FALSE(pool.push(boost::make_shared<BufferSlot>()));
+}
+
+TEST(TestBuffer, TestRequestAndReceive)
+{
+	std::srand(std::time(0));
+	size_t poolSize = 50;
+	int n = poolSize+10;
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
+	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(poolSize));
+	MockBufferObserver observer1, observer2;
+	Buffer buffer(pool);
+
+	buffer.attach(&observer1);
+	buffer.attach(&observer2);
+
+	for (int i = 0; i < n; ++i)
+	{
+		std::vector<boost::shared_ptr<Interest>> interests;
+ 
+    	int nInterests = std::rand()%30+10;
+		for (int j = 0; j < nInterests; ++j)
+		{
+			boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(frameName).appendSequenceNumber(i).appendSegment(j), 1000));
+			int nonce = 0x1234+i*10+j;
+			interest->setNonce(Blob((uint8_t*)&nonce, sizeof(int)));
+			interests.push_back(interest);
+		}
+
+		if (i < poolSize)
+		{
+			EXPECT_CALL(observer1, onNewRequest(_))
+				.Times(1);
+			EXPECT_CALL(observer2, onNewRequest(_))
+				.Times(1);
+
+			EXPECT_TRUE(buffer.requested(interests));
+			EXPECT_EQ(i+1, buffer.getSlotsNum(Name(frameName), BufferSlot::New));
+		}
+		else
+		{
+			EXPECT_CALL(observer1, onNewRequest(_))
+				.Times(0);
+			EXPECT_CALL(observer2, onNewRequest(_))
+				.Times(0);
+			EXPECT_FALSE(buffer.requested(interests));
+		}
+	}
+
+	for (int i = 0; i < poolSize; ++i)
+	{
+		VideoFramePacket vp = getVideoFramePacket();
+		std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+	
+		Name n(frameName);
+		n.appendSequenceNumber(i);
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(n.toUri(), segments);
+		
+		std::random_shuffle(dataObjects.begin(), dataObjects.end());
+	
+		int idx = 0;
+		for (auto d:dataObjects)
+		{
+			boost::function<void(const Buffer::Receipt&)> checkFrame = [](const Buffer::Receipt& r){
+				VideoFrameSlot vs;
+				bool recovered = false;
+				if (r.slot_->getState() == BufferSlot::Ready)
+					EXPECT_TRUE(vs.readPacket(*(r.slot_), recovered).get());
+			};
+
+			boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+			EXPECT_CALL(observer1, onNewData(_))
+				.Times(1);
+			EXPECT_CALL(observer2, onNewData(_))
+				.Times(1)
+				.WillOnce(Invoke(checkFrame));
+			Buffer::Receipt rcpt = buffer.received(wd);
+			idx++;
+			if (idx == dataObjects.size())
+				EXPECT_EQ(BufferSlot::Ready, rcpt.slot_->getState());
+			else
+				EXPECT_EQ(1, buffer.getSlotsNum(Name(frameName), BufferSlot::Assembling));
+		}
+
+		EXPECT_EQ(i+1, buffer.getSlotsNum(Name(frameName), BufferSlot::Ready));
+		EXPECT_EQ(poolSize-i-1, buffer.getSlotsNum(Name(frameName), BufferSlot::New));
+	}
+}
+
+//******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

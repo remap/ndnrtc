@@ -8,43 +8,78 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/function.hpp>
 
 #include "jitter-timing.h"
 #include "ndnrtc-utils.h"
-
+#include "clock.h"
+#include "simple-log.h"
+#include "ndnrtc-object.h"
 
 using namespace ndnrtc;
 using namespace webrtc;
 using namespace ndnlog;
 using namespace std;
 
+namespace ndnrtc {
+    class JitterTimingImpl : public NdnRtcComponent {
+    public:
+        JitterTimingImpl(boost::asio::io_service& io);
+
+        void flush();
+        void stop();
+        int64_t startFramePlayout();
+        void updatePlayoutTime(int framePlayoutTime);
+        void run(boost::function<void()> callback);
+
+
+    private:
+        friend JitterTiming::~JitterTiming();
+
+        boost::asio::steady_timer timer_;
+        int framePlayoutTimeMs_ = 0;
+        int processingTimeUsec_ = 0;
+        int64_t playoutTimestampUsec_ = 0;
+
+        void resetData();
+    };
+}
+
 //******************************************************************************
-#pragma mark - construction/destruction
-JitterTiming::JitterTiming()
+JitterTiming::JitterTiming(boost::asio::io_service& io):
+pimpl_(boost::make_shared<JitterTimingImpl>(io)){}
+JitterTiming::~JitterTiming() { pimpl_->timer_.cancel(); }
+void JitterTiming::flush() { pimpl_->flush(); }
+void JitterTiming::stop() { pimpl_->stop(); }
+int64_t JitterTiming::startFramePlayout() { pimpl_->startFramePlayout(); }
+void JitterTiming::updatePlayoutTime(int framePlayoutTime) { pimpl_->updatePlayoutTime(framePlayoutTime); }
+void JitterTiming::run(boost::function<void()> callback) { pimpl_->run(callback); }
+void JitterTiming::setLogger(ndnlog::new_api::Logger* logger) { pimpl_->setLogger(logger); }
+void JitterTiming::setDescription(const std::string& desc) { pimpl_->setDescription(desc); }
+
+//******************************************************************************
+#pragma mark - public
+JitterTimingImpl::JitterTimingImpl(boost::asio::io_service& io):timer_(io)
 {
     resetData();
 }
 
-JitterTiming::~JitterTiming()
-{
-}
-
-//******************************************************************************
-#pragma mark - public
-void JitterTiming::flush()
+void JitterTimingImpl::flush()
 {
     resetData();
     LogTraceC << "flushed" << std::endl;
 }
-void JitterTiming::stop()
+void JitterTimingImpl::stop()
 {
-    stopJob();
+    timer_.cancel();
+    resetData();
     LogTraceC << "stopped" << std::endl;
 }
 
-int64_t JitterTiming::startFramePlayout()
+int64_t JitterTimingImpl::startFramePlayout()
 {
-    int64_t processingStart = NdnRtcUtils::microsecondTimestamp();
+    int64_t processingStart = clock::microsecondTimestamp();
     LogTraceC << "[ proc start " << processingStart << endl;
     
     if (playoutTimestampUsec_ == 0)
@@ -54,7 +89,7 @@ int64_t JitterTiming::startFramePlayout()
     else
     { // calculate processing delay from the previous iteration
         int64_t prevIterationProcTimeUsec = processingStart -
-        playoutTimestampUsec_;
+            playoutTimestampUsec_;
         
         LogTraceC << ". prev iter full time " << prevIterationProcTimeUsec << endl;
         
@@ -86,12 +121,12 @@ int64_t JitterTiming::startFramePlayout()
     return playoutTimestampUsec_;
 }
 
-void JitterTiming::updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo)
+void JitterTimingImpl::updatePlayoutTime(int framePlayoutTime)
 {
-    LogTraceC << ". packet " << packetNo << " playout time " << framePlayoutTime << endl;
+    LogTraceC << ". packet playout time " << framePlayoutTime << endl;
     
     int playoutTimeUsec = framePlayoutTime*1000;
-    if (playoutTimeUsec < 0) playoutTimeUsec = 0;
+    assert(playoutTimeUsec >= 0);
     
     if (processingTimeUsec_ >= 1000)
     {
@@ -122,20 +157,21 @@ void JitterTiming::updatePlayoutTime(int framePlayoutTime, PacketNumber packetNo
     framePlayoutTimeMs_ = playoutTimeUsec/1000;
 }
 
-void JitterTiming::run(boost::function<void()> callback)
+void JitterTimingImpl::run(boost::function<void()> callback)
 {
     assert(framePlayoutTimeMs_ >= 0);
     
-    LogTraceC << ". timer wait " << framePlayoutTimeMs_ << endl;
+    LogTraceC << ". timer wait " << framePlayoutTimeMs_ << " ]" << endl;
     
-    scheduleJob(framePlayoutTimeMs_*1000, [this, callback]()->bool{
-        callback();
-        return false;
+    timer_.expires_from_now(boost::chrono::microseconds(framePlayoutTimeMs_*1000));
+    timer_.async_wait([callback](const boost::system::error_code& e){
+        if (e != boost::asio::error::operation_aborted)
+            callback();
     });
 }
 
 //******************************************************************************
-void JitterTiming::resetData()
+void JitterTimingImpl::resetData()
 {
     framePlayoutTimeMs_ = 0;
     processingTimeUsec_ = 0;

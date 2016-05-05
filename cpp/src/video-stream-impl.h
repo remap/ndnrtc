@@ -30,8 +30,10 @@ namespace ndnlog{
 namespace ndnrtc {
 	class VideoThread;
 	class FrameScaler;
-	class VideoFramePacket;
 	class VideoThreadParams;
+	struct Mutable;
+	template<typename T> class VideoFramePacketT;
+	typedef VideoFramePacketT<Mutable> VideoFramePacketAlias;
 
 	class VideoStreamImpl : public MediaStreamBase
 	{
@@ -82,8 +84,8 @@ namespace ndnrtc {
 		bool checkMeta();
 		
 		void feedFrame(const WebRtcVideoFrame& frame);
-		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacket>>& frames);
-		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacket>& fp);
+		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>>& frames);
+		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacketAlias>& fp);
 		std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
 	};
 }

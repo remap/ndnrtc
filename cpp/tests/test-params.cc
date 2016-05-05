@@ -9,6 +9,8 @@
 
 #include "gtest/gtest.h"
 #include "include/params.h"
+
+#define PARAMS
 #include "tests-helpers.h"
 
 using namespace std;

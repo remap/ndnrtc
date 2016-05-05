@@ -15,8 +15,6 @@
 class MockExternalCapturer : public ndnrtc::IExternalCapturer
 {
 public:
-	MOCK_METHOD0(capturingStarted, void(void));
-	MOCK_METHOD0(capturingStopped, void(void));
 	MOCK_METHOD4(incomingArgbFrame, int(const unsigned int width,
                                       const unsigned int height,
                                       unsigned char* argbFrameData,

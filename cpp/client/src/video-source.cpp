@@ -87,16 +87,16 @@ double VideoSource::getMeanSourcingTimeMs()
 #pragma mark - private
 void VideoSource::startCapturers()
 {
-	for (auto capturer:capturers_)
-		capturer->capturingStarted();
+	// for (auto capturer:capturers_)
+	// 	capturer->capturingStarted();
 
 	LogDebug("") << "started " << capturers_.size() << " capturers" << endl;
 }
 
 void VideoSource::stopCapturers()
 {
-	for (auto capturer:capturers_)
-		capturer->capturingStopped();
+	// for (auto capturer:capturers_)
+	// 	capturer->capturingStopped();
 
 	LogDebug("") << "stopped " << capturers_.size() << " capturers" << endl;
 }
