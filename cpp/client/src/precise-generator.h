@@ -19,10 +19,11 @@
 #include <iostream>
 #include <chrono>
 #include <boost/asio.hpp>
+#include <boost/chrono.hpp>
 
 namespace lib_bind=std;
 namespace lib_fun=std;
-namespace lib_chrono=std::chrono;
+namespace lib_chrono=boost::chrono;
 
 using namespace std::placeholders;
 

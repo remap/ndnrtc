@@ -149,7 +149,7 @@ void Client::tearDownProducer(){
 	if (!params_.isProducing())
 		return;
 
-	LogInfo("Tearing down producing...");
+LogInfo("") << "Tearing down producing..." << std::endl;
 
 	for (auto& ls:localStreams_)
 	{

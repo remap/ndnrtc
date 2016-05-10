@@ -158,6 +158,28 @@ TEST(TestSource, TestBadSourcePath)
 	EXPECT_ANY_THROW(FileFrameSource("/test-source.argb"));
 }
 
+TEST(TestSource, TestSinkAndSource)
+{
+	std::string fname = "/tmp/test-sink3.argb";
+	boost::shared_ptr<FileSink> sink(new FileSink(fname));
+	ArgbFrame storeFrame(640, 480);
+	uint8_t *b = storeFrame.getBuffer().get();
+
+	for (int i = 0; i < storeFrame.getFrameSizeInBytes(); ++i)
+		b[i] = (i%256);
+
+	*sink << storeFrame;
+	sink.reset();
+
+	FileFrameSource source(fname);
+	ArgbFrame sourcedFrame(640,480);
+
+	unsigned int frameCount = 0;
+	source >> sourcedFrame;
+
+	EXPECT_EQ(storeFrame.getFrameSizeInBytes(), sourcedFrame.getFrameSizeInBytes());
+}
+
 #if 0
 TEST(TestSource, TestTemp)
 {

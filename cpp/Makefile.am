@@ -59,7 +59,7 @@ libndnrtc_la_SOURCES = src/audio-capturer.cpp src/audio-capturer.h \
 
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace 
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@  
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread
 
 
@@ -76,7 +76,7 @@ libwebrtc-all.a: make-fat-libs
 	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
 		ar x $$lib; \
 	done && \
-	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+	ar r @WEBRTCLIB@/$@ *.o && cd .. )	
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 libndnrtc_la_LIBADD += -lwebrtc-all
@@ -96,8 +96,8 @@ endif
 EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir)
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
-ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir) ${libndnrtc_LDFLAGS}
+ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD}
 noinst_SCRIPTS = client/params.cfg
 
 if OS_LINUX
@@ -119,8 +119,8 @@ endif
 GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
 GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS}
-UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
+UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS}  ${ndnrtc_client_LDFLAGS} -pthread
+UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD} 
 UNIT_TESTS_COMMON_SOURCES_ = tests/tests-helpers.cc contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
 if OS_DARWIN

@@ -236,7 +236,7 @@ VideoThread::publishFrameData(const webrtc::EncodedImage &encodedImage,
         if (getSettings().useFec_)
             nSegmentsParity = publishParityData(frameNo, frameData, nSegments, framePrefix,
                                                 prefixMeta);
-        
+        LogTraceC << "published parity. good" << std::endl;
         
         if (!isKeyFrame)
             deltaFrameNo_++;

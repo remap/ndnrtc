@@ -147,6 +147,7 @@ LT_INIT
 AC_LANG([C++])
 LT_PREREQ([2.2])
 LT_INIT()
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # checking platform
 case $host_os in

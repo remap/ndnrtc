@@ -76,13 +76,18 @@ current_(0), readError_(false)
     openFile(); 
 }
 
-IFrameSource& FileFrameSource::operator>>(RawFrame& frame)
+IFrameSource& FileFrameSource::operator>>(RawFrame& frame) noexcept
 {
     uint8_t *buf = frame.getBuffer().get();
     size_t readBytes = fread(buf, sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
     current_ = ftell(file_);
     readError_ = (readBytes != frame.getFrameSizeInBytes());
-
+    
+ //   for (int i = 0; i < frame.getFrameSizeInBytes(); i+=4)
+ //   {
+ //       std::swap(frame.getBuffer().get()[i],frame.getBuffer().get()[i+3]);
+ //       std::swap(frame.getBuffer().get()[i+1],frame.getBuffer().get()[i+2]);
+ //   }
     // {
     //     stringstream msg;
     //     msg << "error trying to read frame of " << frame.getFrameSizeInBytes()

@@ -111,15 +111,3 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
     return;
 }
 
-// //******************************************************************************
-// void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix) {
-
-//     int streamsPrefixNumber = StreamsPrefix.size();
-
-//     for (int streamsPrefixCount = 0; streamsPrefixCount < streamsPrefixNumber; streamsPrefixCount++) {
-//         ndnp->removeRemoteStream(StreamsPrefix[streamsPrefixCount]);
-//     }
-//     return;
-
-// }
-
