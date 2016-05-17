@@ -35,7 +35,6 @@ std::vector<boost::shared_ptr<ndn::Data>> dataFromParitySegments(std::string fra
 	const std::vector<ndnrtc::CommonSegment>& segments);
 std::vector<boost::shared_ptr<ndn::Interest>> getInterests(std::string frameName,
 	unsigned int startSeg, size_t nSeg);
-#endif
 
 namespace testing
 {
@@ -52,3 +51,5 @@ namespace testing
  }
 }
 #define GT_PRINTF(...)  do { testing::internal::ColoredPrintf(testing::internal::COLOR_GREEN, "[ INFO     ] "); testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__); } while(0)
+
+#endif

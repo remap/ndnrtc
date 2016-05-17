@@ -177,9 +177,10 @@ BufferSlot::dump() const
 {
     std::stringstream dump;
     
-    dump
-    << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
-    << std::setw(7) << nameInfo_.sampleNo_ << ", "
+    dump << "[ "
+    // << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
+    << std::setw(5) 
+    << nameInfo_.sampleNo_ << ", "
     << toString(getConsistencyState()) << ", "
     // << std::setw(7) << getPlaybackNumber() << ", "
     // << std::setw(10) << getProducerTimestamp() << ", "
@@ -194,9 +195,11 @@ BufferSlot::dump() const
     // << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
     // << "/" << nSegmentsParity_ << " "
     // << getLifetime() << " "
-    << getAssemblingTime() << " "
-    << assembledSize_ << " "
-    << std::hex << this;
+    << std::setw(5) << getAssemblingTime() << " "
+    << std::setw(5) << assembledSize_ << " "
+    << nameInfo_.getSuffix(suffix_filter::Stream)
+    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
+    << "]";
     
     return dump.str();
 }
@@ -479,7 +482,10 @@ Buffer::requested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests
             
             activeSlots_[it.first]->segmentsRequested(it.second);
 
-            LogTraceC << "requested " << activeSlots_[it.first]->dump() << std::endl;
+            LogDebugC << "▷▷▷" << activeSlots_[it.first]->dump() 
+                << it.second.size()
+                << " " << shortdump() << std::endl;
+            LogTraceC << dump() << std::endl;
         }
 
         for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
@@ -494,18 +500,32 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
     Buffer::Receipt receipt;
 
     {
+        Name key = segment->getInfo().getPrefix(prefix_filter::Sample);
         boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
 
-        if (activeSlots_.find(segment->getInfo().getPrefix(prefix_filter::Sample)) == activeSlots_.end())
-            throw std::runtime_error("Received data that was not previously requested");
+        if (activeSlots_.find(key) == activeSlots_.end())
+        {
+            for (auto& s:activeSlots_)
+                std::cout << s.second->getPrefix() << std::endl;
 
-        receipt.segment_ = activeSlots_[segment->getInfo().getPrefix(prefix_filter::Sample)]->segmentReceived(segment);
-        receipt.slot_ = activeSlots_[segment->getInfo().getPrefix(prefix_filter::Sample)];
+            stringstream ss;
+            ss << "Received data that was not previously requested: " 
+                << key;
+            throw std::runtime_error(ss.str());
+        }
+
+        receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
+        receipt.slot_ = activeSlots_[key];
     }
 
-    LogTraceC << "received " << receipt.segment_->getInfo().sampleNo_ 
-        << "-"<< receipt.segment_->getInfo().segNo_ 
-        << " state " << receipt.slot_->getState() << std::endl;
+    if (receipt.slot_->getState() == BufferSlot::Ready)
+        LogDebugC << "►►►" << receipt.slot_->dump()
+                << " " << shortdump() << std::endl;
+    else
+        LogTraceC << " ► " << receipt.slot_->dump() 
+            << receipt.segment_->getInfo().segNo_ 
+            << " " << (receipt.slot_->getState() == BufferSlot::Ready ? shortdump() : "")
+            << std::endl;
 
     for (auto o:observers_) o->onNewData(receipt);
 
@@ -550,6 +570,61 @@ Buffer::invalidate(const Name& slotPrefix)
     pool_->push(slot);
 }
 
+void
+Buffer::invalidatePrevious(const Name& slotPrefix)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::map<ndn::Name, boost::shared_ptr<BufferSlot>>::iterator lower = 
+        activeSlots_.lower_bound(slotPrefix);
+
+    while (activeSlots_.begin() != lower) 
+        activeSlots_.erase(activeSlots_.begin());
+}
+
+void
+Buffer::lock(const Name& slotPrefix)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    assert(activeSlots_.find(slotPrefix) != activeSlots_.end());
+    
+    boost::shared_ptr<BufferSlot> slot = activeSlots_.find(slotPrefix)->second;
+    slot->state_ = BufferSlot::Locked;
+}
+
+std::string
+Buffer::dump()
+{
+    int i = 0;
+    stringstream ss;
+    ss << std::endl;
+
+    for (auto& s:activeSlots_)
+        ss << ++i << " " << s.second->dump() << std::endl;
+
+    return ss.str();
+}
+
+std::string
+Buffer::shortdump()
+{
+    int i = 0;
+    stringstream ss;
+    ss << "[ ";
+
+    for (auto& s:activeSlots_)
+    {
+        if ((i++ % 10 == 0) || !s.second->getNameInfo().isDelta_ )
+            ss << s.second->getNameInfo().sampleNo_; 
+        
+        ss << (s.second->getNameInfo().isDelta_ ? "" : "K") 
+           << (s.second->getAssembledLevel() >= 1 ? "■" : "☐" );
+    }
+
+    ss << " ]";
+
+    return ss.str();
+}
+
 //******************************************************************************
 int64_t
 PlaybackQueue::Sample::timestamp() const
@@ -584,12 +659,18 @@ PlaybackQueue::pop(ExtractSlot extract)
             slot = queue_.begin()->slot();
             queue_.erase(queue_.begin());
         }
-        
-        LogDebugC << "▲pop [" << slot->dump() << "] " << std::endl;
-        LogTraceC << "dump " << dump() << std::endl;    
 
         double playTime = (queue_.size() ? queue_.begin()->timestamp() - slot->getHeader().publishTimestampMs_ : samplePeriod());
+        
+        LogDebugC << "-■-" << slot->dump()  << "~" << (int)playTime << "ms " 
+            << dump() << std::endl;
+
+        buffer_->lock(slot->getPrefix());
         extract(slot, playTime);
+        
+        if (slot->getNameInfo().isDelta_) 
+            buffer_->invalidatePrevious(slot->getPrefix());
+
         buffer_->invalidate(slot->getPrefix());
     }
 }
@@ -599,7 +680,7 @@ PlaybackQueue::size() const
 {
     if (!queue_.size()) return 0;
     if (queue_.size() == 1) return samplePeriod();
-    return (--queue_.end())->timestamp() - queue_.begin()->timestamp();
+    return (--queue_.end())->timestamp() - queue_.begin()->timestamp() + samplePeriod();
 }
 
 int64_t
@@ -631,8 +712,9 @@ PlaybackQueue::dump()
     
     ss << "[ ";
     for (auto s:queue_)
-        ss << s.slot()->getNameInfo().sampleNo_ << " ";
-    ss << "]";
+        ss  << s.slot()->getNameInfo().sampleNo_ 
+            << (s.slot()->getNameInfo().isDelta_ ? "D" : "K") << " ";
+    ss << "]" << size() << "ms";
     
     return ss.str();
 }
@@ -658,6 +740,6 @@ PlaybackQueue::onNewData(const Buffer::Receipt& receipt)
 
         for (auto o:observers_) o->onNewSampleReady();
         
-        LogDebugC << "▼push[" << receipt.slot_->dump() << "]" << std::endl;
+        LogDebugC << "--■" << receipt.slot_->dump() << dump() << std::endl;
     }
 }

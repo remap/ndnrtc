@@ -851,6 +851,7 @@ namespace ndnrtc {
         std::string getStreamName() const { return dataNameInfo_.streamName_; }
         bool isMeta() const { return dataNameInfo_.isMeta_; }
         PacketNumber getSampleNo() const { return dataNameInfo_.sampleNo_; }
+        bool isDelta() const { return dataNameInfo_.isDelta_; }
         unsigned int getSegNo() const { return dataNameInfo_.segNo_; }
         bool isParity() const { return dataNameInfo_.isParity_; }
         std::string getThreadName() const { return dataNameInfo_.threadName_; }

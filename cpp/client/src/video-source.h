@@ -39,6 +39,7 @@ public:
 	void stop();
 	unsigned int getSourcedFramesNumber() { return framesSourced_; }
 	unsigned int getRewinds() { return nRewinds_; }
+	bool isRunning(){ return isRunning_; }
 	double getMeanSourcingTimeMs();
 
 private:

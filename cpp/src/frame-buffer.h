@@ -67,6 +67,7 @@ namespace ndnrtc
     //******************************************************************************
     class VideoFrameSlot;
     class AudioBundleSlot;
+    class Buffer;
 
     class BufferSlot : public ISlot
     {
@@ -160,6 +161,7 @@ namespace ndnrtc
     private:
         friend VideoFrameSlot;
         friend AudioBundleSlot;
+        friend Buffer;
 
         ndn::Name name_;
         NamespaceInfo nameInfo_;
@@ -270,6 +272,12 @@ namespace ndnrtc
         void detach(IBufferObserver* observer);
         boost::shared_ptr<SlotPool> getPool() const { return pool_; }
 
+        std::string
+        dump();
+
+        std::string
+        shortdump();
+
     private:
         friend PlaybackQueue;
 
@@ -278,7 +286,9 @@ namespace ndnrtc
         std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_;
         std::vector<IBufferObserver*> observers_;
 
+        void lock(const ndn::Name& slotPrefix);
         void invalidate(const ndn::Name& slotPrefix);
+        void invalidatePrevious(const ndn::Name& slotPrefix);
     };
 
     class IBufferObserver {
