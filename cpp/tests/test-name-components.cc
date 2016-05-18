@@ -185,7 +185,7 @@ TEST(TestNameComponents, TestPrefixFiltering)
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1"), info.getPrefix(0));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00"), info.getPrefix());
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00"), info.getPrefix(Segment));
-		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity"), info.getPrefix(Sample));
+		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07"), info.getPrefix(Sample));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d"), info.getPrefix(Thread));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera"), info.getPrefix(Stream));
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02") , info.getPrefix(Library));

@@ -82,13 +82,14 @@ NamespaceInfo::getPrefix(int filter) const
                 streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
                     prefix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
             if (filter&(Sample^Thread))
-            {
                 prefix.appendSequenceNumber(sampleNo_);
-                if (isParity_)
-                    prefix.append(NameComponents::NameComponentParity);
-            }
+
             if (filter&(Segment^Sample))
+            {
+                if (isParity_)
+                    prefix.append(NameComponents::NameComponentParity);                
                 prefix.appendSegment(segNo_);
+            }
         }
     }
 

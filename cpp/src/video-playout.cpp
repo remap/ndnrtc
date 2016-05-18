@@ -7,196 +7,124 @@
 //
 
 #include "video-playout.h"
-#include "video-consumer.h"
+#include "frame-data.h"
+#include "frame-buffer.h"
 
 using namespace std;
-using namespace ndnlog;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
-
-#define RECORD 0
-#if RECORD
-#include "ndnrtc-testing.h"
-using namespace ndnrtc::testing;
-static EncodedFrameWriter frameWriter("received.nrtc");
-#endif
+using namespace ndnlog;
 
 //******************************************************************************
-#pragma mark - construction/destruction
-VideoPlayout::VideoPlayout(Consumer* consumer,
-                           const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
-Playout(consumer, statStorage)
+VideoPlayout::VideoPlayout(boost::asio::io_service& io,
+            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<StatStorage>& statStorage):
+Playout(io, queue, statStorage),
+gopIsValid_(false), currentPlayNo_(-1), 
+gopCount_(0), frameConsumer_(nullptr)
 {
-    description_ = "video-playout";
+    setDescription("vplayout");
 }
 
-VideoPlayout::~VideoPlayout()
+void VideoPlayout::registerFrameConsumer(IEncodedFrameConsumer* frameConsumer)
+{ 
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    frameConsumer_ = frameConsumer; 
+}
+
+void VideoPlayout::deregisterFrameConsumer()
 {
-    
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    frameConsumer_ = nullptr;
+}
+
+void VideoPlayout::attach(IVideoPlayoutObserver* observer)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    Playout::attach(observer);
+}
+
+void VideoPlayout::detach(IVideoPlayoutObserver* observer)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    Playout::detach(observer);
+}
+
+void VideoPlayout::stop()
+{
+    Playout::stop();
+    currentPlayNo_ = -1;
+    gopCount_ = 0;
 }
 
 //******************************************************************************
-#pragma mark - public
-int
-VideoPlayout::start(int playbackAdjustment)
+void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot)
 {
-    validGop_ = false;
-    currentKeyNo_ = 0;
-    
-    int res = Playout::start(playbackAdjustment);
-    
-    return res;
-}
+    LogTraceC << "processing sample " << slot->dump() << std::endl;
 
-//******************************************************************************
-#pragma mark - private
-bool
-VideoPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
-                             PacketNumber playbackPacketNo,
-                             PacketNumber sequencePacketNo,
-                             PacketNumber pairedPacketNo,
-                             bool isKey, double assembledLevel)
-{
-    bool res = false;
-    
-    // render frame if we have one
-    if (frameConsumer_)
-    { 
-        bool pushFrameFurther = false;
-        
-        if (consumer_->getGeneralParameters().skipIncomplete_)
+    bool recovered = false;
+    boost::shared_ptr<ImmutableVideoFramePacket> framePacket =
+        frameSlot_.readPacket(*slot, recovered);
+
+    if (framePacket.get())
+    {
+        VideoFrameSegmentHeader hdr = frameSlot_.readSegmentHeader(*slot);
+
+        if (recovered)
+            LogDebugC << "recovered " << slot->getNameInfo().sampleNo_ 
+                << " (" << hdr.playbackNo_ << ")" << std::endl;
+
+        if (!slot->getNameInfo().isDelta_)
         {
-            if (isKey)
-            {
-                if (assembledLevel >= 1)
-                {
-                    pushFrameFurther = true;
-                    currentKeyNo_ = sequencePacketNo;
-                    validGop_ = true;
-                    
-                    LogTraceC << "new GOP with key: "
-                    << currentKeyNo_ << endl;
-                }
-                else
-                {
-                    validGop_ = false;
-                    (*statStorage_)[Indicator::SkippedIncompleteNum]++;
-                    (*statStorage_)[Indicator::SkippedIncompleteKeyNum]++;
-                    
-                    getVideoConsumer()->playbackEventOccurred(PlaybackEventKeySkipIncomplete,
-                                                              sequencePacketNo);
-                    
-                    LogWarnC << "key incomplete."
-                    << " lvl " << assembledLevel
-                    << " seq " << sequencePacketNo
-                    << " abs " << playbackPacketNo
-                    << endl;
-                }
-            }
+            gopIsValid_ = true; 
+            ++gopCount_;
+
+            LogTraceC << "gop " << gopCount_ << std::endl;
+        }
+
+        if (currentPlayNo_ >= 0 &&
+            (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
+        {
+            if (!gopIsValid_)
+                LogWarnC << "skip " << slot->getNameInfo().sampleNo_ 
+                    << " invalid GOP" << std::endl;
             else
-            {
-                // update stat
-                if (assembledLevel < 1.)
-                {
-                    (*statStorage_)[Indicator::SkippedIncompleteNum]++;
-                    
-                    getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipIncomplete,
-                                                              sequencePacketNo);
-                    
-                    LogWarnC << "delta incomplete."
-                    << " lvl " << assembledLevel
-                    << " seq " << sequencePacketNo
-                    << " abs " << playbackPacketNo
-                    << endl;
-                }
-                else
-                {
-                    if (pairedPacketNo != currentKeyNo_)
-                    {
-                        (*statStorage_)[Indicator::SkippedNoKeyNum]++;
-                        
-                        getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipNoKey, sequencePacketNo);
-                        
-                        LogWarnC << "delta gop mismatch."
-                        << " current " << currentKeyNo_
-                        << " received " << pairedPacketNo
-                        << " seq " << sequencePacketNo
-                        << " abs " << playbackPacketNo
-                        << endl;
-                    }
-                    else
-                    {
-                        if (!validGop_)
-                        {
-                            (*statStorage_)[Indicator::SkippedBadGopNum]++;
-                            
-                            getVideoConsumer()->playbackEventOccurred(PlaybackEventDeltaSkipInvalidGop, sequencePacketNo);
-                            
-                            LogWarnC << "invalid gop."
-                            << " seq " << sequencePacketNo
-                            << " abs " << playbackPacketNo
-                            << " key " << currentKeyNo_
-                            << endl;
-                        }
-                    }
-                }
-                
-                validGop_ &= (assembledLevel >= 1);
-                pushFrameFurther = validGop_ && (pairedPacketNo == currentKeyNo_);
-            }
-        }
-        else
-            pushFrameFurther  = true;
-        
-        // check for valid data
-        pushFrameFurther &= (data != NULL);
-        
-#if RECORD
-        if (pushFrameFurther)
-        {
-            PacketData::PacketMetadata meta = data_->getMetadata();
-            frameWriter.writeFrame(frame, meta);
-        }
-#endif
-        
-        if (!pushFrameFurther)
-        {
-            if (onFrameSkipped_)
-                onFrameSkipped_(playbackPacketNo, sequencePacketNo,
-                                pairedPacketNo, isKey, assembledLevel);
-            
-            LogDebugC << "bad frame."
-            << " type " << (isKey?"K":"D")
-            << " lvl " << assembledLevel
-            << " seq " << sequencePacketNo
-            << " abs " << playbackPacketNo
-            << endl;
-        }
-        else
-        {
-            LogDebugC << "playback."
-            << " type " << (isKey?"K":"D")
-            << " seq " << sequencePacketNo
-            << " abs " << playbackPacketNo
-            << " total " << (*statStorage_)[Indicator::PlayedNum]
-            << endl;
-        
-            webrtc::EncodedImage frame;
-            
-            if (data)
-                ((NdnFrameData*)data)->getFrame(frame);
-            
-            // update stat
-            (*statStorage_)[Indicator::PlayedNum]++;
-            if (isKey)
-                (*statStorage_)[Indicator::PlayedKeyNum]++;
-        
-            ((IEncodedFrameConsumer*)frameConsumer_)->onEncodedFrameDelivered(frame, NdnRtcUtils::unixTimestamp(), pushFrameFurther);
+                LogWarnC << "skip " << slot->getNameInfo().sampleNo_ 
+                    << " (expected " << currentPlayNo_+1 
+                    << " received " << hdr.playbackNo_ << ")" << std::endl;
+
+            gopIsValid_ = false;
+
+            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+            for (auto o:observers_) 
+                ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
+                    !slot->getNameInfo().isDelta_);
         }
 
-        res = pushFrameFurther;
-    } // if data
-    
-    return res;
+        currentPlayNo_ = hdr.playbackNo_;
+
+        if (gopIsValid_)
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+            if (frameConsumer_)
+                frameConsumer_->procesFrame(framePacket);
+            
+            for (auto o:observers_) 
+                ((IVideoPlayoutObserver*)o)->frameProcessed(hdr.playbackNo_, 
+                    !slot->getNameInfo().isDelta_);
+
+            LogDebugC << "processed " << slot->getNameInfo().sampleNo_
+                << " (" << hdr.playbackNo_ << ")" << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "********************fucked up" << std::endl;
+
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        LogWarnC << "failed recovery " << slot->dump() << std::endl;
+
+        for (auto o:observers_) 
+                ((IVideoPlayoutObserver*)o)->recoveryFailure(slot->getNameInfo().sampleNo_, 
+                    !slot->getNameInfo().isDelta_);
+    }
 }

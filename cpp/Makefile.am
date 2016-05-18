@@ -138,7 +138,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout
 
 # bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
 
@@ -185,7 +185,7 @@ check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/tes
 
 ### NDN-RTC tests
 
-bin_tests_test_params_SOURCES = tests/test-params.cc tests/tests-helpers.cc src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_params_SOURCES = tests/test-params.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_params_LDADD = ${libndnrtc_la_LIBADD}
@@ -205,7 +205,7 @@ bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
 
-bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpers.cc src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpers.cc src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
@@ -220,12 +220,12 @@ bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_capturer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_audio_capturer_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_frame_converter_SOURCES = tests/test-frame-converter.cc tests/tests-helpers.cc src/fec.cpp src/frame-converter.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_frame_converter_SOURCES = tests/test-frame-converter.cc tests/tests-helpers.cc src/fec.cpp src/frame-converter.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_converter_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_converter_LDADD = ${libndnrtc_la_LIBADD}
@@ -259,5 +259,10 @@ bin_tests_test_playout_SOURCES = tests/test-playout.cc tests/tests-helpers.cc sr
 bin_tests_test_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_playout_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_video_playout_SOURCES = tests/test-video-playout.cc tests/tests-helpers.cc src/video-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_playout_LDADD = ${libndnrtc_la_LIBADD}
 
 TESTS = ${check_PROGRAMS}

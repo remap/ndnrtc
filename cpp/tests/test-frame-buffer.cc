@@ -438,7 +438,8 @@ TEST(TestVideoFrameSlot, TestAsembleVideoFrame)
 	bool recovered = false;
 	boost::shared_ptr<ImmutableVideoFramePacket> videoPacket = videoSlot.readPacket(slot, recovered);
 
-	EXPECT_TRUE(recovered);
+	ASSERT_TRUE(videoPacket.get());
+	EXPECT_FALSE(recovered);
 	EXPECT_TRUE(checkVideoFrame(videoPacket->getFrame()));
 	EXPECT_EQ(734, videoSlot.readSegmentHeader(slot).playbackNo_);
 	EXPECT_EQ(1249, videoSlot.readSegmentHeader(slot).pairedSequenceNo_);
@@ -482,8 +483,9 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket(10000);
 
+	boost::shared_ptr<NetworkData> parity;
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
-	std::vector<CommonSegment> paritySegments = sliceParity(vp);
+	std::vector<CommonSegment> paritySegments = sliceParity(vp, parity);
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
@@ -532,8 +534,9 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket(20000);
 
+	boost::shared_ptr<NetworkData> parity;
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
-	std::vector<CommonSegment> paritySegments = sliceParity(vp);
+	std::vector<CommonSegment> paritySegments = sliceParity(vp, parity);
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);

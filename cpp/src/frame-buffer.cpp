@@ -232,9 +232,7 @@ BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment
     hasOriginalSegments_ = segment->isOriginal();
     assembled_ += segment->getData()->getSegmentWeight();
     asmLevel_ += segment->getData()->getShareSize();
-    
-    if (!segment->getData()->isParity())
-        state_ = (assembled_ >= segment->getData()->getSlicesNum() ? Ready : Assembling);
+    state_ = (assembled_ >= segment->getData()->getSlicesNum() ? Ready : Assembling);
 
     if (state_ == Ready) assembledTimeUsec_ = segment->getArrivalTimeUsec();
 }
@@ -281,7 +279,7 @@ VideoFrameSlot::readPacket(const BufferSlot& slot, bool& recovered)
     size_t paritySegSize = (paritySegments.size() ? firstParitySeg->segment().getPayload().size() : 0);
     unsigned int nDataSegmentsExpected = firstSeg->getSlicesNum();
     unsigned int nParitySegmentsExpected = (paritySegments.size() ? paritySegments.begin()->second->getData()->getSlicesNum() : 0);
-    
+
     fecList_.assign(nDataSegmentsExpected+nParitySegmentsExpected, FEC_RLIST_SYMEMPTY);
     storage_->resize(segmentSize*(nDataSegmentsExpected+nParitySegmentsExpected));
 
@@ -324,6 +322,7 @@ VideoFrameSlot::readPacket(const BufferSlot& slot, bool& recovered)
         }
     }
 
+    bool frameExtracted = false;
     if (dataSegments.size() < nDataSegmentsExpected)
     {
         fec::Rs28Decoder dec(nDataSegmentsExpected, nParitySegmentsExpected, segmentSize);
@@ -331,13 +330,14 @@ VideoFrameSlot::readPacket(const BufferSlot& slot, bool& recovered)
             storage_->data()+nDataSegmentsExpected*segmentSize,
             fecList_.data());
         recovered = (nRecovered+dataSegments.size() >= nDataSegmentsExpected);
+        frameExtracted = recovered;
     }
     else 
-        recovered = true;
+        frameExtracted = true;
 
     storage_->resize(nDataSegmentsExpected*segmentSize);
-    
-    return (recovered ? boost::make_shared<ImmutableVideoFramePacket>(storage_) : 
+
+    return (frameExtracted ? boost::make_shared<ImmutableVideoFramePacket>(storage_) : 
                 boost::shared_ptr<ImmutableVideoFramePacket>());
 }
 
@@ -484,7 +484,9 @@ Buffer::requested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests
 
             LogDebugC << "▷▷▷" << activeSlots_[it.first]->dump() 
                 << it.second.size()
-                << " " << shortdump() << std::endl;
+                << " " << shortdump()
+                << std::endl;
+            
             LogTraceC << dump() << std::endl;
         }
 

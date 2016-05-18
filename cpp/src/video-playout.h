@@ -9,45 +9,63 @@
 #ifndef __ndnrtc__video_playout__
 #define __ndnrtc__video_playout__
 
+#include "ndnrtc-common.h"
 #include "playout.h"
-#include "video-coder.h"
+#include "frame-buffer.h"
 
 namespace ndnrtc {
-    namespace new_api {
-        class VideoConsumer;
+    template<typename T>
+    class VideoFramePacketT;
+    struct Immutable;
+    typedef VideoFramePacketT<Immutable> ImmutableFrameAlias;
+    class IEncodedFrameConsumer;
+    class PlaybackQueue;
+    typedef new_api::statistics::StatisticsStorage StatStorage; 
+    class IVideoPlayoutObserver;
+    
+    class VideoPlayout : public Playout
+    {
+    public:
+        VideoPlayout(boost::asio::io_service& io,
+            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<StatStorage>& statStorage = 
+                boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+        ~VideoPlayout(){}
         
-        typedef boost::function<void (PacketNumber, PacketNumber, PacketNumber, bool, double)> OnFrameSkipped;
+        void stop();
+        void registerFrameConsumer(IEncodedFrameConsumer* frameConsumer);
+        void deregisterFrameConsumer();
+
+        void attach(IVideoPlayoutObserver* observer);
+        void detach(IVideoPlayoutObserver* observer);
         
-        class VideoPlayout : public Playout
-        {
-        public:
-            VideoPlayout(Consumer* consumer,
-                         const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
-            ~VideoPlayout();
-            
-            int
-            start(int playbackAdjustment = 0);
-            
-            OnFrameSkipped onFrameSkipped_;
-            
-        private:
-            // this flags indicates whether frames should be played out (unless
-            // new full key frame received)
-            bool validGop_;
-            PacketNumber currentKeyNo_;
-            
-            bool
-            playbackPacket(int64_t packetTsLocal, PacketData* data,
-                           PacketNumber playbackPacketNo,
-                           PacketNumber sequencePacketNo,
-                           PacketNumber pairedPacketNo,
-                           bool isKey, double assembledLevel);
-            
-            VideoConsumer*
-            getVideoConsumer()
-            { return (VideoConsumer*)consumer_; }
-        };
-    }
+    private:
+        using Playout::attach;
+        using Playout::detach;
+
+        VideoFrameSlot frameSlot_;
+        IEncodedFrameConsumer *frameConsumer_;
+        bool gopIsValid_;
+        PacketNumber currentPlayNo_;
+        int gopCount_;
+
+        void
+        processSample(const boost::shared_ptr<const BufferSlot>&);
+    };
+
+    class IEncodedFrameConsumer 
+    {
+    public:
+        virtual void procesFrame(const boost::shared_ptr<ImmutableFrameAlias>&) = 0;
+    };
+
+    class IVideoPlayoutObserver : public IPlayoutObserver 
+    {
+    public:
+        virtual void frameSkipped(PacketNumber pNo, bool isKey) = 0;
+        virtual void frameProcessed(PacketNumber pNo, bool isKey) = 0;
+        virtual void recoveryFailure(PacketNumber sampleNo, bool isKey) = 0;
+    };
 }
 
 #endif /* defined(__ndnrtc__video_playout__) */

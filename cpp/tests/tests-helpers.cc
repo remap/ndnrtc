@@ -268,14 +268,16 @@ std::vector<VideoFrameSegment> sliceFrame(VideoFramePacket& vp,
     return frameSegments;
 }
 
-std::vector<CommonSegment> sliceParity(VideoFramePacket& vp)
+std::vector<CommonSegment> sliceParity(VideoFramePacket& vp, boost::shared_ptr<NetworkData>& parity)
 {
 	DataSegmentHeader header;
     header.interestNonce_ = 0x1234;
     header.interestArrivalMs_ = 1460399362;
     header.generationDelayMs_ = 200;
-	
-	boost::shared_ptr<NetworkData> parity = vp.getParityData(CommonSegment::payloadLength(1000), 0.2);
+
+	parity = vp.getParityData(CommonSegment::payloadLength(1000), 0.2);
+	assert(parity.get());
+
 	std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
 
 	int idx = 0;
@@ -317,7 +319,7 @@ dataFromParitySegments(std::string frameName,
     for (auto& s:segments)
     {
         ndn::Name n(frameName);
-        n.appendSegment(segIdx++);
+        n.append(NameComponents::NameComponentParity).appendSegment(segIdx++);
         boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
         ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
         ds->setContent(s.getNetworkData()->getData(), s.size());
@@ -328,7 +330,8 @@ dataFromParitySegments(std::string frameName,
 }
 
 std::vector<boost::shared_ptr<Interest>>
-getInterests(std::string frameName, unsigned int startSeg, size_t nSeg)
+getInterests(std::string frameName, unsigned int startSeg, size_t nSeg, 
+	unsigned int parityStartSeg, size_t parityNSeg)
 {
 	std::vector<boost::shared_ptr<Interest>> interests;
 
@@ -342,5 +345,108 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg)
 		nonce++;
 	}
 
+	for (int i = parityStartSeg; i < parityStartSeg+parityNSeg; ++i)
+	{
+		Name n(frameName);
+		n.append(NameComponents::NameComponentParity).appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(n, 1000));
+		interests.back()->setNonce(Blob((uint8_t*)&(nonce), sizeof(int)));
+		nonce++;
+	}
+
 	return interests;
 }
+
+//******************************************************************************
+void DelayQueue::push(QueueBlock block)
+{
+  int fireDelayMs = delayMs_ + (dev_ ? std::rand()%(int)(dev_/2)+dev_ : 0);
+  TPoint fireTime = Clock::now()+Msec(fireDelayMs);
+
+  queue_[fireTime].push_back(block);
+
+  if (!timerSet_) 
+  {
+    timerSet_ = true;
+    timer_.expires_at(fireTime);
+    timer_.async_wait(boost::bind(&DelayQueue::pop, this, 
+      boost::asio::placeholders::error));
+  }
+}
+
+void DelayQueue::reset()
+{
+  timer_.cancel();
+  active_ = false;
+}
+
+void DelayQueue::pop(const boost::system::error_code& e)
+{
+	if (e != boost::asio::error::operation_aborted && active_ && active_)
+	{
+		for (auto& block:queue_.begin()->second)
+			block();
+
+		if (queue_.size() > 1)
+		{
+			queue_.erase(queue_.begin());
+			timer_.expires_at(queue_.begin()->first);
+			timer_.async_wait(boost::bind(&DelayQueue::pop, this, 
+				boost::asio::placeholders::error));
+		}
+		else
+		{
+			queue_.erase(queue_.begin());
+			timerSet_ = false;
+		}
+	}
+}
+
+void DataCache::addInterest(const boost::shared_ptr<ndn::Interest>& interest, OnDataT onData)
+{
+
+  if (data_.find(interest->getName()) != data_.end())
+  {
+    boost::lock_guard<boost::mutex> scopedLock(m_);
+    boost::shared_ptr<ndn::Data> d = data_[interest->getName()];
+    
+    onData(d);
+
+    if (onInterestCallbacks_.find(interest->getName()) != onInterestCallbacks_.end())
+    {
+      onInterestCallbacks_[interest->getName()](interest);
+      onInterestCallbacks_.erase(onInterestCallbacks_.find(interest->getName()));
+    }
+
+    data_.erase(data_.find(interest->getName()));
+  }
+  else
+  {
+    boost::lock_guard<boost::mutex> scopedLock(m_);
+
+    interests_[interest->getName()] = interest;
+    onDataCallbacks_[interest->getName()] = onData;
+  }
+}
+
+void DataCache::addData(const boost::shared_ptr<ndn::Data>& data, OnInterestT onInterest)
+  {
+    if (interests_.find(data->getName()) != interests_.end())
+    {
+      boost::lock_guard<boost::mutex> scopedLock(m_);
+      boost::shared_ptr<ndn::Interest> i = interests_[data->getName()];
+      
+      if (onInterest) onInterest(i);
+      onDataCallbacks_[data->getName()](data);
+
+      interests_.erase(interests_.find(data->getName()));
+      onDataCallbacks_.erase(onDataCallbacks_.find(data->getName()));
+    }
+    else
+    {
+      boost::lock_guard<boost::mutex> scopedLock(m_);
+
+      data_[data->getName()] = data;
+      if (onInterest) onInterestCallbacks_[data->getName()] = onInterest;
+    }
+  }
