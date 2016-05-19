@@ -13,9 +13,10 @@
 
 namespace ndnrtc {
 	class AudioThread;
+	class AudiobundlePacket;
 
 	class AudioStreamImpl : public MediaStreamBase,
-							public  IAudioThreadCallback {
+							public IAudioThreadCallback {
 	public:
 		AudioStreamImpl(const std::string& basePrefix,
 			const MediaStreamSettings& settings);
@@ -53,6 +54,7 @@ namespace ndnrtc {
 
 		std::map<std::string, boost::shared_ptr<AudioThread>> threads_;
 		std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
+		std::vector<boost::shared_ptr<AudioBundlePacket>> bundlePool_;
 		boost::atomic<bool> streamRunning_;
 
 		// may be called from main thread or face thread

@@ -7,7 +7,10 @@
 
 #include "audio-stream-impl.h"
 #include "async.h"
+#include "clock.h"
 #include "name-components.h"
+
+#define BUNDLES_POOL_SIZE 10
 
 using namespace std;
 using namespace ndnrtc;
@@ -25,6 +28,10 @@ streamRunning_(false)
 	for (int i = 0; i < settings_.params_.getThreadNum(); ++i)
 		if (settings_.params_.getAudioThread(i))
 			add(settings_.params_.getAudioThread(i));
+
+	for (int i = 0; i < BUNDLES_POOL_SIZE; ++i)
+		bundlePool_.push_back(boost::make_shared<AudioBundlePacket>
+			(CommonSegment::payloadLength(settings_.params_.producerParams_.segmentSize_)));
 }
 
 AudioStreamImpl::~AudioStreamImpl()
@@ -130,12 +137,41 @@ void
 AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 			boost::shared_ptr<AudioBundlePacket> packet)
 {
+	if (!bundlePool_.size())
+	{
+		LogWarnC << "Audio bundle pool is drained. This may happen do to fast capturing "
+			"and slow publishing or too small segment size" << std::endl;
+		return;
+	}
+
 	Name n(streamPrefix_);
 	n.append(threadName).appendSequenceNumber(bundleNo);
 	boost::shared_ptr<AudioStreamImpl> me = boost::static_pointer_cast<AudioStreamImpl>(shared_from_this());
+	boost::shared_ptr<AudioBundlePacket> bundle = bundlePool_.back();
 
-	async::dispatchAsync(settings_.faceIo_, [n, packet, me](){
-		me->dataPublisher_->publish(n, *packet);
+	double packetRate = 0;
+
+	{
+		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+		bundle->swap(*packet);
+		packetRate = metaKeepers_[threadName]->getMeta().getRate();
+		bundlePool_.pop_back();
+	}
+
+	async::dispatchAsync(settings_.faceIo_, [packetRate, n, bundle, threadName, me](){
+		CommonHeader packetHdr;
+
+		packetHdr.sampleRate_ = packetRate;
+		packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
+		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+		bundle->setHeader(packetHdr);
+
+		me->dataPublisher_->publish(n, *bundle);
+
+		{
+			boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
+			me->bundlePool_.push_back(bundle);
+		}
 	});
 }
 

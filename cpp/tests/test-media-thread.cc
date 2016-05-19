@@ -266,7 +266,7 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 	}
 }
 #endif
-#if 1
+
 TEST(TestAudioThread, TestRunOpusThread)
 {
 	MockAudioThreadCallback callback;
@@ -289,6 +289,17 @@ TEST(TestAudioThread, TestRunOpusThread)
 		EXPECT_LT(0, b->getRemainingSpace());
 		EXPECT_GE(wire_length, b->getRemainingSpace());
 		callbackTs = high_resolution_clock::now();
+
+		CommonHeader packetHdr;
+		packetHdr.sampleRate_ = 25;
+		packetHdr.publishTimestampMs_ = nBundles+1;
+		packetHdr.publishUnixTimestampMs_ = nBundles+2;
+		bundle->setHeader(packetHdr);
+
+		EXPECT_EQ(25, bundle->getHeader().sampleRate_);
+		EXPECT_EQ(nBundles+1, bundle->getHeader().publishTimestampMs_);
+		EXPECT_EQ(nBundles+2, bundle->getHeader().publishUnixTimestampMs_);
+		EXPECT_LE(1, bundle->getSamplesNum());
 	};
 
 	EXPECT_CALL(callback, onSampleBundle("hd",_, _))
@@ -308,11 +319,11 @@ TEST(TestAudioThread, TestRunOpusThread)
 	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 	EXPECT_LE(1, nBundles);
 	EXPECT_GE(wire_length, bundle->getLength());
-	EXPECT_LT(1, bundle->getSamplesNum());
+	EXPECT_LE(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
 		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
-
+#if 1
 TEST(TestAudioThread, TestRunG722Thread)
 {
 	MockAudioThreadCallback callback;
@@ -350,7 +361,7 @@ TEST(TestAudioThread, TestRunG722Thread)
 	EXPECT_NO_THROW(at.stop());
 	EXPECT_LE(1, nBundles);
 	EXPECT_GE(wire_length, bundle->getLength());
-	EXPECT_LT(1, bundle->getSamplesNum());
+	EXPECT_LE(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
 		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }

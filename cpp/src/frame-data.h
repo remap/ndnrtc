@@ -384,6 +384,14 @@ namespace ndnrtc {
 
     protected:
         bool isHeaderSet() const { return isHeaderSet_; }
+        void clear() 
+        { 
+            this->_data().clear();
+            this->_data().insert(this->_data().begin(),0);
+            this->payloadBegin_ = this->_data().begin()+1;
+            this->blobs_.clear();
+            isHeaderSet_ = false;
+        }
 
     private:
         bool isHeaderSet_;
@@ -680,6 +688,8 @@ namespace ndnrtc {
                 { return header_; }
             size_t size() const
                 { return Blob::size()+(fromBlob_?0:sizeof(AudioSampleHeader)); }
+            size_t payloadLength() const
+                { return Blob::size()+(fromBlob_?-sizeof(AudioSampleHeader):0); }
             const uint8_t* data() const 
                 { return (fromBlob_?&(*(begin_+sizeof(AudioSampleHeader))):&(*begin_)); }
 
@@ -712,10 +722,7 @@ namespace ndnrtc {
         ENABLE_IF(T,Mutable)
         void clear()
         {
-            this->_data().clear();
-            this->_data().insert(this->_data().begin(),0);
-            this->payloadBegin_ = this->_data().begin()+1;
-            this->blobs_.clear();
+            HeaderPacketT<CommonHeader, T>::clear();
             this->remainingSpace_ = AudioBundlePacketT<T>::payloadLength(wireLength_);
         }
 
@@ -742,6 +749,8 @@ namespace ndnrtc {
                 this->reinit();
                 remainingSpace_ -= DataPacket::wireLength(sampleBlob.size());
             }
+            else
+                throw std::runtime_error("Can not add sample to bundle: no free space");
 
             return *this;
         }

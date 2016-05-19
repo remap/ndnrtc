@@ -27,6 +27,7 @@ using namespace ndnrtc::new_api::statistics;
 Playout::Playout(boost::asio::io_service& io,
     const boost::shared_ptr<PlaybackQueue>& queue,
     const boost::shared_ptr<new_api::statistics::StatisticsStorage> statStorage):
+isRunning_(false),
 jitterTiming_(io),
 pqueue_(queue),
 StatObject(statStorage),

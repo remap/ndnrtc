@@ -8,106 +8,120 @@
 //  Author:  Peter Gusev
 //
 
+#include <webrtc/voice_engine/include/voe_hardware.h>
+#include <webrtc/voice_engine/include/voe_network.h>
+#include <webrtc/voice_engine/include/voe_base.h>
+
 #include "audio-renderer.h"
-#include "ndnrtc-utils.h"
+#include "audio-controller.h"
 
 using namespace std;
-using namespace webrtc;
-using namespace ndnlog;
-using namespace ndnlog::new_api;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
+using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioRenderer::AudioRenderer():
-WebrtcAudioChannel()
+AudioRenderer::AudioRenderer(const unsigned int deviceIdx, 
+  const WebrtcAudioChannel::Codec& codec):
+WebrtcAudioChannel(codec),
+rendering_(false)
 {
     description_ = "arenderer";
+    AudioController::getSharedInstance()->initVoiceEngine();
+
+    int res = 0;
+    AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res]{
+      voeHardware_ = VoEHardware::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
+      if (voeHardware_)
+      {
+        int nDevices = 0;
+        voeHardware_->GetNumOfPlayoutDevices(nDevices);
+        if (deviceIdx > nDevices)
+        {
+          res = 1;
+          voeHardware_->Release();
+        }
+        else
+          voeHardware_->SetPlayoutDevice(deviceIdx);
+      }
+      else 
+        res = 1;
+    });
+
+    if (res != 0)
+      throw std::runtime_error("Can't initialize audio renderer");
 }
 
 AudioRenderer::~AudioRenderer()
 {
+  if (rendering_)
+    stopRendering();
+  voeHardware_->Release();
 }
 
 //******************************************************************************
 #pragma mark - public
-int
-AudioRenderer::init()
+void
+AudioRenderer::startRendering()
 {
-    LogInfoC << "initialized" << endl;
-    return RESULT_OK;
+  if (rendering_)
+    throw std::runtime_error("Audio rendering has already started");
+
+  int res = RESULT_OK;
+  AudioController::getSharedInstance()->performOnAudioThread([this, &res](){
+   // register external transport in order to playback. however, we are not
+   // going to set this channel for sending and should not be getting callback
+   // on webrtc::Transport callbacks
+   if (voeNetwork_->RegisterExternalTransport(webrtcChannelId_, *this) < 0)
+     res = voeBase_->LastError();
+   else if (voeBase_->StartReceive(webrtcChannelId_) < 0)
+     res = voeBase_->LastError();
+   else if (voeBase_->StartPlayout(webrtcChannelId_) < 0)
+     res = voeBase_->LastError();
+ });
+
+  if (RESULT_GOOD(res))
+  {
+    rendering_ = true;
+    LogInfoC << "started" << endl;
+  }
+  else
+  {
+    stringstream ss;
+    ss << "Can't start capturing due to WebRTC error " << res;
+    throw std::runtime_error(ss.str());
+  }
 }
 
-int
-AudioRenderer::startRendering(const std::string &name)
-{
-    if (RESULT_FAIL(WebrtcAudioChannel::init()))
-    {
-        LogErrorC << "can't instantiate WebRTC voice channel \
-        due to error (code: " << voeBase_->LastError() << ")" << endl;
-        return RESULT_ERR;
-    }
-    
-    NdnRtcUtils::performOnBackgroundThread([this](){
-                                           // register external transport in order to playback. however, we are not
-                                           // going to set this channel for sending and should not be getting callback
-                                           // on webrtc::Transport callbacks
-                                           if (voeNetwork_->RegisterExternalTransport(webrtcChannelId_, *this) < 0)
-                                               notifyError(RESULT_ERR, "can't register external transport for "
-                                                           "WebRTC due to error (code %d)",
-                                                           voeBase_->LastError());
-                                           else if (voeBase_->StartReceive(webrtcChannelId_) < 0)
-                                               notifyError(RESULT_ERR, "can't start receiving channel due to "
-                                                           "WebRTC error (code %d)", voeBase_->LastError());
-                                           
-                                           else if (voeBase_->StartPlayout(webrtcChannelId_) < 0)
-                                               notifyError(RESULT_ERR, "can't start playout audio due to WebRTC "
-                                                           "error (code %d)", voeBase_->LastError());
-                                           else
-                                               isRendering_ = true;
-                                           LogInfoC << "started" << endl;
-                                       });
-    
-    return (isRendering_)?RESULT_OK:RESULT_ERR;
-}
-
-int
+void
 AudioRenderer::stopRendering()
 {
-    NdnRtcUtils::performOnBackgroundThread(
-                                       [this](){
-                                           if (isRendering_)
-                                           {
-                                               voeBase_->StopPlayout(webrtcChannelId_);
-                                               voeBase_->StopReceive(webrtcChannelId_);
-                                               voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
-                                           }
-                                           webrtcChannelId_ = -1;
-                                           isRendering_ = false;
-                                       });
+  if (!rendering_) return;
+
+  AudioController::getSharedInstance()->performOnAudioThread([this](){
+    voeBase_->StopPlayout(webrtcChannelId_);
+    voeBase_->StopReceive(webrtcChannelId_);
+    voeNetwork_->DeRegisterExternalTransport(webrtcChannelId_);
+  });
     
-    LogInfoC << "stopped" << endl;
-    return RESULT_OK;
+  rendering_ = false;
+  LogInfoC << "stopped" << endl;
 }
 
 void
 AudioRenderer::onDeliverRtpFrame(unsigned int len, unsigned char *data)
 {
-    if (voeNetwork_->ReceivedRTPPacket(webrtcChannelId_,
-                                       data,
-                                       len) < 0)
-        notifyError(RESULT_WARN, "can't playback audio packet (RTP) due to WebRTC error "
-                    "(code %d)", voeBase_->LastError());
+  if (rendering_)
+    AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
+      voeNetwork_->ReceivedRTPPacket(webrtcChannelId_, data, len);
+    });
 }
 
 void
 AudioRenderer::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
 {
-    if (voeNetwork_->ReceivedRTCPPacket(webrtcChannelId_,
-                                        data,
-                                        len) < 0)
-        notifyError(RESULT_WARN, "can't playback audio packet (RTCP) due to WebRTC error "
-                    "(code %d)", voeBase_->LastError());
-    
+  if (rendering_)
+    AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
+      voeNetwork_->ReceivedRTCPPacket(webrtcChannelId_, data, len);
+    });
 }

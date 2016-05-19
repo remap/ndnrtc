@@ -92,6 +92,7 @@ void AudioThread::deliver(const AudioBundlePacket::AudioSampleBlob& blob)
     {
         estimators::frequencyMeterTick(rateId_);
         callback_->onSampleBundle(threadName_, bundleNo_++, bundle_);
+        bundle_->clear();
     }
 
     *bundle_ << blob;

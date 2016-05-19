@@ -21,21 +21,52 @@ using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-AudioPlayout::AudioPlayout(Consumer* consumer,
-                           const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
-Playout(consumer, statStorage)
+AudioPlayout::AudioPlayout(boost::asio::io_service& io,
+            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<StatStorage>& statStorage):
+Playout(io, queue, statStorage), packetCount_(0)
 {
-    description_ = "audio-playout";
+    description_ = "aplayout";
 }
 
-AudioPlayout::~AudioPlayout()
+void AudioPlayout::start(unsigned int devIdx, WebrtcAudioChannel::Codec codec)
 {
+    renderer_ = boost::make_shared<AudioRenderer>(devIdx, codec);
+    renderer_->setLogger(logger_);
+
+    Playout::start();
+    renderer_->startRendering();
+}
+
+void AudioPlayout::stop()
+{
+    Playout::stop();
+    packetCount_ = 0;
+    renderer_->stopRendering();
+}
+
+void AudioPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+{
+    boost::shared_ptr<ImmutableAudioBundlePacket> bundlePacket = 
+        bundleSlot_.readBundle(*slot);
     
+    if (bundlePacket.get())
+    {
+        for (int i = 0; i < bundlePacket->getSamplesNum(); ++i)
+        {
+            ImmutableAudioBundlePacket::AudioSampleBlob 
+                sampleBlob = (*bundlePacket)[i];
+            if (sampleBlob.getHeader().isRtcp_)
+                renderer_->onDeliverRtcpFrame(sampleBlob.payloadLength(), (unsigned char*)sampleBlob.data());
+            else
+                renderer_->onDeliverRtpFrame(sampleBlob.payloadLength(), (unsigned char*)sampleBlob.data());
+        }            
+    }
+    else
+        LogWarnC << "Error reading audio bundle " << slot->dump() << std::endl;
 }
 
-//******************************************************************************
-#pragma mark - public
-
+#if 0
 //******************************************************************************
 #pragma mark - private
 bool
@@ -82,3 +113,4 @@ AudioPlayout::playbackPacket(int64_t packetTsLocal, PacketData* data,
     
     return res;
 }
+#endif

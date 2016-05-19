@@ -37,7 +37,7 @@ using namespace ndnrtc;
 std::string test_path = "";
 
 //******************************************************************************
-#if 0
+#if 1
 TEST(TestPlayout, TestPlayout100msDelay)
 {
 #ifdef ENABLE_LOGGING
@@ -250,8 +250,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	requestFrame(nRequestedKey++, true);
 	for (nRequested = 1; nRequested <= pipeline; ++nRequested)
 	{
-			requestFrame(nRequestedDelta, false);
-			nRequestedDelta++;
+		requestFrame(nRequestedDelta, false);
+		nRequestedDelta++;
 	}
 
 	source.start(captureFps);

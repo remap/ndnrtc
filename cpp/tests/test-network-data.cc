@@ -494,7 +494,8 @@ TEST(TestAudioBundle, TestBundling)
 
     while (bundlePacket.hasSpace(sample))
         bundlePacket << sample;
-
+    
+    EXPECT_ANY_THROW(bundlePacket << sample);
     ASSERT_EQ(AudioBundlePacket::wireLength(wire_len, data_len)/AudioBundlePacket::AudioSampleBlob::wireLength(data_len), 
         bundlePacket.getSamplesNum());
     for (int i = 0; i < bundlePacket.getSamplesNum(); ++i)
