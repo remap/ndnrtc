@@ -106,7 +106,7 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
         {
             boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
             if (frameConsumer_)
-                frameConsumer_->procesFrame(framePacket);
+                frameConsumer_->processFrame(framePacket);
             
             for (auto o:observers_) 
                 ((IVideoPlayoutObserver*)o)->frameProcessed(hdr.playbackNo_, 

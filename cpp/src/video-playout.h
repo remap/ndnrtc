@@ -56,7 +56,7 @@ namespace ndnrtc {
     class IEncodedFrameConsumer 
     {
     public:
-        virtual void procesFrame(const boost::shared_ptr<ImmutableFrameAlias>&) = 0;
+        virtual void processFrame(const boost::shared_ptr<ImmutableFrameAlias>&) = 0;
     };
 
     class IVideoPlayoutObserver : public IPlayoutObserver 

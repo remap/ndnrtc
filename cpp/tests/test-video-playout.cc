@@ -27,6 +27,7 @@
 #include "mock-objects/playback-queue-observer-mock.h"
 #include "mock-objects/playout-observer-mock.h"
 #include "mock-objects/external-capturer-mock.h"
+#include "mock-objects/video-playout-consumer-mock.h"
 
 // #define ENABLE_LOGGING
 
@@ -360,6 +361,7 @@ TEST(TestPlayout, TestSkipDelta)
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockVideoPlayoutObserver playoutObserver;
+	MockVideoPlayoutConsumer frameConsumer;
 	VideoPlayout playout(io, pqueue);
 
 #ifdef ENABLE_LOGGING
@@ -369,6 +371,7 @@ TEST(TestPlayout, TestSkipDelta)
 	// buffer->attach(&bobserver);
 	pqueue->attach(&pobserver);
 	playout.attach(&playoutObserver);
+	playout.registerFrameConsumer(&frameConsumer);
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
@@ -555,6 +558,12 @@ TEST(TestPlayout, TestSkipDelta)
 		}));
 	EXPECT_CALL(playoutObserver, frameSkipped(_,_))
 		.Times(AtLeast(25));
+
+	boost::function<void(const boost::shared_ptr<ImmutableFrameAlias>&)> processFrame = [](const boost::shared_ptr<ImmutableFrameAlias>& frame){
+		EXPECT_TRUE(frame->isValid());
+	};
+	EXPECT_CALL(frameConsumer, processFrame(_))
+		.WillRepeatedly(Invoke(processFrame));
 
 	// request initial frames
 	requestFrame(nRequestedKey++, true);
