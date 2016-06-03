@@ -118,8 +118,6 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
     }
     else
     {
-        std::cout << "********************fucked up" << std::endl;
-
         boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
         LogWarnC << "failed recovery " << slot->dump() << std::endl;
 

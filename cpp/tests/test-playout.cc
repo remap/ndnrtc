@@ -497,11 +497,11 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 				// std::cout << "request " << i->getName() << std::endl;
 				queue.push([&queue, &cache, i, buffer](){
 					// std::cout << "received interest " << i->getName() << std::endl;
-					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// std::cout << "on data " << d->getName() << std::endl; 
 						queue.push([buffer, d](){
 							// std::cout << "received data " << d->getName() << std::endl;
-							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+							// Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
 						});
 					});
 				});
@@ -694,7 +694,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 				// std::cout << "request " << i->getName() << std::endl;
 				queue.push([&queue, &cache, i, buffer](){
 					// std::cout << "received interest " << i->getName() << std::endl;
-					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// std::cout << "on data " << d->getName() << std::endl; 
 						queue.push([buffer, d](){
 							// std::cout << "received data " << d->getName() << std::endl;
@@ -905,7 +905,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 				// send out interest
 				queue.push([&queue, &cache, i, buffer, &onDataArrived](){
 					// when received on producer side - add interest to cache
-					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
 						queue.push([buffer, d, &onDataArrived](){
 							// when data arrives - add to buffer
@@ -1170,7 +1170,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 				// send out interest
 				queue.push([&queue, &cache, i, buffer, &onDataArrived](){
 					// when received on producer side - add interest to cache
-					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
 						queue.push([buffer, d, &onDataArrived](){
 							// when data arrives - add to buffer
@@ -1435,7 +1435,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 				// send out interest
 				queue.push([&queue, &cache, i, buffer, &onDataArrived](){
 					// when received on producer side - add interest to cache
-					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
 						queue.push([buffer, d, &onDataArrived](){
 							// when data arrives - add to buffer

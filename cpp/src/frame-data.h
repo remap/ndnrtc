@@ -871,8 +871,8 @@ namespace ndnrtc {
          * data is twice less than that (as at least two parity segments needed for
          * recovering 1 missing data segment).
          */
-        double getShareSize() const
-        { return (dataNameInfo_.isParity_ ? 0.5/(double)getSlicesNum() : 1/(double)getSlicesNum()); }
+        double getShareSize(unsigned int nDataSlices) const
+        { return (dataNameInfo_.isParity_ ? 0.5/(double)nDataSlices : 1/(double)nDataSlices); }
         
         double getSegmentWeight() const
         { return (dataNameInfo_.isParity_ ? 0.5 : 1); }

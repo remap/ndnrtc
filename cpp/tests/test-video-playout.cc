@@ -136,6 +136,10 @@ TEST(TestPlayout, TestPlayout100msDelay)
 				std::vector<boost::shared_ptr<ndn::Data>> objects = dataFromSegments(frameName.toUri(), segments);
 				
 				seq++;
+
+				// simulate random order delivery
+				std::random_shuffle(objects.begin(), objects.end());
+
 				for (auto& d:objects)
 					cache.addData(d);
 #ifdef ENABLE_LOGGING
@@ -162,13 +166,15 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
 			ASSERT_TRUE(buffer->requested(interests));
-			
+
 			for (auto& i:interests)
 			{
 				// send out interest
 				queue.push([&queue, &cache, i, buffer, &onDataArrived](){
 					// when received on producer side - add interest to cache
-					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
+						ASSERT_EQ(d->getName(), i->getName());
+
 						// when data becomes available - send it back
 						queue.push([buffer, d, &onDataArrived](){
 							// when data arrives - add to buffer
@@ -595,7 +601,7 @@ TEST(TestPlayout, TestSkipDelta)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #else
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
 #endif
@@ -702,44 +708,28 @@ TEST(TestPlayout, TestSkipDelta)
 				if (isKey) ++gopCount;
 
 				bool skip = (gopCount > 1 && !isKey && nSkipped == 0);
-
 				seq++;
 				int idx = 0;
 				
 				for (auto& d:objects)
 				{
-					if (skip && idx > 2)
+					if (skip && idx >= objects.size() - parityObjects.size())
+					{
 						LogDebug("") << "skip segment " << d->getName() << std::endl;
+						nSkipped++;
+					}
 					else
 						cache.addData(d);
 					++idx;
 				}
 
-
 				for (auto& d:parityObjects)
-				{
-					if (skip)
-					{
-						std::vector<uint8_t> content(*(d->getContent()));
-						// corrupt parity segment randomly
-						for (int i = 100; i < content.size()-100; ++i)  content[i] = 0;
-						d->setContent(content);
-						nSkipped++;
-
-						LogDebug("") << "corrupted parity data " << d->getName()
-							<< " " << content.size() << " bytes" << std::endl;
-					}
-
 					cache.addData(d);
-				}
 
-				if (!skip)
-				{
-					
 #ifdef ENABLE_LOGGING
+				if (!skip)
 					LogDebug("") << "published " << frameName << " " << frameName[-1].toSequenceNumber() << std::endl;
 #endif
-				}
 			}
 			return 0;
 		};
@@ -762,12 +752,15 @@ TEST(TestPlayout, TestSkipDelta)
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg, 0, 2);
 			ASSERT_TRUE(buffer->requested(interests));
 			
+			// simulate random order delivery
+			std::random_shuffle(interests.begin(), interests.end());
+
 			for (auto& i:interests)
 			{
 				// send out interest
 				queue.push([&queue, &cache, i, buffer, &onDataArrived](){
 					// when received on producer side - add interest to cache
-					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
 						queue.push([buffer, d, &onDataArrived](){
 							boost::shared_ptr<WireSegment> data;
@@ -848,8 +841,6 @@ TEST(TestPlayout, TestSkipDelta)
 		}));
 	EXPECT_CALL(playoutObserver, frameSkipped(_,_))
 		.Times(AtLeast(25));
-	EXPECT_CALL(playoutObserver, recoveryFailure(_,_))
-		.Times(1);
 
 	// request initial frames
 	requestFrame(nRequestedKey++, true);
@@ -901,6 +892,7 @@ TEST(TestPlayout, TestSkipDelta)
 		BufferSlot::New|BufferSlot::Assembling|BufferSlot::Ready));
 	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Assembling));
 	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Ready));
+	EXPECT_EQ(nPlayed + cp.gop_-1, nPublished);
 	
 	ASSERT_FALSE(playout.isRunning());
 

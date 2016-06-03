@@ -87,7 +87,7 @@ private:
 };
 
 typedef boost::function<void(const boost::shared_ptr<ndn::Interest>&)> OnInterestT;
-typedef boost::function<void(const boost::shared_ptr<ndn::Data>&)> OnDataT;
+typedef boost::function<void(const boost::shared_ptr<ndn::Data>&, const boost::shared_ptr<ndn::Interest>)> OnDataT;
 
 class DataCache {
 public:

@@ -139,7 +139,7 @@ TEST(TestAudioPlayout, TestG722)
 		LogDebug("") << "express " << i->getName() << std::endl;
 
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
-			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 				queue.push([buffer, &onDataArrived, d](){
 
 					LogDebug("") << "received " << d->getName() << std::endl;
@@ -319,7 +319,7 @@ TEST(TestAudioPlayout, TestOpus)
 		LogDebug("") << "express " << i->getName() << std::endl;
 
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
-			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d){
+			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 				queue.push([buffer, &onDataArrived, d](){
 
 					LogDebug("") << "received " << d->getName() << std::endl;

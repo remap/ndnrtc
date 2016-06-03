@@ -133,12 +133,9 @@ namespace ndnrtc
 
         State getState() const { return state_; }
         
-        double
-        getAssembledLevel() const
-        {
-            if (state_ == Free) return 0;
-            return asmLevel_;
-        }
+        double getAssembledLevel();
+        double getAssembledLevel() const { return asmLevel_; }
+
         const ndn::Name& getPrefix() const { return name_; }
         const NamespaceInfo& getNameInfo() const { return nameInfo_; }
         int getConsistencyState() const { return consistency_; }
@@ -156,7 +153,7 @@ namespace ndnrtc
         const _CommonHeader getHeader() const;
 
         std::string
-        dump() const;
+        dump(bool showLastSegment = false) const;
 
     private:
         friend VideoFrameSlot;
@@ -166,7 +163,8 @@ namespace ndnrtc
         ndn::Name name_;
         NamespaceInfo nameInfo_;
         std::map<ndn::Name, boost::shared_ptr<SlotSegment>> requested_, fetched_;
-        unsigned int consistency_, nRtx_, assembledSize_;
+        boost::shared_ptr<SlotSegment> lastFetched_;
+        unsigned int consistency_, nRtx_, assembledSize_, nDataSegments_;
         bool hasOriginalSegments_;
         State state_;
         int64_t requestTimeUsec_, firstSegmentTimeUsec_, assembledTimeUsec_;
@@ -273,10 +271,10 @@ namespace ndnrtc
         boost::shared_ptr<SlotPool> getPool() const { return pool_; }
 
         std::string
-        dump();
+        dump() const;
 
         std::string
-        shortdump();
+        shortdump() const;
 
     private:
         friend PlaybackQueue;

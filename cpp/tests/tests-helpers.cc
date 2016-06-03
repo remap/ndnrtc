@@ -410,7 +410,7 @@ void DataCache::addInterest(const boost::shared_ptr<ndn::Interest>& interest, On
     boost::lock_guard<boost::mutex> scopedLock(m_);
     boost::shared_ptr<ndn::Data> d = data_[interest->getName()];
     
-    onData(d);
+    onData(d, interest);
 
     if (onInterestCallbacks_.find(interest->getName()) != onInterestCallbacks_.end())
     {
@@ -437,7 +437,7 @@ void DataCache::addData(const boost::shared_ptr<ndn::Data>& data, OnInterestT on
       boost::shared_ptr<ndn::Interest> i = interests_[data->getName()];
       
       if (onInterest) onInterest(i);
-      onDataCallbacks_[data->getName()](data);
+      onDataCallbacks_[data->getName()](data, i);
 
       interests_.erase(interests_.find(data->getName()));
       onDataCallbacks_.erase(onDataCallbacks_.find(data->getName()));

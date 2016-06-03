@@ -21,7 +21,7 @@
 using namespace ndnrtc;
 using namespace ndn;
 using namespace testing;
-
+#if 1
 //******************************************************************************
 TEST(TestSlotSegment, TestCreate)
 {
@@ -318,7 +318,7 @@ TEST(TestBufferSlot, TestAddData)
 		slot.segmentsRequested(interests);
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 		boost::shared_ptr<Data> dobj = dataObjects.back();
-		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/%FE%07/%00%00"));
+		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/desktop/hi/d/%FE%07/%00%00"));
 		EXPECT_ANY_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj)));
 	}
 	{ // add parity data
@@ -477,7 +477,7 @@ TEST(TestVideoFrameSlot, TestFailedAssembleNotEnoughData)
 	EXPECT_FALSE(recovered);
 	EXPECT_FALSE(videoPacket.get());
 }
-
+#endif
 TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 {
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
@@ -489,7 +489,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
-	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName+"/_parity", paritySegments);
+	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName, paritySegments);
 	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 	std::vector<boost::shared_ptr<Interest>> parityInterests = getInterests(frameName+"/_parity", 0, parityObjects.size());
 	BufferSlot slot;
@@ -507,6 +507,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
 		BufferSlot::State state;
 		
+		ASSERT_TRUE(wd->isValid());
 		ASSERT_NO_THROW(slot.segmentReceived(wd));
 		if (++idx == dataObjects.size()-1) break;
 	}
@@ -514,8 +515,8 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 	for (auto p:parityObjects)
 	{
 		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p));
+		ASSERT_TRUE(wd->isValid());
 		ASSERT_NO_THROW(slot.segmentReceived(wd));
-
 		if (slot.getAssembledLevel() > 1) break;
 	}
 	
@@ -528,10 +529,10 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 	EXPECT_TRUE(recovered);
 	EXPECT_TRUE(videoPacket.get());
 }
-
+#if 1
 TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket(20000);
 
 	boost::shared_ptr<NetworkData> parity;
@@ -540,7 +541,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
-	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName+"/_parity", paritySegments);
+	std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName, paritySegments);
 	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 	std::vector<boost::shared_ptr<Interest>> parityInterests = getInterests(frameName+"/_parity", 0, parityObjects.size());
 	BufferSlot slot;
@@ -552,9 +553,12 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 	std::random_shuffle(dataObjects.begin(), dataObjects.end());
 	std::random_shuffle(parityObjects.begin(), parityObjects.end());
 
+	EXPECT_EQ(0, slot.getAssembledLevel());
+
 	for (auto p:parityObjects)
 	{
 		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p));
+		ASSERT_TRUE(wd->isValid());
 		ASSERT_NO_THROW(slot.segmentReceived(wd));
 	}
 
@@ -738,7 +742,7 @@ TEST(TestBuffer, TestRequestAndReceive)
 		EXPECT_EQ(poolSize-i-1, buffer.getSlotsNum(Name(frameName), BufferSlot::New));
 	}
 }
-
+#endif
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
