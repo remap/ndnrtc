@@ -867,15 +867,15 @@ namespace ndnrtc {
         
         /**
          * This returns a percentage of how much does this segment contributes to
-         * the whole packet. For normal data it will be 1/number_of_slices. Parity
-         * data is twice less than that (as at least two parity segments needed for
-         * recovering 1 missing data segment).
+         * the whole packet. For normal data it will be 1/number_of_slices. For 
+         * parity data it corresponds to parityWeight().
+         * @see fec::parityWeight()
          */
         double getShareSize(unsigned int nDataSlices) const
-        { return (dataNameInfo_.isParity_ ? 0.5/(double)nDataSlices : 1/(double)nDataSlices); }
-        
+        { return (dataNameInfo_.isParity_ ? fec::parityWeight()/(double)nDataSlices : 1/(double)nDataSlices); }
+
         double getSegmentWeight() const
-        { return (dataNameInfo_.isParity_ ? 0.5 : 1); }
+        { return (dataNameInfo_.isParity_ ? fec::parityWeight() : 1); }
 
         const NamespaceInfo& getInfo() const { return dataNameInfo_; }
 

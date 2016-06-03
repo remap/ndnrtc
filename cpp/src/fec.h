@@ -33,6 +33,15 @@ typedef struct {
 namespace fec
 {
     /**
+     * This returns a "weight" of parity segment in relation to normal
+     * data segment. For example, if weight is 0.5, it means
+     * that 1 data segment is equivalent to 2 parity segments, or, in other
+     * words, one need at least 2 parity segments to recover 1 missed data 
+     * segment.
+     */
+    double parityWeight();
+
+    /**
      * This is the base class for Encoder/Decoder derived classes
      */
     template <of_codec_id_t CoderID, of_codec_type_t CoderType>

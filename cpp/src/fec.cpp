@@ -14,6 +14,14 @@
 
 using namespace fec;
 
+namespace fec 
+{
+    double parityWeight()
+    {
+        return 0.5;
+    }
+}
+
 //******************************************************************************
 #pragma mark - construction/destruction
 Rs28Encoder::Rs28Encoder(unsigned int nSourceSymbols,
