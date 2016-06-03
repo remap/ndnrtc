@@ -61,6 +61,5 @@ test_app/suite
 tags
 .tags
 .tags_sorted_by_file
-contrib/**/
 *.sublime-project
 *.sublime-workspace
