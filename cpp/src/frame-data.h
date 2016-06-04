@@ -845,7 +845,8 @@ namespace ndnrtc {
     //******************************************************************************
     class WireSegment {
     public:
-        WireSegment(const boost::shared_ptr<ndn::Data>& data);
+        WireSegment(const boost::shared_ptr<ndn::Data>& data, 
+            const boost::shared_ptr<ndn::Interest>& interest);
         WireSegment(const WireSegment& data);
 
         virtual ~WireSegment(){}
@@ -854,6 +855,8 @@ namespace ndnrtc {
         size_t getSlicesNum() const;
 
         boost::shared_ptr<ndn::Data> getData() const { return data_; }
+        boost::shared_ptr<ndn::Interest> getInterest() const { return interest_; }
+
         ndn::Name getBasePrefix() const { return dataNameInfo_.basePrefix_; }
         unsigned int getApiVersion() const { return dataNameInfo_.apiVersion_; }
         MediaStreamParams::MediaStreamType getStreamType() const { return dataNameInfo_.streamType_; }
@@ -895,17 +898,28 @@ namespace ndnrtc {
          */
         const CommonHeader packetHeader() const;
 
+        /**
+         * Indicates, whether current packet was retrieved with the interest
+         * passed at the construction. This compares nonce value of the interest
+         * and nonce value from segment header.
+         * @see header()
+         */
+        bool isOriginal() const;
+
     protected:
         NamespaceInfo dataNameInfo_;
         bool isValid_;
         boost::shared_ptr<ndn::Data> data_;
+        boost::shared_ptr<ndn::Interest> interest_;
     };
 
     template<typename SegmentHeader>
     class WireData : public WireSegment 
     {
     public:
-        WireData(const boost::shared_ptr<ndn::Data>& data):WireSegment(data){}
+        WireData(const boost::shared_ptr<ndn::Data>& data, 
+            const boost::shared_ptr<ndn::Interest>& interest):
+            WireSegment(data, interest){}
         WireData(const WireData<SegmentHeader>& data):WireSegment(data){}
 
         const ImmutableHeaderPacket<SegmentHeader> segment() const

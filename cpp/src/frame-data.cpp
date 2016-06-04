@@ -11,6 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <ndn-cpp/data.hpp>
+#include <ndn-cpp/interest.hpp>
 
 #include "ndnrtc-common.h"
 #include "frame-data.h"
@@ -167,7 +168,9 @@ MediaStreamMeta::getThreads() const
 }
 
 //******************************************************************************
-WireSegment::WireSegment(const boost::shared_ptr<ndn::Data>& data):data_(data),
+WireSegment::WireSegment(const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<ndn::Interest>& interest):
+data_(data), interest_(interest),
 isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
 {
     if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
@@ -190,9 +193,9 @@ size_t WireSegment::getSlicesNum() const
 const DataSegmentHeader
 WireSegment::header() const
 {
-            // this cast will be invalid for VideoFrameSegment packets,
-            // still casting to DataSegmentHeader is possible, because 
-            // it's a parent class for VideoFrameSegmentHeader
+    // this cast will be invalid for VideoFrameSegment packets,
+    // still casting to DataSegmentHeader is possible, because 
+    // it's a parent class for VideoFrameSegmentHeader
     ImmutableHeaderPacket<DataSegmentHeader> s(data_->getContent());
     return s.getHeader();
 }
@@ -210,4 +213,11 @@ WireSegment::packetHeader() const
     return p0.getHeader();
 }
 
-    
+bool 
+WireSegment::isOriginal() const
+{
+    if (!interest_->getNonce().size())
+        throw std::runtime_error("Interest nonce is not set");
+
+    return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
+}

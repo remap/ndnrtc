@@ -56,10 +56,7 @@ SlotSegment::setData(const boost::shared_ptr<WireSegment>& data)
 bool
 SlotSegment::isOriginal() const
 {
-    if (!interest_->getNonce().size())
-        throw std::runtime_error("Interest nonce is not set");
-
-    return data_->header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
+    return data_->isOriginal();
 }
 
 //******************************************************************************

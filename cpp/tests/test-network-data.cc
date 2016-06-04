@@ -1100,6 +1100,7 @@ TEST(TestWireData, TestVideoFrameSegment)
     NetworkData nd(data);
     int wireLength = 1000;
     std::vector<VideoFrameSegment> segments = VideoFrameSegment::slice(nd, wireLength);
+    std::vector<boost::shared_ptr<ndn::Interest>> interests;
     int payloadLength = VideoFrameSegment::payloadLength(wireLength);
 
     EXPECT_EQ(VideoFrameSegment::numSlices(nd, wireLength), segments.size());
@@ -1136,12 +1137,15 @@ TEST(TestWireData, TestVideoFrameSegment)
             ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
             ds->setContent(s.getNetworkData()->getData(), s.size());
             dataSegments.push_back(ds);
+            
+            interests.push_back(boost::make_shared<ndn::Interest>(ds->getName(), 1000));
+            interests.back()->setNonce(ndn::Blob((uint8_t*)&(s.getHeader().interestNonce_), sizeof(int)));
         }
     
         int idx = 0;
         for (auto d:dataSegments)
         {
-            WireData<VideoFrameSegmentHeader> wd(d);
+            WireData<VideoFrameSegmentHeader> wd(d, interests[idx]);
             EXPECT_TRUE(wd.isValid());
             EXPECT_EQ(segments.size(), wd.getSlicesNum());
             EXPECT_EQ(ndn::Name("/ndn/edu/ucla/remap/ndncon/instance1"), wd.getBasePrefix());
@@ -1154,6 +1158,7 @@ TEST(TestWireData, TestVideoFrameSegment)
             EXPECT_EQ(idx, wd.getSegNo());
             EXPECT_FALSE(wd.isParity());
 
+            EXPECT_TRUE(wd.isOriginal());
             EXPECT_EQ(header.interestNonce_+idx, wd.segment().getHeader().interestNonce_);
             EXPECT_EQ(header.interestArrivalMs_+idx, wd.segment().getHeader().interestArrivalMs_);
             EXPECT_EQ(header.playbackNo_+idx, wd.segment().getHeader().playbackNo_);
@@ -1183,8 +1188,9 @@ TEST(TestWireData, TestVideoFrameSegment)
             dataSegments.push_back(ds);
         }
     
+        idx = 0;
         for (auto d:dataSegments)
-            EXPECT_ANY_THROW(WireData<VideoFrameSegment> wd(d));
+            EXPECT_ANY_THROW(WireData<VideoFrameSegment> wd(d, interests[idx++]));
     }
     #endif
 }
@@ -1204,7 +1210,7 @@ TEST(TestWireData, TestWrongData)
 
     ds->setContent(data);
     
-    WireData<VideoFrameSegmentHeader> wd(ds);
+    WireData<VideoFrameSegmentHeader> wd(ds, boost::make_shared<ndn::Interest>(n));
     EXPECT_TRUE(wd.isValid());
     EXPECT_FALSE(wd.segment().isValid());
 }
@@ -1225,6 +1231,7 @@ TEST(TestWireData, TestWrongHeader)
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+    boost::shared_ptr<ndn::Interest> is(boost::make_shared<ndn::Interest>(n));
     ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
 
     DataSegmentHeader header;
@@ -1233,11 +1240,13 @@ TEST(TestWireData, TestWrongHeader)
     header.generationDelayMs_ = 200;
     segments.front().setHeader(header);
     ds->setContent(segments.front().getNetworkData()->getData(), segments.front().size());
-    
+    is->setNonce(ndn::Blob((uint8_t*)&(header.interestNonce_), sizeof(int)));
+
     {
-        WireData<VideoFrameSegmentHeader> wd(ds);
+        WireData<VideoFrameSegmentHeader> wd(ds, is);
         EXPECT_TRUE(wd.isValid());
         EXPECT_FALSE(wd.segment().isValid());
+        EXPECT_TRUE(wd.isOriginal());
 
         EXPECT_EQ(header.interestNonce_, wd.header().interestNonce_);
         EXPECT_EQ(header.interestArrivalMs_, wd.header().interestArrivalMs_);
@@ -1245,9 +1254,10 @@ TEST(TestWireData, TestWrongHeader)
     }
 
     {
-        WireData<DataSegmentHeader> wd(ds);
+        WireData<DataSegmentHeader> wd(ds, is);
         EXPECT_TRUE(wd.isValid());
         EXPECT_TRUE(wd.segment().isValid());
+        EXPECT_TRUE(wd.isOriginal());
 
         EXPECT_EQ(header.interestNonce_, wd.header().interestNonce_);
         EXPECT_EQ(header.interestArrivalMs_, wd.header().interestArrivalMs_);
@@ -1308,6 +1318,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
 
     std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
     std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    std::vector<boost::shared_ptr<ndn::Interest>> interests;
     int segIdx = 0;
     for (auto& s:frameSegments)
     {
@@ -1317,6 +1328,9 @@ TEST(TestWireData, TestMergeVideoFramePacket)
         ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(frameSegments.size()));
         ds->setContent(s.getNetworkData()->getData(), s.size());
         dataSegments.push_back(ds);
+
+        interests.push_back(boost::make_shared<ndn::Interest>(n, 1000));
+        interests.back()->setNonce(ndn::Blob((uint8_t*)&(s.getHeader().interestNonce_), sizeof(int)));
     }
 
     idx = 0;
@@ -1324,7 +1338,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
     std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> videoSegments;
     for (auto d:dataSegments)
     {
-        WireData<VideoFrameSegmentHeader> wd(d);
+        WireData<VideoFrameSegmentHeader> wd(d, interests[idx++]);
         
         if (wd.getSegNo() == 0)
         {
@@ -1393,6 +1407,12 @@ TEST(TestWireData, TestMergeAudioBundle)
     std::vector<CommonSegment> segments = CommonSegment::slice(bundlePacket, wire_len);
     ASSERT_EQ(1, segments.size());
 
+    DataSegmentHeader shdr;
+    shdr.interestNonce_ = 0x1234;
+    shdr.interestArrivalMs_ = 1460399362;
+    shdr.generationDelayMs_ = 200;
+    segments[0].setHeader(shdr);
+
     std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%00";
     ndn::Name n(frameName);
     n.appendSegment(0);
@@ -1400,7 +1420,10 @@ TEST(TestWireData, TestMergeAudioBundle)
     ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
     ds->setContent(segments.front().getNetworkData()->data());
 
-    WireData<DataSegmentHeader> wd(ds);
+    boost::shared_ptr<ndn::Interest> interest = boost::make_shared<ndn::Interest>(n,1000);
+    interest->setNonce(ndn::Blob((uint8_t*)&(shdr.interestNonce_), sizeof(int)));
+
+    WireData<DataSegmentHeader> wd(ds, interest);
     EXPECT_TRUE(wd.isValid());
     EXPECT_TRUE(wd.segment().isValid());
     EXPECT_EQ(1, wd.getSlicesNum());

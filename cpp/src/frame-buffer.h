@@ -120,7 +120,7 @@ namespace ndnrtc
          * @param segment Received segment
          * @note Added segment's name should correspond to one of the Interests, 
          * previously added using segmentsRequested method. Otherwise, this throws.
-         * Priovides strong guarantee.
+         * Provides strong guarantee.
          * @return Slot segment that contains received segment and previously 
          * expressed Interest; it can be used for retrieving segment-level metadata
          * like Data Retrieval Delays, etc.

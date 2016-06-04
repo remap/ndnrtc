@@ -140,12 +140,12 @@ TEST(TestAudioPlayout, TestG722)
 
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
 			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
-				queue.push([buffer, &onDataArrived, d](){
+				queue.push([buffer, &onDataArrived, d,i ](){
 
 					LogDebug("") << "received " << d->getName() << std::endl;
 
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
-						boost::make_shared<WireData<DataSegmentHeader>>(d);
+						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
 					Buffer::Receipt r = buffer->received(data);
 				});
@@ -320,12 +320,12 @@ TEST(TestAudioPlayout, TestOpus)
 
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
 			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
-				queue.push([buffer, &onDataArrived, d](){
+				queue.push([buffer, &onDataArrived, d, i](){
 
 					LogDebug("") << "received " << d->getName() << std::endl;
 
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
-						boost::make_shared<WireData<DataSegmentHeader>>(d);
+						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
 					Buffer::Receipt r = buffer->received(data);
 				});

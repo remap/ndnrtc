@@ -345,6 +345,7 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 		nonce++;
 	}
 
+	nonce = 0x1234;
 	for (int i = parityStartSeg; i < parityStartSeg+parityNSeg; ++i)
 	{
 		Name n(frameName);

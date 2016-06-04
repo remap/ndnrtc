@@ -119,10 +119,12 @@ TEST(TestPlaybackQueue, TestPlay)
 			VideoFramePacket vp = getVideoFramePacket((n%(int)fps == 0 ? 28000 : 8000),
 				fps, ts+n*(int)(1000./fps), uts+n*(int)(1000./fps));
 			std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, segments.size());
 			std::vector<boost::shared_ptr<Data>> data = dataFromSegments(frameName.toUri(), segments);
 
+			int idx = 0;
 			for (auto d:data)
-				buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+				buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, interests[idx++]));
 
 			runTimer.wait();
 		}
@@ -268,10 +270,12 @@ TEST(TestPlayout, TestPlay)
 			timestamps.push_back(ts);
 
 			std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, segments.size());
 			std::vector<boost::shared_ptr<Data>> data = dataFromSegments(frameName.toUri(), segments);
 
+			int idx = 0;
 			for (auto d:data)
-				buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+				buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, interests[idx++]));
 
 			if (boost::chrono::duration_cast<boost::chrono::milliseconds>(p-start).count() >= 1000)
 			{
@@ -494,14 +498,10 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 			
 			for (auto& i:interests)
 			{
-				// std::cout << "request " << i->getName() << std::endl;
 				queue.push([&queue, &cache, i, buffer](){
-					// std::cout << "received interest " << i->getName() << std::endl;
 					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
-						// std::cout << "on data " << d->getName() << std::endl; 
-						queue.push([buffer, d](){
-							// std::cout << "received data " << d->getName() << std::endl;
-							// Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+						queue.push([buffer, d, i](){
+							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
 						});
 					});
 				});
@@ -694,11 +694,11 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 				// std::cout << "request " << i->getName() << std::endl;
 				queue.push([&queue, &cache, i, buffer](){
 					// std::cout << "received interest " << i->getName() << std::endl;
-					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
+					cache.addInterest(i, [&queue, buffer, i](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// std::cout << "on data " << d->getName() << std::endl; 
-						queue.push([buffer, d](){
+						queue.push([buffer, d, i](){
 							// std::cout << "received data " << d->getName() << std::endl;
-							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d));
+							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
 						});
 					});
 				});
@@ -907,9 +907,9 @@ TEST(TestPlayout, TestPlayout70msDelay)
 					// when received on producer side - add interest to cache
 					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
-						queue.push([buffer, d, &onDataArrived](){
+						queue.push([buffer, d, &onDataArrived, i](){
 							// when data arrives - add to buffer
-							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d);
+							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
 							Buffer::Receipt r = buffer->received(data);
 						});
@@ -1172,9 +1172,9 @@ TEST(TestPlayout, TestPlayout100msDelay)
 					// when received on producer side - add interest to cache
 					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
-						queue.push([buffer, d, &onDataArrived](){
+						queue.push([buffer, d, &onDataArrived, i](){
 							// when data arrives - add to buffer
-							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d);
+							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
 							Buffer::Receipt r = buffer->received(data);
 						});
@@ -1437,9 +1437,9 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 					// when received on producer side - add interest to cache
 					cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						// when data becomes available - send it back
-						queue.push([buffer, d, &onDataArrived](){
+						queue.push([buffer, d, &onDataArrived, i](){
 							// when data arrives - add to buffer
-							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d);
+							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
 							Buffer::Receipt r = buffer->received(data);
 						});
