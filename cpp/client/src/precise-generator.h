@@ -87,10 +87,11 @@ public:
         long long getFireCount() { return fireCount_; }
         double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); }// - meanTaskTimeNs_); }
         double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
+
 private:
-		bool isRunning_;
-		long long fireCount_;
-		double meanProcOverheadNs_, meanTaskTimeNs_;
+	bool isRunning_;
+	long long fireCount_;
+	double meanProcOverheadNs_, meanTaskTimeNs_;
         double rate_;
         Task task_;
         boost::asio::io_service& io_;

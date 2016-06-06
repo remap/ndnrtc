@@ -96,7 +96,7 @@ namespace ndnrtc
         ~BufferSlot(){}
         
         /**
-         * Adds issued Intersts to this slot.
+         * Adds issued Interests to this slot.
          * @param interests Vector of Interests' shared pointers
          * @note Interst names should relate to the same sample, and have segment
          * numbers (no rightmost Interests allowed). Otherwise, this throws an 

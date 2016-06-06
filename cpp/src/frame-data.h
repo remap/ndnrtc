@@ -846,7 +846,7 @@ namespace ndnrtc {
     class WireSegment {
     public:
         WireSegment(const boost::shared_ptr<ndn::Data>& data, 
-            const boost::shared_ptr<ndn::Interest>& interest);
+            const boost::shared_ptr<const ndn::Interest>& interest);
         WireSegment(const WireSegment& data);
 
         virtual ~WireSegment(){}
@@ -855,7 +855,7 @@ namespace ndnrtc {
         size_t getSlicesNum() const;
 
         boost::shared_ptr<ndn::Data> getData() const { return data_; }
-        boost::shared_ptr<ndn::Interest> getInterest() const { return interest_; }
+        boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
         ndn::Name getBasePrefix() const { return dataNameInfo_.basePrefix_; }
         unsigned int getApiVersion() const { return dataNameInfo_.apiVersion_; }
@@ -906,11 +906,20 @@ namespace ndnrtc {
          */
         bool isOriginal() const;
 
+        static boost::shared_ptr<WireSegment> 
+        createSegment(const NamespaceInfo& namespaceInfo,
+            const boost::shared_ptr<ndn::Data>& data, 
+            const boost::shared_ptr<const ndn::Interest>& interest);
+
     protected:
         NamespaceInfo dataNameInfo_;
         bool isValid_;
         boost::shared_ptr<ndn::Data> data_;
-        boost::shared_ptr<ndn::Interest> interest_;
+        boost::shared_ptr<const ndn::Interest> interest_;
+
+        WireSegment(const NamespaceInfo& info,
+            const boost::shared_ptr<ndn::Data>& data, 
+            const boost::shared_ptr<const ndn::Interest>& interest);
     };
 
     template<typename SegmentHeader>
@@ -918,7 +927,7 @@ namespace ndnrtc {
     {
     public:
         WireData(const boost::shared_ptr<ndn::Data>& data, 
-            const boost::shared_ptr<ndn::Interest>& interest):
+            const boost::shared_ptr<const ndn::Interest>& interest):
             WireSegment(data, interest){}
         WireData(const WireData<SegmentHeader>& data):WireSegment(data){}
 
@@ -926,6 +935,17 @@ namespace ndnrtc {
         {
             return ImmutableHeaderPacket<SegmentHeader>(data_->getContent());
         }
+
+    private:
+        friend boost::shared_ptr<WireData<SegmentHeader>> 
+        boost::make_shared<WireData<SegmentHeader>>(const NamespaceInfo&,
+                                                    const boost::shared_ptr<ndn::Data>&, 
+                                                    const boost::shared_ptr<const ndn::Interest>&);
+
+        WireData(const NamespaceInfo& info,
+            const boost::shared_ptr<ndn::Data>& data, 
+            const boost::shared_ptr<const ndn::Interest>& interest):
+            WireSegment(info, data, interest){}
     };
 
 };

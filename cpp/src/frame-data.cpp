@@ -169,9 +169,23 @@ MediaStreamMeta::getThreads() const
 
 //******************************************************************************
 WireSegment::WireSegment(const boost::shared_ptr<ndn::Data>& data, 
-    const boost::shared_ptr<ndn::Interest>& interest):
+    const boost::shared_ptr<const ndn::Interest>& interest):
 data_(data), interest_(interest),
 isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
+{
+    if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
+    {
+        std::stringstream ss;
+        ss << "Attempt to create wired data object with "
+        << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+        throw std::runtime_error(ss.str());
+    }
+}
+
+WireSegment::WireSegment(const NamespaceInfo& info,
+    const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<const ndn::Interest>& interest):
+dataNameInfo_(info),data_(data),interest_(interest),isValid_(true)
 {
     if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
     {
@@ -206,7 +220,7 @@ WireSegment::packetHeader() const
     if (getSegNo()) throw std::runtime_error("Accessing packet header in "
         "non-zero segment is not allowed");
 
-        ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
+    ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
     boost::shared_ptr<std::vector<uint8_t>> data(boost::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(), 
         s0.getPayload().end()));
     ImmutableHeaderPacket<CommonHeader> p0(data);
@@ -220,4 +234,16 @@ WireSegment::isOriginal() const
         throw std::runtime_error("Interest nonce is not set");
 
     return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
+}
+
+boost::shared_ptr<WireSegment> 
+WireSegment::createSegment(const NamespaceInfo& namespaceInfo,
+    const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<const ndn::Interest>& interest)
+{
+    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo
+        && !(namespaceInfo.isMeta_ || namespaceInfo.isParity_))
+        return boost::make_shared<WireData<VideoFrameSegment>>(namespaceInfo, data, interest);
+
+    return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);;
 }
