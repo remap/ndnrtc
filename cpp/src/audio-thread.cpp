@@ -25,7 +25,7 @@ AudioThread::AudioThread(const AudioThreadParams& params,
     IAudioThreadCallback* callback,
     size_t bundleWireLength):
 bundleNo_(0),
-rateId_(estimators::setupFrequencyMeter(4)),
+rateMeter_(boost::make_shared<estimators::TimeWindow>(250)),
 threadName_(params.threadName_),
 codec_(params.codec_),
 callback_(callback),
@@ -64,7 +64,7 @@ void AudioThread::stop()
 
 double AudioThread::getRate() const
 {
-    return estimators::currentFrequencyMeterValue(rateId_);
+    return rateMeter_.value();
 }
 
 //******************************************************************************
@@ -90,7 +90,7 @@ void AudioThread::deliver(const AudioBundlePacket::AudioSampleBlob& blob)
 {
     if (!bundle_->hasSpace(blob))
     {
-        estimators::frequencyMeterTick(rateId_);
+        rateMeter_.newValue(0);
         callback_->onSampleBundle(threadName_, bundleNo_++, bundle_);
         bundle_->clear();
     }

@@ -18,6 +18,7 @@
 #include "ndnrtc-object.h"
 #include "audio-capturer.h"
 #include "frame-data.h"
+#include "estimators.h"
 
 namespace ndnrtc
 {
@@ -54,7 +55,7 @@ namespace ndnrtc
        AudioThread(const AudioThread&) = delete;
 
        uint64_t bundleNo_;
-       uint32_t rateId_;
+       estimators::FreqMeter rateMeter_;
        std::string threadName_, codec_;
        IAudioThreadCallback* callback_;
        boost::shared_ptr<AudioBundlePacketT<Mutable>> bundle_;

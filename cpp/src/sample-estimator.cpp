@@ -16,15 +16,12 @@ using namespace estimators;
 
 //******************************************************************************
 SampleEstimator::Estimators::_Estimators():
-segNum_(setupSlidingAverageEstimator(30)),
-segSize_(setupSlidingAverageEstimator(30))
+segNum_(Average(boost::make_shared<SampleWindow>(30))),
+segSize_(Average(boost::make_shared<SampleWindow>(30)))
 {}
 
 SampleEstimator::Estimators::~_Estimators()
-{
-	resetSlidingAverageEstimator(segNum_);
-	resetSlidingAverageEstimator(segSize_);
-}
+{}
 
 //******************************************************************************
 SampleEstimator::SampleEstimator()
@@ -40,8 +37,9 @@ SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {
 	SampleType st = segment->isDelta() ? Delta : Key;
 	DataType dt = segment->isParity() ? Parity : Data;
-	slidingAverageEstimatorNewValue(estimators_[std::make_pair(st,dt)].segNum_, (double)segment->getSlicesNum());
-	slidingAverageEstimatorNewValue(estimators_[std::make_pair(st,dt)].segSize_, (double)segment->getData()->getContent().size());
+
+	estimators_[std::make_pair(st,dt)].segNum_.newValue(segment->getSlicesNum());
+	estimators_[std::make_pair(st,dt)].segSize_.newValue(segment->getData()->getContent().size());
 }
 
 void 
@@ -57,13 +55,13 @@ SampleEstimator::reset()
 double 
 SampleEstimator::getSegmentNumberEstimation(SampleType st, DataType dt)
 {
-	return currentSlidingAverageValue(estimators_[std::make_pair(st,dt)].segNum_);
+	return estimators_[std::make_pair(st,dt)].segNum_.value();
 }
 
 double
 SampleEstimator::getSegmentSizeEstimation(SampleType st, DataType dt)
 {
-	return currentSlidingAverageValue(estimators_[std::make_pair(st,dt)].segSize_);
+	return estimators_[std::make_pair(st,dt)].segSize_.value();
 }
 
 #pragma mark - private

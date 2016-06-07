@@ -20,7 +20,6 @@ public:
 	PeriodicTest(boost::asio::io_service& io, unsigned int periodMs):
 		Periodic(io, periodMs), periodMs_(periodMs), workCounter_(0){}
 	~PeriodicTest(){
-		std::cout << "periodic test dtor" << std::endl;
 	}
 
 	unsigned int periodicInvocation() {

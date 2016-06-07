@@ -9,97 +9,122 @@
 #define __estimators_h__
 
 #include <stdlib.h>
+#include <assert.h>
+#include <deque>
+#include <boost/shared_ptr.hpp>
+#include <boost/move/move.hpp>
+
+#include "ndnrtc-defines.h"
 
 namespace ndnrtc {
 	namespace estimators {
+		/**
+		 * Interface for estimator window class. 
+		 * An estimator window defines an interval in some dimension, over 
+		 * which estimator is operating. For instance, if 
+		 * estimator window is in time dimension and has value of 5 seconds, 
+		 * then estimator is operating over window of 5 seconds. Likewise,
+		 * if window's dimension is the number of samples, then estimator is 
+		 * operating over the window of 5 samples.
+		 */
+		class IEstimatorWindow {
+		public:
+			/**
+			 * Indicates progress over the window.
+			 * Must be called every time estimator receives a new value.
+			 * @return true if window limit has been reached, false otherwise
+			 */
+			virtual bool isLimitReached() = 0;
+		};
 
-		unsigned int setupFrequencyMeter(unsigned int granularity = 1);
-        void frequencyMeterTick(unsigned int meterId);
-        double currentFrequencyMeterValue(unsigned int meterId);
-        void releaseFrequencyMeter(unsigned int meterId);
+		class SampleWindow : public IEstimatorWindow {
+		public:
+			SampleWindow(unsigned int nSamples):nSamples_(nSamples),remaining_(nSamples)
+			{ assert(nSamples_); }
 
-        unsigned int setupDataRateMeter(unsigned int granularity = 1);
-        void dataRateMeterMoreData(unsigned int meterId,
-                                          unsigned int dataSize);
-        double currentDataRateMeterValue(unsigned int meterId);
-        void releaseDataRateMeter(unsigned int meterId);
-        
-        unsigned int setupMeanEstimator(unsigned int sampleSize = 0,
-                                               double startValue = 0.);
-        void meanEstimatorNewValue(unsigned int estimatorId, double value);
-        double currentMeanEstimation(unsigned int estimatorId);
-        double currentDeviationEstimation(unsigned int estimatorId);
-        void releaseMeanEstimator(unsigned int estimatorId);
-        void resetMeanEstimator(unsigned int estimatorId);
-        
-        unsigned int setupSlidingAverageEstimator(unsigned int sampleSize = 2);
-        double slidingAverageEstimatorNewValue(unsigned int estimatorId, double value);
-        double currentSlidingAverageValue(unsigned int estimatorId);
-        double currentSlidingDeviationValue(unsigned int estimatorId);
-        void resetSlidingAverageEstimator(unsigned int estimatorID);
-        void releaseAverageEstimator(unsigned int estimatorID);
-        
-        unsigned int setupFilter(double coeff = 1.);
-        void filterNewValue(unsigned int filterId, double value);
-        double currentFilteredValue(unsigned int filterId);
-        void releaseFilter(unsigned int filterId);
-        
-        unsigned int setupInclineEstimator(unsigned int sampleSize = 0);
-        void inclineEstimatorNewValue(unsigned int estimatorId, double value);
-        double currentIncline(unsigned int estimatorId);
-        void releaseInclineEstimator(unsigned int estimatorId);
+			bool isLimitReached();
+		private:
+			unsigned int nSamples_, remaining_;
+		};
 
-		// TBD: refactor estimators into classes
-#if 0
+		class TimeWindow : public IEstimatorWindow {
+		public:
+			TimeWindow(unsigned int milliseconds);
+
+			bool isLimitReached();
+		private:
+			unsigned int milliseconds_;
+			int64_t lastReach_;
+		};
+
 		/**
 		 * Base class for estimators
 		 */
 		class Estimator {
 		public:
-			Estimator():value_(0){}
-			virtual double value() { return value_; }
+			Estimator(boost::shared_ptr<IEstimatorWindow> window):value_(0),window_(window){}
+			
+			virtual void newValue(double value) = 0;
+			virtual double value() const { return value_; }
 
 		protected:
+			unsigned int nValues_;
 			double value_;
+			boost::shared_ptr<IEstimatorWindow> window_;
 		};
+
 
 		/**
 		 * Sliding window estimator calculates average and deviation over time 
 		 * window
 		 */
-		class SlidingWindow : public Estimator {
+		class Average : public Estimator {
 		public:
-			SlidingWindow(){}
-		private:
+			Average(boost::shared_ptr<IEstimatorWindow> window);
 
+			void newValue(double value);
+			double deviation() const { return sqrt(variance_); }
+			double variance() const { return variance_; }
+			double oldestValue() const { return samples_.front(); }
+
+		private:
+			bool limitReached_;
+			std::deque<double> samples_;
+			double accumulatedSum_, variance_;
 		};
 
 		/**
-		 * This class implements rate estimator for measuring rates of
-		 * arbitrary events (like frame encoding) per second.
+		 * Frequency estimator measures average frequency (per second) of new value 
+		 * appearings. Meter value is updated every window interval.
 		 */
-		class Rate : public Estimator {
+		class FreqMeter : public Estimator {
 		public:
-			/**
-			 * Create an instance of Rate class. 
-			 * @param updateFrequency How often (times per sec) estimator will 
-			 * update its' value
-			 */
-			Rate(unsigned int updateFrequency);
+			FreqMeter(boost::shared_ptr<IEstimatorWindow> window);
 
 			/**
-			 * This method should be called each time measured event happens
+			 * Passed value is ignored. This call is used to calculate frequency of 
+			 * calling this method over the estimator window.
 			 */
-			void tick();
+			void newValue(double value);
 
 		private:
-			double cycleDurationMs_;
-			unsigned int nCyclesPerSec_;
-			double callsPerSecond_;
-			int64_t lastCheckTime_;
-			unsigned int avgEstimatorId_;
+			unsigned int nCalls_;
+			int64_t ts_;
 		};
-#endif
+
+		/**
+		 * A low pass filter class
+		 */
+		class Filter {
+		public:
+			Filter(double smoothing = 1./8.);
+
+			double value() const { return value_; }
+			void newValue(double value);
+		
+		private:
+			double smoothing_,value_;
+		};
 	}
 }
 

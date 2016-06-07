@@ -230,7 +230,7 @@ bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_converter_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_converter_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp src/clock.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_estimators_LDADD = ${libndnrtc_la_LIBADD}

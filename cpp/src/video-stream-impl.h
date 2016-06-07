@@ -16,6 +16,7 @@
 #include "ndnrtc-object.h"
 #include "packet-publisher.h"
 #include "frame-converter.h"
+#include "estimators.h"
 
 namespace ndn {
 	class MemoryContentCache;
@@ -67,7 +68,9 @@ namespace ndnrtc {
 		private:
 			MetaKeeper(const MetaKeeper&) = delete;
 
-			unsigned int rateId_, dId_, dpId_, kId_, kpId_;
+			estimators::FreqMeter rateMeter_;
+			estimators::Average deltaData_, deltaParity_;
+			estimators::Average keyData_, keyParity_;
 		};
 
 		bool fecEnabled_;

@@ -32,6 +32,7 @@
 using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
+using namespace estimators;
 
 typedef boost::shared_ptr<VideoFramePacket> FramePacketPtr;
 typedef boost::future<FramePacketPtr> FutureFrame;
@@ -272,44 +273,38 @@ bool VideoStreamImpl::checkMeta()
 //******************************************************************************
 VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams* params):
 BaseMetaKeeper(params),
-rateId_(estimators::setupFrequencyMeter(2)),
-dId_(estimators::setupSlidingAverageEstimator(10)),
-dpId_(estimators::setupSlidingAverageEstimator(10)),
-kId_(estimators::setupSlidingAverageEstimator(2)),
-kpId_(estimators::setupSlidingAverageEstimator(2))
+rateMeter_(FreqMeter(boost::make_shared<TimeWindow>(500))),
+deltaData_(Average(boost::make_shared<TimeWindow>(100))),
+deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
+keyData_(Average(boost::make_shared<SampleWindow>(2))),
+keyParity_(Average(boost::make_shared<SampleWindow>(2)))
 {}
 
 VideoStreamImpl::MetaKeeper::~MetaKeeper()
-{
-	estimators::releaseFrequencyMeter(rateId_);
-	estimators::releaseAverageEstimator(dId_);
-	estimators::releaseAverageEstimator(dpId_);
-	estimators::releaseAverageEstimator(kId_);
-	estimators::releaseAverageEstimator(kpId_);
-}
+{}
 
 
 bool
 VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg)
 {
-	unsigned int& dataEstId = (isKey ? kId_ : dId_);
-	unsigned int& parityEstId = (isKey ? kpId_ : dpId_);
+	Average& dataAvg = (isKey ? keyData_ : deltaData_);
+	Average& parityAvg = (isKey ? keyParity_ : deltaParity_);
 
-	double r = estimators::currentFrequencyMeterValue(rateId_);
-	double d = estimators::currentSlidingAverageValue(dId_);
-	double dp = estimators::currentSlidingAverageValue(dpId_);
-	double k = estimators::currentSlidingAverageValue(kId_);
-	double kp = estimators::currentSlidingAverageValue(kpId_);
+	double r = rateMeter_.value();
+	double d = deltaData_.value();
+	double dp = deltaParity_.value();
+	double k = keyData_.value();
+	double kp = keyParity_.value();
 
-	estimators::frequencyMeterTick(rateId_);
-	estimators::slidingAverageEstimatorNewValue(dataEstId, nDataSeg);
-	estimators::slidingAverageEstimatorNewValue(parityEstId, nParitySeg);
+	rateMeter_.newValue(0);
+	dataAvg.newValue(nDataSeg);
+	parityAvg.newValue(nParitySeg);
 
-	newMeta_ = (r != estimators::currentFrequencyMeterValue(rateId_) ||
-		d != estimators::currentSlidingAverageValue(dId_) ||
-		dp != estimators::currentSlidingAverageValue(dpId_) ||
-		k != estimators::currentSlidingAverageValue(kId_) ||
-		kp != estimators::currentSlidingAverageValue(kpId_));
+	newMeta_ = (r != rateMeter_.value() ||
+		d != deltaData_.value() ||
+		dp != deltaParity_.value() ||
+		k != keyData_.value() ||
+		kp != keyParity_.value());
 
 	return newMeta_;
 }
@@ -318,17 +313,17 @@ VideoThreadMeta
 VideoStreamImpl::MetaKeeper::getMeta() const
 {
 	FrameSegmentsInfo segInfo;
-	segInfo.deltaAvgSegNum_ = estimators::currentSlidingAverageValue(dId_);
-	segInfo.deltaAvgParitySegNum_ = estimators::currentSlidingAverageValue(dpId_);
-	segInfo.keyAvgSegNum_ = estimators::currentSlidingAverageValue(kId_);
-	segInfo.keyAvgParitySegNum_ = estimators::currentSlidingAverageValue(kpId_);
+	segInfo.deltaAvgSegNum_ = deltaData_.value();
+	segInfo.deltaAvgParitySegNum_ = deltaParity_.value();
+	segInfo.keyAvgSegNum_ = keyData_.value();
+	segInfo.keyAvgParitySegNum_ = keyParity_.value();
 
-	return boost::move(VideoThreadMeta(estimators::currentFrequencyMeterValue(rateId_),
+	return boost::move(VideoThreadMeta(rateMeter_.value(),
 			segInfo, ((VideoThreadParams*)params_)->coderParams_));
 }
 
 double
 VideoStreamImpl::MetaKeeper::getRate() const
 { 
-	return estimators::currentFrequencyMeterValue(rateId_); 
+	return rateMeter_.value(); 
 }

@@ -9,6 +9,7 @@
 #define __sample_estimator_h__
 
 #include "segment-controller.h"
+#include "estimators.h"
 
 namespace ndnrtc {
 	class SampleEstimator : public ISegmentControllerObserver {
@@ -35,7 +36,7 @@ namespace ndnrtc {
 			_Estimators();
 			~_Estimators();
 
-			unsigned int segNum_, segSize_;
+			estimators::Average segNum_, segSize_;
 		} Estimators;
 
 		std::map<std::pair<SampleType, DataType>, Estimators> estimators_;
