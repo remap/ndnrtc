@@ -17,7 +17,8 @@ DrdEstimator::DrdEstimator(unsigned int initialEstimationMs, unsigned int window
 initialEstimation_(initialEstimationMs),
 windowSize_(windowMs),
 cachedDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
-originalDrd_(Average(boost::make_shared<TimeWindow>(windowMs)))
+originalDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
+latest_(&originalDrd_)
 {}
 
 void
@@ -27,6 +28,8 @@ DrdEstimator::newValue(double drd, bool isOriginal)
 
 	if (isOriginal) originalDrd_.newValue(drd);
 	else cachedDrd_.newValue(drd);
+	
+	latest_ = (isOriginal ? &originalDrd_ : &cachedDrd_);
 	
 	double newValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());
 	

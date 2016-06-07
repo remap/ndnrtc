@@ -38,6 +38,11 @@ TEST(TestDrdEstimator, TestDefault)
 
 	EXPECT_EQ(50.5, drd.getOriginalEstimation());
 	EXPECT_EQ(25.75, drd.getCachedEstimation());
+	EXPECT_EQ(25.75, drd.getLatestUpdatedAverage().value());
+
+	drd.reset();
+	EXPECT_EQ(150, drd.getOriginalEstimation());
+	EXPECT_EQ(150, drd.getCachedEstimation());
 }
 
 int main(int argc, char **argv) {

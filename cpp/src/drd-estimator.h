@@ -34,6 +34,7 @@ namespace ndnrtc {
 
 		const estimators::Average& getCachedAverage() const { return cachedDrd_; }
 		const estimators::Average& getOriginalAverage() const { return originalDrd_; }
+		const estimators::Average& getLatestUpdatedAverage() const { return *latest_; }
 
 		void attach(IDrdEstimatorObserver* o);
 		void detach(IDrdEstimatorObserver* o);
@@ -43,6 +44,7 @@ namespace ndnrtc {
 		std::vector<IDrdEstimatorObserver*> observers_;
 		unsigned int windowSize_, initialEstimation_;
 		estimators::Average cachedDrd_, originalDrd_;
+		estimators::Average* latest_;
 	};
 
 	class IDrdEstimatorObserver
