@@ -62,10 +62,12 @@ namespace ndnrtc {
 		 */
 		class Estimator {
 		public:
-			Estimator(boost::shared_ptr<IEstimatorWindow> window):value_(0),window_(window){}
+			Estimator(boost::shared_ptr<IEstimatorWindow> window):
+				value_(0),window_(window),nValues_(0){}
 			
 			virtual void newValue(double value) = 0;
 			virtual double value() const { return value_; }
+			unsigned int count() const { return nValues_; }
 
 		protected:
 			unsigned int nValues_;

@@ -87,6 +87,7 @@ ts_(0), nCalls_(0)
 void
 FreqMeter::newValue(double value)
 {
+	nValues_++;
 	nCalls_++;
 
 	if (window_->isLimitReached())
