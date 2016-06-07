@@ -66,7 +66,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-audio-playout$(EXEEXT) \
 	bin/tests/test-segment-controller$(EXEEXT) \
 	bin/tests/test-periodic$(EXEEXT) \
-	bin/tests/test-sample-estimator$(EXEEXT)
+	bin/tests/test-sample-estimator$(EXEEXT) \
+	bin/tests/test-drd-estimator$(EXEEXT)
 TESTS = $(check_PROGRAMS)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
@@ -251,14 +252,28 @@ bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_data_validator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_5 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
+am__objects_5 = contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.$(OBJEXT)
+am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT) \
+	src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT) \
+	src/bin_tests_test_drd_estimator-estimators.$(OBJEXT) \
+	src/bin_tests_test_drd_estimator-clock.$(OBJEXT) \
+	$(am__objects_5)
+bin_tests_test_drd_estimator_OBJECTS =  \
+	$(am_bin_tests_test_drd_estimator_OBJECTS)
+bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_drd_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_drd_estimator_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_6 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_estimators-gtest-all.$(OBJEXT)
 am_bin_tests_test_estimators_OBJECTS =  \
 	tests/bin_tests_test_estimators-test-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-clock.$(OBJEXT) \
 	client/src/bin_tests_test_estimators-precise-generator.$(OBJEXT) \
-	$(am__objects_5)
+	$(am__objects_6)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
 bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -266,7 +281,7 @@ bin_tests_test_estimators_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_estimators_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_6 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
+am__objects_7 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_buffer-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_buffer_OBJECTS =  \
 	tests/bin_tests_test_frame_buffer-test-frame-buffer.$(OBJEXT) \
@@ -278,7 +293,7 @@ am_bin_tests_test_frame_buffer_OBJECTS =  \
 	src/bin_tests_test_frame_buffer-clock.$(OBJEXT) \
 	src/bin_tests_test_frame_buffer-simple-log.$(OBJEXT) \
 	src/bin_tests_test_frame_buffer-ndnrtc-object.$(OBJEXT) \
-	$(am__objects_6)
+	$(am__objects_7)
 bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am_bin_tests_test_frame_buffer_OBJECTS)
 bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -286,14 +301,14 @@ bin_tests_test_frame_buffer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_frame_buffer_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_7 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
+am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_converter-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter-test-frame-converter.$(OBJEXT) \
 	tests/bin_tests_test_frame_converter-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-fec.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-name-components.$(OBJEXT) \
-	$(am__objects_7)
+	$(am__objects_8)
 bin_tests_test_frame_converter_OBJECTS =  \
 	$(am_bin_tests_test_frame_converter_OBJECTS)
 bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -301,7 +316,7 @@ bin_tests_test_frame_converter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_frame_converter_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
+am__objects_9 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_local_media_stream-gtest-all.$(OBJEXT)
 am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_stream-test-local-media-stream.$(OBJEXT) \
 	tests/bin_tests_test_local_media_stream-tests-helpers.$(OBJEXT) \
@@ -325,7 +340,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-async.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT) \
-	$(am__objects_8)
+	$(am__objects_9)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
@@ -334,7 +349,7 @@ bin_tests_test_local_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_local_media_stream_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_9 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
+am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
 am_bin_tests_test_media_thread_OBJECTS =  \
 	tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT) \
@@ -353,7 +368,7 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-estimators.$(OBJEXT) \
 	src/bin_tests_test_media_thread-clock.$(OBJEXT) \
 	src/bin_tests_test_media_thread-name-components.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_10)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
 bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -361,11 +376,11 @@ bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_media_thread_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
+am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_name_components-gtest-all.$(OBJEXT)
 am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components-test-name-components.$(OBJEXT) \
 	src/bin_tests_test_name_components-name-components.$(OBJEXT) \
-	$(am__objects_10)
+	$(am__objects_11)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
 bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -373,7 +388,7 @@ bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_name_components_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
+am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
@@ -381,7 +396,7 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
 	src/bin_tests_test_network_data-fec.$(OBJEXT) \
 	src/bin_tests_test_network_data-name-components.$(OBJEXT) \
-	$(am__objects_11)
+	$(am__objects_12)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
 bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -389,7 +404,7 @@ bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_network_data_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
+am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT) \
@@ -398,7 +413,7 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	src/bin_tests_test_packet_publisher-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-simple-log.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-name-components.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_13)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
 bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -406,26 +421,26 @@ bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_packet_publisher_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
+am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
 	tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_params-fec.$(OBJEXT) \
 	src/bin_tests_test_params-name-components.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_14)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
+am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT)
 am_bin_tests_test_periodic_OBJECTS =  \
 	tests/bin_tests_test_periodic-test-periodic.$(OBJEXT) \
 	src/bin_tests_test_periodic-periodic.$(OBJEXT) \
-	$(am__objects_14)
+	$(am__objects_15)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
 bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -433,7 +448,7 @@ bin_tests_test_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_periodic_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
+am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_playout_OBJECTS =  \
 	tests/bin_tests_test_playout-test-playout.$(OBJEXT) \
@@ -455,14 +470,14 @@ am_bin_tests_test_playout_OBJECTS =  \
 	src/bin_tests_test_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_playout-video-coder.$(OBJEXT) \
-	$(am__objects_15)
+	$(am__objects_16)
 bin_tests_test_playout_OBJECTS = $(am_bin_tests_test_playout_OBJECTS)
 bin_tests_test_playout_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_playout_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
+am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_sample_estimator-gtest-all.$(OBJEXT)
 am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimator-test-sample-estimator.$(OBJEXT) \
 	tests/bin_tests_test_sample_estimator-tests-helpers.$(OBJEXT) \
@@ -472,7 +487,7 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	src/bin_tests_test_sample_estimator-clock.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-frame-data.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-name-components.$(OBJEXT) \
-	$(am__objects_16)
+	$(am__objects_17)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
 bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -480,7 +495,7 @@ bin_tests_test_sample_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_sample_estimator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
+am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_segment_controller-gtest-all.$(OBJEXT)
 am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_controller-test-segment-controller.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-segment-controller.$(OBJEXT) \
@@ -491,7 +506,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 	src/bin_tests_test_segment_controller-async.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-periodic.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-clock.$(OBJEXT) \
-	$(am__objects_17)
+	$(am__objects_18)
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
@@ -500,7 +515,7 @@ bin_tests_test_segment_controller_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_segment_controller_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
+am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_coder-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_coder_OBJECTS =  \
 	tests/bin_tests_test_video_coder-test-video-coder.$(OBJEXT) \
@@ -510,7 +525,7 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	src/bin_tests_test_video_coder-simple-log.$(OBJEXT) \
 	src/bin_tests_test_video_coder-fec.$(OBJEXT) \
 	src/bin_tests_test_video_coder-name-components.$(OBJEXT) \
-	$(am__objects_18)
+	$(am__objects_19)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
 bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -518,7 +533,7 @@ bin_tests_test_video_coder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_coder_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
+am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-test-video-playout.$(OBJEXT) \
 	tests/bin_tests_test_video_playout-tests-helpers.$(OBJEXT) \
@@ -540,7 +555,7 @@ am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-tes
 	src/bin_tests_test_video_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-coder.$(OBJEXT) \
-	$(am__objects_19)
+	$(am__objects_20)
 bin_tests_test_video_playout_OBJECTS =  \
 	$(am_bin_tests_test_video_playout_OBJECTS)
 bin_tests_test_video_playout_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -548,13 +563,13 @@ bin_tests_test_video_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_playout_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
+am__objects_21 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.$(OBJEXT)
 am_bin_tests_test_webrtc_audio_channel_OBJECTS = tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-audio-controller.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-threading-capability.$(OBJEXT) \
-	$(am__objects_20)
+	$(am__objects_21)
 bin_tests_test_webrtc_audio_channel_OBJECTS =  \
 	$(am_bin_tests_test_webrtc_audio_channel_OBJECTS)
 bin_tests_test_webrtc_audio_channel_DEPENDENCIES =  \
@@ -629,6 +644,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
+	$(bin_tests_test_drd_estimator_SOURCES) \
 	$(bin_tests_test_estimators_SOURCES) \
 	$(bin_tests_test_frame_buffer_SOURCES) \
 	$(bin_tests_test_frame_converter_SOURCES) \
@@ -650,6 +666,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
+	$(bin_tests_test_drd_estimator_SOURCES) \
 	$(bin_tests_test_estimators_SOURCES) \
 	$(bin_tests_test_frame_buffer_SOURCES) \
 	$(bin_tests_test_frame_converter_SOURCES) \
@@ -1042,6 +1059,10 @@ bin_tests_test_sample_estimator_SOURCES = tests/test-sample-estimator.cc tests/t
 bin_tests_test_sample_estimator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_sample_estimator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_sample_estimator_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_drd_estimator_SOURCES = tests/test-drd-estimator.cc src/drd-estimator.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_drd_estimator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_drd_estimator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_drd_estimator_LDADD = ${libndnrtc_la_LIBADD}
 all: all-am
 
 .SUFFIXES:
@@ -1357,6 +1378,23 @@ contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT): 
 bin/tests/test-data-validator$(EXEEXT): $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-data-validator$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_data_validator_LINK) $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_LDADD) $(LIBS)
+tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_drd_estimator-estimators.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_drd_estimator-clock.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-drd-estimator$(EXEEXT): $(bin_tests_test_drd_estimator_OBJECTS) $(bin_tests_test_drd_estimator_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-drd-estimator$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_drd_estimator_LINK) $(bin_tests_test_drd_estimator_OBJECTS) $(bin_tests_test_drd_estimator_LDADD) $(LIBS)
 tests/bin_tests_test_estimators-test-estimators.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_estimators-estimators.$(OBJEXT):  \
@@ -1850,6 +1888,7 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_audio_capturer-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_audio_playout-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT)
@@ -1870,6 +1909,7 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_audio_capturer-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_audio_playout-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_estimators-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_buffer-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_converter-gtest-all.$(OBJEXT)
@@ -1916,6 +1956,9 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_audio_playout-webrtc-audio-channel.$(OBJEXT)
 	-rm -f src/bin_tests_test_data_validator-data-validator.$(OBJEXT)
 	-rm -f src/bin_tests_test_data_validator-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_drd_estimator-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT)
+	-rm -f src/bin_tests_test_drd_estimator-estimators.$(OBJEXT)
 	-rm -f src/bin_tests_test_estimators-clock.$(OBJEXT)
 	-rm -f src/bin_tests_test_estimators-estimators.$(OBJEXT)
 	-rm -f src/bin_tests_test_frame_buffer-clock.$(OBJEXT)
@@ -2132,6 +2175,7 @@ mostlyclean-compile:
 	-rm -f tests/bin_tests_test_audio_playout-test-audio-playout.$(OBJEXT)
 	-rm -f tests/bin_tests_test_audio_playout-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT)
+	-rm -f tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT)
 	-rm -f tests/bin_tests_test_estimators-test-estimators.$(OBJEXT)
 	-rm -f tests/bin_tests_test_frame_buffer-test-frame-buffer.$(OBJEXT)
 	-rm -f tests/bin_tests_test_frame_buffer-tests-helpers.$(OBJEXT)
@@ -2182,6 +2226,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_converter-gmock-all.Po@am__quote@
@@ -2202,6 +2247,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_estimators-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_converter-gtest-all.Po@am__quote@
@@ -2248,6 +2294,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-webrtc-audio-channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_estimators-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_estimators-estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_frame_buffer-clock.Po@am__quote@
@@ -2414,6 +2463,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_playout-test-audio-playout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_playout-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_buffer-test-frame-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_buffer-tests-helpers.Po@am__quote@
@@ -3571,6 +3621,102 @@ contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj: contri
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_drd_estimator-test-drd-estimator.o: tests/test-drd-estimator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_drd_estimator-test-drd-estimator.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Tpo -c -o tests/bin_tests_test_drd_estimator-test-drd-estimator.o `test -f 'tests/test-drd-estimator.cc' || echo '$(srcdir)/'`tests/test-drd-estimator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Tpo tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-drd-estimator.cc' object='tests/bin_tests_test_drd_estimator-test-drd-estimator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_drd_estimator-test-drd-estimator.o `test -f 'tests/test-drd-estimator.cc' || echo '$(srcdir)/'`tests/test-drd-estimator.cc
+
+tests/bin_tests_test_drd_estimator-test-drd-estimator.obj: tests/test-drd-estimator.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_drd_estimator-test-drd-estimator.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Tpo -c -o tests/bin_tests_test_drd_estimator-test-drd-estimator.obj `if test -f 'tests/test-drd-estimator.cc'; then $(CYGPATH_W) 'tests/test-drd-estimator.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-drd-estimator.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Tpo tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-drd-estimator.cc' object='tests/bin_tests_test_drd_estimator-test-drd-estimator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_drd_estimator-test-drd-estimator.obj `if test -f 'tests/test-drd-estimator.cc'; then $(CYGPATH_W) 'tests/test-drd-estimator.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-drd-estimator.cc'; fi`
+
+src/bin_tests_test_drd_estimator-drd-estimator.o: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-drd-estimator.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Tpo -c -o src/bin_tests_test_drd_estimator-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_drd_estimator-drd-estimator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+
+src/bin_tests_test_drd_estimator-drd-estimator.obj: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-drd-estimator.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Tpo -c -o src/bin_tests_test_drd_estimator-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_drd_estimator-drd-estimator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+
+src/bin_tests_test_drd_estimator-estimators.o: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Tpo -c -o src/bin_tests_test_drd_estimator-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_drd_estimator-estimators.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/bin_tests_test_drd_estimator-estimators.obj: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Tpo -c -o src/bin_tests_test_drd_estimator-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_drd_estimator-estimators.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+
+src/bin_tests_test_drd_estimator-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Tpo -c -o src/bin_tests_test_drd_estimator-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_drd_estimator-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_drd_estimator-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_drd_estimator-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Tpo -c -o src/bin_tests_test_drd_estimator-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Tpo src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_drd_estimator-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_drd_estimator-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tests/bin_tests_test_estimators-test-estimators.o: tests/test-estimators.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_estimators-test-estimators.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Tpo -c -o tests/bin_tests_test_estimators-test-estimators.o `test -f 'tests/test-estimators.cc' || echo '$(srcdir)/'`tests/test-estimators.cc

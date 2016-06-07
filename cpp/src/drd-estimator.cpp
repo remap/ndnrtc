@@ -5,6 +5,9 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
+#include <boost/thread/lock_guard.hpp>
+#include <boost/make_shared.hpp>
+
 #include "drd-estimator.h"
 
 using namespace ndnrtc;
@@ -20,16 +23,32 @@ originalDrd_(Average(boost::make_shared<TimeWindow>(windowMs)))
 void
 DrdEstimator::newValue(double drd, bool isOriginal)
 {
+	double oldValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());
+
 	if (isOriginal) originalDrd_.newValue(drd);
 	else cachedDrd_.newValue(drd);
+	
+	double newValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());
+	
+	if (oldValue != newValue)
+	{
+		boost::lock_guard<boost::mutex> scopedLock(mutex_);
+		for (auto& o:observers_) {
+			if (isOriginal)
+				o->onOriginalDrdUpdate();
+			else
+				o->onCachedDrdUpdate();
+			o->onDrdUpdate();
+		}
+	}
 }
 
 double
-DrdEstimator::getCachedEstimation()
+DrdEstimator::getCachedEstimation() const
 { return  cachedDrd_.count() ? cachedDrd_.value() : (double)initialEstimation_; }
 
 double 
-DrdEstimator::getOriginalEstimation()
+DrdEstimator::getOriginalEstimation() const
 { return originalDrd_.count() ? originalDrd_.value() : (double)initialEstimation_; }
 
 void
@@ -37,4 +56,16 @@ DrdEstimator::reset()
 {
 	cachedDrd_ = Average(boost::make_shared<TimeWindow>(windowSize_));
 	originalDrd_ = Average(boost::make_shared<TimeWindow>(windowSize_));
+}
+
+void DrdEstimator::attach(IDrdEstimatorObserver* o)
+{
+	boost::lock_guard<boost::mutex> scopedLock(mutex_);
+	observers_.push_back(o);
+}
+
+void DrdEstimator::detach(IDrdEstimatorObserver* o)
+{
+	boost::lock_guard<boost::mutex> scopedLock(mutex_);
+	observers_.erase(std::find(observers_.begin(), observers_.end(), o));
 }
