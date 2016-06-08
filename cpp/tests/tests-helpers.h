@@ -14,6 +14,7 @@
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include <include/params.h>
 #include "client/src/config.h"
@@ -41,7 +42,8 @@ std::vector<boost::shared_ptr<ndn::Data>> dataFromSegments(std::string frameName
 std::vector<boost::shared_ptr<ndn::Data>> dataFromParitySegments(std::string frameName,
 	const std::vector<ndnrtc::CommonSegment>& segments);
 std::vector<boost::shared_ptr<ndn::Interest>> getInterests(std::string frameName,
-	unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, size_t parityNSeg = 0);
+	unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, size_t parityNSeg = 0, 
+  unsigned int startNonce = 0x1234);
 
 namespace testing
 {
@@ -67,18 +69,20 @@ typedef boost::chrono::milliseconds Msec;
 class DelayQueue {
 public:
   DelayQueue(boost::asio::io_service& io, int delayMs, int deviation = 0):
-    timer_(io), delayMs_(delayMs), dev_(deviation), timerSet_(false), active_(true)
+    timer_(io), delayMs_(delayMs), dev_(deviation), timerSet_(false)
     { std::srand(std::time(0)); }
   ~DelayQueue()
   {
-    active_ = false;
   }
 
   void push(QueueBlock block);
   void reset();
+  size_t size() const;
+  bool isActive() const { return timerSet_; }
 
 private:
-  boost::atomic<bool> active_, timerSet_;
+  mutable boost::recursive_mutex m_;
+  boost::atomic<bool> timerSet_;
   int delayMs_, dev_;
   boost::asio::steady_timer timer_;
   std::map<TPoint, std::vector<QueueBlock>> queue_;
@@ -91,7 +95,7 @@ typedef boost::function<void(const boost::shared_ptr<ndn::Data>&, const boost::s
 
 class DataCache {
 public:
-  void addInterest(const boost::shared_ptr<ndn::Interest>& interest, OnDataT onData);
+  void addInterest(const boost::shared_ptr<ndn::Interest> interest, OnDataT onData);
   void addData(const boost::shared_ptr<ndn::Data>& data, OnInterestT onInterest = OnInterestT());
 
 private:

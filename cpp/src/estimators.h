@@ -88,6 +88,7 @@ namespace ndnrtc {
 			double deviation() const { return sqrt(variance_); }
 			double variance() const { return variance_; }
 			double oldestValue() const { return samples_.front(); }
+			double latestValue() const { return samples_.back(); }
 
 		private:
 			bool limitReached_;

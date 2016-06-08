@@ -331,11 +331,11 @@ dataFromParitySegments(std::string frameName,
 
 std::vector<boost::shared_ptr<Interest>>
 getInterests(std::string frameName, unsigned int startSeg, size_t nSeg, 
-	unsigned int parityStartSeg, size_t parityNSeg)
+	unsigned int parityStartSeg, size_t parityNSeg, unsigned int startNonce)
 {
 	std::vector<boost::shared_ptr<Interest>> interests;
 
-	int nonce = 0x1234;
+	int nonce = startNonce;
 	for (int i = startSeg; i < startSeg+nSeg; ++i)
 	{
 		Name n(frameName);
@@ -345,7 +345,7 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 		nonce++;
 	}
 
-	nonce = 0x1234;
+	nonce = startNonce;
 	for (int i = parityStartSeg; i < parityStartSeg+parityNSeg; ++i)
 	{
 		Name n(frameName);
@@ -361,10 +361,16 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 //******************************************************************************
 void DelayQueue::push(QueueBlock block)
 {
-  int fireDelayMs = delayMs_ + (dev_ ? std::rand()%(int)(dev_/2)+dev_ : 0);
+  int d = (dev_ ? std::rand()%(int)(2*dev_)-dev_ : 0);
+  int fireDelayMs = delayMs_ + d;
+  if (fireDelayMs < 0 ) fireDelayMs = 0;
+
   TPoint fireTime = Clock::now()+Msec(fireDelayMs);
 
-  queue_[fireTime].push_back(block);
+  {
+  	boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+  	queue_[fireTime].push_back(block);
+  }
 
   if (!timerSet_) 
   {
@@ -378,14 +384,17 @@ void DelayQueue::push(QueueBlock block)
 void DelayQueue::reset()
 {
   timer_.cancel();
-  active_ = false;
+  timerSet_ = false;
 }
 
 void DelayQueue::pop(const boost::system::error_code& e)
 {
-	if (e != boost::asio::error::operation_aborted && active_ && active_)
+	if (e != boost::asio::error::operation_aborted && isActive())
 	{
-		for (auto& block:queue_.begin()->second)
+		boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+		std::vector<QueueBlock> first = queue_.begin()->second;
+
+		for (auto& block:first)
 			block();
 
 		if (queue_.size() > 1)
@@ -403,7 +412,13 @@ void DelayQueue::pop(const boost::system::error_code& e)
 	}
 }
 
-void DataCache::addInterest(const boost::shared_ptr<ndn::Interest>& interest, OnDataT onData)
+size_t DelayQueue::size() const 
+{
+	boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+	return queue_.size();
+}
+
+void DataCache::addInterest(const boost::shared_ptr<ndn::Interest> interest, OnDataT onData)
 {
 
   if (data_.find(interest->getName()) != data_.end())
@@ -448,6 +463,5 @@ void DataCache::addData(const boost::shared_ptr<ndn::Data>& data, OnInterestT on
       boost::lock_guard<boost::mutex> scopedLock(m_);
 
       data_[data->getName()] = data;
-      if (onInterest) onInterestCallbacks_[data->getName()] = onInterest;
     }
   }
