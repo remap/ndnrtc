@@ -332,6 +332,8 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	src/bin_tests_test_latency_control-simple-log.$(OBJEXT) \
 	client/src/bin_tests_test_latency_control-precise-generator.$(OBJEXT) \
 	src/bin_tests_test_latency_control-frame-data.$(OBJEXT) \
+	src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT) \
+	src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT) \
 	$(am__objects_9)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
@@ -1089,7 +1091,7 @@ bin_tests_test_drd_estimator_SOURCES = tests/test-drd-estimator.cc src/drd-estim
 bin_tests_test_drd_estimator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_drd_estimator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_drd_estimator_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_latency_control_SOURCES = tests/test-latency-control.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/latency-control.cpp src/estimators.cpp src/clock.cpp src/simple-log.cpp client/src/precise-generator.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_latency_control_SOURCES = tests/test-latency-control.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/latency-control.cpp src/estimators.cpp src/clock.cpp src/simple-log.cpp client/src/precise-generator.cpp src/frame-data.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_latency_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_latency_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_latency_control_LDADD = ${libndnrtc_la_LIBADD}
@@ -1521,6 +1523,10 @@ client/src/bin_tests_test_latency_control-precise-generator.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_latency_control-frame-data.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
@@ -2043,11 +2049,13 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_frame_converter-frame-converter.$(OBJEXT)
 	-rm -f src/bin_tests_test_frame_converter-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-estimators.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-frame-data.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-latency-control.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-name-components.$(OBJEXT)
+	-rm -f src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-simple-log.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-async.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-audio-capturer.$(OBJEXT)
@@ -2396,11 +2404,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_frame_converter-frame-converter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_frame_converter-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-estimators.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-frame-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-latency-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-name-components.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-audio-capturer.Po@am__quote@
@@ -4405,6 +4415,38 @@ src/bin_tests_test_latency_control-frame-data.obj: src/frame-data.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_latency_control-frame-data.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_latency_control-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+
+src/bin_tests_test_latency_control-drd-estimator.o: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_latency_control-drd-estimator.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Tpo -c -o src/bin_tests_test_latency_control-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_latency_control-drd-estimator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_latency_control-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+
+src/bin_tests_test_latency_control-drd-estimator.obj: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_latency_control-drd-estimator.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Tpo -c -o src/bin_tests_test_latency_control-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_latency_control-drd-estimator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_latency_control-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+
+src/bin_tests_test_latency_control-ndnrtc-object.o: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_latency_control-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Tpo -c -o src/bin_tests_test_latency_control-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_latency_control-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_latency_control-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/bin_tests_test_latency_control-ndnrtc-object.obj: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_latency_control-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Tpo -c -o src/bin_tests_test_latency_control-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_latency_control-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_latency_control-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_latency_control-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_latency_control-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

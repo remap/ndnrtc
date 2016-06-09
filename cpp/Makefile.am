@@ -290,7 +290,7 @@ bin_tests_test_drd_estimator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_drd_estimator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_drd_estimator_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_latency_control_SOURCES = tests/test-latency-control.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/latency-control.cpp src/estimators.cpp src/clock.cpp src/simple-log.cpp client/src/precise-generator.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_latency_control_SOURCES = tests/test-latency-control.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/latency-control.cpp src/estimators.cpp src/clock.cpp src/simple-log.cpp client/src/precise-generator.cpp src/frame-data.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_latency_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_latency_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_latency_control_LDADD = ${libndnrtc_la_LIBADD}
