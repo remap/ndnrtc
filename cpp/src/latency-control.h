@@ -8,6 +8,8 @@
 #ifndef __latency_control_h__
 #define __latency_control_h__
 
+#include <boost/thread/mutex.hpp>
+
 #include "drd-estimator.h"
 #include "segment-controller.h"
 #include "ndnrtc-object.h"
@@ -16,6 +18,7 @@
 namespace ndnrtc {
 	class StabilityEstimator;
 	class DrdChangeEstimator;
+	class ILatencyControlObserver;
 
 	/**
 	 * Latency control runs estimation of latest data arrival and detects
@@ -26,7 +29,8 @@ namespace ndnrtc {
 	 * has became available or updated.
 	 */
 	class LatencyControl :  public IDrdEstimatorObserver,
-							public NdnRtcComponent
+							public NdnRtcComponent,
+							public IBufferLatencyControl
 	{
 	public:
 		typedef enum _Command {
@@ -39,16 +43,19 @@ namespace ndnrtc {
 			const boost::shared_ptr<const DrdEstimator>& drd);
 		~LatencyControl();
 
-		void pipelineChanged();
 		void onDrdUpdate();
 		void onCachedDrdUpdate(){ /*ignored*/ }
 		void onOriginalDrdUpdate(){ /*ignored*/ }
 
 		void setTargetRate(double rate) { targetRate_ = rate; }
-		Command sampleArrived();
+		void sampleArrived();
 		void reset();
 
+		void registerObserver(ILatencyControlObserver* o);
+		void unregisterObserver();
+
 	private:
+		boost::mutex mutex_;
 		boost::shared_ptr<StabilityEstimator> stabilityEstimator_;
 		boost::shared_ptr<DrdChangeEstimator> drdChangeEstimator_;
 		bool waitForChange_, waitForStability_;
@@ -57,6 +64,14 @@ namespace ndnrtc {
 		boost::shared_ptr<const DrdEstimator> drd_;
 		estimators::Average interArrival_;
 		double targetRate_;
+		ILatencyControlObserver* observer_;
+
+		void pipelineChanged();
+	};
+
+	class ILatencyControlObserver {
+	public:
+		virtual bool needPipelineAdjustment(const LatencyControl::Command&) = 0;
 	};
 }
 

@@ -7,6 +7,7 @@
 
 #include "latency-control.h"
 #include <boost/make_shared.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include "estimators.h"
 #include "clock.h"
@@ -202,13 +203,13 @@ DrdChangeEstimator::newDrdValue(const Average& drdEstimator)
 bool
 DrdChangeEstimator::hasChange()
 {
-    bool result = false;
+    bool command = false;
     
     if (nChanges_ > lastCheckedChangeNumber_)
-        result = true;
+        command = true;
     
     lastCheckedChangeNumber_ = nChanges_;
-    return result;
+    return command;
 }
 
 void
@@ -233,7 +234,8 @@ waitForChange_(false), waitForStability_(false),
 timeoutWindowMs_(timeoutWindowMs),
 drd_(drd),
 interArrival_(Average(boost::make_shared<estimators::SampleWindow>(10))),
-targetRate_(30.)
+targetRate_(30.),
+observer_(nullptr)
 {
     description_ = "latency-control";
 }
@@ -243,23 +245,17 @@ LatencyControl::~LatencyControl()
 }
 
 void 
-LatencyControl::pipelineChanged()
-{
-    drdChangeEstimator_->flush();
-}
-
-void 
 LatencyControl::onDrdUpdate()
 {
     drdChangeEstimator_->newDrdValue(drd_->getLatestUpdatedAverage());
 }
 
-LatencyControl::Command
+void
 LatencyControl::sampleArrived()
 {
     LogTraceC << "segment arrived. target rate " << targetRate_ << std::endl;
 
-    LatencyControl::Command result = KeepPipeline;
+    LatencyControl::Command command = KeepPipeline;
     int64_t now = clock::millisecondTimestamp();
 
     if (timestamp_ == 0) timestamp_ = now;
@@ -287,7 +283,7 @@ LatencyControl::sampleArrived()
                     LogDebugC << "latest data. DRD change timed out. cmd: decrease" << std::endl;
 
                     timestamp_ = now;
-                    result = DecreasePipeline;
+                    command = DecreasePipeline;
                 }
         }
         else 
@@ -297,7 +293,7 @@ LatencyControl::sampleArrived()
             timestamp_ = now;
             waitForStability_ = false;
             waitForChange_ = true;
-            result = DecreasePipeline;
+            command = DecreasePipeline;
         }
     }
     else // if unstable and we're not waiting for anything - increase
@@ -308,10 +304,15 @@ LatencyControl::sampleArrived()
             timestamp_ = now;
             waitForStability_ = true;
             waitForChange_ = false;
-            result = IncreasePipeline;
+            command = IncreasePipeline;
         }
 
-    return result;
+
+    {
+        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        if (observer_ && observer_->needPipelineAdjustment(command))
+            pipelineChanged();
+    }
 }
 
 void 
@@ -324,4 +325,25 @@ LatencyControl::reset()
     waitForStability_ = false;
     interArrival_ = Average(boost::make_shared<estimators::SampleWindow>(10));
     targetRate_ = 30.;
+}
+
+void 
+LatencyControl::registerObserver(ILatencyControlObserver* o)
+{
+    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    observer_ = o;
+}
+
+void 
+LatencyControl::unregisterObserver()
+{
+    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    observer_ = nullptr;
+}
+
+#pragma mark - private
+void 
+LatencyControl::pipelineChanged()
+{
+    drdChangeEstimator_->flush();
 }

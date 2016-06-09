@@ -17,11 +17,13 @@
 #include "tests-helpers.h"
 #include "src/drd-estimator.h"
 #include "src/latency-control.h"
-
 #include "client/src/precise-generator.h"
+
+#include "mock-objects/latency-control-observer-mock.h"
 
 // #define ENABLE_LOGGING
 
+using namespace ::testing;
 using namespace ndnrtc;
 using namespace ndn;
 
@@ -142,8 +144,10 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 		};
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
+		MockLatencyControlObserver lco;
 		LatencyControl latControl(1000, drd);
 		drd->attach(&latControl);
+		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING
 		latControl.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
@@ -152,7 +156,7 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 		boost::chrono::high_resolution_clock::time_point tp;
 
 		incoming = [&pipeline, &express, &nreceived, &nOriginal, &tp, &dArr, 
-			&latControl, &nIncreaseEvents, &nDecreaseEvents, fps]
+			&latControl, &lco, &nIncreaseEvents, &nDecreaseEvents, fps]
 		(const boost::shared_ptr<WireData<VideoFrameSegmentHeader>>& d)
 		{
 			boost::chrono::high_resolution_clock::time_point now = boost::chrono::high_resolution_clock::now();
@@ -160,10 +164,18 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
 			latControl.setTargetRate(fps);
-			LatencyControl::Command cmd = latControl.sampleArrived();
-			if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
-			if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
-		
+
+			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
+				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
+					if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
+					if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
+					return false;
+				};
+			EXPECT_CALL(lco, needPipelineAdjustment(_))
+				.Times(1)
+				.WillOnce(Invoke(onAdjustmentNeeded));
+			latControl.sampleArrived();
+
 			pipeline++;
 			express();
 			tp = now;
@@ -325,8 +337,10 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 		};
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
+		MockLatencyControlObserver lco;
 		LatencyControl latControl(1000, drd);
 		drd->attach(&latControl);
+		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING
 		latControl.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
@@ -335,7 +349,7 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 		boost::chrono::high_resolution_clock::time_point tp;
 
 		incoming = [&pipeline, &express, &nreceived, &nOriginal, &tp, &dArr, 
-			&latControl, &nIncreaseEvents, &nDecreaseEvents, fps]
+			&latControl, &lco, &nIncreaseEvents, &nDecreaseEvents, fps]
 		(const boost::shared_ptr<WireData<VideoFrameSegmentHeader>>& d)
 		{
 			boost::chrono::high_resolution_clock::time_point now = boost::chrono::high_resolution_clock::now();
@@ -343,10 +357,18 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
 			latControl.setTargetRate(fps);
-			LatencyControl::Command cmd = latControl.sampleArrived();
-			if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
-			if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
-		
+
+			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
+				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
+					if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
+					if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
+					return false;
+				};
+			EXPECT_CALL(lco, needPipelineAdjustment(_))
+				.Times(1)
+				.WillOnce(Invoke(onAdjustmentNeeded));
+			latControl.sampleArrived();
+
 			pipeline++;
 			express();
 			tp = now;
@@ -508,8 +530,10 @@ TEST(TestLatencyControl, TestChangingPipeline)
 		};
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
+		MockLatencyControlObserver lco;
 		LatencyControl latControl(1000, drd);
 		drd->attach(&latControl);
+		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING
 		latControl.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
@@ -519,7 +543,7 @@ TEST(TestLatencyControl, TestChangingPipeline)
 		int lastFailedPipeline = 0;
 
 		incoming = [&pipeline, &express, &nreceived, &nOriginal, &tp, &dArr, 
-			&latControl, &nIncreaseEvents, &nDecreaseEvents, fps, &lastFailedPipeline, &defPipeline]
+			&latControl, &lco, &nIncreaseEvents, &nDecreaseEvents, fps, &lastFailedPipeline, &defPipeline]
 		(const boost::shared_ptr<WireData<VideoFrameSegmentHeader>>& d)
 		{
 			pipeline++;
@@ -529,25 +553,31 @@ TEST(TestLatencyControl, TestChangingPipeline)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
 			latControl.setTargetRate(fps);
-			LatencyControl::Command cmd = latControl.sampleArrived();
-			if (cmd == LatencyControl::IncreasePipeline) 
-			{
-				lastFailedPipeline = defPipeline;
-				nIncreaseEvents++;
-				pipeline += defPipeline;
-				defPipeline += defPipeline;
-				latControl.pipelineChanged();
-			}
 
-			if (cmd == LatencyControl::DecreasePipeline)
-			{ 
-				nDecreaseEvents++;
-				int newDefPipeline = (int)ceil((double)(lastFailedPipeline+defPipeline)/2.);
-				if (newDefPipeline == lastFailedPipeline) newDefPipeline++;
-				pipeline -= (defPipeline-newDefPipeline);
-				defPipeline = newDefPipeline;
-				latControl.pipelineChanged();
-			}
+			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
+				[&nIncreaseEvents, &nDecreaseEvents, &defPipeline, &pipeline, &lastFailedPipeline]
+				(const LatencyControl::Command& cmd)->bool{
+					if (cmd == LatencyControl::IncreasePipeline)
+					{
+						lastFailedPipeline = defPipeline;
+						nIncreaseEvents++;
+						pipeline += defPipeline;
+						defPipeline += defPipeline;
+					}
+					if (cmd == LatencyControl::DecreasePipeline)
+					{ 
+						nDecreaseEvents++;
+						int newDefPipeline = (int)ceil((double)(lastFailedPipeline+defPipeline)/2.);
+						if (newDefPipeline == lastFailedPipeline) newDefPipeline++;
+						pipeline -= (defPipeline-newDefPipeline);
+						defPipeline = newDefPipeline;
+					}
+					return true;
+				};
+			EXPECT_CALL(lco, needPipelineAdjustment(_))
+				.Times(1)
+				.WillOnce(Invoke(onAdjustmentNeeded));
+			latControl.sampleArrived();
 
 			express();
 			tp = now;
