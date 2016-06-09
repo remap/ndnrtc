@@ -1111,7 +1111,7 @@ TEST(TestWireData, TestVideoFrameSegment)
     header.interestArrivalMs_ = 1460399362;
     header.generationDelayMs_ = 200;
     header.totalSegmentsNum_ = segments.size();
-    header.playbackNo_ = 0;
+    header.playbackNo_ = 777;
     header.pairedSequenceNo_ = 1;
     header.paritySegmentsNum_ = 2;
 
@@ -1146,6 +1146,7 @@ TEST(TestWireData, TestVideoFrameSegment)
         for (auto d:dataSegments)
         {
             WireData<VideoFrameSegmentHeader> wd(d, interests[idx]);
+            
             EXPECT_TRUE(wd.isValid());
             EXPECT_EQ(segments.size(), wd.getSlicesNum());
             EXPECT_EQ(ndn::Name("/ndn/edu/ucla/remap/ndncon/instance1"), wd.getBasePrefix());
@@ -1157,6 +1158,10 @@ TEST(TestWireData, TestVideoFrameSegment)
             EXPECT_EQ(0, wd.getSampleNo());
             EXPECT_EQ(idx, wd.getSegNo());
             EXPECT_FALSE(wd.isParity());
+
+            WireSegment *seg = &wd;
+            EXPECT_EQ(777+idx, seg->getPlaybackNo());
+            EXPECT_EQ(777+idx, wd.getPlaybackNo());
 
             EXPECT_TRUE(wd.isOriginal());
             EXPECT_EQ(header.interestNonce_+idx, wd.segment().getHeader().interestNonce_);
@@ -1190,7 +1195,7 @@ TEST(TestWireData, TestVideoFrameSegment)
     
         idx = 0;
         for (auto d:dataSegments)
-            EXPECT_ANY_THROW(WireData<VideoFrameSegment> wd(d, interests[idx++]));
+            EXPECT_ANY_THROW(WireData<VideoFrameSegmentHeader> wd(d, interests[idx++]));
     }
     #endif
 }
@@ -1413,7 +1418,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     shdr.generationDelayMs_ = 200;
     segments[0].setHeader(shdr);
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%00";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
@@ -1430,6 +1435,10 @@ TEST(TestWireData, TestMergeAudioBundle)
     EXPECT_EQ(hdr.sampleRate_, wd.packetHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, wd.packetHeader().publishTimestampMs_);
     EXPECT_EQ(hdr.publishUnixTimestampMs_, wd.packetHeader().publishUnixTimestampMs_);
+    
+    WireSegment *seg = &wd;
+    EXPECT_EQ(7, seg->getPlaybackNo());
+    EXPECT_EQ(7, wd.getPlaybackNo());
 
     std::vector<ImmutableHeaderPacket<DataSegmentHeader>> bundleSegments;
     bundleSegments.push_back(wd.segment());

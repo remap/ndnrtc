@@ -867,6 +867,9 @@ namespace ndnrtc {
         unsigned int getSegNo() const { return dataNameInfo_.segNo_; }
         bool isParity() const { return dataNameInfo_.isParity_; }
         std::string getThreadName() const { return dataNameInfo_.threadName_; }
+
+        bool isPacketHeaderSegment() const { return !dataNameInfo_.isParity_ && dataNameInfo_.segNo_ == 0; }
+        virtual PacketNumber getPlaybackNo() const { return getSampleNo(); }
         
         /**
          * This returns a percentage of how much does this segment contributes to
@@ -936,6 +939,9 @@ namespace ndnrtc {
             return ImmutableHeaderPacket<SegmentHeader>(data_->getContent());
         }
 
+        PacketNumber getPlaybackNo() const
+        { return playbackNo(); }
+
     private:
         friend boost::shared_ptr<WireData<SegmentHeader>> 
         boost::make_shared<WireData<SegmentHeader>>(const NamespaceInfo&,
@@ -946,8 +952,15 @@ namespace ndnrtc {
             const boost::shared_ptr<ndn::Data>& data, 
             const boost::shared_ptr<const ndn::Interest>& interest):
             WireSegment(info, data, interest){}
-    };
 
+        ENABLE_IF(SegmentHeader,_DataSegmentHeader)
+        PacketNumber playbackNo(ENABLE_FOR(_DataSegmentHeader)) const
+        { return getSampleNo();  }
+
+        ENABLE_IF(SegmentHeader,_VideoFrameSegmentHeader)
+        PacketNumber playbackNo(ENABLE_FOR(_VideoFrameSegmentHeader)) const
+        { return segment().getHeader().playbackNo_;  }
+    };
 };
 
 #endif /* defined(__ndnrtc__frame_slot__) */

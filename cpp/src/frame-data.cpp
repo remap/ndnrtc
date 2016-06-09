@@ -243,7 +243,7 @@ WireSegment::createSegment(const NamespaceInfo& namespaceInfo,
 {
     if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo
         && !(namespaceInfo.isMeta_ || namespaceInfo.isParity_))
-        return boost::make_shared<WireData<VideoFrameSegment>>(namespaceInfo, data, interest);
+        return boost::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
 
     return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);;
 }
