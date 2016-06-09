@@ -54,6 +54,8 @@ namespace ndnrtc {
 		void registerObserver(ILatencyControlObserver* o);
 		void unregisterObserver();
 
+		Command getCurrentCommand() const { return currentCommand_; }
+
 	private:
 		boost::mutex mutex_;
 		boost::shared_ptr<StabilityEstimator> stabilityEstimator_;
@@ -65,6 +67,7 @@ namespace ndnrtc {
 		estimators::Average interArrival_;
 		double targetRate_;
 		ILatencyControlObserver* observer_;
+		Command currentCommand_;
 
 		void pipelineChanged();
 	};

@@ -235,7 +235,8 @@ timeoutWindowMs_(timeoutWindowMs),
 drd_(drd),
 interArrival_(Average(boost::make_shared<estimators::SampleWindow>(10))),
 targetRate_(30.),
-observer_(nullptr)
+observer_(nullptr),
+currentCommand_(KeepPipeline)
 {
     description_ = "latency-control";
 }
@@ -313,6 +314,8 @@ LatencyControl::sampleArrived()
         if (observer_ && observer_->needPipelineAdjustment(command))
             pipelineChanged();
     }
+
+    currentCommand_ = command;
 }
 
 void 
@@ -325,6 +328,7 @@ LatencyControl::reset()
     waitForStability_ = false;
     interArrival_ = Average(boost::make_shared<estimators::SampleWindow>(10));
     targetRate_ = 30.;
+    currentCommand_ = KeepPipeline;
 }
 
 void 
