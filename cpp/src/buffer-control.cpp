@@ -13,16 +13,26 @@
 using namespace ndnrtc;
 
 BufferControl::BufferControl(const boost::shared_ptr<DrdEstimator>& drdEstimator, 
-	const boost::shared_ptr<Buffer>& buffer, 
-	const boost::shared_ptr<IBufferLatencyControl>& latencyControl):
-drdEstimator_(drdEstimator), buffer_(buffer),
-latencyControl_(latencyControl)
+	const boost::shared_ptr<Buffer>& buffer):
+drdEstimator_(drdEstimator), buffer_(buffer)
 {
 	description_ = "buffer-control";
 }
 
 BufferControl::~BufferControl()
 {}
+
+void 
+BufferControl::attach(IBufferControlObserver* o)
+{
+	observers_.push_back(o);
+}
+
+void 
+BufferControl::detach(IBufferControlObserver* o)
+{
+	observers_.erase(std::find(observers_.begin(), observers_.end(), o));
+}
 
 void
 BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
@@ -31,7 +41,12 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 	{
 		Buffer::Receipt receipt = buffer_->received(segment);
 		drdEstimator_->newValue(receipt.segment_->getRoundTripDelayUsec()/1000, receipt.segment_->isOriginal());
-		informLatencyControl(receipt);
+
+		if (segment->isPacketHeaderSegment())
+			for (auto& o:observers_) o->targetRateUpdate(receipt.segment_->getData()->packetHeader().sampleRate_);
+
+		if (receipt.slot_->getFetchedNum() == 1)
+			for (auto& o:observers_) o->sampleArrived(segment->getPlaybackNo());
 
 		LogTraceC << "added segment " << receipt.segment_->getInfo().getSuffix(suffix_filter::Stream) 
 			<< (receipt.segment_->isOriginal() ? "ORIG" : "CACH")
@@ -40,15 +55,4 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 	}
 	else
 		LogWarnC << "received unwanted/removed(late) data " << segment->getData()->getName() << std::endl;
-}
-
-void 
-BufferControl::informLatencyControl(const Buffer::Receipt& receipt)
-{
-	if (!receipt.segment_->getInfo().isParity_ && 
-		receipt.segment_->getInfo().segNo_ == 0)
-		latencyControl_->setTargetRate(receipt.segment_->getData()->packetHeader().sampleRate_);
-	
-	if (receipt.slot_->getFetchedNum() == 1)
-		latencyControl_->sampleArrived();
 }

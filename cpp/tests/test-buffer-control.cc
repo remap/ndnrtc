@@ -13,7 +13,7 @@
 #include "frame-buffer.h"
 
 #include "tests-helpers.h"
-#include "mock-objects/buffer-latency-control-mock.h"
+#include "mock-objects/buffer-control-observer-mock.h"
 
 using namespace ndnrtc;
 using namespace ::testing;
@@ -43,9 +43,10 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(150));
 	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
 	boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 500));
-	boost::shared_ptr<MockBufferLatencyControl> latControlMock(boost::make_shared<MockBufferLatencyControl>());
+	MockBufferControlObserver latControlMock;
 
-	BufferControl bufferControl(drd, buffer, latControlMock);
+	BufferControl bufferControl(drd, buffer);
+	bufferControl.attach(&latControlMock);
 
 	boost::thread requestor([&sampleNo, threadPrefix, buffer, nSamples, fps](){
 		boost::asio::io_service io;
@@ -72,7 +73,7 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 	});
 
 	boost::thread provider([&sampleNo, defPipeline, threadPrefix, &bufferControl, nSamples, 
-		fps, latControlMock]()
+		fps, &latControlMock]()
 	{
 		while (sampleNo < defPipeline) ;
 		int64_t ts = 488589553, uts = 1460488589;
@@ -95,9 +96,9 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, segments.size());
 			std::vector<boost::shared_ptr<Data>> data = dataFromSegments(frameName.toUri(), segments);
 
-			EXPECT_CALL(*latControlMock, setTargetRate(_))
+			EXPECT_CALL(latControlMock, targetRateUpdate(_))
 				.Times(1);
-			EXPECT_CALL(*latControlMock, sampleArrived())
+			EXPECT_CALL(latControlMock, sampleArrived(_))
 				.Times(1);
 
 			int idx = 0;

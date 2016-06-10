@@ -8,6 +8,7 @@
 #ifndef __buffer_control_h__
 #define __buffer_control_h__
 
+#include "ndnrtc-common.h"
 #include "segment-controller.h"
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
@@ -15,7 +16,7 @@
 namespace ndnrtc {
 	class DrdEstimator;
 	class Buffer;
-	class IBufferLatencyControl;
+	class IBufferControlObserver;
 
 	/**
 	 * Buffer Control class performs adding incoming segments to frame
@@ -27,27 +28,28 @@ namespace ndnrtc {
 	class BufferControl : public ISegmentControllerObserver, public NdnRtcComponent
 	{
 	public:
-		BufferControl(const boost::shared_ptr<DrdEstimator>&, const boost::shared_ptr<Buffer>&,
-			const boost::shared_ptr<IBufferLatencyControl>&);
+		BufferControl(const boost::shared_ptr<DrdEstimator>&, const boost::shared_ptr<Buffer>&);
 		~BufferControl();
 
-		void segmentArrived(const boost::shared_ptr<WireSegment>&);
+		void attach(IBufferControlObserver*);
+		void detach(IBufferControlObserver*);
 
+		void segmentArrived(const boost::shared_ptr<WireSegment>&);
 		void segmentRequestTimeout(const NamespaceInfo&){ /*ignored*/ }
 		void segmentStarvation(){ /*ignored*/ }
 		
 	private:
+		std::vector<IBufferControlObserver*> observers_;
 		boost::shared_ptr<DrdEstimator> drdEstimator_;
 		boost::shared_ptr<Buffer> buffer_;
-		boost::shared_ptr<IBufferLatencyControl> latencyControl_;
 
 		void informLatencyControl(const Buffer::Receipt&);
 	};
 
-	class IBufferLatencyControl {
+	class IBufferControlObserver {
 	public:
-		virtual void setTargetRate(double rate) = 0;
-		virtual void sampleArrived() = 0;
+		virtual void targetRateUpdate(double rate) = 0;
+		virtual void sampleArrived(const PacketNumber& playbackNo) = 0;
 	};
 }
 

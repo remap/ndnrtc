@@ -252,9 +252,9 @@ LatencyControl::onDrdUpdate()
 }
 
 void
-LatencyControl::sampleArrived()
+LatencyControl::sampleArrived(const PacketNumber& playbackNo)
 {
-    LogTraceC << "segment arrived. target rate " << targetRate_ << std::endl;
+    LogTraceC << "sample " << playbackNo << ". target rate " << targetRate_ << std::endl;
 
     LatencyControl::Command command = KeepPipeline;
     int64_t now = clock::millisecondTimestamp();

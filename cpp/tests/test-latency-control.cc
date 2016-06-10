@@ -163,7 +163,7 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 			if (nreceived > 0)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
-			latControl.setTargetRate(fps);
+			latControl.targetRateUpdate(fps);
 
 			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
 				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
@@ -174,7 +174,7 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 			EXPECT_CALL(lco, needPipelineAdjustment(_))
 				.Times(1)
 				.WillOnce(Invoke(onAdjustmentNeeded));
-			latControl.sampleArrived();
+			latControl.sampleArrived(0);
 
 			pipeline++;
 			express();
@@ -356,7 +356,7 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 			if (nreceived > 0)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
-			latControl.setTargetRate(fps);
+			latControl.targetRateUpdate(fps);
 
 			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
 				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
@@ -367,7 +367,7 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 			EXPECT_CALL(lco, needPipelineAdjustment(_))
 				.Times(1)
 				.WillOnce(Invoke(onAdjustmentNeeded));
-			latControl.sampleArrived();
+			latControl.sampleArrived(0);
 
 			pipeline++;
 			express();
@@ -552,7 +552,7 @@ TEST(TestLatencyControl, TestChangingPipeline)
 			if (nreceived > 0)
 				dArr.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now - tp).count());
 
-			latControl.setTargetRate(fps);
+			latControl.targetRateUpdate(fps);
 
 			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
 				[&nIncreaseEvents, &nDecreaseEvents, &defPipeline, &pipeline, &lastFailedPipeline]
@@ -577,7 +577,7 @@ TEST(TestLatencyControl, TestChangingPipeline)
 			EXPECT_CALL(lco, needPipelineAdjustment(_))
 				.Times(1)
 				.WillOnce(Invoke(onAdjustmentNeeded));
-			latControl.sampleArrived();
+			latControl.sampleArrived(0);
 
 			express();
 			tp = now;

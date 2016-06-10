@@ -30,7 +30,7 @@ namespace ndnrtc {
 	 */
 	class LatencyControl :  public IDrdEstimatorObserver,
 							public NdnRtcComponent,
-							public IBufferLatencyControl
+							public IBufferControlObserver
 	{
 	public:
 		typedef enum _Command {
@@ -47,8 +47,8 @@ namespace ndnrtc {
 		void onCachedDrdUpdate(){ /*ignored*/ }
 		void onOriginalDrdUpdate(){ /*ignored*/ }
 
-		void setTargetRate(double rate) { targetRate_ = rate; }
-		void sampleArrived();
+		void targetRateUpdate(double rate) { targetRate_ = rate; }
+		void sampleArrived(const PacketNumber& playbackNo);
 		void reset();
 
 		void registerObserver(ILatencyControlObserver* o);
