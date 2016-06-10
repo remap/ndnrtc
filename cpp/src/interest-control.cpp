@@ -62,6 +62,10 @@ void
 InterestControl::reset()
 {
 	initialized_ = false;
+	pipeline_ = 0;
+	lowerLimit_ = 3;
+	limit_ = 3;
+	upperLimit_ = 30;
 }
 
 bool
