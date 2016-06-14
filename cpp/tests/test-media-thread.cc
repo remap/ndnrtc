@@ -23,7 +23,6 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
 using namespace boost::chrono;
 
 #if 1

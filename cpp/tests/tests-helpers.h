@@ -44,6 +44,8 @@ std::vector<boost::shared_ptr<ndn::Data>> dataFromParitySegments(std::string fra
 std::vector<boost::shared_ptr<ndn::Interest>> getInterests(std::string frameName,
 	unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, size_t parityNSeg = 0, 
   unsigned int startNonce = 0x1234);
+std::vector<boost::shared_ptr<const ndn::Interest>> 
+makeInterestsConst(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
 
 namespace testing
 {

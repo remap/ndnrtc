@@ -41,11 +41,6 @@ namespace ndnrtc {
         virtual void
         onDroppedFrame() = 0;
     };
-
-    class VideoCoderStatistics : public new_api::ObjectStatistics {
-    public:
-        unsigned int nDroppedByEncoder;
-    };
     
     /**
      * This class performs scaling of raw frames. WebRTC uses frame buffers

@@ -13,8 +13,8 @@
 #include <algorithm>
 #include <boost/assign.hpp>
 
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
+using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace boost::assign;
 
 const std::map<Indicator, std::string> StatisticsStorage::IndicatorNames =

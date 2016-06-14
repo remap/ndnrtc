@@ -13,8 +13,7 @@
 
 using namespace std;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
+using namespace ndnrtc::statistics;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace webrtc;

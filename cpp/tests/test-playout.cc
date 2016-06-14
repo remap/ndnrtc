@@ -95,7 +95,7 @@ TEST(TestPlaybackQueue, TestPlay)
 			frameName.appendSequenceNumber(sampleNo);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			EXPECT_TRUE(buffer->requested(interests));
+			EXPECT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			runTimer.wait();
 		}
 	});
@@ -220,7 +220,7 @@ TEST(TestPlayout, TestPlay)
 			frameName.appendSequenceNumber(sampleNo);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			EXPECT_TRUE(buffer->requested(interests));
+			EXPECT_TRUE(buffer->requested(makeInterestsConst(interests)));
 
 			sem.wait();
 		}
@@ -494,7 +494,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			for (auto& i:interests)
 			{
@@ -687,7 +687,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			for (auto& i:interests)
 			{
@@ -898,7 +898,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			for (auto& i:interests)
 			{
@@ -1163,7 +1163,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			for (auto& i:interests)
 			{
@@ -1428,7 +1428,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			for (auto& i:interests)
 			{

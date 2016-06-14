@@ -134,7 +134,7 @@ TEST(TestAudioPlayout, TestG722)
 
 		std::vector<boost::shared_ptr<ndn::Interest>> interests;
 		interests.push_back(i);
-		buffer->requested(interests);
+		buffer->requested(makeInterestsConst(interests));
 
 		LogDebug("") << "express " << i->getName() << std::endl;
 
@@ -314,7 +314,7 @@ TEST(TestAudioPlayout, TestOpus)
 
 		std::vector<boost::shared_ptr<ndn::Interest>> interests;
 		interests.push_back(i);
-		buffer->requested(interests);
+		buffer->requested(makeInterestsConst(interests));
 
 		LogDebug("") << "express " << i->getName() << std::endl;
 

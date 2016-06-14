@@ -27,11 +27,11 @@ namespace ndnlog {
 namespace ndnrtc {
     class BufferSlot;
     class PlaybackQueue;
-    typedef new_api::statistics::StatisticsStorage StatStorage; 
+    typedef statistics::StatisticsStorage StatStorage; 
     class IPlayoutObserver;
 
     class Playout : public NdnRtcComponent, 
-                    public new_api::statistics::StatObject
+                    public statistics::StatObject
     {
     public:
         Playout(boost::asio::io_service& io,

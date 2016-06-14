@@ -63,7 +63,7 @@ TEST(TestSlotSegment, TestCreate)
 TEST(TestBufferSlot, TestAddInterests)
 {
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
-	std::vector<boost::shared_ptr<Interest>> interests;
+	std::vector<boost::shared_ptr<const Interest>> interests;
 	int n = 10;
 
 	for (int i = 0; i < n; ++i)
@@ -87,7 +87,7 @@ TEST(TestBufferSlot, TestAddInterests)
 TEST(TestBufferSlot, TestAddInterestsTwoTimes)
 {
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
-	std::vector<boost::shared_ptr<Interest>> interests;
+	std::vector<boost::shared_ptr<const Interest>> interests;
 	int n = 10;
 
 	for (int i = 0; i < n/2; ++i)
@@ -130,7 +130,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
 
 	{
-		std::vector<boost::shared_ptr<Interest>> interests;
+		std::vector<boost::shared_ptr<const Interest>> interests;
 		Name iname(frameName);
 		interests.push_back(boost::make_shared<Interest>(iname, 1000));
 		iname.appendSegment(0);
@@ -141,7 +141,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 		EXPECT_EQ(BufferSlot::Free, slot.getState());
 	}
 	{
-		std::vector<boost::shared_ptr<Interest>> interests;
+		std::vector<boost::shared_ptr<const Interest>> interests;
 		Name iname(frameName);
 		iname.appendSegment(0);
 		interests.push_back(boost::make_shared<Interest>(iname, 1000));
@@ -154,7 +154,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 		EXPECT_EQ(BufferSlot::Free, slot.getState());
 	}
 	{
-		std::vector<boost::shared_ptr<Interest>> interests;
+		std::vector<boost::shared_ptr<const Interest>> interests;
 		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07").appendSegment(0), 1000));
 		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%08").appendSegment(0), 1000));
 
@@ -177,7 +177,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		BufferSlot slot;
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 
 		int idx = 0;
@@ -210,7 +210,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		BufferSlot slot;
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 
 		std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -254,7 +254,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		BufferSlot slot;
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 
 		std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -303,7 +303,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		BufferSlot slot;
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 		boost::shared_ptr<Data> dobj = dataObjects.back();
 		dobj->setName(Name(frameName).appendSegment(100));
@@ -316,7 +316,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		BufferSlot slot;
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 		boost::shared_ptr<Data> dobj = dataObjects.back();
 		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/desktop/hi/d/%FE%07/%00%00"));
@@ -331,7 +331,7 @@ TEST(TestBufferSlot, TestAddData)
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size(), 0, 1);
 		BufferSlot slot;
 
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 		boost::shared_ptr<Data> dobj = dataObjects.back();
 		EXPECT_NO_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj, interests.back())));
@@ -365,7 +365,7 @@ TEST(TestBufferSlot, TestReuseSlot)
 		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 		
-		slot.segmentsRequested(interests);
+		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 
 		std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -419,7 +419,7 @@ TEST(TestVideoFrameSlot, TestAsembleVideoFrame)
 	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 	BufferSlot slot;
 	
-	slot.segmentsRequested(interests);
+	slot.segmentsRequested(makeInterestsConst(interests));
 	ASSERT_EQ(BufferSlot::New, slot.getState());
 
 	std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -457,7 +457,7 @@ TEST(TestVideoFrameSlot, TestFailedAssembleNotEnoughData)
 	std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size());
 	BufferSlot slot;
 	
-	slot.segmentsRequested(interests);
+	slot.segmentsRequested(makeInterestsConst(interests));
 	ASSERT_EQ(BufferSlot::New, slot.getState());
 
 	std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -494,8 +494,8 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 	std::vector<boost::shared_ptr<Interest>> parityInterests = getInterests(frameName+"/_parity", 0, parityObjects.size());
 	BufferSlot slot;
 	
-	slot.segmentsRequested(interests);
-	slot.segmentsRequested(parityInterests);
+	slot.segmentsRequested(makeInterestsConst(interests));
+	slot.segmentsRequested(makeInterestsConst(parityInterests));
 	ASSERT_EQ(BufferSlot::New, slot.getState());
 
 	std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -548,8 +548,8 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 	std::vector<boost::shared_ptr<Interest>> parityInterests(interests.end()-parityObjects.size(), interests.end());
 	BufferSlot slot;
 	
-	slot.segmentsRequested(interests);
-	slot.segmentsRequested(parityInterests);
+	slot.segmentsRequested(makeInterestsConst(interests));
+	slot.segmentsRequested(makeInterestsConst(parityInterests));
 	ASSERT_EQ(BufferSlot::New, slot.getState());
 
 	std::random_shuffle(dataObjects.begin(), dataObjects.end());
@@ -629,7 +629,7 @@ TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
 	boost::shared_ptr<WireData<DataSegmentHeader>> wd(new WireData<DataSegmentHeader>(ds, interests.front()));
 
     BufferSlot slot;
-    slot.segmentsRequested(interests);
+    slot.segmentsRequested(makeInterestsConst(interests));
     slot.segmentReceived(wd);
 
     AudioBundleSlot bundleSlot;
@@ -677,7 +677,7 @@ TEST(TestBuffer, TestRequestAndReceive)
 
 	for (int i = 0; i < n; ++i)
 	{
-		std::vector<boost::shared_ptr<Interest>> interests;
+		std::vector<boost::shared_ptr<const Interest>> interests;
 		int nInterests = std::rand()%30+10;
 		for (int j = 0; j < nInterests; ++j)
 		{

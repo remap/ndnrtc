@@ -20,7 +20,6 @@ namespace ndnrtc {
     typedef VideoFramePacketT<Immutable> ImmutableFrameAlias;
     class IEncodedFrameConsumer;
     class PlaybackQueue;
-    typedef new_api::statistics::StatisticsStorage StatStorage;
     class IVideoPlayoutObserver;
     
     class VideoPlayout : public Playout

@@ -21,12 +21,12 @@
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api::statistics;
+using namespace ndnrtc::statistics;
 
 //******************************************************************************
 Playout::Playout(boost::asio::io_service& io,
     const boost::shared_ptr<PlaybackQueue>& queue,
-    const boost::shared_ptr<new_api::statistics::StatisticsStorage> statStorage):
+    const boost::shared_ptr<statistics::StatisticsStorage> statStorage):
 isRunning_(false),
 jitterTiming_(io),
 pqueue_(queue),

@@ -45,6 +45,12 @@ namespace ndnrtc {
         Delta = 1
     };
 
+    enum class SegmentClass {
+        Unknow = -1,
+        Data = 0,
+        Parity = 1
+    };
+
     /**
      * NamespaceInfo represents information that can be extracted from 
      * legitimate NDN-RTC name (interest or data).

@@ -35,8 +35,8 @@ SampleEstimator::~SampleEstimator()
 void 
 SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {
-	SampleType st = segment->isDelta() ? Delta : Key;
-	DataType dt = segment->isParity() ? Parity : Data;
+	SampleClass st = segment->isDelta() ? SampleClass::Delta : SampleClass::Key;
+	SegmentClass dt = segment->isParity() ? SegmentClass::Parity : SegmentClass::Data;
 
 	estimators_[std::make_pair(st,dt)].segNum_.newValue(segment->getSlicesNum());
 	estimators_[std::make_pair(st,dt)].segSize_.newValue(segment->getData()->getContent().size());
@@ -46,20 +46,20 @@ void
 SampleEstimator::reset()
 {
 	estimators_ = boost::assign::map_list_of
-		( std::make_pair(SampleEstimator::Delta, SampleEstimator::Data), Estimators())
-		( std::make_pair(SampleEstimator::Delta, SampleEstimator::Parity), Estimators())
-		( std::make_pair(SampleEstimator::Key, SampleEstimator::Data), Estimators())
-		( std::make_pair(SampleEstimator::Key, SampleEstimator::Parity), Estimators());
+		( std::make_pair(SampleClass::Delta, SegmentClass::Data), Estimators())
+		( std::make_pair(SampleClass::Delta, SegmentClass::Parity), Estimators())
+		( std::make_pair(SampleClass::Key, SegmentClass::Data), Estimators())
+		( std::make_pair(SampleClass::Key, SegmentClass::Parity), Estimators());
 }
 
 double 
-SampleEstimator::getSegmentNumberEstimation(SampleType st, DataType dt)
+SampleEstimator::getSegmentNumberEstimation(SampleClass st, SegmentClass dt)
 {
 	return estimators_[std::make_pair(st,dt)].segNum_.value();
 }
 
 double
-SampleEstimator::getSegmentSizeEstimation(SampleType st, DataType dt)
+SampleEstimator::getSegmentSizeEstimation(SampleClass st, SegmentClass dt)
 {
 	return estimators_[std::make_pair(st,dt)].segSize_.value();
 }

@@ -138,7 +138,7 @@ UNIT_TESTS_CPPFLAGS_ += -DOS_DARWIN
 
 endif
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue
 
 # bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
 
@@ -304,5 +304,26 @@ bin_tests_test_interest_control_SOURCES = tests/test-interest-control.cc src/int
 bin_tests_test_interest_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_interest_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_interest_control_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/pipeline-control.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_state_machine_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeline_control_state_machine_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeline_control_state_machine_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_pipeliner_SOURCES = tests/test-pipeliner.cc src/pipeliner.cpp src/interest-control.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/interest-queue.cpp src/segment-controller.cpp src/frame-buffer.cpp src/sample-estimator.cpp src/periodic.cpp src/fec.cpp src/async.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeliner_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeliner_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeliner_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_interest_queue_SOURCES = tests/test-interest-queue.cc src/interest-queue.cpp src/clock.cpp src/async.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_interest_queue_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_interest_queue_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_interest_queue_LDADD = ${libndnrtc_la_LIBADD}
+
+bin_tests_test_pipeline_control_SOURCES = tests/test-pipeline-control.cc src/pipeline-control.cpp src/interest-control.cpp src/pipeliner.cpp src/segment-controller.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeliner.cpp src/frame-buffer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeline_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeline_control_LDADD = ${libndnrtc_la_LIBADD}
+
 
 TESTS = ${check_PROGRAMS}

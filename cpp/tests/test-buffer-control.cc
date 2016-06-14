@@ -67,7 +67,7 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 			frameName.appendSequenceNumber(sampleNo);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			EXPECT_TRUE(buffer->requested(interests));
+			EXPECT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			runTimer.wait();
 		}
 	});

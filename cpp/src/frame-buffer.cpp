@@ -24,7 +24,7 @@ using namespace ndnrtc;
 using namespace ndn;
 
 //******************************************************************************
-SlotSegment::SlotSegment(const boost::shared_ptr<ndn::Interest>& i):
+SlotSegment::SlotSegment(const boost::shared_ptr<const ndn::Interest>& i):
 interest_(i),
 requestTimeUsec_(clock::microsecondTimestamp()),
 arrivalTimeUsec_(0),
@@ -94,7 +94,7 @@ toString(int consistency)
 BufferSlot::BufferSlot(){ clear(); }
 
 void
-BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests)
+BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
 {
     if (state_ == Ready || state_ == Locked) 
         throw std::runtime_error("Can't add more segments because slot is ready or locked");
@@ -467,9 +467,9 @@ Buffer::reset()
 }
 
 bool
-Buffer::requested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests)
+Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
 {
-    std::map<Name, std::vector<boost::shared_ptr<Interest>>> slotInterests;
+    std::map<Name, std::vector<boost::shared_ptr<const Interest>>> slotInterests;
     for (auto i:interests)
     {
         NamespaceInfo nameInfo;
@@ -553,6 +553,15 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
     for (auto o:observers_) o->onNewData(receipt);
 
     return receipt;
+}
+
+bool
+Buffer::isRequested(const boost::shared_ptr<WireSegment>& segment) const
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    Name key = segment->getInfo().getPrefix(prefix_filter::Sample);
+
+    return (activeSlots_.find(key) != activeSlots_.end());
 }
 
 unsigned int 

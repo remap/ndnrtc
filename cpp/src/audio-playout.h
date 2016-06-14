@@ -15,8 +15,6 @@
 #include "webrtc-audio-channel.h"
 
 namespace ndnrtc {
-  typedef new_api::statistics::StatisticsStorage StatStorage;
-  class BufferSlot;
   class AudioRenderer;
   
   class AudioPlayout : public Playout
@@ -25,7 +23,7 @@ namespace ndnrtc {
     AudioPlayout(boost::asio::io_service& io,
             const boost::shared_ptr<PlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage = 
-              boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+            boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
     ~AudioPlayout(){}
 
     void start(unsigned int devIdx = 0, 

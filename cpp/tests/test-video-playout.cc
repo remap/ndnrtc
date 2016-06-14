@@ -165,7 +165,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 
 			for (auto& i:interests)
 			{
@@ -467,7 +467,7 @@ TEST(TestPlayout, TestSkipDelta)
 			frameName.appendSequenceNumber(fno);
 
 			std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg, 0, 2);
-			ASSERT_TRUE(buffer->requested(interests));
+			ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
 			
 			// simulate random order delivery
 			std::random_shuffle(interests.begin(), interests.end());

@@ -10,26 +10,18 @@
 
 #include "segment-controller.h"
 #include "estimators.h"
+#include "name-components.h"
 
 namespace ndnrtc {
 	class SampleEstimator : public ISegmentControllerObserver {
 	public:
-		typedef enum _SampleType {
-			Delta,
-			Key
-		} SampleType;
-		typedef enum _DataType {
-			Parity,
-			Data
-		} DataType;
-
 		SampleEstimator();
 		~SampleEstimator();
 
 		void segmentArrived(const boost::shared_ptr<WireSegment>&);
 		void reset();
-		double getSegmentNumberEstimation(SampleType st, DataType dt);
-		double getSegmentSizeEstimation(SampleType st, DataType dt);
+		double getSegmentNumberEstimation(SampleClass st, SegmentClass dt);
+		double getSegmentSizeEstimation(SampleClass st, SegmentClass dt);
 
 	private:
 		typedef struct _Estimators {
@@ -39,7 +31,7 @@ namespace ndnrtc {
 			estimators::Average segNum_, segSize_;
 		} Estimators;
 
-		std::map<std::pair<SampleType, DataType>, Estimators> estimators_;
+		std::map<std::pair<SampleClass, SegmentClass>, Estimators> estimators_;
 
 		void segmentRequestTimeout(const NamespaceInfo&){}
 		void segmentStarvation(){}

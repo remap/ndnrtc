@@ -63,26 +63,27 @@ TEST(TestSampleEstimator, TestTrivialEstimations)
 	}
 
 	EXPECT_LT(abs(5500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleEstimator::Delta, SampleEstimator::Data)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data)), 0.5);
 	EXPECT_LT(abs(0.2*5500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleEstimator::Delta, SampleEstimator::Parity)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity)), 0.5);
+
 	EXPECT_LT(abs(27500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleEstimator::Key, SampleEstimator::Data)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data)), 3);
 	EXPECT_LT(abs(0.2*27500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleEstimator::Key, SampleEstimator::Parity)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity)), 0.5);
 
 	GT_PRINTF("average delta segnum: data - %.2f; parity - %.2f.\n", 
-		estimator.getSegmentNumberEstimation(SampleEstimator::Delta, SampleEstimator::Data),
-		estimator.getSegmentNumberEstimation(SampleEstimator::Delta, SampleEstimator::Parity));
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data),
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity));
 	GT_PRINTF("average key segnum: data - %.2f; parity - %.2f.\n", 
-		estimator.getSegmentNumberEstimation(SampleEstimator::Key, SampleEstimator::Data),
-		estimator.getSegmentNumberEstimation(SampleEstimator::Key, SampleEstimator::Parity));
+		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data),
+		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity));
 	GT_PRINTF("average delta segsize: data - %.2f; parity - %.2f.\n", 
-		estimator.getSegmentSizeEstimation(SampleEstimator::Delta, SampleEstimator::Data),
-		estimator.getSegmentSizeEstimation(SampleEstimator::Delta, SampleEstimator::Parity));
+		estimator.getSegmentSizeEstimation(SampleClass::Delta, SegmentClass::Data),
+		estimator.getSegmentSizeEstimation(SampleClass::Delta, SegmentClass::Parity));
 	GT_PRINTF("average key segsize: data - %.2f; parity - %.2f.\n", 
-		estimator.getSegmentSizeEstimation(SampleEstimator::Key, SampleEstimator::Data),
-		estimator.getSegmentSizeEstimation(SampleEstimator::Key, SampleEstimator::Parity));
+		estimator.getSegmentSizeEstimation(SampleClass::Key, SegmentClass::Data),
+		estimator.getSegmentSizeEstimation(SampleClass::Key, SegmentClass::Parity));
 }
 
 int main(int argc, char **argv) {

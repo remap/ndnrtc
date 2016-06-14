@@ -21,11 +21,8 @@ namespace boost { namespace asio { class io_service; }}
 
 namespace ndnrtc
 {
-    namespace new_api
-    {
-        namespace statistics {
-            class StatisticsStorage;
-        }
+    namespace statistics {
+       class StatisticsStorage;
     }
     
     /**
@@ -397,7 +394,7 @@ namespace ndnrtc
          * @param stat Reference to a receiver statistics object
          * @return RESULT_OK on success, RESULT_ERR on failure
          */
-        virtual new_api::statistics::StatisticsStorage
+        virtual statistics::StatisticsStorage
         getRemoteStreamStatistics(const std::string& streamPrefix) = 0;
         
         /**

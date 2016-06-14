@@ -70,7 +70,11 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-drd-estimator$(EXEEXT) \
 	bin/tests/test-latency-control$(EXEEXT) \
 	bin/tests/test-buffer-control$(EXEEXT) \
-	bin/tests/test-interest-control$(EXEEXT)
+	bin/tests/test-interest-control$(EXEEXT) \
+	bin/tests/test-pipeline-control$(EXEEXT) \
+	bin/tests/test-pipeliner$(EXEEXT) \
+	bin/tests/test-pipeline-control-state-machine$(EXEEXT) \
+	bin/tests/test-interest-queue$(EXEEXT)
 TESTS = $(check_PROGRAMS)
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(pkginclude_HEADERS) \
@@ -365,7 +369,24 @@ bin_tests_test_interest_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_interest_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
+am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.$(OBJEXT)
+am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-test-interest-queue.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-interest-queue.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-clock.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-async.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-simple-log.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-ndnrtc-object.$(OBJEXT) \
+	src/bin_tests_test_interest_queue-statistics.$(OBJEXT) \
+	$(am__objects_11)
+bin_tests_test_interest_queue_OBJECTS =  \
+	$(am_bin_tests_test_interest_queue_OBJECTS)
+bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_interest_queue_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_interest_queue_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_latency_control-gtest-all.$(OBJEXT)
 am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control-test-latency-control.$(OBJEXT) \
 	tests/bin_tests_test_latency_control-tests-helpers.$(OBJEXT) \
@@ -379,7 +400,7 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	src/bin_tests_test_latency_control-frame-data.$(OBJEXT) \
 	src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT) \
-	$(am__objects_11)
+	$(am__objects_12)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
 bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -387,7 +408,7 @@ bin_tests_test_latency_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_latency_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
+am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_local_media_stream-gtest-all.$(OBJEXT)
 am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_stream-test-local-media-stream.$(OBJEXT) \
 	tests/bin_tests_test_local_media_stream-tests-helpers.$(OBJEXT) \
@@ -411,7 +432,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-async.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_13)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
@@ -420,7 +441,7 @@ bin_tests_test_local_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_local_media_stream_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
+am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
 am_bin_tests_test_media_thread_OBJECTS =  \
 	tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT) \
@@ -439,7 +460,7 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-estimators.$(OBJEXT) \
 	src/bin_tests_test_media_thread-clock.$(OBJEXT) \
 	src/bin_tests_test_media_thread-name-components.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_14)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
 bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -447,11 +468,11 @@ bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_media_thread_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
+am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_name_components-gtest-all.$(OBJEXT)
 am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components-test-name-components.$(OBJEXT) \
 	src/bin_tests_test_name_components-name-components.$(OBJEXT) \
-	$(am__objects_14)
+	$(am__objects_15)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
 bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -459,7 +480,7 @@ bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_name_components_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
+am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
@@ -467,7 +488,7 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
 	src/bin_tests_test_network_data-fec.$(OBJEXT) \
 	src/bin_tests_test_network_data-name-components.$(OBJEXT) \
-	$(am__objects_15)
+	$(am__objects_16)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
 bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -475,7 +496,7 @@ bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_network_data_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
+am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT) \
@@ -484,7 +505,7 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	src/bin_tests_test_packet_publisher-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-simple-log.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-name-components.$(OBJEXT) \
-	$(am__objects_16)
+	$(am__objects_17)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
 bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -492,26 +513,26 @@ bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_packet_publisher_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
+am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
 	tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_params-fec.$(OBJEXT) \
 	src/bin_tests_test_params-name-components.$(OBJEXT) \
-	$(am__objects_17)
+	$(am__objects_18)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
+am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT)
 am_bin_tests_test_periodic_OBJECTS =  \
 	tests/bin_tests_test_periodic-test-periodic.$(OBJEXT) \
 	src/bin_tests_test_periodic-periodic.$(OBJEXT) \
-	$(am__objects_18)
+	$(am__objects_19)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
 bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -519,7 +540,76 @@ bin_tests_test_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_periodic_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
+am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.$(OBJEXT)
+am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_control-test-pipeline-control.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-pipeline-control.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-interest-control.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-pipeliner.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-segment-controller.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-name-components.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-frame-data.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-clock.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-simple-log.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-ndnrtc-object.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-estimators.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-periodic.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-pipeline-control-state-machine.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-pipeliner.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control-frame-buffer.$(OBJEXT) \
+	$(am__objects_20)
+bin_tests_test_pipeline_control_OBJECTS =  \
+	$(am_bin_tests_test_pipeline_control_OBJECTS)
+bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_pipeline_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_pipeline_control_LDFLAGS) $(LDFLAGS) -o $@
+am__objects_21 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.$(OBJEXT)
+am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT) \
+	$(am__objects_21)
+bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
+	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
+bin_tests_test_pipeline_control_state_machine_DEPENDENCIES =  \
+	$(am__DEPENDENCIES_2)
+bin_tests_test_pipeline_control_state_machine_LINK = $(LIBTOOL) \
+	$(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_pipeline_control_state_machine_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.$(OBJEXT)
+am_bin_tests_test_pipeliner_OBJECTS =  \
+	tests/bin_tests_test_pipeliner-test-pipeliner.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-pipeliner.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-interest-control.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-name-components.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-frame-data.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-clock.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-simple-log.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-ndnrtc-object.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-estimators.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-interest-queue.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-segment-controller.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-frame-buffer.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-sample-estimator.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-periodic.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-fec.$(OBJEXT) \
+	src/bin_tests_test_pipeliner-async.$(OBJEXT) $(am__objects_22)
+bin_tests_test_pipeliner_OBJECTS =  \
+	$(am_bin_tests_test_pipeliner_OBJECTS)
+bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_2)
+bin_tests_test_pipeliner_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_pipeliner_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__objects_23 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_playout_OBJECTS =  \
 	tests/bin_tests_test_playout-test-playout.$(OBJEXT) \
@@ -541,14 +631,14 @@ am_bin_tests_test_playout_OBJECTS =  \
 	src/bin_tests_test_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_playout-video-coder.$(OBJEXT) \
-	$(am__objects_19)
+	$(am__objects_23)
 bin_tests_test_playout_OBJECTS = $(am_bin_tests_test_playout_OBJECTS)
 bin_tests_test_playout_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_playout_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
+am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_sample_estimator-gtest-all.$(OBJEXT)
 am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimator-test-sample-estimator.$(OBJEXT) \
 	tests/bin_tests_test_sample_estimator-tests-helpers.$(OBJEXT) \
@@ -558,7 +648,7 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	src/bin_tests_test_sample_estimator-clock.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-frame-data.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-name-components.$(OBJEXT) \
-	$(am__objects_20)
+	$(am__objects_24)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
 bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -566,7 +656,7 @@ bin_tests_test_sample_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_sample_estimator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_21 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
+am__objects_25 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_segment_controller-gtest-all.$(OBJEXT)
 am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_controller-test-segment-controller.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-segment-controller.$(OBJEXT) \
@@ -577,7 +667,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 	src/bin_tests_test_segment_controller-async.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-periodic.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-clock.$(OBJEXT) \
-	$(am__objects_21)
+	$(am__objects_25)
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
@@ -586,7 +676,7 @@ bin_tests_test_segment_controller_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_segment_controller_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
+am__objects_26 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_coder-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_coder_OBJECTS =  \
 	tests/bin_tests_test_video_coder-test-video-coder.$(OBJEXT) \
@@ -596,7 +686,7 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	src/bin_tests_test_video_coder-simple-log.$(OBJEXT) \
 	src/bin_tests_test_video_coder-fec.$(OBJEXT) \
 	src/bin_tests_test_video_coder-name-components.$(OBJEXT) \
-	$(am__objects_22)
+	$(am__objects_26)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
 bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -604,7 +694,7 @@ bin_tests_test_video_coder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_coder_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_23 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
+am__objects_27 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-test-video-playout.$(OBJEXT) \
 	tests/bin_tests_test_video_playout-tests-helpers.$(OBJEXT) \
@@ -626,7 +716,7 @@ am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-tes
 	src/bin_tests_test_video_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-coder.$(OBJEXT) \
-	$(am__objects_23)
+	$(am__objects_27)
 bin_tests_test_video_playout_OBJECTS =  \
 	$(am_bin_tests_test_video_playout_OBJECTS)
 bin_tests_test_video_playout_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -634,13 +724,13 @@ bin_tests_test_video_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_playout_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
+am__objects_28 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.$(OBJEXT)
 am_bin_tests_test_webrtc_audio_channel_OBJECTS = tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-audio-controller.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-threading-capability.$(OBJEXT) \
-	$(am__objects_24)
+	$(am__objects_28)
 bin_tests_test_webrtc_audio_channel_OBJECTS =  \
 	$(am_bin_tests_test_webrtc_audio_channel_OBJECTS)
 bin_tests_test_webrtc_audio_channel_DEPENDENCIES =  \
@@ -721,6 +811,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_frame_buffer_SOURCES) \
 	$(bin_tests_test_frame_converter_SOURCES) \
 	$(bin_tests_test_interest_control_SOURCES) \
+	$(bin_tests_test_interest_queue_SOURCES) \
 	$(bin_tests_test_latency_control_SOURCES) \
 	$(bin_tests_test_local_media_stream_SOURCES) \
 	$(bin_tests_test_media_thread_SOURCES) \
@@ -729,6 +820,9 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_packet_publisher_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
 	$(bin_tests_test_periodic_SOURCES) \
+	$(bin_tests_test_pipeline_control_SOURCES) \
+	$(bin_tests_test_pipeline_control_state_machine_SOURCES) \
+	$(bin_tests_test_pipeliner_SOURCES) \
 	$(bin_tests_test_playout_SOURCES) \
 	$(bin_tests_test_sample_estimator_SOURCES) \
 	$(bin_tests_test_segment_controller_SOURCES) \
@@ -746,6 +840,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_frame_buffer_SOURCES) \
 	$(bin_tests_test_frame_converter_SOURCES) \
 	$(bin_tests_test_interest_control_SOURCES) \
+	$(bin_tests_test_interest_queue_SOURCES) \
 	$(bin_tests_test_latency_control_SOURCES) \
 	$(bin_tests_test_local_media_stream_SOURCES) \
 	$(bin_tests_test_media_thread_SOURCES) \
@@ -754,6 +849,9 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_packet_publisher_SOURCES) \
 	$(bin_tests_test_params_SOURCES) \
 	$(bin_tests_test_periodic_SOURCES) \
+	$(bin_tests_test_pipeline_control_SOURCES) \
+	$(bin_tests_test_pipeline_control_state_machine_SOURCES) \
+	$(bin_tests_test_pipeliner_SOURCES) \
 	$(bin_tests_test_playout_SOURCES) \
 	$(bin_tests_test_sample_estimator_SOURCES) \
 	$(bin_tests_test_segment_controller_SOURCES) \
@@ -1152,6 +1250,22 @@ bin_tests_test_interest_control_SOURCES = tests/test-interest-control.cc src/int
 bin_tests_test_interest_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_interest_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_interest_control_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/pipeline-control.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_state_machine_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeline_control_state_machine_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeline_control_state_machine_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_pipeliner_SOURCES = tests/test-pipeliner.cc src/pipeliner.cpp src/interest-control.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/interest-queue.cpp src/segment-controller.cpp src/frame-buffer.cpp src/sample-estimator.cpp src/periodic.cpp src/fec.cpp src/async.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeliner_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeliner_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeliner_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_interest_queue_SOURCES = tests/test-interest-queue.cc src/interest-queue.cpp src/clock.cpp src/async.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_interest_queue_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_interest_queue_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_interest_queue_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_pipeline_control_SOURCES = tests/test-pipeline-control.cc src/pipeline-control.cpp src/interest-control.cpp src/pipeliner.cpp src/segment-controller.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeliner.cpp src/frame-buffer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_pipeline_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_pipeline_control_LDADD = ${libndnrtc_la_LIBADD}
 all: all-am
 
 .SUFFIXES:
@@ -1624,6 +1738,29 @@ contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.$(OBJEXT)
 bin/tests/test-interest-control$(EXEEXT): $(bin_tests_test_interest_control_OBJECTS) $(bin_tests_test_interest_control_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-interest-control$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_interest_control_LINK) $(bin_tests_test_interest_control_OBJECTS) $(bin_tests_test_interest_control_LDADD) $(LIBS)
+tests/bin_tests_test_interest_queue-test-interest-queue.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-interest-queue.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-clock.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-async.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-simple-log.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-ndnrtc-object.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_interest_queue-statistics.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-interest-queue$(EXEEXT): $(bin_tests_test_interest_queue_OBJECTS) $(bin_tests_test_interest_queue_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-interest-queue$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_interest_queue_LINK) $(bin_tests_test_interest_queue_OBJECTS) $(bin_tests_test_interest_queue_LDADD) $(LIBS)
 tests/bin_tests_test_latency_control-test-latency-control.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_latency_control-tests-helpers.$(OBJEXT):  \
@@ -1837,6 +1974,105 @@ contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT):  \
 bin/tests/test-periodic$(EXEEXT): $(bin_tests_test_periodic_OBJECTS) $(bin_tests_test_periodic_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-periodic$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_periodic_LINK) $(bin_tests_test_periodic_OBJECTS) $(bin_tests_test_periodic_LDADD) $(LIBS)
+tests/bin_tests_test_pipeline_control-test-pipeline-control.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-pipeline-control.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-interest-control.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-pipeliner.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-segment-controller.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-name-components.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-frame-data.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-clock.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-simple-log.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-ndnrtc-object.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-estimators.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-periodic.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-pipeline-control-state-machine.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control-frame-buffer.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-pipeline-control$(EXEEXT): $(bin_tests_test_pipeline_control_OBJECTS) $(bin_tests_test_pipeline_control_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-pipeline-control$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_pipeline_control_LINK) $(bin_tests_test_pipeline_control_OBJECTS) $(bin_tests_test_pipeline_control_LDADD) $(LIBS)
+tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-pipeline-control-state-machine$(EXEEXT): $(bin_tests_test_pipeline_control_state_machine_OBJECTS) $(bin_tests_test_pipeline_control_state_machine_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-pipeline-control-state-machine$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_pipeline_control_state_machine_LINK) $(bin_tests_test_pipeline_control_state_machine_OBJECTS) $(bin_tests_test_pipeline_control_state_machine_LDADD) $(LIBS)
+tests/bin_tests_test_pipeliner-test-pipeliner.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-pipeliner.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-interest-control.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-name-components.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-frame-data.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-clock.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-simple-log.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-ndnrtc-object.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-estimators.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-interest-queue.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-segment-controller.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-frame-buffer.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-sample-estimator.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-periodic.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-fec.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeliner-async.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+bin/tests/test-pipeliner$(EXEEXT): $(bin_tests_test_pipeliner_OBJECTS) $(bin_tests_test_pipeliner_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-pipeliner$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_pipeliner_LINK) $(bin_tests_test_pipeliner_OBJECTS) $(bin_tests_test_pipeliner_LDADD) $(LIBS)
 tests/bin_tests_test_playout-test-playout.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_playout-tests-helpers.$(OBJEXT):  \
@@ -2088,6 +2324,7 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_interest_control-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT)
@@ -2096,6 +2333,9 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT)
+	-rm -f contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT)
@@ -2112,6 +2352,7 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_buffer-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_frame_converter-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_latency_control-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_local_media_stream-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
@@ -2120,6 +2361,9 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.$(OBJEXT)
+	-rm -f contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_playout-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_sample_estimator-gtest-all.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/bin_tests_test_segment_controller-gtest-all.$(OBJEXT)
@@ -2192,6 +2436,12 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_interest_control-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_interest_control-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_interest_control-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-async.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-interest-queue.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-ndnrtc-object.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_interest_queue-statistics.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-clock.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT)
 	-rm -f src/bin_tests_test_latency_control-estimators.$(OBJEXT)
@@ -2248,6 +2498,39 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_params-fec.$(OBJEXT)
 	-rm -f src/bin_tests_test_params-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_periodic-periodic.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-estimators.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-frame-buffer.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-frame-data.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-interest-control.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-name-components.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-ndnrtc-object.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-periodic.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-pipeline-control-state-machine.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-pipeline-control.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-pipeliner.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-segment-controller.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-async.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-estimators.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-fec.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-frame-buffer.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-frame-data.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-interest-control.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-interest-queue.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-name-components.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-ndnrtc-object.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-periodic.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-pipeliner.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-sample-estimator.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-segment-controller.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeliner-simple-log.$(OBJEXT)
 	-rm -f src/bin_tests_test_playout-async.$(OBJEXT)
 	-rm -f src/bin_tests_test_playout-clock.$(OBJEXT)
 	-rm -f src/bin_tests_test_playout-fec.$(OBJEXT)
@@ -2416,6 +2699,7 @@ mostlyclean-compile:
 	-rm -f tests/bin_tests_test_frame_converter-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_interest_control-test-interest-control.$(OBJEXT)
 	-rm -f tests/bin_tests_test_interest_control-tests-helpers.$(OBJEXT)
+	-rm -f tests/bin_tests_test_interest_queue-test-interest-queue.$(OBJEXT)
 	-rm -f tests/bin_tests_test_latency_control-test-latency-control.$(OBJEXT)
 	-rm -f tests/bin_tests_test_latency_control-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_local_media_stream-test-local-media-stream.$(OBJEXT)
@@ -2429,6 +2713,9 @@ mostlyclean-compile:
 	-rm -f tests/bin_tests_test_params-test-params.$(OBJEXT)
 	-rm -f tests/bin_tests_test_params-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_periodic-test-periodic.$(OBJEXT)
+	-rm -f tests/bin_tests_test_pipeline_control-test-pipeline-control.$(OBJEXT)
+	-rm -f tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.$(OBJEXT)
+	-rm -f tests/bin_tests_test_pipeliner-test-pipeliner.$(OBJEXT)
 	-rm -f tests/bin_tests_test_playout-test-playout.$(OBJEXT)
 	-rm -f tests/bin_tests_test_playout-tests-helpers.$(OBJEXT)
 	-rm -f tests/bin_tests_test_sample_estimator-test-sample-estimator.$(OBJEXT)
@@ -2470,6 +2757,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_converter-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_control-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_latency_control-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_local_media_stream-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_media_thread-gmock-all.Po@am__quote@
@@ -2478,6 +2766,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_packet_publisher-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_params-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_periodic-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_playout-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_sample_estimator-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_segment_controller-gmock-all.Po@am__quote@
@@ -2494,6 +2785,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_converter-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_control-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_latency_control-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_local_media_stream-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_media_thread-gtest-all.Po@am__quote@
@@ -2502,6 +2794,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_packet_publisher-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_params-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_periodic-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_playout-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_sample_estimator-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_segment_controller-gtest-all.Po@am__quote@
@@ -2574,6 +2869,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_control-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_control-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_control-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-async.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-drd-estimator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_latency_control-estimators.Po@am__quote@
@@ -2630,6 +2931,39 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_params-fec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_params-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_periodic-periodic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-async.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-fec.Po@am__quote@
@@ -2748,6 +3082,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_frame_converter-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_interest_control-test-interest-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_interest_control-tests-helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_latency_control-test-latency-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_latency_control-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_local_media_stream-test-local-media-stream.Po@am__quote@
@@ -2761,6 +3096,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-test-params.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_params-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_periodic-test-periodic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_playout-test-playout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_playout-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_sample_estimator-test-sample-estimator.Po@am__quote@
@@ -4863,6 +5201,150 @@ contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.obj: cont
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
+tests/bin_tests_test_interest_queue-test-interest-queue.o: tests/test-interest-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_interest_queue-test-interest-queue.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Tpo -c -o tests/bin_tests_test_interest_queue-test-interest-queue.o `test -f 'tests/test-interest-queue.cc' || echo '$(srcdir)/'`tests/test-interest-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Tpo tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-interest-queue.cc' object='tests/bin_tests_test_interest_queue-test-interest-queue.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_interest_queue-test-interest-queue.o `test -f 'tests/test-interest-queue.cc' || echo '$(srcdir)/'`tests/test-interest-queue.cc
+
+tests/bin_tests_test_interest_queue-test-interest-queue.obj: tests/test-interest-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_interest_queue-test-interest-queue.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Tpo -c -o tests/bin_tests_test_interest_queue-test-interest-queue.obj `if test -f 'tests/test-interest-queue.cc'; then $(CYGPATH_W) 'tests/test-interest-queue.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-interest-queue.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Tpo tests/$(DEPDIR)/bin_tests_test_interest_queue-test-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-interest-queue.cc' object='tests/bin_tests_test_interest_queue-test-interest-queue.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_interest_queue-test-interest-queue.obj `if test -f 'tests/test-interest-queue.cc'; then $(CYGPATH_W) 'tests/test-interest-queue.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-interest-queue.cc'; fi`
+
+src/bin_tests_test_interest_queue-interest-queue.o: src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-interest-queue.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Tpo -c -o src/bin_tests_test_interest_queue-interest-queue.o `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/bin_tests_test_interest_queue-interest-queue.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-interest-queue.o `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+
+src/bin_tests_test_interest_queue-interest-queue.obj: src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-interest-queue.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Tpo -c -o src/bin_tests_test_interest_queue-interest-queue.obj `if test -f 'src/interest-queue.cpp'; then $(CYGPATH_W) 'src/interest-queue.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-queue.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/bin_tests_test_interest_queue-interest-queue.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-interest-queue.obj `if test -f 'src/interest-queue.cpp'; then $(CYGPATH_W) 'src/interest-queue.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-queue.cpp'; fi`
+
+src/bin_tests_test_interest_queue-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Tpo -c -o src/bin_tests_test_interest_queue-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_interest_queue-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_interest_queue-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Tpo -c -o src/bin_tests_test_interest_queue-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_interest_queue-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_interest_queue-async.o: src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-async.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-async.Tpo -c -o src/bin_tests_test_interest_queue-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-async.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-async.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/async.cpp' object='src/bin_tests_test_interest_queue-async.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
+
+src/bin_tests_test_interest_queue-async.obj: src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-async.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-async.Tpo -c -o src/bin_tests_test_interest_queue-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-async.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-async.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/async.cpp' object='src/bin_tests_test_interest_queue-async.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
+
+src/bin_tests_test_interest_queue-simple-log.o: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Tpo -c -o src/bin_tests_test_interest_queue-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_interest_queue-simple-log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/bin_tests_test_interest_queue-simple-log.obj: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Tpo -c -o src/bin_tests_test_interest_queue-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_interest_queue-simple-log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+
+src/bin_tests_test_interest_queue-ndnrtc-object.o: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Tpo -c -o src/bin_tests_test_interest_queue-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_interest_queue-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/bin_tests_test_interest_queue-ndnrtc-object.obj: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Tpo -c -o src/bin_tests_test_interest_queue-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_interest_queue-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+
+src/bin_tests_test_interest_queue-statistics.o: src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Tpo -c -o src/bin_tests_test_interest_queue-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/statistics.cpp' object='src/bin_tests_test_interest_queue-statistics.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+
+src/bin_tests_test_interest_queue-statistics.obj: src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_interest_queue-statistics.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Tpo -c -o src/bin_tests_test_interest_queue-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Tpo src/$(DEPDIR)/bin_tests_test_interest_queue-statistics.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/statistics.cpp' object='src/bin_tests_test_interest_queue-statistics.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_interest_queue-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_interest_queue-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_interest_queue-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_interest_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
 tests/bin_tests_test_latency_control-test-latency-control.o: tests/test-latency-control.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_latency_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_latency_control-test-latency-control.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_latency_control-test-latency-control.Tpo -c -o tests/bin_tests_test_latency_control-test-latency-control.o `test -f 'tests/test-latency-control.cc' || echo '$(srcdir)/'`tests/test-latency-control.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_latency_control-test-latency-control.Tpo tests/$(DEPDIR)/bin_tests_test_latency_control-test-latency-control.Po
@@ -6238,6 +6720,678 @@ contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.obj: contrib/gtes
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_periodic_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_pipeline_control-test-pipeline-control.o: tests/test-pipeline-control.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeline_control-test-pipeline-control.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Tpo -c -o tests/bin_tests_test_pipeline_control-test-pipeline-control.o `test -f 'tests/test-pipeline-control.cc' || echo '$(srcdir)/'`tests/test-pipeline-control.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Tpo tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeline-control.cc' object='tests/bin_tests_test_pipeline_control-test-pipeline-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeline_control-test-pipeline-control.o `test -f 'tests/test-pipeline-control.cc' || echo '$(srcdir)/'`tests/test-pipeline-control.cc
+
+tests/bin_tests_test_pipeline_control-test-pipeline-control.obj: tests/test-pipeline-control.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeline_control-test-pipeline-control.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Tpo -c -o tests/bin_tests_test_pipeline_control-test-pipeline-control.obj `if test -f 'tests/test-pipeline-control.cc'; then $(CYGPATH_W) 'tests/test-pipeline-control.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeline-control.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Tpo tests/$(DEPDIR)/bin_tests_test_pipeline_control-test-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeline-control.cc' object='tests/bin_tests_test_pipeline_control-test-pipeline-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeline_control-test-pipeline-control.obj `if test -f 'tests/test-pipeline-control.cc'; then $(CYGPATH_W) 'tests/test-pipeline-control.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeline-control.cc'; fi`
+
+src/bin_tests_test_pipeline_control-pipeline-control.o: src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeline-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control-pipeline-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
+
+src/bin_tests_test_pipeline_control-pipeline-control.obj: src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeline-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control-pipeline-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-interest-control.o: src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-interest-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Tpo -c -o src/bin_tests_test_pipeline_control-interest-control.o `test -f 'src/interest-control.cpp' || echo '$(srcdir)/'`src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-control.cpp' object='src/bin_tests_test_pipeline_control-interest-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-interest-control.o `test -f 'src/interest-control.cpp' || echo '$(srcdir)/'`src/interest-control.cpp
+
+src/bin_tests_test_pipeline_control-interest-control.obj: src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-interest-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Tpo -c -o src/bin_tests_test_pipeline_control-interest-control.obj `if test -f 'src/interest-control.cpp'; then $(CYGPATH_W) 'src/interest-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-control.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-interest-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-control.cpp' object='src/bin_tests_test_pipeline_control-interest-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-interest-control.obj `if test -f 'src/interest-control.cpp'; then $(CYGPATH_W) 'src/interest-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-control.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-pipeliner.o: src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeliner.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Tpo -c -o src/bin_tests_test_pipeline_control-pipeliner.o `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/bin_tests_test_pipeline_control-pipeliner.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeliner.o `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+
+src/bin_tests_test_pipeline_control-pipeliner.obj: src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeliner.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Tpo -c -o src/bin_tests_test_pipeline_control-pipeliner.obj `if test -f 'src/pipeliner.cpp'; then $(CYGPATH_W) 'src/pipeliner.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeliner.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/bin_tests_test_pipeline_control-pipeliner.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeliner.obj `if test -f 'src/pipeliner.cpp'; then $(CYGPATH_W) 'src/pipeliner.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeliner.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-segment-controller.o: src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-segment-controller.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Tpo -c -o src/bin_tests_test_pipeline_control-segment-controller.o `test -f 'src/segment-controller.cpp' || echo '$(srcdir)/'`src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segment-controller.cpp' object='src/bin_tests_test_pipeline_control-segment-controller.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-segment-controller.o `test -f 'src/segment-controller.cpp' || echo '$(srcdir)/'`src/segment-controller.cpp
+
+src/bin_tests_test_pipeline_control-segment-controller.obj: src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-segment-controller.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Tpo -c -o src/bin_tests_test_pipeline_control-segment-controller.obj `if test -f 'src/segment-controller.cpp'; then $(CYGPATH_W) 'src/segment-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/segment-controller.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segment-controller.cpp' object='src/bin_tests_test_pipeline_control-segment-controller.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-segment-controller.obj `if test -f 'src/segment-controller.cpp'; then $(CYGPATH_W) 'src/segment-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/segment-controller.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-name-components.o: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-name-components.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Tpo -c -o src/bin_tests_test_pipeline_control-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_pipeline_control-name-components.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+
+src/bin_tests_test_pipeline_control-name-components.obj: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-name-components.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Tpo -c -o src/bin_tests_test_pipeline_control-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_pipeline_control-name-components.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-frame-data.o: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Tpo -c -o src/bin_tests_test_pipeline_control-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_pipeline_control-frame-data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+
+src/bin_tests_test_pipeline_control-frame-data.obj: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Tpo -c -o src/bin_tests_test_pipeline_control-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_pipeline_control-frame-data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Tpo -c -o src/bin_tests_test_pipeline_control-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeline_control-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_pipeline_control-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Tpo -c -o src/bin_tests_test_pipeline_control-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeline_control-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-simple-log.o: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Tpo -c -o src/bin_tests_test_pipeline_control-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeline_control-simple-log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/bin_tests_test_pipeline_control-simple-log.obj: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Tpo -c -o src/bin_tests_test_pipeline_control-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeline_control-simple-log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-ndnrtc-object.o: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeline_control-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeline_control-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/bin_tests_test_pipeline_control-ndnrtc-object.obj: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeline_control-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeline_control-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-estimators.o: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Tpo -c -o src/bin_tests_test_pipeline_control-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeline_control-estimators.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/bin_tests_test_pipeline_control-estimators.obj: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Tpo -c -o src/bin_tests_test_pipeline_control-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeline_control-estimators.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-periodic.o: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-periodic.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Tpo -c -o src/bin_tests_test_pipeline_control-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_pipeline_control-periodic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+
+src/bin_tests_test_pipeline_control-periodic.obj: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-periodic.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Tpo -c -o src/bin_tests_test_pipeline_control-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_pipeline_control-periodic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-pipeline-control-state-machine.o: src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeline-control-state-machine.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Tpo -c -o src/bin_tests_test_pipeline_control-pipeline-control-state-machine.o `test -f 'src/pipeline-control-state-machine.cpp' || echo '$(srcdir)/'`src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control-state-machine.cpp' object='src/bin_tests_test_pipeline_control-pipeline-control-state-machine.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeline-control-state-machine.o `test -f 'src/pipeline-control-state-machine.cpp' || echo '$(srcdir)/'`src/pipeline-control-state-machine.cpp
+
+src/bin_tests_test_pipeline_control-pipeline-control-state-machine.obj: src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-pipeline-control-state-machine.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Tpo -c -o src/bin_tests_test_pipeline_control-pipeline-control-state-machine.obj `if test -f 'src/pipeline-control-state-machine.cpp'; then $(CYGPATH_W) 'src/pipeline-control-state-machine.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control-state-machine.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control-state-machine.cpp' object='src/bin_tests_test_pipeline_control-pipeline-control-state-machine.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-pipeline-control-state-machine.obj `if test -f 'src/pipeline-control-state-machine.cpp'; then $(CYGPATH_W) 'src/pipeline-control-state-machine.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control-state-machine.cpp'; fi`
+
+src/bin_tests_test_pipeline_control-frame-buffer.o: src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-frame-buffer.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Tpo -c -o src/bin_tests_test_pipeline_control-frame-buffer.o `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/bin_tests_test_pipeline_control-frame-buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-frame-buffer.o `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+
+src/bin_tests_test_pipeline_control-frame-buffer.obj: src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control-frame-buffer.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Tpo -c -o src/bin_tests_test_pipeline_control-frame-buffer.obj `if test -f 'src/frame-buffer.cpp'; then $(CYGPATH_W) 'src/frame-buffer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-buffer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control-frame-buffer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/bin_tests_test_pipeline_control-frame-buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control-frame-buffer.obj `if test -f 'src/frame-buffer.cpp'; then $(CYGPATH_W) 'src/frame-buffer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-buffer.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.o: tests/test-pipeline-control-state-machine.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Tpo -c -o tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.o `test -f 'tests/test-pipeline-control-state-machine.cc' || echo '$(srcdir)/'`tests/test-pipeline-control-state-machine.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Tpo tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeline-control-state-machine.cc' object='tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.o `test -f 'tests/test-pipeline-control-state-machine.cc' || echo '$(srcdir)/'`tests/test-pipeline-control-state-machine.cc
+
+tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.obj: tests/test-pipeline-control-state-machine.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Tpo -c -o tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.obj `if test -f 'tests/test-pipeline-control-state-machine.cc'; then $(CYGPATH_W) 'tests/test-pipeline-control-state-machine.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeline-control-state-machine.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Tpo tests/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeline-control-state-machine.cc' object='tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.obj `if test -f 'tests/test-pipeline-control-state-machine.cc'; then $(CYGPATH_W) 'tests/test-pipeline-control-state-machine.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeline-control-state-machine.cc'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.o: src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.o `test -f 'src/pipeline-control-state-machine.cpp' || echo '$(srcdir)/'`src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control-state-machine.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.o `test -f 'src/pipeline-control-state-machine.cpp' || echo '$(srcdir)/'`src/pipeline-control-state-machine.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.obj: src/pipeline-control-state-machine.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.obj `if test -f 'src/pipeline-control-state-machine.cpp'; then $(CYGPATH_W) 'src/pipeline-control-state-machine.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control-state-machine.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control-state-machine.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.obj `if test -f 'src/pipeline-control-state-machine.cpp'; then $(CYGPATH_W) 'src/pipeline-control-state-machine.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control-state-machine.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeline_control_state_machine-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeline_control_state_machine-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-simple-log.o: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeline_control_state_machine-simple-log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-simple-log.obj: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeline_control_state_machine-simple-log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.o: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o: src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj: src/pipeline-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_pipeliner-test-pipeliner.o: tests/test-pipeliner.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeliner-test-pipeliner.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Tpo -c -o tests/bin_tests_test_pipeliner-test-pipeliner.o `test -f 'tests/test-pipeliner.cc' || echo '$(srcdir)/'`tests/test-pipeliner.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Tpo tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeliner.cc' object='tests/bin_tests_test_pipeliner-test-pipeliner.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeliner-test-pipeliner.o `test -f 'tests/test-pipeliner.cc' || echo '$(srcdir)/'`tests/test-pipeliner.cc
+
+tests/bin_tests_test_pipeliner-test-pipeliner.obj: tests/test-pipeliner.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_pipeliner-test-pipeliner.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Tpo -c -o tests/bin_tests_test_pipeliner-test-pipeliner.obj `if test -f 'tests/test-pipeliner.cc'; then $(CYGPATH_W) 'tests/test-pipeliner.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeliner.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Tpo tests/$(DEPDIR)/bin_tests_test_pipeliner-test-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='tests/test-pipeliner.cc' object='tests/bin_tests_test_pipeliner-test-pipeliner.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_pipeliner-test-pipeliner.obj `if test -f 'tests/test-pipeliner.cc'; then $(CYGPATH_W) 'tests/test-pipeliner.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-pipeliner.cc'; fi`
+
+src/bin_tests_test_pipeliner-pipeliner.o: src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-pipeliner.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Tpo -c -o src/bin_tests_test_pipeliner-pipeliner.o `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/bin_tests_test_pipeliner-pipeliner.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-pipeliner.o `test -f 'src/pipeliner.cpp' || echo '$(srcdir)/'`src/pipeliner.cpp
+
+src/bin_tests_test_pipeliner-pipeliner.obj: src/pipeliner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-pipeliner.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Tpo -c -o src/bin_tests_test_pipeliner-pipeliner.obj `if test -f 'src/pipeliner.cpp'; then $(CYGPATH_W) 'src/pipeliner.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeliner.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-pipeliner.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeliner.cpp' object='src/bin_tests_test_pipeliner-pipeliner.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-pipeliner.obj `if test -f 'src/pipeliner.cpp'; then $(CYGPATH_W) 'src/pipeliner.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeliner.cpp'; fi`
+
+src/bin_tests_test_pipeliner-interest-control.o: src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-interest-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Tpo -c -o src/bin_tests_test_pipeliner-interest-control.o `test -f 'src/interest-control.cpp' || echo '$(srcdir)/'`src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-control.cpp' object='src/bin_tests_test_pipeliner-interest-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-interest-control.o `test -f 'src/interest-control.cpp' || echo '$(srcdir)/'`src/interest-control.cpp
+
+src/bin_tests_test_pipeliner-interest-control.obj: src/interest-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-interest-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Tpo -c -o src/bin_tests_test_pipeliner-interest-control.obj `if test -f 'src/interest-control.cpp'; then $(CYGPATH_W) 'src/interest-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-control.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-interest-control.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-control.cpp' object='src/bin_tests_test_pipeliner-interest-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-interest-control.obj `if test -f 'src/interest-control.cpp'; then $(CYGPATH_W) 'src/interest-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-control.cpp'; fi`
+
+src/bin_tests_test_pipeliner-name-components.o: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-name-components.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Tpo -c -o src/bin_tests_test_pipeliner-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_pipeliner-name-components.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+
+src/bin_tests_test_pipeliner-name-components.obj: src/name-components.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-name-components.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Tpo -c -o src/bin_tests_test_pipeliner-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-name-components.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/name-components.cpp' object='src/bin_tests_test_pipeliner-name-components.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
+
+src/bin_tests_test_pipeliner-frame-data.o: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Tpo -c -o src/bin_tests_test_pipeliner-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_pipeliner-frame-data.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
+
+src/bin_tests_test_pipeliner-frame-data.obj: src/frame-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Tpo -c -o src/bin_tests_test_pipeliner-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-frame-data.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-data.cpp' object='src/bin_tests_test_pipeliner-frame-data.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
+
+src/bin_tests_test_pipeliner-clock.o: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Tpo -c -o src/bin_tests_test_pipeliner-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeliner-clock.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/bin_tests_test_pipeliner-clock.obj: src/clock.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Tpo -c -o src/bin_tests_test_pipeliner-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/clock.cpp' object='src/bin_tests_test_pipeliner-clock.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_pipeliner-simple-log.o: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Tpo -c -o src/bin_tests_test_pipeliner-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeliner-simple-log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
+
+src/bin_tests_test_pipeliner-simple-log.obj: src/simple-log.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Tpo -c -o src/bin_tests_test_pipeliner-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-simple-log.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/simple-log.cpp' object='src/bin_tests_test_pipeliner-simple-log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
+
+src/bin_tests_test_pipeliner-ndnrtc-object.o: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeliner-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeliner-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
+
+src/bin_tests_test_pipeliner-ndnrtc-object.obj: src/ndnrtc-object.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Tpo -c -o src/bin_tests_test_pipeliner-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-ndnrtc-object.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/ndnrtc-object.cpp' object='src/bin_tests_test_pipeliner-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
+
+src/bin_tests_test_pipeliner-estimators.o: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Tpo -c -o src/bin_tests_test_pipeliner-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeliner-estimators.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/bin_tests_test_pipeliner-estimators.obj: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Tpo -c -o src/bin_tests_test_pipeliner-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeliner-estimators.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+
+src/bin_tests_test_pipeliner-interest-queue.o: src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-interest-queue.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Tpo -c -o src/bin_tests_test_pipeliner-interest-queue.o `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/bin_tests_test_pipeliner-interest-queue.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-interest-queue.o `test -f 'src/interest-queue.cpp' || echo '$(srcdir)/'`src/interest-queue.cpp
+
+src/bin_tests_test_pipeliner-interest-queue.obj: src/interest-queue.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-interest-queue.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Tpo -c -o src/bin_tests_test_pipeliner-interest-queue.obj `if test -f 'src/interest-queue.cpp'; then $(CYGPATH_W) 'src/interest-queue.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-queue.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-interest-queue.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/interest-queue.cpp' object='src/bin_tests_test_pipeliner-interest-queue.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-interest-queue.obj `if test -f 'src/interest-queue.cpp'; then $(CYGPATH_W) 'src/interest-queue.cpp'; else $(CYGPATH_W) '$(srcdir)/src/interest-queue.cpp'; fi`
+
+src/bin_tests_test_pipeliner-segment-controller.o: src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-segment-controller.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Tpo -c -o src/bin_tests_test_pipeliner-segment-controller.o `test -f 'src/segment-controller.cpp' || echo '$(srcdir)/'`src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segment-controller.cpp' object='src/bin_tests_test_pipeliner-segment-controller.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-segment-controller.o `test -f 'src/segment-controller.cpp' || echo '$(srcdir)/'`src/segment-controller.cpp
+
+src/bin_tests_test_pipeliner-segment-controller.obj: src/segment-controller.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-segment-controller.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Tpo -c -o src/bin_tests_test_pipeliner-segment-controller.obj `if test -f 'src/segment-controller.cpp'; then $(CYGPATH_W) 'src/segment-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/segment-controller.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-segment-controller.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/segment-controller.cpp' object='src/bin_tests_test_pipeliner-segment-controller.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-segment-controller.obj `if test -f 'src/segment-controller.cpp'; then $(CYGPATH_W) 'src/segment-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/segment-controller.cpp'; fi`
+
+src/bin_tests_test_pipeliner-frame-buffer.o: src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-frame-buffer.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Tpo -c -o src/bin_tests_test_pipeliner-frame-buffer.o `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/bin_tests_test_pipeliner-frame-buffer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-frame-buffer.o `test -f 'src/frame-buffer.cpp' || echo '$(srcdir)/'`src/frame-buffer.cpp
+
+src/bin_tests_test_pipeliner-frame-buffer.obj: src/frame-buffer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-frame-buffer.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Tpo -c -o src/bin_tests_test_pipeliner-frame-buffer.obj `if test -f 'src/frame-buffer.cpp'; then $(CYGPATH_W) 'src/frame-buffer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-buffer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-frame-buffer.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/frame-buffer.cpp' object='src/bin_tests_test_pipeliner-frame-buffer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-frame-buffer.obj `if test -f 'src/frame-buffer.cpp'; then $(CYGPATH_W) 'src/frame-buffer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-buffer.cpp'; fi`
+
+src/bin_tests_test_pipeliner-sample-estimator.o: src/sample-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-sample-estimator.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Tpo -c -o src/bin_tests_test_pipeliner-sample-estimator.o `test -f 'src/sample-estimator.cpp' || echo '$(srcdir)/'`src/sample-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/sample-estimator.cpp' object='src/bin_tests_test_pipeliner-sample-estimator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-sample-estimator.o `test -f 'src/sample-estimator.cpp' || echo '$(srcdir)/'`src/sample-estimator.cpp
+
+src/bin_tests_test_pipeliner-sample-estimator.obj: src/sample-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-sample-estimator.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Tpo -c -o src/bin_tests_test_pipeliner-sample-estimator.obj `if test -f 'src/sample-estimator.cpp'; then $(CYGPATH_W) 'src/sample-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sample-estimator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-sample-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/sample-estimator.cpp' object='src/bin_tests_test_pipeliner-sample-estimator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-sample-estimator.obj `if test -f 'src/sample-estimator.cpp'; then $(CYGPATH_W) 'src/sample-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/sample-estimator.cpp'; fi`
+
+src/bin_tests_test_pipeliner-periodic.o: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-periodic.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Tpo -c -o src/bin_tests_test_pipeliner-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_pipeliner-periodic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+
+src/bin_tests_test_pipeliner-periodic.obj: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-periodic.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Tpo -c -o src/bin_tests_test_pipeliner-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_pipeliner-periodic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+
+src/bin_tests_test_pipeliner-fec.o: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-fec.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Tpo -c -o src/bin_tests_test_pipeliner-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_pipeliner-fec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
+
+src/bin_tests_test_pipeliner-fec.obj: src/fec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-fec.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Tpo -c -o src/bin_tests_test_pipeliner-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-fec.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/fec.cpp' object='src/bin_tests_test_pipeliner-fec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
+
+src/bin_tests_test_pipeliner-async.o: src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-async.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-async.Tpo -c -o src/bin_tests_test_pipeliner-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-async.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-async.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/async.cpp' object='src/bin_tests_test_pipeliner-async.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
+
+src/bin_tests_test_pipeliner-async.obj: src/async.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeliner-async.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeliner-async.Tpo -c -o src/bin_tests_test_pipeliner-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeliner-async.Tpo src/$(DEPDIR)/bin_tests_test_pipeliner-async.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/async.cpp' object='src/bin_tests_test_pipeliner-async.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeliner-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeliner-gmock-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_pipeliner-gtest-all.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeliner_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tests/bin_tests_test_playout-test-playout.o: tests/test-playout.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_playout-test-playout.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_playout-test-playout.Tpo -c -o tests/bin_tests_test_playout-test-playout.o `test -f 'tests/test-playout.cc' || echo '$(srcdir)/'`tests/test-playout.cc

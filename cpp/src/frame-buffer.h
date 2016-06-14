@@ -34,7 +34,7 @@ namespace ndnrtc
     class SlotSegment {
     public:
 
-        SlotSegment(const boost::shared_ptr<ndn::Interest>&);
+        SlotSegment(const boost::shared_ptr<const ndn::Interest>&);
 
         const NamespaceInfo& getInfo() const;
         void setData(const boost::shared_ptr<WireSegment>& data);
@@ -56,7 +56,7 @@ namespace ndnrtc
         }
 
     private:
-        boost::shared_ptr<ndn::Interest> interest_;
+        boost::shared_ptr<const ndn::Interest> interest_;
         NamespaceInfo interestInfo_;
         boost::shared_ptr<WireSegment> data_;
         int64_t requestTimeUsec_, arrivalTimeUsec_;
@@ -105,7 +105,7 @@ namespace ndnrtc
          * @see clear()
          */
         void 
-        segmentsRequested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
+        segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
         
         /**
          * Clears all internal structures of this slot and returns to Free state
@@ -144,6 +144,8 @@ namespace ndnrtc
         int64_t getShortestDrd() const { return (state_ >= Assembling ? firstSegmentTimeUsec_-requestTimeUsec_ : 0); }
         int64_t getLongestDrd() const { return (state_ >= Ready ? assembledTimeUsec_ - requestTimeUsec_ : 0); }
         bool hasOriginalSegments() const { return hasOriginalSegments_; }
+        size_t getFetchedNum() const { return fetched_.size(); }
+        
         /**
          * Returns common packet header if it's available (HeaderMeta consistency),
          * otherwise throws an error.
@@ -260,11 +262,12 @@ namespace ndnrtc
         void reset();
 
         bool
-        requested(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
+        requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
 
         Receipt
         received(const boost::shared_ptr<WireSegment>& segment);
 
+        bool isRequested(const boost::shared_ptr<WireSegment>& segment) const;
         unsigned int getSlotsNum(const ndn::Name& prefix, int stateMask);
         void attach(IBufferObserver* observer);
         void detach(IBufferObserver* observer);
@@ -299,6 +302,11 @@ namespace ndnrtc
     typedef boost::function<void(const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs)> ExtractSlot;
     class IPlaybackQueueObserver;
 
+    /**
+     * Class PaybackQueue implements functionality for ordering assembled frames
+     * in playback order and provides interface for extracting media samples
+     * for playback
+     */
     class PlaybackQueue : public NdnRtcComponent,
                           public IBufferObserver
     {

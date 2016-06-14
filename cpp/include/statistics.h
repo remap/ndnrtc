@@ -21,15 +21,8 @@
 #include <boost/shared_ptr.hpp>
 
 namespace ndnrtc {
-    
-    namespace new_api {
-        class ObjectStatistics {
-        public:
-            virtual ~ObjectStatistics(){}
-        };
-        
-        namespace statistics {
-            enum class Indicator {
+    namespace statistics {
+        enum class Indicator {
                 // general
                 Timestamp,  // NDN-RTC timestamp when statistics were captured
                 
@@ -104,10 +97,10 @@ namespace ndnrtc {
                 
                 // capturer
                 CapturedNum
-            };
-            
-            class StatisticsStorage {
-            public:
+        };
+        
+        class StatisticsStorage {
+        public:
                 typedef std::map<Indicator, double> StatRepo;
                 static const std::map<Indicator, std::string> IndicatorNames;
                 static const std::map<Indicator, std::string> IndicatorKeywords;
@@ -160,26 +153,25 @@ namespace ndnrtc {
                     
                     return os;
                 }
-            private:
+        private:
                 StatisticsStorage(const StatRepo& indicators):indicators_(indicators){}
                 
                 const std::map<Indicator, std::string> inidicatorNames_;
                 static const StatRepo ConsumerStatRepo;
                 static const StatRepo ProducerStatRepo;
                 StatRepo indicators_;
-            };
-
-            class StatObject {
-            public:
-                StatObject(const boost::shared_ptr<StatisticsStorage>& statStorage):statStorage_(statStorage){}
-                
-                virtual ~StatObject(){}
-                
-            protected:
-                boost::shared_ptr<StatisticsStorage> statStorage_;
-            };
         };
-    }
+
+        class StatObject {
+        public:
+            StatObject(const boost::shared_ptr<StatisticsStorage>& statStorage):statStorage_(statStorage){}
+            
+            virtual ~StatObject(){}
+            
+        protected:
+            boost::shared_ptr<StatisticsStorage> statStorage_;
+        };
+    };
 }
 
 #endif

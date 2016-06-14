@@ -358,6 +358,15 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 	return interests;
 }
 
+std::vector<boost::shared_ptr<const Interest>> 
+makeInterestsConst(const std::vector<boost::shared_ptr<Interest>>& interests)
+{
+	std::vector<boost::shared_ptr<const Interest>> cinterests;
+	for (auto& i:interests)
+		cinterests.push_back(boost::make_shared<const Interest>(*i));
+	return cinterests;
+}
+
 //******************************************************************************
 void DelayQueue::push(QueueBlock block)
 {
