@@ -12,221 +12,154 @@
 #define __ndnrtc__interest_queue__
 
 #include <queue>
+#include <boost/asio.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/function.hpp>
 
-#include <ndn-cpp/face.hpp>
-
-#include "ndn-assembler.h"
-#include "ndnrtc-utils.h"
-#include "statistics.h"
 #include "ndnrtc-object.h"
+#include "statistics.h"
+
+namespace ndn {
+    class Interest;
+    class Face;
+    class Data;
+}
 
 namespace ndnrtc {
+    class DeadlinePriority;
+
+    class IInterestQueueObserver {
+    public:
+        virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
+    };
     
-    class FaceWrapper;
-    
-    namespace new_api {
-        class Consumer;
-        
-        class IInterestQueueCallback {
-        public:
-            virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
-        };
-        
-        class InterestQueue : public NdnRtcComponent,
-                              public statistics::StatObject
+    /**
+     * Interst queue class implements functionality for priority Interest queue.
+     * Interests are expressed according to their priorities on Face thread.
+     */
+    class InterestQueue : public NdnRtcComponent,
+                          public statistics::StatObject
+    {
+    public:
+        typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
+                                    const boost::shared_ptr<ndn::Data>&)> OnData;
+        typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)> 
+            OnTimeout;
+
+        class IPriority
         {
         public:
-            
-            class IPriority
+            virtual int64_t getValue() const = 0;
+        };
+
+        InterestQueue(boost::asio::io_service& io,
+                      const boost::shared_ptr<ndn::Face> &face,
+                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+        ~InterestQueue();
+        
+        /**
+         * Enqueues Interest in the queue.
+         * @param interest Interest to be expressed
+         * @param priority Interest priority
+         * @param onData OnData callback
+         * @param onTimeout OnTimeout callback
+         */
+        void
+        enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
+                        boost::shared_ptr<DeadlinePriority> priority,
+                        OnData onData,
+                        OnTimeout onTimeout);
+        
+        /**
+         * Flushes current interest queue
+         */
+        void reset();
+        void registerObserver(IInterestQueueObserver *observer) { observer_ = observer; }
+        void unregisterObserver() { observer_ = nullptr; }
+        size_t size() const { return queue_.size(); }
+        
+    private:
+        class QueueEntry
+        {
+        public:
+            class Comparator
             {
-                class QueueEntry;
-                friend QueueEntry;
-                friend InterestQueue;
             public:
-                virtual int64_t getValue() const = 0;
+                Comparator(bool inverted):inverted_(inverted){}
                 
-                virtual int64_t getEnqueueTimestamp() const = 0;
-                virtual int64_t getExpressionTimestamp() const  = 0;
-
-                class Comparator
+                bool operator() (const QueueEntry& q1,
+                                 const QueueEntry& q2) const
                 {
-                public:
-                    Comparator(bool inverted):inverted_(inverted){}
-                    
-                    bool operator() (const IPriority& p1,
-                                     const IPriority& p2) const
-                    {
-                        return inverted_^(p1.getValue() < p2.getValue());
-                    }
-                    
-                private:
-                    bool inverted_;
-                };
-                
-            protected:
-                virtual void setEnqueueTimestamp(int64_t timestamp) = 0;
-                virtual void setExpressionTimestamp(int64_t timestamp) = 0;
-            };
-
-            InterestQueue(const boost::shared_ptr<FaceWrapper> &face,
-                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
-            ~InterestQueue();
-            
-            void
-            enqueueInterest(const ndn::Interest& interest,
-                            const boost::shared_ptr<IPriority>& priority,
-                            const ndn::OnData& onData = Assembler::defaultOnDataHandler(),
-                            const ndn::OnTimeout& onTimeout = Assembler::defaultOnTimeoutHandler());
-            
-            /**
-             * Flushes current interest queue
-             */
-            void
-            reset();
-            
-            void
-            registerCallback(IInterestQueueCallback *callback)
-            { callback_ = callback; }
-            
-        private:
-            class QueueEntry : public IPriority
-            {
-                friend InterestQueue;
-            public:
-                QueueEntry(){}
-                QueueEntry(const ndn::Interest& interest,
-                           const boost::shared_ptr<IPriority>& priority,
-                           const ndn::OnData& onData,
-                           const ndn::OnTimeout& onTimeout);
-
-                int64_t
-                getValue() const { return priority_->getValue(); }
-                
-                int64_t
-                getEnqueueTimestamp() const
-                { return priority_->getEnqueueTimestamp(); }
-                
-                int64_t
-                getExpressionTimestamp() const
-                { return priority_->getExpressionTimestamp(); }
-                
-                QueueEntry& operator=(const QueueEntry& entry)
-                {
-                    interest_.reset(new ndn::Interest(*entry.interest_));
-                    priority_  = entry.priority_;
-                    onDataCallback_ = entry.onDataCallback_;
-                    onTimeoutCallback_ = entry.onTimeoutCallback_;
-                    
-                    return *this;
+                    return inverted_^(q1.getValue() < q2.getValue());
                 }
                 
             private:
-                boost::shared_ptr<const ndn::Interest> interest_;
-                boost::shared_ptr<IPriority> priority_;
-                ndn::OnData onDataCallback_;
-                ndn::OnTimeout onTimeoutCallback_;
-                
-                void
-                setEnqueueTimestamp(int64_t timestamp) {
-                    priority_->setEnqueueTimestamp(timestamp);
-                }
-                void
-                setExpressionTimestamp(int64_t timestamp) {
-                    priority_->setExpressionTimestamp(timestamp);
-                }
+                bool inverted_;
             };
-            
-            typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, IPriority::Comparator>
-            PriorityQueue;
-            
-            boost::shared_ptr<FaceWrapper> face_;
-            boost::shared_mutex queueAccess_;
 
-            PriorityQueue queue_;
+            QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
+                       const boost::shared_ptr<IPriority>& priority,
+                       OnData onData,
+                       OnTimeout onTimeout);
+
+            int64_t
+            getValue() const { return priority_->getValue(); }
             
-            IInterestQueueCallback *callback_ = NULL;
-            
-            bool isWatchingQueue_ = false;
-            
-            bool
-            watchQueue();
-            
-            void
-            stopQueueWatching();
-            
-            void
-            processEntry(const QueueEntry &entry);
-        };
-        
-        class Priority : public InterestQueue::IPriority
-        {
-        public:
-            Priority(const Priority& p)
+            QueueEntry& operator=(const QueueEntry& entry)
             {
-                createdMs_ = NdnRtcUtils::millisecondTimestamp();
-                arrivalDelayMs_ = p.getArrivalDelay();
+                interest_ = interest_;
+                priority_  = entry.priority_;
+                onDataCallback_ = entry.onDataCallback_;
+                onTimeoutCallback_ = entry.onTimeoutCallback_;
+                return *this;
             }
-            
-            int64_t getValue() const
-            {
-                return getArrivalDeadlineFromEnqueue() -
-                        NdnRtcUtils::millisecondTimestamp();
-            }
-            
-            int64_t getArrivalDelay() const { return arrivalDelayMs_; }
-            int64_t getCreationTimestamp() const { return createdMs_; }
-            
-            int64_t getEnqueueTimestamp() const { return enqueuedMs_; }
-            int64_t getExpressionTimestamp() const { return expressedMs_; }
-            
-            static boost::shared_ptr<Priority>
-            fromArrivalDelay(int64_t millisecondsFromNow)
-            {
-                return boost::shared_ptr<Priority>(new Priority(millisecondsFromNow));
-            }
-            
-            static boost::shared_ptr<Priority>
-            fromAbsolutePriority(int priority)
-            {
-                return boost::shared_ptr<Priority>(new Priority(priority));
-            }
-            
+
         private:
-            int64_t createdMs_ = -1, enqueuedMs_ = -1,
-                    expressedMs_ = -1, arrivalDelayMs_ = -1;
-            
-            Priority(int64_t arrivalDelay):arrivalDelayMs_(arrivalDelay) {
-                createdMs_ = NdnRtcUtils::millisecondTimestamp();
-            }
-            
-            void setEnqueueTimestamp(int64_t timestamp)
-            { enqueuedMs_ = timestamp; }
-            
-            void setExpressionTimestamp(int64_t timestamp)
-            { expressedMs_ = timestamp; }
-            
-            int64_t getArrivalDeadlineFromEnqueue() const
-            {
-                if (enqueuedMs_ < 0)
-                    return -1;
-                return enqueuedMs_+arrivalDelayMs_;
-            }
-            
-            int64_t getArrivalDedalineFromExpression() const
-            {
-                if (expressedMs_ < 0)
-                    return -1;
-                return expressedMs_+arrivalDelayMs_;
-            }
-            
-            int64_t getArrivalDelayFromNow() const
-            {
-                return NdnRtcUtils::millisecondTimestamp()-
-                getArrivalDeadlineFromEnqueue();
-            }
+            friend InterestQueue;
+
+            boost::shared_ptr<const ndn::Interest> interest_;
+            boost::shared_ptr<IPriority> priority_;
+            OnData onDataCallback_;
+            OnTimeout onTimeoutCallback_;
         };
         
-    }
+        typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, 
+                    QueueEntry::Comparator> PriorityQueue;
+        
+        boost::shared_ptr<ndn::Face> face_;
+        boost::asio::io_service& faceIo_;
+        boost::recursive_mutex queueAccess_;
+        PriorityQueue queue_;
+        IInterestQueueObserver *observer_;
+        bool isWatchingQueue_;
+        
+        void watchQueue();
+        void stopQueueWatching();
+        void processEntry(const QueueEntry &entry);
+    };
+    
+    /**
+     * DeadlinePriority class implements IPriority interface for assigning 
+     * priorities for Interests based on expected data arrival deadlines.
+     * The farther the arrival deadline is, the lower the priority.
+     */
+    class DeadlinePriority : public InterestQueue::IPriority
+    {
+    public:
+        DeadlinePriority(int64_t arrivalDelay);
+
+        int64_t getValue() const;
+        void setEnqueueTimestamp(int64_t timestamp) { enqueuedMs_ = timestamp; }
+
+        static boost::shared_ptr<DeadlinePriority>
+        fromNow(int64_t delayMs) { return boost::make_shared<DeadlinePriority>(delayMs); }
+        
+    private:
+        int64_t enqueuedMs_, arrivalDelayMs_;
+
+        DeadlinePriority(const DeadlinePriority& p);
+        int64_t getArrivalDeadlineFromEnqueue() const;
+    };
 }
 
 #endif /* defined(__ndnrtc__interest_queue__) */
