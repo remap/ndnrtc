@@ -302,12 +302,22 @@ namespace ndnrtc
     typedef boost::function<void(const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs)> ExtractSlot;
     class IPlaybackQueueObserver;
 
+    class IPlaybackQueue {
+    public:
+        virtual void pop(ExtractSlot) = 0;
+        virtual int64_t size() const = 0;
+        virtual int64_t pendingSize() const = 0;
+        virtual double sampleRate() const = 0;
+        virtual double samplePeriod() const = 0;
+    };
+
     /**
      * Class PaybackQueue implements functionality for ordering assembled frames
      * in playback order and provides interface for extracting media samples
      * for playback
      */
     class PlaybackQueue : public NdnRtcComponent,
+                          public IPlaybackQueue,
                           public IBufferObserver
     {
     public:

@@ -28,23 +28,35 @@ namespace ndn {
 namespace ndnrtc {
     class DeadlinePriority;
 
+    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
+                                    const boost::shared_ptr<ndn::Data>&)> OnData;
+    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)> 
+            OnTimeout;
+
     class IInterestQueueObserver {
     public:
         virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
     };
     
+    class IInterestQueue {
+    public:
+        virtual void
+        enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
+                        boost::shared_ptr<DeadlinePriority> priority,
+                        OnData onData,
+                        OnTimeout onTimeout) = 0;
+        virtual void reset() = 0;
+    };
+
     /**
      * Interst queue class implements functionality for priority Interest queue.
      * Interests are expressed according to their priorities on Face thread.
      */
     class InterestQueue : public NdnRtcComponent,
+                          public IInterestQueue,
                           public statistics::StatObject
     {
     public:
-        typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
-                                    const boost::shared_ptr<ndn::Data>&)> OnData;
-        typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)> 
-            OnTimeout;
 
         class IPriority
         {

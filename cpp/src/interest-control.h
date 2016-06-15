@@ -23,6 +23,20 @@ namespace ndn {
 namespace ndnrtc {
 	class WireSegment;
 
+	class IInterestControl
+	{
+	public:
+		virtual void reset() = 0;
+		virtual bool decrement() = 0;
+		virtual bool increment() = 0;
+		virtual size_t pipelineLimit() const = 0;
+		virtual size_t pipelineSize() const = 0;
+		virtual int room() const = 0;
+		virtual bool burst() = 0;
+		virtual bool withhold() = 0;
+		virtual void markLowerLimit(unsigned int lowerLimit) = 0;
+	};
+
 	/**
 	 * InterestControl implements algorithm for lambda control or Intersts 
 	 * expression control. It keeps track of the max limit size of the pipeline
@@ -30,6 +44,7 @@ namespace ndnrtc {
 	 * the room for exressing mode Interests.
 	 */
 	class InterestControl : public NdnRtcComponent,
+							public IInterestControl,
 							public IDrdEstimatorObserver,
 							public IBufferControlObserver
 	{

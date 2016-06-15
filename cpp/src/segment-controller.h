@@ -25,7 +25,29 @@ namespace ndnrtc {
 	class WireSegment;
 	class ISegmentControllerObserver;
 
-	class SegmentController : public NdnRtcComponent, private Periodic {
+	class ISegmentController {
+	public:
+		virtual unsigned int getCurrentIdleTime() const = 0;
+		virtual unsigned int getMaxIdleTime() const = 0;
+		virtual ndn::OnData getOnDataCallback() = 0;
+		virtual ndn::OnTimeout getOnTimeoutCallback() = 0;
+		virtual void attach(ISegmentControllerObserver*) = 0;
+		virtual void detach(ISegmentControllerObserver*) = 0;
+	};
+
+	/**
+	 * SegmentController is the first responder for incoming data. It combines
+	 * incoming segment and Interest that requested it in a WireSegment structure
+	 * which is passed further to any attached observer. SegmentController provides
+	 * OnData and OnTimeout callbacks that should be used for Interests expression.
+	 * SegmentController also checks for incoming data flow interruptions - it will
+	 * notify all attached observers if data has not arrived during specified period 
+	 * of time.
+	 */
+	class SegmentController : public NdnRtcComponent,
+							  public ISegmentController, 
+							  private Periodic
+	{
 	public:
 		SegmentController(boost::asio::io_service& faceIo, 
 			unsigned int maxIdleTimeMs);

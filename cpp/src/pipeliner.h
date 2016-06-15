@@ -13,315 +13,114 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "ndn-assembler.h"
-#include "chase-estimation.h"
-#include "frame-buffer.h"
 #include "ndnrtc-object.h"
+#include "name-components.h"
 
 namespace ndnrtc {
-    namespace new_api {
-        
-        class BufferEstimator;
-        
-        class IPipelinerCallback
-        {
-        public:
-            virtual void
-            onBufferingEnded() = 0;
-            
-            virtual void
-            onInitialDataArrived() = 0;
-            
-            virtual void
-            onStateChanged(const int& oldState, const int& newState) = 0;
-        };
-        
-        class PipelinerWindow : public NdnRtcComponent
-        {
-        public:
-            PipelinerWindow();
-            ~PipelinerWindow();
-            
-            void
-            init(unsigned int windowSize, const FrameBuffer* frameBuffer);
-            
-            void
-            reset();
-            
-            void
-            dataArrived(PacketNumber packetNo);
-            
-            bool
-            canAskForData(PacketNumber packetNo);
-            
-            unsigned int
-            getDefaultWindowSize();
-            
-            int
-            getCurrentWindowSize();
-            
-            int
-            changeWindow(int delta);
-            
-            bool
-            isInitialized()
-            { return isInitialized_; }
-            
-        private:
-            unsigned int dw_;
-            int w_;
-            bool isInitialized_;
-            PacketNumber lastAddedToPool_;
-            boost::mutex mutex_;
-            std::set<PacketNumber> framePool_;
-            const FrameBuffer* frameBuffer_;
-        };
-        
-        
-        class Pipeliner2 : public NdnRtcComponent,
-                           public IFrameBufferCallback,
-                           public statistics::StatObject,
-                           public IPacketAssembler
-        {
-        public:
-            typedef enum _State {
-                StateInactive = -1,
-                StateWaitInitial = 0,                
-                StateChasing = 1,
-                StateAdjust = 2,
-                StateBuffering = 3,
-                StateFetching = 4
-            } State;
-            
-            static const FrameSegmentsInfo DefaultSegmentsInfo;
-            
-            // average number of segments for delta and key frames
-            static const double SegmentsAvgNumDelta;
-            static const double SegmentsAvgNumKey;
-            static const double ParitySegmentsAvgNumDelta;
-            static const double ParitySegmentsAvgNumKey;
-            
-            static const int DefaultWindow;
-            static const int DefaultMinWindow;
-            
-            Pipeliner2(const boost::shared_ptr<Consumer>& consumer,
-                       const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
-                       const FrameSegmentsInfo& frameSegmentsInfo = DefaultSegmentsInfo);
-            ~Pipeliner2();
-            
-            int
-            initialize();
-            
-            int
-            start();
-            
-            int
-            stop();
-            
-            void
-            setUseKeyNamespace(bool useKeyNamespace)
-            { useKeyNamespace_ = useKeyNamespace; }
-            
-            State
-            getState() const
-            { return state_; }
-            
-            void
-            registerCallback(IPipelinerCallback* callback)
-            { callback_ = callback; }
-            
-            void
-            triggerRebuffering();
-            
-            bool
-            threadSwitched();
-            
-            int
-            getIdleTime()
-            {
-                int idleTime = (recoveryCheckpointTimestamp_)?(int)(NdnRtcUtils::millisecondTimestamp() - recoveryCheckpointTimestamp_):0;
-                
-                ((idleTime > FRAME_DELAY_DEADLINE) ? LogWarnC : LogTraceC)
-                << "idle time " << idleTime
-                << std::endl;
-                
-                return idleTime;
-            }
-            
-            void
-            setLogger(ndnlog::new_api::Logger* logger)
-            {
-                NdnRtcComponent::setLogger(logger);
-                stabilityEstimator_.setLogger(logger);
-                rttChangeEstimator_.setLogger(logger);
-            }
-            
-        protected:
-            State state_;
-            Name threadPrefix_, deltaFramesPrefix_, keyFramesPrefix_;
-            
-            Consumer* consumer_;
-            FrameBuffer* frameBuffer_;
-            IPacketAssembler* ndnAssembler_;
-            IPipelinerCallback* callback_;
-            
-            int deltaSegnumEstimatorId_, keySegnumEstimatorId_;
-            int deltaParitySegnumEstimatorId_, keyParitySegnumEstimatorId_;
-            PacketNumber keyFrameSeqNo_, deltaFrameSeqNo_;
-            FrameSegmentsInfo frameSegmentsInfo_;
-            
-            bool useKeyNamespace_;
-            int64_t recoveryCheckpointTimestamp_, startPhaseTimestamp_;
-            std::map<std::string, PacketNumber> deltaSyncList_, keySyncList_;
-            
-            StabilityEstimator2 stabilityEstimator_;
-            RttChangeEstimator rttChangeEstimator_;
-            PipelinerWindow window_;
-            
-            uint64_t timestamp_;
-            bool waitForChange_, waitForStability_;
-            unsigned int failedWindow_;
-            FrameNumber seedFrameNo_;
-            ndn::Interest rightmostInterest_;
-            PacketNumber exclusionPacket_;
-            bool waitForThreadTransition_;
-            
-            void
-            switchToState(State newState)
-            {
-                State oldState = state_;
-                state_ = newState;
-                
-                if (oldState != newState)
-                {
-                    int64_t timestamp = NdnRtcUtils::millisecondTimestamp();
-                    int64_t phaseDuration = timestamp - startPhaseTimestamp_;
-                    startPhaseTimestamp_ = timestamp;
-                    
-                    ((oldState == StateChasing) ? LogInfoC : LogDebugC)
-                    << "phase " << toString(oldState) << " finished in "
-                    << phaseDuration << " msec" << std::endl;
-                    
-                    LogDebugC << "new state " << toString(state_) << std::endl;
-                    
-                    if (callback_)
-                        callback_->onStateChanged(oldState, state_);
-                }
-            }
-            
-            std::string
-            toString(State state)
-            {
-                switch (state) {
-                    case StateInactive:
-                        return "Inactive";
-                    case StateChasing:
-                        return "Chasing";
-                    case StateWaitInitial:
-                        return "WaitingInitial";
-                    case StateAdjust:
-                        return "Adjust";
-                    case StateBuffering:
-                        return "Buffering";
-                    case StateFetching:
-                        return "Fetching";
-                    default:
-                        return "Unknown";
-                }
-            }
-            
-            void
-            updateSegnumEstimation(FrameBuffer::Slot::Namespace frameNs,
-                                   int nSegments, bool isParity);
-            
-            void
-            requestNextKey(PacketNumber& keyFrameNo);
-            
-            void
-            requestNextDelta(PacketNumber& deltaFrameNo);
-            
-            void
-            prefetchFrame(const Name& basePrefix, PacketNumber packetNo,
-                          int prefetchSize, int parityPrefetchSize,
-                          FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta);
-            
-            
-            void
-            expressRange(Interest& interest, SegmentNumber startNo,
-                         SegmentNumber endNo, int64_t priority, bool isParity);
-            
-            void
-            express(Interest& interest, int64_t priority);
-            
-            boost::shared_ptr<Interest>
-            getDefaultInterest(const Name& prefix, int64_t timeoutMs = 0);
-            
-            boost::shared_ptr<Interest>
-            getInterestForRightMost(int64_t timeoutMs, bool isKeyNamespace = false,
-                                    PacketNumber exclude = -1);
-            
-            int64_t
-            getInterestLifetime(int64_t playbackDeadline,
-                                FrameBuffer::Slot::Namespace nspc = FrameBuffer::Slot::Delta,
-                                bool rtx = false);
-            
-            void
-            requestMissing(const boost::shared_ptr<FrameBuffer::Slot>& slot,
-                           int64_t lifetime, int64_t priority);
-            
-            // IFrameBufferCallback interface
-            void
-            onRetransmissionNeeded(FrameBuffer::Slot* slot);
-            
-            void
-            onKeyNeeded(PacketNumber seqNo);
-            
-            void
-            rebuffer();
-            
-            void
-            resetData();
-            
-            unsigned int
-            getCurrentMinimalLambda();
-            
-            unsigned int
-            getCurrentMaximumLambda();
-            
-            OnData
-            getOnDataHandler()
-            { return bind(&Pipeliner2::onData, boost::dynamic_pointer_cast<Pipeliner2>(shared_from_this()), _1, _2); }
-            
-            OnTimeout
-            getOnTimeoutHandler()
-            { return bind(&Pipeliner2::onTimeout, boost::dynamic_pointer_cast<Pipeliner2>(shared_from_this()), _1); }
-            
-            void onData(const boost::shared_ptr<const Interest>& interest,
-                        const boost::shared_ptr<Data>& data);
-            void onTimeout(const boost::shared_ptr<const Interest>& interest);
-            
-            void
-            onFrameDropped(PacketNumber seguenceNo,
-                           PacketNumber playbackNo,
-                           FrameBuffer::Slot::Namespace nspc);
-            
-            void
-            askForRightmostData();
-            
-            void
-            askForInitialData(const boost::shared_ptr<Data>& data);
-            
-            void
-            askForSubsequentData(const boost::shared_ptr<Data>& data);
-            
-            void
-            updateThreadSyncList(const PrefixMetaInfo& metaInfo, bool isKey);
+    class SampleEstimator;
+    class Buffer;
+    class IInterestControl;
+    class IInterestQueue;
+    class IPlaybackQueue;
+    class ISegmentController;
+    class DeadlinePriority;
 
-            void
-            performThreadTransition();
-            
-        };
-    }
+    typedef struct _PipelinerSettings {
+        unsigned int interestLifetimeMs_;
+        boost::shared_ptr<SampleEstimator> sampleEstimator_;
+        boost::shared_ptr<Buffer>& buffer_;
+        boost::shared_ptr<IInterestControl> interestControl_;
+        boost::shared_ptr<IInterestQueue> interestQueue_;
+        boost::shared_ptr<IPlaybackQueue> playbackQueue_;
+        boost::shared_ptr<ISegmentController> segmentController_;
+    } PipelinerSettings;
+
+    /**
+     * Pipeliner class implements functionality for expressing Interests towards
+     * samples of specified media thread.
+     * Pipeliner queries SampleEstimator in order to calculate size of Interest
+     * batch to express.
+     */
+    class Pipeliner : public NdnRtcComponent {
+    public:
+        Pipeliner(const PipelinerSettings& settings);
+
+        /**
+         * Express interests for the last requested sample.
+         * For instance, if pipeliner previously expressed Interests for sample 100,
+         * this expresses Interests for sample 100 again.
+         * This does not place Interests in the buffer.
+         * NOTE: if pipeliner did not express any interests before, this expresses
+         * Interest with RightmostChild selector.
+         * @param threadPrefix Thread prefix used for Interests
+         */
+        void express(const ndn::Name& threadPrefix);
+
+        /**
+         * Express specified Interests.
+         * This does not place Interests in the buffer.
+         * @param interests Interests to be expressed
+         */
+        void express(const std::vector<boost::shared_ptr<const ndn::Interest>> interests);
+
+        /**
+         * Called each time new segment arrives. 
+         * This will query InterestControl for the room size and if it's not zero
+         * or negative, will continuously issue Interest batches towards new 
+         * samples according to he current sample class priority unless 
+         * InterestControl will tell that there is no room for more Interests.
+         * This also places issued Interests in the buffer by calling requested()
+         * method.
+         * @see InterestControl
+         * @see Buffer::requested()
+         */
+        void segmentArrived(const ndn::Name& threadPrefix);
+        void reset();
+
+        /**
+         * Sets priority for the next sample. After calling this method, pipeliner
+         * will prioritize specified sample class for the next batch of Interests
+         * @param cls Sample class (Delta, Key, etc.)
+         */
+        void setNeedSample(SampleClass cls) { nextSamplePriority_ = cls; }
+
+        /**
+         * Sets flag to request rightmost interest on next express(const ndn::Name&)
+         * invocation
+         * @see express(const ndn::Name&)
+         */
+        void setNeedRightmost() { lastRequestedSample_ = SampleClass::Unknown; }
+
+        /**
+         * Sets pipeliner's frame sequence number counters
+         * @param seqNo Sequence number 
+         * @param cls Frame class (Key or Delta)
+         */
+        void setSequenceNumber(PacketNumber seqNo, SampleClass cls);
+
+    private:
+        typedef struct _SequenceCounter {
+            PacketNumber delta_, key_;
+        } SequenceCounter;
+
+        unsigned int interestLifetime_;
+        boost::shared_ptr<SampleEstimator> sampleEstimator_;
+        boost::shared_ptr<Buffer> buffer_;
+        boost::shared_ptr<IInterestControl> interestControl_;
+        boost::shared_ptr<IInterestQueue> interestQueue_;
+        boost::shared_ptr<IPlaybackQueue> playbackQueue_;
+        boost::shared_ptr<ISegmentController> segmentController_;
+        SequenceCounter seqCounter_;
+        SampleClass nextSamplePriority_, lastRequestedSample_;
+
+        void request(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
+            const boost::shared_ptr<DeadlinePriority>& prioirty);
+        void request(const boost::shared_ptr<const ndn::Interest>& interest,
+            const boost::shared_ptr<DeadlinePriority>& prioirty);
+        std::vector<boost::shared_ptr<const ndn::Interest>>
+        getBatch(ndn::Name n, SampleClass cls,
+            bool noParity = false) const;
+    };
 }
 
 #endif /* defined(__ndnrtc__pipeliner__) */

@@ -46,13 +46,13 @@ TEST(TestInterestQueue, TestDefault)
 	iq.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
 
-	InterestQueue::OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
+	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
                                     const boost::shared_ptr<ndn::Data>&){
 		ASSERT_FALSE(true);
 	};
 
 	int nTimeouts = 0;
-	InterestQueue::OnTimeout onTimeout = [&nTimeouts](const boost::shared_ptr<const ndn::Interest>& i){
+	OnTimeout onTimeout = [&nTimeouts](const boost::shared_ptr<const ndn::Interest>& i){
 		nTimeouts++;
 	};
 
