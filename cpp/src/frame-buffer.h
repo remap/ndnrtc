@@ -257,7 +257,7 @@ namespace ndnrtc
     class IBuffer {
     public:
         virtual void reset() = 0;
-        virtual bool reqeusted(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
+        virtual bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
         virtual BufferReceipt received(const boost::shared_ptr<WireSegment>&) = 0;
         virtual bool isRequested(const boost::shared_ptr<WireSegment>&) const = 0;
         virtual unsigned int getSlotsNum(const ndn::Name&, int) const = 0;
