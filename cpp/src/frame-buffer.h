@@ -249,26 +249,32 @@ namespace ndnrtc
     class IBufferObserver;
     class PlaybackQueue;
 
+    typedef struct _BufferReceipt {
+        boost::shared_ptr<const BufferSlot> slot_;
+        boost::shared_ptr<const SlotSegment> segment_;
+    } BufferReceipt;
+
+    class IBuffer {
+    public:
+        virtual void reset() = 0;
+        virtual bool reqeusted(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
+        virtual BufferReceipt received(const boost::shared_ptr<WireSegment>&) = 0;
+        virtual bool isRequested(const boost::shared_ptr<WireSegment>&) const = 0;
+        virtual unsigned int getSlotsNum(const ndn::Name&, int) const = 0;
+    };
+
     class Buffer : public NdnRtcComponent {
     public:
-        typedef struct _Receipt {
-            boost::shared_ptr<const BufferSlot> slot_;
-            boost::shared_ptr<const SlotSegment> segment_;
-        } Receipt;
-
         Buffer(boost::shared_ptr<SlotPool> pool = 
                 boost::shared_ptr<SlotPool>(new SlotPool()));
 
         void reset();
 
-        bool
-        requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
-
-        Receipt
-        received(const boost::shared_ptr<WireSegment>& segment);
-
+        bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
+        BufferReceipt received(const boost::shared_ptr<WireSegment>& segment);
         bool isRequested(const boost::shared_ptr<WireSegment>& segment) const;
-        unsigned int getSlotsNum(const ndn::Name& prefix, int stateMask);
+        unsigned int getSlotsNum(const ndn::Name& prefix, int stateMask) const;
+
         void attach(IBufferObserver* observer);
         void detach(IBufferObserver* observer);
         boost::shared_ptr<SlotPool> getPool() const { return pool_; }
@@ -295,7 +301,7 @@ namespace ndnrtc
     class IBufferObserver {
     public:
         virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&) = 0;
-        virtual void onNewData(const Buffer::Receipt& receipt) = 0;
+        virtual void onNewData(const BufferReceipt& receipt) = 0;
     };
 
     //******************************************************************************
@@ -370,7 +376,7 @@ namespace ndnrtc
         std::vector<IPlaybackQueueObserver*> observers_;
 
         virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&);
-        virtual void onNewData(const Buffer::Receipt& receipt);
+        virtual void onNewData(const BufferReceipt& receipt);
     };
 
     class IPlaybackQueueObserver

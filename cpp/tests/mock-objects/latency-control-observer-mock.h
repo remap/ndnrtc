@@ -15,7 +15,7 @@
 class MockLatencyControlObserver : public ndnrtc::ILatencyControlObserver 
 {
 public:
-	MOCK_METHOD1(needPipelineAdjustment, bool(const ndnrtc::LatencyControl::Command&));
+	MOCK_METHOD1(needPipelineAdjustment, bool(const ndnrtc::PipelineAdjust&));
 };
 
 #endif

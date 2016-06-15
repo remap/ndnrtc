@@ -180,7 +180,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 							// when data arrives - add to buffer
 							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
-							Buffer::Receipt r = buffer->received(data);
+							BufferReceipt r = buffer->received(data);
 						});
 					});
 				});
@@ -489,7 +489,7 @@ TEST(TestPlayout, TestSkipDelta)
 								data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 
 							onDataArrived(data);
-							Buffer::Receipt r = buffer->received(data);
+							BufferReceipt r = buffer->received(data);
 						});
 					});
 				});

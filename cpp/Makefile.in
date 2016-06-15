@@ -572,7 +572,9 @@ am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_
 	src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT) \
-	src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-latency-control.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-drd-estimator.$(OBJEXT) \
+	src/bin_tests_test_pipeline_control_state_machine-estimators.$(OBJEXT) \
 	$(am__objects_21)
 bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
@@ -1250,7 +1252,7 @@ bin_tests_test_interest_control_SOURCES = tests/test-interest-control.cc src/int
 bin_tests_test_interest_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_interest_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_interest_control_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/pipeline-control.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/latency-control.cpp src/drd-estimator.cpp src/estimators.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_pipeline_control_state_machine_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_pipeline_control_state_machine_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_pipeline_control_state_machine_LDADD = ${libndnrtc_la_LIBADD}
@@ -2021,7 +2023,11 @@ src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT):  \
+src/bin_tests_test_pipeline_control_state_machine-latency-control.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-drd-estimator.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_pipeline_control_state_machine-estimators.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
@@ -2512,9 +2518,11 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_pipeline_control-segment-controller.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeline_control-simple-log.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-drd-estimator.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-estimators.$(OBJEXT)
+	-rm -f src/bin_tests_test_pipeline_control_state_machine-latency-control.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT)
-	-rm -f src/bin_tests_test_pipeline_control_state_machine-pipeline-control.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeline_control_state_machine-simple-log.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeliner-async.$(OBJEXT)
 	-rm -f src/bin_tests_test_pipeliner-clock.$(OBJEXT)
@@ -2945,9 +2953,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-segment-controller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-clock.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeliner-clock.Po@am__quote@
@@ -7057,21 +7067,53 @@ src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj: src/ndnrtc-
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
 
-src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o: src/pipeline-control.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po
+src/bin_tests_test_pipeline_control_state_machine-latency-control.o: src/latency-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-latency-control.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-latency-control.o `test -f 'src/latency-control.cpp' || echo '$(srcdir)/'`src/latency-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Po
 @am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/latency-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-latency-control.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.o `test -f 'src/pipeline-control.cpp' || echo '$(srcdir)/'`src/pipeline-control.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-latency-control.o `test -f 'src/latency-control.cpp' || echo '$(srcdir)/'`src/latency-control.cpp
 
-src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj: src/pipeline-control.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-pipeline-control.Po
+src/bin_tests_test_pipeline_control_state_machine-latency-control.obj: src/latency-control.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-latency-control.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-latency-control.obj `if test -f 'src/latency-control.cpp'; then $(CYGPATH_W) 'src/latency-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/latency-control.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-latency-control.Po
 @am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/pipeline-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/latency-control.cpp' object='src/bin_tests_test_pipeline_control_state_machine-latency-control.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-pipeline-control.obj `if test -f 'src/pipeline-control.cpp'; then $(CYGPATH_W) 'src/pipeline-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/pipeline-control.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-latency-control.obj `if test -f 'src/latency-control.cpp'; then $(CYGPATH_W) 'src/latency-control.cpp'; else $(CYGPATH_W) '$(srcdir)/src/latency-control.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-drd-estimator.o: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-drd-estimator.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_pipeline_control_state_machine-drd-estimator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-drd-estimator.o `test -f 'src/drd-estimator.cpp' || echo '$(srcdir)/'`src/drd-estimator.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-drd-estimator.obj: src/drd-estimator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-drd-estimator.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-drd-estimator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/drd-estimator.cpp' object='src/bin_tests_test_pipeline_control_state_machine-drd-estimator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-drd-estimator.obj `if test -f 'src/drd-estimator.cpp'; then $(CYGPATH_W) 'src/drd-estimator.cpp'; else $(CYGPATH_W) '$(srcdir)/src/drd-estimator.cpp'; fi`
+
+src/bin_tests_test_pipeline_control_state_machine-estimators.o: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeline_control_state_machine-estimators.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/bin_tests_test_pipeline_control_state_machine-estimators.obj: src/estimators.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_pipeline_control_state_machine-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Tpo -c -o src/bin_tests_test_pipeline_control_state_machine-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Tpo src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-estimators.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/estimators.cpp' object='src/bin_tests_test_pipeline_control_state_machine-estimators.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_pipeline_control_state_machine-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_pipeline_control_state_machine_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_pipeline_control_state_machine-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

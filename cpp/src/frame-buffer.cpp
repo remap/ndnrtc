@@ -517,10 +517,10 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
     return true;
 }
 
-Buffer::Receipt
+BufferReceipt
 Buffer::received(const boost::shared_ptr<WireSegment>& segment)
 {
-    Buffer::Receipt receipt;
+    BufferReceipt receipt;
 
     {
         Name key = segment->getInfo().getPrefix(prefix_filter::Sample);
@@ -565,7 +565,7 @@ Buffer::isRequested(const boost::shared_ptr<WireSegment>& segment) const
 }
 
 unsigned int 
-Buffer::getSlotsNum(const ndn::Name& prefix, int stateMask)
+Buffer::getSlotsNum(const ndn::Name& prefix, int stateMask) const
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
     unsigned int nSlots = 0;
@@ -761,7 +761,7 @@ PlaybackQueue::onNewRequest(const boost::shared_ptr<BufferSlot>&)
 }
 
 void 
-PlaybackQueue::onNewData(const Buffer::Receipt& receipt)
+PlaybackQueue::onNewData(const BufferReceipt& receipt)
 {
     if (receipt.slot_->getState() == BufferSlot::Ready &&
         streamPrefix_.match(receipt.slot_->getPrefix()))

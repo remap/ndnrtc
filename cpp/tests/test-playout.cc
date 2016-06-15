@@ -501,7 +501,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 				queue.push([&queue, &cache, i, buffer](){
 					cache.addInterest(i, [&queue, buffer](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 						queue.push([buffer, d, i](){
-							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
+							BufferReceipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
 						});
 					});
 				});
@@ -698,7 +698,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 						// std::cout << "on data " << d->getName() << std::endl; 
 						queue.push([buffer, d, i](){
 							// std::cout << "received data " << d->getName() << std::endl;
-							Buffer::Receipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
+							BufferReceipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
 						});
 					});
 				});
@@ -911,7 +911,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 							// when data arrives - add to buffer
 							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
-							Buffer::Receipt r = buffer->received(data);
+							BufferReceipt r = buffer->received(data);
 						});
 					});
 				});
@@ -1176,7 +1176,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 							// when data arrives - add to buffer
 							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
-							Buffer::Receipt r = buffer->received(data);
+							BufferReceipt r = buffer->received(data);
 						});
 					});
 				});
@@ -1441,7 +1441,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 							// when data arrives - add to buffer
 							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 							onDataArrived(data);
-							Buffer::Receipt r = buffer->received(data);
+							BufferReceipt r = buffer->received(data);
 						});
 					});
 				});

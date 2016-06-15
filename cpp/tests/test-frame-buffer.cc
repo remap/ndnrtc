@@ -721,7 +721,7 @@ TEST(TestBuffer, TestRequestAndReceive)
 		int idx = 0;
 		for (auto d:dataObjects)
 		{
-			boost::function<void(const Buffer::Receipt&)> checkFrame = [](const Buffer::Receipt& r){
+			boost::function<void(const BufferReceipt&)> checkFrame = [](const BufferReceipt& r){
 				VideoFrameSlot vs;
 				bool recovered = false;
 				if (r.slot_->getState() == BufferSlot::Ready)
@@ -738,7 +738,7 @@ TEST(TestBuffer, TestRequestAndReceive)
 			EXPECT_CALL(observer2, onNewData(_))
 				.Times(1)
 				.WillOnce(Invoke(checkFrame));
-			Buffer::Receipt rcpt = buffer.received(wd);
+			BufferReceipt rcpt = buffer.received(wd);
 			idx++;
 			if (idx == dataObjects.size())
 				EXPECT_EQ(BufferSlot::Ready, rcpt.slot_->getState());

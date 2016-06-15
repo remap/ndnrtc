@@ -147,7 +147,7 @@ TEST(TestAudioPlayout, TestG722)
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
 						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
-					Buffer::Receipt r = buffer->received(data);
+					BufferReceipt r = buffer->received(data);
 				});
 			});
 		});
@@ -327,7 +327,7 @@ TEST(TestAudioPlayout, TestOpus)
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
 						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
-					Buffer::Receipt r = buffer->received(data);
+					BufferReceipt r = buffer->received(data);
 				});
 			});
 		});

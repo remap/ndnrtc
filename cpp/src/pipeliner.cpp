@@ -72,7 +72,7 @@ Pipeliner::express(const ndn::Name& threadPrefix)
 }
 
 void
-Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>> interests)
+Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
 {
     LogDebugC << "request batch of size " << interests.size() << std::endl;
 

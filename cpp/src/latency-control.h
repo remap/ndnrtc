@@ -20,6 +20,18 @@ namespace ndnrtc {
 	class DrdChangeEstimator;
 	class ILatencyControlObserver;
 
+	typedef enum _PipelineAdjust {
+		IncreasePipeline,
+		DecreasePipeline,
+		KeepPipeline
+	} PipelineAdjust;
+
+	class ILatencyControl {
+	public:
+		virtual void reset() = 0;
+		virtual PipelineAdjust getCurrentCommand() const = 0;
+	};
+
 	/**
 	 * Latency control runs estimation of latest data arrival and detects
 	 * changes in DRD when pipeline size changes. In order for it to work 
@@ -28,17 +40,12 @@ namespace ndnrtc {
 	 * setTargetRate() whenever new information about target sample rate 
 	 * has became available or updated.
 	 */
-	class LatencyControl :  public IDrdEstimatorObserver,
-							public NdnRtcComponent,
+	class LatencyControl :  public NdnRtcComponent,
+							public ILatencyControl,
+							public IDrdEstimatorObserver,
 							public IBufferControlObserver
 	{
 	public:
-		typedef enum _Command {
-			IncreasePipeline,
-			DecreasePipeline,
-			KeepPipeline
-		} Command;
-
 		LatencyControl(unsigned int timeoutWindowMs, 
 			const boost::shared_ptr<const DrdEstimator>& drd);
 		~LatencyControl();
@@ -54,7 +61,7 @@ namespace ndnrtc {
 		void registerObserver(ILatencyControlObserver* o);
 		void unregisterObserver();
 
-		Command getCurrentCommand() const { return currentCommand_; }
+		PipelineAdjust getCurrentCommand() const { return currentCommand_; }
 
 	private:
 		boost::mutex mutex_;
@@ -67,14 +74,14 @@ namespace ndnrtc {
 		estimators::Average interArrival_;
 		double targetRate_;
 		ILatencyControlObserver* observer_;
-		Command currentCommand_;
+		PipelineAdjust currentCommand_;
 
 		void pipelineChanged();
 	};
 
 	class ILatencyControlObserver {
 	public:
-		virtual bool needPipelineAdjustment(const LatencyControl::Command&) = 0;
+		virtual bool needPipelineAdjustment(const PipelineAdjust&) = 0;
 	};
 }
 

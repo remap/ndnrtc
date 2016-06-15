@@ -35,13 +35,25 @@ namespace ndnrtc {
         boost::shared_ptr<ISegmentController> segmentController_;
     } PipelinerSettings;
 
+    class IPipeliner {
+    public:
+        virtual void express(const ndn::Name& threadPrefix) = 0;
+        virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
+        virtual void segmentArrived(const ndn::Name&) = 0;
+        virtual void reset() = 0;
+        virtual void setNeedSample(SampleClass cls) = 0;
+        virtual void setNeedRightmost() = 0;
+        virtual void setSequenceNumber(PacketNumber seqNo, SampleClass cls) = 0;
+    };
+
     /**
      * Pipeliner class implements functionality for expressing Interests towards
      * samples of specified media thread.
      * Pipeliner queries SampleEstimator in order to calculate size of Interest
      * batch to express.
      */
-    class Pipeliner : public NdnRtcComponent {
+    class Pipeliner : public NdnRtcComponent, public IPipeliner 
+    {
     public:
         Pipeliner(const PipelinerSettings& settings);
 
@@ -61,7 +73,7 @@ namespace ndnrtc {
          * This does not place Interests in the buffer.
          * @param interests Interests to be expressed
          */
-        void express(const std::vector<boost::shared_ptr<const ndn::Interest>> interests);
+        void express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
 
         /**
          * Called each time new segment arrives. 

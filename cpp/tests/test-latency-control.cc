@@ -165,10 +165,10 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 
 			latControl.targetRateUpdate(fps);
 
-			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
-				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
-					if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
-					if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
+			boost::function<bool(const PipelineAdjust&)> onAdjustmentNeeded = 
+				[&nIncreaseEvents, &nDecreaseEvents](const PipelineAdjust& cmd)->bool{
+					if (cmd == PipelineAdjust::IncreasePipeline) nIncreaseEvents++;
+					if (cmd == PipelineAdjust::DecreasePipeline) nDecreaseEvents++;
 					return false;
 				};
 			EXPECT_CALL(lco, needPipelineAdjustment(_))
@@ -358,10 +358,10 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 
 			latControl.targetRateUpdate(fps);
 
-			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
-				[&nIncreaseEvents, &nDecreaseEvents](const LatencyControl::Command& cmd)->bool{
-					if (cmd == LatencyControl::IncreasePipeline) nIncreaseEvents++;
-					if (cmd == LatencyControl::DecreasePipeline) nDecreaseEvents++;
+			boost::function<bool(const PipelineAdjust&)> onAdjustmentNeeded = 
+				[&nIncreaseEvents, &nDecreaseEvents](const PipelineAdjust& cmd)->bool{
+					if (cmd == PipelineAdjust::IncreasePipeline) nIncreaseEvents++;
+					if (cmd == PipelineAdjust::DecreasePipeline) nDecreaseEvents++;
 					return false;
 				};
 			EXPECT_CALL(lco, needPipelineAdjustment(_))
@@ -554,17 +554,17 @@ TEST(TestLatencyControl, TestChangingPipeline)
 
 			latControl.targetRateUpdate(fps);
 
-			boost::function<bool(const LatencyControl::Command&)> onAdjustmentNeeded = 
+			boost::function<bool(const PipelineAdjust&)> onAdjustmentNeeded = 
 				[&nIncreaseEvents, &nDecreaseEvents, &defPipeline, &pipeline, &lastFailedPipeline]
-				(const LatencyControl::Command& cmd)->bool{
-					if (cmd == LatencyControl::IncreasePipeline)
+				(const PipelineAdjust& cmd)->bool{
+					if (cmd == PipelineAdjust::IncreasePipeline)
 					{
 						lastFailedPipeline = defPipeline;
 						nIncreaseEvents++;
 						pipeline += defPipeline;
 						defPipeline += defPipeline;
 					}
-					if (cmd == LatencyControl::DecreasePipeline)
+					if (cmd == PipelineAdjust::DecreasePipeline)
 					{ 
 						nDecreaseEvents++;
 						int newDefPipeline = (int)ceil((double)(lastFailedPipeline+defPipeline)/2.);

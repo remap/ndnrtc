@@ -39,7 +39,7 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {
 	if (buffer_->isRequested(segment))
 	{
-		Buffer::Receipt receipt = buffer_->received(segment);
+		BufferReceipt receipt = buffer_->received(segment);
 		drdEstimator_->newValue(receipt.segment_->getRoundTripDelayUsec()/1000, receipt.segment_->isOriginal());
 
 		if (segment->isPacketHeaderSegment())

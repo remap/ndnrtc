@@ -256,7 +256,7 @@ LatencyControl::sampleArrived(const PacketNumber& playbackNo)
 {
     LogTraceC << "sample " << playbackNo << ". target rate " << targetRate_ << std::endl;
 
-    LatencyControl::Command command = KeepPipeline;
+    PipelineAdjust command = KeepPipeline;
     int64_t now = clock::millisecondTimestamp();
 
     if (timestamp_ == 0) timestamp_ = now;

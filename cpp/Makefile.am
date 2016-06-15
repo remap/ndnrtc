@@ -305,7 +305,7 @@ bin_tests_test_interest_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_interest_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_interest_control_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/pipeline-control.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_state_machine_SOURCES = tests/test-pipeline-control-state-machine.cc src/pipeline-control-state-machine.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/latency-control.cpp src/drd-estimator.cpp src/estimators.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_pipeline_control_state_machine_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_pipeline_control_state_machine_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_pipeline_control_state_machine_LDADD = ${libndnrtc_la_LIBADD}
