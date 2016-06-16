@@ -35,7 +35,7 @@ lastRequestedSample_(SampleClass::Delta)
 }
 
 void
-Pipeliner::express(const ndn::Name& threadPrefix)
+Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
     Name n(threadPrefix);
     n.append((nextSamplePriority_ == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
@@ -60,8 +60,15 @@ Pipeliner::express(const ndn::Name& threadPrefix)
     else
     {
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
-        request(getBatch(n, nextSamplePriority_), DeadlinePriority::fromNow(0));
+        
+        const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
 
+        if (placeInBuffer)
+        {
+            request(batch, DeadlinePriority::fromNow(0));
+            buffer_->requested(batch);
+        }
+        
         LogTraceC << "request sample " 
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
             << " " << n << std::endl;
@@ -72,11 +79,15 @@ Pipeliner::express(const ndn::Name& threadPrefix)
 }
 
 void
-Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
+Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
+    bool placeInBuffer)
 {
     LogDebugC << "request batch of size " << interests.size() << std::endl;
 
     request(interests, DeadlinePriority::fromNow(0));
+
+    if (placeInBuffer)
+        buffer_->requested(interests);
 }
 
 void

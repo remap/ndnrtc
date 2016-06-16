@@ -110,12 +110,24 @@ namespace ndnrtc {
 		std::string str() const { return kStateWaitForRightmost; }
 		virtual void enter();
 
-	private:
+	protected:
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 
 		virtual void askRightmost();
 		virtual void receivedRightmost(const boost::shared_ptr<const EventSegment>& es);
+	};
+
+	/**
+	 * WaitForRightmostKey state is a subclass of WaitForRightmost which requests for
+	 * rightmost data in Key namespace, instead of default (Delta).
+	 */
+	class WaitForRightmostKey : public WaitForRightmost {
+	public:
+		WaitForRightmostKey(PipelineControlStateMachine::Struct& ctrl):WaitForRightmost(ctrl){}
+
+	private:
+		void askRightmost();
 	};
 
 	/**
@@ -141,11 +153,24 @@ namespace ndnrtc {
 		std::string str() const { return kStateWaitForInitial; }
 		void enter();
 
-	private:
+	protected:
 		unsigned int nTimeouts_;
 
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
+	};
+
+	/**
+	 * WaitForInitialKey state is a subclass of WaitForInitial which requests
+	 * key frames instead of default (delta) samples as initial data. It 
+	 * initializes pipeliner sequence number based on received segment metada.
+	 */
+	class WaitForInitialKey : public WaitForInitial
+	{
+	public:
+		WaitForInitialKey(PipelineControlStateMachine::Struct& ctrl):WaitForInitial(ctrl){}
+	private:
+		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 	};
 
 	/**
@@ -243,9 +268,39 @@ PipelineControlEvent::toString() const
 }
 
 //******************************************************************************
-PipelineControlStateMachine::PipelineControlStateMachine(PipelineControlStateMachine::Struct ctrl):
-ppCtrl_(ctrl), 
-currentState_(boost::make_shared<Idle>(ppCtrl_)),
+PipelineControlStateMachine::StatesMap
+PipelineControlStateMachine::defaultConsumerStatesMap(PipelineControlStateMachine::Struct ctrl)
+{
+	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
+	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
+		(kStateIdle, idle)
+		(kStateWaitForRightmost, boost::make_shared<WaitForRightmost>(ctrl))
+		(kStateWaitForInitial, boost::make_shared<WaitForInitial>(ctrl))
+		(kStateChasing, boost::make_shared<Chasing>(ctrl))
+		(kStateAdjusting, boost::make_shared<Adjusting>(ctrl))
+		(kStateFetching, boost::make_shared<Fetching>(ctrl));
+	return map;
+}
+
+PipelineControlStateMachine::StatesMap
+PipelineControlStateMachine::videoConsumerStatesMap(PipelineControlStateMachine::Struct ctrl)
+{
+	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
+	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
+		(kStateIdle, idle)
+		(kStateWaitForRightmost, boost::make_shared<WaitForRightmostKey>(ctrl))
+		(kStateWaitForInitial, boost::make_shared<WaitForInitialKey>(ctrl))
+		(kStateChasing, boost::make_shared<Chasing>(ctrl))
+		(kStateAdjusting, boost::make_shared<Adjusting>(ctrl))
+		(kStateFetching, boost::make_shared<Fetching>(ctrl));
+	return map;
+}
+
+PipelineControlStateMachine::PipelineControlStateMachine(PipelineControlStateMachine::Struct ctrl,
+	PipelineControlStateMachine::StatesMap statesMap):
+ppCtrl_(ctrl),
+states_(statesMap),
+currentState_(states_[kStateIdle]),
 lastEventTimestamp_(clock::millisecondTimestamp())
 {
 	assert(ppCtrl_.pipeliner_.get());
@@ -254,14 +309,6 @@ lastEventTimestamp_(clock::millisecondTimestamp())
 
 	currentState_->enter();
 	description_ = "state-machine";
-
-	states_ = boost::assign::map_list_of 
-		(kStateIdle, currentState_)
-		(kStateWaitForRightmost, boost::make_shared<WaitForRightmost>(ppCtrl_))
-		(kStateWaitForInitial, boost::make_shared<WaitForInitial>(ppCtrl_))
-		(kStateChasing, boost::make_shared<Chasing>(ppCtrl_))
-		(kStateAdjusting, boost::make_shared<Adjusting>(ppCtrl_))
-		(kStateFetching, boost::make_shared<Fetching>(ppCtrl_));
 
 	stateMachineTable_ = boost::assign::map_list_of
 		(STATE_TRANSITION(kStateIdle, Start), 					kStateWaitForRightmost)
@@ -301,6 +348,7 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 }
 
 #pragma mark - private
+
 bool
 PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineControlEvent>& ev)
 {
@@ -390,7 +438,15 @@ WaitForRightmost::receivedRightmost(const boost::shared_ptr<const EventSegment>&
 	ctrl_.pipeliner_->setSequenceNumber(ev->getSegment()->getSampleNo()+1,
 		ev->getSegment()->getSampleClass());
 	ctrl_.pipeliner_->setNeedSample(ev->getSegment()->getSampleClass());
-	ctrl_.pipeliner_->express(ctrl_.threadPrefix_);
+	ctrl_.pipeliner_->express(ctrl_.threadPrefix_, true);
+}
+
+//******************************************************************************
+void 
+WaitForRightmostKey::askRightmost()
+{
+	ctrl_.pipeliner_->setNeedSample(SampleClass::Key);
+	return WaitForRightmost::askRightmost();
 }
 
 //******************************************************************************
@@ -403,7 +459,7 @@ WaitForInitial::enter()
 std::string
 WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
-	if (++nTimeouts_ == 3)
+	if (++nTimeouts_ > 3)
 		return kStateIdle;
 
 	ctrl_.pipeliner_->setNeedSample(ev->getInfo().class_);
@@ -414,8 +470,22 @@ WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 std::string
 WaitForInitial::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
+	nTimeouts_ = 0;
 	ctrl_.pipeliner_->segmentArrived(ctrl_.threadPrefix_);
 	return kStateChasing;
+}
+
+//******************************************************************************
+std::string
+WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
+{
+	boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> seg = 
+		boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
+
+	ctrl_.pipeliner_->setSequenceNumber(seg->segment().getHeader().pairedSequenceNo_,
+		SampleClass::Delta);
+	
+	return WaitForInitial::onSegment(ev);
 }
 
 //******************************************************************************

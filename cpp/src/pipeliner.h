@@ -37,8 +37,9 @@ namespace ndnrtc {
 
     class IPipeliner {
     public:
-        virtual void express(const ndn::Name& threadPrefix) = 0;
-        virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
+        virtual void express(const ndn::Name& threadPrefix, bool placeInBuffer = false) = 0;
+        virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&, 
+            bool placeInBuffer = false) = 0;
         virtual void segmentArrived(const ndn::Name&) = 0;
         virtual void reset() = 0;
         virtual void setNeedSample(SampleClass cls) = 0;
@@ -61,19 +62,22 @@ namespace ndnrtc {
          * Express interests for the last requested sample.
          * For instance, if pipeliner previously expressed Interests for sample 100,
          * this expresses Interests for sample 100 again.
-         * This does not place Interests in the buffer.
          * NOTE: if pipeliner did not express any interests before, this expresses
          * Interest with RightmostChild selector.
          * @param threadPrefix Thread prefix used for Interests
+         * @param placeInBuffer Indicates whther interests need to be placed in 
+         *          the buffer (does not affect rightmost Interest).
          */
-        void express(const ndn::Name& threadPrefix);
+        void express(const ndn::Name& threadPrefix, bool placeInBuffer = false);
 
         /**
          * Express specified Interests.
-         * This does not place Interests in the buffer.
          * @param interests Interests to be expressed
+         * @param placeInBuffer Indicates whether interests need to be placed in 
+         *          the buffer.
          */
-        void express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
+        void express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
+            bool placeInBuffer = false);
 
         /**
          * Called each time new segment arrives. 

@@ -99,6 +99,8 @@ namespace ndnrtc {
 	 */
 	class PipelineControlStateMachine : public NdnRtcComponent {
 	public:
+		typedef std::map<std::string, boost::shared_ptr<PipelineControlState>>
+			StatesMap;
 		typedef struct _Struct {
 			_Struct(const ndn::Name threadPrefix):threadPrefix_(threadPrefix){}
 
@@ -108,12 +110,17 @@ namespace ndnrtc {
 			boost::shared_ptr<ILatencyControl> latencyControl_;
 		} Struct;
 
-		PipelineControlStateMachine(Struct ctrl);
 		~PipelineControlStateMachine();
 
 		std::string getState() const;
 		boost::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
 		void dispatch(const boost::shared_ptr<const PipelineControlEvent>& ev);
+
+		static PipelineControlStateMachine defaultConsumerStateMachine(Struct ctrl)
+		{ return PipelineControlStateMachine(ctrl, defaultConsumerStatesMap(ctrl)); }
+		
+		static PipelineControlStateMachine videoConsumerStateMachine(Struct ctrl)
+		{ return PipelineControlStateMachine(ctrl, videoConsumerStatesMap(ctrl)); }
 
 	private:
 		typedef std::map<std::pair<std::string, PipelineControlEvent::Type>, 
@@ -125,8 +132,14 @@ namespace ndnrtc {
 		boost::shared_ptr<PipelineControlState> currentState_;
 		int64_t lastEventTimestamp_;
 
+		PipelineControlStateMachine(Struct ctrl, 
+			StatesMap statesMap);
+
 		bool transition(const boost::shared_ptr<const PipelineControlEvent>& ev);
 		void switchToState(const std::string& state);
+
+		static StatesMap defaultConsumerStatesMap(Struct);
+		static StatesMap videoConsumerStatesMap(Struct);
 	};
 }
 
