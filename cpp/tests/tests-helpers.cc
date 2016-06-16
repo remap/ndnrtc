@@ -367,6 +367,46 @@ makeInterestsConst(const std::vector<boost::shared_ptr<Interest>>& interests)
 	return cinterests;
 }
 
+boost::shared_ptr<WireSegment>
+getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls, 
+	PacketNumber pNo, unsigned int segNo)
+{
+	boost::shared_ptr<WireSegment> segment;
+
+	Name n(threadPrefix);
+	n.append((cls == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey))
+		.appendSequenceNumber(pNo);
+
+	if (segCls == SegmentClass::Parity) n.append(NameComponents::NameComponentParity);
+
+	n.appendSegment(segNo);
+	
+	boost::shared_ptr<const Interest> interest(boost::make_shared<Interest>(n, 1000));
+	boost::shared_ptr<Data> data(boost::make_shared<Data>(n));
+	
+	int nSegments = 0;
+	
+	if (cls == SampleClass::Delta)
+	{
+		if (segCls == SegmentClass::Parity)
+			nSegments = 2;
+		else
+			nSegments = 10;
+	}
+	else
+	{
+		if (segCls == SegmentClass::Parity)
+			nSegments = 6;
+		else
+			nSegments = 30;
+	}
+
+	data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(nSegments));
+	segment = boost::make_shared<WireSegment>(data, interest);
+
+	return segment;
+}
+
 //******************************************************************************
 void DelayQueue::push(QueueBlock block)
 {

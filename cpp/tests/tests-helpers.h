@@ -21,7 +21,9 @@
 #include <include/interfaces.h>
 #include <include/statistics.h>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+
 #include "src/frame-data.h"
+#include "name-components.h"
 
 #define GT_PRINTF(...)  do { testing::internal::ColoredPrintf(testing::internal::COLOR_GREEN, "[ INFO     ] "); testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__); } while(0)
 
@@ -45,7 +47,10 @@ std::vector<boost::shared_ptr<ndn::Interest>> getInterests(std::string frameName
 	unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, size_t parityNSeg = 0, 
   unsigned int startNonce = 0x1234);
 std::vector<boost::shared_ptr<const ndn::Interest>> 
-makeInterestsConst(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
+  makeInterestsConst(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
+boost::shared_ptr<ndnrtc::WireSegment>
+  getFakeSegment(std::string threadPrefix, ndnrtc::SampleClass cls, ndnrtc::SegmentClass segCls, 
+    PacketNumber pNo, unsigned int segNo);
 
 namespace testing
 {
