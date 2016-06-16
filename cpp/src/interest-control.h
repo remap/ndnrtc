@@ -135,7 +135,7 @@ namespace ndnrtc {
 		/**
 		 * Sets lower limit for pipeline size
 		 */
-		void markLowerLimit(unsigned int lowerLimit) { lowerLimit_ = lowerLimit; }
+		void markLowerLimit(unsigned int lowerLimit);
 
 		void onDrdUpdate();
 		void onCachedDrdUpdate(){ /*ignored*/ }
@@ -146,7 +146,7 @@ namespace ndnrtc {
 
 	private:
 		boost::shared_ptr<IStrategy> strategy_;
-		boost::atomic<bool> initialized_;
+		boost::atomic<bool> initialized_, limitSet_;
 		unsigned int lowerLimit_, limit_, upperLimit_;
 		boost::atomic<int> pipeline_;
 		boost::shared_ptr<DrdEstimator> drdEstimator_;

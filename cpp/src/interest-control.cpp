@@ -62,6 +62,7 @@ void
 InterestControl::reset()
 {
 	initialized_ = false;
+	limitSet_ = false;
 	pipeline_ = 0;
 	lowerLimit_ = 3;
 	limit_ = 3;
@@ -122,6 +123,14 @@ InterestControl::withhold()
 }
 
 void 
+InterestControl::markLowerLimit(unsigned int lowerLimit) 
+{ 
+	limitSet_ = true; 
+	lowerLimit_ = lowerLimit; 
+	setLimits();
+}
+
+void 
 InterestControl::onDrdUpdate()
 {
 	if (initialized_)
@@ -146,7 +155,7 @@ InterestControl::setLimits()
 	if (lowerLimit_ != newLower ||
 		upperLimit_ != newUpper)
 	{
-		lowerLimit_ = newLower;
+		if (!limitSet_ || newLower > lowerLimit_) lowerLimit_ = newLower;
 		upperLimit_ = newUpper;
 
 		LogDebugC << "set limits."

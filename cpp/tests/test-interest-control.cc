@@ -123,6 +123,37 @@ TEST(TestInterestControl, TestDefault)
 	EXPECT_EQ(5, ictrl.room());
 }
 
+TEST(TestInterestControl, TestViolationsOfLowerBoundary)
+{
+	{
+		boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 1));
+		InterestControl ictrl(drd);
+		drd->attach(&ictrl);
+
+		drd->newValue(75, true);
+		ictrl.targetRateUpdate(30.);
+		ictrl.burst();
+		EXPECT_TRUE(ictrl.withhold());
+		drd->newValue(75, true);
+		EXPECT_TRUE(ictrl.withhold());
+	}
+	{
+		boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 1));
+		InterestControl ictrl(drd);
+		drd->attach(&ictrl);
+
+		drd->newValue(75, true);
+		ictrl.targetRateUpdate(30.);
+		
+		EXPECT_EQ(3, ictrl.room());
+		ictrl.markLowerLimit(5);
+		EXPECT_EQ(5, ictrl.room());
+		EXPECT_FALSE(ictrl.withhold());
+		drd->newValue(75, true);
+		EXPECT_FALSE(ictrl.withhold());
+	}
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
