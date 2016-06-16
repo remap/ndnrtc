@@ -263,7 +263,7 @@ namespace ndnrtc
         virtual unsigned int getSlotsNum(const ndn::Name&, int) const = 0;
     };
 
-    class Buffer : public NdnRtcComponent {
+    class Buffer : public NdnRtcComponent, public IBuffer {
     public:
         Buffer(boost::shared_ptr<SlotPool> pool = 
                 boost::shared_ptr<SlotPool>(new SlotPool()));

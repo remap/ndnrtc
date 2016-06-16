@@ -18,7 +18,7 @@
 
 namespace ndnrtc {
     class SampleEstimator;
-    class Buffer;
+    class IBuffer;
     class IInterestControl;
     class IInterestQueue;
     class IPlaybackQueue;
@@ -28,7 +28,7 @@ namespace ndnrtc {
     typedef struct _PipelinerSettings {
         unsigned int interestLifetimeMs_;
         boost::shared_ptr<SampleEstimator> sampleEstimator_;
-        boost::shared_ptr<Buffer>& buffer_;
+        boost::shared_ptr<IBuffer> buffer_;
         boost::shared_ptr<IInterestControl> interestControl_;
         boost::shared_ptr<IInterestQueue> interestQueue_;
         boost::shared_ptr<IPlaybackQueue> playbackQueue_;
@@ -121,7 +121,7 @@ namespace ndnrtc {
 
         unsigned int interestLifetime_;
         boost::shared_ptr<SampleEstimator> sampleEstimator_;
-        boost::shared_ptr<Buffer> buffer_;
+        boost::shared_ptr<IBuffer> buffer_;
         boost::shared_ptr<IInterestControl> interestControl_;
         boost::shared_ptr<IInterestQueue> interestQueue_;
         boost::shared_ptr<IPlaybackQueue> playbackQueue_;

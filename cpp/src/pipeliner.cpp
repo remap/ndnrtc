@@ -62,12 +62,9 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
-
-        if (placeInBuffer)
-        {
-            request(batch, DeadlinePriority::fromNow(0));
-            buffer_->requested(batch);
-        }
+        
+        request(batch, DeadlinePriority::fromNow(0));
+        if (placeInBuffer) buffer_->requested(batch);
         
         LogTraceC << "request sample " 
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
@@ -85,9 +82,7 @@ Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& in
     LogDebugC << "request batch of size " << interests.size() << std::endl;
 
     request(interests, DeadlinePriority::fromNow(0));
-
-    if (placeInBuffer)
-        buffer_->requested(interests);
+    if (placeInBuffer) buffer_->requested(interests);
 }
 
 void
