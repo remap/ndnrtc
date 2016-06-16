@@ -31,7 +31,7 @@ namespace ndnrtc {
 namespace ndnrtc {
 	class PipelineControlState {
 	public:
-		PipelineControlState(PipelineControlStateMachine::Struct& ctrl):ctrl_(ctrl){}
+		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}
 
 		virtual std::string str() const = 0;
 
@@ -56,7 +56,7 @@ namespace ndnrtc {
 		{ return str() == other.str(); }
 
 	protected:
-		PipelineControlStateMachine::Struct ctrl_;
+		boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
 
 		virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent>&)
 		{ return str(); }
@@ -82,7 +82,7 @@ namespace ndnrtc {
 	 */
 	class Idle : public PipelineControlState {
 	public:
-		Idle(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		Idle(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateIdle; }
 
@@ -105,7 +105,7 @@ namespace ndnrtc {
 	 */
 	class WaitForRightmost : public PipelineControlState {
 	public:
-		WaitForRightmost(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		WaitForRightmost(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateWaitForRightmost; }
 		virtual void enter();
@@ -124,7 +124,7 @@ namespace ndnrtc {
 	 */
 	class WaitForRightmostKey : public WaitForRightmost {
 	public:
-		WaitForRightmostKey(PipelineControlStateMachine::Struct& ctrl):WaitForRightmost(ctrl){}
+		WaitForRightmostKey(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):WaitForRightmost(ctrl){}
 
 	private:
 		void askRightmost();
@@ -148,7 +148,7 @@ namespace ndnrtc {
 	 */
 	class WaitForInitial : public PipelineControlState {
 	public:
-		WaitForInitial(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		WaitForInitial(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateWaitForInitial; }
 		void enter();
@@ -168,7 +168,7 @@ namespace ndnrtc {
 	class WaitForInitialKey : public WaitForInitial
 	{
 	public:
-		WaitForInitialKey(PipelineControlStateMachine::Struct& ctrl):WaitForInitial(ctrl){}
+		WaitForInitialKey(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):WaitForInitial(ctrl){}
 	private:
 		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 	};
@@ -191,7 +191,7 @@ namespace ndnrtc {
 	 */
 	class Chasing : public PipelineControlState {
 	public:
-		Chasing(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		Chasing(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateChasing; }
 	private:
@@ -217,7 +217,7 @@ namespace ndnrtc {
 	 */
 	class Adjusting : public PipelineControlState {
 	public:
-		Adjusting(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		Adjusting(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateAdjusting; }
 		void enter();
@@ -244,7 +244,7 @@ namespace ndnrtc {
 	 */
 	class Fetching : public PipelineControlState {
 	public:
-		Fetching(PipelineControlStateMachine::Struct& ctrl):PipelineControlState(ctrl){}
+		Fetching(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateFetching; }
 	private:
@@ -268,8 +268,24 @@ PipelineControlEvent::toString() const
 }
 
 //******************************************************************************
+PipelineControlStateMachine 
+PipelineControlStateMachine::defaultStateMachine(PipelineControlStateMachine::Struct ctrl)
+{
+	boost::shared_ptr<PipelineControlStateMachine::Struct> 
+		pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+	return PipelineControlStateMachine(pctrl, defaultConsumerStatesMap(pctrl)); 
+}
+
+PipelineControlStateMachine 
+PipelineControlStateMachine::videoStateMachine(Struct ctrl)
+{
+	boost::shared_ptr<PipelineControlStateMachine::Struct> 
+		pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+	return PipelineControlStateMachine(pctrl, videoConsumerStatesMap(pctrl)); 
+}
+
 PipelineControlStateMachine::StatesMap
-PipelineControlStateMachine::defaultConsumerStatesMap(PipelineControlStateMachine::Struct ctrl)
+PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl)
 {
 	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
 	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
@@ -283,7 +299,7 @@ PipelineControlStateMachine::defaultConsumerStatesMap(PipelineControlStateMachin
 }
 
 PipelineControlStateMachine::StatesMap
-PipelineControlStateMachine::videoConsumerStatesMap(PipelineControlStateMachine::Struct ctrl)
+PipelineControlStateMachine::videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl)
 {
 	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
 	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
@@ -296,16 +312,17 @@ PipelineControlStateMachine::videoConsumerStatesMap(PipelineControlStateMachine:
 	return map;
 }
 
-PipelineControlStateMachine::PipelineControlStateMachine(PipelineControlStateMachine::Struct ctrl,
+//******************************************************************************
+PipelineControlStateMachine::PipelineControlStateMachine(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl,
 	PipelineControlStateMachine::StatesMap statesMap):
 ppCtrl_(ctrl),
 states_(statesMap),
 currentState_(states_[kStateIdle]),
 lastEventTimestamp_(clock::millisecondTimestamp())
 {
-	assert(ppCtrl_.pipeliner_.get());
-	assert(ppCtrl_.interestControl_.get());
-	assert(ppCtrl_.latencyControl_.get());
+	assert(ppCtrl_->pipeliner_.get());
+	assert(ppCtrl_->interestControl_.get());
+	assert(ppCtrl_->latencyControl_.get());
 
 	currentState_->enter();
 	description_ = "state-machine";
@@ -399,9 +416,9 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 void 
 Idle::enter()
 {
-	ctrl_.pipeliner_->reset();
-	ctrl_.latencyControl_->reset();
-	ctrl_.interestControl_->reset();
+	ctrl_->pipeliner_->reset();
+	ctrl_->latencyControl_->reset();
+	ctrl_->interestControl_->reset();
 }
 
 //******************************************************************************
@@ -428,24 +445,24 @@ WaitForRightmost::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 void 
 WaitForRightmost::askRightmost()
 {
-	ctrl_.pipeliner_->setNeedRightmost();
-	ctrl_.pipeliner_->express(ctrl_.threadPrefix_);
+	ctrl_->pipeliner_->setNeedRightmost();
+	ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
 }
 
 void
 WaitForRightmost::receivedRightmost(const boost::shared_ptr<const EventSegment>& ev)
 {
-	ctrl_.pipeliner_->setSequenceNumber(ev->getSegment()->getSampleNo()+1,
+	ctrl_->pipeliner_->setSequenceNumber(ev->getSegment()->getSampleNo()+1,
 		ev->getSegment()->getSampleClass());
-	ctrl_.pipeliner_->setNeedSample(ev->getSegment()->getSampleClass());
-	ctrl_.pipeliner_->express(ctrl_.threadPrefix_, true);
+	ctrl_->pipeliner_->setNeedSample(ev->getSegment()->getSampleClass());
+	ctrl_->pipeliner_->express(ctrl_->threadPrefix_, true);
 }
 
 //******************************************************************************
 void 
 WaitForRightmostKey::askRightmost()
 {
-	ctrl_.pipeliner_->setNeedSample(SampleClass::Key);
+	ctrl_->pipeliner_->setNeedSample(SampleClass::Key);
 	return WaitForRightmost::askRightmost();
 }
 
@@ -462,8 +479,8 @@ WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 	if (++nTimeouts_ > 3)
 		return kStateIdle;
 
-	ctrl_.pipeliner_->setNeedSample(ev->getInfo().class_);
-	ctrl_.pipeliner_->express(ctrl_.threadPrefix_);
+	ctrl_->pipeliner_->setNeedSample(ev->getInfo().class_);
+	ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
 	return str();
 }
 
@@ -471,7 +488,7 @@ std::string
 WaitForInitial::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
 	nTimeouts_ = 0;
-	ctrl_.pipeliner_->segmentArrived(ctrl_.threadPrefix_);
+	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
 	return kStateChasing;
 }
 
@@ -482,7 +499,7 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 	boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> seg = 
 		boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
 
-	ctrl_.pipeliner_->setSequenceNumber(seg->segment().getHeader().pairedSequenceNo_,
+	ctrl_->pipeliner_->setSequenceNumber(seg->segment().getHeader().pairedSequenceNo_,
 		SampleClass::Delta);
 	
 	return WaitForInitial::onSegment(ev);
@@ -492,17 +509,17 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 std::string 
 Chasing::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
-	ctrl_.pipeliner_->setNeedSample(ev->getInfo().class_);
-	ctrl_.pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::Thread));
+	ctrl_->pipeliner_->setNeedSample(ev->getInfo().class_);
+	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::Thread));
 	return str();
 }
 
 std::string 
 Chasing::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
-	ctrl_.pipeliner_->segmentArrived(ctrl_.threadPrefix_);
+	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
 
-	if (ctrl_.latencyControl_->getCurrentCommand() == PipelineAdjust::DecreasePipeline)
+	if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::DecreasePipeline)
 		return kStateAdjusting;
 	return str();
 }
@@ -511,23 +528,23 @@ Chasing::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 void 
 Adjusting::enter()
 {
-	pipelineLowerLimit_ = ctrl_.interestControl_->pipelineLimit();
+	pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
 }
 
 std::string 
 Adjusting::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
-	ctrl_.pipeliner_->segmentArrived(ctrl_.threadPrefix_);
-	PipelineAdjust cmd = ctrl_.latencyControl_->getCurrentCommand();
+	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+	PipelineAdjust cmd = ctrl_->latencyControl_->getCurrentCommand();
 	
 	if (cmd == PipelineAdjust::IncreasePipeline)
 	{
-		ctrl_.interestControl_->markLowerLimit(pipelineLowerLimit_);
+		ctrl_->interestControl_->markLowerLimit(pipelineLowerLimit_);
 		return kStateFetching;
 	}
 
 	if (cmd == PipelineAdjust::DecreasePipeline)
-		pipelineLowerLimit_ = ctrl_.interestControl_->pipelineLimit();
+		pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
 
 	return str();
 }
@@ -536,9 +553,9 @@ Adjusting::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 std::string
 Fetching::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
-	ctrl_.pipeliner_->segmentArrived(ctrl_.threadPrefix_);
+	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
 
-	if (ctrl_.latencyControl_->getCurrentCommand() == PipelineAdjust::IncreasePipeline)
+	if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::IncreasePipeline)
 		return kStateAdjusting;
 	return str();
 }

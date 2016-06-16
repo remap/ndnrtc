@@ -49,7 +49,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -148,7 +148,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::videoConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -262,7 +262,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostTimeout)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -310,7 +310,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -360,7 +360,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -403,7 +403,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -481,7 +481,7 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::videoConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -561,7 +561,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
@@ -621,7 +621,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
 
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultConsumerStateMachine(ctrl);
+	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING

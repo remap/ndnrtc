@@ -116,30 +116,27 @@ namespace ndnrtc {
 		boost::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
 		void dispatch(const boost::shared_ptr<const PipelineControlEvent>& ev);
 
-		static PipelineControlStateMachine defaultConsumerStateMachine(Struct ctrl)
-		{ return PipelineControlStateMachine(ctrl, defaultConsumerStatesMap(ctrl)); }
-		
-		static PipelineControlStateMachine videoConsumerStateMachine(Struct ctrl)
-		{ return PipelineControlStateMachine(ctrl, videoConsumerStatesMap(ctrl)); }
+		static PipelineControlStateMachine defaultStateMachine(Struct ctrl);
+		static PipelineControlStateMachine videoStateMachine(Struct ctrl);
 
 	private:
 		typedef std::map<std::pair<std::string, PipelineControlEvent::Type>, 
 			std::string> TransitionMap;
 
-		Struct ppCtrl_;
+		boost::shared_ptr<Struct> ppCtrl_;
 		std::map<std::string, boost::shared_ptr<PipelineControlState>> states_;
 		TransitionMap stateMachineTable_;
 		boost::shared_ptr<PipelineControlState> currentState_;
 		int64_t lastEventTimestamp_;
 
-		PipelineControlStateMachine(Struct ctrl, 
+		PipelineControlStateMachine(const boost::shared_ptr<Struct>& ctrl, 
 			StatesMap statesMap);
 
 		bool transition(const boost::shared_ptr<const PipelineControlEvent>& ev);
 		void switchToState(const std::string& state);
 
-		static StatesMap defaultConsumerStatesMap(Struct);
-		static StatesMap videoConsumerStatesMap(Struct);
+		static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
+		static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
 	};
 }
 
