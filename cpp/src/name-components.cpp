@@ -349,6 +349,8 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                 if (name.size() > 4)
                 {
                     info.isParity_ = (name[4] == Name::Component(NameComponents::NameComponentParity));
+                    info.segmentClass_ = (info.isParity_ ? SegmentClass::Parity : SegmentClass::Data);
+
                     if (info.isParity_ && name.size() > 5)
                     {
                         info.segNo_ = name[5].toSegment();
@@ -412,6 +414,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
         info.isDelta_ = true;
         info.class_ = SampleClass::Delta;
+        info.segmentClass_ = SegmentClass::Data;
 
         try
         {

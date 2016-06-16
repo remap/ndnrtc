@@ -864,8 +864,10 @@ namespace ndnrtc {
         bool isMeta() const { return dataNameInfo_.isMeta_; }
         PacketNumber getSampleNo() const { return dataNameInfo_.sampleNo_; }
         bool isDelta() const { return dataNameInfo_.isDelta_; }
+        SampleClass getSampleClass() const { return (isDelta() ? SampleClass::Delta : SampleClass::Key); }
         unsigned int getSegNo() const { return dataNameInfo_.segNo_; }
         bool isParity() const { return dataNameInfo_.isParity_; }
+        SegmentClass getSegmentClass() const { return (isParity() ? SegmentClass::Parity : SegmentClass::Data); }
         std::string getThreadName() const { return dataNameInfo_.threadName_; }
 
         bool isPacketHeaderSegment() const { return !dataNameInfo_.isParity_ && dataNameInfo_.segNo_ == 0; }

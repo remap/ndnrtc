@@ -67,6 +67,7 @@ namespace ndnrtc {
         std::string streamName_, threadName_;
         bool isMeta_, isParity_, isDelta_, hasSeqNo_;
         SampleClass class_;
+        SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
         unsigned int metaVersion_;
