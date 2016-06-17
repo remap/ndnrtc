@@ -35,20 +35,20 @@ TEST(TestPlayoutControl, TestDefault)
 		for (int i = 0; i < 7; ++i)
 			pc.onNewSampleReady();
 
- 		pc.allowPlayout(true);
+		pc.allowPlayout(true);
 
- 		EXPECT_CALL(*playout, stop())
- 			.Times(1);
- 		EXPECT_CALL(*playout, isRunning())
- 			.Times(3)
- 			.WillOnce(Return(true))
- 			.WillOnce(Return(false))
- 			.WillOnce(Return(false));
+		EXPECT_CALL(*playout, stop())
+			.Times(1);
+		EXPECT_CALL(*playout, isRunning())
+			.Times(3)
+			.WillOnce(Return(true))
+			.WillOnce(Return(false))
+			.WillOnce(Return(false));
 
- 		pc.allowPlayout(false);
- 		pc.allowPlayout(false);
- 		pc.allowPlayout(false);
- 	}
+		pc.allowPlayout(false);
+		pc.allowPlayout(false);
+		pc.allowPlayout(false);
+	}
 
 	{
 		EXPECT_CALL(*playbackQueue, size())

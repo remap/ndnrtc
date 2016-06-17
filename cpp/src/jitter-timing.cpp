@@ -6,19 +6,18 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
+#include <boost/make_shared.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/function.hpp>
 
 #include "jitter-timing.h"
-#include "ndnrtc-utils.h"
 #include "clock.h"
 #include "simple-log.h"
 #include "ndnrtc-object.h"
 
 using namespace ndnrtc;
-using namespace webrtc;
 using namespace ndnlog;
 using namespace std;
 

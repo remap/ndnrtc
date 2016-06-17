@@ -14,6 +14,7 @@
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
+#if 0
 #include "video-decoder.h"
 #include "ndnrtc-utils.h"
 
@@ -121,3 +122,4 @@ int NdnVideoDecoder::resetDecoder()
     
     return RESULT_OK;
 }
+#endif

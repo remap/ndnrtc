@@ -13,6 +13,7 @@
 #define __ndnrtc__video_decoder__
 
 #include "ndnrtc-common.h"
+#if 0
 #include "webrtc.h"
 #include "base-capturer.h"
 #include "video-coder.h"
@@ -54,5 +55,5 @@ namespace ndnrtc {
         };
     }
 }
-
+#endif
 #endif /* defined(__ndnrtc__video_decoder__) */
