@@ -30,7 +30,22 @@ namespace ndnrtc {
     typedef statistics::StatisticsStorage StatStorage; 
     class IPlayoutObserver;
 
+    class IPlayout {
+    public:
+        virtual void start(unsigned int fastForwardMs = 0) = 0;
+        virtual void stop() = 0;
+        virtual bool isRunning() const = 0;
+    };
+
+    /**
+     * Playout is a base class for media streams (audio and video) playout 
+     * mechanism. It implements functionality of retrieveing assembled frames from
+     * playback queue respectively to their timestamps. Playout mechanism is 
+     * self-correcting: it maintains measurements for each frame processing time
+     * and adjusts for these drifts for the next frames.
+     */
     class Playout : public NdnRtcComponent, 
+                    public IPlayout,
                     public statistics::StatObject
     {
     public:
@@ -45,7 +60,7 @@ namespace ndnrtc {
 
         void setLogger(ndnlog::new_api::Logger* logger);
         void setDescription(const std::string& desc);
-        bool isRunning() { return isRunning_; }
+        bool isRunning() const { return isRunning_; }
 
         void attach(IPlayoutObserver* observer);
         void detach(IPlayoutObserver* observer);
