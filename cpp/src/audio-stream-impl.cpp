@@ -49,7 +49,6 @@ AudioStreamImpl::start()
 	for (auto it:threads_)
 		if (!it.second->isRunning()) it.second->start();
 
-	if (!streamRunning_) setupMetaCheckTimer();
 	streamRunning_ = true;
 }
 
@@ -62,7 +61,6 @@ AudioStreamImpl::stop()
 		it.second->stop();
 
 	streamRunning_ = false;
-	metaCheckTimer_.cancel();
 }
 
 void 

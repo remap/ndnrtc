@@ -13,6 +13,7 @@
 
 #include "local-media-stream.h"
 #include "packet-publisher.h"
+#include "periodic.h"
 
 namespace ndn {
 	class MemoryContentCache;
@@ -21,7 +22,9 @@ namespace ndn {
 namespace ndnrtc {
 	class MediaThreadParams;
 
-	class MediaStreamBase : public NdnRtcComponent {
+	class MediaStreamBase : public NdnRtcComponent, 
+							public Periodic 
+	{
 	public:
 		MediaStreamBase(const std::string& basePrefix, 
 			const MediaStreamSettings& settings);
@@ -60,12 +63,11 @@ namespace ndnrtc {
 		ndn::Name streamPrefix_;
 		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 		boost::shared_ptr<CommonPacketPublisher> dataPublisher_;
-		boost::asio::steady_timer metaCheckTimer_;
 
 		virtual void add(const MediaThreadParams* params) = 0;
 		virtual void remove(const std::string& threadName) = 0;
 		void publishMeta();
-		void setupMetaCheckTimer();
+		unsigned int periodicInvocation();
 		virtual bool checkMeta() = 0;
 	};
 }

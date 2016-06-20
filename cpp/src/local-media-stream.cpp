@@ -92,12 +92,10 @@ LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
 {
 	pimpl_->publishMeta();
-	pimpl_->setupMetaCheckTimer();
 }
 
 LocalVideoStream::~LocalVideoStream()
 {
-	pimpl_->metaCheckTimer_.cancel();
 }
 
 void

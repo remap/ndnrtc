@@ -23,12 +23,15 @@ using namespace ndn;
 
 MediaStreamBase::MediaStreamBase(const std::string& basePrefix, 
 	const MediaStreamSettings& settings):
+Periodic(settings_.faceIo_, META_CHECK_INTERVAL_MS),
 metaVersion_(0),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
-cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_)),
-metaCheckTimer_(settings_.faceIo_)
+cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_))
 {
+	assert(settings_.face_);
+	assert(settings_.keyChain_);
+
 	streamPrefix_.append(Name(settings_.params_.streamName_));
 
 	PublisherSettings ps;
@@ -63,11 +66,10 @@ MediaStreamBase::removeThread(const string& threadName)
 void 
 MediaStreamBase::publishMeta()
 {
-	boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>());	
+	boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(getThreads()));
 	// don't need to synchronize unless publishMeta will be called 
 	// from places others than addThread/removeThread or outer class' 
 	// constructor LocalVideoStream/LocalAudioStream
-	for (auto t:getThreads()) meta->addThread(t);
 	
 	Name metaName(streamPrefix_);
 	metaName.append(NameComponents::NameComponentMeta).appendVersion(++metaVersion_);
@@ -80,16 +82,8 @@ MediaStreamBase::publishMeta()
 	LogDebugC << "published stream meta " << metaName << std::endl;
 }
 
-void MediaStreamBase::setupMetaCheckTimer()
+unsigned int MediaStreamBase::periodicInvocation()
 {
-	metaCheckTimer_.expires_from_now(boost::chrono::milliseconds(META_CHECK_INTERVAL_MS));
-	boost::shared_ptr<MediaStreamBase> me = boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
-	metaCheckTimer_.async_wait([me](const boost::system::error_code& e){
-		if (e != boost::asio::error::operation_aborted)
-		{
-			if (me->checkMeta())
-				me->setupMetaCheckTimer();
-		}
-	});
+	checkMeta();
+	return META_CHECK_INTERVAL_MS;
 }
-

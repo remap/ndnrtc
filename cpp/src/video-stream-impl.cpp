@@ -60,7 +60,7 @@ fecEnabled_(useFec)
 	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
 
 	publisher_ = boost::make_shared<VideoPacketPublisher>(ps, streamPrefix_);
-	publisher_->setDescription("publisher-"+settings_.params_.streamName_);
+	publisher_->setDescription("seg-publisher-"+settings_.params_.streamName_);
 }
 
 VideoStreamImpl::~VideoStreamImpl()
@@ -123,6 +123,8 @@ VideoStreamImpl::add(const MediaThreadParams* mp)
 		seqCounters_[params->threadName_].first  = 0;
 		seqCounters_[params->threadName_].second = 0;
 		metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
+
+		threads_[params->threadName_]->setDescription("thread-"+params->threadName_);
 	}
 
 	LogTraceC << "added thread " << params->threadName_ << std::endl;
@@ -148,7 +150,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 	if (threads_.size())
 	{
 		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
-		LogTraceC << "feeding frame into threads..." << std::endl;
+		LogTraceC << "feeding frame "<< playbackCounter_ << " into threads..." << std::endl;
 
 		map<string,FutureFramePtr> futureFrames;
 		for (auto it:threads_)
@@ -168,7 +170,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 			{
 				frames[it.first] = f;
 
-				LogTraceC << "encoded frame from thread " << it.first 
+				LogTraceC << "encoded frame for thread " << it.first 
 				<< " " << f->getLength() << " bytes" << std::endl;
 			}
 		}
