@@ -9,6 +9,7 @@
 #define __remote_stream_h__
 
 #include <boost/asio.hpp>
+#include "simple-log.h"
 
 namespace ndn {
 	class Face;
@@ -44,6 +45,13 @@ namespace ndnrtc {
 
 		void attach(IRemoteStreamObserver*);
 		void detach(IRemoteStreamObserver*);
+
+
+		/**
+		 * Sets logger for current stream
+		 * @param logger Pointer to Logger instance
+		 */
+		void setLogger(ndnlog::new_api::Logger* logger);
 
 		// static boost::shared_ptr<RemoteStream> 
 			// createStream(const std::string streamPrefix);

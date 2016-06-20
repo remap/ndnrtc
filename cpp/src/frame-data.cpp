@@ -201,7 +201,7 @@ dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_){}
 
 size_t WireSegment::getSlicesNum() const
 {
-    return data_->getMetaInfo().getFinalBlockId().toNumber();
+    return data_->getMetaInfo().getFinalBlockId().toSegment()+1;
 }
 
 const DataSegmentHeader

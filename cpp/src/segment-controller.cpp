@@ -61,14 +61,17 @@ unsigned int SegmentController::periodicInvocation()
 {
 	int64_t now = clock::millisecondTimestamp();
 
-	if (now - lastDataTimestampMs_ > maxIdleTimeMs_ && !starvationFired_)
+	if (now - lastDataTimestampMs_ > maxIdleTimeMs_)
 	{
-		LogWarnC << "no data during " << (now-lastDataTimestampMs_) << " ms" << std::endl;
-
-		starvationFired_ = true;
+		if (!starvationFired_)
 		{
-			boost::lock_guard<boost::mutex> scopedLock(mutex_);
-			for (auto& o:observers_) o->segmentStarvation();
+			LogWarnC << "no data during " << (now-lastDataTimestampMs_) << " ms" << std::endl;
+	
+			starvationFired_ = true;
+			{
+				boost::lock_guard<boost::mutex> scopedLock(mutex_);
+				for (auto& o:observers_) o->segmentStarvation();
+			}
 		}
 		return maxIdleTimeMs_;
 	}

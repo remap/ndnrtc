@@ -1089,6 +1089,50 @@ TEST(TestMediaStreamMeta, TestCreate)
     EXPECT_EQ("mic", meta2.getSyncStreams()[1]);
 }
 
+TEST(TestMediaStreamMeta, TestPackAndUnpack)
+{
+    MediaStreamMeta meta;
+    meta.addThread("low");
+    meta.addSyncStream("mic");
+
+    EXPECT_TRUE(meta.isValid());
+    ASSERT_EQ(1, meta.getThreads().size());
+    EXPECT_EQ("low", meta.getThreads()[0]);
+
+    ASSERT_EQ(1, meta.getSyncStreams().size());
+    EXPECT_EQ("mic", meta.getSyncStreams()[0]);
+
+    GT_PRINTF("Media stream meta is %d bytes long\n", meta.getLength());
+
+    // HeaderPacket<DataSegmenHeader>
+    std::vector<CommonSegment> segs = CommonSegment::slice(meta, 1000);
+    ASSERT_EQ(1, segs.size());
+
+    DataSegmentHeader hdr;
+    hdr.interestNonce_ = 1;
+    hdr.interestArrivalMs_ = 2;
+    hdr.generationDelayMs_ = 3;
+    segs.front().setHeader(hdr);
+
+    boost::shared_ptr<std::vector<uint8_t>> 
+        bytes(boost::make_shared<std::vector<uint8_t>>(segs.front().getNetworkData()->data()));
+    ImmutableHeaderPacket<DataSegmentHeader> packet(bytes);
+
+    EXPECT_EQ(1, packet.getHeader().interestNonce_);
+    EXPECT_EQ(2, packet.getHeader().interestArrivalMs_);
+    EXPECT_EQ(3, packet.getHeader().generationDelayMs_);
+
+    NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
+    MediaStreamMeta meta2(boost::move(nd));
+
+    EXPECT_TRUE(meta2.isValid());
+    ASSERT_EQ(1, meta2.getThreads().size());
+    EXPECT_EQ("low", meta2.getThreads()[0]);
+
+    ASSERT_EQ(1, meta2.getSyncStreams().size());
+    EXPECT_EQ("mic", meta2.getSyncStreams()[0]);
+}
+
 TEST(TestWireData, TestVideoFrameSegment)
 {
     int data_len = 6472;

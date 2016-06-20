@@ -100,7 +100,7 @@ namespace ndnrtc{
 				
 				ndn::Data ndnSegment(segmentName);
 				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
-				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
 				ndnSegment.setContent(segmentData->getData(), segment.size());
 				settings_.keyChain_->sign(ndnSegment);
 				settings_.memoryCache_->add(ndnSegment);

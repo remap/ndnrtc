@@ -437,6 +437,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-async.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT) \
+	src/bin_tests_test_local_media_stream-periodic.$(OBJEXT) \
 	$(am__objects_13)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
@@ -496,6 +497,10 @@ am_bin_tests_test_loop_OBJECTS =  \
 	src/bin_tests_test_loop-video-stream-impl.$(OBJEXT) \
 	src/bin_tests_test_loop-video-thread.$(OBJEXT) \
 	src/bin_tests_test_loop-webrtc-audio-channel.$(OBJEXT) \
+	client/src/bin_tests_test_loop-video-source.$(OBJEXT) \
+	client/src/bin_tests_test_loop-precise-generator.$(OBJEXT) \
+	client/src/bin_tests_test_loop-frame-io.$(OBJEXT) \
+	src/bin_tests_test_loop-meta-fetcher.$(OBJEXT) \
 	$(am__objects_14)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
 bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -1296,7 +1301,7 @@ bin_tests_test_name_components_SOURCES = tests/test-name-components.cc src/name-
 bin_tests_test_name_components_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_name_components_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_name_components_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_local_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_local_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_local_media_stream_LDADD = ${libndnrtc_la_LIBADD}
@@ -1386,7 +1391,9 @@ bin_tests_test_loop_SOURCES = tests/test-loop.cc \
 	src/threading-capability.cpp src/video-coder.cpp \
 	src/video-decoder.cpp src/video-playout.cpp \
 	src/video-stream-impl.cpp src/video-thread.cpp \
-	src/webrtc-audio-channel.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+	src/webrtc-audio-channel.cpp client/src/video-source.cpp \
+	client/src/precise-generator.cpp client/src/frame-io.cpp \
+	src/meta-fetcher.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD}
@@ -1969,6 +1976,8 @@ src/bin_tests_test_local_media_stream-audio-stream-impl.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_local_media_stream-periodic.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -2072,6 +2081,17 @@ src/bin_tests_test_loop-video-thread.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_loop-webrtc-audio-channel.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_loop-video-source.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_loop-precise-generator.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_loop-frame-io.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_loop-meta-fetcher.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -2577,6 +2597,9 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_estimators-precise-generator.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_latency_control-precise-generator.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_loop-frame-io.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_loop-precise-generator.$(OBJEXT)
+	-rm -f client/src/bin_tests_test_loop-video-source.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_playout-frame-io.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_playout-precise-generator.$(OBJEXT)
 	-rm -f client/src/bin_tests_test_playout-video-source.$(OBJEXT)
@@ -2750,6 +2773,7 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-ndnrtc-object.$(OBJEXT)
+	-rm -f src/bin_tests_test_local_media_stream-periodic.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-simple-log.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-threading-capability.$(OBJEXT)
 	-rm -f src/bin_tests_test_local_media_stream-video-coder.$(OBJEXT)
@@ -2778,6 +2802,7 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_loop-latency-control.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-local-media-stream.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-media-stream-base.$(OBJEXT)
+	-rm -f src/bin_tests_test_loop-meta-fetcher.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-name-components.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-ndnrtc-object.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-packet-publisher.$(OBJEXT)
@@ -3082,6 +3107,9 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_latency_control-precise-generator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_playout-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_playout-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_playout-video-source.Po@am__quote@
@@ -3255,6 +3283,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-media-stream-base.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-threading-capability.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_local_media_stream-video-coder.Po@am__quote@
@@ -3283,6 +3312,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-latency-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-local-media-stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-media-stream-base.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-packet-publisher.Po@am__quote@
@@ -6391,6 +6421,22 @@ src/bin_tests_test_local_media_stream-media-stream-base.obj: src/media-stream-ba
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-media-stream-base.obj `if test -f 'src/media-stream-base.cpp'; then $(CYGPATH_W) 'src/media-stream-base.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream-base.cpp'; fi`
 
+src/bin_tests_test_local_media_stream-periodic.o: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-periodic.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Tpo -c -o src/bin_tests_test_local_media_stream-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_local_media_stream-periodic.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
+
+src/bin_tests_test_local_media_stream-periodic.obj: src/periodic.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_local_media_stream-periodic.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Tpo -c -o src/bin_tests_test_local_media_stream-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Tpo src/$(DEPDIR)/bin_tests_test_local_media_stream-periodic.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/periodic.cpp' object='src/bin_tests_test_local_media_stream-periodic.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_local_media_stream-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
+
 contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_local_media_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_local_media_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_local_media_stream-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_local_media_stream-gmock-all.Po
@@ -7174,6 +7220,70 @@ src/bin_tests_test_loop-webrtc-audio-channel.obj: src/webrtc-audio-channel.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/webrtc-audio-channel.cpp' object='src/bin_tests_test_loop-webrtc-audio-channel.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
+
+client/src/bin_tests_test_loop-video-source.o: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-video-source.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Tpo -c -o client/src/bin_tests_test_loop-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/video-source.cpp' object='client/src/bin_tests_test_loop-video-source.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+
+client/src/bin_tests_test_loop-video-source.obj: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-video-source.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Tpo -c -o client/src/bin_tests_test_loop-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-video-source.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/video-source.cpp' object='client/src/bin_tests_test_loop-video-source.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+
+client/src/bin_tests_test_loop-precise-generator.o: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Tpo -c -o client/src/bin_tests_test_loop-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_loop-precise-generator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+
+client/src/bin_tests_test_loop-precise-generator.obj: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Tpo -c -o client/src/bin_tests_test_loop-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-precise-generator.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_loop-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+
+client/src/bin_tests_test_loop-frame-io.o: client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-frame-io.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Tpo -c -o client/src/bin_tests_test_loop-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/frame-io.cpp' object='client/src/bin_tests_test_loop-frame-io.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
+
+client/src/bin_tests_test_loop-frame-io.obj: client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_loop-frame-io.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Tpo -c -o client/src/bin_tests_test_loop-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Tpo client/src/$(DEPDIR)/bin_tests_test_loop-frame-io.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='client/src/frame-io.cpp' object='client/src/bin_tests_test_loop-frame-io.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_loop-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
+
+src/bin_tests_test_loop-meta-fetcher.o: src/meta-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-meta-fetcher.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Tpo -c -o src/bin_tests_test_loop-meta-fetcher.o `test -f 'src/meta-fetcher.cpp' || echo '$(srcdir)/'`src/meta-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Tpo src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/meta-fetcher.cpp' object='src/bin_tests_test_loop-meta-fetcher.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-meta-fetcher.o `test -f 'src/meta-fetcher.cpp' || echo '$(srcdir)/'`src/meta-fetcher.cpp
+
+src/bin_tests_test_loop-meta-fetcher.obj: src/meta-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-meta-fetcher.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Tpo -c -o src/bin_tests_test_loop-meta-fetcher.obj `if test -f 'src/meta-fetcher.cpp'; then $(CYGPATH_W) 'src/meta-fetcher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/meta-fetcher.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Tpo src/$(DEPDIR)/bin_tests_test_loop-meta-fetcher.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/meta-fetcher.cpp' object='src/bin_tests_test_loop-meta-fetcher.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-meta-fetcher.obj `if test -f 'src/meta-fetcher.cpp'; then $(CYGPATH_W) 'src/meta-fetcher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/meta-fetcher.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_loop-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

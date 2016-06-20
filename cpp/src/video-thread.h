@@ -39,6 +39,9 @@ namespace ndnrtc
         unsigned int
         getDroppedNum() { return nDropped_; }
 
+        void
+        setDescription(const std::string& desc);
+
     private:
         VideoThread(const VideoThread&) = delete;
         VideoCoder coder_;

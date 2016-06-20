@@ -26,6 +26,11 @@ namespace ndnrtc {
 		const unsigned char* vBuffer_;
 	} I420RawFrameWrapper;
 
+	/**
+	 * FrameConverter converts wrappers of raw video frames into a
+	 * WebRTC raw video frame object. Converted object is stored inside the
+	 * converter and is valid as long as converter lives.
+	 */
 	class RawFrameConverter 
 	{
 	public:

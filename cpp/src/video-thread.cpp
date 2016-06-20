@@ -43,6 +43,13 @@ VideoThread::encode(const WebRtcVideoFrame& frame)
     return boost::move(videoFramePacket_);
 }
 
+void
+VideoThread::setDescription(const std::string& desc)
+{
+    description_ = desc;
+    coder_.setDescription(desc+"-coder");
+}
+
 //******************************************************************************
 #pragma mark - interfaces realization
 void
