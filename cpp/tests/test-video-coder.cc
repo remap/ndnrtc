@@ -276,6 +276,8 @@ TEST(TestCoder, TestEncode700K)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
@@ -378,6 +380,8 @@ TEST(TestCoder, TestEncode1000K)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
@@ -479,6 +483,8 @@ TEST(TestCoder, TestEncode2000K)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
@@ -580,6 +586,8 @@ TEST(TestCoder, TestEncode3000K)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
@@ -680,6 +688,8 @@ TEST(TestCoder, TestEnforceNoDrop)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
 
@@ -780,6 +790,8 @@ TEST(TestCoder, TestEnforceKeyGop)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
@@ -884,6 +896,8 @@ TEST(TestCoder, TestEnforceKeyTimed)
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
 		EXPECT_EQ(coderDelegate.getEncodedNum()-nFrames/vcp.gop_, coderDelegate.getDelta());
