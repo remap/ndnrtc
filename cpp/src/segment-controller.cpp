@@ -61,7 +61,7 @@ unsigned int SegmentController::periodicInvocation()
 {
 	int64_t now = clock::millisecondTimestamp();
 
-	if (now - lastDataTimestampMs_ > maxIdleTimeMs_)
+	if (now - lastDataTimestampMs_ >= maxIdleTimeMs_)
 	{
 		if (!starvationFired_)
 		{
