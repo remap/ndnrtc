@@ -73,7 +73,7 @@ namespace ndnrtc {
 			estimators::Average keyData_, keyParity_;
 		};
 
-		bool fecEnabled_;
+		bool fecEnabled_, incomingData_;
 		RawFrameConverter conv_;
 		std::map<std::string, boost::shared_ptr<VideoThread>> threads_;
 		std::map<std::string, boost::shared_ptr<FrameScaler>> scalers_;

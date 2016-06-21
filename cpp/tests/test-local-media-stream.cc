@@ -145,11 +145,13 @@ MediaStreamParams getSampleVideoParams()
 	VideoThreadParams atp("low", sampleVideoCoderParams());
 	atp.coderParams_.encodeWidth_ = 640;
 	atp.coderParams_.encodeHeight_ = 480;
+	atp.coderParams_.startBitrate_ = 500;
 	msp.addMediaThread(atp);
 
 	VideoThreadParams atp2("mid", sampleVideoCoderParams());
 	atp2.coderParams_.encodeWidth_ = 1280;
 	atp2.coderParams_.encodeHeight_ = 720;
+	atp2.coderParams_.startBitrate_ = 1000;
 	msp.addMediaThread(atp2);
 
 	return msp;
@@ -192,7 +194,6 @@ MediaStreamParams getSampleAudioParams()
 
 	return msp;
 }
-
 #if 1
 TEST(TestVideoStream, TestCreate)
 {
@@ -290,7 +291,48 @@ TEST(TestVideoStream, TestDeleteThreads)
 
 	EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frameBuffer, frameSize));
 }
-#if 1
+
+TEST(TestVideoStream, TestDestructorNotLocking)
+{
+	boost::atomic<bool> destructed(false);
+
+	boost::asio::io_service checkIo;
+	boost::asio::steady_timer checkTimer(checkIo);
+
+	boost::asio::io_service io;
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+
+	checkTimer.expires_from_now(boost::chrono::milliseconds(2500));
+	checkTimer.async_wait([&destructed, &t](const boost::system::error_code& e){
+		ASSERT_TRUE(destructed);
+		if (!destructed) t.interrupt();
+	});
+
+	boost::thread checkThread([&checkIo](){
+		checkIo.run();
+	});
+
+	{
+		ndn::Face face("aleph.ndn.ucla.edu");
+		shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+		std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+		shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+	
+		MediaStreamSettings settings(io, getSampleVideoParams());
+		settings.face_ = &face;
+		settings.keyChain_ = keyChain.get();
+		LocalVideoStream s(appPrefix, settings);
+	
+		work.reset();
+		t.timed_join(boost::posix_time::seconds(2));
+	}
+	destructed = true;
+	checkThread.join();
+}
+
 TEST(TestVideoStream, TestPublish)
 {
 #ifdef ENABLE_LOGGING
@@ -316,26 +358,23 @@ TEST(TestVideoStream, TestPublish)
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
 	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
 
-	{ // create a scope, to make sure that t.join() will be called after
-	  // stream is destroyed
-		MediaStreamSettings settings(io, getSampleVideoParams());
-		settings.face_ = &face;
-		settings.keyChain_ = keyChain.get();
-		LocalVideoStream s(appPrefix, settings);
+	MediaStreamSettings settings(io, getSampleVideoParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalVideoStream s(appPrefix, settings);
 
 #ifdef ENABLE_LOGGING
 	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
 
-		EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frameBuffer, frameSize));
+	EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frameBuffer, frameSize));
 
-		work.reset();
-	}
-
+	work.reset();
 	t.join();
 	free(frameBuffer);
 }
-
+#endif
+#if 1
 TEST(TestVideoStream, TestPublish5Sec)
 {
 #ifdef ENABLE_LOGGING
@@ -381,38 +420,43 @@ TEST(TestVideoStream, TestPublish5Sec)
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
 	shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
 
-	{
-		MediaStreamSettings settings(io, getSampleVideoParams());
-		settings.face_ = &face;
-		settings.keyChain_ = keyChain.get();
-		LocalVideoStream s(appPrefix, settings);
+	MediaStreamSettings settings(io, getSampleVideoParams());
+	settings.face_ = &face;
+	settings.keyChain_ = keyChain.get();
+	LocalVideoStream s(appPrefix, settings);
 
 #ifdef ENABLE_LOGGING
 	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
-		boost::chrono::duration<int, boost::milli> pubDuration;
-		high_resolution_clock::time_point pubStart;
-		high_resolution_clock::time_point t1 = high_resolution_clock::now();
-		for (int i = 0; i < nFrames; ++i)
-		{
-			runTimer.expires_from_now(boost::posix_time::milliseconds(30));
-			pubStart = high_resolution_clock::now();
-			EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
-			pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
-			runTimer.wait();
-		}
-		high_resolution_clock::time_point t2 = high_resolution_clock::now();
-		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
-	
-		double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
-		EXPECT_GE(1000/30, avgFramePubTimeMs);
-		GT_PRINTF("publishing took %d milliseconds (avg %.2f ms per frame), %d ms total test\n",
-			pubDuration.count(), avgFramePubTimeMs, duration);
-		
-		work.reset();
+	boost::chrono::duration<int, boost::milli> pubDuration;
+	high_resolution_clock::time_point pubStart;
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+	for (int i = 0; i < nFrames; ++i)
+	{
+		runTimer.expires_from_now(boost::posix_time::milliseconds(30));
+		pubStart = high_resolution_clock::now();
+		EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
+		pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+		runTimer.wait();
 	}
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+	
+	double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+	std::stringstream ss;
+	for (int i = 0; i < settings.params_.getThreadNum(); ++i)
+		ss << settings.params_.getVideoThread(i)->coderParams_.encodeWidth_ << "x"
+			<< settings.params_.getVideoThread(i)->coderParams_.encodeHeight_ << " "
+			<< settings.params_.getVideoThread(i)->coderParams_.startBitrate_ << "kBit/s ";
+
+	GT_PRINTF("Published %d frames. Number of threads: %d (%s). Average publishing time is %.2fms\n",
+				nFrames, settings.params_.getThreadNum(), ss.str().c_str(), avgFramePubTimeMs);
+	EXPECT_GE(1000/30, avgFramePubTimeMs);
+
+	work.reset();
 	t.join();
 }
+#endif
 
 TEST(TestVideoStream, TestPublish3SecOnFaceThread)
 {
@@ -421,8 +465,9 @@ TEST(TestVideoStream, TestPublish3SecOnFaceThread)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	int nFrames = 30*3;
-	int width = 1280, height = 720;
+	int nFrames = 30*5;
+	int width = 1280;
+	int height = 720;
 	std::srand(std::time(0));
 	int frameSize = width*height*4*sizeof(uint8_t);
 	std::vector<boost::shared_ptr<uint8_t>> frames;
@@ -464,37 +509,56 @@ TEST(TestVideoStream, TestPublish3SecOnFaceThread)
 		settings.face_ = &face;
 		settings.keyChain_ = keyChain.get();
 		LocalVideoStream s(appPrefix, settings);
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(3000));
 
 #ifdef ENABLE_LOGGING
 	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
-		boost::chrono::duration<int, boost::milli> pubDuration;
-		high_resolution_clock::time_point pubStart;
-		high_resolution_clock::time_point t1 = high_resolution_clock::now();
-		for (int i = 0; i < nFrames; ++i)
+		boost::mutex m;
+		boost::unique_lock<boost::mutex> lock(m);
+		boost::condition_variable isDone;
+
+		io.dispatch([&settings, frameSize, nFrames, &runTimer, width, height, &s, &frames, &isDone]()
 		{
-			runTimer.expires_from_now(boost::posix_time::milliseconds(30));
-			pubStart = high_resolution_clock::now();
-			
-			io.dispatch([&frames, i, &s, &width, &height, &frameSize](){
+			boost::chrono::duration<int, boost::milli> pubDuration;
+			high_resolution_clock::time_point pubStart;
+			high_resolution_clock::time_point t1 = high_resolution_clock::now();
+			for (int i = 0; i < nFrames; ++i)
+			{
+				runTimer.expires_from_now(boost::posix_time::milliseconds(30));
+				
+				pubStart = high_resolution_clock::now();
 				EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
-			});
+				pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+
+				runTimer.wait();
+			}
 	
-			pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
-			runTimer.wait();
-		}
-		high_resolution_clock::time_point t2 = high_resolution_clock::now();
-		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
-	
-		double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
-		EXPECT_GE(1000/30, avgFramePubTimeMs);
-	
-		work.reset();
+			high_resolution_clock::time_point t2 = high_resolution_clock::now();
+			auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+		
+			double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+			std::stringstream ss;
+			for (int i = 0; i < settings.params_.getThreadNum(); ++i)
+				ss << settings.params_.getVideoThread(i)->coderParams_.encodeWidth_ << "x"
+					<< settings.params_.getVideoThread(i)->coderParams_.encodeHeight_ << " "
+					<< settings.params_.getVideoThread(i)->coderParams_.startBitrate_ << "kBit/s ";
+
+			GT_PRINTF("Published %d frames. Number of threads: %d (%s). Average publishing time is %.2fms\n",
+				nFrames, settings.params_.getThreadNum(), ss.str().c_str(), avgFramePubTimeMs);
+
+			// EXPECT_GE(1000/30, avgFramePubTimeMs);
+			isDone.notify_one();
+		});
+
+		isDone.wait(lock);
 	}
+
+	work.reset();
 	t.join();
 }
-#endif
 
+#if 1
 TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 {
 #ifdef ENABLE_LOGGING
@@ -577,8 +641,7 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 	}
 	t.join();
 }
-#endif
-#if 1
+
 TEST(TestAudioStream, TestCreate)
 {
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
@@ -686,8 +749,7 @@ TEST(TestAudioStream, TestRun5Sec)
 	work.reset();
 	t.join();
 }
-#endif
-#if 0
+
 TEST(TestAudioStream, TestRunAndStopOnDtor)
 {
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
@@ -725,8 +787,7 @@ TEST(TestAudioStream, TestRunAndStopOnDtor)
 	work.reset();
 	t.join();
 }
-#endif
-#if 1
+
 TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
 {
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";

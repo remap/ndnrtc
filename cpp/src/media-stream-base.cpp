@@ -14,16 +14,19 @@
 #include "name-components.h"
 #include "async.h"
 
-// how often is thread meta information published
+
 #define META_CHECK_INTERVAL_MS 1000
 
 using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
 
+// how often is thread meta information published
+const unsigned int MediaStreamBase::MetaCheckIntervalMs = META_CHECK_INTERVAL_MS;
+
 MediaStreamBase::MediaStreamBase(const std::string& basePrefix, 
 	const MediaStreamSettings& settings):
-Periodic(settings_.faceIo_, META_CHECK_INTERVAL_MS),
+Periodic(settings.faceIo_, META_CHECK_INTERVAL_MS),
 metaVersion_(0),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
@@ -84,6 +87,7 @@ MediaStreamBase::publishMeta()
 
 unsigned int MediaStreamBase::periodicInvocation()
 {
-	checkMeta();
-	return META_CHECK_INTERVAL_MS;
+	if (checkMeta())
+		return META_CHECK_INTERVAL_MS;
+	return 0;
 }

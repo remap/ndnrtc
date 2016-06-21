@@ -49,6 +49,7 @@ AudioStreamImpl::start()
 	for (auto it:threads_)
 		if (!it.second->isRunning()) it.second->start();
 
+	setupInvocation(MediaStreamBase::MetaCheckIntervalMs);
 	streamRunning_ = true;
 }
 

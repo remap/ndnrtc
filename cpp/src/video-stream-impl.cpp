@@ -42,7 +42,8 @@ VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 MediaStreamBase(streamPrefix, settings),
 playbackCounter_(0),
-fecEnabled_(useFec)
+fecEnabled_(useFec),
+incomingData_(false)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
@@ -176,6 +177,8 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		}
 		publish(frames);
 		playbackCounter_++;
+		if (!incomingData_) setupInvocation(MediaStreamBase::MetaCheckIntervalMs);
+		incomingData_ = true;
 	}
 	else
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
@@ -225,7 +228,8 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 	boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
 
 	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, pairedSeq, keeper, isKey, 
-		thread, fp, parityData, dataName]{
+		thread, fp, parityData, dataName]
+	{
 		VideoFrameSegmentHeader segmentHdr;
 		segmentHdr.totalSegmentsNum_ = nDataSeg;
 		segmentHdr.paritySegmentsNum_ = nParitySeg;
@@ -238,7 +242,8 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 	});
 
 	dataName.append(NameComponents::NameComponentParity);
-	async::dispatchAsync(settings_.faceIo_, [me, parityData, dataName]{
+	async::dispatchAsync(settings_.faceIo_, [me, parityData, dataName]
+	{
 		size_t nParitySlices = me->dataPublisher_->publish(dataName, *parityData);
 		assert(nParitySlices);
 	});
@@ -269,7 +274,8 @@ bool VideoStreamImpl::checkMeta()
 		}
 	}
 
-	return true;
+	incomingData_ = false;
+	return incomingData_;
 }
 
 //******************************************************************************

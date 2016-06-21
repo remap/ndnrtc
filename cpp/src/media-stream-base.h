@@ -26,6 +26,8 @@ namespace ndnrtc {
 							public Periodic 
 	{
 	public:
+		static const unsigned int MetaCheckIntervalMs;
+
 		MediaStreamBase(const std::string& basePrefix, 
 			const MediaStreamSettings& settings);
 		virtual ~MediaStreamBase();
