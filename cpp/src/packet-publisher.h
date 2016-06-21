@@ -40,6 +40,7 @@ namespace ndnrtc{
 		MemoryCache* memoryCache_;
 		size_t segmentWireLength_;
 		unsigned int freshnessPeriodMs_;
+		bool sign = true;
 	};
 
 	typedef _PublisherSettings<ndn::KeyChain, ndn::MemoryContentCache> PublisherSettings;
@@ -102,7 +103,7 @@ namespace ndnrtc{
 				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
 				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
 				ndnSegment.setContent(segmentData->getData(), segment.size());
-				settings_.keyChain_->sign(ndnSegment);
+				if (settings_.sign) settings_.keyChain_->sign(ndnSegment);
 				settings_.memoryCache_->add(ndnSegment);
 		
 				LogTraceC << "added to cache " << segmentName << " ("
