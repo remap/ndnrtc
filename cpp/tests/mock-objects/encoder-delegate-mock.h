@@ -34,17 +34,28 @@ public:
 	int getBytesReceived() { return receivedBytes_; }
 	int getDelta() { return nDelta_; }
 	int getKey() {return nKey_; }
+	double getAvgKeySize() { return keyBytes_/(double)nKey_; }
+	double getAvgDeltaSize() { return deltaBytes_/(double)nDelta_; }
 
 	int encStarted_ = 0, encComplete_ = 0, dropped_ = 0, receivedBytes_;
 	int nDelta_ = 0, nKey_ = 0;
+	double deltaBytes_ = 0, keyBytes_ = 0;
 
 	void countEncodingStarted() { encStarted_++; }
 	void countDroppedFrame() { dropped_++; }
 	void countEncodedFrame(const webrtc::EncodedImage& f) 
 	{ 
-		if (f._frameType == webrtc::kKeyFrame) nKey_++;
-		else nDelta_++;
-		encComplete_++; receivedBytes_ += f._length; 
+		if (f._frameType == webrtc::kKeyFrame) 
+		{
+			nKey_++;
+			keyBytes_ += f._length;
+		}
+		else 
+		{
+			nDelta_++;
+			deltaBytes_ += f._length;
+		}
+		encComplete_++; receivedBytes_ += f._length;
 	}
 };
 
