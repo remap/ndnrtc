@@ -49,6 +49,13 @@ Periodic::~Periodic()
 	pimpl_->cancel();
 }
 
+void 
+Periodic::setupInvocation(unsigned int intervalMs)
+{
+	if (!pimpl_->isRunning_)
+		pimpl_->setupTimer(intervalMs);
+}
+
 //******************************************************************************
 PeriodicImpl::PeriodicImpl(boost::asio::io_service& io, unsigned int periodMs,
 	boost::function<unsigned int(void)> workFunc):
@@ -78,6 +85,8 @@ PeriodicImpl::fire(const boost::system::error_code& e)
 			unsigned int nextIntervalMs = workFunc_();
 			if (nextIntervalMs)
 				setupTimer(nextIntervalMs);
+			else 
+				isRunning_ = false;
 		}
 	}
 }

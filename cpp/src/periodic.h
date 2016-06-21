@@ -34,6 +34,13 @@ namespace ndnrtc
 		 */
 		virtual unsigned int periodicInvocation() = 0;
 
+		/**
+		 * If invocation was stopped (by returning 0 in periodicInvocation), this
+		 * schedules timer again.
+		 * @param intervalMs Interval in milliseconds to schedule timer for
+		 */
+		void setupInvocation(unsigned int intervalMs);
+
 	private:
 		boost::shared_ptr<PeriodicImpl> pimpl_;
 	};
