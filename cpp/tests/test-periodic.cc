@@ -7,26 +7,32 @@
 
 #include <stdlib.h>
 #include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/make_shared.hpp>
 
 #include "gtest/gtest.h"
-
 #include "src/periodic.h"
 
 using namespace ndnrtc;
 
-class PeriodicTest : public Periodic
+class PeriodicTest : public Periodic, public boost::enable_shared_from_this<PeriodicTest>
 {
 public:
 	PeriodicTest(boost::asio::io_service& io, unsigned int periodMs):
-		Periodic(io, periodMs), periodMs_(periodMs), workCounter_(0){}
+		Periodic(io), periodMs_(periodMs), workCounter_(0)
+		{}
+
 	~PeriodicTest(){
 	}
 
 	unsigned int periodicInvocation() {
+		boost::lock_guard<boost::mutex> scopedLock(mutex_);
 		workCounter_++;
 		return periodMs_;
 	}
 
+	boost::mutex mutex_;
 	unsigned int periodMs_;
 	unsigned int workCounter_;
 };
@@ -39,11 +45,14 @@ TEST(TestPeriodic, TestDestructionOnDifferentThread)
 		io.run();
 	});
 	unsigned int workCounter = 0;
+	unsigned int d = 50;
 
 	{
-		PeriodicTest p(io, 50);
-		boost::this_thread::sleep_for(boost::chrono::milliseconds(550));
-		workCounter = p.workCounter_;
+		boost::shared_ptr<PeriodicTest> p(boost::make_shared<PeriodicTest>(io, d));
+		p->setupInvocation(d, boost::bind(&PeriodicTest::periodicInvocation, p));
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(540));
+		workCounter = p->workCounter_;
+		p->cancelInvocation();
 	}
 	work.reset();
 	t.join();

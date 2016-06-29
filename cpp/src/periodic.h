@@ -10,6 +10,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/function.hpp>
 
 namespace ndnrtc 
 {
@@ -22,24 +23,26 @@ namespace ndnrtc
 	 */
 	class Periodic {
 	public:
-		Periodic(boost::asio::io_service& io, unsigned int periodMs);
+		Periodic(boost::asio::io_service& io);
 		virtual ~Periodic();
 
 		/**
-		 * Called repeatedly, each periodMs milliseconds. Client can alter
-		 * next time period by returning a number of milliseconds other than 
-		 * periodMs.
-		 * @return Time interval in milliseconds for next call. If zero - cancels
-		 * periodic invocations. 
+		 * This sets up periodic invocation
+		 * @param intervalMs Interval in milliseconds to schedule timer for
+		 * @param callback Callback to call periodically
 		 */
-		virtual unsigned int periodicInvocation() = 0;
+		void setupInvocation(unsigned int intervalMs, 
+			boost::function<unsigned int(void)> callback);
 
 		/**
-		 * If invocation was stopped (by returning 0 in periodicInvocation), this
-		 * schedules timer again.
-		 * @param intervalMs Interval in milliseconds to schedule timer for
+		 * This cancels periodic invocation
 		 */
-		void setupInvocation(unsigned int intervalMs);
+		void cancelInvocation();
+
+		/**
+		 * This returns true if invocation was set up. False otherwise.
+		 */
+		bool isPeriodicInvocationSet() const;
 
 	private:
 		boost::shared_ptr<PeriodicImpl> pimpl_;

@@ -10,7 +10,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/chrono.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/function.hpp>
 #include <boost/atomic.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
@@ -21,8 +20,7 @@ namespace ndnrtc {
 	class PeriodicImpl : public boost::enable_shared_from_this<PeriodicImpl> 
 	{
 	public:
-		PeriodicImpl(boost::asio::io_service& io, unsigned int periodMs,
-			boost::function<unsigned int(void)> workFunc);
+		PeriodicImpl(boost::asio::io_service& io);
 		~PeriodicImpl();
 
 		void setupTimer(unsigned int intervalMs);
@@ -30,18 +28,15 @@ namespace ndnrtc {
 		void cancel();
 
 		boost::atomic<bool> isRunning_;
-		unsigned int periodMs_;
 		boost::asio::io_service& io_;
 		boost::function<unsigned int(void)> workFunc_;
 		boost::asio::steady_timer timer_;
 	};
 }
 
-Periodic::Periodic(boost::asio::io_service& io, unsigned int periodMs):
-pimpl_(boost::make_shared<PeriodicImpl>(io, periodMs, 
-	boost::bind(&Periodic::periodicInvocation, this)))
+Periodic::Periodic(boost::asio::io_service& io):
+pimpl_(boost::make_shared<PeriodicImpl>(io))
 {
-	pimpl_->setupTimer(periodMs);
 }
 
 Periodic::~Periodic()
@@ -50,16 +45,34 @@ Periodic::~Periodic()
 }
 
 void 
-Periodic::setupInvocation(unsigned int intervalMs)
+Periodic::setupInvocation(unsigned int intervalMs, 
+	boost::function<unsigned int(void)> callback)
 {
 	if (!pimpl_->isRunning_)
+	{
+		pimpl_->isRunning_ = true;
+		pimpl_->workFunc_ = callback;
 		pimpl_->setupTimer(intervalMs);
+	}
+	else
+		throw std::runtime_error("Periodic invocation is already running");
+}
+
+void
+Periodic::cancelInvocation()
+{
+	pimpl_->cancel();
+}
+
+bool
+Periodic::isPeriodicInvocationSet() const
+{
+	return pimpl_->isRunning_;
 }
 
 //******************************************************************************
-PeriodicImpl::PeriodicImpl(boost::asio::io_service& io, unsigned int periodMs,
-	boost::function<unsigned int(void)> workFunc):
-isRunning_(true),io_(io),periodMs_(periodMs),workFunc_(workFunc),timer_(io_)
+PeriodicImpl::PeriodicImpl(boost::asio::io_service& io):
+isRunning_(false),io_(io),timer_(io_)
 {
 }
 
