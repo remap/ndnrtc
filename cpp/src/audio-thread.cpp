@@ -49,7 +49,7 @@ void AudioThread::start()
     bundleNo_ = 0;
     capturer_.startCapture();
 
-    LogTraceC << "started" << std::endl;
+    LogDebugC << "started" << std::endl;
 }
 
 void AudioThread::stop()
@@ -58,7 +58,7 @@ void AudioThread::stop()
     {
         isRunning_ = false;
         capturer_.stopCapture();
-        LogTraceC << "stopped" << std::endl;
+        LogDebugC << "stopped" << std::endl;
     }
 }
 
@@ -72,6 +72,8 @@ void AudioThread::onDeliverRtpFrame(unsigned int len, uint8_t* data)
 {   
     if (isRunning_)
     {
+        LogTraceC << "delivering rtp frame" << std::endl;
+
         AudioBundlePacket::AudioSampleBlob blob({false}, len, data);
         deliver(blob);
     }
@@ -81,6 +83,8 @@ void AudioThread::onDeliverRtcpFrame(unsigned int len, uint8_t* data)
 {
     if (isRunning_)
     {
+        LogTraceC << "delivering rtcp frame" << std::endl;
+
         AudioBundlePacket::AudioSampleBlob blob({true}, len, data);
         deliver(blob);
     }

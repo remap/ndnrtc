@@ -24,7 +24,22 @@ namespace ndnrtc {
     class IAudioSampleConsumer
     {
     public:
+        /**
+         * This is called every time new RTP packet has been acquired
+         * @param len Size of the packet in bytes
+         * @param data Packet data
+         * @note This is called on audio thread
+         * @see AudioController
+         */
         virtual void onDeliverRtpFrame(unsigned int len, uint8_t* data) = 0;
+
+        /**
+         * This is called every time new RTCP packet has been acquired
+         * @param len Size of the packet in bytes
+         * @param data Packet data
+         * @note This is called on audio thread
+         * @see AudioController
+         */
         virtual void onDeliverRtcpFrame(unsigned int len, uint8_t* data) = 0;
     };
     

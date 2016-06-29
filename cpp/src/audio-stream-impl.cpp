@@ -9,6 +9,7 @@
 #include "async.h"
 #include "clock.h"
 #include "name-components.h"
+#include "audio-controller.h"
 
 #define BUNDLES_POOL_SIZE 10
 
@@ -49,14 +50,24 @@ AudioStreamImpl::start()
 	for (auto it:threads_)
 		if (!it.second->isRunning()) it.second->start();
 
-	if (!streamRunning_) setupInvocation(MediaStreamBase::MetaCheckIntervalMs);
+	if (!isPeriodicInvocationSet())
+	{
+		boost::shared_ptr<AudioStreamImpl> me = boost::dynamic_pointer_cast<AudioStreamImpl>(shared_from_this());
+		setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
+			boost::bind(&AudioStreamImpl::periodicInvocation, me));
+	}
+
 	streamRunning_ = true;
 }
 
 void 
 AudioStreamImpl::stop()
 {
-	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+	// here, lock should not be acquired as it may lead to deadlock
+	// if one of the threads already dispatched onSampleBundle callback
+	// BUT has not yet acquired internalMutex_ (see onSampleBundle method) 
+	// boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+	// to avoid this, we need to dispatch call synchronously on audio thread
 
 	for (auto it:threads_)
 		it.second->stop();
@@ -126,6 +137,8 @@ AudioStreamImpl::remove(const std::string& threadName)
 			metaKeepers_.erase(threadName);
 		}
 
+		if (thread->isRunning()) thread->stop();
+
 		if (!threads_.size()) streamRunning_ = false;
 		LogDebugC << "removed thread " << threadName << std::endl;
 	}
@@ -149,29 +162,31 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 	boost::shared_ptr<AudioBundlePacket> bundle = bundlePool_.back();
 
 	double packetRate = 0;
-
+	bool threadRemoved = false;
 	{
 		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+		threadRemoved = (metaKeepers_.find(threadName) == metaKeepers_.end());
 		bundle->swap(*packet);
 		packetRate = metaKeepers_[threadName]->getMeta().getRate();
 		bundlePool_.pop_back();
 	}
 
-	async::dispatchAsync(settings_.faceIo_, [packetRate, n, bundle, threadName, me](){
-		CommonHeader packetHdr;
-
-		packetHdr.sampleRate_ = packetRate;
-		packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
-		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
-		bundle->setHeader(packetHdr);
-
-		me->dataPublisher_->publish(n, *bundle);
-
-		{
-			boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
-			me->bundlePool_.push_back(bundle);
-		}
-	});
+	if (!threadRemoved)
+		async::dispatchAsync(settings_.faceIo_, [packetRate, n, bundle, me](){
+			CommonHeader packetHdr;
+	
+			packetHdr.sampleRate_ = packetRate;
+			packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
+			packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+			bundle->setHeader(packetHdr);
+	
+			me->dataPublisher_->publish(n, *bundle);
+	
+			{
+				boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
+				me->bundlePool_.push_back(bundle);
+			}
+		});
 }
 
 bool 

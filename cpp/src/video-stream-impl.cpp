@@ -42,8 +42,7 @@ VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 MediaStreamBase(streamPrefix, settings),
 playbackCounter_(0),
-fecEnabled_(useFec),
-incomingData_(false)
+fecEnabled_(useFec)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
@@ -177,8 +176,12 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		}
 		publish(frames);
 		playbackCounter_++;
-		if (!incomingData_) setupInvocation(MediaStreamBase::MetaCheckIntervalMs);
-		incomingData_ = true;
+		if (!isPeriodicInvocationSet())
+		{ 
+			boost::shared_ptr<VideoStreamImpl> me = boost::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
+			setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
+				boost::bind(&VideoStreamImpl::periodicInvocation, me));
+		}
 	}
 	else
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
@@ -274,8 +277,7 @@ bool VideoStreamImpl::checkMeta()
 		}
 	}
 
-	incomingData_ = false;
-	return incomingData_;
+	return false;
 }
 
 //******************************************************************************

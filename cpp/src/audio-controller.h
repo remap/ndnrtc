@@ -25,7 +25,10 @@ namespace ndnrtc {
         webrtc::VoiceEngine *getVoiceEngine();
         void initVoiceEngine();
         void releaseVoiceEngine();
+
+        // asynchronous
         void dispatchOnAudioThread(boost::function<void(void)> dispatchBlock);
+        // synchronous
         void performOnAudioThread(boost::function<void(void)> dispatchBlock);
         
         ~AudioController();

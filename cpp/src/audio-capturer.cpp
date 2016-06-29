@@ -220,7 +220,6 @@ void AudioCapturerImpl::startCapture()
     }
 }
 
-// NOTE: should be called on audio thread
 void AudioCapturerImpl::stopCapture()
 {
     if (!capturing_) return;

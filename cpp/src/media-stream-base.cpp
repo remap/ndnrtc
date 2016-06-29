@@ -26,7 +26,7 @@ const unsigned int MediaStreamBase::MetaCheckIntervalMs = META_CHECK_INTERVAL_MS
 
 MediaStreamBase::MediaStreamBase(const std::string& basePrefix, 
 	const MediaStreamSettings& settings):
-Periodic(settings.faceIo_, META_CHECK_INTERVAL_MS),
+Periodic(settings.faceIo_),
 metaVersion_(0),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),

@@ -285,7 +285,7 @@ TEST(TestAudioThread, TestRunOpusThread)
 		nBundles++;
 		if (bundleNo) EXPECT_LT(bundleNo, n);
 		bundleNo = n;
-		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_LE(0, b->getRemainingSpace());
 		EXPECT_GE(wire_length, b->getRemainingSpace());
 		callbackTs = high_resolution_clock::now();
 
@@ -340,7 +340,7 @@ TEST(TestAudioThread, TestRunG722Thread)
 		nBundles++;
 		if (bundleNo) EXPECT_LT(bundleNo, n);
 		bundleNo = n;
-		EXPECT_LT(0, b->getRemainingSpace());
+		EXPECT_LE(0, b->getRemainingSpace());
 		EXPECT_GE(wire_length, b->getRemainingSpace());
 	};
 

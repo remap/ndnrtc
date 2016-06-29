@@ -39,6 +39,8 @@ namespace ndnrtc {
 		virtual std::vector<std::string> getThreads() const = 0;
 
 	protected:
+		friend LocalAudioStream;
+		friend LocalVideoStream;
 		template<typename Meta>
 		class BaseMetaKeeper {
 		public:

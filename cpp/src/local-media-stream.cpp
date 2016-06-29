@@ -34,11 +34,14 @@ LocalAudioStream::LocalAudioStream(const std::string& basePrefix,
 			const MediaStreamSettings& settings):
 pimpl_(boost::make_shared<AudioStreamImpl>(basePrefix, settings))
 {
+	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
+		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
 	pimpl_->publishMeta();
 }
 
 LocalAudioStream::~LocalAudioStream()
 {
+	pimpl_->cancelInvocation();
 	pimpl_->stop();
 }
 
@@ -91,6 +94,8 @@ LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
 {
+	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
+		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
 	pimpl_->publishMeta();
 }
 
