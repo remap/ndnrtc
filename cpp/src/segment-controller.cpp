@@ -18,15 +18,18 @@ using namespace ndn;
 #pragma mark - public
 SegmentController::SegmentController(boost::asio::io_service& faceIo,
 	unsigned int maxIdleTimeMs):
-Periodic(faceIo, maxIdleTimeMs),
+Periodic(faceIo),
 maxIdleTimeMs_(maxIdleTimeMs),
 lastDataTimestampMs_(clock::millisecondTimestamp()),
 starvationFired_(false)
 {
 	description_ = "segment-controller";
+	setupInvocation(maxIdleTimeMs_, 
+		boost::bind(&SegmentController::periodicInvocation, this));
 }
 
 SegmentController::~SegmentController(){
+	cancelInvocation();
 }
 
 unsigned int SegmentController::getCurrentIdleTime() const

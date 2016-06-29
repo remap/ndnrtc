@@ -69,9 +69,6 @@ namespace ndnrtc {
 		int64_t lastDataTimestampMs_;
 		bool starvationFired_;
 
-		void setupIdleTimer(unsigned int timeMs);
-		void cancelIdleTimer();
-		void checkStarvation();
 		unsigned int periodicInvocation();
 
 		void onData(const boost::shared_ptr<const ndn::Interest>&,
