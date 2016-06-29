@@ -76,7 +76,7 @@ current_(0), readError_(false)
     openFile(); 
 }
 
-IFrameSource& FileFrameSource::operator>>(RawFrame& frame)
+IFrameSource& FileFrameSource::operator>>(RawFrame& frame) noexcept
 {
     uint8_t *buf = frame.getBuffer().get();
     size_t readBytes = fread(buf, sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
