@@ -115,6 +115,7 @@ endif
 if OS_DARWIN
 
 ndnrtc_client_CPPFLAGS += -DOS_DARWIN
+ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
 
 endif
 

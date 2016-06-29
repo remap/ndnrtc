@@ -46,7 +46,8 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
 #ndnrtc_client_LDFLAGS += -Wl,-rpath -Wl,/usr/lib/x86_64-linux-gnu
 @OS_LINUX_TRUE@am__append_3 = -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
 @OS_DARWIN_TRUE@am__append_4 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_5 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_5 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+@OS_DARWIN_TRUE@am__append_6 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -1188,7 +1189,7 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/capturer.h client/src/capturer.cpp client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_4)
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir) $(am__append_5)
 ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la \
 	$(am__append_3)
 noinst_SCRIPTS = client/params.cfg
@@ -1204,7 +1205,7 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
-	$(am__append_5)
+	$(am__append_6)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
