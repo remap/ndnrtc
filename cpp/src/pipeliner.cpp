@@ -561,7 +561,7 @@ Pipeliner2::onTimeout(const boost::shared_ptr<const Interest>& interest)
             {
                 PacketNumber packetNo = NdnRtcNamespace::getPacketNumber(interest->getName());
 
-                if (packetNo == keyFrameSeqNo_)
+                if (packetNo+1 == keyFrameSeqNo_)
                 {
                     LogDebugC << "re-express "
                     << interest->getName()

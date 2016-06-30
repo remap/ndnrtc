@@ -52,3 +52,84 @@ NameComponents::getThreadPrefix(const std::string& threadName,
 {
     return NdnRtcNamespace::getThreadPrefix(*NdnRtcNamespace::getStreamPath(prefix, username, streamName), threadName);
 }
+
+std::string 
+NameComponents::getUserName(const std::string& prefix)
+{
+    size_t userComp = prefix.find(NameComponents::NameComponentUser);
+    
+    if (userComp != std::string::npos)
+    {
+        size_t startPos = userComp+NameComponents::NameComponentUser.size()+1;
+        if (prefix.size() >= startPos)
+        {
+            size_t endPos = prefix.find("/", startPos);
+
+            if (endPos == std::string::npos)
+                endPos = prefix.size();
+            return prefix.substr(startPos, endPos-startPos);
+        }
+    }
+        
+    return "";
+}
+
+std::string 
+NameComponents::getStreamName(const std::string& prefix)
+{
+    size_t userComp = prefix.find(NameComponents::NameComponentUserStreams);
+    
+    if (userComp != std::string::npos)
+    {
+        size_t startPos = userComp+NameComponents::NameComponentUserStreams.size()+1;
+        if (prefix.size() >= startPos)
+        {
+            size_t endPos = prefix.find("/", startPos);
+
+            if (endPos == std::string::npos)
+                endPos = prefix.size();
+            return prefix.substr(startPos, endPos-startPos);
+        }
+    }
+
+#if 0 // this code if for updated namespace
+	std::string userName = NameComponents::getUserName(prefix);
+
+	if (userName == "") return "";
+
+    size_t p = prefix.find(userName);
+    size_t startPos = p+userName.size()+1;
+    
+    if (prefix.size() >= startPos)
+    {
+        size_t endPos = prefix.find("/", startPos);
+
+        if (endPos == std::string::npos)
+            endPos = prefix.size();
+        return prefix.substr(startPos, endPos-startPos);
+    }
+#endif
+    return "";
+}
+
+std::string 
+NameComponents::getThreadName(const std::string& prefix)
+{
+	std::string streamName = NameComponents::getStreamName(prefix);
+
+	if (streamName == "") return "";
+
+    size_t p = prefix.find(streamName);
+    size_t startPos = p+streamName.size()+1;
+
+    if (prefix.size() >= startPos)
+    {
+        size_t endPos = prefix.find("/", startPos);
+
+        if (endPos == std::string::npos)
+            endPos = prefix.size();
+        return prefix.substr(startPos, endPos-startPos);
+    }
+        
+    return "";
+}

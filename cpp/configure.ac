@@ -147,6 +147,7 @@ LT_INIT
 AC_LANG([C++])
 LT_PREREQ([2.2])
 LT_INIT()
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 # checking platform
 case $host_os in
@@ -200,8 +201,18 @@ case $host_os in
 		;;
 esac
 
-# create links for demo script
-AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])
+# create links for client config file
+AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([client/sample-consumer.cfg:tests/sample-consumer.cfg])
+AC_CONFIG_LINKS([client/sample-producer.cfg:tests/sample-producer.cfg])
+AC_CONFIG_LINKS([client/test-freeculture.cfg:tests/test-freeculture.cfg])
+AC_CONFIG_LINKS([tests/default.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([tests/sample-consumer.cfg:tests/sample-consumer.cfg])
+AC_CONFIG_LINKS([tests/sample-producer.cfg:tests/sample-producer.cfg])
+
+AC_CONFIG_LINKS([tests/sample-bad1.cfg:tests/sample-bad1.cfg])
+AC_CONFIG_LINKS([tests/consumer-audio.cfg:tests/consumer-audio.cfg])
+AC_CONFIG_LINKS([tests/consumer-video.cfg:tests/consumer-video.cfg])
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])

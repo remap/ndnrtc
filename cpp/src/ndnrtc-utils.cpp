@@ -176,15 +176,18 @@ void NdnRtcUtils::performOnBackgroundThread(boost::function<void(void)> dispatch
             boost::mutex m;
             boost::unique_lock<boost::mutex> lock(m);
             boost::condition_variable isDone;
+	    boost::atomic<bool> doneFlag(false);
             
-            (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone]{
+            (*NdnRtcIoService).post([dispatchBlock, onCompletion, &isDone, &doneFlag]{
                 dispatchBlock();
                 if (onCompletion)
                     onCompletion();
+		doneFlag = true;
                 isDone.notify_one();
             });
-            
-            isDone.wait(lock);
+
+	    while (!doneFlag)
+            	isDone.wait(lock);
         }
     }
     else

@@ -178,6 +178,7 @@ ndnrtc::new_api::FrameBuffer::Slot::addInterest(ndn::Interest &interest)
         reservedSegment.get())
     {
         interest.setNonce(NdnRtcUtils::nonceToBlob(NdnRtcUtils::generateNonceValue()));
+	interest.refreshNonce();
         reservedSegment->interestIssued(NdnRtcUtils::blobToNonce(interest.getNonce()));
         reservedSegment->setNumber(segmentNumber);
         reservedSegment->setIsParity(isParityPrefix);

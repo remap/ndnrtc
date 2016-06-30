@@ -134,11 +134,11 @@ namespace ndnrtc {
             
             std::string
             getCurrentThreadName() const
-            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]->threadName_; }
+            { return settings_.streamParams_.getMediaThread(currentThreadIdx_)->threadName_; }
             
             MediaThreadParams*
             getCurrentThreadParameters() const
-            { return settings_.streamParams_.mediaThreads_[currentThreadIdx_]; }
+            { return settings_.streamParams_.getMediaThread(currentThreadIdx_); }
             
             void
             switchThread(const std::string& threadName);
