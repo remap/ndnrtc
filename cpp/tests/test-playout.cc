@@ -381,7 +381,6 @@ TEST(TestPlayout, TestPlay)
 	EXPECT_EQ(nSamples, frameNo);
 }
 #endif
-
 #if 1
 TEST(TestPlayout, TestRequestAndPlayWithDelay)
 {
@@ -571,7 +570,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 	t.join();
 }
 #endif
-#if 1
+#if 0
 TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 {
 #ifdef ENABLE_LOGGING
@@ -674,8 +673,9 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
 		.WillRepeatedly(Invoke(publishFrame));
 
+	int nInvalidated = 0;
 	boost::function<void(PacketNumber, bool)> 
-		requestFrame = [threadPrefix, &queue, &cache, buffer]
+		requestFrame = [threadPrefix, &queue, &cache, buffer, &nInvalidated]
 			(PacketNumber fno, bool key)
 		{
 			int nSeg = (key ? 10: 10);
@@ -691,25 +691,27 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 			
 			for (auto& i:interests)
 			{
-				// std::cout << "request " << i->getName() << std::endl;
-				queue.push([&queue, &cache, i, buffer](){
-					// std::cout << "received interest " << i->getName() << std::endl;
-					cache.addInterest(i, [&queue, buffer, i](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
-						// std::cout << "on data " << d->getName() << std::endl; 
-						queue.push([buffer, d, i](){
-							// std::cout << "received data " << d->getName() << std::endl;
-							BufferReceipt r = buffer->received(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i));
+				queue.push([&queue, &cache, i, buffer, &nInvalidated](){
+					cache.addInterest(i, [&queue, buffer, i, &nInvalidated](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
+						queue.push([buffer, d, i, &nInvalidated](){
+							// check whether buffer still has reserved slot - it may have been invalidated
+							boost::shared_ptr<WireData<VideoFrameSegmentHeader>> s = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
+							if (buffer->isRequested(s))
+								buffer->received(s);
+							else
+								nInvalidated++;
 						});
 					});
 				});
 			}
 		};
 
+	bool done = false;
 	boost::function<void(void)> 
-		requestNext = [&request, &requestKey, &requestDelta, &requestFrame, cp, targetSize, samplePeriod, pqueue, &playout]
+		requestNext = [&done, &request, &requestKey, &requestDelta, &requestFrame, cp, targetSize, samplePeriod, pqueue, &playout]
 			()
 		{
-			if (pqueue->size() >= targetSize && !playout.isRunning())
+			if (!done && pqueue->size() >= targetSize && !playout.isRunning())
 				EXPECT_NO_THROW(playout.start());
 			
 			if (playout.isRunning()) 
@@ -735,27 +737,27 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 		nPlayed++;
 	};
 
-	boost::function<void(void)> 
-		queueEmpty = [pipeline, &playout, &source, &pqueue, &buffer, streamPrefix, &nPlayed, &request, &published]
-			()
-		{
-			playout.stop();
-			LogTrace("") << buffer->dump() << std::endl;
-			EXPECT_FALSE(source.isRunning());
-			EXPECT_EQ(0, pqueue->size());
-			EXPECT_EQ(pipeline, request-nPlayed);
-			EXPECT_EQ(nPlayed, published);
-			EXPECT_LT(0, buffer->getSlotsNum(Name(streamPrefix), 
-				BufferSlot::New|BufferSlot::Assembling|BufferSlot::Ready));
-			EXPECT_EQ(request-nPlayed, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::New));
-			EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Assembling));
-			EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Ready));
-			ASSERT_FALSE(playout.isRunning());
-		};
+	// boost::function<void(void)> 
+	// 	queueEmpty = [pipeline, &playout, &source, &pqueue, &buffer, streamPrefix, &nPlayed, &request, &published]
+	// 		()
+	// 	{
+	// 		playout.stop();
+	// 		LogTrace("") << buffer->dump() << std::endl;
+	// 		EXPECT_FALSE(source.isRunning());
+	// 		EXPECT_EQ(0, pqueue->size());
+	// 		EXPECT_EQ(pipeline, request-nPlayed);
+	// 		EXPECT_EQ(nPlayed, published);
+	// 		EXPECT_LT(0, buffer->getSlotsNum(Name(streamPrefix), 
+	// 			BufferSlot::New|BufferSlot::Assembling|BufferSlot::Ready));
+	// 		EXPECT_EQ(request-nPlayed, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::New));
+	// 		EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Assembling));
+	// 		EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Ready));
+	// 		ASSERT_FALSE(playout.isRunning());
+	// 	};
 
 	EXPECT_CALL(playoutObserver, onQueueEmpty())
-		.Times(1)
-		.WillOnce(Invoke(queueEmpty));
+		.Times(AtLeast(1));
+		// .WillOnce(Invoke(queueEmpty));
 
 	// request initial frames
 	for (request = 0; request < pipeline; ++request)
@@ -766,9 +768,23 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	}
 
 	source.start(captureFps);
-
 	boost::this_thread::sleep_for(Msec(3000));
+	done = true;
 	source.stop();
+	boost::this_thread::sleep_for(Msec(2*oneWayDelay+4*deviation));
+	playout.stop();
+
+	LogTrace("") << buffer->dump() << std::endl;
+	EXPECT_FALSE(source.isRunning());
+	EXPECT_EQ(0, pqueue->size());
+	EXPECT_EQ(pipeline, request-nPlayed);
+	EXPECT_EQ(nPlayed+nInvalidated, published);
+	EXPECT_LT(0, buffer->getSlotsNum(Name(streamPrefix), 
+		BufferSlot::New|BufferSlot::Assembling|BufferSlot::Ready));
+	EXPECT_EQ(request-nPlayed-nInvalidated, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::New));
+	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Assembling));
+	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Ready));
+	ASSERT_FALSE(playout.isRunning());
 
 	work.reset();
 	t.join();
@@ -939,9 +955,6 @@ TEST(TestPlayout, TestPlayout70msDelay)
 						cp, targetSize, samplePeriod, pqueue, &playout, 
 						&pqueueSizeCnt, &pqueueSize]()
 		{
-			if (done && playout.isRunning())
-				playout.stop();
-
 			pqueueSizeCnt++;
 			pqueueSize += pqueue->size();
 
@@ -993,10 +1006,9 @@ TEST(TestPlayout, TestPlayout70msDelay)
 	source.stop();
 	queue.reset();
 
-	EXPECT_CALL(playoutObserver, onQueueEmpty())
-		.Times(1)
-		.WillOnce(Invoke([&playout](){ playout.stop(); }));
-
+	// allow some time to drain playout queue
+	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	playout.stop();
 	work.reset();
 	t.join();
 
@@ -1037,7 +1049,6 @@ TEST(TestPlayout, TestPlayout70msDelay)
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
 #endif
-
 //******************************************************************************
 #if 1
 TEST(TestPlayout, TestPlayout100msDelay)
@@ -1204,8 +1215,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 						cp, targetSize, samplePeriod, pqueue, &playout, 
 						&pqueueSizeCnt, &pqueueSize]()
 		{
-			if (done && playout.isRunning())
-				playout.stop();
+			// if (done && playout.isRunning())
+			// 	playout.stop();
 
 			pqueueSizeCnt++;
 			pqueueSize += pqueue->size();
@@ -1258,10 +1269,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	source.stop();
 	queue.reset();
 
-	EXPECT_CALL(playoutObserver, onQueueEmpty())
-		.Times(1)
-		.WillOnce(Invoke([&playout](){ playout.stop(); }));
-
+	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	playout.stop();
 	work.reset();
 	t.join();
 
@@ -1468,9 +1477,6 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 						cp, targetSize, samplePeriod, pqueue, &playout, 
 						&pqueueSizeCnt, &pqueueSize]()
 		{
-			if (done && playout.isRunning())
-				playout.stop();
-
 			pqueueSizeCnt++;
 			pqueueSize += pqueue->size();
 
@@ -1522,10 +1528,8 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 	source.stop();
 	queue.reset();
 
-	EXPECT_CALL(playoutObserver, onQueueEmpty())
-		.Times(1)
-		.WillOnce(Invoke([&playout](){ playout.stop(); }));
-
+	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	playout.stop();
 	work.reset();
 	t.join();
 

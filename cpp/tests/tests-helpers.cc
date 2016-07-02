@@ -302,7 +302,7 @@ dataFromSegments(std::string frameName,
         ndn::Name n(frameName);
         n.appendSegment(segIdx++);
         boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
-        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
         ds->setContent(s.getNetworkData()->getData(), s.size());
         dataSegments.push_back(ds);
     }
@@ -321,7 +321,7 @@ dataFromParitySegments(std::string frameName,
         ndn::Name n(frameName);
         n.append(NameComponents::NameComponentParity).appendSegment(segIdx++);
         boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
-        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+        ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
         ds->setContent(s.getNetworkData()->getData(), s.size());
         dataSegments.push_back(ds);
     }
@@ -401,7 +401,7 @@ getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
 			nSegments = 30;
 	}
 
-	data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(nSegments));
+	data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(nSegments-1));
 	segment = boost::make_shared<WireSegment>(data, interest);
 
 	return segment;

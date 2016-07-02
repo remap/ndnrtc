@@ -188,7 +188,8 @@ TEST(TestBufferSlot, TestAddData)
 
 			if (idx == 0) EXPECT_TRUE(slot.getConsistencyState() == BufferSlot::Inconsistent);
 			
-			EXPECT_NO_THROW(slot.segmentReceived(wd));
+			slot.segmentReceived(wd);
+			// EXPECT_NO_THROW(slot.segmentReceived(wd));
 			
 			EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::HeaderMeta);
 			EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
@@ -617,7 +618,7 @@ TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
-    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(0));
     ds->setContent(segments.front().getNetworkData()->data());
 
 	std::vector<boost::shared_ptr<Interest>> interests;

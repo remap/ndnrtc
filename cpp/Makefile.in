@@ -502,6 +502,8 @@ am_bin_tests_test_loop_OBJECTS =  \
 	client/src/bin_tests_test_loop-precise-generator.$(OBJEXT) \
 	client/src/bin_tests_test_loop-frame-io.$(OBJEXT) \
 	src/bin_tests_test_loop-meta-fetcher.$(OBJEXT) \
+	src/bin_tests_test_loop-remote-video-stream.$(OBJEXT) \
+	src/bin_tests_test_loop-remote-audio-stream.$(OBJEXT) \
 	$(am__objects_14)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
 bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -1394,7 +1396,8 @@ bin_tests_test_loop_SOURCES = tests/test-loop.cc \
 	src/video-stream-impl.cpp src/video-thread.cpp \
 	src/webrtc-audio-channel.cpp client/src/video-source.cpp \
 	client/src/precise-generator.cpp client/src/frame-io.cpp \
-	src/meta-fetcher.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+	src/meta-fetcher.cpp src/remote-video-stream.cpp \
+	src/remote-audio-stream.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD}
@@ -2093,6 +2096,10 @@ client/src/bin_tests_test_loop-frame-io.$(OBJEXT):  \
 	client/src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_loop-meta-fetcher.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_loop-remote-video-stream.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_loop-remote-audio-stream.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -2813,8 +2820,10 @@ mostlyclean-compile:
 	-rm -f src/bin_tests_test_loop-pipeliner.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-playout-control.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-playout.$(OBJEXT)
+	-rm -f src/bin_tests_test_loop-remote-audio-stream.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-remote-stream-impl.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-remote-stream.$(OBJEXT)
+	-rm -f src/bin_tests_test_loop-remote-video-stream.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-sample-estimator.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-segment-controller.$(OBJEXT)
 	-rm -f src/bin_tests_test_loop-simple-log.$(OBJEXT)
@@ -3323,8 +3332,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-pipeliner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-playout-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-playout.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-remote-stream-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-remote-stream.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-sample-estimator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-segment-controller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_loop-simple-log.Po@am__quote@
@@ -7285,6 +7296,38 @@ src/bin_tests_test_loop-meta-fetcher.obj: src/meta-fetcher.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/meta-fetcher.cpp' object='src/bin_tests_test_loop-meta-fetcher.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-meta-fetcher.obj `if test -f 'src/meta-fetcher.cpp'; then $(CYGPATH_W) 'src/meta-fetcher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/meta-fetcher.cpp'; fi`
+
+src/bin_tests_test_loop-remote-video-stream.o: src/remote-video-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-remote-video-stream.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Tpo -c -o src/bin_tests_test_loop-remote-video-stream.o `test -f 'src/remote-video-stream.cpp' || echo '$(srcdir)/'`src/remote-video-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Tpo src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/remote-video-stream.cpp' object='src/bin_tests_test_loop-remote-video-stream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-remote-video-stream.o `test -f 'src/remote-video-stream.cpp' || echo '$(srcdir)/'`src/remote-video-stream.cpp
+
+src/bin_tests_test_loop-remote-video-stream.obj: src/remote-video-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-remote-video-stream.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Tpo -c -o src/bin_tests_test_loop-remote-video-stream.obj `if test -f 'src/remote-video-stream.cpp'; then $(CYGPATH_W) 'src/remote-video-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/remote-video-stream.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Tpo src/$(DEPDIR)/bin_tests_test_loop-remote-video-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/remote-video-stream.cpp' object='src/bin_tests_test_loop-remote-video-stream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-remote-video-stream.obj `if test -f 'src/remote-video-stream.cpp'; then $(CYGPATH_W) 'src/remote-video-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/remote-video-stream.cpp'; fi`
+
+src/bin_tests_test_loop-remote-audio-stream.o: src/remote-audio-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-remote-audio-stream.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Tpo -c -o src/bin_tests_test_loop-remote-audio-stream.o `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Tpo src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/remote-audio-stream.cpp' object='src/bin_tests_test_loop-remote-audio-stream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-remote-audio-stream.o `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
+
+src/bin_tests_test_loop-remote-audio-stream.obj: src/remote-audio-stream.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_loop-remote-audio-stream.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Tpo -c -o src/bin_tests_test_loop-remote-audio-stream.obj `if test -f 'src/remote-audio-stream.cpp'; then $(CYGPATH_W) 'src/remote-audio-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/remote-audio-stream.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Tpo src/$(DEPDIR)/bin_tests_test_loop-remote-audio-stream.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/remote-audio-stream.cpp' object='src/bin_tests_test_loop-remote-audio-stream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_loop-remote-audio-stream.obj `if test -f 'src/remote-audio-stream.cpp'; then $(CYGPATH_W) 'src/remote-audio-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/remote-audio-stream.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_loop_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_loop-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

@@ -1178,7 +1178,7 @@ TEST(TestWireData, TestVideoFrameSegment)
             ndn::Name n(frameName);
             n.appendSegment(segIdx++);
             boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
-            ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+            ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
             ds->setContent(s.getNetworkData()->getData(), s.size());
             dataSegments.push_back(ds);
             
@@ -1223,7 +1223,7 @@ TEST(TestWireData, TestVideoFrameSegment)
             idx++;
         }
     }
-    #if 1
+    #if 0
     {
         std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%00/video/camera/hi/d/%FE%00";
         std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
@@ -1466,7 +1466,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
-    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(1));
+    ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(0));
     ds->setContent(segments.front().getNetworkData()->data());
 
     boost::shared_ptr<ndn::Interest> interest = boost::make_shared<ndn::Interest>(n,1000);

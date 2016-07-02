@@ -107,7 +107,7 @@ TEST(TestAudioPlayout, TestG722)
 			segmentName.appendSequenceNumber(nBundles).appendSegment(idx);
 			boost::shared_ptr<ndn::Data> d(boost::make_shared<ndn::Data>(segmentName));
 			d->getMetaInfo().setFreshnessPeriod(1000);
-			d->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+			d->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
 			d->setContent(segmentData->getData(), segmentData->getLength());
 			cache.addData(d);
 			idx++;
@@ -287,7 +287,7 @@ TEST(TestAudioPlayout, TestOpus)
 			segmentName.appendSequenceNumber(nBundles).appendSegment(idx);
 			boost::shared_ptr<ndn::Data> d(boost::make_shared<ndn::Data>(segmentName));
 			d->getMetaInfo().setFreshnessPeriod(1000);
-			d->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromNumber(segments.size()));
+			d->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
 			d->setContent(segmentData->getData(), segmentData->getLength());
 			cache.addData(d);
 			idx++;

@@ -48,7 +48,15 @@ namespace ndnrtc {
 
 	class IBufferControlObserver {
 	public:
+		/**
+		 * Called whenever sample rate value is retrieved from sample packet metadata
+		 * @param rate Sample rate
+		 */
 		virtual void targetRateUpdate(double rate) = 0;
+		/**
+		 * Called whenever new sample arrived (not, segment!)
+		 * @param playbackNo Sample playback number
+		 */
 		virtual void sampleArrived(const PacketNumber& playbackNo) = 0;
 	};
 }

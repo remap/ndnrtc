@@ -609,8 +609,11 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
     std::map<ndn::Name, boost::shared_ptr<BufferSlot>>::iterator lower = 
         activeSlots_.lower_bound(slotPrefix);
 
-    while (activeSlots_.begin() != lower) 
+    while (activeSlots_.begin() != lower)
+    {
+        LogDebugC << "invalidate " << activeSlots_.begin()->first << std::endl;
         activeSlots_.erase(activeSlots_.begin());
+    }
 }
 
 void
