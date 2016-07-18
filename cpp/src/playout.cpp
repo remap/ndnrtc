@@ -25,7 +25,7 @@ using namespace ndnrtc::statistics;
 
 //******************************************************************************
 Playout::Playout(boost::asio::io_service& io,
-    const boost::shared_ptr<PlaybackQueue>& queue,
+    const boost::shared_ptr<IPlaybackQueue>& queue,
     const boost::shared_ptr<statistics::StatisticsStorage> statStorage):
 isRunning_(false),
 jitterTiming_(io),
@@ -88,11 +88,14 @@ Playout::setDescription(const std::string &desc)
 void 
 Playout::attach(IPlayoutObserver* o) 
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.push_back(o); 
+    if (o)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        observers_.push_back(o);
+    }
 }
 
-void 
+void
 Playout::detach(IPlayoutObserver* o) 
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);

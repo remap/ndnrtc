@@ -580,15 +580,22 @@ Buffer::getSlotsNum(const ndn::Name& prefix, int stateMask) const
 void
 Buffer::attach(IBufferObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.push_back(observer);
+    if (observer)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        observers_.push_back(observer);
+    }
 }
 
 void
 Buffer::detach(IBufferObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.erase(std::find(observers_.begin(), observers_.end(), observer));
+    std::vector<IBufferObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), observer);
+    if (it != observers_.end())
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        observers_.erase(it);
+    }
 }
 
 void
@@ -730,15 +737,22 @@ PlaybackQueue::pendingSize() const
 void 
 PlaybackQueue::attach(IPlaybackQueueObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.push_back(observer);
+    if (observer)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        observers_.push_back(observer);
+    }
 }
 
 void
 PlaybackQueue::detach(IPlaybackQueueObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.erase(std::find(observers_.begin(), observers_.end(), observer));
+    std::vector<IPlaybackQueueObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), observer);
+    if (it != observers_.end())
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        observers_.erase(it);
+    }
 }
 
 std::string

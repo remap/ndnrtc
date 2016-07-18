@@ -26,9 +26,9 @@ namespace ndnlog {
 
 namespace ndnrtc {
     class BufferSlot;
-    class PlaybackQueue;
-    typedef statistics::StatisticsStorage StatStorage; 
+    class IPlaybackQueue;
     class IPlayoutObserver;
+    typedef statistics::StatisticsStorage StatStorage;
 
     class IPlayout {
     public:
@@ -50,7 +50,7 @@ namespace ndnrtc {
     {
     public:
         Playout(boost::asio::io_service& io,
-            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage> statStorage = 
                 boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
         ~Playout();
@@ -70,7 +70,7 @@ namespace ndnrtc {
 
         mutable boost::recursive_mutex mutex_;
         boost::atomic<bool> isRunning_;
-        boost::shared_ptr<PlaybackQueue> pqueue_;
+        boost::shared_ptr<IPlaybackQueue> pqueue_;
         JitterTiming jitterTiming_;
         int64_t lastTimestamp_, lastDelay_, delayAdjustment_;
         std::vector<IPlayoutObserver*> observers_;

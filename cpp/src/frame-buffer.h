@@ -261,6 +261,9 @@ namespace ndnrtc
         virtual BufferReceipt received(const boost::shared_ptr<WireSegment>&) = 0;
         virtual bool isRequested(const boost::shared_ptr<WireSegment>&) const = 0;
         virtual unsigned int getSlotsNum(const ndn::Name&, int) const = 0;
+        virtual std::string shortdump() const = 0;
+        virtual void attach(IBufferObserver* observer) = 0;
+        virtual void detach(IBufferObserver* observer) = 0;
     };
 
     class Buffer : public NdnRtcComponent, public IBuffer {

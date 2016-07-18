@@ -49,14 +49,21 @@ OnTimeout SegmentController::getOnTimeoutCallback()
 
 void SegmentController::attach(ISegmentControllerObserver* o)
 {
-	boost::lock_guard<boost::mutex> scopedLock(mutex_);
-	observers_.push_back(o);
+    if (o)
+    {
+        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        observers_.push_back(o);
+    }
 }
 
 void SegmentController::detach(ISegmentControllerObserver* o)
 {
-	boost::lock_guard<boost::mutex> scopedLock(mutex_);
-	observers_.erase(std::find(observers_.begin(), observers_.end(), o));
+    std::vector<ISegmentControllerObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), o);
+    if (it != observers_.end())
+    {
+        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        observers_.erase(it);
+    }
 }
 
 #pragma mark - private

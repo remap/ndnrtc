@@ -63,12 +63,19 @@ DrdEstimator::reset()
 
 void DrdEstimator::attach(IDrdEstimatorObserver* o)
 {
-	boost::lock_guard<boost::mutex> scopedLock(mutex_);
-	observers_.push_back(o);
+    if (o)
+    {
+        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        observers_.push_back(o);
+    }
 }
 
 void DrdEstimator::detach(IDrdEstimatorObserver* o)
 {
-	boost::lock_guard<boost::mutex> scopedLock(mutex_);
-	observers_.erase(std::find(observers_.begin(), observers_.end(), o));
+    std::vector<IDrdEstimatorObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), o);
+    if (it != observers_.end())
+    {
+        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        observers_.erase(it);
+    }
 }
