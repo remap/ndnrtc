@@ -228,8 +228,10 @@ namespace ndnrtc
         class MediaStreamParams : public Params {
         public:
             typedef enum _MediaStreamType {
+                MediaStreamTypeUnknown = -1,
                 MediaStreamTypeAudio = 0,
-                MediaStreamTypeVideo = 1
+                MediaStreamTypeVideo = 1,
+                MediaStreamTypeData = 2
             } MediaStreamType;
             
             MediaStreamParams(){}
