@@ -20,6 +20,9 @@ public:
 	MOCK_METHOD1(received, ndnrtc::BufferReceipt(const boost::shared_ptr<ndnrtc::WireSegment>&));
 	MOCK_CONST_METHOD1(isRequested, bool(const boost::shared_ptr<ndnrtc::WireSegment>&));
 	MOCK_CONST_METHOD2(getSlotsNum, unsigned int(const ndn::Name&, int));
+    MOCK_CONST_METHOD0(shortdump, std::string());
+    MOCK_METHOD1(attach, void(ndnrtc::IBufferObserver));
+    MOCK_METHOD1(detach, void(ndnrtc::IBufferObserver));
 };
 
 #endif
