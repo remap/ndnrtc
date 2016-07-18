@@ -35,6 +35,7 @@ namespace ndnrtc {
 		virtual bool burst() = 0;
 		virtual bool withhold() = 0;
 		virtual void markLowerLimit(unsigned int lowerLimit) = 0;
+        virtual std::string snapshot() const = 0;
 	};
 
 	/**
@@ -137,10 +138,27 @@ namespace ndnrtc {
 		 */
 		void markLowerLimit(unsigned int lowerLimit);
 
+        /**
+         * Returns symbolic representation of pipeline state
+         * For example:
+         *      1-8[⬆︎⬆︎⬆︎⬆︎◻︎◻︎◻︎◆]4-8 (4)
+         * - first two numbers represent lower limit and upper limit for the pipeline
+         * - up arrow (⬆︎) represents outstanding interest
+         * - empty slot (◻︎) represents room to express an interest
+         * - diamond (◆) represents current pipeline limit
+         * - last three numbers:
+         *      - current number of outstanding interests (pipeline size)
+         *      - current pipeline limit
+         *      - current pipeline room size (limit-pipeline)
+         */
+        std::string snapshot() const;
+        
+        // IDrdEstimatorObserver
 		void onDrdUpdate();
 		void onCachedDrdUpdate(){ /*ignored*/ }
 		void onOriginalDrdUpdate(){ /*ignored*/ }
 
+        // IBufferControlObserver
 		void targetRateUpdate(double rate);
 		void sampleArrived(const PacketNumber&) { decrement(); }
 
@@ -154,7 +172,6 @@ namespace ndnrtc {
 
 		void setLimits();
 		void changeLimitTo(unsigned int newLimit);
-		std::string snapshot() const;
 	};
 }
 

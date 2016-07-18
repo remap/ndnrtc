@@ -73,6 +73,7 @@ bool
 InterestControl::decrement()
 {
 	pipeline_--;
+    assert(pipeline_ >= 0);
 	LogTraceC << "▼dec " << snapshot() << std::endl;
 	return true;
 }
@@ -158,14 +159,12 @@ InterestControl::setLimits()
 		if (!limitSet_ || newLower > lowerLimit_) lowerLimit_ = newLower;
 		upperLimit_ = newUpper;
 
-		LogDebugC << "set limits."
-		<< " lower " << lowerLimit_ 
-		<< ", upper " << upperLimit_ 
-		<< ", current " << limit_
-		<< std::endl;
-
 		if (limit_ < lowerLimit_)
 			changeLimitTo(lowerLimit_);
+        
+        LogDebugC << "DRD orig: " << drdEstimator_->getOriginalEstimation()
+            << " cach: " << drdEstimator_->getCachedEstimation()
+            << ", set limits " << snapshot() << std::endl;
 	}
 }
 
@@ -198,11 +197,20 @@ InterestControl::snapshot() const
 {
 	std::stringstream ss;
 	ss << lowerLimit_  << "-" << upperLimit_ << "[";
-	for (int i = 0; i <= (limit_ < pipeline_ ? (int)pipeline_ : (int)limit_); ++i) 
-		if (i == limit_)
-			ss << "◆";
-		else
-			ss << (i <= pipeline_ ? (i == pipeline_ ? "◉" : "•") : "✕");
+    for (int i = 1;
+         i <= fmax(limit_, pipeline_);
+         ++i)
+    {
+        if (i > limit_)
+            ss << "⥣";
+        else
+        {
+            if (i <= pipeline_)
+                ss << "⬆︎";
+            else
+                ss << "◻︎";
+        }
+    }
 	ss << "]" << pipeline_ << "-" << limit_ << " (" << room() <<")";
 
 	return ss.str();
