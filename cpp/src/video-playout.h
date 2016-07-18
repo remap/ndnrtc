@@ -19,14 +19,14 @@ namespace ndnrtc {
     struct Immutable;
     typedef VideoFramePacketT<Immutable> ImmutableFrameAlias;
     class IEncodedFrameConsumer;
-    class PlaybackQueue;
+    class IPlaybackQueue;
     class IVideoPlayoutObserver;
     
     class VideoPlayout : public Playout
     {
     public:
         VideoPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage = 
                 boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
         ~VideoPlayout(){}

@@ -16,7 +16,7 @@ using namespace ndnlog;
 
 //******************************************************************************
 VideoPlayout::VideoPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage):
 Playout(io, queue, statStorage),
 gopIsValid_(false), currentPlayNo_(-1), 
