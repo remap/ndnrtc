@@ -13,7 +13,7 @@
 using namespace ndnrtc;
 
 BufferControl::BufferControl(const boost::shared_ptr<DrdEstimator>& drdEstimator, 
-	const boost::shared_ptr<Buffer>& buffer):
+	const boost::shared_ptr<IBuffer>& buffer):
 drdEstimator_(drdEstimator), buffer_(buffer)
 {
 	description_ = "buffer-control";

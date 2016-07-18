@@ -28,7 +28,7 @@ namespace ndnrtc {
 	class BufferControl : public ISegmentControllerObserver, public NdnRtcComponent
 	{
 	public:
-		BufferControl(const boost::shared_ptr<DrdEstimator>&, const boost::shared_ptr<Buffer>&);
+		BufferControl(const boost::shared_ptr<DrdEstimator>&, const boost::shared_ptr<IBuffer>&);
 		~BufferControl();
 
 		void attach(IBufferControlObserver*);
@@ -41,7 +41,7 @@ namespace ndnrtc {
 	private:
 		std::vector<IBufferControlObserver*> observers_;
 		boost::shared_ptr<DrdEstimator> drdEstimator_;
-		boost::shared_ptr<Buffer> buffer_;
+		boost::shared_ptr<IBuffer> buffer_;
 
 		void informLatencyControl(const BufferReceipt&);
 	};
