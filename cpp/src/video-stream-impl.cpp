@@ -30,6 +30,7 @@
 #define PARITY_RATIO 0.2
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace std;
 using namespace ndn;
 using namespace estimators;
@@ -42,7 +43,8 @@ VideoStreamImpl::VideoStreamImpl(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
 MediaStreamBase(streamPrefix, settings),
 playbackCounter_(0),
-fecEnabled_(useFec)
+fecEnabled_(useFec),
+busyPublishing_(0)
 {
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
 		throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
@@ -54,12 +56,14 @@ fecEnabled_(useFec)
 			add(settings_.params_.getVideoThread(i));
 
 	PublisherSettings ps;
+    ps.sign_ = settings_.sign_;
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = settings_.params_.producerParams_.segmentSize_;
 	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
+    ps.statStorage_ = statStorage_.get();
 
-	publisher_ = boost::make_shared<VideoPacketPublisher>(ps, streamPrefix_);
+	publisher_ = boost::make_shared<VideoPacketPublisher>(ps);
 	publisher_->setDescription("seg-publisher-"+settings_.params_.streamName_);
 }
 
@@ -81,13 +85,13 @@ vector<string> VideoStreamImpl::getThreads() const
 
 void VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w)
 {
-	LogDebugC << "incoming ARGB frame " << w.width_ << "x" << w.height_ << std::endl;
+	LogDebugC << "⤹ incoming ARGB frame " << w.width_ << "x" << w.height_ << std::endl;
 	feedFrame(conv_ << w);
 }
 
 void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
 {
-	LogDebugC << "incoming I420 frame " << w.width_ << "x" << w.height_ << std::endl;
+	LogDebugC << "⤹ incoming I420 frame " << w.width_ << "x" << w.height_ << std::endl;
 	feedFrame(conv_ << w);
 }
 
@@ -147,10 +151,20 @@ void VideoStreamImpl::remove(const string& threadName)
 
 void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 {
+    (*statStorage_)[Indicator::CapturedNum]++;
+    
+    if (busyPublishing_ > 0)
+    {
+        LogWarnC << "⨂ busy publishing (capture rate may be too high)" << std::endl;
+        return ;
+    }
+    
 	if (threads_.size())
 	{
+        (*statStorage_)[Indicator::ProcessedNum]++;
+        
 		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
-		LogTraceC << "feeding frame "<< playbackCounter_ << " into threads..." << std::endl;
+		LogDebugC << "↓ feeding "<< playbackCounter_ << "p into encoders..." << std::endl;
 
 		map<string,FutureFramePtr> futureFrames;
 		for (auto it:threads_)
@@ -165,17 +179,21 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		for (auto it:futureFrames)
 		{
 			FramePacketPtr f(it.second->get());
-
 			if (f.get())
-			{
-				frames[it.first] = f;
-
-				LogTraceC << "encoded frame for thread " << it.first 
-				<< " " << f->getLength() << " bytes" << std::endl;
-			}
+            {
+                (*statStorage_)[Indicator::EncodedNum]++;
+                frames[it.first] = f;
+            }
 		}
-		publish(frames);
-		playbackCounter_++;
+		
+        (*statStorage_)[Indicator::DroppedNum] += (threads_.size()-frames.size());
+        
+		if (frames.size())
+		{
+			publish(frames);
+			playbackCounter_++;
+		}
+		
 		if (!isPeriodicInvocationSet())
 		{ 
 			boost::shared_ptr<VideoStreamImpl> me = boost::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
@@ -189,7 +207,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 
 void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 {
-	LogTraceC << "publishing " << frames.size() << " frames" << std::endl;
+	LogTraceC << "will publish " << frames.size() << " frames" << std::endl;
 
 	for (auto it:frames)
 	{
@@ -202,7 +220,10 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 
 		it.second->setSyncList(getCurrentSyncList(isKey));
 		it.second->setHeader(packetHdr);
-
+        
+        LogTraceC << "thread " << it.first << " " << packetHdr.sampleRate_
+            << "fps " << packetHdr.publishTimestampMs_ << "ms " << std::endl;
+        
 		publish(it.first, it.second);
 
 		if (isKey) seqCounters_[it.first].first++;
@@ -217,42 +238,77 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 		PARITY_RATIO);
 
 	bool isKey = (fp->getFrame()._frameType == webrtc::kKeyFrame);
+    PacketNumber seqNo = (isKey ? seqCounters_[thread].first : seqCounters_[thread].second);
+    PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
+    PacketNumber playbackNo = playbackCounter_;
 	Name dataName(streamPrefix_);
 	dataName.append(thread)
 		.append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
-		.appendSequenceNumber((isKey ? seqCounters_[thread].first : seqCounters_[thread].second));
+		.appendSequenceNumber(seqNo);
 
 	size_t nDataSeg = VideoFrameSegment::numSlices(*fp, 
 			settings_.params_.producerParams_.segmentSize_);
 	size_t nParitySeg = VideoFrameSegment::numSlices(*parityData, 
 			settings_.params_.producerParams_.segmentSize_);
-	PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
 	boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
 	boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
 
-	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, pairedSeq, keeper, isKey, 
-		thread, fp, parityData, dataName]
+    LogTraceC << "spawned publish task for "
+        << seqNo
+        << (isKey ? "k " : "d ")
+        << playbackNo << "p "
+        << "(" << SAMPLE_SUFFIX(dataName) << ")" << std::endl;
+    
+    busyPublishing_++;
+	async::dispatchAsync(settings_.faceIo_,  [me, nParitySeg, nDataSeg, seqNo, pairedSeq, keeper, isKey,
+		thread, fp, parityData, dataName, playbackNo, this]
 	{
 		VideoFrameSegmentHeader segmentHdr;
 		segmentHdr.totalSegmentsNum_ = nDataSeg;
 		segmentHdr.paritySegmentsNum_ = nParitySeg;
-		segmentHdr.playbackNo_ = me->playbackCounter_;
+        segmentHdr.playbackNo_ = playbackNo;
 		segmentHdr.pairedSequenceNo_ = pairedSeq;
 
 		size_t nSlices = me->publisher_->publish(dataName, *fp, segmentHdr);
 		assert(nSlices);
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
+        if (nParitySeg == 0) busyPublishing_--;
+        
+        (*statStorage_)[Indicator::PublishedNum]++;
+        if (isKey) (*statStorage_)[Indicator::PublishedKeyNum]++;
+        
+        LogDebugC << (busyPublishing_ == 0 ? "⤷" : "↓") << " published "
+            << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
+            << "(" << SAMPLE_SUFFIX(dataName) << ")x" << nSlices
+            << " Dgen " << segmentHdr.generationDelayMs_ << "ms" << std::endl;
 	});
 
-	dataName.append(NameComponents::NameComponentParity);
-	async::dispatchAsync(settings_.faceIo_, [me, parityData, dataName]
-	{
-		size_t nParitySlices = me->dataPublisher_->publish(dataName, *parityData);
-		assert(nParitySlices);
-	});
+    if (nParitySeg)
+    {
+        dataName.append(NameComponents::NameComponentParity);
+        
+        LogTraceC << "spawned publish task for "
+            << seqNo
+            << (isKey ? "k " : "d ")
+            << playbackNo << "p "
+            << "(" << PARITY_SUFFIX(dataName) << ")" << std::endl;
+        
+        async::dispatchAsync(settings_.faceIo_, [me, parityData, seqNo, dataName,
+                                                 isKey, playbackNo, this]
+        {
+            size_t nParitySlices = me->dataPublisher_->publish(dataName, *parityData);
+            assert(nParitySlices);
+            busyPublishing_--;
+            
+            LogDebugC << (busyPublishing_ == 0 ? "⤷" : "↓") << " published "
+                << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
+                << "(" << PARITY_SUFFIX(dataName) << ")x" << nParitySlices
+                << std::endl;
+        });
+    }
 }
 
-map<string, PacketNumber> 
+map<string, PacketNumber>
 VideoStreamImpl::getCurrentSyncList(bool forKey)
 {
 	map<string, PacketNumber> syncList;
@@ -283,7 +339,7 @@ bool VideoStreamImpl::checkMeta()
 //******************************************************************************
 VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams* params):
 BaseMetaKeeper(params),
-rateMeter_(FreqMeter(boost::make_shared<TimeWindow>(500))),
+rateMeter_(FreqMeter(boost::make_shared<TimeWindow>(1000))),
 deltaData_(Average(boost::make_shared<TimeWindow>(100))),
 deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
 keyData_(Average(boost::make_shared<SampleWindow>(2))),

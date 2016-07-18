@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/atomic.hpp>
 
 #include "media-stream-base.h"
 #include "ndnrtc-object.h"
@@ -74,6 +75,7 @@ namespace ndnrtc {
 		};
 
 		bool fecEnabled_;
+        boost::atomic<int> busyPublishing_;
 		RawFrameConverter conv_;
 		std::map<std::string, boost::shared_ptr<VideoThread>> threads_;
 		std::map<std::string, boost::shared_ptr<FrameScaler>> scalers_;
