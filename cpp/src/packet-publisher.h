@@ -16,6 +16,7 @@
 
 #include "frame-data.h"
 #include "ndnrtc-object.h"
+#include "statistics.h"
 
 #define ADD_CRC 0
 
@@ -28,7 +29,11 @@ namespace ndn{
 	class InterestFilter;
 }
 
-namespace ndnrtc{
+namespace ndnrtc {
+	namespace statistics {
+		class StatisticsStorage;
+	}
+
 	template<typename T>
 	class NetworkDataT;
 	struct _DataSegmentHeader;
@@ -36,11 +41,15 @@ namespace ndnrtc{
 
 	template<typename KeyChain, typename MemoryCache>
 	struct _PublisherSettings {
+        _PublisherSettings():keyChain_(nullptr), memoryCache_(nullptr),
+            statStorage_(nullptr){}
+        
 		KeyChain* keyChain_;
 		MemoryCache* memoryCache_;
+		statistics::StatisticsStorage *statStorage_;
 		size_t segmentWireLength_;
 		unsigned int freshnessPeriodMs_;
-		bool sign = true;
+		bool sign_ = true;
 	};
 
 	typedef _PublisherSettings<ndn::KeyChain, ndn::MemoryContentCache> PublisherSettings;
@@ -48,12 +57,13 @@ namespace ndnrtc{
 	template<typename SegmentType, typename Settings>
 	class PacketPublisher : public NdnRtcComponent {
 	public:
-		PacketPublisher(const Settings& settings, const ndn::Name& nameFilter = ndn::Name("/nofilter")):
-		settings_(settings)
-		{
-			if (nameFilter.toUri() != "/nofilter")
-				settings_.memoryCache_->setInterestFilter(nameFilter, settings_.memoryCache_->getStorePendingInterest());
-		}
+		PacketPublisher(const Settings& settings):
+        settings_(settings)
+        {
+            assert(settings_.keyChain_);
+            assert(settings_.memoryCache_);
+            assert(settings_.statStorage_);
+        }
 
 		size_t publish(const ndn::Name& name, const MutableNetworkData& data)
 		{
@@ -68,56 +78,65 @@ namespace ndnrtc{
 		size_t publish(const ndn::Name& name, const MutableNetworkData& data, 
 			_DataSegmentHeader& commonHeader)
 		{
-			LogDebugC << "publish " << name << std::endl;
-
-			std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
-			settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
-		
-			if (pendingInterests.size())
-			{
-				commonHeader.interestNonce_ = *(uint32_t *)(pendingInterests.back()->getInterest()->getNonce().buf());
-				commonHeader.interestArrivalMs_ = pendingInterests.back()->getTimeoutPeriodStart();
-				commonHeader.generationDelayMs_ = ndn_getNowMilliseconds()-pendingInterests.back()->getTimeoutPeriodStart();
-				
-				LogDebugC << "pending interest found " << pendingInterests.back()->getInterest()->toUri() << std::endl;
-				LogStatC << "Dgen" << STAT_DIV << commonHeader.generationDelayMs_ << std::endl;
-			}
-		
 			std::vector<SegmentType> segments = SegmentType::slice(data, settings_.segmentWireLength_);
-			
 			LogTraceC << "sliced into " << segments.size() << " segments" << std::endl;
 
 			unsigned int segIdx = 0;
 			for (auto segment:segments)
 			{
+                ndn::Name segmentName(name);
+                segmentName.appendSegment(segIdx);
+                #if ADD_CRC
+                segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
+                #endif
+                
+                checkForPendingInterests(segmentName, commonHeader);
 				segment.setHeader(commonHeader);
+                
 				boost::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
-		
-				ndn::Name segmentName(name);
-				segmentName.appendSegment(segIdx);
-				#if ADD_CRC
-				segmentName.append(ndn::Name::Component::fromNumber(segmentData->getCrcValue()));
-				#endif
-				
 				ndn::Data ndnSegment(segmentName);
 				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
 				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
 				ndnSegment.setContent(segmentData->getData(), segment.size());
-				if (settings_.sign) settings_.keyChain_->sign(ndnSegment);
+				if (settings_.sign_) settings_.keyChain_->sign(ndnSegment);
 				settings_.memoryCache_->add(ndnSegment);
+                
+                (*settings_.statStorage_)[statistics::Indicator::BytesPublished] += ndnSegment.getContent().size();
+                (*settings_.statStorage_)[statistics::Indicator::RawBytesPublished] += ndnSegment.getDefaultWireEncoding().size();
 		
-				LogTraceC << "added to cache " << segmentName << " ("
-						<< ndnSegment.getContent().size() << " bytes payload, "
-						<< ndnSegment.getDefaultWireEncoding().size() << " bytes wire)" << std::endl;
+				LogTraceC << "cached " << segmentName << " ("
+						<< ndnSegment.getContent().size() << "b payload, "
+						<< ndnSegment.getDefaultWireEncoding().size() << "b wire)" << std::endl;
 				++segIdx;
 			}
-
-			LogDebugC << "published " << name << " (" << segments.size() << " segments)" << std::endl;
+            
+            (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
 
 			return segments.size();
 		}
 	private:
 		Settings settings_;
+        
+        void checkForPendingInterests(const ndn::Name& name, _DataSegmentHeader& commonHeader)
+        {
+            commonHeader.interestNonce_ = 0;
+            commonHeader.generationDelayMs_ = 0;
+            commonHeader.interestArrivalMs_ = 0;
+            
+            std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
+            settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
+            
+            if (pendingInterests.size())
+            {
+                commonHeader.interestNonce_ = *(uint32_t *)(pendingInterests.back()->getInterest()->getNonce().buf());
+                commonHeader.interestArrivalMs_ = pendingInterests.back()->getTimeoutPeriodStart();
+                commonHeader.generationDelayMs_ = ndn_getNowMilliseconds()-pendingInterests.back()->getTimeoutPeriodStart();
+                
+                (*settings_.statStorage_)[statistics::Indicator::InterestsReceivedNum] += pendingInterests.size();
+                
+                LogTraceC << "PIT hit " << pendingInterests.back()->getInterest()->toUri() << std::endl;
+            }
+        }
 	};
 
 	typedef PacketPublisher<VideoFrameSegment, PublisherSettings> VideoPacketPublisher;

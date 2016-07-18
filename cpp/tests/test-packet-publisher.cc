@@ -26,6 +26,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 typedef _PublisherSettings<MockNdnKeyChain, MockNdnMemoryCache> MockSettings;
@@ -173,6 +174,7 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 	settings.memoryCache_ = &memoryCache;
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
 	Name filter("/test"), packetName(filter);
 	packetName.append("1");
@@ -199,10 +201,9 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 	};
 
 	EXPECT_CALL(memoryCache, getStorePendingInterest())
-		.Times(1)
-		.WillOnce(ReturnRef(mockCallback));
+        .Times(0);
 	EXPECT_CALL(memoryCache, setInterestFilter(filter, _))
-		.Times(1);
+		.Times(0);
 	EXPECT_CALL(keyChain, sign(_))
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
@@ -212,7 +213,7 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
 
-	PacketPublisher<VideoFrameSegment, MockSettings> publisher(settings, filter);
+	PacketPublisher<VideoFrameSegment, MockSettings> publisher(settings);
 
 	{
 		CommonHeader hdr;
@@ -318,6 +319,7 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 	settings.memoryCache_ = &memoryCache;
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
 	Name filter("/testpacket");
 	Name packetName(filter);
@@ -420,6 +422,7 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 	settings.memoryCache_ = &memoryCache;
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
 	Name filter("/test"), packetName(filter);
 	packetName.append("1");
@@ -440,10 +443,9 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 	};
 
 	EXPECT_CALL(memoryCache, getStorePendingInterest())
-		.Times(1)
-		.WillOnce(ReturnRef(mockCallback));
+        .Times(0);
 	EXPECT_CALL(memoryCache, setInterestFilter(filter, _))
-		.Times(1);
+		.Times(0);
 	EXPECT_CALL(keyChain, sign(_))
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
@@ -453,7 +455,7 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
 
-	PacketPublisher<CommonSegment, MockSettings> publisher(settings, filter);
+	PacketPublisher<CommonSegment, MockSettings> publisher(settings);
 
 	{
 		
@@ -503,13 +505,14 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment1000)
 	settings.memoryCache_ = memCache.get();
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
 	Name filter("/test"), packetName(filter);
 	packetName.append("1");
 
 	for (int frameLen = 10000; frameLen < 35000; frameLen+=10000)
 	{
-		VideoPacketPublisher publisher(settings, filter);
+		VideoPacketPublisher publisher(settings);
 		int nFrames = 100;
 		unsigned int publishDuration = 0;
 		unsigned int totalSlices = 0;
@@ -575,13 +578,14 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment8000)
 	settings.memoryCache_ = memCache.get();
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
 	Name filter("/test"), packetName(filter);
 	packetName.append("1");
 
 	for (int frameLen = 10000; frameLen < 35000; frameLen+=10000)
 	{
-		VideoPacketPublisher publisher(settings, filter);
+		VideoPacketPublisher publisher(settings);
 		int nFrames = 100;
 		unsigned int publishDuration = 0;
 		unsigned int totalSlices = 0;
@@ -647,6 +651,7 @@ TEST(TestPacketPublisher, TestBenchmarkNoSigning)
 	settings.memoryCache_ = memCache.get();
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 	settings.sign = false;
 
 	Name filter("/test"), packetName(filter);
@@ -654,7 +659,7 @@ TEST(TestPacketPublisher, TestBenchmarkNoSigning)
 
 	for (int frameLen = 10000; frameLen < 35000; frameLen+=10000)
 	{
-		VideoPacketPublisher publisher(settings, filter);
+		VideoPacketPublisher publisher(settings);
 		int nFrames = 1000;
 		unsigned int publishDuration = 0;
 		unsigned int totalSlices = 0;
