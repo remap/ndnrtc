@@ -342,6 +342,70 @@ TEST(TestBufferSlot, TestAddData)
 	}
 }
 
+TEST(TestBufferSlot, TestMissingSegments)
+{
+    std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
+    VideoFramePacket vp = getVideoFramePacket(30000);
+    std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+    boost::shared_ptr<ndnrtc::NetworkData> parityData;
+    std::vector<ndnrtc::CommonSegment> paritySegments = sliceParity(vp, parityData);
+    
+    { // all data arrived in random order
+        std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+        std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName, paritySegments);
+        std::vector<boost::shared_ptr<Interest>> allinterests = getInterests(frameName, 0, dataObjects.size(), 0, parityObjects.size());
+        std::vector<boost::shared_ptr<Interest>> dataInterests, parityInterests;
+        
+        std::copy(allinterests.begin(), allinterests.end()-parityObjects.size(), std::back_inserter(dataInterests));
+        std::copy(allinterests.end()-parityObjects.size(), allinterests.end(), std::back_inserter(parityInterests));
+        
+        BufferSlot slot;
+        
+        {
+            std::vector<boost::shared_ptr<const Interest>> first(dataInterests.begin(), dataInterests.end()-3);
+            std::vector<boost::shared_ptr<const Interest>> second(dataInterests.end()-3, dataInterests.end());
+            
+            slot.segmentsRequested(first);
+            boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(dataObjects.front(), dataInterests.front()));
+            
+            EXPECT_NO_THROW(slot.segmentReceived(wd));
+            
+            std::vector<ndn::Name> missing = slot.getMissingSegments();
+            EXPECT_EQ(missing.size(), second.size());
+
+            for (auto& i:second)
+            {
+                EXPECT_NE(std::find(missing.begin(), missing.end(), i->getName()), missing.end());
+                missing.erase(std::find(missing.begin(), missing.end(), i->getName()));
+            }
+            slot.segmentsRequested(second);
+            
+            EXPECT_EQ(slot.getMissingSegments().size(), 0);
+        }
+        {
+            std::vector<boost::shared_ptr<const Interest>> first(parityInterests.begin(), parityInterests.end()-2);
+            std::vector<boost::shared_ptr<const Interest>> second(parityInterests.end()-2, parityInterests.end());
+            
+            slot.segmentsRequested(first);
+            boost::shared_ptr<WireSegment> wd(boost::make_shared<WireSegment>(parityObjects.front(), parityInterests.front()));
+            
+            EXPECT_NO_THROW(slot.segmentReceived(wd));
+            
+            std::vector<ndn::Name> missing = slot.getMissingSegments();
+            EXPECT_EQ(missing.size(), second.size());
+        
+            for (auto& i:second)
+            {
+                EXPECT_NE(std::find(missing.begin(), missing.end(), i->getName()), missing.end());
+                missing.erase(std::find(missing.begin(), missing.end(), i->getName()));
+            }
+            slot.segmentsRequested(second);
+            
+            EXPECT_EQ(slot.getMissingSegments().size(), 0);
+        }
+    }
+}
+
 TEST(TestBufferSlot, TestReuseSlot)
 {
 	BufferSlot slot;

@@ -59,6 +59,14 @@ SlotSegment::isOriginal() const
     return data_->isOriginal();
 }
 
+int64_t
+SlotSegment::getDrdUsec() const
+{
+    if (isOriginal())
+        return getRoundTripDelayUsec() - (int64_t)(1000*data_->header().generationDelayMs_);
+    return getRoundTripDelayUsec();
+}
+
 //******************************************************************************
 static std::string
 stateToString(BufferSlot::State s)
@@ -143,6 +151,8 @@ BufferSlot::clear()
     nRtx_ = 0;
     state_ = Free;
     lastFetched_.reset();
+    nDataSegments_ = 0;
+    nParitySegments_ = 0;
 }
 
 const boost::shared_ptr<SlotSegment>
@@ -172,18 +182,28 @@ BufferSlot::segmentReceived(const boost::shared_ptr<WireSegment>& segment)
     return fetched_[segmentKey];
 }
 
-double BufferSlot::getAssembledLevel()
+std::vector<ndn::Name>
+BufferSlot::getMissingSegments() const
 {
-    if (state_ == Ready) return asmLevel_;
-
-    if (consistency_&SegmentMeta) 
+    std::vector<ndn::Name> missing;
+    
+    if (getFetchedNum() > 0)
     {
-        asmLevel_ = 0;
-        for (auto& it:fetched_) asmLevel_ += it.second->getData()->getShareSize(nDataSegments_);
-        return asmLevel_;
+        for (unsigned int segNo = 0; segNo < nDataSegments_; ++segNo)
+        {
+            Name segKey = Name().appendSegment(segNo);
+            if (requested_.find(segKey) == requested_.end())
+                missing.push_back(Name(getPrefix()).append(segKey));
+        }
+        for (unsigned int segNo = 0; segNo < nParitySegments_; ++segNo)
+        {
+            Name segKey = Name(NameComponents::NameComponentParity).appendSegment(segNo);
+            if (requested_.find(segKey) == requested_.end())
+                missing.push_back(Name(getPrefix()).append(segKey));
+        }
     }
-
-    return 0.;
+    
+    return missing;
 }
 
 std::string
@@ -210,7 +230,7 @@ BufferSlot::dump(bool showLastSegment) const
     // << "/" << nSegmentsParity_ << " "
     // << getLifetime() << " "
     << std::setw(5) << assembledSize_ << " "
-    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Stream) : nameInfo_.getSuffix(suffix_filter::Stream))
+    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
     << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
     << "]";
 
@@ -234,6 +254,8 @@ BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment
         consistency_ |= SegmentMeta;
         nDataSegments_ = segment->getData()->getSlicesNum();
     }
+    else
+        nParitySegments_ = segment->getData()->getSlicesNum();
 
     if (!segment->getData()->isParity() && segment->getInfo().segNo_ == 0)
         consistency_ |= HeaderMeta;
@@ -251,12 +273,22 @@ BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment
     
     if (consistency_&SegmentMeta)
     {
-        getAssembledLevel();
+        updateAssembledLevel();
         state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
     }
 
     if (state_ == Ready) assembledTimeUsec_ = segment->getArrivalTimeUsec();
 }
+
+void BufferSlot::updateAssembledLevel()
+{
+    if (consistency_&SegmentMeta)
+    {
+        asmLevel_ = 0;
+        for (auto& it:fetched_) asmLevel_ += it.second->getData()->getShareSize(nDataSegments_);
+    }
+}
+
 
 //******************************************************************************
 VideoFrameSlot::VideoFrameSlot(const size_t storageSize):
@@ -454,7 +486,7 @@ SlotPool::push(const boost::shared_ptr<BufferSlot>& slot)
 
 //******************************************************************************
 Buffer::Buffer(boost::shared_ptr<SlotPool> pool):pool_(pool)
-{}
+{ description_ = "buffer"; }
 
 void
 Buffer::reset()
@@ -503,10 +535,8 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
             
             activeSlots_[it.first]->segmentsRequested(it.second);
 
-            LogDebugC << "▷▷▷" << activeSlots_[it.first]->dump() 
-                << it.second.size()
-                << " " << shortdump()
-                << std::endl;
+            LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
+                << it.second.size() << std::endl;
             
             LogTraceC << dump() << std::endl;
         }
@@ -541,7 +571,7 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
         receipt.slot_ = activeSlots_[key];
 
         if (receipt.slot_->getState() == BufferSlot::Ready)
-            LogDebugC << "►►►" << receipt.slot_->dump(true)
+            LogTraceC << "►►►" << receipt.slot_->dump(true)
                 << " " << shortdump() << std::endl;
         else
             LogTraceC << " ► " << receipt.slot_->dump(true) 
@@ -682,6 +712,7 @@ streamPrefix_(streamPrefix),
 buffer_(buffer),
 packetRate_(0)
 {
+    description_ = "pqueue";
     buffer_->attach(this);
 }
 
@@ -763,20 +794,25 @@ PlaybackQueue::dump()
     
     ss << "[ ";
     for (auto s:queue_)
-        ss  << s.slot()->getNameInfo().sampleNo_ 
-            << (s.slot()->getNameInfo().isDelta_ ? "D" : "K") << " ";
+    {
+        if (s.slot()->getNameInfo().sampleNo_%10 == 0 ||
+            !s.slot()->getNameInfo().isDelta_)
+            ss  << s.slot()->getNameInfo().sampleNo_;
+        ss << (s.slot()->getNameInfo().isDelta_ ? "d" : "k");
+    }
     ss << "]" << size() << "ms";
     
     return ss.str();
 }
 
-
+// IBufferObserver
 void 
 PlaybackQueue::onNewRequest(const boost::shared_ptr<BufferSlot>&)
 {
     // do nothing...
 }
 
+// IBufferObserver
 void 
 PlaybackQueue::onNewData(const BufferReceipt& receipt)
 {

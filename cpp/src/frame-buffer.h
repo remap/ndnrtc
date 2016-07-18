@@ -54,6 +54,13 @@ namespace ndnrtc
             if (arrivalTimeUsec_ <= 0) return -1;
             return (arrivalTimeUsec_-requestTimeUsec_);
         }
+        
+        /**
+         * Takes into account if the segment is original or not.
+         * If the segment is original, this returns getRoundTripDelayUsec() minus
+         * generation delay received in metadata for the segment.
+         */
+        int64_t getDrdUsec() const;
 
     private:
         boost::shared_ptr<const ndn::Interest> interest_;
@@ -127,24 +134,37 @@ namespace ndnrtc
          */
         const boost::shared_ptr<SlotSegment>
         segmentReceived(const boost::shared_ptr<WireSegment>& segment);
+        
+        /**
+         * Returns an array of names of missing segments
+         */
+        std::vector<ndn::Name> getMissingSegments() const;
 
+        /**
+         * Marks segment verification flag
+         * @param segmentName Name of the segment of this slot
+         * @param verified Verification flag
+         */
         void
         markVerified(const std::string& segmentName, bool verified) {}
 
         State getState() const { return state_; }
         
-        double getAssembledLevel();
         double getAssembledLevel() const { return asmLevel_; }
 
         const ndn::Name& getPrefix() const { return name_; }
         const NamespaceInfo& getNameInfo() const { return nameInfo_; }
         int getConsistencyState() const { return consistency_; }
         unsigned int getRtxNum() const { return nRtx_; }
-        int64_t getAssemblingTime() const { return ( state_ >= Ready ? assembledTimeUsec_-firstSegmentTimeUsec_ : 0); }
-        int64_t getShortestDrd() const { return (state_ >= Assembling ? firstSegmentTimeUsec_-requestTimeUsec_ : 0); }
-        int64_t getLongestDrd() const { return (state_ >= Ready ? assembledTimeUsec_ - requestTimeUsec_ : 0); }
         bool hasOriginalSegments() const { return hasOriginalSegments_; }
         size_t getFetchedNum() const { return fetched_.size(); }
+        
+        int64_t getAssemblingTime() const
+        { return ( state_ >= Ready ? assembledTimeUsec_-firstSegmentTimeUsec_ : 0); }
+        int64_t getShortestDrd() const
+        { return (state_ >= Assembling ? firstSegmentTimeUsec_-requestTimeUsec_ : 0); }
+        int64_t getLongestDrd() const
+        { return (state_ >= Ready ? assembledTimeUsec_ - requestTimeUsec_ : 0); }
         
         /**
          * Returns common packet header if it's available (HeaderMeta consistency),
@@ -166,13 +186,15 @@ namespace ndnrtc
         NamespaceInfo nameInfo_;
         std::map<ndn::Name, boost::shared_ptr<SlotSegment>> requested_, fetched_;
         boost::shared_ptr<SlotSegment> lastFetched_;
-        unsigned int consistency_, nRtx_, assembledSize_, nDataSegments_;
+        unsigned int consistency_, nRtx_, assembledSize_;
+        unsigned int nDataSegments_, nParitySegments_;
         bool hasOriginalSegments_;
         State state_;
         int64_t requestTimeUsec_, firstSegmentTimeUsec_, assembledTimeUsec_;
         double assembled_, asmLevel_;
 
         virtual void updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment);
+        void updateAssembledLevel();
     };
 
     //******************************************************************************
