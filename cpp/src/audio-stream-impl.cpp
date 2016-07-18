@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 AudioStreamImpl::AudioStreamImpl(const std::string& basePrefix,
@@ -172,7 +173,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 	}
 
 	if (!threadRemoved)
-		async::dispatchAsync(settings_.faceIo_, [packetRate, n, bundle, me](){
+		async::dispatchAsync(settings_.faceIo_, [this, packetRate, n, bundle, me](){
 			CommonHeader packetHdr;
 	
 			packetHdr.sampleRate_ = packetRate;
@@ -181,6 +182,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 			bundle->setHeader(packetHdr);
 	
 			me->dataPublisher_->publish(n, *bundle);
+            (*statStorage_)[Indicator::PublishedNum]++;
 	
 			{
 				boost::lock_guard<boost::mutex> scopedLock(me->internalMutex_);
