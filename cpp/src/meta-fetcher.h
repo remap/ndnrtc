@@ -8,8 +8,7 @@
 #ifndef __meta_fetcher_h__
 #define __meta_fetcher_h__
 
-#include <ndn-cpp/util/segment-fetcher.hpp>
-
+#include "segment-fetcher.h"
 #include "ndnrtc-object.h"
 #include "frame-data.h"
 
@@ -21,17 +20,20 @@ namespace ndn {
 }
 
 namespace ndnrtc {
-	class MetaFetcher : public NdnRtcComponent{
+	class MetaFetcher : public NdnRtcComponent {
 	public:
-		typedef boost::function<void(NetworkData&)>
+		typedef boost::function<void(NetworkData&, 
+			const std::vector<ValidationErrorInfo>)>
 			OnMeta;
 		typedef boost::function<void(const std::string&)>
 			OnError;
 
 		void fetch(boost::shared_ptr<ndn::Face>, boost::shared_ptr<ndn::KeyChain>, 
 			const ndn::Name&, const OnMeta&, const OnError&);
+		bool hasPendingRequest() const { return isPending_; }
 
 	private:
+		bool isPending_;
 	};
 }
 

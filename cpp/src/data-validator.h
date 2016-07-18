@@ -22,6 +22,18 @@ namespace ndnrtc {
     };
     class ISlotBuffer;
 
+    class ValidationErrorInfo {
+    public:
+        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data):
+            failedData_(data){}
+    
+        boost::shared_ptr<const ndn::Data> getData() const 
+        { return failedData_; }
+    
+    private:
+        boost::shared_ptr<const ndn::Data> failedData_;
+    };
+
     template<typename KeyChainType>
     class DataValidator : public ndnlog::new_api::ILoggingObject
     {
