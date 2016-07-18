@@ -47,6 +47,10 @@ namespace ndnrtc {
     #define ENABLE_FOR(M) typename boost::enable_if<typename boost::is_same<M,U>>::type* dummy = 0
 
     //******************************************************************************
+    /**
+     * Network data class is a base class for network data used to transfer binary 
+     * data over the (NDN) network.
+     */
     template<typename T = Mutable>
     class NetworkDataT {
     public:
@@ -142,6 +146,15 @@ namespace ndnrtc {
     typedef NetworkDataT<> NetworkData;
 
     //******************************************************************************
+    /**
+     * Data packet class extends NetworkData functionality by implementing addBlob
+     * method whith allows to add any number (less than 255) of binary data of any
+     * size (less than 65525)to the packet and retrieve it later.
+     * The wire format of the data packet is the following:
+     *
+     *      <#_of_blobs>[<blob_size_byte0><blob_size_byte1><blob>]*<payload_bytes>+
+     *
+     */
     template<typename T = Mutable>
     class DataPacketT : public NetworkDataT<T>
     {
@@ -322,6 +335,14 @@ namespace ndnrtc {
     typedef DataPacketT<> DataPacket;
 
     //******************************************************************************
+    /**
+     * HeaderPacket extends DataPacket class by adding functionality for a header 
+     * which is usually a structure.
+     * Header is appended as the last blob to the packet and one can not set header
+     * several times - an exception will be raised. Typically, one whould add header
+     * to the packet as the very last step in preparing data to be transfered over 
+     * the network.
+     */
     template<typename Header, typename T>
     class HeaderPacketT : public DataPacketT<T> {
     public:
@@ -553,6 +574,9 @@ namespace ndnrtc {
             HeaderPacketT<CommonHeader,T>(frame._length, frame._buffer), 
             isSyncListSet_(false)
         {
+            assert(frame._encodedWidth);
+            assert(frame._encodedHeight);
+
             Header hdr;
             hdr.encodedWidth_ = frame._encodedWidth;
             hdr.encodedHeight_ = frame._encodedHeight;
@@ -619,6 +643,7 @@ namespace ndnrtc {
                 parityData = boost::make_shared<NetworkData>(boost::move(fecData));
             // shrink data back
             this->_data().resize(this->getLength()-padding);
+            this->reinit(); // data may have been relocated, so we need to reinit blobs
 
             return parityData;
         }

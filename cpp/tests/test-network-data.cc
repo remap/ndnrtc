@@ -6,6 +6,7 @@
 //
 
 #include <stdlib.h>
+#include <ctime>
 #include <boost/move/move.hpp>
 #include <boost/assign.hpp>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
@@ -961,6 +962,46 @@ TEST(TestVideoFramePacket, TestSliceFrame)
     EXPECT_EQ(CommonSegment::numSlices(*parity, 1000), paritySegments.size());
     EXPECT_EQ(5, frameSegments.size());
     EXPECT_EQ(1, paritySegments.size());
+}
+
+// test for data relocation after retrieving parity data which leads to BAD_ACCESS
+// when accessing packet blobs
+TEST(TestVideoFramePacket, TestGetParity)
+{
+    std::srand(std::time(0));
+    for (int i = 0; i < 100; ++i)
+    {
+        CommonHeader hdr;
+        hdr.sampleRate_ = 24.7;
+        hdr.publishTimestampMs_ = 488589553;
+        hdr.publishUnixTimestampMs_ = 1460488589;
+        
+        size_t frameLen = std::rand()%30000+100;
+        int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+        uint8_t *buffer = (uint8_t*)malloc(frameLen);
+        for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+        
+        webrtc::EncodedImage frame(buffer, frameLen, size);
+        frame._encodedWidth = 640;
+        frame._encodedHeight = 480;
+        frame._timeStamp = 1460488589;
+        frame.capture_time_ms_ = 1460488569;
+        frame._frameType = webrtc::kKeyFrame;
+        frame._completeFrame = true;
+        
+        VideoFramePacket vp(frame);
+        std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+        
+        vp.setSyncList(syncList);
+        vp.setHeader(hdr);
+        boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(8000), 0.2);
+        
+        EXPECT_EQ(hdr.sampleRate_, vp.getHeader().sampleRate_);
+        EXPECT_EQ(hdr.publishTimestampMs_, vp.getHeader().publishTimestampMs_);
+        EXPECT_EQ(hdr.publishUnixTimestampMs_, vp.getHeader().publishUnixTimestampMs_);
+        EXPECT_EQ(frame._encodedWidth, vp.getFrame()._encodedWidth);
+        EXPECT_EQ(frame._encodedHeight, vp.getFrame()._encodedHeight);
+    }
 }
 
 TEST(TestAudioThreadMeta, TestCreate)
