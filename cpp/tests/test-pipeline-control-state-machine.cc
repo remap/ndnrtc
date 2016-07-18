@@ -427,6 +427,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Delta));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
@@ -506,6 +507,7 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Key));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Key));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
@@ -585,6 +587,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Delta));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
@@ -645,6 +648,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Delta));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
