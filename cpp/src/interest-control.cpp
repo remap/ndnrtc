@@ -80,7 +80,7 @@ InterestControl::decrement()
 bool
 InterestControl::increment()
 {
-	if (pipeline_ >= limit_)
+	if (pipeline_ >= (int)limit_)
 		return false;
 
 	pipeline_++;
