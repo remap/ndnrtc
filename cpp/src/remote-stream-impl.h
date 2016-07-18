@@ -10,14 +10,21 @@
 
 #include "remote-stream.h"
 #include "ndnrtc-object.h"
+#include "meta-fetcher.h"
+#include "data-validator.h"
 
 namespace ndnrtc {
+	namespace statistics {
+		class StatisticsStorage;
+	}
+
 	class SegmentController;
 	class BufferControl;
 	class PipelineControl;
 	class SampleEstimator;
 	class DrdEstimator;
 	class PipelineControlStateMachine;
+    class PipelineControl;
 	class ILatencyControl;
 	class IInterestControl;
 	class IBuffer;
@@ -26,6 +33,7 @@ namespace ndnrtc {
 	class IPlaybackQueue;
 	class IPlayout;
 	class IPlayoutControl;
+	class MediaStreamMeta;
 
 	/**
 	 * RemoteStreamImpl is a base class for implementing remote stream functionality
@@ -40,6 +48,7 @@ namespace ndnrtc {
 		bool isMetaFetched() const;
 		std::vector<std::string> getThreads() const;
 
+		void fetchMeta();
 		void start(const std::string& threadName);
 		void setThread(const std::string& threadName);
 		void stop();
@@ -48,16 +57,46 @@ namespace ndnrtc {
 		void setTargetBufferSize(unsigned int bufferSizeMs);
 		void setLogger(ndnlog::new_api::Logger* logger);
 
-		void attach(IRemoteStreamObserver*);
-		void detach(IRemoteStreamObserver*);
+		bool isVerified() const;
+		// void attach(IRemoteStreamObserver*);
+		// void detach(IRemoteStreamObserver*);
+
+		void setNeedsMeta(bool needMeta) { needMeta_ = needMeta; }
 
 	protected:
-		boost::asio::io_service& io_;
+        MediaStreamParams::MediaStreamType type_;
+		bool needMeta_, isRunning_, cuedToRun_;
+		boost::shared_ptr<ndn::Face> face_;
+		boost::shared_ptr<ndn::KeyChain> keyChain_;
+		std::string streamPrefix_, threadName_;
+		boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+
 		std::vector<IRemoteStreamObserver*> observers_;
-		boost::shared_ptr<PipelineControl> pipelineControl_;
+		boost::shared_ptr<MetaFetcher> metaFetcher_;
+		boost::shared_ptr<MediaStreamMeta> streamMeta_;
+		std::map<std::string, boost::shared_ptr<NetworkData>> threadsMeta_;
+
+        boost::shared_ptr<IBuffer> buffer_;
+        boost::shared_ptr<SegmentController> segmentController_;
+        boost::shared_ptr<PipelineControl> pipelineControl_;
 		boost::shared_ptr<BufferControl> bufferControl_;
+        boost::shared_ptr<SampleEstimator> sampleEstimator_;
 		boost::shared_ptr<IPlayoutControl> playoutControl_;
+        boost::shared_ptr<IInterestQueue> interestQueue_;
 		boost::shared_ptr<IPipeliner> pipeliner_;
+		boost::shared_ptr<ILatencyControl> latencyControl_;
+		boost::shared_ptr<IInterestControl> interestControl_;
+		boost::shared_ptr<IPlayout> playout_;
+		boost::shared_ptr<IPlaybackQueue> playbackQueue_;
+
+		std::vector<ValidationErrorInfo> validationInfo_;
+
+		void fetchThreadMeta(const std::string& threadName);
+		void streamMetaFetched(NetworkData&);
+		void threadMetaFetched(const std::string& thread, NetworkData&);
+		virtual void initiateFetching();
+		virtual void stopFetching();
+		void addValidationInfo(const std::vector<ValidationErrorInfo>&);
 	};
 }
 

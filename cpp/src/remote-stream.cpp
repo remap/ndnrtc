@@ -7,8 +7,11 @@
 
 #include "remote-stream.h"
 #include <boost/make_shared.hpp>
+#include <ndn-cpp/name.hpp>
 
 #include "remote-stream-impl.h"
+#include "remote-video-stream.h"
+#include "remote-audio-stream.h"
 
 using namespace ndnrtc;
 
@@ -16,13 +19,15 @@ using namespace ndnrtc;
 RemoteStream::RemoteStream(boost::asio::io_service& faceIo, 
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
-			const std::string& streamPrefix):
-pimpl_(boost::make_shared<RemoteStreamImpl>(faceIo, face, keyChain, streamPrefix))
+			const std::string& basePrefix,
+			const std::string& streamName):
+basePrefix_(basePrefix), streamName_(streamName)
 {
-
 }
 
-RemoteStream::~RemoteStream(){}
+RemoteStream::~RemoteStream(){
+	pimpl_->setNeedsMeta(false);
+}
 
 bool
 RemoteStream::isMetaFetched() const
@@ -67,13 +72,39 @@ RemoteStream::setTargetBufferSize(unsigned int bufferSize)
 }
 
 void
-RemoteStream::attach(IRemoteStreamObserver* o)
+RemoteStream::setLogger(ndnlog::new_api::Logger* logger)
 {
-	pimpl_->attach(o);
+	pimpl_->setLogger(logger);
 }
 
-void 
-RemoteStream::detach(IRemoteStreamObserver* o)
+bool
+RemoteStream::isVerified() const
 {
-	pimpl_->detach(o);
+	return pimpl_->isVerified();
+}
+
+//******************************************************************************
+RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo, 
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& basePrefix,
+			const std::string& streamName):
+RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
+{
+	pimpl_ = boost::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, 
+		NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri());
+	pimpl_->fetchMeta();
+}
+
+//******************************************************************************
+RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo, 
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& basePrefix,
+			const std::string& streamName):
+RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
+{
+	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, 
+		NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri());
+	pimpl_->fetchMeta();
 }

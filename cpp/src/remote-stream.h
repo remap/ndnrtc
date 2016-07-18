@@ -31,8 +31,9 @@ namespace ndnrtc {
 		RemoteStream(boost::asio::io_service& faceIo, 
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
-			const std::string& streamPrefix);
-		~RemoteStream();
+			const std::string& basePrefix,
+			const std::string& streamName);
+		virtual ~RemoteStream();
 
 		bool isMetaFetched() const;
 		std::vector<std::string> getThreads() const;
@@ -43,9 +44,7 @@ namespace ndnrtc {
 		void setInterestLifetime(unsigned int lifetimeMs);
 		void setTargetBufferSize(unsigned int bufferSizeMs);
 
-		void attach(IRemoteStreamObserver*);
-		void detach(IRemoteStreamObserver*);
-
+		bool isVerified() const;
 
 		/**
 		 * Sets logger for current stream
@@ -53,17 +52,30 @@ namespace ndnrtc {
 		 */
 		void setLogger(ndnlog::new_api::Logger* logger);
 
-		// static boost::shared_ptr<RemoteStream> 
-			// createStream(const std::string streamPrefix);
-	private:
+		std::string getBasePrefix() const { return basePrefix_; }
+		std::string getStreamName() const { return streamName_; }
+
+	protected:
+		std::string basePrefix_, streamName_;
 		boost::shared_ptr<RemoteStreamImpl> pimpl_;
 	};
 
-	class IRemoteStreamObserver {
+	class RemoteAudioStream: public RemoteStream {
 	public:
-		virtual void onRebuffering() = 0;
-		virtual void onSkippedFrame() = 0;
-		virtual void onStateChange(RemoteStream::State) = 0;
+		RemoteAudioStream(boost::asio::io_service& faceIo, 
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& basePrefix,
+			const std::string& streamName);
+	};
+
+	class RemoteVideoStream: public RemoteStream {
+	public:
+		RemoteVideoStream(boost::asio::io_service& faceIo, 
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& basePrefix,
+			const std::string& streamName);
 	};
 }
 
