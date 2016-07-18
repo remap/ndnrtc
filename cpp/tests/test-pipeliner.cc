@@ -280,7 +280,7 @@ TEST(TestPipeliner, TestSegmentsArrive)
 		int nExpectedParityInterests = (i == 30 ? 6: 2);
 
 		EXPECT_CALL(*interestControl, room())
-			.Times(roomSize+1)
+			.Times(AtLeast(roomSize+1))
 			.WillRepeatedly(Invoke([&roomSize]()->size_t{ return roomSize; }));
 
 		EXPECT_CALL(*interestControl, increment())

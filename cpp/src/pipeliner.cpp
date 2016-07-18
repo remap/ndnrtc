@@ -32,6 +32,12 @@ nextSamplePriority_(SampleClass::Delta),
 lastRequestedSample_(SampleClass::Delta)
 {
     description_ = "pipeliner";
+    buffer_->attach(this);
+}
+
+Pipeliner::~Pipeliner()
+{
+    buffer_->detach(this);
 }
 
 void
@@ -66,9 +72,9 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         request(batch, DeadlinePriority::fromNow(0));
         if (placeInBuffer) buffer_->requested(batch);
         
-        LogTraceC << "request sample " 
+        LogDebugC << "request sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
-            << " " << n << std::endl;
+            << " " << SAMPLE_SUFFIX(n) << std::endl;
     }
 
     lastRequestedSample_ = nextSamplePriority_;
@@ -79,7 +85,7 @@ void
 Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
     bool placeInBuffer)
 {
-    LogDebugC << "request batch of size " << interests.size() << std::endl;
+    LogTraceC << "request batch of size " << interests.size() << std::endl;
 
     request(interests, DeadlinePriority::fromNow(0));
     if (placeInBuffer) buffer_->requested(interests);
@@ -88,6 +94,11 @@ Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& in
 void
 Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
 {
+    if (interestControl_->room() > 0)
+        LogDebugC << interestControl_->room()
+            << " sample(s) will be requested: "
+            << interestControl_->snapshot() << std::endl;
+    
     while (interestControl_->room() > 0)
     {
         Name n(threadPrefix);
@@ -97,14 +108,15 @@ Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         int64_t deadline = playbackQueue_->size()+playbackQueue_->pendingSize();
 
-        LogTraceC << "request sample " 
-            << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_)
-            << " " << n << "(" << batch.size() <<")" << std::endl;
-
         request(batch, DeadlinePriority::fromNow(deadline));
         buffer_->requested(batch);
         interestControl_->increment();
 
+        LogDebugC << "requested "
+            << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_)
+            << " " << SAMPLE_SUFFIX(n) << " x" << batch.size()
+            << " buf " << buffer_->shortdump() << std::endl;
+        
         if (nextSamplePriority_ == SampleClass::Delta) seqCounter_.delta_++;
         else seqCounter_.key_++;
 
@@ -173,4 +185,24 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
     }
 
     return interests;
+}
+
+// IBufferObserver
+void Pipeliner::onNewRequest(const boost::shared_ptr<BufferSlot>&)
+{
+    // do nothing
+}
+
+void Pipeliner::onNewData(const BufferReceipt& receipt)
+{
+    // check for missing segments
+    std::vector<boost::shared_ptr<const Interest>> interests;
+    for (auto& n:receipt.slot_->getMissingSegments())
+        interests.push_back(boost::make_shared<const Interest>(n, interestLifetime_));
+    if (interests.size())
+    {
+        LogTraceC << interests.size() << " missing segments for "
+            << receipt.slot_->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
+        express(interests, true);
+    }
 }

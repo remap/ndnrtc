@@ -15,6 +15,7 @@
 
 #include "ndnrtc-object.h"
 #include "name-components.h"
+#include "frame-buffer.h"
 
 namespace ndnrtc {
     class SampleEstimator;
@@ -53,10 +54,12 @@ namespace ndnrtc {
      * Pipeliner queries SampleEstimator in order to calculate size of Interest
      * batch to express.
      */
-    class Pipeliner : public NdnRtcComponent, public IPipeliner 
+    class Pipeliner : public NdnRtcComponent, public IPipeliner,
+                    public IBufferObserver
     {
     public:
         Pipeliner(const PipelinerSettings& settings);
+        ~Pipeliner();
 
         /**
          * Express interests for the last requested sample.
@@ -136,6 +139,10 @@ namespace ndnrtc {
         std::vector<boost::shared_ptr<const ndn::Interest>>
         getBatch(ndn::Name n, SampleClass cls,
             bool noParity = false) const;
+        
+        // IBufferObserver
+        void onNewRequest(const boost::shared_ptr<BufferSlot>&);
+        void onNewData(const BufferReceipt& receipt);
     };
 }
 
