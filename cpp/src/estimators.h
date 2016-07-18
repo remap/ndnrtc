@@ -35,6 +35,11 @@ namespace ndnrtc {
 			 * @return true if window limit has been reached, false otherwise
 			 */
 			virtual bool isLimitReached() = 0;
+            
+            /**
+             * Cuts provided sample array to be of window size
+             */
+            virtual void cut(std::deque<double>& samples) = 0;
 		};
 
 		class SampleWindow : public IEstimatorWindow {
@@ -43,6 +48,7 @@ namespace ndnrtc {
 			{ assert(nSamples_); }
 
 			bool isLimitReached();
+            void cut(std::deque<double>& samples);
 		private:
 			unsigned int nSamples_, remaining_;
 		};
@@ -52,6 +58,7 @@ namespace ndnrtc {
 			TimeWindow(unsigned int milliseconds);
 
 			bool isLimitReached();
+            void cut(std::deque<double>& samples);
 		private:
 			unsigned int milliseconds_;
 			int64_t lastReach_;
@@ -111,8 +118,8 @@ namespace ndnrtc {
 			void newValue(double value);
 
 		private:
-			unsigned int nCalls_;
-			int64_t ts_;
+            std::deque<double> samples_;
+            bool run_;
 		};
 
 		/**

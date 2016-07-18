@@ -103,19 +103,21 @@ TEST(TestFrequencyMeter, TestTimeWindow)
 	boost::thread t([&io](){
 		io.run();
 	});
-
-	FreqMeter freqMeter(boost::make_shared<TimeWindow>(250));
-	PreciseGenerator p(io, 30, [&freqMeter](){
+    
+    // smaller windows give less precise results
+	FreqMeter freqMeter(boost::make_shared<TimeWindow>(500));
+    double rate = 30;
+	PreciseGenerator p(io, rate, [&freqMeter](){
 		freqMeter.newValue(0);
 	});
 
 	p.start();
-	boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(3000));
 	p.stop();
 	work.reset();
 	t.join();
 
-	EXPECT_LT(abs(30-freqMeter.value()), 0.1);
+	EXPECT_LT(abs(rate-freqMeter.value())/rate, 0.15);
 }
 
 TEST(TestFrequencyMeter, TestSampleWindow)
@@ -126,8 +128,10 @@ TEST(TestFrequencyMeter, TestSampleWindow)
 		io.run();
 	});
 
+    // smaller windows give less precise results
 	FreqMeter freqMeter(boost::make_shared<SampleWindow>(10));
-	PreciseGenerator p(io, 30, [&freqMeter](){
+    double rate = 30;
+	PreciseGenerator p(io, rate, [&freqMeter](){
 		freqMeter.newValue(0);
 	});
 
@@ -136,8 +140,8 @@ TEST(TestFrequencyMeter, TestSampleWindow)
 	p.stop();
 	work.reset();
 	t.join();
-
-	EXPECT_LT(abs(30-freqMeter.value()), 0.1);
+    
+	EXPECT_LT(abs(rate-freqMeter.value())/rate, 0.15);
 }
 
 TEST(TestFilter, TestSmoothing)

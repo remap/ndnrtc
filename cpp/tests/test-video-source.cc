@@ -7,16 +7,22 @@
 
 #include <stdlib.h>
 #include <boost/asio.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 #include "gtest/gtest.h"
 #include "tests-helpers.h"
 #include "mock-objects/external-capturer-mock.h"
 #include "client/src/config.h"
 #include "client/src/video-source.h"
+#include "estimators.h"
 
 using namespace std;
 using namespace ::testing;
 using namespace boost::chrono;
+using namespace ndnrtc::estimators;
+
+std::string test_path = "";
 
 TEST(TestVideoSource, TestBlank)
 {
@@ -63,10 +69,8 @@ TEST(TestVideoSource, TestVideoSourcing)
 
 	{
 		InSequence s;
-		EXPECT_CALL(capturer, capturingStarted());
 		EXPECT_CALL(capturer, incomingArgbFrame(640, 480, _, frame->getFrameSizeInBytes()))
 			.Times(90);
-		EXPECT_CALL(capturer, capturingStopped());
 	}
 
 	boost::shared_ptr<boost::asio::io_service::work> work;
@@ -98,8 +102,83 @@ TEST(TestVideoSource, TestVideoSourcing)
 	remove(fname.c_str());
 }
 
+TEST(TestVideoSource, TestHdVideoSourcing)
+{
+    std::string fname = test_path+"../../res/test-source-1280x720.argb";
+    Sequence s;
+    MockExternalCapturer capturer;
+    
+    boost::asio::io_service io;
+    boost::shared_ptr<ArgbFrame> frame(new ArgbFrame(1280, 720));
+    VideoSource vs(io, fname, frame);
+    
+    Average avg(boost::make_shared<TimeWindow>(500));
+    high_resolution_clock::time_point captureTp;
+    boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
+    incomingFrame = [&captureTp, &avg](const unsigned int width,
+                       const unsigned int height,
+                       unsigned char* argbFrameData,
+                       unsigned int frameSize){
+        high_resolution_clock::time_point now = high_resolution_clock::now();
+        
+        if (captureTp != high_resolution_clock::time_point())
+        {
+            auto duration = duration_cast<milliseconds>( now - captureTp).count();
+            avg.newValue((double)duration);
+        }
+        
+        captureTp = now;
+        return 0;
+    };
+    
+    EXPECT_CALL(capturer, incomingArgbFrame(1280, 720, _, _))
+        .Times(90)
+        .WillRepeatedly(Invoke(incomingFrame));
+    
+    boost::shared_ptr<boost::asio::io_service::work> work;
+    boost::asio::deadline_timer runTimer(io);
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    
+    runTimer.expires_from_now(boost::posix_time::milliseconds(3000));
+    runTimer.async_wait([&](const boost::system::error_code& ){
+        vs.stop();
+        work.reset();
+    });
+    
+    vs.addCapturer(&capturer);
+    vs.start(30);
+    
+    work.reset(new boost::asio::io_service::work(io));
+    io.run();
+    io.stop();
+    
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto duration = duration_cast<seconds>( t2 - t1 ).count();
+    
+    GT_PRINTF("mean time to source 1 frame was %.4f ms\n", vs.getMeanSourcingTimeMs());
+    GT_PRINTF("sourced %d frames\n", vs.getSourcedFramesNumber());
+    GT_PRINTF("mean sample period: %.2f, var: %.2f, dev: %.2f\n",
+              avg.value(), avg.variance(), avg.deviation());
+    
+    EXPECT_EQ(3, duration);
+    EXPECT_LE(fabs(90-vs.getSourcedFramesNumber()), 1);
+}
+
+
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
+    
+    test_path = std::string(argv[0]);
+    std::vector<std::string> comps;
+    boost::split(comps, test_path, boost::is_any_of("/"));
+    
+    test_path = "";
+    for (int i = 0; i < comps.size()-1; ++i)
+    {
+        test_path += comps[i];
+        if (i != comps.size()-1) test_path += "/";
+    }
+    
 	return RUN_ALL_TESTS();
 }

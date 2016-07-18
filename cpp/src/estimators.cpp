@@ -25,8 +25,14 @@ SampleWindow::isLimitReached()
 	return (remaining_ == nSamples_);
 }
 
+void
+SampleWindow::cut(std::deque<double>& samples)
+{
+    while (samples.size() >= nSamples_) samples.pop_front();
+}
+
 TimeWindow::TimeWindow(unsigned int milliseconds):
-milliseconds_(milliseconds), lastReach_(clock::millisecondTimestamp())
+milliseconds_(milliseconds), lastReach_(0)
 {
 	assert(milliseconds_);
 }
@@ -35,13 +41,22 @@ bool
 TimeWindow::isLimitReached()
 {
 	int64_t now = clock::millisecondTimestamp();
-	if (now-lastReach_ >= milliseconds_) 
+    if (lastReach_ == 0) lastReach_ = now;
+    
+	if (now-lastReach_ > milliseconds_)
 	{
 		lastReach_ += milliseconds_;
 		return true;
 	}
 
 	return false;
+}
+
+void
+TimeWindow::cut(std::deque<double>& samples)
+{
+    double now = (double)clock::millisecondTimestamp();
+    while (samples.front() < now-milliseconds_) samples.pop_front();
 }
 
 //******************************************************************************
@@ -81,27 +96,22 @@ Average::newValue(double value)
 
 //******************************************************************************
 FreqMeter::FreqMeter(boost::shared_ptr<IEstimatorWindow> window):Estimator(window),
-ts_(0), nCalls_(0)
+run_(false)
 {}
 
 void
 FreqMeter::newValue(double value)
 {
+    int64_t now = clock::millisecondTimestamp();
 	nValues_++;
-	nCalls_++;
+    samples_.push_back((double)now);
 
 	if (window_->isLimitReached())
-	{
-		int64_t now = clock::millisecondTimestamp();
-
-		if (ts_ > 0)
-		{
-			value_ = 1000.*(double)nCalls_/(double)(now-ts_);
-			nCalls_ = 0;
-		}
-
-		ts_ = now;
-	}
+        run_ = true;
+    
+    if (run_) window_->cut(samples_);
+    if (samples_.size() > 1)
+        value_ = 1000.*(double)samples_.size()/(samples_.back()-samples_.front());
 }
 
 Filter::Filter(double smoothing):smoothing_(smoothing), value_(0){}
