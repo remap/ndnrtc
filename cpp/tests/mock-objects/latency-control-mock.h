@@ -17,6 +17,8 @@ class MockLatencyControl : public ndnrtc::ILatencyControl {
 public:
 	MOCK_METHOD0(reset, void());
 	MOCK_CONST_METHOD0(getCurrentCommand, ndnrtc::PipelineAdjust());
+    MOCK_METHOD1(registerObserver, void(ndnrtc::ILatencyControlObserver*));
+    MOCK_METHOD0(unregisterObserver, void());
 };
 
 #endif

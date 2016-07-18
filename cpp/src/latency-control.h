@@ -30,6 +30,8 @@ namespace ndnrtc {
 	public:
 		virtual void reset() = 0;
 		virtual PipelineAdjust getCurrentCommand() const = 0;
+        virtual void registerObserver(ILatencyControlObserver* o) = 0;
+        virtual void unregisterObserver() = 0;
 	};
 
 	/**
