@@ -21,7 +21,7 @@ namespace ndnrtc {
   {
   public:
     AudioPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage = 
             boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
     ~AudioPlayout(){}

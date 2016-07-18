@@ -21,7 +21,7 @@ using namespace webrtc;
 //******************************************************************************
 #pragma mark - construction/destruction
 AudioPlayout::AudioPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<PlaybackQueue>& queue,
+            const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage):
 Playout(io, queue, statStorage), packetCount_(0)
 {
