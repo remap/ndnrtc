@@ -87,6 +87,7 @@ namespace ndnrtc {
                 BytesPublished,
                 RawBytesPublished,
                 PublishedSegmentsNum,
+                ProcessedNum,
                 PublishedNum,
                 PublishedKeyNum,
                 InterestsReceivedNum,
