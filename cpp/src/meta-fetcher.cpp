@@ -22,23 +22,18 @@ MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::KeyCha
 {
 	Interest i(Name(prefix).append(NameComponents::NameComponentMeta), 1000);
 
+	isPending_ = true;
+	boost::shared_ptr<MetaFetcher> me = boost::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
 	SegmentFetcher::fetch(*f, i, 
 		kc.get(),
-		// [kc](const ptr_lib::shared_ptr<Data>& data)->bool{
-		// 	kc->verifyData(data, 
-		// 		[](const boost::shared_ptr<Data>&)
-		// 		{ std::cout << "verified" << std::endl; },
-		// 		[](const boost::shared_ptr<Data>&)
-		// 		{ std::cout << "verify failed" << std::endl; });
-
-		// 	return true;
-		// },
-		[onMeta](const Blob& content){
-			ImmutableHeaderPacket<DataSegmentHeader> packet(content);
+		[onMeta, me, this](const Blob& content, const std::vector<ValidationErrorInfo>& info){
+			isPending_ = false;
+            ImmutableHeaderPacket<DataSegmentHeader> packet(content);
 			NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
-			onMeta(nd);
+			onMeta(nd, info);
 		},
-		[onError](SegmentFetcher::ErrorCode code, const std::string& msg){
-			onError(msg);
+		[onError, me, this](SegmentFetcher::ErrorCode code, const std::string& msg){
+			isPending_ = false;
+            onError(msg);
 		});
 }
