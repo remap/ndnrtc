@@ -192,7 +192,7 @@ VideoCoder::~VideoCoder()
 #pragma mark - public
 void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 {
-    LogTraceC << "encoding..." << endl;
+    LogTraceC << "⤹ encoding ○" << endl;
 
     if (frame.width() != coderParams_.encodeWidth_ || 
             frame.height() != coderParams_.encodeHeight_)
@@ -221,11 +221,9 @@ void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 
     if (!encodeComplete_)
     {
-        LogTraceC << "frame dropped" << endl;
+        LogTraceC << " dropped ✕" << endl;
         delegate_->onDroppedFrame();
     }
-
-    LogTraceC << "encode result " << err << endl;
     
     if (err != WEBRTC_VIDEO_CODEC_OK)
         LogErrorC <<"can't encode frame due to error " << err << std::endl;
@@ -239,7 +237,9 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
 {
     encodeComplete_ = true;
     if (keyEnforcement_ == KeyEnforcement::Gop) gopCounter_++;
-
+    
+    LogTraceC << "⤷ encoded ●" << std::endl;
+    
     /*
     LogInfoC << "encoded"
     << " type " << ((encodedImage._frameType == webrtc::kKeyFrame) ? "KEY":((encodedImage._frameType == webrtc::kSkipFrame)?"SKIP":"DELTA"))
