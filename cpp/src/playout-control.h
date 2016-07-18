@@ -23,6 +23,8 @@ namespace ndnrtc {
 		virtual void allowPlayout(bool allow) = 0;
 		virtual void onNewSampleReady() = 0;
 		virtual void onQueueEmpty() = 0;
+        virtual void setThreshold(unsigned int t) = 0;
+        virtual unsigned int getThreshold() const = 0;
 	};
 
 	/**
@@ -43,6 +45,8 @@ namespace ndnrtc {
 		void allowPlayout(bool allow);
 		void onNewSampleReady();
 		void onQueueEmpty() { /*ignored*/ }
+        void setThreshold(unsigned int t) { thresholdMs_ = t; }
+        unsigned int getThreshold() const { return thresholdMs_; }
 
 	private:
 		bool playoutAllowed_;

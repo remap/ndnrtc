@@ -18,6 +18,8 @@ public:
 	MOCK_METHOD1(allowPlayout, void(bool));
 	MOCK_METHOD0(onNewSampleReady, void());
 	MOCK_METHOD0(onQueueEmpty, void());
+    MOCK_METHOD1(setThreshold, void(unsigned int));
+    MOCK_CONST_METHOD0(getThreshold, unsigned int());
 };
 
 #endif
