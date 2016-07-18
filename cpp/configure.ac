@@ -143,6 +143,7 @@ AC_PROG_CXX
 AC_PROG_OBJC
 AC_PROG_OBJCXX
 AM_PROG_CC_C_O
+AM_PROG_AR
 LT_INIT
 AC_LANG([C++])
 LT_PREREQ([2.2])
@@ -239,6 +240,26 @@ AX_CXX_COMPILE_STDCXX_11([], optional)
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
+
+# check for wget or curl
+AC_CHECK_PROGS([WGET], [wget curl])
+
+AC_MSG_CHECKING(if wget was wget)
+if test "X$WGET" = "Xwget"; then
+   AC_MSG_RESULT(yes)
+   WGET="wget -q" 
+else
+   AC_MSG_RESULT(no)
+fi
+AC_MSG_CHECKING(if wget was curl)
+if test "X$WGET" = "Xcurl"; then
+   AC_MSG_RESULT(yes)
+   WGET="curl -O" 
+else
+   AC_MSG_RESULT(no)
+fi
+
+AC_CHECK_PROGS([TAR], [tar])
 
 ###############################
 # Check for Boost
