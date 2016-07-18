@@ -380,18 +380,16 @@ PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineCo
 void
 PipelineControlStateMachine::switchToState(const std::string& state)
 {
-	std::string oldState = currentState_->str();
+    int64_t now = clock::millisecondTimestamp();
+    int64_t stateDuration = (lastEventTimestamp_ ? now - lastEventTimestamp_ : 0);
+    lastEventTimestamp_ = now;
+    
+    LogInfoC << "[" << currentState_->str() << "] ---> [" << states_[state]->str() << "] "
+    << stateDuration << "ms" << std::endl;
 
 	currentState_->exit();
 	currentState_ = states_[state];
 	currentState_->enter();
-
-	int64_t now = clock::millisecondTimestamp();
-	int64_t stateDuration = (lastEventTimestamp_ ? now - lastEventTimestamp_ : 0);
-	lastEventTimestamp_ = now;
-
-	LogDebugC << "[" << oldState << "] ---> [" << currentState_->str() << "] "
-		<< stateDuration << "ms" << std::endl;
 }
 
 //******************************************************************************
@@ -456,6 +454,7 @@ WaitForRightmost::receivedRightmost(const boost::shared_ptr<const EventSegment>&
 		ev->getSegment()->getSampleClass());
 	ctrl_->pipeliner_->setNeedSample(ev->getSegment()->getSampleClass());
 	ctrl_->pipeliner_->express(ctrl_->threadPrefix_, true);
+    ctrl_->interestControl_->increment();
 }
 
 //******************************************************************************
