@@ -30,18 +30,22 @@ Periodic(settings.faceIo_),
 metaVersion_(0),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
-cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_))
+cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_)),
+statStorage_(statistics::StatisticsStorage::createProducerStatistics())
 {
 	assert(settings_.face_);
 	assert(settings_.keyChain_);
 
 	streamPrefix_.append(Name(settings_.params_.streamName_));
+    cache_->setInterestFilter(streamPrefix_, cache_->getStorePendingInterest());
 
 	PublisherSettings ps;
+    ps.sign_ = settings_.sign_;
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = settings_.params_.producerParams_.segmentSize_;
 	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
+    ps.statStorage_ = statStorage_.get();
 	
 	dataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
 	dataPublisher_->setDescription("data-publisher-"+settings_.params_.streamName_);
@@ -66,6 +70,12 @@ MediaStreamBase::removeThread(const string& threadName)
 	publishMeta();
 }
 
+statistics::StatisticsStorage 
+MediaStreamBase::getStatistics() const
+{
+	return *statStorage_;
+}
+
 void 
 MediaStreamBase::publishMeta()
 {
@@ -81,7 +91,7 @@ MediaStreamBase::publishMeta()
 	async::dispatchAsync(settings_.faceIo_, [me, metaName, meta](){
 		me->dataPublisher_->publish(metaName, *meta);
 	});
-
+	
 	LogDebugC << "published stream meta " << metaName << std::endl;
 }
 

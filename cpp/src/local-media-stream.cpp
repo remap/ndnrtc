@@ -89,6 +89,12 @@ LocalAudioStream::setLogger(ndnlog::new_api::Logger* logger)
 	pimpl_->setLogger(logger);
 }
 
+statistics::StatisticsStorage 
+LocalAudioStream::getStatistics() const
+{
+	return pimpl_->getStatistics();
+}
+
 //******************************************************************************
 LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
@@ -153,4 +159,10 @@ void
 LocalVideoStream::setLogger(ndnlog::new_api::Logger* logger)
 {
 	pimpl_->setLogger(logger);
+}
+
+statistics::StatisticsStorage 
+LocalVideoStream::getStatistics() const
+{
+	return pimpl_->getStatistics();
 }

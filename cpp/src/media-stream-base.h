@@ -14,13 +14,18 @@
 #include "local-media-stream.h"
 #include "packet-publisher.h"
 #include "periodic.h"
+#include "statistics.h"
 
 namespace ndn {
 	class MemoryContentCache;
 }
 
 namespace ndnrtc {
-	class MediaThreadParams;
+    namespace statistics {
+        class StatisticsStorage;
+    }
+	
+    class MediaThreadParams;
 
 	class MediaStreamBase : public NdnRtcComponent, 
 							public Periodic 
@@ -37,6 +42,7 @@ namespace ndnrtc {
 
 		std::string getPrefix() { return streamPrefix_.toUri(); }
 		virtual std::vector<std::string> getThreads() const = 0;
+		statistics::StatisticsStorage getStatistics() const;
 
 	protected:
 		friend LocalAudioStream;
@@ -67,6 +73,7 @@ namespace ndnrtc {
 		ndn::Name streamPrefix_;
 		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 		boost::shared_ptr<CommonPacketPublisher> dataPublisher_;
+        boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
 
 		virtual void add(const MediaThreadParams* params) = 0;
 		virtual void remove(const std::string& threadName) = 0;

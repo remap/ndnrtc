@@ -31,10 +31,11 @@ namespace ndnrtc {
 	class MediaStreamSettings
 	{
 	public:
-		MediaStreamSettings(boost::asio::io_service& faceIo,
-			const MediaStreamParams& params):faceIo_(faceIo), params_(params){}
+        MediaStreamSettings(boost::asio::io_service& faceIo,
+			const MediaStreamParams& params):sign_(true), faceIo_(faceIo), params_(params){}
 		~MediaStreamSettings(){}
 
+        bool sign_;
 		boost::asio::io_service& faceIo_;
 		ndn::KeyChain* keyChain_;
 		ndn::Face* face_;
@@ -75,6 +76,11 @@ namespace ndnrtc {
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(ndnlog::new_api::Logger* logger);
+
+		/**
+		 * Returns statistics storage for this stream
+		 */
+		statistics::StatisticsStorage getStatistics() const;
 
 		static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
 		static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
@@ -194,6 +200,11 @@ namespace ndnrtc {
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(ndnlog::new_api::Logger* logger);
+
+		/**
+		 * Returns statistics storage for this stream
+		 */
+		statistics::StatisticsStorage getStatistics() const;
 
 	private:
 		LocalVideoStream(const LocalVideoStream&) = delete;
