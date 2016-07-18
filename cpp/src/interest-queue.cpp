@@ -95,13 +95,14 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
         queue_.push(entry);
     
         if (!isWatchingQueue_)
+        {
+            isWatchingQueue_ = true;
             async::dispatchAsync(faceIo_,
                 boost::bind(&InterestQueue::watchQueue, this));
-    
-        isWatchingQueue_ = true;
+        }
     }
     
-    LogDebugC
+    LogTraceC
     << "enqueue\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
@@ -128,7 +129,7 @@ void
 InterestQueue::watchQueue()
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-    while (isWatchingQueue_ > 0)
+    while (isWatchingQueue_)
     {
         processEntry(queue_.top());
         queue_.pop();
@@ -139,7 +140,7 @@ InterestQueue::watchQueue()
 void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
-    LogDebugC
+    LogTraceC
     << "express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
