@@ -93,4 +93,11 @@ PipelineControl::needPipelineAdjustment(const PipelineAdjust& cmd)
 	if (cmd == PipelineAdjust::DecreasePipeline) interestControl_->withhold();
 }
 
+void
+PipelineControl::setLogger(ndnlog::new_api::Logger* logger)
+{
+    NdnRtcComponent::setLogger(logger);
+    machine_.setLogger(logger);
+}
+
 #pragma mark - private

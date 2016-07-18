@@ -40,6 +40,7 @@ namespace ndnrtc {
 		void segmentStarvation();
 
 		bool needPipelineAdjustment(const PipelineAdjust&);
+        void setLogger(ndnlog::new_api::Logger* logger);
 
 		static PipelineControl defaultPipelineControl(const ndn::Name& threadPrefix,
 			const boost::shared_ptr<IPipeliner> pipeliner,
