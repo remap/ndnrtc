@@ -16,6 +16,12 @@
 #include <boost/asio.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
+#include <ndn-cpp/security/key-chain.hpp>
+#include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
+#include <ndn-cpp/security/identity/memory-identity-storage.hpp>
+#include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
+#include <ndn-cpp/security/policy/self-verify-policy-manager.hpp>
+
 #include <include/params.h>
 #include "client/src/config.h"
 #include <include/interfaces.h>
@@ -51,6 +57,10 @@ std::vector<boost::shared_ptr<const ndn::Interest>>
 boost::shared_ptr<ndnrtc::WireSegment>
   getFakeSegment(std::string threadPrefix, ndnrtc::SampleClass cls, ndnrtc::SegmentClass segCls, 
     PacketNumber pNo, unsigned int segNo);
+
+ndn::Name keyName(std::string s);
+ndn::Name certName(ndn::Name keyName);
+boost::shared_ptr<ndn::KeyChain> memoryKeyChain(const std::string name);
 
 namespace testing
 {

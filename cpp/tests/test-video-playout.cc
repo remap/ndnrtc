@@ -68,7 +68,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
@@ -339,7 +339,7 @@ TEST(TestPlayout, TestSkipDelta)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);

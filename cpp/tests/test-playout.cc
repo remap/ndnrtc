@@ -57,6 +57,30 @@ private:
 };
 
 #if 1
+TEST(TestPlaybackQueue, TestAttach)
+{
+    int nSamples = 100;
+    int delay = 10; // samples delay between data request and data produce
+    int targetSize = 150;
+    boost::atomic<int> sampleNo(0);
+    double fps = 30;
+    std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    
+    MockBufferObserver bobserver;
+    MockPlaybackQueueObserver pobserver;
+    boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(delay*3)); // make sure we re-use slots
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
+    
+    EXPECT_NO_THROW(pqueue->detach(nullptr));
+    EXPECT_NO_THROW(pqueue->attach(nullptr));
+    EXPECT_NO_THROW(pqueue->detach(nullptr));
+    EXPECT_NO_THROW(pqueue->attach(&pobserver));
+    EXPECT_NO_THROW(pqueue->attach(nullptr));
+    EXPECT_NO_THROW(pqueue->detach(nullptr));
+}
+
 TEST(TestPlaybackQueue, TestPlay)
 {
 	int nSamples = 100;
@@ -407,7 +431,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
@@ -597,7 +621,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
@@ -820,7 +844,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
@@ -1080,7 +1104,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
@@ -1343,7 +1367,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 	std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../res/test-source-320x240.argb";
+	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
 	VideoSource source(io, testVideoSource, frame);
 	MockExternalCapturer capturer;
 	source.addCapturer(&capturer);
