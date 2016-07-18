@@ -32,6 +32,17 @@ SampleEstimator::SampleEstimator()
 SampleEstimator::~SampleEstimator()
 {}
 
+void
+SampleEstimator::bootstrapSegmentNumber(double value, SampleClass st, SegmentClass dt)
+{
+    estimators_[std::make_pair(st,dt)].segNum_.newValue(value);
+}
+
+void SampleEstimator::bootstrapSegmentSize(double value, SampleClass st, SegmentClass dt)
+{
+    estimators_[std::make_pair(st,dt)].segSize_.newValue(value);
+}
+
 void 
 SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {

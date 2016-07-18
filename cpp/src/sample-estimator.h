@@ -13,14 +13,52 @@
 #include "name-components.h"
 
 namespace ndnrtc {
+    /**
+     * This class runs average estimation of sample size and number of segments
+     * per sample. It supports two sample classes - Delta and Key and two segment
+     * data classes  - Data and Parity.
+     */
 	class SampleEstimator : public ISegmentControllerObserver {
 	public:
 		SampleEstimator();
 		~SampleEstimator();
+        
+        /**
+         * This initializes average estimator of the number of segments per sample
+         */
+        void bootstrapSegmentNumber(double value, SampleClass st, SegmentClass dt);
 
+        /**
+         * This initializes average estimator of the segment size per sample
+         */
+        void bootstrapSegmentSize(double value, SampleClass st, SegmentClass dt);
+        
+        /**
+         * Called by SegmentController each time new segment arrives
+         */
 		void segmentArrived(const boost::shared_ptr<WireSegment>&);
+        
+        /**
+         * Resets estimatior
+         */
 		void reset();
+        
+        /**
+         * Returns estimation of segments number per sample and segment class
+         * @param st Sample class - Key or Delta
+         * @param dt Segment class - Data or Parity
+         * @return Average estimation of the number of segments for sample/segment 
+         *          class requested
+         */
 		double getSegmentNumberEstimation(SampleClass st, SegmentClass dt);
+        
+        /**
+         * Returns estimation of segment size per sample and segment class
+         * @param st Sample class - Key or Delta
+         * @param dt Segment class - Data or Parity
+         * @return Average estimation of the nuber of bytes per one segment for 
+         *          sample/segment class requested
+         */
 		double getSegmentSizeEstimation(SampleClass st, SegmentClass dt);
 
 	private:
