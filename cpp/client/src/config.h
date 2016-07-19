@@ -16,7 +16,6 @@
 
 #include <ndnrtc/simple-log.h>
 #include <ndnrtc/params.h>
-#include <ndnrtc/ndnrtc-library.h>
 
 class StatGatheringParams : public ndnrtc::Params {
 public:

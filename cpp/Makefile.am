@@ -1,63 +1,60 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-library.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
+pkginclude_HEADERS = include/ndnrtc-common.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
 
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-controller.cpp src/audio-controller.h \
-  src/audio-consumer.cpp src/audio-consumer.h \
   src/audio-playout.cpp src/audio-playout.h \
   src/audio-renderer.cpp src/audio-renderer.h \
   src/audio-stream-impl.cpp src/audio-stream-impl.h \
   src/audio-thread.cpp src/audio-thread.h \
   src/av-sync.cpp src/av-sync.h \
-  src/buffer-estimator.cpp src/buffer-estimator.h \
-  src/base-capturer.cpp src/base-capturer.h \
-  src/chase-estimation.cpp src/chase-estimation.h \
-  src/consumer.cpp src/consumer.h \
+  src/buffer-control.cpp src/buffer-control.h \
   src/clock.cpp src/clock.h \
-  src/data-validator.h src/data-validator.cpp \
-  src/ndnrtc-endian.h \
-  src/external-capturer.cpp src/external-capturer.hpp \
+  src/data-validator.cpp src/data-validator.h \
+  src/drd-estimator.cpp src/drd-estimator.h \
   src/estimators.cpp src/estimators.h \
   src/fec.cpp src/fec.h \
   src/frame-buffer.cpp src/frame-buffer.h \
-  src/frame-data.cpp src/frame-data.h \
   src/frame-converter.cpp src/frame-converter.h \
+  src/frame-data.cpp src/frame-data.h \
+  src/interest-control.cpp src/interest-control.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
+  src/latency-control.cpp src/latency-control.h \
   src/local-media-stream.cpp src/local-media-stream.h \
   src/media-stream-base.cpp src/media-stream-base.h \
+  src/meta-fetcher.cpp src/meta-fetcher.h \
   src/name-components.cpp include/name-components.h \
-  src/ndn-assembler.cpp src/ndn-assembler.h \
-  src/ndnrtc-common.h \
   src/ndnrtc-debug.h \
-  include/ndnrtc-defines.h \
-  src/ndnrtc-exception.h src/ndnrtc-exception.cpp \
-  src/ndnrtc-library.cpp include/ndnrtc-library.h \
-  src/ndnrtc-manager.cpp src/ndnrtc-manager.h \
-  include/interfaces.h \
-  src/ndnrtc-namespace.cpp src/ndnrtc-namespace.h \
+  src/ndnrtc-endian.h \
   src/ndnrtc-object.cpp src/ndnrtc-object.h \
   src/ndnrtc-testing.h \
-  src/ndnrtc-utils.cpp src/ndnrtc-utils.h \
-  include/params.h \
-  src/params-validator.h src/params-validator.cpp \
-  src/pipeliner.cpp src/pipeliner.h \
-  src/playout.cpp src/playout.h \
   src/packet-publisher.cpp src/packet-publisher.h \
+  src/periodic.cpp src/periodic.h \
+  src/pipeline-control-state-machine.cpp src/pipeline-control-state-machine.h \
+  src/pipeline-control.cpp src/pipeline-control.h \
+  src/pipeliner.cpp src/pipeliner.h \
+  src/playout-control.cpp src/playout-control.h \
+  src/playout.cpp src/playout.h \
+  src/rate-adaptation-module.h \
+  src/remote-audio-stream.cpp src/remote-audio-stream.h \
+  src/remote-stream-impl.cpp src/remote-stream-impl.h \
+  src/remote-stream.cpp src/remote-stream.h \
+  src/remote-video-stream.cpp src/remote-video-stream.h \
   src/renderer.h \
-  src/rtt-estimation.cpp src/rtt-estimation.h \
-  src/simple-log.cpp \
+  src/sample-estimator.cpp src/sample-estimator.h \
+  src/segment-controller.cpp src/segment-controller.h \
+  src/segment-fetcher.cpp src/segment-fetcher.h \
+  src/simple-log.cpp include/simple-log.h \
   src/slot-buffer.cpp src/slot-buffer.h \
-  include/statistics.h src/statistics.cpp \
-  src/threading-capability.h src/threading-capability.cpp \
+  src/statistics.cpp include/statistics.h \
+  src/threading-capability.cpp src/threading-capability.h \
   src/video-coder.cpp src/video-coder.h \
-  src/video-consumer.cpp src/video-consumer.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
-  src/video-renderer.cpp src/video-renderer.h \
   src/video-stream-impl.cpp src/video-stream-impl.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
@@ -95,7 +92,7 @@ if OS_DARWIN
 endif
 
 #################
-# client app	#
+# client app	  #
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
@@ -145,8 +142,6 @@ res/test-source-320x240.argb:
 	mkdir -p $(top_builddir)/res/
 	$(WGET) https://s3.amazonaws.com/ndnrtc-test-files/raw/test-source-320x240.argb.tar.gz
 	$(TAR) -xf test-source-320x240.argb.tar.gz -C $(top_builddir)/res/
-
-noinst_PROGRAMS = bin/benchmark-local-stream
 
 check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source
 
@@ -333,7 +328,7 @@ bin_tests_test_interest_queue_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_interest_queue_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_interest_queue_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_pipeline_control_SOURCES = tests/test-pipeline-control.cc src/pipeline-control.cpp src/interest-control.cpp src/segment-controller.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeliner.cpp src/frame-buffer.cpp src/fec.cpp src/sample-estimator.cpp src/interest-queue.cpp src/async.cpp tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_control_SOURCES = tests/test-pipeline-control.cc src/pipeline-control.cpp src/interest-control.cpp src/segment-controller.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/estimators.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeliner.cpp src/frame-buffer.cpp src/fec.cpp src/sample-estimator.cpp src/interest-queue.cpp src/async.cpp tests/tests-helpers.cc src/drd-estimator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_pipeline_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_pipeline_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_pipeline_control_LDADD = ${libndnrtc_la_LIBADD}
@@ -348,10 +343,22 @@ bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD}
 
+TESTS = ${check_PROGRAMS}
+
+#################
+# extra apps    #
+#################
+
+noinst_PROGRAMS = bin/benchmark-local-stream bin/local-stream
+
 bin_benchmark_local_stream_SOURCES = extra/benchmark-local-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_benchmark_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
 bin_benchmark_local_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_benchmark_local_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_benchmark_local_stream_LDADD = ${libndnrtc_la_LIBADD}
 
-TESTS = ${check_PROGRAMS}
+bin_local_stream_SOURCES = extra/local-stream.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp client/src/config.cpp
+bin_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
+bin_local_stream_CPPFLAGS = ${libndnrtc_la_CPPFLAGS} ${ndnrtc_client_CPPFLAGS}
+bin_local_stream_LDFLAGS = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
+bin_local_stream_LDADD = ${libndnrtc_la_LIBADD} -lconfig++

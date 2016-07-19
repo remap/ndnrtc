@@ -17,9 +17,15 @@ namespace ndn {
 	class MemoryContentCache;
 }
 
-namespace ndnlog{
+namespace ndnlog {
 	namespace new_api{
 		class Logger;
+	}
+}
+
+namespace boost {
+	namespace asio {
+		class io_service;
 	}
 }
 

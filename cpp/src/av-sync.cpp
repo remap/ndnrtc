@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 
 #include "av-sync.h"
+#if 0
 #include "consumer.h"
 
 using namespace ndnrtc;
@@ -226,3 +227,4 @@ void AudioVideoSynchronizer::initialize(SyncStruct &syncData,
     syncData.lastPacketTsLocal_ = localTimestamp;
     syncData.lastPacketTsRemote_ = firstPacketTsRemote;
 }
+#endif

@@ -24,7 +24,7 @@ public:
 	MOCK_METHOD0(burst, bool());
 	MOCK_METHOD0(withhold, bool());
 	MOCK_METHOD1(markLowerLimit, void(unsigned int));
-    MOCK_METHOD0(snapshot, std::string());
+    MOCK_CONST_METHOD0(snapshot, std::string());
 };
 
 #endif

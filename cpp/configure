@@ -596,7 +596,7 @@ PACKAGE_BUGREPORT='peter@remap.ucla.edu'
 PACKAGE_URL='https://github.com/remap/ndnrtc'
 
 ac_default_prefix=/usr/local
-ac_unique_file="src/ndnrtc-common.h"
+ac_unique_file="include/ndnrtc-common.h"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

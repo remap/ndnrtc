@@ -12,7 +12,7 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
-
+#if 0
 #include "simple-log.h"
 
 namespace ndnrtc
@@ -121,5 +121,5 @@ namespace ndnrtc
                         new_api::Consumer *consumer);
     };
 }
-
+#endif
 #endif /* defined(__ndnrtc__av_sync__) */

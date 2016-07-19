@@ -652,7 +652,7 @@ TEST(TestPacketPublisher, TestBenchmarkNoSigning)
 	settings.segmentWireLength_ = wireLength;
 	settings.freshnessPeriodMs_ = freshness;
     settings.statStorage_ = StatisticsStorage::createProducerStatistics();
-	settings.sign = false;
+	settings.sign_ = false;
 
 	Name filter("/test"), packetName(filter);
 	packetName.append("1");

@@ -25,7 +25,6 @@
 using namespace std;
 using namespace libconfig;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
 using namespace ndnlog;
 
 int lookupNumber(const Setting &SettingPath, string lookupKey,

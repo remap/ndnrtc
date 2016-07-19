@@ -89,8 +89,14 @@ PipelineControl::segmentStarvation()
 bool 
 PipelineControl::needPipelineAdjustment(const PipelineAdjust& cmd)
 {
-	if (cmd == PipelineAdjust::IncreasePipeline) interestControl_->burst();
-	if (cmd == PipelineAdjust::DecreasePipeline) interestControl_->withhold();
+	if (cmd == PipelineAdjust::IncreasePipeline ||
+		cmd == PipelineAdjust::DecreasePipeline)
+	{
+		if (cmd == PipelineAdjust::IncreasePipeline) interestControl_->burst();
+		if (cmd == PipelineAdjust::DecreasePipeline) interestControl_->withhold();
+		return true;
+	}
+	return false;
 }
 
 void

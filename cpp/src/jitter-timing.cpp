@@ -51,7 +51,7 @@ pimpl_(boost::make_shared<JitterTimingImpl>(io)){}
 JitterTiming::~JitterTiming() { pimpl_->timer_.cancel(); }
 void JitterTiming::flush() { pimpl_->flush(); }
 void JitterTiming::stop() { pimpl_->stop(); }
-int64_t JitterTiming::startFramePlayout() { pimpl_->startFramePlayout(); }
+int64_t JitterTiming::startFramePlayout() { return pimpl_->startFramePlayout(); }
 void JitterTiming::updatePlayoutTime(int framePlayoutTime) { pimpl_->updatePlayoutTime(framePlayoutTime); }
 void JitterTiming::run(boost::function<void()> callback) { pimpl_->run(callback); }
 void JitterTiming::setLogger(ndnlog::new_api::Logger* logger) { pimpl_->setLogger(logger); }

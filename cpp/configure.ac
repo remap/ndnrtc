@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PREFIX_DEFAULT([/usr/local])
-AC_CONFIG_SRCDIR([src/ndnrtc-common.h])
+AC_CONFIG_SRCDIR([include/ndnrtc-common.h])
 AC_CONFIG_FILES([Makefile])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
