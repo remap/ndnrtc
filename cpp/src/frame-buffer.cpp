@@ -249,17 +249,6 @@ BufferSlot::getHeader() const
 void
 BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment)
 {
-    if (!segment->getData()->isParity())
-    {
-        consistency_ |= SegmentMeta;
-        nDataSegments_ = segment->getData()->getSlicesNum();
-    }
-    else
-        nParitySegments_ = segment->getData()->getSlicesNum();
-
-    if (!segment->getData()->isParity() && segment->getInfo().segNo_ == 0)
-        consistency_ |= HeaderMeta;
-
     if (state_ == New)
     {
         nameInfo_ = segment->getData()->getInfo();
@@ -267,14 +256,31 @@ BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment
         firstSegmentTimeUsec_ = segment->getArrivalTimeUsec();
     }
 
-    assembledSize_ += segment->getData()->getData()->getContent().size();
-    hasOriginalSegments_ = segment->isOriginal();
-    assembled_ += segment->getData()->getSegmentWeight();
-    
-    if (consistency_&SegmentMeta)
+    if (segment->getInfo().segmentClass_ == SegmentClass::Manifest)
     {
-        updateAssembledLevel();
-        state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
+        #warning verify manifest segment here
+    }
+    else
+    {
+        if (segment->getInfo().segmentClass_ == SegmentClass::Data)
+        {
+            consistency_ |= SegmentMeta;
+            nDataSegments_ = segment->getData()->getSlicesNum();
+            if (segment->getInfo().segNo_ == 0)
+                consistency_ |= HeaderMeta;
+        }
+        else if (segment->getInfo().segmentClass_ == SegmentClass::Parity)
+            nParitySegments_ = segment->getData()->getSlicesNum();
+
+        assembledSize_ += segment->getData()->getData()->getContent().size();
+        hasOriginalSegments_ = segment->isOriginal();
+        assembled_ += segment->getData()->getSegmentWeight();
+        
+        if (consistency_&SegmentMeta)
+        {
+            updateAssembledLevel();
+            state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
+        }
     }
 
     if (state_ == Ready) assembledTimeUsec_ = segment->getArrivalTimeUsec();
