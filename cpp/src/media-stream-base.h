@@ -11,7 +11,7 @@
 #include <boost/thread/mutex.hpp>
 #include <ndn-cpp/name.hpp>
 
-#include "local-media-stream.h"
+#include "local-stream.h"
 #include "packet-publisher.h"
 #include "periodic.h"
 #include "statistics.h"
@@ -41,6 +41,9 @@ namespace ndnrtc {
 		void removeThread(const std::string& threadName);
 
 		std::string getPrefix() { return streamPrefix_.toUri(); }
+		std::string getBasePrefix() const { return basePrefix_; }
+		std::string getStreamName() const { return settings_.params_.streamName_; }
+		
 		virtual std::vector<std::string> getThreads() const = 0;
 		statistics::StatisticsStorage getStatistics() const;
 
@@ -70,6 +73,7 @@ namespace ndnrtc {
 		mutable boost::mutex internalMutex_;
 		uint64_t metaVersion_;
 		MediaStreamSettings settings_;
+		std::string basePrefix_;
 		ndn::Name streamPrefix_;
 		boost::shared_ptr<ndn::MemoryContentCache> cache_;
 		boost::shared_ptr<CommonPacketPublisher> dataPublisher_;
