@@ -148,7 +148,10 @@ namespace ndnrtc {
         void sign(boost::shared_ptr<ndn::Data> segment)
         {
 			if (settings_.sign_) 
+			{
 				settings_.keyChain_->sign(*segment);
+				(*settings_.statStorage_)[statistics::Indicator::SingNum]++;
+			}
 			else
 			{
 				static uint8_t digest[ndn_SHA256_DIGEST_SIZE];

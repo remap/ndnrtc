@@ -80,6 +80,7 @@ map_list_of
 ( Indicator::PublishedNum, "Published frames" ) 
 ( Indicator::PublishedKeyNum, "Published key frames" )
 ( Indicator::InterestsReceivedNum, "Interests received" )
+( Indicator::SingNum, "Sign operations")
 
 // encoder
 ( Indicator::EncodedNum, "Encoded frames" )
@@ -154,6 +155,7 @@ map_list_of ( Indicator::Timestamp, 0. )
 ( Indicator::PublishedNum, 0. )
 ( Indicator::PublishedKeyNum, 0. )
 ( Indicator::InterestsReceivedNum, 0. )
+( Indicator::SingNum, 0. )
 // encoder
 ( Indicator::DroppedNum, 0. )
 ( Indicator::EncodedNum, 0. )
@@ -223,6 +225,7 @@ boost::assign::map_list_of
 (Indicator::ProcessedNum, "framesProcessed")
 (Indicator::PublishedNum, "framesPub")
 (Indicator::PublishedKeyNum, "framesPubKey")
+(Indicator::SingNum, "signNum")
 // encoder
 (Indicator::EncodedNum, "framesEncoded")
 // capturer
