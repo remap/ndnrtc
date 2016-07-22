@@ -150,7 +150,7 @@ namespace ndnrtc {
 			if (settings_.sign_) 
 			{
 				settings_.keyChain_->sign(*segment);
-				(*settings_.statStorage_)[statistics::Indicator::SingNum]++;
+				(*settings_.statStorage_)[statistics::Indicator::SignNum]++;
 			}
 			else
 			{

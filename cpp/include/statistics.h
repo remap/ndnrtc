@@ -91,7 +91,7 @@ namespace ndnrtc {
                 PublishedNum,
                 PublishedKeyNum,
                 InterestsReceivedNum,
-                SingNum,
+                SignNum,
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)
