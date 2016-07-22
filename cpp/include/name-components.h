@@ -43,15 +43,17 @@ namespace ndnrtc {
     }
 
     enum class SampleClass {
-        Unknown = -1,
-        Key = 0,
-        Delta = 1
+        Unknown,
+        Key,
+        Delta
     };
 
     enum class SegmentClass {
-        Unknow = -1,
-        Data = 0,
-        Parity = 1
+        Unknown,
+        Data,
+        Parity,
+        Manifest,
+        Meta
     };
 
     /**
@@ -62,7 +64,7 @@ namespace ndnrtc {
     public:
         NamespaceInfo():apiVersion_(0), isMeta_(false), isParity_(false), 
             isDelta_(false), hasSeqNo_(false), class_(SampleClass::Unknown),
-            sampleNo_(0), segNo_(0), metaVersion_(0){}
+            segmentClass_(SegmentClass::Unknown), sampleNo_(0), segNo_(0), metaVersion_(0){}
 
         ndn::Name basePrefix_;
         unsigned int apiVersion_;
@@ -88,6 +90,7 @@ namespace ndnrtc {
         static const std::string NameComponentDelta;
         static const std::string NameComponentKey;
         static const std::string NameComponentParity;
+        static const std::string NameComponentManifest;
 
         static unsigned int 
         nameApiVersion();

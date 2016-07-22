@@ -28,6 +28,7 @@ const string NameComponents::NameComponentMeta = "_meta";
 const string NameComponents::NameComponentDelta = "d";
 const string NameComponents::NameComponentKey = "k";
 const string NameComponents::NameComponentParity = "_parity";
+const string NameComponents::NameComponentManifest = "_manifest";
 
 #include <bitset>
 
@@ -190,6 +191,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     
     if (info.isMeta_)
     {
+        info.segmentClass_ = SegmentClass::Meta;
         info.threadName_ = "";
         return extractMeta(name.getSubName(2), info);
     }
@@ -201,6 +203,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
         if (info.isMeta_)
         {
+            info.segmentClass_ = SegmentClass::Meta;
             if(name.size() > 3 && extractMeta(name.getSubName(3), info))
                 return true;
             return false;
@@ -225,10 +228,10 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                 if (name.size() > 4)
                 {
                     info.isParity_ = (name[4] == Name::Component(NameComponents::NameComponentParity));
-                    info.segmentClass_ = (info.isParity_ ? SegmentClass::Parity : SegmentClass::Data);
 
                     if (info.isParity_ && name.size() > 5)
                     {
+                        info.segmentClass_ = SegmentClass::Parity;
                         info.segNo_ = name[5].toSegment();
                         return true;
                     }
@@ -237,7 +240,15 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                         if (info.isParity_) 
                             return false;
                         else
-                            info.segNo_ = name[4].toSegment();
+                        {
+                            if (name[4] == Name::Component(NameComponents::NameComponentManifest))
+                                info.segmentClass_ = SegmentClass::Manifest;
+                            else
+                            {
+                                info.segmentClass_ = SegmentClass::Data;
+                                info.segNo_ = name[4].toSegment();
+                            }
+                        }
                         return true;
                     }
                 }
@@ -262,6 +273,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     
     if (info.isMeta_)
     {
+        info.segmentClass_ = SegmentClass::Meta;
         if (name.size() < 3)
             return false;
 
@@ -283,6 +295,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
         if (info.isMeta_)
         { 
+            info.segmentClass_ = SegmentClass::Meta;
             if (name.size() > 3 && extractMeta(name.getSubName(3), info))
                 return true;
             return false;
@@ -290,7 +303,6 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
         info.isDelta_ = true;
         info.class_ = SampleClass::Delta;
-        info.segmentClass_ = SegmentClass::Data;
 
         try
         {
@@ -300,7 +312,14 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             info.hasSeqNo_ = true;
             if (name.size() > 3)
             {
-                info.segNo_ = name[3].toSegment();
+
+                if (name[3] == Name::Component(NameComponents::NameComponentManifest))
+                    info.segmentClass_ = SegmentClass::Manifest;
+                else
+                {
+                    info.segmentClass_ = SegmentClass::Data;
+                    info.segNo_ = name[3].toSegment();
+                }
                 return true;
             }
         }
