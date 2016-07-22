@@ -56,7 +56,7 @@ busyPublishing_(0)
 			add(settings_.params_.getVideoThread(i));
 
 	PublisherSettings ps;
-    ps.sign_ = settings_.sign_;
+    ps.sign_ = false; // stream samples are not signed - we use manifests for verification
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = settings_.params_.producerParams_.segmentSize_;
@@ -269,43 +269,47 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
         segmentHdr.playbackNo_ = playbackNo;
 		segmentHdr.pairedSequenceNo_ = pairedSeq;
 
-		size_t nSlices = me->publisher_->publish(dataName, *fp, segmentHdr);
-		assert(nSlices);
+		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr);
+		assert(segments.size());
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
-        if (nParitySeg == 0) busyPublishing_--;
         
+        LogDebugC << (busyPublishing_ == 0 || nParitySeg == 0 ? "⤷" : "↓") << " published "
+            << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
+            << "(" << SAMPLE_SUFFIX(dataName) << ")x" << segments.size()
+            << " Dgen " << segmentHdr.generationDelayMs_ << "ms" << std::endl;
+
+        if (nParitySeg)
+    	{
+    		Name parityName(dataName);
+	        parityName.append(NameComponents::NameComponentParity);
+
+	        PublishedDataPtrVector paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr);
+	        assert(paritySegments.size());
+	        std::copy(paritySegments.begin(), paritySegments.end(), std::back_inserter(segments));
+	        
+	        LogDebugC << (busyPublishing_ == 1 ? "⤷" : "↓") << " published "
+	            << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
+	            << "(" << PARITY_SUFFIX(parityName) << ")x" << paritySegments.size()
+	            << std::endl;
+		}
+
+		publishManifest(dataName, segments);
+		busyPublishing_--;
+
         (*statStorage_)[Indicator::PublishedNum]++;
         if (isKey) (*statStorage_)[Indicator::PublishedKeyNum]++;
-        
-        LogDebugC << (busyPublishing_ == 0 ? "⤷" : "↓") << " published "
-            << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
-            << "(" << SAMPLE_SUFFIX(dataName) << ")x" << nSlices
-            << " Dgen " << segmentHdr.generationDelayMs_ << "ms" << std::endl;
 	});
+}
 
-    if (nParitySeg)
-    {
-        dataName.append(NameComponents::NameComponentParity);
-        
-        LogTraceC << "spawned publish task for "
-            << seqNo
-            << (isKey ? "k " : "d ")
-            << playbackNo << "p "
-            << "(" << PARITY_SUFFIX(dataName) << ")" << std::endl;
-        
-        async::dispatchAsync(settings_.faceIo_, [me, parityData, seqNo, dataName,
-                                                 isKey, playbackNo, this]
-        {
-            size_t nParitySlices = me->dataPublisher_->publish(dataName, *parityData);
-            assert(nParitySlices);
-            busyPublishing_--;
-            
-            LogDebugC << (busyPublishing_ == 0 ? "⤷" : "↓") << " published "
-                << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
-                << "(" << PARITY_SUFFIX(dataName) << ")x" << nParitySlices
-                << std::endl;
-        });
-    }
+void 
+VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector& segments)
+{
+	Manifest m(segments);
+	dataName.append(NameComponents::NameComponentManifest).appendVersion(0);
+	PublishedDataPtrVector ss = dataPublisher_->publish(dataName, m);
+
+	LogDebugC << "☆ published manifest (" << dataName.getSubName(-5,5) << ")x" 
+		<< ss.size() << std::endl;
 }
 
 map<string, PacketNumber>

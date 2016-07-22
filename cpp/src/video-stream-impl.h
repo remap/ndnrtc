@@ -91,6 +91,7 @@ namespace ndnrtc {
 		void feedFrame(const WebRtcVideoFrame& frame);
 		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>>& frames);
 		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacketAlias>& fp);
+		void publishManifest(ndn::Name dataName, PublishedDataPtrVector& segments);
 		std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
 	};
 }

@@ -40,10 +40,12 @@ statStorage_(statistics::StatisticsStorage::createProducerStatistics())
     cache_->setInterestFilter(streamPrefix_, cache_->getStorePendingInterest());
 
 	PublisherSettings ps;
-    ps.sign_ = settings_.sign_;
+    ps.sign_ = true; 	// it's ok to sign every packet as data publisher 
+    					// is used for low-rate data (max 10fps), 
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
-	ps.segmentWireLength_ = settings_.params_.producerParams_.segmentSize_;
+	ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE;	// it's ok to rely on link-layer fragmenting
+													// because data is low-rate
 	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
     ps.statStorage_ = statStorage_.get();
 	
