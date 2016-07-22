@@ -19,7 +19,7 @@
 
 #include "gtest/gtest.h"
 #include "tests-helpers.h"
-#include "src/local-media-stream.h"
+#include "include/local-stream.h"
 #include "include/name-components.h"
 
 // #define ENABLE_LOGGING

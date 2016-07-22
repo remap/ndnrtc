@@ -285,12 +285,12 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"[2: stream sink: ; thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientB; name: sound (audio); synced to:"
 		" ; seg size: 1000 bytes; freshness: 0 ms; no device; 1 threads:\n"
-		"[0: name: pcmu]\n"
+		"[0: name: pcmu; codec: g722]\n"
 		"]\n"
 		"[3: stream sink: ; thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientC; name: sound (audio); synced to:"
 		" ; seg size: 1000 bytes; freshness: 0 ms; no device; 1 threads:\n"
-		"[0: name: pcmu]\n"
+		"[0: name: pcmu; codec: g722]\n"
 		"]\n"
 		"-producing:\n"
 		"username: clientA; prefix: /ndn/edu/ucla/remap;\n"
@@ -312,7 +312,7 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); "
 		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "
 		"no device; 1 threads:\n"
-		"[0: name: pcmu]\n",
+		"[0: name: pcmu; codec: g722]\n",
 		ss.str());
 }
 
@@ -347,7 +347,7 @@ TEST(TestConfigLoad, TestSampleConsumerParams)
 		"[0: stream sink: ; thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); synced to:"
 		" ; seg size: 1000 bytes; freshness: 0 ms; no device; 1 threads:\n"
-		"[0: name: pcmu]\n"
+		"[0: name: pcmu; codec: g722]\n"
 		"]\n"
 		"[1: stream sink: /tmp/clientA-camera; thread to fetch: tiny; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/clientA; name: camera (video); synced to:"
@@ -385,7 +385,7 @@ TEST(TestConfigLoad, TestSampleProducerParams)
 		"--1:\n"
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/clientA; name: sound (audio); synced to: ;"
 		" seg size: 1000 bytes; freshness: 2000 ms; no device; 1 threads:\n"
-		"[0: name: pcmu]\n",
+		"[0: name: pcmu; codec: g722]\n",
 		ss.str());
 }
 

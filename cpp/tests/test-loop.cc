@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "remote-stream.h"
-#include "local-media-stream.h"
+#include "local-stream.h"
 #include "tests-helpers.h"
 #include "client/src/video-source.h"
 

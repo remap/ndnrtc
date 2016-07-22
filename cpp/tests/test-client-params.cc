@@ -11,10 +11,9 @@
 #include "config.h"
 #include "include/params.h"
 #include "tests-helpers.h"
-#include "mock-objects/ndnrtc-library-mock.h"
 
 using namespace std;
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 
 TEST(TestStatGatheringParams, TestOutput)
 {
@@ -57,14 +56,14 @@ TEST(TestClientMediaStreamParams, TestOutput)
 	CaptureDeviceParams cdp;
 	cdp.deviceId_ = 10;
 	msp.captureDevice_ = cdp;
-	msp.addMediaThread(AudioThreadParams("pcmu"));
+	msp.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	ss << msp;
 	EXPECT_EQ("session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; "
 		"name: mic (audio); synced to: camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n",
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
 }
 
@@ -84,7 +83,7 @@ TEST(TestProducerStreamParams, TestOutputAndCopy)
 	CaptureDeviceParams cdp;
 	cdp.deviceId_ = 10;
 	msp.captureDevice_ = cdp;
-	msp.addMediaThread(AudioThreadParams("pcmu"));
+	msp.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	ProducerStreamParams mspCopy(msp);
@@ -94,7 +93,7 @@ TEST(TestProducerStreamParams, TestOutputAndCopy)
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
 		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n",
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
 }
 
@@ -115,7 +114,7 @@ TEST(TestConsumerStreamParams, TestOutput)
 	CaptureDeviceParams cdp;
 	cdp.deviceId_ = 10;
 	msp.captureDevice_ = cdp;
-	msp.addMediaThread(AudioThreadParams("pcmu"));
+	msp.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	ss << msp;
@@ -123,7 +122,7 @@ TEST(TestConsumerStreamParams, TestOutput)
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
 		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n",
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
 }
 
@@ -166,7 +165,7 @@ TEST(TestProducerStreamParams, TestAudioProducerParams)
 	msp.source_ = "camera.argb";
 	msp.streamName_ = "mic";
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
-	msp.addMediaThread(AudioThreadParams("pcmu"));
+	msp.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	unsigned int height = 0, width = 0;
@@ -205,7 +204,7 @@ TEST(TestConsumerClientParams, TestOutput)
 	CaptureDeviceParams cdp;
 	cdp.deviceId_ = 10;
 	msp1.captureDevice_ = cdp;
-	msp1.addMediaThread(AudioThreadParams("pcmu"));
+	msp1.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp1.addMediaThread(AudioThreadParams("g722"));
 
 	ConsumerStreamParams msp2;
@@ -267,7 +266,7 @@ TEST(TestConsumerClientParams, TestOutput)
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
 		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n]\n"
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
 		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
 		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
@@ -295,7 +294,7 @@ TEST(TestConsumerClientParams, TestCopy)
 	CaptureDeviceParams cdp;
 	cdp.deviceId_ = 10;
 	msp1.captureDevice_ = cdp;
-	msp1.addMediaThread(AudioThreadParams("pcmu"));
+	msp1.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 	msp1.addMediaThread(AudioThreadParams("g722"));
 
 	ConsumerStreamParams msp2;
@@ -365,7 +364,7 @@ TEST(TestConsumerClientParams, TestCopy)
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
 		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n]\n"
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
 		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
 		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
@@ -434,7 +433,7 @@ TEST(TestClientParams, TestOutput){
 		CaptureDeviceParams cdp;
 		cdp.deviceId_ = 10;
 		msp.captureDevice_ = cdp;
-		msp.addMediaThread(AudioThreadParams("pcmu"));
+		msp.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 		msp.addMediaThread(AudioThreadParams("g722"));
 
 		pcp.publishedStreams_.push_back(msp);
@@ -482,7 +481,7 @@ TEST(TestClientParams, TestOutput){
 		CaptureDeviceParams cdp;
 		cdp.deviceId_ = 10;
 		msp1.captureDevice_ = cdp;
-		msp1.addMediaThread(AudioThreadParams("pcmu"));
+		msp1.addMediaThread(AudioThreadParams("pcmu", "pcmu"));
 		msp1.addMediaThread(AudioThreadParams("g722"));
 
 		ConsumerStreamParams msp2;
@@ -551,7 +550,7 @@ TEST(TestClientParams, TestOutput){
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
 		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n]\n"
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
 		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
 		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
@@ -565,7 +564,7 @@ TEST(TestClientParams, TestOutput){
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); "
 		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "
 		"capture device id: 10; 2 threads:\n"
-		"[0: name: pcmu]\n[1: name: g722]\n"
+		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n"
 		"--1:\n"
 		"stream source: camera.yuv; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
 		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "

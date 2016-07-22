@@ -33,34 +33,54 @@
 
 #define GT_PRINTF(...)  do { testing::internal::ColoredPrintf(testing::internal::COLOR_GREEN, "[ INFO     ] "); testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__); } while(0)
 
-ndnrtc::VideoCoderParams sampleVideoCoderParams();
-ClientParams sampleConsumerParams();
-ClientParams sampleProducerParams();
+ndnrtc::VideoCoderParams 
+  sampleVideoCoderParams();
+ClientParams 
+  sampleConsumerParams();
+ClientParams 
+  sampleProducerParams();
 
-webrtc::EncodedImage encodedImage(size_t frameLen, uint8_t*& buffer, bool delta = true);
-bool checkVideoFrame(const webrtc::EncodedImage& image);
-ndnrtc::VideoFramePacket getVideoFramePacket(size_t frameLen = 4300, double rate = 24.7,
-  int64_t pubTs = 488589553, int64_t pubUts = 1460488589);
-std::vector<ndnrtc::VideoFrameSegment> sliceFrame(ndnrtc::VideoFramePacket& vp, 
-  PacketNumber playNo = 0, PacketNumber pairedSeqNo = 1);
-std::vector<ndnrtc::CommonSegment> sliceParity(ndnrtc::VideoFramePacket& vp, 
-  boost::shared_ptr<ndnrtc::NetworkData>& parity);
-std::vector<boost::shared_ptr<ndn::Data>> dataFromSegments(std::string frameName,
-	const std::vector<ndnrtc::VideoFrameSegment>& segments);
-std::vector<boost::shared_ptr<ndn::Data>> dataFromParitySegments(std::string frameName,
-	const std::vector<ndnrtc::CommonSegment>& segments);
-std::vector<boost::shared_ptr<ndn::Interest>> getInterests(std::string frameName,
-	unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, size_t parityNSeg = 0, 
-  unsigned int startNonce = 0x1234);
+webrtc::EncodedImage 
+  encodedImage(size_t frameLen, uint8_t*& buffer, bool delta = true);
+
+bool 
+  checkVideoFrame(const webrtc::EncodedImage& image);
+
+ndnrtc::VideoFramePacket 
+  getVideoFramePacket(size_t frameLen = 4300, double rate = 24.7, int64_t pubTs = 488589553, 
+    int64_t pubUts = 1460488589);
+
+std::vector<ndnrtc::VideoFrameSegment> 
+  sliceFrame(ndnrtc::VideoFramePacket& vp, PacketNumber playNo = 0, PacketNumber pairedSeqNo = 1);
+
+std::vector<ndnrtc::CommonSegment> 
+  sliceParity(ndnrtc::VideoFramePacket& vp, boost::shared_ptr<ndnrtc::NetworkData>& parity);
+
+std::vector<boost::shared_ptr<ndn::Data>> 
+  dataFromSegments(std::string frameName, const std::vector<ndnrtc::VideoFrameSegment>& segments);
+
+std::vector<boost::shared_ptr<ndn::Data>> 
+  dataFromParitySegments(std::string frameName, const std::vector<ndnrtc::CommonSegment>& segments);
+
+std::vector<boost::shared_ptr<ndn::Interest>> 
+  getInterests(std::string frameName, unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, 
+      size_t parityNSeg = 0, unsigned int startNonce = 0x1234);
+
 std::vector<boost::shared_ptr<const ndn::Interest>> 
   makeInterestsConst(const std::vector<boost::shared_ptr<ndn::Interest>>& interests);
+
 boost::shared_ptr<ndnrtc::WireSegment>
   getFakeSegment(std::string threadPrefix, ndnrtc::SampleClass cls, ndnrtc::SegmentClass segCls, 
     PacketNumber pNo, unsigned int segNo);
 
-ndn::Name keyName(std::string s);
-ndn::Name certName(ndn::Name keyName);
-boost::shared_ptr<ndn::KeyChain> memoryKeyChain(const std::string name);
+ndn::Name 
+  keyName(std::string s);
+
+ndn::Name 
+  certName(ndn::Name keyName);
+
+boost::shared_ptr<ndn::KeyChain> 
+  memoryKeyChain(const std::string name);
 
 namespace testing
 {
