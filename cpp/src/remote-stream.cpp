@@ -71,6 +71,12 @@ RemoteStream::setTargetBufferSize(unsigned int bufferSize)
 	pimpl_->setTargetBufferSize(bufferSize);
 }
 
+statistics::StatisticsStorage
+RemoteStream::getStatistics() const
+{
+	return pimpl_->getStatistics();
+}
+
 void
 RemoteStream::setLogger(ndnlog::new_api::Logger* logger)
 {
@@ -91,8 +97,8 @@ RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo,
 			const std::string& streamName):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	pimpl_ = boost::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, 
-		NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri());
+	streamPrefix_ = NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri();
+	pimpl_ = boost::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, streamPrefix_);
 	pimpl_->fetchMeta();
 }
 
@@ -104,7 +110,7 @@ RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo,
 			const std::string& streamName):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, 
-		NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri());
+	streamPrefix_ = NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri();
+	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, streamPrefix_);
 	pimpl_->fetchMeta();
 }

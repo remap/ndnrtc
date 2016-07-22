@@ -1,5 +1,5 @@
 // 
-// local-media-stream.cpp
+// local-stream.cpp
 //
 //  Created by Peter Gusev on 18 April 2016.
 //  Copyright 2013-2016 Regents of the University of California
@@ -7,7 +7,7 @@
 
 #include <boost/asio.hpp>
 
-#include "local-media-stream.h"
+#include "local-stream.h"
 #include "audio-stream-impl.h"
 #include "video-stream-impl.h"
 #include "audio-capturer.h"
@@ -75,6 +75,18 @@ string
 LocalAudioStream::getPrefix() const
 {
 	return pimpl_->getPrefix();
+}
+
+std::string 
+LocalAudioStream::getBasePrefix() const 
+{ 
+	return pimpl_->getBasePrefix(); 
+}
+
+std::string 
+LocalAudioStream::getStreamName() const 
+{ 
+	return pimpl_->getStreamName(); 
 }
 
 vector<string> 
@@ -147,6 +159,18 @@ string
 LocalVideoStream::getPrefix() const
 {
 	return pimpl_->getPrefix();
+}
+
+std::string 
+LocalVideoStream::getBasePrefix() const 
+{ 
+	return pimpl_->getBasePrefix(); 
+}
+
+std::string 
+LocalVideoStream::getStreamName() const 
+{ 
+	return pimpl_->getStreamName(); 
 }
 
 vector<string> 

@@ -1,15 +1,16 @@
 // 
-// local-media-stream.h
+// local-stream.h
 //
 //  Created by Peter Gusev on 18 April 2016.
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#ifndef __local_media_stream_h__
-#define __local_media_stream_h__
+#ifndef __local_stream_h__
+#define __local_stream_h__
 
 #include "interfaces.h"
 #include "params.h"
+#include "stream.h"
 
 namespace ndn {
 	class KeyChain;
@@ -51,7 +52,7 @@ namespace ndnrtc {
 	class VideoStreamImpl;
 	class AudioStreamImpl;
 
-	class LocalAudioStream {
+	class LocalAudioStream : public IStream {
 	public:
 		LocalAudioStream(const std::string& basePrefix, 
 			const MediaStreamSettings& settings);
@@ -70,6 +71,8 @@ namespace ndnrtc {
 		 * @return Full stream prefix
 		 */
 		std::string getPrefix() const;
+		std::string getBasePrefix() const;
+		std::string getStreamName() const;
 		
 		/**
 		 * Returns array of current video thread names
@@ -131,7 +134,7 @@ namespace ndnrtc {
 	 * Consequently, LocalVideoStream ensures that any access to Face/KeyChain is 
 	 * performed on the face thread.
 	 */
-	class LocalVideoStream : public IExternalCapturer
+	class LocalVideoStream : public IStream, public IExternalCapturer
 	{
 	public:
 		/**
@@ -194,6 +197,8 @@ namespace ndnrtc {
 		 * @return Full stream prefix
 		 */
 		std::string getPrefix() const;
+		std::string getBasePrefix() const;
+		std::string getStreamName() const;
 		
 		/**
 		 * Returns array of current video thread names

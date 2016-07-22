@@ -9,7 +9,7 @@
 #define __remote_stream_h__
 
 #include <boost/asio.hpp>
-#include "simple-log.h"
+#include "stream.h"
 
 namespace ndn {
 	class Face;
@@ -20,7 +20,7 @@ namespace ndnrtc {
 	class RemoteStreamImpl;
 	class IRemoteStreamObserver;
 
-	class RemoteStream {
+	class RemoteStream : public IStream {
 	public:
 		typedef enum _State {
 			Chasing,
@@ -47,16 +47,22 @@ namespace ndnrtc {
 		bool isVerified() const;
 
 		/**
+		 * Returns current statistics storage.
+		 */
+		statistics::StatisticsStorage getStatistics() const;
+
+		/**
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(ndnlog::new_api::Logger* logger);
 
+		std::string getPrefix() const { return streamPrefix_; }
 		std::string getBasePrefix() const { return basePrefix_; }
 		std::string getStreamName() const { return streamName_; }
 
 	protected:
-		std::string basePrefix_, streamName_;
+		std::string streamPrefix_, basePrefix_, streamName_;
 		boost::shared_ptr<RemoteStreamImpl> pimpl_;
 	};
 
