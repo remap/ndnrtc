@@ -13,6 +13,7 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
+#include <ndn-cpp/digest-sha256-signature.hpp>
 
 #include "frame-data.h"
 #include "ndnrtc-object.h"
@@ -30,6 +31,9 @@ namespace ndn{
 }
 
 namespace ndnrtc {
+	
+	static const size_t MAX_NDN_PACKET_SIZE = 8800;
+
 	namespace statistics {
 		class StatisticsStorage;
 	}
@@ -53,6 +57,7 @@ namespace ndnrtc {
 	};
 
 	typedef _PublisherSettings<ndn::KeyChain, ndn::MemoryContentCache> PublisherSettings;
+	typedef std::vector<boost::shared_ptr<const ndn::Data>> PublishedDataPtrVector;
 
 	template<typename SegmentType, typename Settings>
 	class PacketPublisher : public NdnRtcComponent {
@@ -65,7 +70,7 @@ namespace ndnrtc {
             assert(settings_.statStorage_);
         }
 
-		size_t publish(const ndn::Name& name, const MutableNetworkData& data)
+		PublishedDataPtrVector publish(const ndn::Name& name, const MutableNetworkData& data)
 		{
 			// provide dummy memory of the size of the segment header to publish function
 			// we don't care of bytes that will be saved in this memory, so allocate it
@@ -75,9 +80,10 @@ namespace ndnrtc {
 			return publish(name, data, (_DataSegmentHeader&)*dummyHeader.get());
 		}
 
-		size_t publish(const ndn::Name& name, const MutableNetworkData& data, 
+		PublishedDataPtrVector publish(const ndn::Name& name, const MutableNetworkData& data, 
 			_DataSegmentHeader& commonHeader)
 		{
+			PublishedDataPtrVector ndnSegments;
 			std::vector<SegmentType> segments = SegmentType::slice(data, settings_.segmentWireLength_);
 			LogTraceC << "sliced into " << segments.size() << " segments" << std::endl;
 
@@ -94,25 +100,26 @@ namespace ndnrtc {
 				segment.setHeader(commonHeader);
                 
 				boost::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
-				ndn::Data ndnSegment(segmentName);
-				ndnSegment.getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
-				ndnSegment.getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
-				ndnSegment.setContent(segmentData->getData(), segment.size());
-				if (settings_.sign_) settings_.keyChain_->sign(ndnSegment);
-				settings_.memoryCache_->add(ndnSegment);
-                
-                (*settings_.statStorage_)[statistics::Indicator::BytesPublished] += ndnSegment.getContent().size();
-                (*settings_.statStorage_)[statistics::Indicator::RawBytesPublished] += ndnSegment.getDefaultWireEncoding().size();
+				boost::shared_ptr<ndn::Data> ndnSegment(boost::make_shared<ndn::Data>(segmentName));
+				ndnSegment->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
+				ndnSegment->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size()-1));
+				ndnSegment->setContent(segmentData->getData(), segment.size());
+				sign(ndnSegment);
+				settings_.memoryCache_->add(*ndnSegment);
+                ++segIdx;
+                ndnSegments.push_back(ndnSegment);
+
+                (*settings_.statStorage_)[statistics::Indicator::BytesPublished] += ndnSegment->getContent().size();
+                (*settings_.statStorage_)[statistics::Indicator::RawBytesPublished] += ndnSegment->getDefaultWireEncoding().size();
 		
 				LogTraceC << "cached " << segmentName << " ("
-						<< ndnSegment.getContent().size() << "b payload, "
-						<< ndnSegment.getDefaultWireEncoding().size() << "b wire)" << std::endl;
-				++segIdx;
+						<< ndnSegment->getContent().size() << "b payload, "
+						<< ndnSegment->getDefaultWireEncoding().size() << "b wire)" << std::endl;
 			}
             
             (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
-
-			return segments.size();
+            #warning should return vector of pointers to Data objects
+			return ndnSegments;
 		}
 	private:
 		Settings settings_;
@@ -136,6 +143,21 @@ namespace ndnrtc {
                 
                 LogTraceC << "PIT hit " << pendingInterests.back()->getInterest()->toUri() << std::endl;
             }
+        }
+
+        void sign(boost::shared_ptr<ndn::Data> segment)
+        {
+			if (settings_.sign_) 
+				settings_.keyChain_->sign(*segment);
+			else
+			{
+				static uint8_t digest[ndn_SHA256_DIGEST_SIZE];
+				memset(digest, 0, ndn_SHA256_DIGEST_SIZE);
+				ndn::Blob signatureBits(digest, sizeof(digest));
+				segment->setSignature(ndn::DigestSha256Signature());
+				ndn::DigestSha256Signature* sha256Signature = (ndn::DigestSha256Signature*)segment->getSignature();
+				sha256Signature->setSignature(signatureBits);
+			}
         }
 	};
 
