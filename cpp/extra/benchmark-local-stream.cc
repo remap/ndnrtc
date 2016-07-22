@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "../tests/tests-helpers.h"
-#include "src/local-media-stream.h"
+#include "include/local-stream.h"
 #include "include/name-components.h"
 #include "client/src/video-source.h"
 #include "../tests/mock-objects/external-capturer-mock.h"
@@ -34,7 +34,7 @@ using namespace ndn;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-#define ENABLE_LOGGING
+//#define ENABLE_LOGGING
 
 void runProducer(std::string sourceFile, boost::shared_ptr<RawFrame> frame,
 	MediaStreamParams msp, int runTimeMs, bool sign = true)
@@ -124,7 +124,7 @@ void runProducer(std::string sourceFile, boost::shared_ptr<RawFrame> frame,
               stat[Indicator::CapturedNum]/runTimeSec, stat[Indicator::ProcessedNum]/runTimeSec,
               bitrate, rawBitrate, (rawBitrate-bitrate)/bitrate*100);
 }
-#if 0
+#if 1
 TEST(BenchmarkLocalStream, VideoStream320x240_300)
 {
 	MediaStreamParams msp("camera");
@@ -472,7 +472,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_3000)
                 msp,
                 5000);
 }
-#endif
+
 TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000)
 {
     MediaStreamParams msp("camera");
@@ -511,9 +511,9 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                30000);
+                5000);
 }
-#if 0
+
 TEST(BenchmarkLocalStream, VideoStream8Kseg_1280x720_500_1000_3000)
 {
     MediaStreamParams msp("camera");
@@ -596,7 +596,8 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000_nosign)
                 5000,
                 false);
 }
-
+#endif
+#if 1
 TEST(BenchmarkLocalStream, VideoStream8kseg_1280x720_500_1000_3000_nosign)
 {
     MediaStreamParams msp("camera");
