@@ -48,6 +48,32 @@ AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHead
 }
 
 //******************************************************************************
+Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>>& dataObjects):
+DataPacket(std::vector<uint8_t>())
+{
+    for (auto& d:dataObjects)
+    {
+        ndn::Blob digest = (*d->getFullName())[-1].getValue();
+        addBlob(digest.size(), digest.buf());
+    }
+}
+
+Manifest::Manifest(NetworkData&& nd):
+DataPacket(boost::move(nd)){}
+
+bool Manifest::hasData(const ndn::Data& data) const
+{
+   ndn::Blob digest = (*data.getFullName())[-1].getValue();
+
+   for (int i = 0; i < getBlobsNum(); ++i)
+   {
+       ndn::Blob b(getBlob(i).data(), getBlob(i).size());
+       if (b.equals(digest)) return true;
+   }
+   return false;
+}
+
+//******************************************************************************
 AudioThreadMeta::AudioThreadMeta(double rate, const std::string& codec):
 DataPacket(std::vector<uint8_t>())
 {
@@ -241,8 +267,8 @@ WireSegment::createSegment(const NamespaceInfo& namespaceInfo,
     const boost::shared_ptr<ndn::Data>& data, 
     const boost::shared_ptr<const ndn::Interest>& interest)
 {
-    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo
-        && !(namespaceInfo.isMeta_ || namespaceInfo.isParity_))
+    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo && 
+        (namespaceInfo.segmentClass_ == SegmentClass::Data || namespaceInfo.segmentClass_ == SegmentClass::Parity))
         return boost::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
 
     return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);;

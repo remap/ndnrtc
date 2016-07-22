@@ -10,6 +10,8 @@
 #include <boost/move/move.hpp>
 #include <boost/assign.hpp>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+#include <ndn-cpp/digest-sha256-signature.hpp>
+#include <ndn-cpp/name.hpp>
 
 #include "tests-helpers.h"
 #include "gtest/gtest.h"
@@ -1541,6 +1543,54 @@ TEST(TestWireData, TestMergeAudioBundle)
             identical = (rtpData[k], (*bundleP)[i].data()[k]);
         EXPECT_TRUE(identical);
     }
+}
+
+TEST(TestManifest, TestWithDummySignature)
+{
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+    size_t frameSize = 60000;
+    VideoFramePacket vp = getVideoFramePacket(frameSize);
+    std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+    boost::shared_ptr<NetworkData> parityData = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+    std::vector<CommonSegment> paritySegments = sliceParity(vp, parityData);
+    std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
+    std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName, paritySegments);
+    std::vector<boost::shared_ptr<ndn::Data>> allObjects(dataObjects);
+    
+    std::copy(parityObjects.begin(), parityObjects.end(), std::back_inserter(allObjects));
+
+    std::vector<boost::shared_ptr<const ndn::Data>> allSegments;
+
+    for (auto& o:allObjects)
+    {
+        static uint8_t digest[ndn_SHA256_DIGEST_SIZE];
+        memset(digest, 0, ndn_SHA256_DIGEST_SIZE);
+        ndn::Blob signatureBits(digest, sizeof(digest));
+        o->setSignature(ndn::DigestSha256Signature());
+        ndn::DigestSha256Signature* sha256Signature = (ndn::DigestSha256Signature*)o->getSignature();
+        sha256Signature->setSignature(signatureBits);
+
+        ndn::Name::Component c = (*(o->getFullName()))[-1];
+        allSegments.push_back(boost::shared_ptr<const ndn::Data>(o));
+    }
+
+    Manifest m(allSegments);
+    
+    EXPECT_EQ(allSegments.size(), m.size());
+
+    for (auto& o:allObjects)
+        EXPECT_TRUE(m.hasData(*o));
+
+    GT_PRINTF("Manifest packet of %d segments (frame size %d bytes) has total length of %d bytes\n",
+        m.size(), frameSize, m.getLength());
+
+    NetworkData nd(m);
+    Manifest im(boost::move(nd));
+
+    EXPECT_EQ(allSegments.size(), im.size());
+
+    for (auto& o:allObjects)
+        EXPECT_TRUE(im.hasData(*o));
 }
 
 //******************************************************************************

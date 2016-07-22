@@ -822,6 +822,30 @@ namespace ndnrtc {
     typedef AudioBundlePacketT<Immutable> ImmutableAudioBundlePacket;
 
     //******************************************************************************
+    /**
+     * This is a manifest data packet for (video) samples but can be used for an 
+     * arbitrary array of ndn::Data objects.
+     * It stores digests of given data objects and provides methods to check whether
+     * a data object is a part of this manifest.
+     */
+    class Manifest : public DataPacket
+    {
+    public:
+         Manifest(const std::vector<boost::shared_ptr<const ndn::Data>>& dataObjects);
+         Manifest(NetworkData&& nd);
+         
+         /**
+          * Checks whether given data object is a part of this manifest
+          */
+         bool hasData(const ndn::Data& data) const;
+
+         /**
+          * Returns total number of data objects described by this manifest
+          */
+         size_t size() const { return blobs_.size(); }
+    };
+
+    //******************************************************************************
     class AudioThreadMeta : public DataPacket
     {
     public:
