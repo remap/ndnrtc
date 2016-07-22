@@ -160,9 +160,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
     }
     
 	if (threads_.size())
-	{
-        (*statStorage_)[Indicator::ProcessedNum]++;
-        
+	{   
 		boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 		LogDebugC << "↓ feeding "<< playbackCounter_ << "p into encoders..." << std::endl;
 
@@ -273,7 +271,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 		assert(segments.size());
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
         
-        LogDebugC << (busyPublishing_ == 0 || nParitySeg == 0 ? "⤷" : "↓") << " published "
+        LogDebugC << "↓ published "
             << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
             << "(" << SAMPLE_SUFFIX(dataName) << ")x" << segments.size()
             << " Dgen " << segmentHdr.generationDelayMs_ << "ms" << std::endl;
@@ -287,17 +285,17 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 	        assert(paritySegments.size());
 	        std::copy(paritySegments.begin(), paritySegments.end(), std::back_inserter(segments));
 	        
-	        LogDebugC << (busyPublishing_ == 1 ? "⤷" : "↓") << " published "
+	        LogDebugC << "↓ published "
 	            << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
 	            << "(" << PARITY_SUFFIX(parityName) << ")x" << paritySegments.size()
 	            << std::endl;
 		}
-
 		publishManifest(dataName, segments);
 		busyPublishing_--;
 
         (*statStorage_)[Indicator::PublishedNum]++;
         if (isKey) (*statStorage_)[Indicator::PublishedKeyNum]++;
+        if (busyPublishing_ == 0) (*statStorage_)[Indicator::ProcessedNum]++;
 	});
 }
 
@@ -308,7 +306,8 @@ VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector& seg
 	dataName.append(NameComponents::NameComponentManifest).appendVersion(0);
 	PublishedDataPtrVector ss = dataPublisher_->publish(dataName, m);
 
-	LogDebugC << "☆ published manifest (" << dataName.getSubName(-5,5) << ")x" 
+	LogDebugC << (busyPublishing_ == 1 ? "⤷" : "↓") 
+		<< " published manifest ☆ (" << dataName.getSubName(-5,5) << ")x"
 		<< ss.size() << std::endl;
 }
 

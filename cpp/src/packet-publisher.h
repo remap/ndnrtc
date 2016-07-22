@@ -118,7 +118,6 @@ namespace ndnrtc {
 			}
             
             (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
-            #warning should return vector of pointers to Data objects
 			return ndnSegments;
 		}
 	private:

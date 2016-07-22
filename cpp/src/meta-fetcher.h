@@ -20,6 +20,12 @@ namespace ndn {
 }
 
 namespace ndnrtc {
+	/**
+	 * MetaFetcher is a helper class to fetch metadata (stream metadata, manifests, etc.)
+	 * which is segmented and named /<prefix>/<version>/<segment>.
+	 * If data can not be verified using provided KeyChain object, it is still returned in 
+	 * the callback alongside with an array of ValidationErrorInfo objects.
+	 */
 	class MetaFetcher : public NdnRtcComponent {
 	public:
 		typedef boost::function<void(NetworkData&, 
