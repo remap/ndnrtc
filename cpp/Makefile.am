@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-common.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h
+pkginclude_HEADERS = include/ndnrtc-common.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h include/stream.h include/local-stream.h include/remote-stream.h
 
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.h \
@@ -24,7 +24,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/interest-queue.cpp src/interest-queue.h \
   src/jitter-timing.cpp src/jitter-timing.h \
   src/latency-control.cpp src/latency-control.h \
-  src/local-media-stream.cpp src/local-media-stream.h \
+  src/local-stream.cpp include/local-stream.h \
   src/media-stream-base.cpp src/media-stream-base.h \
   src/meta-fetcher.cpp src/meta-fetcher.h \
   src/name-components.cpp include/name-components.h \
@@ -42,7 +42,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/rate-adaptation-module.h \
   src/remote-audio-stream.cpp src/remote-audio-stream.h \
   src/remote-stream-impl.cpp src/remote-stream-impl.h \
-  src/remote-stream.cpp src/remote-stream.h \
+  src/remote-stream.cpp include/remote-stream.h \
   src/remote-video-stream.cpp src/remote-video-stream.h \
   src/renderer.h \
   src/sample-estimator.cpp src/sample-estimator.h \
@@ -51,6 +51,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/simple-log.cpp include/simple-log.h \
   src/slot-buffer.cpp src/slot-buffer.h \
   src/statistics.cpp include/statistics.h \
+  src/stream.h include/stream.h \
   src/threading-capability.cpp src/threading-capability.h \
   src/video-coder.cpp src/video-coder.h \
   src/video-decoder.cpp src/video-decoder.h \
@@ -143,51 +144,50 @@ res/test-source-320x240.argb:
 	$(WGET) https://s3.amazonaws.com/ndnrtc-test-files/raw/test-source-320x240.argb.tar.gz
 	$(TAR) -xf test-source-320x240.argb.tar.gz -C $(top_builddir)/res/
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector 
+#bin/tests/test-client
 
-# bin/tests/test-client-params bin/tests/test-config-load bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client bin/tests/test-media-stream
+bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
 
-#bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
-#
-#
-#bin_tests_test_client_params_SOURCES = tests/test-client-params.cc #client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
-#
-#bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp #client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp #client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}
-#
-#bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc #client/src/stat-collector.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_stat_collector_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_stat_collector_LDADD = ${UNIT_TESTS_LDADD_}
-#
-#bin_tests_test_renderer_SOURCES = tests/test-renderer.cc client/src/renderer.cpp #client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_renderer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_renderer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_renderer_LDADD = ${UNIT_TESTS_LDADD_}
-#
-#bin_tests_test_frame_io_SOURCES = tests/test-frame-io.cc client/src/frame-io.cpp #${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_frame_io_LDADD = ${UNIT_TESTS_LDADD_}
-#
+bin_tests_test_client_params_SOURCES = tests/test-client-params.cc tests/tests-helpers.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc client/src/stat-collector.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_stat_collector_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_stat_collector_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_renderer_SOURCES = tests/test-renderer.cc client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_renderer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_renderer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_renderer_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_frame_io_SOURCES = tests/test-frame-io.cc client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_frame_io_LDADD = ${UNIT_TESTS_LDADD_}
+
 bin_tests_test_video_source_SOURCES = tests/test-video-source.cc client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp src/simple-log.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_source_DEPENDENCIES = res/test-source-1280x720.argb
 bin_tests_test_video_source_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_source_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_source_LDADD = ${libndnrtc_la_LIBADD}
-#
-#bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-#generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
+
+#bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp #client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp #client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
+#bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+#bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+#bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}
+
 
 ### NDN-RTC tests
 
@@ -206,7 +206,7 @@ bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} 
 
-bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} 
@@ -251,7 +251,7 @@ bin_tests_test_name_components_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_name_components_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_name_components_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_local_media_stream_SOURCES = tests/test-local-media-stream.cc tests/tests-helpers.cc src/local-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_local_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_local_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_local_media_stream_LDADD = ${libndnrtc_la_LIBADD}
@@ -338,7 +338,7 @@ bin_tests_test_playout_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_playout_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_playout_control_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_loop_SOURCES = tests/test-loop.cc tests/tests-helpers.cc src/async.cpp src/audio-capturer.cpp src/audio-controller.cpp src/audio-playout.cpp src/audio-renderer.cpp src/audio-stream-impl.cpp src/audio-thread.cpp src/buffer-control.cpp src/clock.cpp src/data-validator.cpp src/drd-estimator.cpp src/estimators.cpp src/fec.cpp src/frame-buffer.cpp src/frame-converter.cpp src/frame-data.cpp src/interest-control.cpp src/interest-queue.cpp src/jitter-timing.cpp src/latency-control.cpp src/local-media-stream.cpp src/media-stream-base.cpp src/name-components.cpp src/ndnrtc-object.cpp src/packet-publisher.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeline-control.cpp src/pipeliner.cpp src/playout-control.cpp src/playout.cpp src/remote-stream-impl.cpp src/remote-stream.cpp src/sample-estimator.cpp src/segment-controller.cpp src/simple-log.cpp src/slot-buffer.cpp src/statistics.cpp src/threading-capability.cpp src/video-coder.cpp src/video-decoder.cpp src/video-playout.cpp src/video-stream-impl.cpp src/video-thread.cpp src/webrtc-audio-channel.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/meta-fetcher.cpp src/remote-video-stream.cpp src/remote-audio-stream.cpp src/segment-fetcher.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_loop_SOURCES = tests/test-loop.cc tests/tests-helpers.cc src/async.cpp src/audio-capturer.cpp src/audio-controller.cpp src/audio-playout.cpp src/audio-renderer.cpp src/audio-stream-impl.cpp src/audio-thread.cpp src/buffer-control.cpp src/clock.cpp src/data-validator.cpp src/drd-estimator.cpp src/estimators.cpp src/fec.cpp src/frame-buffer.cpp src/frame-converter.cpp src/frame-data.cpp src/interest-control.cpp src/interest-queue.cpp src/jitter-timing.cpp src/latency-control.cpp src/local-stream.cpp src/media-stream-base.cpp src/name-components.cpp src/ndnrtc-object.cpp src/packet-publisher.cpp src/periodic.cpp src/pipeline-control-state-machine.cpp src/pipeline-control.cpp src/pipeliner.cpp src/playout-control.cpp src/playout.cpp src/remote-stream-impl.cpp src/remote-stream.cpp src/sample-estimator.cpp src/segment-controller.cpp src/simple-log.cpp src/slot-buffer.cpp src/statistics.cpp src/threading-capability.cpp src/video-coder.cpp src/video-decoder.cpp src/video-playout.cpp src/video-stream-impl.cpp src/video-thread.cpp src/webrtc-audio-channel.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/meta-fetcher.cpp src/remote-video-stream.cpp src/remote-audio-stream.cpp src/segment-fetcher.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD}
@@ -351,13 +351,13 @@ TESTS = ${check_PROGRAMS}
 
 noinst_PROGRAMS = bin/benchmark-local-stream bin/local-stream
 
-bin_benchmark_local_stream_SOURCES = extra/benchmark-local-stream.cc tests/tests-helpers.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_benchmark_local_stream_SOURCES = extra/benchmark-local-stream.cc tests/tests-helpers.cc src/local-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_benchmark_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
 bin_benchmark_local_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_benchmark_local_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_benchmark_local_stream_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_local_stream_SOURCES = extra/local-stream.cc src/local-media-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp client/src/config.cpp
+bin_local_stream_SOURCES = extra/local-stream.cc src/local-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp client/src/config.cpp
 bin_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
 bin_local_stream_CPPFLAGS = ${libndnrtc_la_CPPFLAGS} ${ndnrtc_client_CPPFLAGS}
 bin_local_stream_LDFLAGS = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
