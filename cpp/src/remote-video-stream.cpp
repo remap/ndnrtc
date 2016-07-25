@@ -14,6 +14,7 @@
 #include "latency-control.h"
 #include "interest-control.h"
 #include "playout-control.h"
+#include "sample-validator.h"
 
 using namespace ndnrtc;
 using namespace ndn;
@@ -28,6 +29,13 @@ RemoteStreamImpl(io, face, keyChain, streamPrefix)
     type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeVideo;
 	playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
+    validator_ = boost::make_shared<ManifestValidator>(face, keyChain);
+    buffer_->attach(validator_.get());
+}
+
+RemoteVideoStreamImpl::~RemoteVideoStreamImpl()
+{
+    buffer_->detach(validator_.get());
 }
 
 void
@@ -48,4 +56,11 @@ RemoteVideoStreamImpl::initiateFetching()
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
     pipelineControl_->start();
+}
+
+void
+RemoteVideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+{
+    RemoteStreamImpl::setLogger(logger);
+    validator_->setLogger(logger);
 }

@@ -153,6 +153,8 @@ BufferSlot::clear()
     lastFetched_.reset();
     nDataSegments_ = 0;
     nParitySegments_ = 0;
+    verified_ = Verification::Unknown;
+    manifest_.reset();
 }
 
 const boost::shared_ptr<SlotSegment>
@@ -214,7 +216,8 @@ BufferSlot::dump(bool showLastSegment) const
     dump << "[ "
     // << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
     << std::setw(5) 
-    << nameInfo_.sampleNo_ << ", "
+    << nameInfo_.sampleNo_
+    << (verified_ == Verification::Verified ? "☆" : (verified_ == Verification::Unknown? "?" : "✕")) << ", "
     << toString(getConsistencyState()) << ", "
     // << std::setw(7) << getPlaybackNumber() << ", "
     // << std::setw(10) << getProducerTimestamp() << ", "
@@ -295,7 +298,6 @@ void BufferSlot::updateAssembledLevel()
     }
 }
 
-
 //******************************************************************************
 VideoFrameSlot::VideoFrameSlot(const size_t storageSize):
 storage_(boost::make_shared<std::vector<uint8_t>>())
@@ -329,10 +331,10 @@ VideoFrameSlot::readPacket(const BufferSlot& slot, bool& recovered)
 
     boost::shared_ptr<WireData<VideoFrameSegmentHeader>> firstSeg = 
             boost::dynamic_pointer_cast<WireData<VideoFrameSegmentHeader>>(dataSegments.begin()->second->getData());
-    boost::shared_ptr<WireData<DataSegmentHeader>> firstParitySeg;
+    boost::shared_ptr<WireData<VideoFrameSegmentHeader>> firstParitySeg;
 
     if (paritySegments.size()) 
-        firstParitySeg = boost::dynamic_pointer_cast<WireData<DataSegmentHeader>>(paritySegments.begin()->second->getData());
+        firstParitySeg = boost::dynamic_pointer_cast<WireData<VideoFrameSegmentHeader>>(paritySegments.begin()->second->getData());
 
     size_t segmentSize = firstSeg->segment().getPayload().size();
     size_t paritySegSize = (paritySegments.size() ? firstParitySeg->segment().getPayload().size() : 0);
@@ -804,7 +806,10 @@ PlaybackQueue::dump()
         if (s.slot()->getNameInfo().sampleNo_%10 == 0 ||
             !s.slot()->getNameInfo().isDelta_)
             ss  << s.slot()->getNameInfo().sampleNo_;
-        ss << (s.slot()->getNameInfo().isDelta_ ? "d" : "k");
+        if (s.slot()->getVerificationStatus() == BufferSlot::Verification::Verified)
+            ss << (s.slot()->getNameInfo().isDelta_ ? "D" : "K");
+        else
+            ss << (s.slot()->getNameInfo().isDelta_ ? "d" : "k");
     }
     ss << "]" << size() << "ms";
     

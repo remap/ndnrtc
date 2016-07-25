@@ -9,11 +9,13 @@
 #define __remote_video_stream_h__
 
 #include "remote-stream-impl.h"
+#include "sample-validator.h"
 
 namespace ndnrtc{
 	class IPlayoutControl;
 	class VideoPlayout;
 	class PipelineControl;
+	class ManifestValidator;
 
 	class RemoteVideoStreamImpl : public RemoteStreamImpl
 	{
@@ -22,10 +24,13 @@ namespace ndnrtc{
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& streamPrefix);
+		~RemoteVideoStreamImpl();
 		
 		void initiateFetching();
-
+        void setLogger(ndnlog::new_api::Logger* logger);
+        
 	private:
+		boost::shared_ptr<ManifestValidator> validator_;
 	};
 }
 

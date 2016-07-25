@@ -75,8 +75,11 @@ namespace ndnrtc
     class VideoFrameSlot;
     class AudioBundleSlot;
     class Buffer;
+    class Manifest;
+    class SampleValidator;
+    class ManifestValidator;
 
-    class BufferSlot : public ISlot
+    class BufferSlot
     {
     public:
         enum State {
@@ -89,6 +92,12 @@ namespace ndnrtc
                             // decoding a frame
             Locked = 1<<4 // slot is locked for decoding
         }; // enum State
+
+        enum Verification {
+            Unknown = 1<<0,
+            Failed = 1<<1,
+            Verified = 1<<2
+        };
         
         typedef enum _Consistency {
             Inconsistent = 0,        // slot has no meta info yet
@@ -141,12 +150,9 @@ namespace ndnrtc
         std::vector<ndn::Name> getMissingSegments() const;
 
         /**
-         * Marks segment verification flag
-         * @param segmentName Name of the segment of this slot
-         * @param verified Verification flag
+         * Returns boolean value on whether slot is verified
          */
-        void
-        markVerified(const std::string& segmentName, bool verified) {}
+        Verification getVerificationStatus() const { return verified_; }
 
         State getState() const { return state_; }
         
@@ -180,6 +186,8 @@ namespace ndnrtc
     private:
         friend VideoFrameSlot;
         friend AudioBundleSlot;
+        friend SampleValidator;
+        friend ManifestValidator;
         friend Buffer;
 
         ndn::Name name_;
@@ -192,6 +200,8 @@ namespace ndnrtc
         State state_;
         int64_t requestTimeUsec_, firstSegmentTimeUsec_, assembledTimeUsec_;
         double assembled_, asmLevel_;
+        mutable boost::shared_ptr<Manifest> manifest_;
+        mutable Verification verified_;
 
         virtual void updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment);
         void updateAssembledLevel();
