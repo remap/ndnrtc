@@ -34,7 +34,7 @@ using namespace ndn;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-//#define ENABLE_LOGGING
+// #define ENABLE_LOGGING
 
 void runProducer(std::string sourceFile, boost::shared_ptr<RawFrame> frame,
 	MediaStreamParams msp, int runTimeMs, bool sign = true)
@@ -123,8 +123,18 @@ void runProducer(std::string sourceFile, boost::shared_ptr<RawFrame> frame,
               (int)stat[Indicator::PublishedNum], (int)stat[Indicator::PublishedKeyNum],
               stat[Indicator::CapturedNum]/runTimeSec, stat[Indicator::ProcessedNum]/runTimeSec,
               bitrate, rawBitrate, (rawBitrate-bitrate)/bitrate*100);
+    GT_PRINTF("total segments: %d, avg segment size: %.2f, segrate: %.2f, "
+              "avg seg/frame: %.2f, sopnum: %d, sop/sec: %.2f, enc/sec: %.2f\n",
+              (int)stat[Indicator::PublishedSegmentsNum],
+              stat[Indicator::BytesPublished]/stat[Indicator::PublishedSegmentsNum],
+              stat[Indicator::PublishedSegmentsNum]/runTimeSec,
+              stat[Indicator::PublishedSegmentsNum]/stat[Indicator::PublishedNum],
+              (int)stat[Indicator::SignNum], stat[Indicator::SignNum]/runTimeSec,
+              stat[Indicator::EncodedNum]/runTimeSec);
 }
-#if 1
+
+unsigned int runtime = 5000;
+#if 0
 TEST(BenchmarkLocalStream, VideoStream320x240_300)
 {
 	MediaStreamParams msp("camera");
@@ -147,7 +157,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_300)
     runProducer(test_path+"/../res/test-source-320x240.argb",
     	boost::make_shared<ArgbFrame>(320,240),
     	msp,
-    	5000);
+    	runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_500)
@@ -172,7 +182,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_500)
     runProducer(test_path+"/../res/test-source-320x240.argb",
     	boost::make_shared<ArgbFrame>(320,240),
     	msp,
-    	5000);
+    	runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_700)
@@ -197,7 +207,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_700)
     runProducer(test_path+"/../res/test-source-320x240.argb",
     	boost::make_shared<ArgbFrame>(320,240),
     	msp,
-    	5000);
+    	runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_1000)
@@ -222,7 +232,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_1000)
     runProducer(test_path+"/../res/test-source-320x240.argb",
     	boost::make_shared<ArgbFrame>(320,240),
     	msp,
-    	5000);
+    	runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_300_500)
@@ -255,7 +265,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_300_500)
     runProducer(test_path+"/../res/test-source-320x240.argb",
                                      boost::make_shared<ArgbFrame>(320,240),
                                      msp,
-                                     5000);
+                                     runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_300_500_1000)
@@ -296,7 +306,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_300_500_1000)
     runProducer(test_path+"/../res/test-source-320x240.argb",
                                      boost::make_shared<ArgbFrame>(320,240),
                                      msp,
-                                     5000);
+                                     runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_300x2)
@@ -329,7 +339,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_300x2)
     runProducer(test_path+"/../res/test-source-320x240.argb",
                 boost::make_shared<ArgbFrame>(320,240),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream320x240_300x3)
@@ -370,7 +380,7 @@ TEST(BenchmarkLocalStream, VideoStream320x240_300x3)
     runProducer(test_path+"/../res/test-source-320x240.argb",
                 boost::make_shared<ArgbFrame>(320,240),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_500)
@@ -395,7 +405,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_500)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_1000)
@@ -420,7 +430,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_1000)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_1500)
@@ -445,7 +455,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_1500)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_3000)
@@ -470,7 +480,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_3000)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000)
@@ -511,7 +521,7 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream8Kseg_1280x720_500_1000_3000)
@@ -552,7 +562,7 @@ TEST(BenchmarkLocalStream, VideoStream8Kseg_1280x720_500_1000_3000)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000);
+                runtime);
 }
 
 TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000_nosign)
@@ -593,11 +603,10 @@ TEST(BenchmarkLocalStream, VideoStream1280x720_500_1000_3000_nosign)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000,
+                runtime,
                 false);
 }
-#endif
-#if 1
+
 TEST(BenchmarkLocalStream, VideoStream8kseg_1280x720_500_1000_3000_nosign)
 {
     MediaStreamParams msp("camera");
@@ -636,10 +645,91 @@ TEST(BenchmarkLocalStream, VideoStream8kseg_1280x720_500_1000_3000_nosign)
     runProducer(test_path+"/../res/test-source-1280x720.argb",
                 boost::make_shared<ArgbFrame>(1280,720),
                 msp,
-                5000,
+                runtime,
                 false);
 }
+
+TEST(BenchmarkLocalStream, VideoStream1280x720_700_3000)
+{
+    MediaStreamParams msp("camera");
+    
+    msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
+    msp.synchronizedStreamName_ = "mic";
+    msp.producerParams_.freshnessMs_ = 2000;
+    msp.producerParams_.segmentSize_ = 1000;
+    
+    CaptureDeviceParams cdp;
+    cdp.deviceId_ = 10;
+    msp.captureDevice_ = cdp;
+    
+    {
+        VideoThreadParams atp("mid", sampleVideoCoderParams());
+        atp.coderParams_.encodeWidth_ = 1280;
+        atp.coderParams_.encodeHeight_ = 720;
+        atp.coderParams_.startBitrate_ = 700;
+        msp.addMediaThread(atp);
+    }
+    
+    {
+        VideoThreadParams atp("hi", sampleVideoCoderParams());
+        atp.coderParams_.encodeWidth_ = 1280;
+        atp.coderParams_.encodeHeight_ = 720;
+        atp.coderParams_.startBitrate_ = 3000;
+        msp.addMediaThread(atp);
+    }
+    
+    runProducer(test_path+"/../res/test-source-1280x720.argb",
+                boost::make_shared<ArgbFrame>(1280,720),
+                msp,
+                runtime);
+}
 #endif
+TEST(BenchmarkLocalStream, VideoStream1280x720_1200_500_100)
+{
+    MediaStreamParams msp("camera");
+    
+    msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
+    msp.synchronizedStreamName_ = "mic";
+    msp.producerParams_.freshnessMs_ = 2000;
+    msp.producerParams_.segmentSize_ = 1000;
+    
+    CaptureDeviceParams cdp;
+    cdp.deviceId_ = 10;
+    msp.captureDevice_ = cdp;
+    
+    {
+        VideoThreadParams atp("hi", sampleVideoCoderParams());
+        atp.coderParams_.encodeWidth_ = 1280;
+        atp.coderParams_.encodeHeight_ = 720;
+        atp.coderParams_.startBitrate_ = 1200;
+        atp.coderParams_.maxBitrate_ = 1200;
+        msp.addMediaThread(atp);
+    }
+    
+    {
+        VideoThreadParams atp("mid", sampleVideoCoderParams());
+        atp.coderParams_.encodeWidth_ = 640;
+        atp.coderParams_.encodeHeight_ = 360;
+        atp.coderParams_.startBitrate_ = 300;
+        atp.coderParams_.maxBitrate_ = 300;
+        msp.addMediaThread(atp);
+    }
+
+    {
+        VideoThreadParams atp("low", sampleVideoCoderParams());
+        atp.coderParams_.encodeWidth_ = 320;
+        atp.coderParams_.encodeHeight_ = 180;
+        atp.coderParams_.startBitrate_ = 100;
+        atp.coderParams_.maxBitrate_ = 100;
+        msp.addMediaThread(atp);
+    }    
+
+    runProducer(test_path+"/../res/test-source-1280x720.argb",
+                boost::make_shared<ArgbFrame>(1280,720),
+                msp,
+                runtime);
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 
