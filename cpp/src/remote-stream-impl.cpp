@@ -163,8 +163,7 @@ void
 RemoteStreamImpl::fetchMeta()
 {
 	shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
-
-	metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_), 
+	metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(NameComponents::NameComponentMeta), 
 		[me,this](NetworkData& meta, 
 			const std::vector<ValidationErrorInfo>& validationInfo){ 
 			me->addValidationInfo(validationInfo);
@@ -196,7 +195,7 @@ void
 RemoteStreamImpl::fetchThreadMeta(const std::string& threadName)
 {
 	shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
-	metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(threadName),
+	metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(threadName).append(NameComponents::NameComponentMeta),
 		[threadName,me,this](NetworkData& meta, 
 			const std::vector<ValidationErrorInfo>& validationInfo){ 
 			me->addValidationInfo(validationInfo);
