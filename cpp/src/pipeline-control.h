@@ -18,6 +18,7 @@
 namespace ndnrtc {
 	class IPipeliner;
 	class IInterestControl;
+	class IPlayoutControl;
 	class PipelineControlStateMachine;
 
 	/**
@@ -45,11 +46,13 @@ namespace ndnrtc {
 		static PipelineControl defaultPipelineControl(const ndn::Name& threadPrefix,
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
-			const boost::shared_ptr<ILatencyControl> latencyControl);
+			const boost::shared_ptr<ILatencyControl> latencyControl,
+			const boost::shared_ptr<IPlayoutControl> playoutControl);
 		static PipelineControl videoPipelineControl(const ndn::Name& threadPrefix,
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
-			const boost::shared_ptr<ILatencyControl> latencyControl);
+			const boost::shared_ptr<ILatencyControl> latencyControl,
+			const boost::shared_ptr<IPlayoutControl> playoutControl);
 	
 	private:
 		PipelineControlStateMachine machine_;

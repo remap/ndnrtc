@@ -22,6 +22,7 @@ namespace ndnrtc {
 	class IPipeliner;
 	class IInterestControl;
 	class ILatencyControl;
+	class IPlayoutControl;
 	class PipelineControl;
 	class WireSegment;
 
@@ -108,6 +109,7 @@ namespace ndnrtc {
 			boost::shared_ptr<IPipeliner> pipeliner_;
 			boost::shared_ptr<IInterestControl> interestControl_;
 			boost::shared_ptr<ILatencyControl> latencyControl_;
+			boost::shared_ptr<IPlayoutControl> playoutControl_;
 		} Struct;
 
 		~PipelineControlStateMachine();

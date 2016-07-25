@@ -14,6 +14,7 @@
 #include "interest-control.h"
 #include "pipeliner.h"
 #include "frame-data.h"
+#include "playout-control.h"
 
 using namespace ndnrtc;
 namespace ndnrtc {
@@ -528,6 +529,7 @@ void
 Adjusting::enter()
 {
 	pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
+	ctrl_->playoutControl_->allowPlayout(true);
 }
 
 std::string 

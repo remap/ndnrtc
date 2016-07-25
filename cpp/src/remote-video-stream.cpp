@@ -51,7 +51,8 @@ RemoteVideoStreamImpl::initiateFetching()
 		PipelineControl::videoPipelineControl(threadPrefix.toUri(),
             boost::dynamic_pointer_cast<IPipeliner>(pipeliner_),
             boost::dynamic_pointer_cast<IInterestControl>(interestControl_),
-            boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_)));
+            boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
+            boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_)));
     pipelineControl_->setLogger(logger_);
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
