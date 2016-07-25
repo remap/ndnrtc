@@ -53,10 +53,10 @@ Playout::start(unsigned int fastForwardMs)
     jitterTiming_.flush();
     lastTimestamp_ = -1;
     lastDelay_ = -1;
-    delayAdjustment_ = fastForwardMs;
+    delayAdjustment_ = -(int)fastForwardMs;
     isRunning_ = true;
     
-    LogInfoC << "started" << std::endl;
+    LogInfoC << "started (‣‣" << fastForwardMs << "ms)" << std::endl;
     extractSample();
 }
 

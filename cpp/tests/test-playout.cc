@@ -404,8 +404,7 @@ TEST(TestPlayout, TestPlay)
 	EXPECT_GT(0.1, actualFps-playFps);
 	EXPECT_EQ(nSamples, frameNo);
 }
-#endif
-#if 1
+
 TEST(TestPlayout, TestRequestAndPlayWithDelay)
 {
 #ifdef ENABLE_LOGGING
@@ -593,8 +592,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 	work.reset();
 	t.join();
 }
-#endif
-#if 0
+
 TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 {
 #ifdef ENABLE_LOGGING
@@ -813,8 +811,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	work.reset();
 	t.join();
 }
-#endif
-#if 1
+
 TEST(TestPlayout, TestPlayout70msDelay)
 {
 #ifdef ENABLE_LOGGING
@@ -1072,9 +1069,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
-#endif
 //******************************************************************************
-#if 1
 TEST(TestPlayout, TestPlayout100msDelay)
 {
 #ifdef ENABLE_LOGGING
@@ -1334,10 +1329,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
-#endif
-
 //******************************************************************************
-#if 1
 TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 {
 #ifdef ENABLE_LOGGING
@@ -1594,6 +1586,254 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
 #endif
+TEST(TestPlayout, TestPlayoutFastForward)
+{
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#else
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
+#endif
+    
+    boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){
+        io.run();
+    });
+    
+    int runTimeMs = 10000;
+    int nRequested(0), nRequestedKey(0), nRequestedDelta(0);
+    int nPublished(0), nPublishedKey(0), nPublishedDelta(0);
+    int oneWayDelay = 100; // milliseconds
+    int deviation = 0;
+    int targetSize = oneWayDelay+deviation;
+    double captureFps = 22;
+    int samplePeriod = (int)(1000./captureFps);
+    int pipeline = 2*round((double)oneWayDelay/(double)samplePeriod)+1;
+    DelayQueue queue(io, oneWayDelay, deviation);
+    DataCache cache;
+    std::string streamPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera";
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
+    std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
+    VideoSource source(io, testVideoSource, frame);
+    MockExternalCapturer capturer;
+    source.addCapturer(&capturer);
+    
+    VideoCoderParams cp = sampleVideoCoderParams();
+    cp.codecFrameRate_ = captureFps;
+    cp.startBitrate_ = 200;
+    cp.encodeWidth_ = 320;
+    cp.encodeHeight_ = 240;
+    
+    VideoThread vthread(cp);
+    RawFrameConverter fc;
+    MockBufferObserver bobserver;
+    MockPlaybackQueueObserver pobserver;
+    boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
+    MockPlayoutObserver playoutObserver;
+    PlayoutTest playout(io, pqueue);
+    
+#ifdef ENABLE_LOGGING
+    playout.setDescription("playout");
+    playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+    
+    // buffer->attach(&bobserver);
+    pqueue->attach(&pobserver);
+    playout.attach(&playoutObserver);
+    
+#ifdef ENABLE_LOGGING
+    buffer->setDescription("buffer");
+    buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+    pqueue->setDescription("pqueue");
+    pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+    
+    int publishStart = 0, lastPublishTime = 0;
+    boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
+    publishFrame = [captureFps, threadPrefix, &cache, &vthread, &fc, &nPublished, pipeline,
+                    &nPublishedKey, &nPublishedDelta, &publishStart, &lastPublishTime]
+    (const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size)
+    {
+        boost::shared_ptr<VideoFramePacket> vp = vthread.encode(fc << ArgbRawFrameWrapper({w,h,data,size}));
+        if (vp.get())
+        {
+            std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+            vp->setSyncList(syncList);
+            
+            CommonHeader hdr;
+            hdr.sampleRate_ = captureFps;
+            hdr.publishTimestampMs_ = clock::millisecondTimestamp();
+            hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+            vp->setHeader(hdr);
+            
+            if (publishStart == 0)
+                publishStart = hdr.publishTimestampMs_;
+            lastPublishTime = hdr.publishTimestampMs_;
+            
+            bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+            int paired = (isKey ? nPublishedDelta : nPublishedKey);
+            int& seq = (isKey ? nPublishedKey : nPublishedDelta);
+            std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
+            Name frameName(threadPrefix);
+            frameName.append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
+            .appendSequenceNumber(seq);
+            std::vector<boost::shared_ptr<ndn::Data>> objects = dataFromSegments(frameName.toUri(), segments);
+            
+            seq++;
+            for (auto& d:objects)
+                cache.addData(d);
+#ifdef ENABLE_LOGGING
+            LogDebug("") << "published " << frameName << " " << frameName[-1].toSequenceNumber() << std::endl;
+#endif
+        }
+        return 0;
+    };
+    EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
+    .WillRepeatedly(Invoke(publishFrame));
+    
+    boost::function<void(boost::shared_ptr<WireData<VideoFrameSegmentHeader>>)> onDataArrived;
+    boost::function<void(PacketNumber, bool)>
+    requestFrame = [threadPrefix, &queue, &cache, buffer, &onDataArrived]
+    (PacketNumber fno, bool key)
+    {
+        int nSeg = (key ? 20 : 10);
+        Name frameName(threadPrefix);
+        
+        if (key) frameName.append(NameComponents::NameComponentKey);
+        else frameName.append(NameComponents::NameComponentDelta);
+        
+        frameName.appendSequenceNumber(fno);
+        
+        std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName.toUri(), 0, nSeg);
+        ASSERT_TRUE(buffer->requested(makeInterestsConst(interests)));
+        
+        for (auto& i:interests)
+        {
+            // send out interest
+            queue.push([&queue, &cache, i, buffer, &onDataArrived](){
+                // when received on producer side - add interest to cache
+                cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
+                    // when data becomes available - send it back
+                    queue.push([buffer, d, &onDataArrived, i](){
+                        // when data arrives - add to buffer
+                        boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
+                        onDataArrived(data);
+                        BufferReceipt r = buffer->received(data);
+                    });
+                });
+            });
+        }
+    };
+    
+    onDataArrived = [&requestFrame, &nRequested, &nRequestedDelta, &nRequestedKey, pipeline]
+    (boost::shared_ptr<WireData<VideoFrameSegmentHeader>> data)
+    {
+        int& seqNo = (data->isDelta() ? nRequestedDelta : nRequestedKey);
+        int pp = (data->isDelta() ? pipeline : 1);
+        
+        if (data->getSampleNo()+pp == seqNo)
+        {
+            requestFrame(seqNo++, !data->isDelta());
+            ++nRequested;
+        }
+    };
+    
+    int pqueueSizeCnt = 0;
+    int pqueueSize = 0;
+    bool done = false;
+    boost::function<void(void)>
+    sampleReady = [&done,
+                   cp, targetSize, samplePeriod, pqueue, &playout,
+                   &pqueueSizeCnt, &pqueueSize]()
+    {
+        pqueueSizeCnt++;
+        pqueueSize += pqueue->size();
+        
+        if (pqueue->size() >= 2*targetSize && !playout.isRunning() && !done)
+            EXPECT_NO_THROW(playout.start(pqueue->size()-targetSize));
+    };
+    
+    EXPECT_CALL(pobserver, onNewSampleReady())
+    .WillRepeatedly(Invoke(sampleReady));
+    
+    int nPlayed = 0;
+    VideoFrameSlot vs;
+    boost::chrono::high_resolution_clock::time_point startPlayback, lastTimestamp;
+    playout.onSampleReadyForPlayback = [&vs, &nPlayed, &buffer,  &lastTimestamp, samplePeriod,
+                                        threadPrefix, &startPlayback]
+    (const boost::shared_ptr<const BufferSlot>& slot)
+    {
+        boost::chrono::high_resolution_clock::time_point p = boost::chrono::high_resolution_clock::now();
+        lastTimestamp = p;
+        
+        if (startPlayback == boost::chrono::high_resolution_clock::time_point())
+            startPlayback = p;
+        
+        bool recovered = false;
+        boost::shared_ptr<ImmutableVideoFramePacket> framePacket = vs.readPacket(*slot, recovered);
+        EXPECT_TRUE(framePacket.get());
+        nPlayed++;
+    };
+    
+    int emptyCount = 0;
+    EXPECT_CALL(playoutObserver, onQueueEmpty())
+    .Times(AtLeast(0))
+    .WillRepeatedly(Invoke([&emptyCount]() {
+        emptyCount++;
+    }));
+    
+    // request initial frames
+    requestFrame(nRequestedKey++, true);
+    for (nRequested = 1; nRequested <= pipeline; ++nRequested)
+    {
+        requestFrame(nRequestedDelta, false);
+        nRequestedDelta++;
+    }
+    
+    source.start(captureFps);
+    
+    boost::this_thread::sleep_for(Msec(runTimeMs));
+    done = true;
+    source.stop();
+    queue.reset();
+    
+    // allow some time to drain playout queue
+    boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+    playout.stop();
+    work.reset();
+    t.join();
+    
+    int playbackDuration = boost::chrono::duration_cast<boost::chrono::milliseconds>(lastTimestamp-startPlayback).count();
+    int publishDuration = lastPublishTime - publishStart;
+    double avgQueueSize = (double)pqueueSize/(double)pqueueSizeCnt;
+    double avgPublishRate = (double)nPublished/((double)(publishDuration)/1000.);
+    double avgPlayRate = (double)nPlayed/((double)playbackDuration/1000.);
+    double avgPublishPeriod = (double)publishDuration/(double)nPublished;
+    double avgPlayPeriod = (double)playbackDuration/(double)nPlayed;
+    int tmp = nPublished;
+    double queueSizeDeviation = 0.2;
+    
+    GT_PRINTF("Total published: %dms (%d frames), played: %dms (%d frames)\n",
+              publishDuration, tmp, playbackDuration, nPlayed);
+    GT_PRINTF("Average playout queue size %.2fms (%.2f frames); target %dms. Queue drain count: %d\n", 
+              avgQueueSize, avgQueueSize/avgPlayPeriod, targetSize, emptyCount);
+    GT_PRINTF("avg publish rate %.2f; avg play rate: %.2f; avg publish period: %2.f; avg play period: %.2f\n",
+              avgPublishRate, avgPlayRate, avgPublishPeriod, avgPlayPeriod);
+    
+#ifdef ENABLE_LOGGING
+    LogDebug("") << buffer->dump() << std::endl;
+#endif
+    EXPECT_LT(80, avgQueueSize);
+    EXPECT_LT(avgQueueSize, 120);
+    
+    ASSERT_FALSE(playout.isRunning());
+    
+    ndnlog::new_api::Logger::getLogger("").flush();
+}
 
 //******************************************************************************
 int main(int argc, char **argv) {
