@@ -14,6 +14,8 @@
 
 using namespace ndnrtc;
 
+const unsigned int InterestControl::MinPipelineSize = 3;
+
 void 
 InterestControl::StrategyDefault::getLimits(double rate, 
 	const estimators::Average& drd, 
@@ -24,6 +26,9 @@ InterestControl::StrategyDefault::getLimits(double rate,
 	double targetSamplePeriod = 1000./rate;
 	int interestDemand = (int)(ceil(d/targetSamplePeriod));
 	
+    if (interestDemand < InterestControl::MinPipelineSize)
+        interestDemand = InterestControl::MinPipelineSize;
+
 	lowerLimit = interestDemand;
 	upperLimit = interestDemand*8;
 }
@@ -46,7 +51,9 @@ InterestControl::StrategyDefault::withhold(unsigned int currentLimit,
 InterestControl::InterestControl(const boost::shared_ptr<DrdEstimator>& drdEstimator,
 	boost::shared_ptr<IStrategy> strategy):
 initialized_(false), 
-lowerLimit_(3), limit_(3), upperLimit_(30),
+lowerLimit_(InterestControl::MinPipelineSize),
+limit_(InterestControl::MinPipelineSize),
+upperLimit_(10*InterestControl::MinPipelineSize),
 pipeline_(0),
 drdEstimator_(drdEstimator), strategy_(strategy),
 targetRate_(0.)
@@ -64,8 +71,8 @@ InterestControl::reset()
 	initialized_ = false;
 	limitSet_ = false;
 	pipeline_ = 0;
-	lowerLimit_ = 3;
-	limit_ = 3;
+	lowerLimit_ = InterestControl::MinPipelineSize;
+	limit_ = InterestControl::MinPipelineSize;
 	upperLimit_ = 30;
 }
 

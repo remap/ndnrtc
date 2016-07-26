@@ -50,6 +50,7 @@ namespace ndnrtc {
 							public IBufferControlObserver
 	{
 	public:
+        static const unsigned int MinPipelineSize;
 		/**
 		 * Interface for Interest pipeline adjustment strategy
 		 */
