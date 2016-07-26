@@ -102,8 +102,10 @@ Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
     while (interestControl_->room() > 0)
     {
         Name n(threadPrefix);
-        n.append((nextSamplePriority_ == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
-        n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
+        n.append((nextSamplePriority_ == SampleClass::Delta ?
+                  NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+        n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ?
+                                seqCounter_.delta_ : seqCounter_.key_));
 
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         int64_t deadline = playbackQueue_->size()+playbackQueue_->pendingSize();
@@ -205,4 +207,10 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
             << receipt.slot_->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
         express(interests, true);
     }
+    
+    // set priority for key frames if we got key frame ready
+    if (receipt.slot_->getNameInfo().class_ == SampleClass::Key &&
+        receipt.slot_->getState() == BufferSlot::State::Ready)
+        setNeedSample(SampleClass::Key);
+
 }
