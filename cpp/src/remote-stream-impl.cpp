@@ -228,6 +228,7 @@ RemoteStreamImpl::initiateFetching()
         << " (thread " << threadName_ << ")" << std::endl;
     
     isRunning_ = true;
+    segmentController_->setIsActive(true);
     
     if (type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
     {
@@ -248,6 +249,7 @@ RemoteStreamImpl::stopFetching()
 {
     if (isRunning_)
     {
+        segmentController_->setIsActive(false);
         pipelineControl_->stop();
         isRunning_ = false;
         needMeta_ = false;

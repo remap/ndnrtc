@@ -27,6 +27,7 @@ TEST(TestSegmentController, TestOnData)
 {
 	boost::asio::io_service io;
 	SegmentController controller(io, 500);
+    controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
@@ -63,10 +64,52 @@ TEST(TestSegmentController, TestOnData)
 	onData(i, d);
 }
 
+TEST(TestSegmentController, TestOnDataNotActive)
+{
+    boost::asio::io_service io;
+    SegmentController controller(io, 500);
+    controller.setIsActive(true);
+    
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    controller.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+    
+    OnData onData = controller.getOnDataCallback();
+    OnTimeout onTimeout = controller.getOnTimeoutCallback();
+    
+    std::string segmentPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00";
+    boost::shared_ptr<Interest> i = boost::make_shared<Interest>(Name(segmentPrefix));
+    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(segmentPrefix));
+    
+    MockSegmentControllerObserver o;
+    controller.attach(&o);
+    
+    boost::function<void(const boost::shared_ptr<WireSegment>&)> checkSegment = [i,d]
+    (const boost::shared_ptr<WireSegment>& seg)
+    {
+        EXPECT_EQ(d, seg->getData());
+        EXPECT_EQ(i, seg->getInterest());
+    };
+    
+    EXPECT_CALL(o, segmentArrived(_))
+    .Times(1)
+    .WillOnce(Invoke(checkSegment));
+    
+    onData(i, d);
+    
+    controller.setIsActive(false);
+    EXPECT_CALL(o, segmentArrived(_))
+    .Times(0);
+    onData(i, d);
+}
+
 TEST(TestSegmentController, TestOnBadNamedData)
 {
 	boost::asio::io_service io;
 	SegmentController controller(io, 500);
+    controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
@@ -95,6 +138,7 @@ TEST(TestSegmentController, TestOnTimeout)
 {
 	boost::asio::io_service io;
 	SegmentController controller(io, 500);
+    controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
@@ -140,6 +184,7 @@ TEST(TestSegmentController, TestStarvation)
 
 	{
 		SegmentController controller(io, 500);
+        controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
 		ndnlog::new_api::Logger::initAsyncLogging();
@@ -152,6 +197,39 @@ TEST(TestSegmentController, TestStarvation)
 	}
 	work.reset();
 	t.join();
+}
+
+TEST(TestSegmentController, TestStarvationNotActive)
+{
+    boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io));
+    boost::thread t([&io](){
+        io.run();
+    });
+    
+    MockSegmentControllerObserver o;
+    EXPECT_CALL(o, segmentStarvation())
+    .Times(0);
+    
+    {
+        SegmentController controller(io, 200);
+        
+#ifdef ENABLE_LOGGING
+        ndnlog::new_api::Logger::initAsyncLogging();
+        ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+        controller.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+        
+        controller.attach(&o);
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(400));
+        
+        EXPECT_CALL(o, segmentStarvation())
+        .Times(1);
+        controller.setIsActive(true);
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(400));
+    }
+    work.reset();
+    t.join();
 }
 
 //******************************************************************************

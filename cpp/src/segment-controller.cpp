@@ -21,11 +21,10 @@ SegmentController::SegmentController(boost::asio::io_service& faceIo,
 Periodic(faceIo),
 maxIdleTimeMs_(maxIdleTimeMs),
 lastDataTimestampMs_(clock::millisecondTimestamp()),
-starvationFired_(false)
+starvationFired_(false),
+active_(false)
 {
 	description_ = "segment-controller";
-	setupInvocation(maxIdleTimeMs_, 
-		boost::bind(&SegmentController::periodicInvocation, this));
 }
 
 SegmentController::~SegmentController(){
@@ -35,6 +34,17 @@ SegmentController::~SegmentController(){
 unsigned int SegmentController::getCurrentIdleTime() const
 {
 	return 0;
+}
+
+void
+SegmentController::setIsActive(bool active)
+{
+    active_ = active;
+    if (!active_)
+        cancelInvocation();
+    else
+        setupInvocation(maxIdleTimeMs_,
+                        boost::bind(&SegmentController::periodicInvocation, this));
 }
 
 OnData SegmentController::getOnDataCallback()
@@ -92,6 +102,12 @@ unsigned int SegmentController::periodicInvocation()
 void SegmentController::onData(const boost::shared_ptr<const Interest>& interest,
 			const boost::shared_ptr<Data>& data)
 {
+    if (!active_)
+    {
+        LogWarnC << "incoming data in inactive state " << data->getName() << std::endl;
+        return;
+    }
+    
 	lastDataTimestampMs_ =  clock::millisecondTimestamp();
 	starvationFired_ = false;
 	NamespaceInfo info;
@@ -118,6 +134,12 @@ void SegmentController::onData(const boost::shared_ptr<const Interest>& interest
 
 void SegmentController::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
+    if (!active_)
+    {
+        LogWarnC << "timeout in inactive state " << interest->getName() << std::endl;
+        return;
+    }
+    
 	NamespaceInfo info;
 
 	if (NameComponents::extractInfo(interest->getName(), info))

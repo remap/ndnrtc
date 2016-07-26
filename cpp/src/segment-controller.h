@@ -55,6 +55,8 @@ namespace ndnrtc {
 
 		unsigned int getCurrentIdleTime() const;
 		unsigned int getMaxIdleTime() const { return maxIdleTimeMs_; }
+        void setIsActive(bool active);
+        bool getIsActive() const { return active_; }
 
 		ndn::OnData getOnDataCallback();
 		ndn::OnTimeout getOnTimeoutCallback();
@@ -63,6 +65,7 @@ namespace ndnrtc {
 		void detach(ISegmentControllerObserver* o);
 
 	private:
+        bool active_;
 		boost::mutex mutex_;
 		unsigned int maxIdleTimeMs_;
 		std::vector<ISegmentControllerObserver*> observers_;
