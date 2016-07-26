@@ -321,9 +321,11 @@ states_(statesMap),
 currentState_(states_[kStateIdle]),
 lastEventTimestamp_(clock::millisecondTimestamp())
 {
-	assert(ppCtrl_->pipeliner_.get());
+    assert(ppCtrl_->buffer_.get());
+    assert(ppCtrl_->pipeliner_.get());
 	assert(ppCtrl_->interestControl_.get());
 	assert(ppCtrl_->latencyControl_.get());
+    assert(ppCtrl_->playoutControl_.get());
 
 	currentState_->enter();
 	description_ = "state-machine";
@@ -359,7 +361,7 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 	{
 		if (states_.find(nextState) == states_.end())
 			throw std::runtime_error(std::string("Unsupported state: "+nextState).c_str());
-		switchToState(nextState);
+		switchToState(nextState, ev->toString());
 	}
 	else 
 		transition(ev);
@@ -374,19 +376,22 @@ PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineCo
 		stateMachineTable_.end())
 		return false;
 
-	switchToState(stateMachineTable_[MAKE_TRANSITION(currentState_->str(), ev->getType())]);
+	switchToState(stateMachineTable_[MAKE_TRANSITION(currentState_->str(), ev->getType())],
+                  ev->toString());
 	return true;
 }
 
 void
-PipelineControlStateMachine::switchToState(const std::string& state)
+PipelineControlStateMachine::switchToState(const std::string& state,
+                                           const std::string& event)
 {
     int64_t now = clock::millisecondTimestamp();
     int64_t stateDuration = (lastEventTimestamp_ ? now - lastEventTimestamp_ : 0);
     lastEventTimestamp_ = now;
     
-    LogInfoC << "[" << currentState_->str() << "] ---> [" << states_[state]->str() << "] "
-    << stateDuration << "ms" << std::endl;
+    LogInfoC << "[" << currentState_->str() << "]-("
+        << event << ")->[" << states_[state]->str() << "] "
+        << stateDuration << "ms" << std::endl;
 
 	currentState_->exit();
 	currentState_ = states_[state];
@@ -415,9 +420,11 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 void 
 Idle::enter()
 {
+    ctrl_->buffer_->reset();
 	ctrl_->pipeliner_->reset();
 	ctrl_->latencyControl_->reset();
 	ctrl_->interestControl_->reset();
+    ctrl_->playoutControl_->allowPlayout(false);
 }
 
 //******************************************************************************
@@ -501,7 +508,9 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 
 	ctrl_->pipeliner_->setSequenceNumber(seg->segment().getHeader().pairedSequenceNo_,
 		SampleClass::Delta);
-	
+    ctrl_->pipeliner_->setSequenceNumber(seg->getSampleNo()+1,
+                                         SampleClass::Key);
+
 	return WaitForInitial::onSegment(ev);
 }
 
@@ -509,7 +518,6 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 std::string 
 Chasing::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
-	ctrl_->pipeliner_->setNeedSample(ev->getInfo().class_);
 	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::Thread));
 	return str();
 }
@@ -536,6 +544,7 @@ std::string
 Adjusting::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
 	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+    
 	PipelineAdjust cmd = ctrl_->latencyControl_->getCurrentCommand();
 	
 	if (cmd == PipelineAdjust::IncreasePipeline)

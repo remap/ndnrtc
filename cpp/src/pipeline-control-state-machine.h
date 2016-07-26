@@ -23,6 +23,7 @@ namespace ndnrtc {
 	class IInterestControl;
 	class ILatencyControl;
 	class IPlayoutControl;
+    class IBuffer;
 	class PipelineControl;
 	class WireSegment;
 
@@ -106,6 +107,7 @@ namespace ndnrtc {
 			_Struct(const ndn::Name threadPrefix):threadPrefix_(threadPrefix){}
 
 			const ndn::Name threadPrefix_;
+            boost::shared_ptr<IBuffer> buffer_;
 			boost::shared_ptr<IPipeliner> pipeliner_;
 			boost::shared_ptr<IInterestControl> interestControl_;
 			boost::shared_ptr<ILatencyControl> latencyControl_;
@@ -135,7 +137,7 @@ namespace ndnrtc {
 			StatesMap statesMap);
 
 		bool transition(const boost::shared_ptr<const PipelineControlEvent>& ev);
-		void switchToState(const std::string& state);
+		void switchToState(const std::string& state, const std::string& event);
 
 		static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
 		static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);

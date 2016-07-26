@@ -15,13 +15,15 @@ using namespace ndnrtc;
 
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadPrefix,
+            const boost::shared_ptr<IBuffer> buffer,
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
 			const boost::shared_ptr<IPlayoutControl> playoutControl)
 {
 	PipelineControlStateMachine::Struct ctrl(threadPrefix);
-	ctrl.pipeliner_ = pipeliner;
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pipeliner;
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;
 	ctrl.playoutControl_ = playoutControl;
@@ -30,12 +32,14 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadP
 }
 
 PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPrefix,
-			const boost::shared_ptr<IPipeliner> pipeliner,
+			const boost::shared_ptr<IBuffer> buffer,
+            const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
 			const boost::shared_ptr<IPlayoutControl> playoutControl)
 {
 	PipelineControlStateMachine::Struct ctrl(threadPrefix);
+    ctrl.buffer_ = buffer;
 	ctrl.pipeliner_ = pipeliner;
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;

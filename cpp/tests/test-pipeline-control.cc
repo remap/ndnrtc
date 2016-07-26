@@ -14,6 +14,8 @@
 #include "mock-objects/interest-control-mock.h"
 #include "mock-objects/pipeliner-mock.h"
 #include "mock-objects/latency-control-mock.h"
+#include "mock-objects/buffer-mock.h"
+#include "mock-objects/playout-control-mock.h"
 
 using namespace ::testing;
 using namespace ndnrtc;
@@ -25,16 +27,22 @@ TEST(TestPipelineControl, TestDefault)
 	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
 	EXPECT_CALL(*interestControl, reset())
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControl ppc = PipelineControl::defaultPipelineControl(Name(threadPrefix),
-		pp, interestControl, latencyControl);
+		buffer, pp, interestControl, latencyControl, playoutControl);
 
 	{
 		EXPECT_CALL(*pp, setNeedRightmost())
@@ -45,12 +53,16 @@ TEST(TestPipelineControl, TestDefault)
 		ppc.start();
 		EXPECT_ANY_THROW(ppc.start());
 	
+        EXPECT_CALL(*buffer, reset())
+            .Times(1);
 		EXPECT_CALL(*pp, reset())
 			.Times(1);
 		EXPECT_CALL(*interestControl, reset())
 			.Times(1);
 		EXPECT_CALL(*latencyControl, reset())
 			.Times(1);
+        EXPECT_CALL(*playoutControl, allowPlayout(false))
+            .Times(1);
 	
 		ppc.stop();
 	}
@@ -72,11 +84,15 @@ TEST(TestPipelineControl, TestDefault)
 			.Times(1);
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true))
 			.Times(1);
+        EXPECT_CALL(*interestControl, increment())
+            .Times(1);
 
 		ppc.segmentArrived(seg);
 	}
 
 	{ // waitforinitial -> chasing -> adjusting
+        EXPECT_CALL(*playoutControl, allowPlayout(true))
+            .Times(1);
 		EXPECT_CALL(*latencyControl, getCurrentCommand())
 			.Times(2)
 			.WillOnce(Return(PipelineAdjust::IncreasePipeline))

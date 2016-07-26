@@ -49,6 +49,7 @@ RemoteVideoStreamImpl::initiateFetching()
 	// create pipeline control
 	pipelineControl_ = boost::make_shared<PipelineControl>(
 		PipelineControl::videoPipelineControl(threadPrefix.toUri(),
+            boost::dynamic_pointer_cast<IBuffer>(buffer_),
             boost::dynamic_pointer_cast<IPipeliner>(pipeliner_),
             boost::dynamic_pointer_cast<IInterestControl>(interestControl_),
             boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
