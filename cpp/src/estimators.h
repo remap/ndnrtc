@@ -94,8 +94,8 @@ namespace ndnrtc {
 			void newValue(double value);
 			double deviation() const { return sqrt(variance_); }
 			double variance() const { return variance_; }
-			double oldestValue() const { return samples_.front(); }
-			double latestValue() const { return samples_.back(); }
+            double oldestValue() const { return (samples_.size() ? samples_.front() : 0); }
+            double latestValue() const { return (samples_.size() ? samples_.back() : 0); }
 
 		private:
 			bool limitReached_;

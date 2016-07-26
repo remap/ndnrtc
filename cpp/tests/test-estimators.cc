@@ -96,6 +96,27 @@ TEST(TestSlidingAverage, TestTimeWindow)
 	EXPECT_LT(2.87 - avg.deviation(), 0.5);
 }
 
+TEST(TestSlidingAverage, TestEdgeValues)
+{
+    Average avg(boost::make_shared<SampleWindow>(10));
+    
+    EXPECT_EQ(0, avg.oldestValue());
+    EXPECT_EQ(0, avg.latestValue());
+    
+    double v = 0;
+    int d = 1;
+    for (int i = 1; i <= 100; ++i)
+    {
+        avg.newValue(v);
+        if (i%10 == 0) d = -d;
+        else v+=d;
+    }
+    
+    EXPECT_EQ(4.5, avg.value());
+    EXPECT_EQ(8.25, avg.variance());
+    EXPECT_LT(2.87 - avg.deviation(), 0.01);
+}
+
 TEST(TestFrequencyMeter, TestTimeWindow)
 {
 	boost::asio::io_service io;
@@ -151,6 +172,7 @@ TEST(TestFilter, TestSmoothing)
 	for (auto v:values) f.newValue(v);
 	EXPECT_LT(5.5-f.value(), 0.5);
 }
+
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
