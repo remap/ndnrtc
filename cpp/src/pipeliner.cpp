@@ -208,9 +208,10 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
         express(interests, true);
     }
     
-    // set priority for key frames if we got key frame ready
+    // set priority for requesting next key frame when key segment is received
     if (receipt.slot_->getNameInfo().class_ == SampleClass::Key &&
-        receipt.slot_->getState() == BufferSlot::State::Ready)
+        receipt.slot_->getState() == BufferSlot::State::Assembling &&
+        receipt.slot_->getFetchedNum() == 1)
         setNeedSample(SampleClass::Key);
 
 }

@@ -251,6 +251,7 @@ RemoteStreamImpl::stopFetching()
     {
         segmentController_->setIsActive(false);
         pipelineControl_->stop();
+        interestQueue_->reset();
         isRunning_ = false;
         needMeta_ = false;
         streamMeta_.reset();
