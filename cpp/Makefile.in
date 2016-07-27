@@ -413,12 +413,8 @@ am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-tes
 	$(am__objects_6)
 bin_tests_test_client_params_OBJECTS =  \
 	$(am_bin_tests_test_client_params_OBJECTS)
-@OS_LINUX_TRUE@am__DEPENDENCIES_3 =  \
-@OS_LINUX_TRUE@	/usr/lib/x86_64-linux-gnu/libboost_system.so
-am__DEPENDENCIES_4 = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
-am__DEPENDENCIES_5 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_4)
-bin_tests_test_client_params_DEPENDENCIES = $(am__DEPENDENCIES_5)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
+bin_tests_test_client_params_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_client_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -431,7 +427,7 @@ am_bin_tests_test_config_load_OBJECTS =  \
 	$(am__objects_7)
 bin_tests_test_config_load_OBJECTS =  \
 	$(am_bin_tests_test_config_load_OBJECTS)
-bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -526,7 +522,7 @@ am_bin_tests_test_frame_io_OBJECTS =  \
 	$(am__objects_13)
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
-bin_tests_test_frame_io_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_frame_io_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
@@ -539,7 +535,7 @@ am_bin_tests_test_generator_OBJECTS =  \
 	$(am__objects_14)
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
-bin_tests_test_generator_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_generator_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
@@ -940,7 +936,7 @@ am_bin_tests_test_renderer_OBJECTS =  \
 	$(am__objects_31)
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
-bin_tests_test_renderer_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_renderer_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
@@ -991,7 +987,7 @@ am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-t
 	$(am__objects_34)
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
-bin_tests_test_stat_collector_DEPENDENCIES = $(am__DEPENDENCIES_5)
+bin_tests_test_stat_collector_DEPENDENCIES = $(am__DEPENDENCIES_3)
 bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1087,8 +1083,10 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-video-source.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
+@OS_LINUX_TRUE@am__DEPENDENCIES_4 =  \
+@OS_LINUX_TRUE@	/usr/lib/x86_64-linux-gnu/libboost_system.so
 ndnrtc_client_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_4)
 ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
@@ -1687,8 +1685,8 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
 	$(am__append_6)
-UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS}
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} ${ndnrtc_client_LDADD}
+UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 #bin/tests/test-client
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
