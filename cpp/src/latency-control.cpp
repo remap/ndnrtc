@@ -144,7 +144,9 @@ StabilityEstimator::flush()
 //******************************************************************************
 DrdChangeEstimator::DrdChangeEstimator(unsigned int sampleSize, 
 	unsigned int minStableOccurrences, double threshold)
-{}
+{
+    description_ = "drd-change-est";
+}
 
 void
 DrdChangeEstimator::newDrdValue(const Average& drdEstimator)
@@ -343,6 +345,14 @@ LatencyControl::unregisterObserver()
 {
     boost::lock_guard<boost::mutex> scopedLock(mutex_);
     observer_ = nullptr;
+}
+
+void
+LatencyControl::setLogger(ndnlog::new_api::Logger* logger)
+{
+    NdnRtcComponent::setLogger(logger);
+    stabilityEstimator_->setLogger(logger);
+    drdChangeEstimator_->setLogger(logger);
 }
 
 #pragma mark - private

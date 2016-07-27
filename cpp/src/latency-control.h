@@ -15,6 +15,12 @@
 #include "ndnrtc-object.h"
 #include "buffer-control.h"
 
+namespace ndnlog {
+    namespace new_api {
+        class ILogger;
+    }
+}
+
 namespace ndnrtc {
 	class StabilityEstimator;
 	class DrdChangeEstimator;
@@ -64,6 +70,8 @@ namespace ndnrtc {
 		void unregisterObserver();
 
 		PipelineAdjust getCurrentCommand() const { return currentCommand_; }
+        
+        void setLogger(ndnlog::new_api::Logger* logger);
 
 	private:
 		boost::mutex mutex_;

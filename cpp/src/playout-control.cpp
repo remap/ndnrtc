@@ -20,6 +20,7 @@ playout_(playout),
 queue_(queue),
 thresholdMs_(minimalPlayableLevel)
 {
+    description_ = "playout-control";
 }
 
 void
