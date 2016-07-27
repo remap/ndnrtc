@@ -53,14 +53,14 @@ ndnrtc::VideoFramePacket
 std::vector<ndnrtc::VideoFrameSegment> 
   sliceFrame(ndnrtc::VideoFramePacket& vp, PacketNumber playNo = 0, PacketNumber pairedSeqNo = 1);
 
-std::vector<ndnrtc::CommonSegment> 
+std::vector<ndnrtc::VideoFrameSegment>
   sliceParity(ndnrtc::VideoFramePacket& vp, boost::shared_ptr<ndnrtc::NetworkData>& parity);
 
 std::vector<boost::shared_ptr<ndn::Data>> 
   dataFromSegments(std::string frameName, const std::vector<ndnrtc::VideoFrameSegment>& segments);
 
 std::vector<boost::shared_ptr<ndn::Data>> 
-  dataFromParitySegments(std::string frameName, const std::vector<ndnrtc::CommonSegment>& segments);
+  dataFromParitySegments(std::string frameName, const std::vector<ndnrtc::VideoFrameSegment>& segments);
 
 std::vector<boost::shared_ptr<ndn::Interest>> 
   getInterests(std::string frameName, unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0, 

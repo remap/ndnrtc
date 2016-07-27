@@ -90,7 +90,7 @@ namespace ndnrtc
                                     // already has some data segments arrived
             Ready = 1<<3, // slot assembled all the data and is ready for
                             // decoding a frame
-            Locked = 1<<4 // slot is locked for decoding
+            Locked = 1<<4 // slot is locked for playout
         }; // enum State
 
         enum Verification {
@@ -164,6 +164,7 @@ namespace ndnrtc
         unsigned int getRtxNum() const { return nRtx_; }
         bool hasOriginalSegments() const { return hasOriginalSegments_; }
         size_t getFetchedNum() const { return fetched_.size(); }
+        void toggleLock();
         
         int64_t getAssemblingTime() const
         { return ( state_ >= Ready ? assembledTimeUsec_-firstSegmentTimeUsec_ : 0); }
@@ -325,18 +326,21 @@ namespace ndnrtc
 
         mutable boost::recursive_mutex mutex_;
         boost::shared_ptr<SlotPool> pool_;
-        std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_;
+        std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
 
-        void lock(const ndn::Name& slotPrefix);
         void invalidate(const ndn::Name& slotPrefix);
         void invalidatePrevious(const ndn::Name& slotPrefix);
+        
+        void reserveSlot(const boost::shared_ptr<const BufferSlot>& slot);
+        void releaseSlot(const boost::shared_ptr<const BufferSlot>& slot);
     };
 
     class IBufferObserver {
     public:
         virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&) = 0;
         virtual void onNewData(const BufferReceipt& receipt) = 0;
+        virtual void onReset() = 0;
     };
 
     //******************************************************************************
@@ -412,6 +416,7 @@ namespace ndnrtc
 
         virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&);
         virtual void onNewData(const BufferReceipt& receipt);
+        virtual void onReset();
     };
 
     class IPlaybackQueueObserver

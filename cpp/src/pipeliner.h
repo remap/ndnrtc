@@ -143,6 +143,7 @@ namespace ndnrtc {
         // IBufferObserver
         void onNewRequest(const boost::shared_ptr<BufferSlot>&);
         void onNewData(const BufferReceipt& receipt);
+        void onReset(){}
     };
 }
 

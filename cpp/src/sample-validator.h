@@ -29,6 +29,7 @@ namespace ndnrtc {
 
 		void onNewRequest(const boost::shared_ptr<BufferSlot>&);
 		void onNewData(const BufferReceipt& receipt);
+		void onReset() {}
 	};
 
 	class ManifestValidator : public NdnRtcComponent, public IBufferObserver
@@ -86,6 +87,7 @@ namespace ndnrtc {
 
 		void onNewRequest(const boost::shared_ptr<BufferSlot>&);
 		void onNewData(const BufferReceipt& receipt);
+		void onReset() {}
 		void verifySlot(const boost::shared_ptr<const BufferSlot> slot);
 	};
 }

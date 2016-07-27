@@ -415,7 +415,7 @@ TEST(TestPlayout, TestSkipDelta)
 				std::vector<boost::shared_ptr<ndn::Data>> parityObjects;
 				{
 					boost::shared_ptr<NetworkData> parity;
-					std::vector<ndnrtc::CommonSegment> paritySegments = sliceParity(*vp, parity);
+					std::vector<ndnrtc::VideoFrameSegment> paritySegments = sliceParity(*vp, parity);
 					parityObjects = dataFromParitySegments(frameName.toUri(), paritySegments);
 				}
 
@@ -482,10 +482,7 @@ TEST(TestPlayout, TestSkipDelta)
 							boost::shared_ptr<WireSegment> data;
 							NamespaceInfo info;
 							NameComponents::extractInfo(d->getName(), info);
-							if (info.isParity_)
-								data = boost::make_shared<WireData<DataSegmentHeader>>(d, i);
-							else
-								data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
+                            data = boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, i);
 
 							onDataArrived(data);
 							if (buffer->isRequested(data))

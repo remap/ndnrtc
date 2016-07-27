@@ -33,7 +33,7 @@
 #include "mock-objects/playout-observer-mock.h"
 #include "mock-objects/external-capturer-mock.h"
 
-// #define ENABLE_LOGGING
+//#define ENABLE_LOGGING
 
 using namespace testing;
 using namespace ndn;
@@ -56,7 +56,6 @@ private:
 	}
 };
 
-#if 1
 TEST(TestPlaybackQueue, TestAttach)
 {
     int nSamples = 100;
@@ -1069,7 +1068,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
-//******************************************************************************
+
 TEST(TestPlayout, TestPlayout100msDelay)
 {
 #ifdef ENABLE_LOGGING
@@ -1329,7 +1328,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
-//******************************************************************************
+
 TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 {
 #ifdef ENABLE_LOGGING
@@ -1585,7 +1584,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 
 	ndnlog::new_api::Logger::getLogger("").flush();
 }
-#endif
+
 TEST(TestPlayout, TestPlayoutFastForward)
 {
 #ifdef ENABLE_LOGGING

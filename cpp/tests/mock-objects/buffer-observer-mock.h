@@ -17,6 +17,7 @@ class MockBufferObserver : public ndnrtc::IBufferObserver
 public:
 	MOCK_METHOD1(onNewRequest, void(const boost::shared_ptr<ndnrtc::BufferSlot>&));
 	MOCK_METHOD1(onNewData, void(const ndnrtc::BufferReceipt&));
+    MOCK_METHOD0(onReset, void(void));
 };
 
 #endif

@@ -18,6 +18,8 @@
 #include "mock-objects/interest-control-mock.h"
 #include "mock-objects/pipeliner-mock.h"
 #include "mock-objects/latency-control-mock.h"
+#include "mock-objects/buffer-mock.h"
+#include "mock-objects/playout-control-mock.h"
 
 // #define ENABLE_LOGGING
 
@@ -33,21 +35,29 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+	boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
 	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
 	
 	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+	ctrl.buffer_ = buffer;
 	ctrl.pipeliner_ = pp;
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
 	EXPECT_CALL(*interestControl, reset())
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -73,7 +83,9 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Delta));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
+    
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
 
@@ -98,6 +110,8 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateChasing, sm.getState());
 
+    EXPECT_CALL(*playoutControl, allowPlayout(true))
+        .Times(1);
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateAdjusting, sm.getState());
 
@@ -132,14 +146,18 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -147,6 +165,10 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -185,13 +207,14 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 		EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1,SampleClass::Key));
 		EXPECT_CALL(*pp, setNeedSample(SampleClass::Key));
 		EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*interestControl, increment());
 	}
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
 
 	// difference from default consumer - sets sequence number for Delta upon receiving initial segment
 	EXPECT_CALL(*pp, setSequenceNumber(deltaSeqNo, SampleClass::Delta));
-
+    
 	EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
 		.Times(4);
 	EXPECT_CALL(*latencyControl, getCurrentCommand())
@@ -202,6 +225,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 	EXPECT_CALL(*interestControl, pipelineLimit())
 		.Times(1)
 		.WillOnce(Return(5));
+    EXPECT_CALL(*pp, setSequenceNumber(startSeqNo+1, SampleClass::Key));
 
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateChasing, sm.getState());
@@ -212,6 +236,8 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateChasing, sm.getState());
 
+    EXPECT_CALL(*playoutControl, allowPlayout(true))
+        .Times(1);
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateAdjusting, sm.getState());
 
@@ -246,14 +272,18 @@ TEST(TestPipelineControlStateMachine, TestRightmostTimeout)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -261,6 +291,10 @@ TEST(TestPipelineControlStateMachine, TestRightmostTimeout)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -294,14 +328,18 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -309,6 +347,10 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -331,6 +373,10 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -344,14 +390,18 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -359,6 +409,10 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -387,14 +441,18 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -402,6 +460,10 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -453,6 +515,11 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
+    
 
 	sm.dispatch(boost::make_shared<EventTimeout>(ninfo));
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -466,14 +533,18 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -481,6 +552,10 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -533,6 +608,10 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	sm.dispatch(boost::make_shared<EventTimeout>(ninfo));
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -547,14 +626,18 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -562,6 +645,10 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -608,14 +695,18 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -623,6 +714,10 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
 
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
@@ -659,6 +754,11 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 		.Times(1);
 	EXPECT_CALL(*latencyControl, reset())
 		.Times(1);
+    EXPECT_CALL(*buffer, reset())
+        .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+        .Times(1);
+    
 	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
 	EXPECT_EQ(kStateIdle, sm.getState());
 }

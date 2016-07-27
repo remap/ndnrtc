@@ -348,7 +348,7 @@ TEST(TestBufferSlot, TestMissingSegments)
     VideoFramePacket vp = getVideoFramePacket(30000);
     std::vector<VideoFrameSegment> segments = sliceFrame(vp);
     boost::shared_ptr<ndnrtc::NetworkData> parityData;
-    std::vector<ndnrtc::CommonSegment> paritySegments = sliceParity(vp, parityData);
+    std::vector<ndnrtc::VideoFrameSegment> paritySegments = sliceParity(vp, parityData);
     
     { // all data arrived in random order
         std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
@@ -450,8 +450,11 @@ TEST(TestBufferSlot, TestReuseSlot)
 			else
 				EXPECT_TRUE(slot.getConsistencyState()&BufferSlot::SegmentMeta);
 
-			if (++idx < dataObjects.size()) 
+			if (++idx < dataObjects.size())
+            {
 				EXPECT_EQ(BufferSlot::Assembling, slot.getState());
+                EXPECT_ANY_THROW(slot.toggleLock());
+            }
 			else
 				EXPECT_EQ(BufferSlot::Ready, slot.getState());
 
@@ -467,6 +470,9 @@ TEST(TestBufferSlot, TestReuseSlot)
 		EXPECT_LT(0, slot.getAssemblingTime());
 		EXPECT_LT(0, slot.getLongestDrd());
 		EXPECT_EQ(slot.getConsistencyState(), BufferSlot::Consistent);
+        
+        EXPECT_NO_THROW(slot.toggleLock());
+        EXPECT_EQ(BufferSlot::Locked, slot.getState());
 
 		slot.clear();
 	}
@@ -550,7 +556,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 
 	boost::shared_ptr<NetworkData> parity;
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
-	std::vector<CommonSegment> paritySegments = sliceParity(vp, parity);
+	std::vector<VideoFrameSegment> paritySegments = sliceParity(vp, parity);
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
@@ -580,7 +586,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 	idx = 0;
 	for (auto p:parityObjects)
 	{
-		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p, parityInterests[idx]));
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(p, parityInterests[idx]));
 		ASSERT_TRUE(wd->isValid());
 		ASSERT_NO_THROW(slot.segmentReceived(wd));
 		if (slot.getAssembledLevel() > 1) break;
@@ -604,7 +610,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 
 	boost::shared_ptr<NetworkData> parity;
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
-	std::vector<CommonSegment> paritySegments = sliceParity(vp, parity);
+	std::vector<VideoFrameSegment> paritySegments = sliceParity(vp, parity);
 
 	// all data arrived in random order
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
@@ -625,7 +631,8 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 	int idx = 0;
 	for (auto p:parityObjects)
 	{
-		boost::shared_ptr<WireData<DataSegmentHeader>> wd(boost::make_shared<WireData<DataSegmentHeader>>(p, parityInterests[idx]));
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(
+            boost::make_shared<WireData<VideoFrameSegmentHeader>>(p, parityInterests[idx]));
 		ASSERT_TRUE(wd->isValid());
 		ASSERT_NO_THROW(slot.segmentReceived(wd));
 		idx++;
@@ -634,7 +641,8 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 	idx = 0;
 	for (auto d:dataObjects)
 	{
-		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, interests[idx]));
+		boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd(
+            boost::make_shared<WireData<VideoFrameSegmentHeader>>(d, interests[idx]));
 		BufferSlot::State state;
 		
 		ASSERT_NO_THROW(slot.segmentReceived(wd));

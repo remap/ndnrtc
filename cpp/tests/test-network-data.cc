@@ -1552,7 +1552,7 @@ TEST(TestManifest, TestWithDummySignature)
     VideoFramePacket vp = getVideoFramePacket(frameSize);
     std::vector<VideoFrameSegment> segments = sliceFrame(vp);
     boost::shared_ptr<NetworkData> parityData = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
-    std::vector<CommonSegment> paritySegments = sliceParity(vp, parityData);
+    std::vector<VideoFrameSegment> paritySegments = sliceParity(vp, parityData);
     std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
     std::vector<boost::shared_ptr<ndn::Data>> parityObjects = dataFromParitySegments(frameName, paritySegments);
     std::vector<boost::shared_ptr<ndn::Data>> allObjects(dataObjects);

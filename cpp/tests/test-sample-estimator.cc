@@ -22,7 +22,7 @@ std::vector<boost::shared_ptr<WireSegment>> getSegments(unsigned int frameSize, 
 	VideoFramePacket p = getVideoFramePacket(frameSize);
 	std::vector<VideoFrameSegment> dataSegments = sliceFrame(p);
 	boost::shared_ptr<NetworkData> parityData;
-	std::vector<CommonSegment> paritySegments = sliceParity(p, parityData);
+	std::vector<VideoFrameSegment> paritySegments = sliceParity(p, parityData);
 	std::string frameName = (isDelta ? "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07" : 
 		 "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/k/%FE%07");
 	std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, dataSegments);

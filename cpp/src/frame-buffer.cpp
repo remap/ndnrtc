@@ -298,6 +298,19 @@ void BufferSlot::updateAssembledLevel()
     }
 }
 
+void
+BufferSlot::toggleLock()
+{
+    if (state_ == BufferSlot::Locked)
+        state_ = BufferSlot::Ready;
+    else
+    {
+        if (state_ != BufferSlot::State::Ready)
+            throw std::runtime_error("Trying to lock slot whith is not ready");
+        state_ = BufferSlot::State::Locked;
+    }
+}
+
 //******************************************************************************
 VideoFrameSlot::VideoFrameSlot(const size_t storageSize):
 storage_(boost::make_shared<std::vector<uint8_t>>())
@@ -369,8 +382,8 @@ VideoFrameSlot::readPacket(const BufferSlot& slot, bool& recovered)
         segNo = 0;
         for (auto it:paritySegments)
         {
-            const boost::shared_ptr<WireData<DataSegmentHeader>> wd = 
-            boost::dynamic_pointer_cast<WireData<DataSegmentHeader>>(it.second->getData());
+            const boost::shared_ptr<WireData<VideoFrameSegmentHeader>> wd =
+            boost::dynamic_pointer_cast<WireData<VideoFrameSegmentHeader>>(it.second->getData());
 
             while (segNo != wd->getSegNo() && segNo < nParitySegmentsExpected)
                 storage_->insert(storage_->begin()+nDataSegmentsExpected*segmentSize + paritySegSize*segNo++, segmentSize, 0);
@@ -499,11 +512,17 @@ Buffer::Buffer(boost::shared_ptr<SlotPool> pool):pool_(pool)
 void
 Buffer::reset()
 {
+    LogDebugC << "reset. slot pool capacity " << pool_->capacity()
+        << " pool size " << pool_->size() << " "
+        << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
+    
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-
+    
     for (auto s:activeSlots_)
         pool_->push(s.second);
     activeSlots_.clear();
+    
+    for (auto o:observers_) o->onReset();
 }
 
 bool
@@ -525,30 +544,28 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
     }
 
     for (auto it:slotInterests)
-    {   
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        if (activeSlots_.find(it.first) == activeSlots_.end())
         {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-            if (activeSlots_.find(it.first) == activeSlots_.end())
+            if (pool_->size() == 0)
             {
-                if (pool_->size() == 0)
-                {
-                    LogErrorC << "no free slots available" << std::endl;
-                    return false;
-                }
-                else
-                {
-                    activeSlots_[it.first] = pool_->pop();
-                }
+                LogErrorC << "no free slots available" << std::endl;
+                return false;
             }
-            
-            activeSlots_[it.first]->segmentsRequested(it.second);
-
-            LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
-                << it.second.size() << std::endl;
-            
-            LogTraceC << dump() << std::endl;
+            else
+            {
+                activeSlots_[it.first] = pool_->pop();
+            }
         }
-
+        
+        activeSlots_[it.first]->segmentsRequested(it.second);
+        
+        LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
+        << it.second.size() << std::endl;
+        
+        LogTraceC << dump() << std::endl;
+        
         for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
     }
 
@@ -558,38 +575,36 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
 BufferReceipt
 Buffer::received(const boost::shared_ptr<WireSegment>& segment)
 {
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    
     BufferReceipt receipt;
-
+    Name key = segment->getInfo().getPrefix(prefix_filter::Sample);
+    
+    if (activeSlots_.find(key) == activeSlots_.end())
     {
-        Name key = segment->getInfo().getPrefix(prefix_filter::Sample);
-        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-
-        if (activeSlots_.find(key) == activeSlots_.end())
-        {
-            for (auto& s:activeSlots_)
-                std::cout << s.second->getPrefix() << std::endl;
-
-            stringstream ss;
-            ss << "Received data that was not previously requested: " 
-            << key;
-            throw std::runtime_error(ss.str());
-        }
-
-        receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
-        receipt.slot_ = activeSlots_[key];
-
-        if (receipt.slot_->getState() == BufferSlot::Ready)
-            LogTraceC << "►►►" << receipt.slot_->dump(true)
-                << " " << shortdump() << std::endl;
-        else
-            LogTraceC << " ► " << receipt.slot_->dump(true) 
-                << receipt.segment_->getInfo().segNo_ 
-                << " " << (receipt.slot_->getState() == BufferSlot::Ready ? shortdump() : "")
-                << std::endl;
+        for (auto& s:activeSlots_)
+            std::cout << s.second->getPrefix() << std::endl;
+        
+        stringstream ss;
+        ss << "Received data that was not previously requested: "
+        << key;
+        throw std::runtime_error(ss.str());
     }
-
+    
+    receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
+    receipt.slot_ = activeSlots_[key];
+    
+    if (receipt.slot_->getState() == BufferSlot::Ready)
+        LogTraceC << "►►►" << receipt.slot_->dump(true)
+        << " " << shortdump() << std::endl;
+    else
+        LogTraceC << " ► " << receipt.slot_->dump(true)
+        << receipt.segment_->getInfo().segNo_
+        << " " << (receipt.slot_->getState() == BufferSlot::Ready ? shortdump() : "")
+        << std::endl;
+    
     for (auto o:observers_) o->onNewData(receipt);
-
+    
     return receipt;
 }
 
@@ -657,18 +672,38 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
     while (activeSlots_.begin() != lower)
     {
         LogDebugC << "invalidate " << activeSlots_.begin()->first << std::endl;
+        pool_->push(activeSlots_.begin()->second);
         activeSlots_.erase(activeSlots_.begin());
     }
 }
 
 void
-Buffer::lock(const Name& slotPrefix)
+Buffer::reserveSlot(const boost::shared_ptr<const BufferSlot>& slot)
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    assert(activeSlots_.find(slotPrefix) != activeSlots_.end());
+    std::map<ndn::Name, boost::shared_ptr<BufferSlot>>::iterator it =
+    activeSlots_.find(slot->getPrefix());
     
-    boost::shared_ptr<BufferSlot> slot = activeSlots_.find(slotPrefix)->second;
-    slot->state_ = BufferSlot::Locked;
+    if (it != activeSlots_.end())
+    {
+        reservedSlots_[slot->getPrefix()] = activeSlots_[slot->getPrefix()];
+        activeSlots_.erase(it);
+        reservedSlots_[slot->getPrefix()]->toggleLock();
+    }
+}
+
+void
+Buffer::releaseSlot(const boost::shared_ptr<const BufferSlot>& slot)
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::map<ndn::Name, boost::shared_ptr<BufferSlot>>::iterator it =
+    reservedSlots_.find(slot->getPrefix());
+    
+    if (it != reservedSlots_.end())
+    {
+        pool_->push(it->second);
+        reservedSlots_.erase(it);
+    }
 }
 
 std::string
@@ -748,13 +783,12 @@ PlaybackQueue::pop(ExtractSlot extract)
         LogDebugC << "-■-" << slot->dump()  << "~" << (int)playTime << "ms " 
             << dump() << std::endl;
 
-        buffer_->lock(slot->getPrefix());
         extract(slot, playTime);
         
         if (slot->getNameInfo().isDelta_) 
             buffer_->invalidatePrevious(slot->getPrefix());
-
-        buffer_->invalidate(slot->getPrefix());
+        
+        buffer_->releaseSlot(slot);
     }
 }
 
@@ -823,21 +857,26 @@ PlaybackQueue::onNewRequest(const boost::shared_ptr<BufferSlot>&)
     // do nothing...
 }
 
-// IBufferObserver
 void 
 PlaybackQueue::onNewData(const BufferReceipt& receipt)
 {
     if (receipt.slot_->getState() == BufferSlot::Ready &&
         streamPrefix_.match(receipt.slot_->getPrefix()))
     {
-        {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-            packetRate_ = receipt.slot_->getHeader().sampleRate_;
-            queue_.insert(Sample(receipt.slot_));
-        }
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        buffer_->reserveSlot(receipt.slot_);
+        packetRate_ = receipt.slot_->getHeader().sampleRate_;
+        queue_.insert(Sample(receipt.slot_));
 
         for (auto o:observers_) o->onNewSampleReady();
         
         LogDebugC << "--■" << receipt.slot_->dump() << dump() << std::endl;
     }
+}
+
+void
+PlaybackQueue::onReset()
+{
+//    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+//    queue_.clear();
 }

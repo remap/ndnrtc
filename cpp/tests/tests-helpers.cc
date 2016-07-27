@@ -368,17 +368,17 @@ std::vector<VideoFrameSegment> sliceFrame(VideoFramePacket& vp,
     return frameSegments;
 }
 
-std::vector<CommonSegment> sliceParity(VideoFramePacket& vp, boost::shared_ptr<NetworkData>& parity)
+std::vector<VideoFrameSegment> sliceParity(VideoFramePacket& vp, boost::shared_ptr<NetworkData>& parity)
 {
 	DataSegmentHeader header;
     header.interestNonce_ = 0x1234;
     header.interestArrivalMs_ = 1460399362;
     header.generationDelayMs_ = 200;
 
-	parity = vp.getParityData(CommonSegment::payloadLength(1000), 0.2);
+	parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
 	assert(parity.get());
 
-	std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
+	std::vector<VideoFrameSegment> paritySegments = VideoFrameSegment::slice(*parity, 1000);
 
 	int idx = 0;
 	for (auto& s:paritySegments)
@@ -412,7 +412,7 @@ dataFromSegments(std::string frameName,
 
 std::vector<boost::shared_ptr<ndn::Data>> 
 dataFromParitySegments(std::string frameName,
-	const std::vector<CommonSegment>& segments)
+	const std::vector<VideoFrameSegment>& segments)
 {
     std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
     int segIdx = 0;
