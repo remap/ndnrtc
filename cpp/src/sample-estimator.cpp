@@ -10,8 +10,10 @@
 
 #include "estimators.h"
 #include "frame-data.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace estimators;
 
 //******************************************************************************
@@ -24,7 +26,8 @@ SampleEstimator::Estimators::~_Estimators()
 {}
 
 //******************************************************************************
-SampleEstimator::SampleEstimator()
+SampleEstimator::SampleEstimator(const boost::shared_ptr<statistics::StatisticsStorage>& storage):
+sstorage_(storage)
 {
 	reset();
 }
@@ -51,9 +54,24 @@ SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 
 	estimators_[std::make_pair(st,dt)].segNum_.newValue(segment->getSlicesNum());
 	estimators_[std::make_pair(st,dt)].segSize_.newValue(segment->getData()->getContent().size());
+    
+    if (st == SampleClass::Delta)
+    {
+        if (dt == SegmentClass::Data)
+            (*sstorage_)[Indicator::SegmentsDeltaAvgNum] = segment->getSlicesNum();
+        else
+            (*sstorage_)[Indicator::SegmentsDeltaParityAvgNum] = segment->getSlicesNum();
+    }
+    else
+    {
+        if (dt == SegmentClass::Data)
+            (*sstorage_)[Indicator::SegmentsKeyAvgNum] = segment->getSlicesNum();
+        else
+            (*sstorage_)[Indicator::SegmentsKeyParityAvgNum] = segment->getSlicesNum();
+    }
 }
 
-void 
+void
 SampleEstimator::reset()
 {
 	estimators_ = boost::assign::map_list_of
@@ -61,6 +79,11 @@ SampleEstimator::reset()
 		( std::make_pair(SampleClass::Delta, SegmentClass::Parity), Estimators())
 		( std::make_pair(SampleClass::Key, SegmentClass::Data), Estimators())
 		( std::make_pair(SampleClass::Key, SegmentClass::Parity), Estimators());
+    
+    (*sstorage_)[Indicator::SegmentsDeltaAvgNum] = 0;
+    (*sstorage_)[Indicator::SegmentsDeltaParityAvgNum] = 0;
+    (*sstorage_)[Indicator::SegmentsKeyAvgNum] = 0;
+    (*sstorage_)[Indicator::SegmentsKeyParityAvgNum] = 0;
 }
 
 double 

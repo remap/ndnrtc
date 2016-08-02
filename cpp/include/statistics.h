@@ -58,10 +58,10 @@ namespace ndnrtc {
                 LatencyEstimated,
                 
                 // pipeliner
-                SegmentsDeltaAvgNum,
-                SegmentsKeyAvgNum,
-                SegmentsDeltaParityAvgNum,
-                SegmentsKeyParityAvgNum,
+                SegmentsDeltaAvgNum,            // SampleEstimator
+                SegmentsKeyAvgNum,              // SampleEstimator
+                SegmentsDeltaParityAvgNum,      // SampleEstimator
+                SegmentsKeyParityAvgNum,        // SampleEstimator
                 RtxNum,
                 RebufferingsNum,
                 RequestedNum,
@@ -80,8 +80,8 @@ namespace ndnrtc {
                 DrdCachedEstimation,            // BufferControl
                 
                 // interest queue
-                QueueSize,
-                InterestsSentNum,
+                QueueSize,                      // InterestQueue
+                InterestsSentNum,               // InterestQueue
                 
                 // producer
                 //media thread

@@ -13,9 +13,11 @@
 
 #include "src/sample-estimator.h"
 #include "src/frame-data.h"
+#include "statistics.h"
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 std::vector<boost::shared_ptr<WireSegment>> getSegments(unsigned int frameSize, bool isDelta = true)
 {
@@ -51,7 +53,8 @@ std::vector<boost::shared_ptr<WireSegment>> getSegments(unsigned int frameSize, 
 TEST(TestSampleEstimator, TestTrivialEstimations)
 {
 	std::srand(std::time(0));
-	SampleEstimator estimator;
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	SampleEstimator estimator(storage);
 
 	for (int i = 0; i < 30*50; ++i)
 	{

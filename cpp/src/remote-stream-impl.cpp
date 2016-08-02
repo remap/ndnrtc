@@ -55,7 +55,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 
 	interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
 	shared_ptr<DrdEstimator> drdEstimator(make_shared<DrdEstimator>());
-	sampleEstimator_ = make_shared<SampleEstimator>();
+	sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
 	bufferControl_ = make_shared<BufferControl>(drdEstimator, buffer_, sstorage_);
 	latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator);
 	interestControl_ = make_shared<InterestControl>(drdEstimator);

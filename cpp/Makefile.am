@@ -289,7 +289,7 @@ bin_tests_test_periodic_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_periodic_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_periodic_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_sample_estimator_SOURCES = tests/test-sample-estimator.cc tests/tests-helpers.cc src/fec.cpp src/sample-estimator.cpp src/estimators.cpp src/clock.cpp src/frame-data.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_sample_estimator_SOURCES = tests/test-sample-estimator.cc tests/tests-helpers.cc src/fec.cpp src/sample-estimator.cpp src/estimators.cpp src/clock.cpp src/frame-data.cpp src/name-components.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_sample_estimator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_sample_estimator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_sample_estimator_LDADD = ${libndnrtc_la_LIBADD}

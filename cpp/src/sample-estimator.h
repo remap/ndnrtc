@@ -13,6 +13,10 @@
 #include "name-components.h"
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
     /**
      * This class runs average estimation of sample size and number of segments
      * per sample. It supports two sample classes - Delta and Key and two segment
@@ -20,7 +24,7 @@ namespace ndnrtc {
      */
 	class SampleEstimator : public ISegmentControllerObserver {
 	public:
-		SampleEstimator();
+        SampleEstimator(const boost::shared_ptr<statistics::StatisticsStorage>&);
 		~SampleEstimator();
         
         /**
@@ -70,6 +74,7 @@ namespace ndnrtc {
 		} Estimators;
 
 		std::map<std::pair<SampleClass, SegmentClass>, Estimators> estimators_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void segmentRequestTimeout(const NamespaceInfo&){}
 		void segmentStarvation(){}
