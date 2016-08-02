@@ -13,53 +13,147 @@
 #include <boost/thread/lock_guard.hpp>
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
+
+namespace ndnrtc {
+    class SegmentControllerImpl : public NdnRtcComponent,
+                                  public ISegmentController,
+                                  private Periodic
+    {
+    public:
+        SegmentControllerImpl(boost::asio::io_service& faceIo, unsigned int
+                              maxIdleTimeMs,
+                              const boost::shared_ptr<StatisticsStorage>& storage);
+        ~SegmentControllerImpl();
+        
+        unsigned int getCurrentIdleTime() const;
+        unsigned int getMaxIdleTime() const { return maxIdleTimeMs_; }
+        void setIsActive(bool active);
+        bool getIsActive() const { return active_; }
+        
+        ndn::OnData getOnDataCallback();
+        ndn::OnTimeout getOnTimeoutCallback();
+        
+        void attach(ISegmentControllerObserver* o);
+        void detach(ISegmentControllerObserver* o);
+        
+    private:
+        bool active_;
+        boost::mutex mutex_;
+        unsigned int maxIdleTimeMs_;
+        std::vector<ISegmentControllerObserver*> observers_;
+        int64_t lastDataTimestampMs_;
+        bool starvationFired_;
+        boost::shared_ptr<StatisticsStorage> sstorage_;
+        
+        unsigned int periodicInvocation();
+        
+        void onData(const boost::shared_ptr<const ndn::Interest>&,
+                    const boost::shared_ptr<ndn::Data>&);
+        void onTimeout(const boost::shared_ptr<const ndn::Interest>&);
+    };
+}
 
 #pragma mark - public
 SegmentController::SegmentController(boost::asio::io_service& faceIo,
-	unsigned int maxIdleTimeMs):
+                                     unsigned int maxIdleTimeMs, StatStoragePtr storage):
+pimpl_(boost::make_shared<SegmentControllerImpl>(faceIo, maxIdleTimeMs, storage))
+{}
+
+unsigned int SegmentController::getCurrentIdleTime() const
+{
+    return pimpl_->getCurrentIdleTime();
+}
+
+unsigned int SegmentController::getMaxIdleTime() const
+{
+    return pimpl_->getMaxIdleTime();
+}
+
+void SegmentController::setIsActive(bool active)
+{
+    pimpl_->setIsActive(active);
+}
+
+bool SegmentController::getIsActive() const
+{
+    return pimpl_->getIsActive();
+}
+
+ndn::OnData SegmentController::getOnDataCallback()
+{
+    return pimpl_->getOnDataCallback();
+}
+
+ndn::OnTimeout SegmentController::getOnTimeoutCallback()
+{
+    return pimpl_->getOnTimeoutCallback();
+}
+
+void SegmentController::attach(ISegmentControllerObserver* o)
+{
+    pimpl_->attach(o);
+}
+
+void SegmentController::detach(ISegmentControllerObserver* o)
+{
+    pimpl_->detach(o);
+}
+
+void SegmentController::setLogger(ndnlog::new_api::Logger* logger)
+{
+    pimpl_->setLogger(logger);
+}
+
+#pragma mark - pimpl
+SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service& faceIo,
+	unsigned int maxIdleTimeMs,
+    const boost::shared_ptr<StatisticsStorage>& storage):
 Periodic(faceIo),
 maxIdleTimeMs_(maxIdleTimeMs),
 lastDataTimestampMs_(clock::millisecondTimestamp()),
 starvationFired_(false),
-active_(false)
+active_(false),
+sstorage_(storage)
 {
+	assert(sstorage_.get());
 	description_ = "segment-controller";
 }
 
-SegmentController::~SegmentController(){
+SegmentControllerImpl::~SegmentControllerImpl(){
 	cancelInvocation();
 }
 
-unsigned int SegmentController::getCurrentIdleTime() const
+unsigned int SegmentControllerImpl::getCurrentIdleTime() const
 {
 	return 0;
 }
 
 void
-SegmentController::setIsActive(bool active)
+SegmentControllerImpl::setIsActive(bool active)
 {
     active_ = active;
     if (!active_)
         cancelInvocation();
     else
         setupInvocation(maxIdleTimeMs_,
-                        boost::bind(&SegmentController::periodicInvocation, this));
+                        boost::bind(&SegmentControllerImpl::periodicInvocation, this));
 }
 
-OnData SegmentController::getOnDataCallback()
+OnData SegmentControllerImpl::getOnDataCallback()
 {
-    boost::shared_ptr<SegmentController> me = boost::dynamic_pointer_cast<SegmentController>(shared_from_this());
-	return boost::bind(&SegmentController::onData, me, _1, _2);
+    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+	return boost::bind(&SegmentControllerImpl::onData, me, _1, _2);
 }
 
-OnTimeout SegmentController::getOnTimeoutCallback()
+OnTimeout SegmentControllerImpl::getOnTimeoutCallback()
 {
-    boost::shared_ptr<SegmentController> me = boost::dynamic_pointer_cast<SegmentController>(shared_from_this());
-	return boost::bind(&SegmentController::onTimeout, me, _1);
+    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+	return boost::bind(&SegmentControllerImpl::onTimeout, me, _1);
 }
 
-void SegmentController::attach(ISegmentControllerObserver* o)
+void SegmentControllerImpl::attach(ISegmentControllerObserver* o)
 {
     if (o)
     {
@@ -68,7 +162,7 @@ void SegmentController::attach(ISegmentControllerObserver* o)
     }
 }
 
-void SegmentController::detach(ISegmentControllerObserver* o)
+void SegmentControllerImpl::detach(ISegmentControllerObserver* o)
 {
     std::vector<ISegmentControllerObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), o);
     if (it != observers_.end())
@@ -79,7 +173,7 @@ void SegmentController::detach(ISegmentControllerObserver* o)
 }
 
 #pragma mark - private
-unsigned int SegmentController::periodicInvocation()
+unsigned int SegmentControllerImpl::periodicInvocation()
 {
 	int64_t now = clock::millisecondTimestamp();
 
@@ -101,7 +195,7 @@ unsigned int SegmentController::periodicInvocation()
 	return (maxIdleTimeMs_ - (now - lastDataTimestampMs_));
 }
 
-void SegmentController::onData(const boost::shared_ptr<const Interest>& interest,
+void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& interest,
 			const boost::shared_ptr<Data>& data)
 {
     if (!active_)
@@ -126,6 +220,10 @@ void SegmentController::onData(const boost::shared_ptr<const Interest>& interest
 				boost::lock_guard<boost::mutex> scopedLock(mutex_);
 				for (auto& o:observers_) o->segmentArrived(segment);
 			}
+            
+			(*sstorage_)[Indicator::SegmentsReceivedNum]++;
+			(*sstorage_)[Indicator::BytesReceived] += data->getContent().size();
+			(*sstorage_)[Indicator::RawBytesReceived] += data->getDefaultWireEncoding().size();
 		}
 		else
 			LogWarnC << "received invalid data " << data->getName() << std::endl;
@@ -134,7 +232,7 @@ void SegmentController::onData(const boost::shared_ptr<const Interest>& interest
 		LogWarnC << "received data with bad name: " << data->getName() << std::endl;
 }
 
-void SegmentController::onTimeout(const boost::shared_ptr<const Interest>& interest)
+void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& interest)
 {
     if (!active_)
     {
@@ -152,6 +250,8 @@ void SegmentController::onTimeout(const boost::shared_ptr<const Interest>& inter
 			boost::lock_guard<boost::mutex> scopedLock(mutex_);
 			for (auto& o:observers_) o->segmentRequestTimeout(info);
 		}
+
+		(*sstorage_)[Indicator::TimeoutsNum]++;
 	}
 	else
 		LogWarnC << "received timeout for badly named Interest " << interest->getName() << std::endl;

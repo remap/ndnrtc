@@ -279,7 +279,7 @@ bin_tests_test_audio_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_audio_playout_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_segment_controller_SOURCES = tests/test-segment-controller.cc src/segment-controller.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/name-components.cpp src/frame-data.cpp src/async.cpp src/periodic.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_segment_controller_SOURCES = tests/test-segment-controller.cc src/segment-controller.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/name-components.cpp src/frame-data.cpp src/async.cpp src/periodic.cpp src/clock.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_segment_controller_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_segment_controller_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_segment_controller_LDADD = ${libndnrtc_la_LIBADD}

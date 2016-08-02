@@ -15,6 +15,7 @@
 #include "ndnrtc-object.h"
 #include "name-components.h"
 #include "periodic.h"
+#include "statistics.h"
 
 namespace ndn {
 	class Interest;
@@ -22,8 +23,13 @@ namespace ndn {
 }
 
 namespace ndnrtc {
+	namespace statistics {
+		class StatisticsStorage;
+	}
+
 	class WireSegment;
 	class ISegmentControllerObserver;
+    class SegmentControllerImpl;
 
 	class ISegmentController {
 	public:
@@ -44,40 +50,31 @@ namespace ndnrtc {
 	 * notify all attached observers if data has not arrived during specified period 
 	 * of time.
 	 */
-	class SegmentController : public NdnRtcComponent,
-							  public ISegmentController, 
-							  private Periodic
+	class SegmentController : public ISegmentController
 	{
+		typedef statistics::StatisticsStorage StatStorage;
+		typedef boost::shared_ptr<statistics::StatisticsStorage> StatStoragePtr;
 	public:
 		SegmentController(boost::asio::io_service& faceIo, 
-			unsigned int maxIdleTimeMs);
-		~SegmentController();
+			unsigned int maxIdleTimeMs,
+			StatStoragePtr storage = 
+				StatStoragePtr(StatStorage::createConsumerStatistics()));
 
 		unsigned int getCurrentIdleTime() const;
-		unsigned int getMaxIdleTime() const { return maxIdleTimeMs_; }
+        unsigned int getMaxIdleTime() const;
         void setIsActive(bool active);
-        bool getIsActive() const { return active_; }
+        bool getIsActive() const;
 
 		ndn::OnData getOnDataCallback();
 		ndn::OnTimeout getOnTimeoutCallback();
 
 		void attach(ISegmentControllerObserver* o);
 		void detach(ISegmentControllerObserver* o);
-
-	private:
-        bool active_;
-		boost::mutex mutex_;
-		unsigned int maxIdleTimeMs_;
-		std::vector<ISegmentControllerObserver*> observers_;
-		int64_t lastDataTimestampMs_;
-		bool starvationFired_;
-
-		unsigned int periodicInvocation();
-
-		void onData(const boost::shared_ptr<const ndn::Interest>&,
-			const boost::shared_ptr<ndn::Data>&);
-		void onTimeout(const boost::shared_ptr<const ndn::Interest>&);
-	};
+        
+        void setLogger(ndnlog::new_api::Logger* logger);
+    private:
+        boost::shared_ptr<SegmentControllerImpl> pimpl_;
+    };
 
 	class ISegmentControllerObserver {
 	public:

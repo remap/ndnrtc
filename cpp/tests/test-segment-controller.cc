@@ -19,14 +19,16 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 // #define ENABLE_LOGGING
 
 TEST(TestSegmentController, TestOnData)
 {
+	boost::shared_ptr<StatisticsStorage> sstorage(StatisticsStorage::createConsumerStatistics());
 	boost::asio::io_service io;
-	SegmentController controller(io, 500);
+	SegmentController controller(io, 500, sstorage);
     controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
@@ -62,6 +64,8 @@ TEST(TestSegmentController, TestOnData)
 	EXPECT_CALL(o, segmentArrived(_))
 		.Times(0);
 	onData(i, d);
+
+	EXPECT_EQ(2, (*sstorage)[Indicator::SegmentsReceivedNum]);
 }
 
 TEST(TestSegmentController, TestOnDataNotActive)
@@ -136,8 +140,9 @@ TEST(TestSegmentController, TestOnBadNamedData)
 
 TEST(TestSegmentController, TestOnTimeout)
 {
+    boost::shared_ptr<StatisticsStorage> sstorage(StatisticsStorage::createConsumerStatistics());
 	boost::asio::io_service io;
-	SegmentController controller(io, 500);
+	SegmentController controller(io, 500, sstorage);
     controller.setIsActive(true);
 
 #ifdef ENABLE_LOGGING
@@ -168,6 +173,8 @@ TEST(TestSegmentController, TestOnTimeout)
 
 	onTimeout(i);
 	controller.detach(&o);
+    
+    EXPECT_EQ(1, (*sstorage)[Indicator::TimeoutsNum]);
 }
 
 TEST(TestSegmentController, TestStarvation)
