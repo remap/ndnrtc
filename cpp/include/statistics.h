@@ -69,11 +69,11 @@ namespace ndnrtc {
                 DW,
                 W,
                 RttPrime,
-                SegmentsReceivedNum,
-                TimeoutsNum,
+                SegmentsReceivedNum,            // SegmentController
+                TimeoutsNum,                    // SegmentController
                 Darr,
-                BytesReceived,
-                RawBytesReceived,
+                BytesReceived,                  // SegmentController
+                RawBytesReceived,               // SegmentController
                 
                 // RTT estimator
                 RttEstimation,

@@ -47,7 +47,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 
 	description_ = "remote-stream";
 
-	segmentController_ = make_shared<SegmentController>(io, 500);
+	segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
 	buffer_ = make_shared<Buffer>(make_shared<SlotPool>(500));
 	playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                dynamic_pointer_cast<Buffer>(buffer_));
