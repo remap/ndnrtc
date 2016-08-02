@@ -43,7 +43,7 @@ namespace ndnrtc {
                 BufferTargetSize,
                 BufferPlayableSize,
                 BufferEstimatedSize,
-                CurrentProducerFramerate,
+                CurrentProducerFramerate,       // BufferControl
                 
                 // playout
                 LastPlayedNo,
@@ -75,8 +75,9 @@ namespace ndnrtc {
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController
                 
-                // RTT estimator
-                RttEstimation,
+                // DRD estimator
+                DrdOriginalEstimation,          // BufferControl
+                DrdCachedEstimation,            // BufferControl
                 
                 // interest queue
                 QueueSize,

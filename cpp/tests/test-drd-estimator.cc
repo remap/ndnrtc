@@ -85,9 +85,10 @@ TEST(TestDrdEstimator, TestDrdDeviation)
 		while (queue.size())
 			boost::this_thread::sleep_for(boost::chrono::milliseconds(2*oneWayDelay));
 	
-		GT_PRINTF("1-way delay: %dms (deviation %dms); measured drd: %.2fms, dev: %.2f\n",
+		GT_PRINTF("1-way delay: %dms (deviation %dms); measured drd: %.2fms, dev: %.2f (%.2f%%)\n",
 			oneWayDelay, deviation, drd.getLatestUpdatedAverage().value(), 
-			drd.getLatestUpdatedAverage().deviation());
+			drd.getLatestUpdatedAverage().deviation(),
+                  drd.getLatestUpdatedAverage().deviation()/drd.getLatestUpdatedAverage().value()*100);
 		EXPECT_LE(abs(oneWayDelay*2-drd.getLatestUpdatedAverage().value())/((double)oneWayDelay*2), drdError);
 		if (deviation)
 			EXPECT_LE(abs(deviation-drd.getLatestUpdatedAverage().deviation())/(double)deviation, devError);

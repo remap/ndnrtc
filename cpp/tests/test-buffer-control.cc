@@ -11,17 +11,19 @@
 #include "buffer-control.h"
 #include "drd-estimator.h"
 #include "frame-buffer.h"
+#include "statistics.h"
 
 #include "tests-helpers.h"
 #include "mock-objects/buffer-control-observer-mock.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ::testing;
 using namespace ndn;
 
 TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 {
-	#ifdef ENABLE_LOGGING
+#ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #endif
@@ -45,7 +47,8 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 	boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 500));
 	MockBufferControlObserver latControlMock;
 
-	BufferControl bufferControl(drd, buffer);
+    boost::shared_ptr<StatisticsStorage> sstorage(StatisticsStorage::createConsumerStatistics());
+	BufferControl bufferControl(drd, buffer, sstorage);
 	bufferControl.attach(&latControlMock);
 
 	boost::thread requestor([&sampleNo, threadPrefix, buffer, nSamples, fps](){

@@ -66,8 +66,9 @@ map_list_of
 ( Indicator::Darr, "Darr" )
 ( Indicator::BytesReceived, "Payload bytes received" )
 ( Indicator::RawBytesReceived, "Wire bytes received" )
-// RTT estimator
-( Indicator::RttEstimation, "RTT estimation" )
+// DRD estimator
+( Indicator::DrdOriginalEstimation, "DRD estimation (orig)" )
+( Indicator::DrdCachedEstimation, "DRD estimation (cach)" )
 // interest queue
 ( Indicator::QueueSize, "Interest queue" )
 ( Indicator::InterestsSentNum, "Sent interests" )
@@ -138,8 +139,9 @@ map_list_of
 ( Indicator::Darr, 0. )
 ( Indicator::BytesReceived, 0. )
 ( Indicator::RawBytesReceived, 0. )
-// RTT estimator
-( Indicator::RttEstimation, 0. )
+// DRD estimator
+( Indicator::DrdCachedEstimation, 0. )
+( Indicator::DrdOriginalEstimation, 0. )
 // interest queue
 ( Indicator::QueueSize, 0. )
 ( Indicator::InterestsSentNum, 0. );
@@ -213,8 +215,9 @@ boost::assign::map_list_of
 (Indicator::Darr, "dArr")
 (Indicator::BytesReceived, "bytesRcvd")
 (Indicator::RawBytesReceived, "rawBytesRcvd")
-// RTT estimator
-(Indicator::RttEstimation, "drdEst")
+// DRD estimator
+(Indicator::DrdOriginalEstimation, "drdEst")
+(Indicator::DrdCachedEstimation, "drdEstCach")
 // interest queue
 (Indicator::QueueSize, "iqueue")
 (Indicator::InterestsSentNum, "isent")

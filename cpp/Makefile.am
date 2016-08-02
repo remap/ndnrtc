@@ -304,7 +304,7 @@ bin_tests_test_latency_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_latency_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_latency_control_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_buffer_control_SOURCES = tests/test-buffer-control.cc src/buffer-control.cpp tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-buffer.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp src/estimators.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_buffer_control_SOURCES = tests/test-buffer-control.cc src/buffer-control.cpp tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-buffer.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp src/estimators.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_buffer_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_buffer_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_buffer_control_LDADD = ${libndnrtc_la_LIBADD}

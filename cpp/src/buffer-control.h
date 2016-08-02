@@ -14,6 +14,10 @@
 #include "frame-buffer.h"
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class DrdEstimator;
 	class Buffer;
 	class IBufferControlObserver;
@@ -28,7 +32,9 @@ namespace ndnrtc {
 	class BufferControl : public ISegmentControllerObserver, public NdnRtcComponent
 	{
 	public:
-		BufferControl(const boost::shared_ptr<DrdEstimator>&, const boost::shared_ptr<IBuffer>&);
+		BufferControl(const boost::shared_ptr<DrdEstimator>&,
+                      const boost::shared_ptr<IBuffer>&,
+                      const boost::shared_ptr<statistics::StatisticsStorage>& storage);
 		~BufferControl();
 
 		void attach(IBufferControlObserver*);
@@ -42,6 +48,7 @@ namespace ndnrtc {
 		std::vector<IBufferControlObserver*> observers_;
 		boost::shared_ptr<DrdEstimator> drdEstimator_;
 		boost::shared_ptr<IBuffer> buffer_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void informLatencyControl(const BufferReceipt&);
 	};

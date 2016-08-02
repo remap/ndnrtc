@@ -9,12 +9,15 @@
 #include "name-components.h"
 #include "drd-estimator.h"
 #include "frame-data.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
-BufferControl::BufferControl(const boost::shared_ptr<DrdEstimator>& drdEstimator, 
-	const boost::shared_ptr<IBuffer>& buffer):
-drdEstimator_(drdEstimator), buffer_(buffer)
+BufferControl::BufferControl(const boost::shared_ptr<DrdEstimator>& drdEstimator,
+    const boost::shared_ptr<IBuffer>& buffer,
+    const boost::shared_ptr<statistics::StatisticsStorage>& storage):
+drdEstimator_(drdEstimator), buffer_(buffer), sstorage_(storage)
 {
 	description_ = "buffer-control";
 }
@@ -43,10 +46,19 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 	if (buffer_->isRequested(segment))
 	{
 		BufferReceipt receipt = buffer_->received(segment);
+        std::cout << "DRD " << receipt.segment_->getDrdUsec()/1000 << std::endl;
 		drdEstimator_->newValue(receipt.segment_->getDrdUsec()/1000, receipt.segment_->isOriginal());
+        
+        (*sstorage_)[Indicator::DrdOriginalEstimation] = drdEstimator_->getOriginalEstimation();
+        (*sstorage_)[Indicator::DrdCachedEstimation] = drdEstimator_->getCachedEstimation();
 
 		if (segment->isPacketHeaderSegment())
-			for (auto& o:observers_) o->targetRateUpdate(receipt.segment_->getData()->packetHeader().sampleRate_);
+        {
+            double rate = receipt.segment_->getData()->packetHeader().sampleRate_;
+			for (auto& o:observers_) o->targetRateUpdate(rate);
+            
+            (*sstorage_)[Indicator::CurrentProducerFramerate] = rate;
+        }
 
 		if (receipt.slot_->getFetchedNum() == 1)
 			for (auto& o:observers_) o->sampleArrived(segment->getPlaybackNo());

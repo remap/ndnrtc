@@ -397,6 +397,7 @@ am_bin_tests_test_buffer_control_OBJECTS = tests/bin_tests_test_buffer_control-t
 	src/bin_tests_test_buffer_control-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_buffer_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_buffer_control-estimators.$(OBJEXT) \
+	src/bin_tests_test_buffer_control-statistics.$(OBJEXT) \
 	$(am__objects_5)
 bin_tests_test_buffer_control_OBJECTS =  \
 	$(am_bin_tests_test_buffer_control_OBJECTS)
@@ -1816,7 +1817,7 @@ bin_tests_test_latency_control_SOURCES = tests/test-latency-control.cc tests/tes
 bin_tests_test_latency_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_latency_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_latency_control_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_buffer_control_SOURCES = tests/test-buffer-control.cc src/buffer-control.cpp tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-buffer.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp src/estimators.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_buffer_control_SOURCES = tests/test-buffer-control.cc src/buffer-control.cpp tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-buffer.cpp src/frame-data.cpp src/clock.cpp src/simple-log.cpp src/drd-estimator.cpp src/ndnrtc-object.cpp src/estimators.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_buffer_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_buffer_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_buffer_control_LDADD = ${libndnrtc_la_LIBADD}
@@ -2371,6 +2372,8 @@ src/bin_tests_test_buffer_control-drd-estimator.$(OBJEXT):  \
 src/bin_tests_test_buffer_control-ndnrtc-object.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_buffer_control-estimators.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_buffer_control-statistics.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_buffer_control-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
@@ -3621,6 +3624,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_buffer_control-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_buffer_control-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_buffer_control-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-data-validator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_data_validator-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-clock.Po@am__quote@
@@ -5874,6 +5878,20 @@ src/bin_tests_test_buffer_control-estimators.obj: src/estimators.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/estimators.cpp' object='src/bin_tests_test_buffer_control-estimators.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_buffer_control-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
+
+src/bin_tests_test_buffer_control-statistics.o: src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_buffer_control-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Tpo -c -o src/bin_tests_test_buffer_control-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Tpo src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/statistics.cpp' object='src/bin_tests_test_buffer_control-statistics.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_buffer_control-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+
+src/bin_tests_test_buffer_control-statistics.obj: src/statistics.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_buffer_control-statistics.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Tpo -c -o src/bin_tests_test_buffer_control-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Tpo src/$(DEPDIR)/bin_tests_test_buffer_control-statistics.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/statistics.cpp' object='src/bin_tests_test_buffer_control-statistics.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_buffer_control-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_buffer_control-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_buffer_control-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_buffer_control-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_buffer_control-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
