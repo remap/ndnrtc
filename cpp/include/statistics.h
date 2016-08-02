@@ -64,8 +64,8 @@ namespace ndnrtc {
                 SegmentsKeyParityAvgNum,        // SampleEstimator
                 RtxNum,
                 RebufferingsNum,
-                RequestedNum,
-                RequestedKeyNum,
+                RequestedNum,                   // Pipeliner
+                RequestedKeyNum,                // Pipeliner
                 DW,
                 W,
                 RttPrime,

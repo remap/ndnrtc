@@ -15,8 +15,10 @@
 #include "interest-control.h"
 #include "interest-queue.h"
 #include "segment-controller.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 Pipeliner::Pipeliner(const PipelinerSettings& settings):
@@ -27,10 +29,13 @@ interestQueue_(settings.interestQueue_),
 playbackQueue_(settings.playbackQueue_),
 segmentController_(settings.segmentController_),
 interestLifetime_(settings.interestLifetimeMs_),
+sstorage_(settings.sstorage_),
 seqCounter_({0,0}),
 nextSamplePriority_(SampleClass::Delta),
 lastRequestedSample_(SampleClass::Delta)
 {
+    assert(sstorage_.get());
+    
     description_ = "pipeliner";
     buffer_->attach(this);
 }
@@ -116,14 +121,17 @@ Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
 
         LogDebugC << "requested "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_)
-            << " " << SAMPLE_SUFFIX(n) << " x" << batch.size()
-            << " buf " << buffer_->shortdump() << std::endl;
+            << " " << SAMPLE_SUFFIX(n) << " x" << batch.size() << std::endl;
         
         if (nextSamplePriority_ == SampleClass::Delta) seqCounter_.delta_++;
         else seqCounter_.key_++;
 
         lastRequestedSample_ = nextSamplePriority_;
         nextSamplePriority_ = SampleClass::Delta;
+        
+        (*sstorage_)[Indicator::RequestedNum]++;
+        if (lastRequestedSample_ == SampleClass::Key)
+            (*sstorage_)[Indicator::RequestedKeyNum]++;
     }
 }
 

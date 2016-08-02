@@ -12,6 +12,7 @@
 #include "pipeliner.h"
 #include "sample-estimator.h"
 #include "frame-data.h"
+#include "statistics.h"
 
 #include "tests-helpers.h"
 
@@ -22,6 +23,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 // #define ENABLE_LOGGING
@@ -33,14 +35,15 @@ TEST(TestPipeliner, TestExpressRightmost)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>());
+	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
 	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
-	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl, 
-		interestQueue, playbackQueue, segmentController});
+	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
+		interestQueue, playbackQueue, segmentController, sstorage});
 	
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
@@ -97,14 +100,15 @@ TEST(TestPipeliner, TestRequestSample)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>());
+	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
 	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
-	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl, 
-		interestQueue, playbackQueue, segmentController});
+	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
+		interestQueue, playbackQueue, segmentController, sstorage});
 	
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
@@ -163,14 +167,15 @@ TEST(TestPipeliner, TestRequestKeySample)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>());
+	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
 	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
-	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl, 
-		interestQueue, playbackQueue, segmentController});
+	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
+		interestQueue, playbackQueue, segmentController, sstorage});
 	
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
@@ -230,14 +235,15 @@ TEST(TestPipeliner, TestSegmentsArrive)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>());
+	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
 	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
-	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl, 
-		interestQueue, playbackQueue, segmentController});
+	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
+		interestQueue, playbackQueue, segmentController, sstorage});
 	
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
@@ -274,6 +280,9 @@ TEST(TestPipeliner, TestSegmentsArrive)
 
 	int roomSize = 5;
 
+    EXPECT_CALL(*interestControl, snapshot())
+        .Times(AtLeast(1));
+    
 	for (int i = 1; i <= 30; ++i)
 	{
 		int nExpectedDataInterests = (i == 30 ? 30: 10);

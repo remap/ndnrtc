@@ -18,6 +18,10 @@
 #include "frame-buffer.h"
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
     class SampleEstimator;
     class IBuffer;
     class IInterestControl;
@@ -34,6 +38,7 @@ namespace ndnrtc {
         boost::shared_ptr<IInterestQueue> interestQueue_;
         boost::shared_ptr<IPlaybackQueue> playbackQueue_;
         boost::shared_ptr<ISegmentController> segmentController_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
     } PipelinerSettings;
 
     class IPipeliner {
@@ -129,6 +134,7 @@ namespace ndnrtc {
         boost::shared_ptr<IInterestQueue> interestQueue_;
         boost::shared_ptr<IPlaybackQueue> playbackQueue_;
         boost::shared_ptr<ISegmentController> segmentController_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
         SequenceCounter seqCounter_;
         SampleClass nextSamplePriority_, lastRequestedSample_;
 
