@@ -17,8 +17,10 @@
 #include "src/frame-data.h"
 #include "src/frame-buffer.h"
 #include "tests-helpers.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 using namespace testing;
 
@@ -741,9 +743,10 @@ TEST(TestBuffer, TestRequestAndReceive)
 	size_t poolSize = 50;
 	int n = poolSize+10;
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(poolSize));
 	MockBufferObserver observer1, observer2;
-	Buffer buffer(pool);
+	Buffer buffer(storage, pool);
 
 	buffer.attach(&observer1);
 	buffer.attach(&observer2);
@@ -822,6 +825,8 @@ TEST(TestBuffer, TestRequestAndReceive)
 		EXPECT_EQ(i+1, buffer.getSlotsNum(Name(frameName), BufferSlot::Ready));
 		EXPECT_EQ(poolSize-i-1, buffer.getSlotsNum(Name(frameName), BufferSlot::New));
 	}
+    
+    EXPECT_EQ(poolSize, (*storage)[Indicator::AssembledNum]);
 }
 
 //******************************************************************************

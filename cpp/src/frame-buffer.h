@@ -28,6 +28,10 @@ namespace ndn {
 
 namespace ndnrtc
 {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
     struct _CommonHeader;
     class WireSegment;
 
@@ -301,7 +305,8 @@ namespace ndnrtc
 
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
-        Buffer(boost::shared_ptr<SlotPool> pool = 
+        Buffer(boost::shared_ptr<statistics::StatisticsStorage> storage,
+               boost::shared_ptr<SlotPool> pool =
                 boost::shared_ptr<SlotPool>(new SlotPool()));
 
         void reset();
@@ -322,6 +327,7 @@ namespace ndnrtc
         boost::shared_ptr<SlotPool> pool_;
         std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
         std::string
         dump() const;
@@ -413,6 +419,7 @@ namespace ndnrtc
         double packetRate_;
         std::set<Sample> queue_;
         std::vector<IPlaybackQueueObserver*> observers_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
         virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&);
         virtual void onNewData(const BufferReceipt& receipt);

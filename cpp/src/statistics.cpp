@@ -60,7 +60,6 @@ map_list_of
 ( Indicator::RequestedKeyNum, "Requested key" ) 
 ( Indicator::DW, "Lambda D" )
 ( Indicator::W, "Lambda" )
-( Indicator::RttPrime, "RTT'" )
 ( Indicator::SegmentsReceivedNum, "Segments received" )
 ( Indicator::TimeoutsNum, "Timeouts" )
 ( Indicator::Darr, "Darr" )
@@ -133,7 +132,6 @@ map_list_of
 ( Indicator::RequestedKeyNum, 0. )
 ( Indicator::DW, 0. )
 ( Indicator::W, 0. )
-( Indicator::RttPrime, 0. )
 ( Indicator::SegmentsReceivedNum, 0. )
 ( Indicator::TimeoutsNum, 0. )
 ( Indicator::Darr, 0. )
@@ -209,7 +207,6 @@ boost::assign::map_list_of
 (Indicator::RequestedKeyNum, "framesReqKey")
 (Indicator::DW, "lambdaD")
 (Indicator::W, "lambda")
-(Indicator::RttPrime, "drdPrime")
 (Indicator::SegmentsReceivedNum, "segNumRcvd")
 (Indicator::TimeoutsNum, "timeouts")
 (Indicator::Darr, "dArr")
@@ -217,7 +214,7 @@ boost::assign::map_list_of
 (Indicator::RawBytesReceived, "rawBytesRcvd")
 // DRD estimator
 (Indicator::DrdOriginalEstimation, "drdEst")
-(Indicator::DrdCachedEstimation, "drdEstCach")
+(Indicator::DrdCachedEstimation, "drdPrime")
 // interest queue
 (Indicator::QueueSize, "iqueue")
 (Indicator::InterestsSentNum, "isent")

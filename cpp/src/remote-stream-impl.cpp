@@ -68,6 +68,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	pps.interestQueue_ = interestQueue_;
 	pps.playbackQueue_ = playbackQueue_;
 	pps.segmentController_ = segmentController_;
+    pps.sstorage_ = storage_;
 
 	pipeliner_ = make_shared<Pipeliner>(pps);
 	// pipeline control created in subclasses

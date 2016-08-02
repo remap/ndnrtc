@@ -18,9 +18,11 @@
 #include "frame-data.h"
 #include "name-components.h"
 #include "simple-log.h"
+#include "statistics.h"
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 //******************************************************************************
@@ -506,8 +508,13 @@ SlotPool::push(const boost::shared_ptr<BufferSlot>& slot)
 }
 
 //******************************************************************************
-Buffer::Buffer(boost::shared_ptr<SlotPool> pool):pool_(pool)
-{ description_ = "buffer"; }
+Buffer::Buffer(boost::shared_ptr<StatisticsStorage> storage,
+               boost::shared_ptr<SlotPool> pool):pool_(pool),
+sstorage_(storage)
+{
+    assert(sstorage_.get());
+    description_ = "buffer";
+}
 
 void
 Buffer::reset()
@@ -591,17 +598,25 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
         throw std::runtime_error(ss.str());
     }
     
+    BufferSlot::State oldState = activeSlots_[key]->getState();
     receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
     receipt.slot_ = activeSlots_[key];
     
     if (receipt.slot_->getState() == BufferSlot::Ready)
-        LogTraceC << "►►►" << receipt.slot_->dump(true)
-        << " " << shortdump() << std::endl;
+    {
+        if (oldState != BufferSlot::Ready)
+        {
+            LogTraceC << "►►►" << receipt.slot_->dump(true)
+                << " " << shortdump() << std::endl;
+            
+            (*sstorage_)[Indicator::AssembledNum]++;
+            if (receipt.slot_->getNameInfo().class_ == SampleClass::Key)
+                (*sstorage_)[Indicator::AssembledKeyNum]++;
+        }
+    }
     else
         LogTraceC << " ► " << receipt.slot_->dump(true)
-        << receipt.segment_->getInfo().segNo_
-        << " " << (receipt.slot_->getState() == BufferSlot::Ready ? shortdump() : "")
-        << std::endl;
+        << receipt.segment_->getInfo().segNo_ << std::endl;
     
     for (auto o:observers_) o->onNewData(receipt);
     
@@ -659,6 +674,11 @@ Buffer::invalidate(const Name& slotPrefix)
 
     boost::shared_ptr<BufferSlot> slot = activeSlots_.find(slotPrefix)->second;
     activeSlots_.erase(activeSlots_.find(slotPrefix));
+    
+    (*sstorage_)[Indicator::DroppedNum]++;
+    if (slot->getNameInfo().class_ == SampleClass::Key)
+        (*sstorage_)[Indicator::DroppedKeyNum]++;
+    
     pool_->push(slot);
 }
 
@@ -672,6 +692,12 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
     while (activeSlots_.begin() != lower)
     {
         LogDebugC << "invalidate " << activeSlots_.begin()->first << std::endl;
+        boost::shared_ptr<BufferSlot> slot = activeSlots_.begin()->second;
+        
+        (*sstorage_)[Indicator::DroppedNum]++;
+        if (slot->getNameInfo().class_ == SampleClass::Key)
+            (*sstorage_)[Indicator::DroppedKeyNum]++;
+        
         pool_->push(activeSlots_.begin()->second);
         activeSlots_.erase(activeSlots_.begin());
     }
@@ -753,7 +779,8 @@ PlaybackQueue::PlaybackQueue(const ndn::Name& streamPrefix,
     const boost::shared_ptr<Buffer>& buffer):
 streamPrefix_(streamPrefix),
 buffer_(buffer),
-packetRate_(0)
+packetRate_(0),
+sstorage_(buffer->sstorage_)
 {
     description_ = "pqueue";
     buffer_->attach(this);

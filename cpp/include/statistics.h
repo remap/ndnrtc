@@ -30,10 +30,10 @@ namespace ndnrtc {
                 // buffer
                 AcquiredNum,
                 AcquiredKeyNum,
-                DroppedNum,
-                DroppedKeyNum,
-                AssembledNum,
-                AssembledKeyNum,
+                DroppedNum,                     // Buffer
+                DroppedKeyNum,                  // Buffer
+                AssembledNum,                   // Buffer
+                AssembledKeyNum,                // Buffer
                 RecoveredNum,
                 RecoveredKeyNum,
                 RescuedNum,
@@ -68,7 +68,6 @@ namespace ndnrtc {
                 RequestedKeyNum,                // Pipeliner
                 DW,
                 W,
-                RttPrime,
                 SegmentsReceivedNum,            // SegmentController
                 TimeoutsNum,                    // SegmentController
                 Darr,
