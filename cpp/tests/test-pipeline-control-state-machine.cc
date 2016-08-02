@@ -763,6 +763,56 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
 	EXPECT_EQ(kStateIdle, sm.getState());
 }
 
+TEST(TestPipelineControlStateMachine, TestIgnoredEvents)
+{
+    
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
+    
+    EXPECT_CALL(*buffer, reset())
+    .Times(1);
+    EXPECT_CALL(*pp, reset())
+    .Times(1);
+    EXPECT_CALL(*interestControl, reset())
+    .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+    .Times(1);
+    EXPECT_CALL(*playoutControl, allowPlayout(false))
+    .Times(1);
+    
+    PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
+    EXPECT_EQ(kStateIdle, sm.getState());
+    
+    boost::shared_ptr<WireSegment> seg = getFakeSegment(threadPrefix, SampleClass::Delta,
+                                                        SegmentClass::Data, 7, 0);
+    
+    sm.dispatch(boost::make_shared<EventSegment>(seg));
+    EXPECT_EQ(kStateIdle, sm.getState());
+    
+    Name fName(threadPrefix);
+    fName.append(NameComponents::NameComponentDelta).appendSequenceNumber(7).appendSegment(0);
+    NamespaceInfo ninfo;
+    ASSERT_TRUE(NameComponents::extractInfo(fName, ninfo));
+    
+    sm.dispatch(boost::make_shared<EventTimeout>(ninfo));
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.dispatch(boost::make_shared<EventStarvation>(500));
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
+    EXPECT_EQ(kStateIdle, sm.getState());
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

@@ -49,12 +49,14 @@ SegmentController::setIsActive(bool active)
 
 OnData SegmentController::getOnDataCallback()
 {
-	return boost::bind(&SegmentController::onData, this, _1, _2);
+    boost::shared_ptr<SegmentController> me = boost::dynamic_pointer_cast<SegmentController>(shared_from_this());
+	return boost::bind(&SegmentController::onData, me, _1, _2);
 }
 
 OnTimeout SegmentController::getOnTimeoutCallback()
 {
-	return boost::bind(&SegmentController::onTimeout, this, _1);
+    boost::shared_ptr<SegmentController> me = boost::dynamic_pointer_cast<SegmentController>(shared_from_this());
+	return boost::bind(&SegmentController::onTimeout, me, _1);
 }
 
 void SegmentController::attach(ISegmentControllerObserver* o)

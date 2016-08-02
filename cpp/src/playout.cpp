@@ -138,8 +138,9 @@ void Playout::extractSample()
 
     LogDebugC << "●--" << debugStr.str() << actualDelay << "ms" << std::endl;
 
+    boost::shared_ptr<Playout> me = boost::dynamic_pointer_cast<Playout>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);
-    jitterTiming_.run(boost::bind(&Playout::extractSample, this));
+    jitterTiming_.run(boost::bind(&Playout::extractSample, me));
 }
 
 void Playout::correctAdjustment(int64_t newSampleTimestamp)

@@ -109,7 +109,7 @@ new_api::Logger::log(const NdnLogType& logType,
     
     if (isWritingLogEntry_ &&
         currentEntryLogType_ >= (NdnLogType)logLevel_)
-        *this << std::endl;
+        throw std::runtime_error("Previous log entry wasn't closed");
     
     unlockStream();
     

@@ -511,17 +511,17 @@ Buffer::Buffer(boost::shared_ptr<SlotPool> pool):pool_(pool)
 
 void
 Buffer::reset()
-{
-    LogDebugC << "reset. slot pool capacity " << pool_->capacity()
-        << " pool size " << pool_->size() << " "
-        << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
-    
+{   
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
     
     for (auto s:activeSlots_)
         pool_->push(s.second);
     activeSlots_.clear();
-    
+ 
+     LogDebugC << "reset. slot pool capacity " << pool_->capacity()
+        << " pool size " << pool_->size() << " "
+        << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
+
     for (auto o:observers_) o->onReset();
 }
 
@@ -563,7 +563,7 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
         
         LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
         << it.second.size() << std::endl;
-        
+        LogDebugC << shortdump() << std::endl;
         LogTraceC << dump() << std::endl;
         
         for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);

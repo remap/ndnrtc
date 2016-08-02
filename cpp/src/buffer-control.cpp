@@ -20,7 +20,9 @@ drdEstimator_(drdEstimator), buffer_(buffer)
 }
 
 BufferControl::~BufferControl()
-{}
+{
+    std::cout << "BufferControl::~BufferControl()" << std::endl;
+}
 
 void 
 BufferControl::attach(IBufferControlObserver* o)

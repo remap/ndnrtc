@@ -14,11 +14,15 @@
 #include <boost/asio/deadline_timer.hpp>
 
 #include <ndnrtc/simple-log.h>
-#include "config.h"
-
+#include "../client/src/config.h"
 
 using namespace std;
 using namespace ndnrtc;
+
+void run(const std::string &configFile,
+         const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
+         const unsigned int headlessAppOnlineTimeSecconst,
+         const unsigned int statisticsSampleInterval);
 
 int main(int argc, char **argv)
 {
@@ -64,5 +68,34 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+	run(configFile, logLevel, runTimeSec, statSamplePeriodMs);
+
 	return 0;
+}
+
+void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
+            const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
+{
+    ClientParams params;
+
+	ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
+
+    LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
+    "params from " << configFile << "..." << std::endl;
+
+    if (loadParamsFromFile(configFile, params) == EXIT_FAILURE) 
+    {
+        LogError("") << "error loading params from " << configFile << std::endl;
+        return;
+    }
+
+    LogInfo("") << "Parameters loaded:\n" << params << std::endl;
+
+    //client.run(&ndnp, runTimeSec, statSamplePeriodMs, params);
+
+#warning this is temporary sleep. should fix simple-log for flushing all log records before release
+    sleep(1);
+    ndnlog::new_api::Logger::releaseAsyncLogging();
+    return;
 }

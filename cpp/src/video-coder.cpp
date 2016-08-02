@@ -104,7 +104,7 @@ webrtc::VideoCodec VideoCoder::codecFromSettings(const VideoCoderParams &setting
     codec.maxFramerate = (int)settings.codecFrameRate_;
     codec.startBitrate = settings.startBitrate_;
     codec.minBitrate = 100;
-    codec.maxBitrate = 10000;//settings.maxBitrate_;
+    codec.maxBitrate = settings.maxBitrate_;
     codec.targetBitrate = settings.startBitrate_;
     codec.width = settings.encodeWidth_;
     codec.height = settings.encodeHeight_;

@@ -26,15 +26,14 @@ MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::KeyCha
 
 	isPending_ = true;
 	boost::shared_ptr<MetaFetcher> me = boost::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
-	SegmentFetcher::fetch(*f, i, 
-		kc.get(),
-		[onMeta, me, this](const Blob& content, const std::vector<ValidationErrorInfo>& info){
+	SegmentFetcher::fetch(*f, i, kc.get(),
+		[onMeta, me, f, kc, this](const Blob& content, const std::vector<ValidationErrorInfo>& info){
 			isPending_ = false;
             ImmutableHeaderPacket<DataSegmentHeader> packet(content);
 			NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
 			onMeta(nd, info);
 		},
-		[onError, me, this](SegmentFetcher::ErrorCode code, const std::string& msg){
+		[onError, me, f, kc, this](SegmentFetcher::ErrorCode code, const std::string& msg){
 			isPending_ = false;
             onError(msg);
 		});

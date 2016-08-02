@@ -103,8 +103,8 @@ void VideoSource::stopCapturers()
 
 void VideoSource::sourceFrame()
 {
-	LogTrace("") << "reading " << frame_->getWidth() << "x" << frame_->getHeight() 
-		<< "frame from " << source_->getPath() << endl;
+	// LogTrace("") << "reading " << frame_->getWidth() << "x" << frame_->getHeight() 
+		// << "frame from " << source_->getPath() << endl;
 
 	do{
 		if (source_->isEof())
@@ -126,7 +126,7 @@ void VideoSource::deliverFrame(const RawFrame& frame)
 		capturer->incomingArgbFrame(frame.getWidth(), frame.getHeight(),
 			frame.getBuffer().get(), frame.getFrameSizeInBytes());
 
-	LogTrace("") << "delivered frame to " << capturers_.size() << " capturers" << endl;
+	// LogTrace("") << "delivered frame to " << capturers_.size() << " capturers" << endl;
 }
 
 

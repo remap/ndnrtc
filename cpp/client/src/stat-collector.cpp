@@ -5,17 +5,14 @@
 //  Created by Jiachen Wang on 15 Octboer 2015.
 //  Copyright 2013-2015 Regents of the University of California
 //
-
+#include <algorithm>
 #include <boost/make_shared.hpp>
-#include <include/name-components.h>
-#include <include/ndnrtc-library.h>
 
 #include "stat-collector.h"
 
 using namespace std;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
+using namespace ndnrtc::statistics;
 
 //******************************************************************************
 std::map<std::string, Indicator> StatWriter::IndicatorLookupTable;
@@ -190,7 +187,8 @@ void StatCollector::StreamStatCollector::addStatsToCollect(string filePath,
 {
     for (auto p:statGatheringParams)
     {
-        string ffp = fullFilePath(filePath, p.getFilename(), streamPrefix_);
+        string ffp = fullFilePath(filePath, p.getFilename(), stream_->getBasePrefix(), 
+            stream_->getStreamName());
         statWriters_.push_back(StatCollector::newDefaultStatWriter(p, ffp));
     }
 }
@@ -201,21 +199,23 @@ void StatCollector::StreamStatCollector::flushData()
         w->flush();
 }
 
-void StatCollector::StreamStatCollector::writeStats(const StatisticsStorage::StatRepo& repo)
+void StatCollector::StreamStatCollector::writeStats()
 {
+    StatisticsStorage::StatRepo repo = stream_->getStatistics().getIndicators();
+
     for (auto w:statWriters_)
         w->writeStats(repo);
 }
 
 string StatCollector::StreamStatCollector::fullFilePath(string path, string fname, 
-      string streamPrefix)
+      string basePrefix, string stream)
 {
-    string fpath = path + "/" + fname + "-" + 
-        NameComponents::getUserName(streamPrefix) + "-" +
-        NameComponents::getStreamName(streamPrefix) + ".stat";
+    std::replace(basePrefix.begin(), basePrefix.end(), '/', '+');
+    string fpath = path + "/" + fname + "-" + basePrefix + stream + ".stat";
     return fpath;
 }
 
+#if 1
 //******************************************************************************
 StatWriter* StatCollector::newDefaultStatWriter(const StatGatheringParams& p,
       std::string fname)
@@ -228,21 +228,21 @@ StatCollector::~StatCollector()
     removeAllStreams();
 }
 
-void StatCollector::addStream(string streamPrefix)
+void StatCollector::addStream(const boost::shared_ptr<const IStream>& stream)
 {
-    if (streamStatCollectors_.find(streamPrefix) == streamStatCollectors_.end())
-        streamStatCollectors_[streamPrefix] = new StreamStatCollector(streamPrefix);
+    if (streamStatCollectors_.find(stream->getPrefix()) == streamStatCollectors_.end())
+        streamStatCollectors_[stream->getPrefix()] = new StreamStatCollector(stream);
     else
         throw runtime_error("stream has been already added for stat gathering");
 }
 
-void StatCollector::removeStream(string streamPrefix)
+void StatCollector::removeStream(const boost::shared_ptr<const IStream>& stream)
 {
-    if (streamStatCollectors_.find(streamPrefix) != streamStatCollectors_.end())
+    if (streamStatCollectors_.find(stream->getPrefix()) != streamStatCollectors_.end())
     {
-        finalizeEntry(*streamStatCollectors_[streamPrefix]);
-        delete streamStatCollectors_[streamPrefix];
-        streamStatCollectors_.erase(streamPrefix);
+        finalizeEntry(*streamStatCollectors_[stream->getPrefix()]);
+        delete streamStatCollectors_[stream->getPrefix()];
+        streamStatCollectors_.erase(stream->getPrefix());
     }
 }
 
@@ -269,17 +269,19 @@ size_t StatCollector::getWritersNumber()
 void StatCollector::startCollecting(unsigned int queryInterval, string path, 
       vector<StatGatheringParams> stats)
 {
-    queryInterval_ = queryInterval;
+    double rate = 1000./(double)queryInterval;
 
     for (auto entry:streamStatCollectors_)
         entry.second->addStatsToCollect(path, stats);
 
-    setupTimer();
+    generator_ = boost::make_shared<PreciseGenerator>(io_, rate, 
+        boost::bind(&StatCollector::queryStats, this));
+    generator_->start();
 }
 
 void StatCollector::stop()
 {
-    queryTimer_.cancel();
+    generator_->stop();
 }
 
 #pragma mark - private
@@ -291,13 +293,9 @@ void StatCollector::finalizeEntry(StreamStatCollector& entry)
 void StatCollector::queryStats()
 {
     for (auto it:streamStatCollectors_)
-    {
-        StatisticsStorage storage = ndnp_->getRemoteStreamStatistics(it.second->getStreamPrefix());
-        it.second->writeStats(storage.getIndicators());
-    }
+        it.second->writeStats();
 
     flushData();
-    setupTimer();
 }
 
 void StatCollector::flushData()
@@ -306,12 +304,4 @@ void StatCollector::flushData()
         collectorEntry.second->flushData();
 }
 
-void StatCollector::setupTimer()
-{
-    queryTimer_.expires_from_now(boost::chrono::milliseconds(queryInterval_));
-    queryTimer_.async_wait([this](const boost::system::error_code& code){
-        if (code != boost::asio::error::operation_aborted){
-            this->queryStats();
-        }
-    });
-}
+#endif
