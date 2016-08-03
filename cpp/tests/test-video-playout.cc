@@ -22,6 +22,7 @@
 #include "src/video-thread.h"
 #include "src/frame-converter.h"
 #include "src/clock.h"
+#include "statistics.h"
 
 #include "mock-objects/buffer-observer-mock.h"
 #include "mock-objects/playback-queue-observer-mock.h"
@@ -34,6 +35,7 @@
 using namespace testing;
 using namespace ndn;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 std::string test_path = "";
 
@@ -84,7 +86,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockVideoPlayoutObserver playoutObserver;
@@ -355,7 +358,8 @@ TEST(TestPlayout, TestSkipDelta)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockVideoPlayoutObserver playoutObserver;

@@ -62,7 +62,7 @@ namespace ndnrtc {
 		// void detach(IRemoteStreamObserver*);
 
 		void setNeedsMeta(bool needMeta) { needMeta_ = needMeta; }
-		statistics::StatisticsStorage getStatistics() const { return *sstorage_; }
+		statistics::StatisticsStorage getStatistics() const;
 
 	protected:
         MediaStreamParams::MediaStreamType type_;

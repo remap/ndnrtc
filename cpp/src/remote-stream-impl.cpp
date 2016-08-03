@@ -24,6 +24,7 @@
 #include "playout-control.h"
 #include "interest-queue.h"
 #include "data-validator.h"
+#include "clock.h"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -158,6 +159,13 @@ bool
 RemoteStreamImpl::isVerified() const
 {
 	return (validationInfo_.size() == 0);
+}
+
+statistics::StatisticsStorage
+RemoteStreamImpl::getStatistics() const
+{
+    (*sstorage_)[Indicator::Timestamp] = clock::millisecondTimestamp();
+    return *sstorage_;
 }
 
 #pragma mark - private

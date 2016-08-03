@@ -43,7 +43,8 @@ TEST(TestBufferControl, TestDrdAndLatControlCallbacks)
 	boost::atomic<int> sampleNo(0);
 
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(150));
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 500));
 	MockBufferControlObserver latControlMock;
 

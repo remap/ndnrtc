@@ -13,7 +13,8 @@
 #include "media-stream-base.h"
 #include "name-components.h"
 #include "async.h"
-
+#include "clock.h"
+#include "statistics.h"
 
 #define META_CHECK_INTERVAL_MS 1000
 
@@ -75,6 +76,7 @@ MediaStreamBase::removeThread(const string& threadName)
 statistics::StatisticsStorage 
 MediaStreamBase::getStatistics() const
 {
+    (*statStorage_)[statistics::Indicator::Timestamp] = clock::millisecondTimestamp();
 	return *statStorage_;
 }
 

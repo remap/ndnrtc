@@ -15,6 +15,7 @@
 #include "clock.h"
 #include "include/params.h"
 #include "audio-capturer.h"
+#include "statistics.h"
 
 #include "mock-objects/audio-thread-callback-mock.h"
 #include "mock-objects/buffer-observer-mock.h"
@@ -27,6 +28,7 @@ using namespace testing;
 using namespace ndnrtc;
 using namespace ndn;
 using namespace boost::chrono;
+using namespace ndnrtc::statistics;
 
 TEST(TestAudioPlayout, TestG722)
 {
@@ -68,7 +70,8 @@ TEST(TestAudioPlayout, TestG722)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockPlayoutObserver playoutObserver;
@@ -248,7 +251,8 @@ TEST(TestAudioPlayout, TestOpus)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockPlayoutObserver playoutObserver;

@@ -37,7 +37,8 @@ TEST(TestPipeliner, TestExpressRightmost)
 
 	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage));
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
@@ -102,7 +103,8 @@ TEST(TestPipeliner, TestRequestSample)
 
 	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage));
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
@@ -169,7 +171,8 @@ TEST(TestPipeliner, TestRequestKeySample)
 
 	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage));
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
@@ -237,7 +240,8 @@ TEST(TestPipeliner, TestSegmentsArrive)
 
 	boost::shared_ptr<statistics::StatisticsStorage> sstorage(statistics::StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(sstorage));
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>());
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage));
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockInterestQueue> interestQueue(boost::make_shared<MockInterestQueue>());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());

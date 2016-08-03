@@ -148,46 +148,46 @@ res/test-source-320x240.argb:
 check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector 
 #bin/tests/test-client
 
-bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_client_params_SOURCES = tests/test-client-params.cc tests/tests-helpers.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_client_params_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc client/src/stat-collector.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_stat_collector_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_stat_collector_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_stat_collector_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_renderer_SOURCES = tests/test-renderer.cc client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_renderer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_renderer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_renderer_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_renderer_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_frame_io_SOURCES = tests/test-frame-io.cc client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_frame_io_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_frame_io_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_video_source_SOURCES = tests/test-video-source.cc client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp src/simple-log.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_source_DEPENDENCIES = res/test-source-1280x720.argb
 bin_tests_test_video_source_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_source_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_video_source_LDADD = ${libndnrtc_la_LIBADD}
+bin_tests_test_video_source_LDADD = ${libndnrtc_la_LIBADD} $(top_builddir)/libndnrtc.la 
 
 bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_}
+bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 #bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp #client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp #client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
 #bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 #bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_}
+#bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 
 ### NDN-RTC tests
