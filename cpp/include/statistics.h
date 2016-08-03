@@ -40,7 +40,7 @@ namespace ndnrtc {
                 RescuedKeyNum,                  // VideoPlayout
                 IncompleteNum,                  // Buffer
                 IncompleteKeyNum,               // Buffer
-                BufferTargetSize,
+                BufferTargetSize,               // RemoteStreamImpl
                 BufferPlayableSize,             // PlaybackQueue
                 BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl

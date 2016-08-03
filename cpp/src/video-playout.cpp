@@ -77,7 +77,7 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
                 << " (" << hdr.playbackNo_ << ")" << std::endl;
             
             (*statStorage_)[Indicator::RecoveredNum]++;
-            if (slot->getNameInfo().class_ = SampleClass::Key)
+            if (slot->getNameInfo().class_ == SampleClass::Key)
                 (*statStorage_)[Indicator::RecoveredKeyNum]++;
         }
 
@@ -93,18 +93,12 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
             (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
         {
             if (!gopIsValid_)
-            {
                 LogWarnC << "skip " << slot->getNameInfo().sampleNo_
                     << " invalid GOP" << std::endl;
-                (*statStorage_)[Indicator::SkippedBadGopNum]++;
-            }
             else
-            {
                 LogWarnC << "skip " << slot->getNameInfo().sampleNo_
                     << " (expected " << currentPlayNo_+1 
                     << " received " << hdr.playbackNo_ << ")" << std::endl;
-                (*statStorage_)[Indicator::SkippedNoKeyNum]++;
-            }
 
             gopIsValid_ = false;
 
@@ -112,6 +106,8 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
             for (auto o:observers_) 
                 ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
                     !slot->getNameInfo().isDelta_);
+            
+            (*statStorage_)[Indicator::SkippedNum]++;
         }
 
         currentPlayNo_ = hdr.playbackNo_;

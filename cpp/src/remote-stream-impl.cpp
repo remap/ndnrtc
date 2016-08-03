@@ -57,7 +57,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	shared_ptr<DrdEstimator> drdEstimator(make_shared<DrdEstimator>());
 	sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
 	bufferControl_ = make_shared<BufferControl>(drdEstimator, buffer_, sstorage_);
-	latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator);
+	latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator, sstorage_);
 	interestControl_ = make_shared<InterestControl>(drdEstimator, sstorage_);
 	
 	PipelinerSettings pps;
@@ -133,6 +133,7 @@ RemoteStreamImpl::setTargetBufferSize(unsigned int bufferSizeMs)
 {
     playoutControl_->setThreshold(bufferSizeMs);
 	LogDebugC << "set target buffer size to " << bufferSizeMs << "ms" << std::endl;
+    (*sstorage_)[Indicator::BufferTargetSize] = bufferSizeMs;
 }
 
 void 
