@@ -22,6 +22,10 @@ namespace ndnlog {
 }
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class StabilityEstimator;
 	class DrdChangeEstimator;
 	class ILatencyControlObserver;
@@ -55,7 +59,8 @@ namespace ndnrtc {
 	{
 	public:
 		LatencyControl(unsigned int timeoutWindowMs, 
-			const boost::shared_ptr<const DrdEstimator>& drd);
+			const boost::shared_ptr<const DrdEstimator>& drd,
+            const boost::shared_ptr<statistics::StatisticsStorage>& storage);
 		~LatencyControl();
 
 		void onDrdUpdate();
@@ -85,6 +90,7 @@ namespace ndnrtc {
 		double targetRate_;
 		ILatencyControlObserver* observer_;
 		PipelineAdjust currentCommand_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void pipelineChanged();
 	};

@@ -18,6 +18,7 @@
 #include "src/drd-estimator.h"
 #include "src/latency-control.h"
 #include "client/src/precise-generator.h"
+#include "statistics.h"
 
 #include "mock-objects/latency-control-observer-mock.h"
 
@@ -25,6 +26,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 TEST(TestLatencyControl, TestLatestDataDetection)
@@ -145,7 +147,8 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
 		MockLatencyControlObserver lco;
-		LatencyControl latControl(1000, drd);
+		boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+		LatencyControl latControl(1000, drd, storage);
 		drd->attach(&latControl);
 		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING
@@ -338,7 +341,8 @@ TEST(TestLatencyControl, TestNeverCatchUp)
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
 		MockLatencyControlObserver lco;
-		LatencyControl latControl(1000, drd);
+		boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+		LatencyControl latControl(1000, drd, storage);
 		drd->attach(&latControl);
 		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING
@@ -531,7 +535,8 @@ TEST(TestLatencyControl, TestChangingPipeline)
 		
 		int nIncreaseEvents = 0, nDecreaseEvents = 0;
 		MockLatencyControlObserver lco;
-		LatencyControl latControl(1000, drd);
+		boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+		LatencyControl latControl(1000, drd, storage);
 		drd->attach(&latControl);
 		latControl.registerObserver(&lco);
 #ifdef ENABLE_LOGGING

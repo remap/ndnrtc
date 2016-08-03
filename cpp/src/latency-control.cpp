@@ -11,8 +11,10 @@
 
 #include "estimators.h"
 #include "clock.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace estimators;
 
 //******************************************************************************
@@ -27,6 +29,8 @@ namespace ndnrtc {
 		void newDataArrived(double currentRate);
 		bool isStable() const { return isStable_; }
         void flush();
+        
+        Average getDarrAverage() const { return m1_; }
 
 	protected:
 		unsigned int sampleSize_, minOccurrences_;
@@ -226,7 +230,8 @@ DrdChangeEstimator::flush()
 
 //******************************************************************************
 LatencyControl::LatencyControl(unsigned int timeoutWindowMs, 
-    const boost::shared_ptr<const DrdEstimator>& drd):
+    const boost::shared_ptr<const DrdEstimator>& drd,
+    const boost::shared_ptr<statistics::StatisticsStorage>& storage):
 stabilityEstimator_(boost::make_shared<StabilityEstimator>(10, 4, 0.3, 0.7)),
 //stabilityEstimator_(30, 4, 0.1, 0.95), // high
 //stabilityEstimator_(3, 4, 0.6, 0.5), // low
@@ -235,6 +240,7 @@ timestamp_(0),
 waitForChange_(false), waitForStability_(false),
 timeoutWindowMs_(timeoutWindowMs),
 drd_(drd),
+sstorage_(storage),
 interArrival_(Average(boost::make_shared<estimators::SampleWindow>(10))),
 targetRate_(30.),
 observer_(nullptr),
@@ -265,6 +271,7 @@ LatencyControl::sampleArrived(const PacketNumber& playbackNo)
 
     bool timeoutFired = (now-timestamp_ > timeoutWindowMs_);
     stabilityEstimator_->newDataArrived(targetRate_);
+    (*sstorage_)[Indicator::Darr] = stabilityEstimator_->getDarrAverage().latestValue();
 
     if (stabilityEstimator_->isStable())
     {

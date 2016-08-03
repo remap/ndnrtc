@@ -60,14 +60,14 @@ namespace ndnrtc {
                 SegmentsDeltaParityAvgNum,      // SampleEstimator
                 SegmentsKeyParityAvgNum,        // SampleEstimator
                 RtxNum,
-                RebufferingsNum,
+                RebufferingsNum,                // PipelineControlStateMachine
                 RequestedNum,                   // Pipeliner
                 RequestedKeyNum,                // Pipeliner
                 DW,                             // InterestControl
                 W,                              // InterestControl
                 SegmentsReceivedNum,            // SegmentController
                 TimeoutsNum,                    // SegmentController
-                Darr,
+                Darr,                           // LatencyControl
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController
                 
