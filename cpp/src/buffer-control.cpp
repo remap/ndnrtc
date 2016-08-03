@@ -46,7 +46,6 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 	if (buffer_->isRequested(segment))
 	{
 		BufferReceipt receipt = buffer_->received(segment);
-        std::cout << "DRD " << receipt.segment_->getDrdUsec()/1000 << std::endl;
 		drdEstimator_->newValue(receipt.segment_->getDrdUsec()/1000, receipt.segment_->isOriginal());
         
         (*sstorage_)[Indicator::DrdOriginalEstimation] = drdEstimator_->getOriginalEstimation();
