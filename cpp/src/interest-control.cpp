@@ -13,6 +13,7 @@
 #include "estimators.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 const unsigned int InterestControl::MinPipelineSize = 3;
 
@@ -49,13 +50,13 @@ InterestControl::StrategyDefault::withhold(unsigned int currentLimit,
 
 //******************************************************************************
 InterestControl::InterestControl(const boost::shared_ptr<DrdEstimator>& drdEstimator,
+    const boost::shared_ptr<statistics::StatisticsStorage>& storage,
 	boost::shared_ptr<IStrategy> strategy):
 initialized_(false), 
 lowerLimit_(InterestControl::MinPipelineSize),
 limit_(InterestControl::MinPipelineSize),
-upperLimit_(10*InterestControl::MinPipelineSize),
-pipeline_(0),
-drdEstimator_(drdEstimator), strategy_(strategy),
+upperLimit_(10*InterestControl::MinPipelineSize), pipeline_(0),
+drdEstimator_(drdEstimator), sstorage_(storage), strategy_(strategy),
 targetRate_(0.)
 {
 	description_ = "interest-control";
@@ -74,6 +75,9 @@ InterestControl::reset()
 	lowerLimit_ = InterestControl::MinPipelineSize;
 	limit_ = InterestControl::MinPipelineSize;
 	upperLimit_ = 30;
+    
+    (*sstorage_)[Indicator::DW] = limit_;
+    (*sstorage_)[Indicator::W] = pipeline_;
 }
 
 bool
@@ -81,7 +85,9 @@ InterestControl::decrement()
 {
 	pipeline_--;
     assert(pipeline_ >= 0);
+    
 	LogTraceC << "▼dec " << snapshot() << std::endl;
+    (*sstorage_)[Indicator::W] = pipeline_;
 	return true;
 }
 
@@ -92,7 +98,9 @@ InterestControl::increment()
 		return false;
 
 	pipeline_++;
+    
 	LogTraceC << "▲inc " << snapshot() << std::endl;
+    (*sstorage_)[Indicator::W] = pipeline_;
 	return true;
 }
 
@@ -197,6 +205,8 @@ InterestControl::changeLimitTo(unsigned int newLimit)
 	}
 	else
 		limit_ = newLimit;
+    
+    (*sstorage_)[Indicator::DW] = limit_;
 }
 
 std::string

@@ -21,6 +21,10 @@ namespace ndn {
 }
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class WireSegment;
 
 	class IInterestControl
@@ -81,7 +85,8 @@ namespace ndnrtc {
 				unsigned int lowerLimit, unsigned int upperLimit);
 		};
 
-		InterestControl(const boost::shared_ptr<DrdEstimator>&, 
+		InterestControl(const boost::shared_ptr<DrdEstimator>&,
+                        const boost::shared_ptr<statistics::StatisticsStorage>& storage,
 			boost::shared_ptr<IStrategy> strategy = boost::make_shared<StrategyDefault>());
 		~InterestControl();
 
@@ -170,6 +175,7 @@ namespace ndnrtc {
 		boost::atomic<int> pipeline_;
 		boost::shared_ptr<DrdEstimator> drdEstimator_;
 		double targetRate_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void setLimits();
 		void changeLimitTo(unsigned int newLimit);

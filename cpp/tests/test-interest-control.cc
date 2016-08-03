@@ -12,11 +12,13 @@
 #include "gtest/gtest.h"
 #include "interest-control.h"
 #include "drd-estimator.h"
+#include "statistics.h"
 
 #include "tests-helpers.h"
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 // #define ENABLE_LOGGING
@@ -35,7 +37,8 @@ TEST(TestInterestControl, TestDefault)
 	});
 
 	boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>());
-	InterestControl ictrl(drd);
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	InterestControl ictrl(drd, storage);
 	drd->attach(&ictrl);
 
 #ifdef ENABLE_LOGGING
@@ -127,7 +130,8 @@ TEST(TestInterestControl, TestViolationsOfLowerBoundary)
 {
 	{
 		boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 1));
-		InterestControl ictrl(drd);
+        boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+		InterestControl ictrl(drd,storage);
 		drd->attach(&ictrl);
 
 		drd->newValue(75, true);
@@ -139,7 +143,8 @@ TEST(TestInterestControl, TestViolationsOfLowerBoundary)
 	}
 	{
 		boost::shared_ptr<DrdEstimator> drd(boost::make_shared<DrdEstimator>(150, 1));
-		InterestControl ictrl(drd);
+        boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+		InterestControl ictrl(drd, storage);
 		drd->attach(&ictrl);
 
 		drd->newValue(75, true);

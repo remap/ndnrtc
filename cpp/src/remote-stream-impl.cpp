@@ -58,7 +58,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
 	bufferControl_ = make_shared<BufferControl>(drdEstimator, buffer_, sstorage_);
 	latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator);
-	interestControl_ = make_shared<InterestControl>(drdEstimator);
+	interestControl_ = make_shared<InterestControl>(drdEstimator, sstorage_);
 	
 	PipelinerSettings pps;
 	pps.interestLifetimeMs_ = 2000;

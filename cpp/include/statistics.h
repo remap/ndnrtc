@@ -40,7 +40,7 @@ namespace ndnrtc {
                 RescuedKeyNum,                  // VideoPlayout
                 IncompleteNum,                  // Buffer
                 IncompleteKeyNum,               // Buffer
-                BufferTargetSize,               
+                BufferTargetSize,
                 BufferPlayableSize,             // PlaybackQueue
                 BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl
@@ -63,8 +63,8 @@ namespace ndnrtc {
                 RebufferingsNum,
                 RequestedNum,                   // Pipeliner
                 RequestedKeyNum,                // Pipeliner
-                DW,
-                W,
+                DW,                             // InterestControl
+                W,                              // InterestControl
                 SegmentsReceivedNum,            // SegmentController
                 TimeoutsNum,                    // SegmentController
                 Darr,
