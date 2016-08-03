@@ -18,6 +18,10 @@ namespace ndn {
 }
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class PipelineControlState;
 	class IPipeliner;
 	class IInterestControl;
@@ -112,6 +116,7 @@ namespace ndnrtc {
 			boost::shared_ptr<IInterestControl> interestControl_;
 			boost::shared_ptr<ILatencyControl> latencyControl_;
 			boost::shared_ptr<IPlayoutControl> playoutControl_;
+            boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 		} Struct;
 
 		~PipelineControlStateMachine();

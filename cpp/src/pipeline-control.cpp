@@ -19,7 +19,8 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadP
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
-			const boost::shared_ptr<IPlayoutControl> playoutControl)
+			const boost::shared_ptr<IPlayoutControl> playoutControl,
+            const boost::shared_ptr<statistics::StatisticsStorage>& storage)
 {
 	PipelineControlStateMachine::Struct ctrl(threadPrefix);
     ctrl.buffer_ = buffer;
@@ -27,6 +28,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadP
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;
 	ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 	return PipelineControl(PipelineControlStateMachine::defaultStateMachine(ctrl),
 		interestControl);
 }
@@ -36,7 +38,8 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPre
             const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
-			const boost::shared_ptr<IPlayoutControl> playoutControl)
+			const boost::shared_ptr<IPlayoutControl> playoutControl,
+            const boost::shared_ptr<statistics::StatisticsStorage>& storage)
 {
 	PipelineControlStateMachine::Struct ctrl(threadPrefix);
     ctrl.buffer_ = buffer;
@@ -44,6 +47,7 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPre
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;
 	ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 	return PipelineControl(PipelineControlStateMachine::videoStateMachine(ctrl),
 		interestControl);
 }

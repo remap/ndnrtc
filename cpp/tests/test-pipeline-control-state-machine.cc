@@ -25,6 +25,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 TEST(TestPipelineControlStateMachine, TestDefaultSequence)
@@ -40,6 +41,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
 	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 	
 	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
 	ctrl.buffer_ = buffer;
@@ -47,6 +49,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 	ctrl.interestControl_ = interestControl;
 	ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
@@ -151,6 +154,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -158,6 +162,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideoConsumer)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -277,6 +282,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostTimeout)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -284,6 +290,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostTimeout)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -333,6 +340,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -340,6 +348,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostReset)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -395,6 +404,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -402,6 +412,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -446,6 +457,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -453,6 +465,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialTimeout)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -538,6 +551,7 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -545,6 +559,7 @@ TEST(TestPipelineControlStateMachine, TestVideoConsumerWaitInitialTimeout)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -631,6 +646,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -638,6 +654,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialStarvation)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -700,6 +717,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -707,6 +725,7 @@ TEST(TestPipelineControlStateMachine, TestWaitInitialReset)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -772,6 +791,7 @@ TEST(TestPipelineControlStateMachine, TestIgnoredEvents)
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
     
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -779,6 +799,7 @@ TEST(TestPipelineControlStateMachine, TestIgnoredEvents)
     ctrl.interestControl_ = interestControl;
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
     
     EXPECT_CALL(*buffer, reset())
     .Times(1);

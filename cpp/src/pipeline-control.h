@@ -16,6 +16,10 @@
 #include "pipeline-control-state-machine.h"
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class IPipeliner;
 	class IInterestControl;
 	class IPlayoutControl;
@@ -49,13 +53,15 @@ namespace ndnrtc {
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
-			const boost::shared_ptr<IPlayoutControl> playoutControl);
+			const boost::shared_ptr<IPlayoutControl> playoutControl,
+            const boost::shared_ptr<statistics::StatisticsStorage>& storage );
 		static PipelineControl videoPipelineControl(const ndn::Name& threadPrefix,
             const boost::shared_ptr<IBuffer> buffer,
 			const boost::shared_ptr<IPipeliner> pipeliner,
 			const boost::shared_ptr<IInterestControl> interestControl,
 			const boost::shared_ptr<ILatencyControl> latencyControl,
-			const boost::shared_ptr<IPlayoutControl> playoutControl);
+			const boost::shared_ptr<IPlayoutControl> playoutControl,
+            const boost::shared_ptr<statistics::StatisticsStorage>& storage);
 	
 	private:
 		PipelineControlStateMachine machine_;

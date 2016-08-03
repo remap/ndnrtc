@@ -15,8 +15,11 @@
 #include "pipeliner.h"
 #include "frame-data.h"
 #include "playout-control.h"
+#include "statistics.h"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
+
 namespace ndnrtc {
 	const std::string kStateIdle = "Idle";
 	const std::string kStateWaitForRightmost = "WaitForRightmost";
@@ -396,6 +399,9 @@ PipelineControlStateMachine::switchToState(const std::string& state,
 	currentState_->exit();
 	currentState_ = states_[state];
 	currentState_->enter();
+    
+    if (event == boost::make_shared<EventStarvation>(0)->toString())
+        (*ppCtrl_->sstorage_)[Indicator::RebufferingsNum]++;
 }
 
 //******************************************************************************

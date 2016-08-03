@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "pipeline-control.h"
 #include "tests-helpers.h"
+#include "statistics.h"
 
 #include "mock-objects/interest-control-mock.h"
 #include "mock-objects/pipeliner-mock.h"
@@ -19,6 +20,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 TEST(TestPipelineControl, TestDefault)
@@ -29,6 +31,7 @@ TEST(TestPipelineControl, TestDefault)
 	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
 	EXPECT_CALL(*pp, reset())
 		.Times(1);
@@ -42,7 +45,7 @@ TEST(TestPipelineControl, TestDefault)
         .Times(1);
 
 	PipelineControl ppc = PipelineControl::defaultPipelineControl(Name(threadPrefix),
-		buffer, pp, interestControl, latencyControl, playoutControl);
+		buffer, pp, interestControl, latencyControl, playoutControl, storage);
 
 	{
 		EXPECT_CALL(*pp, setNeedRightmost())
