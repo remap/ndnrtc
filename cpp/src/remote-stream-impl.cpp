@@ -48,7 +48,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	description_ = "remote-stream";
 
 	segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
-	buffer_ = make_shared<Buffer>(make_shared<SlotPool>(500));
+	buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
 	playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                dynamic_pointer_cast<Buffer>(buffer_));
 	// playout and playout-control created in subclasses
@@ -68,7 +68,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	pps.interestQueue_ = interestQueue_;
 	pps.playbackQueue_ = playbackQueue_;
 	pps.segmentController_ = segmentController_;
-    pps.sstorage_ = storage_;
+    pps.sstorage_ = sstorage_;
 
 	pipeliner_ = make_shared<Pipeliner>(pps);
 	// pipeline control created in subclasses

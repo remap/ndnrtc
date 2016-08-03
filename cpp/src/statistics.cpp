@@ -36,7 +36,7 @@ map_list_of
 ( Indicator::IncompleteKeyNum, "Incomplete key frames" ) 
 ( Indicator::BufferTargetSize, "Jitter target size" ) 
 ( Indicator::BufferPlayableSize, "Jitter playable size" ) 
-( Indicator::BufferEstimatedSize, "Jitter estimated size" ) 
+( Indicator::BufferReservedSize, "Jitter reserved size" )
 ( Indicator::CurrentProducerFramerate, "Producer rate" )
 // playout
 ( Indicator::LastPlayedNo, "Playback #" ) 
@@ -108,7 +108,7 @@ map_list_of
 ( Indicator::IncompleteKeyNum, 0. )
 ( Indicator::BufferTargetSize, 0. )
 ( Indicator::BufferPlayableSize, 0. )
-( Indicator::BufferEstimatedSize, 0. )
+( Indicator::BufferReservedSize, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
 // playout
 ( Indicator::LastPlayedNo, 0. )
@@ -183,7 +183,7 @@ boost::assign::map_list_of
 (Indicator::IncompleteKeyNum, "framesIncKey")
 (Indicator::BufferTargetSize, "jitterTar")
 (Indicator::BufferPlayableSize, "jitterPlay")
-(Indicator::BufferEstimatedSize, "jitterEst")
+(Indicator::BufferReservedSize, "jitterRsrv")
 (Indicator::CurrentProducerFramerate, "prodRate")
 // playout
 (Indicator::LastPlayedNo, "playNo")

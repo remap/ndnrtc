@@ -811,9 +811,12 @@ PlaybackQueue::pop(ExtractSlot extract)
             << dump() << std::endl;
 
         extract(slot, playTime);
+        (*sstorage_)[Indicator::AcquiredNum]++;
         
         if (slot->getNameInfo().isDelta_) 
             buffer_->invalidatePrevious(slot->getPrefix());
+        else
+            (*sstorage_)[Indicator::AcquiredKeyNum]++;
         
         buffer_->releaseSlot(slot);
     }
@@ -881,7 +884,7 @@ PlaybackQueue::dump()
 void 
 PlaybackQueue::onNewRequest(const boost::shared_ptr<BufferSlot>&)
 {
-    // do nothing...
+    (*sstorage_)[Indicator::BufferReservedSize] = pendingSize();
 }
 
 void 
@@ -898,6 +901,8 @@ PlaybackQueue::onNewData(const BufferReceipt& receipt)
         for (auto o:observers_) o->onNewSampleReady();
         
         LogDebugC << "--■" << receipt.slot_->dump() << dump() << std::endl;
+        
+        (*sstorage_)[Indicator::BufferPlayableSize] = size();
     }
 }
 

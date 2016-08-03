@@ -28,8 +28,8 @@ namespace ndnrtc {
                 
                 // consumer
                 // buffer
-                AcquiredNum,
-                AcquiredKeyNum,
+                AcquiredNum,                    // PlaybackQueue
+                AcquiredKeyNum,                 // PlaybackQueue
                 DroppedNum,                     // Buffer
                 DroppedKeyNum,                  // Buffer
                 AssembledNum,                   // Buffer
@@ -40,9 +40,9 @@ namespace ndnrtc {
                 RescuedKeyNum,
                 IncompleteNum,
                 IncompleteKeyNum,
-                BufferTargetSize,
-                BufferPlayableSize,
-                BufferEstimatedSize,
+                BufferTargetSize,               //
+                BufferPlayableSize,             // PlaybackQueue
+                BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl
                 
                 // playout

@@ -27,6 +27,7 @@
 #include "src/video-thread.h"
 #include "src/frame-converter.h"
 #include "src/clock.h"
+#include "statistics.h"
 
 #include "mock-objects/buffer-observer-mock.h"
 #include "mock-objects/playback-queue-observer-mock.h"
@@ -38,6 +39,7 @@
 using namespace testing;
 using namespace ndn;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 std::string test_path = "";
 
@@ -69,7 +71,8 @@ TEST(TestPlaybackQueue, TestAttach)
     MockBufferObserver bobserver;
     MockPlaybackQueueObserver pobserver;
     boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(delay*3)); // make sure we re-use slots
-    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+        boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
     boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
     
     EXPECT_NO_THROW(pqueue->detach(nullptr));
@@ -93,7 +96,8 @@ TEST(TestPlaybackQueue, TestPlay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(delay*3)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+        boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	buffer->attach(&bobserver);
@@ -217,7 +221,8 @@ TEST(TestPlayout, TestPlay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+	    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	buffer->attach(&bobserver);
 	pqueue->attach(&pobserver);
@@ -443,7 +448,8 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	MockPlayoutObserver playoutObserver;
 	PlayoutTest playout(io, pqueue);
@@ -556,8 +562,6 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 
 	boost::function<void(void)> queueEmpty = [pipeline, &playout, &source, &pqueue, &buffer, streamPrefix, &nPlayed, &request, &published](){
 		playout.stop();
-		
-		LogTrace("") << buffer->dump() << std::endl;
 
 		EXPECT_FALSE(source.isRunning());
 		EXPECT_EQ(0, pqueue->size());
@@ -632,7 +636,8 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	MockPlayoutObserver playoutObserver;
 	PlayoutTest playout(io, pqueue);
@@ -795,7 +800,6 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	boost::this_thread::sleep_for(Msec(2*oneWayDelay+4*deviation));
 	playout.stop();
 
-	LogTrace("") << buffer->dump() << std::endl;
 	EXPECT_FALSE(source.isRunning());
 	EXPECT_EQ(0, pqueue->size());
 	EXPECT_EQ(pipeline, request-nPlayed);
@@ -856,7 +860,8 @@ TEST(TestPlayout, TestPlayout70msDelay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	MockPlayoutObserver playoutObserver;
 	PlayoutTest playout(io, pqueue);
@@ -1114,7 +1119,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	MockPlayoutObserver playoutObserver;
 	PlayoutTest playout(io, pqueue);
@@ -1374,7 +1380,8 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 	MockBufferObserver bobserver;
 	MockPlaybackQueueObserver pobserver;
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-	boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	MockPlayoutObserver playoutObserver;
 	PlayoutTest playout(io, pqueue);
@@ -1630,7 +1637,8 @@ TEST(TestPlayout, TestPlayoutFastForward)
     MockBufferObserver bobserver;
     MockPlaybackQueueObserver pobserver;
     boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(pipeline*5)); // make sure we re-use slots
-    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(pool));
+    boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<Buffer> buffer(boost::make_shared<Buffer>(storage, pool));
     boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
     MockPlayoutObserver playoutObserver;
     PlayoutTest playout(io, pqueue);
