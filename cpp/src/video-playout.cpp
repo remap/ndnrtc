@@ -9,9 +9,11 @@
 #include "video-playout.h"
 #include "frame-data.h"
 #include "frame-buffer.h"
+#include "statistics.h"
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndnlog;
 
 //******************************************************************************
@@ -70,8 +72,14 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
         VideoFrameSegmentHeader hdr = frameSlot_.readSegmentHeader(*slot);
 
         if (recovered)
-            LogDebugC << "recovered " << slot->getNameInfo().sampleNo_ 
+        {
+            LogDebugC << "recovered " << slot->getNameInfo().sampleNo_
                 << " (" << hdr.playbackNo_ << ")" << std::endl;
+            
+            (*statStorage_)[Indicator::RecoveredNum]++;
+            if (slot->getNameInfo().class_ = SampleClass::Key)
+                (*statStorage_)[Indicator::RecoveredKeyNum]++;
+        }
 
         if (!slot->getNameInfo().isDelta_)
         {
@@ -85,12 +93,18 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
             (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
         {
             if (!gopIsValid_)
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_ 
+            {
+                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
                     << " invalid GOP" << std::endl;
+                (*statStorage_)[Indicator::SkippedBadGopNum]++;
+            }
             else
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_ 
+            {
+                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
                     << " (expected " << currentPlayNo_+1 
                     << " received " << hdr.playbackNo_ << ")" << std::endl;
+                (*statStorage_)[Indicator::SkippedNoKeyNum]++;
+            }
 
             gopIsValid_ = false;
 
@@ -114,6 +128,16 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
 
             LogDebugC << "processed " << slot->getNameInfo().sampleNo_
                 << " (" << hdr.playbackNo_ << ")" << std::endl;
+            
+            (*statStorage_)[Indicator::PlayedNum]++;
+            (*statStorage_)[Indicator::LastPlayedNo] = currentPlayNo_;
+            if (slot->getNameInfo().class_ == SampleClass::Key)
+            {
+                (*statStorage_)[Indicator::LastPlayedKeyNo] = slot->getNameInfo().sampleNo_;
+                (*statStorage_)[Indicator::PlayedKeyNum]++;
+            }
+            else
+                (*statStorage_)[Indicator::LastPlayedDeltaNo] = slot->getNameInfo().sampleNo_;
         }
     }
     else
@@ -122,7 +146,7 @@ void VideoPlayout::processSample(const boost::shared_ptr<const BufferSlot>& slot
         LogWarnC << "failed recovery " << slot->dump() << std::endl;
 
         for (auto o:observers_) 
-                ((IVideoPlayoutObserver*)o)->recoveryFailure(slot->getNameInfo().sampleNo_, 
+            ((IVideoPlayoutObserver*)o)->recoveryFailure(slot->getNameInfo().sampleNo_,
                     !slot->getNameInfo().isDelta_);
     }
 }

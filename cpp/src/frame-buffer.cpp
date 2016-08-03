@@ -676,8 +676,14 @@ Buffer::invalidate(const Name& slotPrefix)
     activeSlots_.erase(activeSlots_.find(slotPrefix));
     
     (*sstorage_)[Indicator::DroppedNum]++;
+    if (slot->getState() <= BufferSlot::Assembling)
+        (*sstorage_)[Indicator::IncompleteNum]++;
     if (slot->getNameInfo().class_ == SampleClass::Key)
+    {
         (*sstorage_)[Indicator::DroppedKeyNum]++;
+        if (slot->getState() <= BufferSlot::Assembling)
+            (*sstorage_)[Indicator::IncompleteKeyNum]++;
+    }
     
     pool_->push(slot);
 }
@@ -695,8 +701,14 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
         boost::shared_ptr<BufferSlot> slot = activeSlots_.begin()->second;
         
         (*sstorage_)[Indicator::DroppedNum]++;
+        if (slot->getState() <= BufferSlot::Assembling)
+            (*sstorage_)[Indicator::IncompleteNum]++;
         if (slot->getNameInfo().class_ == SampleClass::Key)
+        {
             (*sstorage_)[Indicator::DroppedKeyNum]++;
+            if (slot->getState() <= BufferSlot::Assembling)
+                (*sstorage_)[Indicator::IncompleteKeyNum]++;
+        }
         
         pool_->push(activeSlots_.begin()->second);
         activeSlots_.erase(activeSlots_.begin());

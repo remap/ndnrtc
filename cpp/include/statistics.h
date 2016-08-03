@@ -34,27 +34,24 @@ namespace ndnrtc {
                 DroppedKeyNum,                  // Buffer
                 AssembledNum,                   // Buffer
                 AssembledKeyNum,                // Buffer
-                RecoveredNum,
-                RecoveredKeyNum,
-                RescuedNum,
-                RescuedKeyNum,
-                IncompleteNum,
-                IncompleteKeyNum,
-                BufferTargetSize,               //
+                RecoveredNum,                   // VideoPlayout
+                RecoveredKeyNum,                // VideoPlayout
+                RescuedNum,                     // VideoPlayout
+                RescuedKeyNum,                  // VideoPlayout
+                IncompleteNum,                  // Buffer
+                IncompleteKeyNum,               // Buffer
+                BufferTargetSize,               
                 BufferPlayableSize,             // PlaybackQueue
                 BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl
                 
                 // playout
-                LastPlayedNo,
-                LastPlayedDeltaNo,
-                LastPlayedKeyNo,
-                PlayedNum,
-                PlayedKeyNum,
-                SkippedNoKeyNum,
-                SkippedIncompleteNum,
-                SkippedBadGopNum,
-                SkippedIncompleteKeyNum,
+                LastPlayedNo,                   // VideoPlayout
+                LastPlayedDeltaNo,              // VideoPlayout
+                LastPlayedKeyNo,                // VideoPlayout
+                PlayedNum,                      // VideoPlayout
+                PlayedKeyNum,                   // VideoPlayout
+                SkippedNum,                     // VideoPlayout
                 LatencyEstimated,
                 
                 // pipeliner
