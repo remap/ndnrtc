@@ -14,7 +14,6 @@
 #include "gtest/gtest.h"
 #include "src/video-playout.h"
 #include "src/frame-buffer.h"
-#include "src/playout.h"
 #include "tests-helpers.h"
 #include "name-components.h"
 #include "async.h"
@@ -31,7 +30,7 @@
 #include "mock-objects/video-playout-consumer-mock.h"
 
 // #define ENABLE_LOGGING
-
+#if 1
 using namespace testing;
 using namespace ndn;
 using namespace ndnrtc;
@@ -39,7 +38,6 @@ using namespace ndnrtc::statistics;
 
 std::string test_path = "";
 
-#if 1
 //******************************************************************************
 TEST(TestPlayout, TestPlayout100msDelay)
 {

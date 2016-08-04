@@ -9,8 +9,8 @@
 //  Created: 3/19/14
 //
 
-#ifndef __ndnrtc__playout__
-#define __ndnrtc__playout__
+#ifndef __playout_h__
+#define __playout_h__
 
 #include <boost/asio.hpp>
 
