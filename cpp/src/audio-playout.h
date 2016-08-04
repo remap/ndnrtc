@@ -9,35 +9,29 @@
 #ifndef __ndnrtc__audio_playout__
 #define __ndnrtc__audio_playout__
 
-#include "ndnrtc-common.h"
 #include "playout.h"
-#include "frame-buffer.h"
 #include "webrtc-audio-channel.h"
 
 namespace ndnrtc {
   class AudioRenderer;
+  class AudioPlayoutImpl;
   
   class AudioPlayout : public Playout
   {
+    typedef statistics::StatisticsStorage StatStorage;
   public:
     AudioPlayout(boost::asio::io_service& io,
             const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage = 
             boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
-    ~AudioPlayout(){}
 
     void start(unsigned int devIdx = 0, 
       WebrtcAudioChannel::Codec codec = WebrtcAudioChannel::Codec::G722);
     void stop();
 
   private:
-    AudioBundleSlot bundleSlot_;
-    PacketNumber packetCount_;
-    boost::shared_ptr<AudioRenderer> renderer_;
-
-    void
-    processSample(const boost::shared_ptr<const BufferSlot>&);
+    AudioPlayoutImpl* pimpl();
   };
 }
 
-#endif /* defined(__ndnrtc__audio_playout__) */
+#endif

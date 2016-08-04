@@ -62,7 +62,7 @@ namespace ndnrtc {
         void detach(IPlayoutObserver* observer);
 
     protected:
-        Playout(const boost::shared_ptr<PlayoutImpl>& pimpl):pimpl_(pimpl){}
+        Playout(boost::shared_ptr<PlayoutImpl> pimpl):pimpl_(pimpl){}
 
         PlayoutImpl* pimpl();
         PlayoutImpl* pimpl() const;
