@@ -11,8 +11,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "src/playout.h"
-#include "src/video-playout.h"
+#include "src/playout-impl.h"
 
 class MockPlayoutObserver : public ndnrtc::IPlayoutObserver
 {

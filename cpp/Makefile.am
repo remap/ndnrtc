@@ -7,6 +7,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-controller.cpp src/audio-controller.h \
   src/audio-playout.cpp src/audio-playout.h \
+  src/audio-playout-impl.cpp src/audio-playout-impl.h \
   src/audio-renderer.cpp src/audio-renderer.h \
   src/audio-stream-impl.cpp src/audio-stream-impl.h \
   src/audio-thread.cpp src/audio-thread.h \
@@ -39,6 +40,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout-control.cpp src/playout-control.h \
   src/playout.cpp src/playout.h \
+  src/playout-impl.cpp src/playout-impl.h \
   src/rate-adaptation-module.h \
   src/remote-audio-stream.cpp src/remote-audio-stream.h \
   src/remote-stream-impl.cpp src/remote-stream-impl.h \
@@ -57,6 +59,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/video-coder.cpp src/video-coder.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
+  src/video-playout-impl.cpp src/video-playout-impl.h \
   src/video-stream-impl.cpp src/video-stream-impl.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
@@ -262,19 +265,19 @@ bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_buffer_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_playout_SOURCES = tests/test-playout.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_playout_SOURCES = tests/test-playout.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/playout-impl.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_playout_DEPENDENCIES = res/test-source-320x240.argb
 bin_tests_test_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_playout_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_video_playout_SOURCES = tests/test-video-playout.cc tests/tests-helpers.cc src/video-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_playout_SOURCES = tests/test-video-playout.cc tests/tests-helpers.cc src/video-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/video-playout-impl.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_playout_DEPENDENCIES = res/test-source-320x240.argb
 bin_tests_test_video_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_playout_LDADD = ${libndnrtc_la_LIBADD}
 
-bin_tests_test_audio_playout_SOURCES = tests/test-audio-playout.cc tests/tests-helpers.cc src/audio-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp  src/audio-thread.cpp src/estimators.cpp src/audio-capturer.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/threading-capability.cpp src/audio-renderer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_audio_playout_SOURCES = tests/test-audio-playout.cc tests/tests-helpers.cc src/audio-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/audio-playout-impl.cpp src/statistics.cpp  src/audio-thread.cpp src/estimators.cpp src/audio-capturer.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/threading-capability.cpp src/audio-renderer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_audio_playout_LDADD = ${libndnrtc_la_LIBADD}

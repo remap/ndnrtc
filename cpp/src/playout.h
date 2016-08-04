@@ -16,7 +16,6 @@
 
 #include "statistics.h"
 #include "ndnrtc-object.h"
-#include "jitter-timing.h"
 
 namespace ndnlog {
     namespace new_api {
@@ -25,7 +24,7 @@ namespace ndnlog {
 }
 
 namespace ndnrtc {
-    class BufferSlot;
+    class PlayoutImpl;
     class IPlaybackQueue;
     class IPlayoutObserver;
     typedef statistics::StatisticsStorage StatStorage;
@@ -44,48 +43,32 @@ namespace ndnrtc {
      * self-correcting: it maintains measurements for each frame processing time
      * and adjusts for these drifts for the next frames.
      */
-    class Playout : public NdnRtcComponent, 
-                    public IPlayout,
-                    public statistics::StatObject
+    class Playout : public IPlayout
     {
     public:
         Playout(boost::asio::io_service& io,
             const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage> statStorage = 
                 boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
-        ~Playout();
 
         virtual void start(unsigned int fastForwardMs = 0);
         virtual void stop();
 
         void setLogger(ndnlog::new_api::Logger* logger);
         void setDescription(const std::string& desc);
-        bool isRunning() const { return isRunning_; }
+        bool isRunning() const;
 
         void attach(IPlayoutObserver* observer);
         void detach(IPlayoutObserver* observer);
 
     protected:
-        Playout(const Playout&) = delete;
+        Playout(const boost::shared_ptr<PlayoutImpl>& pimpl):pimpl_(pimpl){}
 
-        mutable boost::recursive_mutex mutex_;
-        boost::atomic<bool> isRunning_;
-        boost::shared_ptr<IPlaybackQueue> pqueue_;
-        JitterTiming jitterTiming_;
-        int64_t lastTimestamp_, lastDelay_, delayAdjustment_;
-        std::vector<IPlayoutObserver*> observers_;
+        PlayoutImpl* pimpl();
+        PlayoutImpl* pimpl() const;
 
-        void extractSample();
-        virtual void processSample(const boost::shared_ptr<const BufferSlot>&) = 0;
-        
-        void correctAdjustment(int64_t newSampleTimestamp);
-        int64_t adjustDelay(int64_t delay);
-    };
-
-    class IPlayoutObserver
-    {
-    public:
-        virtual void onQueueEmpty() = 0;
+    private:
+        boost::shared_ptr<PlayoutImpl> pimpl_;
     };
 }
 

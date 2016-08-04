@@ -198,6 +198,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-audio-capturer.lo \
 	src/libndnrtc_la-audio-controller.lo \
 	src/libndnrtc_la-audio-playout.lo \
+	src/libndnrtc_la-audio-playout-impl.lo \
 	src/libndnrtc_la-audio-renderer.lo \
 	src/libndnrtc_la-audio-stream-impl.lo \
 	src/libndnrtc_la-audio-thread.lo src/libndnrtc_la-av-sync.lo \
@@ -223,7 +224,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-pipeline-control.lo \
 	src/libndnrtc_la-pipeliner.lo \
 	src/libndnrtc_la-playout-control.lo \
-	src/libndnrtc_la-playout.lo \
+	src/libndnrtc_la-playout.lo src/libndnrtc_la-playout-impl.lo \
 	src/libndnrtc_la-remote-audio-stream.lo \
 	src/libndnrtc_la-remote-stream-impl.lo \
 	src/libndnrtc_la-remote-stream.lo \
@@ -238,6 +239,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-decoder.lo \
 	src/libndnrtc_la-video-playout.lo \
+	src/libndnrtc_la-video-playout-impl.lo \
 	src/libndnrtc_la-video-stream-impl.lo \
 	src/libndnrtc_la-video-thread.lo \
 	src/libndnrtc_la-webrtc-audio-channel.lo
@@ -367,6 +369,7 @@ am_bin_tests_test_audio_playout_OBJECTS = tests/bin_tests_test_audio_playout-tes
 	src/bin_tests_test_audio_playout-async.$(OBJEXT) \
 	src/bin_tests_test_audio_playout-jitter-timing.$(OBJEXT) \
 	src/bin_tests_test_audio_playout-playout.$(OBJEXT) \
+	src/bin_tests_test_audio_playout-audio-playout-impl.$(OBJEXT) \
 	src/bin_tests_test_audio_playout-statistics.$(OBJEXT) \
 	src/bin_tests_test_audio_playout-audio-thread.$(OBJEXT) \
 	src/bin_tests_test_audio_playout-estimators.$(OBJEXT) \
@@ -912,6 +915,7 @@ am_bin_tests_test_playout_OBJECTS =  \
 	src/bin_tests_test_playout-async.$(OBJEXT) \
 	src/bin_tests_test_playout-jitter-timing.$(OBJEXT) \
 	src/bin_tests_test_playout-playout.$(OBJEXT) \
+	src/bin_tests_test_playout-playout-impl.$(OBJEXT) \
 	src/bin_tests_test_playout-statistics.$(OBJEXT) \
 	client/src/bin_tests_test_playout-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_playout-precise-generator.$(OBJEXT) \
@@ -1042,6 +1046,7 @@ am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-tes
 	src/bin_tests_test_video_playout-async.$(OBJEXT) \
 	src/bin_tests_test_video_playout-jitter-timing.$(OBJEXT) \
 	src/bin_tests_test_video_playout-playout.$(OBJEXT) \
+	src/bin_tests_test_video_playout-video-playout-impl.$(OBJEXT) \
 	src/bin_tests_test_video_playout-statistics.$(OBJEXT) \
 	client/src/bin_tests_test_video_playout-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_video_playout-precise-generator.$(OBJEXT) \
@@ -1622,6 +1627,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/audio-capturer.cpp src/audio-capturer.h \
   src/audio-controller.cpp src/audio-controller.h \
   src/audio-playout.cpp src/audio-playout.h \
+  src/audio-playout-impl.cpp src/audio-playout-impl.h \
   src/audio-renderer.cpp src/audio-renderer.h \
   src/audio-stream-impl.cpp src/audio-stream-impl.h \
   src/audio-thread.cpp src/audio-thread.h \
@@ -1654,6 +1660,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/pipeliner.cpp src/pipeliner.h \
   src/playout-control.cpp src/playout-control.h \
   src/playout.cpp src/playout.h \
+  src/playout-impl.cpp src/playout-impl.h \
   src/rate-adaptation-module.h \
   src/remote-audio-stream.cpp src/remote-audio-stream.h \
   src/remote-stream-impl.cpp src/remote-stream-impl.h \
@@ -1672,6 +1679,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.h \
   src/video-coder.cpp src/video-coder.h \
   src/video-decoder.cpp src/video-decoder.h \
   src/video-playout.cpp src/video-playout.h \
+  src/video-playout-impl.cpp src/video-playout-impl.h \
   src/video-stream-impl.cpp src/video-stream-impl.h \
   src/video-thread.cpp src/video-thread.h \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
@@ -1797,17 +1805,17 @@ bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-hel
 bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_buffer_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_playout_SOURCES = tests/test-playout.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_playout_SOURCES = tests/test-playout.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/playout-impl.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_playout_DEPENDENCIES = res/test-source-320x240.argb
 bin_tests_test_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_playout_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_video_playout_SOURCES = tests/test-video-playout.cc tests/tests-helpers.cc src/video-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_playout_SOURCES = tests/test-video-playout.cc tests/tests-helpers.cc src/video-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/video-playout-impl.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/frame-converter.cpp src/video-thread.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_playout_DEPENDENCIES = res/test-source-320x240.argb
 bin_tests_test_video_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_playout_LDADD = ${libndnrtc_la_LIBADD}
-bin_tests_test_audio_playout_SOURCES = tests/test-audio-playout.cc tests/tests-helpers.cc src/audio-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/statistics.cpp  src/audio-thread.cpp src/estimators.cpp src/audio-capturer.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/threading-capability.cpp src/audio-renderer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_audio_playout_SOURCES = tests/test-audio-playout.cc tests/tests-helpers.cc src/audio-playout.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/async.cpp src/jitter-timing.cpp src/playout.cpp src/audio-playout-impl.cpp src/statistics.cpp  src/audio-thread.cpp src/estimators.cpp src/audio-capturer.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/threading-capability.cpp src/audio-renderer.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_playout_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_playout_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_audio_playout_LDADD = ${libndnrtc_la_LIBADD}
@@ -1985,6 +1993,8 @@ src/libndnrtc_la-audio-controller.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-audio-playout-impl.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-renderer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-audio-stream-impl.lo: src/$(am__dirstamp) \
@@ -2043,6 +2053,8 @@ src/libndnrtc_la-playout-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-playout-impl.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-audio-stream.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-stream-impl.lo: src/$(am__dirstamp) \
@@ -2072,6 +2084,8 @@ src/libndnrtc_la-video-coder.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-video-decoder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-playout.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-video-playout-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-stream-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -2336,6 +2350,8 @@ src/bin_tests_test_audio_playout-async.$(OBJEXT): src/$(am__dirstamp) \
 src/bin_tests_test_audio_playout-jitter-timing.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_audio_playout-playout.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_audio_playout-audio-playout-impl.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_audio_playout-statistics.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
@@ -3150,6 +3166,8 @@ src/bin_tests_test_playout-jitter-timing.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_playout-playout.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_playout-playout-impl.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_playout-statistics.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 client/src/bin_tests_test_playout-video-source.$(OBJEXT):  \
@@ -3340,6 +3358,8 @@ src/bin_tests_test_video_playout-async.$(OBJEXT): src/$(am__dirstamp) \
 src/bin_tests_test_video_playout-jitter-timing.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_video_playout-playout.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_video_playout-video-playout-impl.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_video_playout-statistics.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
@@ -3628,6 +3648,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-renderer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_playout-audio-thread.Po@am__quote@
@@ -3861,6 +3882,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-jitter-timing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-ndnrtc-object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-playout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_playout-statistics.Po@am__quote@
@@ -3904,6 +3926,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-video-coder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-video-playout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-video-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_source-clock.Po@am__quote@
@@ -3915,6 +3938,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-async.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo@am__quote@
@@ -3944,6 +3968,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeline-control.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeliner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout-control.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo@am__quote@
@@ -3959,6 +3984,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
@@ -4075,6 +4101,13 @@ src/libndnrtc_la-audio-playout.lo: src/audio-playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout.cpp' object='src/libndnrtc_la-audio-playout.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
+
+src/libndnrtc_la-audio-playout-impl.lo: src/audio-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-playout-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Tpo -c -o src/libndnrtc_la-audio-playout-impl.lo `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Tpo src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout-impl.cpp' object='src/libndnrtc_la-audio-playout-impl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout-impl.lo `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
 
 src/libndnrtc_la-audio-renderer.lo: src/audio-renderer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
@@ -4279,6 +4312,13 @@ src/libndnrtc_la-playout.lo: src/playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout.lo `test -f 'src/playout.cpp' || echo '$(srcdir)/'`src/playout.cpp
 
+src/libndnrtc_la-playout-impl.lo: src/playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-playout-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-playout-impl.Tpo -c -o src/libndnrtc_la-playout-impl.lo `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-playout-impl.Tpo src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout-impl.cpp' object='src/libndnrtc_la-playout-impl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout-impl.lo `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
+
 src/libndnrtc_la-remote-audio-stream.lo: src/remote-audio-stream.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-remote-audio-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Tpo -c -o src/libndnrtc_la-remote-audio-stream.lo `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Tpo src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo
@@ -4383,6 +4423,13 @@ src/libndnrtc_la-video-playout.lo: src/video-playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-playout.cpp' object='src/libndnrtc_la-video-playout.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
+
+src/libndnrtc_la-video-playout-impl.lo: src/video-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-playout-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Tpo -c -o src/libndnrtc_la-video-playout-impl.lo `test -f 'src/video-playout-impl.cpp' || echo '$(srcdir)/'`src/video-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Tpo src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-playout-impl.cpp' object='src/libndnrtc_la-video-playout-impl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-playout-impl.lo `test -f 'src/video-playout-impl.cpp' || echo '$(srcdir)/'`src/video-playout-impl.cpp
 
 src/libndnrtc_la-video-stream-impl.lo: src/video-stream-impl.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-stream-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Tpo -c -o src/libndnrtc_la-video-stream-impl.lo `test -f 'src/video-stream-impl.cpp' || echo '$(srcdir)/'`src/video-stream-impl.cpp
@@ -5608,6 +5655,20 @@ src/bin_tests_test_audio_playout-playout.obj: src/playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout.cpp' object='src/bin_tests_test_audio_playout-playout.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_audio_playout-playout.obj `if test -f 'src/playout.cpp'; then $(CYGPATH_W) 'src/playout.cpp'; else $(CYGPATH_W) '$(srcdir)/src/playout.cpp'; fi`
+
+src/bin_tests_test_audio_playout-audio-playout-impl.o: src/audio-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_audio_playout-audio-playout-impl.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Tpo -c -o src/bin_tests_test_audio_playout-audio-playout-impl.o `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout-impl.cpp' object='src/bin_tests_test_audio_playout-audio-playout-impl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_audio_playout-audio-playout-impl.o `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
+
+src/bin_tests_test_audio_playout-audio-playout-impl.obj: src/audio-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_audio_playout-audio-playout-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Tpo -c -o src/bin_tests_test_audio_playout-audio-playout-impl.obj `if test -f 'src/audio-playout-impl.cpp'; then $(CYGPATH_W) 'src/audio-playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-playout-impl.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_audio_playout-audio-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout-impl.cpp' object='src/bin_tests_test_audio_playout-audio-playout-impl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_audio_playout-audio-playout-impl.obj `if test -f 'src/audio-playout-impl.cpp'; then $(CYGPATH_W) 'src/audio-playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-playout-impl.cpp'; fi`
 
 src/bin_tests_test_audio_playout-statistics.o: src/statistics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_audio_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_audio_playout-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_audio_playout-statistics.Tpo -c -o src/bin_tests_test_audio_playout-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
@@ -10187,6 +10248,20 @@ src/bin_tests_test_playout-playout.obj: src/playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_playout-playout.obj `if test -f 'src/playout.cpp'; then $(CYGPATH_W) 'src/playout.cpp'; else $(CYGPATH_W) '$(srcdir)/src/playout.cpp'; fi`
 
+src/bin_tests_test_playout-playout-impl.o: src/playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_playout-playout-impl.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Tpo -c -o src/bin_tests_test_playout-playout-impl.o `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout-impl.cpp' object='src/bin_tests_test_playout-playout-impl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_playout-playout-impl.o `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
+
+src/bin_tests_test_playout-playout-impl.obj: src/playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_playout-playout-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Tpo -c -o src/bin_tests_test_playout-playout-impl.obj `if test -f 'src/playout-impl.cpp'; then $(CYGPATH_W) 'src/playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/playout-impl.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_playout-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout-impl.cpp' object='src/bin_tests_test_playout-playout-impl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_playout-playout-impl.obj `if test -f 'src/playout-impl.cpp'; then $(CYGPATH_W) 'src/playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/playout-impl.cpp'; fi`
+
 src/bin_tests_test_playout-statistics.o: src/statistics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_playout-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_playout-statistics.Tpo -c -o src/bin_tests_test_playout-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_playout-statistics.Tpo src/$(DEPDIR)/bin_tests_test_playout-statistics.Po
@@ -11180,6 +11255,20 @@ src/bin_tests_test_video_playout-playout.obj: src/playout.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout.cpp' object='src/bin_tests_test_video_playout-playout.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_playout-playout.obj `if test -f 'src/playout.cpp'; then $(CYGPATH_W) 'src/playout.cpp'; else $(CYGPATH_W) '$(srcdir)/src/playout.cpp'; fi`
+
+src/bin_tests_test_video_playout-video-playout-impl.o: src/video-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_playout-video-playout-impl.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Tpo -c -o src/bin_tests_test_video_playout-video-playout-impl.o `test -f 'src/video-playout-impl.cpp' || echo '$(srcdir)/'`src/video-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-playout-impl.cpp' object='src/bin_tests_test_video_playout-video-playout-impl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_playout-video-playout-impl.o `test -f 'src/video-playout-impl.cpp' || echo '$(srcdir)/'`src/video-playout-impl.cpp
+
+src/bin_tests_test_video_playout-video-playout-impl.obj: src/video-playout-impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_playout-video-playout-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Tpo -c -o src/bin_tests_test_video_playout-video-playout-impl.obj `if test -f 'src/video-playout-impl.cpp'; then $(CYGPATH_W) 'src/video-playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-playout-impl.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Tpo src/$(DEPDIR)/bin_tests_test_video_playout-video-playout-impl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-playout-impl.cpp' object='src/bin_tests_test_video_playout-video-playout-impl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_playout-video-playout-impl.obj `if test -f 'src/video-playout-impl.cpp'; then $(CYGPATH_W) 'src/video-playout-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-playout-impl.cpp'; fi`
 
 src/bin_tests_test_video_playout-statistics.o: src/statistics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_playout_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_playout-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_playout-statistics.Tpo -c -o src/bin_tests_test_video_playout-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp

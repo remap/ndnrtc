@@ -9,171 +9,28 @@
 //  Created: 3/19/14
 //
 
-
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 
 #include "playout.h"
-#include "jitter-timing.h"
-#include "simple-log.h"
-#include "frame-buffer.h"
-#include "frame-data.h"
+#include "playout-impl.h"
 
 using namespace std;
-using namespace ndnlog;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-//******************************************************************************
 Playout::Playout(boost::asio::io_service& io,
-    const boost::shared_ptr<IPlaybackQueue>& queue,
-    const boost::shared_ptr<statistics::StatisticsStorage> statStorage):
-isRunning_(false),
-jitterTiming_(io),
-pqueue_(queue),
-StatObject(statStorage),
-lastTimestamp_(-1),
-lastDelay_(-1),
-delayAdjustment_(0)
-{
-    setDescription("playout");
-}
+        const boost::shared_ptr<IPlaybackQueue>& queue,
+        const boost::shared_ptr<StatStorage> statStorage):
+pimpl_(boost::make_shared<PlayoutImpl>(io, queue, statStorage)){}
 
-Playout::~Playout()
-{
-    if (isRunning_)
-        stop();
-}
+void Playout::start(unsigned int fastForwardMs) { pimpl_->start(fastForwardMs); }
+void Playout::stop() { pimpl_->stop(); }
+void Playout::setLogger(ndnlog::new_api::Logger* logger) { pimpl_->setLogger(logger); }
+void Playout::setDescription(const std::string& desc) { pimpl_->setDescription(desc); }
+bool Playout::isRunning() const { return pimpl_->isRunning(); }
+void Playout::attach(IPlayoutObserver* observer) { pimpl_->attach(observer); }
+void Playout::detach(IPlayoutObserver* observer) { pimpl_->detach(observer); }
 
-void
-Playout::start(unsigned int fastForwardMs)
-{
-    if (isRunning_)
-        throw std::runtime_error("Playout has started already");
-
-    jitterTiming_.flush();
-    lastTimestamp_ = -1;
-    lastDelay_ = -1;
-    delayAdjustment_ = -(int)fastForwardMs;
-    isRunning_ = true;
-    
-    LogInfoC << "started (‣‣" << fastForwardMs << "ms)" << std::endl;
-    extractSample();
-}
-
-void
-Playout::stop()
-{
-    if (isRunning_)
-    {
-        isRunning_ = false;
-        jitterTiming_.stop();
-        LogInfoC << "stopped" << std::endl;
-    }
-}
-
-void
-Playout::setLogger(ndnlog::new_api::Logger* logger)
-{
-    ILoggingObject::setLogger(logger);
-    jitterTiming_.setLogger(logger);
-}
-
-void
-Playout::setDescription(const std::string &desc)
-{
-    ILoggingObject::setDescription(desc);
-    jitterTiming_.setDescription(getDescription()+"-timing");
-}
-
-void 
-Playout::attach(IPlayoutObserver* o) 
-{
-    if (o)
-    {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-        observers_.push_back(o);
-    }
-}
-
-void
-Playout::detach(IPlayoutObserver* o) 
-{
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    observers_.erase(std::find(observers_.begin(), observers_.end(), o));
-}
-
-#pragma mark - private
-void Playout::extractSample()
-{
-    if (!isRunning_) return;
-    
-    stringstream debugStr;
-    int64_t sampleDelay = (int64_t)round(pqueue_->samplePeriod());
-    jitterTiming_.startFramePlayout();
-
-    if (pqueue_->size())
-    {
-        pqueue_->pop([this, &sampleDelay, &debugStr](const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs){
-            processSample(slot);
-            correctAdjustment(slot->getHeader().publishTimestampMs_);
-            lastTimestamp_ = slot->getHeader().publishTimestampMs_;
-            sampleDelay = playTimeMs;
-            debugStr << slot->dump();
-        });
-
-        LogTraceC << ". packet delay " << sampleDelay << " ts " << lastTimestamp_ << std::endl;
-    }
-    else
-    {
-        lastTimestamp_ += sampleDelay;
-        LogWarnC << "playback queue is empty" << std::endl;
-        {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-            for (auto o:observers_) o->onQueueEmpty();
-        }
-    }
-
-    lastDelay_ = sampleDelay;
-    int64_t actualDelay = adjustDelay(sampleDelay);
-
-    LogDebugC << "●--" << debugStr.str() << actualDelay << "ms" << std::endl;
-
-    boost::shared_ptr<Playout> me = boost::dynamic_pointer_cast<Playout>(shared_from_this());
-    jitterTiming_.updatePlayoutTime(actualDelay);
-    jitterTiming_.run(boost::bind(&Playout::extractSample, me));
-}
-
-void Playout::correctAdjustment(int64_t newSampleTimestamp)
-{
-    if (lastDelay_ >= 0)
-    {
-        int64_t prevDelay = newSampleTimestamp-lastTimestamp_;
-        
-        LogTraceC << ". prev delay hard " << prevDelay 
-            << " offset " << prevDelay - lastDelay_ << std::endl;
-
-        delayAdjustment_ += (prevDelay - lastDelay_);
-    }
-}
-
-int64_t Playout::adjustDelay(int64_t delay)
-{
-    int64_t adj = 0;
-
-    if (delayAdjustment_ < 0 &&
-        abs(delayAdjustment_) > delay)
-    {
-        delayAdjustment_ += delay;
-        adj = -delay;
-    }
-    else
-    {
-        adj = delayAdjustment_;
-        delayAdjustment_ = 0;
-    }
-
-    LogTraceC << ". total adj " << delayAdjustment_ << " delay " 
-    << (delay+adj) << std::endl;
-
-    return (delay+adj);
-}
+PlayoutImpl* Playout::pimpl() { return pimpl_.get(); }
+PlayoutImpl* Playout::pimpl() const { return pimpl_.get(); }
