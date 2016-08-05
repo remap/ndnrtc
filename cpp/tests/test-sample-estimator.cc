@@ -65,14 +65,14 @@ TEST(TestSampleEstimator, TestTrivialEstimations)
 			estimator.segmentArrived(wireSegment);
 	}
 
-	EXPECT_LT(abs(5500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(abs(5500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data)), 0.5);
-	EXPECT_LT(abs(0.2*5500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(abs(0.2*5500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity)), 0.5);
 
-	EXPECT_LT(abs(27500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(abs(27500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data)), 3);
-	EXPECT_LT(abs(0.2*27500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(abs(0.2*27500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity)), 0.5);
 
 	GT_PRINTF("average delta segnum: data - %.2f; parity - %.2f.\n", 
