@@ -113,7 +113,7 @@ AudioRenderer::onDeliverRtpFrame(unsigned int len, unsigned char *data)
 {
   if (rendering_)
     AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
-      voeNetwork_->ReceivedRTPPacket(webrtcChannelId_, data, len);
+        voeNetwork_->ReceivedRTPPacket(webrtcChannelId_, data, len);
     });
 }
 
@@ -122,6 +122,6 @@ AudioRenderer::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
 {
   if (rendering_)
     AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
-      voeNetwork_->ReceivedRTCPPacket(webrtcChannelId_, data, len);
+        voeNetwork_->ReceivedRTCPPacket(webrtcChannelId_, data, len);
     });
 }

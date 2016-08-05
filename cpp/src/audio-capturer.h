@@ -64,6 +64,9 @@ namespace ndnrtc {
         unsigned int
         getRtcpNum();
 
+        void
+        setLogger(ndnlog::new_api::Logger*);
+
         static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
         static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
 

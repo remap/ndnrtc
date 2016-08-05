@@ -30,7 +30,8 @@ namespace ndnrtc
    class IAudioThreadCallback {
     public:
       /**
-       * This is called when RTP/RTCP packets form an audio bundle packet
+       * This is called when audio bundle consisting of RTP/RTCP packets
+       * is ready.
        * @param threadName Name of the audio media thread
        * @param bundleNo Sequential bundle number
        * @param packet Shared pointer for bundle packet
@@ -58,6 +59,7 @@ namespace ndnrtc
        bool isRunning() const { return isRunning_; }
        std::string getCodec() const { return codec_; }
        double getRate() const;
+       void setLogger(ndnlog::new_api::Logger* logger);
 
    private:
        AudioThread(const AudioThread&) = delete;

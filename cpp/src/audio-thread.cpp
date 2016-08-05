@@ -67,13 +67,18 @@ double AudioThread::getRate() const
     return rateMeter_.value();
 }
 
+void AudioThread::setLogger(ndnlog::new_api::Logger* logger)
+{
+    ILoggingObject::setLogger(logger);
+    capturer_.setLogger(logger);
+}
+
 //******************************************************************************
 void AudioThread::onDeliverRtpFrame(unsigned int len, uint8_t* data)
 {   
     if (isRunning_)
     {
         LogTraceC << "delivering rtp frame" << std::endl;
-
         AudioBundlePacket::AudioSampleBlob blob({false}, len, data);
         deliver(blob);
     }
@@ -84,7 +89,6 @@ void AudioThread::onDeliverRtcpFrame(unsigned int len, uint8_t* data)
     if (isRunning_)
     {
         LogTraceC << "delivering rtcp frame" << std::endl;
-
         AudioBundlePacket::AudioSampleBlob blob({true}, len, data);
         deliver(blob);
     }

@@ -589,9 +589,6 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
     
     if (activeSlots_.find(key) == activeSlots_.end())
     {
-        for (auto& s:activeSlots_)
-            std::cout << s.second->getPrefix() << std::endl;
-        
         stringstream ss;
         ss << "Received data that was not previously requested: "
         << key;

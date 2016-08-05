@@ -572,24 +572,27 @@ void DelayQueue::pop(const boost::system::error_code& e)
 {
 	if (e != boost::asio::error::operation_aborted && isActive())
 	{
-		boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
-		std::vector<QueueBlock> first = queue_.begin()->second;
-
-		for (auto& block:first)
-			block();
-
-		if (queue_.size() > 1)
-		{
-			queue_.erase(queue_.begin());
-			timer_.expires_at(queue_.begin()->first);
-			timer_.async_wait(boost::bind(&DelayQueue::pop, this, 
-				boost::asio::placeholders::error));
-		}
-		else
-		{
-			queue_.erase(queue_.begin());
-			timerSet_ = false;
-		}
+        std::vector<QueueBlock> first;
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+            first = queue_.begin()->second;
+            
+            if (queue_.size() > 1)
+            {
+                queue_.erase(queue_.begin());
+                timer_.expires_at(queue_.begin()->first);
+                timer_.async_wait(boost::bind(&DelayQueue::pop, this,
+                                              boost::asio::placeholders::error));
+            }
+            else
+            {
+                queue_.erase(queue_.begin());
+                timerSet_ = false;
+            }
+        }
+        
+        for (auto& block:first)
+            block();
 	}
 }
 
@@ -604,18 +607,23 @@ void DataCache::addInterest(const boost::shared_ptr<ndn::Interest> interest, OnD
 
   if (data_.find(interest->getName()) != data_.end())
   {
-    boost::lock_guard<boost::mutex> scopedLock(m_);
-    boost::shared_ptr<ndn::Data> d = data_[interest->getName()];
-    
-    onData(d, interest);
-
-    if (onInterestCallbacks_.find(interest->getName()) != onInterestCallbacks_.end())
-    {
-      onInterestCallbacks_[interest->getName()](interest);
-      onInterestCallbacks_.erase(onInterestCallbacks_.find(interest->getName()));
-    }
-
-    data_.erase(data_.find(interest->getName()));
+      boost::shared_ptr<ndn::Data> d;
+      OnInterestT onInterest;
+      {
+          boost::lock_guard<boost::mutex> scopedLock(m_);
+          d = data_[interest->getName()];
+          
+          if (onInterestCallbacks_.find(interest->getName()) != onInterestCallbacks_.end())
+          {
+              onInterest = onInterestCallbacks_[interest->getName()];
+              onInterestCallbacks_.erase(onInterestCallbacks_.find(interest->getName()));
+          }
+          
+          data_.erase(data_.find(interest->getName()));
+      }
+      
+      if (onInterest) onInterest(interest);
+      onData(d, interest);
   }
   else
   {
@@ -630,14 +638,17 @@ void DataCache::addData(const boost::shared_ptr<ndn::Data>& data, OnInterestT on
   {
     if (interests_.find(data->getName()) != interests_.end())
     {
-      boost::lock_guard<boost::mutex> scopedLock(m_);
-      boost::shared_ptr<ndn::Interest> i = interests_[data->getName()];
-      
-      if (onInterest) onInterest(i);
-      onDataCallbacks_[data->getName()](data, i);
-
-      interests_.erase(interests_.find(data->getName()));
-      onDataCallbacks_.erase(onDataCallbacks_.find(data->getName()));
+        OnDataT onData = onDataCallbacks_[data->getName()];
+        boost::shared_ptr<ndn::Interest> i;
+        {
+            boost::lock_guard<boost::mutex> scopedLock(m_);
+            i = interests_[data->getName()];
+            interests_.erase(interests_.find(data->getName()));
+            onDataCallbacks_.erase(onDataCallbacks_.find(data->getName()));
+        }
+        
+        if (onInterest) onInterest(i);
+        onData(data, i);
     }
     else
     {

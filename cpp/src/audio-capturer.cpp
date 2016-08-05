@@ -154,6 +154,12 @@ AudioCapturer::getRtcpNum()
     return pimpl_->getRtcpNum();
 }
 
+void
+AudioCapturer::setLogger(ndnlog::new_api::Logger* logger)
+{
+    pimpl_->setLogger(logger);    
+}
+
 //******************************************************************************
 #pragma mark - construction/destruction
 AudioCapturerImpl::AudioCapturerImpl(const unsigned int deviceIdx,
@@ -199,7 +205,7 @@ void AudioCapturerImpl::startCapture()
         throw std::runtime_error("Audio capturing is already initiated");
 
     int res = RESULT_OK;
-    
+
     AudioController::getSharedInstance()->performOnAudioThread([this, &res](){
         if (voeNetwork_->RegisterExternalTransport(webrtcChannelId_, *this) < 0) 
             res = voeBase_->LastError();
@@ -248,7 +254,6 @@ int AudioCapturerImpl::SendPacket(int channel, const void *data, size_t len)
     if (capturing_)
     {
         nRtp_++;
-        std::cout << "try deliver rtp" << std::endl;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtpFrame(len, (uint8_t*)data);
         });
@@ -264,7 +269,6 @@ int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
     if (capturing_)
     {
         nRtcp_++;
-        std::cout << "try deliver rtcp" << std::endl;
         AudioController::getSharedInstance()->performOnAudioThread([this, len, data](){
             sampleConsumer_->onDeliverRtcpFrame(len, (uint8_t*)data);
         });

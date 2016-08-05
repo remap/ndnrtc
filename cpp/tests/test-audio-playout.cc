@@ -34,7 +34,7 @@ TEST(TestAudioPlayout, TestG722)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
 	boost::asio::io_service io;
@@ -79,6 +79,7 @@ TEST(TestAudioPlayout, TestG722)
 
 #ifdef ENABLE_LOGGING
 	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	at.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -115,7 +116,9 @@ TEST(TestAudioPlayout, TestG722)
 			cache.addData(d);
 			idx++;
 
+#ifdef ENABLE_LOGGING
 			LogDebug("") << "published " << d->getName() << std::endl;
+#endif
 		}
 
 		nBundles++;
@@ -139,14 +142,16 @@ TEST(TestAudioPlayout, TestG722)
 		interests.push_back(i);
 		buffer->requested(makeInterestsConst(interests));
 
+#ifdef ENABLE_LOGGING
 		LogDebug("") << "express " << i->getName() << std::endl;
+#endif
 
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
 			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 				queue.push([buffer, &onDataArrived, d,i ](){
-
+#ifdef ENABLE_LOGGING
 					LogDebug("") << "received " << d->getName() << std::endl;
-
+#endif
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
 						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
@@ -206,6 +211,9 @@ TEST(TestAudioPlayout, TestG722)
 	queue.reset();
 	t.join();
 
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::releaseAsyncLogging();
+#endif
 
 	GT_PRINTF("Queue drain count %d, Avg play queue size: %.2fms (target %dms)\n", 
 		drainCount, (double)queuSizeAccum/(double)nQueueSize, targetSize);
@@ -296,7 +304,9 @@ TEST(TestAudioPlayout, TestOpus)
 			cache.addData(d);
 			idx++;
 
+#ifdef ENABLE_LOGGING
 			LogDebug("") << "published " << d->getName() << std::endl;
+#endif
 		}
 
 		nBundles++;
@@ -320,14 +330,17 @@ TEST(TestAudioPlayout, TestOpus)
 		interests.push_back(i);
 		buffer->requested(makeInterestsConst(interests));
 
+#ifdef ENABLE_LOGGING
 		LogDebug("") << "express " << i->getName() << std::endl;
-
+#endif
+        
 		queue.push([i, &cache, &queue, buffer, &onDataArrived](){
 			cache.addInterest(i, [&queue, buffer, &onDataArrived](const boost::shared_ptr<ndn::Data>& d, const boost::shared_ptr<ndn::Interest> i){
 				queue.push([buffer, &onDataArrived, d, i](){
 
+#ifdef ENABLE_LOGGING
 					LogDebug("") << "received " << d->getName() << std::endl;
-
+#endif
 					boost::shared_ptr<WireData<DataSegmentHeader>> data = 
 						boost::make_shared<WireData<DataSegmentHeader>>(d, i);
 					onDataArrived(data);
@@ -391,7 +404,6 @@ TEST(TestAudioPlayout, TestOpus)
 	GT_PRINTF("Queue drain count %d, Avg play queue size: %.2fms (target %dms)\n", 
 		drainCount, (double)queuSizeAccum/(double)nQueueSize, targetSize);
 }
-
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

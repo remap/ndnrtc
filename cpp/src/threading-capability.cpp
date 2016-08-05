@@ -53,13 +53,18 @@ void ThreadingCapability::performOnMyThread(boost::function<void(void)> dispatch
             mutex m;
             unique_lock<mutex> lock(m);
             condition_variable isDone;
+            // doneFlag is needed to prevent situations where the block passed to ioService_
+            // finishes before current thread reaches isDone.wait() call 
+            boost::atomic<bool> doneFlag(false);
             
-            ioService_.dispatch([dispatchBlock,&isDone]{
+            ioService_.dispatch([dispatchBlock,&isDone, &doneFlag]{
                 dispatchBlock();
+                doneFlag = true;
                 isDone.notify_one();
             });
-            
-            isDone.wait(lock);
+
+            while (!doneFlag)
+                isDone.wait(lock);
         }
     }
 }
