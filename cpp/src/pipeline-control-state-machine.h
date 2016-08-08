@@ -142,7 +142,8 @@ namespace ndnrtc {
 			StatesMap statesMap);
 
 		bool transition(const boost::shared_ptr<const PipelineControlEvent>& ev);
-		void switchToState(const std::string& state, const std::string& event);
+        void switchToState(const boost::shared_ptr<PipelineControlState>& state,
+                           const boost::shared_ptr<const PipelineControlEvent>& event);
 
 		static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
 		static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);

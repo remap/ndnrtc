@@ -35,6 +35,16 @@ namespace ndnrtc {
 namespace ndnrtc {
 	class PipelineControlState {
 	public:
+        typedef enum _StateId {
+            Unknown,
+            Idle,
+            WaitForRightmost,
+            WaitForInitial,
+            Chasing,
+            Adjusting,
+            Fetching
+        } StateId;
+        
 		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}
 
 		virtual std::string str() const = 0;
@@ -58,6 +68,8 @@ namespace ndnrtc {
 
 		bool operator==(const PipelineControlState& other) const
 		{ return str() == other.str(); }
+        
+        virtual int toInt() { return (int)StateId::Unknown; }
 
 	protected:
 		boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
@@ -91,6 +103,7 @@ namespace ndnrtc {
 		std::string str() const { return kStateIdle; }
 
 		virtual void enter();
+        int toInt() { return (int)StateId::Idle; }
 	};
 
 	/**
@@ -113,7 +126,8 @@ namespace ndnrtc {
 
 		std::string str() const { return kStateWaitForRightmost; }
 		virtual void enter();
-
+        int toInt() { return (int)StateId::WaitForRightmost; }
+        
 	protected:
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
@@ -156,7 +170,8 @@ namespace ndnrtc {
 
 		std::string str() const { return kStateWaitForInitial; }
 		void enter();
-
+        int toInt() { return (int)StateId::WaitForInitial; }
+        
 	protected:
 		unsigned int nTimeouts_;
 
@@ -198,6 +213,8 @@ namespace ndnrtc {
 		Chasing(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateChasing; }
+        int toInt() { return (int)StateId::Chasing; }
+        
 	private:
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
@@ -225,6 +242,8 @@ namespace ndnrtc {
 
 		std::string str() const { return kStateAdjusting; }
 		void enter();
+        int toInt() { return (int)StateId::Adjusting; }
+        
 	private:
 		unsigned int pipelineLowerLimit_;
 
@@ -251,6 +270,8 @@ namespace ndnrtc {
 		Fetching(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
 		std::string str() const { return kStateFetching; }
+        int toInt() { return (int)StateId::Fetching; }
+        
 	private:
 		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 	};
@@ -364,7 +385,7 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 	{
 		if (states_.find(nextState) == states_.end())
 			throw std::runtime_error(std::string("Unsupported state: "+nextState).c_str());
-		switchToState(nextState, ev->toString());
+		switchToState(states_[nextState], ev);
 	}
 	else 
 		transition(ev);
@@ -379,29 +400,31 @@ PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineCo
 		stateMachineTable_.end())
 		return false;
 
-	switchToState(stateMachineTable_[MAKE_TRANSITION(currentState_->str(), ev->getType())],
-                  ev->toString());
+    std::string stateStr = stateMachineTable_[MAKE_TRANSITION(currentState_->str(), ev->getType())];
+	switchToState(states_[stateStr], ev);
+
 	return true;
 }
 
 void
-PipelineControlStateMachine::switchToState(const std::string& state,
-                                           const std::string& event)
+PipelineControlStateMachine::switchToState(const boost::shared_ptr<PipelineControlState>& state,
+                   const boost::shared_ptr<const PipelineControlEvent>& event)
 {
     int64_t now = clock::millisecondTimestamp();
     int64_t stateDuration = (lastEventTimestamp_ ? now - lastEventTimestamp_ : 0);
     lastEventTimestamp_ = now;
     
     LogInfoC << "[" << currentState_->str() << "]-("
-        << event << ")->[" << states_[state]->str() << "] "
-        << stateDuration << "ms" << std::endl;
-
-	currentState_->exit();
-	currentState_ = states_[state];
-	currentState_->enter();
+    << event->toString() << ")->[" << state->str() << "] "
+    << stateDuration << "ms" << std::endl;
     
-    if (event == boost::make_shared<EventStarvation>(0)->toString())
+    currentState_->exit();
+    currentState_ = state;
+    currentState_->enter();
+    
+    if (event->toString() == boost::make_shared<EventStarvation>(0)->toString())
         (*ppCtrl_->sstorage_)[Indicator::RebufferingsNum]++;
+    (*ppCtrl_->sstorage_)[Indicator::State] = (double)state->toInt();
 }
 
 //******************************************************************************
