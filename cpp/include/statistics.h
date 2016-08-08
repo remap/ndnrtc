@@ -70,6 +70,7 @@ namespace ndnrtc {
                 Darr,                           // LatencyControl
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController
+                State,                          // PipelineControlStateMachine
                 
                 // DRD estimator
                 DrdOriginalEstimation,          // BufferControl

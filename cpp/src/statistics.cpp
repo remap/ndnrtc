@@ -62,6 +62,7 @@ map_list_of
 ( Indicator::Darr, "Darr" )
 ( Indicator::BytesReceived, "Payload bytes received" )
 ( Indicator::RawBytesReceived, "Wire bytes received" )
+( Indicator::State, "Consumer state" )
 // DRD estimator
 ( Indicator::DrdOriginalEstimation, "DRD estimation (orig)" )
 ( Indicator::DrdCachedEstimation, "DRD estimation (cach)" )
@@ -131,6 +132,7 @@ map_list_of
 ( Indicator::Darr, 0. )
 ( Indicator::BytesReceived, 0. )
 ( Indicator::RawBytesReceived, 0. )
+( Indicator::State, 0. )
 // DRD estimator
 ( Indicator::DrdCachedEstimation, 0. )
 ( Indicator::DrdOriginalEstimation, 0. )
@@ -203,6 +205,7 @@ boost::assign::map_list_of
 (Indicator::Darr, "dArr")
 (Indicator::BytesReceived, "bytesRcvd")
 (Indicator::RawBytesReceived, "rawBytesRcvd")
+(Indicator::State, "state" )
 // DRD estimator
 (Indicator::DrdOriginalEstimation, "drdEst")
 (Indicator::DrdCachedEstimation, "drdPrime")
