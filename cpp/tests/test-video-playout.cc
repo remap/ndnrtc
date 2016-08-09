@@ -557,8 +557,9 @@ TEST(TestPlayout, TestSkipDelta)
 	EXPECT_CALL(playoutObserver, frameSkipped(_,_))
 		.Times(AtLeast(25));
 
-	boost::function<void(const boost::shared_ptr<ImmutableFrameAlias>&)> processFrame = [](const boost::shared_ptr<ImmutableFrameAlias>& frame){
-		EXPECT_TRUE(frame->isValid());
+	int nEncodedReceived = 0;
+	boost::function<void(const webrtc::EncodedImage&)> processFrame = [&nEncodedReceived](const webrtc::EncodedImage&){
+		nEncodedReceived++;
 	};
 	EXPECT_CALL(frameConsumer, processFrame(_))
 		.WillRepeatedly(Invoke(processFrame));

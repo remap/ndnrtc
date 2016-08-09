@@ -101,10 +101,12 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
 
             gopIsValid_ = false;
 
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-            for (auto o:observers_) 
-                ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
-                    !slot->getNameInfo().isDelta_);
+            {
+                boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                for (auto o:observers_) 
+                    ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
+                        !slot->getNameInfo().isDelta_);
+            }
             
             (*statStorage_)[Indicator::SkippedNum]++;
         }
@@ -113,13 +115,23 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
 
         if (gopIsValid_)
         {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-            if (frameConsumer_)
-                frameConsumer_->processFrame(framePacket);
+            {
+                boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                if (frameConsumer_)
+                {
+                    if (framePacket->isValid())
+                        frameConsumer_->processFrame(framePacket->getFrame());
+                    else
+                    {
+                        LogErrorC << "frame packet is not valid " << std::endl;
+                        assert(false);
+                    }
+                }
             
-            for (auto o:observers_) 
-                ((IVideoPlayoutObserver*)o)->frameProcessed(hdr.playbackNo_, 
-                    !slot->getNameInfo().isDelta_);
+                for (auto o:observers_) 
+                    ((IVideoPlayoutObserver*)o)->frameProcessed(hdr.playbackNo_, 
+                        !slot->getNameInfo().isDelta_);
+            }
 
             LogDebugC << "processed " << slot->getNameInfo().sampleNo_
                 << " (" << hdr.playbackNo_ << ")" << std::endl;

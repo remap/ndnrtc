@@ -11,6 +11,10 @@
 #include "playout-impl.h"
 #include "frame-buffer.h"
 
+namespace webrtc {
+    class EncodedImage;
+}
+
 namespace ndnrtc {
 	template<typename T>
     class VideoFramePacketT;
@@ -52,7 +56,7 @@ namespace ndnrtc {
 	class IEncodedFrameConsumer 
     {
     public:
-        virtual void processFrame(const boost::shared_ptr<ImmutableFrameAlias>&) = 0;
+        virtual void processFrame(const webrtc::EncodedImage&) = 0;
     };
 
     class IVideoPlayoutObserver : public IPlayoutObserver 

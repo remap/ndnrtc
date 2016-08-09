@@ -16,7 +16,7 @@
 class MockVideoPlayoutConsumer : public ndnrtc::IEncodedFrameConsumer
 {
 public:
-	MOCK_METHOD1(processFrame, void(const boost::shared_ptr<ndnrtc::ImmutableFrameAlias>&));
+	MOCK_METHOD1(processFrame, void(const webrtc::EncodedImage&));
 };
 
 #endif
