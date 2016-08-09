@@ -185,9 +185,6 @@ keyEnforcement_(keyEnforcement),
     << " parameters: " << plotCodec(codec_) << endl;
 }
 
-VideoCoder::~VideoCoder()
-{}
-
 //********************************************************************************
 #pragma mark - public
 void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)

@@ -87,9 +87,9 @@ namespace ndnrtc {
 
         VideoCoder(const VideoCoderParams& coderParams, IEncoderDelegate* delegate, 
             KeyEnforcement = KeyEnforcement::EncoderDefined);
-        ~VideoCoder();
-
         void onRawFrame(const WebRtcVideoFrame &frame);
+
+        static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
 
     private:
         VideoCoder(const VideoCoder&) = delete;
@@ -110,8 +110,6 @@ namespace ndnrtc {
         int32_t Encoded(const webrtc::EncodedImage& encodedImage,
                         const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
                         const webrtc::RTPFragmentationHeader* fragmentation = NULL);
-
-        static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
     };
 }
 

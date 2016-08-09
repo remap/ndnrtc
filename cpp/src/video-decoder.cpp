@@ -14,112 +14,78 @@
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
-#if 0
 #include "video-decoder.h"
-#include "ndnrtc-utils.h"
+#include "video-coder.h"
+#include "clock.h"
 
 using namespace std;
-using namespace ndnlog;
-using namespace ndnrtc::new_api;
-using namespace webrtc;
+using namespace ndnrtc;
 
 //********************************************************************************
 #pragma mark - construction/destruction
-NdnVideoDecoder::NdnVideoDecoder() :
-frameConsumer_(NULL)
+VideoDecoder::VideoDecoder(const VideoCoderParams& settings, OnDecodedImage onDecodedImage):
+settings_(settings),
+onDecodedImage_(onDecodedImage)
 {
     memset(&codec_, 0, sizeof(codec_));
+    
+    codec_ = VideoCoder::codecFromSettings(settings_);
+    
+    stringstream ss;
+    ss << "decoder-" << codec_.startBitrate;
+    description_ = ss.str();
+    
+    resetDecoder();
 }
 
 //********************************************************************************
 #pragma mark - public
-int NdnVideoDecoder::init(const VideoCoderParams& settings)
-{
-    int res = RESULT_OK;
-    
-    settings_ = settings;
-    res = VideoCoder::getCodecFromSetings(settings_, codec_);
-    description_ = NdnRtcUtils::toString("decoder-%d", codec_.startBitrate);
-    
-    if (RESULT_GOOD(res))
-        return resetDecoder();
-    
-    return 0;
-}
-
-void NdnVideoDecoder::reset()
-{
-    if (frameCount_ > 0)
-    {
-        LogTraceC << "resetting decoder..." << std::endl;
-        int res = decoder_->Release();
-        resetDecoder();
-        LogTraceC << "decoder reset" << std::endl;
-    }
-}
-
-//********************************************************************************
-#pragma mark - intefaces realization webrtc::DecodedImageCallback
-int32_t NdnVideoDecoder::Decoded(WebRtcVideoFrame &decodedImage)
-{
-    decodedImage.set_render_time_ms(NdnRtcUtils::millisecondTimestamp());
-    
-    if (frameConsumer_)
-        frameConsumer_->onDeliverFrame(decodedImage, capturedTimestamp_);
-    
-    return 0;
-}
-
-//********************************************************************************
-#pragma mark - intefaces realization IEncodedFrameConsumer
-void NdnVideoDecoder::onEncodedFrameDelivered(const webrtc::EncodedImage &encodedImage,
-                                              double timestamp,
-                                              bool completeFrame)
+void VideoDecoder::processFrame(const webrtc::EncodedImage& encodedImage)
 {
     LogTraceC
-    << " type " << NdnRtcUtils::stringFromFrameType(encodedImage._frameType)
-    << " complete (encoder) " << encodedImage._completeFrame
-    << " complete (ndn) " << completeFrame
-    << std::endl;
+        << " type " << (encodedImage._frameType == webrtc::kKeyFrame ? "KEY" : "DELTA")
+        << " complete (encoder) " << encodedImage._completeFrame
+        << std::endl;
     
     if (frameCount_ == 0)
         LogInfoC << "start decode from "
-        << (encodedImage._frameType == webrtc::kKeyFrame ? "KEY" : "DELTA")
-        << std::endl;
+            << (encodedImage._frameType == webrtc::kKeyFrame ? "KEY" : "DELTA")
+            << std::endl;
     
-    capturedTimestamp_ = timestamp;
     frameCount_++;
     
-    if (decoder_->Decode(encodedImage, !completeFrame, NULL) != WEBRTC_VIDEO_CODEC_OK)
-    {
-        LogTraceC << "error decoding " << endl;
-        
-        notifyError(-1, "can't decode frame");
-    }
+    if (decoder_->Decode(encodedImage, true, NULL) != WEBRTC_VIDEO_CODEC_OK)
+        LogErrorC << "error decoding " << endl;
     else
-    {
         LogTraceC << "decoded" << endl;
-    }
 }
 
-int NdnVideoDecoder::resetDecoder()
+#pragma mark - private
+void VideoDecoder::resetDecoder()
 {
     frameCount_ = 0;
-    
+    if (decoder_.get())
+        decoder_->Release();
+
 #ifdef USE_VP9
-    decoder_.reset(VP9Decoder::Create());
+    decoder_.reset(webrtc::VP9Decoder::Create());
 #else
-    decoder_.reset(VP8Decoder::Create());
+    decoder_.reset(webrtc::VP8Decoder::Create());
 #endif
     
     if (!decoder_.get())
-        return notifyError(RESULT_ERR, "can't create decoder");
+        throw std::runtime_error("can't create decoder");
     
     decoder_->RegisterDecodeCompleteCallback(this);
     
     if (decoder_->InitDecode(&codec_, boost::thread::hardware_concurrency()) != WEBRTC_VIDEO_CODEC_OK)
-        return notifyError(RESULT_ERR, "can't initialize decoder");
-    
-    return RESULT_OK;
+        throw std::runtime_error("can't initialize decoder");
 }
-#endif
+
+#pragma mark - intefaces realization webrtc::DecodedImageCallback
+int32_t VideoDecoder::Decoded(WebRtcVideoFrame &decodedImage)
+{
+    decodedImage.set_render_time_ms(clock::millisecondTimestamp());
+    onDecodedImage_(decodedImage);
+    return 0;
+}
