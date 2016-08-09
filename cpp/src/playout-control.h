@@ -10,7 +10,7 @@
 
 #include "ndnrtc-object.h"
 #include "frame-buffer.h"
-#include "playout.h"
+#include "playout-impl.h"
 
 namespace ndnrtc {
 	class IPlayout;

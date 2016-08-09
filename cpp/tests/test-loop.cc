@@ -1,4 +1,4 @@
-// 
+//
 // test-loop.cc
 //
 //  Created by Peter Gusev on 17 June 2016.
@@ -23,13 +23,16 @@
 #include "local-stream.h"
 #include "tests-helpers.h"
 #include "client/src/video-source.h"
+#include "estimators.h"
 
 #include "mock-objects/external-capturer-mock.h"
+#include "mock-objects/external-renderer-mock.h"
 
 #define ENABLE_LOGGING
 
 using namespace ::testing;
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 using namespace ndn;
 
 std::string test_path = "";
@@ -160,169 +163,6 @@ bool checkNfd()
 
   return true;
 }
-#if 0
-TEST(TestLoop, TestFetchMeta)
-{
-  if (!checkNfd()) return;
-
-#ifdef ENABLE_LOGGING
-  ndnlog::new_api::Logger::initAsyncLogging();
-  ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDefault);
-#endif
-
-	boost::asio::io_service io;
-	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
-	boost::thread t([&io](){
-		io.run();
-	});
-	
-  // video source
-	boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-	std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
-	VideoSource source(io, testVideoSource, frame);
-	MockExternalCapturer capturer;
-	source.addCapturer(&capturer);
-
-  boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
-  std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
-  boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io));
-  boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
-
-  publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
-  publisherFace->registerPrefix(Name(appPrefix), OnInterestCallback(), 
-    [](const boost::shared_ptr<const Name>&){
-      ASSERT_FALSE(true);
-    });
-  
-  MediaStreamSettings settings(io, getSampleVideoParams());
-  settings.face_ = publisherFace.get();
-  settings.keyChain_ = keyChain.get();
-  LocalVideoStream localStream(appPrefix, settings);
-
-#ifdef ENABLE_LOGGING
-  localStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-#endif
-
-  boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
-    incomingRawFrame =[&localStream](const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size){
-      EXPECT_NO_THROW(localStream.incomingArgbFrame(w, h, data, size));
-      return 0;
-    };
-
-  EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
-    .WillRepeatedly(Invoke(incomingRawFrame));
-
-  int runTime = 3000;
-
-  boost::shared_ptr<Face> consumerFace(boost::make_shared<ThreadsafeFace>(io));
-  std::string streamPrefix = "/ndn/edu/ucla/remap/peter/app/ndnrtc/%FD%02/video/"+getSampleVideoParams().streamName_;
-  keyChain->setFace(consumerFace.get());
-  RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
-
-
-#ifdef ENABLE_LOGGING
-  rs.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-#endif
-
-  source.start(30);
-  EXPECT_FALSE(rs.isMetaFetched());
-  EXPECT_EQ(0, rs.getThreads().size());
-  boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
-  source.stop();
-  consumerFace->shutdown();
-  publisherFace->shutdown();
-
-  EXPECT_TRUE(rs.isMetaFetched());
-  EXPECT_EQ(settings.params_.getThreadNum(), rs.getThreads().size());
-
-  for (int i = 0; i < settings.params_.getThreadNum(); ++i)
-    EXPECT_EQ(settings.params_.getVideoThread(i)->threadName_, 
-      rs.getThreads()[i]);
-
-	work.reset();
-	t.join();
-}
-#endif
-
-#if 0
-TEST(TestLoop, TestFetchMetaFailToVerify)
-{
-  if (!checkNfd()) return;
-
-#ifdef ENABLE_LOGGING
-  ndnlog::new_api::Logger::initAsyncLogging();
-  ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDefault);
-#endif
-
-  boost::asio::io_service io;
-  boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
-  boost::thread t([&io](){
-    io.run();
-  });
-  
-  // video source
-  boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-  std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
-  VideoSource source(io, testVideoSource, frame);
-  MockExternalCapturer capturer;
-  source.addCapturer(&capturer);
-
-  boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
-  std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
-  boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io));
-  boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
-
-  publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
-  publisherFace->registerPrefix(Name(appPrefix), OnInterestCallback(), 
-    [](const boost::shared_ptr<const Name>&){
-      ASSERT_FALSE(true);
-    });
-  
-  MediaStreamSettings settings(io, getSampleVideoParams());
-  settings.face_ = publisherFace.get();
-  settings.keyChain_ = keyChain.get();
-  LocalVideoStream localStream(appPrefix, settings);
-
-#ifdef ENABLE_LOGGING
-  localStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-#endif
-
-  boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
-    incomingRawFrame =[&localStream](const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size){
-      EXPECT_NO_THROW(localStream.incomingArgbFrame(w, h, data, size));
-      return 0;
-    };
-
-  EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
-    .WillRepeatedly(Invoke(incomingRawFrame));
-
-  int runTime = 3000;
-
-  boost::shared_ptr<Face> consumerFace(boost::make_shared<ThreadsafeFace>(io));
-  std::string streamPrefix = "/ndn/edu/ucla/remap/peter/app/ndnrtc/%FD%02/video/"+getSampleVideoParams().streamName_;
-  boost::shared_ptr<KeyChain> keyChain2 = memoryKeyChain2(appPrefix);
-  keyChain2->setFace(consumerFace.get());
-  RemoteVideoStream rs(io, consumerFace, keyChain2, appPrefix, getSampleVideoParams().streamName_);
-
-#ifdef ENABLE_LOGGING
-  rs.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-#endif
-
-  source.start(30);
-  boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
-  source.stop();
-  consumerFace->shutdown();
-  publisherFace->shutdown();
-  
-  EXPECT_TRUE(rs.isMetaFetched());
-  EXPECT_EQ(2, rs.getThreads().size());
-  EXPECT_FALSE(rs.isVerified());
-
-  work.reset();
-  io.stop();
-  t.join();
-}
-#endif
 
 #if 1
 TEST(TestLoop, TestFetch30Sec)
@@ -331,7 +171,7 @@ TEST(TestLoop, TestFetch30Sec)
     
 #ifdef ENABLE_LOGGING
     ndnlog::new_api::Logger::initAsyncLogging();
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #endif
     
     boost::asio::io_service io_source;
@@ -351,11 +191,13 @@ TEST(TestLoop, TestFetch30Sec)
     std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
     VideoSource source(io_source, testVideoSource, frame);
     MockExternalCapturer capturer;
+    MockExternalRenderer renderer;
     source.addCapturer(&capturer);
     
     boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
     std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
     boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io));
+    boost::shared_ptr<Face> consumerFace(boost::make_shared<ThreadsafeFace>(io));
     boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
     
     publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
@@ -363,58 +205,108 @@ TEST(TestLoop, TestFetch30Sec)
                                   [](const boost::shared_ptr<const Name>&){
                                       ASSERT_FALSE(true);
                                   });
-    
-    MediaStreamSettings settings(io, getSampleVideoParams());
-    settings.face_ = publisherFace.get();
-    settings.keyChain_ = keyChain.get();
-    LocalVideoStream localStream(appPrefix, settings);
-    
-#ifdef ENABLE_LOGGING
-     localStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-#endif
-    
-    boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
-    incomingRawFrame =[&localStream](const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size){
-        EXPECT_NO_THROW(localStream.incomingArgbFrame(w, h, data, size));
-        return 0;
+
+    boost::atomic<bool> done(false);
+    boost::asio::deadline_timer statTimer(io);
+    boost::function<void(const boost::system::error_code&)> queryStat;
+    boost::function<void()> setupTimer = [&statTimer, &queryStat, &done](){
+      if (!done)
+      {
+        statTimer.expires_from_now(boost::posix_time::milliseconds(10));
+        statTimer.async_wait(queryStat);
+      }
     };
-    
-    EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
-    .WillRepeatedly(Invoke(incomingRawFrame));
-    
-    int runTime = 5000;
-    
-    boost::shared_ptr<Face> consumerFace(boost::make_shared<ThreadsafeFace>(io));
-    keyChain->setFace(consumerFace.get());
-    RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
-    
+
+    int rebufferingsNum = 0, nRendered = 0, state = 0;
+    estimators::Average bufferLevel(boost::make_shared<estimators::SampleWindow>(10));
+    {
+      MediaStreamSettings settings(io, getSampleVideoParams());
+      settings.face_ = publisherFace.get();
+      settings.keyChain_ = keyChain.get();
+      LocalVideoStream localStream(appPrefix, settings);
+      
 #ifdef ENABLE_LOGGING
-//    rs.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+      // localStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
-    
-    int waitThreads = 0;
-    while (rs.getThreads().size() == 0 && waitThreads++ < 3)
-        boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
-    ASSERT_LT(0, rs.getThreads().size());
-    
-    source.start(30);
-    rs.start(rs.getThreads()[0]);
-    boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
-    rs.stop();
-    source.stop();
-    consumerFace->shutdown();
-    publisherFace->shutdown();
-    
+      
+      boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
+      incomingRawFrame =[&localStream](const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size){
+          EXPECT_NO_THROW(localStream.incomingArgbFrame(w, h, data, size));
+          return 0;
+      };
+      
+      EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
+        .WillRepeatedly(Invoke(incomingRawFrame));
+      
+      int runTime = 5000;
+      
+      keyChain->setFace(consumerFace.get());
+      RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
+
+      queryStat = [&statTimer, &rs, &setupTimer, &rebufferingsNum, &bufferLevel, &state](const boost::system::error_code&){
+        StatisticsStorage storage = rs.getStatistics();
+        rebufferingsNum = storage[Indicator::RebufferingsNum];
+        
+        if (storage[Indicator::State] > state)
+          state = storage[Indicator::State];
+
+        bufferLevel.newValue(storage[Indicator::BufferPlayableSize]);
+        setupTimer();
+      };
+      setupTimer();
+      
+#ifdef ENABLE_LOGGING
+      rs.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+      
+      int waitThreads = 0;
+      while (rs.getThreads().size() == 0 && waitThreads++ < 3)
+          boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
+      ASSERT_LT(0, rs.getThreads().size());
+      
+      boost::shared_ptr<uint8_t> frameBuffer(new uint8_t[320*240*4]);
+      EXPECT_CALL(renderer, getFrameBuffer(320,240))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(frameBuffer.get()));
+      
+      boost::function<void(int64_t,int,int,const uint8_t*)> 
+        renderFrame = [&nRendered, frameBuffer](int64_t,int,int,const uint8_t* buf){
+          nRendered++;
+          EXPECT_EQ(frameBuffer.get(), buf);
+        };
+      EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Invoke(renderFrame));
+
+      source.start(30);
+      rs.start(rs.getThreads()[0], &renderer);
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
+      done = true;
+      rs.stop();
+      source.stop();
+    }
+
     work_source.reset();
-    io_source.stop();
     t_source.join();
+    io_source.stop();
     
+    io.dispatch([consumerFace, publisherFace]{
+      consumerFace->shutdown();
+      publisherFace->shutdown();
+    });
     work.reset();
-    io.stop();
     t.join();
+    io.stop();
+
+    GT_PRINTF("Rebufferins: %d, Buffer Level: %.2f, Rendered frames: %d\n",
+      rebufferingsNum, bufferLevel.value(), nRendered);
+
+    ASSERT_EQ(0, rebufferingsNum);
+    EXPECT_GE(state, 5);
+    EXPECT_LT(110, bufferLevel.value());
+    EXPECT_GT(190, bufferLevel.value());
 }
 #endif
-
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

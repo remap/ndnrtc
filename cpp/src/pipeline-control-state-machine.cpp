@@ -36,13 +36,13 @@ namespace ndnrtc {
 	class PipelineControlState {
 	public:
         typedef enum _StateId {
-            Unknown,
-            Idle,
-            WaitForRightmost,
-            WaitForInitial,
-            Chasing,
-            Adjusting,
-            Fetching
+            Unknown = 0,
+            Idle = 1,
+            WaitForRightmost = 2,
+            WaitForInitial = 3,
+            Chasing = 4,
+            Adjusting = 5,
+            Fetching = 6
         } StateId;
         
 		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}

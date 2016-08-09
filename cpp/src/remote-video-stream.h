@@ -10,12 +10,15 @@
 
 #include "remote-stream-impl.h"
 #include "sample-validator.h"
+#include "webrtc.h"
 
 namespace ndnrtc{
 	class IPlayoutControl;
 	class VideoPlayout;
 	class PipelineControl;
 	class ManifestValidator;
+	class VideoDecoder;
+	class IExternalRenderer;
 
 	class RemoteVideoStreamImpl : public RemoteStreamImpl
 	{
@@ -26,11 +29,18 @@ namespace ndnrtc{
 			const std::string& streamPrefix);
 		~RemoteVideoStreamImpl();
 		
+		void start(const std::string& threadName, IExternalRenderer* render);
 		void initiateFetching();
         void setLogger(ndnlog::new_api::Logger* logger);
         
 	private:
 		boost::shared_ptr<ManifestValidator> validator_;
+		IExternalRenderer* renderer_;
+		boost::shared_ptr<VideoDecoder> decoder_;
+
+		void feedFrame(const WebRtcVideoFrame&);
+        void setupDecoder();
+        void setupPipelineControl();
 	};
 }
 

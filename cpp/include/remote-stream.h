@@ -19,6 +19,7 @@ namespace ndn {
 namespace ndnrtc {
 	class RemoteStreamImpl;
 	class IRemoteStreamObserver;
+	class IExternalRenderer;
 
 	class RemoteStream : public IStream {
 	public:
@@ -38,7 +39,6 @@ namespace ndnrtc {
 		bool isMetaFetched() const;
 		std::vector<std::string> getThreads() const;
 
-		void start(const std::string& threadName);
 		void setThread(const std::string& threadName);
 		void stop();
 		void setInterestLifetime(unsigned int lifetimeMs);
@@ -73,6 +73,8 @@ namespace ndnrtc {
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName);
+
+		void start(const std::string& threadName);
 	};
 
 	class RemoteVideoStream: public RemoteStream {
@@ -82,6 +84,9 @@ namespace ndnrtc {
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName);
+
+		void start(const std::string& threadName, 
+			IExternalRenderer* renderer);
 	};
 }
 

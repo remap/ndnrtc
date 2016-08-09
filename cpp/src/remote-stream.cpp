@@ -42,12 +42,6 @@ RemoteStream::getThreads() const
 }
 
 void
-RemoteStream::start(const std::string& threadName)
-{
-	pimpl_->start(threadName);
-}
-
-void
 RemoteStream::setThread(const std::string& threadName)
 {
 	pimpl_->setThread(threadName);
@@ -102,6 +96,12 @@ RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 	pimpl_->fetchMeta();
 }
 
+void
+RemoteAudioStream::start(const std::string& threadName)
+{
+	pimpl_->start(threadName);
+}
+
 //******************************************************************************
 RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo, 
 			const boost::shared_ptr<ndn::Face>& face,
@@ -113,4 +113,10 @@ RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 	streamPrefix_ = NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri();
 	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, streamPrefix_);
 	pimpl_->fetchMeta();
+}
+
+void
+RemoteVideoStream::start(const std::string& threadName, IExternalRenderer* renderer)
+{
+	boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(pimpl_)->start(threadName, renderer);
 }
