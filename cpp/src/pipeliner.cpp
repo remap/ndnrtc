@@ -9,6 +9,7 @@
 //
 
 #include "pipeliner.h"
+#include <ndn-cpp/exclude.hpp>
 
 #include "sample-estimator.h"
 #include "frame-buffer.h"
@@ -21,7 +22,9 @@ using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 using namespace ndn;
 
-Pipeliner::Pipeliner(const PipelinerSettings& settings):
+Pipeliner::Pipeliner(const PipelinerSettings& settings,
+                     const boost::shared_ptr<INameScheme>& nameScheme):
+nameScheme_(nameScheme),
 sampleEstimator_(settings.sampleEstimator_),
 buffer_(settings.buffer_),
 interestControl_(settings.interestControl_),
@@ -48,8 +51,7 @@ Pipeliner::~Pipeliner()
 void
 Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
-    Name n(threadPrefix);
-    n.append((nextSamplePriority_ == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+    Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
 
     if (lastRequestedSample_ == SampleClass::Unknown) // request rightmost
     {
@@ -106,9 +108,7 @@ Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
     
     while (interestControl_->room() > 0)
     {
-        Name n(threadPrefix);
-        n.append((nextSamplePriority_ == SampleClass::Delta ?
-                  NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+        Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ?
                                 seqCounter_.delta_ : seqCounter_.key_));
 
@@ -222,4 +222,61 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
         receipt.slot_->getFetchedNum() == 1)
         setNeedSample(SampleClass::Key);
 
+}
+
+Name
+Pipeliner::VideoNameScheme::samplePrefix(const Name& threadPrefix, SampleClass cls)
+{
+    Name prefix(threadPrefix);
+    if (cls == SampleClass::Delta)
+        prefix.append(NameComponents::NameComponentDelta);
+    else
+        prefix.append(NameComponents::NameComponentKey);
+    return prefix;
+}
+
+Name
+Pipeliner::VideoNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
+{
+    Name prefix(threadPrefix);
+    return prefix.append(NameComponents::NameComponentKey);
+}
+
+boost::shared_ptr<ndn::Interest>
+Pipeliner::VideoNameScheme::rightmostInterest(const ndn::Name threadPrefix,
+                                                   unsigned int lifetime)
+{
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
+                                                                      lifetime));
+    interest->setMustBeFresh(true);
+    interest->setChildSelector(1);
+    return interest;
+}
+
+Name
+Pipeliner::AudioNameScheme::samplePrefix(const Name& threadPrefix, SampleClass cls)
+{
+    return threadPrefix;
+    
+}
+
+Name
+Pipeliner::AudioNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
+{
+    return threadPrefix;
+}
+
+boost::shared_ptr<ndn::Interest>
+Pipeliner::AudioNameScheme::rightmostInterest(const ndn::Name threadPrefix,
+                                              unsigned int lifetime)
+{
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
+                                                                      lifetime));
+    Exclude ex;
+    ex.appendComponent(Name::Component(NameComponents::NameComponentMeta));
+    interest->setExclude(ex);
+    interest->setMustBeFresh(true);
+    interest->setChildSelector(1);
+    
+    return interest;
 }

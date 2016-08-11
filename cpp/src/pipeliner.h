@@ -63,7 +63,10 @@ namespace ndnrtc {
                     public IBufferObserver
     {
     public:
-        Pipeliner(const PipelinerSettings& settings);
+        class INameScheme;
+        
+        Pipeliner(const PipelinerSettings& settings,
+                  const boost::shared_ptr<INameScheme>&);
         ~Pipeliner();
 
         /**
@@ -122,12 +125,40 @@ namespace ndnrtc {
          */
         void setSequenceNumber(PacketNumber seqNo, SampleClass cls);
 
+        /**
+         * This class
+         */
+        class INameScheme {
+        public:
+            virtual ndn::Name samplePrefix(const ndn::Name&, SampleClass) = 0;
+            virtual ndn::Name rightmostPrefix(const ndn::Name&) = 0;
+            virtual boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
+                                                                       unsigned int) = 0;
+        };
+        
+        class VideoNameScheme : public INameScheme {
+        public:
+            ndn::Name samplePrefix(const ndn::Name&, SampleClass);
+            ndn::Name rightmostPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
+                                                               unsigned int);
+        };
+        
+        class AudioNameScheme : public INameScheme {
+        public:
+            ndn::Name samplePrefix(const ndn::Name&, SampleClass);
+            ndn::Name rightmostPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
+                                                               unsigned int);
+        };
+
     private:
         typedef struct _SequenceCounter {
             PacketNumber delta_, key_;
         } SequenceCounter;
 
         unsigned int interestLifetime_;
+        boost::shared_ptr<INameScheme> nameScheme_;
         boost::shared_ptr<SampleEstimator> sampleEstimator_;
         boost::shared_ptr<IBuffer> buffer_;
         boost::shared_ptr<IInterestControl> interestControl_;
