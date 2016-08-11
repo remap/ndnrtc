@@ -55,9 +55,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 
     if (lastRequestedSample_ == SampleClass::Unknown) // request rightmost
     {
-        boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(n, interestLifetime_));
-        interest->setMustBeFresh(true);
-        interest->setChildSelector(1);
+        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(n, interestLifetime_);
     
         // if (exclusionPacket_)
         // {
