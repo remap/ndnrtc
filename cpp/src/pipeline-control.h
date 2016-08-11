@@ -36,8 +36,6 @@ namespace ndnrtc {
 							public ISegmentControllerObserver
 	{
 	public:
-		~PipelineControl(){}
-
 		void start();
 		void stop();
 

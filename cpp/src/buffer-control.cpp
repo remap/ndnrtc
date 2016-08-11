@@ -43,7 +43,9 @@ BufferControl::detach(IBufferControlObserver* o)
 void
 BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {
-	if (buffer_->isRequested(segment))
+    if ((segment->getSampleClass() == SampleClass::Key ||
+        segment->getSampleClass() == SampleClass::Delta) &&
+        buffer_->isRequested(segment))
 	{
 		BufferReceipt receipt = buffer_->received(segment);
 		drdEstimator_->newValue(receipt.segment_->getDrdUsec()/1000, receipt.segment_->isOriginal());

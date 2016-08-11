@@ -198,6 +198,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     else
     {
         info.class_ = SampleClass::Unknown;
+        info.segmentClass_ = SegmentClass::Unknown;
         info.threadName_ = name[1].toEscapedString();
         info.isMeta_ = (name[2] == Name::Component(NameComponents::NameComponentMeta));
 
@@ -283,6 +284,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     else
     {
         info.class_ = SampleClass::Unknown;
+        info.segmentClass_ = SegmentClass::Unknown;
         info.threadName_ = name[1].toEscapedString();
 
         if (name.size() == 2)

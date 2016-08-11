@@ -10,6 +10,7 @@
 
 #include "interest-control.h"
 #include "pipeline-control-state-machine.h"
+#include "frame-data.h"
 
 using namespace ndnrtc;
 
@@ -83,7 +84,9 @@ PipelineControl::stop()
 void 
 PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment>& s)
 {
-	machine_.dispatch(boost::make_shared<EventSegment>(s));
+    if (s->getSampleClass() == SampleClass::Key ||
+        s->getSampleClass() == SampleClass::Delta)
+        machine_.dispatch(boost::make_shared<EventSegment>(s));
 }
 
 void 

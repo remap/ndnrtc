@@ -49,25 +49,29 @@ void SampleEstimator::bootstrapSegmentSize(double value, SampleClass st, Segment
 void 
 SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 {
-	SampleClass st = segment->isDelta() ? SampleClass::Delta : SampleClass::Key;
-	SegmentClass dt = segment->isParity() ? SegmentClass::Parity : SegmentClass::Data;
-
-	estimators_[std::make_pair(st,dt)].segNum_.newValue(segment->getSlicesNum());
-	estimators_[std::make_pair(st,dt)].segSize_.newValue(segment->getData()->getContent().size());
-    
-    if (st == SampleClass::Delta)
+    if (segment->getSampleClass() == SampleClass::Key ||
+        segment->getSampleClass() == SampleClass::Delta)
     {
-        if (dt == SegmentClass::Data)
-            (*sstorage_)[Indicator::SegmentsDeltaAvgNum] = segment->getSlicesNum();
+        SampleClass st = segment->getSampleClass();
+        SegmentClass dt = segment->getSegmentClass();
+        
+        estimators_[std::make_pair(st,dt)].segNum_.newValue(segment->getSlicesNum());
+        estimators_[std::make_pair(st,dt)].segSize_.newValue(segment->getData()->getContent().size());
+        
+        if (st == SampleClass::Delta)
+        {
+            if (dt == SegmentClass::Data)
+                (*sstorage_)[Indicator::SegmentsDeltaAvgNum] = segment->getSlicesNum();
+            else
+                (*sstorage_)[Indicator::SegmentsDeltaParityAvgNum] = segment->getSlicesNum();
+        }
         else
-            (*sstorage_)[Indicator::SegmentsDeltaParityAvgNum] = segment->getSlicesNum();
-    }
-    else
-    {
-        if (dt == SegmentClass::Data)
-            (*sstorage_)[Indicator::SegmentsKeyAvgNum] = segment->getSlicesNum();
-        else
-            (*sstorage_)[Indicator::SegmentsKeyParityAvgNum] = segment->getSlicesNum();
+        {
+            if (dt == SegmentClass::Data)
+                (*sstorage_)[Indicator::SegmentsKeyAvgNum] = segment->getSlicesNum();
+            else
+                (*sstorage_)[Indicator::SegmentsKeyParityAvgNum] = segment->getSlicesNum();
+        }
     }
 }
 

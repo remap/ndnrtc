@@ -61,18 +61,7 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator, sstorage_);
 	interestControl_ = make_shared<InterestControl>(drdEstimator, sstorage_);
 	
-	PipelinerSettings pps;
-	pps.interestLifetimeMs_ = 2000;
-	pps.sampleEstimator_ = sampleEstimator_;
-	pps.buffer_ = buffer_;
-	pps.interestControl_ = interestControl_;
-	pps.interestQueue_ = interestQueue_;
-	pps.playbackQueue_ = playbackQueue_;
-	pps.segmentController_ = segmentController_;
-    pps.sstorage_ = sstorage_;
-
-	pipeliner_ = make_shared<Pipeliner>(pps);
-	// pipeline control created in subclasses
+	// pipeliner and pipeline control created in subclasses
 
 	segmentController_->attach(sampleEstimator_.get());
 	segmentController_->attach(bufferControl_.get());
