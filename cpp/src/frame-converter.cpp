@@ -15,7 +15,9 @@ using namespace webrtc;
 WebRtcVideoFrame& RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
 {             
 	// make conversion to I420
-	const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoARGB);
+#warning this needs to be tested with capturing from video devices
+	// const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoARGB);
+	const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoBGRA);
 
 	int stride_y = wr.width_;
 	int stride_uv = (wr.width_ + 1) / 2;
