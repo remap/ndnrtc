@@ -49,7 +49,7 @@ TEST(TestPipeliner, TestExpressRightmost)
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
 
-	Pipeliner pp(ppSettings);
+	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
 	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -115,7 +115,7 @@ TEST(TestPipeliner, TestRequestSample)
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
 
-	Pipeliner pp(ppSettings);
+	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
 	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -183,7 +183,7 @@ TEST(TestPipeliner, TestRequestKeySample)
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
 
-	Pipeliner pp(ppSettings);
+	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
 	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -252,7 +252,7 @@ TEST(TestPipeliner, TestSegmentsArrive)
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
 
-	Pipeliner pp(ppSettings);
+	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
 	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));

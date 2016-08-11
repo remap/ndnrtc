@@ -31,7 +31,20 @@ RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service& io,
 RemoteStreamImpl(io, face, keyChain, streamPrefix)
 {
     type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeVideo;
-	playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
+    
+    PipelinerSettings pps;
+    pps.interestLifetimeMs_ = 2000;
+    pps.sampleEstimator_ = sampleEstimator_;
+    pps.buffer_ = buffer_;
+    pps.interestControl_ = interestControl_;
+    pps.interestQueue_ = interestQueue_;
+    pps.playbackQueue_ = playbackQueue_;
+    pps.segmentController_ = segmentController_;
+    pps.sstorage_ = sstorage_;
+    
+    pipeliner_ = make_shared<Pipeliner>(pps, boost::make_shared<Pipeliner::VideoNameScheme>());
+    
+    playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
     validator_ = boost::make_shared<ManifestValidator>(face, keyChain);
     buffer_->attach(validator_.get());
@@ -76,6 +89,7 @@ RemoteVideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
     
     if (rgbFrameBuffer)
     {
+#warning this needs to be tested with frames captured from real video devices
         ConvertFromI420(frame, webrtc::kBGRA, 0, rgbFrameBuffer);
         renderer_->renderBGRAFrame(clock::millisecondTimestamp(),
                                           frame.width(), frame.height(),
