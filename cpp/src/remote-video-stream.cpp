@@ -78,6 +78,8 @@ RemoteVideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
 {
     RemoteStreamImpl::setLogger(logger);
     validator_->setLogger(logger);
+    boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger);
+    boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger);
 }
 
 #pragma mark private

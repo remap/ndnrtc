@@ -11,6 +11,8 @@
 #include "remote-stream-impl.h"
 
 namespace ndnrtc {
+    class SampleValidator;
+    
 	class RemoteAudioStreamImpl : public RemoteStreamImpl
 	{
 	public:
@@ -18,11 +20,17 @@ namespace ndnrtc {
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& streamPrefix);
+        ~RemoteAudioStreamImpl();
 
 		void initiateFetching();
-
+        void setLogger(ndnlog::new_api::Logger* logger);
+        
 	private:
-
+        boost::asio::io_service& io_;
+        boost::shared_ptr<SampleValidator> validator_;
+        
+        void setupPlayout();
+        void setupPipelineControl();
 	};
 }
 

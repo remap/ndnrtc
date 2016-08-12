@@ -23,12 +23,14 @@
 #include "local-stream.h"
 #include "tests-helpers.h"
 #include "client/src/video-source.h"
+#include "client/src/frame-io.h"
 #include "estimators.h"
 
 #include "mock-objects/external-capturer-mock.h"
 #include "mock-objects/external-renderer-mock.h"
 
 #define ENABLE_LOGGING
+//#define SAVE_VIDEO
 
 using namespace ::testing;
 using namespace ndnrtc;
@@ -164,8 +166,7 @@ bool checkNfd()
   return true;
 }
 
-#if 1
-TEST(TestLoop, TestFetch30Sec)
+TEST(TestLoop, TestVideo)
 {
     if (!checkNfd()) return;
     
@@ -264,15 +265,18 @@ TEST(TestLoop, TestFetch30Sec)
           boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
       ASSERT_LT(0, rs.getThreads().size());
       
-      boost::shared_ptr<uint8_t> frameBuffer(new uint8_t[320*240*4]);
       EXPECT_CALL(renderer, getFrameBuffer(320,240))
         .Times(AtLeast(1))
-        .WillRepeatedly(Return(frameBuffer.get()));
+        .WillRepeatedly(Return(frame->getBuffer().get()));
       
+      FileSink frameSink("/tmp/frame-sink.argb");
       boost::function<void(int64_t,int,int,const uint8_t*)> 
-        renderFrame = [&nRendered, frameBuffer](int64_t,int,int,const uint8_t* buf){
+        renderFrame = [&nRendered, &frameSink, frame](int64_t,int,int,const uint8_t* buf){
           nRendered++;
-          EXPECT_EQ(frameBuffer.get(), buf);
+          EXPECT_EQ(frame->getBuffer().get(), buf);
+#ifdef SAVE_VIDEO
+          frameSink << *frame;
+#endif
         };
       EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_))
         .Times(AtLeast(1))
@@ -306,7 +310,82 @@ TEST(TestLoop, TestFetch30Sec)
     EXPECT_LT(110, bufferLevel.value());
     EXPECT_GT(190, bufferLevel.value());
 }
+
+TEST(TestLoop, TestAudio)
+{
+    if (!checkNfd()) return;
+    
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
+    
+    boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){
+        io.run();
+    });
+    
+    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+    std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+    boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io));
+    boost::shared_ptr<Face> consumerFace(boost::make_shared<ThreadsafeFace>(io));
+    boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+    
+    publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
+    publisherFace->registerPrefix(Name(appPrefix), OnInterestCallback(),
+                                  [](const boost::shared_ptr<const Name>&){
+                                      ASSERT_FALSE(true);
+                                  });
+    
+    boost::atomic<bool> done(false);
+    boost::asio::deadline_timer statTimer(io);
+    boost::function<void(const boost::system::error_code&)> queryStat;
+    boost::function<void()> setupTimer = [&statTimer, &queryStat, &done](){
+        if (!done)
+        {
+            statTimer.expires_from_now(boost::posix_time::milliseconds(10));
+            statTimer.async_wait(queryStat);
+        }
+    };
+    
+    int rebufferingsNum = 0, state = 0;
+    estimators::Average bufferLevel(boost::make_shared<estimators::SampleWindow>(10));
+    {
+        MediaStreamSettings settings(io, getSampleAudioParams());
+        settings.face_ = publisherFace.get();
+        settings.keyChain_ = keyChain.get();
+        LocalAudioStream s(appPrefix, settings);
+        RemoteAudioStream remoteStream(io, consumerFace, keyChain,
+                                       appPrefix, getSampleAudioParams().streamName_);
+
+#ifdef ENABLE_LOGGING
+//        s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+        remoteStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+        s.start();
+        s.isRunning();
+
+        int waitThreads = 0;
+        while (remoteStream.getThreads().size() == 0 && waitThreads++ < 3)
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
+        ASSERT_LT(0, remoteStream.getThreads().size());
+        remoteStream.start(remoteStream.getThreads()[0]);
+        
+        boost::asio::deadline_timer runTimer(io);
+        runTimer.expires_from_now(boost::posix_time::milliseconds(5000));
+        runTimer.wait();
+        
+        EXPECT_NO_THROW(remoteStream.stop());
+        EXPECT_NO_THROW(s.stop());
+        EXPECT_FALSE(s.isRunning());
+    }
+    
+    publisherFace->shutdown();
+    consumerFace->shutdown();
+    work.reset();
+    t.join();
+}
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

@@ -133,13 +133,11 @@ RemoteStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
     dynamic_pointer_cast<NdnRtcComponent>(buffer_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(metaFetcher_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(bufferControl_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(interestQueue_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(pipeliner_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(latencyControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(interestControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(playbackQueue_)->setLogger(logger);
-    dynamic_pointer_cast<Playout>(playout_)->setLogger(logger);
     if (pipelineControl_.get()) pipelineControl_->setLogger(logger);
 }
 
