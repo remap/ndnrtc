@@ -11,6 +11,7 @@
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_codec.h>
+#include <algorithm>
 
 #include "ndnrtc-defines.h"
 #include "webrtc-audio-channel.h"
@@ -54,6 +55,15 @@ WebrtcAudioChannel::~WebrtcAudioChannel()
     voeNetwork_->Release();
     voeCodec_->Release();
   });
+}
+
+WebrtcAudioChannel::Codec
+WebrtcAudioChannel::fromString(std::string codec)
+{
+    std::transform(codec.begin(), codec.end(), codec.begin(), ::tolower);
+    if (codec == "opus")
+        return WebrtcAudioChannel::Codec::Opus;
+    return WebrtcAudioChannel::Codec::G722;
 }
 
 CodecInst

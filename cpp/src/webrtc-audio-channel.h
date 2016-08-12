@@ -34,6 +34,7 @@ namespace ndnrtc {
         WebrtcAudioChannel(const Codec& codec);
         virtual ~WebrtcAudioChannel();
 
+        static Codec fromString(std::string codec);
     protected:
         int webrtcChannelId_;
         webrtc::VoEBase* voeBase_;
