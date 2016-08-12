@@ -264,7 +264,8 @@ TEST(TestAudioPlayout, TestOpus)
 	boost::shared_ptr<PlaybackQueue> pqueue(boost::make_shared<PlaybackQueue>(Name(streamPrefix), buffer));
 	
 	MockPlayoutObserver playoutObserver;
-	AudioPlayout playout(io, pqueue);
+	AudioPlayout playout(io, pqueue, boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
+	 WebrtcAudioChannel::Codec::Opus, 0);
 
 #ifdef ENABLE_LOGGING
 	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -370,7 +371,7 @@ TEST(TestAudioPlayout, TestOpus)
 			&queuSizeAccum, &nQueueSize]()
 			{ 
 				if (!done && pqueue->size() >= targetSize && !playout.isRunning())
-					playout.start(0, WebrtcAudioChannel::Codec::Opus);
+					playout.start();
 				queuSizeAccum += pqueue->size();
 				nQueueSize++;
 			}));

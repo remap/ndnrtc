@@ -13,13 +13,15 @@ using namespace ndnrtc;
 
 AudioPlayout::AudioPlayout(boost::asio::io_service& io,
     const boost::shared_ptr<IPlaybackQueue>& queue,
-    const boost::shared_ptr<StatStorage>& statStorage):
-Playout(boost::make_shared<AudioPlayoutImpl>(io, queue, statStorage))
+    const boost::shared_ptr<StatStorage>& statStorage,
+    const WebrtcAudioChannel::Codec& codec,
+    unsigned int deviceIdx):
+Playout(boost::make_shared<AudioPlayoutImpl>(io, queue, statStorage, codec, deviceIdx))
 {}
 
-void AudioPlayout::start(unsigned int devIdx, WebrtcAudioChannel::Codec codec)
+void AudioPlayout::start(unsigned int fastForwardMs)
 { 
-    pimpl()->start(devIdx, codec); 
+    pimpl()->start(fastForwardMs);
 }
 
 void AudioPlayout::stop() 

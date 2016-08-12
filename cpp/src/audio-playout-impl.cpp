@@ -19,18 +19,18 @@ using namespace webrtc;
 
 AudioPlayoutImpl::AudioPlayoutImpl(boost::asio::io_service& io,
             const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage):
-PlayoutImpl(io, queue, statStorage), packetCount_(0)
+            const boost::shared_ptr<StatStorage>& statStorage,
+            const WebrtcAudioChannel::Codec& codec,
+            unsigned int deviceIdx):
+PlayoutImpl(io, queue, statStorage), packetCount_(0),
+renderer_(boost::make_shared<AudioRenderer>(deviceIdx, codec))
 {
     description_ = "aplayout";
 }
 
-void AudioPlayoutImpl::start(unsigned int devIdx, WebrtcAudioChannel::Codec codec)
+void AudioPlayoutImpl::start(unsigned int fastForwardMs)
 {
-    renderer_ = boost::make_shared<AudioRenderer>(devIdx, codec);
-    renderer_->setLogger(logger_);
-
-    PlayoutImpl::start();
+    PlayoutImpl::start(fastForwardMs);
     renderer_->startRendering();
 }
 
@@ -39,6 +39,12 @@ void AudioPlayoutImpl::stop()
     PlayoutImpl::stop();
     packetCount_ = 0;
     renderer_->stopRendering();
+}
+
+void AudioPlayoutImpl::setLogger(ndnlog::new_api::Logger* logger)
+{
+    PlayoutImpl::setLogger(logger);
+    renderer_->setLogger(logger);
 }
 
 void AudioPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)

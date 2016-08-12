@@ -24,12 +24,15 @@ namespace ndnrtc {
     AudioPlayoutImpl(boost::asio::io_service& io,
             const boost::shared_ptr<IPlaybackQueue>& queue,
             const boost::shared_ptr<StatStorage>& statStorage = 
-            boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+            boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
+            const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722,
+            unsigned int deviceIdx = 0);
     ~AudioPlayoutImpl(){}
 
-    void start(unsigned int devIdx = 0, 
-      WebrtcAudioChannel::Codec codec = WebrtcAudioChannel::Codec::G722);
+    void start(unsigned int fastForwardMs = 0);
     void stop();
+
+    void setLogger(ndnlog::new_api::Logger* logger);
 
   private:
     AudioBundleSlot bundleSlot_;
