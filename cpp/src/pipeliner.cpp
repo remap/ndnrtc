@@ -51,11 +51,9 @@ Pipeliner::~Pipeliner()
 void
 Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
-    Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
-
     if (lastRequestedSample_ == SampleClass::Unknown) // request rightmost
     {
-        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(n, interestLifetime_);
+        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(Name(threadPrefix), interestLifetime_);
     
         // if (exclusionPacket_)
         // {
@@ -70,6 +68,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
     }
     else
     {
+        Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);

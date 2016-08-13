@@ -29,7 +29,7 @@
 #include "mock-objects/external-capturer-mock.h"
 #include "mock-objects/external-renderer-mock.h"
 
-#define ENABLE_LOGGING
+//#define ENABLE_LOGGING
 //#define SAVE_VIDEO
 
 using namespace ::testing;
@@ -244,7 +244,10 @@ TEST(TestLoop, TestVideo)
       keyChain->setFace(consumerFace.get());
       RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
 
-      queryStat = [&statTimer, &rs, &setupTimer, &rebufferingsNum, &bufferLevel, &state](const boost::system::error_code&){
+      queryStat = [&statTimer, &rs, &setupTimer, &rebufferingsNum, &bufferLevel, &state](const boost::system::error_code& err){
+        if (err == boost::asio::error::operation_aborted)
+          return;
+
         StatisticsStorage storage = rs.getStatistics();
         rebufferingsNum = storage[Indicator::RebufferingsNum];
         
@@ -288,6 +291,7 @@ TEST(TestLoop, TestVideo)
       done = true;
       rs.stop();
       source.stop();
+      statTimer.cancel();
     }
 
     work_source.reset();
@@ -372,9 +376,25 @@ TEST(TestLoop, TestAudio)
         ASSERT_LT(0, remoteStream.getThreads().size());
         remoteStream.start(remoteStream.getThreads()[0]);
         
+        queryStat = [&statTimer, &remoteStream, &setupTimer, &rebufferingsNum, &bufferLevel, &state](const boost::system::error_code& err){
+          if (err == boost::asio::error::operation_aborted)
+            return;
+
+          StatisticsStorage storage = remoteStream.getStatistics();
+          rebufferingsNum = storage[Indicator::RebufferingsNum];
+
+          if (storage[Indicator::State] > state)
+            state = storage[Indicator::State];
+
+          bufferLevel.newValue(storage[Indicator::BufferPlayableSize]);
+          setupTimer();
+        };
+        setupTimer();
+
         boost::asio::deadline_timer runTimer(io);
         runTimer.expires_from_now(boost::posix_time::milliseconds(5000));
         runTimer.wait();
+        statTimer.cancel();
         
         EXPECT_NO_THROW(remoteStream.stop());
         EXPECT_NO_THROW(s.stop());
@@ -385,6 +405,14 @@ TEST(TestLoop, TestAudio)
     consumerFace->shutdown();
     work.reset();
     t.join();
+
+    GT_PRINTF("Rebufferins: %d, Buffer Level: %.2f\n",
+      rebufferingsNum, bufferLevel.value());
+
+    ASSERT_EQ(0, rebufferingsNum);
+    EXPECT_GE(state, 5);
+    EXPECT_LT(110, bufferLevel.value());
+    EXPECT_GT(190, bufferLevel.value());
 }
 
 int main(int argc, char **argv) {
