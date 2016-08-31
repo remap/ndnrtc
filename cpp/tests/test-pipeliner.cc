@@ -49,49 +49,71 @@ TEST(TestPipeliner, TestExpressRightmost)
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
 	Name prefix(threadPrefix);
 
-	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
+	{
+		Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::AudioNameScheme>());
 
 #ifdef ENABLE_LOGGING
-	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
 
-	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
-                       const boost::shared_ptr<ndn::Data>&){};
-	OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
+		OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
+			const boost::shared_ptr<ndn::Data>&){};
+		OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 
-	EXPECT_CALL(*segmentController, getOnDataCallback())
-		.Times(3)
+		EXPECT_CALL(*segmentController, getOnDataCallback())
+		.Times(2)
 		.WillRepeatedly(Return(onData));
-	EXPECT_CALL(*segmentController, getOnTimeoutCallback())
-		.Times(3)
+		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
+		.Times(2)
 		.WillRepeatedly(Return(onTimeout));
 
-	EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
 		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
-                        boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
 			Name n(prefix);
-			EXPECT_EQ(n.append(NameComponents::NameComponentDelta), i->getName());
+			EXPECT_EQ(n, i->getName());
 			EXPECT_EQ(i->getChildSelector(), 1);
 		}));
 
-	pp.setNeedRightmost();
-	pp.express(prefix);
-	pp.setNeedRightmost();
-	pp.express(prefix);
+		pp.setNeedRightmost();
+		pp.express(prefix);
+		pp.setNeedRightmost();
+		pp.express(prefix);
+	}
 
-	EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
-		.Times(1)
+	{
+		Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
+
+#ifdef ENABLE_LOGGING
+		pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+		OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
+			const boost::shared_ptr<ndn::Data>&){};
+		OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
+
+		EXPECT_CALL(*segmentController, getOnDataCallback())
+		.Times(2)
+		.WillRepeatedly(Return(onData));
+		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
+		.Times(2)
+		.WillRepeatedly(Return(onTimeout));
+
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
-                        boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
 			Name n(prefix);
 			EXPECT_EQ(n.append(NameComponents::NameComponentKey), i->getName());
 			EXPECT_EQ(i->getChildSelector(), 1);
 		}));
 
-	pp.setNeedRightmost();
-	pp.setNeedSample(SampleClass::Key);
-	pp.express(prefix);
+		pp.setNeedRightmost();
+		pp.express(prefix);
+		pp.setNeedRightmost();
+		pp.express(prefix);
+	}
 }
 
 TEST(TestPipeliner, TestRequestSample)
