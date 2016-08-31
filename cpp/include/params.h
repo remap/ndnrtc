@@ -326,15 +326,13 @@ namespace ndnrtc
         class GeneralConsumerParams : public Params {
         public:
             unsigned int interestLifetime_ = 0;
-            unsigned int bufferSlotsNum_ = 0, slotSize_ = 0;
             unsigned int jitterSizeMs_ = 0;
             
             void write(std::ostream& os) const
             {
                 os << "interest lifetime: " << interestLifetime_
                 << " ms; jitter size: " << jitterSizeMs_
-                << " ms; buffer size: " << bufferSlotsNum_
-                << " slots; slot size: " << slotSize_ << " bytes";
+                << " ms";
             }
         };
         
@@ -345,17 +343,14 @@ namespace ndnrtc
             ndnlog::NdnLoggerDetailLevel loggingLevel_;
             std::string logFile_;
             std::string logPath_;
-            bool useRtx_,
-            useFec_,
-            useAvSync_,
-            skipIncomplete_;
+            bool useFec_, useAvSync_;
             
             // network
             std::string host_;
             unsigned int portNum_;
             
-            GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone), useRtx_(false),
-            useFec_(false), useAvSync_(false), skipIncomplete_(false), portNum_(6363){}
+            GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone),
+            useFec_(false), useAvSync_(false), portNum_(6363){}
 
             void write(std::ostream& os) const
             {
@@ -382,10 +377,8 @@ namespace ndnrtc
 #endif
                 os << "log level: " << lvlToString[loggingLevel_]
                 << "; log file: " << logFile_ << " (at " << logPath_ << ")"
-                << "; RTX: " << (useRtx_?"ON":"OFF")
                 << "; FEC: " << (useFec_?"ON":"OFF")
                 << "; A/V Sync: " << (useAvSync_?"ON":"OFF")
-                << "; Skipping incomplete frames: " << (skipIncomplete_?"ON":"OFF")
                 << "; Host: " << host_
                 << "; Port #: " << portNum_;
             }

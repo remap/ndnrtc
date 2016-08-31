@@ -189,8 +189,7 @@ int loadProducerSettings(const Setting& root, ProducerClientParams& params)
     try{
         const Setting& basic = producerRootSettings[SECTION_BASIC_KEY];
 
-        basic.lookupValue("username", params.username_);
-        basic.lookupValue("prefix", params.prefix_);
+        basic.lookupValue("base_prefix", params.prefix_);
     }
     catch (const SettingNotFoundException &nfex)
     {
@@ -250,18 +249,6 @@ int loadBasicConsumerSettings(const Setting &s, GeneralConsumerParams& gcp)
         return (EXIT_FAILURE);
     }
 
-    if (lookupNumber(s, "buffer_size", gcp.bufferSlotsNum_)==EXIT_FAILURE) 
-    {
-        LogError("") << "Reading buffer_size from file met error!" << std::endl;
-       return (EXIT_FAILURE);
-    }
-
-    if (lookupNumber(s, "slot_size", gcp.slotSize_)==EXIT_FAILURE) 
-    {
-        LogError("") << "Reading slot_size from file met error!" << std::endl;
-        return (EXIT_FAILURE);
-    }
-
     return EXIT_SUCCESS;
 }
 
@@ -318,9 +305,7 @@ int loadGeneralSettings(const Setting &general, GeneralParams &generalParams){
         general.lookupValue("log_path", generalParams.logPath_);
         general.lookupValue("use_fec", generalParams.useFec_);
         general.lookupValue("use_avsync", generalParams.useAvSync_);
-        general.lookupValue("consumer_use_rtx", generalParams.useRtx_);
-        general.lookupValue("consumer_playback_skip_incomplete", generalParams.skipIncomplete_);
-        
+
         const Setting &ndnNetwork = general["ndnnetwork"];
 
         ndnNetwork.lookupValue("connect_host", generalParams.host_);
@@ -345,9 +330,6 @@ int loadStreamParams(const Setting& s, ConsumerStreamParams& params)
     {
         s.lookupValue("thread_to_fetch", params.threadToFetch_);
         s.lookupValue("sink", params.streamSink_);
-
-        if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
-            params.addMediaThread(AudioThreadParams(params.threadToFetch_));
 
         return EXIT_SUCCESS;
     }
@@ -390,11 +372,12 @@ int loadStreamParams(const Setting& s, ClientMediaStreamParams& params)
             return EXIT_FAILURE;
         }
 
-        s.lookupValue("session_prefix", params.sessionPrefix_);
-        s.lookupValue("name", params.streamName_);
-        s.lookupValue("segment_size", params.producerParams_.segmentSize_);
-        s.lookupValue("freshness", params.producerParams_.freshnessMs_);
-        s.lookupValue("sync", params.synchronizedStreamName_);
+        s.lookupValue("name", params.streamName_); // both
+        s.lookupValue("sync", params.synchronizedStreamName_); // both
+
+        s.lookupValue("base_prefix", params.sessionPrefix_); // consumer
+        s.lookupValue("segment_size", params.producerParams_.segmentSize_); // producer
+        s.lookupValue("freshness", params.producerParams_.freshnessMs_); // producer
 
         try { // audio streams do not have thread configurations
             const Setting &threadSettings = s["threads"];

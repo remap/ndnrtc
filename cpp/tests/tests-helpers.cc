@@ -139,10 +139,8 @@ ClientParams sampleConsumerParams()
 		gp.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
 		gp.logFile_ = "ndnrtc.log";
 		gp.logPath_ = "/tmp";
-		gp.useRtx_ = true;
 		gp.useFec_ = false;
 		gp.useAvSync_ = true;
-		gp.skipIncomplete_ = true;
 		gp.host_ = "aleph.ndn.ucla.edu";
 		gp.portNum_ = 6363;
 		cp.setGeneralParameters(gp);
@@ -174,15 +172,11 @@ ClientParams sampleConsumerParams()
 		GeneralConsumerParams gcpa;
 
 		gcpa.interestLifetime_ = 2000;
-		gcpa.bufferSlotsNum_ = 150;
-		gcpa.slotSize_ = 8000;
 		gcpa.jitterSizeMs_ = 150;
 
 		GeneralConsumerParams gcpv;
 
 		gcpv.interestLifetime_ = 2000;
-		gcpv.bufferSlotsNum_ = 200;
-		gcpv.slotSize_ = 16000;
 		gcpv.jitterSizeMs_ = 150;
 
 		StatGatheringParams sgp("buffer");
@@ -214,10 +208,8 @@ ClientParams sampleProducerParams()
 		gp.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
 		gp.logFile_ = "ndnrtc.log";
 		gp.logPath_ = "/tmp";
-		gp.useRtx_ = true;
 		gp.useFec_ = false;
 		gp.useAvSync_ = true;
-		gp.skipIncomplete_ = true;
 		gp.host_ = "aleph.ndn.ucla.edu";
 		gp.portNum_ = 6363;
 		cp.setGeneralParameters(gp);
@@ -226,14 +218,12 @@ ClientParams sampleProducerParams()
 	{
 		ProducerClientParams pcp;
 
-		pcp.username_ = "client1";
-		pcp.prefix_ = "/ndn/edu/ucla/remap";
+		pcp.prefix_ = "/ndn/edu/ucla/remap/client1";
 
 		{
 			ProducerStreamParams msp;
 			stringstream ss;
 	
-			msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
 			msp.streamName_ = "mic";
 			msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
 			msp.producerParams_.freshnessMs_ = 2000;
@@ -252,7 +242,6 @@ ClientParams sampleProducerParams()
 			ProducerStreamParams msp;
 			stringstream ss;
 	
-			msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
 			msp.streamName_ = "camera";
 			msp.source_ = "/tmp/camera.argb";
 			msp.type_ = MediaStreamParams::MediaStreamTypeVideo;

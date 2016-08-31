@@ -137,18 +137,17 @@ class ConsumerClientParams : public ndnrtc::Params {
 
 class ProducerClientParams : public ndnrtc::Params {
 public:
-    std::string username_, prefix_;
+    std::string prefix_;
     std::vector<ProducerStreamParams> publishedStreams_;
 
     ProducerClientParams(){}
     ProducerClientParams(const ProducerClientParams& params):
-        username_(params.username_), prefix_(params.prefix_), 
+        prefix_(params.prefix_), 
         publishedStreams_(params.publishedStreams_){}
 
     void write(std::ostream& os) const {
         os 
-        << "username: " << username_ 
-        << "; prefix: " << prefix_ << ";" << std::endl;
+        << "prefix: " << prefix_ << ";" << std::endl;
         
         for (int i = 0; i < publishedStreams_.size(); i++)
         {
