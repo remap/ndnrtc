@@ -149,7 +149,7 @@ ClientParams sampleConsumerParams()
 	{
 		ConsumerStreamParams msp1;
 
-		msp1.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+		msp1.sessionPrefix_ = "/ndn/edu/ucla/remap/client1";
 		msp1.streamSink_ = "mic.pcmu";
 		msp1.threadToFetch_ = "pcmu";
 		msp1.streamName_ = "mic";
@@ -160,7 +160,7 @@ ClientParams sampleConsumerParams()
 
 		ConsumerStreamParams msp2;
 
-		msp2.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
+		msp2.sessionPrefix_ = "/ndn/edu/ucla/remap/client1";
 		msp2.streamSink_ = "camera.yuv";
 		msp2.threadToFetch_ = "low";
 		msp2.streamName_ = "camera";

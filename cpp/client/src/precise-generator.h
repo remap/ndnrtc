@@ -31,6 +31,7 @@ using namespace std::placeholders;
 #include <boost/function.hpp>
 #include <boost/chrono.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 namespace lib_bind=boost;
 namespace lib_fun=boost;
@@ -89,7 +90,7 @@ public:
         double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
 
 private:
-	bool isRunning_;
+	boost::atomic<bool> isRunning_;
 	long long fireCount_;
 	double meanProcOverheadNs_, meanTaskTimeNs_;
         double rate_;

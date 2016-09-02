@@ -6,6 +6,7 @@
 //
 
 #include <boost/make_shared.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
@@ -15,54 +16,28 @@
 #include "renderer.h"
 
 using namespace std;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc;
 using namespace ndn;
 
 //******************************************************************************
-Client::Client():ndnp_(nullptr)
-{
-	initKeyChain();
-}
-
-Client::~Client()
-{
-}
-
-Client& Client::getSharedInstance()
-{
-	static Client client;
-	return client;
-}
-
-void Client::run(ndnrtc::INdnRtcLibrary* ndnp, unsigned int runTimeSec,
+void Client::run(unsigned int runTimeSec, 
 	unsigned int statSamplePeriodMs, const ClientParams& params)
 {
-	ndnp_ = ndnp;
-	ndnp_->setObserver(&libObserver_);
 	runTimeSec_ = runTimeSec;
 	statSampleIntervalMs_ = statSamplePeriodMs;
 	params_ = params;
 
 	setupConsumer();
-	setupProducer();
+	// setupProducer();
 	setupStatGathering();
 
 	runProcessLoop();
 
 	tearDownStatGathering();
-	tearDownProducer();
+	// tearDownProducer();
 	tearDownConsumer();
 }
 
 //******************************************************************************
-void Client::initKeyChain()
-{
-    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(new MemoryPrivateKeyStorage());    
-    defaultKeyChain_.reset(new KeyChain(boost::make_shared<IdentityManager>(boost::make_shared<MemoryIdentityStorage>(),
-                                                                            privateKeyStorage),
-                                                    boost::make_shared<NoVerifyPolicyManager>()));
-}
 
 void Client::setupConsumer()
 {
@@ -73,7 +48,7 @@ void Client::setupConsumer()
 
 	for (auto p:ccp.fetchedStreams_)
 	{
-		GeneralConsumerParams gp = (p.type_ == ClientMediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? ccp.generalAudioParams_ : ccp.generalVideoParams_);
+		ndnrtc::GeneralConsumerParams gp = (p.type_ == ClientMediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? ccp.generalAudioParams_ : ccp.generalVideoParams_);
 		RemoteStream rs = initRemoteStream(p, gp);
 #warning check move semantics
 		remoteStreams_.push_back(boost::move(rs));
@@ -88,8 +63,6 @@ void Client::setupProducer()
 {
 	if (!params_.isProducing())
 		return;
-
-	initSession();
 
 	ProducerClientParams pcp = params_.getProducerParams();
 
@@ -118,10 +91,10 @@ void Client::setupStatGathering()
 		return;
 
 	LogInfo("") << "new stat colllector" << endl;
-	statCollector_.reset(new StatCollector(io_, ndnp_));
+	statCollector_.reset(new StatCollector(io_));
 	
 	for (auto& rs:remoteStreams_)
-		statCollector_->addStream(rs.getPrefix());
+		statCollector_->addStream(rs.getStream());
 
 	statCollector_->startCollecting(statSampleIntervalMs_, 
 		params_.getGeneralParameters().logPath_, 
@@ -133,22 +106,9 @@ void Client::setupStatGathering()
 
 void Client::runProcessLoop()
 {
-    boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::deadline_timer runTimer(io_);
-
     runTimer.expires_from_now(boost::posix_time::seconds(runTimeSec_));
-    runTimer.async_wait([&](const boost::system::error_code& ){
-        work.reset();
-        io_.stop();
-    });
-
-    LogDebug("") << "ndnrtc client started..." << std::endl;
-    
-    work.reset(new boost::asio::io_service::work(io_));
-    io_.run();
-    io_.reset();
-
-    LogDebug("") << "ndnrtc client completed" << std::endl;
+    runTimer.wait();
 }
 
 void Client::tearDownStatGathering(){
@@ -156,6 +116,8 @@ void Client::tearDownStatGathering(){
 		return;
 
 	statCollector_->stop();
+	statCollector_.reset();
+	LogInfo("") << "Stopped gathering statistics" << std::endl;
 }
 
 void Client::tearDownProducer(){
@@ -166,15 +128,14 @@ void Client::tearDownProducer(){
 
 	for (auto& ls:localStreams_)
 	{
-		ls.stopSource();
-		ndnp_->removeLocalStream(clientSessionObserver_.getSessionPrefix(),
-			ls.getPrefix());
-		LogInfo("") << "...stopped publishing " << ls.getPrefix() << std::endl;
+		if (!ls.getVideoSource().get())
+			boost::dynamic_pointer_cast<ndnrtc::LocalAudioStream>(ls.getStream())->stop();
+		else
+			ls.stopSource();
+
+		LogInfo("") << "...stopped publishing " << ls.getStream()->getPrefix() << std::endl;
 	}
 	localStreams_.clear();
-
-	ndnp_->stopSession(clientSessionObserver_.getSessionPrefix());
-	LogInfo("") << "...stopped session" << std::endl;
 }
 
 void Client::tearDownConsumer(){
@@ -185,50 +146,45 @@ void Client::tearDownConsumer(){
 
 	for (auto& rs:remoteStreams_)
 	{
-		ndnp_->removeRemoteStream(rs.getPrefix());
-		LogInfo("") << "...stopped fetching from " << rs.getPrefix() << std::endl;
+		boost::dynamic_pointer_cast<ndnrtc::RemoteStream>(rs.getStream())->stop();
+		LogInfo("") << "...stopped fetching from " << rs.getStream()->getPrefix() << std::endl;
 	}
 	remoteStreams_.clear();
 }
 
-//******************************************************************************
-void Client::initSession()
-{
-	string username = params_.getProducerParams().username_;
-	string prefix = params_.getProducerParams().prefix_;
-	string sessionPrefix = ndnp_->startSession(username, prefix, params_.getGeneralParameters(), 
-		defaultKeyChain_.get(), &clientSessionObserver_);
-
-	if (sessionPrefix != "")
-	{
-		clientSessionObserver_.setSessionPrefix(sessionPrefix);
-		clientSessionObserver_.setPrefix(prefix);
-		clientSessionObserver_.setUsername(username);
-
-		LogInfo("") << "initialized client session with username " 
-		<< username
-		<< " prefix " << prefix
-		<< " (session prefix " << sessionPrefix << ")" << std::endl;
-	}
-	else
-		throw std::runtime_error("couldn't initialize client session");
-}
-
 RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
-	const GeneralConsumerParams& gcp)
+	const ndnrtc::GeneralConsumerParams& gcp)
 {
 	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal(p.streamSink_, true) : nullptr);
-	string streamPrefix = ndnp_->addRemoteStream(p.sessionPrefix_, p.threadToFetch_, p, 
-		params_.getGeneralParameters(), gcp, defaultKeyChain_.get(), renderer);
-
-	return RemoteStream(streamPrefix, boost::shared_ptr<RendererInternal>(renderer));
+	
+	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
+	{
+		boost::shared_ptr<ndnrtc::RemoteVideoStream> 
+			remoteStream(boost::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
+				p.sessionPrefix_, p.streamName_));
+		remoteStream->start(p.threadToFetch_, renderer);
+		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
+	}
+	else
+	{
+		boost::shared_ptr<ndnrtc::RemoteAudioStream>
+			remoteStream(boost::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
+				p.sessionPrefix_, p.streamName_));
+		remoteStream->start(p.threadToFetch_);
+		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
+	}
 }
 
 LocalStream Client::initLocalStream(const ProducerStreamParams& p)
 {
+	boost::shared_ptr<ndnrtc::IStream> localStream;
 	boost::shared_ptr<VideoSource> videoSource;
+	ndnrtc::MediaStreamSettings settings(io_, p);
 
-	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
+	settings.keyChain_ = keyChain_.get();
+	settings.face_ = face_.get();
+
+	if (p.type_ == ndnrtc::MediaStreamParams::MediaStreamTypeVideo)
 	{
 		LogDebug("") << "initializing video source at " << p.source_ << endl;
 
@@ -236,32 +192,28 @@ LocalStream Client::initLocalStream(const ProducerStreamParams& p)
 		
 		LogDebug("") << "source should support frames of size " 
 			<< sampleFrame->getWidth() << "x" << sampleFrame->getHeight() << endl;
-
 		videoSource.reset(new VideoSource(io_, p.source_, sampleFrame));
-
 		LogDebug("") << "video source initialized" << endl;
-	}
 
-	IExternalCapturer *capturer = nullptr;
-	string streamPrefix = ndnp_->addLocalStream(clientSessionObserver_.getSessionPrefix(),
-		p, &capturer);
-	
-	LogDebug("") << "local stream creation "
-		<< (streamPrefix == "" ? "failure. check log":"success ") << streamPrefix << endl;
+		boost::shared_ptr<ndnrtc::LocalVideoStream> s =
+			boost::make_shared<ndnrtc::LocalVideoStream>(p.sessionPrefix_, settings);
+		videoSource->addCapturer(s.get());
+		localStream = s;
 
-	if (streamPrefix == "")
-		throw runtime_error("error adding local stream.");
-
-	if (p.type_ == MediaStreamParams::MediaStreamTypeVideo)
-	{
-		videoSource->addCapturer(capturer);
 #warning double-check whether FPS should be 30
 		LogDebug("") << "starting video source..." << endl;
 		videoSource->start(30);
 		LogDebug("") << "...video source started" << endl;
 	}
+	else
+	{
+		boost::shared_ptr<ndnrtc::LocalAudioStream> s = 
+			boost::make_shared<ndnrtc::LocalAudioStream>(p.sessionPrefix_, settings);
+		s->start();
+		localStream = s;
+	}
 
-	return LocalStream(streamPrefix, videoSource);
+	return LocalStream(localStream, videoSource);
 }
 
 boost::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamParams& p)

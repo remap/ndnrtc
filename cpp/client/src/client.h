@@ -13,52 +13,40 @@
 #include <ndnrtc/interfaces.h>
 
 #include "config.h"
-#include "client-session-observer.h"
 #include "stream.h"
 #include "stat-collector.h"
 
+namespace ndn {
+	class KeyChain;
+}
+
 class Client {
 public: 
-	static Client& getSharedInstance();
+	Client(boost::asio::io_service& io,
+		const boost::shared_ptr<ndn::Face>& face,
+		const boost::shared_ptr<ndn::KeyChain>& keyChain):io_(io),
+		face_(face), keyChain_(keyChain){}
+	~Client(){}
 
 	// blocking call. will return after runTimeSec seconds
-	void run(ndnrtc::INdnRtcLibrary* ndnp, unsigned int runTimeSec, 
-		unsigned int statSamplePeriodMs, const ClientParams& params);
-
-	~Client();
+	void run(unsigned int runTimeSec, unsigned int statSamplePeriodMs, 
+		const ClientParams& params);
 
 private:
-	class LibraryObserver :  public ndnrtc::INdnRtcLibraryObserver {
-		public:
-		void onStateChanged(const char *state, const char *args) 
-		{
-		    LogInfo("") << "library state changed: " << state << "-" << args << std::endl;
-		}
-
-		void onErrorOccurred(int errorCode, const char *message) 
-		{
-		    LogError("") << "library returned error (" << errorCode << ") " << message << std::endl;
-		}
-	};
-
-	boost::asio::io_service io_;
-	ndnrtc::INdnRtcLibrary *ndnp_;
-	LibraryObserver libObserver_;
+	boost::asio::io_service& io_;
 	unsigned int runTimeSec_, statSampleIntervalMs_;
 	ClientParams params_;
-	ClientSessionObserver clientSessionObserver_;
+
 	boost::shared_ptr<StatCollector> statCollector_;
-	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_;
+	boost::shared_ptr<ndn::Face> face_;
+	boost::shared_ptr<ndn::KeyChain> keyChain_;
 
 	std::vector<RemoteStream> remoteStreams_;
 	std::vector<LocalStream> localStreams_;
 
-	Client();
 	Client(Client const&) = delete;
 	void operator=(Client const&) = delete;
 
-	void initKeyChain();
-	void initSession();
 	void setupConsumer();
 	void setupProducer();
 	void setupStatGathering();
@@ -68,7 +56,7 @@ private:
 	void tearDownConsumer();
 
 	RemoteStream initRemoteStream(const ConsumerStreamParams& p, 
-		const ndnrtc::new_api::GeneralConsumerParams& generalParams);
+		const ndnrtc::GeneralConsumerParams& generalParams);
 	LocalStream initLocalStream(const ProducerStreamParams& p);
 	boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams& p);
 };

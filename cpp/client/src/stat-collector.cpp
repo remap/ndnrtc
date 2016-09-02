@@ -7,6 +7,7 @@
 //
 #include <algorithm>
 #include <boost/make_shared.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include "stat-collector.h"
 
@@ -210,8 +211,8 @@ void StatCollector::StreamStatCollector::writeStats()
 string StatCollector::StreamStatCollector::fullFilePath(string path, string fname, 
       string basePrefix, string stream)
 {
-    std::replace(basePrefix.begin(), basePrefix.end(), '/', '+');
-    string fpath = path + "/" + fname + "-" + basePrefix + stream + ".stat";
+    std::replace(basePrefix.begin(), basePrefix.end(), '/', '-');
+    string fpath = path + "/" + fname + basePrefix + "-" + stream + ".stat";
     return fpath;
 }
 
@@ -225,6 +226,8 @@ StatWriter* StatCollector::newDefaultStatWriter(const StatGatheringParams& p,
 
 StatCollector::~StatCollector()
 {
+    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    stop();
     removeAllStreams();
 }
 
@@ -292,10 +295,14 @@ void StatCollector::finalizeEntry(StreamStatCollector& entry)
 
 void StatCollector::queryStats()
 {
-    for (auto it:streamStatCollectors_)
-        it.second->writeStats();
+    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    if (generator_->isRunning())
+    {
+        for (auto it:streamStatCollectors_)
+            it.second->writeStats();
 
-    flushData();
+        flushData();
+    }
 }
 
 void StatCollector::flushData()

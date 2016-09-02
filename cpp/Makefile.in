@@ -140,7 +140,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-generator$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
-	bin/tests/test-stat-collector$(EXEEXT)
+	bin/tests/test-stat-collector$(EXEEXT) \
+	bin/tests/test-client$(EXEEXT)
 TESTS = $(check_PROGRAMS)
 noinst_PROGRAMS = bin/benchmark-local-stream$(EXEEXT) \
 	bin/local-stream$(EXEEXT)
@@ -411,28 +412,48 @@ bin_tests_test_buffer_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_buffer_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_6 = contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT) \
+am__objects_6 = contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.$(OBJEXT)
+am_bin_tests_test_client_OBJECTS =  \
+	tests/bin_tests_test_client-test-client.$(OBJEXT) \
+	client/src/bin_tests_test_client-client.$(OBJEXT) \
+	client/src/bin_tests_test_client-stat-collector.$(OBJEXT) \
+	client/src/bin_tests_test_client-renderer.$(OBJEXT) \
+	client/src/bin_tests_test_client-frame-io.$(OBJEXT) \
+	client/src/bin_tests_test_client-video-source.$(OBJEXT) \
+	client/src/bin_tests_test_client-precise-generator.$(OBJEXT) \
+	client/src/bin_tests_test_client-config.$(OBJEXT) \
+	tests/bin_tests_test_client-tests-helpers.$(OBJEXT) \
+	$(am__objects_6)
+bin_tests_test_client_OBJECTS = $(am_bin_tests_test_client_OBJECTS)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
+bin_tests_test_client_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(top_builddir)/libndnrtc.la
+bin_tests_test_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_client_LDFLAGS) \
+	$(LDFLAGS) -o $@
+am__objects_7 = contrib/gtest/googlemock/src/bin_tests_test_client_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_client_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-test-client-params.$(OBJEXT) \
 	tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT) \
 	client/src/bin_tests_test_client_params-config.$(OBJEXT) \
-	$(am__objects_6)
+	$(am__objects_7)
 bin_tests_test_client_params_OBJECTS =  \
 	$(am_bin_tests_test_client_params_OBJECTS)
-am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 bin_tests_test_client_params_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 	$(top_builddir)/libndnrtc.la
 bin_tests_test_client_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_client_params_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_7 = contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT) \
+am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_config_load-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_config_load-gtest-all.$(OBJEXT)
 am_bin_tests_test_config_load_OBJECTS =  \
 	tests/bin_tests_test_config_load-test-config-load.$(OBJEXT) \
 	client/src/bin_tests_test_config_load-config.$(OBJEXT) \
 	src/bin_tests_test_config_load-simple-log.$(OBJEXT) \
-	$(am__objects_7)
+	$(am__objects_8)
 bin_tests_test_config_load_OBJECTS =  \
 	$(am_bin_tests_test_config_load_OBJECTS)
 bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_3) \
@@ -441,12 +462,12 @@ bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_config_load_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_8 = contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT) \
+am__objects_9 = contrib/gtest/googlemock/src/bin_tests_test_data_validator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.$(OBJEXT)
 am_bin_tests_test_data_validator_OBJECTS = tests/bin_tests_test_data_validator-test-data-validator.$(OBJEXT) \
 	src/bin_tests_test_data_validator-data-validator.$(OBJEXT) \
 	src/bin_tests_test_data_validator-simple-log.$(OBJEXT) \
-	$(am__objects_8)
+	$(am__objects_9)
 bin_tests_test_data_validator_OBJECTS =  \
 	$(am_bin_tests_test_data_validator_OBJECTS)
 bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -454,7 +475,7 @@ bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_data_validator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_9 = contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT) \
+am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.$(OBJEXT)
 am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT) \
@@ -464,7 +485,7 @@ am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-tes
 	src/bin_tests_test_drd_estimator-fec.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-name-components.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-frame-data.$(OBJEXT) \
-	$(am__objects_9)
+	$(am__objects_10)
 bin_tests_test_drd_estimator_OBJECTS =  \
 	$(am_bin_tests_test_drd_estimator_OBJECTS)
 bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -472,14 +493,14 @@ bin_tests_test_drd_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_drd_estimator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_10 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
+am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_estimators-gtest-all.$(OBJEXT)
 am_bin_tests_test_estimators_OBJECTS =  \
 	tests/bin_tests_test_estimators-test-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-clock.$(OBJEXT) \
 	client/src/bin_tests_test_estimators-precise-generator.$(OBJEXT) \
-	$(am__objects_10)
+	$(am__objects_11)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
 bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -487,7 +508,7 @@ bin_tests_test_estimators_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_estimators_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_11 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
+am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_buffer-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_buffer_OBJECTS =  \
 	tests/bin_tests_test_frame_buffer-test-frame-buffer.$(OBJEXT) \
@@ -500,7 +521,7 @@ am_bin_tests_test_frame_buffer_OBJECTS =  \
 	src/bin_tests_test_frame_buffer-simple-log.$(OBJEXT) \
 	src/bin_tests_test_frame_buffer-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_frame_buffer-statistics.$(OBJEXT) \
-	$(am__objects_11)
+	$(am__objects_12)
 bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am_bin_tests_test_frame_buffer_OBJECTS)
 bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -508,7 +529,7 @@ bin_tests_test_frame_buffer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_frame_buffer_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_12 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
+am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_converter-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter-test-frame-converter.$(OBJEXT) \
 	tests/bin_tests_test_frame_converter-tests-helpers.$(OBJEXT) \
@@ -516,7 +537,7 @@ am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter
 	src/bin_tests_test_frame_converter-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-name-components.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-frame-data.$(OBJEXT) \
-	$(am__objects_12)
+	$(am__objects_13)
 bin_tests_test_frame_converter_OBJECTS =  \
 	$(am_bin_tests_test_frame_converter_OBJECTS)
 bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -524,12 +545,12 @@ bin_tests_test_frame_converter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_frame_converter_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_13 = contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
+am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT)
 am_bin_tests_test_frame_io_OBJECTS =  \
 	tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT) \
 	client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT) \
-	$(am__objects_13)
+	$(am__objects_14)
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
 bin_tests_test_frame_io_DEPENDENCIES = $(am__DEPENDENCIES_3) \
@@ -538,12 +559,12 @@ bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_14 = contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
+am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT)
 am_bin_tests_test_generator_OBJECTS =  \
 	tests/bin_tests_test_generator-test-generator.$(OBJEXT) \
 	client/src/bin_tests_test_generator-precise-generator.$(OBJEXT) \
-	$(am__objects_14)
+	$(am__objects_15)
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
 bin_tests_test_generator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
@@ -552,7 +573,7 @@ bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_15 = contrib/gtest/googlemock/src/bin_tests_test_interest_control-gmock-all.$(OBJEXT) \
+am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_interest_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.$(OBJEXT)
 am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_control-test-interest-control.$(OBJEXT) \
 	src/bin_tests_test_interest_control-interest-control.$(OBJEXT) \
@@ -566,7 +587,7 @@ am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_contr
 	src/bin_tests_test_interest_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_interest_control-estimators.$(OBJEXT) \
 	src/bin_tests_test_interest_control-statistics.$(OBJEXT) \
-	$(am__objects_15)
+	$(am__objects_16)
 bin_tests_test_interest_control_OBJECTS =  \
 	$(am_bin_tests_test_interest_control_OBJECTS)
 bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -574,7 +595,7 @@ bin_tests_test_interest_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_interest_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_16 = contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT) \
+am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.$(OBJEXT)
 am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-test-interest-queue.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-interest-queue.$(OBJEXT) \
@@ -583,7 +604,7 @@ am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-t
 	src/bin_tests_test_interest_queue-simple-log.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-statistics.$(OBJEXT) \
-	$(am__objects_16)
+	$(am__objects_17)
 bin_tests_test_interest_queue_OBJECTS =  \
 	$(am_bin_tests_test_interest_queue_OBJECTS)
 bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -591,7 +612,7 @@ bin_tests_test_interest_queue_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_interest_queue_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_17 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
+am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_latency_control-gtest-all.$(OBJEXT)
 am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control-test-latency-control.$(OBJEXT) \
 	tests/bin_tests_test_latency_control-tests-helpers.$(OBJEXT) \
@@ -606,7 +627,7 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_latency_control-statistics.$(OBJEXT) \
-	$(am__objects_17)
+	$(am__objects_18)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
 bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -614,7 +635,7 @@ bin_tests_test_latency_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_latency_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
+am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_local_media_stream-gtest-all.$(OBJEXT)
 am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_stream-test-local-media-stream.$(OBJEXT) \
 	tests/bin_tests_test_local_media_stream-tests-helpers.$(OBJEXT) \
@@ -640,7 +661,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-media-stream-base.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-periodic.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-statistics.$(OBJEXT) \
-	$(am__objects_18)
+	$(am__objects_19)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
@@ -649,7 +670,7 @@ bin_tests_test_local_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_local_media_stream_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_19 = contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT) \
+am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_loop-gtest-all.$(OBJEXT)
 am_bin_tests_test_loop_OBJECTS =  \
 	tests/bin_tests_test_loop-test-loop.$(OBJEXT) \
@@ -710,14 +731,15 @@ am_bin_tests_test_loop_OBJECTS =  \
 	src/bin_tests_test_loop-remote-audio-stream.$(OBJEXT) \
 	src/bin_tests_test_loop-segment-fetcher.$(OBJEXT) \
 	src/bin_tests_test_loop-sample-validator.$(OBJEXT) \
-	$(am__objects_19)
+	client/src/bin_tests_test_loop-frame-io.$(OBJEXT) \
+	$(am__objects_20)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
 bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_loop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_loop_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
+am__objects_21 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT)
 am_bin_tests_test_media_thread_OBJECTS =  \
 	tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT) \
@@ -736,7 +758,7 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-estimators.$(OBJEXT) \
 	src/bin_tests_test_media_thread-clock.$(OBJEXT) \
 	src/bin_tests_test_media_thread-name-components.$(OBJEXT) \
-	$(am__objects_20)
+	$(am__objects_21)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
 bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -744,11 +766,11 @@ bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_media_thread_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_21 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
+am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_name_components-gtest-all.$(OBJEXT)
 am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components-test-name-components.$(OBJEXT) \
 	src/bin_tests_test_name_components-name-components.$(OBJEXT) \
-	$(am__objects_21)
+	$(am__objects_22)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
 bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -756,7 +778,7 @@ bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_name_components_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
+am__objects_23 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT)
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
@@ -764,7 +786,7 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
 	src/bin_tests_test_network_data-fec.$(OBJEXT) \
 	src/bin_tests_test_network_data-name-components.$(OBJEXT) \
-	$(am__objects_22)
+	$(am__objects_23)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
 bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -772,7 +794,7 @@ bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_network_data_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_23 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
+am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT)
 am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
 	tests/bin_tests_test_packet_publisher-tests-helpers.$(OBJEXT) \
@@ -783,7 +805,7 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	src/bin_tests_test_packet_publisher-simple-log.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-name-components.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-statistics.$(OBJEXT) \
-	$(am__objects_23)
+	$(am__objects_24)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
 bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -791,7 +813,7 @@ bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_packet_publisher_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
+am__objects_25 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
@@ -799,19 +821,19 @@ am_bin_tests_test_params_OBJECTS =  \
 	src/bin_tests_test_params-fec.$(OBJEXT) \
 	src/bin_tests_test_params-name-components.$(OBJEXT) \
 	src/bin_tests_test_params-frame-data.$(OBJEXT) \
-	$(am__objects_24)
+	$(am__objects_25)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_25 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
+am__objects_26 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT)
 am_bin_tests_test_periodic_OBJECTS =  \
 	tests/bin_tests_test_periodic-test-periodic.$(OBJEXT) \
 	src/bin_tests_test_periodic-periodic.$(OBJEXT) \
-	$(am__objects_25)
+	$(am__objects_26)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
 bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -819,7 +841,7 @@ bin_tests_test_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_periodic_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_26 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT) \
+am__objects_27 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.$(OBJEXT)
 am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_control-test-pipeline-control.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control-pipeline-control.$(OBJEXT) \
@@ -842,7 +864,7 @@ am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_contr
 	tests/bin_tests_test_pipeline_control-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control-statistics.$(OBJEXT) \
-	$(am__objects_26)
+	$(am__objects_27)
 bin_tests_test_pipeline_control_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_OBJECTS)
 bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -850,7 +872,7 @@ bin_tests_test_pipeline_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_pipeline_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_27 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT) \
+am__objects_28 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.$(OBJEXT)
 am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT) \
@@ -865,7 +887,7 @@ am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_
 	src/bin_tests_test_pipeline_control_state_machine-fec.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-frame-data.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-statistics.$(OBJEXT) \
-	$(am__objects_27)
+	$(am__objects_28)
 bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
 bin_tests_test_pipeline_control_state_machine_DEPENDENCIES =  \
@@ -875,7 +897,7 @@ bin_tests_test_pipeline_control_state_machine_LINK = $(LIBTOOL) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_pipeline_control_state_machine_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_28 = contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT) \
+am__objects_29 = contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.$(OBJEXT)
 am_bin_tests_test_pipeliner_OBJECTS =  \
 	tests/bin_tests_test_pipeliner-test-pipeliner.$(OBJEXT) \
@@ -897,7 +919,7 @@ am_bin_tests_test_pipeliner_OBJECTS =  \
 	tests/bin_tests_test_pipeliner-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_pipeliner-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_pipeliner-statistics.$(OBJEXT) \
-	$(am__objects_28)
+	$(am__objects_29)
 bin_tests_test_pipeliner_OBJECTS =  \
 	$(am_bin_tests_test_pipeliner_OBJECTS)
 bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -905,7 +927,7 @@ bin_tests_test_pipeliner_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_pipeliner_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_29 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
+am__objects_30 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_playout_OBJECTS =  \
 	tests/bin_tests_test_playout-test-playout.$(OBJEXT) \
@@ -928,19 +950,19 @@ am_bin_tests_test_playout_OBJECTS =  \
 	src/bin_tests_test_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_playout-video-coder.$(OBJEXT) \
-	$(am__objects_29)
+	$(am__objects_30)
 bin_tests_test_playout_OBJECTS = $(am_bin_tests_test_playout_OBJECTS)
 bin_tests_test_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_playout_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_30 = contrib/gtest/googlemock/src/bin_tests_test_playout_control-gmock-all.$(OBJEXT) \
+am__objects_31 = contrib/gtest/googlemock/src/bin_tests_test_playout_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout_control-gtest-all.$(OBJEXT)
 am_bin_tests_test_playout_control_OBJECTS = tests/bin_tests_test_playout_control-test-playout-control.$(OBJEXT) \
 	src/bin_tests_test_playout_control-playout-control.$(OBJEXT) \
 	src/bin_tests_test_playout_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_playout_control-simple-log.$(OBJEXT) \
-	$(am__objects_30)
+	$(am__objects_31)
 bin_tests_test_playout_control_OBJECTS =  \
 	$(am_bin_tests_test_playout_control_OBJECTS)
 bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -948,13 +970,13 @@ bin_tests_test_playout_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_playout_control_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_31 = contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
+am__objects_32 = contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT)
 am_bin_tests_test_renderer_OBJECTS =  \
 	tests/bin_tests_test_renderer-test-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-frame-io.$(OBJEXT) \
-	$(am__objects_31)
+	$(am__objects_32)
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(am__DEPENDENCIES_3) \
@@ -963,7 +985,7 @@ bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__objects_32 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
+am__objects_33 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_sample_estimator-gtest-all.$(OBJEXT)
 am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimator-test-sample-estimator.$(OBJEXT) \
 	tests/bin_tests_test_sample_estimator-tests-helpers.$(OBJEXT) \
@@ -974,7 +996,7 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	src/bin_tests_test_sample_estimator-frame-data.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-name-components.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-statistics.$(OBJEXT) \
-	$(am__objects_32)
+	$(am__objects_33)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
 bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -982,7 +1004,7 @@ bin_tests_test_sample_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_sample_estimator_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_33 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
+am__objects_34 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_segment_controller-gtest-all.$(OBJEXT)
 am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_controller-test-segment-controller.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-segment-controller.$(OBJEXT) \
@@ -994,7 +1016,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 	src/bin_tests_test_segment_controller-periodic.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-clock.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-statistics.$(OBJEXT) \
-	$(am__objects_33)
+	$(am__objects_34)
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
@@ -1003,12 +1025,12 @@ bin_tests_test_segment_controller_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_segment_controller_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_34 = contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
+am__objects_35 = contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT)
 am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-precise-generator.$(OBJEXT) \
-	$(am__objects_34)
+	$(am__objects_35)
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES = $(am__DEPENDENCIES_3) \
@@ -1017,7 +1039,7 @@ bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_stat_collector_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_35 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
+am__objects_36 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_coder-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_coder_OBJECTS =  \
 	tests/bin_tests_test_video_coder-test-video-coder.$(OBJEXT) \
@@ -1028,7 +1050,7 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	src/bin_tests_test_video_coder-fec.$(OBJEXT) \
 	src/bin_tests_test_video_coder-name-components.$(OBJEXT) \
 	src/bin_tests_test_video_coder-frame-data.$(OBJEXT) \
-	$(am__objects_35)
+	$(am__objects_36)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
 bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -1036,7 +1058,7 @@ bin_tests_test_video_coder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_coder_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_36 = contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.$(OBJEXT) \
+am__objects_37 = contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_decoder-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-test-video-decoder.$(OBJEXT) \
 	tests/bin_tests_test_video_decoder-tests-helpers.$(OBJEXT) \
@@ -1048,7 +1070,7 @@ am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-tes
 	src/bin_tests_test_video_decoder-name-components.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-frame-data.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-clock.$(OBJEXT) \
-	$(am__objects_36)
+	$(am__objects_37)
 bin_tests_test_video_decoder_OBJECTS =  \
 	$(am_bin_tests_test_video_decoder_OBJECTS)
 bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -1056,7 +1078,7 @@ bin_tests_test_video_decoder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_decoder_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_37 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
+am__objects_38 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_playout-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-test-video-playout.$(OBJEXT) \
 	tests/bin_tests_test_video_playout-tests-helpers.$(OBJEXT) \
@@ -1080,14 +1102,14 @@ am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-tes
 	src/bin_tests_test_video_playout-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-coder.$(OBJEXT) \
-	$(am__objects_37)
+	$(am__objects_38)
 bin_tests_test_video_playout_OBJECTS =  \
 	$(am_bin_tests_test_video_playout_OBJECTS)
 bin_tests_test_video_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_playout_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_38 = contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
+am__objects_39 = contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT)
 am_bin_tests_test_video_source_OBJECTS =  \
 	tests/bin_tests_test_video_source-test-video-source.$(OBJEXT) \
@@ -1097,20 +1119,20 @@ am_bin_tests_test_video_source_OBJECTS =  \
 	src/bin_tests_test_video_source-simple-log.$(OBJEXT) \
 	src/bin_tests_test_video_source-estimators.$(OBJEXT) \
 	src/bin_tests_test_video_source-clock.$(OBJEXT) \
-	$(am__objects_38)
+	$(am__objects_39)
 bin_tests_test_video_source_OBJECTS =  \
 	$(am_bin_tests_test_video_source_OBJECTS)
 bin_tests_test_video_source_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_source_LDFLAGS) $(LDFLAGS) -o $@
-am__objects_39 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
+am__objects_40 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.$(OBJEXT)
 am_bin_tests_test_webrtc_audio_channel_OBJECTS = tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-audio-controller.$(OBJEXT) \
 	src/bin_tests_test_webrtc_audio_channel-threading-capability.$(OBJEXT) \
-	$(am__objects_39)
+	$(am__objects_40)
 bin_tests_test_webrtc_audio_channel_OBJECTS =  \
 	$(am_bin_tests_test_webrtc_audio_channel_OBJECTS)
 bin_tests_test_webrtc_audio_channel_DEPENDENCIES =  \
@@ -1197,6 +1219,7 @@ SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_buffer_control_SOURCES) \
+	$(bin_tests_test_client_SOURCES) \
 	$(bin_tests_test_client_params_SOURCES) \
 	$(bin_tests_test_config_load_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
@@ -1238,6 +1261,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_buffer_control_SOURCES) \
+	$(bin_tests_test_client_SOURCES) \
 	$(bin_tests_test_client_params_SOURCES) \
 	$(bin_tests_test_config_load_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
@@ -1740,7 +1764,6 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
-#bin/tests/test-client
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -1770,11 +1793,10 @@ bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-ge
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_generator_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
-
-#bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp #client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp #client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.#cpp ${UNIT_TESTS_COMMON_SOURCES_}
-#bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-#bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-#bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
+bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.cpp tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_client_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
 
 ### NDN-RTC tests
 bin_tests_test_params_SOURCES = tests/test-params.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
@@ -1926,7 +1948,7 @@ bin_tests_test_loop_SOURCES = tests/test-loop.cc \
 	client/src/frame-io.cpp src/meta-fetcher.cpp \
 	src/remote-video-stream.cpp src/remote-audio-stream.cpp \
 	src/segment-fetcher.cpp src/sample-validator.cpp \
-	${UNIT_TESTS_COMMON_SOURCES_}
+	client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD}
@@ -2450,6 +2472,41 @@ contrib/gtest/googletest/src/bin_tests_test_buffer_control-gtest-all.$(OBJEXT): 
 bin/tests/test-buffer-control$(EXEEXT): $(bin_tests_test_buffer_control_OBJECTS) $(bin_tests_test_buffer_control_DEPENDENCIES) $(EXTRA_bin_tests_test_buffer_control_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-buffer-control$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_buffer_control_LINK) $(bin_tests_test_buffer_control_OBJECTS) $(bin_tests_test_buffer_control_LDADD) $(LIBS)
+tests/bin_tests_test_client-test-client.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-client.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-stat-collector.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-renderer.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-frame-io.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-video-source.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-precise-generator.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_client-config.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+tests/bin_tests_test_client-tests-helpers.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+
+bin/tests/test-client$(EXEEXT): $(bin_tests_test_client_OBJECTS) $(bin_tests_test_client_DEPENDENCIES) $(EXTRA_bin_tests_test_client_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-client$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_client_LINK) $(bin_tests_test_client_OBJECTS) $(bin_tests_test_client_LDADD) $(LIBS)
 tests/bin_tests_test_client_params-test-client-params.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_client_params-tests-helpers.$(OBJEXT):  \
@@ -3555,6 +3612,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-video-source.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-renderer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client_params-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po@am__quote@
@@ -3591,6 +3655,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_buffer_control-gmock-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po@am__quote@
@@ -3630,6 +3695,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_buffer_control-gtest-all.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po@am__quote@
@@ -4085,6 +4151,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_playout-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_buffer_control-test-buffer-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_buffer_control-tests-helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client-test-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-test-client-params.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po@am__quote@
@@ -6123,6 +6191,160 @@ contrib/gtest/googletest/src/bin_tests_test_buffer_control-gtest-all.obj: contri
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_buffer_control-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_buffer_control_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_buffer_control-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_client-test-client.o: tests/test-client.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-test-client.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-test-client.Tpo -c -o tests/bin_tests_test_client-test-client.o `test -f 'tests/test-client.cc' || echo '$(srcdir)/'`tests/test-client.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-test-client.Tpo tests/$(DEPDIR)/bin_tests_test_client-test-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-client.cc' object='tests/bin_tests_test_client-test-client.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-test-client.o `test -f 'tests/test-client.cc' || echo '$(srcdir)/'`tests/test-client.cc
+
+tests/bin_tests_test_client-test-client.obj: tests/test-client.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-test-client.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-test-client.Tpo -c -o tests/bin_tests_test_client-test-client.obj `if test -f 'tests/test-client.cc'; then $(CYGPATH_W) 'tests/test-client.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-client.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-test-client.Tpo tests/$(DEPDIR)/bin_tests_test_client-test-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-client.cc' object='tests/bin_tests_test_client-test-client.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-test-client.obj `if test -f 'tests/test-client.cc'; then $(CYGPATH_W) 'tests/test-client.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-client.cc'; fi`
+
+client/src/bin_tests_test_client-client.o: client/src/client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-client.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-client.Tpo -c -o client/src/bin_tests_test_client-client.o `test -f 'client/src/client.cpp' || echo '$(srcdir)/'`client/src/client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-client.Tpo client/src/$(DEPDIR)/bin_tests_test_client-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/client.cpp' object='client/src/bin_tests_test_client-client.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-client.o `test -f 'client/src/client.cpp' || echo '$(srcdir)/'`client/src/client.cpp
+
+client/src/bin_tests_test_client-client.obj: client/src/client.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-client.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-client.Tpo -c -o client/src/bin_tests_test_client-client.obj `if test -f 'client/src/client.cpp'; then $(CYGPATH_W) 'client/src/client.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/client.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-client.Tpo client/src/$(DEPDIR)/bin_tests_test_client-client.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/client.cpp' object='client/src/bin_tests_test_client-client.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-client.obj `if test -f 'client/src/client.cpp'; then $(CYGPATH_W) 'client/src/client.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/client.cpp'; fi`
+
+client/src/bin_tests_test_client-stat-collector.o: client/src/stat-collector.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-stat-collector.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Tpo -c -o client/src/bin_tests_test_client-stat-collector.o `test -f 'client/src/stat-collector.cpp' || echo '$(srcdir)/'`client/src/stat-collector.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Tpo client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/stat-collector.cpp' object='client/src/bin_tests_test_client-stat-collector.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-stat-collector.o `test -f 'client/src/stat-collector.cpp' || echo '$(srcdir)/'`client/src/stat-collector.cpp
+
+client/src/bin_tests_test_client-stat-collector.obj: client/src/stat-collector.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-stat-collector.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Tpo -c -o client/src/bin_tests_test_client-stat-collector.obj `if test -f 'client/src/stat-collector.cpp'; then $(CYGPATH_W) 'client/src/stat-collector.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/stat-collector.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Tpo client/src/$(DEPDIR)/bin_tests_test_client-stat-collector.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/stat-collector.cpp' object='client/src/bin_tests_test_client-stat-collector.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-stat-collector.obj `if test -f 'client/src/stat-collector.cpp'; then $(CYGPATH_W) 'client/src/stat-collector.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/stat-collector.cpp'; fi`
+
+client/src/bin_tests_test_client-renderer.o: client/src/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-renderer.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-renderer.Tpo -c -o client/src/bin_tests_test_client-renderer.o `test -f 'client/src/renderer.cpp' || echo '$(srcdir)/'`client/src/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-renderer.Tpo client/src/$(DEPDIR)/bin_tests_test_client-renderer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/renderer.cpp' object='client/src/bin_tests_test_client-renderer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-renderer.o `test -f 'client/src/renderer.cpp' || echo '$(srcdir)/'`client/src/renderer.cpp
+
+client/src/bin_tests_test_client-renderer.obj: client/src/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-renderer.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-renderer.Tpo -c -o client/src/bin_tests_test_client-renderer.obj `if test -f 'client/src/renderer.cpp'; then $(CYGPATH_W) 'client/src/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/renderer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-renderer.Tpo client/src/$(DEPDIR)/bin_tests_test_client-renderer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/renderer.cpp' object='client/src/bin_tests_test_client-renderer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-renderer.obj `if test -f 'client/src/renderer.cpp'; then $(CYGPATH_W) 'client/src/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/renderer.cpp'; fi`
+
+client/src/bin_tests_test_client-frame-io.o: client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-frame-io.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Tpo -c -o client/src/bin_tests_test_client-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Tpo client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/bin_tests_test_client-frame-io.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
+
+client/src/bin_tests_test_client-frame-io.obj: client/src/frame-io.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-frame-io.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Tpo -c -o client/src/bin_tests_test_client-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Tpo client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/bin_tests_test_client-frame-io.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
+
+client/src/bin_tests_test_client-video-source.o: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-video-source.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo -c -o client/src/bin_tests_test_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/bin_tests_test_client-video-source.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
+
+client/src/bin_tests_test_client-video-source.obj: client/src/video-source.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-video-source.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo -c -o client/src/bin_tests_test_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-video-source.Tpo client/src/$(DEPDIR)/bin_tests_test_client-video-source.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/bin_tests_test_client-video-source.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
+
+client/src/bin_tests_test_client-precise-generator.o: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo -c -o client/src/bin_tests_test_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_client-precise-generator.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
+
+client/src/bin_tests_test_client-precise-generator.obj: client/src/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo -c -o client/src/bin_tests_test_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_client-precise-generator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_client-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+
+client/src/bin_tests_test_client-config.o: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-config.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo -c -o client/src/bin_tests_test_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client-config.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/bin_tests_test_client-config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
+
+client/src/bin_tests_test_client-config.obj: client/src/config.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_client-config.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo -c -o client/src/bin_tests_test_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_client-config.Tpo client/src/$(DEPDIR)/bin_tests_test_client-config.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/bin_tests_test_client-config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
+
+tests/bin_tests_test_client-tests-helpers.o: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-tests-helpers.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo -c -o tests/bin_tests_test_client-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/tests-helpers.cc' object='tests/bin_tests_test_client-tests-helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-tests-helpers.o `test -f 'tests/tests-helpers.cc' || echo '$(srcdir)/'`tests/tests-helpers.cc
+
+tests/bin_tests_test_client-tests-helpers.obj: tests/tests-helpers.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client-tests-helpers.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo -c -o tests/bin_tests_test_client-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Tpo tests/$(DEPDIR)/bin_tests_test_client-tests-helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/tests-helpers.cc' object='tests/bin_tests_test_client-tests-helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_client-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_client-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_client-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tests/bin_tests_test_client_params-test-client-params.o: tests/test-client-params.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_client_params_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_client_params-test-client-params.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_client_params-test-client-params.Tpo -c -o tests/bin_tests_test_client_params-test-client-params.o `test -f 'tests/test-client-params.cc' || echo '$(srcdir)/'`tests/test-client-params.cc
@@ -12579,6 +12801,13 @@ bin/tests/test-renderer.log: bin/tests/test-renderer$(EXEEXT)
 bin/tests/test-stat-collector.log: bin/tests/test-stat-collector$(EXEEXT)
 	@p='bin/tests/test-stat-collector$(EXEEXT)'; \
 	b='bin/tests/test-stat-collector'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+bin/tests/test-client.log: bin/tests/test-client$(EXEEXT)
+	@p='bin/tests/test-client$(EXEEXT)'; \
+	b='bin/tests/test-client'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

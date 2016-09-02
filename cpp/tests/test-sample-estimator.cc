@@ -66,9 +66,9 @@ TEST(TestSampleEstimator, TestTrivialEstimations)
 	}
 
 	EXPECT_LE(abs(5500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data)), 1.);
 	EXPECT_LE(abs(0.2*5500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity)), 0.5);
+		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity)), 1.);
 
 	EXPECT_LE(abs(27500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data)), 3);

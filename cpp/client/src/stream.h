@@ -5,44 +5,49 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#ifndef __remote_stream_h__
-#define __remote_stream_h__
+#ifndef __client_stream_h__
+#define __client_stream_h__
 
 #include <stdlib.h>
+#include <ndnrtc/stream.h>
+#include <ndnrtc/remote-stream.h>
+#include <ndnrtc/local-stream.h>
+
 #include "renderer.h"
 #include "video-source.h"
 
 class Stream {
 public:
-	Stream(std::string prefix):streamPrefix_(prefix){}
+	Stream(boost::shared_ptr<ndnrtc::IStream> stream):stream_(stream){}
 	virtual ~Stream(){}
 
-	std::string getPrefix() const { return streamPrefix_; }
+	boost::shared_ptr<const ndnrtc::IStream> getStream() const { return stream_; }
+	boost::shared_ptr<ndnrtc::IStream> getStream() { return stream_; }
 
 protected:
-	std::string streamPrefix_;
+	boost::shared_ptr<ndnrtc::IStream> stream_;
 };
 
 class RemoteStream : public Stream {
 public:
 	// RemoteStream(RemoteStream&& rs){}
-	RemoteStream(std::string& prefix, boost::shared_ptr<RendererInternal>&& renderer):
-		Stream(prefix), renderer_(boost::move(renderer)) {}
+	RemoteStream(boost::shared_ptr<ndnrtc::RemoteStream> stream, boost::shared_ptr<RendererInternal>&& renderer):
+		Stream(stream), renderer_(boost::move(renderer)) {}
 	~RemoteStream(){}
 
 	RendererInternal* getRenderer() const { return renderer_.get(); }
 
 private:
 	boost::shared_ptr<RendererInternal> renderer_;
-	std::string streamPrefix_;
 };
 
 class LocalStream : public Stream {
 public:
-	LocalStream(const LocalStream& ls):Stream(ls.getPrefix()), 
+	LocalStream(const LocalStream& ls):Stream(ls),
 		vsource_(boost::move(ls.getVideoSource())){}
-	LocalStream(std::string& prefix, boost::shared_ptr<VideoSource>& vsource):
-		Stream(prefix), vsource_(boost::move(vsource)){}
+	LocalStream(boost::shared_ptr<ndnrtc::IStream> stream, 
+		boost::shared_ptr<VideoSource>& vsource):
+		Stream(stream), vsource_(boost::move(vsource)){}
 	~LocalStream(){}
 
 	boost::shared_ptr<VideoSource> getVideoSource() const { return vsource_; }

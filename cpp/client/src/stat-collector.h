@@ -241,6 +241,7 @@ private:
    };
 
    boost::asio::io_service& io_;
+   boost::mutex mutex_;
    boost::shared_ptr<PreciseGenerator> generator_;
    std::map<std::string, StreamStatCollector*> streamStatCollectors_;
 

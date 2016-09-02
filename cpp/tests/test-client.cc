@@ -7,112 +7,101 @@
 
 #include <stdlib.h>
 #include <boost/chrono.hpp>
+#include <ndn-cpp/threadsafe-face.hpp>
 
 #include "gtest/gtest.h"
 #include "client/src/client.h"
 #include "client/src/config.h"
 #include "tests-helpers.h"
-#include "mock-objects/ndnrtc-library-mock.h"
+
 #include "mock-objects/external-capturer-mock.h"
 
 using namespace ::testing;
 using namespace std;
 using namespace boost::chrono;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
-
-TEST(TestClient, TestSingleton)
-{
-	Client& c = Client::getSharedInstance();
-}
+using namespace ndnrtc::statistics;
+using namespace ndn;
 
 TEST(TestClient, TestRunClientPhony)
 {
+	boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){
+        io.run();
+    });
+
+	std::string appPrefix = "/ndn/edu/ucla/remap/test/headless";
+	boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+	boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
-
-	MockNdnRtcLibrary ndnrtcLib;
-	Client& c = Client::getSharedInstance();
-
-	EXPECT_CALL(ndnrtcLib, setObserver(_));
+	Client c(io, face, keyChain);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	c.run(&ndnrtcLib, 3, 10, ClientParams());
+	c.run(3, 10, ClientParams());
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
     
     auto duration = duration_cast<seconds>( t2 - t1 ).count();
 
 	EXPECT_EQ(3, duration);
+    
+    work.reset();
+    t.join();
+    io.stop();
 }
 
 TEST(TestClient, TestConsumer)
 {
-	ClientParams cp = sampleConsumerParams();
-	// ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){
+        io.run();
+    });
 
-	MockNdnRtcLibrary ndnrtcLib;
-	Client& c = Client::getSharedInstance();
-	boost::shared_ptr<StatisticsStorage> sampleStats = 
-		boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
+	std::string appPrefix = "/ndn/edu/ucla/remap/test/headless";
+	boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+	boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
 
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 	{
-		InSequence s;
+		Client c(io, face, keyChain);
 
-		EXPECT_CALL(ndnrtcLib, setObserver(_));
-		EXPECT_CALL(ndnrtcLib, 
-			addRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_,
-				cp.getConsumerParams().fetchedStreams_[0].threadToFetch_, _, _, _, _, _))
-			.Times(1)
-			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_));
-		EXPECT_CALL(ndnrtcLib, 
-			addRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_,
-				cp.getConsumerParams().fetchedStreams_[1].threadToFetch_, _, _, _, _, _))
-			.Times(1)
-			.WillOnce(Return(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_));
+		ClientParams cp = sampleConsumerParams();
+		boost::shared_ptr<StatisticsStorage> sampleStats = 
+			boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
 
-		EXPECT_CALL(ndnrtcLib,
-			removeRemoteStream(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
-			.Times(1);
-		EXPECT_CALL(ndnrtcLib,
-			removeRemoteStream(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
-			.Times(1);
+		c.run(3, 100, cp);
 	}
 
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[0].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[0].streamName_))
-		.Times(AtLeast(28))
-		.WillRepeatedly(ReturnPointee(sampleStats));
-	EXPECT_CALL(ndnrtcLib, getRemoteStreamStatistics(cp.getConsumerParams().fetchedStreams_[1].sessionPrefix_+"/streams/"+cp.getConsumerParams().fetchedStreams_[1].streamName_))
-		.Times(AtLeast(28))
-		.WillRepeatedly(ReturnPointee(sampleStats));
+	EXPECT_TRUE(std::ifstream("/tmp/buffer-ndn-edu-ucla-remap-client1-camera.stat").good());
+	EXPECT_TRUE(std::ifstream("/tmp/buffer-ndn-edu-ucla-remap-client1-mic.stat").good());
+	remove("/tmp/buffer-ndn-edu-ucla-remap-client1-mic.stat");
+	remove("/tmp/buffer-ndn-edu-ucla-remap-client1-camera.stat");
 
-	c.run(&ndnrtcLib, 3, 100, cp);
-
-	EXPECT_TRUE(std::ifstream("/tmp/buffer-client1-mic.stat").good());
-	EXPECT_TRUE(std::ifstream("/tmp/buffer-client1-camera.stat").good());
-	remove("/tmp/buffer-client1-mic.stat");
-	remove("/tmp/buffer-client1-camera.stat");
+	face->shutdown();
+    work.reset();
+    t.join();
+    io.stop();
 }
 
 TEST(TestClient, TestProducer)
 {
+	boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){
+        io.run();
+    });
+
+	std::string appPrefix = "/ndn/edu/ucla/remap/test/headless";
+	boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+	boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+
 	// ndnlog::new_api::Logger::initAsyncLogging();
 
 	ClientParams cp = sampleProducerParams();
 	ASSERT_EQ(2, cp.getProducerParams().publishedStreams_.size());
-
-	MockExternalCapturer capturer;
-
-	{
-		unsigned int w,h;
-		cp.getProducerParams().publishedStreams_[1].getMaxResolution(w,h);
-		ArgbFrame frame(w, h);
-
-		InSequence s;
-		EXPECT_CALL(capturer, capturingStarted());
-		EXPECT_CALL(capturer, incomingArgbFrame(w, h, _, frame.getFrameSizeInBytes()))
-			.Times(AtLeast(89));
-		EXPECT_CALL(capturer, capturingStopped());
-	}
 
 	// create frame file source
 	std::string sourceName = cp.getProducerParams().publishedStreams_[1].source_;
@@ -130,33 +119,15 @@ TEST(TestClient, TestProducer)
 			sink << frame;
 	}
 
-	MockNdnRtcLibrary ndnrtcLib;
-	Client& c = Client::getSharedInstance();
-
 	{
-		IExternalCapturer* capPtr = &capturer;
-		InSequence s;
-		std::string sessionPrefix = cp.getProducerParams().prefix_ + "/ndnrtc/user/" +
-			cp.getProducerParams().username_;
-
-		EXPECT_CALL(ndnrtcLib, setObserver(_));
-		EXPECT_CALL(ndnrtcLib, startSession(_, _, _, _, _)).
-			Times(1)
-			.WillOnce(Return(sessionPrefix));
-		EXPECT_CALL(ndnrtcLib, addLocalStream(sessionPrefix, _, _))
-			.Times(2)
-			.WillOnce(Return(sessionPrefix+"/streams/"+
-				cp.getProducerParams().publishedStreams_[0].streamName_))
-			.WillOnce(DoAll(SetArgPointee<2>(capPtr),
-				Return(sessionPrefix+"/streams/"+
-				cp.getProducerParams().publishedStreams_[1].streamName_)));
-		EXPECT_CALL(ndnrtcLib, removeLocalStream(sessionPrefix, _))
-			.Times(2);
-		EXPECT_CALL(ndnrtcLib, stopSession(sessionPrefix));
+		Client c(io, face, keyChain);
+		c.run(3, 0, cp);
 	}
 
-	c.run(&ndnrtcLib, 3, 0, cp);
-	remove(sourceName.c_str());
+	face->shutdown();
+    work.reset();
+    t.join();
+    io.stop();
 }
 
 // TEST(TestClient, TestThrowsAtBadProducerParams)
