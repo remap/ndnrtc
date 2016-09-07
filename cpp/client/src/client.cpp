@@ -27,13 +27,13 @@ void Client::run(unsigned int runTimeSec,
 	params_ = params;
 
 	setupConsumer();
-	// setupProducer();
+	setupProducer();
 	setupStatGathering();
 
 	runProcessLoop();
 
 	tearDownStatGathering();
-	// tearDownProducer();
+	tearDownProducer();
 	tearDownConsumer();
 }
 
@@ -53,7 +53,8 @@ void Client::setupConsumer()
 #warning check move semantics
 		remoteStreams_.push_back(boost::move(rs));
 
-		LogInfo("") << "Set up fetching from " << p.streamName_ << endl;
+		LogInfo("") << "Set up fetching from " << p.sessionPrefix_ << ":" 
+			<< p.streamName_ << endl;
 	}
 
 	LogInfo("") << "Fetching " << remoteStreams_.size() << " remote stream(s) total" << endl;

@@ -31,14 +31,14 @@ namespace ndnrtc {
 		// monotonic clock
 		int64_t nanosecondTimestamp()
 		{
-			boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
+			boost::chrono::nanoseconds nsec = steady_clock::now().time_since_epoch();
 			return nsec.count();
 		};
 
 		// system clock
 		double unixTimestamp()
 		{
-			auto now = boost::chrono::system_clock::now().time_since_epoch();
+			auto now = system_clock::now().time_since_epoch();
 			boost::chrono::duration<double> sec = now;
 			return sec.count();
 		}

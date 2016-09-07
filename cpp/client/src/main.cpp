@@ -13,39 +13,41 @@
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
+#include <ndn-cpp/threadsafe-face.hpp>
+#include <ndn-cpp/security/key-chain.hpp>
+#include <ndn-cpp/security/certificate/identity-certificate.hpp>
+
 #include "config.h"
 #include "client.h"
+#include "key-chain-manager.h"
 
 using namespace std;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-
-void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix);
+using namespace ndn;
 
 void run(const std::string &configFile,
+         const std::string &identity,
          const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
          const unsigned int headlessAppOnlineTimeSecconst,
          const unsigned int statisticsSampleInterval);
-void setupConsumer(unsigned int runTimeSec, const ClientParams &params);
-void setupProducer(unsigned int runTimeSec, const ClientParams &params);
-void setupStatGathering(unsigned int runTimeSec, unsigned int statSamplePeriodMs, 
-    const std::vector<StatGatheringParams>& statParams);
-void runProcessLoopFor(unsigned int sec);
 
 //******************************************************************************
 int main(int argc, char **argv) 
 {
-    char *configFile = NULL;
+    char *configFile = NULL, *identity = NULL, *policy = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)
     unsigned int statSamplePeriodMs = 100;  // default statistics sample interval (ms)
     ndnlog::NdnLoggerDetailLevel logLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
     opterr = 0;
-    while ((c = getopt (argc, argv, "vi:t:c:")) != -1)
+    while ((c = getopt (argc, argv, "vi:t:c:s:p:")) != -1)
         switch (c) {
         case 'c':
             configFile = optarg;
+            break;
+        case 's':
+            identity = optarg;
             break;
         case 'v':
             logLevel = ndnlog::NdnLoggerDetailLevelAll;
@@ -70,27 +72,33 @@ int main(int argc, char **argv)
             abort ();
         }
 
-    if (!configFile || runTimeSec == 0) 
+    if (!configFile || runTimeSec == 0 || identity == NULL) 
     {
-        std::cout << "usage: " << argv[0] << " -c <config_file> -t <app run time in seconds> [-i "
-        "<statistics sample interval in milliseconds> -v <verbose mode>]" << std::endl;
+        std::cout << "usage: " << argv[0] << " -c <config_file> -s <signing identity>"
+            "-t <app run time in seconds> [-i <statistics sample interval in milliseconds>"
+            " -v <verbose mode>]" << std::endl;
         exit(1);
     }
 
-    run(configFile, logLevel, runTimeSec, statSamplePeriodMs);
+    run(configFile, identity, logLevel, runTimeSec, statSamplePeriodMs);
 
     return 0;
 }
 
 //******************************************************************************
-void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
-            const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
+void run(const std::string &configFile, const std::string &identity, 
+    const ndnlog::NdnLoggerDetailLevel logLevel, const unsigned int runTimeSec, 
+    const unsigned int statSamplePeriodMs) 
 {
-    INdnRtcLibrary& ndnp = NdnRtcLibrary::getSharedInstance();
-    Client& client = Client::getSharedInstance();
-    ClientParams params;
-
+    ndnlog::new_api::Logger::initAsyncLogging();
     ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
+
+    boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&io](){ io.run(); });
+    KeyChainManager keyChainManager(identity, runTimeSec);
+    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    ClientParams params;
 
     LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
     "params from " << configFile << "..." << std::endl;
@@ -101,25 +109,21 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
         return;
     }
 
-    LogInfo("") << "Parameters loaded:\n" << params << std::endl;
+    LogInfo("") << "Parameters loaded" << std::endl;
+    LogDebug("") << params << std::endl;
 
-    client.run(&ndnp, runTimeSec, statSamplePeriodMs, params);
+    Client client(io, face, keyChainManager.instanceKeyChain());
+    client.run(runTimeSec, statSamplePeriodMs, params);
+
+    face->shutdown();
+    work.reset();
+    t.join();
+    io.stop();
+
+    LogInfo("") << "Client run completed" << std::endl;
 
 #warning this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);
     ndnlog::new_api::Logger::releaseAsyncLogging();
     return;
 }
-
-// //******************************************************************************
-// void removeRemoteStreams(INdnRtcLibrary *ndnp, std::vector<std::string> &StreamsPrefix) {
-
-//     int streamsPrefixNumber = StreamsPrefix.size();
-
-//     for (int streamsPrefixCount = 0; streamsPrefixCount < streamsPrefixNumber; streamsPrefixCount++) {
-//         ndnp->removeRemoteStream(StreamsPrefix[streamsPrefixCount]);
-//     }
-//     return;
-
-// }
-
