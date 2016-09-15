@@ -22,7 +22,7 @@ namespace ndnrtc {
 		virtual std::string getStreamName() const = 0;
 		virtual std::string getPrefix() const = 0;
 		virtual statistics::StatisticsStorage getStatistics() const = 0;
-		virtual void setLogger(ndnlog::new_api::Logger*) = 0;
+		virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
 	};
 }
 

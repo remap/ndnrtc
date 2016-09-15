@@ -353,29 +353,23 @@ namespace ndnlog {
             isLoggingEnabled() const
             { return true; }
             
-            ILoggingObject():logger_(0), isLoggerCreated_(false){}
-            ILoggingObject(const NdnLoggerDetailLevel& logLevel,
-                           const std::string& logFile);
+            ILoggingObject(){}
             
             virtual ~ILoggingObject()
             {
                 if (logger_)
                     logger_->flush();
-                if (isLoggerCreated_)
-                    delete logger_;
-                logger_ = NULL;
             }
             
             virtual void
-            setLogger(Logger* logger);
+            setLogger(boost::shared_ptr<Logger> logger) { logger_ = logger; }
             
-            virtual Logger*
+            virtual boost::shared_ptr<Logger>
             getLogger() const
             { return logger_; }
             
         protected:
-            bool isLoggerCreated_ = false;
-            Logger* logger_;
+            boost::shared_ptr<Logger> logger_;
             std::string description_ = "<no description>";
         };
         

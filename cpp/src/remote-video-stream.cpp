@@ -74,7 +74,7 @@ RemoteVideoStreamImpl::initiateFetching()
 }
 
 void
-RemoteVideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
     validator_->setLogger(logger);

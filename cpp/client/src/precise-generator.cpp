@@ -7,11 +7,62 @@
 
 // #define DEBUG_PG
 #include "precise-generator.h"
+#include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 using namespace std;
 
-PreciseGenerator::PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec, 
-	const Task& task):
+class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGeneratorImpl>
+{
+public:
+    PreciseGeneratorImpl(boost::asio::io_service& io, const double& ratePerSec,
+                         const PreciseGenerator::Task& task);
+    
+    void start();
+    void stop();
+    bool isRunning(){ return isRunning_; }
+    long long getFireCount() { return fireCount_; }
+    double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); }// - meanTaskTimeNs_); }
+    double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
+    
+    boost::recursive_mutex setupMutex_;
+    boost::atomic<bool> isRunning_;
+    long long fireCount_;
+    double meanProcOverheadNs_, meanTaskTimeNs_;
+    double rate_;
+    PreciseGenerator::Task task_;
+    boost::asio::io_service& io_;
+    timer_type timer_;
+    
+    time_point_type iterStart_;
+    duration_type lagNs_, lastTaskDurationNs_;
+    ms lastIterIntervalMs_;
+    
+    void setupTimer();
+    void onFire(const boost::system::error_code& code);
+    ms getAdjustedInterval(const time_point_type& lastIterStart,
+                           const time_point_type& thisIterStart,
+                           const ms lastIterIntervalMs,
+                           const ns lastTaskDurationNs,
+                           const double& rate);
+};
+
+//******************************************************************************
+PreciseGenerator::PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec,
+                                   const Task& task):
+pimpl_(boost::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)){}
+PreciseGenerator::~PreciseGenerator(){ pimpl_->stop(); }
+
+void PreciseGenerator::start(){ pimpl_->start(); }
+void PreciseGenerator::stop(){ pimpl_->stop(); }
+bool PreciseGenerator::isRunning(){ return pimpl_->isRunning(); }
+long long PreciseGenerator::getFireCount(){ return pimpl_->getFireCount(); }
+double PreciseGenerator::getMeanProcessingOverheadNs(){ return pimpl_->getMeanProcessingOverheadNs(); }
+double PreciseGenerator::getMeanTaskTimeNs(){ return pimpl_->getMeanTaskTimeNs(); }
+
+//******************************************************************************
+PreciseGeneratorImpl::PreciseGeneratorImpl(boost::asio::io_service& io, const double& ratePerSec,
+                                           const PreciseGenerator::Task& task):
 io_(io), timer_(io), rate_(ratePerSec), task_(task),
 lastIterIntervalMs_(0), meanProcOverheadNs_(0), meanTaskTimeNs_(0)
 #ifdef STEADY_TIMER
@@ -19,48 +70,56 @@ lastIterIntervalMs_(0), meanProcOverheadNs_(0), meanTaskTimeNs_(0)
 #endif
 {}
 
-void PreciseGenerator::start()
+void PreciseGeneratorImpl::start()
 {
 	fireCount_ = 0;
 	isRunning_ = true;
 	setupTimer();
 }
 
-void PreciseGenerator::stop()
+void PreciseGeneratorImpl::stop()
 {
-	isRunning_ = false;
-	timer_.cancel();
+    if (isRunning_)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(setupMutex_);
+        isRunning_ = false;
+        timer_.cancel();
+    }
 }
 
-//******************************************************************************
-void PreciseGenerator::setupTimer()
+void PreciseGeneratorImpl::setupTimer()
 {
 	time_point_type lastIterStart = iterStart_;
 	iterStart_ = now_time();
 	ms interval = getAdjustedInterval(lastIterStart, iterStart_, 
 		lastIterIntervalMs_, lastTaskDurationNs_, rate_);
 	timer_.expires_from_now(interval);
-	timer_.async_wait(lib_bind::bind(&PreciseGenerator::onFire, this, _1));
+	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), _1));
 	lastIterIntervalMs_ = interval;
 }
 
-void PreciseGenerator::onFire(const boost::system::error_code& code)
+void PreciseGeneratorImpl::onFire(const boost::system::error_code& code)
 {
-	if (code != boost::asio::error::operation_aborted && isRunning_)
-	{
-		time_point_type tstart = now_time();
-		task_();
-		time_point_type tend = now_time();
-		fireCount_++;
-
-		lastTaskDurationNs_ = duration_cast_ns((tend-tstart));
-		meanTaskTimeNs_ += (double)(duration_cast_double_ns(lastTaskDurationNs_) - meanTaskTimeNs_)/(double)fireCount_;
-
-		setupTimer();
-	}
+    if (!code)
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(setupMutex_);
+        
+        if (isRunning_)
+        {
+            time_point_type tstart = now_time();
+            task_();
+            time_point_type tend = now_time();
+            fireCount_++;
+            
+            lastTaskDurationNs_ = duration_cast_ns((tend-tstart));
+            meanTaskTimeNs_ += (double)(duration_cast_double_ns(lastTaskDurationNs_) - meanTaskTimeNs_)/(double)fireCount_;
+            
+            setupTimer();
+        }
+    }
 }
 
-ms PreciseGenerator::getAdjustedInterval(const time_point_type& lastIterStart,
+ms PreciseGeneratorImpl::getAdjustedInterval(const time_point_type& lastIterStart,
 	const time_point_type& thisIterStart,
 	const ms lastIterIntervalMs,
 	const ns lastTaskDurationNs,

@@ -95,7 +95,7 @@ void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
 	feedFrame(conv_ << w);
 }
 
-void VideoStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 

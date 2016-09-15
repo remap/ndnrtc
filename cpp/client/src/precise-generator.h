@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/thread/mutex.hpp>
 
 #define STEADY_TIMER
 
@@ -76,39 +77,24 @@ typedef boost::posix_time::time_duration duration_type;
 
 //******************************************************************************
 
+class PreciseGeneratorImpl;
+
 class PreciseGenerator {
 public:
-        typedef lib_fun::function<void()> Task;
-        PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec, 
-        	const Task& task);
-
-        void start();
-        void stop();
-        bool isRunning(){ return isRunning_; }
-        long long getFireCount() { return fireCount_; }
-        double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); }// - meanTaskTimeNs_); }
-        double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
-
+    typedef lib_fun::function<void()> Task;
+    PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec,
+                     const Task& task);
+    ~PreciseGenerator();
+    
+    void start();
+    void stop();
+    bool isRunning();
+    long long getFireCount();
+    double getMeanProcessingOverheadNs();
+    double getMeanTaskTimeNs();
+    
 private:
-	boost::atomic<bool> isRunning_;
-	long long fireCount_;
-	double meanProcOverheadNs_, meanTaskTimeNs_;
-        double rate_;
-        Task task_;
-        boost::asio::io_service& io_;
-        timer_type timer_;
-
-        time_point_type iterStart_;
-        duration_type lagNs_, lastTaskDurationNs_;
-        ms lastIterIntervalMs_;
-
-        void setupTimer();
-        void onFire(const boost::system::error_code& code);
-        ms getAdjustedInterval(const time_point_type& lastIterStart,
-                const time_point_type& thisIterStart,
-                const ms lastIterIntervalMs, 
-                const ns lastTaskDurationNs,
-                const double& rate);
+    boost::shared_ptr<PreciseGeneratorImpl> pimpl_;
 };
 
 #endif

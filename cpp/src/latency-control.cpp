@@ -355,7 +355,7 @@ LatencyControl::unregisterObserver()
 }
 
 void
-LatencyControl::setLogger(ndnlog::new_api::Logger* logger)
+LatencyControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     NdnRtcComponent::setLogger(logger);
     stabilityEstimator_->setLogger(logger);

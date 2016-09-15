@@ -65,7 +65,7 @@ namespace ndnrtc {
          */
         void run(boost::function<void()> callback);
 
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
         
     private:

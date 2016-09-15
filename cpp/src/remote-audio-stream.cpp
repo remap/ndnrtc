@@ -58,7 +58,7 @@ RemoteAudioStreamImpl::initiateFetching()
 }
 
 void
-RemoteAudioStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+RemoteAudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
     validator_->setLogger(logger);

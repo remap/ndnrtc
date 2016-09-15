@@ -65,7 +65,7 @@ PlayoutImpl::stop()
 }
 
 void
-PlayoutImpl::setLogger(ndnlog::new_api::Logger* logger)
+PlayoutImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     ILoggingObject::setLogger(logger);
     jitterTiming_.setLogger(logger);

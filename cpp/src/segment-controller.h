@@ -71,7 +71,7 @@ namespace ndnrtc {
 		void attach(ISegmentControllerObserver* o);
 		void detach(ISegmentControllerObserver* o);
         
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
     private:
         boost::shared_ptr<SegmentControllerImpl> pimpl_;
     };

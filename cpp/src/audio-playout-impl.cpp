@@ -41,7 +41,7 @@ void AudioPlayoutImpl::stop()
     renderer_->stopRendering();
 }
 
-void AudioPlayoutImpl::setLogger(ndnlog::new_api::Logger* logger)
+void AudioPlayoutImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     PlayoutImpl::setLogger(logger);
     renderer_->setLogger(logger);

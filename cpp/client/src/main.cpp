@@ -103,7 +103,7 @@ void run(const std::string &configFile, const std::string &identity,
     LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
     "params from " << configFile << "..." << std::endl;
 
-    if (loadParamsFromFile(configFile, params) == EXIT_FAILURE) 
+    if (loadParamsFromFile(configFile, params, identity) == EXIT_FAILURE) 
     {
         LogError("") << "error loading params from " << configFile << std::endl;
         return;

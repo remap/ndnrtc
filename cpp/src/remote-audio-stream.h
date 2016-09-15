@@ -23,7 +23,7 @@ namespace ndnrtc {
         ~RemoteAudioStreamImpl();
 
 		void initiateFetching();
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         
 	private:
         boost::asio::io_service& io_;

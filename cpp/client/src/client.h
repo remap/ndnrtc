@@ -47,8 +47,8 @@ private:
 	Client(Client const&) = delete;
 	void operator=(Client const&) = delete;
 
-	void setupConsumer();
-	void setupProducer();
+	bool setupConsumer();
+	bool setupProducer();
 	void setupStatGathering();
 	void runProcessLoop();
 	void tearDownStatGathering();
@@ -59,6 +59,10 @@ private:
 		const ndnrtc::GeneralConsumerParams& generalParams);
 	LocalStream initLocalStream(const ProducerStreamParams& p);
 	boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams& p);
+
+	boost::shared_ptr<ndnlog::new_api::Logger> producerLogger(std::string streamName);
+	boost::shared_ptr<ndnlog::new_api::Logger> consumerLogger(std::string prefix, 
+		std::string streamName);
 };
 
 #endif

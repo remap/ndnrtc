@@ -101,7 +101,7 @@ void SegmentController::detach(ISegmentControllerObserver* o)
     pimpl_->detach(o);
 }
 
-void SegmentController::setLogger(ndnlog::new_api::Logger* logger)
+void SegmentController::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     pimpl_->setLogger(logger);
 }

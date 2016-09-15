@@ -84,7 +84,7 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(ndnlog::new_api::Logger* logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		/**
 		 * Returns statistics storage for this stream
@@ -210,7 +210,7 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(ndnlog::new_api::Logger* logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		/**
 		 * Returns statistics storage for this stream

@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 #include "interest-queue.h"
+#include "tests-helpers.h"
 
 #include "mock-objects/interest-queue-observer-mock.h"
 
@@ -24,6 +25,8 @@ using namespace ::testing;
 
 TEST(TestInterestQueue, TestDefault)
 {
+	ASSERT_TRUE(checkNfd()) << "Apparently, local NFD is not running. Aborting test.";
+
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
@@ -35,7 +38,7 @@ TEST(TestInterestQueue, TestDefault)
 		io.run();
 	});
 	
-	boost::shared_ptr<ndn::ThreadsafeFace> face(boost::make_shared<ndn::ThreadsafeFace>(io, "aleph.ndn.ucla.edu"));
+	boost::shared_ptr<ndn::ThreadsafeFace> face(boost::make_shared<ndn::ThreadsafeFace>(io));
 	boost::shared_ptr<statistics::StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
 	int n = 100;

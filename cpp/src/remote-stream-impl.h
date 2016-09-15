@@ -55,7 +55,7 @@ namespace ndnrtc {
 
 		void setInterestLifetime(unsigned int lifetimeMs);
 		void setTargetBufferSize(unsigned int bufferSizeMs);
-		void setLogger(ndnlog::new_api::Logger* logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		bool isVerified() const;
 		// void attach(IRemoteStreamObserver*);

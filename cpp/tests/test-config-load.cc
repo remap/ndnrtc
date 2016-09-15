@@ -25,9 +25,10 @@ TEST(TestConfigLoad, LoadGeneral)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 	EXPECT_EQ(params.getGeneralParameters().loggingLevel_, ndnlog::NdnLoggerDetailLevelDefault);
 	EXPECT_EQ(params.getGeneralParameters().logFile_, "ndnrtc-client.log");
 	EXPECT_EQ(params.getGeneralParameters().logPath_, "/tmp");
@@ -43,9 +44,10 @@ TEST(TestConfigLoad, LoadGeneralBad)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_NE(0, loadParamsFromFile(fileName, params));
+	ASSERT_NE(0, loadParamsFromFile(fileName, params, identity));
 }
 
 TEST(TestConfigLoad, LoadConsumerParams)
@@ -54,9 +56,10 @@ TEST(TestConfigLoad, LoadConsumerParams)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 	EXPECT_EQ(2000, params.getConsumerParams().generalAudioParams_.interestLifetime_);
 	EXPECT_EQ(150, params.getConsumerParams().generalAudioParams_.jitterSizeMs_);
 	EXPECT_EQ(2000, params.getConsumerParams().generalVideoParams_.interestLifetime_);
@@ -105,11 +108,12 @@ TEST(TestConfigLoad, LoadProducerParams)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 
-	EXPECT_EQ("/ndn/edu/ucla/remap/clientA", params.getProducerParams().prefix_);
+	EXPECT_EQ("/test/identity", params.getProducerParams().prefix_);
 	EXPECT_EQ(3, params.getProducerParams().publishedStreams_.size());
 	EXPECT_EQ("camera.argb", params.getProducerParams().publishedStreams_[0].source_);
 	EXPECT_EQ("desktop.argb", params.getProducerParams().publishedStreams_[1].source_);
@@ -129,9 +133,10 @@ TEST(TestConfigLoad, LoadAudioConsumerOnly)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 	EXPECT_EQ(2000, params.getConsumerParams().generalAudioParams_.interestLifetime_);
 	EXPECT_EQ(150, params.getConsumerParams().generalAudioParams_.jitterSizeMs_);
 	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_.size());
@@ -164,9 +169,10 @@ TEST(TestConfigLoad, LoadVideoConsumerOnly)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 	EXPECT_EQ(2000, params.getConsumerParams().generalVideoParams_.interestLifetime_);
 	EXPECT_EQ(150, params.getConsumerParams().generalVideoParams_.jitterSizeMs_);
 	EXPECT_EQ(3, params.getConsumerParams().statGatheringParams_.size());
@@ -196,9 +202,10 @@ TEST(TestConfigLoad, LoadAndOutput)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 
 	stringstream ss;
 	ss << params;
@@ -234,7 +241,7 @@ TEST(TestConfigLoad, LoadAndOutput)
 		" ; seg size: 0 bytes; freshness: 0 ms; no device; 0 threads:\n"
 		"]\n"
 		"-producing:\n"
-		"prefix: /ndn/edu/ucla/remap/clientA;\n"
+		"prefix: /test/identity;\n"
 		"--0:\n"
 		"stream source: camera.argb; session prefix: ; name: camera (video); "
 		"synced to: sound; seg size: 1000 bytes; freshness: 2000 ms; no device; 2 threads:\n"
@@ -252,7 +259,7 @@ TEST(TestConfigLoad, LoadAndOutput)
 		"--2:\n"
 		"stream source: ; session prefix: ; name: sound (audio); "
 		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "
-		"no device; 1 threads:\n"
+		"capture device id: 0; 1 threads:\n"
 		"[0: name: pcmu; codec: g722]\n",
 		ss.str());
 #endif
@@ -265,9 +272,10 @@ TEST(TestConfigLoad, TestSampleConsumerParams)
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
 
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 
 	stringstream ss;
 	ss << params;
@@ -301,10 +309,11 @@ TEST(TestConfigLoad, TestSampleProducerParams)
 	string fileName(TEST_CONFIG_SAMPLE_PRODUCER_FILE);
 	
 	ASSERT_TRUE(std::ifstream(fileName.c_str()).good());
-
+	
+	string identity = "/test/identity";
 	ClientParams params;
 
-	ASSERT_EQ(0, loadParamsFromFile(fileName, params));
+	ASSERT_EQ(0, loadParamsFromFile(fileName, params, identity));
 
 	stringstream ss;
 	ss << params;
@@ -314,14 +323,14 @@ TEST(TestConfigLoad, TestSampleProducerParams)
 		"log level: INFO; log file: ndnrtc-client.log (at /tmp); FEC: ON; A/V Sync: ON; "
 		"Host: localhost; Port #: 6363\n"
 		"-producing:\n"
-		"prefix: /ndn/edu/ucla/remap/clientA;\n"
+		"prefix: /test/identity;\n"
 		"--0:\n"
-		"stream source: /tmp/test-320x180-30frames.argb; session prefix: ; "
+		"stream source: ../tests/test-source-320x240.argb; session prefix: ; "
 		"name: camera (video); synced to: sound; seg size: 1000 bytes; freshness: 2000 ms; no device; 1 threads:\n"
-		"[0: name: tiny; 30FPS; GOP: 30; Start bitrate: 100 Kbit/s; Max bitrate: 10000 Kbit/s; 320x180; Drop: YES]\n"
+		"[0: name: tiny; 30FPS; GOP: 30; Start bitrate: 100 Kbit/s; Max bitrate: 10000 Kbit/s; 320x240; Drop: YES]\n"
 		"--1:\n"
 		"stream source: ; session prefix: ; name: sound (audio); synced to: ;"
-		" seg size: 1000 bytes; freshness: 2000 ms; no device; 1 threads:\n"
+		" seg size: 1000 bytes; freshness: 2000 ms; capture device id: 0; 1 threads:\n"
 		"[0: name: pcmu; codec: g722]\n",
 		ss.str());
 }

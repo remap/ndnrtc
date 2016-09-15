@@ -31,7 +31,7 @@ namespace ndnrtc
         boost::shared_ptr<VideoFramePacketT<Mutable>> encode(const WebRtcVideoFrame& frame);
 
         void
-        setLogger(ndnlog::new_api::Logger *logger);
+        setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
 
         unsigned int 
         getEncodedNum() { return nEncoded_; }

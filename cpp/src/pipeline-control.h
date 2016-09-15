@@ -44,7 +44,7 @@ namespace ndnrtc {
 		void segmentStarvation();
 
 		bool needPipelineAdjustment(const PipelineAdjust&);
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		static PipelineControl defaultPipelineControl(const ndn::Name& threadPrefix,
             const boost::shared_ptr<IBuffer> buffer,

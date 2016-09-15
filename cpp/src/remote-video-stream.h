@@ -31,7 +31,7 @@ namespace ndnrtc{
 		
 		void start(const std::string& threadName, IExternalRenderer* render);
 		void initiateFetching();
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         
 	private:
 		boost::shared_ptr<ManifestValidator> validator_;

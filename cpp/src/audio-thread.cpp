@@ -67,7 +67,7 @@ double AudioThread::getRate() const
     return rateMeter_.value();
 }
 
-void AudioThread::setLogger(ndnlog::new_api::Logger* logger)
+void AudioThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     ILoggingObject::setLogger(logger);
     capturer_.setLogger(logger);

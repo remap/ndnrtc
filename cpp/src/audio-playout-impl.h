@@ -32,7 +32,7 @@ namespace ndnrtc {
     void start(unsigned int fastForwardMs = 0);
     void stop();
 
-    void setLogger(ndnlog::new_api::Logger* logger);
+    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
     AudioBundleSlot bundleSlot_;

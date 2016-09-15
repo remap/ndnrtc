@@ -39,7 +39,8 @@ int loadBasicStatSettings(const Setting &consumerBasicStatSettings,
     std::vector<StatGatheringParams> &statistics);
 int loadGeneralSettings(const Setting &general, GeneralParams &generalParams);
 int loadConsumerSettings(const Setting& root, ConsumerClientParams& params);
-int loadProducerSettings(const Setting& root, ProducerClientParams& params);
+int loadProducerSettings(const Setting& root, ProducerClientParams& params, 
+    const std::string& identity);
 int loadStreamParams(const Setting& s, ConsumerStreamParams& params);
 int loadStreamParams(const Setting& s, ProducerStreamParams& params);
 int loadStreamParams(const Setting& s, ClientMediaStreamParams& params);
@@ -68,7 +69,8 @@ void ProducerStreamParams::getMaxResolution(unsigned int& width,
 
 
 //******************************************************************************
-int loadParamsFromFile(const string &cfgFileName, ClientParams &params)
+int loadParamsFromFile(const string &cfgFileName, ClientParams &params, 
+    const std::string& identity)
 {    
     Config cfg;
 
@@ -95,7 +97,7 @@ int loadParamsFromFile(const string &cfgFileName, ClientParams &params)
     params.setConsumerParams(consumerParams);
 
     ProducerClientParams producerParams;
-    loadProducerSettings(root, producerParams);
+    loadProducerSettings(root, producerParams, identity);
 
     params.setProducerParams(producerParams);
     
@@ -176,7 +178,7 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
     }
 }
 
-int loadProducerSettings(const Setting& root, ProducerClientParams& params)
+int loadProducerSettings(const Setting& root, ProducerClientParams& params, const std::string& identity)
 {
     if (!root.exists(PRODUCER_KEY))
     {
@@ -185,17 +187,7 @@ int loadProducerSettings(const Setting& root, ProducerClientParams& params)
     }
 
     const Setting &producerRootSettings = root[PRODUCER_KEY];
-
-    try{
-        const Setting& basic = producerRootSettings[SECTION_BASIC_KEY];
-
-        basic.lookupValue("base_prefix", params.prefix_);
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        LogError("") << "Error loading basic producer params" << std::endl;
-        return EXIT_FAILURE;
-    }
+    params.prefix_ = identity;
 
     try{// setup stream settings
         const Setting &streamSettings = producerRootSettings[SECTION_STREAMS_KEY];
@@ -410,7 +402,7 @@ int loadStreamParams(const Setting& s, ClientMediaStreamParams& params)
         }
         catch (const SettingNotFoundException &nfex)
         {
-            // do nothing
+            s.lookupValue("capture_device", params.captureDevice_.deviceId_);
         }
     }
     catch(const SettingNotFoundException &nfex)

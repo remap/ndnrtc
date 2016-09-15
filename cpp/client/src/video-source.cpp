@@ -33,6 +33,7 @@ nRewinds_(0)
 
 VideoSource::~VideoSource()
 {
+    stop();
 }
 
 void VideoSource::addCapturer(ndnrtc::IExternalCapturer* capturer)
@@ -48,7 +49,6 @@ void VideoSource::start(const double& rate)
 	{
 		framesSourced_ = 0;
 
-		startCapturers();
 		generator_.reset(new PreciseGenerator(io_, rate, [this](){
 			this->sourceFrame();
 			this->deliverFrame(*frame_);
@@ -69,7 +69,6 @@ void VideoSource::stop()
 	if (isRunning_)
 	{
 		generator_->stop();
-		stopCapturers();
 		isRunning_ = false;
 
 		LogInfo("") << "sourcing video from " << source_->getPath() 
@@ -85,22 +84,6 @@ double VideoSource::getMeanSourcingTimeMs()
 }
 
 #pragma mark - private
-void VideoSource::startCapturers()
-{
-	// for (auto capturer:capturers_)
-	// 	capturer->capturingStarted();
-
-	LogDebug("") << "started " << capturers_.size() << " capturers" << endl;
-}
-
-void VideoSource::stopCapturers()
-{
-	// for (auto capturer:capturers_)
-	// 	capturer->capturingStopped();
-
-	LogDebug("") << "stopped " << capturers_.size() << " capturers" << endl;
-}
-
 void VideoSource::sourceFrame()
 {
 	// LogTrace("") << "reading " << frame_->getWidth() << "x" << frame_->getHeight() 

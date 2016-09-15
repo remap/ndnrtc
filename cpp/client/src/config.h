@@ -211,6 +211,7 @@ public:
 };
 
 
-int loadParamsFromFile(const std::string &cfgFileName, ClientParams &params);
+int loadParamsFromFile(const std::string &cfgFileName, ClientParams &params,
+    const std::string& identity);
 #endif
 

@@ -251,24 +251,6 @@ new_api::Logger::finalizeLogRecord()
 }
 
 //******************************************************************************
-//******************************************************************************
-ILoggingObject::ILoggingObject(const NdnLoggerDetailLevel& logLevel,
-                               const std::string& logFile):
-logger_(new Logger(logLevel, logFile)),
-isLoggerCreated_(true){
-}
-
-void
-ILoggingObject::setLogger(ndnlog::new_api::Logger *logger)
-{
-    if (logger_ && isLoggerCreated_)
-        delete logger_;
-    
-    isLoggerCreated_ = false;
-    logger_ = logger;
-}
-
-//******************************************************************************
 void startLogThread()
 {
     if (!LogThreadWork.get() &&

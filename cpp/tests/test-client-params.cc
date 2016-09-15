@@ -181,10 +181,8 @@ TEST(TestConsumerClientParams, TestOutputEmpty)
 	stringstream ss;
 	ss << ccp;
 
-	EXPECT_EQ("general audio: interest lifetime: 0 ms; jitter size: 0 ms; "
-		"buffer size: 0 slots; slot size: 0 bytes\ngeneral video: "
-		"interest lifetime: 0 ms; jitter size: 0 ms; "
-		"buffer size: 0 slots; slot size: 0 bytes\n",
+	EXPECT_EQ("general audio: interest lifetime: 0 ms; jitter size: 0 ms\n"
+		"general video: interest lifetime: 0 ms; jitter size: 0 ms\n",
 		ss.str());
 }
 
@@ -227,16 +225,12 @@ TEST(TestConsumerClientParams, TestOutput)
 	GeneralConsumerParams gcpa;
 
 	gcpa.interestLifetime_ = 2000;
-	gcpa.bufferSlotsNum_ = 150;
-	gcpa.slotSize_ = 8000;
 	gcpa.jitterSizeMs_ = 150;
 
 
 	GeneralConsumerParams gcpv;
 
 	gcpv.interestLifetime_ = 2000;
-	gcpv.bufferSlotsNum_ = 200;
-	gcpv.slotSize_ = 16000;
 	gcpv.jitterSizeMs_ = 150;
 
 	StatGatheringParams sgp("buffer");
@@ -255,10 +249,9 @@ TEST(TestConsumerClientParams, TestOutput)
 	stringstream ss;
 	ss << ccp;
 
-	EXPECT_EQ("general audio: interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 150 slots; slot size: 8000 bytes\ngeneral video: "
-		"interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 200 slots; slot size: 16000 bytes"
+	EXPECT_EQ("general audio: interest lifetime: 2000 ms; jitter size: 150 ms"
+		"\ngeneral video: "
+		"interest lifetime: 2000 ms; jitter size: 150 ms"
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
@@ -317,16 +310,12 @@ TEST(TestConsumerClientParams, TestCopy)
 	GeneralConsumerParams gcpa;
 
 	gcpa.interestLifetime_ = 2000;
-	gcpa.bufferSlotsNum_ = 150;
-	gcpa.slotSize_ = 8000;
 	gcpa.jitterSizeMs_ = 150;
 
 
 	GeneralConsumerParams gcpv;
 
 	gcpv.interestLifetime_ = 2000;
-	gcpv.bufferSlotsNum_ = 200;
-	gcpv.slotSize_ = 16000;
 	gcpv.jitterSizeMs_ = 150;
 
 	StatGatheringParams sgp("buffer");
@@ -353,10 +342,9 @@ TEST(TestConsumerClientParams, TestCopy)
 	stringstream ss;
 	ss << ccpCopy;
 
-	EXPECT_EQ("general audio: interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 150 slots; slot size: 8000 bytes\ngeneral video: "
-		"interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 200 slots; slot size: 16000 bytes"
+	EXPECT_EQ("general audio: interest lifetime: 2000 ms; jitter size: 150 ms"
+		"\ngeneral video: "
+		"interest lifetime: 2000 ms; jitter size: 150 ms"
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
@@ -383,16 +371,14 @@ TEST(TestClientParams, TestOutputEmpty){
 	EXPECT_EQ("", cp.getGeneralParameters().logFile_);
 	EXPECT_EQ(ndnlog::NdnLoggerDetailLevelNone, cp.getGeneralParameters().loggingLevel_);
 	EXPECT_EQ("", cp.getGeneralParameters().logPath_);
-	EXPECT_FALSE(cp.getGeneralParameters().useRtx_);
 	EXPECT_FALSE(cp.getGeneralParameters().useFec_);
 	EXPECT_FALSE(cp.getGeneralParameters().useAvSync_);
-	EXPECT_FALSE(cp.getGeneralParameters().skipIncomplete_);
 	EXPECT_EQ("", cp.getGeneralParameters().host_);
 	EXPECT_EQ(6363, cp.getGeneralParameters().portNum_);
 
 	ss << cp;
-	EXPECT_EQ("-general:\nlog level: NONE; log file:  (at ); RTX: OFF; FEC: OFF; "
-		"A/V Sync: OFF; Skipping incomplete frames: OFF; Host: ; Port #: 6363\n",
+	EXPECT_EQ("-general:\nlog level: NONE; log file:  (at ); FEC: OFF; "
+		"A/V Sync: OFF; Host: ; Port #: 6363\n",
 		ss.str());
 }
 
@@ -406,10 +392,8 @@ TEST(TestClientParams, TestOutput){
 		gp.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
 		gp.logFile_ = "ndnrtc.log";
 		gp.logPath_ = "/tmp";
-		gp.useRtx_ = true;
 		gp.useFec_ = false;
 		gp.useAvSync_ = true;
-		gp.skipIncomplete_ = true;
 		gp.host_ = "aleph.ndn.ucla.edu";
 		gp.portNum_ = 6363;
 		cp.setGeneralParameters(gp);
@@ -418,7 +402,6 @@ TEST(TestClientParams, TestOutput){
 	{
 		ProducerClientParams pcp;
 
-		pcp.username_ = "clientA";
 		pcp.prefix_ = "/ndn/edu/ucla/remap";
 
 		ProducerStreamParams msp;
@@ -504,16 +487,12 @@ TEST(TestClientParams, TestOutput){
 		GeneralConsumerParams gcpa;
 
 		gcpa.interestLifetime_ = 2000;
-		gcpa.bufferSlotsNum_ = 150;
-		gcpa.slotSize_ = 8000;
 		gcpa.jitterSizeMs_ = 150;
 
 
 		GeneralConsumerParams gcpv;
 
 		gcpv.interestLifetime_ = 2000;
-		gcpv.bufferSlotsNum_ = 200;
-		gcpv.slotSize_ = 16000;
 		gcpv.jitterSizeMs_ = 150;
 
 		StatGatheringParams sgp("buffer");
@@ -536,13 +515,12 @@ TEST(TestClientParams, TestOutput){
 	}
 
 	ss << cp;
-	EXPECT_EQ("-general:\nlog level: TRACE; log file: ndnrtc.log (at /tmp); RTX: ON; FEC: OFF; "
-		"A/V Sync: ON; Skipping incomplete frames: ON; Host: aleph.ndn.ucla.edu; Port #: 6363\n"
+	EXPECT_EQ("-general:\nlog level: TRACE; log file: ndnrtc.log (at /tmp); FEC: OFF; "
+		"A/V Sync: ON; Host: aleph.ndn.ucla.edu; Port #: 6363\n"
 		"-consuming:\n"
-		"general audio: interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 150 slots; slot size: 8000 bytes\ngeneral video: "
-		"interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 200 slots; slot size: 16000 bytes"
+		"general audio: interest lifetime: 2000 ms; jitter size: 150 ms"
+		"\ngeneral video: "
+		"interest lifetime: 2000 ms; jitter size: 150 ms"
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
@@ -559,7 +537,7 @@ TEST(TestClientParams, TestOutput){
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
 		"[1: name: hi; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n]\n"
-		"-producing:\nusername: clientA; prefix: /ndn/edu/ucla/remap;\n"
+		"-producing:\nprefix: /ndn/edu/ucla/remap;\n"
 		"--0:\n"
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); "
 		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "

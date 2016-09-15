@@ -48,7 +48,7 @@ namespace ndnrtc {
 
 		void incomingFrame(const ArgbRawFrameWrapper&);
 		void incomingFrame(const I420RawFrameWrapper&);
-		void setLogger(ndnlog::new_api::Logger*);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
 		
 	private:
 		friend LocalVideoStream::LocalVideoStream(const std::string&, const MediaStreamSettings&, bool);

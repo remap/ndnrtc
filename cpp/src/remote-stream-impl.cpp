@@ -127,7 +127,7 @@ RemoteStreamImpl::setTargetBufferSize(unsigned int bufferSizeMs)
 }
 
 void 
-RemoteStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	NdnRtcComponent::setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(buffer_)->setLogger(logger);

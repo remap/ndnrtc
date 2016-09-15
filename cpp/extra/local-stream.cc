@@ -26,6 +26,7 @@ void run(const std::string &configFile,
 
 int main(int argc, char **argv)
 {
+#if 0
     char *configFile = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)
@@ -69,13 +70,14 @@ int main(int argc, char **argv)
     }
 
 	run(configFile, logLevel, runTimeSec, statSamplePeriodMs);
-
+#endif
 	return 0;
 }
 
 void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLevel, 
             const unsigned int runTimeSec, const unsigned int statSamplePeriodMs) 
 {
+#if 0
     ClientParams params;
 
 	ndnlog::new_api::Logger::initAsyncLogging();
@@ -98,4 +100,5 @@ void run(const std::string &configFile, const ndnlog::NdnLoggerDetailLevel logLe
     sleep(1);
     ndnlog::new_api::Logger::releaseAsyncLogging();
     return;
+#endif
 }

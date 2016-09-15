@@ -7,6 +7,7 @@
 
 #include <boost/assign.hpp>
 #include <ndn-cpp/interest.hpp>
+#include <ndn-cpp/threadsafe-face.hpp>
 
 #include "tests-helpers.h"
 
@@ -230,7 +231,7 @@ ClientParams sampleProducerParams()
 			msp.producerParams_.segmentSize_ = 1000;
 	
 			CaptureDeviceParams cdp;
-			cdp.deviceId_ = 10;
+			cdp.deviceId_ = 0;
 			msp.captureDevice_ = cdp;
 			msp.addMediaThread(AudioThreadParams("pcmu"));
 			msp.addMediaThread(AudioThreadParams("g722"));
@@ -526,6 +527,66 @@ boost::shared_ptr<KeyChain> memoryKeyChain(const std::string name)
        sizeof(DEFAULT_RSA_PRIVATE_KEY_DER));
 
     return keyChain;
+}
+
+bool checkNfd()
+{
+  try {
+    boost::mutex m;
+    boost::unique_lock<boost::mutex> lock(m);
+    boost::condition_variable isDone;
+
+    boost::asio::io_service io;
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    boost::thread t([&isDone, &io](){
+        try 
+        {
+          io.run();
+        }
+        catch (std::exception& e)
+        {
+          isDone.notify_one();
+        }
+    });
+
+    ThreadsafeFace f(io);
+
+    boost::shared_ptr<KeyChain> keyChain = memoryKeyChain("/test");
+    f.setCommandSigningInfo(*keyChain, certName(keyName("/test")));
+
+    OnInterestCallback dummy = [](const ptr_lib::shared_ptr<const Name>& prefix,
+     const ptr_lib::shared_ptr<const Interest>& interest, Face& face, 
+     uint64_t interestFilterId,
+     const ptr_lib::shared_ptr<const InterestFilter>& filter){};
+
+    bool registered = false;
+    f.registerPrefix(Name("/test"),
+      dummy, 
+      [&isDone, &registered](const ptr_lib::shared_ptr<const Name>&){
+        isDone.notify_one();
+      },
+      [&isDone, &registered](const ptr_lib::shared_ptr<const Name>&,
+        uint64_t registeredPrefixId){
+        isDone.notify_one();
+        registered = true;
+      });
+
+    isDone.wait(lock);
+
+    work.reset();
+    io.stop();
+    t.join();
+
+    if (!registered)
+      throw std::runtime_error("");
+  }
+  catch (std::exception &e)
+  {
+    GT_PRINTF("Error creating Face. NFD may not be running. Skipping this test.\n");
+    return false;
+  }
+
+  return true;
 }
 
 //******************************************************************************

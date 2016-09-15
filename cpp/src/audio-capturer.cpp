@@ -155,7 +155,7 @@ AudioCapturer::getRtcpNum()
 }
 
 void
-AudioCapturer::setLogger(ndnlog::new_api::Logger* logger)
+AudioCapturer::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     pimpl_->setLogger(logger);    
 }

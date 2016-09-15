@@ -55,7 +55,7 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(ndnlog::new_api::Logger* logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		std::string getPrefix() const { return streamPrefix_; }
 		std::string getBasePrefix() const { return basePrefix_; }

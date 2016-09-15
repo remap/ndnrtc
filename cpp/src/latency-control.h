@@ -76,7 +76,7 @@ namespace ndnrtc {
 
 		PipelineAdjust getCurrentCommand() const { return currentCommand_; }
         
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 	private:
 		boost::mutex mutex_;

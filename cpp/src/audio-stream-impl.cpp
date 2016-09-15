@@ -77,7 +77,7 @@ AudioStreamImpl::stop()
 }
 
 void 
-AudioStreamImpl::setLogger(ndnlog::new_api::Logger* logger)
+AudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 

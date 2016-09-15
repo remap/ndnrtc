@@ -5,6 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
+#include <algorithm>
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
@@ -26,23 +27,23 @@ void Client::run(unsigned int runTimeSec,
 	statSampleIntervalMs_ = statSamplePeriodMs;
 	params_ = params;
 
-	setupConsumer();
-	setupProducer();
+	bool run = setupConsumer();
+	run |= setupProducer();
+
+	if (!run) return;
+
 	setupStatGathering();
-
 	runProcessLoop();
-
 	tearDownStatGathering();
 	tearDownProducer();
 	tearDownConsumer();
 }
 
 //******************************************************************************
-
-void Client::setupConsumer()
+bool Client::setupConsumer()
 {
 	if (!params_.isConsuming())
-		return;
+		return false;
 
 	ConsumerClientParams ccp = params_.getConsumerParams();
 
@@ -58,12 +59,14 @@ void Client::setupConsumer()
 	}
 
 	LogInfo("") << "Fetching " << remoteStreams_.size() << " remote stream(s) total" << endl;
+
+	return true;
 }
 
-void Client::setupProducer()
+bool Client::setupProducer()
 {
 	if (!params_.isProducing())
-		return;
+		return false;
 
 	ProducerClientParams pcp = params_.getProducerParams();
 
@@ -74,16 +77,19 @@ void Client::setupProducer()
 			LocalStream ls = initLocalStream(p);
 			localStreams_.push_back(boost::move(ls));
 
-			LogInfo("") << "Set up publishing stream " << p.streamName_ << endl;
+			LogInfo("") << "Set up publishing stream " << pcp.prefix_ << ":" 
+				<< p.streamName_ << endl;
 		}
 		catch (const runtime_error& e)
 		{
 			LogError("") << "error while trying to publish stream " << p.streamName_ << ": "
 				<< e.what() << endl;
+			return false;
 		}
 	}
 
-	LogInfo("") << "Publishing " << localStreams_.size() << " streams total" << endl;
+	LogInfo("") << "Publishing " << localStreams_.size() << " stream(s) total" << endl;
+	return true;
 }
 
 void Client::setupStatGathering()
@@ -163,6 +169,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 		boost::shared_ptr<ndnrtc::RemoteVideoStream> 
 			remoteStream(boost::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
 				p.sessionPrefix_, p.streamName_));
+		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_, renderer);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
 	}
@@ -171,6 +178,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 		boost::shared_ptr<ndnrtc::RemoteAudioStream>
 			remoteStream(boost::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
 				p.sessionPrefix_, p.streamName_));
+		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
 	}
@@ -198,6 +206,8 @@ LocalStream Client::initLocalStream(const ProducerStreamParams& p)
 
 		boost::shared_ptr<ndnrtc::LocalVideoStream> s =
 			boost::make_shared<ndnrtc::LocalVideoStream>(p.sessionPrefix_, settings);
+
+        s->setLogger(producerLogger(p.streamName_));
 		videoSource->addCapturer(s.get());
 		localStream = s;
 
@@ -230,4 +240,29 @@ boost::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamPar
 	}
 
 	return boost::shared_ptr<RawFrame>(new ArgbFrame(width, height));
+}
+
+boost::shared_ptr<ndnlog::new_api::Logger> 
+Client::producerLogger(std::string streamName)
+{
+	std::stringstream logFileName;
+	logFileName << params_.getGeneralParameters().logPath_ << "/" 
+		<< "producer-" << streamName << ".log";
+	boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
+		logFileName.str()));
+
+	return logger;
+}
+
+boost::shared_ptr<ndnlog::new_api::Logger> 
+Client::consumerLogger(std::string prefix, std::string streamName)
+{
+	std::replace(prefix.begin(), prefix.end(), '/', '-');
+	std::stringstream logFileName;
+	logFileName << params_.getGeneralParameters().logPath_ << "/" 
+		<< "consumer" << prefix << "-" << streamName << ".log" << std::endl;
+	boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
+		logFileName.str()));
+
+	return logger;
 }

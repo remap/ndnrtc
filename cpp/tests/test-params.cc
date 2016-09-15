@@ -481,15 +481,12 @@ TEST(TestGeneralConsumerParams, TestOutput)
 	GeneralConsumerParams gcp;
 
 	gcp.interestLifetime_ = 2000;
-	gcp.bufferSlotsNum_ = 200;
-	gcp.slotSize_ = 16000;
 	gcp.jitterSizeMs_ = 150;
 
 	stringstream ss;
 
 	ss << gcp;
-	EXPECT_EQ("interest lifetime: 2000 ms; jitter size: 150 ms; "
-		"buffer size: 200 slots; slot size: 16000 bytes", ss.str());
+	EXPECT_EQ("interest lifetime: 2000 ms; jitter size: 150 ms", ss.str());
 }
 
 TEST(TestGeneralParams, TestDefault)
@@ -499,10 +496,8 @@ TEST(TestGeneralParams, TestDefault)
 	EXPECT_EQ("", gp.logFile_);
 	EXPECT_EQ(ndnlog::NdnLoggerDetailLevelNone, gp.loggingLevel_);
 	EXPECT_EQ("", gp.logPath_);
-	EXPECT_FALSE(gp.useRtx_);
 	EXPECT_FALSE(gp.useFec_);
 	EXPECT_FALSE(gp.useAvSync_);
-	EXPECT_FALSE(gp.skipIncomplete_);
 	EXPECT_EQ("", gp.host_);
 	EXPECT_EQ(6363, gp.portNum_);
 }
@@ -513,8 +508,8 @@ TEST(TestGeneralParams, TestOutputEmpty)
 	stringstream ss;
 
 	ss << gp;
-	EXPECT_EQ("log level: NONE; log file:  (at ); RTX: OFF; FEC: OFF; "
-		"A/V Sync: OFF; Skipping incomplete frames: OFF; Host: ; Port #: 6363", 
+	EXPECT_EQ("log level: NONE; log file:  (at ); FEC: OFF; "
+		"A/V Sync: OFF; Host: ; Port #: 6363", 
 		ss.str());
 }
 
@@ -525,17 +520,15 @@ TEST(TestGeneralParams, TestOutput)
 	gp.loggingLevel_ = ndnlog::NdnLoggerDetailLevelAll;
 	gp.logFile_ = "ndnrtc.log";
 	gp.logPath_ = "/tmp";
-	gp.useRtx_ = true;
 	gp.useFec_ = false;
 	gp.useAvSync_ = true;
-	gp.skipIncomplete_ = true;
 	gp.host_ = "aleph.ndn.ucla.edu";
 	gp.portNum_ = 6363;
 
 	stringstream ss;
 	ss << gp;
-	EXPECT_EQ("log level: TRACE; log file: ndnrtc.log (at /tmp); RTX: ON; FEC: OFF; "
-		"A/V Sync: ON; Skipping incomplete frames: ON; Host: aleph.ndn.ucla.edu; Port #: 6363", 
+	EXPECT_EQ("log level: TRACE; log file: ndnrtc.log (at /tmp); FEC: OFF; "
+		"A/V Sync: ON; Host: aleph.ndn.ucla.edu; Port #: 6363", 
 		ss.str());
 }
 

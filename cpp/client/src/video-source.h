@@ -53,8 +53,6 @@ private:
 
 	void sourceFrame();
 	void deliverFrame(const RawFrame& frame);
-	void startCapturers();
-	void stopCapturers();
 };
 
 #endif

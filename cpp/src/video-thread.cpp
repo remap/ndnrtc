@@ -68,7 +68,7 @@ void VideoThread::onDroppedFrame()
 }
 
 void
-VideoThread::setLogger(ndnlog::new_api::Logger *logger)
+VideoThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     coder_.setLogger(logger);
     ILoggingObject::setLogger(logger);

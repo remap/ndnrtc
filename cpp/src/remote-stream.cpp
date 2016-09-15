@@ -72,7 +72,7 @@ RemoteStream::getStatistics() const
 }
 
 void
-RemoteStream::setLogger(ndnlog::new_api::Logger* logger)
+RemoteStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	pimpl_->setLogger(logger);
 }

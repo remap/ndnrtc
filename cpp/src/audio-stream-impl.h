@@ -28,7 +28,7 @@ namespace ndnrtc {
 
 		bool isRunning() const { return streamRunning_; };
 		std::vector<std::string> getThreads() const;
-		void setLogger(ndnlog::new_api::Logger* logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 	private:
 		friend LocalAudioStream::LocalAudioStream(const std::string& basePrefix,

@@ -82,6 +82,8 @@ ndn::Name
 boost::shared_ptr<ndn::KeyChain> 
   memoryKeyChain(const std::string name);
 
+bool checkNfd();
+
 namespace testing
 {
  namespace internal

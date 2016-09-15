@@ -54,7 +54,7 @@ namespace ndnrtc {
         virtual void start(unsigned int fastForwardMs = 0);
         virtual void stop();
 
-        void setLogger(ndnlog::new_api::Logger* logger);
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
         bool isRunning() const;
 

@@ -284,7 +284,7 @@ void StatCollector::startCollecting(unsigned int queryInterval, string path,
 
 void StatCollector::stop()
 {
-    generator_->stop();
+    if (generator_) generator_->stop();
 }
 
 #pragma mark - private
