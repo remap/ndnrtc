@@ -22,11 +22,6 @@ drdEstimator_(drdEstimator), buffer_(buffer), sstorage_(storage)
 	description_ = "buffer-control";
 }
 
-BufferControl::~BufferControl()
-{
-    std::cout << "BufferControl::~BufferControl()" << std::endl;
-}
-
 void 
 BufferControl::attach(IBufferControlObserver* o)
 {

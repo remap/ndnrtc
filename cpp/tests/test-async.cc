@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
+#include <boost/make_shared.hpp>
 
 #include "src/async.h"
 
@@ -32,19 +33,15 @@ TEST(TestAsync, TestDispatchAsync)
 	EXPECT_CALL(asyncHelper, onCompletion())
 		.Times(1);
 
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
 	boost::thread t([&io](){
-		int n = 0;
-		while (n < 500) 
-		{
-			io.run();
-			boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-			n+=10;
-		}
+        io.run();
 	});
 
 	ndnrtc::async::dispatchAsync(io, 
 		boost::bind(&MockAsyncHelper::dispatch, &asyncHelper),
 		boost::bind(&MockAsyncHelper::onCompletion, &asyncHelper));
+    work.reset();
 	t.join();
 }
 
@@ -62,14 +59,9 @@ TEST(TestAsync, TestDispatchAsync2)
 		compValue = 1;
 	};
 
+    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
 	boost::thread t([&io](){
-		int n = 0;
-		while (n < 500) 
-		{
-			io.run();
-			boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-			n+=10;
-		}
+        io.run();
 	});
 
 
@@ -81,7 +73,8 @@ TEST(TestAsync, TestDispatchAsync2)
 	boost::this_thread::sleep_for(boost::chrono::milliseconds(150));
 	EXPECT_NE(0, dispValue);
 	EXPECT_NE(0, compValue);
-	
+    
+    work.reset();
 	t.join();
 }
 

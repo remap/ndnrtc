@@ -52,6 +52,7 @@ void KeyChainManager::setupInstanceKeyChain()
 
 void KeyChainManager::createSigningIdentity()
 {
+    // create self-signed certificate
 	Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
 
 	LogWarn("") << "Generated identity " << signingIdentity_ << " (certificate name " 

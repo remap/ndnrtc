@@ -35,7 +35,6 @@ namespace ndnrtc {
 		BufferControl(const boost::shared_ptr<DrdEstimator>&,
                       const boost::shared_ptr<IBuffer>&,
                       const boost::shared_ptr<statistics::StatisticsStorage>& storage);
-		~BufferControl();
 
 		void attach(IBufferControlObserver*);
 		void detach(IBufferControlObserver*);
