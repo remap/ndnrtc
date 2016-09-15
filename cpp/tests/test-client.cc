@@ -50,7 +50,7 @@ TEST(TestClient, TestRunClientPhony)
     t.join();
     io.stop();
 }
-#if 0
+
 TEST(TestClient, TestConsumer)
 {
 	boost::asio::io_service io;
@@ -83,9 +83,8 @@ TEST(TestClient, TestConsumer)
 	face->shutdown();
     work.reset();
     t.join();
-    io.stop();
 }
-#endif
+
 TEST(TestClient, TestProducer)
 {
 	boost::asio::io_service io;

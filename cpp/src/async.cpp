@@ -39,9 +39,8 @@ namespace ndnrtc
                 doneFlag = true;
 				isDone.notify_one();
 			});
-            
-            while (!doneFlag)
-                isDone.wait(lock);
+
+            isDone.wait(lock, [&doneFlag](){ return doneFlag.load(); });
 		}
 	}
 }
