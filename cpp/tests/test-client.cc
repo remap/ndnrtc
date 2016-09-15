@@ -59,7 +59,8 @@ TEST(TestClient, TestConsumer)
         io.run();
     });
 
-	std::string appPrefix = "/ndn/edu/ucla/remap/test/headless";
+    ClientParams cp = sampleConsumerParams();
+    std::string appPrefix = cp.getProducerParams().prefix_;
 	boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
 	boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
 
@@ -68,7 +69,6 @@ TEST(TestClient, TestConsumer)
 	{
 		Client c(io, face, keyChain);
 
-		ClientParams cp = sampleConsumerParams();
 		boost::shared_ptr<StatisticsStorage> sampleStats = 
 			boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
 
@@ -102,13 +102,13 @@ TEST(TestClient, TestProducer)
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 
 	ClientParams cp = sampleProducerParams();
-	// ASSERT_EQ(2, cp.getProducerParams().publishedStreams_.size());
+    ASSERT_EQ(2, cp.getProducerParams().publishedStreams_.size());
 
 	// create frame file source
-	std::string sourceName = cp.getProducerParams().publishedStreams_[0].source_;
+	std::string sourceName = cp.getProducerParams().publishedStreams_[1].source_;
 	{
 		unsigned int w,h;
-		cp.getProducerParams().publishedStreams_[0].getMaxResolution(w,h);
+		cp.getProducerParams().publishedStreams_[1].getMaxResolution(w,h);
 		FileSink sink(sourceName);
 		ArgbFrame frame(w, h);
 		uint8_t *b = frame.getBuffer().get();

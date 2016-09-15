@@ -224,7 +224,8 @@ ClientParams sampleProducerParams()
 		{
 			ProducerStreamParams msp;
 			stringstream ss;
-	
+            
+            msp.sessionPrefix_ = pcp.prefix_;
 			msp.streamName_ = "mic";
 			msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
 			msp.producerParams_.freshnessMs_ = 2000;
@@ -243,6 +244,7 @@ ClientParams sampleProducerParams()
 			ProducerStreamParams msp;
 			stringstream ss;
 	
+            msp.sessionPrefix_ = pcp.prefix_;
 			msp.streamName_ = "camera";
 			msp.source_ = "/tmp/camera.argb";
 			msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
