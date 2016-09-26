@@ -320,20 +320,20 @@ VideoStreamImpl::getCurrentSyncList(bool forKey)
 	return syncList;
 }
 
-bool VideoStreamImpl::checkMeta()
+bool
+VideoStreamImpl::updateMeta()
 {
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
 	for (auto it:metaKeepers_)
 	{
 		if (it.second->isNewMetaAvailable())
-		{
-			Name metaName(streamPrefix_);
-			metaName.append(it.first).append(NameComponents::NameComponentMeta)
-				.appendVersion(it.second->getVersion());
 			it.second->setVersion(it.second->getVersion()+1);
-			dataPublisher_->publish(metaName, it.second->getMeta());
-		}
+        
+        Name metaName(streamPrefix_);
+        metaName.append(it.first).append(NameComponents::NameComponentMeta)
+            .appendVersion(it.second->getVersion());
+        dataPublisher_->publish(metaName, it.second->getMeta());
 	}
 
 	return false;

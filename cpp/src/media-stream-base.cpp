@@ -28,7 +28,7 @@ const unsigned int MediaStreamBase::MetaCheckIntervalMs = META_CHECK_INTERVAL_MS
 MediaStreamBase::MediaStreamBase(const std::string& basePrefix, 
 	const MediaStreamSettings& settings):
 Periodic(settings.faceIo_),
-metaVersion_(0),
+metaVersion_(1),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
 cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_)),
@@ -42,7 +42,7 @@ statStorage_(statistics::StatisticsStorage::createProducerStatistics())
 
 	PublisherSettings ps;
     ps.sign_ = true; 	// it's ok to sign every packet as data publisher 
-    					// is used for low-rate data (max 10fps), 
+    					// is used for low-rate data (max 10fps) and manifests
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE;	// it's ok to rely on link-layer fragmenting
@@ -63,14 +63,14 @@ void
 MediaStreamBase::addThread(const MediaThreadParams* params)
 {
 	add(params);
-	publishMeta();
+	publishMeta(++metaVersion_);
 }
 
 void 
 MediaStreamBase::removeThread(const string& threadName)
 {
 	remove(threadName);
-	publishMeta();
+	publishMeta(++metaVersion_);
 }
 
 statistics::StatisticsStorage 
@@ -81,7 +81,7 @@ MediaStreamBase::getStatistics() const
 }
 
 void 
-MediaStreamBase::publishMeta()
+MediaStreamBase::publishMeta(unsigned int metaVersion)
 {
 	boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(getThreads()));
 	// don't need to synchronize unless publishMeta will be called 
@@ -89,7 +89,7 @@ MediaStreamBase::publishMeta()
 	// constructor LocalVideoStream/LocalAudioStream
 	
 	Name metaName(streamPrefix_);
-	metaName.append(NameComponents::NameComponentMeta).appendVersion(++metaVersion_);
+	metaName.append(NameComponents::NameComponentMeta).appendVersion(metaVersion);
 
 	boost::shared_ptr<MediaStreamBase> me = boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
 	async::dispatchAsync(settings_.faceIo_, [me, metaName, meta](){
@@ -101,7 +101,9 @@ MediaStreamBase::publishMeta()
 
 unsigned int MediaStreamBase::periodicInvocation()
 {
-	if (checkMeta())
+    publishMeta(metaVersion_); // republish stream metadata
+    
+	if (updateMeta()) // update thread meta
 		return META_CHECK_INTERVAL_MS;
 	return 0;
 }

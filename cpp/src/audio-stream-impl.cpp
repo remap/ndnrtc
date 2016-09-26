@@ -192,7 +192,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 }
 
 bool 
-AudioStreamImpl::checkMeta()
+AudioStreamImpl::updateMeta()
 {
 	if (streamRunning_)
 	{
@@ -200,14 +200,14 @@ AudioStreamImpl::checkMeta()
 		for (auto it:metaKeepers_)
 		{
 			it.second->updateMeta(threads_[it.first]->getRate());
-			if (it.second->isNewMetaAvailable())
-			{
-				Name metaName(streamPrefix_);
-				metaName.append(it.first).append(NameComponents::NameComponentMeta)
-					.appendVersion(it.second->getVersion());
+			
+            if (it.second->isNewMetaAvailable())
 				it.second->setVersion(it.second->getVersion()+1);
-				dataPublisher_->publish(metaName, it.second->getMeta());
-			}
+            
+            Name metaName(streamPrefix_);
+            metaName.append(it.first).append(NameComponents::NameComponentMeta)
+                .appendVersion(it.second->getVersion());
+            dataPublisher_->publish(metaName, it.second->getMeta());
 		}
 	}
 	return streamRunning_;

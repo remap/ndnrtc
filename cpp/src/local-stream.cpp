@@ -36,7 +36,7 @@ pimpl_(boost::make_shared<AudioStreamImpl>(basePrefix, settings))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
-	pimpl_->publishMeta();
+	pimpl_->publishMeta(1);
 }
 
 LocalAudioStream::~LocalAudioStream()
@@ -114,7 +114,7 @@ pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
-	pimpl_->publishMeta();
+	pimpl_->publishMeta(1);
 }
 
 LocalVideoStream::~LocalVideoStream()
