@@ -73,7 +73,9 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 				{
 					// had problems verifying manifest
 					for (auto& i:info)
-						LogWarnC << "verification failure " << i.getData()->getName() << std::endl;
+						LogWarnC << "manifest verification failure " << i.getData()->getName()
+                        << " (KeyLocator " << (KeyLocator::getFromSignature(i.getData()->getSignature())).getKeyName()
+                        << ")" << std::endl;
 					slot->verified_ = BufferSlot::Verification::Failed;
 				}
 				else
