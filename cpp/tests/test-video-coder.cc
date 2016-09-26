@@ -595,6 +595,108 @@ TEST(TestCoder, TestEncode3000K)
 }
 #endif
 #if 1
+TEST(TestCoder, Test720pEnforceNoDrop)
+{
+    bool dropEnabled = false;
+    int nFrames = 30;
+    int targetBitrate = 1000;
+    int width = 1280, height = 720;
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+    std::srand(std::time(0));
+    int frameSize = width*height*4*sizeof(uint8_t);
+    uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
+    std::vector<webrtc::I420VideoFrame> frames;
+    
+    for (int f = 0; f < nFrames; ++f)
+    {
+        for (int j = 0; j < height; ++j)
+            for (int i = 0; i < width; ++i)
+                frameBuffer[i*width+j] = std::rand()%256; // random noise
+        
+        webrtc::I420VideoFrame convertedFrame;
+        {
+            // make conversion to I420
+            const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
+            int stride_y = width;
+            int stride_uv = (width + 1) / 2;
+            int target_width = width;
+            int target_height = height;
+            
+            convertedFrame.CreateEmptyFrame(target_width,
+                                            abs(target_height), stride_y, stride_uv, stride_uv);
+            ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
+                          width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
+        }
+        frames.push_back(convertedFrame);
+    }
+    
+    {
+        VideoCoderParams vcp(sampleVideoCoderParams());
+        vcp.startBitrate_ = targetBitrate;
+        vcp.maxBitrate_ = targetBitrate;
+        vcp.encodeWidth_ = width;
+        vcp.encodeHeight_ = height;
+        vcp.dropFramesOn_ = dropEnabled;
+        MockEncoderDelegate coderDelegate;
+        coderDelegate.setDefaults();
+        VideoCoder vc(vcp, &coderDelegate);
+        
+#ifdef ENABLE_LOGGING
+        vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+        boost::asio::io_service io;
+        boost::asio::deadline_timer runTimer(io);
+        boost::chrono::duration<int, boost::milli> encodingDuration;
+        high_resolution_clock::time_point encStart;
+        
+        boost::function<void()> onEncStart = [&encStart, &coderDelegate](){
+            coderDelegate.countEncodingStarted();
+            encStart = high_resolution_clock::now();
+        };
+        boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+            coderDelegate.countEncodedFrame(f);
+            encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
+        };
+        
+        EXPECT_CALL(coderDelegate, onEncodingStarted())
+        .Times(nFrames)
+        .WillRepeatedly(Invoke(onEncStart));
+        EXPECT_CALL(coderDelegate, onEncodedFrame(_))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Invoke(onEncEnd));
+        EXPECT_CALL(coderDelegate, onDroppedFrame())
+        .Times(0);
+        
+        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+        for (int i = 0; i < nFrames; ++i)
+        {
+            runTimer.expires_from_now(boost::posix_time::milliseconds(30));
+            vc.onRawFrame(frames[i]);
+            runTimer.wait();
+        }
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
+        int bitrate = (int)(((double)coderDelegate.getBytesReceived())*8/1000./(double)duration*1000);
+        double avgFrameEncTimeMs = (double)encodingDuration.count()/(double)coderDelegate.getEncodedNum();
+        
+        GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
+                  coderDelegate.getEncodedNum(), encodingDuration.count(),
+                  avgFrameEncTimeMs);
+        GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+                  "dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
+                  nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
+                  coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
+        GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
+                  coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
+        EXPECT_GE(1000./30., avgFrameEncTimeMs);
+    }
+    
+    free(frameBuffer);
+}
+#endif
+#if 1
 TEST(TestCoder, TestEnforceNoDrop)
 {
 	bool dropEnabled = false;
