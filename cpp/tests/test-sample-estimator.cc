@@ -9,11 +9,11 @@
 #include <ctime>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
-#include "src/sample-estimator.h"
-#include "src/frame-data.h"
-#include "statistics.h"
+#include "src/sample-estimator.hpp"
+#include "src/frame-data.hpp"
+#include "statistics.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

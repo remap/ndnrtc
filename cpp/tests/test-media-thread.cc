@@ -13,11 +13,11 @@
 #include <ndn-cpp/data.hpp>
 #include "gtest/gtest.h"
 
-#include "tests-helpers.h"
-#include "frame-data.h"
-#include "src/video-thread.h"
-#include "src/audio-thread.h"
-#include "mock-objects/audio-thread-callback-mock.h"
+#include "tests-helpers.hpp"
+#include "frame-data.hpp"
+#include "src/video-thread.hpp"
+#include "src/audio-thread.hpp"
+#include "mock-objects/audio-thread-callback-mock.hpp"
 
 // #define ENABLE_LOGGING
 

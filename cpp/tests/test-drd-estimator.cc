@@ -10,10 +10,10 @@
 #include <boost/thread.hpp>
 
 #include "gtest/gtest.h"
-#include "src/drd-estimator.h"
-#include "tests-helpers.h"
+#include "src/drd-estimator.hpp"
+#include "tests-helpers.hpp"
 
-#include "mock-objects/drd-estimator-observer-mock.h"
+#include "mock-objects/drd-estimator-observer-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

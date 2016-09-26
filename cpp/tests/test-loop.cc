@@ -19,15 +19,15 @@
 #include <boost/algorithm/string/classification.hpp>
 
 #include "gtest/gtest.h"
-#include "remote-stream.h"
-#include "local-stream.h"
-#include "tests-helpers.h"
-#include "client/src/video-source.h"
-#include "client/src/frame-io.h"
-#include "estimators.h"
+#include "remote-stream.hpp"
+#include "local-stream.hpp"
+#include "tests-helpers.hpp"
+#include "client/src/video-source.hpp"
+#include "client/src/frame-io.hpp"
+#include "estimators.hpp"
 
-#include "mock-objects/external-capturer-mock.h"
-#include "mock-objects/external-renderer-mock.h"
+#include "mock-objects/external-capturer-mock.hpp"
+#include "mock-objects/external-renderer-mock.hpp"
 
 //#define ENABLE_LOGGING
 //#define SAVE_VIDEO

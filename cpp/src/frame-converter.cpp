@@ -6,7 +6,7 @@
 //
 
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
-#include "frame-converter.h"
+#include "frame-converter.hpp"
 #include <stdexcept>
 
 using namespace ndnrtc;

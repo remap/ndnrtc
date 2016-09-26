@@ -11,10 +11,10 @@
 #include <ndn-cpp/threadsafe-face.hpp>
 
 #include "gtest/gtest.h"
-#include "interest-queue.h"
-#include "tests-helpers.h"
+#include "interest-queue.hpp"
+#include "tests-helpers.hpp"
 
-#include "mock-objects/interest-queue-observer-mock.h"
+#include "mock-objects/interest-queue-observer-mock.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

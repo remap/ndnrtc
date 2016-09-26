@@ -21,7 +21,7 @@
 
 #include <fstream>
 #include <iomanip>
-#include "simple-log.h"
+#include "simple-log.hpp"
 
 #define MAX_BUF_SIZE 4*256 // string buffer
 

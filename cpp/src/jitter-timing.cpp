@@ -12,10 +12,10 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/function.hpp>
 
-#include "jitter-timing.h"
-#include "clock.h"
-#include "simple-log.h"
-#include "ndnrtc-object.h"
+#include "jitter-timing.hpp"
+#include "clock.hpp"
+#include "simple-log.hpp"
+#include "ndnrtc-object.hpp"
 
 using namespace ndnrtc;
 using namespace ndnlog;

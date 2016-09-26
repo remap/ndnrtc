@@ -8,17 +8,17 @@
 //  Author:  Peter Gusev
 //
 
-#include "frame-buffer.h"
+#include "frame-buffer.hpp"
 
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "fec.h"
-#include "clock.h"
-#include "frame-data.h"
-#include "name-components.h"
-#include "simple-log.h"
-#include "statistics.h"
+#include "fec.hpp"
+#include "clock.hpp"
+#include "frame-data.hpp"
+#include "name-components.hpp"
+#include "simple-log.hpp"
+#include "statistics.hpp"
 
 using namespace std;
 using namespace ndnrtc;

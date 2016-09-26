@@ -11,8 +11,8 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "segment-fetcher.h"
-#include "simple-log.h"
+#include "segment-fetcher.hpp"
+#include "simple-log.hpp"
 
 using namespace ndn;
 using namespace std;

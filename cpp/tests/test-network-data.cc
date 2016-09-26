@@ -13,9 +13,9 @@
 #include <ndn-cpp/digest-sha256-signature.hpp>
 #include <ndn-cpp/name.hpp>
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 #include "gtest/gtest.h"
-#include "src/frame-data.h"
+#include "src/frame-data.hpp"
 
 using namespace ndnrtc;
 

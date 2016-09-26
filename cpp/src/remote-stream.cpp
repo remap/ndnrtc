@@ -5,13 +5,13 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "remote-stream.h"
+#include "remote-stream.hpp"
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/name.hpp>
 
-#include "remote-stream-impl.h"
-#include "remote-video-stream.h"
-#include "remote-audio-stream.h"
+#include "remote-stream-impl.hpp"
+#include "remote-video-stream.hpp"
+#include "remote-audio-stream.hpp"
 
 using namespace ndnrtc;
 

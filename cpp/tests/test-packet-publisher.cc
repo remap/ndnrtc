@@ -16,10 +16,10 @@
 #include <ndn-cpp/security/policy/self-verify-policy-manager.hpp>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "src/packet-publisher.h"
-#include "mock-objects/ndn-cpp-mock.h"
-#include "frame-data.h"
+#include "tests-helpers.hpp"
+#include "src/packet-publisher.hpp"
+#include "mock-objects/ndn-cpp-mock.hpp"
+#include "frame-data.hpp"
 
 // include .cpp in order to instantiate class with mock objects
 #include "src/packet-publisher.cpp"

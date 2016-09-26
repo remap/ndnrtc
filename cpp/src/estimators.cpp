@@ -9,8 +9,8 @@
 #include <vector>
 #include <cmath>
 
-#include "estimators.h"
-#include "clock.h"
+#include "estimators.hpp"
+#include "clock.hpp"
 
 using namespace ndnrtc::estimators;
 using namespace ndnrtc::clock;

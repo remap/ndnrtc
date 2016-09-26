@@ -5,11 +5,11 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "buffer-control.h"
-#include "name-components.h"
-#include "drd-estimator.h"
-#include "frame-data.h"
-#include "statistics.h"
+#include "buffer-control.hpp"
+#include "name-components.hpp"
+#include "drd-estimator.hpp"
+#include "frame-data.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

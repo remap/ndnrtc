@@ -10,11 +10,11 @@
 #include <boost/chrono.hpp>
 
 #include "gtest/gtest.h"
-#include "interest-control.h"
-#include "drd-estimator.h"
-#include "statistics.h"
+#include "interest-control.hpp"
+#include "drd-estimator.hpp"
+#include "statistics.hpp"
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

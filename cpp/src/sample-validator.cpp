@@ -5,13 +5,13 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "sample-validator.h"
+#include "sample-validator.hpp"
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
-#include "name-components.h"
-#include "meta-fetcher.h"
+#include "name-components.hpp"
+#include "meta-fetcher.hpp"
 
 static const unsigned int META_FETCHER_POOL_SIZE = 100;
 

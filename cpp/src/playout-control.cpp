@@ -5,10 +5,10 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "playout-control.h"
+#include "playout-control.hpp"
 
-#include "playout.h"
-#include "frame-buffer.h"
+#include "playout.hpp"
+#include "frame-buffer.hpp"
 
 using namespace ndnrtc;
 

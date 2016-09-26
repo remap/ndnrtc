@@ -5,14 +5,14 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "remote-audio-stream.h"
-#include "audio-playout.h"
-#include "pipeline-control.h"
-#include "pipeliner.h"
-#include "latency-control.h"
-#include "interest-control.h"
-#include "playout-control.h"
-#include "sample-validator.h"
+#include "remote-audio-stream.hpp"
+#include "audio-playout.hpp"
+#include "pipeline-control.hpp"
+#include "pipeliner.hpp"
+#include "latency-control.hpp"
+#include "interest-control.hpp"
+#include "playout-control.hpp"
+#include "sample-validator.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;

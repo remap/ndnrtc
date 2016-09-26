@@ -8,19 +8,19 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "frame-data.h"
-#include "src/audio-playout.h"
-#include "audio-thread.h"
-#include "clock.h"
-#include "include/params.h"
-#include "audio-capturer.h"
-#include "statistics.h"
+#include "tests-helpers.hpp"
+#include "frame-data.hpp"
+#include "src/audio-playout.hpp"
+#include "audio-thread.hpp"
+#include "clock.hpp"
+#include "include/params.hpp"
+#include "audio-capturer.hpp"
+#include "statistics.hpp"
 
-#include "mock-objects/audio-thread-callback-mock.h"
-#include "mock-objects/buffer-observer-mock.h"
-#include "mock-objects/playback-queue-observer-mock.h"
-#include "mock-objects/playout-observer-mock.h"
+#include "mock-objects/audio-thread-callback-mock.hpp"
+#include "mock-objects/buffer-observer-mock.hpp"
+#include "mock-objects/playback-queue-observer-mock.hpp"
+#include "mock-objects/playout-observer-mock.hpp"
 
 // #define ENABLE_LOGGING
 

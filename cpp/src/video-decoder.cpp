@@ -14,9 +14,9 @@
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
-#include "video-decoder.h"
-#include "video-coder.h"
-#include "clock.h"
+#include "video-decoder.hpp"
+#include "video-coder.hpp"
+#include "clock.hpp"
 
 using namespace std;
 using namespace ndnrtc;

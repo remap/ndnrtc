@@ -12,9 +12,9 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include <client/src/stat-collector.h>
-#include "tests-helpers.h"
-#include "mock-objects/stream-mock.h"
+#include <client/src/stat-collector.hpp>
+#include "tests-helpers.hpp"
+#include "mock-objects/stream-mock.hpp"
 
 #define PREFIX string("/ndn/edu/ucla/remap/ndnrtc/user")
 #define CLIENT1 string("clientA")

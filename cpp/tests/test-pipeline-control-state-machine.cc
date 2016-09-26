@@ -8,18 +8,18 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "pipeliner.h"
-#include "latency-control.h"
-#include "interest-control.h"
-#include "pipeline-control-state-machine.h"
+#include "pipeliner.hpp"
+#include "latency-control.hpp"
+#include "interest-control.hpp"
+#include "pipeline-control-state-machine.hpp"
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
-#include "mock-objects/interest-control-mock.h"
-#include "mock-objects/pipeliner-mock.h"
-#include "mock-objects/latency-control-mock.h"
-#include "mock-objects/buffer-mock.h"
-#include "mock-objects/playout-control-mock.h"
+#include "mock-objects/interest-control-mock.hpp"
+#include "mock-objects/pipeliner-mock.hpp"
+#include "mock-objects/latency-control-mock.hpp"
+#include "mock-objects/buffer-mock.hpp"
+#include "mock-objects/playout-control-mock.hpp"
 
 // #define ENABLE_LOGGING
 

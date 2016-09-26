@@ -13,8 +13,8 @@
 #include <boost/assign.hpp>
 
 #include "gtest/gtest.h"
-#include "src/estimators.h"
-#include "client/src/precise-generator.h"
+#include "src/estimators.hpp"
+#include "client/src/precise-generator.hpp"
 
 using namespace ndnrtc::estimators;
 

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <libconfig.h++>
 
-#include "config.h"
+#include "config.hpp"
 
 #define SECTION_GENERAL_KEY "general"
 #define CONSUMER_KEY "consume"

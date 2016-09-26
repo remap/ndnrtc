@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "client/src/config.h"
+#include "client/src/config.hpp"
 
 #define TEST_CONFIG_FILE "tests/default.cfg"
 #define TEST_CONFIG_SAMPLE_CONSUMER_FILE "tests/sample-consumer.cfg"

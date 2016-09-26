@@ -11,8 +11,8 @@
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "video-thread.h"
-#include "frame-data.h"
+#include "video-thread.hpp"
+#include "frame-data.hpp"
 
 using namespace std;
 using namespace ndnlog;

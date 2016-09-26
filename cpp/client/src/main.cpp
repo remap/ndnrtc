@@ -17,9 +17,9 @@
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
 
-#include "config.h"
-#include "client.h"
-#include "key-chain-manager.h"
+#include "config.hpp"
+#include "client.hpp"
+#include "key-chain-manager.hpp"
 
 using namespace std;
 using namespace ndnrtc;

@@ -5,13 +5,13 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "meta-fetcher.h"
+#include "meta-fetcher.hpp"
 #include <boost/thread.hpp>
 #include <ndn-cpp/util/segment-fetcher.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
-#include "name-components.h"
+#include "name-components.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;

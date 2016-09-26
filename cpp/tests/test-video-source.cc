@@ -11,11 +11,11 @@
 #include <boost/algorithm/string/classification.hpp>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "mock-objects/external-capturer-mock.h"
-#include "client/src/config.h"
-#include "client/src/video-source.h"
-#include "estimators.h"
+#include "tests-helpers.hpp"
+#include "mock-objects/external-capturer-mock.hpp"
+#include "client/src/config.hpp"
+#include "client/src/video-source.hpp"
+#include "estimators.hpp"
 
 using namespace std;
 using namespace ::testing;

@@ -12,8 +12,8 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-#include "playout.h"
-#include "playout-impl.h"
+#include "playout.hpp"
+#include "playout-impl.hpp"
 
 using namespace std;
 using namespace ndnrtc;

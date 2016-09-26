@@ -12,10 +12,10 @@
 #include <boost/chrono.hpp>
 
 #include "gtest/gtest.h"
-#include "segment-controller.h"
-#include "frame-data.h"
+#include "segment-controller.hpp"
+#include "frame-data.hpp"
 
-#include "mock-objects/segment-controller-observer-mock.h"
+#include "mock-objects/segment-controller-observer-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

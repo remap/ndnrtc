@@ -5,7 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "key-chain-manager.h"
+#include "key-chain-manager.hpp"
 #include <algorithm>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>

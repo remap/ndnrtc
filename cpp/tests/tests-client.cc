@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "client/src/client.h"
+#include "client/src/client.hpp"
 
 TEST(TestClient, TestSingleton)
 {

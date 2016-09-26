@@ -10,7 +10,7 @@
 
 #include <iostream>
 #include <string.h>
-#include "fec.h"
+#include "fec.hpp"
 
 using namespace fec;
 

@@ -13,8 +13,8 @@
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/interest.hpp>
 
-#include "ndnrtc-common.h"
-#include "frame-data.h"
+#include "ndnrtc-common.hpp"
+#include "frame-data.hpp"
 
 using namespace std;
 using namespace webrtc;

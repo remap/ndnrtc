@@ -8,7 +8,7 @@
 //  Author: Peter Gusev
 //
 
-#include "statistics.h"
+#include "statistics.hpp"
 
 #include <algorithm>
 #include <boost/assign.hpp>

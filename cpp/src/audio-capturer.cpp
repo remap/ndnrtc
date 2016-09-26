@@ -12,8 +12,8 @@
 #include <boost/thread/lock_guard.hpp>
 #include <boost/make_shared.hpp>
 
-#include "audio-capturer.h"
-#include "audio-controller.h"
+#include "audio-capturer.hpp"
+#include "audio-controller.hpp"
 
 using namespace std;
 using namespace webrtc;

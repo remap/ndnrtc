@@ -7,10 +7,10 @@
 
 #include <boost/asio.hpp>
 
-#include "local-stream.h"
-#include "audio-stream-impl.h"
-#include "video-stream-impl.h"
-#include "audio-capturer.h"
+#include "local-stream.hpp"
+#include "audio-stream-impl.hpp"
+#include "video-stream-impl.hpp"
+#include "audio-capturer.hpp"
 
 using namespace ndnrtc;
 using namespace std;

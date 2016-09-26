@@ -8,13 +8,13 @@
 //  Author:  Peter Gusev
 //
 
-#include "interest-queue.h"
+#include "interest-queue.hpp"
 #include <boost/thread/lock_guard.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/interest.hpp>
 
-#include "clock.h"
-#include "async.h"
+#include "clock.hpp"
+#include "async.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;

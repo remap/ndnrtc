@@ -8,9 +8,9 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "config.h"
-#include "include/params.h"
-#include "tests-helpers.h"
+#include "config.hpp"
+#include "include/params.hpp"
+#include "tests-helpers.hpp"
 
 using namespace std;
 using namespace ndnrtc;

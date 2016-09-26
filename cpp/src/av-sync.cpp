@@ -7,9 +7,9 @@
 //
 //  Author:  Peter Gusev
 
-#include "av-sync.h"
+#include "av-sync.hpp"
 #if 0
-#include "consumer.h"
+#include "consumer.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::new_api;

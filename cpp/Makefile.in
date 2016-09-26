@@ -143,8 +143,7 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
 	bin/tests/test-client$(EXEEXT)
 TESTS = $(check_PROGRAMS)
-noinst_PROGRAMS = bin/benchmark-local-stream$(EXEEXT) \
-	bin/local-stream$(EXEEXT)
+noinst_PROGRAMS = bin/benchmark-local-stream$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
@@ -291,39 +290,6 @@ bin_benchmark_local_stream_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_benchmark_local_stream_LDFLAGS) $(LDFLAGS) -o $@
-am_bin_local_stream_OBJECTS =  \
-	extra/bin_local_stream-local-stream.$(OBJEXT) \
-	src/bin_local_stream-local-stream.$(OBJEXT) \
-	src/bin_local_stream-video-stream-impl.$(OBJEXT) \
-	src/bin_local_stream-video-thread.$(OBJEXT) \
-	src/bin_local_stream-video-coder.$(OBJEXT) \
-	src/bin_local_stream-frame-data.$(OBJEXT) \
-	src/bin_local_stream-fec.$(OBJEXT) \
-	src/bin_local_stream-audio-thread.$(OBJEXT) \
-	src/bin_local_stream-audio-capturer.$(OBJEXT) \
-	src/bin_local_stream-webrtc-audio-channel.$(OBJEXT) \
-	src/bin_local_stream-audio-controller.$(OBJEXT) \
-	src/bin_local_stream-threading-capability.$(OBJEXT) \
-	src/bin_local_stream-ndnrtc-object.$(OBJEXT) \
-	src/bin_local_stream-simple-log.$(OBJEXT) \
-	src/bin_local_stream-name-components.$(OBJEXT) \
-	src/bin_local_stream-frame-converter.$(OBJEXT) \
-	src/bin_local_stream-estimators.$(OBJEXT) \
-	src/bin_local_stream-clock.$(OBJEXT) \
-	src/bin_local_stream-async.$(OBJEXT) \
-	src/bin_local_stream-audio-stream-impl.$(OBJEXT) \
-	src/bin_local_stream-media-stream-base.$(OBJEXT) \
-	src/bin_local_stream-periodic.$(OBJEXT) \
-	src/bin_local_stream-statistics.$(OBJEXT) \
-	client/src/bin_local_stream-video-source.$(OBJEXT) \
-	client/src/bin_local_stream-precise-generator.$(OBJEXT) \
-	client/src/bin_local_stream-frame-io.$(OBJEXT) \
-	client/src/bin_local_stream-config.$(OBJEXT)
-bin_local_stream_OBJECTS = $(am_bin_local_stream_OBJECTS)
-bin_local_stream_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_local_stream_LDFLAGS) \
-	$(LDFLAGS) -o $@
 am__objects_2 = contrib/gtest/googlemock/src/bin_tests_test_async-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_async-gtest-all.$(OBJEXT)
 am_bin_tests_test_async_OBJECTS =  \
@@ -1218,7 +1184,7 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_benchmark_local_stream_SOURCES) \
-	$(bin_local_stream_SOURCES) $(bin_tests_test_async_SOURCES) \
+	$(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_buffer_control_SOURCES) \
@@ -1260,7 +1226,7 @@ SOURCES = $(libndnrtc_la_SOURCES) \
 	$(ndnrtc_client_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(bin_benchmark_local_stream_SOURCES) \
-	$(bin_local_stream_SOURCES) $(bin_tests_test_async_SOURCES) \
+	$(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_audio_capturer_SOURCES) \
 	$(bin_tests_test_audio_playout_SOURCES) \
 	$(bin_tests_test_buffer_control_SOURCES) \
@@ -1676,69 +1642,69 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
-pkginclude_HEADERS = include/ndnrtc-common.h include/params.h include/statistics.h include/interfaces.h include/name-components.h include/error-codes.h include/ndnrtc-defines.h include/simple-log.h include/stream.h include/local-stream.h include/remote-stream.h
+pkginclude_HEADERS = include/ndnrtc-common.hpp include/params.hpp include/statistics.hpp include/interfaces.hpp include/name-components.hpp include/error-codes.hpp include/ndnrtc-defines.hpp include/simple-log.hpp include/stream.hpp include/local-stream.hpp include/remote-stream.hpp
 lib_LTLIBRARIES = libndnrtc.la
-libndnrtc_la_SOURCES = src/async.cpp src/async.h \
-  src/audio-capturer.cpp src/audio-capturer.h \
-  src/audio-controller.cpp src/audio-controller.h \
-  src/audio-playout.cpp src/audio-playout.h \
-  src/audio-playout-impl.cpp src/audio-playout-impl.h \
-  src/audio-renderer.cpp src/audio-renderer.h \
-  src/audio-stream-impl.cpp src/audio-stream-impl.h \
-  src/audio-thread.cpp src/audio-thread.h \
-  src/av-sync.cpp src/av-sync.h \
-  src/buffer-control.cpp src/buffer-control.h \
-  src/clock.cpp src/clock.h \
-  src/data-validator.cpp src/data-validator.h \
-  src/drd-estimator.cpp src/drd-estimator.h \
-  src/estimators.cpp src/estimators.h \
-  src/fec.cpp src/fec.h \
-  src/frame-buffer.cpp src/frame-buffer.h \
-  src/frame-converter.cpp src/frame-converter.h \
-  src/frame-data.cpp src/frame-data.h \
-  src/interest-control.cpp src/interest-control.h \
-  src/interest-queue.cpp src/interest-queue.h \
-  src/jitter-timing.cpp src/jitter-timing.h \
-  src/latency-control.cpp src/latency-control.h \
-  src/local-stream.cpp include/local-stream.h \
-  src/media-stream-base.cpp src/media-stream-base.h \
-  src/meta-fetcher.cpp src/meta-fetcher.h \
-  src/name-components.cpp include/name-components.h \
-  src/ndnrtc-debug.h \
-  src/ndnrtc-endian.h \
-  src/ndnrtc-object.cpp src/ndnrtc-object.h \
-  src/ndnrtc-testing.h \
-  src/packet-publisher.cpp src/packet-publisher.h \
-  src/periodic.cpp src/periodic.h \
-  src/pipeline-control-state-machine.cpp src/pipeline-control-state-machine.h \
-  src/pipeline-control.cpp src/pipeline-control.h \
-  src/pipeliner.cpp src/pipeliner.h \
-  src/playout-control.cpp src/playout-control.h \
-  src/playout.cpp src/playout.h \
-  src/playout-impl.cpp src/playout-impl.h \
-  src/rate-adaptation-module.h \
-  src/remote-audio-stream.cpp src/remote-audio-stream.h \
-  src/remote-stream-impl.cpp src/remote-stream-impl.h \
-  src/remote-stream.cpp include/remote-stream.h \
-  src/remote-video-stream.cpp src/remote-video-stream.h \
-  src/renderer.h \
-  src/sample-estimator.cpp src/sample-estimator.h \
-  src/sample-validator.cpp src/sample-validator.h \
-  src/segment-controller.cpp src/segment-controller.h \
-  src/segment-fetcher.cpp src/segment-fetcher.h \
-  src/simple-log.cpp include/simple-log.h \
-  src/slot-buffer.cpp src/slot-buffer.h \
-  src/statistics.cpp include/statistics.h \
-  src/stream.h include/stream.h \
-  src/threading-capability.cpp src/threading-capability.h \
-  src/video-coder.cpp src/video-coder.h \
-  src/video-decoder.cpp src/video-decoder.h \
-  src/video-playout.cpp src/video-playout.h \
-  src/video-playout-impl.cpp src/video-playout-impl.h \
-  src/video-stream-impl.cpp src/video-stream-impl.h \
-  src/video-thread.cpp src/video-thread.h \
-  src/webrtc-audio-channel.cpp src/webrtc-audio-channel.h \
-  src/webrtc.h
+libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
+  src/audio-capturer.cpp src/audio-capturer.hpp \
+  src/audio-controller.cpp src/audio-controller.hpp \
+  src/audio-playout.cpp src/audio-playout.hpp \
+  src/audio-playout-impl.cpp src/audio-playout-impl.hpp \
+  src/audio-renderer.cpp src/audio-renderer.hpp \
+  src/audio-stream-impl.cpp src/audio-stream-impl.hpp \
+  src/audio-thread.cpp src/audio-thread.hpp \
+  src/av-sync.cpp src/av-sync.hpp \
+  src/buffer-control.cpp src/buffer-control.hpp \
+  src/clock.cpp src/clock.hpp \
+  src/data-validator.cpp src/data-validator.hpp \
+  src/drd-estimator.cpp src/drd-estimator.hpp \
+  src/estimators.cpp src/estimators.hpp \
+  src/fec.cpp src/fec.hpp \
+  src/frame-buffer.cpp src/frame-buffer.hpp \
+  src/frame-converter.cpp src/frame-converter.hpp \
+  src/frame-data.cpp src/frame-data.hpp \
+  src/interest-control.cpp src/interest-control.hpp \
+  src/interest-queue.cpp src/interest-queue.hpp \
+  src/jitter-timing.cpp src/jitter-timing.hpp \
+  src/latency-control.cpp src/latency-control.hpp \
+  src/local-stream.cpp include/local-stream.hpp \
+  src/media-stream-base.cpp src/media-stream-base.hpp \
+  src/meta-fetcher.cpp src/meta-fetcher.hpp \
+  src/name-components.cpp include/name-components.hpp \
+  src/ndnrtc-debug.hpp \
+  src/ndnrtc-endian.hpp \
+  src/ndnrtc-object.cpp src/ndnrtc-object.hpp \
+  src/ndnrtc-testing.hpp \
+  src/packet-publisher.cpp src/packet-publisher.hpp \
+  src/periodic.cpp src/periodic.hpp \
+  src/pipeline-control-state-machine.cpp src/pipeline-control-state-machine.hpp \
+  src/pipeline-control.cpp src/pipeline-control.hpp \
+  src/pipeliner.cpp src/pipeliner.hpp \
+  src/playout-control.cpp src/playout-control.hpp \
+  src/playout.cpp src/playout.hpp \
+  src/playout-impl.cpp src/playout-impl.hpp \
+  src/rate-adaptation-module.hpp \
+  src/remote-audio-stream.cpp src/remote-audio-stream.hpp \
+  src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
+  src/remote-stream.cpp include/remote-stream.hpp \
+  src/remote-video-stream.cpp src/remote-video-stream.hpp \
+  src/renderer.hpp \
+  src/sample-estimator.cpp src/sample-estimator.hpp \
+  src/sample-validator.cpp src/sample-validator.hpp \
+  src/segment-controller.cpp src/segment-controller.hpp \
+  src/segment-fetcher.cpp src/segment-fetcher.hpp \
+  src/simple-log.cpp include/simple-log.hpp \
+  src/slot-buffer.cpp src/slot-buffer.hpp \
+  src/statistics.cpp include/statistics.hpp \
+  src/stream.hpp include/stream.hpp \
+  src/threading-capability.cpp src/threading-capability.hpp \
+  src/video-coder.cpp src/video-coder.hpp \
+  src/video-decoder.cpp src/video-decoder.hpp \
+  src/video-playout.cpp src/video-playout.hpp \
+  src/video-playout-impl.cpp src/video-playout-impl.hpp \
+  src/video-stream-impl.cpp src/video-stream-impl.hpp \
+  src/video-thread.cpp src/video-thread.hpp \
+  src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
+  src/webrtc.hpp
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ -flat_namespace 
@@ -1746,7 +1712,7 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 	-lboost_chrono -lboost_thread -lboost_regex $(am__append_1) \
 	$(am__append_2)
 @OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.h client/src/renderer.cpp client/src/config.cpp client/src/config.h client/src/stat-collector.cpp client/src/stat-collector.h client/src/client.cpp client/src/client.h client/src/frame-io.h client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.h client/src/precise-generator.h client/src/precise-generator.cpp client/src/key-chain-manager.cpp
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_4)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir) $(am__append_5)
@@ -1960,11 +1926,6 @@ bin_benchmark_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-
 bin_benchmark_local_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_benchmark_local_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_benchmark_local_stream_LDADD = ${libndnrtc_la_LIBADD}
-bin_local_stream_SOURCES = extra/local-stream.cc src/local-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp client/src/config.cpp
-bin_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
-bin_local_stream_CPPFLAGS = ${libndnrtc_la_CPPFLAGS} ${ndnrtc_client_CPPFLAGS}
-bin_local_stream_LDFLAGS = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-bin_local_stream_LDADD = ${libndnrtc_la_LIBADD} -lconfig++
 all: all-am
 
 .SUFFIXES:
@@ -2272,68 +2233,6 @@ bin/$(am__dirstamp):
 bin/benchmark-local-stream$(EXEEXT): $(bin_benchmark_local_stream_OBJECTS) $(bin_benchmark_local_stream_DEPENDENCIES) $(EXTRA_bin_benchmark_local_stream_DEPENDENCIES) bin/$(am__dirstamp)
 	@rm -f bin/benchmark-local-stream$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_benchmark_local_stream_LINK) $(bin_benchmark_local_stream_OBJECTS) $(bin_benchmark_local_stream_LDADD) $(LIBS)
-extra/bin_local_stream-local-stream.$(OBJEXT): extra/$(am__dirstamp) \
-	extra/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-local-stream.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-video-stream-impl.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-video-thread.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-video-coder.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-frame-data.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-fec.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-audio-thread.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-audio-capturer.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-webrtc-audio-channel.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-audio-controller.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-threading-capability.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-ndnrtc-object.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-simple-log.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-name-components.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-frame-converter.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-estimators.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-clock.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-async.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-audio-stream-impl.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-media-stream-base.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-periodic.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_local_stream-statistics.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_local_stream-video-source.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_local_stream-precise-generator.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_local_stream-frame-io.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_local_stream-config.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-
-bin/local-stream$(EXEEXT): $(bin_local_stream_OBJECTS) $(bin_local_stream_DEPENDENCIES) $(EXTRA_bin_local_stream_DEPENDENCIES) bin/$(am__dirstamp)
-	@rm -f bin/local-stream$(EXEEXT)
-	$(AM_V_CXXLD)$(bin_local_stream_LINK) $(bin_local_stream_OBJECTS) $(bin_local_stream_LDADD) $(LIBS)
 tests/bin_tests_test_async-test-async.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_async-async.$(OBJEXT): src/$(am__dirstamp) \
@@ -3619,10 +3518,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_benchmark_local_stream-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_benchmark_local_stream-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_benchmark_local_stream-video-source.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-frame-io.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-precise-generator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_local_stream-video-source.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_client-frame-io.Po@am__quote@
@@ -3742,7 +3637,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@extra/$(DEPDIR)/bin_benchmark_local_stream-benchmark-local-stream.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@extra/$(DEPDIR)/bin_local_stream-local-stream.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-audio-controller.Po@am__quote@
@@ -3765,28 +3659,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-video-stream-impl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-video-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_benchmark_local_stream-webrtc-audio-channel.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-async.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-audio-capturer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-audio-controller.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-audio-thread.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-clock.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-estimators.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-fec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-frame-converter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-frame-data.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-local-stream.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-media-stream-base.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-name-components.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-periodic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-simple-log.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-statistics.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-threading-capability.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-video-coder.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-video-stream-impl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-video-thread.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_async-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po@am__quote@
@@ -5030,384 +4902,6 @@ contrib/gtest/googletest/src/bin_benchmark_local_stream-gtest-all.obj: contrib/g
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_benchmark_local_stream-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_benchmark_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_benchmark_local_stream-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
-
-extra/bin_local_stream-local-stream.o: extra/local-stream.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT extra/bin_local_stream-local-stream.o -MD -MP -MF extra/$(DEPDIR)/bin_local_stream-local-stream.Tpo -c -o extra/bin_local_stream-local-stream.o `test -f 'extra/local-stream.cc' || echo '$(srcdir)/'`extra/local-stream.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) extra/$(DEPDIR)/bin_local_stream-local-stream.Tpo extra/$(DEPDIR)/bin_local_stream-local-stream.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='extra/local-stream.cc' object='extra/bin_local_stream-local-stream.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o extra/bin_local_stream-local-stream.o `test -f 'extra/local-stream.cc' || echo '$(srcdir)/'`extra/local-stream.cc
-
-extra/bin_local_stream-local-stream.obj: extra/local-stream.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT extra/bin_local_stream-local-stream.obj -MD -MP -MF extra/$(DEPDIR)/bin_local_stream-local-stream.Tpo -c -o extra/bin_local_stream-local-stream.obj `if test -f 'extra/local-stream.cc'; then $(CYGPATH_W) 'extra/local-stream.cc'; else $(CYGPATH_W) '$(srcdir)/extra/local-stream.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) extra/$(DEPDIR)/bin_local_stream-local-stream.Tpo extra/$(DEPDIR)/bin_local_stream-local-stream.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='extra/local-stream.cc' object='extra/bin_local_stream-local-stream.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o extra/bin_local_stream-local-stream.obj `if test -f 'extra/local-stream.cc'; then $(CYGPATH_W) 'extra/local-stream.cc'; else $(CYGPATH_W) '$(srcdir)/extra/local-stream.cc'; fi`
-
-src/bin_local_stream-local-stream.o: src/local-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-local-stream.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-local-stream.Tpo -c -o src/bin_local_stream-local-stream.o `test -f 'src/local-stream.cpp' || echo '$(srcdir)/'`src/local-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-local-stream.Tpo src/$(DEPDIR)/bin_local_stream-local-stream.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/local-stream.cpp' object='src/bin_local_stream-local-stream.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-local-stream.o `test -f 'src/local-stream.cpp' || echo '$(srcdir)/'`src/local-stream.cpp
-
-src/bin_local_stream-local-stream.obj: src/local-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-local-stream.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-local-stream.Tpo -c -o src/bin_local_stream-local-stream.obj `if test -f 'src/local-stream.cpp'; then $(CYGPATH_W) 'src/local-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/local-stream.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-local-stream.Tpo src/$(DEPDIR)/bin_local_stream-local-stream.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/local-stream.cpp' object='src/bin_local_stream-local-stream.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-local-stream.obj `if test -f 'src/local-stream.cpp'; then $(CYGPATH_W) 'src/local-stream.cpp'; else $(CYGPATH_W) '$(srcdir)/src/local-stream.cpp'; fi`
-
-src/bin_local_stream-video-stream-impl.o: src/video-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-stream-impl.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-stream-impl.Tpo -c -o src/bin_local_stream-video-stream-impl.o `test -f 'src/video-stream-impl.cpp' || echo '$(srcdir)/'`src/video-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-stream-impl.Tpo src/$(DEPDIR)/bin_local_stream-video-stream-impl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-stream-impl.cpp' object='src/bin_local_stream-video-stream-impl.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-stream-impl.o `test -f 'src/video-stream-impl.cpp' || echo '$(srcdir)/'`src/video-stream-impl.cpp
-
-src/bin_local_stream-video-stream-impl.obj: src/video-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-stream-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-stream-impl.Tpo -c -o src/bin_local_stream-video-stream-impl.obj `if test -f 'src/video-stream-impl.cpp'; then $(CYGPATH_W) 'src/video-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-stream-impl.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-stream-impl.Tpo src/$(DEPDIR)/bin_local_stream-video-stream-impl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-stream-impl.cpp' object='src/bin_local_stream-video-stream-impl.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-stream-impl.obj `if test -f 'src/video-stream-impl.cpp'; then $(CYGPATH_W) 'src/video-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-stream-impl.cpp'; fi`
-
-src/bin_local_stream-video-thread.o: src/video-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-thread.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-thread.Tpo -c -o src/bin_local_stream-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-thread.Tpo src/$(DEPDIR)/bin_local_stream-video-thread.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-thread.cpp' object='src/bin_local_stream-video-thread.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-thread.o `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
-
-src/bin_local_stream-video-thread.obj: src/video-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-thread.Tpo -c -o src/bin_local_stream-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-thread.Tpo src/$(DEPDIR)/bin_local_stream-video-thread.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-thread.cpp' object='src/bin_local_stream-video-thread.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-thread.obj `if test -f 'src/video-thread.cpp'; then $(CYGPATH_W) 'src/video-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-thread.cpp'; fi`
-
-src/bin_local_stream-video-coder.o: src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-coder.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-coder.Tpo -c -o src/bin_local_stream-video-coder.o `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-coder.Tpo src/$(DEPDIR)/bin_local_stream-video-coder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-coder.cpp' object='src/bin_local_stream-video-coder.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-coder.o `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-
-src/bin_local_stream-video-coder.obj: src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-video-coder.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-video-coder.Tpo -c -o src/bin_local_stream-video-coder.obj `if test -f 'src/video-coder.cpp'; then $(CYGPATH_W) 'src/video-coder.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-coder.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-video-coder.Tpo src/$(DEPDIR)/bin_local_stream-video-coder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-coder.cpp' object='src/bin_local_stream-video-coder.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-video-coder.obj `if test -f 'src/video-coder.cpp'; then $(CYGPATH_W) 'src/video-coder.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-coder.cpp'; fi`
-
-src/bin_local_stream-frame-data.o: src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-frame-data.Tpo -c -o src/bin_local_stream-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-frame-data.Tpo src/$(DEPDIR)/bin_local_stream-frame-data.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-data.cpp' object='src/bin_local_stream-frame-data.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-
-src/bin_local_stream-frame-data.obj: src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-frame-data.Tpo -c -o src/bin_local_stream-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-frame-data.Tpo src/$(DEPDIR)/bin_local_stream-frame-data.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-data.cpp' object='src/bin_local_stream-frame-data.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
-
-src/bin_local_stream-fec.o: src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-fec.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-fec.Tpo -c -o src/bin_local_stream-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-fec.Tpo src/$(DEPDIR)/bin_local_stream-fec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/fec.cpp' object='src/bin_local_stream-fec.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-
-src/bin_local_stream-fec.obj: src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-fec.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-fec.Tpo -c -o src/bin_local_stream-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-fec.Tpo src/$(DEPDIR)/bin_local_stream-fec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/fec.cpp' object='src/bin_local_stream-fec.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
-
-src/bin_local_stream-audio-thread.o: src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-thread.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-thread.Tpo -c -o src/bin_local_stream-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-thread.Tpo src/$(DEPDIR)/bin_local_stream-audio-thread.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-thread.cpp' object='src/bin_local_stream-audio-thread.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-thread.o `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-
-src/bin_local_stream-audio-thread.obj: src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-thread.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-thread.Tpo -c -o src/bin_local_stream-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-thread.Tpo src/$(DEPDIR)/bin_local_stream-audio-thread.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-thread.cpp' object='src/bin_local_stream-audio-thread.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-thread.obj `if test -f 'src/audio-thread.cpp'; then $(CYGPATH_W) 'src/audio-thread.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-thread.cpp'; fi`
-
-src/bin_local_stream-audio-capturer.o: src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-capturer.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-capturer.Tpo -c -o src/bin_local_stream-audio-capturer.o `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-capturer.Tpo src/$(DEPDIR)/bin_local_stream-audio-capturer.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-capturer.cpp' object='src/bin_local_stream-audio-capturer.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-capturer.o `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-
-src/bin_local_stream-audio-capturer.obj: src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-capturer.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-capturer.Tpo -c -o src/bin_local_stream-audio-capturer.obj `if test -f 'src/audio-capturer.cpp'; then $(CYGPATH_W) 'src/audio-capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-capturer.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-capturer.Tpo src/$(DEPDIR)/bin_local_stream-audio-capturer.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-capturer.cpp' object='src/bin_local_stream-audio-capturer.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-capturer.obj `if test -f 'src/audio-capturer.cpp'; then $(CYGPATH_W) 'src/audio-capturer.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-capturer.cpp'; fi`
-
-src/bin_local_stream-webrtc-audio-channel.o: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-webrtc-audio-channel.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Tpo -c -o src/bin_local_stream-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/webrtc-audio-channel.cpp' object='src/bin_local_stream-webrtc-audio-channel.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-
-src/bin_local_stream-webrtc-audio-channel.obj: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-webrtc-audio-channel.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Tpo -c -o src/bin_local_stream-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_local_stream-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/webrtc-audio-channel.cpp' object='src/bin_local_stream-webrtc-audio-channel.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
-
-src/bin_local_stream-audio-controller.o: src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-controller.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-controller.Tpo -c -o src/bin_local_stream-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-controller.Tpo src/$(DEPDIR)/bin_local_stream-audio-controller.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-controller.cpp' object='src/bin_local_stream-audio-controller.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
-
-src/bin_local_stream-audio-controller.obj: src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-controller.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-controller.Tpo -c -o src/bin_local_stream-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-controller.Tpo src/$(DEPDIR)/bin_local_stream-audio-controller.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-controller.cpp' object='src/bin_local_stream-audio-controller.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
-
-src/bin_local_stream-threading-capability.o: src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-threading-capability.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-threading-capability.Tpo -c -o src/bin_local_stream-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-threading-capability.Tpo src/$(DEPDIR)/bin_local_stream-threading-capability.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_local_stream-threading-capability.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
-
-src/bin_local_stream-threading-capability.obj: src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-threading-capability.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-threading-capability.Tpo -c -o src/bin_local_stream-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-threading-capability.Tpo src/$(DEPDIR)/bin_local_stream-threading-capability.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_local_stream-threading-capability.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
-
-src/bin_local_stream-ndnrtc-object.o: src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Tpo -c -o src/bin_local_stream-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Tpo src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/ndnrtc-object.cpp' object='src/bin_local_stream-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-
-src/bin_local_stream-ndnrtc-object.obj: src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Tpo -c -o src/bin_local_stream-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Tpo src/$(DEPDIR)/bin_local_stream-ndnrtc-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/ndnrtc-object.cpp' object='src/bin_local_stream-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
-
-src/bin_local_stream-simple-log.o: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-simple-log.Tpo -c -o src/bin_local_stream-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-simple-log.Tpo src/$(DEPDIR)/bin_local_stream-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/simple-log.cpp' object='src/bin_local_stream-simple-log.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-
-src/bin_local_stream-simple-log.obj: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-simple-log.Tpo -c -o src/bin_local_stream-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-simple-log.Tpo src/$(DEPDIR)/bin_local_stream-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/simple-log.cpp' object='src/bin_local_stream-simple-log.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
-
-src/bin_local_stream-name-components.o: src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-name-components.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-name-components.Tpo -c -o src/bin_local_stream-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-name-components.Tpo src/$(DEPDIR)/bin_local_stream-name-components.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/bin_local_stream-name-components.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-
-src/bin_local_stream-name-components.obj: src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-name-components.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-name-components.Tpo -c -o src/bin_local_stream-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-name-components.Tpo src/$(DEPDIR)/bin_local_stream-name-components.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/bin_local_stream-name-components.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
-
-src/bin_local_stream-frame-converter.o: src/frame-converter.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-frame-converter.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-frame-converter.Tpo -c -o src/bin_local_stream-frame-converter.o `test -f 'src/frame-converter.cpp' || echo '$(srcdir)/'`src/frame-converter.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-frame-converter.Tpo src/$(DEPDIR)/bin_local_stream-frame-converter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-converter.cpp' object='src/bin_local_stream-frame-converter.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-frame-converter.o `test -f 'src/frame-converter.cpp' || echo '$(srcdir)/'`src/frame-converter.cpp
-
-src/bin_local_stream-frame-converter.obj: src/frame-converter.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-frame-converter.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-frame-converter.Tpo -c -o src/bin_local_stream-frame-converter.obj `if test -f 'src/frame-converter.cpp'; then $(CYGPATH_W) 'src/frame-converter.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-converter.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-frame-converter.Tpo src/$(DEPDIR)/bin_local_stream-frame-converter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-converter.cpp' object='src/bin_local_stream-frame-converter.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-frame-converter.obj `if test -f 'src/frame-converter.cpp'; then $(CYGPATH_W) 'src/frame-converter.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-converter.cpp'; fi`
-
-src/bin_local_stream-estimators.o: src/estimators.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-estimators.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-estimators.Tpo -c -o src/bin_local_stream-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-estimators.Tpo src/$(DEPDIR)/bin_local_stream-estimators.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/estimators.cpp' object='src/bin_local_stream-estimators.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-estimators.o `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
-
-src/bin_local_stream-estimators.obj: src/estimators.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-estimators.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-estimators.Tpo -c -o src/bin_local_stream-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-estimators.Tpo src/$(DEPDIR)/bin_local_stream-estimators.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/estimators.cpp' object='src/bin_local_stream-estimators.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
-
-src/bin_local_stream-clock.o: src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-clock.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-clock.Tpo -c -o src/bin_local_stream-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-clock.Tpo src/$(DEPDIR)/bin_local_stream-clock.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_local_stream-clock.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
-
-src/bin_local_stream-clock.obj: src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-clock.Tpo -c -o src/bin_local_stream-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-clock.Tpo src/$(DEPDIR)/bin_local_stream-clock.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_local_stream-clock.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
-
-src/bin_local_stream-async.o: src/async.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-async.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-async.Tpo -c -o src/bin_local_stream-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-async.Tpo src/$(DEPDIR)/bin_local_stream-async.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/async.cpp' object='src/bin_local_stream-async.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-async.o `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
-
-src/bin_local_stream-async.obj: src/async.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-async.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-async.Tpo -c -o src/bin_local_stream-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-async.Tpo src/$(DEPDIR)/bin_local_stream-async.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/async.cpp' object='src/bin_local_stream-async.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-async.obj `if test -f 'src/async.cpp'; then $(CYGPATH_W) 'src/async.cpp'; else $(CYGPATH_W) '$(srcdir)/src/async.cpp'; fi`
-
-src/bin_local_stream-audio-stream-impl.o: src/audio-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-stream-impl.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Tpo -c -o src/bin_local_stream-audio-stream-impl.o `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Tpo src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-stream-impl.cpp' object='src/bin_local_stream-audio-stream-impl.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-stream-impl.o `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
-
-src/bin_local_stream-audio-stream-impl.obj: src/audio-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-audio-stream-impl.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Tpo -c -o src/bin_local_stream-audio-stream-impl.obj `if test -f 'src/audio-stream-impl.cpp'; then $(CYGPATH_W) 'src/audio-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-stream-impl.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Tpo src/$(DEPDIR)/bin_local_stream-audio-stream-impl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-stream-impl.cpp' object='src/bin_local_stream-audio-stream-impl.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-audio-stream-impl.obj `if test -f 'src/audio-stream-impl.cpp'; then $(CYGPATH_W) 'src/audio-stream-impl.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-stream-impl.cpp'; fi`
-
-src/bin_local_stream-media-stream-base.o: src/media-stream-base.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-media-stream-base.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-media-stream-base.Tpo -c -o src/bin_local_stream-media-stream-base.o `test -f 'src/media-stream-base.cpp' || echo '$(srcdir)/'`src/media-stream-base.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-media-stream-base.Tpo src/$(DEPDIR)/bin_local_stream-media-stream-base.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-stream-base.cpp' object='src/bin_local_stream-media-stream-base.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-media-stream-base.o `test -f 'src/media-stream-base.cpp' || echo '$(srcdir)/'`src/media-stream-base.cpp
-
-src/bin_local_stream-media-stream-base.obj: src/media-stream-base.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-media-stream-base.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-media-stream-base.Tpo -c -o src/bin_local_stream-media-stream-base.obj `if test -f 'src/media-stream-base.cpp'; then $(CYGPATH_W) 'src/media-stream-base.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream-base.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-media-stream-base.Tpo src/$(DEPDIR)/bin_local_stream-media-stream-base.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/media-stream-base.cpp' object='src/bin_local_stream-media-stream-base.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-media-stream-base.obj `if test -f 'src/media-stream-base.cpp'; then $(CYGPATH_W) 'src/media-stream-base.cpp'; else $(CYGPATH_W) '$(srcdir)/src/media-stream-base.cpp'; fi`
-
-src/bin_local_stream-periodic.o: src/periodic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-periodic.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-periodic.Tpo -c -o src/bin_local_stream-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-periodic.Tpo src/$(DEPDIR)/bin_local_stream-periodic.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/periodic.cpp' object='src/bin_local_stream-periodic.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-periodic.o `test -f 'src/periodic.cpp' || echo '$(srcdir)/'`src/periodic.cpp
-
-src/bin_local_stream-periodic.obj: src/periodic.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-periodic.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-periodic.Tpo -c -o src/bin_local_stream-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-periodic.Tpo src/$(DEPDIR)/bin_local_stream-periodic.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/periodic.cpp' object='src/bin_local_stream-periodic.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-periodic.obj `if test -f 'src/periodic.cpp'; then $(CYGPATH_W) 'src/periodic.cpp'; else $(CYGPATH_W) '$(srcdir)/src/periodic.cpp'; fi`
-
-src/bin_local_stream-statistics.o: src/statistics.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-statistics.o -MD -MP -MF src/$(DEPDIR)/bin_local_stream-statistics.Tpo -c -o src/bin_local_stream-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-statistics.Tpo src/$(DEPDIR)/bin_local_stream-statistics.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/statistics.cpp' object='src/bin_local_stream-statistics.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-statistics.o `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
-
-src/bin_local_stream-statistics.obj: src/statistics.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_local_stream-statistics.obj -MD -MP -MF src/$(DEPDIR)/bin_local_stream-statistics.Tpo -c -o src/bin_local_stream-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_local_stream-statistics.Tpo src/$(DEPDIR)/bin_local_stream-statistics.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/statistics.cpp' object='src/bin_local_stream-statistics.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_local_stream-statistics.obj `if test -f 'src/statistics.cpp'; then $(CYGPATH_W) 'src/statistics.cpp'; else $(CYGPATH_W) '$(srcdir)/src/statistics.cpp'; fi`
-
-client/src/bin_local_stream-video-source.o: client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-video-source.o -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-video-source.Tpo -c -o client/src/bin_local_stream-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-video-source.Tpo client/src/$(DEPDIR)/bin_local_stream-video-source.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/bin_local_stream-video-source.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
-
-client/src/bin_local_stream-video-source.obj: client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-video-source.obj -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-video-source.Tpo -c -o client/src/bin_local_stream-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-video-source.Tpo client/src/$(DEPDIR)/bin_local_stream-video-source.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/bin_local_stream-video-source.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
-
-client/src/bin_local_stream-precise-generator.o: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-precise-generator.Tpo -c -o client/src/bin_local_stream-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-precise-generator.Tpo client/src/$(DEPDIR)/bin_local_stream-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_local_stream-precise-generator.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-
-client/src/bin_local_stream-precise-generator.obj: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-precise-generator.Tpo -c -o client/src/bin_local_stream-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-precise-generator.Tpo client/src/$(DEPDIR)/bin_local_stream-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_local_stream-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-
-client/src/bin_local_stream-frame-io.o: client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-frame-io.o -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-frame-io.Tpo -c -o client/src/bin_local_stream-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-frame-io.Tpo client/src/$(DEPDIR)/bin_local_stream-frame-io.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/bin_local_stream-frame-io.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
-
-client/src/bin_local_stream-frame-io.obj: client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-frame-io.obj -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-frame-io.Tpo -c -o client/src/bin_local_stream-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-frame-io.Tpo client/src/$(DEPDIR)/bin_local_stream-frame-io.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/bin_local_stream-frame-io.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
-
-client/src/bin_local_stream-config.o: client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-config.o -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-config.Tpo -c -o client/src/bin_local_stream-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-config.Tpo client/src/$(DEPDIR)/bin_local_stream-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/bin_local_stream-config.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
-
-client/src/bin_local_stream-config.obj: client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_local_stream-config.obj -MD -MP -MF client/src/$(DEPDIR)/bin_local_stream-config.Tpo -c -o client/src/bin_local_stream-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_local_stream-config.Tpo client/src/$(DEPDIR)/bin_local_stream-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/bin_local_stream-config.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_local_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_local_stream-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
 
 tests/bin_tests_test_async-test-async.o: tests/test-async.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_async_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_async-test-async.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_async-test-async.Tpo -c -o tests/bin_tests_test_async-test-async.o `test -f 'tests/test-async.cc' || echo '$(srcdir)/'`tests/test-async.cc
@@ -13238,6 +12732,12 @@ res/test-source-320x240.argb:
 	mkdir -p $(top_builddir)/res/
 	$(WGET) https://s3.amazonaws.com/ndnrtc-test-files/raw/test-source-320x240.argb.tar.gz
 	$(TAR) -xf test-source-320x240.argb.tar.gz -C $(top_builddir)/res/
+
+#bin_local_stream_SOURCES = extra/local-stream.cc src/local-stream.cpp src/video-stream-impl.cpp src/video-thread.cpp src/video-coder.cpp src/frame-data.cpp src/fec.cpp src/audio-thread.cpp src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/frame-converter.cpp src/estimators.cpp src/clock.cpp src/async.cpp src/audio-stream-impl.cpp src/media-stream-base.cpp src/periodic.cpp src/statistics.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp client/src/config.cpp
+#bin_local_stream_DEPENDENCIES = res/test-source-320x240.argb res/test-source-1280x720.argb
+#bin_local_stream_CPPFLAGS = ${libndnrtc_la_CPPFLAGS} ${ndnrtc_client_CPPFLAGS}
+#bin_local_stream_LDFLAGS = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
+#bin_local_stream_LDADD = ${libndnrtc_la_LIBADD} -lconfig++
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -8,15 +8,15 @@
 //  Author:  Peter Gusev
 //
 
-#include "pipeliner.h"
+#include "pipeliner.hpp"
 #include <ndn-cpp/exclude.hpp>
 
-#include "sample-estimator.h"
-#include "frame-buffer.h"
-#include "interest-control.h"
-#include "interest-queue.h"
-#include "segment-controller.h"
-#include "statistics.h"
+#include "sample-estimator.hpp"
+#include "frame-buffer.hpp"
+#include "interest-control.hpp"
+#include "interest-queue.hpp"
+#include "segment-controller.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

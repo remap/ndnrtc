@@ -6,7 +6,7 @@
 //
 
 #include <sstream>
-#include "video-source.h"
+#include "video-source.hpp"
 
 using namespace std;
 using namespace boost::chrono;

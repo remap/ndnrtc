@@ -5,26 +5,26 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "remote-stream-impl.h"
+#include "remote-stream-impl.hpp"
 
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/name.hpp>
 
-#include "frame-buffer.h"
-#include "buffer-control.h"
-#include "drd-estimator.h"
-#include "interest-control.h"
-#include "latency-control.h"
-#include "pipeline-control.h"
-#include "pipeliner.h"
-#include "sample-estimator.h"
-#include "pipeline-control-state-machine.h"
-#include "playout.h"
-#include "playout-control.h"
-#include "interest-queue.h"
-#include "data-validator.h"
-#include "clock.h"
+#include "frame-buffer.hpp"
+#include "buffer-control.hpp"
+#include "drd-estimator.hpp"
+#include "interest-control.hpp"
+#include "latency-control.hpp"
+#include "pipeline-control.hpp"
+#include "pipeliner.hpp"
+#include "sample-estimator.hpp"
+#include "pipeline-control-state-machine.hpp"
+#include "playout.hpp"
+#include "playout-control.hpp"
+#include "interest-queue.hpp"
+#include "data-validator.hpp"
+#include "clock.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

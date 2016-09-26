@@ -8,10 +8,10 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "include/params.h"
+#include "include/params.hpp"
 
 #define PARAMS
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
 using namespace std;
 using namespace ndnrtc;

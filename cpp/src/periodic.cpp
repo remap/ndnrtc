@@ -5,7 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "periodic.h"
+#include "periodic.hpp"
 
 #include <boost/asio/steady_timer.hpp>
 #include <boost/chrono.hpp>

@@ -13,11 +13,11 @@
 #include <ndn-cpp/name.hpp>
 
 #include "gtest/gtest.h"
-#include "mock-objects/buffer-observer-mock.h"
-#include "src/frame-data.h"
-#include "src/frame-buffer.h"
-#include "tests-helpers.h"
-#include "statistics.h"
+#include "mock-objects/buffer-observer-mock.hpp"
+#include "src/frame-data.hpp"
+#include "src/frame-buffer.hpp"
+#include "tests-helpers.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

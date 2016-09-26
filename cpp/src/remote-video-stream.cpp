@@ -5,20 +5,20 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "remote-video-stream.h"
+#include "remote-video-stream.hpp"
 #include <ndn-cpp/name.hpp>
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
-#include "interfaces.h"
-#include "video-playout.h"
-#include "pipeline-control.h"
-#include "pipeliner.h"
-#include "latency-control.h"
-#include "interest-control.h"
-#include "playout-control.h"
-#include "sample-validator.h"
-#include "video-decoder.h"
-#include "clock.h"
+#include "interfaces.hpp"
+#include "video-playout.hpp"
+#include "pipeline-control.hpp"
+#include "pipeliner.hpp"
+#include "latency-control.hpp"
+#include "interest-control.hpp"
+#include "playout-control.hpp"
+#include "sample-validator.hpp"
+#include "video-decoder.hpp"
+#include "clock.hpp"
 
 using namespace ndnrtc;
 using namespace ndn;

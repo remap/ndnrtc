@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 #include <sstream>
-#include "frame-io.h"
+#include "frame-io.hpp"
 
 using namespace std;
 

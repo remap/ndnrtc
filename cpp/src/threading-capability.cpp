@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include "threading-capability.h"
+#include "threading-capability.hpp"
 
 using namespace ndnrtc;
 using namespace boost;

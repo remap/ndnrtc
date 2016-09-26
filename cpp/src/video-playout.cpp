@@ -6,8 +6,8 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
-#include "video-playout.h"
-#include "video-playout-impl.h"
+#include "video-playout.hpp"
+#include "video-playout-impl.hpp"
 
 using namespace ndnrtc;
 

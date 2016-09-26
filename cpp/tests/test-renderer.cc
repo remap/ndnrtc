@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <boost/asio.hpp>
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 #include "gtest/gtest.h"
-#include "client/src/renderer.h"
+#include "client/src/renderer.hpp"
 
 using namespace std;
 

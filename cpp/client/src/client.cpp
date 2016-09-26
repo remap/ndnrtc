@@ -12,9 +12,9 @@
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/policy/no-verify-policy-manager.hpp>
 
-#include "client.h"
-#include "config.h"
-#include "renderer.h"
+#include "client.hpp"
+#include "config.hpp"
+#include "renderer.hpp"
 
 using namespace std;
 using namespace ndn;

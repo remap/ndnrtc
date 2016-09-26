@@ -8,13 +8,13 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "buffer-control.h"
-#include "drd-estimator.h"
-#include "frame-buffer.h"
-#include "statistics.h"
+#include "buffer-control.hpp"
+#include "drd-estimator.hpp"
+#include "frame-buffer.hpp"
+#include "statistics.hpp"
 
-#include "tests-helpers.h"
-#include "mock-objects/buffer-control-observer-mock.h"
+#include "tests-helpers.hpp"
+#include "mock-objects/buffer-control-observer-mock.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

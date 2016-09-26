@@ -19,12 +19,12 @@
 #include <boost/algorithm/string/classification.hpp>
 
 #include "gtest/gtest.h"
-#include "../tests/tests-helpers.h"
-#include "include/local-stream.h"
-#include "include/name-components.h"
-#include "client/src/video-source.h"
-#include "../tests/mock-objects/external-capturer-mock.h"
-#include "statistics.h"
+#include "../tests/tests-helpers.hpp"
+#include "include/local-stream.hpp"
+#include "include/name-components.hpp"
+#include "client/src/video-source.hpp"
+#include "../tests/mock-objects/external-capturer-mock.hpp"
+#include "statistics.hpp"
 
 std::string test_path = "";
 

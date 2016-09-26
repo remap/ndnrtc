@@ -9,7 +9,7 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
 using namespace std;
 using namespace ndnrtc;

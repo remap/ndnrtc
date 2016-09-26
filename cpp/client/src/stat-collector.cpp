@@ -9,7 +9,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/thread/lock_guard.hpp>
 
-#include "stat-collector.h"
+#include "stat-collector.hpp"
 
 using namespace std;
 using namespace ndnrtc;

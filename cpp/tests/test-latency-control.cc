@@ -14,13 +14,13 @@
 #include <fstream>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "src/drd-estimator.h"
-#include "src/latency-control.h"
-#include "client/src/precise-generator.h"
-#include "statistics.h"
+#include "tests-helpers.hpp"
+#include "src/drd-estimator.hpp"
+#include "src/latency-control.hpp"
+#include "client/src/precise-generator.hpp"
+#include "statistics.hpp"
 
-#include "mock-objects/latency-control-observer-mock.h"
+#include "mock-objects/latency-control-observer-mock.hpp"
 
 // #define ENABLE_LOGGING
 

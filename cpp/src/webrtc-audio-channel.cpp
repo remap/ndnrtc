@@ -13,9 +13,9 @@
 #include <webrtc/voice_engine/include/voe_codec.h>
 #include <algorithm>
 
-#include "ndnrtc-defines.h"
-#include "webrtc-audio-channel.h"
-#include "audio-controller.h"
+#include "ndnrtc-defines.hpp"
+#include "webrtc-audio-channel.hpp"
+#include "audio-controller.hpp"
 
 using namespace std;
 using namespace webrtc;

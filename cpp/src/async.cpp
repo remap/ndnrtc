@@ -5,7 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "async.h"
+#include "async.hpp"
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>

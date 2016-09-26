@@ -18,9 +18,9 @@
 #include <boost/thread.hpp>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "include/local-stream.h"
-#include "include/name-components.h"
+#include "tests-helpers.hpp"
+#include "include/local-stream.hpp"
+#include "include/name-components.hpp"
 
 // #define ENABLE_LOGGING
 

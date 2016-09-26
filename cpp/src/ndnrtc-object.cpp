@@ -10,7 +10,7 @@
 //
 
 
-#include "ndnrtc-object.h"
+#include "ndnrtc-object.hpp"
 
 using namespace ndnrtc;
 

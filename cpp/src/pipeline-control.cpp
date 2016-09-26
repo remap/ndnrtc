@@ -5,12 +5,12 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "pipeline-control.h"
+#include "pipeline-control.hpp"
 #include <boost/assign.hpp>
 
-#include "interest-control.h"
-#include "pipeline-control-state-machine.h"
-#include "frame-data.h"
+#include "interest-control.hpp"
+#include "pipeline-control-state-machine.hpp"
+#include "frame-data.hpp"
 
 using namespace ndnrtc;
 

@@ -11,9 +11,9 @@
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "audio-thread.h"
-#include "estimators.h"
-#include "frame-data.h"
+#include "audio-thread.hpp"
+#include "estimators.hpp"
+#include "frame-data.hpp"
 
 using namespace ndnrtc;
 using namespace webrtc;

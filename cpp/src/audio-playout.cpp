@@ -6,8 +6,8 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
-#include "audio-playout.h"
-#include "audio-playout-impl.h"
+#include "audio-playout.hpp"
+#include "audio-playout-impl.hpp"
 
 using namespace ndnrtc;
 

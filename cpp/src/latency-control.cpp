@@ -5,13 +5,13 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "latency-control.h"
+#include "latency-control.hpp"
 #include <boost/make_shared.hpp>
 #include <boost/thread/lock_guard.hpp>
 
-#include "estimators.h"
-#include "clock.h"
-#include "statistics.h"
+#include "estimators.hpp"
+#include "clock.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

@@ -7,9 +7,9 @@
 
 #include <stdlib.h>
 
-#include "tests/tests-helpers.h"
+#include "tests/tests-helpers.hpp"
 #include "gtest/gtest.h"
-#include "client/src/frame-io.h"
+#include "client/src/frame-io.hpp"
 
 TEST(TestFrame, TestArgFrame)
 {

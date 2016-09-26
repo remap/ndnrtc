@@ -5,10 +5,10 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "audio-playout-impl.h"
-#include "frame-data.h"
-#include "frame-buffer.h"
-#include "audio-renderer.h"
+#include "audio-playout-impl.hpp"
+#include "frame-data.hpp"
+#include "frame-buffer.hpp"
+#include "audio-renderer.hpp"
 
 using namespace std;
 using namespace ndnrtc;

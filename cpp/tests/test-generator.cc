@@ -10,8 +10,8 @@
 #include <boost/thread.hpp>
 
 #include "gtest/gtest.h"
-#include "tests-helpers.h"
-#include "precise-generator.h"
+#include "tests-helpers.hpp"
+#include "precise-generator.hpp"
 
 using namespace std;
 using namespace ::testing;

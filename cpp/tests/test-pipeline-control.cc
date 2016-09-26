@@ -8,15 +8,15 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "pipeline-control.h"
-#include "tests-helpers.h"
-#include "statistics.h"
+#include "pipeline-control.hpp"
+#include "tests-helpers.hpp"
+#include "statistics.hpp"
 
-#include "mock-objects/interest-control-mock.h"
-#include "mock-objects/pipeliner-mock.h"
-#include "mock-objects/latency-control-mock.h"
-#include "mock-objects/buffer-mock.h"
-#include "mock-objects/playout-control-mock.h"
+#include "mock-objects/interest-control-mock.hpp"
+#include "mock-objects/pipeliner-mock.hpp"
+#include "mock-objects/latency-control-mock.hpp"
+#include "mock-objects/buffer-mock.hpp"
+#include "mock-objects/playout-control-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

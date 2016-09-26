@@ -5,17 +5,17 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "pipeline-control-state-machine.h"
+#include "pipeline-control-state-machine.hpp"
 #include <boost/make_shared.hpp>
 #include <boost/assign.hpp>
 
-#include "clock.h"
-#include "latency-control.h"
-#include "interest-control.h"
-#include "pipeliner.h"
-#include "frame-data.h"
-#include "playout-control.h"
-#include "statistics.h"
+#include "clock.hpp"
+#include "latency-control.hpp"
+#include "interest-control.hpp"
+#include "pipeliner.hpp"
+#include "frame-data.hpp"
+#include "playout-control.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

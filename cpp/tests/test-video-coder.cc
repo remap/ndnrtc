@@ -11,9 +11,9 @@
 #include <boost/asio.hpp>
 
 #include "gtest/gtest.h"
-#include "src/video-coder.h"
-#include "mock-objects/encoder-delegate-mock.h"
-#include "tests-helpers.h"
+#include "src/video-coder.hpp"
+#include "mock-objects/encoder-delegate-mock.hpp"
+#include "tests-helpers.hpp"
 
 // #define ENABLE_LOGGING
 

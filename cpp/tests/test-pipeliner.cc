@@ -9,17 +9,17 @@
 #include <ndn-cpp/data.hpp>
 
 #include "gtest/gtest.h"
-#include "pipeliner.h"
-#include "sample-estimator.h"
-#include "frame-data.h"
-#include "statistics.h"
+#include "pipeliner.hpp"
+#include "sample-estimator.hpp"
+#include "frame-data.hpp"
+#include "statistics.hpp"
 
-#include "tests-helpers.h"
+#include "tests-helpers.hpp"
 
-#include "mock-objects/interest-control-mock.h"
-#include "mock-objects/interest-queue-mock.h"
-#include "mock-objects/playback-queue-mock.h"
-#include "mock-objects/segment-controller-mock.h"
+#include "mock-objects/interest-control-mock.hpp"
+#include "mock-objects/interest-queue-mock.hpp"
+#include "mock-objects/playback-queue-mock.hpp"
+#include "mock-objects/segment-controller-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

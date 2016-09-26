@@ -15,7 +15,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include "name-components.h"
+#include "name-components.hpp"
 
 using namespace std;
 using namespace ndnrtc;

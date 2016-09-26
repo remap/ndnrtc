@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <ndnrtc/simple-log.h>
 
-#include "renderer.h"
+#include "renderer.hpp"
 
 using namespace std;
 

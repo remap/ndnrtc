@@ -12,22 +12,22 @@
 #include <boost/assign.hpp>
 
 #include "gtest/gtest.h"
-#include "src/video-playout.h"
-#include "src/frame-buffer.h"
-#include "tests-helpers.h"
-#include "name-components.h"
-#include "async.h"
-#include "client/src/video-source.h"
-#include "src/video-thread.h"
-#include "src/frame-converter.h"
-#include "src/clock.h"
-#include "statistics.h"
+#include "src/video-playout.hpp"
+#include "src/frame-buffer.hpp"
+#include "tests-helpers.hpp"
+#include "name-components.hpp"
+#include "async.hpp"
+#include "client/src/video-source.hpp"
+#include "src/video-thread.hpp"
+#include "src/frame-converter.hpp"
+#include "src/clock.hpp"
+#include "statistics.hpp"
 
-#include "mock-objects/buffer-observer-mock.h"
-#include "mock-objects/playback-queue-observer-mock.h"
-#include "mock-objects/playout-observer-mock.h"
-#include "mock-objects/external-capturer-mock.h"
-#include "mock-objects/video-playout-consumer-mock.h"
+#include "mock-objects/buffer-observer-mock.hpp"
+#include "mock-objects/playback-queue-observer-mock.hpp"
+#include "mock-objects/playout-observer-mock.hpp"
+#include "mock-objects/external-capturer-mock.hpp"
+#include "mock-objects/video-playout-consumer-mock.hpp"
 
 // #define ENABLE_LOGGING
 #if 1

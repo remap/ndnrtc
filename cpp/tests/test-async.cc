@@ -13,7 +13,7 @@
 #include <boost/chrono.hpp>
 #include <boost/make_shared.hpp>
 
-#include "src/async.h"
+#include "src/async.hpp"
 
 using namespace ::testing;
 

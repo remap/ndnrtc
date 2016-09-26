@@ -8,7 +8,7 @@
 #include <boost/thread/lock_guard.hpp>
 #include <boost/make_shared.hpp>
 
-#include "drd-estimator.h"
+#include "drd-estimator.hpp"
 
 using namespace ndnrtc;
 using namespace estimators;

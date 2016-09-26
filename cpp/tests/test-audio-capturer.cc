@@ -11,9 +11,9 @@
 
 #include "gtest/gtest.h"
 
-#include "tests-helpers.h"
-#include "src/audio-capturer.h"
-#include "mock-objects/audio-sample-consumer-mock.h"
+#include "tests-helpers.hpp"
+#include "src/audio-capturer.hpp"
+#include "mock-objects/audio-sample-consumer-mock.hpp"
 
 using namespace ::testing;
 using namespace std;

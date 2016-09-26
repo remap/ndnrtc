@@ -5,11 +5,11 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "audio-stream-impl.h"
-#include "async.h"
-#include "clock.h"
-#include "name-components.h"
-#include "audio-controller.h"
+#include "audio-stream-impl.hpp"
+#include "async.hpp"
+#include "clock.hpp"
+#include "name-components.hpp"
+#include "audio-controller.hpp"
 
 #define BUNDLES_POOL_SIZE 10
 

@@ -5,12 +5,12 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "sample-estimator.h"
+#include "sample-estimator.hpp"
 #include <boost/assign.hpp>
 
-#include "estimators.h"
-#include "frame-data.h"
-#include "statistics.h"
+#include "estimators.hpp"
+#include "frame-data.hpp"
+#include "statistics.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

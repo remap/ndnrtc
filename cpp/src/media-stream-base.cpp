@@ -10,11 +10,11 @@
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
 
-#include "media-stream-base.h"
-#include "name-components.h"
-#include "async.h"
-#include "clock.h"
-#include "statistics.h"
+#include "media-stream-base.hpp"
+#include "name-components.hpp"
+#include "async.hpp"
+#include "clock.hpp"
+#include "statistics.hpp"
 
 #define META_CHECK_INTERVAL_MS 1000
 

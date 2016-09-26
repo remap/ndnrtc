@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "frame-converter.h"
+#include "frame-converter.hpp"
 
 using namespace ndnrtc;
 

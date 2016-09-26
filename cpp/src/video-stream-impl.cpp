@@ -15,17 +15,17 @@
 #include <ndn-cpp/util/memory-content-cache.hpp>
 #include <boost/thread/lock_guard.hpp>
 
-#include "video-stream-impl.h"
-#include "frame-data.h"
-#include "video-thread.h"
-#include "video-coder.h"
-#include "packet-publisher.h"
-#include "name-components.h"
-#include "simple-log.h"
-#include "estimators.h"
-#include "clock.h"
-#include "async.h"
-#include "params.h"
+#include "video-stream-impl.hpp"
+#include "frame-data.hpp"
+#include "video-thread.hpp"
+#include "video-coder.hpp"
+#include "packet-publisher.hpp"
+#include "name-components.hpp"
+#include "simple-log.hpp"
+#include "estimators.hpp"
+#include "clock.hpp"
+#include "async.hpp"
+#include "params.hpp"
 
 #define PARITY_RATIO 0.2
 

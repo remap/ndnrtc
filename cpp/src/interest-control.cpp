@@ -5,12 +5,12 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "interest-control.h"
+#include "interest-control.hpp"
 #include <algorithm>
 
-#include "frame-data.h"
-#include "name-components.h"
-#include "estimators.h"
+#include "frame-data.hpp"
+#include "name-components.hpp"
+#include "estimators.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

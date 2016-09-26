@@ -9,7 +9,7 @@
 #include <boost/regex.hpp>
 
 #include "gtest/gtest.h"
-#include "include/name-components.h"
+#include "include/name-components.hpp"
 
 using namespace ndnrtc;
 using namespace std;

@@ -8,10 +8,10 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "playout-control.h"
+#include "playout-control.hpp"
 
-#include "mock-objects/playback-queue-mock.h"
-#include "mock-objects/playout-mock.h"
+#include "mock-objects/playback-queue-mock.hpp"
+#include "mock-objects/playout-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

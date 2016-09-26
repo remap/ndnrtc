@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "src/webrtc-audio-channel.h"
+#include "src/webrtc-audio-channel.hpp"
 
 using namespace ndnrtc;
 

@@ -8,9 +8,9 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "src/video-decoder.h"
-#include "tests-helpers.h"
-#include "mock-objects/encoder-delegate-mock.h"
+#include "src/video-decoder.hpp"
+#include "tests-helpers.hpp"
+#include "mock-objects/encoder-delegate-mock.hpp"
 
 using namespace ::testing;
 using namespace ndnrtc;

@@ -7,7 +7,7 @@
 
 #include <boost/chrono.hpp>
 
-#include "clock.h"
+#include "clock.hpp"
 
 using namespace boost::chrono;
 using namespace ndnrtc;

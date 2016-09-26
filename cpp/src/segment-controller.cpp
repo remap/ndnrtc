@@ -5,10 +5,10 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "segment-controller.h"
-#include "frame-data.h"
-#include "async.h"
-#include "clock.h"
+#include "segment-controller.hpp"
+#include "frame-data.hpp"
+#include "async.hpp"
+#include "clock.hpp"
 
 #include <boost/thread/lock_guard.hpp>
 

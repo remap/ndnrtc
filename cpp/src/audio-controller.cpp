@@ -11,8 +11,8 @@
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <voice_engine/include/voe_audio_processing.h>
 
-#include "audio-controller.h"
-#include "simple-log.h"
+#include "audio-controller.hpp"
+#include "simple-log.hpp"
 
 using namespace ndnrtc;
 using namespace webrtc;

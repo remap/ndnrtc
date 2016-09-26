@@ -10,11 +10,11 @@
 #include <ndn-cpp/threadsafe-face.hpp>
 
 #include "gtest/gtest.h"
-#include "client/src/client.h"
-#include "client/src/config.h"
-#include "tests-helpers.h"
+#include "client/src/client.hpp"
+#include "client/src/config.hpp"
+#include "tests-helpers.hpp"
 
-#include "mock-objects/external-capturer-mock.h"
+#include "mock-objects/external-capturer-mock.hpp"
 
 using namespace ::testing;
 using namespace std;

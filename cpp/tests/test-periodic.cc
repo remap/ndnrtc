@@ -12,7 +12,7 @@
 #include <boost/make_shared.hpp>
 
 #include "gtest/gtest.h"
-#include "src/periodic.h"
+#include "src/periodic.hpp"
 
 using namespace ndnrtc;
 

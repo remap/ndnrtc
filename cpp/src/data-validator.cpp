@@ -5,12 +5,12 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "data-validator.h"
+#include "data-validator.hpp"
 
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
-#include "slot-buffer.h"
+#include "slot-buffer.hpp"
 
 using namespace ndnrtc;
 using namespace std;

@@ -5,13 +5,13 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "playout-impl.h"
+#include "playout-impl.hpp"
 
-#include "playout.h"
-#include "jitter-timing.h"
-#include "simple-log.h"
-#include "frame-buffer.h"
-#include "frame-data.h"
+#include "playout.hpp"
+#include "jitter-timing.hpp"
+#include "simple-log.hpp"
+#include "frame-buffer.hpp"
+#include "frame-data.hpp"
 
 using namespace ndnrtc;
 using namespace std;

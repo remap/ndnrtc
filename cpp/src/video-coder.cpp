@@ -18,7 +18,7 @@
 #include <modules/video_coding/codecs/vp8/include/vp8.h>
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
-#include "video-coder.h"
+#include "video-coder.hpp"
 
 using namespace std;
 using namespace ndnlog;
