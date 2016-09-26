@@ -20,12 +20,13 @@ using namespace std;
 using namespace ndn;
 
 //******************************************************************************
-void Client::run(unsigned int runTimeSec, 
-	unsigned int statSamplePeriodMs, const ClientParams& params)
+void Client::run(unsigned int runTimeSec, unsigned int statSamplePeriodMs,
+                 const ClientParams& params, const std::string& instanceName)
 {
 	runTimeSec_ = runTimeSec;
 	statSampleIntervalMs_ = statSamplePeriodMs;
 	params_ = params;
+    instanceName_ = instanceName;
 
 	bool run = setupConsumer();
 	run |= setupProducer();
@@ -84,7 +85,7 @@ bool Client::setupProducer()
 		{
 			LogError("") << "error while trying to publish stream " << p.streamName_ << ": "
 				<< e.what() << endl;
-			return false;
+            throw;
 		}
 	}
 
@@ -220,6 +221,7 @@ LocalStream Client::initLocalStream(const ProducerStreamParams& p)
 	{
 		boost::shared_ptr<ndnrtc::LocalAudioStream> s = 
 			boost::make_shared<ndnrtc::LocalAudioStream>(p.sessionPrefix_, settings);
+        s->setLogger(producerLogger(p.streamName_));
 		s->start();
 		localStream = s;
 	}
@@ -247,7 +249,7 @@ Client::producerLogger(std::string streamName)
 {
 	std::stringstream logFileName;
 	logFileName << params_.getGeneralParameters().logPath_ << "/" 
-		<< "producer-" << streamName << ".log";
+		<< "producer-" << instanceName_ << "-" << streamName << ".log";
 	boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
 		logFileName.str()));
 

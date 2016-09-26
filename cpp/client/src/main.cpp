@@ -12,10 +12,12 @@
 #include <unistd.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 
 #include "config.hpp"
 #include "client.hpp"
@@ -25,23 +27,27 @@ using namespace std;
 using namespace ndnrtc;
 using namespace ndn;
 
-void run(const std::string &configFile,
-         const std::string &identity,
-         const ndnlog::NdnLoggerDetailLevel appLoggingLevel,
-         const unsigned int headlessAppOnlineTimeSecconst,
-         const unsigned int statisticsSampleInterval);
+struct Args {
+    unsigned int runTimeSec_, samplePeriod_;
+    std::string configFile_, identity_, instance_, policy_;
+    ndnlog::NdnLoggerDetailLevel logLevel_;
+};
+
+int run(const struct Args&);
+void registerPrefix(boost::shared_ptr<Face>&, const KeyChainManager&);
+void publishCertificate(boost::shared_ptr<Face>&, const KeyChainManager&);
 
 //******************************************************************************
 int main(int argc, char **argv) 
 {
-    char *configFile = NULL, *identity = NULL, *policy = NULL;
+    char *configFile = NULL, *identity = NULL, *instance = NULL, *policy = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)
     unsigned int statSamplePeriodMs = 100;  // default statistics sample interval (ms)
     ndnlog::NdnLoggerDetailLevel logLevel = ndnlog::NdnLoggerDetailLevelDefault;
 
     opterr = 0;
-    while ((c = getopt (argc, argv, "vi:t:c:s:p:")) != -1)
+    while ((c = getopt (argc, argv, "vn:i:t:c:s:p:")) != -1)
         switch (c) {
         case 'c':
             configFile = optarg;
@@ -49,14 +55,20 @@ int main(int argc, char **argv)
         case 's':
             identity = optarg;
             break;
+        case 'i':
+            instance = optarg;
+            break;
         case 'v':
             logLevel = ndnlog::NdnLoggerDetailLevelAll;
             break;
-        case 'i':
+        case 'n':
             statSamplePeriodMs = (unsigned int)atoi(optarg);
             break;
         case 't':
             runTimeSec = (unsigned int)atoi(optarg);
+            break;
+        case 'p':
+            policy = optarg;
             break;
         case '?':
             if (optopt == 'c')
@@ -72,48 +84,74 @@ int main(int argc, char **argv)
             abort ();
         }
 
-    if (!configFile || runTimeSec == 0 || identity == NULL) 
+    if (!configFile || runTimeSec == 0 || identity == NULL || policy == NULL)
     {
-        std::cout << "usage: " << argv[0] << " -c <config_file> -s <signing identity>"
-            "-t <app run time in seconds> [-i <statistics sample interval in milliseconds>"
-            " -v <verbose mode>]" << std::endl;
+        std::cout << "usage: " << argv[0] << " -c <config file> -s <signing identity> "
+            "-p <verification policy file> "
+            "-t <app run time in seconds> [-n <statistics sample interval in milliseconds> "
+            "-i <instance name> -v <verbose mode>]" << std::endl;
         exit(1);
     }
+    
+    Args args;
+    args.runTimeSec_ = runTimeSec;
+    args.logLevel_ = logLevel;
+    args.samplePeriod_ = statSamplePeriodMs;
+    args.configFile_ = std::string(configFile);
+    args.identity_ = std::string(identity);
+    args.policy_ = std::string(policy);
+    args.instance_ = (instance ? std::string(instance) : "client0");
 
-    run(configFile, identity, logLevel, runTimeSec, statSamplePeriodMs);
-
-    return 0;
+    return run(args);
 }
 
 //******************************************************************************
-void run(const std::string &configFile, const std::string &identity, 
-    const ndnlog::NdnLoggerDetailLevel logLevel, const unsigned int runTimeSec, 
-    const unsigned int statSamplePeriodMs) 
+int run(const struct Args& args)
 {
     ndnlog::new_api::Logger::initAsyncLogging();
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(logLevel);
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(args.logLevel_);
 
     boost::asio::io_service io;
     boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io](){ io.run(); });
-    KeyChainManager keyChainManager(identity, runTimeSec);
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    KeyChainManager keyChainManager(face, args.identity_, args.instance_,
+                                    args.policy_, args.runTimeSec_);
+    
+    face->setCommandSigningInfo(*(keyChainManager.defaultKeyChain()),
+                                keyChainManager.defaultKeyChain()->getDefaultCertificateName());
+    
     ClientParams params;
 
-    LogInfo("") << "Run time is set to " << runTimeSec << " seconds, loading "
-    "params from " << configFile << "..." << std::endl;
+    LogInfo("") << "Run time is set to " << args.runTimeSec_ << " seconds, loading "
+    "params from " << args.configFile_ << "..." << std::endl;
 
-    if (loadParamsFromFile(configFile, params, identity) == EXIT_FAILURE) 
+    if (loadParamsFromFile(args.configFile_, params, keyChainManager.instancePrefix()) == EXIT_FAILURE)
     {
-        LogError("") << "error loading params from " << configFile << std::endl;
-        return;
+        LogError("") << "error loading params from " << args.configFile_ << std::endl;
+        return 1;
     }
 
     LogInfo("") << "Parameters loaded" << std::endl;
     LogDebug("") << params << std::endl;
-
+    
+    int err = 0;
     Client client(io, face, keyChainManager.instanceKeyChain());
-    client.run(runTimeSec, statSamplePeriodMs, params);
+    
+    try
+    {
+        if (params.isProducing())
+        {
+            registerPrefix(face, keyChainManager);
+            publishCertificate(face, keyChainManager);
+        }
+        
+        client.run(args.runTimeSec_, args.samplePeriod_, params, args.instance_);
+    }
+    catch (std::exception& e)
+    {
+        err = 1;
+    }
 
     face->shutdown();
     work.reset();
@@ -125,5 +163,46 @@ void run(const std::string &configFile, const std::string &identity,
 #warning this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);
     ndnlog::new_api::Logger::releaseAsyncLogging();
-    return;
+    return err;
+}
+
+void registerPrefix(boost::shared_ptr<Face>& face, const KeyChainManager& keyChainManager)
+{
+    boost::mutex m;
+    boost::unique_lock<boost::mutex> lock(m);
+    boost::condition_variable isDone;
+    boost::atomic<bool> completed(false);
+    bool registered = false;
+    
+    face->registerPrefix(Name(keyChainManager.instancePrefix()),
+                         [](const boost::shared_ptr<const Name>& prefix,
+                            const boost::shared_ptr<const Interest>& interest,
+                            Face& face, uint64_t, const boost::shared_ptr<const InterestFilter>&)
+                         {
+                             LogTrace("") << "Unexpected incoming interest " << interest->getName() << std::endl;
+                         },
+                         [&completed, &isDone](const boost::shared_ptr<const Name>& prefix)
+                         {
+                             LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
+                             completed = true;
+                             isDone.notify_one();
+                         },
+                         [&completed, &registered, &isDone](const boost::shared_ptr<const Name>& p, uint64_t)
+                         {
+                             LogInfo("") << "Successfully registered prefix " << *p << std::endl;
+                             registered = true;
+                             completed = true;
+                             isDone.notify_one();
+                         });
+    isDone.wait(lock, [&completed](){ return completed.load(); });
+    
+    if (!registered) throw std::runtime_error("Prefix registration failed");
+}
+
+void publishCertificate(boost::shared_ptr<Face>& face, const KeyChainManager& keyManager)
+{
+    static MemoryContentCache cache(face.get());
+    
+    cache.setInterestFilter(keyManager.instanceCertificate()->getName().getPrefix(keyManager.instanceCertificate()->getName().size()-1));
+    cache.add(*(keyManager.instanceCertificate().get()));
 }

@@ -197,9 +197,10 @@ int loadProducerSettings(const Setting& root, ProducerClientParams& params, cons
             ProducerStreamParams psp;
 
             if (loadStreamParams(streamSettings[i], psp) == EXIT_SUCCESS)
+            {
+                psp.sessionPrefix_ = identity;
                 params.publishedStreams_.push_back(psp);
-            
-            psp.sessionPrefix_ = identity;
+            }
         } // for i
     }
     catch (const SettingNotFoundException &nfex){
