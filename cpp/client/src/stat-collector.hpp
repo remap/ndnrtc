@@ -17,8 +17,8 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <ndnrtc/statistics.h>
-#include <ndnrtc/stream.h>
+#include <ndnrtc/statistics.hpp>
+#include <ndnrtc/stream.hpp>
 #include "config.hpp"
 #include "precise-generator.hpp"
 

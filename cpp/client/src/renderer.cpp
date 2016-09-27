@@ -8,7 +8,7 @@
 
 
 #include <stdlib.h>
-#include <ndnrtc/simple-log.h>
+#include <ndnrtc/simple-log.hpp>
 
 #include "renderer.hpp"
 

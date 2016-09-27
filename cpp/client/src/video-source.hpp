@@ -9,7 +9,7 @@
 #define __video_source_h__
 
 #include <stdlib.h>
-#include <ndnrtc/interfaces.h>
+#include <ndnrtc/interfaces.hpp>
 
 #include "config.hpp"
 #include "frame-io.hpp"

@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <ndnrtc/interfaces.h>
+#include <ndnrtc/interfaces.hpp>
 #include "frame-io.hpp"
 
 /**

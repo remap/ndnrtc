@@ -13,7 +13,7 @@
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 #include <ndn-cpp/security/policy/config-policy-manager.hpp>
 #include <ndn-cpp/face.hpp>
-#include <ndnrtc/simple-log.h>
+#include <ndnrtc/simple-log.hpp>
 #include <boost/chrono.hpp>
 
 using namespace boost::chrono;

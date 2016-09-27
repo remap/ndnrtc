@@ -9,9 +9,9 @@
 #define __client_stream_h__
 
 #include <stdlib.h>
-#include <ndnrtc/stream.h>
-#include <ndnrtc/remote-stream.h>
-#include <ndnrtc/local-stream.h>
+#include <ndnrtc/stream.hpp>
+#include <ndnrtc/remote-stream.hpp>
+#include <ndnrtc/local-stream.hpp>
 
 #include "renderer.hpp"
 #include "video-source.hpp"

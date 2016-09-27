@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <boost/shared_ptr.hpp>
-#include <ndnrtc/interfaces.h>
+#include <ndnrtc/interfaces.hpp>
 
 #include "config.hpp"
 #include "stream.hpp"

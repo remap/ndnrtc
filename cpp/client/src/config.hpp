@@ -14,8 +14,8 @@
 #include <vector>
 #include <libconfig.h++>
 
-#include <ndnrtc/simple-log.h>
-#include <ndnrtc/params.h>
+#include <ndnrtc/simple-log.hpp>
+#include <ndnrtc/params.hpp>
 
 class StatGatheringParams : public ndnrtc::Params {
 public:
