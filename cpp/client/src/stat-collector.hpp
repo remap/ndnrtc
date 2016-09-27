@@ -16,6 +16,8 @@
 #include <vector>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/lock_guard.hpp>
 
 #include <ndnrtc/statistics.hpp>
 #include <ndnrtc/stream.hpp>
