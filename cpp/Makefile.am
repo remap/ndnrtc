@@ -103,13 +103,13 @@ endif
 EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L$(libdir)
-ndnrtc_client_LDADD = -lconfig++ $(top_builddir)/libndnrtc.la 
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ -L$(libdir)
+ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread -lboost_chrono $(top_builddir)/libndnrtc.la 
 noinst_SCRIPTS = client/params.cfg
 
 if OS_LINUX
 
-#ndnrtc_client_LDFLAGS += -Wl,-rpath -Wl,/usr/lib/x86_64-linux-gnu
+ndnrtc_client_LDFLAGS += -pthread 
 ndnrtc_client_LDADD += -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
 
 endif
