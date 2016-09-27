@@ -129,8 +129,8 @@ namespace ndnrtc {
 		static PipelineControlStateMachine videoStateMachine(Struct ctrl);
 
 	private:
-		typedef std::map<std::pair<std::string, PipelineControlEvent::Type>, 
-			std::string> TransitionMap;
+		typedef std::pair<std::string, PipelineControlEvent::Type> StateEventPair;
+		typedef std::map<StateEventPair, std::string> TransitionMap;
 
 		boost::shared_ptr<Struct> ppCtrl_;
 		std::map<std::string, boost::shared_ptr<PipelineControlState>> states_;

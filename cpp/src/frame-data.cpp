@@ -20,6 +20,7 @@ using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
 
+namespace ndnrtc {
 template<>
 boost::shared_ptr<VideoFramePacket> 
 VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>>& segments)
@@ -46,7 +47,7 @@ AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHead
     NetworkData packetData(boost::move(packetBytes));
     return boost::make_shared<AudioBundlePacket>(boost::move(packetData));
 }
-
+}
 //******************************************************************************
 Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>>& dataObjects):
 DataPacket(std::vector<uint8_t>())

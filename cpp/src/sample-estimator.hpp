@@ -72,8 +72,8 @@ namespace ndnrtc {
 
 			estimators::Average segNum_, segSize_;
 		} Estimators;
-
-		std::map<std::pair<SampleClass, SegmentClass>, Estimators> estimators_;
+		typedef std::map<std::pair<SampleClass, SegmentClass>, Estimators> EstimatorMap;
+		EstimatorMap estimators_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void segmentRequestTimeout(const NamespaceInfo&){}

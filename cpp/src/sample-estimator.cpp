@@ -78,12 +78,13 @@ SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 void
 SampleEstimator::reset()
 {
-	estimators_ = boost::assign::map_list_of
+	const EstimatorMap m = boost::assign::map_list_of
 		( std::make_pair(SampleClass::Delta, SegmentClass::Data), Estimators())
 		( std::make_pair(SampleClass::Delta, SegmentClass::Parity), Estimators())
 		( std::make_pair(SampleClass::Key, SegmentClass::Data), Estimators())
 		( std::make_pair(SampleClass::Key, SegmentClass::Parity), Estimators());
-    
+	estimators_ = m;    
+
     (*sstorage_)[Indicator::SegmentsDeltaAvgNum] = 0;
     (*sstorage_)[Indicator::SegmentsDeltaParityAvgNum] = 0;
     (*sstorage_)[Indicator::SegmentsKeyAvgNum] = 0;

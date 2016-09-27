@@ -373,7 +373,7 @@ namespace ndnrtc {
             { setHeader(header); }
         
         ENABLE_IF(T,Mutable)
-        HeaderPacketT<T>(NetworkData&& networkData):
+        HeaderPacketT(NetworkData&& networkData):
             DataPacket(boost::move(networkData))
             {
                 if (this->blobs_.size() > 0)
@@ -995,7 +995,7 @@ namespace ndnrtc {
 
     private:
         friend boost::shared_ptr<WireData<SegmentHeader>> 
-        boost::make_shared<WireData<SegmentHeader>>(const NamespaceInfo&,
+        boost::make_shared<WireData<SegmentHeader>>(const ndnrtc::NamespaceInfo&,
                                                     const boost::shared_ptr<ndn::Data>&, 
                                                     const boost::shared_ptr<const ndn::Interest>&);
 

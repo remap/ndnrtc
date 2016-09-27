@@ -29,8 +29,8 @@ namespace ndnrtc {
 	const std::string kStateFetching = "Fetching";
 }
 
-#define STATE_TRANSITION(s,t)(std::pair<std::string, PipelineControlEvent::Type>(s,PipelineControlEvent::Type::t))
-#define MAKE_TRANSITION(s,t)(std::pair<std::string, PipelineControlEvent::Type>(s,t))
+#define STATE_TRANSITION(s,t)(StateEventPair(s,PipelineControlEvent::Type::t))
+#define MAKE_TRANSITION(s,t)(StateEventPair(s,t))
 
 namespace ndnrtc {
 	class PipelineControlState {
@@ -354,7 +354,8 @@ lastEventTimestamp_(clock::millisecondTimestamp())
 	currentState_->enter();
 	description_ = "state-machine";
 
-	stateMachineTable_ = boost::assign::map_list_of
+	// add indirection to avoid confusion in C++11 (Ubuntu)
+	const TransitionMap m = boost::assign::map_list_of
 		(STATE_TRANSITION(kStateIdle, Start), 					kStateWaitForRightmost)
 		(STATE_TRANSITION(kStateWaitForRightmost, Reset), 		kStateIdle)
 		(STATE_TRANSITION(kStateWaitForInitial, Reset), 		kStateIdle)
@@ -364,6 +365,7 @@ lastEventTimestamp_(clock::millisecondTimestamp())
 		(STATE_TRANSITION(kStateAdjusting, Starvation), 		kStateIdle)
 		(STATE_TRANSITION(kStateFetching, Reset), 				kStateIdle)
 		(STATE_TRANSITION(kStateFetching, Starvation), 			kStateIdle);
+	stateMachineTable_ = m;
 }
 
 PipelineControlStateMachine::~PipelineControlStateMachine()

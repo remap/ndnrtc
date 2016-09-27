@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <boost/make_shared.hpp>
 #include <boost/thread/lock_guard.hpp>
+#include <boost/bind.hpp>
 
 #include "stat-collector.hpp"
 
