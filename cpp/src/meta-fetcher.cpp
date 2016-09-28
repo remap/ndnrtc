@@ -22,7 +22,7 @@ MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::KeyCha
 {
     LogTraceC << "fetching meta for " << prefix << std::endl;
     
-	Interest i(prefix, 1000);
+	Interest i(prefix, 3000);
 
 	isPending_ = true;
 	boost::shared_ptr<MetaFetcher> me = boost::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
