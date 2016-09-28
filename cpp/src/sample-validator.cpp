@@ -88,10 +88,6 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 						slot->manifest_ = boost::make_shared<Manifest>(boost::move(nd));
 						if (slot->getState() >= BufferSlot::State::Ready)
 							verifySlot(slot);
-
-						if (slot->getVerificationStatus() == BufferSlot::Verification::Failed)
-							LogErrorC << "slot verification failure "
-								<< slot->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl; 
 					}
 					else
 						LogWarnC << "late manifest arrival "
@@ -115,17 +111,26 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 void
 ManifestValidator::onNewData(const BufferReceipt& receipt)
 {
-	if ((receipt.slot_->getState()&BufferSlot::State::Ready || 
-		receipt.slot_->getState()&BufferSlot::State::Locked) &&
-        receipt.slot_->manifest_.get())
-		verifySlot(receipt.slot_);
+    if (receipt.slot_->getVerificationStatus() == BufferSlot::Verification::Unknown)
+        if ((receipt.slot_->getState()&BufferSlot::State::Ready ||
+             receipt.slot_->getState()&BufferSlot::State::Locked) &&
+            receipt.slot_->manifest_.get())
+            verifySlot(receipt.slot_);
 }
 
 void 
 ManifestValidator::verifySlot(const boost::shared_ptr<const BufferSlot> slot)
 {
+    assert(slot->getState() >= BufferSlot::State::Ready);
+    
 	bool verified = true;
 	for (auto& it:slot->fetched_)
 		verified &= slot->manifest_->hasData(*(it.second->getData()->getData()));
 	slot->verified_ = (verified ? BufferSlot::Verification::Verified : BufferSlot::Verification::Failed);
+    
+    if (slot->getVerificationStatus() == BufferSlot::Verification::Failed)
+        LogErrorC << "slot verification failure "
+            << slot->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
+    else
+        LogDebugC << "verified " << slot->dump() << std::endl;
 }

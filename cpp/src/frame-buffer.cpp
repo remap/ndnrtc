@@ -261,31 +261,24 @@ BufferSlot::updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment
         firstSegmentTimeUsec_ = segment->getArrivalTimeUsec();
     }
 
-    if (segment->getInfo().segmentClass_ == SegmentClass::Manifest)
+    if (segment->getInfo().segmentClass_ == SegmentClass::Data)
     {
-        #warning verify manifest segment here
+        consistency_ |= SegmentMeta;
+        nDataSegments_ = segment->getData()->getSlicesNum();
+        if (segment->getInfo().segNo_ == 0)
+            consistency_ |= HeaderMeta;
     }
-    else
-    {
-        if (segment->getInfo().segmentClass_ == SegmentClass::Data)
-        {
-            consistency_ |= SegmentMeta;
-            nDataSegments_ = segment->getData()->getSlicesNum();
-            if (segment->getInfo().segNo_ == 0)
-                consistency_ |= HeaderMeta;
-        }
-        else if (segment->getInfo().segmentClass_ == SegmentClass::Parity)
-            nParitySegments_ = segment->getData()->getSlicesNum();
+    else if (segment->getInfo().segmentClass_ == SegmentClass::Parity)
+        nParitySegments_ = segment->getData()->getSlicesNum();
 
-        assembledSize_ += segment->getData()->getData()->getContent().size();
-        hasOriginalSegments_ = segment->isOriginal();
-        assembled_ += segment->getData()->getSegmentWeight();
-        
-        if (consistency_&SegmentMeta)
-        {
-            updateAssembledLevel();
-            state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
-        }
+    assembledSize_ += segment->getData()->getData()->getContent().size();
+    hasOriginalSegments_ = segment->isOriginal();
+    assembled_ += segment->getData()->getSegmentWeight();
+    
+    if (consistency_&SegmentMeta)
+    {
+        updateAssembledLevel();
+        state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
     }
 
     if (state_ == Ready) assembledTimeUsec_ = segment->getArrivalTimeUsec();
