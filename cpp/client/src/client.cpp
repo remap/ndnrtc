@@ -262,7 +262,7 @@ Client::consumerLogger(std::string prefix, std::string streamName)
 	std::replace(prefix.begin(), prefix.end(), '/', '-');
 	std::stringstream logFileName;
 	logFileName << params_.getGeneralParameters().logPath_ << "/" 
-		<< "consumer" << prefix << "-" << streamName << ".log" << std::endl;
+		<< "consumer" << prefix << "-" << streamName << ".log";
 	boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
 		logFileName.str()));
 
