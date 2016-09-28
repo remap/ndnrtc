@@ -10,6 +10,7 @@
 
 #include "ndnrtc-object.hpp"
 #include "frame-buffer.hpp"
+#include "statistics.hpp"
 
 namespace ndn {
 	class Face;
@@ -17,12 +18,18 @@ namespace ndn {
 }
 
 namespace ndnrtc {
+    namespace statistics {
+        class StatisticsStorage;
+    }
+    
 	class MetaFetcher;
 
-	class SampleValidator : public NdnRtcComponent, public IBufferObserver
+	class SampleValidator : public NdnRtcComponent, public IBufferObserver,
+        statistics::StatObject
 	{
 	public:
-		SampleValidator(boost::shared_ptr<ndn::KeyChain> keyChain):keyChain_(keyChain){}
+		SampleValidator(boost::shared_ptr<ndn::KeyChain> keyChain,
+                        const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):StatObject(statStorage), keyChain_(keyChain){}
 
 	private:
 		boost::shared_ptr<ndn::KeyChain> keyChain_;
@@ -32,10 +39,13 @@ namespace ndnrtc {
 		void onReset() {}
 	};
 
-	class ManifestValidator : public NdnRtcComponent, public IBufferObserver
+	class ManifestValidator : public NdnRtcComponent, public IBufferObserver,
+        statistics::StatObject
 	{
 	public:
-		ManifestValidator(boost::shared_ptr<ndn::Face> face, boost::shared_ptr<ndn::KeyChain> keyChain);
+		ManifestValidator(boost::shared_ptr<ndn::Face> face,
+                          boost::shared_ptr<ndn::KeyChain> keyChain,
+                          const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
 
 	private:
 		template<typename T>

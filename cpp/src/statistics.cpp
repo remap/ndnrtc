@@ -38,6 +38,8 @@ map_list_of
 ( Indicator::BufferPlayableSize, "Jitter playable size" ) 
 ( Indicator::BufferReservedSize, "Jitter reserved size" )
 ( Indicator::CurrentProducerFramerate, "Producer rate" )
+( Indicator::VerifySuccess, "Verified samples" )
+( Indicator::VerifyFailure, "Verify failure samples" )
 // playout
 ( Indicator::LastPlayedNo, "Playback #" ) 
 ( Indicator::LastPlayedDeltaNo, "Last delta #" ) 
@@ -108,6 +110,8 @@ map_list_of
 ( Indicator::BufferPlayableSize, 0. )
 ( Indicator::BufferReservedSize, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
+( Indicator::VerifySuccess, 0. )
+( Indicator::VerifyFailure, 0. )
 // playout
 ( Indicator::LastPlayedNo, 0. )
 ( Indicator::LastPlayedDeltaNo, 0. )
@@ -181,6 +185,8 @@ boost::assign::map_list_of
 (Indicator::BufferPlayableSize, "jitterPlay")
 (Indicator::BufferReservedSize, "jitterRsrv")
 (Indicator::CurrentProducerFramerate, "prodRate")
+(Indicator::VerifySuccess, "verifySuccess")
+(Indicator::VerifyFailure, "verifyFailure")
 // playout
 (Indicator::LastPlayedNo, "playNo")
 (Indicator::LastPlayedDeltaNo, "deltaNo")

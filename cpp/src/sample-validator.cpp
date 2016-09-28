@@ -17,6 +17,7 @@ static const unsigned int META_FETCHER_POOL_SIZE = 100;
 
 using namespace ndnrtc;
 using namespace ndn;
+using namespace ndnrtc::statistics;
 
 void
 SampleValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
@@ -27,28 +28,37 @@ SampleValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 void 
 SampleValidator::onNewData(const BufferReceipt& receipt)
 {
+    boost::shared_ptr<SampleValidator> me = boost::dynamic_pointer_cast<SampleValidator>(shared_from_this());
 	boost::shared_ptr<int> nVerifiedSegments(boost::make_shared<int>(0));
 	boost::shared_ptr<const BufferSlot> slot = receipt.slot_;
 	keyChain_->verifyData(receipt.segment_->getData()->getData(),
-		[slot,nVerifiedSegments](const boost::shared_ptr<ndn::Data>& data){
+		[me,this,slot,nVerifiedSegments](const boost::shared_ptr<ndn::Data>& data){
 			// success
 			(*nVerifiedSegments)++;
 			if (slot->getState() >= BufferSlot::State::Ready &&
 				*nVerifiedSegments == slot->getFetchedNum() &&
 				slot->verified_ == BufferSlot::Verification::Unknown)
 				slot->verified_ = BufferSlot::Verification::Verified;
+            
+            LogDebugC << "sample verified " << slot->dump() << std::endl;
+            (*statStorage_)[Indicator::VerifySuccess]++;
 		},
-		[slot](const boost::shared_ptr<ndn::Data>& data)
+		[me,this,slot](const boost::shared_ptr<ndn::Data>& data)
 		{
 			// failure
 			if (slot->getState() >= BufferSlot::State::Assembling)
 				slot->verified_ = BufferSlot::Verification::Failed;
+            
+            LogDebugC << "sample verification failure "
+                << slot->getNameInfo().getSuffix(suffix_filter::Thread)  << std::endl;
+            (*statStorage_)[Indicator::VerifyFailure]++;
 		});
 }
 
 ManifestValidator::ManifestValidator(boost::shared_ptr<ndn::Face> face, 
-	boost::shared_ptr<ndn::KeyChain> keyChain):
-face_(face), keyChain_(keyChain), 
+	boost::shared_ptr<ndn::KeyChain> keyChain,
+    const boost::shared_ptr<StatisticsStorage>& statStorage):
+StatObject(statStorage), face_(face), keyChain_(keyChain),
 metaFetcherPool_(META_FETCHER_POOL_SIZE)
 {
 	description_ = "sample-validator";
@@ -77,6 +87,7 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
                         << " (KeyLocator " << (KeyLocator::getFromSignature(i.getData()->getSignature())).getKeyName()
                         << ")" << std::endl;
 					slot->verified_ = BufferSlot::Verification::Failed;
+                    (*me->statStorage_)[Indicator::VerifyFailure]++;
 				}
 				else
 				{
@@ -96,12 +107,12 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 				metaFetcherPool_.push(mfetcher);
 			},
 			[mfetcher, slot, me, this](const std::string&){
-				#warning maybe - should try fetching manifest again?
 				LogErrorC << "couldn't fetch manifest for " 
 					<< slot->getNameInfo().getSuffix(suffix_filter::Thread)
 					<< std::endl;
 
 				metaFetcherPool_.push(mfetcher);
+                (*me->statStorage_)[Indicator::VerifyFailure]++;
 			});
 
 		LogTraceC << "fetching manifest for " << manifestName << std::endl;
@@ -129,8 +140,14 @@ ManifestValidator::verifySlot(const boost::shared_ptr<const BufferSlot> slot)
 	slot->verified_ = (verified ? BufferSlot::Verification::Verified : BufferSlot::Verification::Failed);
     
     if (slot->getVerificationStatus() == BufferSlot::Verification::Failed)
+    {
         LogErrorC << "slot verification failure "
             << slot->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
+        (*statStorage_)[Indicator::VerifyFailure]++;
+    }
     else
+    {
         LogDebugC << "verified " << slot->dump() << std::endl;
+        (*statStorage_)[Indicator::VerifySuccess]++;
+    }
 }

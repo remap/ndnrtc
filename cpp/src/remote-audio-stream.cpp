@@ -39,7 +39,7 @@ io_(io)
     pipeliner_ = boost::make_shared<Pipeliner>(pps,
                                                boost::make_shared<Pipeliner::AudioNameScheme>());
     
-    validator_ = boost::make_shared<SampleValidator>(keyChain);
+    validator_ = boost::make_shared<SampleValidator>(keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }
 

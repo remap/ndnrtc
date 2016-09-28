@@ -44,6 +44,8 @@ namespace ndnrtc {
                 BufferPlayableSize,             // PlaybackQueue
                 BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl
+                VerifySuccess,                  // SampleValidator
+                VerifyFailure,                  // SampleValidator
                 
                 // playout
                 LastPlayedNo,                   // VideoPlayout
