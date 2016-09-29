@@ -39,7 +39,7 @@ TEST(TestClient, TestRunClientPhony)
 	Client c(io, face, keyChain);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	c.run(3, 10, ClientParams());
+	c.run(3, 10, ClientParams(), "test-client");
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
     
     auto duration = duration_cast<seconds>( t2 - t1 ).count();
@@ -72,7 +72,7 @@ TEST(TestClient, TestConsumer)
 		boost::shared_ptr<StatisticsStorage> sampleStats = 
 			boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
 
-		c.run(3, 100, cp);
+		c.run(3, 100, cp, "test-client");
 	}
 
 	EXPECT_TRUE(std::ifstream("/tmp/buffer-ndn-edu-ucla-remap-client1-camera.stat").good());
@@ -121,7 +121,7 @@ TEST(TestClient, TestProducer)
 
 	{
 		Client c(io, face, keyChain);
-		c.run(3, 0, cp);
+		c.run(3, 0, cp, "test-client");
 	}
 
 	ndnlog::new_api::Logger::releaseAsyncLogging();
