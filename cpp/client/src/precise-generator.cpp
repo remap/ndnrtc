@@ -14,6 +14,12 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
 
+#if !defined(OS_DARWIN) && !defined(BOOST_ASIO_DISABLE_STD_CHRONO)
+
+using namespace std::placeholders; 
+
+#endif
+
 #define STEADY_TIMER
 
 #ifdef STEADY_TIMER
