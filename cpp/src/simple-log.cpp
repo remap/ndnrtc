@@ -12,6 +12,7 @@
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
+#include <boost/make_shared.hpp>
 
 #include <sys/time.h>
 
@@ -26,7 +27,7 @@
 #define MAX_BUF_SIZE 4*256 // string buffer
 
 using namespace ndnlog;
-using namespace new_api;
+using namespace ndnlog::new_api;
 using namespace boost::chrono;
 
 static char tempBuf[MAX_BUF_SIZE];
@@ -54,20 +55,20 @@ boost::asio::io_service LogIoService;
 boost::thread LogThread;
 boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
-ndnlog::new_api::NilLogger ndnlog::new_api::NilLogger::nilLogger_;
-ndnlog::new_api::Logger* Logger::sharedInstance_ = 0;
+NilLogger NilLogger::nilLogger_;
+Logger* Logger::sharedInstance_ = 0;
 
 void startLogThread();
 void stopLogThread();
 
 //******************************************************************************
-boost::recursive_mutex new_api::Logger::stdOutMutex_;
-std::map<std::string, new_api::Logger*> new_api::Logger::loggers_;
+boost::recursive_mutex Logger::stdOutMutex_;
+std::map<std::string, boost::shared_ptr<Logger>> Logger::loggers_;
 
-unsigned int new_api::Logger::FlushIntervalMs = 100;
+unsigned int Logger::FlushIntervalMs = 100;
 
 #pragma mark - construction/destruction
-new_api::Logger::Logger(const NdnLoggerDetailLevel& logLevel,
+Logger::Logger(const NdnLoggerDetailLevel& logLevel,
                         const std::string& logFile):
 isWritingLogEntry_(false),
 currentEntryLogType_(NdnLoggerLevelTrace),
@@ -88,16 +89,16 @@ isStdOutActive_(true)
     isProcessing_ = true;
 }
 
-new_api::Logger::~Logger()
+Logger::~Logger()
 {
     isProcessing_ = false;
 }
 
 //******************************************************************************
 #pragma mark - public
-new_api::Logger&
-new_api::Logger::log(const NdnLogType& logType,
-                     const ndnlog::new_api::ILoggingObject* loggingInstance,
+Logger&
+Logger::log(const NdnLogType& logType,
+                     const ILoggingObject* loggingInstance,
                      const std::string& locationFile,
                      const int& locationLine)
 {
@@ -147,7 +148,7 @@ new_api::Logger::log(const NdnLogType& logType,
 }
 
 void
-new_api::Logger::flush()
+Logger::flush()
 {
     getOutStream().flush();    
 }
@@ -155,60 +156,63 @@ new_api::Logger::flush()
 //******************************************************************************
 #pragma mark - static
 void
-new_api::Logger::initAsyncLogging()
+Logger::initAsyncLogging()
 {
     startLogThread();
 }
 
 void
-new_api::Logger::releaseAsyncLogging()
+Logger::releaseAsyncLogging()
 {
     stopLogThread();
 }
 
-new_api::Logger&
-new_api::Logger::getLogger(const std::string &logFile)
+Logger&
+Logger::getLogger(const std::string &logFile)
 {
-    std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
-    Logger *logger;
-    
-    if (it == loggers_.end())
-    {
-        logger = new Logger(NdnLoggerDetailLevelAll, logFile);
-        loggers_[logFile] = logger;
-    }
-    else
-        logger = it->second;
-    
+    boost::shared_ptr<Logger> logger = Logger::getLoggerPtr(logFile);
     return *logger;
 }
 
-void
-new_api::Logger::destroyLogger(const std::string &logFile)
+boost::shared_ptr<Logger>
+Logger::getLoggerPtr(const std::string &logFile)
 {
-    std::map<std::string, Logger*>::iterator it = loggers_.find(logFile);
+    std::map<std::string, boost::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
+    
+    if (it == loggers_.end())
+        return loggers_[logFile] = boost::make_shared<Logger>(NdnLoggerDetailLevelAll, logFile);
+    else
+        return it->second;
+    
+    return boost::shared_ptr<Logger>();
+}
+
+void
+Logger::destroyLogger(const std::string &logFile)
+{
+    std::map<std::string, boost::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
     
     if (it != loggers_.end())
-        delete it->second;
+        loggers_.erase(it);
 }
 
 //******************************************************************************
 #pragma mark - private
 std::string
-new_api::Logger::stringify(NdnLoggerLevel lvl)
+Logger::stringify(NdnLoggerLevel lvl)
 {
     return lvlToString[lvl];
 }
 
 int64_t
-new_api::Logger::getMillisecondTimestamp()
+Logger::getMillisecondTimestamp()
 {
     milliseconds msec = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     return msec.count();
 }
 
 void
-new_api::Logger::processLogRecords()
+Logger::processLogRecords()
 {
     if (isProcessing_)
     {
@@ -235,19 +239,19 @@ new_api::Logger::processLogRecords()
 }
 
 void
-new_api::Logger::startLogRecord()
+Logger::startLogRecord()
 {
     currentLogRecord_.str( std::string() );
     currentLogRecord_.clear();
 }
 
 void
-new_api::Logger::finalizeLogRecord()
+Logger::finalizeLogRecord()
 {
     if (!recordsQueue_.push(currentLogRecord_.str()))
         getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
     else
-        LogIoService.post(boost::bind(&new_api::Logger::processLogRecords, this));
+        LogIoService.post(boost::bind(&Logger::processLogRecords, this));
 }
 
 //******************************************************************************
