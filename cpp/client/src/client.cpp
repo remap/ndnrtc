@@ -97,8 +97,7 @@ void Client::setupStatGathering()
 {
 	if (!params_.isGatheringStats())
 		return;
-
-	LogInfo("") << "new stat colllector" << endl;
+    
 	statCollector_.reset(new StatCollector(io_));
 	
 	for (auto& rs:remoteStreams_)

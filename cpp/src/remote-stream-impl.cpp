@@ -206,7 +206,6 @@ RemoteStreamImpl::fetchThreadMeta(const std::string& threadName)
 void 
 RemoteStreamImpl::threadMetaFetched(const std::string& thread, NetworkData& meta)
 {
-	threadsMeta_[thread] = make_shared<NetworkData>(move(meta));
 	LogInfoC << "received thread meta info for: " << thread << std::endl;
 
 	if (threadsMeta_.size() == streamMeta_->getThreads().size())

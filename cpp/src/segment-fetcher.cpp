@@ -187,8 +187,10 @@ SegmentFetcher::processSegment
 						onComplete_(Blob(content, false), validationInfo_);
 					} catch (const std::exception& ex) {
 						LogErrorC << "SegmentFetcher::onSegmentReceived: Error in onComplete: " << ex.what() << std::endl;
+                        throw ;
 					} catch (...) {
 						LogErrorC << "SegmentFetcher::onSegmentReceived: Error in onComplete." << std::endl;
+                        throw ;
 					}
 					return;
 				}
