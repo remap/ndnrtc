@@ -38,12 +38,12 @@ SampleEstimator::~SampleEstimator()
 void
 SampleEstimator::bootstrapSegmentNumber(double value, SampleClass st, SegmentClass dt)
 {
-    estimators_[std::make_pair(st,dt)].segNum_.newValue(value);
+    estimators_[std::make_pair(st,dt)].segNum_.newValue((value > 0 ? value : 1.) );
 }
 
 void SampleEstimator::bootstrapSegmentSize(double value, SampleClass st, SegmentClass dt)
 {
-    estimators_[std::make_pair(st,dt)].segSize_.newValue(value);
+    estimators_[std::make_pair(st,dt)].segSize_.newValue((value > 0 ? value : 1000.));
 }
 
 void 
