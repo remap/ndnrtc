@@ -239,7 +239,7 @@ bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UINT_TESTS_LDADD_} 
+bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} 
 
 bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

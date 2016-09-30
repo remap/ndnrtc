@@ -686,7 +686,7 @@ TEST(TestDataSegment, TestSlice)
     for (int i = 0; i < data_len; ++i)
         data.push_back((uint8_t)i);
     
-    NetworkData nd(data);
+    NetworkData nd((const std::vector<uint8_t>)data);
     int wireLength = 1000;
     std::vector<VideoFrameSegment> segments = VideoFrameSegment::slice(nd, wireLength);
     int payloadLength = VideoFrameSegment::payloadLength(wireLength);
@@ -712,7 +712,7 @@ TEST(TestDataSegment, TestSlice)
         idx++;
         s.setHeader(hdr);
     }
-
+    
     for (int i = 0; i < data_len; ++i)
     {
         size_t segIdx = i/payloadLength;

@@ -25,7 +25,7 @@ using namespace ::testing;
 using namespace ndnrtc;
 using namespace boost::chrono;
 
-#if 1
+#if 0
 TEST(TestVideoThread, TestCreate)
 {
 	VideoThread vt(sampleVideoCoderParams());
@@ -318,11 +318,11 @@ TEST(TestAudioThread, TestRunOpusThread)
 	ASSERT_GT(high_resolution_clock::now(), callbackTs);
 	EXPECT_LE(1, nBundles);
 	EXPECT_GE(wire_length, bundle->getLength());
-	EXPECT_LE(1, bundle->getSamplesNum());
+	ASSERT_LE(1, bundle->getSamplesNum());
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
 		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
-#if 1
+#if 0
 TEST(TestAudioThread, TestRunG722Thread)
 {
 	MockAudioThreadCallback callback;
