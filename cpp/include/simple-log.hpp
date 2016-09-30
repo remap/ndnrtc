@@ -227,6 +227,9 @@ namespace ndnlog {
             static Logger&
             getLogger(const std::string &logFile);
             
+            static boost::shared_ptr<Logger>
+            getLoggerPtr(const std::string &logFile);
+            
             static void
             destroyLogger(const std::string &logFile);
             
@@ -278,7 +281,7 @@ namespace ndnlog {
             boost::recursive_mutex logMutex_;
             
             static boost::recursive_mutex stdOutMutex_;
-            static std::map<std::string, Logger*> loggers_;
+            static std::map<std::string, boost::shared_ptr<Logger>> loggers_;
             static Logger* sharedInstance_;
             
             boost::atomic<bool> isProcessing_;
