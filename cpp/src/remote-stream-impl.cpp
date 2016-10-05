@@ -206,6 +206,7 @@ RemoteStreamImpl::fetchThreadMeta(const std::string& threadName)
 void 
 RemoteStreamImpl::threadMetaFetched(const std::string& thread, NetworkData& meta)
 {
+    threadsMeta_[thread] = make_shared<NetworkData>(move(meta));
 	LogInfoC << "received thread meta info for: " << thread << std::endl;
 
 	if (threadsMeta_.size() == streamMeta_->getThreads().size())
@@ -219,6 +220,13 @@ RemoteStreamImpl::threadMetaFetched(const std::string& thread, NetworkData& meta
 void
 RemoteStreamImpl::initiateFetching()
 {
+    if (threadsMeta_.find(threadName_) == threadsMeta_.end())
+    {
+        LogErrorC << "Can't find requested thread " << threadName_
+            << " in received metadata" << std::endl;
+        throw std::runtime_error("Can't find requested thread to fetch");
+    }
+    
     LogInfoC << "initiating fetching from " << streamPrefix_
         << " (thread " << threadName_ << ")" << std::endl;
     
