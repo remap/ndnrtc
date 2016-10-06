@@ -150,7 +150,7 @@ RemoteStreamImpl::isVerified() const
 statistics::StatisticsStorage
 RemoteStreamImpl::getStatistics() const
 {
-    (*sstorage_)[Indicator::Timestamp] = clock::unixTimestamp();
+    (*sstorage_)[Indicator::Timestamp] = clock::millisecSinceEpoch();
     return *sstorage_;
 }
 
