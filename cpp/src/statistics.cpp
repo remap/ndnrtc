@@ -40,8 +40,10 @@ map_list_of
 ( Indicator::CurrentProducerFramerate, "Producer rate" )
 ( Indicator::VerifySuccess, "Verified samples" )
 ( Indicator::VerifyFailure, "Verify failure samples" )
+( Indicator::LatencyControlStable, "Latency control stable state" )
+( Indicator::LatencyControlCommand, "Latency control command" )
 // playout
-( Indicator::LastPlayedNo, "Playback #" ) 
+( Indicator::LastPlayedNo, "Playback #" )
 ( Indicator::LastPlayedDeltaNo, "Last delta #" ) 
 ( Indicator::LastPlayedKeyNo, "Last key #" ) 
 ( Indicator::PlayedNum, "Played frames" ) 
@@ -112,6 +114,8 @@ map_list_of
 ( Indicator::CurrentProducerFramerate, 0. )
 ( Indicator::VerifySuccess, 0. )
 ( Indicator::VerifyFailure, 0. )
+( Indicator::LatencyControlStable, 0. )
+( Indicator::LatencyControlCommand, 0. )
 // playout
 ( Indicator::LastPlayedNo, 0. )
 ( Indicator::LastPlayedDeltaNo, 0. )
@@ -187,6 +191,8 @@ boost::assign::map_list_of
 (Indicator::CurrentProducerFramerate, "prodRate")
 (Indicator::VerifySuccess, "verifySuccess")
 (Indicator::VerifyFailure, "verifyFailure")
+(Indicator::LatencyControlStable, "latCtrlStable" )
+(Indicator::LatencyControlCommand, "latCtrlCmd" )
 // playout
 (Indicator::LastPlayedNo, "playNo")
 (Indicator::LastPlayedDeltaNo, "deltaNo")

@@ -271,7 +271,6 @@ LatencyControl::sampleArrived(const PacketNumber& playbackNo)
 
     bool timeoutFired = (now-timestamp_ > timeoutWindowMs_);
     stabilityEstimator_->newDataArrived(targetRate_);
-    (*sstorage_)[Indicator::Darr] = stabilityEstimator_->getDarrAverage().latestValue();
 
     if (stabilityEstimator_->isStable())
     {
@@ -325,6 +324,10 @@ LatencyControl::sampleArrived(const PacketNumber& playbackNo)
     }
 
     currentCommand_ = command;
+    
+    (*sstorage_)[Indicator::Darr] = stabilityEstimator_->getDarrAverage().latestValue();
+    (*sstorage_)[Indicator::LatencyControlStable] = stabilityEstimator_->isStable();
+    (*sstorage_)[Indicator::LatencyControlCommand] = command;
 }
 
 void 

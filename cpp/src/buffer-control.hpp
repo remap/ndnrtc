@@ -48,8 +48,6 @@ namespace ndnrtc {
 		boost::shared_ptr<DrdEstimator> drdEstimator_;
 		boost::shared_ptr<IBuffer> buffer_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-
-		void informLatencyControl(const BufferReceipt&);
 	};
 
 	class IBufferControlObserver {

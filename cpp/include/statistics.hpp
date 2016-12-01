@@ -46,6 +46,8 @@ namespace ndnrtc {
                 CurrentProducerFramerate,       // BufferControl
                 VerifySuccess,                  // SampleValidator
                 VerifyFailure,                  // SampleValidator
+                LatencyControlStable,           // LatencyControl
+                LatencyControlCommand,          // LatencyControl
                 
                 // playout
                 LastPlayedNo,                   // VideoPlayout
