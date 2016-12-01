@@ -19,11 +19,35 @@
 #include <modules/video_coding/codecs/vp9/include/vp9.h>
 
 #include "video-coder.hpp"
+#include "threading-capability.hpp"
 
 using namespace std;
 using namespace ndnlog;
 using namespace ndnrtc;
 using namespace webrtc;
+
+// this class is needed in order to synchronously dispatch all
+// frame scaling (see - FrameScaler) calls on the same thread.
+// this is WebRTC requirement - all frame scaling calls must be
+// executed on the same thread throughout lifecycle
+class ScalerThread : public ThreadingCapability
+{
+public:
+    static ScalerThread *getSharedInstance()
+    {
+        static ScalerThread scalerThread;
+        return &scalerThread;
+    }
+    
+    void perform(boost::function<void(void)> block)
+    {
+        performOnMyThread(block);
+    }
+    
+private:
+    ScalerThread() { startMyThread(); }
+    ~ScalerThread() { stopMyThread(); }
+};
 
 //********************************************************************************
 char* plotCodec(webrtc::VideoCodec codec)
@@ -130,7 +154,11 @@ FrameScaler::operator()(const WebRtcVideoFrame& frame)
             webrtc::kI420, webrtc::kI420, webrtc::kScaleBilinear);
     }
 
-    int res = scaler_.Scale(frame, &scaledFrame_);
+    int res = -1;
+    ScalerThread::getSharedInstance()->perform([&res, &frame, this](){
+        res = scaler_.Scale(frame, &scaledFrame_);
+    });
+    
     return (res == 0 ? scaledFrame_ : frame);
 }
 
