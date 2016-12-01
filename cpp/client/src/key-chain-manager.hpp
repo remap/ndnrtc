@@ -13,7 +13,6 @@
 namespace ndn {
 	class KeyChain;
     class Face;
-    class MemoryContentCache;
     class IdentityCertificate;
 }
 
