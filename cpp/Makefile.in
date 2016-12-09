@@ -1006,6 +1006,7 @@ am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-tes
 	src/bin_tests_test_video_decoder-name-components.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-frame-data.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-clock.$(OBJEXT) \
+	src/bin_tests_test_video_decoder-threading-capability.$(OBJEXT) \
 	$(am__objects_36)
 bin_tests_test_video_decoder_OBJECTS =  \
 	$(am_bin_tests_test_video_decoder_OBJECTS)
@@ -1753,7 +1754,7 @@ bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpe
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
-bin_tests_test_video_decoder_SOURCES = tests/test-video-decoder.cc tests/tests-helpers.cc src/video-decoder.cpp src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_decoder_SOURCES = tests/test-video-decoder.cc tests/tests-helpers.cc src/video-decoder.cpp src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_decoder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_decoder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_decoder_LDADD = ${libndnrtc_la_LIBADD}
@@ -3238,6 +3239,8 @@ src/bin_tests_test_video_decoder-frame-data.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_video_decoder-clock.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_video_decoder-threading-capability.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -3799,6 +3802,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-name-components.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-ndnrtc-object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-simple-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-video-coder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_decoder-video-decoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_playout-async.Po@am__quote@
@@ -10602,6 +10606,20 @@ src/bin_tests_test_video_decoder-clock.obj: src/clock.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_tests_test_video_decoder-clock.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_decoder-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_video_decoder-threading-capability.o: src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_decoder-threading-capability.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Tpo -c -o src/bin_tests_test_video_decoder-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_tests_test_video_decoder-threading-capability.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_decoder-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
+
+src/bin_tests_test_video_decoder-threading-capability.obj: src/threading-capability.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_decoder-threading-capability.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Tpo -c -o src/bin_tests_test_video_decoder-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_video_decoder-threading-capability.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_tests_test_video_decoder-threading-capability.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_decoder-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_decoder_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

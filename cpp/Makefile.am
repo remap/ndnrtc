@@ -226,7 +226,7 @@ bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_coder_LDADD = ${libndnrtc_la_LIBADD} 
 
-bin_tests_test_video_decoder_SOURCES = tests/test-video-decoder.cc tests/tests-helpers.cc src/video-decoder.cpp src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_decoder_SOURCES = tests/test-video-decoder.cc tests/tests-helpers.cc src/video-decoder.cpp src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/clock.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_decoder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_decoder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_video_decoder_LDADD = ${libndnrtc_la_LIBADD}

@@ -99,7 +99,7 @@ PeriodicImpl::fire(const boost::system::error_code& e)
 			if (nextIntervalMs)
 				setupTimer(nextIntervalMs);
 			else 
-				isRunning_ = false;
+                cancel();
 		}
 	}
 }
@@ -109,4 +109,5 @@ PeriodicImpl::cancel()
 {
 	isRunning_ = false;
 	timer_.cancel();
+    workFunc_ = boost::function<unsigned int(void)>();
 }
