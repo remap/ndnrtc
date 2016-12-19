@@ -23,6 +23,7 @@ namespace ndnrtc {
         ~RemoteAudioStreamImpl();
 
 		void initiateFetching();
+        void stopFetching();
         void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         
 	private:
@@ -30,7 +31,9 @@ namespace ndnrtc {
         boost::shared_ptr<SampleValidator> validator_;
         
         void setupPlayout();
+        void releasePlayout();
         void setupPipelineControl();
+        void releasePipelineControl();
 	};
 }
 

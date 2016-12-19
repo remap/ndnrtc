@@ -51,6 +51,7 @@ namespace ndnrtc {
 		void fetchMeta();
 		void start(const std::string& threadName);
 		void setThread(const std::string& threadName);
+        std::string getThread() const { return threadName_; }
 		void stop();
 
 		void setInterestLifetime(unsigned int lifetimeMs);
@@ -58,14 +59,16 @@ namespace ndnrtc {
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		bool isVerified() const;
-		// void attach(IRemoteStreamObserver*);
-		// void detach(IRemoteStreamObserver*);
+        bool isRunning() const { return isRunning_; };
+		void attach(IRemoteStreamObserver* observer);
+		void detach(IRemoteStreamObserver* observer);
 
 		void setNeedsMeta(bool needMeta) { needMeta_ = needMeta; }
 		statistics::StatisticsStorage getStatistics() const;
 
 	protected:
         MediaStreamParams::MediaStreamType type_;
+        boost::asio::io_service& io_;
 		bool needMeta_, isRunning_, cuedToRun_;
 		boost::shared_ptr<ndn::Face> face_;
 		boost::shared_ptr<ndn::KeyChain> keyChain_;

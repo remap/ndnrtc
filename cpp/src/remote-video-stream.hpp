@@ -31,6 +31,7 @@ namespace ndnrtc{
 		
 		void start(const std::string& threadName, IExternalRenderer* render);
 		void initiateFetching();
+        void stopFetching();
         void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         
 	private:
@@ -40,7 +41,9 @@ namespace ndnrtc{
 
 		void feedFrame(const WebRtcVideoFrame&);
         void setupDecoder();
+        void releaseDecoder();
         void setupPipelineControl();
+        void releasePipelineControl();
 	};
 }
 

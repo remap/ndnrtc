@@ -74,6 +74,15 @@ RemoteVideoStreamImpl::initiateFetching()
 }
 
 void
+RemoteVideoStreamImpl::stopFetching()
+{
+    RemoteStreamImpl::stopFetching();
+    
+    releasePipelineControl();
+    releaseDecoder();
+}
+
+void
 RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
@@ -113,6 +122,13 @@ RemoteVideoStreamImpl::setupDecoder()
 }
 
 void
+RemoteVideoStreamImpl::releaseDecoder()
+{
+    dynamic_pointer_cast<VideoPlayout>(playout_)->deregisterFrameConsumer();
+    decoder_.reset();
+}
+
+void
 RemoteVideoStreamImpl::setupPipelineControl()
 {
     Name threadPrefix(streamPrefix_);
@@ -130,4 +146,13 @@ RemoteVideoStreamImpl::setupPipelineControl()
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
     pipelineControl_->start();
+}
+
+void
+RemoteVideoStreamImpl::releasePipelineControl()
+{
+    latencyControl_->unregisterObserver();
+    segmentController_->detach(pipelineControl_.get());
+    
+    pipelineControl_.reset();
 }

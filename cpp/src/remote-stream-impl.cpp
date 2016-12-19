@@ -11,20 +11,21 @@
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/name.hpp>
 
-#include "frame-buffer.hpp"
+#include "async.hpp"
 #include "buffer-control.hpp"
+#include "clock.hpp"
+#include "data-validator.hpp"
 #include "drd-estimator.hpp"
+#include "frame-buffer.hpp"
 #include "interest-control.hpp"
+#include "interest-queue.hpp"
 #include "latency-control.hpp"
+#include "pipeline-control-state-machine.hpp"
 #include "pipeline-control.hpp"
 #include "pipeliner.hpp"
-#include "sample-estimator.hpp"
-#include "pipeline-control-state-machine.hpp"
-#include "playout.hpp"
 #include "playout-control.hpp"
-#include "interest-queue.hpp"
-#include "data-validator.hpp"
-#include "clock.hpp"
+#include "playout.hpp"
+#include "sample-estimator.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -36,6 +37,7 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service& io,
 			const shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& streamPrefix):
 type_(MediaStreamParams::MediaStreamType::MediaStreamTypeUnknown),
+io_(io),
 face_(face),
 keyChain_(keyChain),
 streamPrefix_(streamPrefix),
@@ -145,6 +147,24 @@ bool
 RemoteStreamImpl::isVerified() const
 {
 	return (validationInfo_.size() == 0);
+}
+
+void
+RemoteStreamImpl::attach(IRemoteStreamObserver* o)
+{
+    async::dispatchSync(io_, [this, o](){
+        observers_.push_back(o);
+    });
+}
+
+void
+RemoteStreamImpl::detach(IRemoteStreamObserver* o)
+{
+    async::dispatchSync(io_, [this, o](){
+        std::vector<IRemoteStreamObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), o);
+        if (it != observers_.end())
+            observers_.erase(it);
+    });
 }
 
 statistics::StatisticsStorage
@@ -257,8 +277,6 @@ RemoteStreamImpl::stopFetching()
         interestQueue_->reset();
         isRunning_ = false;
         needMeta_ = false;
-        streamMeta_.reset();
-        threadsMeta_.clear();
     }
 }
 

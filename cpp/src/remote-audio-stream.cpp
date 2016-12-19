@@ -58,6 +58,15 @@ RemoteAudioStreamImpl::initiateFetching()
 }
 
 void
+RemoteAudioStreamImpl::stopFetching()
+{
+    RemoteStreamImpl::stopFetching();
+    
+    releasePlayout();
+    releasePipelineControl();
+}
+
+void
 RemoteAudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
@@ -74,6 +83,13 @@ RemoteAudioStreamImpl::setupPlayout()
     
     boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger_);
     boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger_);
+}
+
+void
+RemoteAudioStreamImpl::releasePlayout()
+{
+    playout_.reset();
+    playoutControl_.reset();
 }
 
 void
@@ -94,4 +110,11 @@ RemoteAudioStreamImpl::setupPipelineControl()
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
     pipelineControl_->start();
+}
+
+void
+RemoteAudioStreamImpl::releasePipelineControl()
+{
+    latencyControl_->unregisterObserver();
+    segmentController_->detach(pipelineControl_.get());
 }

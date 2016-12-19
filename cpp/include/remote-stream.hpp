@@ -19,7 +19,7 @@ namespace ndn {
 namespace ndnrtc {
 	class RemoteStreamImpl;
 	class IRemoteStreamObserver;
-	class IExternalRenderer;
+    class IExternalRenderer;
     
     /**
      * Main class for handling remote streams - streams published by remote producers.
@@ -83,6 +83,11 @@ namespace ndnrtc {
 		void setThread(const std::string& threadName);
         
         /**
+         * Returns currently fetched thread name 
+         */
+        std::string getThread() const;
+        
+        /**
          * Stops fetching from this stream
          */
 		void stop();
@@ -105,6 +110,22 @@ namespace ndnrtc {
          */
 		bool isVerified() const;
 
+        /**
+         * Indicates, whether stream is actively fetching data.
+         */
+        bool isRunning() const;
+        
+        /**
+         * Registers an observer for this stream. Callbacks are always dispatched on 
+         * the provided io_service's thread.
+         * Stream can have multiple observers.
+         */
+        virtual void registerObserver(IRemoteStreamObserver* observer);
+        
+        /**
+         * Unregistered stream observer, registered previously.
+         */
+        virtual void unregisterObserver(IRemoteStreamObserver* observer);
 
 		statistics::StatisticsStorage getStatistics() const;
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);

@@ -47,6 +47,12 @@ RemoteStream::setThread(const std::string& threadName)
 	pimpl_->setThread(threadName);
 }
 
+std::string
+RemoteStream::getThread() const
+{
+    return pimpl_->getThread();
+}
+
 void 
 RemoteStream::stop()
 {
@@ -81,6 +87,24 @@ bool
 RemoteStream::isVerified() const
 {
 	return pimpl_->isVerified();
+}
+
+bool
+RemoteStream::isRunning() const
+{
+    return pimpl_->isRunning();
+}
+
+void
+RemoteStream::registerObserver(IRemoteStreamObserver* o)
+{
+    pimpl_->attach(o);
+}
+
+void
+RemoteStream::unregisterObserver(IRemoteStreamObserver* o)
+{
+    pimpl_->detach(o);
 }
 
 //******************************************************************************
