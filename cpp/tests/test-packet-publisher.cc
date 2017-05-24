@@ -110,7 +110,7 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 		frame._encodedHeight = 480;
 		frame._timeStamp = 1460488589;
 		frame.capture_time_ms_ = 1460488569;
-		frame._frameType = webrtc::kKeyFrame;
+		frame._frameType = webrtc::kVideoFrameKey;
 		frame._completeFrame = true;
 
 		VideoFramePacket vp(frame);
@@ -250,7 +250,7 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 		frame._encodedHeight = 480;
 		frame._timeStamp = 1460488589;
 		frame.capture_time_ms_ = 1460488569;
-		frame._frameType = webrtc::kKeyFrame;
+		frame._frameType = webrtc::kVideoFrameKey;
 		frame._completeFrame = true;
 
 		VideoFramePacket vp(frame);
@@ -344,7 +344,7 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 
 		int wire_len = wireLength;
 		AudioBundlePacket bundlePacket(wireLength);
-		AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+		AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
 		while (bundlePacket.hasSpace(sample)) bundlePacket << sample;
 		
@@ -412,7 +412,7 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment1000)
 			frame._encodedHeight = 480;
 			frame._timeStamp = 1460488589;
 			frame.capture_time_ms_ = 1460488569;
-			frame._frameType = webrtc::kKeyFrame;
+			frame._frameType = webrtc::kVideoFrameKey;
 			frame._completeFrame = true;
 	
 			VideoFramePacket vp(frame);
@@ -485,7 +485,7 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment8000)
 			frame._encodedHeight = 480;
 			frame._timeStamp = 1460488589;
 			frame.capture_time_ms_ = 1460488569;
-			frame._frameType = webrtc::kKeyFrame;
+			frame._frameType = webrtc::kVideoFrameKey;
 			frame._completeFrame = true;
 	
 			VideoFramePacket vp(frame);
@@ -559,7 +559,7 @@ TEST(TestPacketPublisher, TestBenchmarkNoSigning)
 			frame._encodedHeight = 480;
 			frame._timeStamp = 1460488589;
 			frame.capture_time_ms_ = 1460488569;
-			frame._frameType = webrtc::kKeyFrame;
+			frame._frameType = webrtc::kVideoFrameKey;
 			frame._completeFrame = true;
 	
 			VideoFramePacket vp(frame);
