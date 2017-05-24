@@ -320,6 +320,9 @@ namespace ndnrtc
         void detach(IBufferObserver* observer);
         boost::shared_ptr<SlotPool> getPool() const { return pool_; }
 
+        std::string
+        dump() const;
+        
     private:
         friend PlaybackQueue;
 
@@ -328,9 +331,6 @@ namespace ndnrtc
         std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-
-        std::string
-        dump() const;
         
         std::string
         shortdump() const;

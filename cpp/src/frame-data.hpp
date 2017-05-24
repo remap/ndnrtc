@@ -50,6 +50,16 @@ namespace ndnrtc {
     /**
      * Network data class is a base class for network data used to transfer binary 
      * data over the (NDN) network.
+     * NetworkDataT is a template class, which can be instantiated in two flavors - mutable
+     * data and immutable data. The former can be used for preparing data packets to be
+     * sent over the network. For example, one creates empty packet and then adds necessary
+     * payload(s) to it. (One should rather use derived classes, rather than this class 
+     * directly). The payload is stored as a vector of bytes and copied/moved according to
+     * the constructor used.
+     * The latter (immutable network data) is used for packets, received from the network.
+     * It is intentional by design, that incoming packets are immutable. Internal storage
+     * is a smart pointer to a vector of bytes. This allows for ImmutableNetworkData objects
+     * to be leightweight when copied or passed by values.
      */
     template<typename T = Mutable>
     class NetworkDataT {
@@ -80,15 +90,29 @@ namespace ndnrtc {
         
         virtual ~NetworkDataT() {}
 
+        /**
+         * Returns packet payload size in bytes
+         */
         virtual int 
         getLength() const { return _data().size(); }
 
+        /**
+         * Returns const pointer to the packet payload
+         */
         const uint8_t*
         getData() const { return _data().data(); }
 
+        /**
+         * Returns payload as const vector of bytes
+         */
         const std::vector<uint8_t>& data() const 
         { return _data(); }
 
+        /**
+         * Flag indicating whether the packet is valid. Primarily used by derived classes, or
+         * in cases, when move constructor is used for mutable network data - packet which
+         * payload was moved becomes invalid.
+         */
         bool 
         isValid() const { return isValid_; }
 
@@ -104,6 +128,9 @@ namespace ndnrtc {
             return *this;
         }
 
+        /**
+         * Swaps two packets
+         */
         void 
         swap(NetworkDataT& networkData)
         {
@@ -111,6 +138,9 @@ namespace ndnrtc {
             data_.swap(networkData.data_);
         }
 
+        /**
+         * Calculates CRC for the packet
+         */
         ENABLE_IF(T,Mutable)
         int
         getCrcValue() const
@@ -162,6 +192,14 @@ namespace ndnrtc {
         DataPacketT(DataPacketT<T>&& dataPacket) = delete;
 
     public:
+        /**
+         * Blob provides read-only interface for immutable data. It is a helper
+         * class which makes manipulation of data packet internals easier (such
+         * manipulations as counting number of headers in data packet, their 
+         * sizes, ordering, etc). Blob's constructor takes two const iterators 
+         * or another Blob object. No payload copying is performed during 
+         * construction.
+         */
         class Blob {
         public:
             size_t size() const { return (end_-begin_); }
@@ -698,10 +736,10 @@ namespace ndnrtc {
     public:
         class AudioSampleBlob : protected DataPacket::Blob {
         public:
-            AudioSampleBlob(const AudioSampleHeader& hdr, size_t sampleLen, const uint8_t* data):
-                Blob(std::vector<uint8_t>::const_iterator(data), 
-                    std::vector<uint8_t>::const_iterator(data+sampleLen)), 
-                header_(hdr), fromBlob_(false){}
+            AudioSampleBlob(const AudioSampleHeader& hdr, const std::vector<uint8_t>::const_iterator begin,
+                    const std::vector<uint8_t>::const_iterator& end):
+                Blob(begin, end), header_(hdr), fromBlob_(false){}
+
             AudioSampleBlob(const std::vector<uint8_t>::const_iterator begin,
                     const std::vector<uint8_t>::const_iterator& end):
                 Blob(begin, end), fromBlob_(true)

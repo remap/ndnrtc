@@ -203,6 +203,7 @@ namespace ndnrtc {
 
 	  void
 	  onVerifyFailed(const boost::shared_ptr<ndn::Data>& data,
+	  	const std::string& reason,
 	  	const boost::shared_ptr<ndn::Data>& originalData,
 	  	const boost::shared_ptr<const ndn::Interest>& originalInterest);
 

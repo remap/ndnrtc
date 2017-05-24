@@ -18,19 +18,19 @@ class MockNdnKeyChain
 public:
 	MOCK_METHOD1(sign, void(ndn::Data&));
 	MOCK_METHOD3(verifyData, void(const boost::shared_ptr<ndn::Data>& data, 
-		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed));
+		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed));
 
 	void callOnVerifySuccess(const boost::shared_ptr<ndn::Data>& data, 
-		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed)
+		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed)
 
 	{
 		onVerified(data);
 	}
 
 	void callOnVerifyFailed(const boost::shared_ptr<ndn::Data>& data, 
-		const ndn::OnVerified& onVerified, const ndn::OnVerifyFailed& onVerifyFailed)
+		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed)
 	{
-		onVerifyFailed(data);
+		onVerifyFailed(data, "");
 	}
 };
 

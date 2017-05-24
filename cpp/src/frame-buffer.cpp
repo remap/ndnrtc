@@ -705,6 +705,14 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
     }
 }
 
+#if 0
+void
+Buffer::invalidateOldKey(const Name& slotPrefix)
+{
+    
+}
+#endif
+
 void
 Buffer::reserveSlot(const boost::shared_ptr<const BufferSlot>& slot)
 {
@@ -815,10 +823,13 @@ PlaybackQueue::pop(ExtractSlot extract)
         extract(slot, playTime);
         (*sstorage_)[Indicator::AcquiredNum]++;
         
-        if (slot->getNameInfo().isDelta_) 
+        if (slot->getNameInfo().isDelta_)
             buffer_->invalidatePrevious(slot->getPrefix());
         else
+        {
+            // TODO: invalidate old key frames
             (*sstorage_)[Indicator::AcquiredKeyNum]++;
+        }
         
         buffer_->releaseSlot(slot);
     }

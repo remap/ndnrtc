@@ -6,7 +6,7 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
-#include <webrtc/voice_engine/include/voe_hardware.h>
+// #include <webrtc/voice_engine/include/voe_hardware.h>
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <boost/thread/lock_guard.hpp>

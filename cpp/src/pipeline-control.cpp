@@ -99,6 +99,7 @@ void
 PipelineControl::segmentStarvation()
 {
 	machine_.dispatch(boost::make_shared<EventStarvation>(500));
+    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 }
 
 bool 

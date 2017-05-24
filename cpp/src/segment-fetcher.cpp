@@ -91,11 +91,12 @@ SegmentFetcher::onSegmentReceived
 	(data,
 		bind(&SegmentFetcher::processSegment, 
 			boost::dynamic_pointer_cast<SegmentFetcher>(shared_from_this()), _1, originalInterest),
-		bind(&SegmentFetcher::onVerifyFailed, 
-			boost::dynamic_pointer_cast<SegmentFetcher>(shared_from_this()), _1, data, originalInterest));
+		(const OnDataValidationFailed)bind(&SegmentFetcher::onVerifyFailed, 
+			boost::dynamic_pointer_cast<SegmentFetcher>(shared_from_this()), _1, _2, data, originalInterest));
 	else {
 		if (!verifySegment_(data))
-			onVerifyFailed(data, data, originalInterest);
+			onVerifyFailed(data, "User-defined verification failed", 
+				data, originalInterest);
 
 		processSegment(data, originalInterest);
 	}
@@ -205,11 +206,12 @@ SegmentFetcher::processSegment
 
 void
 SegmentFetcher::onVerifyFailed(const boost::shared_ptr<Data>& data,
+	const std::string& reason,
 	const boost::shared_ptr<Data>& originalData, 
 	const boost::shared_ptr<const Interest>& originalInterest)
 {
 	try {
-		LogWarnC << "Verification failed for " << data->getName() << std::endl;
+		LogWarnC << "Verification failed for " << data->getName() << ": " << reason << std::endl;
 
 		validationInfo_.push_back(ValidationErrorInfo(data));
 		processSegment(originalData, originalInterest);

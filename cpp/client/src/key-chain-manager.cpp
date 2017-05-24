@@ -93,7 +93,7 @@ void KeyChainManager::createInstanceIdentity()
     
     LogInfo("") << "Instance identity " << instanceIdentity << std::endl;
 
-	Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity);
+	Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity, true);
 	Name signingCert = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(Name(signingIdentity_));
 
 	LogDebug("") << "Instance key " << instanceKeyName << std::endl;

@@ -43,7 +43,7 @@ SampleValidator::onNewData(const BufferReceipt& receipt)
             LogDebugC << "sample verified " << slot->dump() << std::endl;
             (*statStorage_)[Indicator::VerifySuccess]++;
 		},
-		[me,this,slot](const boost::shared_ptr<ndn::Data>& data)
+		(const OnDataValidationFailed)[me,this,slot](const boost::shared_ptr<ndn::Data>& data, const std::string& reason)
 		{
 			// failure
 			if (slot->getState() >= BufferSlot::State::Assembling)

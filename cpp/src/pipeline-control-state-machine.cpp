@@ -380,6 +380,11 @@ PipelineControlStateMachine::getState() const
 void
 PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineControlEvent>& ev)
 {
+    // dispatchEvent allows current state to react to the event.
+    // if state need to be switched, then next state name is returned.
+    // every state knows its own behavior to the event.
+    // state might also ignore the event. in this case, it returns
+    // its own name.
 	std::string nextState = currentState_->dispatchEvent(ev);
 
 	// if we got new state - transition to it
@@ -389,7 +394,9 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 			throw std::runtime_error(std::string("Unsupported state: "+nextState).c_str());
 		switchToState(states_[nextState], ev);
 	}
-	else 
+	else
+        // otherwise - check whether state machine table defines transition
+        // for this event
 		transition(ev);
 }
 
