@@ -636,7 +636,6 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
-WEBRTCLIBS
 TAR
 WGET
 LIBOBJS
@@ -800,7 +799,6 @@ enable_option_checking
 enable_silent_rules
 enable_maintainer_mode
 enable_logging
-with_libc__
 enable_dependency_tracking
 enable_shared
 enable_static
@@ -1478,7 +1476,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-libc++           use libc++ if available [default=use libstdc++]
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-aix-soname=aix|svr4|both
@@ -3550,7 +3547,7 @@ if test ${WEBRTCDIR}; then
 	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
 	if [[ "$DIR" = "not found" ]];
 	then
-		as_fn_error $? "directory not found - $WEBRTCDIR" "$LINENO" 5
+		as_fn_error $? "directory not found - $W" "$LINENO" 5
 	fi
 	WEBRTCDIR=$DIR
 fi
@@ -3560,7 +3557,7 @@ if test "x${WEBRTCSRC}" = "x"; then
 fi
 
 if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release"
+	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
 fi
 
 if test ${LCONFIGDIR}; then
@@ -3592,21 +3589,6 @@ else
 
 	$as_echo "#define NDN_DEBUG 1" >>confdefs.h
 
-
-fi
-
-
-
-# Check whether --with-libc++ was given.
-if test "${with_libc__+set}" = set; then :
-  withval=$with_libc__;
-	STDLIBFLAGS_CPP="-stdlib=libc++"
-	STDLIBFLAGS_LD="-stdlib=libc++"
-
-else
-
-	STDLIBFLAGS_CPP="-stdlib=libstdc++"
-	STDLIBFLAGS_LD="-stdlib=libstdc++"
 
 fi
 
@@ -17371,167 +17353,6 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
-		# check for compiler flags
-		if [[ $CPPFLAGS =~ .*stdlib.* ]]; then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped" >&5
-$as_echo "$as_me: stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped" >&6;}
-		else
-			if [[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libc++" >&5
-$as_echo_n "checking whether C++ compiler accepts -stdlib=libc++... " >&6; }
-if ${ax_cv_check_cxxflags___stdlib_libcpp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CXXFLAGS
-  CXXFLAGS="$CXXFLAGS  -stdlib=libc++"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ax_cv_check_cxxflags___stdlib_libcpp=yes
-else
-  ax_cv_check_cxxflags___stdlib_libcpp=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CXXFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___stdlib_libcpp" >&5
-$as_echo "$ax_cv_check_cxxflags___stdlib_libcpp" >&6; }
-if test x"$ax_cv_check_cxxflags___stdlib_libcpp" = xyes; then :
-  CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"
-else
-  :
-fi
-
-			else
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -stdlib=libstdc++" >&5
-$as_echo_n "checking whether C++ compiler accepts -stdlib=libstdc++... " >&6; }
-if ${ax_cv_check_cxxflags___stdlib_libstdcpp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$CXXFLAGS
-  CXXFLAGS="$CXXFLAGS  -stdlib=libstdc++"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ax_cv_check_cxxflags___stdlib_libstdcpp=yes
-else
-  ax_cv_check_cxxflags___stdlib_libstdcpp=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CXXFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_cxxflags___stdlib_libstdcpp" >&5
-$as_echo "$ax_cv_check_cxxflags___stdlib_libstdcpp" >&6; }
-if test x"$ax_cv_check_cxxflags___stdlib_libstdcpp" = xyes; then :
-  CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"
-else
-  :
-fi
-
-			fi
-		fi
-
-		# check for linker flags
-		if [[ $LDFLAGS =~ .*stdlib.* ]]; then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped" >&5
-$as_echo "$as_me: stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped" >&6;}
-		else
-			if [[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]; then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libc++" >&5
-$as_echo_n "checking whether the linker accepts -stdlib=libc++... " >&6; }
-if ${ax_cv_check_ldflags___stdlib_libcpp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$LDFLAGS
-  LDFLAGS="$LDFLAGS  -stdlib=libc++"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ax_cv_check_ldflags___stdlib_libcpp=yes
-else
-  ax_cv_check_ldflags___stdlib_libcpp=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LDFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_ldflags___stdlib_libcpp" >&5
-$as_echo "$ax_cv_check_ldflags___stdlib_libcpp" >&6; }
-if test x"$ax_cv_check_ldflags___stdlib_libcpp" = xyes; then :
-  LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"
-else
-  :
-fi
-
-			else
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the linker accepts -stdlib=libstdc++" >&5
-$as_echo_n "checking whether the linker accepts -stdlib=libstdc++... " >&6; }
-if ${ax_cv_check_ldflags___stdlib_libstdcpp+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  ax_check_save_flags=$LDFLAGS
-  LDFLAGS="$LDFLAGS  -stdlib=libstdc++"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ax_cv_check_ldflags___stdlib_libstdcpp=yes
-else
-  ax_cv_check_ldflags___stdlib_libstdcpp=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LDFLAGS=$ax_check_save_flags
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_check_ldflags___stdlib_libstdcpp" >&5
-$as_echo "$ax_cv_check_ldflags___stdlib_libstdcpp" >&6; }
-if test x"$ax_cv_check_ldflags___stdlib_libstdcpp" = xyes; then :
-  LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"
-else
-  :
-fi
-
-			fi
-		fi
 		;;
   linux*)
 		# Do something specific for linux
@@ -18658,39 +18479,6 @@ fi
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
-
-###############################
-# Check for WebRTC headers
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for WebRTC header files:" >&5
-$as_echo "$as_me: checking for WebRTC header files:" >&6;}
-for ac_header in common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h  modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_cxx_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "
-	   can't find WebRTC header files
-
-See \`config.log' for more details" "$LINENO" 5; }
-fi
-
-done
-
-
-WEBRTCLIBS="-laudio_coding_module -laudio_decoder_interface -lCNG -lG711 -lG722 -liLBC -lPCM16B -laudio_encoder_interface -laudio_conference_mixer -laudioproc_debug_proto -laudio_device -laudio_processing -laudio_processing_sse2 -lbitrate_controller -lchannel_transport -lcommon_audio -lcommon_audio_sse2 -lcommon_video -ldesktop_capture -ldesktop_capture_differ_sse2 -lframe_editing_lib -lframe_generator -lhistogram -ljpeg_turbo -liSAC -lmedia_file -lmetrics -lneteq -lopus -lopenmax_dl -lpaced_sender -lprotobuf_lite -lrtp_rtcp -lred -lrtc_base_approved -lsystem_wrappers -lvideo_capture_module -lvideo_coding_utility -lvideo_engine_core -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvideo_render_module -lvideo_render_module_internal_impl -lvoice_engine -lvpx -lvpx_intrinsics_avx2 -lvpx_intrinsics_mmx -lvpx_intrinsics_sse2 -lvpx_intrinsics_ssse3 -lvpx_intrinsics_sse4_1 -lwebrtc_i420 -lwebrtc_opus -lwebrtc_utility -lwebrtc_video_coding -lwebrtc_vp8 -lwebrtc_vp9 -lwebrtc_common -lwebrtc -lyuv"
-
-
-CPPFLAGS=$SAVED_CPPFLAGS
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure

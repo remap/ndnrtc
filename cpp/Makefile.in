@@ -90,18 +90,15 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@OS_LINUX_FALSE@libndnrtc_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@OS_LINUX_FALSE@	$(am__DEPENDENCIES_1)
-@OS_LINUX_TRUE@am__append_1 = -lwebrtc-all
-@OS_DARWIN_TRUE@am__append_2 = -flat_namespace
-@OS_DARWIN_TRUE@am__append_3 = @WEBRTCLIBS@
+@OS_DARWIN_TRUE@am__append_1 = -flat_namespace
+@OS_DARWIN_TRUE@am__append_2 = @WEBRTCLIBS@
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
-@OS_LINUX_TRUE@am__append_4 = -pthread 
-@OS_LINUX_TRUE@am__append_5 = -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_6 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_7 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
-@OS_LINUX_TRUE@am__append_8 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_9 = -DOS_DARWIN
+@OS_LINUX_TRUE@am__append_3 = -pthread 
+@OS_LINUX_TRUE@am__append_4 = -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
+@OS_DARWIN_TRUE@am__append_5 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_6 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+@OS_LINUX_TRUE@am__append_7 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_8 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -145,9 +142,7 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_compile_flag.m4 \
-	$(top_srcdir)/m4/ax_check_link_flag.m4 \
-	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
@@ -257,7 +252,7 @@ am_bin_tests_test_async_OBJECTS =  \
 	tests/bin_tests_test_async-test-async.$(OBJEXT) \
 	src/bin_tests_test_async-async.$(OBJEXT) $(am__objects_1)
 bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -1549,7 +1544,6 @@ TAR = @TAR@
 VERSION = @VERSION@
 WEBRTCDIR = @WEBRTCDIR@
 WEBRTCLIB = @WEBRTCLIB@
-WEBRTCLIBS = @WEBRTCLIBS@
 WEBRTCSRC = @WEBRTCSRC@
 WGET = @WGET@
 abs_builddir = @abs_builddir@
@@ -1674,18 +1668,18 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
-	-L@BOOSTLIB@ $(am__append_2)
+	-L@BOOSTLIB@ $(am__append_1)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
-	-lboost_chrono -lboost_thread -lboost_regex $(am__append_1) \
-	$(am__append_3)
-@OS_LINUX_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+	-lboost_chrono -lboost_thread -lboost_regex -lwebrtc-all \
+	$(am__append_2)
+libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
-	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_6)
+	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_5)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ \
-	-L$(libdir) $(am__append_4) $(am__append_7)
+	-L$(libdir) $(am__append_3) $(am__append_6)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread \
-	-lboost_chrono $(top_builddir)/libndnrtc.la $(am__append_5)
+	-lboost_chrono $(top_builddir)/libndnrtc.la $(am__append_4)
 noinst_SCRIPTS = client/params.cfg
 
 #################
@@ -1697,9 +1691,9 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
-	$(am__append_9)
+	$(am__append_8)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_8)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_7)
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -12216,18 +12210,18 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 .PRECIOUS: Makefile
 
 
-@OS_LINUX_TRUE@make-fat-libs:
-@OS_LINUX_TRUE@	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-@OS_LINUX_TRUE@		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
-@OS_LINUX_TRUE@	done && \
-@OS_LINUX_TRUE@	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+make-fat-libs:
+	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
+	done && \
+	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
 
-@OS_LINUX_TRUE@libwebrtc-all.a: make-fat-libs
-@OS_LINUX_TRUE@	$(shell mkdir -p tmp && cd tmp && \
-@OS_LINUX_TRUE@	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
-@OS_LINUX_TRUE@		ar x $$lib; \
-@OS_LINUX_TRUE@	done && \
-@OS_LINUX_TRUE@	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+libwebrtc-all.a: make-fat-libs
+	$(shell mkdir -p tmp && cd tmp && \
+	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
+		ar x $$lib; \
+	done && \
+	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
 
 res/test-source-1280x720.argb:
 	mkdir -p $(top_builddir)/res/

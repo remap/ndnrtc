@@ -278,7 +278,7 @@ webrtc::EncodedImage encodedImage(size_t frameLen, uint8_t*& buffer, bool delta)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = (delta ? webrtc::kDeltaFrame : webrtc::kKeyFrame);
+    frame._frameType = (delta ? webrtc::kVideoFrameDelta : webrtc::kVideoFrameKey);
     frame._completeFrame = true;
 
     return frame;
@@ -288,7 +288,7 @@ bool checkVideoFrame(const webrtc::EncodedImage& image)
 {
 	bool identical = true;
 	uint8_t *buf;
-	webrtc::EncodedImage ref = encodedImage(image._length, buf, (image._frameType == webrtc::kDeltaFrame));
+	webrtc::EncodedImage ref = encodedImage(image._length, buf, (image._frameType == webrtc::kVideoFrameDelta));
 
 	identical = (image._encodedWidth == ref._encodedWidth) &&
 		(image._encodedHeight == ref._encodedHeight) &&

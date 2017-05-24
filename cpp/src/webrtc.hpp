@@ -12,9 +12,10 @@
 #ifndef ndnrtc_webrtc_h
 #define ndnrtc_webrtc_h
 
-#include <webrtc/video_frame.h>
-
-typedef webrtc::I420VideoFrame WebRtcVideoFrame;
-typedef webrtc::VideoFrameType WebRtcVideoFrameType;
+// #include <webrtc/video_frame.h>
+#include <webrtc/common_types.h>
+// typedef webrtc::I420VideoFrame WebRtcVideoFrame;
+// typedef webrtc::VideoFrameType WebRtcVideoFrameType;
+typedef webrtc::FrameType WebRtcVideoFrameType;
 
 #endif

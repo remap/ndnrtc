@@ -70,8 +70,6 @@ libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEB
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ 
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread -lboost_regex
 
-if OS_LINUX
-
 make-fat-libs:
 	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
 		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
@@ -87,8 +85,6 @@ libwebrtc-all.a: make-fat-libs
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 libndnrtc_la_LIBADD += -lwebrtc-all
-
-endif
 
 if OS_DARWIN
 

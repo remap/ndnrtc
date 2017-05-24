@@ -33,7 +33,7 @@ void DataValidator<KeyChainType>::validate(const boost::shared_ptr<ndn::Data>& d
     LogDebugC << "verifying data " << data->getName().toUri() << std::endl;
     keyChain_->verifyData(data,
                           bind(&DataValidator::onVerifySuccess, this, _1),
-                          bind(&DataValidator::onVerifyFailure, this, _1));
+                          (const OnDataValidationFailed)bind(&DataValidator::onVerifyFailure, this, _1, _2));
 
 }
 
@@ -46,9 +46,11 @@ void DataValidator<KeyChainType>::onVerifySuccess(const boost::shared_ptr<ndn::D
 }
 
 template<typename KeyChainType>
-void DataValidator<KeyChainType>::onVerifyFailure(const boost::shared_ptr<ndn::Data>& data)
+void DataValidator<KeyChainType>::onVerifyFailure(const boost::shared_ptr<ndn::Data>& data,
+    const std::string& reason)
 {
-    LogDebugC << "failed to verify data: " << data->getName().toUri() << std::endl;
+    LogDebugC << "failed to verify data() " << data->getName().toUri() << "): " 
+        << reason << std::endl;
     markBufferData(data, false);
 }
 

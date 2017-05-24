@@ -488,7 +488,7 @@ TEST(TestAudioBundle, TestBundling)
     EXPECT_EQ(0, bundlePacket.getSamplesNum());
     EXPECT_GE(wire_len, bundlePacket.getRemainingSpace());
     
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
     EXPECT_FALSE(sample.getHeader().isRtcp_);
     // EXPECT_EQ(1234, sample.getHeader().dummy_);
@@ -567,7 +567,7 @@ TEST(TestAudioBundle, TestSwap)
     EXPECT_EQ(0, bundlePacket.getSamplesNum());
     EXPECT_GE(wire_len, bundlePacket.getRemainingSpace());
     
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
     EXPECT_FALSE(sample.getHeader().isRtcp_);
     // EXPECT_EQ(1234, sample.getHeader().dummy_);
@@ -613,7 +613,7 @@ TEST(TestAudioBundle, TestBundlingUsingOperator)
     EXPECT_EQ(0, bundlePacket.getSamplesNum());
     EXPECT_GE(wire_len, bundlePacket.getRemainingSpace());
     
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
     EXPECT_FALSE(sample.getHeader().isRtcp_);
     // EXPECT_EQ(1234, sample.getHeader().dummy_);
@@ -642,7 +642,7 @@ TEST(TestAudioBundle, TestMoveAndReuse)
 
     int wire_len = 1000;
     AudioBundlePacket bundlePacket(wire_len);
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
     AudioBundlePacket tempBundle(wire_len);
 
     for (int j = 0; j < 3; ++j)
@@ -759,7 +759,7 @@ TEST(TestVideoFramePacket, TestCreate)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     VideoFramePacket fp(frame);
@@ -820,7 +820,7 @@ TEST(TestVideoFramePacket, TestAddSyncList)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     VideoFramePacket fp(frame);
@@ -869,7 +869,7 @@ TEST(TestVideoFramePacket, TestFromNetworkData)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     CommonHeader hdr;
@@ -913,7 +913,7 @@ TEST(TestVideoFramePacket, TestAddSyncListThrow)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     VideoFramePacket fp(frame);
@@ -947,7 +947,7 @@ TEST(TestVideoFramePacket, TestSliceFrame)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     VideoFramePacket vp(frame);
@@ -988,7 +988,7 @@ TEST(TestVideoFramePacket, TestGetParity)
         frame._encodedHeight = 480;
         frame._timeStamp = 1460488589;
         frame.capture_time_ms_ = 1460488569;
-        frame._frameType = webrtc::kKeyFrame;
+        frame._frameType = webrtc::kVideoFrameKey;
         frame._completeFrame = true;
         
         VideoFramePacket vp(frame);
@@ -1374,7 +1374,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
     frame._encodedHeight = 480;
     frame._timeStamp = 1460488589;
     frame.capture_time_ms_ = 1460488569;
-    frame._frameType = webrtc::kKeyFrame;
+    frame._frameType = webrtc::kVideoFrameKey;
     frame._completeFrame = true;
 
     VideoFramePacket vp(frame);
@@ -1481,7 +1481,7 @@ TEST(TestWireData, TestMergeAudioBundle)
 
     int wire_len = 1000;
     AudioBundlePacket bundlePacket(wire_len);
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
     while (bundlePacket.hasSpace(sample))
         bundlePacket << sample;

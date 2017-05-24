@@ -48,7 +48,8 @@ namespace ndnrtc {
         ISlotBuffer* buffer_;
 
         void onVerifySuccess(const boost::shared_ptr<ndn::Data>& data);
-        void onVerifyFailure(const boost::shared_ptr<ndn::Data>& data);
+        void onVerifyFailure(const boost::shared_ptr<ndn::Data>& data, 
+            const std::string& reason);
         
         void markBufferData(const boost::shared_ptr<ndn::Data>& data, bool verified);
 	};

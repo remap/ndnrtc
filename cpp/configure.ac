@@ -90,7 +90,7 @@ if test ${WEBRTCDIR}; then
 	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
 	if [[[ "$DIR" = "not found" ]]];
 	then
-		AC_MSG_ERROR([directory not found - $WEBRTCDIR])
+		AC_MSG_ERROR([directory not found - $W])
 	fi
 	WEBRTCDIR=$DIR
 fi
@@ -100,7 +100,7 @@ if test "x${WEBRTCSRC}" = "x"; then
 fi
 
 if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release"
+	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
 fi
 
 if test ${LCONFIGDIR}; then
@@ -124,16 +124,6 @@ AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in
 	AC_DEFINE([NDN_WARN])
 	AC_DEFINE([NDN_ERROR])
 	AC_DEFINE([NDN_DEBUG])
-	])
-
-AC_ARG_WITH([libc++], [AS_HELP_STRING([--with-libc++],[use libc++ if available [default=use libstdc++]])], 
-	[
-	STDLIBFLAGS_CPP="-stdlib=libc++" 
-	STDLIBFLAGS_LD="-stdlib=libc++"
-	],
-	[
-	STDLIBFLAGS_CPP="-stdlib=libstdc++" 
-	STDLIBFLAGS_LD="-stdlib=libstdc++"	
 	])
 
 # Checks for programs.
@@ -165,27 +155,6 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
-		# check for compiler flags
-		if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
-			AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
-		else
-			if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
-				AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-			else
-				AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-			fi
-		fi
-		
-		# check for linker flags
-		if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
-			AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
-		else
-			if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
-				AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-			else
-				AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-			fi
-		fi
 		;;
   linux*)
 		# Do something specific for linux
@@ -407,21 +376,5 @@ AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find O
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
-
-###############################
-# Check for WebRTC headers
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
-
-AC_MSG_NOTICE([checking for WebRTC header files:])
-AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h  modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h], 
-[],
-[AC_MSG_FAILURE([
-	   can't find WebRTC header files
-	   ])])
-
-AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module -laudio_decoder_interface -lCNG -lG711 -lG722 -liLBC -lPCM16B -laudio_encoder_interface -laudio_conference_mixer -laudioproc_debug_proto -laudio_device -laudio_processing -laudio_processing_sse2 -lbitrate_controller -lchannel_transport -lcommon_audio -lcommon_audio_sse2 -lcommon_video -ldesktop_capture -ldesktop_capture_differ_sse2 -lframe_editing_lib -lframe_generator -lhistogram -ljpeg_turbo -liSAC -lmedia_file -lmetrics -lneteq -lopus -lopenmax_dl -lpaced_sender -lprotobuf_lite -lrtp_rtcp -lred -lrtc_base_approved -lsystem_wrappers -lvideo_capture_module -lvideo_coding_utility -lvideo_engine_core -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvideo_render_module -lvideo_render_module_internal_impl -lvoice_engine -lvpx -lvpx_intrinsics_avx2 -lvpx_intrinsics_mmx -lvpx_intrinsics_sse2 -lvpx_intrinsics_ssse3 -lvpx_intrinsics_sse4_1 -lwebrtc_i420 -lwebrtc_opus -lwebrtc_utility -lwebrtc_video_coding -lwebrtc_vp8 -lwebrtc_vp9 -lwebrtc_common -lwebrtc -lyuv"])
-
-CPPFLAGS=$SAVED_CPPFLAGS
 
 AC_OUTPUT
