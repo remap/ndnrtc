@@ -284,7 +284,7 @@ namespace ndnlog {
             static std::map<std::string, boost::shared_ptr<Logger>> loggers_;
             static Logger* sharedInstance_;
             
-            boost::atomic<bool> isProcessing_;
+            std::atomic<bool> isProcessing_;
             std::stringstream currentLogRecord_;
             typedef boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> LogRecordQueue;
             LogRecordQueue recordsQueue_;
