@@ -636,6 +636,7 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+WEBRTCLIBS
 TAR
 WGET
 LIBOBJS
@@ -18479,6 +18480,9 @@ fi
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
+
+WEBRTCLIBS="-lwebrtc"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
