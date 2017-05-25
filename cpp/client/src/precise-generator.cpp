@@ -14,12 +14,6 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/lock_guard.hpp>
 
-#if !defined(OS_DARWIN) && !defined(BOOST_ASIO_DISABLE_STD_CHRONO)
-
-using namespace std::placeholders; 
-
-#endif
-
 #define STEADY_TIMER
 
 #ifdef STEADY_TIMER
@@ -58,6 +52,7 @@ typedef boost::posix_time::time_duration duration_type;
 #endif
 
 using namespace std;
+using namespace std::placeholders;
 
 class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGeneratorImpl>
 {

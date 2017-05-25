@@ -11,7 +11,16 @@
 #include <iostream>
 #include <boost/asio.hpp>
 
-#if defined(OS_DARWIN) || defined(BOOST_ASIO_DISABLE_STD_CHRONO)
+#if BOOST_ASIO_HAS_STD_CHRONO
+
+#include <functional>
+#include <chrono>
+
+namespace lib_bind=std;
+namespace lib_fun=std;
+namespace lib_chrono=std::chrono;
+
+#else
 
 #include <boost/function.hpp>
 #include <boost/chrono.hpp>
@@ -21,15 +30,6 @@
 namespace lib_bind=boost;
 namespace lib_fun=boost;
 namespace lib_chrono=boost::chrono;
-
-#else
-
-#include <functional>
-#include <chrono>
-
-namespace lib_bind=std;
-namespace lib_fun=std;
-namespace lib_chrono=std::chrono;
 
 #endif
 
