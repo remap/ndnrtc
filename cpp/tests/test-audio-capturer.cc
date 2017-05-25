@@ -103,7 +103,7 @@ TEST(TestAudioCapturer, TestCapture)
 
 	boost::asio::io_service io;
 	boost::asio::deadline_timer runTimer(io);
-	runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+	runTimer.expires_from_now(boost::posix_time::milliseconds(3000));
 	runTimer.wait();
 
 	capturer.stopCapture();
@@ -143,7 +143,7 @@ TEST(TestAudioCapturer, TestCaptureOpusCodec)
 
 	boost::asio::io_service io;
 	boost::asio::deadline_timer runTimer(io);
-	runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+	runTimer.expires_from_now(boost::posix_time::milliseconds(3000));
 	runTimer.wait();
 
 	capturer.stopCapture();
@@ -178,7 +178,7 @@ TEST(TestAudioCapturer, TestMultipleCaptureDifferentCodecs)
 
 	boost::asio::io_service io;
 	boost::asio::deadline_timer runTimer(io);
-	runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+	runTimer.expires_from_now(boost::posix_time::milliseconds(3000));
 	runTimer.wait();
 
 	delete g722capturer;
@@ -238,7 +238,7 @@ TEST(TestAudioCapturer, TestMultipleCapturerDifferentDevices)
 
 		c2->startCapture();
 
-		runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
+		runTimer.expires_from_now(boost::posix_time::milliseconds(3000));
 		runTimer.wait();
 
 		// now, gathered rtp packets should differ

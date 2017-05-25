@@ -80,22 +80,19 @@ AudioCapturer::getRecordingDevices()
 {
     vector<pair<string,string>> audioDevices;
     WebRtcSmartPtr<AudioDeviceModule> module(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+    module->Init();
+    
+    int nDevices = module->RecordingDevices();
+    for (int i = 0; i < nDevices; ++i) 
+    {
+        static char guid[128];
+        static char name[128];
+        memset(guid, 0, 128);
+        memset(name, 0, 128);
+        module->RecordingDeviceName(i, name, guid);
 
-    // AudioController::getSharedInstance()->initVoiceEngine();
-    // AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
-        int nDevices = module->RecordingDevices();
-
-        for (int i = 0; i < nDevices; ++i) 
-        {
-            static char guid[128];
-            static char name[128];
-            memset(guid, 0, 128);
-            memset(name, 0, 128);
-            module->RecordingDeviceName(i, name, guid);
-
-            audioDevices.push_back(pair<string,string>(string(guid), string(name)));
-        }
-    // });
+        audioDevices.push_back(pair<string,string>(string(guid), string(name)));
+    }
     return audioDevices;
 }
 
@@ -104,22 +101,19 @@ AudioCapturer::getPlayoutDevices()
 {
     vector<pair<string,string>> audioDevices;
     WebRtcSmartPtr<AudioDeviceModule> module(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+    module->Init();
 
-    // AudioController::getSharedInstance()->initVoiceEngine();
-    // AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
-        int nDevices = module->PlayoutDevices();
+    int nDevices = module->PlayoutDevices();
+    for (int i = 0; i < nDevices; ++i) 
+    {
+        static char guid[128];
+        static char name[128];
+        memset(guid, 0, 128);
+        memset(name, 0, 128);
+        module->PlayoutDeviceName(i, name, guid);
 
-        for (int i = 0; i < nDevices; ++i) 
-        {
-            static char guid[128];
-            static char name[128];
-            memset(guid, 0, 128);
-            memset(name, 0, 128);
-            module->PlayoutDeviceName(i, name, guid);
-
-            audioDevices.push_back(pair<string,string>(string(guid), string(name)));
-        }
-    // });
+        audioDevices.push_back(pair<string,string>(string(guid), string(name)));
+    }
     return audioDevices;
 }
 
@@ -179,16 +173,14 @@ nRtp_(0), nRtcp_(0)
     AudioController::getSharedInstance()->initVoiceEngine();
     int res = 0;
 
-    // AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res](){
-        
-        audioDeviceModule_ = WebRtcSmartPtr<AudioDeviceModule>(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+    audioDeviceModule_ = WebRtcSmartPtr<AudioDeviceModule>(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+    audioDeviceModule_->Init();
 
-        int nDevices = audioDeviceModule_->RecordingDevices();
-        if (deviceIdx > nDevices) 
-            res = 1;
-        else
-            audioDeviceModule_->SetRecordingDevice(deviceIdx);
-    // });
+    int nDevices = audioDeviceModule_->RecordingDevices();
+    if (deviceIdx > nDevices) 
+        res = 1;
+    else
+        audioDeviceModule_->SetRecordingDevice(deviceIdx);
 
     if (res != 0) 
         throw std::runtime_error("Can't initialize audio capturer");
