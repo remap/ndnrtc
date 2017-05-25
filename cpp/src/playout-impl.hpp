@@ -40,7 +40,7 @@ namespace ndnrtc {
         PlayoutImpl(const PlayoutImpl&) = delete;
         
         mutable boost::recursive_mutex mutex_;
-        boost::atomic<bool> isRunning_;
+        std::atomic<bool> isRunning_;
         boost::shared_ptr<IPlaybackQueue> pqueue_;
         JitterTiming jitterTiming_;
         int64_t lastTimestamp_, lastDelay_, delayAdjustment_;

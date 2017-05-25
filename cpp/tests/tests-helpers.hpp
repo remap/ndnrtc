@@ -39,6 +39,9 @@ ClientParams
   sampleConsumerParams();
 ClientParams 
   sampleProducerParams();
+  
+WebRtcVideoFrame getFrame(int w, int h, bool randomNoise = false);
+std::vector<WebRtcVideoFrame> getFrameSequence(int w, int h, int len);
 
 webrtc::EncodedImage 
   encodedImage(size_t frameLen, uint8_t*& buffer, bool delta = true);

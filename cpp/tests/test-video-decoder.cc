@@ -29,33 +29,7 @@ TEST(TestDecoder, TestEncodeDecode2K)
 	int nFrames = 30*5;
 	int width = 1280;
 	int height = 720;
-	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	bool dropEnabled = true;
 	int targetBitrate = 2000;

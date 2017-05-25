@@ -12,7 +12,7 @@
 #ifndef __ndnrtc__video_decoder__
 #define __ndnrtc__video_decoder__
 
-#include <webrtc/modules/video_coding/codecs/interface/video_codec_interface.h>
+#include <webrtc/modules/video_coding/include/video_codec_interface.h>
 
 #include "ndnrtc-common.hpp"
 #include "webrtc.hpp"

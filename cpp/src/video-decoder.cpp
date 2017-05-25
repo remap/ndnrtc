@@ -43,13 +43,13 @@ onDecodedImage_(onDecodedImage)
 void VideoDecoder::processFrame(const webrtc::EncodedImage& encodedImage)
 {
     LogTraceC
-        << " type " << (encodedImage._frameType == webrtc::kKeyFrame ? "KEY" : "DELTA")
+        << " type " << (encodedImage._frameType == webrtc::kVideoFrameKey ? "KEY" : "DELTA")
         << " complete (encoder) " << encodedImage._completeFrame
         << std::endl;
     
     if (frameCount_ == 0)
         LogInfoC << "start decode from "
-            << (encodedImage._frameType == webrtc::kKeyFrame ? "KEY" : "DELTA")
+            << (encodedImage._frameType == webrtc::kVideoFrameKey ? "KEY" : "DELTA")
             << std::endl;
     
     frameCount_++;
@@ -85,7 +85,7 @@ void VideoDecoder::resetDecoder()
 #pragma mark - intefaces realization webrtc::DecodedImageCallback
 int32_t VideoDecoder::Decoded(WebRtcVideoFrame &decodedImage)
 {
-    decodedImage.set_render_time_ms(clock::millisecondTimestamp());
+    decodedImage.set_timestamp_us(clock::microsecondTimestamp());
     onDecodedImage_(decodedImage);
     return 0;
 }
