@@ -24,10 +24,20 @@
 
 // #define ENABLE_LOGGING
 
+#if BOOST_ASIO_HAS_STD_CHRONO
+
+namespace lib_chrono=std::chrono;
+
+#else
+
+namespace lib_chrono=boost::chrono;
+
+#endif
+
 using namespace ndnrtc;
 using namespace ndn;
 using namespace boost;
-using namespace boost::chrono;
+using namespace lib_chrono;
 
 MediaStreamParams getSampleVideoParams()
 {
@@ -73,7 +83,7 @@ MediaStreamParams getSampleAudioParams()
 
 	return msp;
 }
-#if 1
+#if 0
 TEST(TestVideoStream, TestCreate)
 {
 	boost::asio::io_service io;
@@ -184,7 +194,7 @@ TEST(TestVideoStream, TestDestructorNotLocking)
 		io.run();
 	});
 
-	checkTimer.expires_from_now(boost::chrono::milliseconds(2500));
+	checkTimer.expires_from_now(lib_chrono::milliseconds(2500));
 	checkTimer.async_wait([&destructed, &t](const boost::system::error_code& e){
 		ASSERT_TRUE(destructed);
 		if (!destructed) t.interrupt();
@@ -307,27 +317,26 @@ TEST(TestVideoStream, TestPublishInvokeOnMainThread)
 #ifdef ENABLE_LOGGING
 	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
-	boost::chrono::duration<int, boost::milli> pubDuration;
+	lib_chrono::duration<int, std::nano> pubDuration;
 	high_resolution_clock::time_point pubStart;
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (int i = 0; i < nFrames; ++i)
 	{
 		runTimer.expires_from_now(boost::posix_time::milliseconds(30));
 		pubStart = high_resolution_clock::now();
 		EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
-		pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+		auto p = high_resolution_clock::now() - pubStart;
+		pubDuration += p;
 		runTimer.wait();
 	}
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
-	
-	double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+
+	double avgFramePubTimeMs = (double)duration_cast<milliseconds>(pubDuration).count()/(double)nFrames;
 	std::stringstream ss;
 	for (int i = 0; i < settings.params_.getThreadNum(); ++i)
 		ss << settings.params_.getVideoThread(i)->coderParams_.encodeWidth_ << "x"
 			<< settings.params_.getVideoThread(i)->coderParams_.encodeHeight_ << " "
 			<< settings.params_.getVideoThread(i)->coderParams_.startBitrate_ << "kBit/s ";
 
+	GT_PRINTF("Total publish time %ld ms\n", duration_cast<milliseconds>(pubDuration).count());
 	GT_PRINTF("Published %d frames. Number of threads: %d (%s). Average publishing time is %.2fms\n",
 				nFrames, settings.params_.getThreadNum(), ss.str().c_str(), avgFramePubTimeMs);
 	EXPECT_GE(1000/30, avgFramePubTimeMs);
@@ -336,7 +345,7 @@ TEST(TestVideoStream, TestPublishInvokeOnMainThread)
 	t.join();
 }
 #endif
-
+#if 1
 TEST(TestVideoStream, TestPublishInvokeOnFaceThread)
 {
 #ifdef ENABLE_LOGGING
@@ -399,24 +408,20 @@ TEST(TestVideoStream, TestPublishInvokeOnFaceThread)
 
 		io.dispatch([&settings, frameSize, nFrames, &runTimer, width, height, &s, &frames, &isDone]()
 		{
-			boost::chrono::duration<int, boost::milli> pubDuration;
+			lib_chrono::duration<int, std::nano> pubDuration;
 			high_resolution_clock::time_point pubStart;
-			high_resolution_clock::time_point t1 = high_resolution_clock::now();
 			for (int i = 0; i < nFrames; ++i)
 			{
 				runTimer.expires_from_now(boost::posix_time::milliseconds(30));
 				
 				pubStart = high_resolution_clock::now();
 				EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frames[i].get(), frameSize));
-				pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+				pubDuration += ( high_resolution_clock::now() - pubStart );
 
 				runTimer.wait();
 			}
-	
-			high_resolution_clock::time_point t2 = high_resolution_clock::now();
-			auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 		
-			double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+			double avgFramePubTimeMs = (double)duration_cast<milliseconds>(pubDuration).count()/(double)nFrames;
 			std::stringstream ss;
 			for (int i = 0; i < settings.params_.getThreadNum(); ++i)
 				ss << settings.params_.getVideoThread(i)->coderParams_.encodeWidth_ << "x"
@@ -492,9 +497,8 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 #ifdef ENABLE_LOGGING
 	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
 #endif
-		boost::chrono::duration<int, boost::milli> pubDuration;
+		lib_chrono::duration<int, std::nano> pubDuration;
 		high_resolution_clock::time_point pubStart;
-		high_resolution_clock::time_point t1 = high_resolution_clock::now();
 		for (int i = 0; i < nFrames; ++i)
 		{
 			runTimer.expires_from_now(boost::posix_time::milliseconds(30));
@@ -505,13 +509,11 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 			if (i == nFrames/2)
 				s.removeThread(s.getThreads().front());
 	
-			pubDuration += duration_cast<milliseconds>( high_resolution_clock::now() - pubStart );
+			pubDuration += ( high_resolution_clock::now() - pubStart );
 			runTimer.wait();
 		}
-		high_resolution_clock::time_point t2 = high_resolution_clock::now();
-		auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
 	
-		double avgFramePubTimeMs = (double)pubDuration.count()/(double)nFrames;
+		double avgFramePubTimeMs = (double)duration_cast<milliseconds>(pubDuration).count()/(double)nFrames;
 		EXPECT_GE(1000/30, avgFramePubTimeMs);
 		
 		work.reset();
@@ -729,7 +731,7 @@ TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
 	t.join();
 }
 #endif
-
+#endif
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

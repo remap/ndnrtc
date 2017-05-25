@@ -210,7 +210,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 	for (auto it:frames)
 	{
 		// prepare packet header
-		bool isKey = (it.second->getFrame()._frameType == webrtc::kKeyFrame);
+		bool isKey = (it.second->getFrame()._frameType == webrtc::kVideoFrameKey);
 		CommonHeader packetHdr;
 		packetHdr.sampleRate_ = metaKeepers_[it.first]->getRate();
 		packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
@@ -235,7 +235,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 		VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
 		PARITY_RATIO);
 
-	bool isKey = (fp->getFrame()._frameType == webrtc::kKeyFrame);
+	bool isKey = (fp->getFrame()._frameType == webrtc::kVideoFrameKey);
     PacketNumber seqNo = (isKey ? seqCounters_[thread].first : seqCounters_[thread].second);
     PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
     PacketNumber playbackNo = playbackCounter_;

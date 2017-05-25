@@ -14,6 +14,17 @@
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 
+#if BOOST_ASIO_HAS_STD_CHRONO
+
+namespace lib_chrono=std::chrono;
+
+#else
+
+namespace lib_chrono=boost::chrono;
+
+#endif
+
+
 using namespace ndnrtc;
 
 namespace ndnrtc {
@@ -83,7 +94,7 @@ PeriodicImpl::~PeriodicImpl()
 void
 PeriodicImpl::setupTimer(unsigned int intervalMs)
 {
-	timer_.expires_from_now(boost::chrono::milliseconds(intervalMs));
+	timer_.expires_from_now(lib_chrono::milliseconds(intervalMs));
 	timer_.async_wait(boost::bind(&PeriodicImpl::fire, shared_from_this(), 
 		boost::asio::placeholders::error));
 }
