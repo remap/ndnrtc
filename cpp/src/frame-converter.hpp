@@ -37,10 +37,10 @@ namespace ndnrtc {
 		RawFrameConverter(){}
 		~RawFrameConverter(){}
 
-		WebRtcVideoFrame& operator<<(const ArgbRawFrameWrapper&);
-		WebRtcVideoFrame& operator<<(const I420RawFrameWrapper&);
+		WebRtcVideoFrame operator<<(const ArgbRawFrameWrapper&);
+		WebRtcVideoFrame operator<<(const I420RawFrameWrapper&);
 
 	private:
-		WebRtcVideoFrame convertedFrame_;
+		WebRtcSmartPtr<WebRtcVideoFrameBuffer> frameBuffer_;
 	};
 }

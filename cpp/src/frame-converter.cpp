@@ -12,7 +12,7 @@
 using namespace ndnrtc;
 using namespace webrtc;
 
-WebRtcVideoFrame& RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
+WebRtcVideoFrame RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
 {             
 	// make conversion to I420
 #warning this needs to be tested with capturing from video devices
@@ -24,12 +24,9 @@ WebRtcVideoFrame& RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
 	int target_width = wr.width_;
 	int target_height = wr.height_;
 
-	int ret = convertedFrame_.CreateEmptyFrame(target_width,
-		abs(target_height),
-		stride_y,
-		stride_uv, stride_uv);
-	
-	if (ret < 0)
+	frameBuffer_ = I420Buffer::Create(wr.width_, wr.height_, stride_y, stride_uv, stride_uv);
+
+	if (!frameBuffer_)
 		throw std::runtime_error("Failed to allocate I420 frame");
 
 	const int conversionResult = ConvertToI420(commonVideoType,
@@ -38,18 +35,19 @@ WebRtcVideoFrame& RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
                                                wr.width_, wr.height_,
                                                wr.frameSize_,
                                                kVideoRotation_0,
-                                               &convertedFrame_);
+                                               frameBuffer_.get());
 	if (conversionResult < 0)
 		throw std::runtime_error("Failed to convert capture frame to I420");
 
-	return convertedFrame_;
+	return WebRtcVideoFrame(frameBuffer_, webrtc::kVideoRotation_0, 0);
 }
 
-WebRtcVideoFrame& RawFrameConverter::operator<<(const I420RawFrameWrapper& wr)
+WebRtcVideoFrame RawFrameConverter::operator<<(const I420RawFrameWrapper& wr)
 {
-	convertedFrame_.CreateFrame(wr.yBuffer_, wr.uBuffer_, wr.vBuffer_,
-		wr.width_, wr.height_,
-		wr.strideY_, wr.strideU_, wr.strideV_);
+	frameBuffer_ = I420Buffer::Create(wr.width_, wr.height_, wr.strideY_, wr.strideU_, wr.strideV_);
+	memcpy(frameBuffer_->MutableDataY(), wr.yBuffer_, wr.strideY_);
+	memcpy(frameBuffer_->MutableDataU(), wr.uBuffer_, wr.strideU_);
+	memcpy(frameBuffer_->MutableDataV(), wr.vBuffer_, wr.strideV_);
 
-	return convertedFrame_;
+	return WebRtcVideoFrame(frameBuffer_, webrtc::kVideoRotation_0, 0);
 }
