@@ -26,7 +26,7 @@ using namespace ndnlog;
 using namespace ndnrtc;
 using namespace webrtc;
 
-// this class is needed in order to synchronously dispatch all
+// this class is needed to synchronously dispatch all
 // frame scaling (see - FrameScaler) calls on the same thread.
 // this is WebRTC requirement - all frame scaling calls must be
 // executed on the same thread throughout lifecycle
@@ -119,13 +119,6 @@ dstWidth_(dstWidth), dstHeight_(dstHeight)
 const WebRtcVideoFrame&
 FrameScaler::operator()(const WebRtcVideoFrame& frame)
 {
-    // if (srcWidth_ != frame.width() || srcHeight_ != frame.height())
-    // {
-    //     srcWidth_ = frame.width(); srcHeight_ = frame.height();
-    //     scaler_.Set(srcWidth_, srcHeight_, dstWidth_, dstHeight_,
-    //         webrtc::kI420, webrtc::kI420, webrtc::kScaleBilinear);
-    // }
-
     // try do scaling on this thread. if throws, do it old-fashioned way
     // ScalerThread::getSharedInstance()->perform([&res, &frame, this](){
     //     scaledFrameBuffer_->ScaleFrom(frame);
