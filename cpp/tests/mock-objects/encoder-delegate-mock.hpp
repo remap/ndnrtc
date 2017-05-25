@@ -45,7 +45,7 @@ public:
 	void countDroppedFrame() { dropped_++; }
 	void countEncodedFrame(const webrtc::EncodedImage& f) 
 	{ 
-		if (f._frameType == webrtc::kKeyFrame) 
+		if (f._frameType == webrtc::kVideoFrameKey) 
 		{
 			nKey_++;
 			keyBytes_ += f._length;

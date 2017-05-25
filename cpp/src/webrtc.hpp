@@ -12,10 +12,15 @@
 #ifndef ndnrtc_webrtc_h
 #define ndnrtc_webrtc_h
 
-// #include <webrtc/video_frame.h>
 #include <webrtc/common_types.h>
-// typedef webrtc::I420VideoFrame WebRtcVideoFrame;
-// typedef webrtc::VideoFrameType WebRtcVideoFrameType;
+#include <webrtc/api/video/video_frame.h>
+#include <webrtc/api/video/i420_buffer.h>
+
+typedef webrtc::VideoFrame WebRtcVideoFrame;
 typedef webrtc::FrameType WebRtcVideoFrameType;
+typedef webrtc::I420Buffer WebRtcVideoFrameBuffer;
+
+template<typename T>
+using WebRtcSmartPtr = rtc::scoped_refptr<T>;
 
 #endif

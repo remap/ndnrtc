@@ -12,11 +12,11 @@
 // #define USE_VP9
 
 #include <boost/thread.hpp>
-#include <webrtc/modules/video_coding/main/source/codec_database.h>
-#include <webrtc/modules/video_coding/main/interface/video_coding_defines.h>
-#include <modules/video_coding/main/source/internal_defines.h>
-#include <modules/video_coding/codecs/vp8/include/vp8.h>
-#include <modules/video_coding/codecs/vp9/include/vp9.h>
+#include <webrtc/modules/video_coding/codecs/vp8/include/vp8.h>
+#include <webrtc/modules/video_coding/codecs/vp9/include/vp9.h>
+#include <webrtc/modules/video_coding/include/video_coding.h>
+#include <webrtc/modules/video_coding/include/video_codec_interface.h>
+#include <webrtc/modules/video_coding/codec_database.h>
 
 #include "video-coder.hpp"
 #include "threading-capability.hpp"
@@ -80,48 +80,20 @@ webrtc::VideoCodec VideoCoder::codecFromSettings(const VideoCoderParams &setting
 
     // setup default params first
 #ifdef USE_VP9
-    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP9_IDX, &codec))
+    webrtc::VCMCodecDataBase::Codec(webrtc::kVideoCodecVP9, &codec);
 #else
-    if (!webrtc::VCMCodecDataBase::Codec(VCM_VP8_IDX, &codec))
+    webrtc::VCMCodecDataBase::Codec(webrtc::kVideoCodecVP8, &codec);
 #endif
-    {
-        codec.maxFramerate = 30;
-        codec.startBitrate  = 300;
-        codec.maxBitrate = 4000;
-        codec.width = 640;
-        codec.height = 480;
-        codec.qpMax = 56;
-        
-#ifdef USE_VP9
-        strncpy(codec.plName, "VP9", 4);
-        codec.plType = VCM_VP9_PAYLOAD_TYPE;
-        codec.codecType = webrtc::kVideoCodecVP9;
-        codec.codecSpecific.VP9.denoisingOn = true;
-        codec.codecSpecific.VP9.complexity = webrtc::kComplexityNormal;
-        codec.codecSpecific.VP9.numberOfTemporalLayers = 1;
-        codec.codecSpecific.VP9.keyFrameInterval = settings.gop_;
-#else
-        strncpy(codec.plName, "VP8", 4);
-        codec.plType = VCM_VP8_PAYLOAD_TYPE;
-        codec.codecSpecific.VP8.resilience = kResilienceOff;
-        codec.codecType = webrtc::kVideoCodecVP8;
-        codec.codecSpecific.VP8.denoisingOn = true;
-        codec.codecSpecific.VP8.complexity = webrtc::kComplexityNormal;
-        codec.codecSpecific.VP8.numberOfTemporalLayers = 1;
-        codec.codecSpecific.VP8.keyFrameInterval = settings.gop_;
-#endif
-    }
-    
+
     // dropping frames
 #ifdef USE_VP9
-    codec.codecSpecific.VP9.resilience = 1;
-    codec.codecSpecific.VP9.frameDroppingOn = settings.dropFramesOn_;
-    codec.codecSpecific.VP9.keyFrameInterval = settings.gop_;
+    codec.VP9()->resilience = 1;
+    codec.VP9()->frameDroppingOn = settings.dropFramesOn_;
+    codec.VP9()->keyFrameInterval = settings.gop_;
 #else
-    codec.codecSpecific.VP8.resilience = kResilientStream;
-    codec.codecSpecific.VP8.frameDroppingOn = settings.dropFramesOn_;
-    codec.codecSpecific.VP8.keyFrameInterval = settings.gop_;
-    codec.codecSpecific.VP8.feedbackModeOn = false;
+    codec.VP8()->resilience = kResilientStream;
+    codec.VP8()->frameDroppingOn = settings.dropFramesOn_;
+    codec.VP8()->keyFrameInterval = settings.gop_;
 #endif
     
     // customize parameteres if possible
@@ -147,19 +119,21 @@ dstWidth_(dstWidth), dstHeight_(dstHeight)
 const WebRtcVideoFrame&
 FrameScaler::operator()(const WebRtcVideoFrame& frame)
 {
-    if (srcWidth_ != frame.width() || srcHeight_ != frame.height())
-    {
-        srcWidth_ = frame.width(); srcHeight_ = frame.height();
-        scaler_.Set(srcWidth_, srcHeight_, dstWidth_, dstHeight_,
-            webrtc::kI420, webrtc::kI420, webrtc::kScaleBilinear);
-    }
+    // if (srcWidth_ != frame.width() || srcHeight_ != frame.height())
+    // {
+    //     srcWidth_ = frame.width(); srcHeight_ = frame.height();
+    //     scaler_.Set(srcWidth_, srcHeight_, dstWidth_, dstHeight_,
+    //         webrtc::kI420, webrtc::kI420, webrtc::kScaleBilinear);
+    // }
 
-    int res = -1;
-    ScalerThread::getSharedInstance()->perform([&res, &frame, this](){
-        res = scaler_.Scale(frame, &scaledFrame_);
-    });
+    // try do scaling on this thread. if throws, do it old-fashioned way
+    // ScalerThread::getSharedInstance()->perform([&res, &frame, this](){
+    //     scaledFrameBuffer_->ScaleFrom(frame);
+    // });
+
+    scaledFrameBuffer_->ScaleFrom(*(frame.video_frame_buffer()));
     
-    return (res == 0 ? scaledFrame_ : frame);
+    return WebRtcVideoFrame(scaledFrameBuffer_, frame.rotation(), frame.timestamp_us());
 }
 
 void FrameScaler::initScaledFrame()
@@ -169,13 +143,12 @@ void FrameScaler::initScaledFrame()
     int target_width = dstWidth_;
     int target_height = dstHeight_;
     
-    
-    int ret = scaledFrame_.CreateEmptyFrame(target_width,
+    scaledFrameBuffer_ = I420Buffer::Create(target_width,
                                             abs(target_height),
                                             stride_y,
                                             stride_uv, stride_uv);
     
-    if (ret < 0) throw std::runtime_error("failed to allocate scaled frame");
+    if (!scaledFrameBuffer_) throw std::runtime_error("failed to allocate scaled frame");
 }
 
 //********************************************************************************
@@ -197,7 +170,7 @@ keyEnforcement_(keyEnforcement),
 {
     assert(delegate_);
     description_ = "coder";
-    keyFrameType_.push_back(webrtc::kKeyFrame);
+    keyFrameType_.push_back(webrtc::kVideoFrameKey);
 
     if (!encoder_.get())
         throw std::runtime_error("Error creating encoder");
@@ -256,9 +229,10 @@ void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 
 //********************************************************************************
 #pragma mark - interfaces realization - EncodedImageCallback
-int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
-                            const webrtc::CodecSpecificInfo* codecSpecificInfo,
-                            const webrtc::RTPFragmentationHeader* fragmentation)
+webrtc::EncodedImageCallback::Result
+VideoCoder::OnEncodedImage(const EncodedImage& encodedImage,
+    const CodecSpecificInfo* codecSpecificInfo,
+    const RTPFragmentationHeader* fragmentation)
 {
     encodeComplete_ = true;
     if (keyEnforcement_ == KeyEnforcement::Gop) gopCounter_++;
@@ -282,5 +256,5 @@ int32_t VideoCoder::Encoded(const webrtc::EncodedImage& encodedImage,
     << std::endl; 
     */
     delegate_->onEncodedFrame(encodedImage);
-    return 0;
+    return Result(Result::OK);
 }

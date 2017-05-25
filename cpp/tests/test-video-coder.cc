@@ -21,6 +21,49 @@ using namespace ::testing;
 using namespace ndnrtc;
 using namespace boost::chrono;
 
+WebRtcVideoFrame getFrame(int w, int h, bool randomNoise = false)
+{
+	int width = w, height = h;
+	int frameSize = width*height*4*sizeof(uint8_t);
+	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
+		// make gardient frame (black to white vertically)
+	for (int j = 0; j < height; ++j)
+		for (int i = 0; i < width; ++i)
+			if (randomNoise)
+				frameBuffer[i*width+j] = std::rand()%256; // random noise
+			else
+				frameBuffer[i*width+j] = (i%4 ? (uint8_t)(255*((double)j/(double)height)) : 255);
+
+	WebRtcSmartPtr<WebRtcVideoFrameBuffer> videoBuffer;
+	{
+		// make conversion to I420
+		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
+		int stride_y = width;
+		int stride_uv = (width + 1) / 2;
+		int target_width = width;
+		int target_height = height;
+
+		videoBuffer = webrtc::I420Buffer::Create(width, height, stride_y, stride_uv, stride_uv);
+	
+		// convertedFrame.CreateEmptyFrame(target_width,
+		// 	abs(target_height), stride_y, stride_uv, stride_uv);
+		ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
+						width, height, frameSize, webrtc::kVideoRotation_0, videoBuffer.get());
+	}
+	free(frameBuffer);
+
+	return WebRtcVideoFrame(videoBuffer, webrtc::kVideoRotation_0, 0);
+}
+
+std::vector<WebRtcVideoFrame> getFrameSequence(int w, int h, int len)
+{
+	std::srand(std::time(0));
+	std::vector<WebRtcVideoFrame> frames;
+	for (int i = 0; i < len; ++i)
+	 frames.push_back(std::move(getFrame(w,h,true)));
+	return frames;
+}
+
 TEST(TestCoder, TestCreate)
 {
 	VideoCoderParams vcp(sampleVideoCoderParams());
@@ -28,8 +71,7 @@ TEST(TestCoder, TestCreate)
 	VideoCoder *vc;
 
 	EXPECT_NO_THROW(vc = new VideoCoder(vcp, &coderDelegate));
-
-	delete vc;
+	// delete vc;
 }
 
 TEST(TestCoder, TestEncode)
@@ -40,26 +82,7 @@ TEST(TestCoder, TestEncode)
 #endif
 
 	int width = 1280, height = 720;
-	webrtc::I420VideoFrame convertedFrame;
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-		// make gardient frame (black to white vertically)
-	for (int j = 0; j < height; ++j)
-		for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = (i%4 ? (uint8_t)(255*((double)j/(double)height)) : 255);
-	{
-		// make conversion to I420
-		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-		int stride_y = width;
-		int stride_uv = (width + 1) / 2;
-		int target_width = width;
-		int target_height = height;
-	
-		convertedFrame.CreateEmptyFrame(target_width,
-			abs(target_height), stride_y, stride_uv, stride_uv);
-		ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-						width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-	}
+	WebRtcVideoFrame convertedFrame(std::move(getFrame(width, height)));
 
 	{ // try 1 frame
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -71,7 +94,7 @@ TEST(TestCoder, TestEncode)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		EXPECT_CALL(coderDelegate, onEncodingStarted())
@@ -95,7 +118,7 @@ TEST(TestCoder, TestEncode)
 		FrameScaler downScale(width/2, height/2);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		const webrtc::EncodedImage *encodedImage;
 		boost::function<void(const webrtc::EncodedImage&)> onEncoded = 
@@ -127,7 +150,7 @@ TEST(TestCoder, TestEncode)
 		FrameScaler upScale(width*2, height*2);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		const webrtc::EncodedImage *encodedImage;
 		boost::function<void(const webrtc::EncodedImage&)> onEncoded = 
@@ -158,7 +181,7 @@ TEST(TestCoder, TestEncode)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		EXPECT_ANY_THROW(vc.onRawFrame(convertedFrame));
 	}
@@ -173,12 +196,10 @@ TEST(TestCoder, TestEncode)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		EXPECT_ANY_THROW(vc.onRawFrame(convertedFrame));
 	}
-
-	free(frameBuffer);
 }
 #if 1
 TEST(TestCoder, TestEncode700K)
@@ -191,33 +212,7 @@ TEST(TestCoder, TestEncode700K)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -231,7 +226,7 @@ TEST(TestCoder, TestEncode700K)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -280,8 +275,6 @@ TEST(TestCoder, TestEncode700K)
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -295,33 +288,7 @@ TEST(TestCoder, TestEncode1000K)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+ 	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -335,7 +302,7 @@ TEST(TestCoder, TestEncode1000K)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -384,8 +351,6 @@ TEST(TestCoder, TestEncode1000K)
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -399,33 +364,7 @@ TEST(TestCoder, TestEncode2000K)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+ 	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -439,7 +378,7 @@ TEST(TestCoder, TestEncode2000K)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -487,8 +426,6 @@ TEST(TestCoder, TestEncode2000K)
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -502,33 +439,7 @@ TEST(TestCoder, TestEncode3000K)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -542,7 +453,7 @@ TEST(TestCoder, TestEncode3000K)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -590,8 +501,6 @@ TEST(TestCoder, TestEncode3000K)
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -604,33 +513,7 @@ TEST(TestCoder, Test720pEnforceNoDrop)
 #ifdef ENABLE_LOGGING
     ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
-    std::srand(std::time(0));
-    int frameSize = width*height*4*sizeof(uint8_t);
-    uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-    std::vector<webrtc::I420VideoFrame> frames;
-    
-    for (int f = 0; f < nFrames; ++f)
-    {
-        for (int j = 0; j < height; ++j)
-            for (int i = 0; i < width; ++i)
-                frameBuffer[i*width+j] = std::rand()%256; // random noise
-        
-        webrtc::I420VideoFrame convertedFrame;
-        {
-            // make conversion to I420
-            const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-            int stride_y = width;
-            int stride_uv = (width + 1) / 2;
-            int target_width = width;
-            int target_height = height;
-            
-            convertedFrame.CreateEmptyFrame(target_width,
-                                            abs(target_height), stride_y, stride_uv, stride_uv);
-            ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-                          width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-        }
-        frames.push_back(convertedFrame);
-    }
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
     
     {
         VideoCoderParams vcp(sampleVideoCoderParams());
@@ -644,7 +527,7 @@ TEST(TestCoder, Test720pEnforceNoDrop)
         VideoCoder vc(vcp, &coderDelegate);
         
 #ifdef ENABLE_LOGGING
-        vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+        vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
         boost::asio::io_service io;
         boost::asio::deadline_timer runTimer(io);
@@ -692,8 +575,6 @@ TEST(TestCoder, Test720pEnforceNoDrop)
                   coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
         EXPECT_GE(1000./30., avgFrameEncTimeMs);
     }
-    
-    free(frameBuffer);
 }
 #endif
 #if 1
@@ -706,33 +587,7 @@ TEST(TestCoder, TestEnforceNoDrop)
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -746,7 +601,7 @@ TEST(TestCoder, TestEnforceNoDrop)
 		VideoCoder vc(vcp, &coderDelegate);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -794,8 +649,6 @@ TEST(TestCoder, TestEnforceNoDrop)
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -808,33 +661,7 @@ TEST(TestCoder, TestEnforceKeyGop)
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -848,7 +675,7 @@ TEST(TestCoder, TestEnforceKeyGop)
 		VideoCoder vc(vcp, &coderDelegate, VideoCoder::KeyEnforcement::Gop);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -899,8 +726,6 @@ TEST(TestCoder, TestEnforceKeyGop)
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
 		EXPECT_EQ(nFrames-nFrames/vcp.gop_, coderDelegate.getDelta());
 	}
-
-	free(frameBuffer);
 }
 #endif
 #if 1
@@ -913,33 +738,7 @@ TEST(TestCoder, TestEnforceKeyTimed)
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	{
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -953,7 +752,7 @@ TEST(TestCoder, TestEnforceKeyTimed)
 		VideoCoder vc(vcp, &coderDelegate, VideoCoder::KeyEnforcement::Timed);
 
 #ifdef ENABLE_LOGGING
-		vc.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::asio::io_service io;
 		boost::asio::deadline_timer runTimer(io);
@@ -1004,8 +803,6 @@ TEST(TestCoder, TestEnforceKeyTimed)
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
 		EXPECT_EQ(coderDelegate.getEncodedNum()-nFrames/vcp.gop_, coderDelegate.getDelta());
 	}
-
-	free(frameBuffer);
 }
 #endif
 

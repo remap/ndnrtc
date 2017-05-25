@@ -12,15 +12,14 @@
 #ifndef __ndnrtc__video_coder__
 #define __ndnrtc__video_coder__
 
-#include <webrtc/modules/video_coding/codecs/interface/video_codec_interface.h>
-#include <webrtc/common_video/libyuv/include/scaler.h>
+#include <webrtc/modules/video_coding/include/video_codec_interface.h>
 
 #include "webrtc.hpp"
 #include "ndnrtc-common.hpp"
 #include "statistics.hpp"
 #include "ndnrtc-object.hpp"
 
-//#define USE_VP9
+#define USE_VP9
 
 namespace ndnrtc {
     class IRawFrameConsumer
@@ -62,8 +61,9 @@ namespace ndnrtc {
 
         unsigned int srcWidth_, srcHeight_;
         unsigned int dstWidth_, dstHeight_;
-        webrtc::Scaler scaler_;
-        WebRtcVideoFrame scaledFrame_;
+        // webrtc::Scaler scaler_;
+        // WebRtcVideoFrame scaledFrame_;
+        WebRtcSmartPtr<WebRtcVideoFrameBuffer> scaledFrameBuffer_;
 
         void
         initScaledFrame();
@@ -107,9 +107,11 @@ namespace ndnrtc {
         KeyEnforcement keyEnforcement_;
         
         // interface webrtc::EncodedImageCallback
-        int32_t Encoded(const webrtc::EncodedImage& encodedImage,
-                        const webrtc::CodecSpecificInfo* codecSpecificInfo = NULL,
-                        const webrtc::RTPFragmentationHeader* fragmentation = NULL);
+        webrtc::EncodedImageCallback::Result OnEncodedImage(const webrtc::EncodedImage& encoded_image,
+            const webrtc::CodecSpecificInfo* codec_specific_info,
+            const webrtc::RTPFragmentationHeader* fragmentation);
+
+        void OnDroppedFrame() { /* TODO: implement invoking delegate method here */ }
     };
 }
 
