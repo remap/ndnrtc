@@ -21,49 +21,6 @@ using namespace ::testing;
 using namespace ndnrtc;
 using namespace boost::chrono;
 
-WebRtcVideoFrame getFrame(int w, int h, bool randomNoise = false)
-{
-	int width = w, height = h;
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-		// make gardient frame (black to white vertically)
-	for (int j = 0; j < height; ++j)
-		for (int i = 0; i < width; ++i)
-			if (randomNoise)
-				frameBuffer[i*width+j] = std::rand()%256; // random noise
-			else
-				frameBuffer[i*width+j] = (i%4 ? (uint8_t)(255*((double)j/(double)height)) : 255);
-
-	WebRtcSmartPtr<WebRtcVideoFrameBuffer> videoBuffer;
-	{
-		// make conversion to I420
-		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-		int stride_y = width;
-		int stride_uv = (width + 1) / 2;
-		int target_width = width;
-		int target_height = height;
-
-		videoBuffer = webrtc::I420Buffer::Create(width, height, stride_y, stride_uv, stride_uv);
-	
-		// convertedFrame.CreateEmptyFrame(target_width,
-		// 	abs(target_height), stride_y, stride_uv, stride_uv);
-		ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-						width, height, frameSize, webrtc::kVideoRotation_0, videoBuffer.get());
-	}
-	free(frameBuffer);
-
-	return WebRtcVideoFrame(videoBuffer, webrtc::kVideoRotation_0, 0);
-}
-
-std::vector<WebRtcVideoFrame> getFrameSequence(int w, int h, int len)
-{
-	std::srand(std::time(0));
-	std::vector<WebRtcVideoFrame> frames;
-	for (int i = 0; i < len; ++i)
-	 frames.push_back(std::move(getFrame(w,h,true)));
-	return frames;
-}
-
 TEST(TestCoder, TestCreate)
 {
 	VideoCoderParams vcp(sampleVideoCoderParams());

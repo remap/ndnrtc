@@ -16,10 +16,6 @@
 #include "webrtc-audio-channel.hpp"
 #include "ndnrtc-object.hpp"
 
-namespace webrtc {
-    class VoEHardware;
-}
-
 namespace ndnrtc {
     class IAudioSampleConsumer
     {

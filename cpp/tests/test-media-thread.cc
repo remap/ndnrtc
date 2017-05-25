@@ -25,7 +25,7 @@ using namespace ::testing;
 using namespace ndnrtc;
 using namespace boost::chrono;
 
-#if 0
+#if 1
 TEST(TestVideoThread, TestCreate)
 {
 	VideoThread vt(sampleVideoCoderParams());
@@ -37,27 +37,7 @@ TEST(TestVideoThread, TestEncodeSimple)
 	int nFrames = 30;
 	int targetBitrate = 700;
 	int width = 1280, height = 720;
-	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	webrtc::I420VideoFrame convertedFrame;
-
-	for (int j = 0; j < height; ++j)
-		for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-	{
-		// make conversion to I420
-		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-		int stride_y = width;
-		int stride_uv = (width + 1) / 2;
-		int target_width = width;
-		int target_height = height;
-	
-		convertedFrame.CreateEmptyFrame(target_width,
-			abs(target_height), stride_y, stride_uv, stride_uv);
-		ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-						width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-	}
+	WebRtcVideoFrame convertedFrame(std::move(getFrame(width, height)));
 
 	{ // try 1 frame
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -71,7 +51,7 @@ TEST(TestVideoThread, TestEncodeSimple)
 		EXPECT_EQ(width, vf->getFrame()._encodedWidth);
 		EXPECT_EQ(height, vf->getFrame()._encodedHeight);
 		EXPECT_TRUE(vf->getFrame()._completeFrame);
-		EXPECT_EQ(webrtc::kKeyFrame, vf->getFrame()._frameType);
+		EXPECT_EQ(webrtc::kVideoFrameKey, vf->getFrame()._frameType);
 	}
 }
 
@@ -86,27 +66,7 @@ TEST(TestVideoThread, TestEncodeAsync)
 	int nFrames = 30;
 	int targetBitrate = 700;
 	int width = 1280, height = 720;
-	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	webrtc::I420VideoFrame convertedFrame;
-
-	for (int j = 0; j < height; ++j)
-		for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-	{
-		// make conversion to I420
-		const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-		int stride_y = width;
-		int stride_uv = (width + 1) / 2;
-		int target_width = width;
-		int target_height = height;
-	
-		convertedFrame.CreateEmptyFrame(target_width,
-			abs(target_height), stride_y, stride_uv, stride_uv);
-		ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-						width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-	}
+	WebRtcVideoFrame convertedFrame(std::move(getFrame(width, height)));
 
 	{ // try 1 frame to encode asynchronously
 		VideoCoderParams vcp(sampleVideoCoderParams());
@@ -117,7 +77,7 @@ TEST(TestVideoThread, TestEncodeAsync)
 
 		VideoThread vt(vcp);
 #ifdef ENABLE_LOGGING
-		vt.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		vt.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::future<boost::shared_ptr<VideoFramePacket>> futurePacket = 
 			boost::async(boost::launch::async, boost::bind(&VideoThread::encode, &vt, convertedFrame));
@@ -138,7 +98,7 @@ TEST(TestVideoThread, TestEncodeAsync)
 		EXPECT_EQ(width, vf->getFrame()._encodedWidth);
 		EXPECT_EQ(height, vf->getFrame()._encodedHeight);
 		EXPECT_TRUE(vf->getFrame()._completeFrame);
-		EXPECT_EQ(webrtc::kKeyFrame, vf->getFrame()._frameType);
+		EXPECT_EQ(webrtc::kVideoFrameKey, vf->getFrame()._frameType);
 	}
 }
 
@@ -151,33 +111,7 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
- 	std::srand(std::time(0));
-	int frameSize = width*height*4*sizeof(uint8_t);
-	uint8_t *frameBuffer = (uint8_t*)malloc(frameSize);
-	std::vector<webrtc::I420VideoFrame> frames;
-
-	for (int f = 0; f < nFrames; ++f)
-	{
-		for (int j = 0; j < height; ++j)
-			for (int i = 0; i < width; ++i)
-			frameBuffer[i*width+j] = std::rand()%256; // random noise
-
-		webrtc::I420VideoFrame convertedFrame;
-		{
-		// make conversion to I420
-			const webrtc::VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(webrtc::kVideoARGB);
-			int stride_y = width;
-			int stride_uv = (width + 1) / 2;
-			int target_width = width;
-			int target_height = height;
-
-			convertedFrame.CreateEmptyFrame(target_width,
-				abs(target_height), stride_y, stride_uv, stride_uv);
-			ConvertToI420(commonVideoType, frameBuffer, 0, 0,  // No cropping
-				width, height, frameSize, webrtc::kVideoRotation_0, &convertedFrame);
-		}
-		frames.push_back(convertedFrame);
-	}
+	std::vector<WebRtcVideoFrame> frames = getFrameSequence(width, height, nFrames);
 
 	std::vector<VideoCoderParams> coderParams;
 	{
@@ -215,7 +149,7 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 		seqCounters.push_back(std::pair<uint64_t, uint64_t>(0,0));
 
 #ifdef ENABLE_LOGGING
-		videoThreads.back()->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		videoThreads.back()->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 	}
 	
@@ -243,7 +177,7 @@ TEST(TestVideoThread, TestEncodeMultipleThreads)
 			boost::shared_ptr<VideoFramePacket> vf(ff->get());
 			if (vf.get())
 			{
-				if (vf->getFrame()._frameType == webrtc::kKeyFrame)
+				if (vf->getFrame()._frameType == webrtc::kVideoFrameKey)
 					seqCounters[idx].first++;
 				else
 					seqCounters[idx].second++;
@@ -322,7 +256,7 @@ TEST(TestAudioThread, TestRunOpusThread)
 	GT_PRINTF("Received %d bundles (%d samples per bundle, bundle length %d, sample size %d)\n", 
 		nBundles, bundle->getSamplesNum(), bundle->getLength(), bundle->operator[](0).size());
 }
-#if 0
+#if 1
 TEST(TestAudioThread, TestRunG722Thread)
 {
 	MockAudioThreadCallback callback;

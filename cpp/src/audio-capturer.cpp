@@ -6,7 +6,8 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
-// #include <webrtc/voice_engine/include/voe_hardware.h>
+#include <webrtc/modules/audio_device/include/audio_device.h>
+#include <webrtc/modules/audio_device/include/audio_device_defines.h>
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <boost/thread/lock_guard.hpp>
@@ -14,6 +15,7 @@
 
 #include "audio-capturer.hpp"
 #include "audio-controller.hpp"
+#include "webrtc.hpp"
 
 using namespace std;
 using namespace webrtc;
@@ -21,6 +23,10 @@ using namespace ndnrtc;
 using namespace ndnlog;
 using namespace ndnlog::new_api;
 using namespace boost;
+
+namespace webrtc {
+    class VoEHardware;
+}
 
 //******************************************************************************
 namespace ndnrtc {
@@ -51,16 +57,16 @@ namespace ndnrtc {
 
         boost::atomic<bool> capturing_;
         boost::mutex capturingState_;
-        webrtc::VoEHardware* voeHardware_;
+        WebRtcSmartPtr<AudioDeviceModule> audioDeviceModule_;
         unsigned int nRtp_, nRtcp_;
 
         IAudioSampleConsumer* sampleConsumer_ = nullptr;
 
-        int
-        SendPacket(int channel, const void *data, size_t len);
+        bool
+        SendRtp(const uint8_t* packet, size_t length, const PacketOptions& options);
 
-        int
-        SendRTCPPacket(int channel, const void *data, size_t len);
+        bool
+        SendRtcp(const uint8_t* packet, size_t length);
 
     private:
         AudioCapturerImpl(const AudioCapturerImpl&) = delete;
@@ -73,24 +79,23 @@ vector<pair<string,string>>
 AudioCapturer::getRecordingDevices()
 {
     vector<pair<string,string>> audioDevices;
-    AudioController::getSharedInstance()->initVoiceEngine();
-    AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
-        VoEHardware* hardware = VoEHardware::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-        int nDevices = 0;
+    WebRtcSmartPtr<AudioDeviceModule> module(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
 
-        hardware->GetNumOfRecordingDevices(nDevices);
+    // AudioController::getSharedInstance()->initVoiceEngine();
+    // AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
+        int nDevices = module->RecordingDevices();
+
         for (int i = 0; i < nDevices; ++i) 
         {
             static char guid[128];
             static char name[128];
             memset(guid, 0, 128);
             memset(name, 0, 128);
-            hardware->GetRecordingDeviceName(i, guid, name);
+            module->RecordingDeviceName(i, name, guid);
 
             audioDevices.push_back(pair<string,string>(string(guid), string(name)));
         }
-        hardware->Release();
-    });
+    // });
     return audioDevices;
 }
 
@@ -98,24 +103,23 @@ vector<pair<string,string>>
 AudioCapturer::getPlayoutDevices()
 {
     vector<pair<string,string>> audioDevices;
-    AudioController::getSharedInstance()->initVoiceEngine();
-    AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
-        VoEHardware* hardware = VoEHardware::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-        int nDevices = 0;
+    WebRtcSmartPtr<AudioDeviceModule> module(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
 
-        hardware->GetNumOfPlayoutDevices(nDevices);
+    // AudioController::getSharedInstance()->initVoiceEngine();
+    // AudioController::getSharedInstance()->performOnAudioThread([&audioDevices](){
+        int nDevices = module->PlayoutDevices();
+
         for (int i = 0; i < nDevices; ++i) 
         {
             static char guid[128];
             static char name[128];
             memset(guid, 0, 128);
             memset(name, 0, 128);
-            hardware->GetPlayoutDeviceName(i, guid, name);
+            module->PlayoutDeviceName(i, name, guid);
 
             audioDevices.push_back(pair<string,string>(string(guid), string(name)));
         }
-        hardware->Release();
-    });
+    // });
     return audioDevices;
 }
 
@@ -174,18 +178,17 @@ nRtp_(0), nRtcp_(0)
     description_ = "audio-capturer";
     AudioController::getSharedInstance()->initVoiceEngine();
     int res = 0;
-    AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res](){
-        voeHardware_ = VoEHardware::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-        int nDevices = 0;
-        voeHardware_->GetNumOfRecordingDevices(nDevices);
+
+    // AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res](){
+        
+        audioDeviceModule_ = WebRtcSmartPtr<AudioDeviceModule>(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+
+        int nDevices = audioDeviceModule_->RecordingDevices();
         if (deviceIdx > nDevices) 
-        {
             res = 1;
-            voeHardware_->Release();
-        }
         else
-            voeHardware_->SetRecordingDevice(deviceIdx);
-    });
+            audioDeviceModule_->SetRecordingDevice(deviceIdx);
+    // });
 
     if (res != 0) 
         throw std::runtime_error("Can't initialize audio capturer");
@@ -194,7 +197,6 @@ nRtp_(0), nRtcp_(0)
 AudioCapturerImpl::~AudioCapturerImpl()
 {
     if (capturing_) stopCapture();
-    voeHardware_->Release();
 }
 
 //******************************************************************************
@@ -231,7 +233,7 @@ void AudioCapturerImpl::stopCapture()
     if (!capturing_) return;
 
     {
-        boost::lock_guard<mutex> scopedLock(capturingState_);
+        boost::lock_guard<boost::mutex> scopedLock(capturingState_);
         capturing_ = false;
     }
 
@@ -276,10 +278,9 @@ int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
     return len;
 }
 #else
-int AudioCapturerImpl::SendPacket(int channel, const void *data, size_t len)
+bool AudioCapturerImpl::SendRtp(const uint8_t* data, size_t len, const PacketOptions& options)
 {
-    assert(webrtcChannelId_ == channel);
-    boost::lock_guard<mutex> scopedLock(capturingState_);
+    boost::lock_guard<boost::mutex> scopedLock(capturingState_);
 
     if (capturing_)
     {
@@ -294,13 +295,12 @@ int AudioCapturerImpl::SendPacket(int channel, const void *data, size_t len)
             me->sampleConsumer_->onDeliverRtpFrame(len, dataCopy.get());
         });
     }
-    return len;
+    return true;
 }
 
-int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
+bool AudioCapturerImpl::SendRtcp(const uint8_t* data, size_t len)
 {
-    assert(webrtcChannelId_ == channel);
-    boost::lock_guard<mutex> scopedLock(capturingState_);
+    boost::lock_guard<boost::mutex> scopedLock(capturingState_);
 
     if (capturing_)
     {
@@ -313,6 +313,6 @@ int AudioCapturerImpl::SendRTCPPacket(int channel, const void *data, size_t len)
             me->sampleConsumer_->onDeliverRtcpFrame(len, dataCopy.get());
         });
     }
-    return len;
+    return true;
 }
 #endif
