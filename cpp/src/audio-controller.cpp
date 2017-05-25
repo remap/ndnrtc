@@ -9,7 +9,6 @@
 //
 
 #include <webrtc/voice_engine/include/voe_base.h>
-#include <voice_engine/include/voe_audio_processing.h>
 
 #include "audio-controller.hpp"
 #include "simple-log.hpp"
@@ -77,11 +76,5 @@ void AudioController::initVE()
         res = voe_base->Init();
         
         voe_base->Release();
-    }
-    {// configure
-        VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(voiceEngine_);
-        
-        voe_proc->SetEcStatus(true, kEcConference);
-        voe_proc->Release();
     }
 }
