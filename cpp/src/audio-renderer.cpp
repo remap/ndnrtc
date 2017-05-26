@@ -8,9 +8,10 @@
 //  Author:  Peter Gusev
 //
 
-#include <webrtc/voice_engine/include/voe_hardware.h>
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_base.h>
+#include <webrtc/modules/audio_device/include/audio_device.h>
+#include <webrtc/modules/audio_device/include/audio_device_defines.h>
 
 #include "audio-renderer.hpp"
 #include "audio-controller.hpp"
@@ -30,23 +31,14 @@ rendering_(false)
     AudioController::getSharedInstance()->initVoiceEngine();
 
     int res = 0;
-    AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res]{
-      voeHardware_ = VoEHardware::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-      if (voeHardware_)
-      {
-        int nDevices = 0;
-        voeHardware_->GetNumOfPlayoutDevices(nDevices);
-        if (deviceIdx > nDevices)
-        {
-          res = 1;
-          voeHardware_->Release();
-        }
-        else
-          voeHardware_->SetPlayoutDevice(deviceIdx);
-      }
-      else 
+    // AudioController::getSharedInstance()->performOnAudioThread([this, deviceIdx, &res]{
+      rtc::scoped_refptr<AudioDeviceModule> module = rtc::scoped_refptr<AudioDeviceModule>(AudioDeviceModule::Create(0, AudioDeviceModule::kPlatformDefaultAudio));
+      int nDevices = module->PlayoutDevices();
+      if (deviceIdx > nDevices)
         res = 1;
-    });
+      else
+        module->SetPlayoutDevice(deviceIdx);
+    // });
 
     if (res != 0)
       throw std::runtime_error("Can't initialize audio renderer");
@@ -56,7 +48,7 @@ AudioRenderer::~AudioRenderer()
 {
   if (rendering_)
     stopRendering();
-  voeHardware_->Release();
+
 }
 
 //******************************************************************************

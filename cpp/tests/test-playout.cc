@@ -34,7 +34,7 @@
 #include "mock-objects/playout-observer-mock.hpp"
 #include "mock-objects/external-capturer-mock.hpp"
 
-//#define ENABLE_LOGGING
+// #define ENABLE_LOGGING
 
 using namespace testing;
 using namespace ndn;
@@ -68,7 +68,7 @@ public:
 	Playout(boost::make_shared<PlayoutTestImpl>(io, queue)){}
 	PlayoutTestImpl* pimpl(){ return (PlayoutTestImpl*)Playout::pimpl(); }
 };
-
+#if 1
 TEST(TestPlaybackQueue, TestAttach)
 {
     int nSamples = 100;
@@ -93,9 +93,14 @@ TEST(TestPlaybackQueue, TestAttach)
     EXPECT_NO_THROW(pqueue->attach(nullptr));
     EXPECT_NO_THROW(pqueue->detach(nullptr));
 }
-
+#endif
 TEST(TestPlaybackQueue, TestPlay)
 {
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+#endif
+    
 	int nSamples = 100;
 	int delay = 10; // samples delay between data request and data produce
 	int targetSize = 150;
@@ -113,6 +118,13 @@ TEST(TestPlaybackQueue, TestPlay)
 	
 	buffer->attach(&bobserver);
 	pqueue->attach(&pobserver);
+    
+#ifdef ENABLE_LOGGING
+    buffer->setDescription("buffer");
+    buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    pqueue->setDescription("pqueue");
+    pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
 
 	boost::thread requestor([&sampleNo, threadPrefix, buffer, nSamples, fps](){
 		boost::asio::io_service io;
@@ -210,12 +222,12 @@ TEST(TestPlaybackQueue, TestPlay)
 	consumerWork.reset();
 	consumer.join();
 }
-
+#if 1
 TEST(TestPlayout, TestPlay)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #endif
 
 	double fps = 30;
@@ -240,9 +252,9 @@ TEST(TestPlayout, TestPlay)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	boost::thread requestor([&sampleNo, &sem, &pipeline, threadPrefix, buffer, nSamples, samplePeriod, fps](){
@@ -278,7 +290,7 @@ TEST(TestPlayout, TestPlay)
 
 		for (int n = 0; n < nSamples; ++n){
 			boost::chrono::high_resolution_clock::time_point p = boost::chrono::high_resolution_clock::now();
-			runTimer.expires_from_now(boost::chrono::milliseconds(samplePeriod));
+			runTimer.expires_from_now(lib_chrono::milliseconds(samplePeriod));
 
 			Name frameName(threadPrefix);
 			if (n%30 == 0)
@@ -342,7 +354,7 @@ TEST(TestPlayout, TestPlay)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	std::vector<boost::chrono::high_resolution_clock::time_point> playbackTimestamps;
@@ -413,18 +425,19 @@ TEST(TestPlayout, TestPlay)
 	EXPECT_EQ(timestamps.size(), playbackTimestamps.size());
 	int pubDuration = timestamps.back() - timestamps.front();
 	int playDuration = (boost::chrono::duration_cast<boost::chrono::milliseconds>(playbackTimestamps.back() - playbackTimestamps.front())).count();
-	EXPECT_GT(samplePeriod, (int)abs((double)pubDuration-(double)playDuration) );
+	EXPECT_GT(samplePeriod, (int)std::abs((double)pubDuration-(double)playDuration) );
 	
 	GT_PRINTF("Actual FPS: %.2f, Playout FPS: %.2f\n", actualFps, playFps);
 	EXPECT_GT(1, actualFps-playFps);
 	EXPECT_EQ(nSamples, frameNo);
 }
-
+#endif
+#if 1
 TEST(TestPlayout, TestRequestAndPlayWithDelay)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #endif
 
 	boost::asio::io_service io;
@@ -467,7 +480,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -476,9 +489,9 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -497,7 +510,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? publishedDelta : publishedKey);
 				int seq = (isKey ? publishedKey : publishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, published++, paired);
@@ -600,18 +613,19 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(3000));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 	source.stop();
 
 	work.reset();
 	t.join();
 }
-
+#endif
+#if 1
 TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #endif
 
 	boost::asio::io_service io;
@@ -655,7 +669,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -664,9 +678,9 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -685,7 +699,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? publishedDelta : publishedKey);
 				int seq = (isKey ? publishedKey : publishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, published++, paired);
@@ -805,10 +819,10 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 	}
 
 	source.start(captureFps);
-	boost::this_thread::sleep_for(Msec(3000));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(3000));
 	done = true;
 	source.stop();
-	boost::this_thread::sleep_for(Msec(2*oneWayDelay+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(2*oneWayDelay+4*deviation));
 	playout.stop();
 
 	EXPECT_FALSE(source.isRunning());
@@ -830,9 +844,9 @@ TEST(TestPlayout, TestPlayout70msDelay)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #else
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
 #endif
 
 	boost::asio::io_service io;
@@ -879,7 +893,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -888,9 +902,9 @@ TEST(TestPlayout, TestPlayout70msDelay)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	int publishStart = 0, lastPublishTime = 0;
@@ -915,7 +929,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 					publishStart = hdr.publishTimestampMs_;
 				lastPublishTime = hdr.publishTimestampMs_;
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? nPublishedDelta : nPublishedKey);
 				int& seq = (isKey ? nPublishedKey : nPublishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -1037,13 +1051,13 @@ TEST(TestPlayout, TestPlayout70msDelay)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(runTimeMs));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
 	done = true;
 	source.stop();
 	queue.reset();
 
 	// allow some time to drain playout queue
-	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
 	playout.stop();
 	work.reset();
 	t.join();
@@ -1082,16 +1096,16 @@ TEST(TestPlayout, TestPlayout70msDelay)
 	
 	ASSERT_FALSE(playout.isRunning());
 
-	ndnlog::new_api::Logger::getLogger("").flush();
+	ndnlog::new_api::Logger::getLoggerPtr("")->flush();
 }
 
 TEST(TestPlayout, TestPlayout100msDelay)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #else
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
 #endif
 
 	boost::asio::io_service io;
@@ -1138,7 +1152,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -1147,9 +1161,9 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	int publishStart = 0, lastPublishTime = 0;
@@ -1174,7 +1188,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 					publishStart = hdr.publishTimestampMs_;
 				lastPublishTime = hdr.publishTimestampMs_;
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? nPublishedDelta : nPublishedKey);
 				int& seq = (isKey ? nPublishedKey : nPublishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -1299,12 +1313,12 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(runTimeMs));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
 	done = true;
 	source.stop();
 	queue.reset();
 
-	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
 	playout.stop();
 	work.reset();
 	t.join();
@@ -1343,16 +1357,16 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	
 	ASSERT_FALSE(playout.isRunning());
 
-	ndnlog::new_api::Logger::getLogger("").flush();
+	ndnlog::new_api::Logger::getLoggerPtr("")->flush();
 }
 
 TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
 #else
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
 #endif
 
 	boost::asio::io_service io;
@@ -1399,7 +1413,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 
 #ifdef ENABLE_LOGGING
 	playout.setDescription("playout");
-	playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	// buffer->attach(&bobserver);
@@ -1408,9 +1422,9 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 
 #ifdef ENABLE_LOGGING
 	buffer->setDescription("buffer");
-	buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 	pqueue->setDescription("pqueue");
-	pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	int publishStart = 0, lastPublishTime = 0;
@@ -1435,7 +1449,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 					publishStart = hdr.publishTimestampMs_;
 				lastPublishTime = hdr.publishTimestampMs_;
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? nPublishedDelta : nPublishedKey);
 				int& seq = (isKey ? nPublishedKey : nPublishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -1556,12 +1570,12 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(runTimeMs));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
 	done = true;
 	source.stop();
 	queue.reset();
 
-	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
 	playout.stop();
 	work.reset();
 	t.join();
@@ -1600,16 +1614,16 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 	
 	ASSERT_FALSE(playout.isRunning());
 
-	ndnlog::new_api::Logger::getLogger("").flush();
+	ndnlog::new_api::Logger::getLoggerPtr("")->flush();
 }
 
 TEST(TestPlayout, TestPlayoutFastForward)
 {
 #ifdef ENABLE_LOGGING
     ndnlog::new_api::Logger::initAsyncLogging();
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #else
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
+    ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
 #endif
     
     boost::asio::io_service io;
@@ -1656,7 +1670,7 @@ TEST(TestPlayout, TestPlayoutFastForward)
     
 #ifdef ENABLE_LOGGING
     playout.setDescription("playout");
-    playout.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+    playout.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
     
     // buffer->attach(&bobserver);
@@ -1665,9 +1679,9 @@ TEST(TestPlayout, TestPlayoutFastForward)
     
 #ifdef ENABLE_LOGGING
     buffer->setDescription("buffer");
-    buffer->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+    buffer->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
     pqueue->setDescription("pqueue");
-    pqueue->setLogger(&ndnlog::new_api::Logger::getLogger(""));
+    pqueue->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
     
     int publishStart = 0, lastPublishTime = 0;
@@ -1692,7 +1706,7 @@ TEST(TestPlayout, TestPlayoutFastForward)
                 publishStart = hdr.publishTimestampMs_;
             lastPublishTime = hdr.publishTimestampMs_;
             
-            bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+            bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
             int paired = (isKey ? nPublishedDelta : nPublishedKey);
             int& seq = (isKey ? nPublishedKey : nPublishedDelta);
             std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -1814,13 +1828,13 @@ TEST(TestPlayout, TestPlayoutFastForward)
     
     source.start(captureFps);
     
-    boost::this_thread::sleep_for(Msec(runTimeMs));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
     done = true;
     source.stop();
     queue.reset();
     
     // allow some time to drain playout queue
-    boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
     playout.stop();
     work.reset();
     t.join();
@@ -1850,9 +1864,9 @@ TEST(TestPlayout, TestPlayoutFastForward)
     
     ASSERT_FALSE(playout.isRunning());
     
-    ndnlog::new_api::Logger::getLogger("").flush();
+    ndnlog::new_api::Logger::getLoggerPtr("")->flush();
 }
-
+#endif
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

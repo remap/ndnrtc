@@ -21,6 +21,16 @@ using namespace ndnrtc;
 using namespace ndnlog;
 using namespace std;
 
+#if BOOST_ASIO_HAS_STD_CHRONO
+
+namespace lib_chrono=std::chrono;
+
+#else
+
+namespace lib_chrono=boost::chrono;
+
+#endif
+
 namespace ndnrtc {
     class JitterTimingImpl : public NdnRtcComponent {
     public:
@@ -162,7 +172,7 @@ void JitterTimingImpl::run(boost::function<void()> callback)
     
     LogTraceC << ". timer wait " << framePlayoutTimeMs_ << " ]" << endl;
     
-    timer_.expires_from_now(boost::chrono::microseconds(framePlayoutTimeMs_*1000));
+    timer_.expires_from_now(lib_chrono::microseconds(framePlayoutTimeMs_*1000));
     timer_.async_wait([callback](const boost::system::error_code& e){
         if (e != boost::asio::error::operation_aborted)
             callback();

@@ -11,6 +11,7 @@
 #ifndef __ndnrtc__audio_renderer__
 #define __ndnrtc__audio_renderer__
 
+#include <webrtc/api/call/transport.h>
 #include "ndnrtc-object.hpp"
 #include "webrtc-audio-channel.hpp"
 #include "audio-capturer.hpp"
@@ -50,13 +51,13 @@ namespace ndnrtc {
         webrtc::VoEHardware* voeHardware_;
         WebrtcAudioChannel::Codec codec_;
 
-        int
-        SendPacket(int channel, const void *data, size_t len)
+        bool
+        SendRtp(const uint8_t* packet, size_t length, const webrtc::PacketOptions& options)
         { assert(false); }
 
-        int
-        SendRTCPPacket(int channel, const void *data, size_t len) 
-        { return len; }
+        bool
+        SendRtcp(const uint8_t* packet, size_t length)
+        { return false; }
     };
 }
 

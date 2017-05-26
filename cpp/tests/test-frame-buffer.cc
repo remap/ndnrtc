@@ -670,7 +670,7 @@ TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
 
     int wire_len = 1000;
     AudioBundlePacket bundlePacket(wire_len);
-    AudioBundlePacket::AudioSampleBlob sample({false}, data_len, rtpData.data());
+    AudioBundlePacket::AudioSampleBlob sample({false}, rtpData.begin(), rtpData.end());
 
     while (bundlePacket.hasSpace(sample))
         bundlePacket << sample;

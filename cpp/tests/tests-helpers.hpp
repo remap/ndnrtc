@@ -106,13 +106,19 @@ namespace testing
 typedef boost::function<void(void)> QueueBlock;
 
 #if BOOST_ASIO_HAS_STD_CHRONO
+
 typedef std::chrono::high_resolution_clock::time_point TPoint;
 typedef std::chrono::high_resolution_clock Clock;
 typedef std::chrono::milliseconds Msec;
+namespace lib_chrono=std::chrono;
+
 #else
+
 typedef boost::chrono::high_resolution_clock::time_point TPoint;
 typedef boost::chrono::high_resolution_clock Clock;
 typedef boost::chrono::milliseconds Msec;
+namespace lib_chrono=boost::chrono;
+
 #endif
 
 class DelayQueue {
