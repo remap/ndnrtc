@@ -29,8 +29,8 @@
 #include "mock-objects/external-capturer-mock.hpp"
 #include "mock-objects/external-renderer-mock.hpp"
 
-//#define ENABLE_LOGGING
-//#define SAVE_VIDEO
+// #define ENABLE_LOGGING
+// #define SAVE_VIDEO
 
 using namespace ::testing;
 using namespace ndnrtc;
@@ -167,7 +167,7 @@ TEST(TestLoop, TestVideo)
       LocalVideoStream localStream(appPrefix, settings);
       
 #ifdef ENABLE_LOGGING
-      // localStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+      // localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
       
       boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -200,7 +200,7 @@ TEST(TestLoop, TestVideo)
       setupTimer();
       
 #ifdef ENABLE_LOGGING
-      rs.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+      rs.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
       
       int waitThreads = 0;
@@ -304,8 +304,8 @@ TEST(TestLoop, TestAudio)
                                        appPrefix, getSampleAudioParams().streamName_);
 
 #ifdef ENABLE_LOGGING
-//        s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
-        remoteStream.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+//        s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+        remoteStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
         s.start();
         s.isRunning();

@@ -54,7 +54,7 @@ namespace ndnrtc {
     {
     public:
         FrameScaler(unsigned int dstWidth, unsigned int dstHeight);
-        const WebRtcVideoFrame& operator()(const WebRtcVideoFrame& frame);
+        const WebRtcVideoFrame operator()(const WebRtcVideoFrame& frame);
     
     private:
         FrameScaler(const FrameScaler&) = delete;

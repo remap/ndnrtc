@@ -116,7 +116,7 @@ dstWidth_(dstWidth), dstHeight_(dstHeight)
     initScaledFrame();
 }
 
-const WebRtcVideoFrame&
+const WebRtcVideoFrame
 FrameScaler::operator()(const WebRtcVideoFrame& frame)
 {
     // try do scaling on this thread. if throws, do it old-fashioned way
