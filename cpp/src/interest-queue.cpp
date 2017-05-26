@@ -8,68 +8,101 @@
 //  Author:  Peter Gusev
 //
 
+#include "interest-queue.hpp"
 #include <boost/thread/lock_guard.hpp>
+#include <ndn-cpp/face.hpp>
+#include <ndn-cpp/interest.hpp>
 
-#include "interest-queue.h"
-#include "consumer.h"
-#include "ndnrtc-utils.h"
+#include "clock.hpp"
+#include "async.hpp"
 
-using namespace boost;
-using namespace ndnlog;
-using namespace ndnrtc::new_api;
-using namespace ndnrtc::new_api::statistics;
-using namespace webrtc;
+using namespace ndn;
+using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-InterestQueue::QueueEntry::QueueEntry(const Interest& interest,
-                                      const shared_ptr<IPriority>& priority,
-                                      const OnData& onData,
-                                      const OnTimeout& onTimeout):
-interest_(new Interest(interest)),
+InterestQueue::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
+                                      const boost::shared_ptr<IPriority>& priority,
+                                      OnData onData,
+                                      OnTimeout onTimeout):
+interest_(interest),
 priority_(priority),
 onDataCallback_(onData),
 onTimeoutCallback_(onTimeout)
 {
 }
 
-InterestQueue::InterestQueue(const shared_ptr<FaceWrapper>& face,
-                             const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+//******************************************************************************
+DeadlinePriority::DeadlinePriority(const DeadlinePriority& p):
+arrivalDelayMs_(p.arrivalDelayMs_),
+enqueuedMs_(0)
+{}
+
+DeadlinePriority::DeadlinePriority(int64_t arrivalDelay):
+arrivalDelayMs_(arrivalDelay),
+enqueuedMs_(0)
+{}
+
+int64_t
+DeadlinePriority::getValue() const
+{
+    return getArrivalDeadlineFromEnqueue() - clock::millisecondTimestamp();
+}
+
+int64_t
+DeadlinePriority::getArrivalDeadlineFromEnqueue() const
+{
+    if (enqueuedMs_ <= 0) return -1;
+    return enqueuedMs_+arrivalDelayMs_;
+}
+
+//******************************************************************************
+InterestQueue::InterestQueue(boost::asio::io_service& io,
+                      const boost::shared_ptr<Face> &face,
+                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
 StatObject(statStorage),
+faceIo_(io),
 face_(face),
-queue_(PriorityQueue(IPriority::Comparator(true))),
-isWatchingQueue_(false)
+queue_(PriorityQueue(QueueEntry::Comparator(true))),
+isWatchingQueue_(false),
+observer_(nullptr)
 {
     description_ = "iqueue";
 }
 
 InterestQueue::~InterestQueue()
 {
-    stopQueueWatching();
+    reset();
 }
 
 
 //******************************************************************************
 #pragma mark - public
 void
-InterestQueue::enqueueInterest(const Interest& interest,
-                               const shared_ptr<IPriority>& priority,
-                               const OnData& onData,
-                               const OnTimeout& onTimeout)
+InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest,
+                               boost::shared_ptr<DeadlinePriority> priority,
+                               OnData onData,
+                               OnTimeout onTimeout)
 {
+    assert(interest.get());
+
     QueueEntry entry(interest, priority, onData, onTimeout);
-    entry.setEnqueueTimestamp(NdnRtcUtils::millisecondTimestamp());
+    priority->setEnqueueTimestamp(clock::millisecondTimestamp());
     
-    queueAccess_.lock();
-    queue_.push(entry);
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+        queue_.push(entry);
     
-    if (!isWatchingQueue_)
-        scheduleJob(10, boost::bind(&InterestQueue::watchQueue, this));
+        if (!isWatchingQueue_)
+        {
+            isWatchingQueue_ = true;
+            async::dispatchAsync(faceIo_,
+                boost::bind(&InterestQueue::watchQueue, this));
+        }
+    }
     
-    isWatchingQueue_ = true;
-    queueAccess_.unlock();
-    
-    LogDebugC
+    LogTraceC
     << "enqueue\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
@@ -82,49 +115,32 @@ InterestQueue::enqueueInterest(const Interest& interest,
 void
 InterestQueue::reset()
 {
-    queueAccess_.lock();
-    queue_ = PriorityQueue(IPriority::Comparator(true));
-    queueAccess_.unlock();
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+        queue_ = PriorityQueue(QueueEntry::Comparator(true));
+    }
 
-    LogDebugC << "interest queue flushed" << std::endl;
+    LogDebugC << "queue flushed" << std::endl;
 }
 
 //******************************************************************************
 #pragma mark - private
-void
-InterestQueue::stopQueueWatching()
-{
-    stopJob();
-    isWatchingQueue_ = false;
-}
-
-bool
+void 
 InterestQueue::watchQueue()
 {
-    QueueEntry entry;
-    
-    queueAccess_.lock();
-    while (queue_.size() > 0)
+    boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+    while (isWatchingQueue_)
     {
-        //    if (queue_.size() > 0)
-        {
-            entry = queue_.top();
-            queue_.pop();
-        }
+        processEntry(queue_.top());
+        queue_.pop();
         isWatchingQueue_ = (queue_.size() > 0);
-        
-        if (entry.interest_.get())
-            processEntry(entry);
     }
-    queueAccess_.unlock();
-
-    return isWatchingQueue_;
 }
 
 void
-InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &entry)
+InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
-    LogDebugC
+    LogTraceC
     << "express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
@@ -132,19 +148,11 @@ InterestQueue::processEntry(const ndnrtc::new_api::InterestQueue::QueueEntry &en
     << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
     << queue_.size()
     << std::endl;
+
+    face_->expressInterest(*(entry.interest_), entry.onDataCallback_, entry.onTimeoutCallback_);
     
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
-    
-    try {
-        face_->expressInterest(*(entry.interest_),
-                               entry.onDataCallback_, entry.onTimeoutCallback_);
-        (*statStorage_)[Indicator::InterestsSentNum]++;
-        
-        if (callback_)
-            callback_->onInterestIssued(entry.interest_);
-    }
-    catch (std::exception &e)
-    {
-        notifyError(RESULT_ERR, "got exception from NDN library: %s", e.what());
-    }
+    (*statStorage_)[Indicator::InterestsSentNum]++;
+
+    if (observer_) observer_->onInterestIssued(entry.interest_);
 }

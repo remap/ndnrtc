@@ -1,180 +1,215 @@
 //
-//  config.c
-//  ndnrtc
+//  config.cpp
 //
-//  Created by Peter Gusev on 10/10/13.
-//  Copyright (c) 2013 Peter Gusev. All rights reserved.
+//  Created by Jiachen Wang on 15 Octboer 2015.
+//  Copyright 2013-2015 Regents of the University of California
 //
+
 
 #include <stdio.h>
 #include <libconfig.h++>
 
-#include "config.h"
+#include "config.hpp"
 
 #define SECTION_GENERAL_KEY "general"
 #define CONSUMER_KEY "consume"
+#define PRODUCER_KEY "produce"
 #define SECTION_BASIC_KEY "basic"
 #define SECTION_AUDIO_KEY "audio"
 #define SECTION_VIDEO_KEY "video"
 #define SECTION_STREAMS_KEY "streams"
-#define CONSUMER_BAISC_STAT_KEY "stat"
+#define CONSUMER_BASIC_STAT_KEY "stat_gathering"
 #define SECTION_STREAM_TYPE_AUDIO "audio"
 #define SECTION_STREAM_TYPE_VIDEO "video"
 
 using namespace std;
 using namespace libconfig;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
 using namespace ndnlog;
 
-int lookupNumber(const Setting &SettingPath,string lookupKey, double &paramToFind);
+int lookupNumber(const Setting &SettingPath, string lookupKey,
+    double &paramToFind);
 int lookupNumber(const Setting &SettingPath, string lookupKey, int &paramToFind);
-int lookupNumber(const Setting &SettingPath, string lookupKey, unsigned int &paramToFind);
-int loadConfigFile(const string &cfgFileName, 
-                    Config &cfg);
-int loadBasicConsumerSettings(const Setting &settingPath,
-                        GeneralConsumerParams& consumerGeneralParams);
+int lookupNumber(const Setting &SettingPath, string lookupKey,
+    unsigned int &paramToFind);
+int loadConfigFile(const string &cfgFileName, Config &cfg);
+int loadBasicConsumerSettings(const Setting &settingPath, 
+    GeneralConsumerParams& consumerGeneralParams);
 int loadBasicStatSettings(const Setting &consumerBasicStatSettings, 
-                        std::vector<Statistics> &statistics);
-int loadGeneralSettings(const Setting &general, 
-                        GeneralParams &generalParams);
-int loadMediaStreamParams(const Setting &consumerStreamSettings, 
-                            MediaStreamParamsSupplement* defaultAudioStream);
-int loadAudioThreadParams(const Setting &consumerStreamThreadsSettings, 
-                            AudioThreadParams* audioThread, 
-                            MediaStreamParamsSupplement* defaultAudioStream);
-int loadVideoThreadParams(const Setting &consumerStreamThreadsSettings, 
-                            VideoThreadParams* videoThread, 
-                            MediaStreamParamsSupplement* defaultVideoStream);
+    std::vector<StatGatheringParams> &statistics);
+int loadGeneralSettings(const Setting &general, GeneralParams &generalParams);
+int loadConsumerSettings(const Setting& root, ConsumerClientParams& params);
+int loadProducerSettings(const Setting& root, ProducerClientParams& params, 
+    const std::string& identity);
+int loadStreamParams(const Setting& s, ConsumerStreamParams& params);
+int loadStreamParams(const Setting& s, ProducerStreamParams& params);
+int loadStreamParams(const Setting& s, ClientMediaStreamParams& params);
+int loadThreadParams(const Setting &s, AudioThreadParams& params);
+int loadThreadParams(const Setting &s, VideoThreadParams& params);
 
+//******************************************************************************
+void ProducerStreamParams::getMaxResolution(unsigned int& width, 
+    unsigned int& height) const
+{
+    if (type_ == MediaStreamTypeAudio) return;
 
-int loadParamsFromFile(const string &cfgFileName,
-                       ClientParams &params){
+    width = 0; height = 0;
     
+    for (unsigned int i = 0; i < getThreadNum(); ++i)
+    {
+        VideoThreadParams *p = getVideoThread(i);
+        
+        if (p->coderParams_.encodeWidth_ > width)
+        {
+            width = p->coderParams_.encodeWidth_;
+            height = p->coderParams_.encodeHeight_;
+        }
+    }
+}
+
+
+//******************************************************************************
+int loadParamsFromFile(const string &cfgFileName, ClientParams &params, 
+    const std::string& identity)
+{    
     Config cfg;
 
     if (loadConfigFile(cfgFileName, cfg)==EXIT_FAILURE) {
-        LogError("") << "loading params from file: "<< cfgFileName << " met error!" << std::endl;
-        return (EXIT_FAILURE);
+        LogError("") << "error while loading file: "<< cfgFileName << std::endl;
+        return 1;
     }
 
     const Setting &root = cfg.getRoot();
     const Setting &general = root[SECTION_GENERAL_KEY];
     
-    if (loadGeneralSettings(general, params.generalParams_)==EXIT_FAILURE) {
-        LogError("") << "loading general settings from file: "<< cfgFileName << " met error!" << std::endl;
-        return (EXIT_FAILURE);
+    GeneralParams gp;
+    if (loadGeneralSettings(general, gp)==EXIT_FAILURE) {
+        LogError("") << "loading general settings from file: "<< cfgFileName 
+            << " met error!" << std::endl;
+        return 1;
+    }
+    else
+        params.setGeneralParameters(gp);
+
+    ConsumerClientParams consumerParams;
+    loadConsumerSettings(root, consumerParams);
+    
+    params.setConsumerParams(consumerParams);
+
+    ProducerClientParams producerParams;
+    loadProducerSettings(root, producerParams, identity);
+
+    params.setProducerParams(producerParams);
+    
+    return 0;
+}
+
+int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
+{
+    if (!root.exists(CONSUMER_KEY))
+    {
+        LogInfo("") << "Consumer configuration was not found" << std::endl;
+        return EXIT_FAILURE;
     }
 
     const Setting &consumerRootSettings = root[CONSUMER_KEY];
 
-    // setup consumer general settings
-    const Setting &consumerBasicSettings = consumerRootSettings[SECTION_BASIC_KEY ];
-    const Setting &consumerBasicAudioSettings = consumerBasicSettings[SECTION_AUDIO_KEY];
-    const Setting &consumerBasicVideoSettings = consumerBasicSettings[SECTION_VIDEO_KEY];
-    const Setting &consumerBasicStatSettings = consumerBasicSettings[CONSUMER_BAISC_STAT_KEY];
-    
-    if (loadBasicConsumerSettings(consumerBasicAudioSettings, params.audioConsumerParams_)==EXIT_FAILURE) {
-        LogError("") << "loading basic consumer audio settings from file: "<< cfgFileName << " met error!" << std::endl;
-        return (EXIT_FAILURE);
-    }
-    if (loadBasicConsumerSettings(consumerBasicVideoSettings, params.videoConsumerParams_)==EXIT_FAILURE) {
-        LogError("") << "loading basic consumer video settings from file: "<< cfgFileName << " met error!" << std::endl;
-        return (EXIT_FAILURE);
-    }
-    if (loadBasicStatSettings(consumerBasicStatSettings,params.statistics_)==EXIT_FAILURE) {
-        LogInfo("") << "loading statistic settings settings from file: "<< cfgFileName << " met error, and move on ..." << std::endl;
-    }
+    try 
+    {
+        // setup consumer general settings
+        const Setting &consumerBasicSettings = consumerRootSettings[SECTION_BASIC_KEY ];
 
-    
-    try{// setup stream settings
-        const Setting &consumerStreamsSettings = consumerRootSettings[SECTION_STREAMS_KEY];
-        int streamsNumber=consumerStreamsSettings.getLength();
+        bool hasBasicAudio = consumerBasicSettings.exists(SECTION_AUDIO_KEY);
 
-        for (int streamsCount = 0; streamsCount < streamsNumber; streamsCount++){
-
-            const Setting &consumerStreamSettings=consumerStreamsSettings[streamsCount];
-            MediaStreamParamsSupplement* defaultStream = new MediaStreamParamsSupplement(); 
-            string streamType="";
-            
-            consumerStreamSettings.lookupValue("type", streamType);
-
-            if(streamType=="audio") {
-
-                defaultStream->type_ = MediaStreamParams::MediaStreamTypeAudio;
-                if (loadMediaStreamParams(consumerStreamSettings, defaultStream)==EXIT_FAILURE) {
-                        LogError("") << "loading audio stream[" << streamsCount << "] settings from file: "<< cfgFileName << " met error!" << std::endl;
-                        return (EXIT_FAILURE);
-                }
-                params.defaultAudioStreams_.push_back(defaultStream);
-            }
-            else if(streamType=="video") {
-
-                defaultStream->type_ = MediaStreamParams::MediaStreamTypeVideo;
-                if (loadMediaStreamParams(consumerStreamSettings, defaultStream)==EXIT_FAILURE) {
-                        LogError("") << "loading audio stream[" << streamsCount << "] settings from file: "<< cfgFileName << " met error!" << std::endl;
-                        return (EXIT_FAILURE);
-                }
-                params.defaultVideoStreams_.push_back(defaultStream);
-            }
-            else {
-                LogError("") << "Unknow stream type!" << std::endl;
-                delete defaultStream;
-                return(EXIT_FAILURE);
-            }          
+        if (hasBasicAudio)
+        {
+            const Setting &consumerBasicAudioSettings = consumerBasicSettings[SECTION_AUDIO_KEY];
+            hasBasicAudio = (loadBasicConsumerSettings(consumerBasicAudioSettings, params.generalAudioParams_) == EXIT_SUCCESS);
         }
+
+        bool hasBasicVideo = consumerBasicSettings.exists(SECTION_VIDEO_KEY);
+
+        if (hasBasicVideo)
+        {
+            const Setting &consumerBasicVideoSettings = consumerBasicSettings[SECTION_VIDEO_KEY];
+            hasBasicVideo = (loadBasicConsumerSettings(consumerBasicVideoSettings, params.generalVideoParams_) == EXIT_SUCCESS);
+        }
+
+        if (consumerBasicSettings.exists(CONSUMER_BASIC_STAT_KEY))
+        {
+            loadBasicStatSettings(consumerBasicSettings[CONSUMER_BASIC_STAT_KEY], params.statGatheringParams_);
+        }
+        
+        try{// setup stream settings
+            const Setting &streamSettings = consumerRootSettings[SECTION_STREAMS_KEY];
+    
+            for (int i = 0; i < streamSettings.getLength(); i++)
+            {
+                ConsumerStreamParams csp;
+
+                if (loadStreamParams(streamSettings[i], csp) == EXIT_SUCCESS)
+                {
+                    if (!hasBasicAudio && csp.type_ == ConsumerStreamParams::MediaStreamTypeAudio)
+                    {
+                        LogWarn("") << "Found audio stream to fetch (" << csp.streamName_ 
+                            << "), but no basic audio settings were provided. Skipping." << std::endl;
+                        continue;
+                    }
+                    if (!hasBasicVideo && csp.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
+                    {
+                        LogWarn("") << "Found video stream to fetch (" << csp.streamName_ 
+                            << "), but no basic video settings were provided. Skipping." << std::endl;
+                        continue;
+                    }
+
+                    params.fetchedStreams_.push_back(csp);
+                }
+            } // for i
+        }
+        catch (const SettingNotFoundException &nfex){
+            LogError("") << "Error when loading stream settings!" << std::endl;
+            return(EXIT_FAILURE);
+        }
+    }
+    catch (const SettingNotFoundException &e)
+    {
+        std::cout << "check " << e.getPath() << std::endl;
+        LogError("") << "Setting not found at path: " << e.getPath() << std::endl;
+    }
+}
+
+int loadProducerSettings(const Setting& root, ProducerClientParams& params, const std::string& identity)
+{
+    if (!root.exists(PRODUCER_KEY))
+    {
+        LogInfo("") << "Producer configuration was not found" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    const Setting &producerRootSettings = root[PRODUCER_KEY];
+    params.prefix_ = identity;
+
+    try{// setup stream settings
+        const Setting &streamSettings = producerRootSettings[SECTION_STREAMS_KEY];
+
+        for (int i = 0; i < streamSettings.getLength(); i++)
+        {
+            ProducerStreamParams psp;
+
+            if (loadStreamParams(streamSettings[i], psp) == EXIT_SUCCESS)
+            {
+                psp.sessionPrefix_ = identity;
+                params.publishedStreams_.push_back(psp);
+            }
+        } // for i
     }
     catch (const SettingNotFoundException &nfex){
         LogError("") << "Error when loading stream settings!" << std::endl;
         return(EXIT_FAILURE);
     }
-    
-    return EXIT_SUCCESS;
 }
 
-int lookupNumber(const Setting &SettingPath,string lookupKey, double &paramToFind){
-
-    unsigned int valueUnsignedInt=0;
-    int valueInt=0;
-    double valueDouble=0;
-    bool valueUnsignedIntState = SettingPath.lookupValue(lookupKey, valueUnsignedInt);
-    bool valueIntState = SettingPath.lookupValue(lookupKey, valueInt);
-    bool valueDoubleState = SettingPath.lookupValue(lookupKey, valueDouble);
-
-    if(valueUnsignedIntState==true){
-        paramToFind=valueUnsignedInt;
-    }else if (valueIntState==true){
-        paramToFind=valueInt;
-    }
-    else if(valueDoubleState==true){
-        paramToFind=valueDouble;
-    }
-    else{
-        LogError("") << "Failed to read this param: "<< lookupKey << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
-}
-
-int lookupNumber(const Setting &SettingPath, string lookupKey, int &paramToFind){
-
-    double valueDouble=0;
-
-    lookupNumber(SettingPath, lookupKey, valueDouble);
-    paramToFind = (int) valueDouble;
-    return EXIT_SUCCESS;
-}
-int lookupNumber(const Setting &SettingPath, string lookupKey, unsigned int &paramToFind){
-
-    double valueDouble=0;
-
-    lookupNumber(SettingPath, lookupKey, valueDouble);
-    paramToFind = (unsigned int) valueDouble;
-    return EXIT_SUCCESS;
-}
-
-int loadConfigFile(const string &cfgFileName, 
-                    Config &cfg){
+int loadConfigFile(const string &cfgFileName, Config &cfg){
     
     // Read the file. If there is an error, report it and exit.
     try{
@@ -194,68 +229,53 @@ int loadConfigFile(const string &cfgFileName,
     }
     return EXIT_SUCCESS;
 }
-int loadBasicConsumerSettings(const Setting &settingPath,
-                        GeneralConsumerParams& consumerGeneralParams){
-    try{
-        if (lookupNumber(settingPath, "interest_lifetime", consumerGeneralParams.interestLifetime_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping interest_lifetime from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        LogTrace("") << "onsumerGeneralParams.interestLifetime_: " << consumerGeneralParams.interestLifetime_ << std::endl;
-        if (lookupNumber(settingPath, "jitter_size", consumerGeneralParams.jitterSizeMs_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping jitter_size from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(settingPath, "buffer_size", consumerGeneralParams.bufferSlotsNum_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping buffer_size from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(settingPath, "slot_size", consumerGeneralParams.slotSize_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping slot_size from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-    }
-    catch(const SettingNotFoundException &nfex){
-        LogError("") << "Error when loading basic audio Or video settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
 
+int loadBasicConsumerSettings(const Setting &s, GeneralConsumerParams& gcp)
+{
+    if (lookupNumber(s, "interest_lifetime", gcp.interestLifetime_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Reading interest_lifetime from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    if (lookupNumber(s, "jitter_size", gcp.jitterSizeMs_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Reading jitter_size from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    return EXIT_SUCCESS;
 }
 
-int loadBasicStatSettings(const Setting &consumerBasicStatSettings, 
-                        std::vector<Statistics> &statistics){
+int loadBasicStatSettings(const Setting &s, std::vector<StatGatheringParams> &stats){
     try{
-        int statEntryNumber=consumerBasicStatSettings.getLength();
+        LogDebug("") << "total stat entries:  " << s.getLength() << std::endl;
 
-        LogDebug("") << "total stat entries:  " << statEntryNumber << std::endl;
+        for (int i = 0; i < s.getLength(); i++) {
+            Setting &ss = s[i];
+            StatGatheringParams stat;
 
-        for (int statEntryCount = 0; statEntryCount < statEntryNumber; statEntryCount++) {
-            Setting &consumerBasicStatEntrySettings = consumerBasicStatSettings[statEntryCount];
-            Statistics stat;
-
-            consumerBasicStatEntrySettings.lookupValue("name",stat.statFileName_);
+            ss.lookupValue("name",stat.statFileName_);
             LogDebug("") << "stat.statisticName: " << stat.statFileName_ << std::endl;
             
-            Setting &consumerBasicStatEntryItemSettings = consumerBasicStatEntrySettings["statistics"];
-            int statItemStatisticsNumber=consumerBasicStatEntryItemSettings.getLength();
-            
-            for (int statItemStatisticsCount = 0; statItemStatisticsCount < statItemStatisticsNumber; statItemStatisticsCount++){
+            Setting &statKeywords = ss["statistics"];
+            for (int j = 0; j < statKeywords.getLength(); j++){
 
-                string consumerBasicStatEntryItemSetting=consumerBasicStatEntryItemSettings[statItemStatisticsCount];
-                stat.gatheredStatistcs_.push_back(consumerBasicStatEntryItemSetting);
-                LogDebug("") << "consumerBasicStatEntryItemSettings[" << statItemStatisticsCount << "]: "<< consumerBasicStatEntryItemSetting << std::endl;
-            }
-            statistics.push_back(stat);
-        }
-    }catch (const SettingNotFoundException &nfex){
-        LogError("") << "Error when loading statistics settings!" << std::endl;
-        // return(EXIT_FAILURE); //can have no statistics
+                string statKeyword = statKeywords[j];
+                stat.addStat(statKeyword);
+            } // for j
+
+            stats.push_back(stat);
+        } // for i
     }
+    catch (const SettingNotFoundException &nfex){
+        LogInfo("") << "Statistics settings were not found at path: " << nfex.getPath() << std::endl;
+    }
+
     return EXIT_SUCCESS;
 }
-int loadGeneralSettings(const Setting &general, 
-                        GeneralParams &generalParams){
+
+int loadGeneralSettings(const Setting &general, GeneralParams &generalParams){
     try{ 
         // setup general settings
         string log_level, log_file, headlessUser;
@@ -273,19 +293,14 @@ int loadGeneralSettings(const Setting &general,
                 generalParams.loggingLevel_ = NdnLoggerDetailLevelNone;
         }
         if (general.lookupValue("log_level", log_level)){
-            LogInfo("") << "generalParams.loggingLevel_: " << generalParams.loggingLevel_ << std::endl;
+            LogTrace("") << "generalParams.loggingLevel_: " << generalParams.loggingLevel_ << std::endl;
         }
 
         general.lookupValue("log_file", generalParams.logFile_);
-        general.lookupValue("use_tlv", generalParams.useTlv_);
-        general.lookupValue("use_rtx", generalParams.useRtx_);
+        general.lookupValue("log_path", generalParams.logPath_);
         general.lookupValue("use_fec", generalParams.useFec_);
-        general.lookupValue("use_cache", generalParams.useCache_);
         general.lookupValue("use_avsync", generalParams.useAvSync_);
-        general.lookupValue("audio", generalParams.useAudio_);
-        general.lookupValue("video", generalParams.useVideo_);
-        general.lookupValue("skip_incomplete", generalParams.skipIncomplete_);
-        
+
         const Setting &ndnNetwork = general["ndnnetwork"];
 
         ndnNetwork.lookupValue("connect_host", generalParams.host_);
@@ -297,128 +312,209 @@ int loadGeneralSettings(const Setting &general,
         LogTrace("") << "generalParams.portNum_: " << generalParams.portNum_ << std::endl;
     }
     catch(const SettingNotFoundException &nfex){
-        LogError("") << "Error when loading general settings!" << std::endl;
+        LogError("") << "Error when loading setting at path: " << nfex.getPath()  << std::endl;
         return(EXIT_FAILURE);
     }
     return EXIT_SUCCESS;
 }
 
-int loadMediaStreamParams(const Setting &consumerStreamSettings, 
-                            MediaStreamParamsSupplement* defaultStream){
-    try{
-        consumerStreamSettings.lookupValue("session_prefix", defaultStream->streamPrefix_);
-        consumerStreamSettings.lookupValue("thread_to_fetch", defaultStream->threadToFetch_);
-        LogTrace("") << "thread_to_fetch: " << defaultStream->threadToFetch_ << std::endl;
-        consumerStreamSettings.lookupValue("sink", defaultStream->mediaStreamSink_);
-        consumerStreamSettings.lookupValue("name", defaultStream->streamName_);
-        consumerStreamSettings.lookupValue("segment_size", defaultStream->producerParams_.segmentSize_);
+int loadStreamParams(const Setting& s, ConsumerStreamParams& params)
+{
+    // ClientMediaStreamParams msp;
+    if (EXIT_SUCCESS == loadStreamParams(s, (ClientMediaStreamParams&)params))
+    {
+        s.lookupValue("thread_to_fetch", params.threadToFetch_);
+        s.lookupValue("sink", params.streamSink_);
 
-        const Setting &consumerStreamThreadsSettings=consumerStreamSettings["thread"];
-        int threadNumber=consumerStreamThreadsSettings.getLength();
+        return EXIT_SUCCESS;
+    }
+
+    return EXIT_FAILURE;
+}
+
+int loadStreamParams(const Setting& s, ProducerStreamParams& params)
+{
+    // ClientMediaStreamParams msp;
+    if (EXIT_SUCCESS == loadStreamParams(s, (ClientMediaStreamParams&)params))
+    {
+        s.lookupValue("source", params.source_);
+
+        if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
+        {
+            string threadName;
+            s.lookupValue("thread", threadName);
+            params.addMediaThread(AudioThreadParams(threadName));
+        }
+
+        return EXIT_SUCCESS;
+    }
+    return EXIT_FAILURE;
+}
+
+int loadStreamParams(const Setting& s, ClientMediaStreamParams& params)
+{
+    try{
+        string streamType;
+        s.lookupValue("type", streamType);
+
+        if (streamType == "video")
+            params.type_ = MediaStreamParams::MediaStreamTypeVideo;
+        else if (streamType == "audio")
+            params.type_ = MediaStreamParams::MediaStreamTypeAudio;
+        else
+        {
+            LogError("") << "Unknown media stream type: " << streamType << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        s.lookupValue("name", params.streamName_); // both
+        s.lookupValue("sync", params.synchronizedStreamName_); // both
+
+        s.lookupValue("base_prefix", params.sessionPrefix_); // consumer
+        s.lookupValue("segment_size", params.producerParams_.segmentSize_); // producer
+        s.lookupValue("freshness", params.producerParams_.freshnessMs_); // producer
+
+        try { // audio streams do not have thread configurations
+            const Setting &threadSettings = s["threads"];
         
-        for (int threadCount = 0; threadCount < threadNumber; threadCount++){
-            //add threads for one audio or video stream
-            if (defaultStream->type_ == MediaStreamParams::MediaStreamTypeAudio){
-                AudioThreadParams* audioThread=new AudioThreadParams();
+            for (int i = 0; i < threadSettings.getLength(); i++){
+                //add threads for one audio or video stream
+                if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
+                {
+                    AudioThreadParams audioThread;
 
-                if (loadAudioThreadParams(consumerStreamThreadsSettings[threadCount], audioThread, defaultStream)==EXIT_FAILURE) {
-                    LogError("") << "load audioThread settings from file met error!" << std::endl;
-                    return (EXIT_FAILURE);
+                    if (loadThreadParams(threadSettings[i], audioThread)==EXIT_FAILURE) {
+                        LogError("") << "load audioThread settings from file met error!" << std::endl;
+                        return (EXIT_FAILURE);
+                    }
+
+                    params.addMediaThread(audioThread);
                 }
-            }
-            else if (defaultStream->type_ == MediaStreamParams::MediaStreamTypeVideo){
-                VideoThreadParams* videoThread=new VideoThreadParams(); 
-                    
-                if (loadVideoThreadParams(consumerStreamThreadsSettings[threadCount], videoThread, defaultStream)==EXIT_FAILURE) {
-                    LogError("") << "load videoThread settings from file met error!" << std::endl;
-                    return (EXIT_FAILURE);
+                else
+                {
+                    VideoThreadParams videoThread;
+                        
+                    if (loadThreadParams(threadSettings[i], videoThread)==EXIT_FAILURE) {
+                        LogError("") << "load videoThread settings from file met error!" << std::endl;
+                        return (EXIT_FAILURE);
+                    }
+
+                    params.addMediaThread(videoThread);
                 }
-            }
-            else {//could only be audio or video
-                LogError("") << "Error when loading stream settings: Unknown media thread type!" << std::endl;
-                return(EXIT_FAILURE);
-            }
+            } // for i
+        }
+        catch (const SettingNotFoundException &nfex)
+        {
+            s.lookupValue("capture_device", params.captureDevice_.deviceId_);
         }
     }
-    catch(const SettingNotFoundException &nfex){
-
-        LogError("") << "Error when loading media stream basic settings!" << std::endl;
+    catch(const SettingNotFoundException &nfex)
+    {
+        cout << "check " << nfex.getPath() << std::endl;
+        LogError("") << "Setting not found at path: " << nfex.getPath() << std::endl;
         return(EXIT_FAILURE);
     }
+
     return EXIT_SUCCESS;
 }
 
-int loadAudioThreadParams(const Setting &consumerStreamThreadsSettings, 
-                            AudioThreadParams* audioThread, 
-                            MediaStreamParamsSupplement* defaultAudioStream){
-    try{
-        consumerStreamThreadsSettings.lookupValue("name", audioThread->threadName_);
-        defaultAudioStream->mediaThreads_.push_back(audioThread);
-        LogTrace("") << "consumerStreamThreadsSettings(audio): " << audioThread->threadName_ << std::endl;
-    }
-    catch(const SettingNotFoundException &nfex){
-        LogError("") << "Error when loading audio thread settings!" << std::endl;
-        return(EXIT_FAILURE);
-    }
-    return EXIT_SUCCESS;
+int loadThreadParams(const Setting &s, AudioThreadParams& params){
+    return s.lookupValue("name", params.threadName_);
 }
-int loadVideoThreadParams(const Setting &consumerStreamThreadsSettings, 
-                            VideoThreadParams* videoThread, 
-                            MediaStreamParamsSupplement* defaultVideoStream){
-    try{
-        consumerStreamThreadsSettings.lookupValue("name", videoThread->threadName_);
-        if (lookupNumber(consumerStreamThreadsSettings, "average_segnum_delta", videoThread->deltaAvgSegNum_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping average_segnum_delta from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadsSettings, "average_segnum_delta_parity", videoThread->deltaAvgParitySegNum_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping average_segnum_delta_parity from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadsSettings, "average_segnum_key", videoThread->keyAvgSegNum_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping average_segnum_key from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadsSettings, "average_segnum_key_parity", videoThread->keyAvgParitySegNum_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping average_segnum_key_parity from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        LogTrace("") << "consumerStreamThreadsSettings(video): " << videoThread->keyAvgParitySegNum_ << std::endl;
-        
-        const Setting &consumerStreamThreadCoderSettings=consumerStreamThreadsSettings["coder"];
 
-        if (lookupNumber(consumerStreamThreadCoderSettings, "frame_rate", videoThread->coderParams_.codecFrameRate_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping frame_rate from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadCoderSettings, "gop", videoThread->coderParams_.gop_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping gop from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadCoderSettings, "start_bitrate", videoThread->coderParams_.startBitrate_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping start_bitrate from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadCoderSettings, "max_bitrate", videoThread->coderParams_.maxBitrate_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping max_bitrate from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadCoderSettings, "encode_height", videoThread->coderParams_.encodeWidth_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping encode_height from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
-        if (lookupNumber(consumerStreamThreadCoderSettings, "encode_width", videoThread->coderParams_.encodeHeight_)==EXIT_FAILURE) {
-            LogError("") << "Lookuping encode_width from file met error!" << std::endl;
-            return (EXIT_FAILURE);
-        }
+int loadThreadParams(const Setting &s, VideoThreadParams& params){
+    
+    s.lookupValue("name", params.threadName_);
+    lookupNumber(s, "average_segnum_delta", params.segInfo_.deltaAvgSegNum_);
+    lookupNumber(s, "average_segnum_delta_parity", params.segInfo_.deltaAvgParitySegNum_);
+    lookupNumber(s, "average_segnum_key", params.segInfo_.keyAvgSegNum_);
+    lookupNumber(s, "average_segnum_key_parity", params.segInfo_.keyAvgParitySegNum_);
 
-        defaultVideoStream->mediaThreads_.push_back(videoThread);
+    const Setting &coderSettings=s["coder"];
+
+    if (lookupNumber(coderSettings, "frame_rate", params.coderParams_.codecFrameRate_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping frame_rate from file met error!" << std::endl;
+        return (EXIT_FAILURE);
     }
-    catch(const SettingNotFoundException &nfex){
-        LogError("") << "Error when loading video thread settings!" << std::endl;
-        return(EXIT_FAILURE);
+
+    if (lookupNumber(coderSettings, "gop", params.coderParams_.gop_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping gop from file met error!" << std::endl;
+        return (EXIT_FAILURE);
     }
+
+    if (lookupNumber(coderSettings, "start_bitrate", params.coderParams_.startBitrate_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping start_bitrate from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    if (lookupNumber(coderSettings, "max_bitrate", params.coderParams_.maxBitrate_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping max_bitrate from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    if (lookupNumber(coderSettings, "encode_height", params.coderParams_.encodeHeight_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping encode_height from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    if (lookupNumber(coderSettings, "encode_width", params.coderParams_.encodeWidth_)==EXIT_FAILURE) 
+    {
+        LogError("") << "Lookuping encode_width from file met error!" << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    coderSettings.lookupValue("drop_frames", params.coderParams_.dropFramesOn_);
+
     return EXIT_SUCCESS;
 }
 
+int lookupNumber(const Setting &SettingPath,string lookupKey, double &paramToFind)
+{
+    unsigned int valueUnsignedInt=0;
+    int valueInt=0;
+    double valueDouble=0;
+    bool valueUnsignedIntState = SettingPath.lookupValue(lookupKey, valueUnsignedInt);
+    bool valueIntState = SettingPath.lookupValue(lookupKey, valueInt);
+    bool valueDoubleState = SettingPath.lookupValue(lookupKey, valueDouble);
 
+    if(valueUnsignedIntState==true)
+    {
+        paramToFind=valueUnsignedInt;
+    }
+    else if (valueIntState==true)
+    {
+        paramToFind=valueInt;
+    }
+    else if(valueDoubleState==true)
+    {
+        paramToFind=valueDouble;
+    }
+    else
+    {
+        return(EXIT_FAILURE);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int lookupNumber(const Setting &SettingPath, string lookupKey, int &paramToFind){
+    double valueDouble=0;
+
+    lookupNumber(SettingPath, lookupKey, valueDouble);
+    paramToFind = (int) valueDouble;
+    return EXIT_SUCCESS;
+}
+
+int lookupNumber(const Setting &SettingPath, string lookupKey, unsigned int &paramToFind){
+
+    double valueDouble=0;
+
+    lookupNumber(SettingPath, lookupKey, valueDouble);
+    paramToFind = (unsigned int) valueDouble;
+    return EXIT_SUCCESS;
+}

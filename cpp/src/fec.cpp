@@ -10,9 +10,17 @@
 
 #include <iostream>
 #include <string.h>
-#include "fec.h"
+#include "fec.hpp"
 
 using namespace fec;
+
+namespace fec 
+{
+    double parityWeight()
+    {
+        return 0.5;
+    }
+}
 
 //******************************************************************************
 #pragma mark - construction/destruction

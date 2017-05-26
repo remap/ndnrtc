@@ -7,83 +7,93 @@
 //
 
 #include <boost/thread/mutex.hpp>
+#include <webrtc/common_types.h>
+#include <webrtc/voice_engine/include/voe_base.h>
+#include <webrtc/voice_engine/include/voe_network.h>
+#include <webrtc/voice_engine/include/voe_codec.h>
+#include <algorithm>
 
-#include "webrtc-audio-channel.h"
-#include "ndnrtc-utils.h"
-#include "audio-controller.h"
+#include "ndnrtc-defines.hpp"
+#include "webrtc-audio-channel.hpp"
+#include "audio-controller.hpp"
 
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
-using namespace ndnrtc::new_api;
-using namespace ndnlog;
-using namespace ndnlog::new_api;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-WebrtcAudioChannel::WebrtcAudioChannel():
+WebrtcAudioChannel::WebrtcAudioChannel(const Codec& codec):
 voeBase_(nullptr),
 voeNetwork_(nullptr),
 voeCodec_(nullptr)
 {
+  int res = 0;
+
+  AudioController::getSharedInstance()->initVoiceEngine();
+  AudioController::getSharedInstance()->performOnAudioThread(
+    [this, &res, codec](){
+      voeBase_ = VoEBase::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
+      voeNetwork_ = VoENetwork::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
+      voeCodec_ = VoECodec::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
+
+      webrtcChannelId_ = voeBase_->CreateChannel();
+      if (webrtcChannelId_ < 0)
+        res = RESULT_ERR;
+
+      voeCodec_->SetSendCodec(webrtcChannelId_, WebrtcAudioChannel::instFromCodec(codec));
+    });
+  if (RESULT_FAIL(res))
+    throw std::runtime_error("Can't create audio channel");
 }
 
 WebrtcAudioChannel::~WebrtcAudioChannel()
 {
+  AudioController::getSharedInstance()->performOnAudioThread([this](){
+    voeBase_->DeleteChannel(webrtcChannelId_);
+    voeBase_->Release();
+    voeNetwork_->Release();
+    voeCodec_->Release();
+  });
 }
 
-//******************************************************************************
-#pragma mark - public
-int WebrtcAudioChannel::init()
+WebrtcAudioChannel::Codec
+WebrtcAudioChannel::fromString(std::string codec)
 {
-    int res = RESULT_OK;
-    
-    AudioController::getSharedInstance()->performOnAudioThread(
-                      [this, &res](){
-                          voeBase_ = VoEBase::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-                          voeNetwork_ = VoENetwork::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-                          voeCodec_ = VoECodec::GetInterface(AudioController::getSharedInstance()->getVoiceEngine());
-                          
-                          CodecInst cinst;
-                          
-                          // this will give us HD quality audio
-                          // and ~380Kbit/s stream
-                          //                                           strcpy(cinst.plname, "opus");
-                          //                                           cinst.plfreq   = 48000;
-                          //                                           cinst.pltype   = 120;
-                          //                                           cinst.pacsize  = 960;
-                          //                                           cinst.channels = 2;
-                          //                                           cinst.rate     = 64000;
-                          //                                           cinst.rate     = 128000;
-                          
-                          // this will give us decent quality (better than pcmu)
-                          // and ~200Kbit/s stream (same like PCMU)
-                          strcpy(cinst.plname, "G722");
-                          cinst.plfreq   = 16000;
-                          cinst.pltype   = 119;
-                          cinst.pacsize  = 320;
-                          cinst.channels = 2;
-                          cinst.rate     = 64000;
-                          
-                          webrtcChannelId_ = voeBase_->CreateChannel();
-                          if (webrtcChannelId_ < 0)
-                              res = RESULT_ERR;
-                          
-                          voeCodec_->SetSendCodec(webrtcChannelId_, cinst);
-                      });
-    return res;
+    std::transform(codec.begin(), codec.end(), codec.begin(), ::tolower);
+    if (codec == "opus")
+        return WebrtcAudioChannel::Codec::Opus;
+    return WebrtcAudioChannel::Codec::G722;
 }
 
-int WebrtcAudioChannel::release()
+CodecInst
+WebrtcAudioChannel::instFromCodec(const Codec& c)
 {
-    AudioController::getSharedInstance()->performOnAudioThread([this](){
-        if (voeBase_)
-            voeBase_->Release();
-        
-        if (voeNetwork_)
-            voeNetwork_->Release();
-        
-        if (voeCodec_)
-            voeCodec_->Release();
-    });
+  CodecInst cinst;
+
+  switch (c)
+  {
+    case Codec::Opus:
+      {
+        strcpy(cinst.plname, "opus");
+        cinst.plfreq   = 48000;
+        cinst.pltype   = 120;
+        cinst.pacsize  = 960;
+        cinst.channels = 2;
+        cinst.rate     = 128000;
+      }
+      break;
+    case Codec::G722: // fall through
+    default:
+      {
+        strcpy(cinst.plname, "G722");
+        cinst.plfreq   = 16000;
+        cinst.pltype   = 119;
+        cinst.pacsize  = 320;
+        cinst.channels = 2;
+        cinst.rate     = 64000;
+      }
+      break;
+  }
+  return cinst;
 }

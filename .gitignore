@@ -22,6 +22,7 @@ cpp/ndnrtc-demo
 # dev folders
 cpp/debug
 cpp/release
+cpp/ubuntu
 
 # Autoconf
 cpp/Makefile
@@ -58,3 +59,9 @@ cpp/resources/*.pcmu
 docs
 test_app/suite
 .settings
+tags
+.tags
+.tags_sorted_by_file
+*.sublime-project
+*.sublime-workspace
+newwebrtc

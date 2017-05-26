@@ -2,12 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([NDN-RTC],[1.4.0],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC],[2.0.0],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PREFIX_DEFAULT([/usr/local])
-AC_CONFIG_SRCDIR([src/ndnrtc-common.h])
+AC_CONFIG_SRCDIR([include/ndnrtc-common.hpp])
 AC_CONFIG_FILES([Makefile])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
@@ -90,7 +90,7 @@ if test ${WEBRTCDIR}; then
 	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
 	if [[[ "$DIR" = "not found" ]]];
 	then
-		AC_MSG_ERROR([directory not found - $WEBRTCDIR])
+		AC_MSG_ERROR([directory not found - $W])
 	fi
 	WEBRTCDIR=$DIR
 fi
@@ -100,7 +100,7 @@ if test "x${WEBRTCSRC}" = "x"; then
 fi
 
 if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release"
+	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
 fi
 
 if test ${LCONFIGDIR}; then
@@ -126,16 +126,6 @@ AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in
 	AC_DEFINE([NDN_DEBUG])
 	])
 
-AC_ARG_WITH([libc++], [AS_HELP_STRING([--with-libc++],[use libc++ if available [default=use libstdc++]])], 
-	[
-	STDLIBFLAGS_CPP="-stdlib=libc++" 
-	STDLIBFLAGS_LD="-stdlib=libc++"
-	],
-	[
-	STDLIBFLAGS_CPP="-stdlib=libstdc++" 
-	STDLIBFLAGS_LD="-stdlib=libstdc++"	
-	])
-
 # Checks for programs.
 AC_CANONICAL_HOST
 AC_PROG_CC
@@ -143,6 +133,7 @@ AC_PROG_CXX
 AC_PROG_OBJC
 AC_PROG_OBJCXX
 AM_PROG_CC_C_O
+AM_PROG_AR
 LT_INIT
 AC_LANG([C++])
 LT_PREREQ([2.2])
@@ -164,27 +155,6 @@ case $host_os in
 			;;
 		esac
 		os_module=darwin
-		# check for compiler flags
-		if [[[ $CPPFLAGS =~ .*stdlib.* ]]]; then
-			AC_MSG_NOTICE([stdlib compiler flag provided. adding $STDLIBFLAGS_CPP skipped])	
-		else
-			if [[[ $STDLIBFLAGS_CPP =~ .*libc\+\+.* ]]]; then
-				AX_CHECK_COMPILE_FLAG([-stdlib=libc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-			else
-				AX_CHECK_COMPILE_FLAG([-stdlib=libstdc++], [CPPFLAGS="$CPPFLAGS $STDLIBFLAGS_CPP"])
-			fi
-		fi
-		
-		# check for linker flags
-		if [[[ $LDFLAGS =~ .*stdlib.* ]]]; then
-			AC_MSG_NOTICE([stdlib linker flag provided. adding $STDLIBFLAGS_LD skipped])
-		else
-			if [[[ $STDLIBFLAGS_LD =~ .*libc\+\+.* ]]]; then
-				AX_CHECK_LINK_FLAG([-stdlib=libc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-			else
-				AX_CHECK_LINK_FLAG([-stdlib=libstdc++], [LDFLAGS="$LDFLAGS $STDLIBFLAGS_LD"])
-			fi
-		fi
 		;;
   linux*)
 		# Do something specific for linux
@@ -200,8 +170,18 @@ case $host_os in
 		;;
 esac
 
-# create links for demo script
-AC_CONFIG_LINKS([demoapp/rundemo.sh:demoapp/rundemo.sh])
+# create links for client config file
+AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([client/sample-consumer.cfg:tests/sample-consumer.cfg])
+AC_CONFIG_LINKS([client/sample-producer.cfg:tests/sample-producer.cfg])
+AC_CONFIG_LINKS([client/test-freeculture.cfg:tests/test-freeculture.cfg])
+AC_CONFIG_LINKS([tests/default.cfg:tests/default.cfg])
+AC_CONFIG_LINKS([tests/sample-consumer.cfg:tests/sample-consumer.cfg])
+AC_CONFIG_LINKS([tests/sample-producer.cfg:tests/sample-producer.cfg])
+
+AC_CONFIG_LINKS([tests/sample-bad1.cfg:tests/sample-bad1.cfg])
+AC_CONFIG_LINKS([tests/consumer-audio.cfg:tests/consumer-audio.cfg])
+AC_CONFIG_LINKS([tests/consumer-video.cfg:tests/consumer-video.cfg])
 
 # create links for resources folder
 #AC_CONFIG_LINKS([resources/dummy:resources/dummy])
@@ -229,6 +209,26 @@ AX_CXX_COMPILE_STDCXX_11([], optional)
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
+
+# check for wget or curl
+AC_CHECK_PROGS([WGET], [wget curl])
+
+AC_MSG_CHECKING(if wget was wget)
+if test "X$WGET" = "Xwget"; then
+   AC_MSG_RESULT(yes)
+   WGET="wget -q" 
+else
+   AC_MSG_RESULT(no)
+fi
+AC_MSG_CHECKING(if wget was curl)
+if test "X$WGET" = "Xcurl"; then
+   AC_MSG_RESULT(yes)
+   WGET="curl -O" 
+else
+   AC_MSG_RESULT(no)
+fi
+
+AC_CHECK_PROGS([TAR], [tar])
 
 ###############################
 # Check for Boost
@@ -377,20 +377,6 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
-###############################
-# Check for WebRTC headers
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${WEBRTCDIR} -I${WEBRTCSRC}"
-
-AC_MSG_NOTICE([checking for WebRTC header files:])
-AC_CHECK_HEADERS([common_types.h system_wrappers/interface/event_wrapper.h system_wrappers/interface/thread_wrapper.h system_wrappers/interface/critical_section_wrapper.h system_wrappers/interface/tick_util.h system_wrappers/interface/rw_lock_wrapper.h  modules/video_capture/include/video_capture_defines.h modules/video_capture/include/video_capture.h modules/video_capture/include/video_capture_factory.h common_video/libyuv/include/webrtc_libyuv.h modules/video_coding/codecs/vp8/include/vp8.h modules/video_coding/main/interface/video_coding_defines.h modules/video_coding/main/source/codec_database.h modules/video_coding/main/source/internal_defines.h voice_engine/include/voe_base.h voice_engine/include/voe_network.h voice_engine/include/voe_audio_processing.h modules/audio_coding/main/interface/audio_coding_module.h], 
-[],
-[AC_MSG_FAILURE([
-	   can't find WebRTC header files
-	   ])])
-
-AC_SUBST([WEBRTCLIBS], ["-laudio_coding_module -laudio_decoder_interface -lCNG -lG711 -lG722 -liLBC -lPCM16B -laudio_encoder_interface -laudio_conference_mixer -laudioproc_debug_proto -laudio_device -laudio_processing -laudio_processing_sse2 -lbitrate_controller -lchannel_transport -lcommon_audio -lcommon_audio_sse2 -lcommon_video -ldesktop_capture -ldesktop_capture_differ_sse2 -lframe_editing_lib -lframe_generator -lhistogram -ljpeg_turbo -liSAC -lmedia_file -lmetrics -lneteq -lopus -lpaced_sender -lprotobuf_lite -lrtp_rtcp -lrtc_base_approved -lsystem_wrappers -lvideo_capture_module -lvideo_coding_utility -lvideo_engine_core -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvideo_render_module -lvideo_render_module_internal_impl -lvoice_engine -lvpx -lvpx_intrinsics_avx2 -lvpx_intrinsics_mmx -lvpx_intrinsics_sse2 -lvpx_intrinsics_ssse3 -lvpx_intrinsics_sse4_1 -lwebrtc_i420 -lwebrtc_opus -lwebrtc_utility -lwebrtc_video_coding -lwebrtc_vp8 -lwebrtc_vp9 -lwebrtc_common -lwebrtc -lyuv"])
-
-CPPFLAGS=$SAVED_CPPFLAGS
+AC_SUBST([WEBRTCLIBS], ["-lwebrtc"])
 
 AC_OUTPUT

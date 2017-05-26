@@ -64,8 +64,8 @@ For OS X, only the following Boost library versions are currently compatible wit
 $ wget http://downloads.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fboost%2Ffiles%2Fboost%2F1.54.0%2F&ts=1444678642&use_mirror=superb-dca2 -O boost_1_54_0.tar.gz
 $ tar -xvf boost_1_54_0.tar.gz && cd boost_1_54_0
 $ ./bootstrap.sh
-$ mkdir -p build && ./b2 cxxflags="-stdlib=libstdc++" linkflags="-stdlib=libstdc++" --prefix=$(pwd)/build
-$ ./b2 install
+$ mkdir -p build && ./b2 cxxflags="-stdlib=libstdc++" linkflags="-stdlib=libstdc++"
+$ ./b2 install --prefix=$(pwd)/build
 </pre>
 
 ### NDN-CPP

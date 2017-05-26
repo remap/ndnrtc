@@ -8,820 +8,269 @@
 //  Author:  Peter Gusev
 //
 
-#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+#include <cmath>
+#include <stdexcept>
+#include <ndn-cpp/data.hpp>
+#include <ndn-cpp/interest.hpp>
 
-#include "ndnrtc-common.h"
-#include "frame-data.h"
-#include "ndnrtc-utils.h"
-#include "params.h"
-#include "fec.h"
-#include "ndnrtc-namespace.h"
-
-#define PREFIX_META_NCOMP 5
+#include "ndnrtc-common.hpp"
+#include "frame-data.hpp"
 
 using namespace std;
 using namespace webrtc;
 using namespace ndnrtc;
-using namespace fec;
+
+namespace ndnrtc {
+template<>
+boost::shared_ptr<VideoFramePacket> 
+VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>>& segments)
+{
+    std::vector<uint8_t> packetBytes;
+    for (auto s:segments)
+        packetBytes.insert(packetBytes.end(), 
+            s.getPayload().begin(), s.getPayload().end());
+
+    NetworkData packetData(boost::move(packetBytes));
+    return boost::make_shared<VideoFramePacket>(boost::move(packetData));
+}
 
 //******************************************************************************
-const std::string PrefixMetaInfo::SyncListMarker = "sl";
-const PrefixMetaInfo PrefixMetaInfo::ZeroMetaInfo;
+template<>
+boost::shared_ptr<AudioBundlePacket> 
+AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>>& segments)
+{
+    std::vector<uint8_t> packetBytes;
+    for (auto s:segments)
+        packetBytes.insert(packetBytes.end(), 
+            s.getPayload().begin(), s.getPayload().end());
+    
+    NetworkData packetData(boost::move(packetBytes));
+    return boost::make_shared<AudioBundlePacket>(boost::move(packetData));
+}
+}
+//******************************************************************************
+Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>>& dataObjects):
+DataPacket(std::vector<uint8_t>())
+{
+    for (auto& d:dataObjects)
+    {
+        ndn::Blob digest = (*d->getFullName())[-1].getValue();
+        addBlob(digest.size(), digest.buf());
+    }
+}
 
-PrefixMetaInfo::_PrefixMetaInfo():totalSegmentsNum_(0),
-playbackNo_(0),
-pairedSequenceNo_(0),
-paritySegmentsNum_(0),
-crcValue_(0)
+Manifest::Manifest(NetworkData&& nd):
+DataPacket(boost::move(nd)){}
+
+bool Manifest::hasData(const ndn::Data& data) const
+{
+   ndn::Blob digest = (*data.getFullName())[-1].getValue();
+
+   for (int i = 0; i < getBlobsNum(); ++i)
+   {
+       ndn::Blob b(getBlob(i).data(), getBlob(i).size());
+       if (b.equals(digest)) return true;
+   }
+   return false;
+}
+
+//******************************************************************************
+AudioThreadMeta::AudioThreadMeta(double rate, const std::string& codec):
+DataPacket(std::vector<uint8_t>())
+{
+    addBlob(sizeof(rate), (uint8_t*)&rate);
+    if (codec.size()) addBlob(codec.size(), (uint8_t*)codec.c_str());
+    else isValid_ = false;
+}
+
+AudioThreadMeta::AudioThreadMeta(NetworkData&& data):
+DataPacket(boost::move(data))
+{
+    isValid_ = (blobs_.size() == 2 && blobs_[0].size() == sizeof(double));
+}
+
+double 
+AudioThreadMeta::getRate() const
+{
+    return *(const double*)blobs_[0].data();
+}
+
+std::string
+AudioThreadMeta::getCodec() const
+{
+    return std::string((const char*)blobs_[1].data(), blobs_[1].size());
+}
+
+//******************************************************************************
+VideoThreadMeta::VideoThreadMeta(double rate, const FrameSegmentsInfo& segInfo,
+    const VideoCoderParams& coder):
+DataPacket(std::vector<uint8_t>())
+{
+    Meta m({rate, coder.gop_, coder.startBitrate_, coder.encodeWidth_, coder.encodeHeight_, 
+        segInfo.deltaAvgSegNum_, segInfo.deltaAvgParitySegNum_,
+        segInfo.keyAvgSegNum_, segInfo.keyAvgParitySegNum_});
+    addBlob(sizeof(m), (uint8_t*)&m);
+}
+
+VideoThreadMeta::VideoThreadMeta(NetworkData&& data):
+DataPacket(boost::move(data))
+{
+    isValid_ = (blobs_.size() == 1 && blobs_[0].size() == sizeof(Meta));
+}
+
+double VideoThreadMeta::getRate() const
+{
+    return ((Meta*)blobs_[0].data())->rate_;
+}
+
+FrameSegmentsInfo VideoThreadMeta::getSegInfo() const
+{
+    Meta *m = (Meta*)blobs_[0].data();
+    return FrameSegmentsInfo({m->deltaAvgSegNum_, m->deltaAvgParitySegNum_, 
+        m->keyAvgSegNum_, m->keyAvgParitySegNum_});
+}
+
+VideoCoderParams VideoThreadMeta::getCoderParams() const
+{
+    Meta *m = (Meta*)blobs_[0].data();
+    VideoCoderParams c;
+    c.gop_ = m->gop_;
+    c.startBitrate_ = m->bitrate_;
+    c.encodeWidth_ = m->width_;
+    c.encodeHeight_ = m->height_;
+    return c;
+}
+
+//******************************************************************************
+#define SYNC_MARKER "sync:"
+MediaStreamMeta::MediaStreamMeta():
+DataPacket(std::vector<uint8_t>())
 {}
 
-Name
-PrefixMetaInfo::toName(const PrefixMetaInfo &meta)
+MediaStreamMeta::MediaStreamMeta(std::vector<std::string> threads):
+DataPacket(std::vector<uint8_t>())
 {
-    Name metaSuffix("");
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.totalSegmentsNum_));
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.playbackNo_));
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.pairedSequenceNo_));
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.paritySegmentsNum_));
-    metaSuffix.append(NdnRtcUtils::componentFromInt(meta.crcValue_));
-    
-    if (meta.syncList_.size())
-        metaSuffix.append(SyncListMarker);
-        
-    for (auto pair:meta.syncList_)
-    {
-        metaSuffix.append(pair.first);
-        metaSuffix.append(NdnRtcUtils::componentFromInt(pair.second));
-    }
-    
-    return metaSuffix;
-}
-
-int
-PrefixMetaInfo::extractMetadata(const ndn::Name &prefix,
-                                PrefixMetaInfo &meta)
-{
-    if (prefix.size() >= PREFIX_META_NCOMP)
-    {
-        int slPos = 0, slAdj = 0;
-        if ((slPos = NdnRtcNamespace::findComponent(prefix, SyncListMarker)) > 0)
-        {
-            meta.syncList_ = extractSyncList(prefix, slPos);
-            slAdj = meta.syncList_.size()*2+1;
-        }
-            
-        meta.totalSegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[0-(PREFIX_META_NCOMP+slAdj)]);
-        meta.playbackNo_ = NdnRtcUtils::intFromComponent(prefix[1-(PREFIX_META_NCOMP+slAdj)]);
-        meta.pairedSequenceNo_ = NdnRtcUtils::intFromComponent(prefix[2-(PREFIX_META_NCOMP+slAdj)]);
-        meta.paritySegmentsNum_ = NdnRtcUtils::intFromComponent(prefix[3-(PREFIX_META_NCOMP+slAdj)]);
-        meta.crcValue_ = NdnRtcUtils::intFromComponent(prefix[4-(PREFIX_META_NCOMP+slAdj)]);
-        
-        return RESULT_OK;
-    }
-    
-    return RESULT_ERR;
-}
-
-ThreadSyncList PrefixMetaInfo::extractSyncList(const ndn::Name& prefix, int markerPos)
-{
-    assert(markerPos < prefix.size());
-    
-    if (prefix[markerPos].toEscapedString() == SyncListMarker)
-    {
-        ThreadSyncList slList;
-        
-        int p = markerPos+1;
-        while (p+1 < prefix.size())
-        {
-            slList.push_back(pair<string, PacketNumber>(prefix[p].toEscapedString(),
-                                                        NdnRtcUtils::intFromComponent(prefix[p+1])));
-            p += 2;
-        }
-        
-        return slList;
-    }
-    
-    return ThreadSyncList();
-}
-
-//******************************************************************************
-NetworkData::NetworkData(unsigned int dataLength, const unsigned char* rawData)
-{
-    copyFromRaw(dataLength, rawData);
-}
-
-NetworkData::NetworkData(const NetworkData& networkData)
-{
-    copyFromRaw(networkData.getLength(), networkData.getData());
-    isValid_ = networkData.isValid();
-}
-
-NetworkData::~NetworkData(){
-    if (data_ && isDataCopied_)
-        free(data_);
-}
-
-void NetworkData::copyFromRaw(unsigned int dataLength, const unsigned char* rawData)
-{
-    length_ = dataLength;
-    data_ = (unsigned char*)malloc(dataLength);
-    memcpy((void*)data_, (void*)rawData, length_);
-    isDataCopied_ = true;
-}
-
-//******************************************************************************
-const PacketData::PacketMetadata PacketData::ZeroMetadata = {0, 0, 0};
-const PacketData::PacketMetadata PacketData::BadMetadata = {-1, -1, -1};
-
-#pragma mark - public
-ndnrtc::PacketData::PacketMetadata
-PacketData::getMetadata()
-{
-    PacketMetadata meta;
-    meta.packetRate_ = -1;
-    meta.timestamp_ = -1;
-    
-    return meta;
-}
-
-int
-ndnrtc::PacketData::packetFromRaw(unsigned int length,
-                                  unsigned char *data,
-                                  ndnrtc::PacketData **packetData)
-{
-    if (NdnFrameData::isValidHeader(length, data))
-    {
-        NdnFrameData *frameData = new NdnFrameData();
-        
-        frameData->length_ = length;
-        frameData->data_ = data;
-        
-        if (RESULT_GOOD(frameData->initFromRawData(frameData->length_,
-                                                   frameData->data_)))
-        {
-            frameData->isValid_ = true;
-            *packetData = frameData;
-            return RESULT_OK;
-        }
-        
-        delete frameData;
-    }
-
-    if (NdnAudioData::isValidHeader(length, data))
-    {
-        NdnAudioData *audioData = new NdnAudioData();
-
-        audioData->length_ = length;
-        audioData->data_ = data;
-        
-        if (RESULT_GOOD(audioData->initFromRawData(audioData->length_,
-                                                   audioData->data_)))
-        {
-            audioData->isValid_ = true;
-            *packetData = audioData;
-            return RESULT_OK;
-        }
-        
-        delete audioData;
-    }
-
-    
-    return RESULT_ERR;
-}
-
-PacketData::PacketMetadata
-ndnrtc::PacketData::metadataFromRaw(unsigned int length,
-                                    const unsigned char *data)
-{
-    if (NdnFrameData::isValidHeader(length, data))
-        return NdnFrameData::metadataFromRaw(length, data);
-    
-    if (NdnAudioData::isValidHeader(length, data))
-        return NdnAudioData::metadataFromRaw(length, data);
-    
-    return BadMetadata;
-}
-
-//******************************************************************************
-#pragma mark - construction/destruction
-SegmentData::SegmentData(const unsigned char *segmentData,
-                         const unsigned int dataSize,
-                         SegmentMetaInfo metadata)
-{
-    unsigned int headerSize = sizeof(SegmentHeader);
-    
-    length_ = headerSize + dataSize;
-    
-    isValid_ = true;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(length_);
-    memcpy(data_+headerSize, segmentData, dataSize);
-    
-    ((SegmentHeader*)(&data_[0]))->headerMarker_ = NDNRTC_SEGHDR_MRKR;
-    ((SegmentHeader*)(&data_[0]))->metaInfo_ = metadata;
-    ((SegmentHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_SEGBODY_MRKR;
-}
-
-//******************************************************************************
-#pragma mark - public
-int SegmentData::initFromRawData(unsigned int dataLength,
-                                 const unsigned char* rawData)
-{
-    if (rawData &&
-        dataLength > getHeaderSize() &&
-        ((SegmentHeader*)(&rawData[0]))->headerMarker_ == NDNRTC_SEGHDR_MRKR &&
-        ((SegmentHeader*)(&rawData[0]))->bodyMarker_ == NDNRTC_SEGBODY_MRKR)
-    {
-        isValid_ = true;
-        data_ = const_cast<unsigned char*>(rawData);
-        length_ = dataLength;
-        
-        return RESULT_OK;
-    }
-    
-    return RESULT_ERR;
-}
-
-int SegmentData::segmentDataFromRaw(unsigned int dataLength,
-                                    const unsigned char *rawData,
-                                    ndnrtc::SegmentData &segmentData)
-{
-    return segmentData.initFromRawData(dataLength, rawData);
-}
-
-
-//******************************************************************************
-//******************************************************************************
-#pragma mark - construction/destruction
-FrameParityData::FrameParityData(unsigned int length,
-                                 const unsigned char* rawData):
-PacketData(length, rawData)
-{
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
-}
-
-int
-FrameParityData::initFromPacketData(const PacketData& packetData,
-                                    double parityRatio,
-                                    unsigned int nSegments,
-                                    unsigned int segmentSize)
-{
-    uint32_t nParitySegments = getParitySegmentsNum(nSegments, parityRatio);
-    
-    length_ = getParityDataLength(nSegments, parityRatio, segmentSize);
-    data_ = (unsigned char*)malloc(length_);
-    isDataCopied_ = true;
-    
-    // create redundancy data
-    Rs28Encoder enc(nSegments, nParitySegments, segmentSize);
-    
-    if (enc.encode(packetData.getData(), data_) < 0)
-        return RESULT_ERR;
-    else
-    {
-        isValid_ = true;
-    }
-    
-    return RESULT_OK;
-}
-
-int
-FrameParityData::initFromRawData(unsigned int dataLength,
-                                 const unsigned char *rawData)
-{
-    return RESULT_OK;
-}
-
-unsigned int
-FrameParityData::getParitySegmentsNum
-(unsigned int nSegments, double parityRatio)
-{
-    return (uint32_t)ceil(parityRatio*nSegments);
-}
-
-unsigned int
-FrameParityData::getParityDataLength
-(unsigned int nSegments, double parityRatio, unsigned int segmentSize)
-{
-    return getParitySegmentsNum(nSegments, parityRatio) * segmentSize;
-}
-
-//******************************************************************************
-//******************************************************************************
-#pragma mark - construction/destruction
-NdnFrameData::NdnFrameData(unsigned int length, const unsigned char* rawData):
-PacketData(length, rawData)
-{
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
-}
-NdnFrameData::NdnFrameData(const EncodedImage &frame,
-                           unsigned int segmentSize)
-{
-    initialize(frame, segmentSize);
-}
-
-NdnFrameData::NdnFrameData(const EncodedImage &frame, unsigned int segmentSize,
-                           PacketMetadata &metadata)
-{
-    initialize(frame, segmentSize);
-    ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
-}
-
-NdnFrameData::~NdnFrameData()
-{
-}
-
-//******************************************************************************
-#pragma mark - public
-int
-NdnFrameData::getFrame(webrtc::EncodedImage &frame)
-{
-    if (!isValid())
-        return RESULT_ERR;
-    
-    frame = frame_;
-    
-    return RESULT_OK;
+    for (auto t:threads) addThread(t);
 }
 
 void
-copyFrame(const webrtc::EncodedImage &frameOriginal,
-          webrtc::EncodedImage &frameCopy)
+MediaStreamMeta::addThread(const std::string& thread)
 {
-    
+     addBlob(thread.size(), (uint8_t*)thread.c_str());
 }
 
-PacketData::PacketMetadata
-NdnFrameData::getMetadata()
+void 
+MediaStreamMeta::addSyncStream(const std::string& stream)
 {
-    PacketMetadata meta = PacketData::getMetadata();
-    
-    if (isValid())
-        meta = getHeader().metadata_;
-    
-    return meta;
+    addThread("sync:"+stream);
 }
 
-void
-NdnFrameData::setMetadata(PacketMetadata &metadata)
+std::vector<std::string>
+MediaStreamMeta::getSyncStreams() const
 {
-    if (isValid())
-        ((FrameDataHeader*)(&data_[0]))->metadata_ = metadata;
-}
-
-bool
-NdnFrameData::isValidHeader(unsigned int length, const unsigned char *data)
-{
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    
-    if (length >= headerSize)
+    std::vector<std::string> syncStreams;
+    for (auto b:blobs_)
     {
-        FrameDataHeader header = *((FrameDataHeader*)(&data[0]));
-
-        if (header.headerMarker_ == NDNRTC_FRAMEHDR_MRKR &&
-            header.bodyMarker_ == NDNRTC_FRAMEBODY_MRKR)
-            return true;
+        std::string thread = std::string((const char*)b.data(), b.size());
+        size_t p = thread.find(SYNC_MARKER);
+        if (p != std::string::npos)
+            syncStreams.push_back(std::string(thread.begin()+sizeof(SYNC_MARKER)-1, 
+                thread.end()));
+            
     }
-    
-    return false;
+    return syncStreams;
 }
 
-PacketData::PacketMetadata
-NdnFrameData::metadataFromRaw(unsigned int length, const unsigned char *data)
+std::vector<std::string>
+MediaStreamMeta::getThreads() const 
 {
-    if (NdnFrameData::isValidHeader(length, data))
+    std::vector<std::string> threads;
+    for (auto b:blobs_) 
     {
-        NdnFrameData::FrameDataHeader header = *((FrameDataHeader*)data);
-        return header.metadata_;
+        std::string thread = std::string((const char*)b.data(), b.size());
+        if (thread.find("sync:") == std::string::npos)
+            threads.push_back(thread);
     }
-    
-    return PacketData::BadMetadata;
+    return threads;
 }
 
 //******************************************************************************
-#pragma mark - private
-void
-NdnFrameData::initialize(const webrtc::EncodedImage &frame, unsigned int segmentSize)
+WireSegment::WireSegment(const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<const ndn::Interest>& interest):
+data_(data), interest_(interest),
+isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
 {
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    unsigned int allocSize = (unsigned int)ceil((double)(frame._length+headerSize)/(double)segmentSize)*segmentSize;
-    
-    length_ = frame._length+headerSize;
-    isDataCopied_ = true;
-    data_ = (unsigned char*)malloc(allocSize);
-    memset(data_, 0, allocSize);
-    
-    // copy frame data with offset of header
-    memcpy(data_+headerSize, frame._buffer, frame._length);
-    
-    // setup header
-    ((FrameDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_FRAMEHDR_MRKR;
-    ((FrameDataHeader*)(&data_[0]))->encodedWidth_ = frame._encodedWidth;
-    ((FrameDataHeader*)(&data_[0]))->encodedHeight_ = frame._encodedHeight;
-    ((FrameDataHeader*)(&data_[0]))->timeStamp_ = frame._timeStamp;
-    ((FrameDataHeader*)(&data_[0]))->capture_time_ms_ = frame.capture_time_ms_;
-    ((FrameDataHeader*)(&data_[0]))->frameType_ = frame._frameType;
-    ((FrameDataHeader*)(&data_[0]))->completeFrame_ = frame._completeFrame;
-    ((FrameDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_FRAMEBODY_MRKR;
-    
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
-}
-
-int
-NdnFrameData::initFromRawData(unsigned int dataLength,
-                              const unsigned char *rawData)
-{
-    unsigned int headerSize = sizeof(FrameDataHeader);
-    FrameDataHeader header = *((FrameDataHeader*)(&rawData[0]));
-    
-    // check markers
-    if ((header.headerMarker_ != NDNRTC_FRAMEHDR_MRKR ||
-         header.bodyMarker_ != NDNRTC_FRAMEBODY_MRKR) ||
-        dataLength < headerSize)
-        return RESULT_ERR;
-    
-    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, header.encodedWidth_,
-                                          header.encodedHeight_);
-        
-    frame_ = webrtc::EncodedImage(const_cast<uint8_t*>(&rawData[headerSize]),
-                                  dataLength-headerSize, size);
-    frame_._encodedWidth = header.encodedWidth_;
-    frame_._encodedHeight = header.encodedHeight_;
-    frame_._timeStamp = header.timeStamp_;
-    frame_.capture_time_ms_ = header.capture_time_ms_;
-    frame_._frameType = header.frameType_;
-    frame_._completeFrame = header.completeFrame_;
-
-    return RESULT_OK;
-}
-
-//******************************************************************************
-//******************************************************************************
-#pragma mark - construction/destruction
-NdnAudioData::NdnAudioData(unsigned int dataLength, const unsigned char* rawData):
-PacketData(dataLength, rawData)
-{
-    isValid_ = RESULT_GOOD(initFromRawData(length_, data_));
-}
-
-//NdnAudioData::NdnAudioData(const NdnAudioData& audioData)
-//{
-//    isDataCopied_ = true;
-//    isValid_ = audioData.getIs
-//}
-
-//******************************************************************************
-#pragma mark - public
-PacketData::PacketMetadata
-NdnAudioData::getMetadata()
-{
-    PacketMetadata meta = PacketData::getMetadata();
-    
-    if (isValid())
-        meta = getHeader().metadata_;
-    
-    return meta;
-}
-
-void
-NdnAudioData::setMetadata(PacketMetadata &metadata)
-{
-    if (isValid())
-        ((AudioDataHeader*)(&data_[0]))->metadata_ = metadata;
-}
-
-bool
-NdnAudioData::isValidHeader(unsigned int length, const unsigned char *data)
-{
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    
-    if (length >= headerSize)
+    if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
     {
-        AudioDataHeader header = *((AudioDataHeader*)(&data[0]));
-        
-        if (header.headerMarker_ == NDNRTC_AUDIOHDR_MRKR &&
-            header.bodyMarker_ == NDNRTC_AUDIOBODY_MRKR)
-            return true;
+        std::stringstream ss;
+        ss << "Attempt to create wired data object with "
+        << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+        throw std::runtime_error(ss.str());
     }
-    
-    return false;
 }
 
-PacketData::PacketMetadata
-NdnAudioData::metadataFromRaw(unsigned int length, const unsigned char *data)
+WireSegment::WireSegment(const NamespaceInfo& info,
+    const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<const ndn::Interest>& interest):
+dataNameInfo_(info),data_(data),interest_(interest),isValid_(true)
 {
-    if (NdnAudioData::isValidHeader(length, data))
+    if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
     {
-        NdnAudioData::AudioDataHeader header = *((AudioDataHeader*)data);
-        return header.metadata_;
+        std::stringstream ss;
+        ss << "Attempt to create wired data object with "
+        << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+        throw std::runtime_error(ss.str());
     }
-    
-    return PacketData::BadMetadata;
 }
 
-void
-NdnAudioData::addPacket(NdnAudioData::AudioPacket& packet)
-{
-    isDataCopied_ = true;
-    isValid_ = true;
+WireSegment::WireSegment(const WireSegment& data):data_(data.data_),
+dataNameInfo_(data.dataNameInfo_), isValid_(data.isValid_){}
 
-    if (!length_)
-    {
-        length_ = sizeof(AudioDataHeader)+packet.getLength();
-        data_ = (unsigned char*)malloc(length_);
-        ((AudioDataHeader*)(&data_[0]))->headerMarker_ = NDNRTC_AUDIOHDR_MRKR;
-        ((AudioDataHeader*)(&data_[0]))->nPackets_ = 1;
-        ((AudioDataHeader*)(&data_[0]))->metadata_.packetRate_ = 0.;
-        ((AudioDataHeader*)(&data_[0]))->metadata_.timestamp_ = 0;
-        ((AudioDataHeader*)(&data_[0]))->metadata_.unixTimestamp_ = 0;
-        ((AudioDataHeader*)(&data_[0]))->bodyMarker_ = NDNRTC_AUDIOBODY_MRKR;
-    }
-    else
-    {
-        ((AudioDataHeader*)(&data_[0]))->nPackets_++;
-        length_ += packet.getLength();
-        data_ = (unsigned char*)realloc((void*)data_, length_);
-    }
-    
-    unsigned char* dataPtr = data_+length_-packet.getLength();
-    ((AudioPacket*)dataPtr)->isRTCP_ = packet.isRTCP_;
-    ((AudioPacket*)dataPtr)->length_ = packet.length_;
-    
-    dataPtr += sizeof(((AudioPacket*)dataPtr)->isRTCP_)+sizeof(((AudioPacket*)dataPtr)->length_);
-    memcpy(dataPtr, packet.data_, packet.length_);
-    
-    AudioPacket packetCopy = packet;
-    packetCopy.data_ = dataPtr;
-    packets_.push_back(packetCopy);
+size_t WireSegment::getSlicesNum() const
+{
+    return data_->getMetaInfo().getFinalBlockId().toSegment()+1;
 }
 
-//******************************************************************************
-#pragma mark - private
-int
-NdnAudioData::initFromRawData(unsigned int dataLength,
-                              const unsigned char *rawData)
+const DataSegmentHeader
+WireSegment::header() const
 {
-    unsigned int headerSize = sizeof(AudioDataHeader);
-    AudioDataHeader header = *((AudioDataHeader*)(&rawData[0]));
-    
-    if (header.headerMarker_ != NDNRTC_AUDIOHDR_MRKR ||
-        header.bodyMarker_ != NDNRTC_AUDIOBODY_MRKR)
-        return RESULT_ERR;
-    
-    unsigned char* dataPtr = (unsigned char*)(data_+headerSize);
-    for (int i = 0; i < header.nPackets_; i++)
-    {
-        AudioPacket packet;
-        packet.isRTCP_ = ((AudioPacket*)dataPtr)->isRTCP_;
-        packet.length_ = ((AudioPacket*)dataPtr)->length_;
-        dataPtr += sizeof(((AudioPacket*)dataPtr)->isRTCP_) + sizeof(((AudioPacket*)dataPtr)->length_);
-        packet.data_ = dataPtr;
-        
-        packets_.push_back(packet);
-        dataPtr += packet.length_;
-    }
-    
-    return RESULT_OK;
+    // this cast will be invalid for VideoFrameSegment packets,
+    // still casting to DataSegmentHeader is possible, because 
+    // it's a parent class for VideoFrameSegmentHeader
+    ImmutableHeaderPacket<DataSegmentHeader> s(data_->getContent());
+    return s.getHeader();
 }
 
-//******************************************************************************
-SessionInfoData::SessionInfoData(const new_api::SessionInfo& sessionInfo):
-NetworkData(),
-sessionInfo_(sessionInfo)
+const CommonHeader 
+WireSegment::packetHeader() const
 {
-    packParameters(sessionInfo_);
+    if (getSegNo()) throw std::runtime_error("Accessing packet header in "
+        "non-zero segment is not allowed");
+
+    ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
+    boost::shared_ptr<std::vector<uint8_t>> data(boost::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(), 
+        s0.getPayload().end()));
+    ImmutableHeaderPacket<CommonHeader> p0(data);
+    return p0.getHeader();
 }
 
-SessionInfoData::SessionInfoData(unsigned int dataLength, const unsigned char* data):
-NetworkData(dataLength, data)
+bool 
+WireSegment::isOriginal() const
 {
-    isValid_ = RESULT_GOOD(initFromRawData(dataLength, data));
+    if (!interest_->getNonce().size())
+        throw std::runtime_error("Interest nonce is not set");
+
+    return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
 }
 
-int
-SessionInfoData::getSessionInfo(new_api::SessionInfo& sessionInfo)
+boost::shared_ptr<WireSegment> 
+WireSegment::createSegment(const NamespaceInfo& namespaceInfo,
+    const boost::shared_ptr<ndn::Data>& data, 
+    const boost::shared_ptr<const ndn::Interest>& interest)
 {
-    sessionInfo = sessionInfo_;
-    return RESULT_OK;
-}
+    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo && 
+        (namespaceInfo.segmentClass_ == SegmentClass::Data || namespaceInfo.segmentClass_ == SegmentClass::Parity))
+        return boost::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
 
-unsigned int
-SessionInfoData::getSessionInfoLength(const new_api::SessionInfo& sessionInfo)
-{
-    unsigned int dataLength = sizeof(struct _SessionInfoDataHeader) +
-    sessionInfo.sessionPrefix_.size()+1+
-    sizeof(struct _VideoStreamDescription)*sessionInfo.videoStreams_.size() +
-    sizeof(struct _AudioStreamDescription)*sessionInfo.audioStreams_.size();
-    
-    for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
-        dataLength += sizeof(struct _VideoThreadDescription)*sessionInfo.videoStreams_[i]->mediaThreads_.size();
-    
-    for (int i = 0; i < sessionInfo.audioStreams_.size(); i++)
-        dataLength += sizeof(struct _AudioThreadDescription)*sessionInfo.audioStreams_[i]->mediaThreads_.size();
-    
-    return dataLength;
-}
-
-void
-SessionInfoData::packParameters(const new_api::SessionInfo& sessionInfo)
-{
-    isDataCopied_ = true;
-    isValid_ = true;
-    length_ = getSessionInfoLength(sessionInfo);
-    
-    data_ = (unsigned char*)malloc(length_);
-    
-    struct _SessionInfoDataHeader header;
-    header.nVideoStreams_ = sessionInfo.videoStreams_.size();
-    header.nAudioStreams_ = sessionInfo.audioStreams_.size();
-    
-    *((struct _SessionInfoDataHeader*)data_) = header;
-    int idx = sizeof(struct _SessionInfoDataHeader);
-    
-    memcpy((void*)&data_[idx], sessionInfo.sessionPrefix_.c_str(), sessionInfo.sessionPrefix_.size());
-    idx += sessionInfo.sessionPrefix_.size();
-    data_[idx] = '\0';
-    
-    int streamIdx = idx+1;
-    
-    for (int i = 0; i < sessionInfo.videoStreams_.size(); i++)
-    {
-        new_api::MediaStreamParams *params = sessionInfo.videoStreams_[i];
-        struct _VideoStreamDescription streamDescription;
-        
-        streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
-        memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
-        strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
-        memset(&streamDescription.syncName_, 0, MAX_STREAM_NAME_LENGTH+1);
-        strcpy((char*)&streamDescription.syncName_, params->synchronizedStreamName_.c_str());
-        streamDescription.nThreads_  = params->mediaThreads_.size();
-        *((struct _VideoStreamDescription*)&data_[streamIdx]) = streamDescription;
-        
-        streamIdx += sizeof(struct _VideoStreamDescription);
-        int threadIdx = streamIdx;
-        
-        for (int j = 0; j < params->mediaThreads_.size(); j++)
-        {
-            new_api::VideoThreadParams *threadParams = (new_api::VideoThreadParams*)params->mediaThreads_[j];
-            struct _VideoThreadDescription threadDescription;
-            
-            threadDescription.rate_ = threadParams->coderParams_.codecFrameRate_;
-            threadDescription.gop_ = threadParams->coderParams_.gop_;
-            threadDescription.bitrate_ = threadParams->coderParams_.startBitrate_;
-            threadDescription.width_ = threadParams->coderParams_.encodeWidth_;
-            threadDescription.height_ = threadParams->coderParams_.encodeHeight_;
-            threadDescription.deltaAvgSegNum_ = threadParams->deltaAvgSegNum_;
-            threadDescription.deltaAvgParitySegNum_ = threadParams->deltaAvgParitySegNum_;
-            threadDescription.keyAvgSegNum_ = threadParams->keyAvgSegNum_;
-            threadDescription.keyAvgParitySegNum_ = threadParams->keyAvgParitySegNum_;
-            memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
-            strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
-            
-            *((struct _VideoThreadDescription*)&data_[threadIdx]) = threadDescription;
-            threadIdx += sizeof(struct _VideoThreadDescription);
-            streamIdx = threadIdx;
-        }
-    }
-    
-    for (int i = 0; i < sessionInfo.audioStreams_.size(); i++)
-    {
-        new_api::MediaStreamParams *params = sessionInfo_.audioStreams_[i];
-        struct _AudioStreamDescription streamDescription;
-        
-        streamDescription.segmentSize_ = params->producerParams_.segmentSize_;
-        memset(&streamDescription.name_, 0, MAX_STREAM_NAME_LENGTH+1);
-        strcpy((char*)&streamDescription.name_, params->streamName_.c_str());
-        streamDescription.nThreads_  = params->mediaThreads_.size();
-        *((struct _AudioStreamDescription*)&data_[streamIdx]) = streamDescription;
-        
-        streamIdx += sizeof(struct _AudioStreamDescription);
-        int threadIdx = streamIdx;
-        
-        for (int j = 0; j < params->mediaThreads_.size(); j++)
-        {
-            new_api::AudioThreadParams *threadParams = (new_api::AudioThreadParams*)params->mediaThreads_[j];
-            struct _AudioThreadDescription threadDescription;
-            
-            memset(&threadDescription.name_, 0, MAX_THREAD_NAME_LENGTH+1);
-            strcpy((char*)&threadDescription.name_, threadParams->threadName_.c_str());
-            
-            *((struct _AudioThreadDescription*)&data_[threadIdx]) = threadDescription;
-            threadIdx += sizeof(struct _AudioThreadDescription);
-            streamIdx = threadIdx;
-        }
-    }
-    
-    assert(streamIdx == length_);
-}
-
-int
-SessionInfoData::initFromRawData(unsigned int dataLength, const unsigned char *rawData)
-{
-    unsigned int headerSize = sizeof(struct _SessionInfoDataHeader);
-    struct _SessionInfoDataHeader header = *((struct _SessionInfoDataHeader*)(&rawData[0]));
-    
-    if (header.mrkr1_ != NDNRTC_SESSION_MRKR ||
-        header.mrkr2_ != NDNRTC_SESSION_MRKR ||
-        headerSize > dataLength)
-        return RESULT_ERR;
-    
-    unsigned int streamIdx = headerSize;
-    sessionInfo_.sessionPrefix_ = std::string((const char*)&rawData[streamIdx]);
-
-    streamIdx += sessionInfo_.sessionPrefix_.size()+1;
-    
-    for (int i = 0; i < header.nVideoStreams_; i++)
-    {
-        struct _VideoStreamDescription streamDescription = *((struct _VideoStreamDescription*)(&data_[streamIdx]));
-        
-        if (streamDescription.mrkr1_ != NDNRTC_VSTREAMDESC_MRKR &&
-            streamDescription.mrkr2_ != NDNRTC_VSTREAMDESC_MRKR)
-            return RESULT_ERR;
-        
-        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
-        
-        params->type_ = new_api::MediaStreamParams::MediaStreamTypeVideo;
-        params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
-        params->streamName_ = string((char*)&streamDescription.name_[0]);
-        params->synchronizedStreamName_ = string((char*)&streamDescription.syncName_[0]);
-        
-        streamIdx += sizeof(struct _VideoStreamDescription);
-        unsigned int threadIdx = streamIdx;
-        
-        for (int j = 0; j < streamDescription.nThreads_; j++)
-        {
-            struct _VideoThreadDescription threadDescription = *((struct _VideoThreadDescription*)(&data_[threadIdx]));
-            
-            if (threadDescription.mrkr1_ != NDNRTC_VTHREADDESC_MRKR &&
-                threadDescription.mrkr2_ != NDNRTC_VTHREADDESC_MRKR)
-            {
-                delete params;
-                return RESULT_ERR;
-            }
-            
-            new_api::VideoThreadParams *threadParams = new new_api::VideoThreadParams();
-            
-            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
-            threadParams->coderParams_.codecFrameRate_ = threadDescription.rate_;
-            threadParams->coderParams_.gop_ = threadDescription.gop_;
-            threadParams->coderParams_.startBitrate_ = threadDescription.bitrate_;
-            threadParams->coderParams_.maxBitrate_ = 0;
-            threadParams->coderParams_.encodeWidth_ = threadDescription.width_;
-            threadParams->coderParams_.encodeHeight_ = threadDescription.height_;
-            threadParams->deltaAvgSegNum_ = threadDescription.deltaAvgSegNum_;
-            threadParams->deltaAvgParitySegNum_ = threadDescription.deltaAvgParitySegNum_;
-            threadParams->keyAvgSegNum_ = threadDescription.keyAvgSegNum_;
-            threadParams->keyAvgParitySegNum_ = threadDescription.keyAvgParitySegNum_;
-            params->mediaThreads_.push_back(threadParams);
-            
-            threadIdx += sizeof(struct _VideoThreadDescription);
-            streamIdx = threadIdx;
-        }
-        
-        sessionInfo_.videoStreams_.push_back(params);
-    }
-    
-    for (int i = 0; i < header.nAudioStreams_; i++)
-    {
-        struct _AudioStreamDescription streamDescription = *((struct _AudioStreamDescription*)(&data_[streamIdx]));
-        
-        if (streamDescription.mrkr1_ != NDNRTC_ASTREAMDESC_MRKR &&
-            streamDescription.mrkr2_ != NDNRTC_ASTREAMDESC_MRKR)
-            return RESULT_ERR;
-        
-        new_api::MediaStreamParams *params = new new_api::MediaStreamParams();
-        
-        params->type_ = new_api::MediaStreamParams::MediaStreamTypeAudio;
-        params->producerParams_.segmentSize_ = streamDescription.segmentSize_;
-        params->streamName_ = string((char*)&streamDescription.name_[0]);
-        
-        streamIdx += sizeof(struct _AudioStreamDescription);
-        unsigned int threadIdx = streamIdx;
-        
-        for (int j = 0; j < streamDescription.nThreads_; j++)
-        {
-            struct _AudioThreadDescription threadDescription = *((struct _AudioThreadDescription*)(&data_[threadIdx]));
-            
-            if (threadDescription.mrkr1_ != NDNRTC_ATHREADDESC_MRKR &&
-                threadDescription.mrkr2_ != NDNRTC_ATHREADDESC_MRKR)
-            {
-                delete params;
-                return RESULT_ERR;
-            }
-            
-            new_api::AudioThreadParams *threadParams = new new_api::AudioThreadParams();
-            
-            threadParams->threadName_ = string((char*)&threadDescription.name_[0]);
-            params->mediaThreads_.push_back(threadParams);
-            
-            threadIdx += sizeof(struct _AudioThreadDescription);
-            streamIdx = threadIdx;
-        }
-        
-        sessionInfo_.audioStreams_.push_back(params);
-    }
-    
-    assert(streamIdx == length_);
-    
-    return RESULT_OK;
+    return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);;
 }

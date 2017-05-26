@@ -8,9 +8,9 @@
 //  Author:  Peter Gusev
 //
 
-#include "threading-capability.h"
+#include "threading-capability.hpp"
 
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 using namespace boost;
 
 //******************************************************************************
@@ -53,13 +53,17 @@ void ThreadingCapability::performOnMyThread(boost::function<void(void)> dispatch
             mutex m;
             unique_lock<mutex> lock(m);
             condition_variable isDone;
+            // doneFlag is needed to prevent situations where the block passed to ioService_
+            // finishes before current thread reaches isDone.wait() call 
+            boost::atomic<bool> doneFlag(false);
             
-            ioService_.dispatch([dispatchBlock,&isDone]{
+            ioService_.dispatch([dispatchBlock,&isDone, &doneFlag]{
                 dispatchBlock();
+                doneFlag = true;
                 isDone.notify_one();
             });
-            
-            isDone.wait(lock);
+
+            isDone.wait(lock, [&doneFlag](){ return doneFlag.load(); });
         }
     }
 }

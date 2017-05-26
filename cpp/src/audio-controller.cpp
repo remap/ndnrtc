@@ -8,13 +8,12 @@
 //  Author:  Peter Gusev
 //
 
-#include <voice_engine/include/voe_audio_processing.h>
+#include <webrtc/voice_engine/include/voe_base.h>
 
-#include "audio-controller.h"
-#include "ndnrtc-utils.h"
-#include "simple-log.h"
+#include "audio-controller.hpp"
+#include "simple-log.hpp"
 
-using namespace ndnrtc::new_api;
+using namespace ndnrtc;
 using namespace webrtc;
 
 AudioController::AudioController()
@@ -65,7 +64,8 @@ void AudioController::performOnAudioThread(boost::function<void(void)> dispatchB
 //******************************************************************************
 void AudioController::initVE()
 {
-    LogInfo(LIB_LOG) << "Initializing voice engine..." << std::endl;
+    if (voiceEngine_) return;
+
     voiceEngine_ = VoiceEngine::Create();
     
     int res = 0;
@@ -77,12 +77,4 @@ void AudioController::initVE()
         
         voe_base->Release();
     }
-    {// configure
-        VoEAudioProcessing *voe_proc = VoEAudioProcessing::GetInterface(voiceEngine_);
-        
-        voe_proc->SetEcStatus(true, kEcConference);
-        voe_proc->Release();
-    }
-    
-    LogInfo(LIB_LOG) << "Voice engine initialized" << std::endl;
 }

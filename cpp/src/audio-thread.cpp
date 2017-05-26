@@ -8,72 +8,102 @@
 //  Author:  Peter Gusev
 //
 
-#include "ndnrtc-namespace.h"
-#include "audio-thread.h"
-#include "segmentizer.h"
+#include <boost/make_shared.hpp>
+#include <ndn-cpp/data.hpp>
 
-using namespace ndnrtc::new_api;
+#include "audio-thread.hpp"
+#include "estimators.hpp"
+#include "frame-data.hpp"
+
+using namespace ndnrtc;
 using namespace webrtc;
-using namespace boost;
 
 //******************************************************************************
 #pragma mark - public
-int AudioThread::init(const AudioThreadSettings& settings)
+AudioThread::AudioThread(const AudioThreadParams& params,
+    const AudioCaptureParams& captureParams,
+    IAudioThreadCallback* callback,
+    size_t bundleWireLength):
+bundleNo_(0),
+rateMeter_(boost::make_shared<estimators::TimeWindow>(250)),
+threadName_(params.threadName_),
+codec_(params.codec_),
+callback_(callback),
+bundle_(boost::make_shared<AudioBundlePacket>(bundleWireLength)),
+capturer_(captureParams.deviceId_, this, 
+    (params.codec_ == "opus" ? WebrtcAudioChannel::Codec::Opus : WebrtcAudioChannel::Codec::G722)),
+isRunning_(false)
 {
-    settings_ = new AudioThreadSettings();
-    *settings_ = settings;
-    
-    int res = MediaThread::init(settings);
-    
-    if (RESULT_FAIL(res))
-        return res;
-    
-    rtpPacketPrefix_ = Name(threadPrefix_);
-    rtpPacketPrefix_.append(Name(NameComponents::NameComponentStreamFramesDelta));
-    rtcpPacketPrefix_ = rtpPacketPrefix_;
-    
-    return res;
+    description_ = "athread";
 }
 
-void AudioThread::onDeliverRtpFrame(unsigned int len, unsigned char *data)
+AudioThread::~AudioThread()
 {
-    processAudioPacket({false, len, data});
+    if (isRunning_) stop();
 }
 
-void AudioThread::onDeliverRtcpFrame(unsigned int len, unsigned char *data)
+void AudioThread::start()
 {
-    processAudioPacket({true, len, data});
+    if (isRunning_) throw std::runtime_error("Audio thread already started");
+    isRunning_ = true;
+    bundleNo_ = 0;
+    capturer_.startCapture();
+
+    LogDebugC << "started" << std::endl;
 }
 
-int AudioThread::processAudioPacket(NdnAudioData::AudioPacket packet)
+void AudioThread::stop()
 {
-    if ((adata_.getLength() + packet.getLength()) > segSizeNoHeader_)
+    if (isRunning_) 
     {
-        // update packet rate meter
-        NdnRtcUtils::frequencyMeterTick(packetRateMeter_);
-        
-        int nseg = publishPacket((PacketData&)adata_);
-        packetNo_++;
-        adata_.clear();
+        isRunning_ = false;
+        capturer_.stopCapture();
+        LogDebugC << "stopped" << std::endl;
     }
-    
-    adata_.addPacket(packet);
-    return 0;
 }
 
-int AudioThread::publishPacket(PacketData &packetData,
-                               PrefixMetaInfo prefixMeta)
+double AudioThread::getRate() const
 {
-    Name packetPrefix(rtpPacketPrefix_);
-    packetPrefix.append(NdnRtcUtils::componentFromInt(packetNo_));
-    NdnRtcNamespace::appendDataKind(packetPrefix, false);
-    
-    prefixMeta.totalSegmentsNum_ = Segmentizer::getSegmentsNum(packetData.getLength(),
-                                                               segSizeNoHeader_);
-    // no fec for audio
-    prefixMeta.paritySegmentsNum_ = 0;
-    prefixMeta.playbackNo_ = packetNo_;
-    
-    return MediaThread::publishPacket(packetData, packetPrefix, packetNo_,
-                                      prefixMeta, NdnRtcUtils::unixTimestamp());
+    return rateMeter_.value();
+}
+
+void AudioThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+{
+    ILoggingObject::setLogger(logger);
+    capturer_.setLogger(logger);
+}
+
+//******************************************************************************
+void AudioThread::onDeliverRtpFrame(unsigned int len, uint8_t* data)
+{   
+    if (isRunning_)
+    {
+        LogTraceC << "delivering rtp frame" << std::endl;
+        std::vector<uint8_t> adata(data, data+len);
+        AudioBundlePacket::AudioSampleBlob blob({false}, adata.begin(), adata.end());
+        deliver(blob);
+    }
+}
+
+void AudioThread::onDeliverRtcpFrame(unsigned int len, uint8_t* data)
+{
+    if (isRunning_)
+    {
+        LogTraceC << "delivering rtcp frame" << std::endl;
+        std::vector<uint8_t> adata(data, data+len);
+        AudioBundlePacket::AudioSampleBlob blob({true}, adata.begin(), adata.end());
+        deliver(blob);
+    }
+}
+
+void AudioThread::deliver(const AudioBundlePacket::AudioSampleBlob& blob)
+{
+    if (!bundle_->hasSpace(blob))
+    {
+        rateMeter_.newValue(0);
+        callback_->onSampleBundle(threadName_, bundleNo_++, bundle_);
+        bundle_->clear();
+    }
+
+    *bundle_ << blob;
 }
