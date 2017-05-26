@@ -128,7 +128,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 					publishStart = hdr.publishTimestampMs_;
 				lastPublishTime = hdr.publishTimestampMs_;
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? nPublishedDelta : nPublishedKey);
 				int& seq = (isKey ? nPublishedKey : nPublishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -261,12 +261,12 @@ TEST(TestPlayout, TestPlayout100msDelay)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(runTimeMs));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
 	done = true;
 	source.stop();
 	queue.reset();
 
-	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
 	playout.stop();
 
 	work.reset();
@@ -404,7 +404,7 @@ TEST(TestPlayout, TestSkipDelta)
 					publishStart = hdr.publishTimestampMs_;
 				lastPublishTime = hdr.publishTimestampMs_;
 
-				bool isKey = vp->getFrame()._frameType == webrtc::kKeyFrame;
+				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
 				int paired = (isKey ? nPublishedDelta : nPublishedKey);
 				int& seq = (isKey ? nPublishedKey : nPublishedDelta);
 				std::vector<ndnrtc::VideoFrameSegment> segments = sliceFrame(*vp, nPublished++, paired);
@@ -574,12 +574,12 @@ TEST(TestPlayout, TestSkipDelta)
 
 	source.start(captureFps);
 
-	boost::this_thread::sleep_for(Msec(runTimeMs));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(runTimeMs));
 	done = true;
 	source.stop();
 	queue.reset();
 
-	boost::this_thread::sleep_for(Msec(oneWayDelay*2+4*deviation));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(oneWayDelay*2+4*deviation));
 	playout.stop();
 	work.reset();
 	t.join();
