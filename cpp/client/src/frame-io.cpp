@@ -62,6 +62,7 @@ void FileFrameStorage::closeFile()
 IFrameSink& FileSink::operator<<(const RawFrame& frame)
 {
 	fwrite(frame.getBuffer().get(), sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
+    return *this;
 }
 
 FILE* FileSink::openFile_impl(string path)
@@ -92,6 +93,7 @@ IFrameSource& FileFrameSource::operator>>(RawFrame& frame) noexcept
     //         << " ftell " << ftell(file_);
     //     throw runtime_error(msg.str());
     // }
+    return *this;
 }
 
 bool FileFrameSource::checkSourceForFrame(const std::string& path, 

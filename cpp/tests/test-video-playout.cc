@@ -293,7 +293,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 			LogDebug("") << buffer->dump() << std::endl;
 #endif
 
-	EXPECT_GT(pipeline*samplePeriod, abs(playbackDuration-publishDuration));
+	EXPECT_GT(pipeline*samplePeriod, std::abs(playbackDuration-publishDuration));
 	EXPECT_FALSE(source.isRunning());
 	EXPECT_EQ(0, pqueue->size());
 	EXPECT_LT(0, buffer->getSlotsNum(Name(streamPrefix), 
@@ -301,8 +301,8 @@ TEST(TestPlayout, TestPlayout100msDelay)
 	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Assembling));
 	EXPECT_EQ(0, buffer->getSlotsNum(Name(streamPrefix), BufferSlot::Ready));
 	
-	EXPECT_GT(1, abs(avgPlayPeriod-avgPublishPeriod)); 	// ~1ms error
-	EXPECT_GT(0.1, abs(avgPlayRate-avgPublishRate));	// ~0.1 error
+	EXPECT_GT(1, std::abs(avgPlayPeriod-avgPublishPeriod)); 	// ~1ms error
+	EXPECT_GT(0.1, std::abs(avgPlayRate-avgPublishRate));	// ~0.1 error
 	
 	ASSERT_FALSE(playout.isRunning());
 
@@ -605,7 +605,7 @@ TEST(TestPlayout, TestSkipDelta)
 			LogDebug("") << buffer->dump() << std::endl;
 #endif
 
-	EXPECT_GT(pipeline*samplePeriod, abs(playbackDuration-publishDuration));
+	EXPECT_GT(pipeline*samplePeriod, std::abs(playbackDuration-publishDuration));
 	EXPECT_FALSE(source.isRunning());
 	ASSERT_FALSE(playout.isRunning());
 

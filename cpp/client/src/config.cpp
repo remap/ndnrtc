@@ -176,6 +176,7 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
         std::cout << "check " << e.getPath() << std::endl;
         LogError("") << "Setting not found at path: " << e.getPath() << std::endl;
     }
+    return EXIT_SUCCESS;
 }
 
 int loadProducerSettings(const Setting& root, ProducerClientParams& params, const std::string& identity)
@@ -207,6 +208,7 @@ int loadProducerSettings(const Setting& root, ProducerClientParams& params, cons
         LogError("") << "Error when loading stream settings!" << std::endl;
         return(EXIT_FAILURE);
     }
+    return EXIT_SUCCESS;
 }
 
 int loadConfigFile(const string &cfgFileName, Config &cfg){
