@@ -146,6 +146,8 @@ TEST(TestLoop, TestVideo)
                                   [](const boost::shared_ptr<const Name>&){
                                       ASSERT_FALSE(true);
                                   });
+    // making sure that prefix registration gets through
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(2000));
 
     boost::atomic<bool> done(false);
     boost::asio::deadline_timer statTimer(io);
@@ -167,7 +169,7 @@ TEST(TestLoop, TestVideo)
       LocalVideoStream localStream(appPrefix, settings);
       
 #ifdef ENABLE_LOGGING
-      // localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+      localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
       
       boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -204,7 +206,7 @@ TEST(TestLoop, TestVideo)
 #endif
       
       int waitThreads = 0;
-      while (rs.getThreads().size() == 0 && waitThreads++ < 3)
+      while (rs.getThreads().size() == 0 && waitThreads++ < 5)
           boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
       ASSERT_LT(0, rs.getThreads().size());
       
@@ -281,7 +283,9 @@ TEST(TestLoop, TestAudio)
                                   [](const boost::shared_ptr<const Name>&){
                                       ASSERT_FALSE(true);
                                   });
-    
+    // making sure that prefix registration gets through
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(2000));
+
     boost::atomic<bool> done(false);
     boost::asio::deadline_timer statTimer(io);
     boost::function<void(const boost::system::error_code&)> queryStat;
