@@ -101,6 +101,7 @@ namespace ndnrtc {
 		virtual void initiateFetching();
 		virtual void stopFetching();
 		void addValidationInfo(const std::vector<ValidationErrorInfo>&);
+		void notifyObservers(RemoteStream::Event ev);
 	};
 }
 

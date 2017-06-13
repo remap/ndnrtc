@@ -29,6 +29,7 @@ MediaStreamBase::MediaStreamBase(const std::string& basePrefix,
 	const MediaStreamSettings& settings):
 Periodic(settings.faceIo_),
 metaVersion_(1),
+basePrefix_(basePrefix),
 settings_(settings),
 streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
 cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_)),

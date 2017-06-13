@@ -55,6 +55,7 @@ RemoteAudioStreamImpl::initiateFetching()
     
     setupPlayout();
     setupPipelineControl();
+    pipelineControl_->start();
 }
 
 void
@@ -109,7 +110,6 @@ RemoteAudioStreamImpl::setupPipelineControl()
     pipelineControl_->setLogger(logger_);
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
-    pipelineControl_->start();
 }
 
 void

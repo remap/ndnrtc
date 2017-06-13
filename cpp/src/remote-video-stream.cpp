@@ -71,6 +71,7 @@ RemoteVideoStreamImpl::initiateFetching()
 
     setupDecoder();
     setupPipelineControl();
+    pipelineControl_->start();
 }
 
 void
@@ -145,7 +146,6 @@ RemoteVideoStreamImpl::setupPipelineControl()
     pipelineControl_->setLogger(logger_);
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
-    pipelineControl_->start();
 }
 
 void
