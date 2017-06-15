@@ -112,7 +112,7 @@ SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service& faceIo,
     const boost::shared_ptr<StatisticsStorage>& storage):
 Periodic(faceIo),
 maxIdleTimeMs_(maxIdleTimeMs),
-lastDataTimestampMs_(clock::millisecondTimestamp()),
+lastDataTimestampMs_(0),
 starvationFired_(false),
 active_(false),
 sstorage_(storage)
@@ -137,8 +137,11 @@ SegmentControllerImpl::setIsActive(bool active)
     if (!active_)
         cancelInvocation();
     else
+    {
+        lastDataTimestampMs_ = clock::millisecondTimestamp();
         setupInvocation(maxIdleTimeMs_,
                         boost::bind(&SegmentControllerImpl::periodicInvocation, this));
+    }
 }
 
 OnData SegmentControllerImpl::getOnDataCallback()
