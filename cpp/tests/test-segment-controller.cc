@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
+#include <ndn-cpp/network-nack.hpp>
 
 #include "gtest/gtest.h"
 #include "segment-controller.hpp"
@@ -175,6 +176,46 @@ TEST(TestSegmentController, TestOnTimeout)
 	controller.detach(&o);
     
     EXPECT_EQ(1, (*sstorage)[Indicator::TimeoutsNum]);
+}
+
+TEST(TestSegmentController, TestOnNack)
+{
+    boost::shared_ptr<StatisticsStorage> sstorage(StatisticsStorage::createConsumerStatistics());
+	boost::asio::io_service io;
+	SegmentController controller(io, 500, sstorage);
+    controller.setIsActive(true);
+
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+	controller.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+	OnData onData = controller.getOnDataCallback();
+	OnNetworkNack onNack = controller.getOnNetworkNackCallback();
+
+	std::string segmentPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00";
+	boost::shared_ptr<Interest> i = boost::make_shared<Interest>(Name(segmentPrefix));
+	boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(segmentPrefix));
+	boost::shared_ptr<NetworkNack> nack = boost::make_shared<NetworkNack>();
+
+	MockSegmentControllerObserver o;
+	controller.attach(&o);
+
+	boost::function<void(const NamespaceInfo&, int reason)> checkNack = [i]
+		(const NamespaceInfo& info, int reason)
+		{
+			EXPECT_EQ(info.getPrefix(), i->getName());
+		};
+
+	EXPECT_CALL(o, segmentNack(_,ndn_NetworkNackReason_NONE))
+		.Times(1)
+		.WillOnce(Invoke(checkNack));
+
+	onNack(i, nack);
+	controller.detach(&o);
+    
+    EXPECT_EQ(1, (*sstorage)[Indicator::NacksNum]);
 }
 
 TEST(TestSegmentController, TestStarvation)

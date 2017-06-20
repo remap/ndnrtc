@@ -34,6 +34,7 @@ namespace ndnrtc {
         
         ndn::OnData getOnDataCallback();
         ndn::OnTimeout getOnTimeoutCallback();
+        ndn::OnNetworkNack getOnNetworkNackCallback();
         
         void attach(ISegmentControllerObserver* o);
         void detach(ISegmentControllerObserver* o);
@@ -52,6 +53,8 @@ namespace ndnrtc {
         void onData(const boost::shared_ptr<const ndn::Interest>&,
                     const boost::shared_ptr<ndn::Data>&);
         void onTimeout(const boost::shared_ptr<const ndn::Interest>&);
+        void onNetworkNack(const boost::shared_ptr<const ndn::Interest>& interest,
+                            const boost::shared_ptr<ndn::NetworkNack>& networkNack);
     };
 }
 
@@ -89,6 +92,11 @@ ndn::OnData SegmentController::getOnDataCallback()
 ndn::OnTimeout SegmentController::getOnTimeoutCallback()
 {
     return pimpl_->getOnTimeoutCallback();
+}
+
+ndn::OnNetworkNack SegmentController::getOnNetworkNackCallback()
+{
+    return pimpl_->getOnNetworkNackCallback();    
 }
 
 void SegmentController::attach(ISegmentControllerObserver* o)
@@ -154,6 +162,12 @@ OnTimeout SegmentControllerImpl::getOnTimeoutCallback()
 {
     boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
 	return boost::bind(&SegmentControllerImpl::onTimeout, me, _1);
+}
+
+OnNetworkNack SegmentControllerImpl::getOnNetworkNackCallback()
+{
+    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+    return boost::bind(&SegmentControllerImpl::onNetworkNack, me, _1, _2);       
 }
 
 void SegmentControllerImpl::attach(ISegmentControllerObserver* o)
@@ -258,4 +272,34 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& i
 	}
 	else
 		LogWarnC << "received timeout for badly named Interest " << interest->getName() << std::endl;
+}
+
+void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest>& interest,
+                            const boost::shared_ptr<NetworkNack>& networkNack)
+{
+    if (!active_)
+    {
+        LogWarnC << "network nack (reason: " << networkNack->getReason() 
+            << ", other: " << networkNack->getOtherReasonCode() 
+            << ") in inactive state " << interest->getName() << std::endl;
+        return;
+    }
+
+    NamespaceInfo info;
+
+    if (NameComponents::extractInfo(interest->getName(), info))
+    {
+        LogTraceC << "received nack for " << interest->getName() << std::endl;
+        
+        {
+            boost::lock_guard<boost::mutex> scopedLock(mutex_);
+            int reason = (networkNack->getReason() == ndn_NetworkNackReason_OTHER_CODE ? networkNack->getOtherReasonCode() : networkNack->getReason());
+
+            for (auto& o:observers_) o->segmentNack(info, reason);
+        }
+
+        (*sstorage_)[Indicator::NacksNum]++;
+    }
+    else
+        LogWarnC << "received nack for badly named Interest " << interest->getName() << std::endl;
 }
