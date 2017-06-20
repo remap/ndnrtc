@@ -23,6 +23,7 @@ namespace ndn {
     class Interest;
     class Face;
     class Data;
+    class NetworkNack;
 }
 
 namespace ndnrtc {
@@ -32,6 +33,8 @@ namespace ndnrtc {
                                     const boost::shared_ptr<ndn::Data>&)> OnData;
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)> 
             OnTimeout;
+    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>& interest,
+        const boost::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
 
     class IInterestQueueObserver {
     public:
@@ -44,7 +47,8 @@ namespace ndnrtc {
         enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
                         boost::shared_ptr<DeadlinePriority> priority,
                         OnData onData,
-                        OnTimeout onTimeout) = 0;
+                        OnTimeout onTimeout,
+                        OnNetworkNack onNetworkNack) = 0;
         virtual void reset() = 0;
     };
 
@@ -80,7 +84,8 @@ namespace ndnrtc {
         enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
                         boost::shared_ptr<DeadlinePriority> priority,
                         OnData onData,
-                        OnTimeout onTimeout);
+                        OnTimeout onTimeout,
+                        OnNetworkNack = OnNetworkNack());
         
         /**
          * Flushes current interest queue
@@ -112,7 +117,8 @@ namespace ndnrtc {
             QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
                        const boost::shared_ptr<IPriority>& priority,
                        OnData onData,
-                       OnTimeout onTimeout);
+                       OnTimeout onTimeout,
+                       OnNetworkNack onNetworkNack);
 
             int64_t
             getValue() const { return priority_->getValue(); }
@@ -133,6 +139,7 @@ namespace ndnrtc {
             boost::shared_ptr<IPriority> priority_;
             OnData onDataCallback_;
             OnTimeout onTimeoutCallback_;
+            OnNetworkNack onNetworkNack_;
         };
         
         typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, 

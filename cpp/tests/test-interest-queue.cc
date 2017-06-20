@@ -53,7 +53,7 @@ TEST(TestInterestQueue, TestDefault)
                                     const boost::shared_ptr<ndn::Data>&){
 		ASSERT_FALSE(true);
 	};
-
+	
 	int nTimeouts = 0;
 	OnTimeout onTimeout = [&nTimeouts](const boost::shared_ptr<const ndn::Interest>& i){
 		nTimeouts++;
@@ -79,6 +79,71 @@ TEST(TestInterestQueue, TestDefault)
 	t.join();
 
 	EXPECT_EQ(n, nTimeouts);
+}
+
+TEST(TestInterestQueue, TestNacks)
+{
+	ASSERT_TRUE(checkNfd()) << "Apparently, local NFD is not running. Aborting test.";
+
+#ifdef ENABLE_LOGGING
+	ndnlog::new_api::Logger::initAsyncLogging();
+	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+	boost::asio::io_service io;
+	boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+	boost::thread t([&io](){
+		io.run();
+	});
+	
+	boost::shared_ptr<ndn::ThreadsafeFace> face(boost::make_shared<ndn::ThreadsafeFace>(io));
+	boost::shared_ptr<statistics::StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+
+	int n = 100;
+	MockInterestQueueObserver o;
+	InterestQueue iq(io, face, storage);
+	iq.registerObserver(&o);
+#ifdef ENABLE_LOGGING
+	iq.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+#endif
+
+	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
+                                    const boost::shared_ptr<ndn::Data>&){
+		ASSERT_FALSE(true);
+	};
+
+	int nNacks = 0;
+	OnNetworkNack onNack = [&nNacks](const boost::shared_ptr<const ndn::Interest>& interest,
+        const boost::shared_ptr<ndn::NetworkNack>& networkNack){
+		nNacks++;
+	};
+
+	int nTimeouts = 0;
+	OnTimeout onTimeout = [&nTimeouts](const boost::shared_ptr<const ndn::Interest>& i){
+		nTimeouts++;
+	};
+
+	EXPECT_CALL(o, onInterestIssued(_))
+		.Times(n);
+
+	for (int i = 0; i < n; ++i)
+	{
+		std::stringstream ss;
+		ss << "/nack/" << i;
+		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(ss.str(), 1000));
+		iq.enqueueInterest(interest, DeadlinePriority::fromNow(200), onData, onTimeout, onNack);
+	}
+
+	while (iq.size()) 
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+	boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+
+	work.reset();
+	io.stop();
+	t.join();
+
+	EXPECT_EQ(n, nNacks);
+	EXPECT_EQ(0, nTimeouts);
 }
 
 int main(int argc, char **argv) {

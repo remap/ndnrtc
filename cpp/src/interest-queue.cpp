@@ -25,11 +25,13 @@ using namespace ndnrtc::statistics;
 InterestQueue::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
                                       const boost::shared_ptr<IPriority>& priority,
                                       OnData onData,
-                                      OnTimeout onTimeout):
+                                      OnTimeout onTimeout,
+                                      OnNetworkNack onNetworkNack):
 interest_(interest),
 priority_(priority),
 onDataCallback_(onData),
-onTimeoutCallback_(onTimeout)
+onTimeoutCallback_(onTimeout),
+onNetworkNack_(onNetworkNack)
 {
 }
 
@@ -83,11 +85,12 @@ void
 InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest,
                                boost::shared_ptr<DeadlinePriority> priority,
                                OnData onData,
-                               OnTimeout onTimeout)
+                               OnTimeout onTimeout,
+                               OnNetworkNack onNetworkNack)
 {
     assert(interest.get());
 
-    QueueEntry entry(interest, priority, onData, onTimeout);
+    QueueEntry entry(interest, priority, onData, onTimeout, onNetworkNack);
     priority->setEnqueueTimestamp(clock::millisecondTimestamp());
     
     {
@@ -149,7 +152,8 @@ InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
     << queue_.size()
     << std::endl;
 
-    face_->expressInterest(*(entry.interest_), entry.onDataCallback_, entry.onTimeoutCallback_);
+    face_->expressInterest(*(entry.interest_), entry.onDataCallback_, 
+        entry.onTimeoutCallback_, entry.onNetworkNack_);
     
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
     (*statStorage_)[Indicator::InterestsSentNum]++;
