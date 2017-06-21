@@ -82,6 +82,8 @@ namespace ndnrtc {
 		{ return str(); }
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 		{ return str(); }
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev)
+		{ return str(); }
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev)
 		{ return str(); }
 	};
@@ -130,7 +132,9 @@ namespace ndnrtc {
         
 	protected:
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
+		virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation>& ev);
 
 		virtual void askRightmost();
 		virtual void receivedRightmost(const boost::shared_ptr<const EventSegment>& es);
@@ -176,6 +180,7 @@ namespace ndnrtc {
 		unsigned int nTimeouts_;
 
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 	};
 
@@ -486,6 +491,20 @@ WaitForRightmost::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 	return str();
 }
 
+std::string 
+WaitForRightmost::onNack(const boost::shared_ptr<const EventNack>& ev)
+{
+	//askRightmost(); // really?
+	return str();
+}
+
+std::string
+WaitForRightmost::onStarvation(const boost::shared_ptr<const EventStarvation>& ev)
+{
+	// askRightmost(); // maybe?
+	return str();
+}
+
 void 
 WaitForRightmost::askRightmost()
 {
@@ -526,6 +545,12 @@ WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 
 	ctrl_->pipeliner_->setNeedSample(ev->getInfo().class_);
 	ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
+	return str();
+}
+
+std::string
+WaitForInitial::onNack(const boost::shared_ptr<const EventNack>& ev)
+{
 	return str();
 }
 

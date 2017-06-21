@@ -96,6 +96,12 @@ PipelineControl::segmentRequestTimeout(const NamespaceInfo& n)
 }
 
 void 
+PipelineControl::segmentNack(const NamespaceInfo& n, int reason)
+{
+	machine_.dispatch(boost::make_shared<EventNack>(n, reason));
+}
+
+void 
 PipelineControl::segmentStarvation()
 {
 	machine_.dispatch(boost::make_shared<EventStarvation>(500));

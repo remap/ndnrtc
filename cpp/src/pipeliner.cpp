@@ -163,7 +163,8 @@ Pipeliner::request(const boost::shared_ptr<const ndn::Interest>& interest,
 {
     interestQueue_->enqueueInterest(interest,  priority,
         segmentController_->getOnDataCallback(),
-        segmentController_->getOnTimeoutCallback());
+        segmentController_->getOnTimeoutCallback(),
+        segmentController_->getOnNetworkNackCallback());
 }
 
 std::vector<boost::shared_ptr<const Interest>>

@@ -395,7 +395,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
@@ -429,7 +429,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	EXPECT_CALL(*pp, setNeedRightmost())

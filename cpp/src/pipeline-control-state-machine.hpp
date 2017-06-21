@@ -48,7 +48,8 @@ namespace ndnrtc {
 			Reset,
 			Starvation,
 			Segment,
-			Timeout
+			Timeout,
+			Nack
 		} Type;
 
 		PipelineControlEvent(Type e):e_(e){}
@@ -77,6 +78,17 @@ namespace ndnrtc {
 		const NamespaceInfo& getInfo() const { return info_; }
 	private:
 		NamespaceInfo info_;
+	};
+
+	class EventNack : public PipelineControlEvent {
+	public:
+		EventNack(const NamespaceInfo& info, int reason):
+			PipelineControlEvent(PipelineControlEvent::Nack), info_(info), reason_(reason){}
+		const NamespaceInfo& getInfo() const { return info_; }
+		int getReason() const { return reason_; }
+	private:
+		NamespaceInfo info_;
+		int reason_;
 	};
 
 	class EventStarvation : public PipelineControlEvent {

@@ -37,6 +37,7 @@ namespace ndnrtc {
 		virtual unsigned int getMaxIdleTime() const = 0;
 		virtual ndn::OnData getOnDataCallback() = 0;
 		virtual ndn::OnTimeout getOnTimeoutCallback() = 0;
+		virtual ndn::OnNetworkNack getOnNetworkNackCallback() = 0;
 		virtual void attach(ISegmentControllerObserver*) = 0;
 		virtual void detach(ISegmentControllerObserver*) = 0;
 	};

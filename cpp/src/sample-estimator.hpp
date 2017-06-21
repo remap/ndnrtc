@@ -1,3 +1,4 @@
+
 // 
 // sample-estimator.hpp
 //
@@ -77,6 +78,7 @@ namespace ndnrtc {
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void segmentRequestTimeout(const NamespaceInfo&){}
+        void segmentNack(const NamespaceInfo&, int){}
 		void segmentStarvation(){}
 	};
 }
