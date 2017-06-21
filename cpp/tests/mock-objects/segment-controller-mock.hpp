@@ -20,6 +20,7 @@ public:
 	MOCK_CONST_METHOD0(getMaxIdleTime, unsigned int());
 	MOCK_METHOD0(getOnDataCallback, ndn::OnData());
 	MOCK_METHOD0(getOnTimeoutCallback, ndn::OnTimeout());
+	MOCK_METHOD0(getOnNetworkNackCallback, ndn::OnNetworkNack());
 	MOCK_METHOD1(attach, void(ndnrtc::ISegmentControllerObserver*));
 	MOCK_METHOD1(detach, void(ndnrtc::ISegmentControllerObserver*));
 };

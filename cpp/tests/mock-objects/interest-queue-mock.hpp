@@ -15,9 +15,9 @@
 
 class MockInterestQueue : public ndnrtc::IInterestQueue {
 public:
-	MOCK_METHOD4(enqueueInterest, void(const boost::shared_ptr<const ndn::Interest>&,
+	MOCK_METHOD5(enqueueInterest, void(const boost::shared_ptr<const ndn::Interest>&,
                         boost::shared_ptr<ndnrtc::DeadlinePriority>, ndnrtc::OnData, 
-                        ndnrtc::OnTimeout));
+                        ndnrtc::OnTimeout, ndnrtc::OnNetworkNack));
 	MOCK_METHOD0(reset, void(void));
 };
 
