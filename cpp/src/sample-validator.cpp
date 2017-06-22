@@ -94,7 +94,7 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 					LogDebugC << "received manifest for "
 						<< slot->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
 
-					if (slot->getState() >= BufferSlot::State::Assembling)
+					if (slot->getState() >= BufferSlot::State::New)
 					{
 						slot->manifest_ = boost::make_shared<Manifest>(boost::move(nd));
 						if (slot->getState() >= BufferSlot::State::Ready)

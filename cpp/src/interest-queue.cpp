@@ -143,7 +143,6 @@ void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
     LogTraceC
-    << &entry
     << " express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
