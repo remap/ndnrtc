@@ -6,6 +6,7 @@
 //
 
 #include <stdlib.h>
+#include <bitset>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
@@ -29,7 +30,7 @@ TEST(TestInterestQueue, TestDefault)
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
 	boost::asio::io_service io;
@@ -41,12 +42,12 @@ TEST(TestInterestQueue, TestDefault)
 	boost::shared_ptr<ndn::ThreadsafeFace> face(boost::make_shared<ndn::ThreadsafeFace>(io));
 	boost::shared_ptr<statistics::StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
-	int n = 100;
+	int n = 10, nSegments = 10;
 	MockInterestQueueObserver o;
 	InterestQueue iq(io, face, storage);
 	iq.registerObserver(&o);
 #ifdef ENABLE_LOGGING
-	iq.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	iq.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
@@ -55,19 +56,30 @@ TEST(TestInterestQueue, TestDefault)
 	};
 	
 	int nTimeouts = 0;
-	OnTimeout onTimeout = [&nTimeouts](const boost::shared_ptr<const ndn::Interest>& i){
+	int lastSeqNo = 0, lastSegNo = -1;
+	OnTimeout onTimeout = [&nTimeouts, &lastSeqNo, &lastSegNo, nSegments](const boost::shared_ptr<const ndn::Interest>& i){
 		nTimeouts++;
 	};
 
+	std::bitset<100> iBitSet(0);
 	EXPECT_CALL(o, onInterestIssued(_))
-		.Times(n);
+		.Times(n*nSegments)
+		.WillRepeatedly(Invoke([&iBitSet](const boost::shared_ptr<const ndn::Interest>& i){
+			int bitNo = i->getName()[-2].toSequenceNumber()*10+i->getName()[-1].toSegment();
+			
+			EXPECT_FALSE(iBitSet[bitNo]);
+			iBitSet[bitNo] = 1;
+		}));
 
 	for (int i = 0; i < n; ++i)
 	{
-		std::stringstream ss;
-		ss << "/timeout/" << i;
-		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(ss.str(), 1000));
-		iq.enqueueInterest(interest, DeadlinePriority::fromNow(200), onData, onTimeout);
+		Name n("/timeout");
+
+		for (int j = 0; j < nSegments; ++j)
+		{
+			boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name("/timeout").appendSequenceNumber(i).appendSegment(j), 1000));
+			iq.enqueueInterest(interest, DeadlinePriority::fromNow(200), onData, onTimeout);
+		}
 	}
 
 	while (iq.size()) 
@@ -78,7 +90,7 @@ TEST(TestInterestQueue, TestDefault)
 	io.stop();
 	t.join();
 
-	EXPECT_EQ(n, nTimeouts);
+	EXPECT_EQ(n*nSegments, nTimeouts);
 }
 
 TEST(TestInterestQueue, TestNacks)
@@ -87,7 +99,7 @@ TEST(TestInterestQueue, TestNacks)
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
 	boost::asio::io_service io;
@@ -104,7 +116,7 @@ TEST(TestInterestQueue, TestNacks)
 	InterestQueue iq(io, face, storage);
 	iq.registerObserver(&o);
 #ifdef ENABLE_LOGGING
-	iq.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	iq.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,

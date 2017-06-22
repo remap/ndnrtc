@@ -67,7 +67,7 @@ StatObject(statStorage),
 faceIo_(io),
 face_(face),
 queue_(PriorityQueue(QueueEntry::Comparator(true))),
-isWatchingQueue_(false),
+isDrainingQueue_(false),
 observer_(nullptr)
 {
     description_ = "iqueue";
@@ -97,11 +97,11 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
         boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
         queue_.push(entry);
     
-        if (!isWatchingQueue_)
+        if (!isDrainingQueue_)
         {
-            isWatchingQueue_ = true;
+            isDrainingQueue_ = true;
             async::dispatchAsync(faceIo_,
-                boost::bind(&InterestQueue::watchQueue, this));
+                boost::bind(&InterestQueue::drainQueue, this));
         }
     }
     
@@ -110,9 +110,8 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
     << entry.getValue() << "\tlifetime: "
-    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
-    << queue_.size()
-    << std::endl;
+    << entry.interest_->getInterestLifetimeMilliseconds()
+    << "\tqsize: " << queue_.size() << std::endl;
 }
 
 void
@@ -129,14 +128,14 @@ InterestQueue::reset()
 //******************************************************************************
 #pragma mark - private
 void 
-InterestQueue::watchQueue()
+InterestQueue::drainQueue()
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-    while (isWatchingQueue_)
+    while (isDrainingQueue_)
     {
         processEntry(queue_.top());
         queue_.pop();
-        isWatchingQueue_ = (queue_.size() > 0);
+        isDrainingQueue_ = (queue_.size() > 0);
     }
 }
 
@@ -144,7 +143,8 @@ void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
     LogTraceC
-    << "express\t" << entry.interest_->getName()
+    << &entry
+    << " express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
     << entry.getValue() << "\tlifetime: "

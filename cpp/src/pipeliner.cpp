@@ -78,7 +78,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         
         LogDebugC << "request sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
-            << " " << SAMPLE_SUFFIX(n) << std::endl;
+            << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
     }
 
     lastRequestedSample_ = nextSamplePriority_;

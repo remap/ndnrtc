@@ -125,10 +125,11 @@ namespace ndnrtc {
             
             QueueEntry& operator=(const QueueEntry& entry)
             {
-                interest_ = interest_;
+                interest_ = entry.interest_; // we just copy the pointer, since it's a pointer to a const
                 priority_  = entry.priority_;
                 onDataCallback_ = entry.onDataCallback_;
                 onTimeoutCallback_ = entry.onTimeoutCallback_;
+                onNetworkNack_ = entry.onNetworkNack_;
                 return *this;
             }
 
@@ -150,9 +151,9 @@ namespace ndnrtc {
         boost::recursive_mutex queueAccess_;
         PriorityQueue queue_;
         IInterestQueueObserver *observer_;
-        bool isWatchingQueue_;
+        bool isDrainingQueue_;
         
-        void watchQueue();
+        void drainQueue();
         void stopQueueWatching();
         void processEntry(const QueueEntry &entry);
     };
