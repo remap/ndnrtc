@@ -153,6 +153,7 @@ namespace ndnrtc {
         IInterestQueueObserver *observer_;
         bool isDrainingQueue_;
         
+        void safeDrain();
         void drainQueue();
         void stopQueueWatching();
         void processEntry(const QueueEntry &entry);

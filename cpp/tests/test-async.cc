@@ -111,41 +111,41 @@ TEST(TestAsync, TestDispatchSync)
 	t.join();
 }
 
-// TEST(TestAsync, TestDispatchSync2)
-// {
-// 	boost::asio::io_service io;
-// 	int dispValue = 0;
-// 	boost::function<void(void)> disp = [&dispValue](){
-// 		boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
-// 		dispValue = 1;
-// 	};
-// 	int compValue = 0;
-// 	boost::function<void(void)> comp = [&compValue](){
-// 		boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
-// 		compValue = 1;
-// 	};
+TEST(TestAsync, TestDispatchSyncReEntrant)
+{
+	boost::asio::io_service io;
+	int dispValue = 0;
+	boost::function<void(void)> disp = [&dispValue](){
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+		dispValue = 1;
+	};
+	int compValue = 0;
+	boost::function<void(void)> comp = [&compValue](){
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+		compValue = 1;
+	};
 
-// 	boost::thread t([&io](){
-// 		int n = 0;
-// 		while (n < 500) 
-// 		{
-// 			io.run();
-// 			boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-// 			n+=10;
-// 		}
-// 	});
+	boost::thread t([&io](){
+		int n = 0;
+		while (n < 500) 
+		{
+			io.run();
+			boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+			n+=10;
+		}
+	});
 
-// 	boost::function<void(void)> callAsyncAgain = [&io, &comp, &disp](){
-// 		ndnrtc::async::dispatchSync(io, comp, disp);
-// 	};
+	boost::function<void(void)> callAsyncAgain = [&io, &comp, &disp](){
+		ndnrtc::async::dispatchSync(io, comp, disp);
+	};
 
-// 	ndnrtc::async::dispatchSync(io, callAsyncAgain);
+	ndnrtc::async::dispatchSync(io, callAsyncAgain);
+
+	EXPECT_EQ(1, dispValue);
+	EXPECT_EQ(1, compValue);
 	
-// 	EXPECT_NE(0, dispValue);
-// 	EXPECT_NE(0, compValue);
-	
-// 	t.join();
-// }
+	t.join();
+}
 
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

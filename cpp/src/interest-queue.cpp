@@ -100,11 +100,17 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
         if (!isDrainingQueue_)
         {
             isDrainingQueue_ = true;
-            async::dispatchAsync(faceIo_,
-                boost::bind(&InterestQueue::drainQueue, this));
+            async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
         }
+        else 
+          if (queue_.size() > 20)
+            // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
+            drainQueue();   // this is a hack and it will break everything if enqueueInterest
+                            // is called from other than faceIo_ thread. however, the code 
+                            // above locks and I don't know how to avoid growing queues in 
+                            // io_service other than draining them forcibly
     }
-    
+
     LogTraceC
     << "enqueue\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
@@ -127,15 +133,31 @@ InterestQueue::reset()
 
 //******************************************************************************
 #pragma mark - private
+void
+InterestQueue::safeDrain()
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+    drainQueue();    
+}
+
 void 
 InterestQueue::drainQueue()
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-    while (isDrainingQueue_)
+    // boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+    isDrainingQueue_ = (queue_.size() > 0);
+
+    if (isDrainingQueue_)
     {
-        processEntry(queue_.top());
-        queue_.pop();
-        isDrainingQueue_ = (queue_.size() > 0);
+        LogDebugC 
+        << "draining queue, size "  << queue_.size() 
+        << ", top priority: " << queue_.top().getValue() << std::endl;
+        
+        while (isDrainingQueue_)
+        {
+            processEntry(queue_.top());
+            queue_.pop();
+            isDrainingQueue_ = (queue_.size() > 0);
+        }
     }
 }
 
