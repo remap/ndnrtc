@@ -43,7 +43,7 @@ SampleValidator::onNewData(const BufferReceipt& receipt)
             LogDebugC << "sample verified " << slot->dump() << std::endl;
             (*statStorage_)[Indicator::VerifySuccess]++;
 		},
-		(const OnDataValidationFailed)[me,this,slot](const boost::shared_ptr<ndn::Data>& data, const std::string& reason)
+		(const OnDataValidationFailed)([me,this,slot](const boost::shared_ptr<ndn::Data>& data, const std::string& reason)
 		{
 			// failure
 			if (slot->getState() >= BufferSlot::State::Assembling)
@@ -52,7 +52,7 @@ SampleValidator::onNewData(const BufferReceipt& receipt)
             LogDebugC << "sample verification failure "
                 << slot->getNameInfo().getSuffix(suffix_filter::Thread)  << std::endl;
             (*statStorage_)[Indicator::VerifyFailure]++;
-		});
+		}));
 }
 
 ManifestValidator::ManifestValidator(boost::shared_ptr<ndn::Face> face, 
