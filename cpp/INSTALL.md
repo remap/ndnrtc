@@ -143,13 +143,17 @@ $ make && make install
 ### WebRTC
 Here are detailed instructions on [how to build WebRTC](http://www.webrtc.org/native-code/development).
 
+> Since WebRTC binaries are scattered around in subfolders, one must perform an additional step of glueing them all together into one static library (libwebrtc-all.a). This can be done using this sequence of commands:
+
 <pre>
-$ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-$ export PATH=`pwd`/depot_tools:"$PATH"
-$ mkdir webrtc-checkout && cd webrtc-checkout
-$ fetch webrtc
-$ git checkout -b head44 refs/remotes/branch-heads/44
-$ ninja -C out/Release
+
+$ cd <webrtc-checkout>/src/out/Default
+$ echo "create libwebrtc-all.a" > libwebrtc-all.mri
+$ for lib in $(find . -name '*.a'; do echo "addlib $lib" >> libwebrtc-all.mri; done;
+$ echo "save" >> libwebrtc-all.mri && echo "end" >> libwebrtc-all.mri
+$ ar -M <libwebrtc-all.mri
+
+</pre>
 </pre>
 
 ### Boost
