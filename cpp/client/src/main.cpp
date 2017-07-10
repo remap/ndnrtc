@@ -92,7 +92,7 @@ int main(int argc, char **argv)
             "-i <instance name> -v <verbose mode>]" << std::endl;
         exit(1);
     }
-    
+
     Args args;
     args.runTimeSec_ = runTimeSec;
     args.logLevel_ = logLevel;
@@ -111,16 +111,25 @@ int run(const struct Args& args)
     ndnlog::new_api::Logger::initAsyncLogging();
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args.logLevel_);
 
+    LogInfo("") << "Starting headless client... Params:\n" 
+      << "\tlog level: " << args.logLevel_
+      << "\n\trun time: " << args.runTimeSec_
+      << "\n\tconfig file: " << args.configFile_
+      << "\n\tsigning identity: " << args.identity_
+      << "\n\tpolicy file: " << args.policy_
+      << "\n\tstatistics sampling: " << args.samplePeriod_
+      << "\n\tinstance name: " << args.instance_
+      << std::endl;
+
     boost::asio::io_service io;
     boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io](){ io.run(); });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+
     KeyChainManager keyChainManager(face, args.identity_, args.instance_,
                                     args.policy_, args.runTimeSec_);
-    
     face->setCommandSigningInfo(*(keyChainManager.defaultKeyChain()),
                                 keyChainManager.defaultKeyChain()->getDefaultCertificateName());
-    
     ClientParams params;
 
     LogInfo("") << "Run time is set to " << args.runTimeSec_ << " seconds, loading "
