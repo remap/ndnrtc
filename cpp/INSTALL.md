@@ -24,7 +24,7 @@ NDN-RTC depends on its prerequisites. Paths to these sources and/or libraries ca
 * **OPENFECSRC** - Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)
 * **OPENFECLIB** - Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)
 * **WEBRTCDIR** - Path to the directory which contains WebRTC trunk
-* **WEBRTCSRC** - Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/wbertc)
+* **WEBRTCSRC** - Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)
 * **WEBRTCLIB** - Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)
 * **LCONFIGDIR** - (Optional) path to the directory which contains libconfig library headers (default is /usr/local/include)
 * **LCONFIGLIB** - (Optional) path to the directory which contains libconfig library binaries (default is /usr/local/lib)
