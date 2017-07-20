@@ -154,7 +154,7 @@ namespace ndnrtc {
         void cleanPit(const ndn::Name& name)
         {
         	std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
-            settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
+            settings_.memoryCache_->getPendingInterestsWithPrefix(name, pendingInterests);
 
             if (pendingInterests.size())
             {
