@@ -89,6 +89,10 @@ namespace ndnrtc {
 			std::vector<SegmentType> segments = SegmentType::slice(data, settings_.segmentWireLength_);
 			LogTraceC << "sliced into " << segments.size() << " segments" << std::endl;
 
+			commonHeader.interestNonce_ = 0;
+            commonHeader.generationDelayMs_ = 0;
+            commonHeader.interestArrivalMs_ = 0;
+
 			unsigned int segIdx = 0;
 			for (auto segment:segments)
 			{
@@ -100,7 +104,7 @@ namespace ndnrtc {
                 
                 checkForPendingInterests(segmentName, commonHeader);
 				segment.setHeader(commonHeader);
-                
+
 				boost::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
 				boost::shared_ptr<ndn::Data> ndnSegment(boost::make_shared<ndn::Data>(segmentName));
 				ndnSegment->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
@@ -119,6 +123,8 @@ namespace ndnrtc {
 						<< ndnSegment->getDefaultWireEncoding().size() << "b wire)" << std::endl;
 			}
             
+			cleanPit(name);
+
             (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
 			return ndnSegments;
 		}
@@ -126,11 +132,7 @@ namespace ndnrtc {
 		Settings settings_;
         
         void checkForPendingInterests(const ndn::Name& name, _DataSegmentHeader& commonHeader)
-        {
-            commonHeader.interestNonce_ = 0;
-            commonHeader.generationDelayMs_ = 0;
-            commonHeader.interestArrivalMs_ = 0;
-            
+        {   
             std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
             settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
             
@@ -143,6 +145,32 @@ namespace ndnrtc {
                 (*settings_.statStorage_)[statistics::Indicator::InterestsReceivedNum] += pendingInterests.size();
                 
                 LogTraceC << "PIT hit " << pendingInterests.back()->getInterest()->toUri() << std::endl;
+            }
+        }
+
+        /**
+         * Retrieves all pending interests for given name and publishes application NACKs for them
+         */
+        void cleanPit(const ndn::Name& name)
+        {
+        	std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
+            settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
+
+            if (pendingInterests.size())
+            {
+            	LogTraceC 
+            	<< "Cleaning PIT for " << name 
+            	<< " (sending NACKs for " 
+            	<< pendingInterests.size() << " interests)" << std::endl;
+
+				for (auto pi:pendingInterests)
+				{
+					boost::shared_ptr<ndn::Data> nack(boost::make_shared<ndn::Data>(pi->getInterest()->getName()));
+					nack->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
+					nack->setContent((const uint8_t*)"nack", 4);
+					nack->getMetaInfo().setType(ndn_ContentType_NACK);
+					settings_.memoryCache_->add(*nack);
+				}
             }
         }
 
