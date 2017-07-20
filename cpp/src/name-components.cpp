@@ -45,7 +45,9 @@ NamespaceInfo::getPrefix(int filter) const
         if (filter&(Stream^Library))
             prefix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? 
                 NameComponents::NameComponentAudio : NameComponents::NameComponentVideo)).append(streamName_);
-        if (filter&(Thread^Stream) && threadName_ != "")
+        if (threadName_ != "" && 
+            (filter&(Thread^Stream)  || 
+            filter&(ThreadNT^Stream) & streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo))
         {
             prefix.append(threadName_);
         }
@@ -62,7 +64,7 @@ NamespaceInfo::getPrefix(int filter) const
         }   
         else
         {
-            if (filter&(Thread^Stream) && threadName_ != "" &&
+            if (filter&(Thread^ThreadNT) && threadName_ != "" &&
                 streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
                     prefix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
             if (filter&(Sample^Thread))

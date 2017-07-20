@@ -26,9 +26,10 @@ namespace ndnrtc {
             Base = 1<<0,
             Library = 1<<1|Base,
             Stream = 1<<2|Library,
-            Thread = 1<<3|Stream,
-            Sample = 1<<4|Thread,
-            Segment = 1<<5|Sample
+            ThreadNT = 1<<3|Stream,
+            Thread = 1<<4|ThreadNT,
+            Sample = 1<<5|Thread,
+            Segment = 1<<6|Sample
         } PrefixFilter;
     }
 
