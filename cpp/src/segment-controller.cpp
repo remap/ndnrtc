@@ -224,6 +224,7 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& inte
     if  (data->getMetaInfo().getType() == ndn_ContentType_NACK)
     {
         LogTraceC << "received nack for " << data->getName() << std::endl;
+        (*sstorage_)[Indicator::AppNackNum]++;
         return;
     }
 

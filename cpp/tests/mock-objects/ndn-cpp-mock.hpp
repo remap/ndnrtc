@@ -39,6 +39,7 @@ class MockNdnMemoryCache
 public:
 	MOCK_METHOD2(setInterestFilter, void(const ndn::Name&, const ndn::OnInterestCallback&));
 	MOCK_METHOD2(getPendingInterestsForName, void(const ndn::Name&, std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
+	MOCK_METHOD2(getPendingInterestsWithPrefix, void(const ndn::Name&, std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
 	MOCK_METHOD1(add, void(const ndn::Data&));
 	MOCK_METHOD0(getStorePendingInterest, const ndn::OnInterestCallback&());
 
