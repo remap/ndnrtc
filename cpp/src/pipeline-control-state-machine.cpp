@@ -405,23 +405,8 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 		transition(ev);
 }
 
-void
-PipelineControlStateMachine::attach(IPipelineControlStateMachineObserver *observer)
-{
-	if (observer)
-		observers_.push_back(observer);
-}
-
-void
-PipelineControlStateMachine::detach(IPipelineControlStateMachineObserver *observer)
-{
-	std::vector<IPipelineControlStateMachineObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), observer);
-	if (it != observers_.end())
-		observers_.erase(it);
-}
-
-
 #pragma mark - private
+
 bool
 PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineControlEvent>& ev)
 {
@@ -450,9 +435,6 @@ PipelineControlStateMachine::switchToState(const boost::shared_ptr<PipelineContr
     currentState_->exit();
     currentState_ = state;
     currentState_->enter();
-
-    for (auto o:observers_)
-    	o->onStateMachineChangedState(event, currentState_->str());
     
     if (event->toString() == boost::make_shared<EventStarvation>(0)->toString())
         (*ppCtrl_->sstorage_)[Indicator::RebufferingsNum]++;
@@ -481,7 +463,7 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 void 
 Idle::enter()
 {
-	ctrl_->buffer_->reset();
+    ctrl_->buffer_->reset();
 	ctrl_->pipeliner_->reset();
 	ctrl_->latencyControl_->reset();
 	ctrl_->interestControl_->reset();

@@ -59,13 +59,7 @@ PipelineControl::PipelineControl(const PipelineControlStateMachine& machine,
 machine_(machine),
 interestControl_(interestControl)
 {
-	machine_.attach(this);
 	description_ = "pipeline-control";
-}
-
-PipelineControl::~PipelineControl()
-{
-	machine_.detach(this);
 }
 
 void 
@@ -135,15 +129,3 @@ PipelineControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 }
 
 #pragma mark - private
-void 
-PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>& trigger,
-			std::string newState)
-{
-	// if new state is idle - reset the machine
-	if (newState == kStateIdle && 
-		trigger->getType() != PipelineControlEvent::Type::Reset)
-	{
-		LogInfoC << "state machine reverted to Idle. starting over..." << std::endl;
-		start();
-	}
-}

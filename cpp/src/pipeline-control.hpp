@@ -33,12 +33,9 @@ namespace ndnrtc {
 	 */
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
-							public ISegmentControllerObserver,
-							public IPipelineControlStateMachineObserver
+							public ISegmentControllerObserver
 	{
 	public:
-		~PipelineControl();
-		
 		void start();
 		void stop();
 
@@ -71,9 +68,6 @@ namespace ndnrtc {
 
 		PipelineControl(const PipelineControlStateMachine& machine,
 			const boost::shared_ptr<IInterestControl>& interestControl);
-
-		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
-			std::string);
 	};
 }
 

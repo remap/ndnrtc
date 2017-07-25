@@ -100,8 +100,6 @@ namespace ndnrtc {
 		unsigned int duration_;
 	};
 
-	class IPipelineControlStateMachineObserver;
-
 	/**
 	 * Implements simple state machine for pipeline control:
 	 *
@@ -139,11 +137,6 @@ namespace ndnrtc {
 		boost::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
 		void dispatch(const boost::shared_ptr<const PipelineControlEvent>& ev);
 
-		// not thread-safe! should be called on the same thread as dispatch(...)
-		void attach(IPipelineControlStateMachineObserver*);
-		// not thread-safe! should be called on the same thread as dispatch(...)
-		void detach(IPipelineControlStateMachineObserver*);
-
 		static PipelineControlStateMachine defaultStateMachine(Struct ctrl);
 		static PipelineControlStateMachine videoStateMachine(Struct ctrl);
 
@@ -156,7 +149,6 @@ namespace ndnrtc {
 		TransitionMap stateMachineTable_;
 		boost::shared_ptr<PipelineControlState> currentState_;
 		int64_t lastEventTimestamp_;
-		std::vector<IPipelineControlStateMachineObserver*> observers_;
 
 		PipelineControlStateMachine(const boost::shared_ptr<Struct>& ctrl, 
 			StatesMap statesMap);
@@ -167,12 +159,6 @@ namespace ndnrtc {
 
 		static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
 		static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
-	};
-
-	class IPipelineControlStateMachineObserver {
-	public:
-		virtual void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
-			std::string newState) = 0;
 	};
 }
 
