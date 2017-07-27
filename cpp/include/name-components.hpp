@@ -71,7 +71,7 @@ namespace ndnrtc {
         unsigned int apiVersion_;
         MediaStreamParams::MediaStreamType streamType_;
         std::string streamName_, threadName_;
-        bool isMeta_, isParity_, isDelta_, hasSeqNo_;
+        bool isMeta_, isParity_, isDelta_, hasSeqNo_, hasSegNo_;
         SampleClass class_;
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;

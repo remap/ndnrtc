@@ -116,7 +116,7 @@ NamespaceInfo::getSuffix(int filter) const
             else
                 suffix.appendSequenceNumber(sampleNo_);
         }
-        if (filter&(Segment))
+        if (filter&(Segment) && hasSegNo_)
         {
             if (isParity_)
                 suffix.append(NameComponents::NameComponentParity);
@@ -177,6 +177,7 @@ bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
     {
         info.metaVersion_ = name[0].toVersion();
         info.segNo_ = name[1].toSegment();
+        info.hasSegNo_ = true;
         return true;
     }
 
@@ -231,6 +232,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                 if (name.size() > 4)
                 {
                     info.isParity_ = (name[4] == Name::Component(NameComponents::NameComponentParity));
+                    info.hasSegNo_ = true;
 
                     if (info.isParity_ && name.size() > 5)
                     {
@@ -254,6 +256,12 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                         }
                         return true;
                     }
+                }
+                else
+                {
+                    info.segmentClass_ = SegmentClass::Unknown;
+                    info.hasSegNo_ = false;
+                    return true;
                 }
             }
             catch (std::runtime_error& e)
@@ -316,14 +324,19 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             info.hasSeqNo_ = true;
             if (name.size() > 3)
             {
-
                 if (name[3] == Name::Component(NameComponents::NameComponentManifest))
                     info.segmentClass_ = SegmentClass::Manifest;
                 else
                 {
+                    info.hasSegNo_ = true;
                     info.segmentClass_ = SegmentClass::Data;
                     info.segNo_ = name[3].toSegment();
                 }
+                return true;
+            }
+            else
+            {
+                info.hasSegNo_ = false;
                 return true;
             }
         }

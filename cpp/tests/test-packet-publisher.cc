@@ -42,7 +42,7 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 #endif
 
 	Face face("aleph.ndn.ucla.edu");
-	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/test/1", 2000);
+	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d/%FE%00", 2000);
 	boost::shared_ptr<MemoryContentCache::PendingInterest> pendingInterest = boost::make_shared<MemoryContentCache::PendingInterest>(interest, face);
 	PendingInterests pendingInterests;
 
@@ -61,17 +61,25 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 	settings.freshnessPeriodMs_ = freshness;
     settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
-	Name filter("/test"), packetName(filter);
-	packetName.append("1");
+	Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d"), packetName(filter);
+	packetName.appendSequenceNumber(0);
 
 	OnInterestCallback mockCallback(boost::bind(&MockNdnMemoryCache::storePendingInterestCallback, &memoryCache, _1, _2, _3, _4, _5));
-	boost::function<void(const Name&, PendingInterests&)> mockGetPendingInterests = 
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingForName = 
+	[&pendingInterests](const Name& name, PendingInterests& interests){
+		interests.clear();
+		for (auto p:pendingInterests)
+			if (p->getInterest()->matchesName(name))
+				interests.push_back(p);
+	};
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingWithPrefix = 
 	[&pendingInterests](const Name& name, PendingInterests& interests){
 		interests.clear();
 		for (auto p:pendingInterests)
 			if (name.match(p->getInterest()->getName()))
 				interests.push_back(p);
 	};
+
 	std::vector<Data> dataObjects;
 	std::vector<Data> nacks;
 	boost::function<void(const Data&)> mockAddData = [&dataObjects, &nacks, &pendingInterests, packetName, wireLength, freshness](const Data& data){
@@ -106,7 +114,10 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
 		.Times(AtLeast(1))
-		.WillRepeatedly(Invoke(mockGetPendingInterests));
+		.WillRepeatedly(Invoke(mockGetPendingForName));
+	EXPECT_CALL(memoryCache, getPendingInterestsWithPrefix(_,_))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockGetPendingWithPrefix));
 	EXPECT_CALL(memoryCache, add(_))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
@@ -254,7 +265,7 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 #endif
 
 	Face face("aleph.ndn.ucla.edu");
-	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/testpacket/1", 2000);
+	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d/%FE%00", 2000);
 	boost::shared_ptr<MemoryContentCache::PendingInterest> pendingInterest = boost::make_shared<MemoryContentCache::PendingInterest>(interest, face);
 	PendingInterests pendingInterests;
 
@@ -273,18 +284,26 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 	settings.freshnessPeriodMs_ = freshness;
     settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
-	Name filter("/testpacket");
+	Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d");
 	Name packetName(filter);
-	packetName.append("1");
+	packetName.appendSequenceNumber(0);
 
 	OnInterestCallback mockCallback(boost::bind(&MockNdnMemoryCache::storePendingInterestCallback, &memoryCache, _1, _2, _3, _4, _5));
-	boost::function<void(const Name&, PendingInterests&)> mockGetPendingInterests = 
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingForName = 
+	[&pendingInterests](const Name& name, PendingInterests& interests){
+		interests.clear();
+		for (auto p:pendingInterests)
+			if (p->getInterest()->matchesName(name))
+				interests.push_back(p);
+	};
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingWithPrefix = 
 	[&pendingInterests](const Name& name, PendingInterests& interests){
 		interests.clear();
 		for (auto p:pendingInterests)
 			if (name.match(p->getInterest()->getName()))
 				interests.push_back(p);
 	};
+
 	std::vector<Data> dataObjects;
 	std::vector<Data> nacks;
 	boost::function<void(const Data&)> mockAddData = [&dataObjects, &nacks, &pendingInterests, packetName, wireLength, freshness](const Data& data){
@@ -319,7 +338,10 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
 		.Times(AtLeast(1))
-		.WillRepeatedly(Invoke(mockGetPendingInterests));
+		.WillRepeatedly(Invoke(mockGetPendingForName));
+	EXPECT_CALL(memoryCache, getPendingInterestsWithPrefix(_,_))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockGetPendingWithPrefix));
 	EXPECT_CALL(memoryCache, add(_))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
@@ -384,8 +406,8 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 
 TEST(TestPacketPublisher, TestPublishAudioBundle)
 {
-		Face face("aleph.ndn.ucla.edu");
-	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/test/1", 2000);
+	Face face("aleph.ndn.ucla.edu");
+	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d/%FE%00", 2000);
 	boost::shared_ptr<MemoryContentCache::PendingInterest> pendingInterest = boost::make_shared<MemoryContentCache::PendingInterest>(interest, face);
 	PendingInterests pendingInterests;
 
@@ -406,17 +428,25 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 	settings.freshnessPeriodMs_ = freshness;
     settings.statStorage_ = StatisticsStorage::createProducerStatistics();
 
-	Name filter("/test"), packetName(filter);
-	packetName.append("1");
+	Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d"), packetName(filter);
+	packetName.appendSequenceNumber(0);
 
 	OnInterestCallback mockCallback(boost::bind(&MockNdnMemoryCache::storePendingInterestCallback, &memoryCache, _1, _2, _3, _4, _5));
-	boost::function<void(const Name&, PendingInterests&)> mockGetPendingInterests = 
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingForName = 
+	[&pendingInterests](const Name& name, PendingInterests& interests){
+		interests.clear();
+		for (auto p:pendingInterests)
+			if (p->getInterest()->matchesName(name))
+				interests.push_back(p);
+	};
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingWithPrefix = 
 	[&pendingInterests](const Name& name, PendingInterests& interests){
 		interests.clear();
 		for (auto p:pendingInterests)
 			if (name.match(p->getInterest()->getName()))
 				interests.push_back(p);
 	};
+
 	std::vector<Data> dataObjects;
 	std::vector<Data> nacks;
 	boost::function<void(const Data&)> mockAddData = [&dataObjects, &nacks, &pendingInterests, packetName, wireLength, freshness](const Data& data){
@@ -451,7 +481,10 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 		.Times(AtLeast(1));
 	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
 		.Times(AtLeast(1))
-		.WillRepeatedly(Invoke(mockGetPendingInterests));
+		.WillRepeatedly(Invoke(mockGetPendingForName));
+	EXPECT_CALL(memoryCache, getPendingInterestsWithPrefix(_,_))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockGetPendingWithPrefix));
 	EXPECT_CALL(memoryCache, add(_))
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke(mockAddData));
@@ -493,6 +526,162 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 		GT_PRINTF("Targeting %d wire length segment, audio bundle wire length is %d bytes "
 			"(for sample size %d, bundle fits %d samples total)\n", wire_len, bundlePacket.getLength(), 
 			data_len, bundlePacket.getSamplesNum());
+	}
+}
+
+TEST(TestPacketPublisher, TestPitDeepClean)
+{
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+	Face face("aleph.ndn.ucla.edu");
+	boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d/%FE%01", 2000);
+	boost::shared_ptr<MemoryContentCache::PendingInterest> pendingInterest = boost::make_shared<MemoryContentCache::PendingInterest>(interest, face);
+	PendingInterests pendingInterests;
+
+	uint32_t nonce = 1234;
+	interest->setNonce(Blob((uint8_t*)&nonce, sizeof(nonce)));
+
+	MockNdnKeyChain keyChain;
+	MockNdnMemoryCache memoryCache;
+	MockSettings settings;
+
+	int wireLength = 1000;
+	int freshness = 1000;
+	settings.keyChain_ = &keyChain;
+	settings.memoryCache_ = &memoryCache;
+	settings.segmentWireLength_ = wireLength;
+	settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
+
+	Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d"), packetName(filter);
+	packetName.appendSequenceNumber(1);
+
+	OnInterestCallback mockCallback(boost::bind(&MockNdnMemoryCache::storePendingInterestCallback, &memoryCache, _1, _2, _3, _4, _5));
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingForName = 
+	[&pendingInterests](const Name& name, PendingInterests& interests){
+		interests.clear();
+		for (auto p:pendingInterests)
+			if (p->getInterest()->matchesName(name))
+				interests.push_back(p);
+	};
+	boost::function<void(const Name&, PendingInterests&)> mockGetPendingWithPrefix = 
+	[&pendingInterests](const Name& name, PendingInterests& interests){
+		interests.clear();
+		for (auto p:pendingInterests)
+			if (name.match(p->getInterest()->getName()))
+				interests.push_back(p);
+	};
+
+	std::vector<Data> dataObjects;
+	std::vector<Data> nacks;
+	boost::function<void(const Data&)> mockAddData = [&dataObjects, &nacks, &pendingInterests, packetName, wireLength, freshness](const Data& data){
+		EXPECT_EQ(freshness, data.getMetaInfo().getFreshnessPeriod());
+		if (data.getMetaInfo().getType() == ndn_ContentType_BLOB)
+			dataObjects.push_back(data);
+		else if (data.getMetaInfo().getType() == ndn_ContentType_NACK)
+			nacks.push_back(data);
+
+		int i = 0;
+		while (i < pendingInterests.size())
+		{
+			if (pendingInterests[i]->getInterest()->getName().match(data.getName()))
+				pendingInterests.erase(pendingInterests.begin()+i);
+			else i++;
+		}
+
+		#if ADD_CRC
+		// check CRC value
+		NetworkData nd(*data.getContent());
+		uint64_t crcValue = data.getName()[-1].toNumber();
+		EXPECT_EQ(crcValue, nd.getCrcValue());
+		#endif
+	};
+
+	EXPECT_CALL(memoryCache, getStorePendingInterest())
+        .Times(0);
+	EXPECT_CALL(memoryCache, setInterestFilter(filter, _))
+		.Times(0);
+	EXPECT_CALL(keyChain, sign(_))
+		.Times(AtLeast(1));
+	EXPECT_CALL(memoryCache, getPendingInterestsForName(_, _))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockGetPendingForName));
+	EXPECT_CALL(memoryCache, getPendingInterestsWithPrefix(_,_))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockGetPendingWithPrefix));
+	EXPECT_CALL(memoryCache, add(_))
+		.Times(AtLeast(1))
+		.WillRepeatedly(Invoke(mockAddData));
+
+	PacketPublisher<VideoFrameSegment, MockSettings> publisher(settings);
+#ifdef ENABLE_LOGGING
+    publisher.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
+
+	{
+		CommonHeader hdr;
+		hdr.sampleRate_ = 24.7;
+		hdr.publishTimestampMs_ = 488589553;
+		hdr.publishUnixTimestampMs_ = 1460488589;
+
+		size_t frameLen = 4300;
+		int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+		uint8_t *buffer = (uint8_t*)malloc(frameLen);
+		for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+
+		webrtc::EncodedImage frame(buffer, frameLen, size);
+		frame._encodedWidth = 640;
+		frame._encodedHeight = 480;
+		frame._timeStamp = 1460488589;
+		frame.capture_time_ms_ = 1460488569;
+		frame._frameType = webrtc::kVideoFrameKey;
+		frame._completeFrame = true;
+
+		VideoFramePacket vp(frame);
+		std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+
+		vp.setSyncList(syncList);
+		vp.setHeader(hdr);
+
+		{ 
+			boost::shared_ptr<NetworkData> parityData = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+			VideoFrameSegmentHeader segHdr;
+			segHdr.totalSegmentsNum_ = VideoFrameSegment::numSlices(vp, wireLength);
+			segHdr.paritySegmentsNum_ = VideoFrameSegment::numSlices(*parityData, wireLength);
+			segHdr.playbackNo_ = 100;
+			segHdr.pairedSequenceNo_ = 67;
+
+			dataObjects.clear();
+			nacks.clear();
+
+			// add pending interests for previous sample
+			for (int i = 0; i < 10; ++i)
+			{
+				boost::shared_ptr<Interest> in = boost::make_shared<Interest>(Name("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d/%FE%00"));
+				in->getName().appendSegment(i);
+				in->setNonce(Blob((uint8_t*)&nonce, sizeof(nonce)));
+				boost::shared_ptr<MemoryContentCache::PendingInterest> pi = boost::make_shared<MemoryContentCache::PendingInterest>(in, face);
+				pendingInterests.push_back(pi);
+			}
+
+			// now add few interests for published sample
+			for (int i = 0; i < 5+segHdr.totalSegmentsNum_; ++i)
+			{
+				boost::shared_ptr<Interest> in = boost::make_shared<Interest>(interest->getName());
+				in->getName().appendSegment(i);
+				in->setNonce(Blob((uint8_t*)&nonce, sizeof(nonce)));
+				boost::shared_ptr<MemoryContentCache::PendingInterest> pi = boost::make_shared<MemoryContentCache::PendingInterest>(in, face);
+				pendingInterests.push_back(pi);
+			}
+
+			// passing last argument as true should force deep PIT cleaning
+			PublishedDataPtrVector segments = publisher.publish(packetName, vp, segHdr, true);
+			EXPECT_EQ(segments.size(), dataObjects.size());
+			EXPECT_EQ(15, nacks.size()); // as a result, we shall receive 10 (old sample) + 5 (current sample) NACKs
+		}
 	}
 }
 
