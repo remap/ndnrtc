@@ -62,13 +62,13 @@ interestControl_(interestControl),
 pipeliner_(pipeliner),
 sampleLatch_({0,0})
 {
-	machine_.attach(this);
+	// machine_.attach(this);
 	description_ = "pipeline-control";
 }
 
 PipelineControl::~PipelineControl()
 {
-	machine_.detach(this);
+	// machine_.detach(this);
 }
 
 void 
