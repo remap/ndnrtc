@@ -34,8 +34,8 @@ namespace ndnrtc {
 	 */
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
-							public ISegmentControllerObserver,
-							public IPipelineControlStateMachineObserver
+							public ISegmentControllerObserver
+							// ,public IPipelineControlStateMachineObserver
 	{
 	public:
 		~PipelineControl();
@@ -76,8 +76,8 @@ namespace ndnrtc {
 			const boost::shared_ptr<IInterestControl>& interestControl,
 			const boost::shared_ptr<IPipeliner> pipeliner_);
 
-		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
-			std::string);
+		// void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
+			// std::string);
 		bool passesBarrier(const NamespaceInfo& n);
 	};
 }
