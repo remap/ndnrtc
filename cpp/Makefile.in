@@ -94,7 +94,7 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@am__append_2 = @WEBRTCLIBS@
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
 @OS_LINUX_TRUE@am__append_3 = -pthread 
-@OS_LINUX_TRUE@am__append_4 = -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
+@OS_LINUX_TRUE@am__append_4 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
 @OS_DARWIN_TRUE@am__append_5 = -DOS_DARWIN
 @OS_DARWIN_TRUE@am__append_6 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
 @OS_LINUX_TRUE@am__append_7 = -ldl -lX11
@@ -198,6 +198,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-audio-stream-impl.lo \
 	src/libndnrtc_la-audio-thread.lo src/libndnrtc_la-av-sync.lo \
 	src/libndnrtc_la-buffer-control.lo src/libndnrtc_la-clock.lo \
+	src/libndnrtc_la-c-wrapper.lo \
 	src/libndnrtc_la-data-validator.lo \
 	src/libndnrtc_la-drd-estimator.lo \
 	src/libndnrtc_la-estimators.lo src/libndnrtc_la-fec.lo \
@@ -1616,6 +1617,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/av-sync.cpp src/av-sync.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
+  src/c-wrapper.cpp include/c-wrapper.h \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
@@ -1677,8 +1679,8 @@ libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_5)
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ \
-	-L$(libdir) $(am__append_3) $(am__append_6)
+ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
+	-L@BOOSTLIB@ -L$(libdir) $(am__append_3) $(am__append_6)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread \
 	-lboost_chrono $(top_builddir)/libndnrtc.la $(am__append_4)
 noinst_SCRIPTS = client/params.cfg
@@ -1983,6 +1985,8 @@ src/libndnrtc_la-av-sync.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-buffer-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-clock.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-c-wrapper.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-data-validator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -3841,6 +3845,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-av-sync.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-clock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-data-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-drd-estimator.Plo@am__quote@
@@ -4050,6 +4055,13 @@ src/libndnrtc_la-clock.lo: src/clock.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/libndnrtc_la-clock.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-clock.lo `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+
+src/libndnrtc_la-c-wrapper.lo: src/c-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-c-wrapper.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-c-wrapper.Tpo -c -o src/libndnrtc_la-c-wrapper.lo `test -f 'src/c-wrapper.cpp' || echo '$(srcdir)/'`src/c-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-c-wrapper.Tpo src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/c-wrapper.cpp' object='src/libndnrtc_la-c-wrapper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-c-wrapper.lo `test -f 'src/c-wrapper.cpp' || echo '$(srcdir)/'`src/c-wrapper.cpp
 
 src/libndnrtc_la-data-validator.lo: src/data-validator.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-data-validator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-data-validator.Tpo -c -o src/libndnrtc_la-data-validator.lo `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
@@ -12211,18 +12223,32 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 .PRECIOUS: Makefile
 
 
-make-fat-libs:
-	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
-	done && \
-	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+@OS_DARWIN_TRUE@.PHONY: make-fat-libs 
 
-libwebrtc-all.a: make-fat-libs
-	$(shell mkdir -p tmp && cd tmp && \
-	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
-		ar x $$lib; \
-	done && \
-	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+@OS_DARWIN_TRUE@make-fat-libs:
+@OS_DARWIN_TRUE@	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+@OS_DARWIN_TRUE@		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
+@OS_DARWIN_TRUE@	done && \
+@OS_DARWIN_TRUE@	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+
+@OS_DARWIN_TRUE@libwebrtc-all.a: make-fat-libs
+@OS_DARWIN_TRUE@	$(shell mkdir -p tmp && cd tmp && \
+@OS_DARWIN_TRUE@	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
+@OS_DARWIN_TRUE@		ar x $$lib; \
+@OS_DARWIN_TRUE@	done && \
+@OS_DARWIN_TRUE@	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+
+@OS_LINUX_TRUE@.PHONY: libwebrtc-all.mri libwebrtc-all.a
+
+@OS_LINUX_TRUE@libwebrtc-all.mri:
+@OS_LINUX_TRUE@	$(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
+@OS_LINUX_TRUE@	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+@OS_LINUX_TRUE@	echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
+@OS_LINUX_TRUE@	echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
+@OS_LINUX_TRUE@	echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
+
+@OS_LINUX_TRUE@libwebrtc-all.a: libwebrtc-all.mri
+@OS_LINUX_TRUE@	$(shell cd @WEBRTCLIB@ && ar -M <libwebrtc-all.mri)
 
 res/test-source-1280x720.argb:
 	mkdir -p $(top_builddir)/res/
