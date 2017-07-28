@@ -12,6 +12,10 @@
 #include "params.hpp"
 #include "stream.hpp"
 
+extern "C" {
+  float sumTwoNumbers (float a, float b);
+}
+
 namespace ndn {
 	class KeyChain;
 	class Face;

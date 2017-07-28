@@ -156,6 +156,9 @@ case $host_os in
 		esac
 		os_module=darwin
 		;;
+  linux-android*)
+  		os_module=android
+  		;;
   linux*)
 		# Do something specific for linux
 		os_module=linux
@@ -189,6 +192,7 @@ AC_CONFIG_LINKS([tests/consumer-video.cfg:tests/consumer-video.cfg])
 # setting conditionals for automake
 AM_CONDITIONAL([OS_DARWIN],  [test $os_module = darwin])
 AM_CONDITIONAL([OS_LINUX],  [test $os_module = linux])
+AM_CONDITIONAL([OS_ANDROID],  [test $os_module = android])
 AM_CONDITIONAL([OS_BSD],  [test $os_module = bsd])
 
 # Checks for header files.
@@ -206,8 +210,8 @@ AC_TYPE_UINT8_T
 AX_CXX_COMPILE_STDCXX_11([], optional)
 
 # Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
+#AC_FUNC_MALLOC
+#AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
 
 # check for wget or curl
@@ -342,21 +346,25 @@ AC_LINK_IFELSE(
 )
 
 AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
-AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([
-		#include <ndn-cpp/interest.hpp>
-		#include <boost/shared_ptr.hpp>
-		],
-		[
-			ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-			boost::shared_ptr<int> boostPtr(new int(6));
-			ptrlibPtr = boostPtr;
-		]
-	)],
-	[AC_MSG_RESULT([yes])],
-	[AC_MSG_RESULT([no])]
-	[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
-)
+
+if [ "$build_os" -eq "$host_os" ]
+then
+	AC_RUN_IFELSE(
+		[AC_LANG_PROGRAM([
+			#include <ndn-cpp/interest.hpp>
+			#include <boost/shared_ptr.hpp>
+			],
+			[
+				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
+				boost::shared_ptr<int> boostPtr(new int(6));
+				ptrlibPtr = boostPtr;
+			]
+		)],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])]
+		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
+	)
+fi
 
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS

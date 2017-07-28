@@ -16,6 +16,11 @@ using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
 
+float sumTwoNumbers (float a, float b)
+{
+	return (a+b);
+}
+
 //******************************************************************************
 std::vector<std::pair<std::string, std::string>> 
 LocalAudioStream::getRecordingDevices()

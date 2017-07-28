@@ -214,8 +214,9 @@ InterestControl::snapshot() const
 {
 	std::stringstream ss;
 	ss << lowerLimit_  << "-" << upperLimit_ << "[";
+	
     for (int i = 1;
-         i <= fmax(limit_, pipeline_);
+         i <= std::max((int)limit_, (int)pipeline_); //(int)fmax((double)limit_, (double)pipeline_);
          ++i)
     {
         if (i > limit_)
@@ -229,6 +230,5 @@ InterestControl::snapshot() const
         }
     }
 	ss << "]" << pipeline_ << "-" << limit_ << " (" << room() <<")";
-
 	return ss.str();
 }
