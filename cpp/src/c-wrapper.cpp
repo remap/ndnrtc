@@ -15,6 +15,8 @@
 #include <boost/asio.hpp>
 #include <boost/thread/lock_guard.hpp>
 
+#include "local-stream.hpp"
+
 using namespace ndn;
 using namespace ndnrtc;
 
