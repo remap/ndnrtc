@@ -149,6 +149,15 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
 }
 
+PacketNumber 
+Pipeliner::getSequenceNumber(SampleClass cls)
+{
+    if (cls == SampleClass::Delta) return seqCounter_.delta_;
+    if (cls == SampleClass::Key) return seqCounter_.key_;
+    return 0;
+}
+
+
 #pragma mark - private
 void
 Pipeliner::request(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,

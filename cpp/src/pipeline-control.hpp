@@ -14,6 +14,7 @@
 #include "latency-control.hpp"
 #include "segment-controller.hpp"
 #include "pipeline-control-state-machine.hpp"
+#include "pipeliner.hpp"
 
 namespace ndnrtc {
     namespace statistics {
@@ -33,9 +34,12 @@ namespace ndnrtc {
 	 */
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
-							public ISegmentControllerObserver
+							public ISegmentControllerObserver,
+							public IPipelineControlStateMachineObserver
 	{
 	public:
+		~PipelineControl();
+		
 		void start();
 		void stop();
 
@@ -65,9 +69,16 @@ namespace ndnrtc {
 	private:
 		PipelineControlStateMachine machine_;
 		boost::shared_ptr<IInterestControl> interestControl_;
+		boost::shared_ptr<IPipeliner> pipeliner_;
+		Pipeliner::SequenceCounter sampleLatch_;
 
 		PipelineControl(const PipelineControlStateMachine& machine,
-			const boost::shared_ptr<IInterestControl>& interestControl);
+			const boost::shared_ptr<IInterestControl>& interestControl,
+			const boost::shared_ptr<IPipeliner> pipeliner_);
+
+		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string);
+		bool passesBarrier(const NamespaceInfo& n);
 	};
 }
 
