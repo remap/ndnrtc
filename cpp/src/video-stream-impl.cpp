@@ -267,7 +267,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
         segmentHdr.playbackNo_ = playbackNo;
 		segmentHdr.pairedSequenceNo_ = pairedSeq;
 
-		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr);
+		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr, isKey);
 		assert(segments.size());
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
         
@@ -281,7 +281,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
     		Name parityName(dataName);
 	        parityName.append(NameComponents::NameComponentParity);
 
-	        PublishedDataPtrVector paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr);
+	        PublishedDataPtrVector paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr, isKey);
 	        assert(paritySegments.size());
 	        std::copy(paritySegments.begin(), paritySegments.end(), std::back_inserter(segments));
 	        

@@ -51,6 +51,7 @@ namespace ndnrtc {
         virtual void setNeedSample(SampleClass cls) = 0;
         virtual void setNeedRightmost() = 0;
         virtual void setSequenceNumber(PacketNumber seqNo, SampleClass cls) = 0;
+        virtual PacketNumber getSequenceNumber(SampleClass cls) = 0;
     };
 
     /**
@@ -64,6 +65,9 @@ namespace ndnrtc {
     {
     public:
         class INameScheme;
+        typedef struct _SequenceCounter {
+            PacketNumber delta_, key_;
+        } SequenceCounter;
         
         Pipeliner(const PipelinerSettings& settings,
                   const boost::shared_ptr<INameScheme>&);
@@ -126,6 +130,13 @@ namespace ndnrtc {
         void setSequenceNumber(PacketNumber seqNo, SampleClass cls);
 
         /**
+         * Gets pipeliner's current frame sequence number counters
+         * @param seqNo Sequence number 
+         * @param cls Frame class (Key or Delta)
+         */
+        PacketNumber getSequenceNumber(SampleClass cls);
+
+        /**
          * This class
          */
         class INameScheme {
@@ -153,10 +164,6 @@ namespace ndnrtc {
         };
 
     private:
-        typedef struct _SequenceCounter {
-            PacketNumber delta_, key_;
-        } SequenceCounter;
-
         unsigned int interestLifetime_;
         boost::shared_ptr<INameScheme> nameScheme_;
         boost::shared_ptr<SampleEstimator> sampleEstimator_;

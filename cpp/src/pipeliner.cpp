@@ -73,12 +73,12 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         
-        request(batch, DeadlinePriority::fromNow(0));
-        if (placeInBuffer) buffer_->requested(batch);
-        
         LogDebugC << "request sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
             << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
+
+        request(batch, DeadlinePriority::fromNow(0));
+        if (placeInBuffer) buffer_->requested(batch);
     }
 
     lastRequestedSample_ = nextSamplePriority_;
@@ -148,6 +148,15 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
     if (cls == SampleClass::Delta) seqCounter_.delta_ = seqNo;
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
 }
+
+PacketNumber 
+Pipeliner::getSequenceNumber(SampleClass cls)
+{
+    if (cls == SampleClass::Delta) return seqCounter_.delta_;
+    if (cls == SampleClass::Key) return seqCounter_.key_;
+    return 0;
+}
+
 
 #pragma mark - private
 void

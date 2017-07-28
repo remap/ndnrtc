@@ -562,7 +562,7 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
         activeSlots_[it.first]->segmentsRequested(it.second);
         
         LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
-        << it.second.size() << std::endl;
+        << " x" << it.second.size() << std::endl;
         LogDebugC << shortdump() << std::endl;
         LogTraceC << dump() << std::endl;
         

@@ -581,7 +581,7 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 std::string 
 Chasing::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
-	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::Thread));
+	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::ThreadNT));
 	return str();
 }
 

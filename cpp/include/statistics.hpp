@@ -72,6 +72,7 @@ namespace ndnrtc {
                 SegmentsReceivedNum,            // SegmentController
                 TimeoutsNum,                    // SegmentController
                 NacksNum,                       // SegmentController
+                AppNackNum,                     // SegmentController
                 Darr,                           // LatencyControl
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController

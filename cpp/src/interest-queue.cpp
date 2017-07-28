@@ -165,7 +165,7 @@ void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
     LogTraceC
-    << " express\t" << entry.interest_->getName()
+    << "express\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
     << entry.getValue() << "\tlifetime: "

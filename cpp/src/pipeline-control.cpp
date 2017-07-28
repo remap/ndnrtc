@@ -31,7 +31,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadP
 	ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 	return PipelineControl(PipelineControlStateMachine::defaultStateMachine(ctrl),
-		interestControl);
+		interestControl, pipeliner);
 }
 
 PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPrefix,
@@ -50,16 +50,25 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPre
 	ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 	return PipelineControl(PipelineControlStateMachine::videoStateMachine(ctrl),
-		interestControl);
+		interestControl, pipeliner);
 }
 
 //******************************************************************************
 PipelineControl::PipelineControl(const PipelineControlStateMachine& machine,
-			const boost::shared_ptr<IInterestControl>& interestControl):
+			const boost::shared_ptr<IInterestControl>& interestControl,
+			const boost::shared_ptr<IPipeliner> pipeliner):
 machine_(machine),
-interestControl_(interestControl)
+interestControl_(interestControl),
+pipeliner_(pipeliner),
+sampleLatch_({0,0})
 {
+	// machine_.attach(this);
 	description_ = "pipeline-control";
+}
+
+PipelineControl::~PipelineControl()
+{
+	// machine_.detach(this);
 }
 
 void 
@@ -69,9 +78,13 @@ PipelineControl::start()
 		throw std::runtime_error("Can't start Pipeline Control as it has been "
 			"started alread. Use reset() and start() to restart.");
 
+	sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
+	sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
 	machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 
-	LogDebugC << "started" << std::endl;
+	LogDebugC << "started. samples latched at " 
+	<< sampleLatch_.delta_ << "d & " 
+	<< sampleLatch_.key_ << "k" << std::endl;
 }
 
 void 
@@ -86,19 +99,24 @@ PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment>& s)
 {
     if (s->getSampleClass() == SampleClass::Key ||
         s->getSampleClass() == SampleClass::Delta)
-        machine_.dispatch(boost::make_shared<EventSegment>(s));
+    {
+    	if (passesBarrier(s->getInfo()))
+        	machine_.dispatch(boost::make_shared<EventSegment>(s));
+    }
 }
 
 void 
 PipelineControl::segmentRequestTimeout(const NamespaceInfo& n)
 {
-	machine_.dispatch(boost::make_shared<EventTimeout>(n));
+	if (passesBarrier(n))
+		machine_.dispatch(boost::make_shared<EventTimeout>(n));
 }
 
 void 
 PipelineControl::segmentNack(const NamespaceInfo& n, int reason)
 {
-	machine_.dispatch(boost::make_shared<EventNack>(n, reason));
+	if (passesBarrier(n))
+		machine_.dispatch(boost::make_shared<EventNack>(n, reason));
 }
 
 void 
@@ -129,3 +147,34 @@ PipelineControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 }
 
 #pragma mark - private
+// void 
+// PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>& trigger,
+// 			std::string newState)
+// {
+// 	// if new state is idle - reset the machine
+// 	if (newState == kStateIdle && 
+// 		trigger->getType() != PipelineControlEvent::Type::Reset)
+// 	{
+// 		LogInfoC << "state machine reverted to Idle. starting over..." << std::endl;
+// 		start();
+// 	}
+// }
+
+bool 
+PipelineControl::passesBarrier(const NamespaceInfo& n)
+{
+	if (n.hasSeqNo_)
+	{
+		PacketNumber b = (n.class_ == SampleClass::Key ? sampleLatch_.key_ : sampleLatch_.delta_);
+    	if (n.sampleNo_ >= b)
+    		return true;
+    	else
+    		LogWarnC << "received sample number " << n.sampleNo_ 
+        	<< " (" << n.getSuffix(suffix_filter::Stream) << ")"
+        	<< " but samples latched at " << b << std::endl;
+
+        return false;
+    }
+	
+	return true;
+}
