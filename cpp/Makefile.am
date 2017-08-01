@@ -18,6 +18,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
+  src/face-processor.hpp src/face-processor.cpp \
   src/fec.cpp src/fec.hpp \
   src/frame-buffer.cpp src/frame-buffer.hpp \
   src/frame-converter.cpp src/frame-converter.hpp \

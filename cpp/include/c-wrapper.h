@@ -11,17 +11,17 @@
 #define __c_wrapper_h__
 
 extern "C" {
+
+	typedef void (*LibLog) (const char* message);
+
 	// creates Face
 	//		hostname
 	//		portnum
 	// creates KeyChain
 	//		optional: local key storage
 	// - runs everything on internal thread
-	void ndnrtc_init(const char* hostname, unsigned int portnum, 
-		const char* storagePath);
-
-	// returns true if face is connected to the host
-	bool ndnrtc_isConnected();
+	bool ndnrtc_init(const char* hostname, const char* storagePath, 
+		LibLog libLog);
 
 	// deinitializes library (removes connection and frees objects)
 	// init can be called again after this

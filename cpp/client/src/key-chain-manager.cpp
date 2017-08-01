@@ -12,12 +12,12 @@
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 #include <ndn-cpp/security/policy/config-policy-manager.hpp>
+#include <ndn-cpp/security/policy/self-verify-policy-manager.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndnrtc/simple-log.hpp>
 #include <boost/chrono.hpp>
 
 using namespace boost::chrono;
-
 using namespace ndn;
 
 KeyChainManager::KeyChainManager(boost::shared_ptr<Face> face,
@@ -33,6 +33,7 @@ runTime_(runTime)
 {
     checkExists(configPolicy);
 	setupDefaultKeyChain();
+	setupConfigPolicyManager();
 	setupInstanceKeyChain();
 }
 
@@ -60,6 +61,13 @@ void KeyChainManager::setupInstanceKeyChain()
 	createInstanceIdentity();
 }
 
+void KeyChainManager::setupConfigPolicyManager()
+{
+	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
+    privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
+	configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+}
+
 void KeyChainManager::createSigningIdentity()
 {
     // create self-signed certificate
@@ -73,11 +81,9 @@ void KeyChainManager::createSigningIdentity()
 
 void KeyChainManager::createMemoryKeychain()
 {
-    boost::shared_ptr<MemoryIdentityStorage> identityStorage = boost::make_shared<MemoryIdentityStorage>();
-    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage = boost::make_shared<MemoryPrivateKeyStorage>();
     instanceKeyChain_ = boost::make_shared<KeyChain>
-      (boost::make_shared<IdentityManager>(identityStorage, privateKeyStorage),
-       boost::make_shared<ConfigPolicyManager>(configPolicy_));
+      (boost::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
+       configPolicyManager_);
     instanceKeyChain_->setFace(face_.get());
 }
 

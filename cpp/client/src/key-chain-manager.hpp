@@ -14,6 +14,9 @@ namespace ndn {
 	class KeyChain;
     class Face;
     class IdentityCertificate;
+    class ConfigPolicyManager;
+    class IdentityStorage;
+    class PrivateKeyStorage;
 }
 
 class KeyChainManager {
@@ -37,11 +40,15 @@ private:
         configPolicy_, instanceIdentity_;
 	unsigned int runTime_;
 
+    boost::shared_ptr<ndn::ConfigPolicyManager> configPolicyManager_;
 	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
     boost::shared_ptr<ndn::IdentityCertificate> instanceCert_;
+    boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
+    boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
 
 	void setupDefaultKeyChain();
 	void setupInstanceKeyChain();
+    void setupConfigPolicyManager();
 	void createSigningIdentity();
 	void createMemoryKeychain();
 	void createInstanceIdentity();
