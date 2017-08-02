@@ -16,6 +16,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/make_shared.hpp>
 
 #include <iostream>
 #include <string>
@@ -117,7 +118,63 @@ namespace ndnlog {
     {
         class ILoggingObject;
         class NilLogger;
-        
+        class DefaultSink;
+        class CallbackSink;
+
+        // log record sink receives composed log record from a logger
+        class ILogRecordSink 
+        {
+        public:
+            virtual void finalizeRecord(const std::string& record) = 0;
+            virtual void flush() = 0;
+            virtual void close() = 0;
+            virtual bool isStdOut() = 0;
+            virtual void lockExclusively() = 0;
+            virtual void unlock() = 0;
+        };
+
+        class DefaultSink : public ILogRecordSink {
+        public:
+            DefaultSink(const std::string& logFile = "");
+            ~DefaultSink() { flush(); close(); }
+
+            void finalizeRecord(const std::string& record);
+            void flush();
+            void close();
+            bool isStdOut() { return (outStream_ == &std::cout); }
+            virtual void lockExclusively() {
+                if (isStdOut())
+                    stdOutMutex_.lock();
+                else
+                    logMutex_.lock();
+            }
+
+            virtual void unlock() {
+                if (isStdOut())
+                    stdOutMutex_.unlock();
+                else
+                    logMutex_.unlock();
+            }
+
+        private:
+            static boost::recursive_mutex stdOutMutex_;
+            boost::recursive_mutex logMutex_;
+
+            bool isStdOut_;
+            std::string logFile_;
+            std::ostream* outStream_;
+
+            std::ostream&
+            getOutStream() { return *outStream_; }
+            
+            std::ofstream&
+            getOutFileStream()
+            {
+                std::ofstream *fstream = reinterpret_cast<std::ofstream*>(outStream_);
+                return *fstream;
+            }
+        };
+
         /**
          * Logger object. Performs thread-safe logging into a file or standard 
          * output.
@@ -143,6 +200,9 @@ namespace ndnlog {
              */
             Logger(const NdnLoggerDetailLevel& logLevel = NdnLoggerDetailLevelAll,
                    const std::string& logFile = "");
+
+            Logger(const NdnLoggerDetailLevel& logLevel,
+                   const boost::shared_ptr<ILogRecordSink> sink);
             /**
              * Releases current instance and all associated resources
              */
@@ -204,7 +264,7 @@ namespace ndnlog {
                     
                     currentLogRecord_ << endl;
                     finalizeLogRecord();
-                    unlockStream();
+                    sink_->unlock();
                 }
                 
                 return *this;
@@ -264,23 +324,15 @@ namespace ndnlog {
             void
             flush();
             
-            std::string
-            getFileName() const
-            { return logFile_; }
-            
         private:
             NdnLoggerDetailLevel logLevel_;
-            std::string logFile_;
-            std::ostream* outStream_;
+            boost::shared_ptr<ILogRecordSink> sink_;
             int64_t lastFlushTimestampMs_;
             
-            bool isWritingLogEntry_, isStdOutActive_;
+            bool isWritingLogEntry_;
             NdnLogType currentEntryLogType_;
             pthread_t current_;
             
-            boost::recursive_mutex logMutex_;
-            
-            static boost::recursive_mutex stdOutMutex_;
             static std::map<std::string, boost::shared_ptr<Logger>> loggers_;
             static Logger* sharedInstance_;
             
@@ -298,37 +350,10 @@ namespace ndnlog {
             void
             finalizeLogRecord();
             
-            std::ostream&
-            getOutStream() { return *outStream_; }
-            
-            std::ofstream&
-            getOutFileStream()
-            {
-                std::ofstream *fstream = reinterpret_cast<std::ofstream*>(outStream_);
-                return *fstream;
-            }
-            
             int64_t
             getMillisecondTimestamp();
             
-            int i = 0;
-            
-            void
-            lockStreamExclusively()
-            {
-                if (isStdOutActive_)
-                    stdOutMutex_.lock();
-                else
-                    logMutex_.lock();
-            }
-            
-            void unlockStream()
-            {
-                if (isStdOutActive_)
-                    stdOutMutex_.unlock();
-                else
-                    logMutex_.unlock();
-            }
+            // int i = 0;
         };
         
         /**
@@ -376,6 +401,7 @@ namespace ndnlog {
             std::string description_ = "<no description>";
         };
         
+        // nil-logger
         class NilLogger : public Logger {
         private:
             using endl_type = std::ostream&(std::ostream&);
@@ -398,6 +424,24 @@ namespace ndnlog {
             static NilLogger nilLogger_;
         };
 
+        typedef void (*LoggerSinkCallback) (const char* logMessage);
+
+        class CallbackSink : public ILogRecordSink {
+        public:
+            CallbackSink(LoggerSinkCallback callback);
+            ~CallbackSink();
+
+            void finalizeRecord(const std::string& record);
+            void flush();
+            void close();
+            bool isStdOut();
+            void lockExclusively();
+            void unlock();
+
+        private:
+            boost::recursive_mutex mutex_;
+            LoggerSinkCallback callback_;
+        };
     }
 }
 

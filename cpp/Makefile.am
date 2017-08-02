@@ -90,7 +90,8 @@ libwebrtc-all.a: make-fat-libs
 	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
 
 libndnrtc_la_LDFLAGS += -flat_namespace
-libndnrtc_la_LIBADD += @WEBRTCLIBS@
+libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+libndnrtc_la_LIBADD += -lwebrtc-all
 
 else
 
