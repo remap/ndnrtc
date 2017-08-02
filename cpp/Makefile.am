@@ -112,6 +112,12 @@ libndnrtc_la_LIBADD += -lwebrtc-all
 
 endif
 
+if OS_ANDROID
+
+libndnrtc_la_LIBADD += -llog -lOpenSLES
+
+endif
+
 #################
 # client app	  #
 #################
