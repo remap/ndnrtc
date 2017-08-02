@@ -7,7 +7,7 @@ These are prerequisites to build NDN-RTC.
 
 **Required:**
 * [NDN-CPP](https://github.com/named-data/ndn-cpp)
-* [WebRTC branch-heads/44](https://code.google.com/p/webrtc/)
+* [WebRTC branch-heads/59](https://code.google.com/p/webrtc/)
 * [OpenFEC](http://openfec.org/downloads.html)
 * [Boost](http://www.boost.org/users/download/)
 
