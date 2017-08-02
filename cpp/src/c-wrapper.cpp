@@ -42,6 +42,7 @@
 using namespace ndn;
 using namespace ndnrtc;
 using namespace boost::chrono;
+using namespace ndnlog::new_api;
 
 class KeyChainManager;
 
@@ -53,17 +54,34 @@ static boost::shared_ptr<KeyChain> LibKeyChain;
 static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
 
 void initKeyChain(std::string storagePath);
-void initFace(std::string hostname);
+void initFace(std::string hostname, boost::shared_ptr<Logger> logger);
 
 //******************************************************************************
-class KeyChainManager {
+// library construction
+__attribute__((constructor))
+static void initializer(int argc, char** argv, char** envp) {
+    static int initialized = 0;
+    if (!initialized) {
+        initialized = 1;
+        // Logger::initAsyncLogging();
+    }
+}
+
+__attribute__((destructor))
+static void destructor(){
+	// Logger::releaseAsyncLogging();
+}
+
+//******************************************************************************
+class KeyChainManager : public ndnlog::new_api::ILoggingObject {
 public:
     KeyChainManager(boost::shared_ptr<ndn::Face> face,
                     boost::shared_ptr<ndn::KeyChain> keyChain,
                     const std::string& identityName,
                     const std::string& instanceName,
                     const std::string& configPolicy,
-                    unsigned int instanceCertLifetime);
+                    unsigned int instanceCertLifetime,
+                    boost::shared_ptr<Logger> logger);
 
 	boost::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
 	boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
@@ -97,16 +115,24 @@ private:
 // public
 bool ndnrtc_init(const char* hostname, const char* storagePath, LibLog libLog)
 {
+	Logger::initAsyncLogging();
 	libLog("hello from ndnrtc");
 
-	try {
-		initKeyChain(std::string(storagePath));
-		initFace(std::string(hostname));
-	}
-	catch (std::exception &e)
-	{
-		return false;
-	}
+	// boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+	// 	boost::make_shared<CallbackSink>(libLog));
+
+	// libLog("hello from ndnrtc");
+
+	// try {
+	// 	initKeyChain(std::string(storagePath));
+	// 	initFace(std::string(hostname), callbackLogger);
+	// }
+	// catch (std::exception &e)
+	// {
+	// 	callbackLogger->log(ndnlog::NdnLoggerLevelError) 
+	// 		<< "setup error: " << e.what() << std::endl;
+	// 	return false;
+	// }
 	return true;
 }
 
@@ -136,14 +162,15 @@ void initKeyChain(std::string storagePath)
 }
 
 // initializes face and face processing thread 
-void initFace(std::string hostname)
+void initFace(std::string hostname, boost::shared_ptr<Logger> logger)
 {
 	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain, 
 		std::string(SIGNING_IDENTITY),
 		std::string("mobile-terminal0"),
 		std::string("policy-file.conf"),
-		3600);
+		3600,
+		logger);
 
 	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
 	LibFaceProcessor->dispatchSynchronized([](boost::shared_ptr<Face> face){
@@ -158,7 +185,8 @@ KeyChainManager::KeyChainManager(boost::shared_ptr<ndn::Face> face,
                     const std::string& identityName,
                     const std::string& instanceName,
                     const std::string& configPolicy,
-                    unsigned int instanceCertLifetime):
+                    unsigned int instanceCertLifetime,
+                    boost::shared_ptr<Logger> logger):
 face_(face),
 defaultKeyChain_(keyChain),
 signingIdentity_(identityName),
@@ -166,6 +194,7 @@ instanceName_(instanceName),
 configPolicy_(configPolicy),
 runTime_(instanceCertLifetime)
 {
+	setLogger(logger);
 	// checkExists(configPolicy);
 	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
     privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
@@ -189,7 +218,7 @@ void KeyChainManager::setupInstanceKeyChain()
 	if (std::find(identities.begin(), identities.end(), signingIdentity) == identities.end())
 	{
 		// create signing identity in default keychain
-		LogInfo("") << "Signing identity not found. Creating..." << std::endl;
+		LogInfoC << "Signing identity not found. Creating..." << std::endl;
 		createSigningIdentity();
 	}
 
@@ -209,9 +238,9 @@ void KeyChainManager::createSigningIdentity()
     // create self-signed certificate
 	Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
 
-	LogWarn("") << "Generated identity " << signingIdentity_ << " (certificate name " 
+	LogWarnC << "Generated identity " << signingIdentity_ << " (certificate name " 
 		<< cert << ")" << std::endl;
-	LogWarn("") << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i " 
+	LogWarnC << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i " 
 		<< signingIdentity_  << " > signing.cert` if needed)" << std::endl;
 }
 
@@ -233,13 +262,13 @@ void KeyChainManager::createInstanceIdentity()
     instanceIdentity.append(instanceName_);
     instanceIdentity_ = instanceIdentity.toUri();
     
-    LogInfo("") << "Instance identity " << instanceIdentity << std::endl;
+    LogInfoC << "Instance identity " << instanceIdentity << std::endl;
 
 	Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity, true);
 	Name signingCert = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(Name(signingIdentity_));
 
-	LogDebug("") << "Instance key " << instanceKeyName << std::endl;
-	LogDebug("") << "Signing certificate " << signingCert << std::endl;
+	LogDebugC << "Instance key " << instanceKeyName << std::endl;
+	LogDebugC << "Signing certificate " << signingCert << std::endl;
 
 	std::vector<CertificateSubjectDescription> subjectDescriptions;
 	instanceCert_ =
@@ -256,7 +285,7 @@ void KeyChainManager::createInstanceIdentity()
 	instanceKeyChain_->setDefaultCertificateForKey(*instanceCert_);
     instanceKeyChain_->getIdentityManager()->setDefaultIdentity(instanceIdentity);
 
-	LogInfo("") << "Instance certificate "
+	LogInfoC << "Instance certificate "
 		<< instanceKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(Name(instanceIdentity)) << std::endl;
 }
 

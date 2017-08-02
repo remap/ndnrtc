@@ -43,10 +43,10 @@ namespace ndnrtc {
 	};
 
 	/**
-	 * InterestControl implements algorithm for lambda control or Intersts 
+	 * InterestControl implements algorithm for lambda control or Interests 
 	 * expression control. It keeps track of the max limit size of the pipeline
 	 * of outstanding Interests, current size of the pipeline and size of 
-	 * the room for exressing mode Interests.
+	 * the room for expressing more Interests.
 	 */
 	class InterestControl : public NdnRtcComponent,
 							public IInterestControl,
