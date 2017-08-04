@@ -116,7 +116,11 @@ bool ndnrtc_init(const char* hostname, const char* storagePath, LibLog libLog)
 
 void ndnrtc_deinit()
 {
-	LibFaceProcessor->stop();
+	if (LibFaceProcessor)
+		LibFaceProcessor->stop();
+	LibFaceProcessor.reset();
+	LibKeyChainManager.reset();
+	LibKeyChain.reset();
 	Logger::releaseAsyncLogging();
 }
 

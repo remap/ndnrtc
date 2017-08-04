@@ -248,10 +248,10 @@ Logger::finalizeLogRecord()
 //******************************************************************************
 void startLogThread()
 {
-    if (!LogThreadWork.get() &&
-        LogThread.get_id() == boost::thread::id())
+    if (!LogThreadWork.get())
     {
         LogThreadWork.reset(new boost::asio::io_service::work(LogIoService));
+        LogIoService.reset();
         LogThread = boost::thread([](){
             LogIoService.run();
         });
