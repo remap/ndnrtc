@@ -151,7 +151,7 @@ $ cd <webrtc-checkout>/src/out/Default
 $ echo "create libwebrtc-all.a" > libwebrtc-all.mri
 $ for lib in $(find . -name '*.a'; do echo "addlib $lib" >> libwebrtc-all.mri; done;
 $ echo "save" >> libwebrtc-all.mri && echo "end" >> libwebrtc-all.mri
-$ ar -M <libwebrtc-all.mri
+$ ar -M &lt;libwebrtc-all.mri
 
 </pre>
 </pre>
