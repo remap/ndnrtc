@@ -25,6 +25,64 @@ AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (
 AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
 AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
 
+AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
+	[],
+	[
+	AC_DEFINE([NDN_LOGGING])
+	AC_DEFINE([NDN_TRACE])
+	AC_DEFINE([NDN_INFO])
+	AC_DEFINE([NDN_WARN])
+	AC_DEFINE([NDN_ERROR])
+	AC_DEFINE([NDN_DEBUG])
+	])
+
+# Checks for programs.
+AC_CANONICAL_HOST
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_OBJC
+AC_PROG_OBJCXX
+AM_PROG_CC_C_O
+AM_PROG_AR
+LT_INIT
+AC_LANG([C++])
+LT_PREREQ([2.2])
+LT_INIT()
+
+# checking platform
+case $host_os in
+  darwin* )
+		# Do something specific for MacOS  
+		# Special case.
+		case "$host" in
+		  *-darwin* | *-macos10*)
+			if test -d /sw ; then
+				CFLAGS="$CFLAGS -I/sw/include"
+				CXXFLAGS="$CXXFLAGS -I/sw/include"
+				CPPFLAGS="$CPPFLAGS -I/sw/include"
+				LDFLAGS="$LDFLAGS -L/sw/lib"
+			fi
+			;;
+		esac
+		os_module=darwin
+		;;
+  linux-android*)
+  		os_module=android
+  		;;
+  linux*)
+		# Do something specific for linux
+		os_module=linux
+		;;
+   *BSD*)
+		# Do something specific for BSD
+		os_module=bsd        
+		;;
+    *)
+		#Default Case
+		AC_MSG_ERROR([Your platform is not currently supported])
+		;;
+esac
+
 if test ${BOOSTDIR}; then
 	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
 	if [[[ "$DIR" = "not found" ]]];
@@ -114,64 +172,6 @@ if test ${LCONFIGLIB}; then
 else
 	LCONFIGLIB="/usr/local/lib"
 fi
-
-AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
-	[],
-	[
-	AC_DEFINE([NDN_LOGGING])
-	AC_DEFINE([NDN_TRACE])
-	AC_DEFINE([NDN_INFO])
-	AC_DEFINE([NDN_WARN])
-	AC_DEFINE([NDN_ERROR])
-	AC_DEFINE([NDN_DEBUG])
-	])
-
-# Checks for programs.
-AC_CANONICAL_HOST
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_OBJC
-AC_PROG_OBJCXX
-AM_PROG_CC_C_O
-AM_PROG_AR
-LT_INIT
-AC_LANG([C++])
-LT_PREREQ([2.2])
-LT_INIT()
-
-# checking platform
-case $host_os in
-  darwin* )
-		# Do something specific for MacOS  
-		# Special case.
-		case "$host" in
-		  *-darwin* | *-macos10*)
-			if test -d /sw ; then
-				CFLAGS="$CFLAGS -I/sw/include"
-				CXXFLAGS="$CXXFLAGS -I/sw/include"
-				CPPFLAGS="$CPPFLAGS -I/sw/include"
-				LDFLAGS="$LDFLAGS -L/sw/lib"
-			fi
-			;;
-		esac
-		os_module=darwin
-		;;
-  linux-android*)
-  		os_module=android
-  		;;
-  linux*)
-		# Do something specific for linux
-		os_module=linux
-		;;
-   *BSD*)
-		# Do something specific for BSD
-		os_module=bsd        
-		;;
-    *)
-		#Default Case
-		AC_MSG_ERROR([Your platform is not currently supported])
-		;;
-esac
 
 # create links for client config file
 AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])

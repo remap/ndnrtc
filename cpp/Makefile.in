@@ -93,19 +93,20 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@am__append_1 = -flat_namespace
 @OS_DARWIN_TRUE@am__append_2 = -lwebrtc-all
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
-@OS_ANDROID_TRUE@am__append_4 = -llog -lOpenSLES
+@OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
-@OS_LINUX_TRUE@am__append_5 = -pthread 
-@OS_LINUX_TRUE@am__append_6 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite 
+@OS_LINUX_TRUE@am__append_6 = -pthread 
+@OS_LINUX_TRUE@am__append_7 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite 
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_7 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_8 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
-@OS_ANDROID_TRUE@am__append_9 = -fPIE
-@OS_ANDROID_TRUE@am__append_10 = -pthread -fPIE -pie
-@OS_ANDROID_TRUE@am__append_11 = -llog -lOpenSLES
-@OS_LINUX_TRUE@am__append_12 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_13 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_8 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_9 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+@OS_ANDROID_TRUE@am__append_10 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_11 = -pthread -fPIE -pie
+@OS_ANDROID_TRUE@am__append_12 = -llog -lOpenSLES
+@OS_LINUX_TRUE@am__append_13 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_14 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -1677,24 +1678,27 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
   src/webrtc.hpp
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
+	-I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ \
+	-I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\" \
+	$(am__append_4)
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
 	-L@BOOSTLIB@ $(am__append_1)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
 	-lboost_chrono -lboost_thread -lboost_regex $(am__append_2) \
-	$(am__append_3) $(am__append_4)
+	$(am__append_3) $(am__append_5)
 @OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 @OS_DARWIN_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
-	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_7) \
-	$(am__append_9)
-ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
-	-L@BOOSTLIB@ -L$(libdir) $(am__append_5) $(am__append_8) \
+	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_8) \
 	$(am__append_10)
+ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
+	-L@BOOSTLIB@ -L$(libdir) $(am__append_6) $(am__append_9) \
+	$(am__append_11)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread \
 	-lboost_chrono -lboost_system $(top_builddir)/libndnrtc.la \
-	$(am__append_6) $(am__append_11)
+	$(am__append_7) $(am__append_12)
 noinst_SCRIPTS = client/params.cfg
 
 #################
@@ -1706,9 +1710,9 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
-	$(am__append_13)
+	$(am__append_14)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_12)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_13)
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

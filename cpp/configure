@@ -3485,96 +3485,6 @@ AM_BACKSLASH='\'
 
 
 
-if test ${BOOSTDIR}; then
-	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $BOOSTDIR" "$LINENO" 5
-	fi
-	BOOSTDIR=$DIR
-else
-	BOOSTDIR="/usr/local/include"
-fi
-
-if test ${BOOSTLIB}; then
-	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $BOOSTLIB" "$LINENO" 5
-	fi
-	BOOSTLIB=$DIR
-else
-	BOOSTLIB="/usr/local/lib"
-fi
-
-if test ${NDNCPPDIR}; then
-	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $NDNCPPDIR" "$LINENO" 5
-	fi
-	NDNCPPDIR=$DIR
-else
-	NDNCPPDIR="/usr/local/include"
-fi
-
-if test ${NDNCPPLIB}; then
-	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $NDNCPPLIB" "$LINENO" 5
-	fi
-	NDNCPPLIB=$DIR
-else
-	NDNCPPLIB="/usr/local/lib"
-fi
-
-if test ${OPENFECDIR}; then
-	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $OPENFECDIR" "$LINENO" 5
-	fi
-	OPENFECDIR=$DIR
-fi
-
-if test "x${OPENFECSRC}" = "x"; then
-	OPENFECSRC="$OPENFECDIR/src"
-fi
-
-if test "x${OPENFECLIB}" = "x"; then
-	OPENFECLIB="$OPENFECDIR/bin/Release"
-fi
-
-if test ${WEBRTCDIR}; then
-	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $W" "$LINENO" 5
-	fi
-	WEBRTCDIR=$DIR
-fi
-
-if test "x${WEBRTCSRC}" = "x"; then
-	WEBRTCSRC="$WEBRTCDIR/webrtc"
-fi
-
-if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
-fi
-
-if test ${LCONFIGDIR}; then
-	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
-else
-	LCONFIGDIR="/usr/local/include"
-fi
-
-if test ${LCONFIGLIB}; then
-	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
-else
-	LCONFIGLIB="/usr/local/lib"
-fi
-
 # Check whether --enable-logging was given.
 if test "${enable_logging+set}" = set; then :
   enableval=$enable_logging;
@@ -17373,6 +17283,96 @@ case $host_os in
 		as_fn_error $? "Your platform is not currently supported" "$LINENO" 5
 		;;
 esac
+
+if test ${BOOSTDIR}; then
+	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $BOOSTDIR" "$LINENO" 5
+	fi
+	BOOSTDIR=$DIR
+else
+	BOOSTDIR="/usr/local/include"
+fi
+
+if test ${BOOSTLIB}; then
+	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $BOOSTLIB" "$LINENO" 5
+	fi
+	BOOSTLIB=$DIR
+else
+	BOOSTLIB="/usr/local/lib"
+fi
+
+if test ${NDNCPPDIR}; then
+	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $NDNCPPDIR" "$LINENO" 5
+	fi
+	NDNCPPDIR=$DIR
+else
+	NDNCPPDIR="/usr/local/include"
+fi
+
+if test ${NDNCPPLIB}; then
+	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $NDNCPPLIB" "$LINENO" 5
+	fi
+	NDNCPPLIB=$DIR
+else
+	NDNCPPLIB="/usr/local/lib"
+fi
+
+if test ${OPENFECDIR}; then
+	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $OPENFECDIR" "$LINENO" 5
+	fi
+	OPENFECDIR=$DIR
+fi
+
+if test "x${OPENFECSRC}" = "x"; then
+	OPENFECSRC="$OPENFECDIR/src"
+fi
+
+if test "x${OPENFECLIB}" = "x"; then
+	OPENFECLIB="$OPENFECDIR/bin/Release"
+fi
+
+if test ${WEBRTCDIR}; then
+	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $W" "$LINENO" 5
+	fi
+	WEBRTCDIR=$DIR
+fi
+
+if test "x${WEBRTCSRC}" = "x"; then
+	WEBRTCSRC="$WEBRTCDIR/webrtc"
+fi
+
+if test "x${WEBRTCLIB}" = "x"; then
+	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
+fi
+
+if test ${LCONFIGDIR}; then
+	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
+else
+	LCONFIGDIR="/usr/local/include"
+fi
+
+if test ${LCONFIGLIB}; then
+	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
+else
+	LCONFIGLIB="/usr/local/lib"
+fi
 
 # create links for client config file
 ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"

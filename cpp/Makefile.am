@@ -114,6 +114,7 @@ endif
 
 if OS_ANDROID
 
+libndnrtc_la_CPPFLAGS += -fexceptions -frtti
 libndnrtc_la_LIBADD += -llog -lOpenSLES
 
 endif
@@ -147,7 +148,7 @@ endif
 
 if OS_ANDROID
 
-ndnrtc_client_CPPFLAGS += -fPIE
+ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
 ndnrtc_client_LDFLAGS += -pthread -fPIE -pie
 ndnrtc_client_LDADD += -llog -lOpenSLES
 
