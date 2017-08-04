@@ -81,10 +81,10 @@ bool FaceProcessor::checkNfdConnection()
     
     face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
     face.registerPrefix(ndn::Name("/nfd-connectivity-check"),
-                        (ndn::OnInterestCallback)[](const boost::shared_ptr<const ndn::Name>& prefix,
+                        [](const boost::shared_ptr<const ndn::Name>& prefix,
                                                     const boost::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
                                                     uint64_t interestFilterId,
-                                                    const boost::shared_ptr<const ndn::InterestFilter>& filter){} ,
+                                                    const boost::shared_ptr<const ndn::InterestFilter>& filter){},
                         [&done](const boost::shared_ptr<const ndn::Name>& prefix){
                             // failure
                             done = true;
