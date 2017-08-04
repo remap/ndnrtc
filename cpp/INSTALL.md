@@ -149,7 +149,7 @@ Here are detailed instructions on [how to build WebRTC](http://www.webrtc.org/na
 
 $ cd <webrtc-checkout>/src/out/Default
 $ echo "create libwebrtc-all.a" > libwebrtc-all.mri
-$ for lib in $(find . -name '*.a'; do echo "addlib $lib" >> libwebrtc-all.mri; done;
+$ for lib in $(find . -name '*.a'); do echo "addlib $lib" >> libwebrtc-all.mri; done;
 $ echo "save" >> libwebrtc-all.mri && echo "end" >> libwebrtc-all.mri
 $ ar -M &lt;libwebrtc-all.mri
 
