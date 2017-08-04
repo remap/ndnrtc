@@ -35,10 +35,6 @@
 
 #define SIGNING_IDENTITY "/ice-ar"
 
-// UNITY CALLBACKS 
-// 		https://github.com/natbro/UnityPlugin
-// 		http://www.mono-project.com/docs/advanced/pinvoke/
-
 using namespace ndn;
 using namespace ndnrtc;
 using namespace boost::chrono;
@@ -55,22 +51,6 @@ static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
 
 void initKeyChain(std::string storagePath);
 void initFace(std::string hostname, boost::shared_ptr<Logger> logger);
-
-//******************************************************************************
-// library construction
-__attribute__((constructor))
-static void initializer(int argc, char** argv, char** envp) {
-    static int initialized = 0;
-    if (!initialized) {
-        initialized = 1;
-        // Logger::initAsyncLogging();
-    }
-}
-
-__attribute__((destructor))
-static void destructor(){
-	// Logger::releaseAsyncLogging();
-}
 
 //******************************************************************************
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
@@ -112,33 +92,32 @@ private:
 };
 
 //******************************************************************************
-// public
 bool ndnrtc_init(const char* hostname, const char* storagePath, LibLog libLog)
 {
 	Logger::initAsyncLogging();
-	libLog("hello from ndnrtc");
 
-	// boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
-	// 	boost::make_shared<CallbackSink>(libLog));
+	boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+		boost::make_shared<CallbackSink>(libLog));
+	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
-	// libLog("hello from ndnrtc");
-
-	// try {
-	// 	initKeyChain(std::string(storagePath));
-	// 	initFace(std::string(hostname), callbackLogger);
-	// }
-	// catch (std::exception &e)
-	// {
-	// 	callbackLogger->log(ndnlog::NdnLoggerLevelError) 
-	// 		<< "setup error: " << e.what() << std::endl;
-	// 	return false;
-	// }
+	try {
+		initKeyChain(std::string(storagePath));
+		initFace(std::string(hostname), callbackLogger);
+	}
+	catch (std::exception &e)
+	{
+		std::stringstream ss;
+		ss << "setup error: " << e.what() << std::endl;
+		libLog(ss.str().c_str());
+		return false;
+	}
 	return true;
 }
 
 void ndnrtc_deinit()
 {
 	LibFaceProcessor->stop();
+	Logger::releaseAsyncLogging();
 }
 
 //******************************************************************************
@@ -159,11 +138,13 @@ void initKeyChain(std::string storagePath)
 
 	const Name signingIdentity = Name(SIGNING_IDENTITY);
 	LibKeyChain->createIdentityAndCertificate(signingIdentity);
+	identityManager->setDefaultIdentity(signingIdentity);
 }
 
 // initializes face and face processing thread 
 void initFace(std::string hostname, boost::shared_ptr<Logger> logger)
 {
+	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
 	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain, 
 		std::string(SIGNING_IDENTITY),
@@ -172,8 +153,10 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger)
 		3600,
 		logger);
 
-	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
-	LibFaceProcessor->dispatchSynchronized([](boost::shared_ptr<Face> face){
+	LibFaceProcessor->dispatchSynchronized([logger](boost::shared_ptr<Face> face){
+		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
+			<< LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName() << std::endl;
+
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName());
 	});
@@ -194,6 +177,7 @@ instanceName_(instanceName),
 configPolicy_(configPolicy),
 runTime_(instanceCertLifetime)
 {
+	description_ = "key-chain-manager";
 	setLogger(logger);
 	// checkExists(configPolicy);
 	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
@@ -238,9 +222,9 @@ void KeyChainManager::createSigningIdentity()
     // create self-signed certificate
 	Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
 
-	LogWarnC << "Generated identity " << signingIdentity_ << " (certificate name " 
+	LogInfoC << "Generated identity " << signingIdentity_ << " (certificate name " 
 		<< cert << ")" << std::endl;
-	LogWarnC << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i " 
+	LogInfoC << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i " 
 		<< signingIdentity_  << " > signing.cert` if needed)" << std::endl;
 }
 

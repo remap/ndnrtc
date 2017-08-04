@@ -51,9 +51,9 @@ static std::string lvlToString[] = {
 };
 #endif
 
-boost::asio::io_service LogIoService;
-boost::thread LogThread;
-boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
+static boost::asio::io_service LogIoService;
+static boost::thread LogThread;
+static boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
 NilLogger NilLogger::nilLogger_;
 Logger* Logger::sharedInstance_ = 0;
@@ -213,33 +213,18 @@ Logger::processLogRecords()
 {
     if (isProcessing_)
     {
-        bool queueEmpty = false;
         std::string record;
-        
-        while (recordsQueue_.pop(record))
-            sink_->finalizeRecord(record);
 
-        // while (recordsQueue_.pop(record))
-        //     getOutFileStream() << record;
-        
+        while (recordsQueue_.pop(record))
+            if (sink_) sink_->finalizeRecord(record);
+
         if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-            sink_->flush();
-        // if (&getOutStream() != &std::cout)
-        // {
-        //     if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-        //         flush();
-        // }
+            if (sink_) sink_->flush();
     }
-    else
+    else if (sink_)
     {
         sink_->flush();
         sink_->close();
-
-        // if (&getOutStream() != &std::cout)
-        // {
-        //     getOutFileStream().flush();
-        //     getOutFileStream().close();
-        // }
     }
 }
 
@@ -325,7 +310,7 @@ CallbackSink::~CallbackSink(){}
 
 void
 CallbackSink::finalizeRecord(const std::string& record)
-{ callback_("test"); } //record.c_str()); }
+{ callback_(record.c_str()); }
 
 void CallbackSink::flush(){}
 void CallbackSink::close(){}
