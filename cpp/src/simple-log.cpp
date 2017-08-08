@@ -242,7 +242,7 @@ Logger::finalizeLogRecord()
         sink_->finalizeRecord("[CRITICAL]\tlog queue is full");
         // getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
     else
-        LogIoService.post(boost::bind(&Logger::processLogRecords, this));
+        LogIoService.post(boost::bind(&Logger::processLogRecords, shared_from_this()));
 }
 
 //******************************************************************************

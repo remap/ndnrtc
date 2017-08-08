@@ -17,6 +17,7 @@
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <string>
@@ -179,7 +180,7 @@ namespace ndnlog {
          * Logger object. Performs thread-safe logging into a file or standard 
          * output.
          */
-        class Logger
+        class Logger : public boost::enable_shared_from_this<Logger>
         {
         private:
             using endl_type = std::ostream&(std::ostream&);

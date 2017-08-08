@@ -173,11 +173,16 @@ NameComponents::videoStreamPrefix(string basePrefix)
 //******************************************************************************
 bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
 {
-    if (name.size() >= 2 && name[0].isVersion())
+    if (name.size() >= 1 && name[0].isVersion())
     {
         info.metaVersion_ = name[0].toVersion();
-        info.segNo_ = name[1].toSegment();
-        info.hasSegNo_ = true;
+        if (name.size() >= 2)
+        {
+            info.segNo_ = name[1].toSegment();
+            info.hasSegNo_ = true;
+        }
+        else
+            info.hasSegNo_ = false;
         return true;
     }
 
