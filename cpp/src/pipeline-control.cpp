@@ -76,7 +76,7 @@ PipelineControl::start()
 {
 	if (machine_.getState() != kStateIdle)
 		throw std::runtime_error("Can't start Pipeline Control as it has been "
-			"started alread. Use reset() and start() to restart.");
+			"started already. Use reset() and start() to restart.");
 
 	sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
 	sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Delta);

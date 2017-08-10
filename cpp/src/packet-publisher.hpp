@@ -24,7 +24,7 @@
 #define ADD_CRC 0
 // this number defines iteration when publisher will
 // send NACKs to all pending interests, unsatisfied with data 
-#define FULL_PIT_FREQUENCY 100 
+#define FULL_PIT_FREQUENCY 1000 
 
 namespace ndn{
 	class Face;

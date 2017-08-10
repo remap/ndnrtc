@@ -21,6 +21,7 @@
 #include <ndn-cpp/security/identity/file-private-key-storage.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 
 #include <boost/chrono.hpp>
 #include <boost/asio.hpp>
@@ -44,6 +45,7 @@ static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "private-keys";
 
 static boost::shared_ptr<FaceProcessor> LibFaceProcessor;
+static boost::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
 static boost::shared_ptr<KeyChain> LibKeyChain;
 static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
 
@@ -69,6 +71,11 @@ public:
     
     const boost::shared_ptr<ndn::IdentityCertificate> instanceCertificate() const
         { return instanceCert_; }
+
+    const boost::shared_ptr<ndn::IdentityCertificate> signingIdentityCertificate() const
+    {
+    	return signingCert_;
+    }
     
 private:
     boost::shared_ptr<ndn::Face> face_;
@@ -78,7 +85,7 @@ private:
 
     boost::shared_ptr<ndn::PolicyManager> configPolicyManager_;
 	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
-    boost::shared_ptr<ndn::IdentityCertificate> instanceCert_;
+    boost::shared_ptr<ndn::IdentityCertificate> instanceCert_, signingCert_;
     boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
     boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
 
@@ -224,13 +231,34 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		3600,
 		logger);
 
-	LibFaceProcessor->dispatchSynchronized([logger](boost::shared_ptr<Face> face){
+	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
 		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
 			<< LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName() << std::endl;
 
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName());
+		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
 	});
+
+	Name prefix(signingIdentityStr);
+	LibContentCache->registerPrefix(prefix,
+		[logger](const boost::shared_ptr<const Name> &p){
+			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p << std::endl;
+		},
+		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
+			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p << std::endl;
+
+			LibContentCache->add(*(LibKeyChainManager->signingIdentityCertificate()));
+			LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
+		},
+		[logger](const boost::shared_ptr<const Name>& p,
+			const boost::shared_ptr<const Interest> &i,
+			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
+			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
+			<< std::endl;
+
+			LibContentCache->storePendingInterest(i, f);
+		});
 }
 
 //******************************************************************************
@@ -304,6 +332,9 @@ void KeyChainManager::setupInstanceKeyChain()
 		LogInfoC << "Signing identity not found. Creating..." << std::endl;
 		createSigningIdentity();
 	}
+
+	Name certName = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(signingIdentity);
+	signingCert_ = defaultKeyChain_->getCertificate(certName);
 
 	createMemoryKeychain();
 	createInstanceIdentity();
