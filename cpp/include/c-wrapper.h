@@ -10,6 +10,8 @@
 #ifndef __c_wrapper_h__
 #define __c_wrapper_h__
 
+#include "local-stream.hpp"
+
 extern "C" {
 
 	typedef void (*LibLog) (const char* message);
@@ -21,12 +23,23 @@ extern "C" {
 	//		optional: local key storage
 	// - runs everything on internal thread
 	bool ndnrtc_init(const char* hostname, const char* storagePath, 
-		LibLog libLog);
+		const char* signingIdentity, const char * instanceId, LibLog libLog);
 
 	// deinitializes library (removes connection and frees objects)
 	// init can be called again after this
 	void ndnrtc_deinit();
 
+
+	typedef struct _LocalStreamParams {
+		const char *basePrefix;
+		int signingOn;
+		int fecOn;
+		int typeIsVideo;
+		int ndnSegmentSize, ndnDataFreshnessPeriodMs;
+		int frameWidth, frameHeight;
+		int startBitrate, maxBitrate, gop, dropFrames;
+		const char *streamName, *threadName;
+	} LocalStreamParams;
 	// params
 	//	base prefix
 	//	settings
@@ -48,7 +61,22 @@ extern "C" {
 	//			encode_width
 	//			drop_frames
 	//	use FEC
-	// void ndnrtc_CreateVideoStreamObject();
+	ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink);
+	void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject);
+
+	void ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideU,
+			const unsigned int strideV,
+			const unsigned char* yBuffer,
+			const unsigned char* uBuffer,
+			const unsigned char* vBuffer);
+
+	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
+	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
+	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);
 }
 
 #endif

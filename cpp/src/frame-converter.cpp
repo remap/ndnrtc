@@ -45,9 +45,13 @@ WebRtcVideoFrame RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
 WebRtcVideoFrame RawFrameConverter::operator<<(const I420RawFrameWrapper& wr)
 {
 	frameBuffer_ = I420Buffer::Create(wr.width_, wr.height_, wr.strideY_, wr.strideU_, wr.strideV_);
-	memcpy(frameBuffer_->MutableDataY(), wr.yBuffer_, wr.strideY_);
-	memcpy(frameBuffer_->MutableDataU(), wr.uBuffer_, wr.strideU_);
-	memcpy(frameBuffer_->MutableDataV(), wr.vBuffer_, wr.strideV_);
+
+	unsigned int ySize = wr.strideY_*wr.height_;
+	unsigned int uSize = wr.strideU_*(wr.height_+1)/2;
+	unsigned int vSize = wr.strideV_*(wr.height_+1)/2;
+	memcpy(frameBuffer_->MutableDataY(), wr.yBuffer_, ySize);
+	memcpy(frameBuffer_->MutableDataU(), wr.uBuffer_, uSize);
+	memcpy(frameBuffer_->MutableDataV(), wr.vBuffer_, vSize);
 
 	return WebRtcVideoFrame(frameBuffer_, webrtc::kVideoRotation_0, 0);
 }

@@ -33,8 +33,6 @@
 #include "local-stream.hpp"
 #include "simple-log.hpp"
 
-#define SIGNING_IDENTITY "/ice-ar"
-
 using namespace ndn;
 using namespace ndnrtc;
 using namespace boost::chrono;
@@ -49,8 +47,10 @@ static boost::shared_ptr<FaceProcessor> LibFaceProcessor;
 static boost::shared_ptr<KeyChain> LibKeyChain;
 static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
 
-void initKeyChain(std::string storagePath);
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger);
+void initKeyChain(std::string storagePath, std::string signingIdentity);
+void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
+	std::string signingIdentity, std::string instanceId);
+MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 
 //******************************************************************************
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
@@ -92,7 +92,8 @@ private:
 };
 
 //******************************************************************************
-bool ndnrtc_init(const char* hostname, const char* storagePath, LibLog libLog)
+bool ndnrtc_init(const char* hostname, const char* storagePath, 
+	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {
 	Logger::initAsyncLogging();
 
@@ -101,8 +102,8 @@ bool ndnrtc_init(const char* hostname, const char* storagePath, LibLog libLog)
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
 	try {
-		initKeyChain(std::string(storagePath));
-		initFace(std::string(hostname), callbackLogger);
+		initKeyChain(storagePath, signingIdentity);
+		initFace(hostname, callbackLogger, signingIdentity, instanceId);
 	}
 	catch (std::exception &e)
 	{
@@ -124,11 +125,76 @@ void ndnrtc_deinit()
 	Logger::releaseAsyncLogging();
 }
 
+ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink)
+{
+	if (params.typeIsVideo == 1)
+	{
+		MediaStreamSettings settings(LibFaceProcessor->getIo(), prepareMediaStreamParams(params));
+		settings.sign_ = (params.signingOn == 1);
+		settings.face_ = LibFaceProcessor->getFace().get();
+		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
+
+		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+			boost::make_shared<CallbackSink>(loggerSink));
+		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
+			<< "signing " << (settings.sign_ ? "ON" : "OFF")
+	 		<< "):" << settings.params_ << std::endl;
+
+		LocalVideoStream *stream = new LocalVideoStream(params.basePrefix, settings, (params.fecOn == 1));
+		stream->setLogger(callbackLogger);
+
+		return stream;
+	}
+
+	return nullptr;
+}
+
+void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
+{
+	if (localStreamObject)
+		delete localStreamObject;
+}
+
+const char* ndnrtc_LocalStream_getPrefix(IStream *stream)
+{
+	if (stream)
+		return stream->getPrefix().c_str();
+	return "n/a";
+}
+
+const char* ndnrtc_LocalStream_getBasePrefix(IStream *stream)
+{
+	if (stream)
+		return stream->getBasePrefix().c_str();
+	return "n/a";
+}
+
+const char* ndnrtc_LocalStream_getStreamName(IStream *stream)
+{
+	if (stream)
+		return stream->getStreamName().c_str();
+	return "n/a";
+}
+
+void ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideU,
+			const unsigned int strideV,
+			const unsigned char* yBuffer,
+			const unsigned char* uBuffer,
+			const unsigned char* vBuffer)
+{
+	if (stream)
+		stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
+}
+
 //******************************************************************************
 // private
 // initializes new file-based keychain
 // if signing identity does not exist, creates it
-void initKeyChain(std::string storagePath)
+void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 {
 	std::string databaseFilePath = storagePath + "/" + std::string(PublicDb);
 	std::string privateKeysPath = storagePath + "/" + std::string(PrivateDb);
@@ -140,19 +206,20 @@ void initKeyChain(std::string storagePath)
 
 	LibKeyChain = boost::make_shared<KeyChain>(identityManager, policyManager);
 
-	const Name signingIdentity = Name(SIGNING_IDENTITY);
+	const Name signingIdentity = Name(signingIdentityStr);
 	LibKeyChain->createIdentityAndCertificate(signingIdentity);
 	identityManager->setDefaultIdentity(signingIdentity);
 }
 
 // initializes face and face processing thread 
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger)
+void initFace(std::string hostname, boost::shared_ptr<Logger> logger, 
+	std::string signingIdentityStr, std::string instanceIdStr)
 {
 	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
 	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain, 
-		std::string(SIGNING_IDENTITY),
-		std::string("mobile-terminal0"),
+		std::string(signingIdentityStr),
+		std::string(instanceIdStr),
 		std::string("policy-file.conf"),
 		3600,
 		logger);
@@ -164,6 +231,34 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger)
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName());
 	});
+}
+
+//******************************************************************************
+MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
+{
+
+	MediaStreamParams p(params.streamName);
+	p.producerParams_.segmentSize_ = params.ndnSegmentSize;
+	p.producerParams_.freshnessMs_ = params.ndnDataFreshnessPeriodMs;
+
+	if (params.typeIsVideo == 1)
+	{
+		p.type_ = MediaStreamParams::MediaStreamTypeVideo;
+
+		VideoCoderParams vcp;
+		vcp.codecFrameRate_ = 30;
+		vcp.gop_ = params.gop;
+		vcp.startBitrate_ = params.startBitrate;
+		vcp.maxBitrate_ = params.maxBitrate;
+		vcp.encodeWidth_ = params.frameWidth;
+		vcp.encodeHeight_ = params.frameHeight;
+		vcp.dropFramesOn_ = (params.dropFrames == 1);
+
+		VideoThreadParams vp(params.threadName, vcp);
+		p.addMediaThread(vp);
+	}
+
+	return p;
 }
 
 //******************************************************************************
