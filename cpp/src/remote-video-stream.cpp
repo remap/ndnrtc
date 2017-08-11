@@ -46,6 +46,8 @@ RemoteStreamImpl(io, face, keyChain, streamPrefix)
     
     playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
+    latencyControl_->setPlayoutControl(playoutControl_);
+    
     validator_ = boost::make_shared<ManifestValidator>(face, keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }

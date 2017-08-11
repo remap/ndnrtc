@@ -47,7 +47,7 @@ PlayoutControl::checkPlayout()
 			if (pqsize >= thresholdMs_)
 			{
 				LogInfoC << "playback queue size (" << pqsize
-					<< ")reached target size (" << thresholdMs_ 
+					<< ") reached target size (" << thresholdMs_ 
 					<< "). starting playout" << std::endl;
 
 				playout_->start(pqsize-thresholdMs_);
