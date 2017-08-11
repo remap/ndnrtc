@@ -114,12 +114,13 @@ class StatFileWriter : public StatWriter {
 /**
  * Metric formatter for CSV format
  */
+ #define CSV_SEPARATOR ","
 class CsvFormatter : public StatWriter::IMetricFormatter
 {
    public:
       CsvFormatter(const CsvFormatter& formatter):
          IMetricFormatter(formatter),separator_(formatter.getSeparator()){}
-      CsvFormatter(unsigned int precision = 2, std::string separator = "\t"):
+      CsvFormatter(unsigned int precision = 2, std::string separator = CSV_SEPARATOR):
          IMetricFormatter(precision),separator_(separator){}
 
       std::string getSeparator() const { return separator_; }

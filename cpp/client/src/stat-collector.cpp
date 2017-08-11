@@ -16,7 +16,7 @@ using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-#define JSON_FORMATTER
+// #define JSON_FORMATTER
 
 //******************************************************************************
 std::map<std::string, Indicator> StatWriter::IndicatorLookupTable;
