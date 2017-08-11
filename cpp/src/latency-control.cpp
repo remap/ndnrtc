@@ -277,6 +277,8 @@ LatencyControl::onDrdUpdate()
         {
             LogDebugC << "updating target playback queue size to " << targetSize << std::endl;
             playoutControl_->setThreshold(targetSize);
+
+            (*sstorage_)[Indicator::BufferTargetSize] = targetSize;
         }
     }
 }
