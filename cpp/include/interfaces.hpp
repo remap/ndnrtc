@@ -76,7 +76,9 @@ namespace ndnrtc
         virtual int incomingArgbFrame(const unsigned int width,
                                       const unsigned int height,
                                       unsigned char* argbFrameData,
-                                      unsigned int frameSize) = 0;
+                                      unsigned int frameSize,
+                                      unsigned int userDataSize = 0,
+                                      unsigned char* userData = nullptr) = 0;
         
         /**
          * Alternative method for delivering YUV frames (I420 or y420 or 
@@ -90,7 +92,9 @@ namespace ndnrtc
                                       const unsigned int strideV,
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
-                                      const unsigned char* vBuffer) = 0;
+                                      const unsigned char* vBuffer,
+                                      unsigned int userDataSize = 0,
+                                      unsigned char* userData = nullptr) = 0;
     };
 }
 

@@ -610,7 +610,7 @@ namespace ndnrtc {
         ENABLE_IF(T,Mutable)
         VideoFramePacketT(const webrtc::EncodedImage& frame):
             HeaderPacketT<CommonHeader,T>(frame._length, frame._buffer), 
-            isSyncListSet_(false)
+            isSyncListSet_(false), isUserDataSet_(false)
         {
             assert(frame._encodedWidth);
             assert(frame._encodedHeight);
@@ -702,6 +702,22 @@ namespace ndnrtc {
             isSyncListSet_ = true;
         }
 
+        ENABLE_IF(T,Mutable)
+        void setUserData(const std::map<std::string, std::pair<unsigned int, unsigned char*>>& userData)
+        {
+            if (this->isHeaderSet()) throw std::runtime_error("Can't add more data to this packet"
+                " as header has been set already");
+            if (isUserDataSet_) throw std::runtime_error("User Data has been already set");
+
+            for (auto it:userData)
+            {
+                this->addBlob(sizeof(it.second.first), (uint8_t*)&it.second.first);
+                this->addBlob(it.second.first, it.second.second);
+            }
+
+            isUserDataSet_ = true;
+        }
+
         typedef std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> ImmutableVideoSegmentsVector;
         typedef std::vector<ImmutableHeaderPacket<DataSegmentHeader>> ImmutableRecoverySegmentsVector;
 
@@ -720,7 +736,7 @@ namespace ndnrtc {
         } __attribute__((packed)) Header;
 
         webrtc::EncodedImage frame_;
-        bool isSyncListSet_;
+        bool isSyncListSet_, isUserDataSet_;
     };
 
     typedef VideoFramePacketT<> VideoFramePacket;
