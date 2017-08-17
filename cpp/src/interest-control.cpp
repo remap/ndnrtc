@@ -149,10 +149,23 @@ InterestControl::markLowerLimit(unsigned int lowerLimit)
 }
 
 void 
-InterestControl::onDrdUpdate()
+InterestControl::onCachedDrdUpdate()
 {
+	/*ignored*/
+}
+
+void 
+InterestControl::onOriginalDrdUpdate()
+{ 
 	if (initialized_)
 		setLimits();
+}
+
+void 
+InterestControl::onDrdUpdate()
+{
+	// if (initialized_)
+	// 	setLimits();
 }
 
 void
@@ -167,6 +180,7 @@ void
 InterestControl::setLimits()
 {
 	unsigned int newLower = 0, newUpper = 0;
+
 	strategy_->getLimits(targetRate_, drdEstimator_->getLatestUpdatedAverage(),
 		newLower, newUpper);
 

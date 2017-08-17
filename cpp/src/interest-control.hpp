@@ -161,8 +161,8 @@ namespace ndnrtc {
         
         // IDrdEstimatorObserver
 		void onDrdUpdate();
-		void onCachedDrdUpdate(){ /*ignored*/ }
-		void onOriginalDrdUpdate(){ /*ignored*/ }
+		void onCachedDrdUpdate();
+		void onOriginalDrdUpdate();
 
         // IBufferControlObserver
 		void targetRateUpdate(double rate);
