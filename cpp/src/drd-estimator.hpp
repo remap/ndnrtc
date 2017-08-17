@@ -25,7 +25,7 @@ namespace ndnrtc {
 	 */
 	class DrdEstimator {
 	public:
-		DrdEstimator(unsigned int initialEstimationMs = 150, unsigned int windowMs = 30000);
+		DrdEstimator(unsigned int initialEstimationMs = 150, unsigned int windowMs = 1000);
 
 		void newValue(double drd, bool isOriginal);
 		double getCachedEstimation() const;
