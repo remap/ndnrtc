@@ -86,7 +86,7 @@ InterestControl::decrement()
 	pipeline_--;
     assert(pipeline_ >= 0);
     
-	LogTraceC << "▼dec " << snapshot() << std::endl;
+	LogDebugC << "▼dec " << snapshot() << std::endl;
     (*sstorage_)[Indicator::W] = pipeline_;
 	return true;
 }
@@ -99,7 +99,7 @@ InterestControl::increment()
 
 	pipeline_++;
     
-	LogTraceC << "▲inc " << snapshot() << std::endl;
+	LogDebugC << "▲inc " << snapshot() << std::endl;
     (*sstorage_)[Indicator::W] = pipeline_;
 	return true;
 }
@@ -128,9 +128,10 @@ InterestControl::withhold()
 		int d = strategy_->withhold(limit_, lowerLimit_, upperLimit_);
 
 		if (d != 0)
+		{
 			changeLimitTo(limit_+d);
-		
-		LogDebugC << "withhold by " << -d << " " << snapshot() << std::endl;
+			LogDebugC << "withhold by " << -d << " " << snapshot() << std::endl;
+		}
 
 		return (d!=0);
 	}
@@ -141,6 +142,7 @@ InterestControl::withhold()
 void 
 InterestControl::markLowerLimit(unsigned int lowerLimit) 
 { 
+	LogDebugC << "marking lower limit " << lowerLimit << std::endl;
 	limitSet_ = true; 
 	lowerLimit_ = lowerLimit; 
 	setLimits();
@@ -167,6 +169,14 @@ InterestControl::setLimits()
 	unsigned int newLower = 0, newUpper = 0;
 	strategy_->getLimits(targetRate_, drdEstimator_->getLatestUpdatedAverage(),
 		newLower, newUpper);
+
+	LogTraceC << "deciding... rate " << targetRate_ 
+		<< " latest drd update: value " << drdEstimator_->getLatestUpdatedAverage().value()
+		<< " dev " << drdEstimator_->getLatestUpdatedAverage().deviation()
+		<< " (demand ~" << drdEstimator_->getLatestUpdatedAverage().value()/1000.*targetRate_ << ")"
+		<< " newLower " << newLower << " (" << lowerLimit_
+		<< ") newUpper " << newUpper << " (" << upperLimit_ << ")"
+		<< std::endl;
 
 	if (lowerLimit_ != newLower ||
 		upperLimit_ != newUpper)
@@ -220,13 +230,13 @@ InterestControl::snapshot() const
          ++i)
     {
         if (i > limit_)
-            ss << "⥣";
+            ss << "|"; //"⥣";
         else
         {
             if (i <= pipeline_)
-                ss << "⬆︎";
+                ss << "+"; //"⬆︎";
             else
-                ss << "◻︎";
+                ss << "-"; //"◻︎";
         }
     }
 	ss << "]" << pipeline_ << "-" << limit_ << " (" << room() <<")";
