@@ -18,6 +18,8 @@ using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 using namespace estimators;
 
+#define DEFAULT_TARGET_QUEUE_SIZE 150
+
 //******************************************************************************
 namespace ndnrtc {
 	class StabilityEstimator : public ndnlog::new_api::ILoggingObject
@@ -258,6 +260,7 @@ observer_(nullptr),
 currentCommand_(KeepPipeline)
 {
     description_ = "latency-control";
+    (*sstorage_)[Indicator::BufferTargetSize] = DEFAULT_TARGET_QUEUE_SIZE;
 }
 
 LatencyControl::~LatencyControl()
@@ -271,7 +274,7 @@ LatencyControl::onDrdUpdate()
 
     if (playoutControl_.get())
     {
-        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getLatestUpdatedAverage(), 150);
+        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getLatestUpdatedAverage(), DEFAULT_TARGET_QUEUE_SIZE);
         
         if (targetSize != playoutControl_->getThreshold())
         {

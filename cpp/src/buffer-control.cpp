@@ -61,6 +61,8 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
 
 		LogDebugC << "added segment " << receipt.segment_->getInfo().getSuffix(suffix_filter::Thread)
 			<< (receipt.segment_->isOriginal() ? " ORIG" : " CACH")
+			<< " dgen " << receipt.segment_->getDgen()
+			<< " rtt " << (receipt.segment_->getRoundTripDelayUsec())/1000
             << std::endl;
 	}
 	else

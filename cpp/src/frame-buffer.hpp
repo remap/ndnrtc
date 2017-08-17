@@ -65,6 +65,7 @@ namespace ndnrtc
          * generation delay received in metadata for the segment.
          */
         int64_t getDrdUsec() const;
+        int64_t getDgen() const;
 
     private:
         boost::shared_ptr<const ndn::Interest> interest_;

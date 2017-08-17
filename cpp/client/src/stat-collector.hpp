@@ -114,7 +114,7 @@ class StatFileWriter : public StatWriter {
 /**
  * Metric formatter for CSV format
  */
- #define CSV_SEPARATOR ","
+ #define CSV_SEPARATOR "\t"
 class CsvFormatter : public StatWriter::IMetricFormatter
 {
    public:

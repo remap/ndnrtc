@@ -69,6 +69,12 @@ SlotSegment::getDrdUsec() const
     return getRoundTripDelayUsec();
 }
 
+int64_t 
+SlotSegment::getDgen() const
+{
+    return (int64_t)(data_->header().generationDelayMs_);
+}
+
 //******************************************************************************
 static std::string
 stateToString(BufferSlot::State s)

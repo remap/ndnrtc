@@ -103,7 +103,7 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
             async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
         }
         else 
-          if (queue_.size() > 20)
+          if (queue_.size() > 10)
             // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
             drainQueue();   // this is a hack and it will break everything if enqueueInterest
                             // is called from other than faceIo_ thread. however, the code 
@@ -148,10 +148,10 @@ InterestQueue::drainQueue()
 
     if (isDrainingQueue_)
     {
-        LogDebugC 
+        LogTraceC 
         << "draining queue, size "  << queue_.size() 
         << ", top priority: " << queue_.top().getValue() << std::endl;
-        
+
         while (isDrainingQueue_)
         {
             processEntry(queue_.top());
