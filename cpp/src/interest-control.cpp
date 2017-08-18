@@ -12,6 +12,8 @@
 #include "name-components.hpp"
 #include "estimators.hpp"
 
+#define DEVIATION_ALPHA 1.
+
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
@@ -22,8 +24,7 @@ InterestControl::StrategyDefault::getLimits(double rate,
 	const estimators::Average& drd, 
 	unsigned int& lowerLimit, unsigned int& upperLimit)
 {
-	double d = drd.value() + 
-		4*drd.deviation();
+	double d = drd.value() + DEVIATION_ALPHA*drd.deviation();
 	double targetSamplePeriod = 1000./rate;
 	int interestDemand = (int)(ceil(d/targetSamplePeriod));
 	
