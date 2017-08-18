@@ -64,7 +64,7 @@ extern "C" {
 	ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink);
 	void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject);
 
-	void ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
+	int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned int width,
 			const unsigned int height,
 			const unsigned int strideY,

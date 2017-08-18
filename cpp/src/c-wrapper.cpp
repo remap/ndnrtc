@@ -183,7 +183,7 @@ const char* ndnrtc_LocalStream_getStreamName(IStream *stream)
 	return "n/a";
 }
 
-void ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
+int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned int width,
 			const unsigned int height,
 			const unsigned int strideY,
@@ -194,7 +194,7 @@ void ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned char* vBuffer)
 {
 	if (stream)
-		stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
+		return stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
 }
 
 //******************************************************************************

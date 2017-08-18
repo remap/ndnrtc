@@ -170,6 +170,7 @@ namespace ndnrtc {
 		 * publishes encoded data according to NDN-RTC namespace. 
 		 * Call is asynchronous: returns immediately. Publishing is performed
 		 * on Face thread to avoid data races.
+		 * @return playback number of a frame, if is was published, -1 if it wasn't
 		 */
 		int incomingArgbFrame(const unsigned int width,
 			const unsigned int height,

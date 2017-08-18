@@ -83,16 +83,22 @@ vector<string> VideoStreamImpl::getThreads() const
 	return threads;
 }
 
-void VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w)
+int
+VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w)
 {
 	LogDebugC << "⤹ incoming ARGB frame " << w.width_ << "x" << w.height_ << std::endl;
-	feedFrame(conv_ << w);
+	if (feedFrame(conv_ << w))
+		return (playbackCounter_-1);
+	return -1;
 }
 
-void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
+int
+VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
 {
 	LogDebugC << "⤹ incoming I420 frame " << w.width_ << "x" << w.height_ << std::endl;
-	feedFrame(conv_ << w);
+	if (feedFrame(conv_ << w))
+		return (playbackCounter_-1);
+	return -1;
 }
 
 void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
@@ -149,14 +155,14 @@ void VideoStreamImpl::remove(const string& threadName)
 	}
 }
 
-void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
+bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 {
     (*statStorage_)[Indicator::CapturedNum]++;
     
     if (busyPublishing_ > 0)
     {
         LogWarnC << "⨂ busy publishing (capture rate may be too high)" << std::endl;
-        return ;
+        return false;
     }
     
 	if (threads_.size())
@@ -185,11 +191,13 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		}
 		
         (*statStorage_)[Indicator::DroppedNum] += (threads_.size()-frames.size());
-        
+        bool result = false;
+
 		if (frames.size())
 		{
 			publish(frames);
 			playbackCounter_++;
+			result = true;
 		}
 		
 		if (!isPeriodicInvocationSet())
@@ -198,6 +206,8 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 			setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
 				boost::bind(&VideoStreamImpl::periodicInvocation, me));
 		}
+
+		return result;
 	}
 	else
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
