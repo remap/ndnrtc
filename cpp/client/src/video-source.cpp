@@ -16,7 +16,7 @@ VideoSource::VideoSource(io_service& io_service,
 	const std::string& sourcePath, 
 	const boost::shared_ptr<RawFrame>& frame):
 io_(io_service), frame_(frame), isRunning_(false), framesSourced_(0),
-nRewinds_(0)
+nRewinds_(0), userDataSize_(0), userData_(nullptr)
 {
 	assert(frame.get());
 
@@ -107,7 +107,8 @@ void VideoSource::deliverFrame(const RawFrame& frame)
 {
 	for (auto capturer:capturers_)
 		capturer->incomingArgbFrame(frame.getWidth(), frame.getHeight(),
-			frame.getBuffer().get(), frame.getFrameSizeInBytes());
+			frame.getBuffer().get(), frame.getFrameSizeInBytes(),
+			userDataSize_, userData_);
 
 	// LogTrace("") << "delivered frame to " << capturers_.size() << " capturers" << endl;
 }
