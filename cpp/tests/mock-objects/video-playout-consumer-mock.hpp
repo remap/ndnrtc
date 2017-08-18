@@ -16,7 +16,7 @@
 class MockVideoPlayoutConsumer : public ndnrtc::IEncodedFrameConsumer
 {
 public:
-	MOCK_METHOD1(processFrame, void(const webrtc::EncodedImage&));
+	MOCK_METHOD2(processFrame, void(PacketNumber, const webrtc::EncodedImage&));
 };
 
 #endif

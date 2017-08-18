@@ -19,7 +19,7 @@
 #include "video-playout-impl.hpp"
 
 namespace ndnrtc {
-    typedef boost::function<void(const WebRtcVideoFrame&)> OnDecodedImage;
+    typedef boost::function<void(PacketNumber, const WebRtcVideoFrame&)> OnDecodedImage;
 
     class VideoDecoder : public IEncodedFrameConsumer,
                          public webrtc::DecodedImageCallback,
@@ -30,7 +30,7 @@ namespace ndnrtc {
             OnDecodedImage onDecodedImage);
         
         // interface conformance - IEncodedFrameConsumer
-        void processFrame(const webrtc::EncodedImage&);
+        void processFrame(PacketNumber, const webrtc::EncodedImage&);
 
     private:
         VideoCoderParams settings_;
@@ -38,6 +38,7 @@ namespace ndnrtc {
         webrtc::VideoCodec codec_;
         boost::shared_ptr<webrtc::VideoDecoder> decoder_;
         int frameCount_;
+        PacketNumber frameNo_;
         
         void
         resetDecoder();

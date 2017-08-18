@@ -44,11 +44,11 @@ uint8_t* RendererInternal::getFrameBuffer(int width, int height)
     return frame_->getBuffer().get();
 }
 
-void RendererInternal::renderBGRAFrame(int64_t timestamp, int width, int height, 
+void RendererInternal::renderBGRAFrame(int64_t timestamp, uint frameNo, int width, int height, 
     const uint8_t* buffer)
 {
     if (!frame_.get())
-        throw runtime_error("render buffer hasn not been initialized");
+        throw runtime_error("render buffer has not been initialized");
 
     if (width != frame_->getWidth() || height != frame_->getHeight())
         throw runtime_error("wrong frame size supplied");

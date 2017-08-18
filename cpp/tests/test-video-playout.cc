@@ -558,10 +558,10 @@ TEST(TestPlayout, TestSkipDelta)
 		.Times(AtLeast(25));
 
 	int nEncodedReceived = 0;
-	boost::function<void(const webrtc::EncodedImage&)> processFrame = [&nEncodedReceived](const webrtc::EncodedImage&){
+	boost::function<void(PacketNumber, const webrtc::EncodedImage&)> processFrame = [&nEncodedReceived](PacketNumber, const webrtc::EncodedImage&){
 		nEncodedReceived++;
 	};
-	EXPECT_CALL(frameConsumer, processFrame(_))
+	EXPECT_CALL(frameConsumer, processFrame(_, _))
 		.WillRepeatedly(Invoke(processFrame));
 
 	// request initial frames

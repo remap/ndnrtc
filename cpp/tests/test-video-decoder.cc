@@ -20,7 +20,7 @@ using namespace ndnrtc;
 TEST(TestDecoder, TestCreate)
 {
 	EXPECT_NO_THROW(
-		VideoDecoder decoder(sampleVideoCoderParams(), [](const WebRtcVideoFrame &){})
+		VideoDecoder decoder(sampleVideoCoderParams(), [](PacketNumber fNo, const WebRtcVideoFrame &){})
 	);
 }
 
@@ -45,7 +45,7 @@ TEST(TestDecoder, TestEncodeDecode2K)
 
 	int nEncoded = 0;
 	int nDecoded = 0;
-	VideoDecoder vdc(vcp, [&nDecoded, width, height](const WebRtcVideoFrame &f){
+	VideoDecoder vdc(vcp, [&nDecoded, width, height](PacketNumber fNo, const WebRtcVideoFrame &f){
 		nDecoded++;
 		EXPECT_EQ(f.width(), width);
 		EXPECT_EQ(f.height(), height);
@@ -55,7 +55,7 @@ TEST(TestDecoder, TestEncodeDecode2K)
 		.Times(AtLeast(1))
 		.WillRepeatedly(Invoke([&vdc, &nEncoded](const webrtc::EncodedImage& img){
 			nEncoded++;
-			vdc.processFrame(img);
+			vdc.processFrame(nEncoded, img);
 		}));
 	EXPECT_CALL(coderDelegate, onEncodingStarted())
 		.Times(nFrames);

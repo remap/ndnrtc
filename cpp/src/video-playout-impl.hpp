@@ -56,7 +56,7 @@ namespace ndnrtc {
 	class IEncodedFrameConsumer 
     {
     public:
-        virtual void processFrame(const webrtc::EncodedImage&) = 0;
+        virtual void processFrame(PacketNumber, const webrtc::EncodedImage&) = 0;
     };
 
     class IVideoPlayoutObserver : public IPlayoutObserver 
