@@ -610,7 +610,7 @@ namespace ndnrtc {
         ENABLE_IF(T,Mutable)
         VideoFramePacketT(const webrtc::EncodedImage& frame):
             HeaderPacketT<CommonHeader,T>(frame._length, frame._buffer), 
-            isSyncListSet_(false)
+            isSyncListSet_(false), isUserDataSet_(false)
         {
             assert(frame._encodedWidth);
             assert(frame._encodedHeight);
@@ -652,11 +652,38 @@ namespace ndnrtc {
             typedef typename std::vector<typename DataPacketT<T>::Blob>::const_iterator BlobIterator;
             std::map<std::string, PacketNumber> syncList;
 
-            for (BlobIterator blob = this->blobs_.begin()+1; 
-                blob+1 < this->blobs_.end(); blob+=2)
-                syncList[std::string((const char*)blob->data(), blob->size())] = *(PacketNumber*)(blob+1)->data();
+            for (BlobIterator blob = this->blobs_.begin()+1;blob+1 < this->blobs_.end(); blob+=2)
+            {
+                std::string mapKey((const char*)blob->data(), blob->size());
+                std::map<std::string, PacketNumber>::iterator it = syncList.find(mapKey);
+                if(it == syncList.end())
+                    syncList[mapKey] = *(PacketNumber*)(blob+1)->data();
+            }
 
             return boost::move(syncList);
+        }
+
+        const std::map<std::string, std::string> getUserData() const
+        {
+            typedef typename std::vector<typename DataPacketT<T>::Blob>::const_iterator BlobIterator;
+            std::map<std::string, std::string> userData;
+            std::vector<std::string> keyVector;
+
+            for (BlobIterator blob = this->blobs_.begin()+1;blob+1 < this->blobs_.end(); blob+=2)
+            {
+                std::string mapKey((const char*)blob->data(), blob->size());
+                std::vector<std::string>::iterator it = std::find(keyVector.begin(), keyVector.end(), mapKey);
+
+                if(it == keyVector.end())
+                    keyVector.push_back(mapKey);
+                else
+                {
+                    std::string ud((const char*)(blob+1)->data());
+                    userData[mapKey] = ud;
+                }
+            }
+
+            return boost::move(userData);
         }
 
         ENABLE_IF(T,Mutable)
@@ -702,6 +729,28 @@ namespace ndnrtc {
             isSyncListSet_ = true;
         }
 
+        /**
+         * Provide user data along with video frames for client code.
+         * e.g. unsigned char userData[] = "data\0", and its length is defined as 4.
+         * NOTE: User data should be end up with '\0'.
+        */
+        ENABLE_IF(T,Mutable)
+        void setUserData(const std::map<std::string , std::pair<unsigned int, unsigned char*>>& userData)
+        {
+            if (this->isHeaderSet()) throw std::runtime_error("Can't add more data to this packet"
+                " as header has been set already");
+            if (isUserDataSet_) throw std::runtime_error("User Data has been already set");
+
+            for (auto it:userData)
+            {
+               std::string ud(it.second.second, it.second.second+it.second.first+1);
+               this->addBlob(it.first.size(), (uint8_t*)it.first.c_str());
+               this->addBlob(ud.length(), (uint8_t*)ud.c_str());
+            }
+
+            isUserDataSet_ = true;
+        }
+
         typedef std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> ImmutableVideoSegmentsVector;
         typedef std::vector<ImmutableHeaderPacket<DataSegmentHeader>> ImmutableRecoverySegmentsVector;
 
@@ -720,7 +769,7 @@ namespace ndnrtc {
         } __attribute__((packed)) Header;
 
         webrtc::EncodedImage frame_;
-        bool isSyncListSet_;
+        bool isSyncListSet_, isUserDataSet_;
     };
 
     typedef VideoFramePacketT<> VideoFramePacket;

@@ -174,7 +174,9 @@ namespace ndnrtc {
 		int incomingArgbFrame(const unsigned int width,
 			const unsigned int height,
 			unsigned char* argbFrameData,
-			unsigned int frameSize);
+			unsigned int frameSize,
+			unsigned int userDataSize = 0,
+			unsigned char* userData = nullptr);
 
 		/**
 		 * Encode and publish I420 frame data.
@@ -190,7 +192,9 @@ namespace ndnrtc {
 			const unsigned int strideV,
 			const unsigned char* yBuffer,
 			const unsigned char* uBuffer,
-			const unsigned char* vBuffer);
+			const unsigned char* vBuffer,
+			unsigned int userDataSize = 0,
+			unsigned char* userData = nullptr);
 
 		/**
 		 * Returns full stream prefix used for publishing data

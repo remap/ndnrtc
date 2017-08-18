@@ -83,16 +83,16 @@ vector<string> VideoStreamImpl::getThreads() const
 	return threads;
 }
 
-void VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w)
+void VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w, unsigned int userDataSize, unsigned char* userData)
 {
 	LogDebugC << "⤹ incoming ARGB frame " << w.width_ << "x" << w.height_ << std::endl;
-	feedFrame(conv_ << w);
+	feedFrame(conv_ << w, userDataSize, userData);
 }
 
-void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
+void VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w, unsigned int userDataSize, unsigned char* userData)
 {
 	LogDebugC << "⤹ incoming I420 frame " << w.width_ << "x" << w.height_ << std::endl;
-	feedFrame(conv_ << w);
+	feedFrame(conv_ << w, userDataSize, userData);
 }
 
 void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
@@ -149,7 +149,7 @@ void VideoStreamImpl::remove(const string& threadName)
 	}
 }
 
-void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
+void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame, unsigned int userDataSize, unsigned char* userData)
 {
     (*statStorage_)[Indicator::CapturedNum]++;
     
@@ -165,15 +165,18 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		LogDebugC << "↓ feeding "<< playbackCounter_ << "p into encoders..." << std::endl;
 
 		map<string,FutureFramePtr> futureFrames;
+		map<string, pair<unsigned int, unsigned char*>> allUserData;
 		for (auto it:threads_)
 		{
 			FutureFramePtr ff = 
 			boost::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async, 
 				boost::bind(&VideoThread::encode, it.second.get(), (*scalers_[it.first])(frame)))));
 			futureFrames[it.first] = ff;
+			allUserData[it.first] = make_pair(userDataSize, userData);
 		}
 
 		map<string, FramePacketPtr> frames;
+		map<string, pair<unsigned int, unsigned char*>> filteredUserData;
 		for (auto it:futureFrames)
 		{
 			FramePacketPtr f(it.second->get());
@@ -181,6 +184,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
             {
                 (*statStorage_)[Indicator::EncodedNum]++;
                 frames[it.first] = f;
+                filteredUserData[it.first] = allUserData[it.first];
             }
 		}
 		
@@ -188,7 +192,7 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
         
 		if (frames.size())
 		{
-			publish(frames);
+			publish(frames, filteredUserData);
 			playbackCounter_++;
 		}
 		
@@ -203,7 +207,8 @@ void VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
 }
 
-void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
+void 
+VideoStreamImpl::publish(map<string, FramePacketPtr>& frames, map<string, pair<unsigned int, unsigned char*>> filteredUserData)
 {
 	LogTraceC << "will publish " << frames.size() << " frames" << std::endl;
 
@@ -217,6 +222,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
 
 		it.second->setSyncList(getCurrentSyncList(isKey));
+		it.second->setUserData(filteredUserData);
 		it.second->setHeader(packetHdr);
         
         LogTraceC << "thread " << it.first << " " << packetHdr.sampleRate_

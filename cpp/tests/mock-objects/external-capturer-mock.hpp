@@ -18,7 +18,9 @@ public:
 	MOCK_METHOD4(incomingArgbFrame, int(const unsigned int width,
                                       const unsigned int height,
                                       unsigned char* argbFrameData,
-                                      unsigned int frameSize));
+                                      unsigned int frameSize,
+                                      unsigned int userDataSize,
+                                      unsigned char* userData));
 	MOCK_METHOD8(incomingI420Frame, int(const unsigned int width,
                                       const unsigned int height,
                                       const unsigned int strideY,
@@ -26,7 +28,9 @@ public:
                                       const unsigned int strideV,
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
-                                      const unsigned char* vBuffer));
+                                      const unsigned char* vBuffer,
+                                      unsigned int userDataSize,
+                                      unsigned char* userData));
 };
 
 #endif

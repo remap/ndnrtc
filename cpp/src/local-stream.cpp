@@ -135,9 +135,12 @@ void LocalVideoStream::removeThread(const string& threadName)
 int LocalVideoStream::incomingArgbFrame(const unsigned int width,
 	const unsigned int height,
 	unsigned char* argbFrameData,
-	unsigned int frameSize)
+	unsigned int frameSize,
+	unsigned int userDataSize,
+	unsigned char* userData)
 {
-	pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize}));
+	pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize}),
+				userDataSize, userData);
 	return RESULT_OK;
 }
 
@@ -148,10 +151,12 @@ int LocalVideoStream::incomingI420Frame(const unsigned int width,
 	const unsigned int strideV,
 	const unsigned char* yBuffer,
 	const unsigned char* uBuffer,
-	const unsigned char* vBuffer)
+	const unsigned char* vBuffer,
+	unsigned int userDataSize,
+	unsigned char* userData)
 {
 	pimpl_->incomingFrame(I420RawFrameWrapper({width, height, strideY, strideU,
-		strideV, yBuffer, uBuffer, vBuffer}));
+		strideV, yBuffer, uBuffer, vBuffer}), userDataSize, userData);
 	return RESULT_OK;
 }
 
