@@ -12,6 +12,7 @@
 #include <boost/thread.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/atomic.hpp>
+#include <boost/assign.hpp>
 
 #include "media-stream-base.hpp"
 #include "ndnrtc-object.hpp"
@@ -46,8 +47,8 @@ namespace ndnrtc {
 
 		std::vector<std::string> getThreads() const;
 
-		int incomingFrame(const ArgbRawFrameWrapper&);
-		int incomingFrame(const I420RawFrameWrapper&);
+		int incomingFrame(const ArgbRawFrameWrapper&, unsigned int userDataSize=0, unsigned char* userData=nullptr);
+		int incomingFrame(const I420RawFrameWrapper&, unsigned int userDataSize=0, unsigned char* userData=nullptr);
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
 		
 	private:
@@ -88,8 +89,10 @@ namespace ndnrtc {
 		void remove(const std::string& threadName);
 		bool updateMeta();
 		
-		bool feedFrame(const WebRtcVideoFrame& frame);
-		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>>& frames);
+		bool feedFrame(const WebRtcVideoFrame& frame, unsigned int userDataSize=0, unsigned char* userData=nullptr);
+		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>>& frames,
+				std::map<std::string, std::pair<unsigned int, unsigned char*>> filteredUserData = 
+					boost::assign::map_list_of("", std::make_pair(0, nullptr)));
 		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacketAlias>& fp);
 		void publishManifest(ndn::Name dataName, PublishedDataPtrVector& segments);
 		std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
