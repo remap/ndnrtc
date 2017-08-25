@@ -39,7 +39,6 @@ TEST(TestRtxController, TestRtx){
 	rtx.attach(&rtxObserverMock);
 
 	int nPackets = 10;
-	std::srand(std::time(0));
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
 	IBufferObserver *bufferObserver = &rtx;
 
@@ -54,9 +53,12 @@ TEST(TestRtxController, TestRtx){
 				if (rtxInterestNames.find(i->getName()) != rtxInterestNames.end())
 					FAIL() << "RTX for already retransmitted interest";
 				rtxInterestNames.insert(i->getName());
+				EXPECT_GE(i->getName()[-1].toSegment(), 5);
 			}
 		}));
 
+
+	std::vector<boost::shared_ptr<BufferSlot>> slots;
 	for (int i = 0; i < nPackets; ++i)
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
@@ -70,6 +72,7 @@ TEST(TestRtxController, TestRtx){
 		}
 
 		boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
+		slots.push_back(slot);
 		slot->segmentsRequested(interests);
 
 		EXPECT_CALL(*playbackQueue, size())
@@ -80,6 +83,30 @@ TEST(TestRtxController, TestRtx){
 			.WillRepeatedly(Invoke([](){ return 100; }));
 
 		bufferObserver->onNewRequest(slot);
+
+		// add some data (5 segments) - some interests will require RTX, as we requested at least 10 segments per slot
+		VideoFramePacket vp = getVideoFramePacket();
+		std::vector<VideoFrameSegment> segments = sliceFrame(vp);
+	
+		Name n(frameName);
+		n.appendSequenceNumber(i);
+		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(n.toUri(), segments);
+
+		for (auto o:dataObjects)
+		{
+			boost::shared_ptr<const Interest> interest;
+			for (auto i:interests)
+				if (i->getName() == o->getName())
+				{
+					interest = i;
+					break;
+				}
+			if (interest)
+			{
+				boost::shared_ptr<WireSegment> segment = boost::make_shared<WireSegment>(o, interest);
+				slot->segmentReceived(segment);
+			}
+		}
 
 		usleep(33000);
 	}
