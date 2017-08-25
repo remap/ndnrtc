@@ -53,12 +53,21 @@ namespace ndnrtc
         
         int64_t getArrivalTimeUsec() const { return arrivalTimeUsec_; }
         
+        /**
+         * Returns round-trip time delay in microseconds if data has arrived.
+         * Otherwise, returns -1.
+         */
         int64_t getRoundTripDelayUsec() const
         {
             if (arrivalTimeUsec_ <= 0) return -1;
             return (arrivalTimeUsec_-requestTimeUsec_);
         }
         
+        /**
+         * Returns interest used to fetch this segment
+         */
+        boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+
         /**
          * Takes into account if the segment is original or not.
          * If the segment is original, this returns getRoundTripDelayUsec() minus
@@ -153,6 +162,11 @@ namespace ndnrtc
          * Returns an array of names of missing segments
          */
         std::vector<ndn::Name> getMissingSegments() const;
+
+        /**
+         * Returns an array of pending Interests for this slot
+         */
+         std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
 
         /**
          * Returns boolean value on whether slot is verified

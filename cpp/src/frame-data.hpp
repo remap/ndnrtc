@@ -178,7 +178,7 @@ namespace ndnrtc {
     //******************************************************************************
     /**
      * Data packet class extends NetworkData functionality by implementing addBlob
-     * method whith allows to add any number (less than 255) of binary data of any
+     * method which allows to add any number (less than 255) of binary data of any
      * size (less than 65525)to the packet and retrieve it later.
      * The wire format of the data packet is the following:
      *

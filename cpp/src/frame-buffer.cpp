@@ -216,6 +216,18 @@ BufferSlot::getMissingSegments() const
     return missing;
 }
 
+std::vector<boost::shared_ptr<const ndn::Interest>>
+BufferSlot::getPendingInterests() const
+{
+    std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests;
+
+    for (auto it:requested_)
+        if (fetched_.find(it.first) == fetched_.end())
+            pendingInterests.push_back(it.second->getInterest());
+
+    return pendingInterests;
+}
+
 std::string
 BufferSlot::dump(bool showLastSegment) const
 {

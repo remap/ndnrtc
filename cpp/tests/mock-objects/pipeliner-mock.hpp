@@ -21,6 +21,7 @@ public:
 	MOCK_METHOD1(setNeedSample, void(ndnrtc::SampleClass));
 	MOCK_METHOD0(setNeedRightmost, void());
 	MOCK_METHOD2(setSequenceNumber, void(PacketNumber seqNo, ndnrtc::SampleClass cls));
+	MOCK_METHOD1(getSequenceNumber, PacketNumber(ndnrtc::SampleClass));
 };
 
 #endif
