@@ -60,7 +60,7 @@ namespace ndnrtc {
 		 */
 		class IStrategy {
 		public:
-			virtual void getLimits(double rate, const estimators::Average& drd, 
+			virtual void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator, 
 				unsigned int& lowerLimit, unsigned int& upperLimit) = 0;
 			virtual int burst(unsigned int currentLimit, 
 				unsigned int lowerLimit, unsigned int upperLimit) = 0;
@@ -77,7 +77,7 @@ namespace ndnrtc {
 		 */
 		class StrategyDefault : public IStrategy {
 		public:
-			void getLimits(double rate, const estimators::Average& drd, 
+			void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
 				unsigned int& lowerLimit, unsigned int& upperLimit);
 			int burst(unsigned int currentLimit, 
 				unsigned int lowerLimit, unsigned int upperLimit);

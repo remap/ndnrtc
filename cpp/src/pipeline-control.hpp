@@ -15,6 +15,7 @@
 #include "segment-controller.hpp"
 #include "pipeline-control-state-machine.hpp"
 #include "pipeliner.hpp"
+#include "rtx-controller.hpp"
 
 namespace ndnrtc {
     namespace statistics {
@@ -34,7 +35,8 @@ namespace ndnrtc {
 	 */
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
-							public ISegmentControllerObserver
+							public ISegmentControllerObserver,
+							public IRtxObserver
 							// ,public IPipelineControlStateMachineObserver
 	{
 	public:
@@ -78,6 +80,7 @@ namespace ndnrtc {
 
 		// void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
 			// std::string);
+		void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
 		bool passesBarrier(const NamespaceInfo& n);
 	};
 }

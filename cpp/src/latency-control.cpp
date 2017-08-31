@@ -274,7 +274,7 @@ LatencyControl::onDrdUpdate()
 
     if (playoutControl_.get())
     {
-        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getLatestUpdatedAverage(), DEFAULT_TARGET_QUEUE_SIZE);
+        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getOriginalAverage(), DEFAULT_TARGET_QUEUE_SIZE);
         
         if (targetSize != playoutControl_->getThreshold())
         {

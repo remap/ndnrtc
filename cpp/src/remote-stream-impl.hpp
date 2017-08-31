@@ -34,6 +34,7 @@ namespace ndnrtc {
 	class IPlayout;
 	class IPlayoutControl;
 	class MediaStreamMeta;
+	class RetransmissionController;
 
 	/**
 	 * RemoteStreamImpl is a base class for implementing remote stream functionality
@@ -92,6 +93,7 @@ namespace ndnrtc {
 		boost::shared_ptr<IInterestControl> interestControl_;
 		boost::shared_ptr<IPlayout> playout_;
 		boost::shared_ptr<IPlaybackQueue> playbackQueue_;
+		boost::shared_ptr<RetransmissionController> rtxController_;
 
 		std::vector<ValidationErrorInfo> validationInfo_;
 

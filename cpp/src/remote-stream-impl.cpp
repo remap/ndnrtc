@@ -26,6 +26,7 @@
 #include "playout-control.hpp"
 #include "playout.hpp"
 #include "sample-estimator.hpp"
+#include "rtx-controller.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -54,6 +55,8 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
 	playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                dynamic_pointer_cast<Buffer>(buffer_));
+	rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_);
+	buffer_->attach(rtxController_.get());
 	// playout and playout-control created in subclasses
 
 	interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
@@ -141,6 +144,7 @@ RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
     dynamic_pointer_cast<NdnRtcComponent>(interestControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(playbackQueue_)->setLogger(logger);
     segmentController_->setLogger(logger);
+    rtxController_->setLogger(logger);
     if (pipelineControl_.get()) pipelineControl_->setLogger(logger);
 }
 

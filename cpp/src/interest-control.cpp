@@ -21,9 +21,10 @@ const unsigned int InterestControl::MinPipelineSize = 3;
 
 void 
 InterestControl::StrategyDefault::getLimits(double rate, 
-	const estimators::Average& drd, 
+	boost::shared_ptr<DrdEstimator> drdEstimator,
 	unsigned int& lowerLimit, unsigned int& upperLimit)
 {
+	const estimators::Average drd = drdEstimator->getOriginalAverage(); // getLatestUpdatedAverage();//getDrdAverage();
 	double d = drd.value() + DEVIATION_ALPHA*drd.deviation();
 	double targetSamplePeriod = 1000./rate;
 	int interestDemand = (int)(ceil(d/targetSamplePeriod));
@@ -182,7 +183,7 @@ InterestControl::setLimits()
 {
 	unsigned int newLower = 0, newUpper = 0;
 
-	strategy_->getLimits(targetRate_, drdEstimator_->getLatestUpdatedAverage(),
+	strategy_->getLimits(targetRate_, drdEstimator_,
 		newLower, newUpper);
 
 	LogTraceC << "deciding... rate " << targetRate_ 
@@ -202,8 +203,10 @@ InterestControl::setLimits()
 		if (limit_ < lowerLimit_)
 			changeLimitTo(lowerLimit_);
         
-        LogDebugC << "DRD orig: " << drdEstimator_->getOriginalEstimation()
+        LogDebugC 
+        	<< "DRD orig: " << drdEstimator_->getOriginalEstimation()
             << " cach: " << drdEstimator_->getCachedEstimation()
+            << " dGen: " << drdEstimator_->getGenerationDelayAverage().value()
             << ", set limits " << snapshot() << std::endl;
 	}
 }

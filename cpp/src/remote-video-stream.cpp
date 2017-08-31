@@ -43,7 +43,6 @@ RemoteStreamImpl(io, face, keyChain, streamPrefix)
     pps.sstorage_ = sstorage_;
     
     pipeliner_ = make_shared<Pipeliner>(pps, boost::make_shared<Pipeliner::VideoNameScheme>());
-    
     playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
     latencyControl_->setPlayoutControl(playoutControl_);
@@ -146,6 +145,7 @@ RemoteVideoStreamImpl::setupPipelineControl()
        boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
        sstorage_));
     pipelineControl_->setLogger(logger_);
+    rtxController_->attach(pipelineControl_.get());
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
 }

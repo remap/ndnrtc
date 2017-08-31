@@ -188,6 +188,9 @@ namespace ndnrtc {
         void onNewRequest(const boost::shared_ptr<BufferSlot>&);
         void onNewData(const BufferReceipt& receipt);
         void onReset(){}
+
+        // IRtxObserver
+        void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
     };
 }
 

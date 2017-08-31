@@ -225,10 +225,8 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
     
     // set priority for requesting next key frame when key segment is received
     if (receipt.slot_->getNameInfo().class_ == SampleClass::Key &&
-        receipt.slot_->getState() == BufferSlot::State::Assembling &&
-        receipt.slot_->getFetchedNum() == 1)
+        receipt.oldState_ == BufferSlot::State::New)
         setNeedSample(SampleClass::Key);
-
 }
 
 Name

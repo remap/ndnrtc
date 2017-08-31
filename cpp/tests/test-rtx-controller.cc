@@ -30,26 +30,39 @@ using namespace ndnrtc::statistics;
 using namespace ndn;
 using namespace testing;
 
+#define ENABLE_LOGGING
+
 TEST(TestRtxController, TestRtx){
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
 	boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<MockPlaybackQueue> playbackQueue(boost::make_shared<MockPlaybackQueue>());
 
 	MockRtxObserver rtxObserverMock;
-	RetransmissionController rtx = RetransmissionController(storage, playbackQueue);
+	RetransmissionController rtx(storage, playbackQueue);
 	rtx.attach(&rtxObserverMock);
 
-	int nPackets = 10;
+#ifdef ENABLE_LOGGING
+	rtx.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
+
+	int nPackets = 12;
 	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
 	IBufferObserver *bufferObserver = &rtx;
 
 	std::set<Name> rtxInterestNames;
 	EXPECT_CALL(rtxObserverMock, onRetransmissionRequired(_))
-		.Times(AtLeast(nPackets/2))
+		.Times(AtLeast(nPackets/3))
 		.WillRepeatedly(Invoke([&rtxInterestNames](const std::vector<boost::shared_ptr<const ndn::Interest>> interests){
 			GT_PRINTF("RTX for %d interests\n", interests.size());
 
 			for (auto i:interests)
 			{
+				GT_PRINTF(" > %s\n", i->getName().toUri().c_str());
+
 				if (rtxInterestNames.find(i->getName()) != rtxInterestNames.end())
 					FAIL() << "RTX for already retransmitted interest";
 				rtxInterestNames.insert(i->getName());
@@ -62,7 +75,7 @@ TEST(TestRtxController, TestRtx){
 	for (int i = 0; i < nPackets; ++i)
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
-		int nInterests = std::rand()%30+10;
+		int nInterests = i+1; //std::rand()%30+10;
 		for (int j = 0; j < nInterests; ++j)
 		{
 			boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(frameName).appendSequenceNumber(i).appendSegment(j), 1000));
@@ -84,7 +97,7 @@ TEST(TestRtxController, TestRtx){
 
 		bufferObserver->onNewRequest(slot);
 
-		// add some data (5 segments) - some interests will require RTX, as we requested at least 10 segments per slot
+		// add some data - some interests will require RTX
 		VideoFramePacket vp = getVideoFramePacket();
 		std::vector<VideoFrameSegment> segments = sliceFrame(vp);
 	
@@ -103,8 +116,9 @@ TEST(TestRtxController, TestRtx){
 				}
 			if (interest)
 			{
+				o->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(i));
 				boost::shared_ptr<WireSegment> segment = boost::make_shared<WireSegment>(o, interest);
-				slot->segmentReceived(segment);
+				bufferObserver->onNewData({slot, slot->segmentReceived(segment)});
 			}
 		}
 

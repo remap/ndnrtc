@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/thread/mutex.hpp>
@@ -37,9 +38,25 @@ int run(const struct Args&);
 void registerPrefix(boost::shared_ptr<Face>&, const KeyChainManager&);
 void publishCertificate(boost::shared_ptr<Face>&, const KeyChainManager&);
 
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 //******************************************************************************
 int main(int argc, char **argv) 
 {
+    signal(SIGABRT, handler);
+    signal(SIGSEGV, handler);
+    
     char *configFile = NULL, *identity = NULL, *instance = NULL, *policy = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)

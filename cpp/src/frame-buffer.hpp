@@ -166,7 +166,7 @@ namespace ndnrtc
         /**
          * Returns an array of pending Interests for this slot
          */
-         std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
+        std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
 
         /**
          * Returns boolean value on whether slot is verified
@@ -304,6 +304,7 @@ namespace ndnrtc
     typedef struct _BufferReceipt {
         boost::shared_ptr<const BufferSlot> slot_;
         boost::shared_ptr<const SlotSegment> segment_;
+        BufferSlot::State oldState_;
     } BufferReceipt;
 
     class IBuffer {

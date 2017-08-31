@@ -178,3 +178,13 @@ PipelineControl::passesBarrier(const NamespaceInfo& n)
 	
 	return true;
 }
+
+void 
+PipelineControl::onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
+{
+	if (machine_.currentState()->toInt() >= PipelineControlState::Chasing)
+	{
+    	LogDebugC << "retransmission for " << interests[0]->getName().getPrefix(-1) << std::endl;
+    	pipeliner_->express(interests, true);
+    }
+}

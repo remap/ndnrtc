@@ -563,6 +563,7 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
 
     for (auto it:slotInterests)
     {
+        bool newRequest = false;
         boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
         if (activeSlots_.find(it.first) == activeSlots_.end())
         {
@@ -574,17 +575,19 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
             else
             {
                 activeSlots_[it.first] = pool_->pop();
+                newRequest = true;
             }
         }
         
         activeSlots_[it.first]->segmentsRequested(it.second);
         
+        if (newRequest) 
+            for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
+
         LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
         << " x" << it.second.size() << std::endl;
         LogDebugC << shortdump() << std::endl;
         LogTraceC << dump() << std::endl;
-        
-        for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
     }
 
     return true;
@@ -609,6 +612,7 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
     BufferSlot::State oldState = activeSlots_[key]->getState();
     receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
     receipt.slot_ = activeSlots_[key];
+    receipt.oldState_ = oldState;
     
     if (receipt.slot_->getState() == BufferSlot::Ready)
     {

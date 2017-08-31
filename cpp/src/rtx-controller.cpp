@@ -19,6 +19,7 @@ using namespace ndnrtc::statistics;
 RetransmissionController::RetransmissionController(boost::shared_ptr<statistics::StatisticsStorage> storage,
 	boost::shared_ptr<IPlaybackQueue> playbackQueue):StatObject(storage), playbackQueue_(playbackQueue)
 {
+	description_ = "rtx-controller";
 }
 
 void RetransmissionController::attach(IRtxObserver* observer)
@@ -64,15 +65,23 @@ void RetransmissionController::checkRetransmissions()
 	{
 		boost::shared_ptr<BufferSlot> slot = it->second.slot_;
 		int64_t playbackDeadline = it->second.deadlineTimestamp_;
+		bool needRtx = (playbackDeadline-now < 100);
+		bool assembledOrCleared = (slot->getState() >= BufferSlot::State::Ready || slot->getState() == BufferSlot::State::Free);
 
-		if (playbackDeadline-now < 100)
+		if (needRtx || assembledOrCleared)
 		{
 			activeSlots_.erase(it++);
 
-			std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
-			if (pendingInterests.size())
-				for (auto o:observers_)
-					o->onRetransmissionRequired(pendingInterests);
+			if (needRtx)
+			{
+				std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
+				if (pendingInterests.size())
+					for (auto o:observers_)
+						o->onRetransmissionRequired(pendingInterests);
+
+				LogTraceC << "rtx required " << slot->dump() 
+					<< " playback in " << playbackDeadline-now << "ms" << std::endl;
+			}
 		}
 		else
 			++it;

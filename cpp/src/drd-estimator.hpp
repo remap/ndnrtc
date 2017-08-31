@@ -25,9 +25,9 @@ namespace ndnrtc {
 	 */
 	class DrdEstimator {
 	public:
-		DrdEstimator(unsigned int initialEstimationMs = 150, unsigned int windowMs = 1000);
+		DrdEstimator(unsigned int initialEstimationMs = 150, unsigned int windowMs = 200);
 
-		void newValue(double drd, bool isOriginal);
+		void newValue(double drd, bool isOriginal, double dGen);
 		double getCachedEstimation() const;
 		double getOriginalEstimation() const;
 		void reset();
@@ -35,6 +35,7 @@ namespace ndnrtc {
 		const estimators::Average& getCachedAverage() const { return cachedDrd_; }
 		const estimators::Average& getOriginalAverage() const { return originalDrd_; }
 		const estimators::Average& getLatestUpdatedAverage() const { return *latest_; }
+		const estimators::Average& getGenerationDelayAverage() const { return generationDelay_; }
 
 		void attach(IDrdEstimatorObserver* o);
 		void detach(IDrdEstimatorObserver* o);
@@ -44,6 +45,7 @@ namespace ndnrtc {
 		std::vector<IDrdEstimatorObserver*> observers_;
 		unsigned int windowSize_, initialEstimation_;
 		estimators::Average cachedDrd_, originalDrd_;
+		estimators::Average generationDelay_;
 		estimators::Average* latest_;
 	};
 
