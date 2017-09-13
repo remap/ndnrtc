@@ -327,6 +327,7 @@ int loadStreamParams(const Setting& s, ConsumerStreamParams& params)
     {
         s.lookupValue("thread_to_fetch", params.threadToFetch_);
         s.lookupValue("sink", params.streamSink_);
+        s.lookupValue("sink_is_pipe", params.sinkIsPipe_);
 
         return EXIT_SUCCESS;
     }
