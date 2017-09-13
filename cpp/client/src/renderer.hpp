@@ -33,15 +33,18 @@
  * more info on transcoding raw video can be found at:
  *      http://stackoverflow.com/questions/15778774/using-ffmpeg-to-losslessly-convert-yuv-to-another-format-for-editing-in-adobe-pr
  */
+
+typedef boost::shared_ptr<IFrameSink>(*SinkFactoryCreate)(const std::string&);
+
 class RendererInternal : public ndnrtc::IExternalRenderer{
 public:
     /**
-     * @param sinkFileName File name of video sink
-     * @param suppressBadSink If true, any error during creation of the sink 
-     *  file will be ignored. Video sequence won't be recorder. Othewise, 
-     *  will throw exception on any file creation error.
-     */
-    RendererInternal(const std::string& sinkFileName, 
+     * @param sinkName Base name which will be used to derive new sink names
+     * @param sinkFactoryCreate Function that creates new sink
+     * @param suppressBadSink If there is a problem creating new sink, renderer will
+     *                          throw is this is false or ignore otherwise.  
+     */ 
+    RendererInternal(const std::string sinkName, SinkFactoryCreate sinkFactoryCreate, 
         bool suppressBadSink = false);
     ~RendererInternal();
     
@@ -50,12 +53,12 @@ public:
                          const uint8_t* buffer);
     
 private:
-    boost::shared_ptr<FileSink> sink_;
+    SinkFactoryCreate createSink_;
+    boost::shared_ptr<IFrameSink> sink_;
     boost::shared_ptr<ArgbFrame> frame_;
     std::string sinkName_;
     bool isDumping_, suppressBadSink_;
     unsigned int frameCount_;
-    unsigned int sinkIdx_;
     
     std::string openSink(unsigned int width, unsigned int height);
     void closeSink();

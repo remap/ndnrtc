@@ -66,6 +66,7 @@ private:
 class IFrameSink {
 public:
 	virtual IFrameSink& operator<<(const RawFrame& frame) = 0;
+	virtual std::string getName() = 0;
 };
 
 /**
@@ -75,6 +76,8 @@ class FileSink : public IFrameSink, public FileFrameStorage {
 public:
 	FileSink(const std::string& path):FileFrameStorage(path){ openFile(); }
 	IFrameSink& operator<<(const RawFrame& frame);
+	std::string getName() { return path_; }
+
 private:
     FILE* openFile_impl(std::string path);
 };
@@ -91,8 +94,11 @@ public:
 	~PipeSink();
 
 	IFrameSink& operator<<(const RawFrame& frame);
+	std::string getName() { return pipePath_; }
+
 	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
 	bool isWriting() { return isWriting_; }
+
 private:
 	std::string pipePath_;
 	int pipe_;

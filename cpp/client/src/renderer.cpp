@@ -14,12 +14,13 @@
 
 using namespace std;
 
-RendererInternal::RendererInternal(const std::string& sinkFileName, bool suppressBadSink)
-:sinkName_(sinkFileName), frameCount_(0), sinkIdx_(0), 
-isDumping_(true), suppressBadSink_(suppressBadSink),
+RendererInternal::RendererInternal(const std::string sinkName, SinkFactoryCreate sinkFactoryCreate, 
+        bool suppressBadSink)
+:sinkName_(sinkName), createSink_(sinkFactoryCreate), 
+frameCount_(0), isDumping_(true), suppressBadSink_(suppressBadSink),
 frame_(new ArgbFrame(0,0))
 {
-};
+}
 
 RendererInternal::~RendererInternal()
 {
@@ -29,16 +30,15 @@ RendererInternal::~RendererInternal()
 
 uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 {
-    if (frame_->getFrameSizeInBytes() < ArgbFrame(width, height).getFrameSizeInBytes())
+    if (frame_->getFrameSizeInBytes() != ArgbFrame(width, height).getFrameSizeInBytes())
     {
         frame_.reset(new ArgbFrame(width, height));
         closeSink();
-        string sinkFullPath = openSink(width, height);
-        sinkIdx_++;
+        openSink(width, height);
         
         LogInfo("") << "receiving frame of resolution " << width << "x" << height 
             << "(" << frame_->getFrameSizeInBytes() <<" bytes per frame)." 
-            <<  (isDumping_? string(" writing to ") + sinkFullPath : "" ) << std::endl;
+            <<  (isDumping_? string(" writing to ") + sink_->getName() : "" ) << std::endl;
     }
 
     return frame_->getBuffer().get();
@@ -68,16 +68,15 @@ string RendererInternal::openSink(unsigned int width, unsigned int height)
         if (suppressBadSink_)
             isDumping_ = false;
         else
-            throw runtime_error("invalid sink name provided");
+            throw runtime_error("invalid sink provided");
     }
 
     stringstream sinkPath;
-    sinkPath << sinkName_ << "-" << sinkIdx_ << "-"
-        << width << "x" << height << ".argb";
+    sinkPath << sinkName_  << "." << width << "x" << height;
 
     try
     {
-        sink_.reset(new FileSink(sinkPath.str()));
+        sink_ = createSink_(sinkPath.str());
     }
     catch (const std::runtime_error& e)
     {

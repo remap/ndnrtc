@@ -14,102 +14,118 @@
 
 using namespace std;
 
+boost::shared_ptr<IFrameSink> createNewSink(const std::string& path)
+{
+	return boost::make_shared<FileSink>(path);
+}
+
 TEST(TestRenderer, TestCreate)
 {
-	RendererInternal r("client1-camera");
+	std::string sinkName = "client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 }
 
 TEST(TestRenderer, Test1Frame)
 {
-	RendererInternal r("/tmp/client1-camera");
+	std::string sinkName = "/tmp/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
 	
 	memset(buffer, 0, width*height*4);
-	r.renderBGRAFrame(1457733705984, width, height, buffer);
+	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
 
-	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera-0-640x480.argb").c_str()).good());
-	remove("/tmp/client1-camera-640x480-0.argb");
+	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
+	remove("/tmp/client1-camera.640x480");
 }
 
 TEST(TestRenderer, Test2Frames)
 {
-	RendererInternal r("/tmp/client1-camera");
+	std::string sinkName = "/tmp/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	
 	uint8_t *buffer = r.getFrameBuffer(640, 480);
 	memset(buffer, 0, 640*480*4);
-	r.renderBGRAFrame(1457733705984, 640, 480, buffer);
+	r.renderBGRAFrame(1457733705984, 1, 640, 480, buffer);
 
 	buffer = r.getFrameBuffer(1280, 720);
 	memset(buffer, 0, 1280*720*4);
-	r.renderBGRAFrame(1457733705994, 1280, 720, buffer);
+	r.renderBGRAFrame(1457733705994, 2, 1280, 720, buffer);
 
-	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera-0-640x480.argb").c_str()).good());
-	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera-1-1280x720.argb").c_str()).good());
-	remove("/tmp/client1-camera-0-640x480.argb");
-	remove("/tmp/client1-camera-1-1280x720.argb");
+	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.1280x720").c_str()).good());
+	remove("/tmp/client1-camera.640x480");
+	remove("/tmp/client1-camera.1280x720");
 }
 
 TEST(TestRenderer, TestThrowOnSinkCreation)
 {
-	RendererInternal r("/client1-camera");
+	std::string sinkName = "/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	
 	EXPECT_ANY_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestThrowOnSinkCreation2)
 {
-	RendererInternal r("");
+	std::string sinkName = "";
+	RendererInternal r(sinkName, createNewSink);
 	
 	EXPECT_ANY_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestSinkSuppression)
 {
-	RendererInternal r("/client1-camera", true);
+	std::string sinkName = "/client1-camera";
+	RendererInternal r(sinkName, createNewSink, true);
 	
 	EXPECT_NO_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestSinkSuppression2)
 {
-	RendererInternal r("", true);
+	std::string sinkName = "";
+	RendererInternal r(sinkName, createNewSink, true);
 	
 	EXPECT_NO_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestRenderFrameNoSink)
 {
-	RendererInternal r("", true);
+	std::string sinkName = "";
+	RendererInternal r(sinkName, createNewSink, true);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
 	
 	memset(buffer, 0, width*height*4);
-	r.renderBGRAFrame(1457733705984, width, height, buffer);
+	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
 
-	ASSERT_FALSE(std::ifstream(string("/tmp/client1-camera-0-640x480.argb").c_str()).good());
+	ASSERT_FALSE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 }
 
 TEST(TestRenderer, TestWrongArgs)
 {
-	RendererInternal r("/tmp/client1-camera");
+	std::string sinkName = "/tmp/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	
 	uint8_t *buf = r.getFrameBuffer(640, 480);
-	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1280, 720, buf));
+	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1, 1280, 720, buf));
 }
 
 TEST(TestRenderer, TestWrongCallSequence)
 {
-	RendererInternal r("/tmp/client1-camera");
+	std::string sinkName = "/tmp/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	
-	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1280, 720, nullptr));
+	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1, 1280, 720, nullptr));
 }
 
 TEST(TestRenderer, TestFrameCorrectness)
 {
-	RendererInternal r("/tmp/client1-camera");
+	std::string sinkName = "/tmp/client1-camera";
+	RendererInternal r(sinkName, createNewSink);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
@@ -118,11 +134,11 @@ TEST(TestRenderer, TestFrameCorrectness)
 	for (int i = 0; i < width*height*4; ++i)
 		buffer[i] = (i%256);
 
-	r.renderBGRAFrame(1457733705984, width, height, buffer);
+	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
 
-	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera-0-640x480.argb").c_str()).good());
+	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 
-	FILE *f = fopen("/tmp/client1-camera-0-640x480.argb", "rb");
+	FILE *f = fopen("/tmp/client1-camera.640x480", "rb");
 	fseek (f , 0 , SEEK_END);
   	long lSize = ftell(f);
   	rewind (f);
@@ -136,7 +152,7 @@ TEST(TestRenderer, TestFrameCorrectness)
 		ASSERT_EQ(buf[i], (i%256));
 
 	free(buf);
-	remove("/tmp/client1-camera-640x480-0.argb");
+	remove("/tmp/client1-camera.640x480");
 }
 
 //******************************************************************************
