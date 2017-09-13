@@ -30,6 +30,12 @@ RendererInternal::~RendererInternal()
 
 uint8_t* RendererInternal::getFrameBuffer(int width, int height)
 {
+    if (sink_ && sink_->isBusy()) 
+    {
+        LogWarn("") << "Frame sink is busy. Writing frames is too slow?..." << std::endl;
+        return nullptr;
+    }
+
     if (frame_->getFrameSizeInBytes() != ArgbFrame(width, height).getFrameSizeInBytes())
     {
         frame_.reset(new ArgbFrame(width, height));
@@ -100,5 +106,6 @@ void RendererInternal::dumpFrame()
     if (!isDumping_)
         return;
     
-    *sink_ << *frame_;
+    if (!sink_->isBusy())
+        *sink_ << *frame_;
 }

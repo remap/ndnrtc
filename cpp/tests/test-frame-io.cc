@@ -204,7 +204,7 @@ TEST(TestPipeSink, TestWriteAndRead)
 	boost::thread t([&sink, &frame]{
 		do {
 			EXPECT_NO_THROW(*sink << frame);
-		} while(!sink->isLastWriteSuccessful() && !sink->isWriting());
+		} while(!sink->isLastWriteSuccessful() && !sink->isBusy());
 	});
 
 	int pipe = open(fname.c_str(), O_RDONLY);

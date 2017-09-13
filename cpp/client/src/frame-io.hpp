@@ -67,6 +67,7 @@ class IFrameSink {
 public:
 	virtual IFrameSink& operator<<(const RawFrame& frame) = 0;
 	virtual std::string getName() = 0;
+	virtual bool isBusy() = 0;
 };
 
 /**
@@ -77,6 +78,9 @@ public:
 	FileSink(const std::string& path):FileFrameStorage(path){ openFile(); }
 	IFrameSink& operator<<(const RawFrame& frame);
 	std::string getName() { return path_; }
+
+	// TODO: whether file writing can be busy, probably, need to be tested
+	bool isBusy() { return false; }
 
 private:
     FILE* openFile_impl(std::string path);
@@ -97,7 +101,7 @@ public:
 	std::string getName() { return pipePath_; }
 
 	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
-	bool isWriting() { return isWriting_; }
+	bool isBusy() { return isWriting_; }
 
 private:
 	std::string pipePath_;
