@@ -158,6 +158,73 @@ TEST(TestSource, TestBadSourcePath)
 	EXPECT_ANY_THROW(FileFrameSource("/test-source.argb"));
 }
 
+TEST(TestPipeSink, TestCreate)
+{
+	std::string fname = "/tmp/test-pipe.argb";
+	boost::shared_ptr<PipeSink> sink(new PipeSink(fname));
+
+	ASSERT_TRUE( access( fname.c_str(), F_OK ) != -1 );
+
+	remove(fname.c_str());
+}
+
+TEST(TestPipeSink, TestCreateFailure)
+{
+	std::string fname = "/etc/test-pipe.argb";
+	EXPECT_ANY_THROW(
+		boost::shared_ptr<PipeSink> sink(new PipeSink(fname))
+		);
+}
+
+TEST(TestPipeSink, TestWriteToNonOpen)
+{
+	std::string fname = "/tmp/test-pipe.argb";
+	boost::shared_ptr<PipeSink> sink(new PipeSink(fname));
+	ArgbFrame frame(640, 480);
+	uint8_t *b = frame.getBuffer().get();
+
+	for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
+		b[i] = (i%256);
+
+	EXPECT_NO_THROW(*sink << frame);
+
+	remove(fname.c_str());
+}
+
+TEST(TestPipeSink, TestWriteAndRead)
+{
+	std::string fname = "/tmp/test-pipe.argb";
+	boost::shared_ptr<PipeSink> sink(new PipeSink(fname));
+	ArgbFrame frame(1280, 720);
+	uint8_t *b = frame.getBuffer().get();
+
+	for (int i = 0; i < frame.getFrameSizeInBytes(); ++i)
+		b[i] = (i%256);
+
+	boost::thread t([&sink, &frame]{
+		do {
+			EXPECT_NO_THROW(*sink << frame);
+		} while(!sink->isLastWriteSuccessful() && !sink->isWriting());
+	});
+
+	int pipe = open(fname.c_str(), O_RDONLY);
+	ASSERT_TRUE(pipe > 0);
+
+	size_t bufSz = frame.getFrameSizeInBytes();
+	uint8_t *buf = (uint8_t*)malloc(sizeof(uint8_t)*bufSz);
+	int readBytes = 0;
+	do {
+		int r = read(pipe, buf+readBytes, bufSz-readBytes);
+		if (r > 0) readBytes += r;
+	} while (readBytes != bufSz);
+
+	EXPECT_TRUE(sink->isLastWriteSuccessful());
+	t.join(); 
+	sink.reset();
+
+	remove(fname.c_str());
+}
+
 #if 0
 TEST(TestSource, TestTemp)
 {

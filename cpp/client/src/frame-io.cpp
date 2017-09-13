@@ -7,6 +7,14 @@
 
 #include <stdexcept>
 #include <sstream>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "frame-io.hpp"
 
 using namespace std;
@@ -68,6 +76,66 @@ IFrameSink& FileSink::operator<<(const RawFrame& frame)
 FILE* FileSink::openFile_impl(string path)
 {
     return fopen(path.c_str(), "wb");
+}
+
+//******************************************************************************
+PipeSink::PipeSink(const std::string& path):pipePath_(path), pipe_(-1), 
+isLastWriteSuccessful_(false), isWriting_(false)
+{ 
+    createPipe(pipePath_);
+    openPipe(pipePath_);
+}
+
+PipeSink::~PipeSink()
+{
+    if (pipe_ > 0) close(pipe_);
+}
+
+IFrameSink& PipeSink::operator<<(const RawFrame& frame)
+{
+    if (pipe_ < 0) openPipe(pipePath_);
+    if (pipe > 0) 
+    {
+        isWriting_ = true;
+
+        uint8_t *buf = frame.getBuffer().get();
+        int written = 0, r = 0;
+        bool continueWrite = false;
+
+        do {
+            r = write(pipe_, buf+written, frame.getFrameSizeInBytes()-written);
+            if (r > 0) written += r;
+            isLastWriteSuccessful_ = (r > 0);
+
+            // keep writing if has not written all buffer and no errors occured or
+            // there was an error and this error is EAGAIN
+            continueWrite =  (r > 0 && written != frame.getFrameSizeInBytes()) ||
+                    (r < 0 && errno == EAGAIN);
+        } while (continueWrite);
+
+        isWriting_ = false;
+    }
+    else
+        isLastWriteSuccessful_ = false;
+
+    return *this;
+}
+
+void PipeSink::createPipe(const std::string& path)
+{
+    int res = mkfifo(path.c_str(), 0644);
+
+    if (res < 0 && errno != EEXIST)
+    {
+        std::stringstream ss;
+        ss << "Error creating pipe(" << errno << "): " << strerror(errno);
+        throw std::runtime_error(ss.str());
+    }
+}
+
+void PipeSink::openPipe(const std::string& path)
+{
+    pipe_ = open(path.c_str(), O_WRONLY|O_NONBLOCK|O_EXCL);
 }
 
 //******************************************************************************

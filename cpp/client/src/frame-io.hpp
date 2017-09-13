@@ -68,12 +68,38 @@ public:
 	virtual IFrameSink& operator<<(const RawFrame& frame) = 0;
 };
 
+/**
+ * File-based frame sink
+ */
 class FileSink : public IFrameSink, public FileFrameStorage {
 public:
 	FileSink(const std::string& path):FileFrameStorage(path){ openFile(); }
 	IFrameSink& operator<<(const RawFrame& frame);
 private:
     FILE* openFile_impl(std::string path);
+};
+
+/**
+ * Non-blocking pipe-based frame sink
+ * - will create pipe if it does not exist
+ * - in order for pipe to be opened for writing, it should be opened for reading 
+ *		by another process; until then, sink will skip writing frames. 
+ */
+class PipeSink : public IFrameSink {
+public:
+	PipeSink(const std::string& path);
+	~PipeSink();
+
+	IFrameSink& operator<<(const RawFrame& frame);
+	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
+	bool isWriting() { return isWriting_; }
+private:
+	std::string pipePath_;
+	int pipe_;
+	std::atomic<bool> isLastWriteSuccessful_, isWriting_;
+
+	void createPipe(const std::string& path);
+	void openPipe(const std::string& path);
 };
 
 //******************************************************************************
