@@ -162,7 +162,7 @@ void Client::tearDownConsumer(){
 RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	const ndnrtc::GeneralConsumerParams& gcp)
 {
-	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal(p.streamSink_, true) : nullptr);
+	RendererInternal *renderer = setupRenderer(p);
 	
 	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
 	{
@@ -266,4 +266,23 @@ Client::consumerLogger(std::string prefix, std::string streamName)
 		logFileName.str()));
 
 	return logger;
+}
+
+RendererInternal *Client::setupRenderer(const ConsumerStreamParams& p)
+{
+	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
+	{
+		if (p.sinkIsPipe_)
+			return new RendererInternal(p.streamSink_, 
+				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+					return boost::make_shared<PipeSink>(s);
+				});
+		else
+			return new RendererInternal(p.streamSink_, 
+				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+					return boost::make_shared<FileSink>(s);
+				});
+	}
+	else
+		return nullptr;
 }
