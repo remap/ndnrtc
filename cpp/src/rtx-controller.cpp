@@ -72,7 +72,7 @@ void RetransmissionController::checkRetransmissions()
 		{
 			activeSlots_.erase(it++);
 
-			if (needRtx)
+			if (needRtx && !assembledOrCleared)
 			{
 				std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
 				if (pendingInterests.size())

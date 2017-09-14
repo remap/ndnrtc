@@ -102,12 +102,15 @@ RemoteVideoStreamImpl::feedFrame(PacketNumber frameNo, const WebRtcVideoFrame& f
     
     if (rgbFrameBuffer)
     {
+        LogTraceC << "passing frame " << frameNo << " to renderer" << std::endl;
 #warning this needs to be tested with frames captured from real video devices
         ConvertFromI420(frame, webrtc::kBGRA, 0, rgbFrameBuffer);
         renderer_->renderBGRAFrame(clock::millisecondTimestamp(), frameNo,
                                           frame.width(), frame.height(),
                                           rgbFrameBuffer);
     }
+    else
+        LogTraceC << "renderer is busy." << std::endl;
 }
 
 void

@@ -13,6 +13,7 @@
 #include "frame-data.hpp"
 
 using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadPrefix,
@@ -30,7 +31,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name& threadP
 	ctrl.latencyControl_ = latencyControl;
 	ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
-	return PipelineControl(PipelineControlStateMachine::defaultStateMachine(ctrl),
+	return PipelineControl(storage, PipelineControlStateMachine::defaultStateMachine(ctrl),
 		interestControl, pipeliner);
 }
 
@@ -49,26 +50,26 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name& threadPre
 	ctrl.latencyControl_ = latencyControl;
 	ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
-	return PipelineControl(PipelineControlStateMachine::videoStateMachine(ctrl),
+	return PipelineControl(storage, PipelineControlStateMachine::videoStateMachine(ctrl),
 		interestControl, pipeliner);
 }
 
 //******************************************************************************
-PipelineControl::PipelineControl(const PipelineControlStateMachine& machine,
+PipelineControl::PipelineControl(const boost::shared_ptr<StatisticsStorage>& statStorage,
+			const PipelineControlStateMachine& machine,
 			const boost::shared_ptr<IInterestControl>& interestControl,
 			const boost::shared_ptr<IPipeliner> pipeliner):
+StatObject(statStorage),
 machine_(machine),
 interestControl_(interestControl),
 pipeliner_(pipeliner),
 sampleLatch_({0,0})
 {
-	// machine_.attach(this);
 	description_ = "pipeline-control";
 }
 
 PipelineControl::~PipelineControl()
 {
-	// machine_.detach(this);
 }
 
 void 
@@ -77,19 +78,17 @@ PipelineControl::start()
 	if (machine_.getState() != kStateIdle)
 		throw std::runtime_error("Can't start Pipeline Control as it has been "
 			"started already. Use reset() and start() to restart.");
-
-	sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
-	sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
+	
+	machine_.attach(this);
 	machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 
-	LogDebugC << "started. samples latched at " 
-	<< sampleLatch_.delta_ << "d & " 
-	<< sampleLatch_.key_ << "k" << std::endl;
+	LogDebugC << "started." << std::endl;
 }
 
 void 
 PipelineControl::stop()
 {
+	machine_.detach(this);
 	machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
 	LogDebugC << "stopped" << std::endl;
 }
@@ -147,18 +146,28 @@ PipelineControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 }
 
 #pragma mark - private
-// void 
-// PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>& trigger,
-// 			std::string newState)
-// {
-// 	// if new state is idle - reset the machine
-// 	if (newState == kStateIdle && 
-// 		trigger->getType() != PipelineControlEvent::Type::Reset)
-// 	{
-// 		LogInfoC << "state machine reverted to Idle. starting over..." << std::endl;
-// 		start();
-// 	}
-// }
+void 
+PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>& trigger,
+			std::string newState)
+{
+	// if new state is idle - reset the machine
+	if (newState == kStateIdle && 
+		trigger->getType() != PipelineControlEvent::Type::Reset)
+	{
+		sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
+		sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Key);
+
+		LogDebugC << "samples latched at " 
+			<< sampleLatch_.delta_ << "d & " 
+			<< sampleLatch_.key_ << "k" << std::endl;
+		LogInfoC << "state machine reverted to Idle. starting over..." << std::endl;
+
+		(*statStorage_)[statistics::Indicator::RebufferingsNum]++;
+
+		stop();
+		start();
+	}
+}
 
 bool 
 PipelineControl::passesBarrier(const NamespaceInfo& n)

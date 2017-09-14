@@ -36,8 +36,9 @@ namespace ndnrtc {
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
 							public ISegmentControllerObserver,
-							public IRtxObserver
-							// ,public IPipelineControlStateMachineObserver
+							public IRtxObserver,
+							public IPipelineControlStateMachineObserver,
+							public statistics::StatObject
 	{
 	public:
 		~PipelineControl();
@@ -74,12 +75,13 @@ namespace ndnrtc {
 		boost::shared_ptr<IPipeliner> pipeliner_;
 		Pipeliner::SequenceCounter sampleLatch_;
 
-		PipelineControl(const PipelineControlStateMachine& machine,
+		PipelineControl(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
+			const PipelineControlStateMachine& machine,
 			const boost::shared_ptr<IInterestControl>& interestControl,
 			const boost::shared_ptr<IPipeliner> pipeliner_);
 
-		// void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
-			// std::string);
+		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string);
 		void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
 		bool passesBarrier(const NamespaceInfo& n);
 	};

@@ -168,7 +168,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	{
 		boost::shared_ptr<ndnrtc::RemoteVideoStream> 
 			remoteStream(boost::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
-				p.sessionPrefix_, p.streamName_));
+				p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
 		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_, renderer);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
@@ -177,7 +177,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	{
 		boost::shared_ptr<ndnrtc::RemoteAudioStream>
 			remoteStream(boost::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
-				p.sessionPrefix_, p.streamName_));
+				p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
 		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));

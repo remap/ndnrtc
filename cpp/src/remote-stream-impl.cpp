@@ -120,7 +120,7 @@ void RemoteStreamImpl::stop()
 void 
 RemoteStreamImpl::setInterestLifetime(unsigned int lifetimeMs)
 {
-	// pipeliner_->setInterestLifetime(lifetimeMs);
+	pipeliner_->setInterestLifetime(lifetimeMs);
 }
 
 void 
