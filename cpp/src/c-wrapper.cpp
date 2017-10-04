@@ -53,6 +53,7 @@ void initKeyChain(std::string storagePath, std::string signingIdentity);
 void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 	std::string signingIdentity, std::string instanceId);
 MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
+void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
 
 //******************************************************************************
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
@@ -141,7 +142,7 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.face_ = LibFaceProcessor->getFace().get();
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
 
-		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
 			boost::make_shared<CallbackSink>(loggerSink));
 		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
 			<< "signing " << (settings.sign_ ? "ON" : "OFF")
@@ -149,6 +150,10 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 
 		LocalVideoStream *stream = new LocalVideoStream(params.basePrefix, settings, (params.fecOn == 1));
 		stream->setLogger(callbackLogger);
+
+		// registering prefix for the stream
+		Name prefix(stream->getPrefix());
+		registerPrefix(prefix, callbackLogger);
 
 		return stream;
 	}
@@ -240,22 +245,36 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
 	});
 
-	Name prefix(signingIdentityStr);
+	{ // registering prefix for serving signing ifdentity: <signing-identity>/KEY
+		Name prefix(signingIdentityStr);
+		prefix.append("KEY");
+		registerPrefix(prefix, logger);
+	}
+
+	{ // registering prefix for serving instance ifdentity: <instance-identity>/KEY
+		Name prefix(signingIdentityStr);
+		prefix.append(instanceIdStr).append("KEY");
+		registerPrefix(prefix, logger);
+	}
+
+	LibContentCache->add(*(LibKeyChainManager->signingIdentityCertificate()));
+	LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
+}
+
+void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger) 
+{
 	LibContentCache->registerPrefix(prefix,
 		[logger](const boost::shared_ptr<const Name> &p){
 			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p << std::endl;
 		},
 		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
 			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p << std::endl;
-
-			LibContentCache->add(*(LibKeyChainManager->signingIdentityCertificate()));
-			LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
 		},
 		[logger](const boost::shared_ptr<const Name>& p,
 			const boost::shared_ptr<const Interest> &i,
 			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
 			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
-			<< std::endl;
+				<< std::endl;
 
 			LibContentCache->storePendingInterest(i, f);
 		});

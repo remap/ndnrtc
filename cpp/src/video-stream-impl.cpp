@@ -211,6 +211,8 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 	}
 	else
 		LogWarnC << "incoming frame was given, but there are no threads" << std::endl;
+
+	return false;
 }
 
 void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
