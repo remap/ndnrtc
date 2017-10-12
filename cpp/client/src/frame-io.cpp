@@ -143,11 +143,13 @@ void PipeSink::openPipe(const std::string& path)
 }
 
 #ifdef HAVE_NANOMSG
+#include <iostream>
+
 NanoMsgSink::NanoMsgSink(const std::string& handle)
 {
     nnSocket_ = ipc_setupPubSourceSocket(handle.c_str());
     if (nnSocket_ < 0)
-        throw std::string(ipc_lastError());
+        throw std::runtime_error(ipc_lastError());
 }
 
 NanoMsgSink::~NanoMsgSink()

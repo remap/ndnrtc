@@ -86,18 +86,17 @@ public:
 
 class ConsumerStreamParams : public ClientMediaStreamParams {
 public:
-    std::string streamSink_, threadToFetch_;
-    bool sinkIsPipe_ = false;
+    std::string streamSink_, threadToFetch_, sinkType_;
 
-    ConsumerStreamParams(){}
+    ConsumerStreamParams():sinkType_("file"){}
     ConsumerStreamParams(const ConsumerStreamParams& params):
         ClientMediaStreamParams(params), streamSink_(params.streamSink_), 
-        threadToFetch_(params.threadToFetch_), sinkIsPipe_(params.sinkIsPipe_){}
+        threadToFetch_(params.threadToFetch_), sinkType_(params.sinkType_){}
 
     void write(std::ostream& os) const {
         os 
-        << "stream sink: " << streamSink_ << " (is pipe: " 
-        <<  (sinkIsPipe_ ? "YES)" : "NO)")
+        << "stream sink: " << streamSink_ << " (type: " 
+        <<  sinkType_
         << "; thread to fetch: " << threadToFetch_ << "; ";
         ClientMediaStreamParams::write(os);
     }

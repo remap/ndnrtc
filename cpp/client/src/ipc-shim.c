@@ -7,6 +7,7 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "ipc-shim.h"
 
@@ -19,7 +20,11 @@ int ipc_setupSocket(const char* handle, int isPub, int isBind)
 
 	if (socket >= 0)
 	{
-		int endpoint = (isBind ? nn_bind(socket, handle) : nn_connect(socket, handle));
+		char str[256];
+		memset(str,0,256);
+		sprintf(str, "ipc://%s", handle);
+
+		int endpoint = (isBind ? nn_bind(socket, str) : nn_connect(socket, str));
 		if (endpoint < 0) return -1;
 	}
 	return socket;

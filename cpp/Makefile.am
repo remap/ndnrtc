@@ -173,6 +173,13 @@ UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
 UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} -lconfig++
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
+if HAVE_NANOMSG
+UNIT_TESTS_COMMON_SOURCES_ += client/src/ipc-shim.c client/src/ipc-shim.h
+UNIT_TESTS_CPPFLAGS_ += -I@NANOMSGDIR@ -DHAVE_NANOMSG
+UNIT_TESTS_LDFLAGS_ += -L@NANOMSGLIB@
+UNIT_TESTS_LDADD_ += -lnanomsg
+endif
+
 if OS_LINUX
 
 UNIT_TESTS_LDADD_ += -ldl -lX11

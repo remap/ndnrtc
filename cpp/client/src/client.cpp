@@ -272,11 +272,22 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams& p)
 {
 	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
 	{
-		if (p.sinkIsPipe_)
+		if (p.sinkType_ == "pipe")
 			return new RendererInternal(p.streamSink_, 
 				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
 					return boost::make_shared<PipeSink>(s);
 				});
+		else if (p.sinkType_ == "nano")
+		{
+			#ifdef HAVE_NANOMSG
+				return new RendererInternal(p.streamSink_,
+					[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+						return boost::make_shared<NanoMsgSink>(s);
+					});
+			#else
+				throw std::runtime_error("Requested nano type sink, but code was not built with nanomsg library support");
+			#endif
+		}
 		else
 			return new RendererInternal(p.streamSink_, 
 				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
