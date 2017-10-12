@@ -24,6 +24,8 @@ AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header file
 AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
 AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
 AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
+AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory which contains nanomsg library headers (default is /usr/local/include)])
+AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
 
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
 	[],
@@ -171,6 +173,18 @@ if test ${LCONFIGLIB}; then
 	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
 else
 	LCONFIGLIB="/usr/local/lib"
+fi
+
+if test ${NANOMSGDIR}; then
+	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
+else
+	NANOMSGDIR="/usr/local/include"
+fi
+
+if test ${NANOMSGLIB}; then
+	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
+else
+	NANOMSGLIB="/usr/local/lib"
 fi
 
 # create links for client config file
@@ -380,6 +394,22 @@ SAVED_LIBS="$LIBS"
 
 AC_CHECK_HEADERS([lib_common/of_openfec_api.h],,[AC_MSG_FAILURE([can't find OpenFEC headers])])
 AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find OpenFEC library])])
+
+CPPFLAGS=$SAVED_CPPFLAGS
+LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
+
+###############################
+# Check for nanomsg
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$NANOMSGDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$NANOMSGLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lnanomsg"
+
+AC_CHECK_LIB([nanomsg], [nn_socket])
+AM_CONDITIONAL([HAVE_NANOMSG], [test "$ac_cv_lib_nanomsg_nn_socket" = yes])
 
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS

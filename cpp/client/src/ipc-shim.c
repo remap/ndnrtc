@@ -1,0 +1,121 @@
+// 
+// ipc-shim.c
+//
+// Copyright (c) 2017. Peter Gusev. All rights reserved
+//
+
+#include <nanomsg/nn.h>
+#include <nanomsg/pubsub.h>
+#include <string.h>
+
+#include "ipc-shim.h"
+
+int ipc_setupSocket(const char* handle, int isPub, int isBind)
+{
+	int socket = nn_socket (AF_SP, (isPub == 1 ? NN_PUB : NN_SUB));
+
+	if (isPub != 1) // set receive all messages is SUB
+		nn_setsockopt (socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
+
+	if (socket >= 0)
+	{
+		int endpoint = (isBind ? nn_bind(socket, handle) : nn_connect(socket, handle));
+		if (endpoint < 0) return -1;
+	}
+	return socket;
+}
+
+int ipc_shutdownSocket(int socket)
+{
+	return nn_close(socket);
+}
+
+int ipc_setupPubSourceSocket(const char* handle)
+{
+	return ipc_setupSocket(handle, 1, 1);
+}
+
+int ipc_setupSubSinkSocket(const char* handle)
+{
+	return ipc_setupSocket(handle, 0, 0);
+}
+
+int ipc_setupPubSinkSocket(const char* handle)
+{
+	return ipc_setupSocket(handle, 1, 0);
+}
+
+int ipc_setupSubSourceSocket(const char* handle)
+{
+	return ipc_setupSocket(handle, 0, 1);
+}
+
+int ipc_sendData(int socket, void *buffer, size_t bufferLen)
+{
+	struct nn_msghdr msgHdr;
+	struct nn_iovec iov;
+
+	iov.iov_base = buffer;
+	iov.iov_len = bufferLen;
+	memset(&msgHdr, 0, sizeof(msgHdr));
+	msgHdr.msg_iov = &iov;
+	msgHdr.msg_iovlen = 1;
+
+	return nn_sendmsg(socket, &msgHdr, NN_DONTWAIT);
+}
+
+int ipc_sendFrame(int socket, unsigned int frameNo, void *buffer, size_t bufferLen)
+{
+	struct nn_msghdr msgHdr;
+	struct nn_iovec iov[2];
+
+	iov[0].iov_base = &frameNo;
+	iov[0].iov_len = sizeof(frameNo);
+	iov[1].iov_base = buffer;
+	iov[1].iov_len = bufferLen;
+	memset(&msgHdr, 0, sizeof(msgHdr));
+	msgHdr.msg_iov = iov;
+	msgHdr.msg_iovlen = 2;
+
+	return nn_sendmsg(socket, &msgHdr, NN_DONTWAIT);
+}
+
+int ipc_readData(int socket, void *buffer, size_t bufferLen)
+{
+	struct nn_msghdr msgHdr;
+	struct nn_iovec iov;
+
+	iov.iov_base = buffer;
+	iov.iov_len = bufferLen;
+	memset(&msgHdr, 0, sizeof(msgHdr));
+	msgHdr.msg_iov = &iov;
+	msgHdr.msg_iovlen = 1;
+
+	return nn_recvmsg(socket, &msgHdr, 0);
+}
+
+int ipc_readFrame(int socket, unsigned int *frameNo, void *buffer, size_t bufferLen)
+{
+	struct nn_msghdr msgHdr;
+	struct nn_iovec iov[2];
+
+	iov[0].iov_base = frameNo;
+	iov[0].iov_len = sizeof(unsigned int);
+	iov[1].iov_base = buffer;
+	iov[1].iov_len = bufferLen;
+	memset(&msgHdr, 0, sizeof(msgHdr));
+	msgHdr.msg_iov = iov;
+	msgHdr.msg_iovlen = 2;
+
+	return nn_recvmsg(socket, &msgHdr, 0);
+}
+
+const int ipc_lastErrorCode()
+{
+	return nn_errno();
+}
+
+const char* ipc_lastError()
+{
+	return nn_strerror(nn_errno());
+}

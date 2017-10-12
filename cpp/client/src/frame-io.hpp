@@ -112,6 +112,28 @@ private:
 	void openPipe(const std::string& path);
 };
 
+#ifdef HAVE_NANOMSG
+/**
+ * nanomsg sink (unix socket)
+ */
+class NanoMsgSink : public IFrameSink {
+public: 
+	NanoMsgSink(const std::string& handle);
+	~NanoMsgSink();
+
+	virtual IFrameSink& operator<<(const RawFrame& frame);
+	virtual std::string getName() { return handle_; }
+	virtual bool isBusy() { return false; }
+	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
+
+private:
+	std::string handle_;
+	bool isLastWriteSuccessful_;
+	int nnSocket_;
+
+};
+#endif
+
 //******************************************************************************
 class IFrameSource {
 public:

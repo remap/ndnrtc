@@ -17,6 +17,10 @@
 
 #include "frame-io.hpp"
 
+#ifdef HAVE_NANOMSG
+#include "ipc-shim.h"
+#endif
+
 using namespace std;
 
 RawFrame::RawFrame(unsigned int width, unsigned int height):
@@ -137,6 +141,28 @@ void PipeSink::openPipe(const std::string& path)
 {
     pipe_ = open(path.c_str(), O_WRONLY|O_NONBLOCK|O_EXCL);
 }
+
+#ifdef HAVE_NANOMSG
+NanoMsgSink::NanoMsgSink(const std::string& handle)
+{
+    nnSocket_ = ipc_setupPubSourceSocket(handle.c_str());
+    if (nnSocket_ < 0)
+        throw std::string(ipc_lastError());
+}
+
+NanoMsgSink::~NanoMsgSink()
+{
+    ipc_shutdownSocket(nnSocket_);
+}
+
+IFrameSink& NanoMsgSink::operator<<(const RawFrame& frame) 
+{
+    uint8_t *buf = frame.getBuffer().get();
+    isLastWriteSuccessful_ = (ipc_sendData(nnSocket_, buf, frame.getFrameSizeInBytes()) > 0);
+    return *this;
+}
+
+#endif
 
 //******************************************************************************
 FileFrameSource::FileFrameSource(const string& path):FileFrameStorage(path),

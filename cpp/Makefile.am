@@ -105,8 +105,8 @@ libwebrtc-all.mri:
   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
 
-libwebrtc-all.a: libwebrtc-all.mri
-  $(shell cd @WEBRTCLIB@ && ar -M <libwebrtc-all.mri)
+#libwebrtc-all.a: libwebrtc-all.mri
+#  $(shell cd @WEBRTCLIB@ && $AR -M <libwebrtc-all.mri)
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 libndnrtc_la_LIBADD += -lwebrtc-all
@@ -130,6 +130,13 @@ ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ 
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread -lboost_chrono -lboost_system $(top_builddir)/libndnrtc.la 
 noinst_SCRIPTS = client/params.cfg
+
+if HAVE_NANOMSG
+ndnrtc_client_SOURCES += client/src/ipc-shim.c client/src/ipc-shim.h
+ndnrtc_client_CPPFLAGS += -I@NANOMSGDIR@ -DHAVE_NANOMSG
+ndnrtc_client_LDFLAGS += -L@NANOMSGLIB@
+ndnrtc_client_LDADD += -lnanomsg
+endif
 
 if OS_LINUX
 
