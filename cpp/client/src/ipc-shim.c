@@ -60,13 +60,21 @@ int ipc_sendData(int socket, void *buffer, size_t bufferLen)
 	struct nn_msghdr msgHdr;
 	struct nn_iovec iov;
 
-	iov.iov_base = buffer;
-	iov.iov_len = bufferLen;
+	void *b = nn_allocmsg(bufferLen, 0); // it will be deallocated automatically upon successfull send
+	memcpy(b, buffer, bufferLen);
+
+	iov.iov_base = &b; // this is curious (pointer of a pointer)
+	iov.iov_len = NN_MSG;
 	memset(&msgHdr, 0, sizeof(msgHdr));
 	msgHdr.msg_iov = &iov;
 	msgHdr.msg_iovlen = 1;
 
-	return nn_sendmsg(socket, &msgHdr, NN_DONTWAIT);
+	int ret = nn_sendmsg(socket, &msgHdr, NN_DONTWAIT);
+
+	if (ret < 0)
+		free(b);
+
+	return ret;
 }
 
 int ipc_sendFrame(int socket, unsigned int frameNo, void *buffer, size_t bufferLen)
@@ -85,18 +93,29 @@ int ipc_sendFrame(int socket, unsigned int frameNo, void *buffer, size_t bufferL
 	return nn_sendmsg(socket, &msgHdr, NN_DONTWAIT);
 }
 
-int ipc_readData(int socket, void *buffer, size_t bufferLen)
+int ipc_readData(int socket, void **buffer)
 {
 	struct nn_msghdr msgHdr;
 	struct nn_iovec iov;
 
-	iov.iov_base = buffer;
-	iov.iov_len = bufferLen;
+	void *b;
+
+	iov.iov_base = &b;
+	iov.iov_len = NN_MSG;
 	memset(&msgHdr, 0, sizeof(msgHdr));
 	msgHdr.msg_iov = &iov;
 	msgHdr.msg_iovlen = 1;
 
-	return nn_recvmsg(socket, &msgHdr, 0);
+	int ret = nn_recvmsg(socket, &msgHdr, 0);
+
+	if (ret > 0)
+	{
+		*buffer = malloc(ret);
+		memcpy(*buffer, b, ret);
+		nn_freemsg(b);
+	}
+
+	return ret;
 }
 
 int ipc_readFrame(int socket, unsigned int *frameNo, void *buffer, size_t bufferLen)
