@@ -44,7 +44,8 @@ public:
 
 private:
 	bool isRunning_;
-	unsigned int framesSourced_, nRewinds_;
+	unsigned char* userData_;
+	unsigned int framesSourced_, nRewinds_, userDataSize_;
 	boost::shared_ptr<FileFrameSource> source_;
 	boost::shared_ptr<RawFrame> frame_;
 	std::vector<ndnrtc::IExternalCapturer*> capturers_;

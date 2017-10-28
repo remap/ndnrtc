@@ -84,19 +84,19 @@ vector<string> VideoStreamImpl::getThreads() const
 }
 
 int
-VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w)
+VideoStreamImpl::incomingFrame(const ArgbRawFrameWrapper& w, unsigned int userDataSize, unsigned char* userData)
 {
 	LogDebugC << "⤹ incoming ARGB frame " << w.width_ << "x" << w.height_ << std::endl;
-	if (feedFrame(conv_ << w))
+	if (feedFrame(conv_ << w, userDataSize, userData))
 		return (playbackCounter_-1);
 	return -1;
 }
 
 int
-VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w)
+VideoStreamImpl::incomingFrame(const I420RawFrameWrapper& w, unsigned int userDataSize, unsigned char* userData)
 {
 	LogDebugC << "⤹ incoming I420 frame " << w.width_ << "x" << w.height_ << std::endl;
-	if (feedFrame(conv_ << w))
+	if (feedFrame(conv_ << w, userDataSize, userData))
 		return (playbackCounter_-1);
 	return -1;
 }
@@ -155,7 +155,7 @@ void VideoStreamImpl::remove(const string& threadName)
 	}
 }
 
-bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
+bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame, unsigned int userDataSize, unsigned char* userData)
 {
     (*statStorage_)[Indicator::CapturedNum]++;
     
@@ -171,15 +171,18 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 		LogDebugC << "↓ feeding "<< playbackCounter_ << "p into encoders..." << std::endl;
 
 		map<string,FutureFramePtr> futureFrames;
+		map<string, pair<unsigned int, unsigned char*>> allUserData;
 		for (auto it:threads_)
 		{
 			FutureFramePtr ff = 
 			boost::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async, 
 				boost::bind(&VideoThread::encode, it.second.get(), (*scalers_[it.first])(frame)))));
 			futureFrames[it.first] = ff;
+			allUserData[it.first] = make_pair(userDataSize, userData);
 		}
 
 		map<string, FramePacketPtr> frames;
+		map<string, pair<unsigned int, unsigned char*>> filteredUserData;
 		for (auto it:futureFrames)
 		{
 			FramePacketPtr f(it.second->get());
@@ -187,6 +190,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
             {
                 (*statStorage_)[Indicator::EncodedNum]++;
                 frames[it.first] = f;
+                filteredUserData[it.first] = allUserData[it.first];
             }
 		}
 		
@@ -195,7 +199,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 
 		if (frames.size())
 		{
-			publish(frames);
+			publish(frames, filteredUserData);
 			playbackCounter_++;
 			result = true;
 		}
@@ -215,7 +219,8 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
 	return false;
 }
 
-void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
+void 
+VideoStreamImpl::publish(map<string, FramePacketPtr>& frames, map<string, pair<unsigned int, unsigned char*>> filteredUserData)
 {
 	LogTraceC << "will publish " << frames.size() << " frames" << std::endl;
 
@@ -229,6 +234,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
 
 		it.second->setSyncList(getCurrentSyncList(isKey));
+		it.second->setUserData(filteredUserData);
 		it.second->setHeader(packetHdr);
         
         LogTraceC << "thread " << it.first << " " << packetHdr.sampleRate_

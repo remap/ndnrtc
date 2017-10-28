@@ -857,6 +857,66 @@ TEST(TestVideoFramePacket, TestAddSyncList)
     for (int i = 0; i < frameLen; ++i) EXPECT_EQ(buffer[i], fp.getFrame()._buffer[i]);
 }
 
+TEST(TestVideoFramePacket, TestAddUserData)
+{
+    size_t frameLen = 4300;
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+    uint8_t *buffer = (uint8_t*)malloc(frameLen);
+    for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+
+    webrtc::EncodedImage frame(buffer, frameLen, size);
+    frame._encodedWidth = 640;
+    frame._encodedHeight = 480;
+    frame._timeStamp = 1460488589;
+    frame.capture_time_ms_ = 1460488569;
+    frame._frameType = webrtc::kVideoFrameKey;
+    frame._completeFrame = true;
+
+    VideoFramePacket fp(frame);
+    std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+
+    fp.setSyncList(syncList);
+    EXPECT_EQ(syncList, fp.getSyncList());
+
+    unsigned char c1[] = "data1\0";
+    unsigned char c2[] = "data22\0";
+    unsigned char c3[] = "data333\0";
+    std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+        ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
+    std::map<std::string, std::string> ud = boost::assign::map_list_of ("hi", "data1") ("mid", "data22") ("low", "data333");
+
+    fp.setUserData(userData);
+    EXPECT_EQ(ud, fp.getUserData());
+
+    CommonHeader hdr;
+    hdr.sampleRate_ = 24.7;
+    hdr.publishTimestampMs_ = 488589553;
+    hdr.publishUnixTimestampMs_ = 1460488589;
+
+    fp.setHeader(hdr);
+    EXPECT_EQ(syncList, fp.getSyncList());
+    EXPECT_EQ(ud, fp.getUserData());
+
+    EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
+    EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+
+    int length = fp.getLength();
+    boost::shared_ptr<NetworkData> parityData = fp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+    EXPECT_TRUE(parityData.get());
+    EXPECT_EQ(length, fp.getLength());
+    EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
+    EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(frame._encodedWidth       , fp.getFrame()._encodedWidth   );
+    EXPECT_EQ(frame._encodedHeight      , fp.getFrame()._encodedHeight  );
+    EXPECT_EQ(frame._timeStamp          , fp.getFrame()._timeStamp      );
+    EXPECT_EQ(frame.capture_time_ms_    , fp.getFrame().capture_time_ms_);
+    EXPECT_EQ(frame._frameType          , fp.getFrame()._frameType      );
+    EXPECT_EQ(frame._completeFrame      , fp.getFrame()._completeFrame  );
+    for (int i = 0; i < frameLen; ++i) EXPECT_EQ(buffer[i], fp.getFrame()._buffer[i]);
+}
+
 TEST(TestVideoFramePacket, TestFromNetworkData)
 {
     size_t frameLen = 4300;
@@ -879,8 +939,16 @@ TEST(TestVideoFramePacket, TestFromNetworkData)
 
     std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
 
+    unsigned char c1[] = "data1\0";
+    unsigned char c2[] = "data22\0";
+    unsigned char c3[] = "data333\0";
+    std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+        ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
+    std::map<std::string, std::string> ud = boost::assign::map_list_of ("hi", "data1") ("mid", "data22") ("low", "data333");
+
     VideoFramePacket first(frame);    
     first.setSyncList(syncList);
+    first.setUserData(userData);
     first.setHeader(hdr);
 
     VideoFramePacket fp(boost::move((NetworkData&)first));
@@ -888,6 +956,7 @@ TEST(TestVideoFramePacket, TestFromNetworkData)
     EXPECT_EQ(0, first.getLength());
     EXPECT_FALSE(first.isValid());
     EXPECT_EQ(syncList, fp.getSyncList());    
+    EXPECT_EQ(ud, fp.getUserData());
 
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
@@ -930,6 +999,39 @@ TEST(TestVideoFramePacket, TestAddSyncListThrow)
     EXPECT_ANY_THROW(fp.setSyncList(syncList));
 }
 
+TEST(TestVideoFramePacket, TestAddUserDataThrow)
+{
+    size_t frameLen = 4300;
+    int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
+    uint8_t *buffer = (uint8_t*)malloc(frameLen);
+    for (int i = 0; i < frameLen; ++i) buffer[i] = i%255;
+
+    webrtc::EncodedImage frame(buffer, frameLen, size);
+    frame._encodedWidth = 640;
+    frame._encodedHeight = 480;
+    frame._timeStamp = 1460488589;
+    frame.capture_time_ms_ = 1460488569;
+    frame._frameType = webrtc::kVideoFrameKey;
+    frame._completeFrame = true;
+
+    VideoFramePacket fp(frame);
+
+    CommonHeader hdr;
+    hdr.sampleRate_ = 24.7;
+    hdr.publishTimestampMs_ = 488589553;
+    hdr.publishUnixTimestampMs_ = 1460488589;
+
+    fp.setHeader(hdr);
+
+    unsigned char c1[] = "data1\0";
+    unsigned char c2[] = "data22\0";
+    unsigned char c3[] = "data333\0";
+    std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+        ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
+
+    EXPECT_ANY_THROW(fp.setUserData(userData));
+}
+
 TEST(TestVideoFramePacket, TestSliceFrame)
 {
     CommonHeader hdr;
@@ -952,8 +1054,14 @@ TEST(TestVideoFramePacket, TestSliceFrame)
 
     VideoFramePacket vp(frame);
     std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+    unsigned char c1[] = "data1\0";
+    unsigned char c2[] = "data22\0";
+    unsigned char c3[] = "data333\0";
+    std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+        ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
 
     vp.setSyncList(syncList);
+    vp.setUserData(userData);
     vp.setHeader(hdr);
     boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
 
@@ -993,8 +1101,14 @@ TEST(TestVideoFramePacket, TestGetParity)
         
         VideoFramePacket vp(frame);
         std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
-        
+        unsigned char c1[] = "data1\0";
+        unsigned char c2[] = "data22\0";
+        unsigned char c3[] = "data333\0";
+        std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+            ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
+       
         vp.setSyncList(syncList);
+        vp.setUserData(userData);
         vp.setHeader(hdr);
         boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(8000), 0.2);
         
@@ -1379,8 +1493,15 @@ TEST(TestWireData, TestMergeVideoFramePacket)
 
     VideoFramePacket vp(frame);
     std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
+    unsigned char c1[] = "data1\0";
+    unsigned char c2[] = "data22\0";
+    unsigned char c3[] = "data333\0";
+    std::map<std::string, std::pair<unsigned int, unsigned char*>> userData = boost::assign::map_list_of
+        ("hi", std::make_pair(5, c1)) ("mid", std::make_pair(6, c2)) ("low",std::make_pair(7, c3));
+    std::map<std::string, std::string> ud = boost::assign::map_list_of ("hi", "data1") ("mid", "data22") ("low", "data333");
 
     vp.setSyncList(syncList);
+    vp.setUserData(userData);
     vp.setHeader(hdr);
     boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
 
@@ -1469,6 +1590,14 @@ TEST(TestWireData, TestMergeVideoFramePacket)
     {
         ASSERT_NE(packet->getSyncList().end(), packet->getSyncList().find(t.first));
         EXPECT_EQ(t.second, packet->getSyncList().at(t.first));
+    }
+
+    EXPECT_EQ(ud.size(), packet->getUserData().size());
+    idx = 0;
+    for (auto t:ud)
+    {
+        ASSERT_NE(packet->getUserData().end(), packet->getUserData().find(t.first));
+        EXPECT_EQ(t.second, packet->getUserData().at(t.first));
     }
 }
 
