@@ -98,7 +98,7 @@ PipeSink::~PipeSink()
 IFrameSink& PipeSink::operator<<(const RawFrame& frame)
 {
     if (pipe_ < 0) openPipe(pipePath_);
-    if (pipe > 0) 
+    if (pipe_ > 0) 
     {
         isWriting_ = true;
 
