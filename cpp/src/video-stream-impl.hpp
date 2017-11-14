@@ -48,6 +48,7 @@ namespace ndnrtc {
 
 		int incomingFrame(const ArgbRawFrameWrapper&);
 		int incomingFrame(const I420RawFrameWrapper&);
+		int incomingFrame(const YUV_NV21FrameWrapper&);
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
 		
 	private:

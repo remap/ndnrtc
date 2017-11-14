@@ -153,6 +153,17 @@ int LocalVideoStream::incomingI420Frame(const unsigned int width,
 		strideV, yBuffer, uBuffer, vBuffer}));
 }
 
+int LocalVideoStream::incomingNV21Frame(const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideUV,
+			const unsigned char* yBuffer,
+			const unsigned char* uvBuffer)
+{
+	return pimpl_->incomingFrame(YUV_NV21FrameWrapper({width, height, strideY, 
+		strideUV, yBuffer, uvBuffer}));
+}
+
 string
 LocalVideoStream::getPrefix() const
 {

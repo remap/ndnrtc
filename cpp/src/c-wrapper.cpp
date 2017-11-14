@@ -202,6 +202,18 @@ int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 		return stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
 }
 
+int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideUV,
+			const unsigned char* yBuffer,
+			const unsigned char* uvBuffer)
+{
+	if (stream)
+		return stream->incomingNV21Frame(width, height, strideY, strideUV, yBuffer, uvBuffer);
+}
+
 //******************************************************************************
 // private
 // initializes new file-based keychain

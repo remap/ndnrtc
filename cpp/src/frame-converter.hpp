@@ -26,6 +26,15 @@ namespace ndnrtc {
 		const unsigned char* vBuffer_;
 	} I420RawFrameWrapper;
 
+	typedef struct _YUV_NV21FrameWrapper {
+		const unsigned int width_;
+		const unsigned int height_;
+		const unsigned int strideY_;
+		const unsigned int strideUV_;
+		const unsigned char* yBuffer_;
+		const unsigned char* uvBuffer_;
+	} YUV_NV21FrameWrapper; 
+
 	/**
 	 * FrameConverter converts wrappers of raw video frames into a
 	 * WebRTC raw video frame object. Converted object is stored inside the
@@ -39,6 +48,7 @@ namespace ndnrtc {
 
 		WebRtcVideoFrame operator<<(const ArgbRawFrameWrapper&);
 		WebRtcVideoFrame operator<<(const I420RawFrameWrapper&);
+		WebRtcVideoFrame operator<<(const YUV_NV21FrameWrapper&);
 
 	private:
 		WebRtcSmartPtr<WebRtcVideoFrameBuffer> frameBuffer_;

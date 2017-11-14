@@ -55,3 +55,31 @@ WebRtcVideoFrame RawFrameConverter::operator<<(const I420RawFrameWrapper& wr)
 
 	return WebRtcVideoFrame(frameBuffer_, webrtc::kVideoRotation_0, 0);
 }
+
+WebRtcVideoFrame RawFrameConverter::operator<<(const YUV_NV21FrameWrapper& wr)
+{             
+	// make conversion to I420
+	const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoNV21);
+
+	int stride_y = wr.width_;
+	int stride_uv = (wr.width_ + 1) / 2;
+	int target_width = wr.width_;
+	int target_height = wr.height_;
+
+	frameBuffer_ = I420Buffer::Create(wr.width_, wr.height_, stride_y, stride_uv, stride_uv);
+
+	if (!frameBuffer_)
+		throw std::runtime_error("Failed to allocate I420 frame");
+
+	const int conversionResult = ConvertToI420(commonVideoType,
+											   wr.yBuffer_,
+                                               0, 0,  // No cropping
+                                               wr.width_, wr.height_,
+                                               wr.strideY_+wr.strideUV_,
+                                               kVideoRotation_0,
+                                               frameBuffer_.get());
+	if (conversionResult < 0)
+		throw std::runtime_error("Failed to convert capture frame to I420");
+
+	return WebRtcVideoFrame(frameBuffer_, webrtc::kVideoRotation_0, 0);
+}
