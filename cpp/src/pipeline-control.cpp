@@ -155,7 +155,11 @@ PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const Pipeli
 		trigger->getType() != PipelineControlEvent::Type::Reset)
 	{
 		sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
-		sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Key);
+		// for key frames, pipeliner stores sequence number of a frame to be requested
+		// in order to reduce rebuffer time, we set latching key frame number to the 
+		// current frame; that way, upon restart, pipeliner will start from already requested
+		// frame, thus will receive data faster
+		sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Key)-1;
 
 		LogDebugC << "samples latched at " 
 			<< sampleLatch_.delta_ << "d & " 
