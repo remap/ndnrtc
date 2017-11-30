@@ -113,7 +113,7 @@ void PlayoutImpl::extractSample()
             lastTimestamp_ = slot->getHeader().publishTimestampMs_;
             sampleDelay = playTimeMs;
             debugStr << slot->dump();
-            (*statStorage_)[Indicator::LatencyEstimated] = (clock::unixTimestamp() - slot->getHeader().publishUnixTimestampMs_);
+            (*statStorage_)[Indicator::LatencyEstimated] = (clock::unixTimestamp() - slot->getHeader().publishUnixTimestamp_);
         });
 
         LogTraceC << ". packet delay " << sampleDelay << " ts " << lastTimestamp_ << std::endl;

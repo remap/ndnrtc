@@ -235,7 +235,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr>& frames)
 		CommonHeader packetHdr;
 		packetHdr.sampleRate_ = metaKeepers_[it.first]->getRate();
 		packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
-		packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+		packetHdr.publishUnixTimestamp_ = clock::unixTimestamp();
 
 		it.second->setSyncList(getCurrentSyncList(isKey));
 		it.second->setHeader(packetHdr);

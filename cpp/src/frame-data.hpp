@@ -469,7 +469,7 @@ namespace ndnrtc {
     typedef struct _CommonHeader {
             double sampleRate_; // current packet production rate
             int64_t publishTimestampMs_; // packet timestamp set by producer
-            double publishUnixTimestampMs_; // unix timestamp set by producer
+            double publishUnixTimestamp_; // unix timestamp set by producer
     } __attribute__((packed)) CommonHeader;
     
     typedef struct _AudioSampleHeader {

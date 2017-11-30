@@ -82,6 +82,8 @@ namespace ndnrtc {
 
 		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
 			std::string);
+		void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string);
 		void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
 		bool passesBarrier(const NamespaceInfo& n);
 	};

@@ -178,7 +178,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 	
 			packetHdr.sampleRate_ = packetRate;
 			packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
-			packetHdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+			packetHdr.publishUnixTimestamp_ = clock::unixTimestamp();
 			bundle->setHeader(packetHdr);
 	
 			me->dataPublisher_->publish(n, *bundle);

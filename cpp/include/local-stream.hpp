@@ -194,6 +194,20 @@ namespace ndnrtc {
 			const unsigned char* vBuffer);
 
 		/**
+		 * Encode and publish NV21 frame data.
+		 * This initiates encoding of raw frames for each video thread and
+		 * publishes encoded data according to NDN-RTC namespace. 
+		 * Call is asynchronous: returns immediately. Publishing is performed
+		 * on Face thread to avoid data races.
+		 */
+		int incomingNV21Frame(const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideUV,
+			const unsigned char* yBuffer,
+			const unsigned char* uvBuffer);
+
+		/**
 		 * Returns full stream prefix used for publishing data
 		 * @return Full stream prefix
 		 */

@@ -74,6 +74,14 @@ extern "C" {
 			const unsigned char* uBuffer,
 			const unsigned char* vBuffer);
 
+	int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideUV,
+			const unsigned char* yBuffer,
+			const unsigned char* uvBuffer);
+
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);

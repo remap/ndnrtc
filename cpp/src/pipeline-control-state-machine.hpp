@@ -173,6 +173,9 @@ namespace ndnrtc {
 	public:
 		virtual void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
 			std::string newState) = 0;
+		// called whenever received event didn't trigger any state change
+		virtual void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string state) = 0;
 	};
 
 	/**

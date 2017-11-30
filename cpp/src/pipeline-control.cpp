@@ -169,6 +169,19 @@ PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const Pipeli
 	}
 }
 
+void 
+PipelineControl::onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>& trigger,
+			std::string currentState)
+{
+	if ((currentState == kStateWaitForRightmost || currentState == kStateWaitForInitial) &&
+		trigger->getType() == PipelineControlEvent::Type::Timeout)
+	{
+		// reset latch
+		sampleLatch_.delta_ = 0;
+		sampleLatch_.key_ = 0;
+	}
+}
+
 bool 
 PipelineControl::passesBarrier(const NamespaceInfo& n)
 {

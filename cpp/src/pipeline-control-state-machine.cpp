@@ -347,7 +347,11 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 	else
         // otherwise - check whether state machine table defines transition
         // for this event
-		transition(ev);
+		if (!transition(ev))
+		{
+			for (auto o:observers_)
+				o->onStateMachineReceivedEvent(ev, currentState_->str());
+		}
 }
 
 void
