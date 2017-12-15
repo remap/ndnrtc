@@ -6,6 +6,7 @@
 //
 
 #include <stdlib.h>
+#include <execinfo.h>
 
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/transport/tcp-transport.hpp>
@@ -29,7 +30,7 @@
 #include "mock-objects/external-capturer-mock.hpp"
 #include "mock-objects/external-renderer-mock.hpp"
 
-// #define ENABLE_LOGGING
+#define ENABLE_LOGGING
 // #define SAVE_VIDEO
 
 using namespace ::testing;
@@ -112,7 +113,7 @@ TEST(TestLoop, TestVideo)
     
 #ifdef ENABLE_LOGGING
     ndnlog::new_api::Logger::initAsyncLogging();
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
     
     boost::asio::io_service io_source;
@@ -169,7 +170,8 @@ TEST(TestLoop, TestVideo)
       LocalVideoStream localStream(appPrefix, settings);
       
 #ifdef ENABLE_LOGGING
-      localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+      ndnlog::new_api::Logger::getLogger("/tmp/loop-producer.log").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+      localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr("/tmp/loop-producer.log"));
 #endif
       
       boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -181,7 +183,7 @@ TEST(TestLoop, TestVideo)
       EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
         .WillRepeatedly(Invoke(incomingRawFrame));
       
-      int runTime = 5000;
+      int runTime = 120000;
       
       keyChain->setFace(consumerFace.get());
       RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
@@ -196,6 +198,7 @@ TEST(TestLoop, TestVideo)
         if (storage[Indicator::State] > state)
           state = storage[Indicator::State];
 
+        EXPECT_EQ(0, storage[Indicator::IncompleteNum]);
         bufferLevel.newValue(storage[Indicator::BufferPlayableSize]);
         setupTimer();
       };
@@ -214,16 +217,22 @@ TEST(TestLoop, TestVideo)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(frame->getBuffer().get()));
       
+#ifdef SAVE_VIDEO
       FileSink frameSink("/tmp/frame-sink.argb");
-      boost::function<void(int64_t,int,int,const uint8_t*)> 
-        renderFrame = [&nRendered, &frameSink, frame](int64_t,int,int,const uint8_t* buf){
+#endif
+      boost::function<void(int64_t,uint,int,int,const uint8_t*)> 
+#ifdef SAVE_VIDEO
+        renderFrame = [&nRendered, &frameSink, frame](int64_t,uint,int,int,const uint8_t* buf){
+#else
+        renderFrame = [&nRendered, frame](int64_t,uint,int,int,const uint8_t* buf){
+#endif
           nRendered++;
           EXPECT_EQ(frame->getBuffer().get(), buf);
 #ifdef SAVE_VIDEO
           frameSink << *frame;
 #endif
         };
-      EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_))
+      EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_,_))
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke(renderFrame));
 
@@ -254,9 +263,9 @@ TEST(TestLoop, TestVideo)
     ASSERT_EQ(0, rebufferingsNum);
     EXPECT_GE(state, 5);
     EXPECT_LT(110, bufferLevel.value());
-    EXPECT_GT(190, bufferLevel.value());
+    EXPECT_GT(200, bufferLevel.value());
 }
-
+#if 0
 TEST(TestLoop, TestAudio)
 {
     if (!checkNfd()) return;
@@ -358,8 +367,25 @@ TEST(TestLoop, TestAudio)
     EXPECT_LT(110, bufferLevel.value());
     EXPECT_GT(190, bufferLevel.value());
 }
+#endif
+
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
 
 int main(int argc, char **argv) {
+    signal(SIGABRT, handler);
+    signal(SIGSEGV, handler);
+
     ::testing::InitGoogleTest(&argc, argv);
     
     test_path = std::string(argv[0]);

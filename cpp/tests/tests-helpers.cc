@@ -354,7 +354,7 @@ VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs
  	CommonHeader hdr;
     hdr.sampleRate_ = rate;
     hdr.publishTimestampMs_ = pubTs;
-    hdr.publishUnixTimestampMs_ = pubUts;
+    hdr.publishUnixTimestamp_ = pubUts;
 
     uint8_t *buffer;
 
