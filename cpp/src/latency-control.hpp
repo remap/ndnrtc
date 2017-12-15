@@ -25,10 +25,15 @@ namespace ndnrtc {
     namespace statistics {
         class StatisticsStorage;
     }
+
+    namespace estimators {
+    	class Average;
+    }
     
 	class StabilityEstimator;
 	class DrdChangeEstimator;
 	class ILatencyControlObserver;
+	class IPlayoutControl;
 
 	typedef enum _PipelineAdjust {
 		IncreasePipeline,
@@ -42,6 +47,7 @@ namespace ndnrtc {
 		virtual PipelineAdjust getCurrentCommand() const = 0;
         virtual void registerObserver(ILatencyControlObserver* o) = 0;
         virtual void unregisterObserver() = 0;
+        virtual void setPlayoutControl(boost::shared_ptr<IPlayoutControl> playoutControl) = 0;
 	};
 
 	/**
@@ -71,6 +77,9 @@ namespace ndnrtc {
 		void sampleArrived(const PacketNumber& playbackNo);
 		void reset();
 
+		void setPlayoutControl(boost::shared_ptr<IPlayoutControl> playoutControl) 
+		{ playoutControl_ = playoutControl; }
+
 		void registerObserver(ILatencyControlObserver* o);
 		void unregisterObserver();
 
@@ -79,9 +88,25 @@ namespace ndnrtc {
         void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
 	private:
+		class IQueueSizeStrategy {
+		public:
+			virtual unsigned int getTargetPlayoutSize(const estimators::Average& drd, const unsigned int& lowerLimit) = 0; 
+		};
+
+		class DefaultStrategy : public IQueueSizeStrategy {
+		public:
+			DefaultStrategy(double alpha = 4.):alpha_(alpha){}
+			unsigned int getTargetPlayoutSize(const estimators::Average& drd, const unsigned int& lowerLimit);
+
+		private:
+			double alpha_;
+		};
+
 		boost::mutex mutex_;
 		boost::shared_ptr<StabilityEstimator> stabilityEstimator_;
 		boost::shared_ptr<DrdChangeEstimator> drdChangeEstimator_;
+		boost::shared_ptr<IPlayoutControl> playoutControl_;
+		boost::shared_ptr<IQueueSizeStrategy> queueSizeStrategy_;
 		bool waitForChange_, waitForStability_;
 		int64_t timestamp_;
 		unsigned int timeoutWindowMs_;

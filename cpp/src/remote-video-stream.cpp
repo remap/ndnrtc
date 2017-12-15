@@ -43,9 +43,10 @@ RemoteStreamImpl(io, face, keyChain, streamPrefix)
     pps.sstorage_ = sstorage_;
     
     pipeliner_ = make_shared<Pipeliner>(pps, boost::make_shared<Pipeliner::VideoNameScheme>());
-    
     playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
+    latencyControl_->setPlayoutControl(playoutControl_);
+    
     validator_ = boost::make_shared<ManifestValidator>(face, keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }
@@ -71,6 +72,7 @@ RemoteVideoStreamImpl::initiateFetching()
 
     setupDecoder();
     setupPipelineControl();
+    pipelineControl_->start();
 }
 
 void
@@ -93,19 +95,22 @@ RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logg
 
 #pragma mark private
 void
-RemoteVideoStreamImpl::feedFrame(const WebRtcVideoFrame& frame)
+RemoteVideoStreamImpl::feedFrame(PacketNumber frameNo, const WebRtcVideoFrame& frame)
 {
     uint8_t *rgbFrameBuffer = renderer_->getFrameBuffer(frame.width(),
         frame.height());
     
     if (rgbFrameBuffer)
     {
+        LogTraceC << "passing frame " << frameNo << " to renderer" << std::endl;
 #warning this needs to be tested with frames captured from real video devices
         ConvertFromI420(frame, webrtc::kBGRA, 0, rgbFrameBuffer);
-        renderer_->renderBGRAFrame(clock::millisecondTimestamp(),
+        renderer_->renderBGRAFrame(clock::millisecondTimestamp(), frameNo,
                                           frame.width(), frame.height(),
                                           rgbFrameBuffer);
     }
+    else
+        LogTraceC << "renderer is busy." << std::endl;
 }
 
 void
@@ -114,8 +119,8 @@ RemoteVideoStreamImpl::setupDecoder()
     boost::shared_ptr<RemoteVideoStreamImpl> me = boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(shared_from_this());
     VideoThreadMeta meta(threadsMeta_[threadName_]->data());
     boost::shared_ptr<VideoDecoder> decoder = boost::make_shared<VideoDecoder>(meta.getCoderParams(),
-     [this, me](const WebRtcVideoFrame& frame){
-       feedFrame(frame);
+     [this, me](PacketNumber frameNo, const WebRtcVideoFrame& frame){
+       feedFrame(frameNo, frame);
      });
     boost::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
     decoder_ = decoder;
@@ -143,9 +148,9 @@ RemoteVideoStreamImpl::setupPipelineControl()
        boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
        sstorage_));
     pipelineControl_->setLogger(logger_);
+    rtxController_->attach(pipelineControl_.get());
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
-    pipelineControl_->start();
 }
 
 void

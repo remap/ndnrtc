@@ -37,6 +37,7 @@ namespace ndnrtc {
 		virtual unsigned int getMaxIdleTime() const = 0;
 		virtual ndn::OnData getOnDataCallback() = 0;
 		virtual ndn::OnTimeout getOnTimeoutCallback() = 0;
+		virtual ndn::OnNetworkNack getOnNetworkNackCallback() = 0;
 		virtual void attach(ISegmentControllerObserver*) = 0;
 		virtual void detach(ISegmentControllerObserver*) = 0;
 	};
@@ -67,6 +68,7 @@ namespace ndnrtc {
 
 		ndn::OnData getOnDataCallback();
 		ndn::OnTimeout getOnTimeoutCallback();
+		ndn::OnNetworkNack getOnNetworkNackCallback();
 
 		void attach(ISegmentControllerObserver* o);
 		void detach(ISegmentControllerObserver* o);
@@ -87,6 +89,11 @@ namespace ndnrtc {
 		 * Called whenever interest has timed out
 		 */
 		virtual void segmentRequestTimeout(const NamespaceInfo&) = 0;
+
+		/**
+		 * Called whenever interest gets network nack
+		 */
+		virtual void segmentNack(const NamespaceInfo&, int reason) = 0;
 
 		/**
 		 * Called when no segments were received during specified time interval.

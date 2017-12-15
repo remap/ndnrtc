@@ -26,6 +26,7 @@
 #include "playout-control.hpp"
 #include "playout.hpp"
 #include "sample-estimator.hpp"
+#include "rtx-controller.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -54,6 +55,8 @@ sstorage_(StatisticsStorage::createConsumerStatistics())
 	buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
 	playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                dynamic_pointer_cast<Buffer>(buffer_));
+	rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_);
+	buffer_->attach(rtxController_.get());
 	// playout and playout-control created in subclasses
 
 	interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
@@ -117,7 +120,7 @@ void RemoteStreamImpl::stop()
 void 
 RemoteStreamImpl::setInterestLifetime(unsigned int lifetimeMs)
 {
-	// pipeliner_->setInterestLifetime(lifetimeMs);
+	pipeliner_->setInterestLifetime(lifetimeMs);
 }
 
 void 
@@ -140,6 +143,8 @@ RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
     dynamic_pointer_cast<NdnRtcComponent>(latencyControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(interestControl_)->setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(playbackQueue_)->setLogger(logger);
+    segmentController_->setLogger(logger);
+    rtxController_->setLogger(logger);
     if (pipelineControl_.get()) pipelineControl_->setLogger(logger);
 }
 
@@ -232,6 +237,10 @@ RemoteStreamImpl::threadMetaFetched(const std::string& thread, NetworkData& meta
 	if (threadsMeta_.size() == streamMeta_->getThreads().size())
 	{
 		needMeta_ = false;
+
+		// notify observers that we got all the meta needed
+		notifyObservers(RemoteStream::Event::NewMeta);
+
 		if (cuedToRun_ && !isRunning_)
 			initiateFetching();
 	}
@@ -240,13 +249,20 @@ RemoteStreamImpl::threadMetaFetched(const std::string& thread, NetworkData& meta
 void
 RemoteStreamImpl::initiateFetching()
 {
-    if (threadsMeta_.find(threadName_) == threadsMeta_.end())
-    {
-        LogErrorC << "Can't find requested thread " << threadName_
-            << " in received metadata" << std::endl;
-        throw std::runtime_error("Can't find requested thread to fetch");
-    }
-    
+	if (threadName_ == "")
+	{
+		threadName_ = threadsMeta_.begin()->first;
+	}
+	else
+	{
+		if (threadsMeta_.find(threadName_) == threadsMeta_.end())
+		{
+			LogErrorC << "Can't find requested thread " << threadName_
+			<< " in received metadata" << std::endl;
+			throw std::runtime_error("Can't find requested thread to fetch");
+		}
+	}
+
     LogInfoC << "initiating fetching from " << streamPrefix_
         << " (thread " << threadName_ << ")" << std::endl;
     
@@ -286,4 +302,11 @@ RemoteStreamImpl::addValidationInfo(const std::vector<ValidationErrorInfo>& vali
 	for (auto& vi:validationInfo)
 		LogWarnC << "failed to verify data packet " << vi.getData()->getName() << std::endl;
 	std::copy(validationInfo.begin(), validationInfo.end(), std::back_inserter(validationInfo_));
+}
+
+void
+RemoteStreamImpl::notifyObservers(RemoteStream::Event ev)
+{
+	for (auto o : observers_)
+		o->onNewEvent(RemoteStream::Event::NewMeta);
 }

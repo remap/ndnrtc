@@ -53,15 +53,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
     if (lastRequestedSample_ == SampleClass::Unknown) // request rightmost
     {
-        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(Name(threadPrefix), interestLifetime_);
-    
-        // if (exclusionPacket_)
-        // {
-        //     rightmostInterest_.getExclude().appendAny();
-        //     rightmostInterest_.getExclude().appendComponent(NdnRtcUtils::componentFromInt(exclusionPacket_));
-        //     exclusionPacket_ = 0;
-        // }
-
+        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
         request(interest, DeadlinePriority::fromNow(0));
 
         LogDebugC << "request rightmost " << interest->getName() << std::endl;
@@ -73,12 +65,12 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         
-        request(batch, DeadlinePriority::fromNow(0));
-        if (placeInBuffer) buffer_->requested(batch);
-        
         LogDebugC << "request sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
-            << " " << SAMPLE_SUFFIX(n) << std::endl;
+            << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
+
+        request(batch, DeadlinePriority::fromNow(0));
+        if (placeInBuffer) buffer_->requested(batch);
     }
 
     lastRequestedSample_ = nextSamplePriority_;
@@ -101,7 +93,9 @@ Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
     if (interestControl_->room() > 0)
         LogDebugC << interestControl_->room()
             << " sample(s) will be requested: "
-            << interestControl_->snapshot() << std::endl;
+            << interestControl_->snapshot() 
+            << " priority " << (int)nextSamplePriority_ 
+            << std::endl;
     
     while (interestControl_->room() > 0)
     {
@@ -137,7 +131,6 @@ Pipeliner::reset()
 {
     LogInfoC << "reset" << std::endl;
 
-    seqCounter_ = {0,0};
     nextSamplePriority_ = SampleClass::Delta;
     lastRequestedSample_ = SampleClass::Unknown;
 }
@@ -147,6 +140,15 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
 {
     if (cls == SampleClass::Delta) seqCounter_.delta_ = seqNo;
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
+}
+
+PacketNumber 
+Pipeliner::getSequenceNumber(SampleClass cls)
+{
+    if (cls == SampleClass::Delta) return seqCounter_.delta_;
+    if (cls == SampleClass::Key) return seqCounter_.key_;
+
+    return 0;
 }
 
 #pragma mark - private
@@ -163,7 +165,8 @@ Pipeliner::request(const boost::shared_ptr<const ndn::Interest>& interest,
 {
     interestQueue_->enqueueInterest(interest,  priority,
         segmentController_->getOnDataCallback(),
-        segmentController_->getOnTimeoutCallback());
+        segmentController_->getOnTimeoutCallback(),
+        segmentController_->getOnNetworkNackCallback());
 }
 
 std::vector<boost::shared_ptr<const Interest>>
@@ -215,10 +218,8 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
     
     // set priority for requesting next key frame when key segment is received
     if (receipt.slot_->getNameInfo().class_ == SampleClass::Key &&
-        receipt.slot_->getState() == BufferSlot::State::Assembling &&
-        receipt.slot_->getFetchedNum() == 1)
+        receipt.oldState_ == BufferSlot::State::New)
         setNeedSample(SampleClass::Key);
-
 }
 
 Name
@@ -241,12 +242,15 @@ Pipeliner::VideoNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
 
 boost::shared_ptr<ndn::Interest>
 Pipeliner::VideoNameScheme::rightmostInterest(const ndn::Name threadPrefix,
-                                                   unsigned int lifetime)
+                                                   unsigned int lifetime,
+                                                   SequenceCounter seqCounter)
 {
     boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
     interest->setChildSelector(1);
+    interest->getExclude().appendAny();
+    interest->getExclude().appendComponent(Name::Component::fromSequenceNumber(seqCounter.key_));
     return interest;
 }
 
@@ -265,7 +269,8 @@ Pipeliner::AudioNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
 
 boost::shared_ptr<ndn::Interest>
 Pipeliner::AudioNameScheme::rightmostInterest(const ndn::Name threadPrefix,
-                                              unsigned int lifetime)
+                                              unsigned int lifetime,
+                                              SequenceCounter seqCounter)
 {
     boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
                                                                       lifetime));
@@ -274,6 +279,8 @@ Pipeliner::AudioNameScheme::rightmostInterest(const ndn::Name threadPrefix,
     interest->setExclude(ex);
     interest->setMustBeFresh(true);
     interest->setChildSelector(1);
+    interest->getExclude().appendAny();
+    interest->getExclude().appendComponent(Name::Component::fromSequenceNumber(seqCounter.delta_));
     
     return interest;
 }

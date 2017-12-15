@@ -56,6 +56,8 @@ private:
 	void tearDownProducer();
 	void tearDownConsumer();
 
+	RendererInternal *setupRenderer(const ConsumerStreamParams& p);
+
 	RemoteStream initRemoteStream(const ConsumerStreamParams& p, 
 		const ndnrtc::GeneralConsumerParams& generalParams);
 	LocalStream initLocalStream(const ProducerStreamParams& p);

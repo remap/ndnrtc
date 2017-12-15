@@ -24,7 +24,7 @@ NDN-RTC depends on its prerequisites. Paths to these sources and/or libraries ca
 * **OPENFECSRC** - Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)
 * **OPENFECLIB** - Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)
 * **WEBRTCDIR** - Path to the directory which contains WebRTC trunk
-* **WEBRTCSRC** - Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/wbertc)
+* **WEBRTCSRC** - Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)
 * **WEBRTCLIB** - Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)
 * **LCONFIGDIR** - (Optional) path to the directory which contains libconfig library headers (default is /usr/local/include)
 * **LCONFIGLIB** - (Optional) path to the directory which contains libconfig library binaries (default is /usr/local/lib)
@@ -115,8 +115,16 @@ $ make && make install
 
 To run unit tests (compilation takes a while):
 
+> Since WebRTC binaries are scattered around in subfolders, one must perform an additional step of glueing them all together into one static library (libwebrtc-all.a). This can be done using this sequence of commands:
+
 <pre>
-$ make check
+
+$ cd <webrtc-checkout>/src/out/Default
+$ echo "create libwebrtc-all.a" > libwebrtc-all.mri
+$ for lib in $(find . -name '*.a'); do echo "addlib $lib" >> libwebrtc-all.mri; done;
+$ echo "save" >> libwebrtc-all.mri && echo "end" >> libwebrtc-all.mri
+$ ar -M &lt;libwebrtc-all.mri
+
 </pre>
 
 # Build instructions for Ubuntu 12.04, 14.04, 15.04

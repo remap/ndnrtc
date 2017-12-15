@@ -34,6 +34,7 @@ namespace ndnrtc {
         
         ndn::OnData getOnDataCallback();
         ndn::OnTimeout getOnTimeoutCallback();
+        ndn::OnNetworkNack getOnNetworkNackCallback();
         
         void attach(ISegmentControllerObserver* o);
         void detach(ISegmentControllerObserver* o);
@@ -52,6 +53,8 @@ namespace ndnrtc {
         void onData(const boost::shared_ptr<const ndn::Interest>&,
                     const boost::shared_ptr<ndn::Data>&);
         void onTimeout(const boost::shared_ptr<const ndn::Interest>&);
+        void onNetworkNack(const boost::shared_ptr<const ndn::Interest>& interest,
+                            const boost::shared_ptr<ndn::NetworkNack>& networkNack);
     };
 }
 
@@ -91,6 +94,11 @@ ndn::OnTimeout SegmentController::getOnTimeoutCallback()
     return pimpl_->getOnTimeoutCallback();
 }
 
+ndn::OnNetworkNack SegmentController::getOnNetworkNackCallback()
+{
+    return pimpl_->getOnNetworkNackCallback();    
+}
+
 void SegmentController::attach(ISegmentControllerObserver* o)
 {
     pimpl_->attach(o);
@@ -112,7 +120,7 @@ SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service& faceIo,
     const boost::shared_ptr<StatisticsStorage>& storage):
 Periodic(faceIo),
 maxIdleTimeMs_(maxIdleTimeMs),
-lastDataTimestampMs_(clock::millisecondTimestamp()),
+lastDataTimestampMs_(0),
 starvationFired_(false),
 active_(false),
 sstorage_(storage)
@@ -137,8 +145,11 @@ SegmentControllerImpl::setIsActive(bool active)
     if (!active_)
         cancelInvocation();
     else
+    {
+        lastDataTimestampMs_ = clock::millisecondTimestamp();
         setupInvocation(maxIdleTimeMs_,
                         boost::bind(&SegmentControllerImpl::periodicInvocation, this));
+    }
 }
 
 OnData SegmentControllerImpl::getOnDataCallback()
@@ -151,6 +162,12 @@ OnTimeout SegmentControllerImpl::getOnTimeoutCallback()
 {
     boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
 	return boost::bind(&SegmentControllerImpl::onTimeout, me, _1);
+}
+
+OnNetworkNack SegmentControllerImpl::getOnNetworkNackCallback()
+{
+    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+    return boost::bind(&SegmentControllerImpl::onNetworkNack, me, _1, _2);       
 }
 
 void SegmentControllerImpl::attach(ISegmentControllerObserver* o)
@@ -204,6 +221,13 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& inte
         return;
     }
     
+    if  (data->getMetaInfo().getType() == ndn_ContentType_NACK)
+    {
+        LogTraceC << "received nack for " << data->getName() << std::endl;
+        (*sstorage_)[Indicator::AppNackNum]++;
+        return;
+    }
+
 	lastDataTimestampMs_ =  clock::millisecondTimestamp();
 	starvationFired_ = false;
 	NamespaceInfo info;
@@ -255,4 +279,34 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& i
 	}
 	else
 		LogWarnC << "received timeout for badly named Interest " << interest->getName() << std::endl;
+}
+
+void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest>& interest,
+                            const boost::shared_ptr<NetworkNack>& networkNack)
+{
+    if (!active_)
+    {
+        LogWarnC << "network nack (reason: " << networkNack->getReason() 
+            << ", other: " << networkNack->getOtherReasonCode() 
+            << ") in inactive state " << interest->getName() << std::endl;
+        return;
+    }
+
+    NamespaceInfo info;
+
+    if (NameComponents::extractInfo(interest->getName(), info))
+    {
+        LogTraceC << "received nack for " << interest->getName() << std::endl;
+        
+        {
+            boost::lock_guard<boost::mutex> scopedLock(mutex_);
+            int reason = (networkNack->getReason() == ndn_NetworkNackReason_OTHER_CODE ? networkNack->getOtherReasonCode() : networkNack->getReason());
+
+            for (auto& o:observers_) o->segmentNack(info, reason);
+        }
+
+        (*sstorage_)[Indicator::NacksNum]++;
+    }
+    else
+        LogWarnC << "received nack for badly named Interest " << interest->getName() << std::endl;
 }

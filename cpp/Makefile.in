@@ -91,14 +91,22 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @OS_DARWIN_TRUE@am__append_1 = -flat_namespace
-@OS_DARWIN_TRUE@am__append_2 = @WEBRTCLIBS@
+@OS_DARWIN_TRUE@am__append_2 = -lwebrtc-all
+@OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
+@OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
-@OS_LINUX_TRUE@am__append_3 = -pthread 
-@OS_LINUX_TRUE@am__append_4 = -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite /usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_5 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_6 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
-@OS_LINUX_TRUE@am__append_7 = -ldl -lX11
+@OS_LINUX_TRUE@am__append_6 = -pthread 
+@OS_LINUX_TRUE@am__append_7 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite 
+# TODO: check ubuntu build after commenting below line (part of LDADD flags)
+#/usr/lib/x86_64-linux-gnu/libboost_system.so
 @OS_DARWIN_TRUE@am__append_8 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_9 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+@OS_ANDROID_TRUE@am__append_10 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_11 = -pthread -fPIE -pie
+@OS_ANDROID_TRUE@am__append_12 = -llog -lOpenSLES
+@OS_LINUX_TRUE@am__append_13 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_14 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -198,9 +206,11 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-audio-stream-impl.lo \
 	src/libndnrtc_la-audio-thread.lo src/libndnrtc_la-av-sync.lo \
 	src/libndnrtc_la-buffer-control.lo src/libndnrtc_la-clock.lo \
+	src/libndnrtc_la-c-wrapper.lo \
 	src/libndnrtc_la-data-validator.lo \
 	src/libndnrtc_la-drd-estimator.lo \
-	src/libndnrtc_la-estimators.lo src/libndnrtc_la-fec.lo \
+	src/libndnrtc_la-estimators.lo \
+	src/libndnrtc_la-face-processor.lo src/libndnrtc_la-fec.lo \
 	src/libndnrtc_la-frame-buffer.lo \
 	src/libndnrtc_la-frame-converter.lo \
 	src/libndnrtc_la-frame-data.lo \
@@ -252,7 +262,8 @@ am_bin_tests_test_async_OBJECTS =  \
 	tests/bin_tests_test_async-test-async.$(OBJEXT) \
 	src/bin_tests_test_async-async.$(OBJEXT) $(am__objects_1)
 bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_2)
 bin_tests_test_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -1086,10 +1097,8 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
 	client/src/ndnrtc_client-key-chain-manager.$(OBJEXT)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
-@OS_LINUX_TRUE@am__DEPENDENCIES_4 =  \
-@OS_LINUX_TRUE@	/usr/lib/x86_64-linux-gnu/libboost_system.so
 ndnrtc_client_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
@@ -1616,9 +1625,11 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/av-sync.cpp src/av-sync.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
+  src/c-wrapper.cpp include/c-wrapper.h \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
+  src/face-processor.hpp src/face-processor.cpp \
   src/fec.cpp src/fec.hpp \
   src/frame-buffer.cpp src/frame-buffer.hpp \
   src/frame-converter.cpp src/frame-converter.hpp \
@@ -1667,20 +1678,27 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
   src/webrtc.hpp
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
+	-I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ \
+	-I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\" \
+	$(am__append_4)
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
 	-L@BOOSTLIB@ $(am__append_1)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer \
-	-lboost_chrono -lboost_thread -lboost_regex -lwebrtc-all \
-	$(am__append_2)
-libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+	-lboost_chrono -lboost_thread -lboost_regex $(am__append_2) \
+	$(am__append_3) $(am__append_5)
+@OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+@OS_DARWIN_TRUE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
-	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_5)
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ \
-	-L$(libdir) $(am__append_3) $(am__append_6)
+	-I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@ $(am__append_8) \
+	$(am__append_10)
+ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
+	-L@BOOSTLIB@ -L$(libdir) $(am__append_6) $(am__append_9) \
+	$(am__append_11)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread \
-	-lboost_chrono $(top_builddir)/libndnrtc.la $(am__append_4)
+	-lboost_chrono -lboost_system $(top_builddir)/libndnrtc.la \
+	$(am__append_7) $(am__append_12)
 noinst_SCRIPTS = client/params.cfg
 
 #################
@@ -1692,9 +1710,9 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
-	$(am__append_8)
+	$(am__append_14)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_7)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_13)
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -1984,11 +2002,15 @@ src/libndnrtc_la-buffer-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-clock.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-c-wrapper.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-data-validator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-drd-estimator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-estimators.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-face-processor.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-fec.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -3841,10 +3863,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-av-sync.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-clock.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-data-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-drd-estimator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-estimators.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-face-processor.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-fec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-frame-buffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-frame-converter.Plo@am__quote@
@@ -4051,6 +4075,13 @@ src/libndnrtc_la-clock.lo: src/clock.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-clock.lo `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
 
+src/libndnrtc_la-c-wrapper.lo: src/c-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-c-wrapper.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-c-wrapper.Tpo -c -o src/libndnrtc_la-c-wrapper.lo `test -f 'src/c-wrapper.cpp' || echo '$(srcdir)/'`src/c-wrapper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-c-wrapper.Tpo src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/c-wrapper.cpp' object='src/libndnrtc_la-c-wrapper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-c-wrapper.lo `test -f 'src/c-wrapper.cpp' || echo '$(srcdir)/'`src/c-wrapper.cpp
+
 src/libndnrtc_la-data-validator.lo: src/data-validator.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-data-validator.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-data-validator.Tpo -c -o src/libndnrtc_la-data-validator.lo `test -f 'src/data-validator.cpp' || echo '$(srcdir)/'`src/data-validator.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-data-validator.Tpo src/$(DEPDIR)/libndnrtc_la-data-validator.Plo
@@ -4071,6 +4102,13 @@ src/libndnrtc_la-estimators.lo: src/estimators.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/estimators.cpp' object='src/libndnrtc_la-estimators.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-estimators.lo `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
+
+src/libndnrtc_la-face-processor.lo: src/face-processor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-face-processor.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-face-processor.Tpo -c -o src/libndnrtc_la-face-processor.lo `test -f 'src/face-processor.cpp' || echo '$(srcdir)/'`src/face-processor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-face-processor.Tpo src/$(DEPDIR)/libndnrtc_la-face-processor.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/face-processor.cpp' object='src/libndnrtc_la-face-processor.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-face-processor.lo `test -f 'src/face-processor.cpp' || echo '$(srcdir)/'`src/face-processor.cpp
 
 src/libndnrtc_la-fec.lo: src/fec.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-fec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-fec.Tpo -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
@@ -12211,18 +12249,32 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 .PRECIOUS: Makefile
 
 
-make-fat-libs:
-	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
-	done && \
-	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+@OS_DARWIN_TRUE@.PHONY: make-fat-libs 
 
-libwebrtc-all.a: make-fat-libs
-	$(shell mkdir -p tmp && cd tmp && \
-	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
-		ar x $$lib; \
-	done && \
-	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+@OS_DARWIN_TRUE@make-fat-libs:
+@OS_DARWIN_TRUE@	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+@OS_DARWIN_TRUE@		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
+@OS_DARWIN_TRUE@	done && \
+@OS_DARWIN_TRUE@	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
+
+@OS_DARWIN_TRUE@libwebrtc-all.a: make-fat-libs
+@OS_DARWIN_TRUE@	$(shell mkdir -p tmp && cd tmp && \
+@OS_DARWIN_TRUE@	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
+@OS_DARWIN_TRUE@		ar x $$lib; \
+@OS_DARWIN_TRUE@	done && \
+@OS_DARWIN_TRUE@	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
+
+@OS_DARWIN_FALSE@.PHONY: libwebrtc-all.mri libwebrtc-all.a
+
+@OS_DARWIN_FALSE@libwebrtc-all.mri:
+@OS_DARWIN_FALSE@  $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
+@OS_DARWIN_FALSE@  for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+@OS_DARWIN_FALSE@  echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
+@OS_DARWIN_FALSE@  echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
+@OS_DARWIN_FALSE@  echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
+
+@OS_DARWIN_FALSE@libwebrtc-all.a: libwebrtc-all.mri
+@OS_DARWIN_FALSE@  $(shell cd @WEBRTCLIB@ && ar -M <libwebrtc-all.mri)
 
 res/test-source-1280x720.argb:
 	mkdir -p $(top_builddir)/res/

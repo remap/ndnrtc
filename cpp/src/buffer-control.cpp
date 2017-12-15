@@ -43,7 +43,9 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
         buffer_->isRequested(segment))
 	{
 		BufferReceipt receipt = buffer_->received(segment);
-		drdEstimator_->newValue(receipt.segment_->getDrdUsec()/1000, receipt.segment_->isOriginal());
+		drdEstimator_->newValue(receipt.segment_->getDrdUsec()/1000, 
+			receipt.segment_->isOriginal(),
+			receipt.segment_->getDgen());
         
         (*sstorage_)[Indicator::DrdOriginalEstimation] = drdEstimator_->getOriginalEstimation();
         (*sstorage_)[Indicator::DrdCachedEstimation] = drdEstimator_->getCachedEstimation();
@@ -56,11 +58,17 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
             (*sstorage_)[Indicator::CurrentProducerFramerate] = rate;
         }
 
-		if (receipt.slot_->getFetchedNum() == 1)
+		// since we're receiving new segment, check previous slot state
+		// if it was New (no segments previously received), then it means
+		// that new sample is arriving and we need to notify observers
+		// if (receipt.slot_->getFetchedNum() == 1)
+		if (receipt.oldState_ == BufferSlot::New)
 			for (auto& o:observers_) o->sampleArrived(segment->getPlaybackNo());
 
 		LogDebugC << "added segment " << receipt.segment_->getInfo().getSuffix(suffix_filter::Thread)
 			<< (receipt.segment_->isOriginal() ? " ORIG" : " CACH")
+			<< " dgen " << receipt.segment_->getDgen()
+			<< " rtt " << (receipt.segment_->getRoundTripDelayUsec())/1000
             << std::endl;
 	}
 	else

@@ -51,9 +51,9 @@ static std::string lvlToString[] = {
 };
 #endif
 
-boost::asio::io_service LogIoService;
-boost::thread LogThread;
-boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
+static boost::asio::io_service LogIoService;
+static boost::thread LogThread;
+static boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
 NilLogger NilLogger::nilLogger_;
 Logger* Logger::sharedInstance_ = 0;
@@ -62,7 +62,7 @@ void startLogThread();
 void stopLogThread();
 
 //******************************************************************************
-boost::recursive_mutex Logger::stdOutMutex_;
+boost::recursive_mutex DefaultSink::stdOutMutex_;
 std::map<std::string, boost::shared_ptr<Logger>> Logger::loggers_;
 
 unsigned int Logger::FlushIntervalMs = 100;
@@ -73,19 +73,20 @@ Logger::Logger(const NdnLoggerDetailLevel& logLevel,
 isWritingLogEntry_(false),
 currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
-logFile_(logFile),
-outStream_(&std::cout),
-isStdOutActive_(true)
+sink_(boost::make_shared<DefaultSink>(logFile))
 {
-    if (logFile_ != "")
-    {
-        isStdOutActive_ = false;
-        outStream_ = new std::ofstream();
-        getOutFileStream().open(logFile_.c_str(),
-                                std::ofstream::out | std::ofstream::trunc);
-        lastFlushTimestampMs_ = getMillisecondTimestamp();
-    }
-    
+    lastFlushTimestampMs_ = getMillisecondTimestamp();   
+    isProcessing_ = true;
+}
+
+Logger::Logger(const NdnLoggerDetailLevel& logLevel,
+               const boost::shared_ptr<ILogRecordSink> sink):
+isWritingLogEntry_(false),
+currentEntryLogType_(NdnLoggerLevelTrace),
+logLevel_(logLevel),
+sink_(sink)
+{
+    lastFlushTimestampMs_ = getMillisecondTimestamp();   
     isProcessing_ = true;
 }
 
@@ -106,13 +107,13 @@ Logger::log(const NdnLogType& logType,
     if (logType < (NdnLogType)logLevel_)
         return NilLogger::get();
     
-    lockStreamExclusively();
+    sink_->lockExclusively();
     
     if (isWritingLogEntry_ &&
         currentEntryLogType_ >= (NdnLogType)logLevel_)
         throw std::runtime_error("Previous log entry wasn't closed");
     
-    unlockStream();
+    sink_->unlock();
     
     bool shouldIgnore = (loggingInstance != 0 &&
                             !loggingInstance->isLoggingEnabled());
@@ -120,7 +121,7 @@ Logger::log(const NdnLogType& logType,
     if (!shouldIgnore &&
         logType >= (NdnLogType)logLevel_)
     {
-        lockStreamExclusively();
+        sink_->lockExclusively();
         startLogRecord();
         
         isWritingLogEntry_ = true;
@@ -136,11 +137,6 @@ Logger::log(const NdnLogType& logType,
             << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
             << std::hex << std::setw(15) << loggingInstance << std::dec;
         
-//        if (logType < (NdnLogType)NdnLoggerLevelDebug &&
-//            locationFile != "" &&
-//            locationLine >= 0)
-//            getOutStream() << "(" << locationFile << ":" << locationLine << ")";
-        
         currentLogRecord_ << ": ";
     }
     
@@ -150,7 +146,8 @@ Logger::log(const NdnLogType& logType,
 void
 Logger::flush()
 {
-    getOutStream().flush();    
+    sink_->flush();
+    // getOutStream().flush();    
 }
 
 //******************************************************************************
@@ -216,25 +213,18 @@ Logger::processLogRecords()
 {
     if (isProcessing_)
     {
-        bool queueEmpty = false;
         std::string record;
-        
+
         while (recordsQueue_.pop(record))
-            getOutFileStream() << record;
-        
-        if (&getOutStream() != &std::cout)
-        {
-            if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
-                flush();
-        }
+            if (sink_) sink_->finalizeRecord(record);
+
+        if ((getMillisecondTimestamp() - lastFlushTimestampMs_) >= FlushIntervalMs)
+            if (sink_) sink_->flush();
     }
-    else
+    else if (sink_)
     {
-        if (&getOutStream() != &std::cout)
-        {
-            getOutFileStream().flush();
-            getOutFileStream().close();
-        }
+        sink_->flush();
+        sink_->close();
     }
 }
 
@@ -249,18 +239,19 @@ void
 Logger::finalizeLogRecord()
 {
     if (!recordsQueue_.push(currentLogRecord_.str()))
-        getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
+        sink_->finalizeRecord("[CRITICAL]\tlog queue is full");
+        // getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
     else
-        LogIoService.post(boost::bind(&Logger::processLogRecords, this));
+        LogIoService.post(boost::bind(&Logger::processLogRecords, shared_from_this()));
 }
 
 //******************************************************************************
 void startLogThread()
 {
-    if (!LogThreadWork.get() &&
-        LogThread.get_id() == boost::thread::id())
+    if (!LogThreadWork.get())
     {
         LogThreadWork.reset(new boost::asio::io_service::work(LogIoService));
+        LogIoService.reset();
         LogThread = boost::thread([](){
             LogIoService.run();
         });
@@ -277,3 +268,52 @@ void stopLogThread()
     }
 }
 
+
+//******************************************************************************
+DefaultSink::DefaultSink(const std::string& logFile):
+logFile_(logFile),
+outStream_(&std::cout)
+{
+    if (logFile != "")
+    {
+        outStream_ = new std::ofstream();
+        getOutFileStream().open(logFile_.c_str(),
+                                std::ofstream::out | std::ofstream::trunc);
+    }
+}
+
+void
+DefaultSink::finalizeRecord(const std::string& record)
+{
+    getOutFileStream() << record;
+}
+
+void 
+DefaultSink::flush()
+{
+    if (&getOutStream() != &std::cout)
+        getOutFileStream().flush();
+}
+
+void 
+DefaultSink::close()
+{
+    if (&getOutStream() != &std::cout)
+        getOutFileStream().close();    
+}
+
+//******************************************************************************
+CallbackSink::CallbackSink(LoggerSinkCallback callback):
+callback_(callback){}
+
+CallbackSink::~CallbackSink(){}
+
+void
+CallbackSink::finalizeRecord(const std::string& record)
+{ callback_(record.c_str()); }
+
+void CallbackSink::flush(){}
+void CallbackSink::close(){}
+bool CallbackSink::isStdOut(){ return false; }
+void CallbackSink::lockExclusively() { mutex_.lock(); }
+void CallbackSink::unlock() { mutex_.unlock(); }

@@ -89,9 +89,9 @@ TEST(TestDrdEstimator, TestDrdDeviation)
 			oneWayDelay, deviation, drd.getLatestUpdatedAverage().value(), 
 			drd.getLatestUpdatedAverage().deviation(),
                   drd.getLatestUpdatedAverage().deviation()/drd.getLatestUpdatedAverage().value()*100);
-		EXPECT_LE(abs(oneWayDelay*2-drd.getLatestUpdatedAverage().value())/((double)oneWayDelay*2), drdError);
+		EXPECT_LE(std::abs(oneWayDelay*2-drd.getLatestUpdatedAverage().value())/((double)oneWayDelay*2), drdError);
 		if (deviation)
-			EXPECT_LE(abs(deviation-drd.getLatestUpdatedAverage().deviation())/(double)deviation, devError);
+			EXPECT_LE(std::abs((float)(deviation-drd.getLatestUpdatedAverage().deviation()))/(double)deviation, devError);
 
 		deviation += deviationInterval;
 	}

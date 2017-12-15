@@ -24,6 +24,66 @@ AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header file
 AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
 AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
 AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
+AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory which contains nanomsg library headers (default is /usr/local/include)])
+AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
+
+AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
+	[],
+	[
+	AC_DEFINE([NDN_LOGGING])
+	AC_DEFINE([NDN_TRACE])
+	AC_DEFINE([NDN_INFO])
+	AC_DEFINE([NDN_WARN])
+	AC_DEFINE([NDN_ERROR])
+	AC_DEFINE([NDN_DEBUG])
+	])
+
+# Checks for programs.
+AC_CANONICAL_HOST
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_OBJC
+AC_PROG_OBJCXX
+AM_PROG_CC_C_O
+AM_PROG_AR
+LT_INIT
+AC_LANG([C++])
+LT_PREREQ([2.2])
+LT_INIT()
+
+# checking platform
+case $host_os in
+  darwin* )
+		# Do something specific for MacOS  
+		# Special case.
+		case "$host" in
+		  *-darwin* | *-macos10*)
+			if test -d /sw ; then
+				CFLAGS="$CFLAGS -I/sw/include"
+				CXXFLAGS="$CXXFLAGS -I/sw/include"
+				CPPFLAGS="$CPPFLAGS -I/sw/include"
+				LDFLAGS="$LDFLAGS -L/sw/lib"
+			fi
+			;;
+		esac
+		os_module=darwin
+		;;
+  linux-android*)
+  		os_module=android
+  		;;
+  linux*)
+		# Do something specific for linux
+		os_module=linux
+		;;
+   *BSD*)
+		# Do something specific for BSD
+		os_module=bsd        
+		;;
+    *)
+		#Default Case
+		AC_MSG_ERROR([Your platform is not currently supported])
+		;;
+esac
 
 if test ${BOOSTDIR}; then
 	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
@@ -115,60 +175,17 @@ else
 	LCONFIGLIB="/usr/local/lib"
 fi
 
-AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
-	[],
-	[
-	AC_DEFINE([NDN_LOGGING])
-	AC_DEFINE([NDN_TRACE])
-	AC_DEFINE([NDN_INFO])
-	AC_DEFINE([NDN_WARN])
-	AC_DEFINE([NDN_ERROR])
-	AC_DEFINE([NDN_DEBUG])
-	])
+if test ${NANOMSGDIR}; then
+	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
+else
+	NANOMSGDIR="/usr/local/include"
+fi
 
-# Checks for programs.
-AC_CANONICAL_HOST
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_OBJC
-AC_PROG_OBJCXX
-AM_PROG_CC_C_O
-AM_PROG_AR
-LT_INIT
-AC_LANG([C++])
-LT_PREREQ([2.2])
-LT_INIT()
-
-# checking platform
-case $host_os in
-  darwin* )
-		# Do something specific for MacOS  
-		# Special case.
-		case "$host" in
-		  *-darwin* | *-macos10*)
-			if test -d /sw ; then
-				CFLAGS="$CFLAGS -I/sw/include"
-				CXXFLAGS="$CXXFLAGS -I/sw/include"
-				CPPFLAGS="$CPPFLAGS -I/sw/include"
-				LDFLAGS="$LDFLAGS -L/sw/lib"
-			fi
-			;;
-		esac
-		os_module=darwin
-		;;
-  linux*)
-		# Do something specific for linux
-		os_module=linux
-		;;
-   *BSD*)
-		# Do something specific for BSD
-		os_module=bsd        
-		;;
-    *)
-		#Default Case
-		AC_MSG_ERROR([Your platform is not currently supported])
-		;;
-esac
+if test ${NANOMSGLIB}; then
+	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
+else
+	NANOMSGLIB="/usr/local/lib"
+fi
 
 # create links for client config file
 AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
@@ -189,6 +206,7 @@ AC_CONFIG_LINKS([tests/consumer-video.cfg:tests/consumer-video.cfg])
 # setting conditionals for automake
 AM_CONDITIONAL([OS_DARWIN],  [test $os_module = darwin])
 AM_CONDITIONAL([OS_LINUX],  [test $os_module = linux])
+AM_CONDITIONAL([OS_ANDROID],  [test $os_module = android])
 AM_CONDITIONAL([OS_BSD],  [test $os_module = bsd])
 
 # Checks for header files.
@@ -206,8 +224,8 @@ AC_TYPE_UINT8_T
 AX_CXX_COMPILE_STDCXX_11([], optional)
 
 # Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
+#AC_FUNC_MALLOC
+#AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strstr])
 
 # check for wget or curl
@@ -342,21 +360,25 @@ AC_LINK_IFELSE(
 )
 
 AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
-AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([
-		#include <ndn-cpp/interest.hpp>
-		#include <boost/shared_ptr.hpp>
-		],
-		[
-			ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-			boost::shared_ptr<int> boostPtr(new int(6));
-			ptrlibPtr = boostPtr;
-		]
-	)],
-	[AC_MSG_RESULT([yes])],
-	[AC_MSG_RESULT([no])]
-	[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
-)
+
+if [ "$build_os" -eq "$host_os" ]
+then
+	AC_RUN_IFELSE(
+		[AC_LANG_PROGRAM([
+			#include <ndn-cpp/interest.hpp>
+			#include <boost/shared_ptr.hpp>
+			],
+			[
+				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
+				boost::shared_ptr<int> boostPtr(new int(6));
+				ptrlibPtr = boostPtr;
+			]
+		)],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])]
+		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
+	)
+fi
 
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
@@ -372,6 +394,22 @@ SAVED_LIBS="$LIBS"
 
 AC_CHECK_HEADERS([lib_common/of_openfec_api.h],,[AC_MSG_FAILURE([can't find OpenFEC headers])])
 AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find OpenFEC library])])
+
+CPPFLAGS=$SAVED_CPPFLAGS
+LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
+
+###############################
+# Check for nanomsg
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$NANOMSGDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$NANOMSGLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lnanomsg"
+
+AC_CHECK_LIB([nanomsg], [nn_socket])
+AM_CONDITIONAL([HAVE_NANOMSG], [test "$ac_cv_lib_nanomsg_nn_socket" = yes])
 
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS

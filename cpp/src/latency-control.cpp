@@ -12,10 +12,13 @@
 #include "estimators.hpp"
 #include "clock.hpp"
 #include "statistics.hpp"
+#include "playout-control.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 using namespace estimators;
+
+#define DEFAULT_TARGET_QUEUE_SIZE 150
 
 //******************************************************************************
 namespace ndnrtc {
@@ -229,12 +232,22 @@ DrdChangeEstimator::flush()
 }
 
 //******************************************************************************
+unsigned int
+LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average& drd, const unsigned int& lowerLimit)
+{
+    double d = drd.value() + alpha_*drd.deviation();
+    return (d > lowerLimit ? (unsigned int)d : lowerLimit);
+}
+
+//******************************************************************************
 LatencyControl::LatencyControl(unsigned int timeoutWindowMs, 
     const boost::shared_ptr<const DrdEstimator>& drd,
     const boost::shared_ptr<statistics::StatisticsStorage>& storage):
 stabilityEstimator_(boost::make_shared<StabilityEstimator>(10, 4, 0.3, 0.7)),
 //stabilityEstimator_(30, 4, 0.1, 0.95), // high
 //stabilityEstimator_(3, 4, 0.6, 0.5), // low
+queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
+// queueSizeStrategy_(boos::make_shared<DefaultStrategy>(10)), // conservative
 drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),
 timestamp_(0),
 waitForChange_(false), waitForStability_(false),
@@ -247,6 +260,7 @@ observer_(nullptr),
 currentCommand_(KeepPipeline)
 {
     description_ = "latency-control";
+    (*sstorage_)[Indicator::BufferTargetSize] = DEFAULT_TARGET_QUEUE_SIZE;
 }
 
 LatencyControl::~LatencyControl()
@@ -257,6 +271,19 @@ void
 LatencyControl::onDrdUpdate()
 {
     drdChangeEstimator_->newDrdValue(drd_->getLatestUpdatedAverage());
+
+    if (playoutControl_.get())
+    {
+        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getOriginalAverage(), DEFAULT_TARGET_QUEUE_SIZE);
+        
+        if (targetSize != playoutControl_->getThreshold())
+        {
+            LogDebugC << "updating target playback queue size to " << targetSize << std::endl;
+            playoutControl_->setThreshold(targetSize);
+
+            (*sstorage_)[Indicator::BufferTargetSize] = targetSize;
+        }
+    }
 }
 
 void

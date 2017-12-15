@@ -165,7 +165,9 @@ namespace ndnrtc {
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
-			const std::string& streamName);
+			const std::string& streamName,
+            const int interestLifeTime = 2000,
+            const int jitterSizeMs = 150);
 
         /**
          * Starts fetching audio samples from the remote producer
@@ -183,7 +185,9 @@ namespace ndnrtc {
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
-			const std::string& streamName);
+			const std::string& streamName,
+            const int interestLifeTime = 2000,
+            const int jitterSizeMs = 150);
 
         /**
          * Starts fetching video frames from the remote producer

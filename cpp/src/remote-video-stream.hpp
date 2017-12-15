@@ -39,7 +39,7 @@ namespace ndnrtc{
 		IExternalRenderer* renderer_;
 		boost::shared_ptr<VideoDecoder> decoder_;
 
-		void feedFrame(const WebRtcVideoFrame&);
+		void feedFrame(PacketNumber frameNo, const WebRtcVideoFrame&);
         void setupDecoder();
         void releaseDecoder();
         void setupPipelineControl();

@@ -25,11 +25,13 @@ using namespace ndnrtc::statistics;
 InterestQueue::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
                                       const boost::shared_ptr<IPriority>& priority,
                                       OnData onData,
-                                      OnTimeout onTimeout):
+                                      OnTimeout onTimeout,
+                                      OnNetworkNack onNetworkNack):
 interest_(interest),
 priority_(priority),
 onDataCallback_(onData),
-onTimeoutCallback_(onTimeout)
+onTimeoutCallback_(onTimeout),
+onNetworkNack_(onNetworkNack)
 {
 }
 
@@ -65,7 +67,7 @@ StatObject(statStorage),
 faceIo_(io),
 face_(face),
 queue_(PriorityQueue(QueueEntry::Comparator(true))),
-isWatchingQueue_(false),
+isDrainingQueue_(false),
 observer_(nullptr)
 {
     description_ = "iqueue";
@@ -83,33 +85,39 @@ void
 InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest,
                                boost::shared_ptr<DeadlinePriority> priority,
                                OnData onData,
-                               OnTimeout onTimeout)
+                               OnTimeout onTimeout,
+                               OnNetworkNack onNetworkNack)
 {
     assert(interest.get());
 
-    QueueEntry entry(interest, priority, onData, onTimeout);
+    QueueEntry entry(interest, priority, onData, onTimeout, onNetworkNack);
     priority->setEnqueueTimestamp(clock::millisecondTimestamp());
     
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
         queue_.push(entry);
     
-        if (!isWatchingQueue_)
+        if (!isDrainingQueue_)
         {
-            isWatchingQueue_ = true;
-            async::dispatchAsync(faceIo_,
-                boost::bind(&InterestQueue::watchQueue, this));
+            isDrainingQueue_ = true;
+            async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
         }
+        else 
+          if (queue_.size() > 10)
+            // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
+            drainQueue();   // this is a hack and it will break everything if enqueueInterest
+                            // is called from other than faceIo_ thread. however, the code 
+                            // above locks and I don't know how to avoid growing queues in 
+                            // io_service other than draining them forcibly
     }
-    
+
     LogTraceC
     << "enqueue\t" << entry.interest_->getName()
     << "\texclude: " << entry.interest_->getExclude().toUri()
     << "\tpri: "
     << entry.getValue() << "\tlifetime: "
-    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
-    << queue_.size()
-    << std::endl;
+    << entry.interest_->getInterestLifetimeMilliseconds()
+    << "\tqsize: " << queue_.size() << std::endl;
 }
 
 void
@@ -125,15 +133,31 @@ InterestQueue::reset()
 
 //******************************************************************************
 #pragma mark - private
-void 
-InterestQueue::watchQueue()
+void
+InterestQueue::safeDrain()
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-    while (isWatchingQueue_)
+    drainQueue();    
+}
+
+void 
+InterestQueue::drainQueue()
+{
+    // boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+    isDrainingQueue_ = (queue_.size() > 0);
+
+    if (isDrainingQueue_)
     {
-        processEntry(queue_.top());
-        queue_.pop();
-        isWatchingQueue_ = (queue_.size() > 0);
+        LogTraceC 
+        << "draining queue, size "  << queue_.size() 
+        << ", top priority: " << queue_.top().getValue() << std::endl;
+
+        while (isDrainingQueue_)
+        {
+            processEntry(queue_.top());
+            queue_.pop();
+            isDrainingQueue_ = (queue_.size() > 0);
+        }
     }
 }
 
@@ -149,7 +173,8 @@ InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
     << queue_.size()
     << std::endl;
 
-    face_->expressInterest(*(entry.interest_), entry.onDataCallback_, entry.onTimeoutCallback_);
+    face_->expressInterest(*(entry.interest_), entry.onDataCallback_, 
+        entry.onTimeoutCallback_, entry.onNetworkNack_);
     
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
     (*statStorage_)[Indicator::InterestsSentNum]++;

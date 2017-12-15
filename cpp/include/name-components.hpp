@@ -26,9 +26,10 @@ namespace ndnrtc {
             Base = 1<<0,
             Library = 1<<1|Base,
             Stream = 1<<2|Library,
-            Thread = 1<<3|Stream,
-            Sample = 1<<4|Thread,
-            Segment = 1<<5|Sample
+            ThreadNT = 1<<3|Stream,
+            Thread = 1<<4|ThreadNT,
+            Sample = 1<<5|Thread,
+            Segment = 1<<6|Sample
         } PrefixFilter;
     }
 
@@ -70,7 +71,7 @@ namespace ndnrtc {
         unsigned int apiVersion_;
         MediaStreamParams::MediaStreamType streamType_;
         std::string streamName_, threadName_;
-        bool isMeta_, isParity_, isDelta_, hasSeqNo_;
+        bool isMeta_, isParity_, isDelta_, hasSeqNo_, hasSegNo_;
         SampleClass class_;
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;

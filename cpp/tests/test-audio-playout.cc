@@ -136,7 +136,10 @@ TEST(TestAudioPlayout, TestG722)
 		frameName.appendSequenceNumber(pno).appendSegment(0);
 
 		boost::shared_ptr<ndn::Interest> i(boost::make_shared<ndn::Interest>(frameName,1000));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 		i->setNonce(Blob((uint8_t*)&pno, sizeof(PacketNumber)));
+#pragma GCC diagnostic pop
 
 		std::vector<boost::shared_ptr<ndn::Interest>> interests;
 		interests.push_back(i);
@@ -325,7 +328,10 @@ TEST(TestAudioPlayout, TestOpus)
 		frameName.appendSequenceNumber(pno).appendSegment(0);
 
 		boost::shared_ptr<ndn::Interest> i(boost::make_shared<ndn::Interest>(frameName,1000));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 		i->setNonce(Blob((uint8_t*)&pno, sizeof(PacketNumber)));
+#pragma GCC diagnostic pop
 
 		std::vector<boost::shared_ptr<ndn::Interest>> interests;
 		interests.push_back(i);

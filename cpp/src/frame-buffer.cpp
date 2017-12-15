@@ -69,6 +69,12 @@ SlotSegment::getDrdUsec() const
     return getRoundTripDelayUsec();
 }
 
+int64_t 
+SlotSegment::getDgen() const
+{
+    return (int64_t)(data_->header().generationDelayMs_);
+}
+
 //******************************************************************************
 static std::string
 stateToString(BufferSlot::State s)
@@ -208,6 +214,18 @@ BufferSlot::getMissingSegments() const
     }
     
     return missing;
+}
+
+std::vector<boost::shared_ptr<const ndn::Interest>>
+BufferSlot::getPendingInterests() const
+{
+    std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests;
+
+    for (auto it:requested_)
+        if (fetched_.find(it.first) == fetched_.end())
+            pendingInterests.push_back(it.second->getInterest());
+
+    return pendingInterests;
 }
 
 std::string
@@ -545,6 +563,7 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
 
     for (auto it:slotInterests)
     {
+        bool newRequest = false;
         boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
         if (activeSlots_.find(it.first) == activeSlots_.end())
         {
@@ -556,17 +575,19 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
             else
             {
                 activeSlots_[it.first] = pool_->pop();
+                newRequest = true;
             }
         }
         
         activeSlots_[it.first]->segmentsRequested(it.second);
         
+        if (newRequest) 
+            for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
+
         LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
-        << it.second.size() << std::endl;
+        << " x" << it.second.size() << std::endl;
         LogDebugC << shortdump() << std::endl;
         LogTraceC << dump() << std::endl;
-        
-        for (auto o:observers_) o->onNewRequest(activeSlots_[it.first]);
     }
 
     return true;
@@ -591,6 +612,7 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
     BufferSlot::State oldState = activeSlots_[key]->getState();
     receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
     receipt.slot_ = activeSlots_[key];
+    receipt.oldState_ = oldState;
     
     if (receipt.slot_->getState() == BufferSlot::Ready)
     {

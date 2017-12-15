@@ -56,7 +56,6 @@ cpp/m4/lt~obsolete.m4
 #Other
 cpp/resources/*.yuv
 cpp/resources/*.pcmu
-docs
 test_app/suite
 .settings
 tags
@@ -65,3 +64,4 @@ tags
 *.sublime-project
 *.sublime-workspace
 newwebrtc
+android

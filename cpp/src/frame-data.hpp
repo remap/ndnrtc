@@ -178,7 +178,7 @@ namespace ndnrtc {
     //******************************************************************************
     /**
      * Data packet class extends NetworkData functionality by implementing addBlob
-     * method whith allows to add any number (less than 255) of binary data of any
+     * method which allows to add any number (less than 255) of binary data of any
      * size (less than 65525)to the packet and retrieve it later.
      * The wire format of the data packet is the following:
      *
@@ -469,7 +469,7 @@ namespace ndnrtc {
     typedef struct _CommonHeader {
             double sampleRate_; // current packet production rate
             int64_t publishTimestampMs_; // packet timestamp set by producer
-            double publishUnixTimestampMs_; // unix timestamp set by producer
+            double publishUnixTimestamp_; // unix timestamp set by producer
     } __attribute__((packed)) CommonHeader;
     
     typedef struct _AudioSampleHeader {

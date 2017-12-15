@@ -120,7 +120,7 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                 if (frameConsumer_)
                 {
                     if (framePacket->isValid())
-                        frameConsumer_->processFrame(framePacket->getFrame());
+                        frameConsumer_->processFrame(currentPlayNo_, framePacket->getFrame());
                     else
                     {
                         LogErrorC << "frame packet is not valid " << std::endl;

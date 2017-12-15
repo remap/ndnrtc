@@ -16,6 +16,8 @@ using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
+// #define JSON_FORMATTER
+
 //******************************************************************************
 std::map<std::string, Indicator> StatWriter::IndicatorLookupTable;
 
@@ -222,7 +224,11 @@ string StatCollector::StreamStatCollector::fullFilePath(string path, string fnam
 StatWriter* StatCollector::newDefaultStatWriter(const StatGatheringParams& p,
       std::string fname)
 {
+#ifdef JSON_FORMATTER
     return new StatFileWriter(p, boost::make_shared<JsonFormatter>(), fname);
+#else
+    return new StatFileWriter(p, boost::make_shared<CsvFormatter>(), fname);
+#endif
 }
 
 StatCollector::~StatCollector()

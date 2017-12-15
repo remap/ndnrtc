@@ -20,6 +20,7 @@
 #include "mock-objects/latency-control-mock.hpp"
 #include "mock-objects/buffer-mock.hpp"
 #include "mock-objects/playout-control-mock.hpp"
+#include "mock-objects/pipeline-control-state-machine-observer-mock.hpp"
 
 // #define ENABLE_LOGGING
 
@@ -62,8 +63,10 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
+    MockPipelineControlStateMachineObserver observer;
 	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
 	EXPECT_EQ(kStateIdle, sm.getState());
+	sm.attach(&observer);
 
 #ifdef ENABLE_LOGGING
 	sm.setLogger(&ndnlog::new_api::Logger::getLogger(""));
@@ -73,6 +76,11 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 		.Times(1);
 	EXPECT_CALL(*pp, express(Name(threadPrefix), false))
 		.Times(1);
+	EXPECT_CALL(observer, onStateMachineChangedState(_, "WaitForRightmost"))
+		.Times(1)
+		.WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent>& s, std::string newState){
+			EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
+		}));
 
 	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 	EXPECT_EQ(kStateWaitForRightmost, sm.getState());
@@ -89,6 +97,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
         EXPECT_CALL(*interestControl, increment());
 	}
     
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "WaitForInitial"));
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateWaitForInitial, sm.getState());
 
@@ -104,6 +113,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 		.Times(1)
 		.WillOnce(Return(5));
 
+	EXPECT_CALL(observer, onStateMachineChangedState(_, "Chasing"));
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateChasing, sm.getState());
 
@@ -115,6 +125,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 
     EXPECT_CALL(*playoutControl, allowPlayout(true))
         .Times(1);
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Adjusting"));
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateAdjusting, sm.getState());
 
@@ -137,6 +148,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequence)
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateAdjusting, sm.getState());
 
+	EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
 	sm.dispatch(boost::make_shared<EventSegment>(seg));
 	EXPECT_EQ(kStateFetching, sm.getState());
 }
@@ -395,7 +407,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
 	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
@@ -429,7 +441,7 @@ TEST(TestPipelineControlStateMachine, TestRightmostStarvation)
 	EXPECT_EQ(kStateIdle, sm.getState());
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	EXPECT_CALL(*pp, setNeedRightmost())

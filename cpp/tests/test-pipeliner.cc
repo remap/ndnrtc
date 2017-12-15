@@ -67,10 +67,10 @@ TEST(TestPipeliner, TestExpressRightmost)
 		.Times(2)
 		.WillRepeatedly(Return(onTimeout));
 
-		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
-			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 			Name n(prefix);
 			EXPECT_EQ(n, i->getName());
 			EXPECT_EQ(i->getChildSelector(), 1);
@@ -100,10 +100,10 @@ TEST(TestPipeliner, TestExpressRightmost)
 		.Times(2)
 		.WillRepeatedly(Return(onTimeout));
 
-		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
-			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 			Name n(prefix);
 			EXPECT_EQ(n.append(NameComponents::NameComponentKey), i->getName());
 			EXPECT_EQ(i->getChildSelector(), 1);
@@ -167,10 +167,10 @@ TEST(TestPipeliner, TestRequestSample)
 			.WillRepeatedly(Return(onTimeout));
 	
 		int segNo = 0;
-		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 			.Times(12)
 			.WillRepeatedly(Invoke([prefix, &segNo](const boost::shared_ptr<const ndn::Interest>& i,
-    	                    boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+    	                    boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 				Name n(prefix);
 				if (segNo < 10)
 					EXPECT_EQ(n.append(NameComponents::NameComponentDelta).appendSequenceNumber(7).appendSegment(segNo), i->getName());
@@ -235,10 +235,10 @@ TEST(TestPipeliner, TestRequestKeySample)
 			.WillRepeatedly(Return(onTimeout));
 	
 		int segNo = 0;
-		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 			.Times(36)
 			.WillRepeatedly(Invoke([prefix, &segNo](const boost::shared_ptr<const ndn::Interest>& i,
-    	                    boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout){
+    	                    boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 				Name n(prefix);
 				if (segNo < 30)
 					EXPECT_EQ(n.append(NameComponents::NameComponentKey).appendSequenceNumber(7).appendSegment(segNo), i->getName());
@@ -330,7 +330,7 @@ TEST(TestPipeliner, TestSegmentsArrive)
 		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
 			.Times((nExpectedDataInterests+nExpectedParityInterests)*roomSize)
 			.WillRepeatedly(Return(onTimeout));
-		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _))
+		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 			.Times((nExpectedDataInterests+nExpectedParityInterests)*roomSize);
 
 		if (i == 30) pp.setNeedSample(SampleClass::Key);

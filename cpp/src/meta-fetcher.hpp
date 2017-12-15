@@ -34,6 +34,7 @@ namespace ndnrtc {
 		typedef boost::function<void(const std::string&)>
 			OnError;
 
+		MetaFetcher(){ description_ = "meta-fetcher"; }
 		void fetch(boost::shared_ptr<ndn::Face>, boost::shared_ptr<ndn::KeyChain>, 
 			const ndn::Name&, const OnMeta&, const OnError&);
 		bool hasPendingRequest() const { return isPending_; }

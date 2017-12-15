@@ -41,6 +41,7 @@ namespace ndnrtc {
 
 		void segmentArrived(const boost::shared_ptr<WireSegment>&);
 		void segmentRequestTimeout(const NamespaceInfo&){ /*ignored*/ }
+		void segmentNack(const NamespaceInfo&, int) { /*ignored*/ }
 		void segmentStarvation(){ /*ignored*/ }
 		
 	private:

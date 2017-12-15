@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/thread/mutex.hpp>
@@ -37,9 +38,25 @@ int run(const struct Args&);
 void registerPrefix(boost::shared_ptr<Face>&, const KeyChainManager&);
 void publishCertificate(boost::shared_ptr<Face>&, const KeyChainManager&);
 
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 //******************************************************************************
 int main(int argc, char **argv) 
 {
+    signal(SIGABRT, handler);
+    signal(SIGSEGV, handler);
+    
     char *configFile = NULL, *identity = NULL, *instance = NULL, *policy = NULL;
     int c;
     unsigned int runTimeSec = 0; // default app run time (sec)
@@ -92,7 +109,7 @@ int main(int argc, char **argv)
             "-i <instance name> -v <verbose mode>]" << std::endl;
         exit(1);
     }
-    
+
     Args args;
     args.runTimeSec_ = runTimeSec;
     args.logLevel_ = logLevel;
@@ -111,16 +128,25 @@ int run(const struct Args& args)
     ndnlog::new_api::Logger::initAsyncLogging();
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args.logLevel_);
 
+    LogInfo("") << "Starting headless client... Params:\n" 
+      << "\tlog level: " << args.logLevel_
+      << "\n\trun time: " << args.runTimeSec_
+      << "\n\tconfig file: " << args.configFile_
+      << "\n\tsigning identity: " << args.identity_
+      << "\n\tpolicy file: " << args.policy_
+      << "\n\tstatistics sampling: " << args.samplePeriod_
+      << "\n\tinstance name: " << args.instance_
+      << std::endl;
+
     boost::asio::io_service io;
     boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io](){ io.run(); });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+
     KeyChainManager keyChainManager(face, args.identity_, args.instance_,
                                     args.policy_, args.runTimeSec_);
-    
     face->setCommandSigningInfo(*(keyChainManager.defaultKeyChain()),
                                 keyChainManager.defaultKeyChain()->getDefaultCertificateName());
-    
     ClientParams params;
 
     LogInfo("") << "Run time is set to " << args.runTimeSec_ << " seconds, loading "

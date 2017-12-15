@@ -66,15 +66,73 @@ private:
 class IFrameSink {
 public:
 	virtual IFrameSink& operator<<(const RawFrame& frame) = 0;
+	virtual std::string getName() = 0;
+	virtual bool isBusy() = 0;
 };
 
+/**
+ * File-based frame sink
+ */
 class FileSink : public IFrameSink, public FileFrameStorage {
 public:
 	FileSink(const std::string& path):FileFrameStorage(path){ openFile(); }
 	IFrameSink& operator<<(const RawFrame& frame);
+	std::string getName() { return path_; }
+
+	// TODO: whether file writing can be busy, probably, need to be tested
+	bool isBusy() { return false; }
+
 private:
     FILE* openFile_impl(std::string path);
 };
+
+/**
+ * Non-blocking pipe-based frame sink
+ * - will create pipe if it does not exist
+ * - in order for pipe to be opened for writing, it should be opened for reading 
+ *		by another process; until then, sink will skip writing frames. 
+ */
+class PipeSink : public IFrameSink {
+public:
+	PipeSink(const std::string& path);
+	~PipeSink();
+
+	IFrameSink& operator<<(const RawFrame& frame);
+	std::string getName() { return pipePath_; }
+
+	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
+	bool isBusy() { return isWriting_; }
+
+private:
+	std::string pipePath_;
+	int pipe_;
+	std::atomic<bool> isLastWriteSuccessful_, isWriting_;
+
+	void createPipe(const std::string& path);
+	void openPipe(const std::string& path);
+};
+
+#ifdef HAVE_NANOMSG
+/**
+ * nanomsg sink (unix socket)
+ */
+class NanoMsgSink : public IFrameSink {
+public: 
+	NanoMsgSink(const std::string& handle);
+	~NanoMsgSink();
+
+	virtual IFrameSink& operator<<(const RawFrame& frame);
+	virtual std::string getName() { return handle_; }
+	virtual bool isBusy() { return false; }
+	bool isLastWriteSuccessful() { return isLastWriteSuccessful_; }
+
+private:
+	std::string handle_;
+	bool isLastWriteSuccessful_;
+	int nnSocket_;
+
+};
+#endif
 
 //******************************************************************************
 class IFrameSource {

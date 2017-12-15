@@ -33,59 +33,6 @@ namespace ndnrtc {
 #define MAKE_TRANSITION(s,t)(StateEventPair(s,t))
 
 namespace ndnrtc {
-	class PipelineControlState {
-	public:
-        typedef enum _StateId {
-            Unknown = 0,
-            Idle = 1,
-            WaitForRightmost = 2,
-            WaitForInitial = 3,
-            Chasing = 4,
-            Adjusting = 5,
-            Fetching = 6
-        } StateId;
-        
-		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}
-
-		virtual std::string str() const = 0;
-
-		/**
-		 * Called when state is entered
-		 */
-		virtual void enter(){}
-
-		/**
-		 * Called when state is exited
-		 */
-		virtual void exit(){}
-		
-		/**
-		 * Called when upon new event
-		 * @param event State machine event
-		 * @return Next state transition to
-		 */
-		virtual std::string dispatchEvent(const boost::shared_ptr<const PipelineControlEvent>& ev);
-
-		bool operator==(const PipelineControlState& other) const
-		{ return str() == other.str(); }
-        
-        virtual int toInt() { return (int)StateId::Unknown; }
-
-	protected:
-		boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
-
-		virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent>&)
-		{ return str(); }
-		virtual std::string onReset(const boost::shared_ptr<const PipelineControlEvent>& ev)
-		{ return str(); }
-		virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation>& ev)
-		{ return str(); }
-		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
-		{ return str(); }
-		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev)
-		{ return str(); }
-	};
-
 	/**
 	 * Idle state. System is in idle state when it first created.
 	 * On entry:
@@ -130,7 +77,9 @@ namespace ndnrtc {
         
 	protected:
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
+		virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation>& ev);
 
 		virtual void askRightmost();
 		virtual void receivedRightmost(const boost::shared_ptr<const EventSegment>& es);
@@ -176,6 +125,7 @@ namespace ndnrtc {
 		unsigned int nTimeouts_;
 
 		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
 		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
 	};
 
@@ -397,11 +347,30 @@ PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineCont
 	else
         // otherwise - check whether state machine table defines transition
         // for this event
-		transition(ev);
+		if (!transition(ev))
+		{
+			for (auto o:observers_)
+				o->onStateMachineReceivedEvent(ev, currentState_->str());
+		}
 }
 
-#pragma mark - private
+void
+PipelineControlStateMachine::attach(IPipelineControlStateMachineObserver *observer)
+{
+	if (observer)
+		observers_.push_back(observer);
+}
 
+void
+PipelineControlStateMachine::detach(IPipelineControlStateMachineObserver *observer)
+{
+	std::vector<IPipelineControlStateMachineObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), observer);
+	if (it != observers_.end())
+		observers_.erase(it);
+}
+
+
+#pragma mark - private
 bool
 PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineControlEvent>& ev)
 {
@@ -430,6 +399,9 @@ PipelineControlStateMachine::switchToState(const boost::shared_ptr<PipelineContr
     currentState_->exit();
     currentState_ = state;
     currentState_->enter();
+
+    for (auto o:observers_)
+    	o->onStateMachineChangedState(event, currentState_->str());
     
     if (event->toString() == boost::make_shared<EventStarvation>(0)->toString())
         (*ppCtrl_->sstorage_)[Indicator::RebufferingsNum]++;
@@ -458,7 +430,7 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 void 
 Idle::enter()
 {
-    ctrl_->buffer_->reset();
+	ctrl_->buffer_->reset();
 	ctrl_->pipeliner_->reset();
 	ctrl_->latencyControl_->reset();
 	ctrl_->interestControl_->reset();
@@ -483,6 +455,20 @@ std::string
 WaitForRightmost::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
 	askRightmost();
+	return str();
+}
+
+std::string 
+WaitForRightmost::onNack(const boost::shared_ptr<const EventNack>& ev)
+{
+	//askRightmost(); // really?
+	return str();
+}
+
+std::string
+WaitForRightmost::onStarvation(const boost::shared_ptr<const EventStarvation>& ev)
+{
+	// askRightmost(); // maybe?
 	return str();
 }
 
@@ -530,6 +516,12 @@ WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 }
 
 std::string
+WaitForInitial::onNack(const boost::shared_ptr<const EventNack>& ev)
+{
+	return str();
+}
+
+std::string
 WaitForInitial::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 {
 	nTimeouts_ = 0;
@@ -556,7 +548,7 @@ WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 std::string 
 Chasing::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
 {
-	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::Thread));
+	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::ThreadNT));
 	return str();
 }
 
@@ -604,6 +596,10 @@ Fetching::onSegment(const boost::shared_ptr<const EventSegment>& ev)
 	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
 
 	if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::IncreasePipeline)
+	{
+		// ctrl_->interestControl_->markLowerLimit(interestControl::MinPipelineSize);
 		return kStateAdjusting;
+	}
+
 	return str();
 }

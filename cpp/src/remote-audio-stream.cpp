@@ -38,7 +38,6 @@ io_(io)
     
     pipeliner_ = boost::make_shared<Pipeliner>(pps,
                                                boost::make_shared<Pipeliner::AudioNameScheme>());
-    
     validator_ = boost::make_shared<SampleValidator>(keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }
@@ -55,6 +54,7 @@ RemoteAudioStreamImpl::initiateFetching()
     
     setupPlayout();
     setupPipelineControl();
+    pipelineControl_->start();
 }
 
 void
@@ -80,6 +80,7 @@ RemoteAudioStreamImpl::setupPlayout()
     playout_ = boost::make_shared<AudioPlayout>(io_, playbackQueue_, sstorage_,
                                                 WebrtcAudioChannel::fromString(meta.getCodec()));
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
+    latencyControl_->setPlayoutControl(playoutControl_);
     
     boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger_);
     boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger_);
@@ -107,9 +108,9 @@ RemoteAudioStreamImpl::setupPipelineControl()
          boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
          sstorage_));
     pipelineControl_->setLogger(logger_);
+    rtxController_->attach(pipelineControl_.get());
     segmentController_->attach(pipelineControl_.get());
     latencyControl_->registerObserver(pipelineControl_.get());
-    pipelineControl_->start();
 }
 
 void

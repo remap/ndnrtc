@@ -12,6 +12,7 @@
 #include "simple-log.hpp"
 #include "frame-buffer.hpp"
 #include "frame-data.hpp"
+#include "clock.hpp"
 
 using namespace ndnrtc;
 using namespace std;
@@ -112,6 +113,7 @@ void PlayoutImpl::extractSample()
             lastTimestamp_ = slot->getHeader().publishTimestampMs_;
             sampleDelay = playTimeMs;
             debugStr << slot->dump();
+            (*statStorage_)[Indicator::LatencyEstimated] = (clock::unixTimestamp() - slot->getHeader().publishUnixTimestamp_);
         });
 
         LogTraceC << ". packet delay " << sampleDelay << " ts " << lastTimestamp_ << std::endl;

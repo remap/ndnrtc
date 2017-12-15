@@ -44,13 +44,14 @@ namespace ndnrtc
          * This method is called every time new frame is available for rendering.
          * This method is called on the same thread as getFrameBuffer was called.
          * @param timestamp Frame's timestamp
+         * @param frameNo Frame's playback number as it was set by a publisher
          * @param width Frame's width (NOTE: width can change during run)
          * @param height Frame's height (NOTE: height can change during run)
          * @param buffer Buffer with the RGB frame data (the same that was
          * returned from getFrameBuffer call)
          * @see getFrameBuffer
          */
-        virtual void renderBGRAFrame(int64_t timestamp, int width, int height,
+        virtual void renderBGRAFrame(int64_t timestamp, uint frameNo, int width, int height,
                                      const uint8_t* buffer) = 0;
     };
 

@@ -22,7 +22,7 @@ namespace ndnrtc {
         class StatisticsStorage;
     }
     
-	class PipelineControlState;
+    class PipelineControlState;
 	class IPipeliner;
 	class IInterestControl;
 	class ILatencyControl;
@@ -48,7 +48,8 @@ namespace ndnrtc {
 			Reset,
 			Starvation,
 			Segment,
-			Timeout
+			Timeout,
+			Nack
 		} Type;
 
 		PipelineControlEvent(Type e):e_(e){}
@@ -79,6 +80,17 @@ namespace ndnrtc {
 		NamespaceInfo info_;
 	};
 
+	class EventNack : public PipelineControlEvent {
+	public:
+		EventNack(const NamespaceInfo& info, int reason):
+			PipelineControlEvent(PipelineControlEvent::Nack), info_(info), reason_(reason){}
+		const NamespaceInfo& getInfo() const { return info_; }
+		int getReason() const { return reason_; }
+	private:
+		NamespaceInfo info_;
+		int reason_;
+	};
+
 	class EventStarvation : public PipelineControlEvent {
 	public:
 		EventStarvation(unsigned int duration):
@@ -87,6 +99,8 @@ namespace ndnrtc {
 	private:
 		unsigned int duration_;
 	};
+
+	class IPipelineControlStateMachineObserver;
 
 	/**
 	 * Implements simple state machine for pipeline control:
@@ -125,6 +139,11 @@ namespace ndnrtc {
 		boost::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
 		void dispatch(const boost::shared_ptr<const PipelineControlEvent>& ev);
 
+		// not thread-safe! should be called on the same thread as dispatch(...)
+		void attach(IPipelineControlStateMachineObserver*);
+		// not thread-safe! should be called on the same thread as dispatch(...)
+		void detach(IPipelineControlStateMachineObserver*);
+
 		static PipelineControlStateMachine defaultStateMachine(Struct ctrl);
 		static PipelineControlStateMachine videoStateMachine(Struct ctrl);
 
@@ -137,6 +156,7 @@ namespace ndnrtc {
 		TransitionMap stateMachineTable_;
 		boost::shared_ptr<PipelineControlState> currentState_;
 		int64_t lastEventTimestamp_;
+		std::vector<IPipelineControlStateMachineObserver*> observers_;
 
 		PipelineControlStateMachine(const boost::shared_ptr<Struct>& ctrl, 
 			StatesMap statesMap);
@@ -147,6 +167,73 @@ namespace ndnrtc {
 
 		static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
 		static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>&);
+	};
+
+	class IPipelineControlStateMachineObserver {
+	public:
+		virtual void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string newState) = 0;
+		// called whenever received event didn't trigger any state change
+		virtual void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string state) = 0;
+	};
+
+	/**
+	 * Base class for pipeline control states
+	 */
+	class PipelineControlState {
+	public:
+        typedef enum _StateId {
+            Unknown = 0,
+            Idle = 1,
+            WaitForRightmost = 2,
+            WaitForInitial = 3,
+            Chasing = 4,
+            Adjusting = 5,
+            Fetching = 6
+        } StateId;
+        
+		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}
+
+		virtual std::string str() const = 0;
+
+		/**
+		 * Called when state is entered
+		 */
+		virtual void enter(){}
+
+		/**
+		 * Called when state is exited
+		 */
+		virtual void exit(){}
+		
+		/**
+		 * Called when upon new event
+		 * @param event State machine event
+		 * @return Next state transition to
+		 */
+		virtual std::string dispatchEvent(const boost::shared_ptr<const PipelineControlEvent>& ev);
+
+		bool operator==(const PipelineControlState& other) const
+		{ return str() == other.str(); }
+        
+        virtual int toInt() { return (int)StateId::Unknown; }
+
+	protected:
+		boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
+
+		virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent>&)
+		{ return str(); }
+		virtual std::string onReset(const boost::shared_ptr<const PipelineControlEvent>& ev)
+		{ return str(); }
+		virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation>& ev)
+		{ return str(); }
+		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
+		{ return str(); }
+		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev)
+		{ return str(); }
+		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev)
+		{ return str(); }
 	};
 }
 

@@ -176,6 +176,7 @@ int loadConsumerSettings(const Setting& root, ConsumerClientParams& params)
         std::cout << "check " << e.getPath() << std::endl;
         LogError("") << "Setting not found at path: " << e.getPath() << std::endl;
     }
+    return EXIT_SUCCESS;
 }
 
 int loadProducerSettings(const Setting& root, ProducerClientParams& params, const std::string& identity)
@@ -207,6 +208,7 @@ int loadProducerSettings(const Setting& root, ProducerClientParams& params, cons
         LogError("") << "Error when loading stream settings!" << std::endl;
         return(EXIT_FAILURE);
     }
+    return EXIT_SUCCESS;
 }
 
 int loadConfigFile(const string &cfgFileName, Config &cfg){
@@ -325,6 +327,9 @@ int loadStreamParams(const Setting& s, ConsumerStreamParams& params)
     {
         s.lookupValue("thread_to_fetch", params.threadToFetch_);
         s.lookupValue("sink", params.streamSink_);
+
+        params.sinkType_ = "file";
+        s.lookupValue("sink_type", params.sinkType_);
 
         return EXIT_SUCCESS;
     }

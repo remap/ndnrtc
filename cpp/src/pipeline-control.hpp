@@ -14,6 +14,8 @@
 #include "latency-control.hpp"
 #include "segment-controller.hpp"
 #include "pipeline-control-state-machine.hpp"
+#include "pipeliner.hpp"
+#include "rtx-controller.hpp"
 
 namespace ndnrtc {
     namespace statistics {
@@ -33,14 +35,20 @@ namespace ndnrtc {
 	 */
 	class PipelineControl : public NdnRtcComponent,
 							public ILatencyControlObserver,
-							public ISegmentControllerObserver
+							public ISegmentControllerObserver,
+							public IRtxObserver,
+							public IPipelineControlStateMachineObserver,
+							public statistics::StatObject
 	{
 	public:
+		~PipelineControl();
+		
 		void start();
 		void stop();
 
 		void segmentArrived(const boost::shared_ptr<WireSegment>&);
 		void segmentRequestTimeout(const NamespaceInfo&);
+		void segmentNack(const NamespaceInfo&, int);
 		void segmentStarvation();
 
 		bool needPipelineAdjustment(const PipelineAdjust&);
@@ -64,9 +72,20 @@ namespace ndnrtc {
 	private:
 		PipelineControlStateMachine machine_;
 		boost::shared_ptr<IInterestControl> interestControl_;
+		boost::shared_ptr<IPipeliner> pipeliner_;
+		Pipeliner::SequenceCounter sampleLatch_;
 
-		PipelineControl(const PipelineControlStateMachine& machine,
-			const boost::shared_ptr<IInterestControl>& interestControl);
+		PipelineControl(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
+			const PipelineControlStateMachine& machine,
+			const boost::shared_ptr<IInterestControl>& interestControl,
+			const boost::shared_ptr<IPipeliner> pipeliner_);
+
+		void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string);
+		void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>&,
+			std::string);
+		void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
+		bool passesBarrier(const NamespaceInfo& n);
 	};
 }
 

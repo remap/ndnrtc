@@ -18,17 +18,22 @@ initialEstimation_(initialEstimationMs),
 windowSize_(windowMs),
 cachedDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
 originalDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
+generationDelay_(Average(boost::make_shared<TimeWindow>(windowMs))),
 latest_(&originalDrd_)
 {}
 
 void
-DrdEstimator::newValue(double drd, bool isOriginal)
+DrdEstimator::newValue(double drd, bool isOriginal, double dGen)
 {
 	double oldValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());
 
-	if (isOriginal) originalDrd_.newValue(drd);
-	else cachedDrd_.newValue(drd);
-	
+	if (dGen > 0) generationDelay_.newValue(dGen);
+
+	if (isOriginal) 
+		originalDrd_.newValue(drd);
+	else 
+		cachedDrd_.newValue(drd);
+
 	latest_ = (isOriginal ? &originalDrd_ : &cachedDrd_);
 	
 	double newValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());

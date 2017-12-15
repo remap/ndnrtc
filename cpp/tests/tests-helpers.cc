@@ -354,7 +354,7 @@ VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs
  	CommonHeader hdr;
     hdr.sampleRate_ = rate;
     hdr.publishTimestampMs_ = pubTs;
-    hdr.publishUnixTimestampMs_ = pubUts;
+    hdr.publishUnixTimestamp_ = pubUts;
 
     uint8_t *buffer;
 
@@ -476,7 +476,10 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 		Name n(frameName);
 		n.appendSegment(i);
 		interests.push_back(boost::make_shared<Interest>(n, 1000));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 		interests.back()->setNonce(Blob((uint8_t*)&(nonce), sizeof(int)));
+#pragma GCC diagnostic pop
 		nonce++;
 	}
 
@@ -486,7 +489,10 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
 		Name n(frameName);
 		n.append(NameComponents::NameComponentParity).appendSegment(i);
 		interests.push_back(boost::make_shared<Interest>(n, 1000));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 		interests.back()->setNonce(Blob((uint8_t*)&(nonce), sizeof(int)));
+#pragma GCC diagnostic pop
 		nonce++;
 	}
 

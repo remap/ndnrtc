@@ -51,6 +51,8 @@ namespace ndnrtc {
         virtual void setNeedSample(SampleClass cls) = 0;
         virtual void setNeedRightmost() = 0;
         virtual void setSequenceNumber(PacketNumber seqNo, SampleClass cls) = 0;
+        virtual PacketNumber getSequenceNumber(SampleClass cls) = 0;
+        virtual void setInterestLifetime(unsigned int lifetimeMs) = 0;
     };
 
     /**
@@ -64,6 +66,9 @@ namespace ndnrtc {
     {
     public:
         class INameScheme;
+        typedef struct _SequenceCounter {
+            PacketNumber delta_, key_;
+        } SequenceCounter;
         
         Pipeliner(const PipelinerSettings& settings,
                   const boost::shared_ptr<INameScheme>&);
@@ -126,6 +131,15 @@ namespace ndnrtc {
         void setSequenceNumber(PacketNumber seqNo, SampleClass cls);
 
         /**
+         * Gets pipeliner's current frame sequence number counters
+         * @param seqNo Sequence number 
+         * @param cls Frame class (Key or Delta)
+         */
+        PacketNumber getSequenceNumber(SampleClass cls);
+
+        void setInterestLifetime(unsigned int lifetimeMs) {  interestLifetime_ = lifetimeMs; }
+
+        /**
          * This class
          */
         class INameScheme {
@@ -133,7 +147,8 @@ namespace ndnrtc {
             virtual ndn::Name samplePrefix(const ndn::Name&, SampleClass) = 0;
             virtual ndn::Name rightmostPrefix(const ndn::Name&) = 0;
             virtual boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                                       unsigned int) = 0;
+                                                                       unsigned int,
+                                                                       SequenceCounter) = 0;
         };
         
         class VideoNameScheme : public INameScheme {
@@ -141,7 +156,8 @@ namespace ndnrtc {
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name rightmostPrefix(const ndn::Name&);
             boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                               unsigned int);
+                                                               unsigned int,
+                                                               SequenceCounter);
         };
         
         class AudioNameScheme : public INameScheme {
@@ -149,14 +165,11 @@ namespace ndnrtc {
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name rightmostPrefix(const ndn::Name&);
             boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                               unsigned int);
+                                                               unsigned int,
+                                                               SequenceCounter);
         };
 
     private:
-        typedef struct _SequenceCounter {
-            PacketNumber delta_, key_;
-        } SequenceCounter;
-
         unsigned int interestLifetime_;
         boost::shared_ptr<INameScheme> nameScheme_;
         boost::shared_ptr<SampleEstimator> sampleEstimator_;
@@ -181,6 +194,9 @@ namespace ndnrtc {
         void onNewRequest(const boost::shared_ptr<BufferSlot>&);
         void onNewData(const BufferReceipt& receipt);
         void onReset(){}
+
+        // IRtxObserver
+        void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
     };
 }
 

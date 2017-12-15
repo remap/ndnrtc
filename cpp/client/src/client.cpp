@@ -131,7 +131,7 @@ void Client::tearDownProducer(){
 	if (!params_.isProducing())
 		return;
 
-	LogInfo("Tearing down producing...");
+	LogInfo("") << "Tearing down producing..." << std::endl;
 
 	for (auto& ls:localStreams_)
 	{
@@ -162,13 +162,13 @@ void Client::tearDownConsumer(){
 RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	const ndnrtc::GeneralConsumerParams& gcp)
 {
-	RendererInternal *renderer = (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo ? new RendererInternal(p.streamSink_, true) : nullptr);
+	RendererInternal *renderer = setupRenderer(p);
 	
 	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
 	{
 		boost::shared_ptr<ndnrtc::RemoteVideoStream> 
 			remoteStream(boost::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
-				p.sessionPrefix_, p.streamName_));
+				p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
 		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_, renderer);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
@@ -177,7 +177,7 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams& p,
 	{
 		boost::shared_ptr<ndnrtc::RemoteAudioStream>
 			remoteStream(boost::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
-				p.sessionPrefix_, p.streamName_));
+				p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
 		remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
 		remoteStream->start(p.threadToFetch_);
 		return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
@@ -266,4 +266,34 @@ Client::consumerLogger(std::string prefix, std::string streamName)
 		logFileName.str()));
 
 	return logger;
+}
+
+RendererInternal *Client::setupRenderer(const ConsumerStreamParams& p)
+{
+	if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
+	{
+		if (p.sinkType_ == "pipe")
+			return new RendererInternal(p.streamSink_, 
+				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+					return boost::make_shared<PipeSink>(s);
+				});
+		else if (p.sinkType_ == "nano")
+		{
+			#ifdef HAVE_NANOMSG
+				return new RendererInternal(p.streamSink_,
+					[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+						return boost::make_shared<NanoMsgSink>(s);
+					});
+			#else
+				throw std::runtime_error("Requested nano type sink, but code was not built with nanomsg library support");
+			#endif
+		}
+		else
+			return new RendererInternal(p.streamSink_, 
+				[](const std::string& s)->boost::shared_ptr<IFrameSink>{
+					return boost::make_shared<FileSink>(s);
+				});
+	}
+	else
+		return nullptr;
 }

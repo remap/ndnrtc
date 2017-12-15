@@ -137,8 +137,7 @@ int LocalVideoStream::incomingArgbFrame(const unsigned int width,
 	unsigned char* argbFrameData,
 	unsigned int frameSize)
 {
-	pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize}));
-	return RESULT_OK;
+	return pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize}));
 }
 
 int LocalVideoStream::incomingI420Frame(const unsigned int width,
@@ -150,9 +149,19 @@ int LocalVideoStream::incomingI420Frame(const unsigned int width,
 	const unsigned char* uBuffer,
 	const unsigned char* vBuffer)
 {
-	pimpl_->incomingFrame(I420RawFrameWrapper({width, height, strideY, strideU,
+	return pimpl_->incomingFrame(I420RawFrameWrapper({width, height, strideY, strideU,
 		strideV, yBuffer, uBuffer, vBuffer}));
-	return RESULT_OK;
+}
+
+int LocalVideoStream::incomingNV21Frame(const unsigned int width,
+			const unsigned int height,
+			const unsigned int strideY,
+			const unsigned int strideUV,
+			const unsigned char* yBuffer,
+			const unsigned char* uvBuffer)
+{
+	return pimpl_->incomingFrame(YUV_NV21FrameWrapper({width, height, strideY, 
+		strideUV, yBuffer, uvBuffer}));
 }
 
 string

@@ -46,8 +46,9 @@ namespace ndnrtc {
 
 		std::vector<std::string> getThreads() const;
 
-		void incomingFrame(const ArgbRawFrameWrapper&);
-		void incomingFrame(const I420RawFrameWrapper&);
+		int incomingFrame(const ArgbRawFrameWrapper&);
+		int incomingFrame(const I420RawFrameWrapper&);
+		int incomingFrame(const YUV_NV21FrameWrapper&);
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
 		
 	private:
@@ -88,7 +89,7 @@ namespace ndnrtc {
 		void remove(const std::string& threadName);
 		bool updateMeta();
 		
-		void feedFrame(const WebRtcVideoFrame& frame);
+		bool feedFrame(const WebRtcVideoFrame& frame);
 		void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>>& frames);
 		void publish(const std::string& thread, boost::shared_ptr<VideoFramePacketAlias>& fp);
 		void publishManifest(ndn::Name dataName, PublishedDataPtrVector& segments);
