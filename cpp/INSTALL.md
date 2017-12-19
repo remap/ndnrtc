@@ -64,15 +64,15 @@ $ gclient sync
 $ gn gen out/Default --args='is_debug=false'
 $ ninja -C out/Default
 </pre>
-
 <details>
-  <summary>// for macOS</summary>
+  <summary>// additional WebRTC step for macOS</summary>
   
   > Do this:
   <pre>
   $ mkdir -p out/Default/allibs && for lib in `find out/Default -name "*.a"`; do cp $lib out/Default/allibs/; done;
   </pre>
 </details>
+
 
 <details> 
   <summary> Boost </summary>
@@ -83,6 +83,12 @@ $ ninja -C out/Default
 
 <pre>
 $ brew install boost
+</pre>
+
+-- or --
+
+<pre>
+$ sudo apt-get install libboost-all-dev
 </pre>
 
 <details>
@@ -99,7 +105,7 @@ $ cd ndn-cpp && mkdir -p build/share
 </pre>
 
 <details>
-  <summary>// for macOS > 10.11</summary>
+  <summary>// additional step for macOS > 10.11</summary>
   
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
