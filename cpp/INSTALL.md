@@ -14,7 +14,8 @@ These are prerequisites to build NDN-RTC.
 **Optional (for ndnrtc-client app only)**
 * [libconfig](http://www.hyperrealm.com/libconfig/)
 
-# General
+# Build instructions (macOS, Ubuntu)
+## General
 <details>
 <summary>NDN-RTC configure variables <i>(expand for more info)</i></summary>
   
@@ -33,7 +34,7 @@ These are prerequisites to build NDN-RTC.
 
 </details>
 <details>
-  <summary><b>NDN-RTC environment </b><i>(expand for more info)</i></summary>
+  <summary>#0 <b>NDN-RTC environment </b><i>(expand for more info)</i></summary>
    
    > Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled.
    > Future instructions assume everything is happening inside `ndnrtc-env` folder.
@@ -44,13 +45,11 @@ These are prerequisites to build NDN-RTC.
 $ mkdir ndnrtc-env && cd ndnrtc-env
 </pre>
 
-
-# Build instructions (macOS, Ubuntu)
 ## Prerequisites
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites.
 
 <details>
-  <summary><b>WebRTC </b><i>(expand for more info)</i></summary>
+  <summary>#1 <b>WebRTC </b><i>(expand for more info)</i></summary>
   
   > Here are detailed and latest instructions on [how to build WebRTC](http://www.webrtc.org/native-code/development).
   > Follow the instructions and build WebRTC **branch-heads/59** (Release version).
@@ -68,7 +67,7 @@ $ ninja -C out/Default
 </pre>
 
 <details>
-  <summary><i>// additional WebRTC step for macOS (expand for more info)</i></summary>
+  <summary><i>// additional step for macOS (expand for more info)</i></summary>
   
   > Do this:
   <pre>
@@ -78,7 +77,7 @@ $ ninja -C out/Default
 
 
 <details> 
-  <summary><b>Boost </b><i>(expand for more info)</i></summary>
+  <summary>#2 <b>Boost </b><i>(expand for more info)</i></summary>
   
   > Using `homebrew` to install boost proved to be sufficient.
   
@@ -95,7 +94,7 @@ $ sudo apt-get install libboost-all-dev
 </pre>
 
 <details>
-  <summary><b>NDN-CPP </b><i>(expand for more info)</i></summary>
+  <summary>#3 <b>NDN-CPP </b><i>(expand for more info)</i></summary>
 
   > NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
   > In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to `std::shared_ptr` by default.
@@ -127,7 +126,7 @@ $ make && make install
 
 
 <details>
-  <summary><b>OpenFEC </b><i>(expand for more info)</i></summary>
+  <summary>#4 <b>OpenFEC </b><i>(expand for more info)</i></summary>
   
    > To build OpenFEC, few edits need to be made for **src/CMakeLists.txt** file (applied as [ndnrtc-openfec.patch](https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch) in instructions below):
    >
