@@ -170,7 +170,7 @@ $ make && make install
 </pre>
 
 <details>
-  <summary>#3.5 <b>OpenFEC prerequisites</b>
+  <summary>#3.5 <b>OpenFEC prerequisites</b></summary>
     
    > Nothing's here :bowtie:
 </details>
