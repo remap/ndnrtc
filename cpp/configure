@@ -638,6 +638,8 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 WEBRTCLIBS
+HAVE_NANOMSG_FALSE
+HAVE_NANOMSG_TRUE
 TAR
 WGET
 HAVE_CXX11
@@ -716,6 +718,8 @@ build_os
 build_vendor
 build_cpu
 build
+NANOMSGLIB
+NANOMSGGDIR
 LCONFIGLIB
 LCONFIGDIR
 WEBRTCLIB
@@ -827,6 +831,8 @@ WEBRTCSRC
 WEBRTCLIB
 LCONFIGDIR
 LCONFIGLIB
+NANOMSGGDIR
+NANOMSGLIB
 CC
 CFLAGS
 LDFLAGS
@@ -1512,6 +1518,10 @@ Some influential environment variables:
               /usr/local/include)
   LCONFIGLIB  Optional (for client demo app): path to the directory which
               contains libconfig library binaries (default is /usr/local/lib)
+  NANOMSGGDIR Optional (for client demo app): path to the directory which
+              contains nanomsg library headers (default is /usr/local/include)
+  NANOMSGLIB  Optional (for client demo app): path to the directory which
+              contains nanomsg library binaries (default is /usr/local/lib)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -3470,6 +3480,8 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
+
 
 
 
@@ -17359,7 +17371,7 @@ if test "x${WEBRTCSRC}" = "x"; then
 fi
 
 if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
+	WEBRTCLIB="$WEBRTCDIR/out/Default/obj/webrtc"
 fi
 
 if test ${LCONFIGDIR}; then
@@ -17372,6 +17384,18 @@ if test ${LCONFIGLIB}; then
 	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
 else
 	LCONFIGLIB="/usr/local/lib"
+fi
+
+if test ${NANOMSGDIR}; then
+	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
+else
+	NANOMSGDIR="/usr/local/include"
+fi
+
+if test ${NANOMSGLIB}; then
+	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
+else
+	NANOMSGLIB="/usr/local/lib"
 fi
 
 # create links for client config file
@@ -18366,6 +18390,73 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
+###############################
+# Check for nanomsg
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$NANOMSGDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$NANOMSGLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lnanomsg"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for nn_socket in -lnanomsg" >&5
+$as_echo_n "checking for nn_socket in -lnanomsg... " >&6; }
+if ${ac_cv_lib_nanomsg_nn_socket+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnanomsg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char nn_socket ();
+int
+main ()
+{
+return nn_socket ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_nanomsg_nn_socket=yes
+else
+  ac_cv_lib_nanomsg_nn_socket=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nanomsg_nn_socket" >&5
+$as_echo "$ac_cv_lib_nanomsg_nn_socket" >&6; }
+if test "x$ac_cv_lib_nanomsg_nn_socket" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBNANOMSG 1
+_ACEOF
+
+  LIBS="-lnanomsg $LIBS"
+
+fi
+
+ if test "$ac_cv_lib_nanomsg_nn_socket" = yes; then
+  HAVE_NANOMSG_TRUE=
+  HAVE_NANOMSG_FALSE='#'
+else
+  HAVE_NANOMSG_TRUE='#'
+  HAVE_NANOMSG_FALSE=
+fi
+
+
+CPPFLAGS=$SAVED_CPPFLAGS
+LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
+
 WEBRTCLIBS="-lwebrtc"
 
 
@@ -18568,6 +18659,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${OS_BSD_TRUE}" && test -z "${OS_BSD_FALSE}"; then
   as_fn_error $? "conditional \"OS_BSD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_NANOMSG_TRUE}" && test -z "${HAVE_NANOMSG_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_NANOMSG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

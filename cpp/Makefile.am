@@ -75,24 +75,8 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_c
 
 if OS_DARWIN
 
-.PHONY: make-fat-libs 
-
-make-fat-libs:
-	$(shell for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-		ar -t $$lib | xargs ar rvs $$lib.new 1> /dev/null 2>&1 && mv -v $$lib.new $$lib > /dev/null; \
-	done && \
-	for lib in $$(find @WEBRTCLIB@ -name '*.a'); do cp -f $$lib @WEBRTCLIB@ 2> /dev/null; done;)
-
-libwebrtc-all.a: make-fat-libs
-	$(shell mkdir -p tmp && cd tmp && \
-	for lib in $$(ls @WEBRTCLIB@/*.a) ; do \
-		ar x $$lib; \
-	done && \
-	ar r @WEBRTCLIB@/$@ *.o && cd .. && rm -Rf tmp)	
-
-libndnrtc_la_LDFLAGS += -flat_namespace
-libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-libndnrtc_la_LIBADD += -lwebrtc-all
+libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
+libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
 
 else
 
@@ -105,8 +89,8 @@ libwebrtc-all.mri:
   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
 
-#libwebrtc-all.a: libwebrtc-all.mri
-#  $(shell cd @WEBRTCLIB@ && $AR -M <libwebrtc-all.mri)
+libwebrtc-all.a: libwebrtc-all.mri
+  $(shell cd @WEBRTCLIB@ && $AR -M <libwebrtc-all.mri)
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 libndnrtc_la_LIBADD += -lwebrtc-all
@@ -141,7 +125,7 @@ endif
 if OS_LINUX
 
 ndnrtc_client_LDFLAGS += -pthread 
-ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite 
+ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
 
@@ -150,7 +134,8 @@ endif
 if OS_DARWIN
 
 ndnrtc_client_CPPFLAGS += -DOS_DARWIN
-ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
+ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
 
 endif
 

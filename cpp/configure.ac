@@ -160,7 +160,7 @@ if test "x${WEBRTCSRC}" = "x"; then
 fi
 
 if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Release/obj/webrtc"
+	WEBRTCLIB="$WEBRTCDIR/out/Default/obj/webrtc"
 fi
 
 if test ${LCONFIGDIR}; then
