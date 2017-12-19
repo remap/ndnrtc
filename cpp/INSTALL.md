@@ -129,12 +129,12 @@ $ make && make install
 <details>
 <summary>OpenFEC <i>(expand for more info)</i></summary>
   
-   > Before building OpenFEC, modify **src/CMakeLists.txt** file (stored in [ndnrtc-openfec.patch](https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch)):
+   > To build OpenFEC, few edits need to be made for **src/CMakeLists.txt** file (applied as [ndnrtc-openfec.patch](https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch) in instructions below):
    >
    > 1. Change line `add_library(openfec SHARED ${openfec_sources})` to `add_library(openfec STATIC ${openfec_sources})`
    > 2. Change line `target_link_libraries(openfec pthread IL)` to `target_link_libraries(openfec pthread)`
    > 3. Add line `set(CMAKE_C_FLAGS "-fPIC")`
-   > Check OpenFEC's README file for further build instructions.
+   
 </details>
 
 <pre>
@@ -143,7 +143,7 @@ $ tar -xvf openfec_v1_4_2.tgz && rm openfec_v1_4_2.tgz
 $ mkdir -p openfec_v1_4_2/build 
 $ cd openfec_v1.4.2/
 $ wget https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch && patch src/CMakeLists.txt ndnrtc-openfec.patch
-$ cd build_release/
+$ cd build/
 $ cmake .. -DDEBUG:STRING=OFF
 $ make
 </pre>
