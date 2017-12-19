@@ -148,7 +148,7 @@ $ make
 </pre>
 
 <details>
-  <summary><b>Libconfig </b><i>(expand for more info)</i></summary>
+  <summary>#5 <b>Libconfig </b><i>(expand for more info)</i></summary>
   
   > Optional, needed by **headless client app**.
 </details>
