@@ -67,7 +67,7 @@ $ ninja -C out/Default
 </pre>
 
 <details>
-  <summary><i>// additional step for macOS (expand for more info)</i></summary>
+  <summary>&#9658;<i>// additional step for macOS (expand for more info)</i></summary>
   
   > Do this:
   <pre>
@@ -107,7 +107,7 @@ $ cd ndn-cpp && mkdir -p build/share
 </pre>
 
 <details>
-  <summary><i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
+  <summary>&#9658;<i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
   
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
