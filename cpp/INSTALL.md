@@ -33,7 +33,7 @@ These are prerequisites to build NDN-RTC.
 
 </details>
 <details>
-  <summary>NDN-RTC environment <i>(expand for more info)</i></summary>
+  <summary><b>NDN-RTC environment </b><i>(expand for more info)</i></summary>
    
    > Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled.
    > Future instructions assume everything is happening inside `ndnrtc-env` folder.
@@ -50,7 +50,7 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites.
 
 <details>
-  <summary>WebRTC <i>(expand for more info)</i></summary>
+  <summary><b>WebRTC </b><i>(expand for more info)</i></summary>
   
   > Here are detailed and latest instructions on [how to build WebRTC](http://www.webrtc.org/native-code/development).
   > Follow the instructions and build WebRTC **branch-heads/59** (Release version).
@@ -78,7 +78,7 @@ $ ninja -C out/Default
 
 
 <details> 
-  <summary>Boost <i>(expand for more info)</i></summary>
+  <summary><b>Boost </b><i>(expand for more info)</i></summary>
   
   > Using `homebrew` to install boost proved to be sufficient.
   
@@ -95,7 +95,7 @@ $ sudo apt-get install libboost-all-dev
 </pre>
 
 <details>
-  <summary>NDN-CPP <i>(expand for more info)</i></summary>
+  <summary><b>NDN-CPP </b><i>(expand for more info)</i></summary>
 
   > NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
   > In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to `std::shared_ptr` by default.
@@ -127,7 +127,7 @@ $ make && make install
 
 
 <details>
-<summary>OpenFEC <i>(expand for more info)</i></summary>
+  <summary><b>OpenFEC </b><i>(expand for more info)</i></summary>
   
    > To build OpenFEC, few edits need to be made for **src/CMakeLists.txt** file (applied as [ndnrtc-openfec.patch](https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch) in instructions below):
    >
@@ -149,7 +149,7 @@ $ make
 </pre>
 
 <details>
-<summary>Libconfig <i>(expand for more info)</i></summary>
+  <summary><b>Libconfig </b><i>(expand for more info)</i></summary>
   
   > Optional, needed by **headless client app**.
 </details>
@@ -184,7 +184,7 @@ $ make test
 </pre>
 
 <details>
-  <summary>Headless client <i>(expand for more info)</i></summary>
+  <summary><b>Headless client </b><i>(expand for more info)</i></summary>
 
   > If you want to build headless client application, make sure you have succesfully installed **libconfig**.
 </details>
