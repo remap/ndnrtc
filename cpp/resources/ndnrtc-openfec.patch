@@ -1,0 +1,9 @@
+3c3
+< add_library(openfec  SHARED  ${openfec_sources})
+---
+> add_library(openfec  STATIC  ${openfec_sources})
+29c29,30
+< #target_link_libraries(openfec pthread)
+---
+> target_link_libraries(openfec pthread)
+> set(CMAKE_C_FLAGS "-fPIC")
