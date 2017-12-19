@@ -46,7 +46,11 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 </pre>
 
 ## Prerequisites
-> Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites.
+> Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites. Last time checked, [`depot-tools`](http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) needed to be installed first:
+> <pre>
+> $ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+> $ export PATH=$PATH:`pwd`/depot_tools
+> </pre>
 
 <details>
   <summary>#1 <b>WebRTC </b><i>(expand for more info)</i></summary>
@@ -76,7 +80,7 @@ $ gclient sync
 </details>
 
 <details>
-  <summary><i><b>WebRTC </b>(continuation)</i></summary>
+  <summary>&emsp;<i><b>WebRTC </b>(continuation)</i></summary>
   
   > Compilation may take some time
   
@@ -141,7 +145,7 @@ $ cd ndn-cpp && mkdir -p build/share
 </details>
 
 <details>
-  <summary><i><b>NDN-CPP</b> (continuation)</i></summary>
+  <summary>&emsp;<i><b>NDN-CPP</b> (continuation)</i></summary>
   
   > Nothing here :grin:
 </details>
