@@ -76,8 +76,10 @@ $ gclient sync
 </details>
 
 <details>
-  <summary><b>WebRTC (continuation)</b></summary>
+  <summary><i><b>WebRTC </b>(continuation)</i></summary>
+  
   > Compilation may take some time
+  
 </details>
 
 <pre>
@@ -136,6 +138,12 @@ $ cd ndn-cpp && mkdir -p build/share
    $ echo CXXFLAGS="-I/usr/local/opt/openssl/include" >> build/share/config.site
    $ echo LDFLAGS="-L/usr/local/opt/openssl/lib" >> build/share/config.site
    </pre>
+</details>
+
+<details>
+  <summary><i><b>NDN-CPP</b> (continuation)</i></summary>
+  
+  > Nothing here :grin:
 </details>
 
 <pre>
