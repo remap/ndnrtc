@@ -16,7 +16,7 @@ These are prerequisites to build NDN-RTC.
 
 # General
 <details>
-<summary>NDN-RTC configure variables</summary>
+<summary>NDN-RTC configure variables <i>(expand for more info)</i></summary>
   
   > Paths to prerequisites sources and/or libraries can be set during configure phase. Use these variables for NDN-RTC _configure_ script for providing custom paths:
   > * **BOOSTDIR** - Path to the directory which contains Boost library headers folder (default is /usr/local/include)
@@ -33,7 +33,7 @@ These are prerequisites to build NDN-RTC.
 
 </details>
 <details>
-  <summary>NDN-RTC environment:</summary>
+  <summary>NDN-RTC environment <i>(expand for more info)</i></summary>
    
    > Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled.
    > Future instructions assume everything is happening inside `ndnrtc-env` folder.
@@ -50,7 +50,7 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites.
 
 <details>
-  <summary>WebRTC</summary>
+  <summary>WebRTC <i>(expand for more info)</i></summary>
   
   > Here are detailed and latest instructions on [how to build WebRTC](http://www.webrtc.org/native-code/development).
   > Follow the instructions and build WebRTC **branch-heads/59** (Release version).
@@ -66,8 +66,9 @@ $ gclient sync
 $ gn gen out/Default --args='is_debug=false'
 $ ninja -C out/Default
 </pre>
+
 <details>
-  <summary>// additional WebRTC step for macOS</summary>
+  <summary><i>// additional WebRTC step for macOS (expand for more info)</i></summary>
   
   > Do this:
   <pre>
@@ -77,7 +78,7 @@ $ ninja -C out/Default
 
 
 <details> 
-  <summary> Boost </summary>
+  <summary>Boost <i>(expand for more info)</i></summary>
   
   > Using `homebrew` to install boost proved to be sufficient.
   
@@ -94,7 +95,7 @@ $ sudo apt-get install libboost-all-dev
 </pre>
 
 <details>
-  <summary>NDN-CPP</summary>
+  <summary>NDN-CPP <i>(expand for more info)</i></summary>
 
   > NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
   > In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to `std::shared_ptr` by default.
@@ -107,7 +108,7 @@ $ cd ndn-cpp && mkdir -p build/share
 </pre>
 
 <details>
-  <summary>// additional step for macOS > 10.11</summary>
+  <summary><i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
   
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
@@ -126,7 +127,7 @@ $ make && make install
 
 
 <details>
-<summary>OpenFEC</summary>
+<summary>OpenFEC <i>(expand for more info)</i></summary>
   
    > Before building OpenFEC, modify **src/CMakeLists.txt** file (stored in (ndnrtc-openfec.patch)[https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch]):
    >
@@ -148,9 +149,9 @@ $ make
 </pre>
 
 <details>
-<summary>Libconfig (optional)</summary>
+<summary>Libconfig <i>(expand for more info)</i></summary>
   
-  > Optional, needed by headless client app.
+  > Optional, needed by **headless client app**.
 </details>
 
 <pre>
@@ -183,7 +184,7 @@ $ make test
 </pre>
 
 <details>
-  <summary>Headless client</summary>
+  <summary>Headless client <i>(expand for more info)</i></summary>
 
   > If you want to build headless client application, make sure you have succesfully installed **libconfig**.
 </details>
