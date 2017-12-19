@@ -47,6 +47,8 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 
 # Build instructions (macOS, Ubuntu)
 ## Prerequisites
+> Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites.
+
 <details>
   <summary>WebRTC</summary>
   
