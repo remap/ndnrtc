@@ -172,7 +172,7 @@ $ make && make install
 <details>
   <summary>#3.5 <b>OpenFEC prerequisites</b>
     
-    > Nothing's here :bowtie:
+   > Nothing's here :bowtie:
 </details>
 
 > One must have `cmake` in order to build OpenFEC:
