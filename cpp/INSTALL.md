@@ -33,21 +33,33 @@ These are prerequisites to build NDN-RTC.
   > * **LCONFIGLIB** - (Optional) path to the directory which contains libconfig library binaries (default is /usr/local/lib)
 
 </details>
+
+> Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled.
+
 <details>
   <summary>#0 <b>NDN-RTC environment </b><i>(expand for more info)</i></summary>
-   
-   > Before building NDN-RTC, we suggest to create a folder for NDN-RTC environment where all prerequisites source code and NDN-RTC source code will be stored and compiled.
-   > Future instructions assume everything is happening inside `ndnrtc-env` folder.
   
+  > Eventually, your `ndnrtc-env` should look like this:
+  > `ndnrtc-env/`
+  >
+  > - &emsp; `depot-tools/` 
+  > - &emsp; `libconfig/` 
+  > - &emsp; `ndn-cpp/` 
+  > - &emsp; `ndnrtc/` 
+  > - &emsp; `ndnrtc/` 
+  > - &emsp; `openfec_v1.4.2/` 
+  > - &emsp; `webrtc-checkout/` 
 </details>
 
 <pre>
 $ mkdir ndnrtc-env && cd ndnrtc-env
+$ export NDNRTC_ENV=`pwd`
 </pre>
 
 ## Prerequisites
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites. Last time checked, [`depot-tools`](http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) needed to be installed first:
 > <pre>
+> $ cd $NDNRTC_ENV
 > $ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 > $ export PATH=$PATH:`pwd`/depot_tools
 > </pre>
@@ -61,6 +73,7 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 </details>
 
 <pre>
+$ cd $NDNRTC_ENV
 $ mkdir webrtc-checkout && cd webrtc-checkout/
 $ fetch --nohooks webrtc
 $ cd src
@@ -127,6 +140,7 @@ $ sudo apt-get install libboost-all-dev
 </details>
 
 <pre>
+$ cd $NDNRTC_ENV
 $ git clone https://github.com/named-data/ndn-cpp
 $ cd ndn-cpp && mkdir -p build/share
 </pre>
@@ -168,10 +182,10 @@ $ make && make install
 </details>
 
 <pre>
+$ cd $NDNRTC_ENV
 $ wget http://openfec.org/files/openfec_v1_4_2.tgz
 $ tar -xvf openfec_v1_4_2.tgz && rm openfec_v1_4_2.tgz
-$ mkdir -p openfec_v1_4_2/build 
-$ cd openfec_v1.4.2/
+$ mkdir -p openfec_v1.4.2/build && cd openfec_v1.4.2/
 $ wget https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch && patch src/CMakeLists.txt ndnrtc-openfec.patch
 $ cd build/
 $ cmake .. -DDEBUG:STRING=OFF
@@ -185,6 +199,7 @@ $ make
 </details>
 
 <pre>
+$ cd $NDNRTC_ENV
 $ git clone https://github.com/hyperrealm/libconfig.git
 $ cd libconfig
 $ mkdir -p build/share
@@ -195,6 +210,7 @@ $ make && make install
 
 ## NDN-RTC
 <pre>
+$ cd $NDNRTC_ENV
 $ git clone https://github.com/remap/ndnrtc
 $ cd ndnrtc/cpp && mkdir -p build/share
 $ touch build/share/config.site
@@ -202,7 +218,7 @@ $ echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/conf
 $ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
 $ echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
 $ echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
-$ echo WEBRTCDIR=`pwd`/../../webrtc/src >> build/share/config.site
+$ echo WEBRTCDIR=`pwd`/../../webrtc-checkout/src >> build/share/config.site
 $ ./configure --prefix=$(pwd)/build
 $ make && make install
 </pre>
@@ -223,6 +239,93 @@ $ make test
 $ make ndnrtc-client
 </pre>
 
+
 # Headless client
 
-*TBD: How to run and use*
+Headless client is a C++ console application which demonstrates use of NDN-RTC library and allows one to publish and fetch audio and video streams over NDN network. Since application is console and cross-platform, it does not provide capabilities to capture video frames from connected hardware or software cameras. Instead, it can read and write raw ARGB frames from/to three types of endpoints:
+
+- file;
+- file pipe;
+- [nanomsg](http://nanomsg.org/) unix socket.
+
+ For audio, headless app acquires default audio recording device in the system and it is not configurable (in other words, if there are two audio recording devices, it'll get whatever is set as default in OS).
+ 
+ ## Config file
+ All configuration of the app is done via config file. [Here](tests/default.cfg) is an example of a configuration file with comments, explaining different sections and parameters.
+ 
+ There are **3 sections** in config file: *general*, *consumer* and *producer*. Config file **MUST** have at least two sections - *general* and (*consumer* or *producer*) for consumer OR producer behaviour; but also **MAY** have all three sections for both consumer AND producer behaviour.
+ 
+ ### General
+This section describes general parameters such as logging level, log file name, log file folder, NDN network configuration (one may want to connect to remote NFD, for example) and others (see [example config](tests/default.cfg) for more/latest information):
+
+<pre>
+general = {
+    log_level = "default";  // all, debug, stat, default, none
+    log_file = "ndnrtc-client.log";
+    log_path = "/tmp";
+
+    use_fec = true; // [true | false] -- use Forward Error Correction
+    use_avsync = true; // [true | false] -- TBD: enable synchronization between audio/video streams
+
+    ndnnetwork ={
+        connect_host = "localhost";
+        connect_port = 6363;
+    };
+};
+</pre>
+ 
+ ### Producer
+ This section specifies producer behaviour of headless app. It is structured as an array (`streams`) of media stream configurations. Each stream configuration contains details about its' type, name (will be used as part of NDN name), segmenting, data freshness and source (for video streams) from where application will read raw frames. Besides this basic details, one MUST specify at least 1 **media thread** with encoding parameters.
+ 
+ <pre>
+ produce = {
+    streams = ({
+        type = "video";             // [video | audio] 
+        name = "camera";            // video stream name
+        segment_size = 1000;        // in bytes
+        freshness = 2000;           // in milliseconds
+        source = "camera.argb";     // file from where raw frames will 
+                                    // be read. frame resolution should be
+                                    // equal to the maximum encoding resolution 
+                                    // among threads
+        sync = "sound";             // name of the audio stream to sync this video stream to
+
+        threads = ({    // an array of stream's all threads that will be published
+            name = "low";                       // thread name
+            coder = {                           // encoder parameters
+                frame_rate = 30;
+                gop = 30;                       //group of picture
+                start_bitrate = 1000;
+                max_bitrate = 10000;
+                encode_height = 405;
+                encode_width = 720;
+                drop_frames = true;     // whether encoder should drop frames
+                                        // to maintain start bitrate
+            };
+        },
+        {
+            name = "hi";
+            coder = {
+                frame_rate = 30;
+                gop = 30;
+                start_bitrate = 3000;
+                max_bitrate = 10000;
+                encode_height = 1080;
+                encode_width = 1920;
+                drop_frames = true;
+            };
+        });
+    },
+    {
+        type = "audio";
+        name = "sound";
+        thread = "pcmu";
+        segment_size = 1000;
+        freshness = 2000;           // in milliseconds
+        codec = "g722";
+        capture_device = 0;
+    });
+};
+ </pre>
+ 
+ ### Consumer
