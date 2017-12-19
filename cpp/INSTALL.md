@@ -62,12 +62,31 @@ $ fetch --nohooks webrtc
 $ cd src
 $ git checkout -b branch-heads-59 refs/remotes/branch-heads/59
 $ gclient sync
+</pre>
+
+<details>
+  <summary>&emsp;<i>// additional step for Ubuntu (expand for more info)</i></summary>
+  
+  > As part of installing prerequisites for WebRTC:
+  
+  <pre>
+  $ ./build/install-build-deps.sh
+  </pre>
+  
+</details>
+
+<details>
+  <summary><b>WebRTC (continuation)</b></summary>
+  > Compilation may take some time
+</details>
+
+<pre>
 $ gn gen out/Default --args='is_debug=false'
 $ ninja -C out/Default
 </pre>
 
 <details>
-  <summary>&#9658;<i>// additional step for macOS (expand for more info)</i></summary>
+  <summary>&emsp;<i>// additional step for macOS (expand for more info)</i></summary>
   
   > Do this:
   <pre>
@@ -107,7 +126,7 @@ $ cd ndn-cpp && mkdir -p build/share
 </pre>
 
 <details>
-  <summary>&#9658;<i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
+  <summary>&emsp;<i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
   
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
