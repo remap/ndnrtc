@@ -161,7 +161,7 @@ $ cd ndn-cpp && mkdir -p build/share
 <details>
   <summary>&emsp;<i><b>NDN-CPP</b> (continuation)</i></summary>
   
-  > Nothing here :grin:
+  > Nothing's here :grin:
 </details>
 
 <pre>
@@ -169,6 +169,21 @@ $ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/bu
 $ make && make install
 </pre>
 
+<details>
+  <summary>#3.5 <b>OpenFEC prerequisites</b>
+    
+    > Nothing's here :bowtie:
+</details>
+
+> One must have `cmake` in order to build OpenFEC:
+<pre>
+$ brew install cmake
+</pre>
+
+-- or --
+<pre>
+$ sudo apt-get install cmake
+</pre>
 
 <details>
   <summary>#4 <b>OpenFEC </b><i>(expand for more info)</i></summary>
