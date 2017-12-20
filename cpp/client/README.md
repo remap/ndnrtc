@@ -166,3 +166,17 @@ One can also configure real-time statistics gathering through the optional `stat
       });
     };
 </details>
+
+## Command-line arguments
+
+In order to launch headless app, several command-line arguments must be provided: 
+
+- `-c` (*config file*) -- [config file](#config-file) describing app configuration;
+- `-s` (*signing identity*) -- NDN signing identity which will be used to create application certificate and sign packets; this should be something, like `/ndn/edu/ucla/remap/peter` or whatever NDN identity you have [installed](http://named-data.net/doc/NFD/current/INSTALL.html#nfd-security) in your system (unfortunately, even if app acts as a consumer-only, this parameter is mandatory);
+- `-p` (*verification policy file*) -- [verification policy file](https://named-data.net/doc/ndn-cxx/current/tutorials/security-validator-config.html) for verifying incoming packets (unfortunately, even if app acts as a producer-only, this parameter is mandatory);
+- `-t` (*application run time*) -- application run time in seconds;
+- `-i` (*application instance name*) -- application instance name which will be appended to provided *singning identity* in order to generate application certificate;
+- `-n` (*statistics sampling interval*) -- statistics sampling period in milliseconds (**optional**, default is 100ms);
+- `-v` (*verbose mode*) -- verbose output for std::out (not for log file specified in config file).
+
+## Simple example
