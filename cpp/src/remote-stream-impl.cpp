@@ -120,15 +120,26 @@ void RemoteStreamImpl::stop()
 void 
 RemoteStreamImpl::setInterestLifetime(unsigned int lifetimeMs)
 {
-	pipeliner_->setInterestLifetime(lifetimeMs);
+	if (pipeliner_.get())
+	{
+		pipeliner_->setInterestLifetime(lifetimeMs);
+	}
+	else
+		LogWarnC << "attempting to setInterestLifetime() but pipeliner_ is null" << std::endl;
 }
 
 void 
 RemoteStreamImpl::setTargetBufferSize(unsigned int bufferSizeMs)
 {
-    playoutControl_->setThreshold(bufferSizeMs);
-	LogDebugC << "set target buffer size to " << bufferSizeMs << "ms" << std::endl;
-    (*sstorage_)[Indicator::BufferTargetSize] = bufferSizeMs;
+	if (playoutControl_.get())
+	{
+    	playoutControl_->setThreshold(bufferSizeMs);
+		LogDebugC << "set target buffer size to " << bufferSizeMs << "ms" << std::endl;
+    	(*sstorage_)[Indicator::BufferTargetSize] = bufferSizeMs;
+    }
+    else
+    	#warning figure this out for audio streams
+    	LogWarnC << "attempting to setTargetBufferSize() but playoutControl_ is null" << std::endl;
 }
 
 void 
