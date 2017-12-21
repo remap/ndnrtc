@@ -33,7 +33,7 @@ Please, see the [cpp/INSTALL.md](cpp/INSTALL.md) for build and install instructi
 
 ## Headless client
 
-As an example application, one can use headless client provided with the codebase. It is a console C++ application, which employs NDN-RTC library and can demonstrate publishing audio and video streams (video streams can be captured from files or file pipes only) as well as fetching those streams from NDN network. Please, refer to the [cpp/INSTALL.md](cpp/INSTALL.md#headless-client) file for details on how to build it.
+As an example application, one can use headless client provided with the codebase. It is a console C++ application, which employs NDN-RTC library and can demonstrate publishing audio and video streams (video streams can be captured from files or file pipes only) as well as fetching those streams from NDN network. Please, refer to the [cpp/INSTALL.md](cpp/INSTALL.md#NDN-RTC) file for details on how to build it and [client/README.md](cpp/client/README.md) on how to use it.
 
 ## License
 
