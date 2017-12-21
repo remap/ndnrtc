@@ -100,7 +100,7 @@ One can also configure real-time statistics gathering through the optional `stat
 `streams` subsection specifies which stream will application attempt to fetch from the network. Each entry describes type of stream, base prefix (in other words, producer's prefix supplied when application was launched), stream name and thread to fetch. For video streams, one may store received raw ARGB frames into a file, specified by `sink`. Alternatively, raw frames can be dumped into a file pipe or nanomsg socket by specifying `sink_type` parameter.
 
 <details>
-  <summary>Expand to see example consumer configuration</summary>
+ <summary><i>Expand to see example consumer configuration</i></summary>
   
     consume = {
       basic = {
@@ -180,3 +180,80 @@ In order to launch headless app, several command-line arguments must be provided
 - `-v` (*verbose mode*) -- verbose output for std::out (not for log file specified in config file).
 
 ## Simple example
+> To run simple example with headless client, one will need to have [NFD installed and configured](http://named-data.net/doc/NFD/current/INSTALL.html).
+
+Here, I'll explain how to run a simple producer-consumer setup (on two machines preferrrably) using headless client app. Producer will read raw video frames from file and acquire audio from default audio input device on the system. These two streams will be fetched by consumer - video saved into a file and audio played back on default audio output device.
+
+> Following console commands should be ran statnding in `ndndrtc/cpp` folder (after running `make ndnrtc-client` command).
+
+### Producer setup
+
+<details>
+ <summary>#1 <b>Create producer identity and store certificate into a file</b> <i>(expand for more info)</i></summary>
+ 
+ > Producer's certificate will be needed by consumer for verifying data later.
+ 
+</details>
+
+<pre>
+$ ndnsec-keygen /ndnrtc-test | ndnsec-install-cert -
+$ ndnsec-dump-certificate -i /ndnrtc-test > tests/policy_config/signing.cert
+</pre>
+
+<details>
+ <summary>#2 <b>Run producer</b> <i>(expand for more info)</i></summary>
+ 
+ > Last argument `-t` specifies runtime in seconds. Producer will read frames from test sequence in a loop.
+ 
+</details>
+
+<pre>
+$ nfd-start
+$ ./ndnrtc-client -c tests/sample-producer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance -t 100
+</pre>
+
+Producer will generate two log files:
+
+- `/tmp/producer-instance1-camera.log` - for video stream;
+- `/tmp/producer-instance1-sound.log` - for audio stream.
+
+### Consumer setup
+
+<details>
+ <summary>#3 <b>Copy `signing.cert` saved in step #1 to consumer's machine</b></summary>
+ 
+ > Nothing's here :neckbeard:
+</details>
+
+<pre>
+$ cp <producer-ndnrtc-cpp-folder>/tests/policy_config/signing.cert <consumer-ndnrtc-cpp-folder>/tests/policy_config
+</pre>
+
+<details>
+ <summary>#4 <b>Run consumer</b></summary>
+ 
+ > Nothing's here :expressionless:
+</details>
+ 
+ <pre>
+ $ ./ndnrtc-client -c tests/sample-consumer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance2 -t 50 -v
+ </pre>
+ 
+Consumer will generate multiple files:
+
+- `/tmp/consumer-ndnrtc-test-instance1-camera.log` - for video stream fetching;
+- `/tmp/consumer-ndnrtc-test-instance1-sound.log` - for audio stream fetching;
+- `/tmp/instance1-camera.320x240` - fetched ARGB frames frames from producer;
+- video stream statistics (see [sample-consumer.cfg](../tests/sample-consumer.cfg#L25) for details which statistics are wirtten):
+  - `/tmp/buffer-ndnrtc-test-instance1-camera.stat`
+  - `/tmp/play-ndnrtc-test-instance1-camera.stat`
+  - `/tmp/playback-ndnrtc-test-instance1-camera.stat`
+- audio stream statistics (see [sample-consumer.cfg](../tests/sample-consumer.cfg#L25) for details which statistics are wirtten):
+  - `/tmp/buffer-ndnrtc-test-instance1-sound.stat`
+  - `/tmp/play-ndnrtc-test-instance1-sound.stat`
+  - `/tmp/playback-ndnrtc-test-instance1-sound.stat`
+  
+**To convert video into viewable format, use `ffmpeg`:**
+<pre>
+ffmpeg -f rawvideo -vcodec rawvideo -s 320x240 -r 25 -pix_fmt argb -i /tmp/instance1-camera.320x240 -c:v libx264 -preset ultrafast -qp 0 instance1-camera.mp4
+</pre>
