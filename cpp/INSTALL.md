@@ -56,7 +56,24 @@ $ mkdir ndnrtc-env && cd ndnrtc-env
 $ export NDNRTC_ENV=`pwd`
 </pre>
 
-## Prerequisites
+<details>
+  <summary>#0.5 <b>Out-of-the box prerequisites</b><summary>
+  
+  > These are required prerequisites which can be installed using [`homebrew`](https://brew.sh/) (macOS) or `apt-get` (Ubuntu).
+  
+</details>
+
+<pre>
+$ brew install boost cmake wget autotools libtool
+</pre>
+
+-- or (for Ubuntu) --
+
+<pre>
+$ sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool
+</pre>
+
+## Compiled prerequisites
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites. Last time checked, [`depot-tools`](http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) needed to be installed first:
 > <pre>
 > $ cd $NDNRTC_ENV
@@ -113,26 +130,8 @@ $ ninja -C out/Default
   </pre>
 </details>
 
-
-<details> 
-  <summary>#2 <b>Boost </b><i>(expand for more info)</i></summary>
-  
-  > Using `homebrew` to install boost proved to be sufficient.
-  
-</details>
-
-<pre>
-$ brew install boost
-</pre>
-
--- or --
-
-<pre>
-$ sudo apt-get install libboost-all-dev
-</pre>
-
 <details>
-  <summary>#3 <b>NDN-CPP </b><i>(expand for more info)</i></summary>
+  <summary>#2 <b>NDN-CPP </b><i>(expand for more info)</i></summary>
 
   > NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
   > In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to `std::shared_ptr` by default.
@@ -170,23 +169,7 @@ $ make && make install
 </pre>
 
 <details>
-  <summary>#3.5 <b>OpenFEC prerequisites</b></summary>
-    
-   > Nothing's here :bowtie:
-</details>
-
-> One must have `cmake` in order to build OpenFEC:
-<pre>
-$ brew install cmake
-</pre>
-
--- or --
-<pre>
-$ sudo apt-get install cmake
-</pre>
-
-<details>
-  <summary>#4 <b>OpenFEC </b><i>(expand for more info)</i></summary>
+  <summary>#3 <b>OpenFEC </b><i>(expand for more info)</i></summary>
   
    > To build OpenFEC, few edits need to be made for **src/CMakeLists.txt** file (applied as [ndnrtc-openfec.patch](https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch) in instructions below):
    >
@@ -208,7 +191,7 @@ $ make
 </pre>
 
 <details>
-  <summary>#5 <b>Libconfig </b><i>(expand for more info)</i></summary>
+  <summary>#4 <b>Libconfig </b><i>(expand for more info)</i></summary>
   
   > Optional, needed by **headless client app**.
 </details>
@@ -226,9 +209,8 @@ $ make && make install
 ## NDN-RTC
 <pre>
 $ cd $NDNRTC_ENV
-$ git clone https://github.com/remap/ndnrtc
+$ git clone --recursive https://github.com/remap/ndnrtc
 $ cd ndnrtc/cpp && mkdir -p build/share
-$ touch build/share/config.site
 $ echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/config.site
 $ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
 $ echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
