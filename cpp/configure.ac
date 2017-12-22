@@ -250,95 +250,103 @@ AC_CHECK_PROGS([TAR], [tar])
 
 ###############################
 # Check for Boost
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -L$BOOSTLIB"
-SAVED_LIBS=$LIBS
-LIBS="$LIBS -lboost_system -lboost_timer -lboost_chrono"
+#SAVED_CPPFLAGS=$CPPFLAGS
+#CPPFLAGS="$CPPFLAGS -I$BOOSTDIR"
+#SAVED_LDFLAGS=$LDFLAGS
+#LDFLAGS="$LDFLAGS -L$BOOSTLIB"
+#SAVED_LIBS=$LIBS
+#LIBS="$LIBS -lboost_system -lboost_timer -lboost_chrono"
 
-AC_MSG_CHECKING([for boost::shared_ptr...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/shared_ptr.hpp>]]
-    [[boost::shared_ptr<int> have_shared_ptr;]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+AX_BOOST_BASE([1.54])
 
-AC_MSG_CHECKING([for boost::enabled_shared_from_this...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/enable_shared_from_this.hpp>]]
-    [[class A:public boost::enable_shared_from_this<A>{};]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+AX_BOOST_SYSTEM
+AX_BOOST_ASIO
+AX_BOOST_CHRONO
+AX_BOOST_THREAD
+AX_BOOST_REGEX
 
-AC_MSG_CHECKING([for boost::chrono...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/chrono.hpp>]]
-    [[auto now = boost::chrono::system_clock::now().time_since_epoch();
-  	boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
-  	boost::chrono::microseconds usec = boost::chrono::duration_cast<boost::chrono::microseconds>(boost::chrono::steady_clock::now().time_since_epoch());
-    boost::chrono::milliseconds msec = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::steady_clock::now().time_since_epoch());
-    boost::chrono::seconds sec = boost::chrono::duration_cast<boost::chrono::seconds>(boost::chrono::steady_clock::now().time_since_epoch());
-    boost::chrono::duration<double> secd = now;]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+#AC_MSG_CHECKING([for boost::shared_ptr...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/shared_ptr.hpp>]]
+#    [[boost::shared_ptr<int> have_shared_ptr;]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
 
-AC_MSG_CHECKING([for boost::asio::steady_timer...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/asio.hpp>
-	  #include <boost/asio/steady_timer.hpp>]]
-    [[
-    boost::asio::io_service io_service_;
-    boost::asio::steady_timer timer_(io_service_);]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+#AC_MSG_CHECKING([for boost::enabled_shared_from_this...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/enable_shared_from_this.hpp>]]
+#    [[class A:public boost::enable_shared_from_this<A>{};]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
 
-AC_MSG_CHECKING([for boost::crc...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/crc.hpp>]]
-    [[
-    boost::crc_16_type crc_computer_;]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+#AC_MSG_CHECKING([for boost::chrono...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/chrono.hpp>]]
+#    [[auto now = boost::chrono::system_clock::now().time_since_epoch();
+#  	boost::chrono::nanoseconds nsec = boost::chrono::steady_clock::now().time_since_epoch();
+#  	boost::chrono::microseconds usec = boost::chrono::duration_cast<boost::chrono::microseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+#    boost::chrono::milliseconds msec = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::steady_clock::now().time_since_epoch());
+#    boost::chrono::seconds sec = boost::chrono::duration_cast<boost::chrono::seconds>(boost::chrono::steady_clock::now().time_since_epoch());
+#    boost::chrono::duration<double> secd = now;]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
 
-AC_MSG_CHECKING([for boost::thread...])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[#include <boost/thread.hpp>]]
-    [[boost::thread thread;]])
-], [
-    AC_MSG_RESULT([yes])
-], [
-    AC_MSG_FAILURE([not found])
-])
+#AC_MSG_CHECKING([for boost::asio::steady_timer...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/asio.hpp>
+#	  #include <boost/asio/steady_timer.hpp>]]
+#    [[
+#    boost::asio::io_service io_service_;
+#    boost::asio::steady_timer timer_(io_service_);]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
 
-AC_MSG_CHECKING([check linking with libs $LIBS...])
-AC_LINK_IFELSE(
- 	[AC_LANG_PROGRAM([#include <boost/asio.hpp>
-	  #include <boost/asio/steady_timer.hpp>],
- 		[boost::asio::io_service io_service_;
-    boost::asio::steady_timer timer_(io_service_);])],
- 		[AC_MSG_RESULT([yes])],
- 		[AC_MSG_FAILURE([can't find required boost libraries (boost_system-mt, boost_timer-mt, boost_chrono-mt)])]
-)
+#AC_MSG_CHECKING([for boost::crc...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/crc.hpp>]]
+#    [[
+#    boost::crc_16_type crc_computer_;]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
 
-LIBS=$SAVED_LIBS
-LDFLAGS=$SAVED_LDFLAGS
-CPPFLAGS=$SAVED_CPPFLAGS
+#AC_MSG_CHECKING([for boost::thread...])
+#AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+#    [[#include <boost/thread.hpp>]]
+#    [[boost::thread thread;]])
+#], [
+#    AC_MSG_RESULT([yes])
+#], [
+#    AC_MSG_FAILURE([not found])
+#])
+
+#AC_MSG_CHECKING([check linking with libs $LIBS...])
+#AC_LINK_IFELSE(
+# 	[AC_LANG_PROGRAM([#include <boost/asio.hpp>
+#	  #include <boost/asio/steady_timer.hpp>],
+# 		[boost::asio::io_service io_service_;
+#    boost::asio::steady_timer timer_(io_service_);])],
+# 		[AC_MSG_RESULT([yes])],
+# 		[AC_MSG_FAILURE([can't find required boost libraries (boost_system-mt, boost_timer-mt, boost_chrono-mt)])]
+#)
+
+#LIBS=$SAVED_LIBS
+#LDFLAGS=$SAVED_LDFLAGS
+#CPPFLAGS=$SAVED_CPPFLAGS
 
 ###############################
 # Check for NDN-CPP

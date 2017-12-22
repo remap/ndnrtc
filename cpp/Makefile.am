@@ -69,9 +69,9 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/webrtc.hpp
 
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@BOOSTDIR@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ 
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec -lboost_system -lboost_timer -lboost_chrono -lboost_thread -lboost_regex
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} -lboost_timer ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
 
 if OS_DARWIN
 
@@ -110,9 +110,9 @@ endif
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ -I@BOOSTDIR@ -I$(includedir) -I@NDNCPPDIR@
-ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ -L@BOOSTLIB@ -L$(libdir)
-ndnrtc_client_LDADD = -lconfig++ -lndn-cpp -lboost_thread -lboost_chrono -lboost_system $(top_builddir)/libndnrtc.la 
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
+ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la 
 noinst_SCRIPTS = client/params.cfg
 
 if HAVE_NANOMSG
