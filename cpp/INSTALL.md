@@ -57,7 +57,7 @@ $ export NDNRTC_ENV=`pwd`
 </pre>
 
 <details>
-  <summary>#0.5 <b>Out-of-the box prerequisites</b><summary>
+  <summary>#0.5 <b>Out-of-the box prerequisites</b></summary>
   
   > These are required prerequisites which can be installed using [`homebrew`](https://brew.sh/) (macOS) or `apt-get` (Ubuntu).
   
