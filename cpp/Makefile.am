@@ -90,7 +90,7 @@ libwebrtc-all.mri:
   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
 
 libwebrtc-all.a: libwebrtc-all.mri
-  $(shell cd @WEBRTCLIB@ && $AR -M <libwebrtc-all.mri)
+  $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 libndnrtc_la_LIBADD += -lwebrtc-all
