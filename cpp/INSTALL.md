@@ -228,6 +228,6 @@ make && make install
   > If you want to build headless client application, make sure you have succesfully installed **libconfig**.
 </details>
 
-``Shell
+```Shell
 make ndnrtc-client
 ```
