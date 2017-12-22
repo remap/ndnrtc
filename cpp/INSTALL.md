@@ -51,10 +51,10 @@ These are prerequisites to build NDN-RTC.
   > - &emsp; `webrtc-checkout/` 
 </details>
 
-<pre>
-$ mkdir ndnrtc-env && cd ndnrtc-env
-$ export NDNRTC_ENV=`pwd`
-</pre>
+```Shell
+mkdir ndnrtc-env && cd ndnrtc-env
+export NDNRTC_ENV=`pwd`
+```
 
 <details>
   <summary>#0.5 <b>Out-of-the box prerequisites</b></summary>
@@ -63,23 +63,23 @@ $ export NDNRTC_ENV=`pwd`
   
 </details>
 
-<pre>
-$ brew install boost cmake wget autotools libtool
-</pre>
+```Shell
+brew install boost cmake wget autotools libtool
+```
 
 -- or (for Ubuntu) --
 
-<pre>
-$ sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool
-</pre>
+```Shell
+sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool
+```
 
 ## Compiled prerequisites
 > Don't forget to complete [**Before you start**](https://webrtc.org/native-code/development/prerequisite-sw/) step for installing WebRTC prerequisites. Last time checked, [`depot-tools`](http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up) needed to be installed first:
-> <pre>
-> $ cd $NDNRTC_ENV
-> $ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-> $ export PATH=$PATH:`pwd`/depot_tools
-> </pre>
+> ```sh
+> cd $NDNRTC_ENV
+> git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+> export PATH=$PATH:`pwd`/depot_tools
+> ```
 
 <details>
   <summary>#1 <b>WebRTC </b><i>(expand for more info)</i></summary>
@@ -89,23 +89,23 @@ $ sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool
 
 </details>
 
-<pre>
-$ cd $NDNRTC_ENV
-$ mkdir webrtc-checkout && cd webrtc-checkout/
-$ fetch --nohooks webrtc
-$ cd src
-$ git checkout -b branch-heads-59 refs/remotes/branch-heads/59
-$ gclient sync
-</pre>
+```Shell
+cd $NDNRTC_ENV
+mkdir webrtc-checkout && cd webrtc-checkout/
+fetch --nohooks webrtc
+cd src
+git checkout -b branch-heads-59 refs/remotes/branch-heads/59
+gclient sync
+```
 
 <details>
   <summary>&emsp;<i>// additional step for Ubuntu (expand for more info)</i></summary>
   
   > As part of installing prerequisites for WebRTC:
   
-  <pre>
-  $ ./build/install-build-deps.sh
-  </pre>
+  ```Shell
+  ./build/install-build-deps.sh
+  ```
   
 </details>
 
@@ -116,18 +116,18 @@ $ gclient sync
   
 </details>
 
-<pre>
-$ gn gen out/Default --args='is_debug=false'
-$ ninja -C out/Default
-</pre>
+```Shell
+gn gen out/Default --args='is_debug=false'
+ninja -C out/Default
+```
 
 <details>
   <summary>&emsp;<i>// additional step for macOS (expand for more info)</i></summary>
   
   > Do this:
-  <pre>
-  $ mkdir -p out/Default/allibs && for lib in `find out/Default -name "*.a"`; do cp $lib out/Default/allibs/; done;
-  </pre>
+  ```Shell
+  mkdir -p out/Default/allibs && for lib in `find out/Default -name "*.a"`; do cp $lib out/Default/allibs/; done;
+  ```
 </details>
 
 <details>
@@ -138,11 +138,11 @@ $ ninja -C out/Default
   
 </details>
 
-<pre>
-$ cd $NDNRTC_ENV
-$ git clone https://github.com/named-data/ndn-cpp
-$ cd ndn-cpp && mkdir -p build/share
-</pre>
+```Shell
+cd $NDNRTC_ENV
+git clone https://github.com/named-data/ndn-cpp
+cd ndn-cpp && mkdir -p build/share
+```
 
 <details>
   <summary>&emsp;<i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
@@ -150,11 +150,11 @@ $ cd ndn-cpp && mkdir -p build/share
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
    >
-   <pre>
-   $ echo CFLAGS="-I/usr/local/opt/openssl/include" > build/share/config.site
-   $ echo CXXFLAGS="-I/usr/local/opt/openssl/include" >> build/share/config.site
-   $ echo LDFLAGS="-L/usr/local/opt/openssl/lib" >> build/share/config.site
-   </pre>
+   ```Shell
+   echo CFLAGS="-I/usr/local/opt/openssl/include" > build/share/config.site
+   echo CXXFLAGS="-I/usr/local/opt/openssl/include" >> build/share/config.site
+   echo LDFLAGS="-L/usr/local/opt/openssl/lib" >> build/share/config.site
+   ```
 </details>
 
 <details>
@@ -163,10 +163,10 @@ $ cd ndn-cpp && mkdir -p build/share
   > Nothing's here :grin:
 </details>
 
-<pre>
-$ ./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
-$ make && make install
-</pre>
+```Shell
+./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/build
+make && make install
+```
 
 <details>
   <summary>#3 <b>OpenFEC </b><i>(expand for more info)</i></summary>
@@ -179,16 +179,16 @@ $ make && make install
    
 </details>
 
-<pre>
-$ cd $NDNRTC_ENV
-$ wget http://openfec.org/files/openfec_v1_4_2.tgz
-$ tar -xvf openfec_v1_4_2.tgz && rm openfec_v1_4_2.tgz
-$ mkdir -p openfec_v1.4.2/build && cd openfec_v1.4.2/
-$ wget https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch && patch src/CMakeLists.txt ndnrtc-openfec.patch
-$ cd build/
-$ cmake .. -DDEBUG:STRING=OFF
-$ make
-</pre>
+```Shell
+cd $NDNRTC_ENV
+wget http://openfec.org/files/openfec_v1_4_2.tgz
+tar -xvf openfec_v1_4_2.tgz && rm openfec_v1_4_2.tgz
+mkdir -p openfec_v1.4.2/build && cd openfec_v1.4.2/
+wget https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-openfec.patch && patch src/CMakeLists.txt ndnrtc-openfec.patch
+cd build/
+cmake .. -DDEBUG:STRING=OFF
+make
+```
 
 <details>
   <summary>#4 <b>Libconfig </b><i>(expand for more info)</i></summary>
@@ -196,31 +196,31 @@ $ make
   > Optional, needed by **headless client app**.
 </details>
 
-<pre>
-$ cd $NDNRTC_ENV
-$ git clone https://github.com/hyperrealm/libconfig.git
-$ cd libconfig
-$ mkdir -p build/share
-$ autoreconf -i .
-$ ./configure --prefix=$(pwd)/build
-$ make && make install
-</pre>
+```Shell
+cd $NDNRTC_ENV
+git clone https://github.com/hyperrealm/libconfig.git
+cd libconfig
+mkdir -p build/share
+autoreconf -i .
+./configure --prefix=$(pwd)/build
+make && make install
+```
 
 ## NDN-RTC
-<pre>
-$ cd $NDNRTC_ENV
-$ git clone --recursive https://github.com/remap/ndnrtc
-$ cd ndnrtc/cpp && mkdir -p build/share
-$ echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/config.site
-$ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
-$ echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
-$ echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
-$ echo WEBRTCDIR=`pwd`/../../webrtc-checkout/src >> build/share/config.site
-$ echo LCONFIGDIR=`pwd`/../../libconfig/build/include >> build/share/config.site
-$ echo LCONFIGLIB=`pwd`/../../libconfig/build/lib >> build/share/config.site
-$ ./configure --prefix=$(pwd)/build
-$ make && make install
-</pre>
+```Shell
+cd $NDNRTC_ENV
+git clone --recursive https://github.com/remap/ndnrtc
+cd ndnrtc/cpp && mkdir -p build/share
+echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/config.site
+echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
+echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
+echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
+echo WEBRTCDIR=`pwd`/../../webrtc-checkout/src >> build/share/config.site
+echo LCONFIGDIR=`pwd`/../../libconfig/build/include >> build/share/config.site
+echo LCONFIGLIB=`pwd`/../../libconfig/build/lib >> build/share/config.site
+./configure --prefix=$(pwd)/build
+make && make install
+```
 
 <details>
   <summary><b>Headless client </b><i>(expand for more info)</i></summary>
@@ -228,6 +228,6 @@ $ make && make install
   > If you want to build headless client application, make sure you have succesfully installed **libconfig**.
 </details>
 
-<pre>
-$ make ndnrtc-client
-</pre>
+``Shell
+make ndnrtc-client
+```
