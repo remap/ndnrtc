@@ -240,12 +240,6 @@ $ ./configure --prefix=$(pwd)/build
 $ make && make install
 </pre>
 
-To run unit tests (compilation takes a while):
-
-<pre>
-$ make test
-</pre>
-
 <details>
   <summary><b>Headless client </b><i>(expand for more info)</i></summary>
 
