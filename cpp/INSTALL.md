@@ -234,6 +234,8 @@ $ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
 $ echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
 $ echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
 $ echo WEBRTCDIR=`pwd`/../../webrtc-checkout/src >> build/share/config.site
+$ echo LCONFIGDIR=`pwd`/../../libconfig/build/include >> build/share/config.site
+$ echo LCONFIGLIB=`pwd`/../../libconfig/build/lib >> build/share/config.site
 $ ./configure --prefix=$(pwd)/build
 $ make && make install
 </pre>
