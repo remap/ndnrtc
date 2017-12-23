@@ -82,6 +82,12 @@ extern "C" {
 			const unsigned char* yBuffer,
 			const unsigned char* uvBuffer);
 
+	int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			unsigned char* argbFrameData,
+			unsigned int frameSize);
+
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);

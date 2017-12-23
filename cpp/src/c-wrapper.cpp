@@ -214,6 +214,15 @@ int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
 		return stream->incomingNV21Frame(width, height, strideY, strideUV, yBuffer, uvBuffer);
 }
 
+int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
+			const unsigned int width,
+			const unsigned int height,
+			unsigned char* argbFrameData,
+			unsigned int frameSize)
+{
+	if (stream)
+		return stream->incomingArgbFrame(width, height, argbFrameData, frameSize);
+}
 //******************************************************************************
 // private
 // initializes new file-based keychain
