@@ -9,12 +9,12 @@ Headless client is a C++ console application which demonstrates use of NDN-RTC l
  For audio, headless app acquires default audio recording device in the system and it is not configurable (in other words, if there are two audio recording devices, it'll get whatever is set as default in OS).
  
 ## Config file
-Configuration of the app is done via config file. [Here](tests/default.cfg) is an example of a configuration file with comments, explaining different sections and parameters.
+Configuration of the app is done via config file. [Here](../tests/default.cfg) is an example of a configuration file with comments, explaining different sections and parameters.
  
  There are **3 sections** in config file: *general*, *producer* and *consumer*. Config file **MUST** have at least two sections - *general* and (*consumer* or *producer*) for consumer OR producer behaviour; but also **MAY** have all three sections for both consumer AND producer behaviour.
  
 ### General
-This section describes general parameters such as logging level, log file name, log file folder, NDN network configuration (one may want to connect to remote NFD, for example) and others (see [example config](tests/default.cfg) for more/latest information):
+This section describes general parameters such as logging level, log file name, log file folder, NDN network configuration (one may want to connect to remote NFD, for example) and others (see [example config](../tests/default.cfg) for more/latest information):
 
 <details>
   <summary><i>Expand to see example general configuration</i></summary>
@@ -95,7 +95,7 @@ This section specifies producer behaviour of headless app. It is structured as a
 ### Consumer
 This section of config file specifies parameters for fetching remote media streams. `basic` subsection is used for configuring interest lifetimes and jitter buffer sizes for audio and video streams. 
 
-One can also configure real-time statistics gathering through the optional `stat_gathering` sub-subsection. Each entry in `stat_gathering` array will result in creating `.stat` CSV file for every fetched stream (specified later in `streams` section) with specified statistics. Statistics keywords and their descriptions can be found in [statistics.hpp](include/statistics.hpp) and [statistics.cpp](src/statistics.cpp#L180) source files.
+One can also configure real-time statistics gathering through the optional `stat_gathering` sub-subsection. Each entry in `stat_gathering` array will result in creating `.stat` CSV file for every fetched stream (specified later in `streams` section) with specified statistics. Statistics keywords and their descriptions can be found in [statistics.hpp](../include/statistics.hpp) and [statistics.cpp](src/statistics.cpp#L180) source files.
 
 `streams` subsection specifies which stream will application attempt to fetch from the network. Each entry describes type of stream, base prefix (in other words, producer's prefix supplied when application was launched), stream name and thread to fetch. For video streams, one may store received raw ARGB frames into a file, specified by `sink`. Alternatively, raw frames can be dumped into a file pipe or nanomsg socket by specifying `sink_type` parameter.
 
