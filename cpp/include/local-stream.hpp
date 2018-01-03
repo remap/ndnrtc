@@ -12,6 +12,8 @@
 #include "params.hpp"
 #include "stream.hpp"
 
+#include <boost/asio.hpp>
+
 namespace ndn {
 	class KeyChain;
 	class Face;
@@ -21,12 +23,6 @@ namespace ndn {
 namespace ndnlog {
 	namespace new_api{
 		class Logger;
-	}
-}
-
-namespace boost {
-	namespace asio {
-		class io_service;
 	}
 }
 

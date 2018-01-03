@@ -18,17 +18,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/lock_guard.hpp>
+#include <boost/asio.hpp>
 
 #include <ndnrtc/statistics.hpp>
 #include <ndnrtc/stream.hpp>
 #include "config.hpp"
 #include "precise-generator.hpp"
-
-namespace boost {
-   namespace asio {
-      class io_service;
-   }
-}
 
 namespace ndnrtc {
    class IStream;

@@ -12,15 +12,10 @@
 #include <stdio.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/asio.hpp>
 
 namespace ndn {
     class Face;
-}
-
-namespace boost {
-    namespace asio {
-        class io_service;
-    }
 }
 
 class FaceProcessorImpl;
