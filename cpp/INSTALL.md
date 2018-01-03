@@ -64,7 +64,7 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autotools libtool
+brew install boost cmake wget autoconf automake libtool
 ```
 
 -- or (for Ubuntu) --
