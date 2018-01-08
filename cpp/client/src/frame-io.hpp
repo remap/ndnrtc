@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <boost/shared_ptr.hpp>
+#include <atomic>
 
 //******************************************************************************
 class RawFrame {
