@@ -64,7 +64,7 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool
+brew install boost cmake wget autoconf automake libtool openssl
 ```
 
 -- or (for Ubuntu) --
@@ -145,10 +145,10 @@ cd ndn-cpp && mkdir -p build/share
 ```
 
 <details>
-  <summary>&emsp;<i>// additional step for macOS > 10.11 (expand for more info)</i></summary>
+  <summary>&emsp;<i>// additional step for macOS >= 10.11 (expand for more info)</i></summary>
   
    > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
-   > For macOS 10.12 (Sierra), `openssl` library is no longer a default, thus one needs to provide paths, such as:
+   > For macOS 10.11 (El Capitan), `openssl` library is no longer a default, thus one needs to provide paths, such as:
    >
    ```Shell
    echo CFLAGS="-I/usr/local/opt/openssl/include" > build/share/config.site
