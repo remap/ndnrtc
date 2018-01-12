@@ -369,8 +369,7 @@ AC_LINK_IFELSE(
 
 AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
 
-if [ "$build_os" -eq "$host_os" ]
-then
+if test "$build_os" == "$host_os"; then
 	AC_RUN_IFELSE(
 		[AC_LANG_PROGRAM([
 			#include <ndn-cpp/interest.hpp>
