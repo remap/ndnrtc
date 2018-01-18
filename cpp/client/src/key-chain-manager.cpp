@@ -47,8 +47,12 @@ void KeyChainManager::setupInstanceKeyChain()
 	Name signingIdentity(signingIdentity_);
 	std::vector<Name> identities;
 
-	defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, false);
-	defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, true);
+	if (defaultKeyChain_->getIsSecurityV1()) {
+		defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, false);
+		defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, true);
+	}
+    else
+		defaultKeyChain_->getPib().getAllIdentityNames(identities);
 
 	if (std::find(identities.begin(), identities.end(), signingIdentity) == identities.end())
 	{
