@@ -225,9 +225,7 @@ Producer will generate two log files:
  > Nothing's here :neckbeard:
 </details>
 
-<pre>
-$ cp tests/policy_config/signing.cert tests/policy_config
-</pre>
+    $ cp <producer-ndn-rtc-cpp-folder>/tests/policy_config/signing.cert <consumer-ndn-rtc-cpp-folder>/tests/policy_config
 
 <details>
  <summary>#4 <b>Run consumer</b></summary>
