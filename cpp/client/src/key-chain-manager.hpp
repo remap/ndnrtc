@@ -53,6 +53,7 @@ private:
 	void createSigningIdentity();
 	void createMemoryKeychain();
 	void createInstanceIdentity();
+	void createInstanceIdentityV2();
     void checkExists(const std::string&);
 };
 
