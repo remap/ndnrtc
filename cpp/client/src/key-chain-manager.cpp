@@ -162,9 +162,9 @@ void KeyChainManager::createInstanceIdentityV2()
     std::cout << "Debug instancePibIdentity " << instancePibIdentity->getName() << std::endl;
 	boost::shared_ptr<PibKey> instancePibKey = 
       instancePibIdentity->getDefaultKey();
-	Name signingCert = defaultKeyChain_->getPib()
-      .getIdentity(Name(signingIdentity_))->getDefaultKey()
-      ->getDefaultCertificate()->getName();
+	boost::shared_ptr<PibKey> signingPibKey = defaultKeyChain_->getPib()
+      .getIdentity(Name(signingIdentity_))->getDefaultKey();
+	Name signingCert = signingPibKey->getDefaultCertificate()->getName();
 
 	LogDebug("") << "Instance key " << instancePibKey->getName() << std::endl;
 	LogDebug("") << "Signing certificate " << signingCert << std::endl;
@@ -172,14 +172,15 @@ void KeyChainManager::createInstanceIdentityV2()
     // Prepare the instance certificate.
 	boost::shared_ptr<CertificateV2> instanceCertificate(new CertificateV2());
 	Name certificateName = instancePibKey->getName();
-	certificateName.append("issuer").appendVersion((uint64_t)(sec.count()*1000));
+    // Use the issuer's public key digest.
+	certificateName.append(PublicKey(signingPibKey->getPublicKey()).getDigest());
+    certificateName.appendVersion((uint64_t)(sec.count()*1000));
 	instanceCertificate->setName(certificateName);
 	instanceCertificate->getMetaInfo().setType(ndn_ContentType_KEY);
 	instanceCertificate->getMetaInfo().setFreshnessPeriod(3600 * 1000.0);
 	instanceCertificate->setContent(instancePibKey->getPublicKey());
 
-    SigningInfo signingParams
-      (defaultKeyChain_->getPib().getIdentity(Name(signingIdentity_)));
+    SigningInfo signingParams(signingPibKey);
 	signingParams.setValidityPeriod
       (ValidityPeriod(sec.count() * 1000, 
                       (sec + duration<double>(runTime_)).count() * 1000));
