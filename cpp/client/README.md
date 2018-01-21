@@ -226,7 +226,7 @@ Producer will generate two log files:
 </details>
 
 <pre>
-$ cp <producer-ndnrtc-cpp-folder>/tests/policy_config/signing.cert <consumer-ndnrtc-cpp-folder>/tests/policy_config
+$ cp tests/policy_config/signing.cert tests/policy_config
 </pre>
 
 <details>
