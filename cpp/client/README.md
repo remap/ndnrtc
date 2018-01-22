@@ -195,10 +195,10 @@ Here, I'll explain how to run a simple producer-consumer setup (on two machines 
  
 </details>
 
-<pre>
-$ ndnsec-keygen /ndnrtc-test | ndnsec-install-cert -
-$ ndnsec-dump-certificate -i /ndnrtc-test > tests/policy_config/signing.cert
-</pre>
+```Shell
+ndnsec-keygen /ndnrtc-test | ndnsec-install-cert -
+ndnsec-dump-certificate -i /ndnrtc-test > tests/policy_config/signing.cert
+```
 
 <details>
  <summary>#2 <b>Run producer</b> <i>(expand for more info)</i></summary>
@@ -207,10 +207,10 @@ $ ndnsec-dump-certificate -i /ndnrtc-test > tests/policy_config/signing.cert
  
 </details>
 
-<pre>
-$ nfd-start
-$ ./ndnrtc-client -c tests/sample-producer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance -t 100
-</pre>
+```Shell
+nfd-start
+./ndnrtc-client -c tests/sample-producer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance1 -t 100
+```
 
 Producer will generate two log files:
 
@@ -225,17 +225,18 @@ Producer will generate two log files:
  > Nothing's here :neckbeard:
 </details>
 
-    $ cp <producer-ndn-rtc-cpp-folder>/tests/policy_config/signing.cert <consumer-ndn-rtc-cpp-folder>/tests/policy_config
-
+ ```Shell
+ cp <producer-ndn-rtc-cpp-folder>/tests/policy_config/signing.cert <consumer-ndn-rtc-cpp-folder>/tests/policy_config
+ ```
 <details>
  <summary>#4 <b>Run consumer</b></summary>
  
  > Nothing's here :expressionless:
 </details>
  
- <pre>
- $ ./ndnrtc-client -c tests/sample-consumer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance2 -t 50 -v
- </pre>
+```Shell
+./ndnrtc-client -c tests/sample-consumer.cfg -s /ndnrtc-test -p tests/policy_config/rule.conf -i instance2 -t 50 -v
+```
  
 Consumer will generate multiple files:
 
@@ -252,6 +253,6 @@ Consumer will generate multiple files:
   - `/tmp/playback-ndnrtc-test-instance1-sound.stat`
   
 **To convert video into viewable format, use `ffmpeg`:**
-<pre>
+```Shell
 ffmpeg -f rawvideo -vcodec rawvideo -s 320x240 -r 25 -pix_fmt argb -i /tmp/instance1-camera.320x240 -c:v libx264 -preset ultrafast -qp 0 instance1-camera.mp4
-</pre>
+```
