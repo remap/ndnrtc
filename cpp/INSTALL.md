@@ -64,13 +64,13 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool openssl
+brew install boost cmake wget autoconf automake libtool openssl libconfig
 ```
 
 -- or (for Ubuntu) --
 
 ```Shell
-sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler
+sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler libconfig++-dev libconfig++9v5
 ```
 
 ## Compiled prerequisites
@@ -188,22 +188,6 @@ wget https://raw.githubusercontent.com/remap/ndnrtc/master/cpp/resources/ndnrtc-
 cd build/
 cmake .. -DDEBUG:STRING=OFF
 make
-```
-
-<details>
-  <summary>#4 <b>Libconfig </b><i>(expand for more info)</i></summary>
-  
-  > Optional, needed by **headless client app**.
-</details>
-
-```Shell
-cd $NDNRTC_ENV
-git clone https://github.com/hyperrealm/libconfig.git
-cd libconfig
-mkdir -p build/share
-autoreconf -i .
-./configure --prefix=$(pwd)/build
-make && make install
 ```
 
 ## NDN-RTC
