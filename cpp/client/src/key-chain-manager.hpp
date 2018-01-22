@@ -13,7 +13,7 @@
 namespace ndn {
 	class KeyChain;
     class Face;
-    class IdentityCertificate;
+    class Data;
     class ConfigPolicyManager;
     class IdentityStorage;
     class PrivateKeyStorage;
@@ -31,7 +31,7 @@ public:
 	boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
     std::string instancePrefix() const { return instanceIdentity_; }
     
-    const boost::shared_ptr<ndn::IdentityCertificate> instanceCertificate() const
+    const boost::shared_ptr<ndn::Data> instanceCertificate() const
         { return instanceCert_; }
     
 private:
@@ -42,7 +42,8 @@ private:
 
     boost::shared_ptr<ndn::ConfigPolicyManager> configPolicyManager_;
 	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
-    boost::shared_ptr<ndn::IdentityCertificate> instanceCert_;
+    // instanceCert_ is a certificate subclass of Data.
+    boost::shared_ptr<ndn::Data> instanceCert_;
     boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
     boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
 
@@ -52,6 +53,7 @@ private:
 	void createSigningIdentity();
 	void createMemoryKeychain();
 	void createInstanceIdentity();
+	void createInstanceIdentityV2();
     void checkExists(const std::string&);
 };
 

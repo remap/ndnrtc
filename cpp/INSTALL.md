@@ -70,7 +70,7 @@ brew install boost cmake wget autoconf automake libtool openssl
 -- or (for Ubuntu) --
 
 ```Shell
-sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool
+sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler
 ```
 
 ## Compiled prerequisites
