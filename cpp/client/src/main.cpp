@@ -125,6 +125,8 @@ int main(int argc, char **argv)
 //******************************************************************************
 int run(const struct Args& args)
 {
+    int err = 0;
+
     ndnlog::new_api::Logger::initAsyncLogging();
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args.logLevel_);
 
@@ -140,7 +142,16 @@ int run(const struct Args& args)
 
     boost::asio::io_service io;
     boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
-    boost::thread t([&io](){ io.run(); });
+    boost::thread t([&io, &err](){ 
+      try {
+        io.run();  
+      }
+      catch (std::exception& e)
+      {
+        LogError("") << "Client caught exception while running: " << e.what() << std::endl; 
+        err = 1;
+      }
+    });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
 
     KeyChainManager keyChainManager(face, args.identity_, args.instance_,
@@ -161,7 +172,6 @@ int run(const struct Args& args)
     LogInfo("") << "Parameters loaded" << std::endl;
     LogDebug("") << params << std::endl;
     
-    int err = 0;
     Client client(io, face, keyChainManager.instanceKeyChain());
     
     try
@@ -173,20 +183,22 @@ int run(const struct Args& args)
         }
         
         client.run(args.runTimeSec_, args.samplePeriod_, params, args.instance_);
+
+        face->shutdown();
+        face.reset();
+        work.reset();
+        t.join();
+        io.stop();
     }
     catch (std::exception& e)
     {
-        err = 1;
+      LogError("") << "Client caught exception: " << e.what() << std::endl;
+      err = 1;
     }
-
-    face->shutdown();
-    work.reset();
-    t.join();
-    io.stop();
 
     LogInfo("") << "Client run completed" << std::endl;
 
-#warning this is temporary sleep. should fix simple-log for flushing all log records before release
+    // NOTE: this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);
     ndnlog::new_api::Logger::releaseAsyncLogging();
     return err;
