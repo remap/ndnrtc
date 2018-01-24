@@ -71,7 +71,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} -lboost_timer ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
+libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
 
 if OS_DARWIN
 

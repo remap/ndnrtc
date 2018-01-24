@@ -640,6 +640,8 @@ LIBOBJS
 WEBRTCLIBS
 HAVE_NANOMSG_FALSE
 HAVE_NANOMSG_TRUE
+BOOST_TIMER_STATIC_LIB
+BOOST_TIMER_LIB
 BOOST_REGEX_LIB
 BOOST_THREAD_LIB
 BOOST_CHRONO_LIB
@@ -829,6 +831,7 @@ with_boost_asio
 with_boost_chrono
 with_boost_thread
 with_boost_regex
+with_boost_timer
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1536,6 +1539,10 @@ Optional Packages:
                           use the Regex library from boost - it is possible to
                           specify a certain library for the linker e.g.
                           --with-boost-regex=boost_regex-gcc-mt-d-1_33_1
+  --with-boost-timer[=special-lib]
+                          use the Timer library from boost - it is possible to
+                          specify a certain library for the linker e.g.
+                          --with-boost-timer=boost_timer-gcc-mt
 
 Some influential environment variables:
   BOOSTDIR    Path to the directory which contains Boost library headers
@@ -19487,6 +19494,310 @@ fi
 		CPPFLAGS="$CPPFLAGS_SAVED"
 	LDFLAGS="$LDFLAGS_SAVED"
 	fi
+
+
+
+# Check whether --with-boost-timer was given.
+if test "${with_boost_timer+set}" = set; then :
+  withval=$with_boost_timer;
+        if test "$withval" = "no"; then
+			want_boost="no"
+        elif test "$withval" = "yes"; then
+            want_boost="yes"
+            ax_boost_user_timer_lib=""
+        else
+		    want_boost="yes"
+		ax_boost_user_timer_lib="$withval"
+		fi
+
+else
+  want_boost="yes"
+
+fi
+
+
+	if test "x$want_boost" = "xyes"; then
+
+
+		CPPFLAGS_SAVED="$CPPFLAGS"
+		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+		export CPPFLAGS
+
+		LDFLAGS_SAVED="$LDFLAGS"
+		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
+		export LDFLAGS
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the Boost::Timer library is available" >&5
+$as_echo_n "checking whether the Boost::Timer library is available... " >&6; }
+if ${ax_cv_boost_timer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+			 CXXFLAGS_SAVE=$CXXFLAGS
+
+			 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <boost/timer/timer.hpp>
+int
+main ()
+{
+boost::timer::cpu_timer().stop();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ax_cv_boost_timer=yes
+else
+  ax_cv_boost_timer=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+			 CXXFLAGS=$CXXFLAGS_SAVE
+             ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_boost_timer" >&5
+$as_echo "$ax_cv_boost_timer" >&6; }
+
+        if test "x$ax_cv_boost_timer" = "xyes"; then
+
+
+
+$as_echo "#define HAVE_BOOST_TIMER /**/" >>confdefs.h
+
+            BOOSTLIBDIR=`echo $BOOST_LDFLAGS | sed -e 's/[^\/]*//'`
+
+            ax_lib=""
+            ax_static_lib=""
+            no_find="yes"
+            no_link="yes"
+            link_timer="no"
+            link_timer_static="no"
+
+            LDFLAGS_SAVE=$LDFLAGS
+            if test "x$ax_boost_user_timer_lib" = "x"; then
+                for libextension in `ls $BOOSTLIBDIR/libboost_timer*.so* $BOOSTLIBDIR/libboost_timer*.dylib* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_timer.*\)\.so.*$;\1;' -e 's;^lib\(boost_timer.*\)\.dylib.*$;\1;'` ; do
+                    ax_lib=${libextension}
+                    as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_exit" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -l$ax_lib" >&5
+$as_echo_n "checking for exit in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$ax_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char exit ();
+int
+main ()
+{
+return exit ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_TIMER_LIB="-l$ax_lib";  link_timer="yes"; break
+else
+  link_timer="no"
+fi
+
+                done
+                if test "x$link_timer" != "xyes"; then
+                    for libextension in `ls $BOOSTLIBDIR/boost_timer*.dll* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_timer.*\)\.dll.*$;\1;'` ; do
+                        ax_lib=${libextension}
+                        as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_exit" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -l$ax_lib" >&5
+$as_echo_n "checking for exit in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$ax_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char exit ();
+int
+main ()
+{
+return exit ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_TIMER_LIB="-l$ax_lib";  link_timer="yes"; break
+else
+  link_timer="no"
+fi
+
+                    done
+                fi
+                for libextension in `ls $BOOSTLIBDIR/libboost_timer*.a* 2>/dev/null` ; do
+                    ax_static_lib=${libextension}
+                    as_ac_File=`$as_echo "ac_cv_file_$ax_static_lib" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ax_static_lib" >&5
+$as_echo_n "checking for $ax_static_lib... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$ax_static_lib"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+  BOOST_TIMER_STATIC_LIB="$ax_static_lib";  link_timer_static="yes"; break
+else
+  link_timer_static="no"
+fi
+
+                done
+
+                no_find="no"
+                if [ -z "$ax_lib" ] && [ -z "$ax_static_lib" ]; then
+                    no_find="yes"
+                fi
+
+                no_link="no"
+                if [ "$link_timer" == "no" ] && [ "$link_timer_static" == "no" ]; then
+                    no_link="yes"
+                fi
+
+            else
+                for ax_lib in $ax_boost_user_timer_lib boost_timer-$ax_boost_user_timer_lib; do
+                    as_ac_Lib=`$as_echo "ac_cv_lib_$ax_lib''_exit" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for exit in -l$ax_lib" >&5
+$as_echo_n "checking for exit in -l$ax_lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$ax_lib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char exit ();
+int
+main ()
+{
+return exit ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  BOOST_TIMER_LIB="-l$ax_lib";  link_timer="yes"; break
+else
+  link_timer="no"
+fi
+
+                done
+
+            fi
+            if [ -z "$ax_lib" ]; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not find a dynamic version of boost_timer" >&5
+$as_echo "$as_me: WARNING: Could not find a dynamic version of boost_timer" >&2;}
+            fi
+            if [ -z "$ax_static_lib" ]; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not find a static version of boost_timer" >&5
+$as_echo "$as_me: WARNING: Could not find a static version of boost_timer" >&2;}
+            fi
+            if [ "$no_find" == "yes" ]; then
+                as_fn_error $? "Could not find any version boost_timer to link to" "$LINENO" 5
+            fi
+
+            if [ "$link_timer" == "no" ]; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not dynamic link against boost_timer" >&5
+$as_echo "$as_me: WARNING: Could not dynamic link against boost_timer" >&2;}
+            fi
+            if [ "$link_timer_static" == "no" ]; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not static link against boost_timer" >&5
+$as_echo "$as_me: WARNING: Could not static link against boost_timer" >&2;}
+            fi
+            if [ "$no_link" == "yes" ]; then
+                as_fn_error $? "Could not link against any boost_timer lib" "$LINENO" 5
+            fi
+
+        fi
+
+        CPPFLAGS="$CPPFLAGS_SAVED"
+	LDFLAGS="$LDFLAGS_SAVED"
+    fi
 
 
 #AC_MSG_CHECKING([for boost::shared_ptr...])

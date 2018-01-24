@@ -149,7 +149,7 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1)
+@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES
@@ -277,6 +277,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_asio.m4 \
 	$(top_srcdir)/m4/ax_boost_regex.m4 \
 	$(top_srcdir)/m4/ax_boost_system.m4 \
 	$(top_srcdir)/m4/ax_boost_thread.m4 \
+	$(top_srcdir)/m4/ax_boost_timer.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
@@ -399,7 +400,8 @@ bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -2094,6 +2096,8 @@ BOOST_LDFLAGS = @BOOST_LDFLAGS@
 BOOST_REGEX_LIB = @BOOST_REGEX_LIB@
 BOOST_SYSTEM_LIB = @BOOST_SYSTEM_LIB@
 BOOST_THREAD_LIB = @BOOST_THREAD_LIB@
+BOOST_TIMER_LIB = @BOOST_TIMER_LIB@
+BOOST_TIMER_STATIC_LIB = @BOOST_TIMER_STATIC_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -2306,7 +2310,7 @@ libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
 	-L@BOOSTLIB@ ${BOOST_LDFLAGS} $(am__append_1)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
-	-lboost_timer ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} \
+	${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} \
 	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
 	$(am__append_3) $(am__append_5)
 @OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
