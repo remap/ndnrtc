@@ -64,13 +64,13 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool openssl libconfig
+brew install boost cmake wget openssl libconfig
 ```
 
 -- or (for Ubuntu) --
 
 ```Shell
-sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler libconfig++-dev libconfig++9v5
+sudo apt-get install libboost-all-dev cmake wget git protobuf-compiler libconfig++-dev libconfig++9v5
 ```
 
 ## Compiled prerequisites
@@ -200,8 +200,6 @@ echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
 echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
 echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
 echo WEBRTCDIR=`pwd`/../../webrtc-checkout/src >> build/share/config.site
-echo LCONFIGDIR=`pwd`/../../libconfig/build/include >> build/share/config.site
-echo LCONFIGLIB=`pwd`/../../libconfig/build/lib >> build/share/config.site
 ./configure --prefix=$(pwd)/build
 make && make install
 ```
