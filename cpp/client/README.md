@@ -179,6 +179,29 @@ In order to launch headless app, several command-line arguments must be provided
 - `-n` (*statistics sampling interval*) -- statistics sampling period in milliseconds (**optional**, default is 100ms);
 - `-v` (*verbose mode*) -- verbose output for std::out (not for log file specified in config file).
 
+## Loopback test
+This is a quick test to verify ndnrtc-client was built correctly. Two instances (producer and consumer) should be run on the same machine, but in separate terminal windows. For more details and more advanced example see next section below.
+
+In a first terminal window, type:
+
+```Shell
+ndnsec-keygen /ndnrtc-loopback | ndnsec-install-cert -
+ndnsec-dump-certificate -i /ndnrtc-loopback > tests/policy_config/signing.cert
+mkdir loopback
+nfd-start &> /tmp/nfd.log
+./ndnrtc-client -c tests/loopback-producer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i producer -t 120
+```
+
+This will start ndnrtc-client with producer configuration and run it for 120 seconds.
+In a second terminal window, type:
+
+```Shell
+./ndnrtc-client -c tests/loopback-consumer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i consumer -t 60 -v
+```
+
+This will start ndnrtc-client with consumer configuration, configured to fetch from previously started producer.
+Check `loopback` folder - it'll contain a number of `log` and `stat` files. It also contains raw video `.argb` received by consumer (see below on how to use `ffmpeg` to encode it into `h264` video).
+
 ## Simple example
 > To run simple example with headless client, one will need to have [NFD installed and configured](http://named-data.net/doc/NFD/current/INSTALL.html).
 
