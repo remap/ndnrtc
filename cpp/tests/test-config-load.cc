@@ -190,8 +190,8 @@ TEST(TestConfigLoad, LoadVideoConsumerOnly)
 	EXPECT_EQ("/ndn/edu/ucla/remap/clientC", params.getConsumerParams().fetchedStreams_[1].sessionPrefix_);
 	EXPECT_EQ("clientB-camera", params.getConsumerParams().fetchedStreams_[0].streamSink_);
 	EXPECT_EQ("/tmp/clientC-camera", params.getConsumerParams().fetchedStreams_[1].streamSink_);
-	EXPECT_EQ(false, params.getConsumerParams().fetchedStreams_[0].sinkIsPipe_);
-	EXPECT_EQ(true, params.getConsumerParams().fetchedStreams_[1].sinkIsPipe_);
+	EXPECT_STREQ("file", params.getConsumerParams().fetchedStreams_[0].sinkType_.c_str());
+	EXPECT_STREQ("pipe", params.getConsumerParams().fetchedStreams_[1].sinkType_.c_str());
 	EXPECT_EQ("low", params.getConsumerParams().fetchedStreams_[0].threadToFetch_);
 	EXPECT_EQ("mid", params.getConsumerParams().fetchedStreams_[1].threadToFetch_);
 	EXPECT_EQ("camera", params.getConsumerParams().fetchedStreams_[0].streamName_);

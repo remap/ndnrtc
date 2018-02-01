@@ -34,10 +34,10 @@ TEST(TestDrdEstimator, TestDefault)
 		.Times(200);
 
 	for (int i = 1; i <= 100; ++i)
-		drd.newValue(i, true);
+		drd.newValue(i, true, 0);
 
 	for (double i = 1; i <= 50.5; i+=0.5)
-		drd.newValue(i, false);
+		drd.newValue(i, false, 0);
 
 	EXPECT_EQ(50.5, drd.getOriginalEstimation());
 	EXPECT_EQ(25.75, drd.getCachedEstimation());
@@ -75,7 +75,7 @@ TEST(TestDrdEstimator, TestDrdDeviation)
 			queue.push([&queue, &drd, issue](){
 				queue.push([&drd, issue](){
 					boost::chrono::high_resolution_clock::time_point now = boost::chrono::high_resolution_clock::now();
-					drd.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now-issue).count(), true);
+					drd.newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now-issue).count(), true, 0);
 				});
 			});
 	

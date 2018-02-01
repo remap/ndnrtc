@@ -121,7 +121,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				if (publishStart == 0)
@@ -397,7 +397,7 @@ TEST(TestPlayout, TestSkipDelta)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				if (publishStart == 0)

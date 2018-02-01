@@ -134,10 +134,10 @@ TEST(TestLatencyControl, TestLatestDataDetection)
 							if (data->isOriginal())
 							{
 								double delta = boost::chrono::duration_cast<boost::chrono::milliseconds>(now-issue).count();
-								drd->newValue(delta - generationDelayMs, true);
+								drd->newValue(delta - generationDelayMs, true, 0);
 							}
 							else
-								drd->newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now-issue).count(), false);
+								drd->newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(now-issue).count(), false, 0);
 
 							incoming(data); // process received data
 						});

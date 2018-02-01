@@ -678,7 +678,7 @@ TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     bundlePacket.setHeader(hdr);
 

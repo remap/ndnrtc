@@ -99,7 +99,7 @@ TEST(TestAudioPlayout, TestG722)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 25.;
 		hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-		hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+		hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 		bundle->setHeader(hdr);
 
 		std::vector<CommonSegment> segments = CommonSegment::slice(*bundle, 1000);
@@ -291,7 +291,7 @@ TEST(TestAudioPlayout, TestOpus)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 25.;
 		hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-		hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+		hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 		bundle->setHeader(hdr);
 
 		std::vector<CommonSegment> segments = CommonSegment::slice(*bundle, 1000);

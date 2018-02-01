@@ -226,12 +226,12 @@ TEST(TestAudioThread, TestRunOpusThread)
 		CommonHeader packetHdr;
 		packetHdr.sampleRate_ = 25;
 		packetHdr.publishTimestampMs_ = nBundles+1;
-		packetHdr.publishUnixTimestampMs_ = nBundles+2;
+		packetHdr.publishUnixTimestamp_ = nBundles+2;
 		bundle->setHeader(packetHdr);
 
 		EXPECT_EQ(25, bundle->getHeader().sampleRate_);
 		EXPECT_EQ(nBundles+1, bundle->getHeader().publishTimestampMs_);
-		EXPECT_EQ(nBundles+2, bundle->getHeader().publishUnixTimestampMs_);
+		EXPECT_EQ(nBundles+2, bundle->getHeader().publishUnixTimestamp_);
 		EXPECT_LE(1, bundle->getSamplesNum());
 	};
 

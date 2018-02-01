@@ -423,7 +423,7 @@ TEST(TestSamplePacket, TestCreate)
         EXPECT_TRUE(sp.isValid());
         EXPECT_EQ(hdr.sampleRate_, sp.getHeader().sampleRate_);
         EXPECT_EQ(hdr.publishTimestampMs_, sp.getHeader().publishTimestampMs_);
-        EXPECT_EQ(hdr.publishUnixTimestampMs_, sp.getHeader().publishUnixTimestampMs_);
+        EXPECT_EQ(hdr.publishUnixTimestamp_, sp.getHeader().publishUnixTimestamp_);
 
         EXPECT_ANY_THROW(sp.setHeader(hdr));
     }
@@ -436,7 +436,7 @@ TEST(TestSamplePacket, TestCreate)
         EXPECT_TRUE(sp.isValid());
         EXPECT_EQ(hdr.sampleRate_, sp.getHeader().sampleRate_);
         EXPECT_EQ(hdr.publishTimestampMs_, sp.getHeader().publishTimestampMs_);
-        EXPECT_EQ(hdr.publishUnixTimestampMs_, sp.getHeader().publishUnixTimestampMs_);
+        EXPECT_EQ(hdr.publishUnixTimestamp_, sp.getHeader().publishUnixTimestamp_);
 
         EXPECT_ANY_THROW(sp.setHeader(hdr));
     }
@@ -459,7 +459,7 @@ TEST(TestSamplePacket, TestCreateFromRaw)
     ASSERT_TRUE(sp.isValid());
     EXPECT_EQ(hdr.sampleRate_, sp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, sp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, sp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, sp.getHeader().publishUnixTimestamp_);
     EXPECT_EQ(payload_len, sp.getPayload().size());
     for (int i = 0; i < payload_len; i++)
         EXPECT_EQ(payload[i], sp.getPayload()[i]);
@@ -537,7 +537,7 @@ TEST(TestAudioBundle, TestBundling)
         newBundle.getSamplesNum());
     EXPECT_EQ(25, newBundle.getHeader().sampleRate_);
     EXPECT_EQ(1, newBundle.getHeader().publishTimestampMs_);
-    EXPECT_EQ(2, newBundle.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(2, newBundle.getHeader().publishUnixTimestamp_);
 
     for (int i = 0; i < newBundle.getSamplesNum(); ++i)
     {
@@ -777,14 +777,14 @@ TEST(TestVideoFramePacket, TestCreate)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     fp.setHeader(hdr);
     ASSERT_TRUE(fp.isValid());
 
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, fp.getHeader().publishUnixTimestamp_);
 
     int length = fp.getLength();
     boost::shared_ptr<NetworkData> parityData = fp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
@@ -792,7 +792,7 @@ TEST(TestVideoFramePacket, TestCreate)
     EXPECT_EQ(length, fp.getLength());
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, fp.getHeader().publishUnixTimestamp_);
     EXPECT_EQ(frame._encodedWidth       , fp.getFrame()._encodedWidth   );
     EXPECT_EQ(frame._encodedHeight      , fp.getFrame()._encodedHeight  );
     EXPECT_EQ(frame._timeStamp          , fp.getFrame()._timeStamp      );
@@ -832,14 +832,14 @@ TEST(TestVideoFramePacket, TestAddSyncList)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     fp.setHeader(hdr);
     EXPECT_EQ(syncList, fp.getSyncList());    
 
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, fp.getHeader().publishUnixTimestamp_);
 
     int length = fp.getLength();
     boost::shared_ptr<NetworkData> parityData = fp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
@@ -847,7 +847,7 @@ TEST(TestVideoFramePacket, TestAddSyncList)
     EXPECT_EQ(length, fp.getLength());
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, fp.getHeader().publishUnixTimestamp_);
     EXPECT_EQ(frame._encodedWidth       , fp.getFrame()._encodedWidth   );
     EXPECT_EQ(frame._encodedHeight      , fp.getFrame()._encodedHeight  );
     EXPECT_EQ(frame._timeStamp          , fp.getFrame()._timeStamp      );
@@ -875,7 +875,7 @@ TEST(TestVideoFramePacket, TestFromNetworkData)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of ("hi", 341) ("mid", 433) ("low", 432);
 
@@ -891,7 +891,7 @@ TEST(TestVideoFramePacket, TestFromNetworkData)
 
     EXPECT_EQ(hdr.sampleRate_, fp.getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, fp.getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, fp.getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, fp.getHeader().publishUnixTimestamp_);
     EXPECT_EQ(frame._encodedWidth       , fp.getFrame()._encodedWidth   );
     EXPECT_EQ(frame._encodedHeight      , fp.getFrame()._encodedHeight  );
     EXPECT_EQ(frame._timeStamp          , fp.getFrame()._timeStamp      );
@@ -921,7 +921,7 @@ TEST(TestVideoFramePacket, TestAddSyncListThrow)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     fp.setHeader(hdr);
 
@@ -935,7 +935,7 @@ TEST(TestVideoFramePacket, TestSliceFrame)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     size_t frameLen = 4300;
     int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -976,7 +976,7 @@ TEST(TestVideoFramePacket, TestGetParity)
         CommonHeader hdr;
         hdr.sampleRate_ = 24.7;
         hdr.publishTimestampMs_ = 488589553;
-        hdr.publishUnixTimestampMs_ = 1460488589;
+        hdr.publishUnixTimestamp_ = 1460488589;
         
         size_t frameLen = std::rand()%30000+100;
         int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -1000,7 +1000,7 @@ TEST(TestVideoFramePacket, TestGetParity)
         
         EXPECT_EQ(hdr.sampleRate_, vp.getHeader().sampleRate_);
         EXPECT_EQ(hdr.publishTimestampMs_, vp.getHeader().publishTimestampMs_);
-        EXPECT_EQ(hdr.publishUnixTimestampMs_, vp.getHeader().publishUnixTimestampMs_);
+        EXPECT_EQ(hdr.publishUnixTimestamp_, vp.getHeader().publishUnixTimestamp_);
         EXPECT_EQ(frame._encodedWidth, vp.getFrame()._encodedWidth);
         EXPECT_EQ(frame._encodedHeight, vp.getFrame()._encodedHeight);
     }
@@ -1362,7 +1362,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     size_t frameLen = 4300;
     int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -1436,7 +1436,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
         {
             EXPECT_EQ(hdr.sampleRate_, wd.packetHeader().sampleRate_);
             EXPECT_EQ(hdr.publishTimestampMs_, wd.packetHeader().publishTimestampMs_);
-            EXPECT_EQ(hdr.publishUnixTimestampMs_, wd.packetHeader().publishUnixTimestampMs_);
+            EXPECT_EQ(hdr.publishUnixTimestamp_, wd.packetHeader().publishUnixTimestamp_);
         }
         else EXPECT_ANY_THROW(wd.packetHeader());
 
@@ -1448,7 +1448,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
 
     EXPECT_EQ(hdr.sampleRate_, packet->getHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, packet->getHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, packet->getHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, packet->getHeader().publishUnixTimestamp_);
 
     EXPECT_EQ(frame._encodedWidth, packet->getFrame()._encodedWidth);
     EXPECT_EQ(frame._encodedHeight, packet->getFrame()._encodedHeight);
@@ -1489,7 +1489,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     CommonHeader hdr;
     hdr.sampleRate_ = 24.7;
     hdr.publishTimestampMs_ = 488589553;
-    hdr.publishUnixTimestampMs_ = 1460488589;
+    hdr.publishUnixTimestamp_ = 1460488589;
 
     bundlePacket.setHeader(hdr);
 
@@ -1521,7 +1521,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     EXPECT_EQ(1, wd.getSlicesNum());
     EXPECT_EQ(hdr.sampleRate_, wd.packetHeader().sampleRate_);
     EXPECT_EQ(hdr.publishTimestampMs_, wd.packetHeader().publishTimestampMs_);
-    EXPECT_EQ(hdr.publishUnixTimestampMs_, wd.packetHeader().publishUnixTimestampMs_);
+    EXPECT_EQ(hdr.publishUnixTimestamp_, wd.packetHeader().publishUnixTimestamp_);
     
     WireSegment *seg = &wd;
     EXPECT_EQ(7, seg->getPlaybackNo());

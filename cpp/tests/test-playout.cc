@@ -507,7 +507,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDelay)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
@@ -696,7 +696,7 @@ TEST(TestPlayout, TestRequestAndPlayWithDeviation)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				bool isKey = vp->getFrame()._frameType == webrtc::kVideoFrameKey;
@@ -922,7 +922,7 @@ TEST(TestPlayout, TestPlayout70msDelay)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				if (publishStart == 0)
@@ -1181,7 +1181,7 @@ TEST(TestPlayout, TestPlayout100msDelay)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				if (publishStart == 0)
@@ -1442,7 +1442,7 @@ TEST(TestPlayout, TestPlayout100msDelay30msDeviation)
 				CommonHeader hdr;
 				hdr.sampleRate_ = captureFps;
 				hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-				hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+				hdr.publishUnixTimestamp_ = clock::unixTimestamp();
 				vp->setHeader(hdr);
 
 				if (publishStart == 0)
@@ -1699,7 +1699,7 @@ TEST(TestPlayout, TestPlayoutFastForward)
             CommonHeader hdr;
             hdr.sampleRate_ = captureFps;
             hdr.publishTimestampMs_ = clock::millisecondTimestamp();
-            hdr.publishUnixTimestampMs_ = clock::unixTimestamp();
+            hdr.publishUnixTimestamp_ = clock::unixTimestamp();
             vp->setHeader(hdr);
             
             if (publishStart == 0)

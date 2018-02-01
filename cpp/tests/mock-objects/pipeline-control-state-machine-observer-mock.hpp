@@ -16,6 +16,8 @@ class MockPipelineControlStateMachineObserver : public ndnrtc::IPipelineControlS
 public:
 	MOCK_METHOD2(onStateMachineChangedState, void(const boost::shared_ptr<const ndnrtc::PipelineControlEvent>&,
 			std::string newState));
+	MOCK_METHOD2(onStateMachineReceivedEvent, void(const boost::shared_ptr<const ndnrtc::PipelineControlEvent>&,
+			std::string state));
 };
 
 #endif

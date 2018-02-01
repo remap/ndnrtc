@@ -131,7 +131,7 @@ TEST(TestPacketPublisher, TestPublishVideoFrame)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 24.7;
 		hdr.publishTimestampMs_ = 488589553;
-		hdr.publishUnixTimestampMs_ = 1460488589;
+		hdr.publishUnixTimestamp_ = 1460488589;
 
 		size_t frameLen = 4300;
 		int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -355,7 +355,7 @@ TEST(TestPacketPublisher, TestPublishVideoParity)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 24.7;
 		hdr.publishTimestampMs_ = 488589553;
-		hdr.publishUnixTimestampMs_ = 1460488589;
+		hdr.publishUnixTimestamp_ = 1460488589;
 
 		size_t frameLen = 4300;
 		int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -505,7 +505,7 @@ TEST(TestPacketPublisher, TestPublishAudioBundle)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 24.7;
 		hdr.publishTimestampMs_ = 488589553;
-		hdr.publishUnixTimestampMs_ = 1460488589;
+		hdr.publishUnixTimestamp_ = 1460488589;
 
 		bundlePacket.setHeader(hdr);
 
@@ -625,7 +625,7 @@ TEST(TestPacketPublisher, TestPitDeepClean)
 		CommonHeader hdr;
 		hdr.sampleRate_ = 24.7;
 		hdr.publishTimestampMs_ = 488589553;
-		hdr.publishUnixTimestampMs_ = 1460488589;
+		hdr.publishUnixTimestamp_ = 1460488589;
 
 		size_t frameLen = 4300;
 		int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
@@ -719,7 +719,7 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment1000)
 			CommonHeader hdr;
 			hdr.sampleRate_ = 24.7;
 			hdr.publishTimestampMs_ = 488589553;
-			hdr.publishUnixTimestampMs_ = 1460488589;
+			hdr.publishUnixTimestamp_ = 1460488589;
 	
 			int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
 			uint8_t *buffer = (uint8_t*)malloc(frameLen);
@@ -792,7 +792,7 @@ TEST(TestPacketPublisher, TestBenchmarkSigningSegment8000)
 			CommonHeader hdr;
 			hdr.sampleRate_ = 24.7;
 			hdr.publishTimestampMs_ = 488589553;
-			hdr.publishUnixTimestampMs_ = 1460488589;
+			hdr.publishUnixTimestamp_ = 1460488589;
 	
 			int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
 			uint8_t *buffer = (uint8_t*)malloc(frameLen);
@@ -866,7 +866,7 @@ TEST(TestPacketPublisher, TestBenchmarkNoSigning)
 			CommonHeader hdr;
 			hdr.sampleRate_ = 24.7;
 			hdr.publishTimestampMs_ = 488589553;
-			hdr.publishUnixTimestampMs_ = 1460488589;
+			hdr.publishUnixTimestamp_ = 1460488589;
 	
 			int32_t size = webrtc::CalcBufferSize(webrtc::kI420, 640, 480);
 			uint8_t *buffer = (uint8_t*)malloc(frameLen);

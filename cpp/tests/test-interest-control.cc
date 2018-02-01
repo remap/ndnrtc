@@ -67,7 +67,7 @@ TEST(TestInterestControl, TestDefault)
 
 	// update DRD and set target rate after getting initial data
 	int drdValue = (std::rand()%(deviation/2)-deviation/2) +(2*oneWayDelay);
-	drd->newValue(drdValue, true);
+	drd->newValue(drdValue, true, 0);
 	ictrl.targetRateUpdate(fps);
 
 	EXPECT_EQ(5, ictrl.pipelineLimit());
@@ -89,7 +89,7 @@ TEST(TestInterestControl, TestDefault)
 			boost::chrono::high_resolution_clock::time_point t = boost::chrono::high_resolution_clock::now();
 			queue.push([&queue, &ictrl, &drd, &nReceived, &ppChange, t](){
 				queue.push([&ictrl, &drd, &nReceived, &ppChange, t](){
-					drd->newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::high_resolution_clock::now()-t).count(), true);
+					drd->newValue(boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::high_resolution_clock::now()-t).count(), true, 0);
 					EXPECT_TRUE(ictrl.decrement());
 					nReceived++;
 					if (nReceived%5 == 0)
@@ -134,11 +134,11 @@ TEST(TestInterestControl, TestViolationsOfLowerBoundary)
 		InterestControl ictrl(drd,storage);
 		drd->attach(&ictrl);
 
-		drd->newValue(75, true);
+		drd->newValue(75, true, 0);
 		ictrl.targetRateUpdate(30.);
 		ictrl.burst();
 		EXPECT_TRUE(ictrl.withhold());
-		drd->newValue(75, true);
+		drd->newValue(75, true, 0);
 		EXPECT_TRUE(ictrl.withhold());
 	}
 	{
@@ -147,14 +147,14 @@ TEST(TestInterestControl, TestViolationsOfLowerBoundary)
 		InterestControl ictrl(drd, storage);
 		drd->attach(&ictrl);
 
-		drd->newValue(75, true);
+		drd->newValue(75, true, 0);
 		ictrl.targetRateUpdate(30.);
 		
 		EXPECT_EQ(3, ictrl.room());
 		ictrl.markLowerLimit(5);
 		EXPECT_EQ(5, ictrl.room());
 		EXPECT_FALSE(ictrl.withhold());
-		drd->newValue(75, true);
+		drd->newValue(75, true, 0);
 		EXPECT_FALSE(ictrl.withhold());
 	}
 }
