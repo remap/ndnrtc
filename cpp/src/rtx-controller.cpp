@@ -80,13 +80,13 @@ void RetransmissionController::checkRetransmissions()
 
 			if (needRtx && !assembledOrCleared)
 			{
+				LogTraceC << "rtx required " << slot->dump() 
+					<< " playback in " << playbackDeadline-now << "ms" << std::endl;
+
 				std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
 				if (pendingInterests.size())
 					for (auto o:observers_)
 						o->onRetransmissionRequired(pendingInterests);
-
-				LogTraceC << "rtx required " << slot->dump() 
-					<< " playback in " << playbackDeadline-now << "ms" << std::endl;
 			}
 		}
 		else

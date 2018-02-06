@@ -350,6 +350,10 @@ namespace ndnrtc
         
         std::string
         shortdump() const;
+
+        void 
+        dumpSlotDictionary(std::stringstream&, 
+            const std::map<ndn::Name, boost::shared_ptr<BufferSlot>> &) const;
         
         void invalidate(const ndn::Name& slotPrefix);
         void invalidatePrevious(const ndn::Name& slotPrefix);

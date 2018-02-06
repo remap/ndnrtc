@@ -770,7 +770,7 @@ Buffer::dump() const
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
     int i = 0;
     stringstream ss;
-    ss << std::endl;
+    ss << "buffer dump:" << std::endl;
 
     for (auto& s:activeSlots_)
         ss << ++i << " " << s.second->dump() << std::endl;
@@ -782,22 +782,33 @@ std::string
 Buffer::shortdump() const
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    int i = 0;
     stringstream ss;
     ss << "[ ";
 
-    for (auto& s:activeSlots_)
-    {
-        if ((i++ % 10 == 0) || !s.second->getNameInfo().isDelta_ )
-            ss << s.second->getNameInfo().sampleNo_; 
-        
-        ss << (s.second->getNameInfo().isDelta_ ? "" : "K") 
-           << (s.second->getAssembledLevel() >= 1 ? "■" : "☐" );
-    }
+    //dumpSlotDictionary(ss, reservedSlots_);
+    dumpSlotDictionary(ss, activeSlots_);
 
     ss << " ]";
 
     return ss.str();
+}
+
+void
+Buffer::dumpSlotDictionary(stringstream& ss, 
+    const map<ndn::Name, boost::shared_ptr<BufferSlot>> &slotDict) const
+{
+    int i = 0;
+    for (auto& s:slotDict)
+    {
+        if ((i++ % 10 == 0) || !s.second->getNameInfo().isDelta_ )
+        {
+            ss << s.second->getNameInfo().sampleNo_; 
+            ss << (s.second->getNameInfo().isDelta_ ? "" : "K");
+        }
+
+        ss << (s.second->getAssembledLevel() >= 1 ? "■" :
+            (s.second->getAssembledLevel() > 0 ? "◘" : "☐" ));
+    }
 }
 
 //******************************************************************************
@@ -935,7 +946,8 @@ PlaybackQueue::onNewData(const BufferReceipt& receipt)
 
         for (auto o:observers_) o->onNewSampleReady();
         
-        LogDebugC << "--■" << receipt.slot_->dump() << dump() << std::endl;
+        LogDebugC << "--■" << receipt.slot_->dump() << std::endl;
+        LogTraceC << "dump " << dump() << buffer_->shortdump() << std::endl;
         
         (*sstorage_)[Indicator::BufferPlayableSize] = size();
     }
