@@ -288,7 +288,7 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
         segmentHdr.playbackNo_ = playbackNo;
 		segmentHdr.pairedSequenceNo_ = pairedSeq;
 
-		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr, isKey);
+		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr, isKey, true);
 		assert(segments.size());
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
         

@@ -76,7 +76,7 @@ namespace ndnrtc {
         }
 
 		PublishedDataPtrVector publish(const ndn::Name& name, const MutableNetworkData& data, 
-			bool forcePitClean = false)
+			bool forcePitClean = false, bool banPitClean = false)
 		{
 			// provide dummy memory of the size of the segment header to publish function
 			// we don't care of bytes that will be saved in this memory, so allocate it
@@ -87,7 +87,7 @@ namespace ndnrtc {
 		}
 
 		PublishedDataPtrVector publish(const ndn::Name& name, const MutableNetworkData& data, 
-			_DataSegmentHeader& commonHeader, bool forcePitClean = false)
+			_DataSegmentHeader& commonHeader, bool forcePitClean = false, bool banPitClean = false)
 		{
 			PublishedDataPtrVector ndnSegments;
 			std::vector<SegmentType> segments = SegmentType::slice(data, settings_.segmentWireLength_);
@@ -127,7 +127,8 @@ namespace ndnrtc {
 						<< ndnSegment->getDefaultWireEncoding().size() << "b wire)" << std::endl;
 			}
             
-			cleanPit(name, forcePitClean);
+            if (!banPitClean)
+				cleanPit(name, forcePitClean);
 
             (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
 			return ndnSegments;
