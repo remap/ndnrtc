@@ -48,7 +48,15 @@ gnuplot -p -e 'set style histogram rowstacked;
 			   set ylabel "# of segments" font ",25";
 			   set key outside;
 			   set xrange [0:];
-			   plot "segments.csv" using 2 t "Data", "" using 3 t "Parity";' > segments.png
+			   fName = "segments.csv";
+			   plot 
+			     fName using (strcol(4) eq "d"?$2:1/0) t "Delta (Data)" lc rgb "#A4AF69",
+			     fName using (strcol(4) eq "d"?$3:1/0) t "Delta (Parity)" lc rgb "#EDE580",
+			     fName using (strcol(4) eq "k"?$2:1/0) t "Key (Data)" lc rgb "#D35269", 
+			     fName using (strcol(4) eq "k"?$3:1/0) t "Key (Parity)" lc rgb "#F5AC72";' > segments.png
+			   
+			   # plot "segments.csv" using (strcol(4) eq "d" ? ) 2 t "Data", 
+			   # 	    "" using 3 t "Parity";' > segments.png
 
 gnuplot -p -e 'set style histogram rowstacked;
 			   set style data histograms;
