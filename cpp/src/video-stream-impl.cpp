@@ -297,12 +297,13 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
             << "(" << SAMPLE_SUFFIX(dataName) << ")x" << segments.size()
             << " Dgen " << segmentHdr.generationDelayMs_ << "ms" << std::endl;
 
+        PublishedDataPtrVector paritySegments;
         if (nParitySeg)
     	{
     		Name parityName(dataName);
 	        parityName.append(NameComponents::NameComponentParity);
 
-	        PublishedDataPtrVector paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr, isKey);
+	        paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr, isKey);
 	        assert(paritySegments.size());
 	        std::copy(paritySegments.begin(), paritySegments.end(), std::back_inserter(segments));
 	        
@@ -313,6 +314,12 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
 		}
 		publishManifest(dataName, segments);
 		busyPublishing_--;
+
+		LogInfoC << "▻ published frame "
+			<< seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
+			<< " data segments x" << segments.size()
+			<< " parity segments x" << paritySegments.size()
+			<< std::endl;
 
         (*statStorage_)[Indicator::PublishedNum]++;
         if (isKey) (*statStorage_)[Indicator::PublishedKeyNum]++;
