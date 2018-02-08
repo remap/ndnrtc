@@ -142,7 +142,7 @@ void PipeSink::openPipe(const std::string& path)
     pipe_ = open(path.c_str(), O_WRONLY|O_NONBLOCK|O_EXCL);
 }
 
-#ifdef HAVE_NANOMSG
+#ifdef HAVE_LIBNANOMSG
 #include <iostream>
 
 NanoMsgSink::NanoMsgSink(const std::string& handle)

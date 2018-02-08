@@ -279,7 +279,7 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams& p)
 				});
 		else if (p.sinkType_ == "nano")
 		{
-			#ifdef HAVE_NANOMSG
+			#ifdef HAVE_LIBNANOMSG
 				return new RendererInternal(p.streamSink_,
 					[](const std::string& s)->boost::shared_ptr<IFrameSink>{
 						return boost::make_shared<NanoMsgSink>(s);

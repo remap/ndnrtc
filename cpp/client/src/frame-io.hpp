@@ -113,7 +113,7 @@ private:
 	void openPipe(const std::string& path);
 };
 
-#ifdef HAVE_NANOMSG
+#ifdef HAVE_LIBNANOMSG
 /**
  * nanomsg sink (unix socket)
  */

@@ -8,6 +8,7 @@
 #include <nanomsg/pubsub.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ipc-shim.h"
 
