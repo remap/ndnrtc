@@ -1,0 +1,27 @@
+#!/bin/sh
+
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+NEW_VERSION=`git describe`
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     machine=Linux;;
+    Darwin*)    machine=macOS;;
+    *)          machine="OTHER:${unameOut}"
+esac
+
+
+read -p "Do you want to update version to ${NEW_VERSION}? [y/N]" -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+	echo "Updating version to $NEW_VERSION"
+
+	if [ $machine == "macOS" ]; then
+		sed -i '' "s/\(AC_INIT(\[[A-Za-z-]*\],\[\)[A-Za-z0-9\.-]*\(\],.*\)/\1${NEW_VERSION}\2/" "$SCRIPTPATH/../configure.ac"
+	else
+		sed "s/\(AC_INIT(\[[A-Za-z-]*\],\[\)[A-Za-z0-9\.-]*\(\],.*\)/\1${NEW_VERSION}\2/" -i "$SCRIPTPATH/../configure.ac"
+	fi
+
+	git add "$SCRIPTPATH/../configure.ac"
+fi
