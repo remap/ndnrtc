@@ -7,6 +7,8 @@
 
 #include "ndnrtcTOP.hpp"
 
+#include <ndnrtc/c-wrapper.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -204,14 +206,15 @@ ndnrtcTOP::getInfoDATEntries(int32_t index,
 #ifdef WIN32
 		strcpy_s(tempBuffer1, "step");
 #else // macOS
-        strlcpy(tempBuffer1, "step", sizeof(tempBuffer1));
+        strlcpy(tempBuffer1, "ndnrtc lib version", sizeof(tempBuffer1));
 #endif
 		entries->values[0] = tempBuffer1;
 
 #ifdef WIN32
 		sprintf_s(tempBuffer2, "%g", myStep);
 #else // macOS
-        snprintf(tempBuffer2, sizeof(tempBuffer2), "%g", myStep);
+        const char *ndnrtcLibVersion = ndnrtc_lib_version();
+        snprintf(tempBuffer2, strlen(ndnrtcLibVersion), "%s", ndnrtcLibVersion);
 #endif
 		entries->values[1] = tempBuffer2;
 	}

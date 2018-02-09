@@ -16,6 +16,9 @@ extern "C" {
 
 	typedef void (*LibLog) (const char* message);
 
+	// returns a c-string, containing current library version
+	const char* ndnrtc_lib_version();
+
 	// creates Face
 	//		hostname
 	//		portnum

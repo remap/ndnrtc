@@ -1,6 +1,17 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-common.hpp include/params.hpp include/statistics.hpp include/interfaces.hpp include/name-components.hpp include/error-codes.hpp include/ndnrtc-defines.hpp include/simple-log.hpp include/stream.hpp include/local-stream.hpp include/remote-stream.hpp
+pkginclude_HEADERS = include/ndnrtc-common.hpp \
+  include/params.hpp \
+  include/statistics.hpp \
+  include/interfaces.hpp \
+  include/name-components.hpp \
+  include/error-codes.hpp \
+  include/ndnrtc-defines.hpp \
+  include/simple-log.hpp \
+  include/stream.hpp \
+  include/local-stream.hpp \
+  include/remote-stream.hpp \
+  include/c-wrapper.h
 
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
@@ -14,7 +25,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/av-sync.cpp src/av-sync.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
-  src/c-wrapper.cpp include/c-wrapper.h \
+  src/c-wrapper.cpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \

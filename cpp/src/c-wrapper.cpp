@@ -100,6 +100,11 @@ private:
 };
 
 //******************************************************************************
+const char* ndnrtc_lib_version()
+{
+	return PACKAGE_VERSION;
+}
+
 bool ndnrtc_init(const char* hostname, const char* storagePath, 
 	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {

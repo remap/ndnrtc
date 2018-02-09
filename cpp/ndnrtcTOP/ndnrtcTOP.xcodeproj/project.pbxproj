@@ -8,7 +8,40 @@
 
 /* Begin PBXBuildFile section */
 		AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */; };
+		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
+		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
+		AFE43CA8202E43CC00072172 /* ndnrtcTOP.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C92202E2BAC00072172;
+			remoteInfo = libndnrtc;
+		};
+		AFE43C9F202E2EEE00072172 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C9B202E2EE300072172;
+			remoteInfo = "libndnrtc-build";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${PROJECT_DIR}/${LIBNDNRTC_INSTALL_DIR}";
+			dstSubfolderSpec = 0;
+			files = (
+				AFE43CA8202E43CC00072172 /* ndnrtcTOP.plugin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcTOP.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -17,6 +50,8 @@
 		AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcTOP.cpp; sourceTree = "<group>"; };
 		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
 		AFE43C8F202E239900072172 /* ndnrtcTOP.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcTOP.hpp; sourceTree = "<group>"; };
+		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../.libs/libndnrtc.a; sourceTree = "<group>"; };
+		AFE43CA5202E330100072172 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = /usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -24,6 +59,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */,
+				AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -35,6 +72,7 @@
 			children = (
 				AFE43C85202DDCD200072172 /* ndnrtcTOP */,
 				AFE43C84202DDCD200072172 /* Products */,
+				AFE43C98202E2D9700072172 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -66,7 +104,48 @@
 			name = src;
 			sourceTree = "<group>";
 		};
+		AFE43C98202E2D9700072172 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AFE43CA5202E330100072172 /* libboost_system.a */,
+				AFE43C99202E2D9700072172 /* libndnrtc.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		AFE43C92202E2BAC00072172 /* libndnrtc */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = install;
+			buildConfigurationList = AFE43C93202E2BAC00072172 /* Build configuration list for PBXLegacyTarget "libndnrtc" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../;
+			dependencies = (
+				AFE43CA0202E2EEE00072172 /* PBXTargetDependency */,
+			);
+			name = libndnrtc;
+			passBuildSettingsInEnvironment = 1;
+			productName = libndnrtc;
+		};
+		AFE43C9B202E2EE300072172 /* libndnrtc-build */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) $PREFIX=$LIBNDNRTC_INSTALL_DIR";
+			buildConfigurationList = AFE43C9C202E2EE300072172 /* Build configuration list for PBXLegacyTarget "libndnrtc-build" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../;
+			dependencies = (
+			);
+			name = "libndnrtc-build";
+			passBuildSettingsInEnvironment = 1;
+			productName = libndnrtc;
+		};
+/* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
 		AFE43C82202DDCD200072172 /* ndnrtcTOP */ = {
@@ -76,10 +155,12 @@
 				AFE43C7F202DDCD200072172 /* Sources */,
 				AFE43C80202DDCD200072172 /* Frameworks */,
 				AFE43C81202DDCD200072172 /* Resources */,
+				AFE43CA7202E43BA00072172 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AFE43C97202E2C5B00072172 /* PBXTargetDependency */,
 			);
 			name = ndnrtcTOP;
 			productName = ndnrtcTOP;
@@ -99,6 +180,13 @@
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
 					};
+					AFE43C92202E2BAC00072172 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					AFE43C9B202E2EE300072172 = {
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = AFE43C7E202DDCD200072172 /* Build configuration list for PBXProject "ndnrtcTOP" */;
@@ -114,6 +202,8 @@
 			projectRoot = "";
 			targets = (
 				AFE43C82202DDCD200072172 /* ndnrtcTOP */,
+				AFE43C92202E2BAC00072172 /* libndnrtc */,
+				AFE43C9B202E2EE300072172 /* libndnrtc-build */,
 			);
 		};
 /* End PBXProject section */
@@ -138,6 +228,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AFE43C97202E2C5B00072172 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
+			targetProxy = AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */;
+		};
+		AFE43CA0202E2EEE00072172 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C9B202E2EE300072172 /* libndnrtc-build */;
+			targetProxy = AFE43C9F202E2EEE00072172 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AFE43C87202DDCD200072172 /* Debug */ = {
@@ -188,6 +291,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBNDNRTC_INSTALL_DIR = ../build;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -237,6 +341,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBNDNRTC_INSTALL_DIR = ../build;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -249,8 +354,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcTOP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -264,12 +377,70 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcTOP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = plugin;
+			};
+			name = Release;
+		};
+		AFE43C94202E2BAC00072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFE43C95202E2BAC00072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AFE43C9D202E2EE300072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFE43C9E202E2EE300072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -290,6 +461,24 @@
 			buildConfigurations = (
 				AFE43C8A202DDCD200072172 /* Debug */,
 				AFE43C8B202DDCD200072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C93202E2BAC00072172 /* Build configuration list for PBXLegacyTarget "libndnrtc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C94202E2BAC00072172 /* Debug */,
+				AFE43C95202E2BAC00072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C9C202E2EE300072172 /* Build configuration list for PBXLegacyTarget "libndnrtc-build" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C9D202E2EE300072172 /* Debug */,
+				AFE43C9E202E2EE300072172 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
