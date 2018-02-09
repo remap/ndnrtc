@@ -189,18 +189,43 @@ ndnsec-keygen /ndnrtc-loopback | ndnsec-install-cert -
 ndnsec-dump-certificate -i /ndnrtc-loopback > tests/policy_config/signing.cert
 mkdir loopback
 nfd-start &> /tmp/nfd.log
-./ndnrtc-client -c tests/loopback-producer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i producer -t 120
+./ndnrtc-client -c tests/loopback-producer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i producer -t 35
 ```
 
-This will start ndnrtc-client with producer configuration and run it for 120 seconds.
+This will start ndnrtc-client with producer configuration and run it for 35 seconds.
 In a second terminal window, type:
 
 ```Shell
-./ndnrtc-client -c tests/loopback-consumer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i consumer -t 60 -v
+./ndnrtc-client -c tests/loopback-consumer.cfg -s /ndnrtc-loopback -p tests/policy_config/rule.conf -i consumer -t 30
 ```
 
 This will start ndnrtc-client with consumer configuration, configured to fetch from previously started producer.
-Check `loopback` folder - it'll contain a number of `log` and `stat` files. It also contains raw video `.argb` received by consumer (see below on how to use `ffmpeg` to encode it into `h264` video).
+Check `loopback` folder - it'll contain a number of `log` and `stat` files. It also contains raw video `producer-camera.320x240` received by the consumer (see below on how to use `ffmpeg` to encode it into `h264` video).
+
+### Process results
+If you want to process results, install [PyNDN2](https://github.com/named-data/PyNDN2/blob/master/INSTALL.md) first.
+Then, do this:
+
+```Shell
+cd loopback
+git clone https://github.com/peetonn/ndnrtc-tools && export PATH=$PATH:$(pwd)/ndnrtc-tools
+prep-logs.sh
+../resources/report-loopback.sh
+```
+
+Check out `.png` files of the generated plots inside the folder:
+ - `bitrates.png` - shows calculated bitrates for the incoming data on consumer side (*Payload* - actual data without NDN overhead, *Wire* - data with NDN overhead);
+ - `buffer.png` - shows durations (in milliseconds) of the frame buffer: playout part (assembled, ready-to-go frames) and pending part (frames, yet expected to arrive);
+ - `network.png` - shows calculated rates for various network-level packets: Interests, Data, Nacks, Application Nacks, etc.;
+ - `playback.png` - shows *DRD* estimation (Data Retrieval Delay) for packets, end-to-end playback latency estimation and Frame demand (Lambda) estimation - minimum number of pending frames;
+ - `segments.png` - producer-side printout of number of segments for each frame per data type (data/parity), per frame type (key/delta);
+ - `states.png` - consumer states changes over time (1 - Idle, 2 - WaitForInitial, 3 - WaitForRightmost, 4 - Chasing, 5 - Adjusting, 6 - Fetching). 
+
+If you want to watch received video, use `ffmpeg` to transcode it to `.mp4`:
+
+```Shell
+ffmpeg -f rawvideo -vcodec rawvideo -s 320x240 -r 25 -pix_fmt argb -i producer-camera.320x240 -c:v libx264 -preset ultrafast -qp 0 producer-camera.mp4
+```
 
 ## Simple example
 > To run simple example with headless client, one will need to have [NFD installed and configured](http://named-data.net/doc/NFD/current/INSTALL.html).
