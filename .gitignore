@@ -65,3 +65,4 @@ tags
 *.sublime-workspace
 newwebrtc
 android
+xcuserdata
