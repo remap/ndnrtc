@@ -19,6 +19,10 @@ extern "C" {
 	// returns a c-string, containing current library version
 	const char* ndnrtc_lib_version();
 
+	void ndnrtc_get_identities_list(char*** identities, int* nIdentities);
+
+	// bool ndnrtc_check_nfd_connection(const char* hostname, int port);
+
 	// creates Face
 	//		hostname
 	//		portnum

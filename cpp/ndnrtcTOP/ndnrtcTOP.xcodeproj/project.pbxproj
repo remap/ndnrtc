@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
+		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
+		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B42033AC380042FB3A /* mapping.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
@@ -31,6 +37,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		AF9431B12033ABDC0042FB3A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain;
+			dstSubfolderSpec = 7;
+			files = (
+				AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9431B32033AC040042FB3A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain/keys;
+			dstSubfolderSpec = 7;
+			files = (
+				AF9431B42033AC380042FB3A /* mapping.txt in CopyFiles */,
+				AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */,
+				AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -44,6 +72,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
+		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
+		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
+		AF9431A92033A91E0042FB3A /* mapping.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mapping.txt; sourceTree = "<group>"; };
+		AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri"; sourceTree = "<group>"; };
+		AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub"; sourceTree = "<group>"; };
+		AF9431AC2033A91E0042FB3A /* public-info.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = "public-info.db"; path = "keychain/public-info.db"; sourceTree = "<group>"; };
 		AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcTOP.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
@@ -67,6 +102,35 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF9431A32033A70A0042FB3A /* res */ = {
+			isa = PBXGroup;
+			children = (
+				AF9431A72033A9110042FB3A /* keychain */,
+				AF9431A42033A71C0042FB3A /* touchdesigner.cert */,
+			);
+			name = res;
+			sourceTree = "<group>";
+		};
+		AF9431A72033A9110042FB3A /* keychain */ = {
+			isa = PBXGroup;
+			children = (
+				AF9431A82033A91E0042FB3A /* keys */,
+				AF9431AC2033A91E0042FB3A /* public-info.db */,
+			);
+			name = keychain;
+			sourceTree = "<group>";
+		};
+		AF9431A82033A91E0042FB3A /* keys */ = {
+			isa = PBXGroup;
+			children = (
+				AF9431A92033A91E0042FB3A /* mapping.txt */,
+				AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */,
+				AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */,
+			);
+			name = keys;
+			path = keychain/keys;
+			sourceTree = "<group>";
+		};
 		AFE43C7A202DDCD200072172 = {
 			isa = PBXGroup;
 			children = (
@@ -87,6 +151,7 @@
 		AFE43C85202DDCD200072172 /* ndnrtcTOP */ = {
 			isa = PBXGroup;
 			children = (
+				AF9431A32033A70A0042FB3A /* res */,
 				AFE43C91202E23A300072172 /* src */,
 				AFE43C86202DDCD200072172 /* Info.plist */,
 			);
@@ -100,6 +165,8 @@
 				AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */,
 				AFE43C8F202E239900072172 /* ndnrtcTOP.hpp */,
 				AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */,
+				AF9431A02033A5200042FB3A /* foundation-helpers.h */,
+				AF9431A12033A5380042FB3A /* foundation-helpers.mm */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -155,6 +222,8 @@
 				AFE43C7F202DDCD200072172 /* Sources */,
 				AFE43C80202DDCD200072172 /* Frameworks */,
 				AFE43C81202DDCD200072172 /* Resources */,
+				AF9431B12033ABDC0042FB3A /* CopyFiles */,
+				AF9431B32033AC040042FB3A /* CopyFiles */,
 				AFE43CA7202E43BA00072172 /* CopyFiles */,
 			);
 			buildRules = (
@@ -213,6 +282,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -223,6 +293,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */,
 				AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

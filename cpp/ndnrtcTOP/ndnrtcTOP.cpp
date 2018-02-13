@@ -7,12 +7,35 @@
 
 #include "ndnrtcTOP.hpp"
 
-#include <ndnrtc/c-wrapper.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <cmath>
+
+#include "foundation-helpers.h"
+
+using namespace std;
+using namespace std::placeholders;
+
+#define PAR_NFD_HOST            "Nfdhost"
+#define PAR_SIGNING_IDENTITY    "Signingidentity"
+#define PAR_INSTANCE_NAME       "Instancename"
+#define PAR_USE_MACOS_KEYCHAIN  "Usemacoskeychain"
+#define PAR_INIT                "Init"
+#define PAR_BASE_PREFIX         "Baseprefix"
+#define PAR_STREAM_NAME         "Streamname"
+#define PAR_TARGET_BITRATE      "Targetbitrate"
+#define PAR_ENCODE_WIDTH        "Encodewidth"
+#define PAR_ENCODE_HEIGHT       "Encodeheight"
+#define PAR_THREAD_NAME         "Threadname"
+#define PAR_FEC                 "Fec"
+#define PAR_SIGNING             "Signing"
+#define PAR_FRAMEDROP           "Framedrop"
+#define PAR_SEGSIZE             "Segmentsize"
+#define PAR_FRESHNESS           "Freshness"
+#define PAR_GOPSIZE             "Gopsize"
+
+#define TOUCHDESIGNER_IDENTITY  "/touchdesigner"
 
 // These functions are basic C function, which the DLL loader can find
 // much easier than finding a C++ Class.
@@ -56,7 +79,13 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 
 };
 
+//******************************************************************************
+static void NdnrtcLoggingCallback(const char* message)
+{
+    std::cout << "[ndnrtc] " << message << endl;
+}
 
+//******************************************************************************
 ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) : myNodeInfo(info)
 {
 	myExecuteCount = 0;
@@ -65,7 +94,7 @@ ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) : myNodeInfo(info)
 
 ndnrtcTOP::~ndnrtcTOP()
 {
-
+    deinitNdnrtcLibrary();
 }
 
 void
@@ -73,7 +102,7 @@ ndnrtcTOP::getGeneralInfo(TOP_GeneralInfo* ginfo)
 {
 	// Uncomment this line if you want the TOP to cook every frame even
 	// if none of it's inputs/parameters are changing.
-	ginfo->cookEveryFrame = true;
+	ginfo->cookEveryFrame = false;
     ginfo->memPixelType = OP_CPUMemPixelType::RGBA32Float;
 }
 
@@ -93,13 +122,20 @@ ndnrtcTOP::execute(const TOP_OutputFormatSpecs* outputFormat,
 						OP_Inputs* inputs,
 						TOP_Context *context)
 {
+    checkInputs(outputFormat, inputs, context);
+    
+    while (executeQueue_.size())
+    {
+        executeQueue_.front()(outputFormat, inputs, context);
+        executeQueue_.pop();
+    }
+    
 	myExecuteCount++;
 
-
-	double speed = inputs->getParDouble("Speed");
+    double speed = 1; //inputs->getParDouble("Speed");
 	myStep += speed;
 
-	float brightness = (float)inputs->getParDouble("Brightness");
+    float brightness = 1; //(float)inputs->getParDouble("Brightness");
 
 	int xstep = (int)(fmod(myStep, outputFormat->width));
 	int ystep = (int)(fmod(myStep, outputFormat->height));
@@ -223,61 +259,218 @@ ndnrtcTOP::getInfoDATEntries(int32_t index,
 void
 ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
 {
-	// brightness
-	{
-		OP_NumericParameter	np;
+    {
+        OP_StringParameter nfdHost(PAR_NFD_HOST), signingIdentity(PAR_SIGNING_IDENTITY),
+                           instanceName(PAR_INSTANCE_NAME);
+        OP_NumericParameter useMacOsKeyChain(PAR_USE_MACOS_KEYCHAIN);
+        
+        nfdHost.label = "NFD Host";
+        nfdHost.defaultValue = "localhost";
+        nfdHost.page = "Lib Config";
+        
+        signingIdentity.label = "Signing Identity";
+        signingIdentity.defaultValue = TOUCHDESIGNER_IDENTITY;
+        signingIdentity.page = "Lib Config";
 
-		np.name = "Brightness";
-		np.label = "Brightness";
-		np.defaultValues[0] = 1.0;
-
-		np.minSliders[0] =  0.0;
-		np.maxSliders[0] =  1.0;
-
-		np.minValues[0] = 0.0;
-		np.maxValues[0] = 1.0;
-
-		np.clampMins[0] = true;
-		np.clampMaxes[0] = true;
-		
-		OP_ParAppendResult res = manager->appendFloat(np);
-		assert(res == OP_ParAppendResult::Success);
-	}
-
-	// speed
-	{
-		OP_NumericParameter	np;
-
-		np.name = "Speed";
-		np.label = "Speed";
-		np.defaultValues[0] = 1.0;
-		np.minSliders[0] = -10.0;
-		np.maxSliders[0] =  10.0;
-		
-		OP_ParAppendResult res = manager->appendFloat(np);
-		assert(res == OP_ParAppendResult::Success);
-	}
-
-	// pulse
-	{
-		OP_NumericParameter	np;
-
-		np.name = "Reset";
-		np.label = "Reset";
-		
-		OP_ParAppendResult res = manager->appendPulse(np);
-		assert(res == OP_ParAppendResult::Success);
-	}
-
+        instanceName.label = "Instance name";
+        instanceName.defaultValue = "ndnrtcTOP0";
+        instanceName.page = "Lib Config";
+        
+        useMacOsKeyChain.label = "Use System KeyChain";
+        useMacOsKeyChain.defaultValues[0] = 0;
+        useMacOsKeyChain.page = "Lib Config";
+        
+        OP_ParAppendResult res = manager->appendString(nfdHost);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendString(signingIdentity);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendString(instanceName);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendToggle(useMacOsKeyChain);
+        assert(res == OP_ParAppendResult::Success);
+    }
+    {
+        OP_NumericParameter    np;
+        
+        np.name = PAR_INIT;
+        np.label = "Init";
+        np.page = "Lib Config";
+        
+        OP_ParAppendResult res = manager->appendPulse(np);
+        assert(res == OP_ParAppendResult::Success);
+    }
+    {
+        OP_StringParameter basePrefix(PAR_BASE_PREFIX), streamName(PAR_STREAM_NAME);
+        OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE), encodeWidth(PAR_ENCODE_WIDTH),
+                            encodeHeight(PAR_ENCODE_HEIGHT);
+        
+        basePrefix.label = "Base prefix";
+        basePrefix.defaultValue = "/touch/ndnrtc";
+        basePrefix.page = "Stream Config";
+        
+        streamName.label = "Stream Name";
+        streamName.defaultValue = "video1";
+        streamName.page = "Stream Config";
+        
+        targetBitrate.label = "Target Bitrate";
+        targetBitrate.page = "Stream Config";
+        targetBitrate.defaultValues[0] = 1000;
+        targetBitrate.minSliders[0] = 500;
+        targetBitrate.maxSliders[0] = 15000;
+        
+        encodeWidth.label = "Encode Width";
+        encodeWidth.page = "Stream Config";
+        encodeWidth.defaultValues[0] = 320;
+        encodeWidth.minSliders[0] = 320;
+        encodeWidth.maxSliders[0] = 4096;
+        
+        encodeHeight.label = "Encode Height";
+        encodeHeight.page = "Stream Config";
+        encodeHeight.defaultValues[0] = 180;
+        encodeHeight.minSliders[0] = 180;
+        encodeHeight.maxSliders[0] = 2160;
+        
+        OP_ParAppendResult res = manager->appendString(basePrefix);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendString(streamName);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(targetBitrate);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(encodeWidth);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(encodeHeight);
+        assert(res == OP_ParAppendResult::Success);
+    }
+    {
+        OP_StringParameter threadName(PAR_THREAD_NAME);
+        OP_NumericParameter fec(PAR_FEC), signing(PAR_SIGNING), frameDrop(PAR_FRAMEDROP),
+                            segmentSize(PAR_SEGSIZE), freshness(PAR_FRESHNESS),
+                            gopSize(PAR_GOPSIZE);
+        
+        threadName.label = "Thread Name";
+        threadName.defaultValue = "t1";
+        threadName.page = "Advanced";
+        
+        fec.label = "FEC";
+        fec.page = "Advanced";
+        fec.defaultValues[0] = 1.0;
+        
+        signing.label = "Signing";
+        signing.page = "Advanced";
+        signing.defaultValues[0] = 1.0;
+        
+        frameDrop.label = "Frame Drop";
+        frameDrop.page = "Advanced";
+        frameDrop.defaultValues[0] = 1.0;
+        
+        segmentSize.label = "Segment Size";
+        segmentSize.page = "Advanced";
+        segmentSize.defaultValues[0] = 1200;
+        segmentSize.defaultValues[1] = 7700;
+        segmentSize.minSliders[0] = 1000;
+        segmentSize.maxSliders[0] = 8000;
+        
+        gopSize.label = "GOP Size";
+        gopSize.page = "Advanced";
+        gopSize.defaultValues[0] = 30;
+        gopSize.minSliders[0] = 15;
+        gopSize.maxSliders[0] = 60;
+        
+        freshness.label = "Freshness";
+        freshness.page = "Advanced";
+        freshness.defaultValues[0] = 2000;
+        freshness.minSliders[0] = 1000;
+        freshness.maxSliders[0] = 10000;
+        
+        OP_ParAppendResult res = manager->appendString(threadName);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendToggle(fec);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendToggle(signing);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendToggle(frameDrop);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(segmentSize);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(freshness);
+        assert(res == OP_ParAppendResult::Success);
+        res = manager->appendInt(gopSize);
+        assert(res == OP_ParAppendResult::Success);
+    }
 }
 
 void
 ndnrtcTOP::pulsePressed(const char* name)
 {
-	if (!strcmp(name, "Reset"))
+	if (!strcmp(name, "Init"))
 	{
-		myStep = 0.0;
+        executeQueue_.push(bind(&ndnrtcTOP::initNdnrtcLibrary, this, _1, _2, _3));
 	}
+}
 
+//******************************************************************************
+#pragma mark private
+void
+ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
+                       OP_Inputs* inputs,
+                       TOP_Context *context)
+{
+    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
+    inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+}
 
+void
+ndnrtcTOP::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
+                             OP_Inputs* inputs,
+                             TOP_Context *context)
+{
+    if (ndnrtcInitialized_)
+    {
+        ndnrtc_deinit();
+    }
+    
+    std::string hostname(inputs->getParString(PAR_NFD_HOST));
+    std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
+    std::string instanceName(inputs->getParString(PAR_INSTANCE_NAME));
+    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
+    
+    try
+    {
+        if (useMacOsKeyChain)
+            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), nullptr,
+                                             signingIdentity.c_str(), instanceName.c_str(),
+                                             &NdnrtcLoggingCallback);
+        else if (get_resources_path())
+        {
+            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
+            
+            string keyChainPath = string(get_resources_path())+"/keychain";
+            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), keyChainPath.c_str(),
+                                             TOUCHDESIGNER_IDENTITY, instanceName.c_str(),
+                                             &NdnrtcLoggingCallback);
+        }
+        else
+        {
+            // TODO report error!
+            cout << "error: file-bbased keychain was not found" << endl;
+        }
+    }
+    catch(std::exception &e)
+    {
+        cout << "Error initializing library: " << e.what() << endl;
+    }
+}
+
+void
+ndnrtcTOP::deinitNdnrtcLibrary()
+{
+    ndnrtc_deinit();
+}
+
+LocalStreamParams
+ndnrtcTOP::readStreamParams() const
+{
+    LocalStreamParams p;
+    
+    return p;
 }

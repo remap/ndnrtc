@@ -50,6 +50,8 @@ namespace ndnrtc {
          * performed.
          */
 		virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
+
+        virtual ~IStream() {}
 	};
 }
 
