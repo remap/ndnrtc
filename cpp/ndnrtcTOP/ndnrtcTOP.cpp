@@ -14,8 +14,6 @@
 #include <cstring>
 #include <OpenGL/gl3.h>
 
-#include "foundation-helpers.h"
-
 #include <ndnrtc/statistics.hpp>
 
 using namespace std;
@@ -23,11 +21,6 @@ using namespace std::placeholders;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-#define PAR_NFD_HOST            "Nfdhost"
-#define PAR_SIGNING_IDENTITY    "Signingidentity"
-#define PAR_INSTANCE_NAME       "Instancename"
-#define PAR_USE_MACOS_KEYCHAIN  "Usemacoskeychain"
-#define PAR_INIT                "Init"
 #define PAR_BASE_PREFIX         "Baseprefix"
 #define PAR_STREAM_NAME         "Streamname"
 #define PAR_TARGET_BITRATE      "Targetbitrate"
@@ -57,8 +50,6 @@ default:                                                                        
 }\
 }\
 }
-
-static map<ndnrtcTOP*, std::string> TopNames;
 
 // These functions are basic C function, which the DLL loader can find
 // much easier than finding a C++ Class.
@@ -103,29 +94,24 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 };
 
 //******************************************************************************
-static void NdnrtcLibraryLoggingCallback(const char* message)
-{
-    std::cout << "[ndnrtc-library] " << message << endl;
-}
-
 static void NdnrtcStreamLoggingCallback(const char* message)
 {
     std::cout << "[ndnrtc-stream] " << message << endl;
 }
 
 //******************************************************************************
-/**
- * This enum identifies output DAT's different fields
- * The output DAT is a table that contains two
- * columns: name (identified by this enum) and value
- * (either float or string)
- */
-enum class InfoDatIndex {
-    LibVersion,
-    StreamPrefix,
-    StreamName,
-    StreamBasePrefix
-};
+///**
+// * This enum identifies output DAT's different fields
+// * The output DAT is a table that contains two
+// * columns: name (identified by this enum) and value
+// * (either float or string)
+// */
+//enum class InfoDatIndex {
+//    LibVersion,
+//    StreamPrefix,
+//    StreamName,
+//    StreamBasePrefix
+//};
 
 /**
  * This enum identifies output DAT's different fields
@@ -136,16 +122,7 @@ enum class InfoDatIndex {
 enum class InfoChopIndex {
     PublishedFrame
 };
-/**
- * This maps output DAT's field onto their textual representation
- * (table caption)
- */
-static std::map<InfoDatIndex, std::string> RowNames = {
-    { InfoDatIndex::LibVersion, "Lirary Version" },
-    { InfoDatIndex::StreamPrefix, "Stream Prefix" },
-    { InfoDatIndex::StreamName, "Stream Name" },
-    { InfoDatIndex::StreamBasePrefix, "Base Prefix" }
-};
+
 
 /**
  * This maps output CHOP's channel names
@@ -155,21 +132,17 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
 };
 
 //******************************************************************************
-ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) : myNodeInfo(info),
+ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) :
+ndnrtcTOPbase(info),
 incomingFrameBuffer_(nullptr),
 incomingFrameWidth_(0), incomingFrameHeight_(0),
-localStream_(nullptr),
-statStorage_(StatisticsStorage::createProducerStatistics()),
-errorString_(""), warningString_("")
+localStream_(nullptr)
 {
-    TopNames[this] = generateName();
+    statStorage_ = StatisticsStorage::createProducerStatistics();
 }
 
 ndnrtcTOP::~ndnrtcTOP()
 {
-    deinitNdnrtcLibrary();
-    TopNames.erase(this);
-    delete statStorage_;
 }
 
 void
@@ -197,19 +170,7 @@ ndnrtcTOP::execute(const TOP_OutputFormatSpecs* outputFormat,
 						OP_Inputs* inputs,
 						TOP_Context *context)
 {
-    checkInputs(outputFormat, inputs, context);
- 
-    try {
-        while (executeQueue_.size())
-        {
-            executeQueue_.front()(outputFormat, inputs, context);
-            executeQueue_.pop();
-        }
-    } catch (exception& e) {
-        executeQueue_.pop(); // just throw this naughty block away
-        NdnrtcLibraryLoggingCallback((string(string("Exception caught: ")+e.what())).c_str());
-        errorString_ = e.what();
-    }
+    ndnrtcTOPbase::execute(outputFormat, inputs, context);
     
     int nInputs = inputs->getNumInputs();
     
@@ -303,108 +264,27 @@ ndnrtcTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
     }
 }
 
-bool		
+bool
 ndnrtcTOP::getInfoDATSize(OP_InfoDATSize* infoSize)
 {
-	infoSize->rows = (int)RowNames.size();
-	infoSize->cols = 2;
-	infoSize->byColumn = false;
-	return true;
+    return ndnrtcTOPbase::getInfoDATSize(infoSize);
 }
+
+
 
 void
 ndnrtcTOP::getInfoDATEntries(int32_t index,
-								int32_t nEntries,
-								OP_InfoDATEntries* entries)
+                                 int32_t nEntries,
+                                 OP_InfoDATEntries* entries)
 {
-	// It's safe to use static buffers here because Touch will make it's own
-	// copies of the strings immediately after this call returns
-	// (so the buffers can be reuse for each column/row)
-	static char tempBuffer1[4096];
-	static char tempBuffer2[4096];
-    memset(tempBuffer1, 0, 4096);
-    memset(tempBuffer2, 0, 4096);
-    
-    InfoDatIndex idx = (InfoDatIndex)index;
-
-    if (RowNames.find(idx) != RowNames.end())
-    {
-        strcpy(tempBuffer1, RowNames[idx].c_str());
-        
-        switch (idx) {
-            case InfoDatIndex::LibVersion:
-            {
-                const char *ndnrtcLibVersion = ndnrtc_lib_version();
-                snprintf(tempBuffer2, strlen(ndnrtcLibVersion), "%s", ndnrtcLibVersion);
-            }
-                break;
-            case InfoDatIndex::StreamPrefix:
-            {
-                ndnrtc_LocalStream_getPrefix(localStream_, tempBuffer2);
-            }
-                break;
-            case InfoDatIndex::StreamName:
-            {
-                ndnrtc_LocalStream_getStreamName(localStream_, tempBuffer2);
-            }
-                break;
-            case InfoDatIndex::StreamBasePrefix:
-            {
-                ndnrtc_LocalStream_getBasePrefix(localStream_, tempBuffer2);
-            }
-                break;
-            default:
-                break;
-        }
-        
-        entries->values[0] = tempBuffer1;
-        entries->values[1] = tempBuffer2;
-    }
+    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries);
 }
 
 void
 ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
 {
-    {
-        OP_StringParameter nfdHost(PAR_NFD_HOST), signingIdentity(PAR_SIGNING_IDENTITY),
-                           instanceName(PAR_INSTANCE_NAME);
-        OP_NumericParameter useMacOsKeyChain(PAR_USE_MACOS_KEYCHAIN);
-        
-        nfdHost.label = "NFD Host";
-        nfdHost.defaultValue = "localhost";
-        nfdHost.page = "Lib Config";
-        
-        signingIdentity.label = "Signing Identity";
-        signingIdentity.defaultValue = TOUCHDESIGNER_IDENTITY;
-        signingIdentity.page = "Lib Config";
-
-        instanceName.label = "Instance name";
-        instanceName.defaultValue = TopNames[this].c_str();
-        instanceName.page = "Lib Config";
-        
-        useMacOsKeyChain.label = "Use System KeyChain";
-        useMacOsKeyChain.defaultValues[0] = 0;
-        useMacOsKeyChain.page = "Lib Config";
-        
-        OP_ParAppendResult res = manager->appendString(nfdHost);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendString(signingIdentity);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendString(instanceName);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendToggle(useMacOsKeyChain);
-        assert(res == OP_ParAppendResult::Success);
-    }
-    {
-        OP_NumericParameter    np;
-        
-        np.name = PAR_INIT;
-        np.label = "Init";
-        np.page = "Lib Config";
-        
-        OP_ParAppendResult res = manager->appendPulse(np);
-        assert(res == OP_ParAppendResult::Success);
-    }
+    ndnrtcTOPbase::setupParameters(manager);
+    
     {
         OP_StringParameter streamName(PAR_STREAM_NAME);
         OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE), encodeWidth(PAR_ENCODE_WIDTH),
@@ -502,38 +382,22 @@ ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
 void
 ndnrtcTOP::pulsePressed(const char* name)
 {
+    ndnrtcTOPbase::pulsePressed(name);
+    
 	if (!strcmp(name, "Init"))
 	{
-        executeQueue_.push(bind(&ndnrtcTOP::initNdnrtcLibrary, this, _1, _2, _3));
         executeQueue_.push(bind(&ndnrtcTOP::createLocalStream, this, _1, _2, _3));
 	}
 }
 
 //******************************************************************************
 #pragma mark private
-const char*
-ndnrtcTOP::getWarningString()
-{
-    if (warningString_.size())
-        return warningString_.c_str();
-    return nullptr;
-}
-
-const char *
-ndnrtcTOP::getErrorString()
-{
-    if (errorString_.size())
-        return errorString_.c_str();
-    return nullptr;
-}
-
 void
 ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                        OP_Inputs* inputs,
                        TOP_Context *context)
 {
-    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
-    inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+    ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
     
     if (inputs->getNumInputs())
     {
@@ -542,56 +406,6 @@ ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
             if (topInput->width != incomingFrameWidth_ || topInput->height != incomingFrameHeight_)
                 allocateIncomingFramebuffer(topInput->width, topInput->height);
     }
-}
-
-void
-ndnrtcTOP::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
-                             OP_Inputs* inputs,
-                             TOP_Context *context)
-{
-    if (ndnrtcInitialized_)
-        ndnrtc_deinit();
-    
-    std::string hostname(inputs->getParString(PAR_NFD_HOST));
-    std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
-    std::string instanceName(inputs->getParString(PAR_INSTANCE_NAME));
-    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
-    
-    try
-    {
-        errorString_ = "";
-        
-        if (useMacOsKeyChain)
-            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), nullptr,
-                                             signingIdentity.c_str(), instanceName.c_str(),
-                                             &NdnrtcLibraryLoggingCallback);
-        else if (get_resources_path())
-        {
-            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
-            
-            string keyChainPath = string(get_resources_path())+"/keychain";
-            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), keyChainPath.c_str(),
-                                             TOUCHDESIGNER_IDENTITY, instanceName.c_str(),
-                                             &NdnrtcLibraryLoggingCallback);
-        }
-        else
-        {
-            errorString_ = "File-bbased keychain was not found";
-        }
-    }
-    catch(std::exception &e)
-    {
-        errorString_ = string("Error initializing library: ") + e.what();
-    }
-    
-    if (!ndnrtcInitialized_)
-        errorString_ = "Failed to initialize library: check NFD is running";
-}
-
-void
-ndnrtcTOP::deinitNdnrtcLibrary()
-{
-    ndnrtc_deinit();
 }
 
 void
@@ -622,11 +436,9 @@ ndnrtcTOP::readStreamParams(OP_Inputs* inputs) const
 {
     LocalStreamParams p;
 
-    stringstream basePrefix;
-    basePrefix << inputs->getParString(PAR_SIGNING_IDENTITY) << "/"
-        << inputs->getParString(PAR_INSTANCE_NAME);
-    p.basePrefix = (const char*)malloc(basePrefix.str().size()+1);
-    strcpy((char*)p.basePrefix, basePrefix.str().c_str());
+    string basePrefix = readBasePrefix(inputs);
+    p.basePrefix = (const char*)malloc(basePrefix.size()+1);
+    strcpy((char*)p.basePrefix, basePrefix.c_str());
     p.streamName = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_NAME))+1);
     strcpy((char*)p.streamName, inputs->getParString(PAR_STREAM_NAME));
     p.threadName = (const char*)malloc(strlen(inputs->getParString(PAR_THREAD_NAME))+1);
@@ -647,29 +459,10 @@ ndnrtcTOP::readStreamParams(OP_Inputs* inputs) const
     return p;
 }
 
-std::string
-ndnrtcTOP::generateName() const
-{
-    // TODO make this function smarter, if needed
-    int nTOPs = (int)TopNames.size();
-    
-    stringstream ss;
-    ss << "ndnrtcTOP" << nTOPs;
-    
-    return ss.str();
-}
-
 void
 ndnrtcTOP::allocateIncomingFramebuffer(int w, int h)
 {
     incomingFrameBufferSize_ = w*h*4*sizeof(unsigned char);
     incomingFrameBuffer_ = (unsigned char*)realloc(incomingFrameBuffer_, incomingFrameBufferSize_);
     memset(incomingFrameBuffer_, 0, incomingFrameBufferSize_);
-}
-
-void
-ndnrtcTOP::readStreamStats()
-{
-    if (localStream_)
-        *statStorage_ = localStream_->getStatistics();
 }

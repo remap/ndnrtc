@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -73,6 +74,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcTOP_base.cpp; sourceTree = "<group>"; };
+		AF889B4A20374DA700F36342 /* ndnrtcTOP_base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcTOP_base.hpp; sourceTree = "<group>"; };
 		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
 		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
 		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
@@ -119,6 +122,8 @@
 				AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */,
 				AF9431A02033A5200042FB3A /* foundation-helpers.h */,
 				AF9431A12033A5380042FB3A /* foundation-helpers.mm */,
+				AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */,
+				AF889B4A20374DA700F36342 /* ndnrtcTOP_base.hpp */,
 			);
 			name = common;
 			sourceTree = "<group>";
@@ -315,6 +320,7 @@
 			files = (
 				AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */,
 				AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */,
+				AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
