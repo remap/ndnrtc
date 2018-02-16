@@ -1,5 +1,5 @@
 // 
-// ndnrtcTOP.cpp
+// ndnrtcOut.cpp
 //
 //  Created by Peter Gusev on 09 February 2018.
 //  Copyright 2013-2016 Regents of the University of California
@@ -135,9 +135,9 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
 ndnrtcOut::ndnrtcOut(const OP_NodeInfo* info) :
 ndnrtcTOPbase(info),
 incomingFrameBuffer_(nullptr),
-incomingFrameWidth_(0), incomingFrameHeight_(0),
-localStream_(nullptr)
+incomingFrameWidth_(0), incomingFrameHeight_(0)
 {
+    generateName("ndnrtcOut");
     statStorage_ = StatisticsStorage::createProducerStatistics();
 }
 
@@ -178,7 +178,7 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
     {
         const OP_TOPInput* topInput = inputs->getInputTOP(0);
         
-        if (topInput && localStream_)
+        if (topInput && stream_)
         {
             glBindTexture(GL_TEXTURE_2D, topInput->textureIndex);
             GetError()
@@ -214,9 +214,7 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
                 *((int32_t*)&incomingFrameBuffer_[idx]) = argb;
 #endif
             }
-            
-            publbishedFrame_ = ndnrtc_LocalVideoStream_incomingArgbFrame(localStream_,
-                                                                    topInput->width, topInput->height,
+            publbishedFrame_ = ((ndnrtc::LocalVideoStream*)stream_)->incomingArgbFrame(topInput->width, topInput->height,
                                                                     incomingFrameBuffer_, incomingFrameBufferSize_);
         }
     }
@@ -415,15 +413,11 @@ ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
 {
     if (ndnrtcInitialized_)
     {
-        if (localStream_)
-            ndnrtc_destroyLocalStream(localStream_);
+        if (stream_)
+            ndnrtc_destroyLocalStream(stream_);
         
         LocalStreamParams params = readStreamParams(inputs);
-        localStream_ = (ndnrtc::LocalVideoStream*)ndnrtc_createLocalStream(params, &NdnrtcStreamLoggingCallback);
-        
-        char prefix[256];
-        ndnrtc_LocalStream_getPrefix(localStream_, prefix);
-        cout << "Stream prefix " << prefix << endl;
+        stream_ = (ndnrtc::LocalVideoStream*)ndnrtc_createLocalStream(params, &NdnrtcStreamLoggingCallback);
         
         free((void*)(params.basePrefix));
         free((void*)(params.streamName));

@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AFE43C82202DDCD200072172"
-               BuildableName = "ndnrtcTOP.plugin"
-               BlueprintName = "ndnrtcTOP"
+               BuildableName = "ndnrtcOut.plugin"
+               BlueprintName = "ndnrtcOut"
                ReferencedContainer = "container:ndnrtcTOP.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -34,8 +34,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AFE43C82202DDCD200072172"
-            BuildableName = "ndnrtcTOP.plugin"
-            BlueprintName = "ndnrtcTOP"
+            BuildableName = "ndnrtcOut.plugin"
+            BlueprintName = "ndnrtcOut"
             ReferencedContainer = "container:ndnrtcTOP.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AFE43C82202DDCD200072172"
-            BuildableName = "ndnrtcTOP.plugin"
-            BlueprintName = "ndnrtcTOP"
+            BuildableName = "ndnrtcOut.plugin"
+            BlueprintName = "ndnrtcOut"
             ReferencedContainer = "container:ndnrtcTOP.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -86,8 +86,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "AFE43C82202DDCD200072172"
-            BuildableName = "ndnrtcTOP.plugin"
-            BlueprintName = "ndnrtcTOP"
+            BuildableName = "ndnrtcOut.plugin"
+            BlueprintName = "ndnrtcOut"
             ReferencedContainer = "container:ndnrtcTOP.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

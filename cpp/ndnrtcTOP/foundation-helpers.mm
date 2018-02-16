@@ -11,11 +11,17 @@
 #include <Foundation/Foundation.h>
 #include <string>
 
+// this dummy class is used only in order to identify plugin bundle
+@interface Dummy : NSObject
+@end
+
+@implementation Dummy
+@end
+
 const char* get_resources_path()
 {
-    NSBundle *bundle;
-    
-    bundle = [NSBundle bundleWithIdentifier: @"edu.ucla.remap.ndnrtcTOP"];
+    NSBundle *bundle = [NSBundle bundleForClass:[Dummy class]];
+
     if (bundle == NULL) {
         return NULL;
     }

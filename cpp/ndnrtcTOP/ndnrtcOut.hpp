@@ -1,5 +1,5 @@
 // 
-// ndnrtcTOP.hpp
+// ndnrtcOut.hpp
 //
 //  Created by Peter Gusev on 09 February 2018.
 //  Copyright 2013-2016 Regents of the University of California
@@ -42,7 +42,7 @@ public:
     virtual void        pulsePressed(const char *name) override;
     
 private:
-    ndnrtc::LocalVideoStream*        localStream_;
+//    ndnrtc::LocalVideoStream*        localStream_;
     
     int                     publbishedFrame_;
     

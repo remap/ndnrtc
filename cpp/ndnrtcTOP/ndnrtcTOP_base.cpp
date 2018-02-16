@@ -27,7 +27,7 @@ using namespace std::placeholders;
 #define PAR_USE_MACOS_KEYCHAIN  "Usemacoskeychain"
 #define PAR_INIT                "Init"
 
-static map<ndnrtcTOPbase*, std::string> TopNames;
+static map<const ndnrtcTOPbase*, std::string> TopNames;
 
 //******************************************************************************
 static void NdnrtcLibraryLoggingCallback(const char* message)
@@ -65,7 +65,6 @@ errorString_(""), warningString_(""),
 statStorage_(nullptr),
 stream_(nullptr)
 {
-    TopNames[this] = generateName();
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()
@@ -273,7 +272,7 @@ ndnrtcTOPbase::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
         }
         else
         {
-            errorString_ = "File-bbased keychain was not found";
+            errorString_ = "File-based keychain was not found";
         }
     }
     catch(std::exception &e)
@@ -292,13 +291,15 @@ ndnrtcTOPbase::deinitNdnrtcLibrary()
 }
 
 std::string
-ndnrtcTOPbase::generateName() const
+ndnrtcTOPbase::generateName(string topBaseName) const
 {
     // TODO make this function smarter, if needed
     int nTOPs = (int)TopNames.size();
     
     stringstream ss;
-    ss << "ndnrtcTOP" << nTOPs;
+    ss << topBaseName << nTOPs;
+
+    TopNames[this] = ss.str();
     
     return ss.str();
 }

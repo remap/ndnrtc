@@ -72,7 +72,7 @@ protected:
     
     virtual void            checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
     void                    libraryLog(const char* msg);
-    std::string             generateName() const;
+    std::string             generateName(std::string) const;
     void                    readStreamStats();
     std::string             readBasePrefix(OP_Inputs* inputs) const;
 };

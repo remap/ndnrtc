@@ -18,7 +18,7 @@
 		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
-		AFE43CA8202E43CC00072172 /* ndnrtcTOP.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */; };
+		AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,7 +67,7 @@
 			dstPath = "${PROJECT_DIR}/${LIBNDNRTC_INSTALL_DIR}";
 			dstSubfolderSpec = 0;
 			files = (
-				AFE43CA8202E43CC00072172 /* ndnrtcTOP.plugin in CopyFiles */,
+				AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,7 +84,7 @@
 		AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub"; sourceTree = "<group>"; };
 		AF9431AC2033A91E0042FB3A /* public-info.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = "public-info.db"; path = "keychain/public-info.db"; sourceTree = "<group>"; };
 		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcTOP.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcOut.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
 		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
@@ -169,7 +169,7 @@
 		AFE43C84202DDCD200072172 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */,
+				AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -240,9 +240,9 @@
 /* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
-		AFE43C82202DDCD200072172 /* ndnrtcTOP */ = {
+		AFE43C82202DDCD200072172 /* ndnrtcOut */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcTOP" */;
+			buildConfigurationList = AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcOut" */;
 			buildPhases = (
 				AFE43C7F202DDCD200072172 /* Sources */,
 				AFE43C80202DDCD200072172 /* Frameworks */,
@@ -256,9 +256,9 @@
 			dependencies = (
 				AFE43C97202E2C5B00072172 /* PBXTargetDependency */,
 			);
-			name = ndnrtcTOP;
+			name = ndnrtcOut;
 			productName = ndnrtcTOP;
-			productReference = AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */;
+			productReference = AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -295,7 +295,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AFE43C82202DDCD200072172 /* ndnrtcTOP */,
+				AFE43C82202DDCD200072172 /* ndnrtcOut */,
 				AFE43C92202E2BAC00072172 /* libndnrtc */,
 				AFE43C9B202E2EE300072172 /* libndnrtc-build */,
 			);
@@ -461,7 +461,7 @@
 					/usr/local/lib,
 					$LIBNDNRTC_INSTALL_DIR/lib,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcTOP;
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = plugin;
@@ -484,7 +484,7 @@
 					/usr/local/lib,
 					$LIBNDNRTC_INSTALL_DIR/lib,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcTOP;
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = plugin;
@@ -553,7 +553,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcTOP" */ = {
+		AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcOut" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AFE43C8A202DDCD200072172 /* Debug */,
