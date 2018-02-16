@@ -13,6 +13,7 @@
 		AF9431B42033AC380042FB3A /* mapping.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
 		AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
@@ -79,6 +80,7 @@
 		AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri"; sourceTree = "<group>"; };
 		AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub"; sourceTree = "<group>"; };
 		AF9431AC2033A91E0042FB3A /* public-info.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = "public-info.db"; path = "keychain/public-info.db"; sourceTree = "<group>"; };
+		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcTOP.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */,
 				AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */,
 				AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */,
 			);
@@ -102,6 +105,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AF889B4720374C9100F36342 /* in */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = in;
+			sourceTree = "<group>";
+		};
+		AF889B4820374CA200F36342 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				AFE43C8C202E239900072172 /* CPlusPlus_Common.h */,
+				AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */,
+				AF9431A02033A5200042FB3A /* foundation-helpers.h */,
+				AF9431A12033A5380042FB3A /* foundation-helpers.mm */,
+			);
+			name = common;
+			sourceTree = "<group>";
+		};
 		AF9431A32033A70A0042FB3A /* res */ = {
 			isa = PBXGroup;
 			children = (
@@ -151,29 +172,28 @@
 		AFE43C85202DDCD200072172 /* ndnrtcTOP */ = {
 			isa = PBXGroup;
 			children = (
+				AF889B4820374CA200F36342 /* common */,
+				AFE43C91202E23A300072172 /* out */,
+				AF889B4720374C9100F36342 /* in */,
 				AF9431A32033A70A0042FB3A /* res */,
-				AFE43C91202E23A300072172 /* src */,
 				AFE43C86202DDCD200072172 /* Info.plist */,
 			);
 			name = ndnrtcTOP;
 			sourceTree = "<group>";
 		};
-		AFE43C91202E23A300072172 /* src */ = {
+		AFE43C91202E23A300072172 /* out */ = {
 			isa = PBXGroup;
 			children = (
-				AFE43C8C202E239900072172 /* CPlusPlus_Common.h */,
 				AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */,
 				AFE43C8F202E239900072172 /* ndnrtcTOP.hpp */,
-				AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */,
-				AF9431A02033A5200042FB3A /* foundation-helpers.h */,
-				AF9431A12033A5380042FB3A /* foundation-helpers.mm */,
 			);
-			name = src;
+			name = out;
 			sourceTree = "<group>";
 		};
 		AFE43C98202E2D9700072172 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF9431BB20357CF20042FB3A /* OpenGL.framework */,
 				AFE43CA5202E330100072172 /* libboost_system.a */,
 				AFE43C99202E2D9700072172 /* libndnrtc.a */,
 			);

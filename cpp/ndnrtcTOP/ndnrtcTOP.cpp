@@ -11,11 +11,17 @@
 #include <string.h>
 #include <assert.h>
 #include <cmath>
+#include <cstring>
+#include <OpenGL/gl3.h>
 
 #include "foundation-helpers.h"
 
+#include <ndnrtc/statistics.hpp>
+
 using namespace std;
 using namespace std::placeholders;
+using namespace ndnrtc;
+using namespace ndnrtc::statistics;
 
 #define PAR_NFD_HOST            "Nfdhost"
 #define PAR_SIGNING_IDENTITY    "Signingidentity"
@@ -36,6 +42,23 @@ using namespace std::placeholders;
 #define PAR_GOPSIZE             "Gopsize"
 
 #define TOUCHDESIGNER_IDENTITY  "/touchdesigner"
+
+#define GetError( )\
+{\
+for ( GLenum Error = glGetError( ); ( GL_NO_ERROR != Error ); Error = glGetError( ) )\
+{\
+switch ( Error )\
+{\
+case GL_INVALID_ENUM:      printf( "\n%s\n\n", "GL_INVALID_ENUM"      ); assert( 1 ); break;\
+case GL_INVALID_VALUE:     printf( "\n%s\n\n", "GL_INVALID_VALUE"     ); assert( 1 ); break;\
+case GL_INVALID_OPERATION: printf( "\n%s\n\n", "GL_INVALID_OPERATION" ); assert( 1 ); break;\
+case GL_OUT_OF_MEMORY:     printf( "\n%s\n\n", "GL_OUT_OF_MEMORY"     ); assert( 1 ); break;\
+default:                                                                              break;\
+}\
+}\
+}
+
+static map<ndnrtcTOP*, std::string> TopNames;
 
 // These functions are basic C function, which the DLL loader can find
 // much easier than finding a C++ Class.
@@ -80,21 +103,73 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 };
 
 //******************************************************************************
-static void NdnrtcLoggingCallback(const char* message)
+static void NdnrtcLibraryLoggingCallback(const char* message)
 {
-    std::cout << "[ndnrtc] " << message << endl;
+    std::cout << "[ndnrtc-library] " << message << endl;
+}
+
+static void NdnrtcStreamLoggingCallback(const char* message)
+{
+    std::cout << "[ndnrtc-stream] " << message << endl;
 }
 
 //******************************************************************************
-ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) : myNodeInfo(info)
+/**
+ * This enum identifies output DAT's different fields
+ * The output DAT is a table that contains two
+ * columns: name (identified by this enum) and value
+ * (either float or string)
+ */
+enum class InfoDatIndex {
+    LibVersion,
+    StreamPrefix,
+    StreamName,
+    StreamBasePrefix
+};
+
+/**
+ * This enum identifies output DAT's different fields
+ * The output DAT is a table that contains two
+ * columns : name(identified by this enum) and value
+ * (either float or string)
+ */
+enum class InfoChopIndex {
+    PublishedFrame
+};
+/**
+ * This maps output DAT's field onto their textual representation
+ * (table caption)
+ */
+static std::map<InfoDatIndex, std::string> RowNames = {
+    { InfoDatIndex::LibVersion, "Lirary Version" },
+    { InfoDatIndex::StreamPrefix, "Stream Prefix" },
+    { InfoDatIndex::StreamName, "Stream Name" },
+    { InfoDatIndex::StreamBasePrefix, "Base Prefix" }
+};
+
+/**
+ * This maps output CHOP's channel names
+ */
+static std::map<InfoChopIndex, std::string> ChanNames = {
+    { InfoChopIndex::PublishedFrame, "publishedFrame" }
+};
+
+//******************************************************************************
+ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) : myNodeInfo(info),
+incomingFrameBuffer_(nullptr),
+incomingFrameWidth_(0), incomingFrameHeight_(0),
+localStream_(nullptr),
+statStorage_(StatisticsStorage::createProducerStatistics()),
+errorString_(""), warningString_("")
 {
-	myExecuteCount = 0;
-	myStep = 0.0;
+    TopNames[this] = generateName();
 }
 
 ndnrtcTOP::~ndnrtcTOP()
 {
     deinitNdnrtcLibrary();
+    TopNames.erase(this);
+    delete statStorage_;
 }
 
 void
@@ -103,7 +178,7 @@ ndnrtcTOP::getGeneralInfo(TOP_GeneralInfo* ginfo)
 	// Uncomment this line if you want the TOP to cook every frame even
 	// if none of it's inputs/parameters are changing.
 	ginfo->cookEveryFrame = false;
-    ginfo->memPixelType = OP_CPUMemPixelType::RGBA32Float;
+    ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
 }
 
 bool
@@ -123,86 +198,116 @@ ndnrtcTOP::execute(const TOP_OutputFormatSpecs* outputFormat,
 						TOP_Context *context)
 {
     checkInputs(outputFormat, inputs, context);
-    
-    while (executeQueue_.size())
-    {
-        executeQueue_.front()(outputFormat, inputs, context);
-        executeQueue_.pop();
+ 
+    try {
+        while (executeQueue_.size())
+        {
+            executeQueue_.front()(outputFormat, inputs, context);
+            executeQueue_.pop();
+        }
+    } catch (exception& e) {
+        executeQueue_.pop(); // just throw this naughty block away
+        NdnrtcLibraryLoggingCallback((string(string("Exception caught: ")+e.what())).c_str());
+        errorString_ = e.what();
     }
     
-	myExecuteCount++;
-
-    double speed = 1; //inputs->getParDouble("Speed");
-	myStep += speed;
-
-    float brightness = 1; //(float)inputs->getParDouble("Brightness");
-
-	int xstep = (int)(fmod(myStep, outputFormat->width));
-	int ystep = (int)(fmod(myStep, outputFormat->height));
-
-	if (xstep < 0)
-		xstep += outputFormat->width;
-
-	if (ystep < 0)
-		ystep += outputFormat->height;
-
-
-    int textureMemoryLocation = 0;
-
-    float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
-
-    for (int y = 0; y < outputFormat->height; ++y)
+    int nInputs = inputs->getNumInputs();
+    
+    if (nInputs)
     {
-        for (int x = 0; x < outputFormat->width; ++x)
+        const OP_TOPInput* topInput = inputs->getInputTOP(0);
+        
+        if (topInput && localStream_)
         {
-            float* pixel = &mem[4*(y*outputFormat->width + x)];
-
-			// RGBA
-            pixel[0] = (x > xstep) * brightness;
-            pixel[1] = (y > ystep) * brightness;
-            pixel[2] = ((float) (xstep % 50) / 50.0f) * brightness;
-            pixel[3] = 1;
+            glBindTexture(GL_TEXTURE_2D, topInput->textureIndex);
+            GetError()
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, incomingFrameBuffer_);
+            GetError();
+            
+            // convert RGBA -> ARGB
+            for (int i = 0; i < incomingFrameBufferSize_/4; ++i)
+            {
+                // little endian on mac
+                // incomingFrameBuffer_[0] [1] [2] [3]
+                //                      r   g   b   a
+                // if read as int32 -> 0xabgr
+                //
+                // need to be stored as
+                // incomingFrameBuffer_[0] [1] [2] [3]
+                //                      a   r   g   b
+                // which is as int32 -> 0xbgra
+                //
+                // in other words, need to convert one int32 (0xabgr)
+                // into another int32 (0xbgra)
+                
+                int idx = i*4;
+#if 1
+                unsigned char a = incomingFrameBuffer_[idx+3];
+                for (int j = 3; j > 0; j--)
+                    incomingFrameBuffer_[idx+j] = incomingFrameBuffer_[idx+j-1];
+                incomingFrameBuffer_[idx] = a;
+#else
+                // this code does not work, i can't figure out why
+                int32_t rgba = *(int32_t*)&(incomingFrameBuffer_[idx]);
+                int32_t argb = (rgba >> 24 | rgba << 8);
+                *((int32_t*)&incomingFrameBuffer_[idx]) = argb;
+#endif
+            }
+            
+            publbishedFrame_ = ndnrtc_LocalVideoStream_incomingArgbFrame(localStream_,
+                                                                    topInput->width, topInput->height,
+                                                                    incomingFrameBuffer_, incomingFrameBufferSize_);
         }
     }
-
-    outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
-    textureMemoryLocation = !textureMemoryLocation;
 }
 
 int32_t
 ndnrtcTOP::getNumInfoCHOPChans()
 {
-	// We return the number of channel we want to output to any Info CHOP
-	// connected to the TOP. In this example we are just going to send one channel.
-	return 2;
+	return (int32_t)ChanNames.size() + (int32_t)statStorage_->getIndicators().size();
 }
 
 void
 ndnrtcTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
 {
-	// This function will be called once for each channel we said we'd want to return
-	// In this example it'll only be called once.
-
-	if (index == 0)
-	{
-		chan->name = "executeCount";
-		chan->value = (float)myExecuteCount;
-	}
-
-	if (index == 1)
-	{
-		chan->name = "step";
-		chan->value = (float)myStep;
-	}
+    InfoChopIndex idx = (InfoChopIndex)index;
+    
+    if (ChanNames.find(idx) != ChanNames.end())
+    {
+        switch (idx) {
+            case InfoChopIndex::PublishedFrame:
+            {
+                chan->name = ChanNames[idx].c_str();
+                chan->value = (float)publbishedFrame_;
+            }
+                break;
+            default:
+                break;
+        }
+    }
+    else
+    { // print statistics
+        readStreamStats();
+        
+        int statIdx = ((int)idx - (int)ChanNames.size());
+        int idx = 0;
+        for (auto pair:statStorage_->getIndicators())
+        {
+            if (idx == statIdx)
+            {
+                chan->name = StatisticsStorage::IndicatorKeywords.at(pair.first).c_str();
+                chan->value = (float)pair.second;
+            }
+            idx++;
+        }
+    }
 }
 
 bool		
 ndnrtcTOP::getInfoDATSize(OP_InfoDATSize* infoSize)
 {
-	infoSize->rows = 2;
+	infoSize->rows = (int)RowNames.size();
 	infoSize->cols = 2;
-	// Setting this to false means we'll be assigning values to the table
-	// one row at a time. True means we'll do it one column at a time.
 	infoSize->byColumn = false;
 	return true;
 }
@@ -217,43 +322,44 @@ ndnrtcTOP::getInfoDATEntries(int32_t index,
 	// (so the buffers can be reuse for each column/row)
 	static char tempBuffer1[4096];
 	static char tempBuffer2[4096];
+    memset(tempBuffer1, 0, 4096);
+    memset(tempBuffer2, 0, 4096);
+    
+    InfoDatIndex idx = (InfoDatIndex)index;
 
-	if (index == 0)
-	{
-        // Set the value for the first column
-#ifdef WIN32
-        strcpy_s(tempBuffer1, "executeCount");
-#else // macOS
-        strlcpy(tempBuffer1, "executeCount", sizeof(tempBuffer1));
-#endif
+    if (RowNames.find(idx) != RowNames.end())
+    {
+        strcpy(tempBuffer1, RowNames[idx].c_str());
+        
+        switch (idx) {
+            case InfoDatIndex::LibVersion:
+            {
+                const char *ndnrtcLibVersion = ndnrtc_lib_version();
+                snprintf(tempBuffer2, strlen(ndnrtcLibVersion), "%s", ndnrtcLibVersion);
+            }
+                break;
+            case InfoDatIndex::StreamPrefix:
+            {
+                ndnrtc_LocalStream_getPrefix(localStream_, tempBuffer2);
+            }
+                break;
+            case InfoDatIndex::StreamName:
+            {
+                ndnrtc_LocalStream_getStreamName(localStream_, tempBuffer2);
+            }
+                break;
+            case InfoDatIndex::StreamBasePrefix:
+            {
+                ndnrtc_LocalStream_getBasePrefix(localStream_, tempBuffer2);
+            }
+                break;
+            default:
+                break;
+        }
+        
         entries->values[0] = tempBuffer1;
-
-        // Set the value for the second column
-#ifdef WIN32
-        sprintf_s(tempBuffer2, "%d", myExecuteCount);
-#else // macOS
-        snprintf(tempBuffer2, sizeof(tempBuffer2), "%d", myExecuteCount);
-#endif
         entries->values[1] = tempBuffer2;
-	}
-
-	if (index == 1)
-	{
-#ifdef WIN32
-		strcpy_s(tempBuffer1, "step");
-#else // macOS
-        strlcpy(tempBuffer1, "ndnrtc lib version", sizeof(tempBuffer1));
-#endif
-		entries->values[0] = tempBuffer1;
-
-#ifdef WIN32
-		sprintf_s(tempBuffer2, "%g", myStep);
-#else // macOS
-        const char *ndnrtcLibVersion = ndnrtc_lib_version();
-        snprintf(tempBuffer2, strlen(ndnrtcLibVersion), "%s", ndnrtcLibVersion);
-#endif
-		entries->values[1] = tempBuffer2;
-	}
+    }
 }
 
 void
@@ -273,7 +379,7 @@ ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
         signingIdentity.page = "Lib Config";
 
         instanceName.label = "Instance name";
-        instanceName.defaultValue = "ndnrtcTOP0";
+        instanceName.defaultValue = TopNames[this].c_str();
         instanceName.page = "Lib Config";
         
         useMacOsKeyChain.label = "Use System KeyChain";
@@ -300,13 +406,9 @@ ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
         assert(res == OP_ParAppendResult::Success);
     }
     {
-        OP_StringParameter basePrefix(PAR_BASE_PREFIX), streamName(PAR_STREAM_NAME);
+        OP_StringParameter streamName(PAR_STREAM_NAME);
         OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE), encodeWidth(PAR_ENCODE_WIDTH),
                             encodeHeight(PAR_ENCODE_HEIGHT);
-        
-        basePrefix.label = "Base prefix";
-        basePrefix.defaultValue = "/touch/ndnrtc";
-        basePrefix.page = "Stream Config";
         
         streamName.label = "Stream Name";
         streamName.defaultValue = "video1";
@@ -330,9 +432,7 @@ ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
         encodeHeight.minSliders[0] = 180;
         encodeHeight.maxSliders[0] = 2160;
         
-        OP_ParAppendResult res = manager->appendString(basePrefix);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendString(streamName);
+        OP_ParAppendResult res = manager->appendString(streamName);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendInt(targetBitrate);
         assert(res == OP_ParAppendResult::Success);
@@ -405,11 +505,28 @@ ndnrtcTOP::pulsePressed(const char* name)
 	if (!strcmp(name, "Init"))
 	{
         executeQueue_.push(bind(&ndnrtcTOP::initNdnrtcLibrary, this, _1, _2, _3));
+        executeQueue_.push(bind(&ndnrtcTOP::createLocalStream, this, _1, _2, _3));
 	}
 }
 
 //******************************************************************************
 #pragma mark private
+const char*
+ndnrtcTOP::getWarningString()
+{
+    if (warningString_.size())
+        return warningString_.c_str();
+    return nullptr;
+}
+
+const char *
+ndnrtcTOP::getErrorString()
+{
+    if (errorString_.size())
+        return errorString_.c_str();
+    return nullptr;
+}
+
 void
 ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                        OP_Inputs* inputs,
@@ -417,6 +534,14 @@ ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
 {
     bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
     inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+    
+    if (inputs->getNumInputs())
+    {
+        const OP_TOPInput *topInput = inputs->getInputTOP(0);
+        if (topInput)
+            if (topInput->width != incomingFrameWidth_ || topInput->height != incomingFrameHeight_)
+                allocateIncomingFramebuffer(topInput->width, topInput->height);
+    }
 }
 
 void
@@ -425,9 +550,7 @@ ndnrtcTOP::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
                              TOP_Context *context)
 {
     if (ndnrtcInitialized_)
-    {
         ndnrtc_deinit();
-    }
     
     std::string hostname(inputs->getParString(PAR_NFD_HOST));
     std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
@@ -436,10 +559,12 @@ ndnrtcTOP::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
     
     try
     {
+        errorString_ = "";
+        
         if (useMacOsKeyChain)
             ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), nullptr,
                                              signingIdentity.c_str(), instanceName.c_str(),
-                                             &NdnrtcLoggingCallback);
+                                             &NdnrtcLibraryLoggingCallback);
         else if (get_resources_path())
         {
             inputs->enablePar(PAR_SIGNING_IDENTITY, false);
@@ -447,18 +572,20 @@ ndnrtcTOP::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
             string keyChainPath = string(get_resources_path())+"/keychain";
             ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), keyChainPath.c_str(),
                                              TOUCHDESIGNER_IDENTITY, instanceName.c_str(),
-                                             &NdnrtcLoggingCallback);
+                                             &NdnrtcLibraryLoggingCallback);
         }
         else
         {
-            // TODO report error!
-            cout << "error: file-bbased keychain was not found" << endl;
+            errorString_ = "File-bbased keychain was not found";
         }
     }
     catch(std::exception &e)
     {
-        cout << "Error initializing library: " << e.what() << endl;
+        errorString_ = string("Error initializing library: ") + e.what();
     }
+    
+    if (!ndnrtcInitialized_)
+        errorString_ = "Failed to initialize library: check NFD is running";
 }
 
 void
@@ -467,10 +594,82 @@ ndnrtcTOP::deinitNdnrtcLibrary()
     ndnrtc_deinit();
 }
 
+void
+ndnrtcTOP::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
+                             OP_Inputs *inputs,
+                             TOP_Context *context)
+{
+    if (ndnrtcInitialized_)
+    {
+        if (localStream_)
+            ndnrtc_destroyLocalStream(localStream_);
+        
+        LocalStreamParams params = readStreamParams(inputs);
+        localStream_ = (ndnrtc::LocalVideoStream*)ndnrtc_createLocalStream(params, &NdnrtcStreamLoggingCallback);
+        
+        char prefix[256];
+        ndnrtc_LocalStream_getPrefix(localStream_, prefix);
+        cout << "Stream prefix " << prefix << endl;
+        
+        free((void*)(params.basePrefix));
+        free((void*)(params.streamName));
+        free((void*)(params.threadName));
+    }
+}
+
 LocalStreamParams
-ndnrtcTOP::readStreamParams() const
+ndnrtcTOP::readStreamParams(OP_Inputs* inputs) const
 {
     LocalStreamParams p;
+
+    stringstream basePrefix;
+    basePrefix << inputs->getParString(PAR_SIGNING_IDENTITY) << "/"
+        << inputs->getParString(PAR_INSTANCE_NAME);
+    p.basePrefix = (const char*)malloc(basePrefix.str().size()+1);
+    strcpy((char*)p.basePrefix, basePrefix.str().c_str());
+    p.streamName = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_NAME))+1);
+    strcpy((char*)p.streamName, inputs->getParString(PAR_STREAM_NAME));
+    p.threadName = (const char*)malloc(strlen(inputs->getParString(PAR_THREAD_NAME))+1);
+    strcpy((char*)p.threadName, inputs->getParString(PAR_THREAD_NAME));
+    
+    p.signingOn = inputs->getParInt(PAR_SIGNING);
+    p.fecOn = inputs->getParInt(PAR_FEC);
+    p.typeIsVideo = 1;
+    p.ndnSegmentSize = inputs->getParInt(PAR_SEGSIZE);
+    p.ndnDataFreshnessPeriodMs = inputs->getParInt(PAR_FRESHNESS);
+    p.frameWidth = inputs->getParInt(PAR_ENCODE_WIDTH);
+    p.frameHeight = inputs->getParInt(PAR_ENCODE_HEIGHT);
+    p.startBitrate = inputs->getParInt(PAR_TARGET_BITRATE);
+    p.maxBitrate = p.startBitrate;
+    p.gop = inputs->getParInt(PAR_GOPSIZE);
+    p.dropFrames = inputs->getParInt(PAR_FRAMEDROP);
     
     return p;
+}
+
+std::string
+ndnrtcTOP::generateName() const
+{
+    // TODO make this function smarter, if needed
+    int nTOPs = (int)TopNames.size();
+    
+    stringstream ss;
+    ss << "ndnrtcTOP" << nTOPs;
+    
+    return ss.str();
+}
+
+void
+ndnrtcTOP::allocateIncomingFramebuffer(int w, int h)
+{
+    incomingFrameBufferSize_ = w*h*4*sizeof(unsigned char);
+    incomingFrameBuffer_ = (unsigned char*)realloc(incomingFrameBuffer_, incomingFrameBufferSize_);
+    memset(incomingFrameBuffer_, 0, incomingFrameBufferSize_);
+}
+
+void
+ndnrtcTOP::readStreamStats()
+{
+    if (localStream_)
+        *statStorage_ = localStream_->getStatistics();
 }

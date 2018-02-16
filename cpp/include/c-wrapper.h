@@ -95,9 +95,9 @@ extern "C" {
 			unsigned char* argbFrameData,
 			unsigned int frameSize);
 
-	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
-	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
-	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);
+	void ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *, char *);
+	void ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *, char*);
+	void ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *, char*);
 }
 
 #endif

@@ -237,6 +237,7 @@ boost::assign::map_list_of
 (Indicator::ProcessedNum, "framesProcessed")
 (Indicator::PublishedNum, "framesPub")
 (Indicator::PublishedKeyNum, "framesPubKey")
+(Indicator::InterestsReceivedNum, "interestsReceivedNum")
 (Indicator::SignNum, "signNum")
 // encoder
 (Indicator::EncodedNum, "framesEncoded")

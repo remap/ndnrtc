@@ -200,25 +200,24 @@ void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
 		delete localStreamObject;
 }
 
-const char* ndnrtc_LocalStream_getPrefix(IStream *stream)
+// const char* ndnrtc_LocalStream_getPrefix(IStream *stream)
+void ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream, char *prefix)
 {
 	if (stream)
-		return stream->getPrefix().c_str();
-	return "n/a";
+		strcpy(prefix, stream->getPrefix().c_str());
 }
 
-const char* ndnrtc_LocalStream_getBasePrefix(IStream *stream)
+
+void ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream, char* basePrefix)
 {
 	if (stream)
-		return stream->getBasePrefix().c_str();
-	return "n/a";
+		strcpy(basePrefix, stream->getBasePrefix().c_str());
 }
 
-const char* ndnrtc_LocalStream_getStreamName(IStream *stream)
+void ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream, char* streamName)
 {
 	if (stream)
-		return stream->getStreamName().c_str();
-	return "n/a";
+		strcpy(streamName, stream->getStreamName().c_str());
 }
 
 int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
@@ -300,11 +299,14 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		logger);
 
 	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
+		std::cout << "will log" << std::endl;
 		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
 			<< LibKeyChainManager->signingIdentityCertificate()->getName() << std::endl;
 
+		std::cout << "will set command signing info" << std::endl;
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->signingIdentityCertificate()->getName());
+		std::cout << "will create mem cache" << std::endl;
 		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
 	});
 

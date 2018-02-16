@@ -11,8 +11,15 @@
 #include <string>
 #include <queue>
 #include <functional>
-
 #include <ndnrtc/c-wrapper.h>
+
+namespace ndnrtc {
+    class LocalVideoStream;
+    
+    namespace statistics {
+        class StatisticsStorage;
+    }
+}
 
 class ndnrtcTOP : public TOP_CPlusPlusBase
 {
@@ -40,6 +47,9 @@ public:
 
 	virtual void		setupParameters(OP_ParameterManager *manager) override;
 	virtual void		pulsePressed(const char *name) override;
+    
+    const char*         getWarningString() override;
+    const char*         getErrorString() override;
 
 private:
 
@@ -56,26 +66,24 @@ private:
     std::queue<ExecuteCallback> executeQueue_;
     
     bool                    ndnrtcInitialized_;
-    LocalStreamParams       streamParams_;
+    std::string             errorString_, warningString_;
     
-    // NDN-RTC specific parameters
-    static std::string      nfdHostname_, signingIdentity_;
-    std::string             basePrefix_, streamName_, threadName_;
+    ndnrtc::LocalVideoStream*        localStream_;
+    ndnrtc::statistics::StatisticsStorage*  statStorage_;
     
-    bool                    signingOn_, fecOn_, canDropFrames_;
-    int                     segmentSizeBytes_, freshnessPeriodMs_;
-    int                     encodeWidth_, encodeHeight_;
-    int                     targetBitrate_, gopSize_;
+    int                     publbishedFrame_;
     
-    // In this example this value will be incremented each time the execute()
-    // function is called, then passes back to the TOP 
-    int						 myExecuteCount;
-
-	double					 myStep;
+    int                     incomingFrameBufferSize_, incomingFrameWidth_, incomingFrameHeight_;
+    unsigned char*          incomingFrameBuffer_;
     
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
     void                    initNdnrtcLibrary(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
     void                    deinitNdnrtcLibrary();
-    void                    createLocalStream();
-    LocalStreamParams       readStreamParams() const;
+    void                    createLocalStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
+    LocalStreamParams       readStreamParams(OP_Inputs*) const;
+    
+    std::string             generateName() const;
+    void                    allocateIncomingFramebuffer(int w, int h);
+    void                    readStreamStats();
+    
 };
