@@ -5,7 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include "ndnrtcTOP.hpp"
+#include "ndnrtcOut.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -78,7 +78,7 @@ CreateTOPInstance(const OP_NodeInfo* info, TOP_Context* context)
 {
 	// Return a new instance of your class every time this is called.
 	// It will be called once per TOP that is using the .dll
-	return new ndnrtcTOP(info);
+	return new ndnrtcOut(info);
 }
 
 DLLEXPORT
@@ -88,7 +88,7 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 	// Delete the instance here, this will be called when
 	// Touch is shutting down, when the TOP using that instance is deleted, or
 	// if the TOP loads a different DLL
-	delete (ndnrtcTOP*)instance;
+	delete (ndnrtcOut*)instance;
 }
 
 };
@@ -132,7 +132,7 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
 };
 
 //******************************************************************************
-ndnrtcTOP::ndnrtcTOP(const OP_NodeInfo* info) :
+ndnrtcOut::ndnrtcOut(const OP_NodeInfo* info) :
 ndnrtcTOPbase(info),
 incomingFrameBuffer_(nullptr),
 incomingFrameWidth_(0), incomingFrameHeight_(0),
@@ -141,12 +141,12 @@ localStream_(nullptr)
     statStorage_ = StatisticsStorage::createProducerStatistics();
 }
 
-ndnrtcTOP::~ndnrtcTOP()
+ndnrtcOut::~ndnrtcOut()
 {
 }
 
 void
-ndnrtcTOP::getGeneralInfo(TOP_GeneralInfo* ginfo)
+ndnrtcOut::getGeneralInfo(TOP_GeneralInfo* ginfo)
 {
 	// Uncomment this line if you want the TOP to cook every frame even
 	// if none of it's inputs/parameters are changing.
@@ -155,7 +155,7 @@ ndnrtcTOP::getGeneralInfo(TOP_GeneralInfo* ginfo)
 }
 
 bool
-ndnrtcTOP::getOutputFormat(TOP_OutputFormat* format)
+ndnrtcOut::getOutputFormat(TOP_OutputFormat* format)
 {
 	// In this function we could assign variable values to 'format' to specify
 	// the pixel format/resolution etc that we want to output to.
@@ -166,7 +166,7 @@ ndnrtcTOP::getOutputFormat(TOP_OutputFormat* format)
 }
 
 void
-ndnrtcTOP::execute(const TOP_OutputFormatSpecs* outputFormat,
+ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
 						OP_Inputs* inputs,
 						TOP_Context *context)
 {
@@ -223,13 +223,13 @@ ndnrtcTOP::execute(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 int32_t
-ndnrtcTOP::getNumInfoCHOPChans()
+ndnrtcOut::getNumInfoCHOPChans()
 {
 	return (int32_t)ChanNames.size() + (int32_t)statStorage_->getIndicators().size();
 }
 
 void
-ndnrtcTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
+ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
 {
     InfoChopIndex idx = (InfoChopIndex)index;
     
@@ -265,7 +265,7 @@ ndnrtcTOP::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
 }
 
 bool
-ndnrtcTOP::getInfoDATSize(OP_InfoDATSize* infoSize)
+ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize)
 {
     return ndnrtcTOPbase::getInfoDATSize(infoSize);
 }
@@ -273,7 +273,7 @@ ndnrtcTOP::getInfoDATSize(OP_InfoDATSize* infoSize)
 
 
 void
-ndnrtcTOP::getInfoDATEntries(int32_t index,
+ndnrtcOut::getInfoDATEntries(int32_t index,
                                  int32_t nEntries,
                                  OP_InfoDATEntries* entries)
 {
@@ -281,7 +281,7 @@ ndnrtcTOP::getInfoDATEntries(int32_t index,
 }
 
 void
-ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
+ndnrtcOut::setupParameters(OP_ParameterManager* manager)
 {
     ndnrtcTOPbase::setupParameters(manager);
     
@@ -380,20 +380,20 @@ ndnrtcTOP::setupParameters(OP_ParameterManager* manager)
 }
 
 void
-ndnrtcTOP::pulsePressed(const char* name)
+ndnrtcOut::pulsePressed(const char* name)
 {
     ndnrtcTOPbase::pulsePressed(name);
     
 	if (!strcmp(name, "Init"))
 	{
-        executeQueue_.push(bind(&ndnrtcTOP::createLocalStream, this, _1, _2, _3));
+        executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
 	}
 }
 
 //******************************************************************************
 #pragma mark private
 void
-ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
+ndnrtcOut::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                        OP_Inputs* inputs,
                        TOP_Context *context)
 {
@@ -409,7 +409,7 @@ ndnrtcTOP::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-ndnrtcTOP::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
+ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
                              OP_Inputs *inputs,
                              TOP_Context *context)
 {
@@ -432,7 +432,7 @@ ndnrtcTOP::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
 }
 
 LocalStreamParams
-ndnrtcTOP::readStreamParams(OP_Inputs* inputs) const
+ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
 {
     LocalStreamParams p;
 
@@ -460,7 +460,7 @@ ndnrtcTOP::readStreamParams(OP_Inputs* inputs) const
 }
 
 void
-ndnrtcTOP::allocateIncomingFramebuffer(int w, int h)
+ndnrtcOut::allocateIncomingFramebuffer(int w, int h)
 {
     incomingFrameBufferSize_ = w*h*4*sizeof(unsigned char);
     incomingFrameBuffer_ = (unsigned char*)realloc(incomingFrameBuffer_, incomingFrameBufferSize_);

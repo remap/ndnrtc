@@ -15,7 +15,7 @@
 		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
-		AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */; };
+		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
 		AFE43CA8202E43CC00072172 /* ndnrtcTOP.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */; };
@@ -87,9 +87,9 @@
 		AFE43C83202DDCD200072172 /* ndnrtcTOP.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcTOP.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
-		AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcTOP.cpp; sourceTree = "<group>"; };
+		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
 		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
-		AFE43C8F202E239900072172 /* ndnrtcTOP.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcTOP.hpp; sourceTree = "<group>"; };
+		AFE43C8F202E239900072172 /* ndnrtcOut.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcOut.hpp; sourceTree = "<group>"; };
 		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../.libs/libndnrtc.a; sourceTree = "<group>"; };
 		AFE43CA5202E330100072172 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = /usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -189,8 +189,8 @@
 		AFE43C91202E23A300072172 /* out */ = {
 			isa = PBXGroup;
 			children = (
-				AFE43C8D202E239900072172 /* ndnrtcTOP.cpp */,
-				AFE43C8F202E239900072172 /* ndnrtcTOP.hpp */,
+				AFE43C8D202E239900072172 /* ndnrtcOut.cpp */,
+				AFE43C8F202E239900072172 /* ndnrtcOut.hpp */,
 			);
 			name = out;
 			sourceTree = "<group>";
@@ -319,7 +319,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */,
-				AFE43C90202E239900072172 /* ndnrtcTOP.cpp in Sources */,
+				AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */,
 				AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

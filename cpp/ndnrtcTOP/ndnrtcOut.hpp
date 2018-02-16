@@ -16,11 +16,11 @@ namespace ndnrtc {
     }
 }
 
-class ndnrtcTOP : public ndnrtcTOPbase
+class ndnrtcOut : public ndnrtcTOPbase
 {
 public:
-    ndnrtcTOP(const OP_NodeInfo *info);
-    virtual ~ndnrtcTOP();
+    ndnrtcOut(const OP_NodeInfo *info);
+    virtual ~ndnrtcOut();
     
     virtual void        getGeneralInfo(TOP_GeneralInfo *) override;
     virtual bool        getOutputFormat(TOP_OutputFormat*) override;
