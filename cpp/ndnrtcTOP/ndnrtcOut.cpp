@@ -2,7 +2,7 @@
 // ndnrtcOut.cpp
 //
 //  Created by Peter Gusev on 09 February 2018.
-//  Copyright 2013-2016 Regents of the University of California
+//  Copyright 2013-2018 Regents of the University of California
 //
 
 #include "ndnrtcOut.hpp"
@@ -21,7 +21,6 @@ using namespace std::placeholders;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-#define PAR_BASE_PREFIX         "Baseprefix"
 #define PAR_STREAM_NAME         "Streamname"
 #define PAR_TARGET_BITRATE      "Targetbitrate"
 #define PAR_ENCODE_WIDTH        "Encodewidth"
@@ -100,19 +99,6 @@ static void NdnrtcStreamLoggingCallback(const char* message)
 }
 
 //******************************************************************************
-///**
-// * This enum identifies output DAT's different fields
-// * The output DAT is a table that contains two
-// * columns: name (identified by this enum) and value
-// * (either float or string)
-// */
-//enum class InfoDatIndex {
-//    LibVersion,
-//    StreamPrefix,
-//    StreamName,
-//    StreamBasePrefix
-//};
-
 /**
  * This enum identifies output DAT's different fields
  * The output DAT is a table that contains two

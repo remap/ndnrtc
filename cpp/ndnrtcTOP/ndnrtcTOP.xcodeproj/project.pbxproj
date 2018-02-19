@@ -7,7 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF2B18FC203AEEE800FE272A /* policy.conf in Resources */ = {isa = PBXBuildFile; fileRef = AF2B18FB203AEEE800FE272A /* policy.conf */; };
+		AF2B18FD203AEEE800FE272A /* policy.conf in Resources */ = {isa = PBXBuildFile; fileRef = AF2B18FB203AEEE800FE272A /* policy.conf */; };
 		AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
+		AF889B502037733900F36342 /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
+		AF889B522037733900F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
+		AF889B542037733900F36342 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
+		AF889B552037733900F36342 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
+		AF889B562037733900F36342 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
+		AF889B582037733900F36342 /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
+		AF889B5A2037733900F36342 /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF889B5C2037733900F36342 /* mapping.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF889B5D2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF889B5E2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF889B642037733900F36342 /* ndnrtcIn.plugin */; };
+		AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B67203773FF00F36342 /* ndnrtcIn.cpp */; };
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -22,6 +36,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AF889B4E2037733900F36342 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C92202E2BAC00072172;
+			remoteInfo = libndnrtc;
+		};
 		AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
@@ -39,6 +60,38 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		AF889B592037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain;
+			dstSubfolderSpec = 7;
+			files = (
+				AF889B5A2037733900F36342 /* public-info.db in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF889B5B2037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain/keys;
+			dstSubfolderSpec = 7;
+			files = (
+				AF889B5C2037733900F36342 /* mapping.txt in CopyFiles */,
+				AF889B5D2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */,
+				AF889B5E2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF889B5F2037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${PROJECT_DIR}/${LIBNDNRTC_INSTALL_DIR}";
+			dstSubfolderSpec = 0;
+			files = (
+				AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF9431B12033ABDC0042FB3A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -74,8 +127,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AF2B18FB203AEEE800FE272A /* policy.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = policy.conf; sourceTree = "<group>"; };
 		AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcTOP_base.cpp; sourceTree = "<group>"; };
 		AF889B4A20374DA700F36342 /* ndnrtcTOP_base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcTOP_base.hpp; sourceTree = "<group>"; };
+		AF889B642037733900F36342 /* ndnrtcIn.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcIn.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF889B652037733900F36342 /* ndnrtcIn-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "ndnrtcIn-Info.plist"; path = "/Users/peetonn/Documents/Work/ndnrtc-build/ndnrtc/cpp/ndnrtcTOP/ndnrtcIn-Info.plist"; sourceTree = "<absolute>"; };
+		AF889B67203773FF00F36342 /* ndnrtcIn.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcIn.cpp; sourceTree = "<group>"; };
+		AF889B68203773FF00F36342 /* ndnrtcIn.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcIn.hpp; sourceTree = "<group>"; };
 		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
 		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
 		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
@@ -85,7 +143,7 @@
 		AF9431AC2033A91E0042FB3A /* public-info.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = "public-info.db"; path = "keychain/public-info.db"; sourceTree = "<group>"; };
 		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcOut.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
-		AFE43C86202DDCD200072172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ndnrtcOut-Info.plist"; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
 		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
 		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
@@ -95,6 +153,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AF889B532037733900F36342 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B542037733900F36342 /* OpenGL.framework in Frameworks */,
+				AF889B552037733900F36342 /* libboost_system.a in Frameworks */,
+				AF889B562037733900F36342 /* libndnrtc.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFE43C80202DDCD200072172 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -111,6 +179,9 @@
 		AF889B4720374C9100F36342 /* in */ = {
 			isa = PBXGroup;
 			children = (
+				AF889B652037733900F36342 /* ndnrtcIn-Info.plist */,
+				AF889B67203773FF00F36342 /* ndnrtcIn.cpp */,
+				AF889B68203773FF00F36342 /* ndnrtcIn.hpp */,
 			);
 			name = in;
 			sourceTree = "<group>";
@@ -131,6 +202,7 @@
 		AF9431A32033A70A0042FB3A /* res */ = {
 			isa = PBXGroup;
 			children = (
+				AF2B18FB203AEEE800FE272A /* policy.conf */,
 				AF9431A72033A9110042FB3A /* keychain */,
 				AF9431A42033A71C0042FB3A /* touchdesigner.cert */,
 			);
@@ -170,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */,
+				AF889B642037733900F36342 /* ndnrtcIn.plugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -181,7 +254,6 @@
 				AFE43C91202E23A300072172 /* out */,
 				AF889B4720374C9100F36342 /* in */,
 				AF9431A32033A70A0042FB3A /* res */,
-				AFE43C86202DDCD200072172 /* Info.plist */,
 			);
 			name = ndnrtcTOP;
 			sourceTree = "<group>";
@@ -189,6 +261,7 @@
 		AFE43C91202E23A300072172 /* out */ = {
 			isa = PBXGroup;
 			children = (
+				AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */,
 				AFE43C8D202E239900072172 /* ndnrtcOut.cpp */,
 				AFE43C8F202E239900072172 /* ndnrtcOut.hpp */,
 			);
@@ -240,6 +313,27 @@
 /* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
+		AF889B4C2037733900F36342 /* ndnrtcIn */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF889B612037733900F36342 /* Build configuration list for PBXNativeTarget "ndnrtcIn" */;
+			buildPhases = (
+				AF889B4F2037733900F36342 /* Sources */,
+				AF889B532037733900F36342 /* Frameworks */,
+				AF889B572037733900F36342 /* Resources */,
+				AF889B592037733900F36342 /* CopyFiles */,
+				AF889B5B2037733900F36342 /* CopyFiles */,
+				AF889B5F2037733900F36342 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF889B4D2037733900F36342 /* PBXTargetDependency */,
+			);
+			name = ndnrtcIn;
+			productName = ndnrtcTOP;
+			productReference = AF889B642037733900F36342 /* ndnrtcIn.plugin */;
+			productType = "com.apple.product-type.bundle";
+		};
 		AFE43C82202DDCD200072172 /* ndnrtcOut */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcOut" */;
@@ -270,6 +364,9 @@
 				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "UCLA REMAP";
 				TargetAttributes = {
+					AF889B4C2037733900F36342 = {
+						ProvisioningStyle = Automatic;
+					};
 					AFE43C82202DDCD200072172 = {
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
@@ -298,22 +395,43 @@
 				AFE43C82202DDCD200072172 /* ndnrtcOut */,
 				AFE43C92202E2BAC00072172 /* libndnrtc */,
 				AFE43C9B202E2EE300072172 /* libndnrtc-build */,
+				AF889B4C2037733900F36342 /* ndnrtcIn */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AF889B572037733900F36342 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B582037733900F36342 /* touchdesigner.cert in Resources */,
+				AF2B18FD203AEEE800FE272A /* policy.conf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFE43C81202DDCD200072172 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */,
+				AF2B18FC203AEEE800FE272A /* policy.conf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AF889B4F2037733900F36342 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B502037733900F36342 /* foundation-helpers.mm in Sources */,
+				AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */,
+				AF889B522037733900F36342 /* ndnrtcTOP_base.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AFE43C7F202DDCD200072172 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -327,6 +445,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AF889B4D2037733900F36342 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
+			targetProxy = AF889B4E2037733900F36342 /* PBXContainerItemProxy */;
+		};
 		AFE43C97202E2C5B00072172 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
@@ -340,6 +463,52 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		AF889B622037733900F36342 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Debug;
+		};
+		AF889B632037733900F36342 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Release;
+		};
 		AFE43C87202DDCD200072172 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -455,7 +624,7 @@
 					/usr/local/include,
 					$LIBNDNRTC_INSTALL_DIR/include,
 				);
-				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
@@ -478,7 +647,7 @@
 					/usr/local/include,
 					$LIBNDNRTC_INSTALL_DIR/include,
 				);
-				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
@@ -544,6 +713,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AF889B612037733900F36342 /* Build configuration list for PBXNativeTarget "ndnrtcIn" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF889B622037733900F36342 /* Debug */,
+				AF889B632037733900F36342 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AFE43C7E202DDCD200072172 /* Build configuration list for PBXProject "ndnrtcTOP" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

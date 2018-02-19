@@ -54,7 +54,7 @@ enum class InfoDatIndex {
  * (table caption)
  */
 static std::map<InfoDatIndex, std::string> RowNames = {
-    { InfoDatIndex::LibVersion, "Lirary Version" },
+    { InfoDatIndex::LibVersion, "Library Version" },
     { InfoDatIndex::StreamPrefix, "Stream Prefix" },
     { InfoDatIndex::StreamName, "Stream Name" },
     { InfoDatIndex::StreamBasePrefix, "Base Prefix" }
@@ -258,15 +258,16 @@ ndnrtcTOPbase::initNdnrtcLibrary(const TOP_OutputFormatSpecs* outputFormat,
         errorString_ = "";
         
         if (useMacOsKeyChain)
-            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), nullptr,
+            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), nullptr, nullptr,
                                              signingIdentity.c_str(), instanceName.c_str(),
                                              &NdnrtcLibraryLoggingCallback);
         else if (get_resources_path())
         {
             inputs->enablePar(PAR_SIGNING_IDENTITY, false);
             
+            string policyFilePath = string(get_resources_path())+"/policy.conf";
             string keyChainPath = string(get_resources_path())+"/keychain";
-            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), keyChainPath.c_str(),
+            ndnrtcInitialized_ = ndnrtc_init(hostname.c_str(), keyChainPath.c_str(), policyFilePath.c_str(),
                                              TOUCHDESIGNER_IDENTITY, instanceName.c_str(),
                                              &NdnrtcLibraryLoggingCallback);
         }

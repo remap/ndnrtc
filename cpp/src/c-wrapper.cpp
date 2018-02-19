@@ -56,7 +56,7 @@ static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
 
 void initKeyChain(const char* storagePath, std::string signingIdentity);
 void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
-	std::string signingIdentity, std::string instanceId);
+	std::string configPolicyFilePath, std::string signingIdentity, std::string instanceId);
 MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
 
@@ -134,7 +134,8 @@ void ndnrtc_get_identities_list(char*** identities, int* nIdentities)
 }
 
 bool ndnrtc_init(const char* hostname, const char* storagePath, 
-	const char* signingIdentity, const char * instanceId, LibLog libLog)
+	const char* policyFilePath, const char* signingIdentity,
+	const char * instanceId, LibLog libLog)
 {
 	Logger::initAsyncLogging();
 
@@ -144,7 +145,7 @@ bool ndnrtc_init(const char* hostname, const char* storagePath,
 
 	try {
 		initKeyChain(storagePath, signingIdentity);
-		initFace(hostname, callbackLogger, signingIdentity, instanceId);
+		initFace(hostname, callbackLogger, (policyFilePath ? policyFilePath : ""), signingIdentity, instanceId);
 	}
 	catch (std::exception &e)
 	{
@@ -287,26 +288,24 @@ void initKeyChain(const char* storagePath, std::string signingIdentityStr)
 
 // initializes face and face processing thread 
 void initFace(std::string hostname, boost::shared_ptr<Logger> logger, 
-	std::string signingIdentityStr, std::string instanceIdStr)
+	std::string configPolicyFilePath, std::string signingIdentityStr, 
+	std::string instanceIdStr)
 {
 	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
 	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain, 
-		std::string(signingIdentityStr),
-		std::string(instanceIdStr),
-		std::string("policy-file.conf"),
+		signingIdentityStr,
+		instanceIdStr,
+		configPolicyFilePath,
 		3600,
 		logger);
 
 	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
-		std::cout << "will log" << std::endl;
 		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
 			<< LibKeyChainManager->signingIdentityCertificate()->getName() << std::endl;
 
-		std::cout << "will set command signing info" << std::endl;
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->signingIdentityCertificate()->getName());
-		std::cout << "will create mem cache" << std::endl;
 		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
 	});
 
@@ -390,10 +389,23 @@ runTime_(instanceCertLifetime)
 {
 	description_ = "key-chain-manager";
 	setLogger(logger);
-	// checkExists(configPolicy);
-	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
-    privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
-	configPolicyManager_ = boost::make_shared<SelfVerifyPolicyManager>(identityStorage_.get());
+
+	if (configPolicy != "")
+	{
+		LogInfoC << "Setting up file-based policy manager from " << configPolicy << std::endl;
+		
+		checkExists(configPolicy);
+		setupConfigPolicyManager();
+	}
+	else
+	{
+		LogInfoC << "Setting self-verify policy manager..." << std::endl;
+
+		identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
+		privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
+		configPolicyManager_ = boost::make_shared<SelfVerifyPolicyManager>(identityStorage_.get());
+	}
+
 	setupInstanceKeyChain();
 }
 
@@ -446,7 +458,11 @@ void KeyChainManager::setupConfigPolicyManager()
 {
 	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
     privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
-	configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+	if (defaultKeyChain_->getIsSecurityV1())
+		configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+	else
+		configPolicyManager_ = boost::make_shared<ConfigPolicyManager>
+          (configPolicy_, boost::make_shared<CertificateCacheV2>());
 }
 
 void KeyChainManager::createSigningIdentity()
@@ -525,7 +541,6 @@ void KeyChainManager::createInstanceIdentityV2()
 
 	boost::shared_ptr<PibIdentity> instancePibIdentity =
       instanceKeyChain_->createIdentityV2(instanceIdentity);
-    std::cout << "Debug instancePibIdentity " << instancePibIdentity->getName() << std::endl;
 	boost::shared_ptr<PibKey> instancePibKey = 
       instancePibIdentity->getDefaultKey();
 	boost::shared_ptr<PibKey> signingPibKey = defaultKeyChain_->getPib()
