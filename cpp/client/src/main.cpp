@@ -26,6 +26,7 @@
 
 using namespace std;
 using namespace ndnrtc;
+using namespace ndnrtc::helpers;
 using namespace ndn;
 
 struct Args {

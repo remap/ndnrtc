@@ -18,30 +18,34 @@ namespace ndn {
     class Face;
 }
 
-class FaceProcessorImpl;
+namespace ndnrtc {
+    namespace helpers {
+        class FaceProcessorImpl;
 
-class FaceProcessor {
-public:
-    FaceProcessor(std::string host);
-    ~FaceProcessor();
-    
-    void start();
-    void stop();
-    bool isProcessing();
-    
-    boost::asio::io_service& getIo();
-    boost::shared_ptr<ndn::Face> getFace();
-    
-    // non blocking
-    void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    // blocking
-    void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    
-    static boost::shared_ptr<FaceProcessor> forLocalhost();
-    static bool checkNfdConnection();
-    
-private:
-    boost::shared_ptr<FaceProcessorImpl> _pimpl;
-};
+        class FaceProcessor {
+        public:
+            FaceProcessor(std::string host);
+            ~FaceProcessor();
+
+            void start();
+            void stop();
+            bool isProcessing();
+
+            boost::asio::io_service& getIo();
+            boost::shared_ptr<ndn::Face> getFace();
+
+            // non blocking
+            void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            // blocking
+            void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+
+            static boost::shared_ptr<FaceProcessor> forLocalhost();
+            static bool checkNfdConnection();
+
+        private:
+            boost::shared_ptr<FaceProcessorImpl> _pimpl;
+        };
+    }
+}
 
 #endif /* face_processor_hpp */

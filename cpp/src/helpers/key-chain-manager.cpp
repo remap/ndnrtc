@@ -23,6 +23,7 @@
 
 using namespace boost::chrono;
 using namespace ndn;
+using namespace ndnrtc::helpers;
 
 KeyChainManager::KeyChainManager(boost::shared_ptr<ndn::Face> face,
                     boost::shared_ptr<ndn::KeyChain> keyChain,

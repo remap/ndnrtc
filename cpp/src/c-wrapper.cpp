@@ -42,10 +42,9 @@
 
 using namespace ndn;
 using namespace ndnrtc;
+using namespace ndnrtc::helpers;
 using namespace boost::chrono;
 using namespace ndnlog::new_api;
-
-class KeyChainManager;
 
 static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "keys";

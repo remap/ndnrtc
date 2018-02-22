@@ -25,37 +25,42 @@
 using namespace ndn;
 using namespace boost;
 using namespace boost::asio;
+using namespace ndnrtc::helpers;
 
-class FaceProcessorImpl : public enable_shared_from_this<FaceProcessorImpl>{
-public:
-    FaceProcessorImpl(std::string host);
-    ~FaceProcessorImpl();
-    
-    void start();
-    void stop();
-    bool isProcessing();
-    
-    // non blocking
-    void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    // blocking
-    void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    
-    bool initFace();
-    void runFace();
-    
-    io_service& getIo() { return io_; }
-    shared_ptr<Face> getFace() { return face_; }
-    
-private:
-    std::string host_;
-    shared_ptr<Face> face_;
-    thread t_;
-    bool isRunningFace_;
-    io_service io_;
+namespace ndnrtc {
+    namespace helpers {
+        class FaceProcessorImpl : public enable_shared_from_this<FaceProcessorImpl>{
+        public:
+            FaceProcessorImpl(std::string host);
+            ~FaceProcessorImpl();
+
+            void start();
+            void stop();
+            bool isProcessing();
+
+            // non blocking
+            void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            // blocking
+            void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+
+            bool initFace();
+            void runFace();
+
+            io_service& getIo() { return io_; }
+            shared_ptr<Face> getFace() { return face_; }
+
+        private:
+            std::string host_;
+            shared_ptr<Face> face_;
+            thread t_;
+            bool isRunningFace_;
+            io_service io_;
 #ifdef USE_THREADSAFE_FACE
-    shared_ptr<io_service::work> ioWork_;
+            shared_ptr<io_service::work> ioWork_;
 #endif
-};
+        };
+    }
+}
 
 shared_ptr<FaceProcessor>
 FaceProcessor::forLocalhost()
