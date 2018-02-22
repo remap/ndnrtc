@@ -13,6 +13,10 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/remote-stream.hpp \
   include/c-wrapper.h
 
+helpersincludedir = $(pkgincludedir)/helpers
+helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
+  include/helpers/face-processor.hpp
+
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/audio-capturer.cpp src/audio-capturer.hpp \
@@ -29,7 +33,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
-  src/face-processor.hpp src/face-processor.cpp \
+  src/helpers/face-processor.cpp \
   src/fec.cpp src/fec.hpp \
   src/frame-buffer.cpp src/frame-buffer.hpp \
   src/frame-converter.cpp src/frame-converter.hpp \
@@ -37,6 +41,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/interest-control.cpp src/interest-control.hpp \
   src/interest-queue.cpp src/interest-queue.hpp \
   src/jitter-timing.cpp src/jitter-timing.hpp \
+  src/helpers/key-chain-manager.cpp \
   src/latency-control.cpp src/latency-control.hpp \
   src/local-stream.cpp include/local-stream.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
@@ -120,7 +125,7 @@ endif
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la 

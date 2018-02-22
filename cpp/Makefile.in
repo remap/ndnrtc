@@ -285,7 +285,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_asio.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(pkginclude_HEADERS) $(am__DIST_COMMON)
+	$(am__configure_deps) $(helpersinclude_HEADERS) \
+	$(pkginclude_HEADERS) $(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
@@ -321,7 +322,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"
+am__installdirs = "$(DESTDIR)$(libdir)" \
+	"$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
@@ -338,13 +340,14 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-data-validator.lo \
 	src/libndnrtc_la-drd-estimator.lo \
 	src/libndnrtc_la-estimators.lo \
-	src/libndnrtc_la-face-processor.lo src/libndnrtc_la-fec.lo \
-	src/libndnrtc_la-frame-buffer.lo \
+	src/helpers/libndnrtc_la-face-processor.lo \
+	src/libndnrtc_la-fec.lo src/libndnrtc_la-frame-buffer.lo \
 	src/libndnrtc_la-frame-converter.lo \
 	src/libndnrtc_la-frame-data.lo \
 	src/libndnrtc_la-interest-control.lo \
 	src/libndnrtc_la-interest-queue.lo \
 	src/libndnrtc_la-jitter-timing.lo \
+	src/helpers/libndnrtc_la-key-chain-manager.lo \
 	src/libndnrtc_la-latency-control.lo \
 	src/libndnrtc_la-local-stream.lo \
 	src/libndnrtc_la-media-stream-base.lo \
@@ -1689,8 +1692,7 @@ am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/frame-io.hpp client/src/frame-io.cpp \
 	client/src/video-source.cpp client/src/video-source.hpp \
 	client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp \
-	client/src/key-chain-manager.cpp client/src/ipc-shim.c \
+	client/src/precise-generator.cpp client/src/ipc-shim.c \
 	client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__objects_81 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
@@ -1701,7 +1703,6 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-frame-io.$(OBJEXT) \
 	client/src/ndnrtc_client-video-source.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
-	client/src/ndnrtc_client-key-chain-manager.$(OBJEXT) \
 	$(am__objects_81)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 ndnrtc_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -1854,7 +1855,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(pkginclude_HEADERS)
+HEADERS = $(helpersinclude_HEADERS) $(pkginclude_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -2249,6 +2250,10 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/remote-stream.hpp \
   include/c-wrapper.h
 
+helpersincludedir = $(pkgincludedir)/helpers
+helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
+  include/helpers/face-processor.hpp
+
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/audio-capturer.cpp src/audio-capturer.hpp \
@@ -2265,7 +2270,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
-  src/face-processor.hpp src/face-processor.cpp \
+  src/helpers/face-processor.cpp \
   src/fec.cpp src/fec.hpp \
   src/frame-buffer.cpp src/frame-buffer.hpp \
   src/frame-converter.cpp src/frame-converter.hpp \
@@ -2273,6 +2278,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/interest-control.cpp src/interest-control.hpp \
   src/interest-queue.cpp src/interest-queue.hpp \
   src/jitter-timing.cpp src/jitter-timing.hpp \
+  src/helpers/key-chain-manager.cpp \
   src/latency-control.cpp src/latency-control.hpp \
   src/local-stream.cpp include/local-stream.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
@@ -2333,8 +2339,7 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/client.hpp client/src/frame-io.hpp \
 	client/src/frame-io.cpp client/src/video-source.cpp \
 	client/src/video-source.hpp client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp \
-	client/src/key-chain-manager.cpp $(am__append_6)
+	client/src/precise-generator.cpp $(am__append_6)
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
 	$(am__append_7) $(am__append_12) $(am__append_15)
@@ -2664,8 +2669,15 @@ src/libndnrtc_la-drd-estimator.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-estimators.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-face-processor.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/helpers/$(am__dirstamp):
+	@$(MKDIR_P) src/helpers
+	@: > src/helpers/$(am__dirstamp)
+src/helpers/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/helpers/$(DEPDIR)
+	@: > src/helpers/$(DEPDIR)/$(am__dirstamp)
+src/helpers/libndnrtc_la-face-processor.lo:  \
+	src/helpers/$(am__dirstamp) \
+	src/helpers/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-fec.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-frame-buffer.lo: src/$(am__dirstamp) \
@@ -2680,6 +2692,9 @@ src/libndnrtc_la-interest-queue.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-jitter-timing.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/helpers/libndnrtc_la-key-chain-manager.lo:  \
+	src/helpers/$(am__dirstamp) \
+	src/helpers/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-latency-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-local-stream.lo: src/$(am__dirstamp) \
@@ -4207,9 +4222,6 @@ client/src/ndnrtc_client-video-source.$(OBJEXT):  \
 client/src/ndnrtc_client-precise-generator.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-key-chain-manager.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
 client/src/ndnrtc_client-ipc-shim.$(OBJEXT):  \
 	client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
@@ -4225,6 +4237,8 @@ mostlyclean-compile:
 	-rm -f contrib/gtest/googletest/src/*.$(OBJEXT)
 	-rm -f src/*.$(OBJEXT)
 	-rm -f src/*.lo
+	-rm -f src/helpers/*.$(OBJEXT)
+	-rm -f src/helpers/*.lo
 	-rm -f tests/*.$(OBJEXT)
 
 distclean-compile:
@@ -4303,7 +4317,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@
@@ -4734,7 +4747,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-data-validator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-drd-estimator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-estimators.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-face-processor.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-fec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-frame-buffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-frame-converter.Plo@am__quote@
@@ -4776,6 +4788,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_async-test-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_capturer-test-audio-capturer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_capturer-tests-helpers.Po@am__quote@
@@ -5570,12 +5584,12 @@ src/libndnrtc_la-estimators.lo: src/estimators.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-estimators.lo `test -f 'src/estimators.cpp' || echo '$(srcdir)/'`src/estimators.cpp
 
-src/libndnrtc_la-face-processor.lo: src/face-processor.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-face-processor.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-face-processor.Tpo -c -o src/libndnrtc_la-face-processor.lo `test -f 'src/face-processor.cpp' || echo '$(srcdir)/'`src/face-processor.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-face-processor.Tpo src/$(DEPDIR)/libndnrtc_la-face-processor.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/face-processor.cpp' object='src/libndnrtc_la-face-processor.lo' libtool=yes @AMDEPBACKSLASH@
+src/helpers/libndnrtc_la-face-processor.lo: src/helpers/face-processor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/helpers/libndnrtc_la-face-processor.lo -MD -MP -MF src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Tpo -c -o src/helpers/libndnrtc_la-face-processor.lo `test -f 'src/helpers/face-processor.cpp' || echo '$(srcdir)/'`src/helpers/face-processor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Tpo src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/helpers/face-processor.cpp' object='src/helpers/libndnrtc_la-face-processor.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-face-processor.lo `test -f 'src/face-processor.cpp' || echo '$(srcdir)/'`src/face-processor.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/helpers/libndnrtc_la-face-processor.lo `test -f 'src/helpers/face-processor.cpp' || echo '$(srcdir)/'`src/helpers/face-processor.cpp
 
 src/libndnrtc_la-fec.lo: src/fec.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-fec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-fec.Tpo -c -o src/libndnrtc_la-fec.lo `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
@@ -5625,6 +5639,13 @@ src/libndnrtc_la-jitter-timing.lo: src/jitter-timing.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/jitter-timing.cpp' object='src/libndnrtc_la-jitter-timing.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-jitter-timing.lo `test -f 'src/jitter-timing.cpp' || echo '$(srcdir)/'`src/jitter-timing.cpp
+
+src/helpers/libndnrtc_la-key-chain-manager.lo: src/helpers/key-chain-manager.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/helpers/libndnrtc_la-key-chain-manager.lo -MD -MP -MF src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Tpo -c -o src/helpers/libndnrtc_la-key-chain-manager.lo `test -f 'src/helpers/key-chain-manager.cpp' || echo '$(srcdir)/'`src/helpers/key-chain-manager.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Tpo src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/helpers/key-chain-manager.cpp' object='src/helpers/libndnrtc_la-key-chain-manager.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/helpers/libndnrtc_la-key-chain-manager.lo `test -f 'src/helpers/key-chain-manager.cpp' || echo '$(srcdir)/'`src/helpers/key-chain-manager.cpp
 
 src/libndnrtc_la-latency-control.lo: src/latency-control.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-latency-control.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-latency-control.Tpo -c -o src/libndnrtc_la-latency-control.lo `test -f 'src/latency-control.cpp' || echo '$(srcdir)/'`src/latency-control.cpp
@@ -13046,20 +13067,6 @@ client/src/ndnrtc_client-precise-generator.obj: client/src/precise-generator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
 
-client/src/ndnrtc_client-key-chain-manager.o: client/src/key-chain-manager.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-key-chain-manager.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Tpo -c -o client/src/ndnrtc_client-key-chain-manager.o `test -f 'client/src/key-chain-manager.cpp' || echo '$(srcdir)/'`client/src/key-chain-manager.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Tpo client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/key-chain-manager.cpp' object='client/src/ndnrtc_client-key-chain-manager.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-key-chain-manager.o `test -f 'client/src/key-chain-manager.cpp' || echo '$(srcdir)/'`client/src/key-chain-manager.cpp
-
-client/src/ndnrtc_client-key-chain-manager.obj: client/src/key-chain-manager.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-key-chain-manager.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Tpo -c -o client/src/ndnrtc_client-key-chain-manager.obj `if test -f 'client/src/key-chain-manager.cpp'; then $(CYGPATH_W) 'client/src/key-chain-manager.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/key-chain-manager.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Tpo client/src/$(DEPDIR)/ndnrtc_client-key-chain-manager.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/key-chain-manager.cpp' object='client/src/ndnrtc_client-key-chain-manager.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-key-chain-manager.obj `if test -f 'client/src/key-chain-manager.cpp'; then $(CYGPATH_W) 'client/src/key-chain-manager.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/key-chain-manager.cpp'; fi`
-
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
@@ -13091,9 +13098,31 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf bin/tests/.libs bin/tests/_libs
 	-rm -rf src/.libs src/_libs
+	-rm -rf src/helpers/.libs src/helpers/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-helpersincludeHEADERS: $(helpersinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(helpersinclude_HEADERS)'; test -n "$(helpersincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(helpersincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(helpersincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(helpersincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(helpersincludedir)" || exit $$?; \
+	done
+
+uninstall-helpersincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(helpersinclude_HEADERS)'; test -n "$(helpersincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(helpersincludedir)'; $(am__uninstall_files_from_dir)
 install-pkgincludeHEADERS: $(pkginclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
@@ -13780,7 +13809,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -13821,6 +13850,8 @@ distclean-generic:
 	-rm -f contrib/gtest/googletest/src/$(am__dirstamp)
 	-rm -f src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/$(am__dirstamp)
+	-rm -f src/helpers/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/helpers/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
 
@@ -13834,7 +13865,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) src/helpers/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -13851,7 +13882,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgincludeHEADERS
+install-data-am: install-helpersincludeHEADERS \
+	install-pkgincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -13882,7 +13914,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) src/helpers/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -13899,7 +13931,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
+uninstall-am: uninstall-helpersincludeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-pkgincludeHEADERS
 
 .MAKE: check-am install-am install-strip
 
@@ -13912,16 +13945,16 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-pdf install-pdf-am \
+	install-exec install-exec-am install-helpersincludeHEADERS \
+	install-html install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
 	install-pkgincludeHEADERS install-ps install-ps-am \
 	install-strip installcheck installcheck-am installdirs \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am recheck tags tags-am uninstall \
-	uninstall-am uninstall-libLTLIBRARIES \
-	uninstall-pkgincludeHEADERS
+	uninstall-am uninstall-helpersincludeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 
 .PRECIOUS: Makefile
 

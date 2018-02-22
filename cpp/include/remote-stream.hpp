@@ -181,7 +181,7 @@ namespace ndnrtc {
      */
 	class RemoteVideoStream: public RemoteStream {
 	public:
-		RemoteVideoStream(boost::asio::io_service& faceIo, 
+		RemoteVideoStream(boost::asio::io_service& faceIo,
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,

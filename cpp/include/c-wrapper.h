@@ -11,6 +11,7 @@
 #define __c_wrapper_h__
 
 #include "local-stream.hpp"
+#include "remote-stream.hpp"
 
 extern "C" {
 
@@ -36,7 +37,6 @@ extern "C" {
 	// deinitializes library (removes connection and frees objects)
 	// init can be called again after this
 	void ndnrtc_deinit();
-
 
 	typedef struct _LocalStreamParams {
 		const char *basePrefix;
@@ -95,6 +95,16 @@ extern "C" {
 			const unsigned int height,
 			unsigned char* argbFrameData,
 			unsigned int frameSize);
+
+	typedef struct _RemoteStreamParams {
+		const char *basePrefix;
+		int jitterSizeMs, lifetimeMs;
+		const char *streamName;
+	} RemoteStreamParams;
+
+	// creates remote video stream
+	ndnrtc::IStream* ndnrtc_createRemoteStream(RemoteStreamParams params, LibLog loggerSink);
+	void ndnrtc_destroyRemoteStream(ndnrtc::IStream* remoteStreamObject);
 
 	void ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *, char *);
 	void ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *, char*);

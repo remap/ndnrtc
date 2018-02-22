@@ -22,7 +22,7 @@
 
 #include "config.hpp"
 #include "client.hpp"
-#include "key-chain-manager.hpp"
+#include <ndnrtc/helpers/key-chain-manager.hpp>
 
 using namespace std;
 using namespace ndnrtc;
@@ -154,8 +154,10 @@ int run(const struct Args& args)
     });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
 
-    KeyChainManager keyChainManager(face, args.identity_, args.instance_,
-                                    args.policy_, args.runTimeSec_);
+    KeyChainManager keyChainManager(face, boost::make_shared<ndn::KeyChain>(),
+                                    args.identity_, args.instance_,
+                                    args.policy_, args.runTimeSec_,
+                                    ndnlog::new_api::Logger::getLoggerPtr(""));
     face->setCommandSigningInfo(*(keyChainManager.defaultKeyChain()),
                                 keyChainManager.defaultKeyChain()->getDefaultCertificateName());
     ClientParams params;

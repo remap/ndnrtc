@@ -6,7 +6,8 @@
 //  Copyright © 2017 UCLA. All rights reserved.
 //
 
-#include "face-processor.hpp"
+#include "helpers/face-processor.hpp"
+
 #include <boost/function.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
