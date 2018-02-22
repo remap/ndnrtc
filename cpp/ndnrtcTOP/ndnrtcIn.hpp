@@ -8,6 +8,8 @@
 
 #include "ndnrtcTOP_base.hpp"
 #include <ndnrtc/c-wrapper.h>
+#include <ndnrtc/interfaces.hpp>
+#include <boost/atomic.hpp>
 
 namespace ndnrtc {
     namespace statistics {
@@ -15,7 +17,8 @@ namespace ndnrtc {
     }
 }
 
-class ndnrtcIn : public ndnrtcTOPbase
+class ndnrtcIn : public ndnrtcTOPbase,
+ndnrtc::IRemoteStreamObserver, ndnrtc::IExternalRenderer
 {
 public:
     ndnrtcIn(const OP_NodeInfo *info);
@@ -42,14 +45,26 @@ public:
     
 private:
     int                     receivedFrame_;
+    int64_t                 receivedFrameTimestamp_;
     
-    int                     incomingFrameBufferSize_, incomingFrameWidth_, incomingFrameHeight_;
-    unsigned char*          incomingFrameBuffer_;
+    boost::atomic<bool>     bufferWrite_, bufferRead_;
+    int                     frameBufferSize_, frameWidth_, frameHeight_;
+    unsigned char*          frameBuffer_;
     
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
     
     void                    createRemoteStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
-//    LocalStreamParams       readStreamParams(OP_Inputs*) const;
-//    void                    allocateIncomingFramebuffer(int w, int h);
+    RemoteStreamParams      readStreamParams(OP_Inputs*) const;
+    void                    allocateFramebuffer(int w, int h);
+    
+    // IRemoteStreamObserver
+    void                    onNewEvent(const ndnrtc::RemoteStream::Event&) override;
+    
+    // IExternalRenderer
+    uint8_t* getFrameBuffer(int width, int height) override;
+    void renderBGRAFrame(int64_t timestamp, uint frameNo,
+                         int width, int height,
+                         const uint8_t* bubffer) override;
 };
+
 

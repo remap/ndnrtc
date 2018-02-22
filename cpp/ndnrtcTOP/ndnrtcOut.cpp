@@ -33,8 +33,6 @@ using namespace ndnrtc::statistics;
 #define PAR_FRESHNESS           "Freshness"
 #define PAR_GOPSIZE             "Gopsize"
 
-#define TOUCHDESIGNER_IDENTITY  "/touchdesigner"
-
 #define GetError( )\
 {\
 for ( GLenum Error = glGetError( ); ( GL_NO_ERROR != Error ); Error = glGetError( ) )\
@@ -242,10 +240,11 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
             {
                 chan->name = StatisticsStorage::IndicatorKeywords.at(pair.first).c_str();
                 chan->value = (float)pair.second;
+                break;
             }
             idx++;
-        }
-    }
+        } // for
+    } // else
 }
 
 bool
@@ -442,6 +441,7 @@ ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
 void
 ndnrtcOut::allocateIncomingFramebuffer(int w, int h)
 {
+    incomingFrameWidth_ = w; incomingFrameHeight_ = h;
     incomingFrameBufferSize_ = w*h*4*sizeof(unsigned char);
     incomingFrameBuffer_ = (unsigned char*)realloc(incomingFrameBuffer_, incomingFrameBufferSize_);
     memset(incomingFrameBuffer_, 0, incomingFrameBufferSize_);
