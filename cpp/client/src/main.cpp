@@ -23,6 +23,7 @@
 #include "config.hpp"
 #include "client.hpp"
 #include <ndnrtc/helpers/key-chain-manager.hpp>
+#include <ndnrtc/helpers/face-processor.hpp>
 
 using namespace std;
 using namespace ndnrtc;
@@ -153,14 +154,12 @@ int run(const struct Args& args)
         err = 1;
       }
     });
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
 
+    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
     KeyChainManager keyChainManager(face, boost::make_shared<ndn::KeyChain>(),
                                     args.identity_, args.instance_,
                                     args.policy_, args.runTimeSec_,
                                     ndnlog::new_api::Logger::getLoggerPtr(""));
-    face->setCommandSigningInfo(*(keyChainManager.defaultKeyChain()),
-                                keyChainManager.defaultKeyChain()->getDefaultCertificateName());
     ClientParams params;
 
     LogInfo("") << "Run time is set to " << args.runTimeSec_ << " seconds, loading "
@@ -181,8 +180,8 @@ int run(const struct Args& args)
     {
         if (params.isProducing())
         {
+            keyChainManager.publishCertificates();
             registerPrefix(face, keyChainManager);
-            publishCertificate(face, keyChainManager);
         }
         
         client.run(args.runTimeSec_, args.samplePeriod_, params, args.instance_);

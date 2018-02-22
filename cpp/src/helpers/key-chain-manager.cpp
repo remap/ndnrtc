@@ -12,18 +12,49 @@
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
+#include <ndn-cpp/security/identity/file-private-key-storage.hpp>
+#include <ndn-cpp/security/identity/basic-identity-storage.hpp>
 #include <ndn-cpp/security/policy/config-policy-manager.hpp>
 #include <ndn-cpp/security/policy/self-verify-policy-manager.hpp>
 #include <ndn-cpp/security/v2/certificate-cache-v2.hpp>
 #include <ndn-cpp/security/pib/pib-memory.hpp>
 #include <ndn-cpp/security/tpm/tpm-back-end-memory.hpp>
 #include <ndn-cpp/security/signing-info.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 #include <ndn-cpp/face.hpp>
 #include <boost/chrono.hpp>
 
 using namespace boost::chrono;
 using namespace ndn;
 using namespace ndnrtc::helpers;
+
+static const char *PublicDb = "public-info.db";
+static const char *PrivateDb = "keys";
+
+boost::shared_ptr<ndn::KeyChain> 
+KeyChainManager::createKeyChain(std::string storagePath)
+{
+	boost::shared_ptr<KeyChain> keyChain;
+
+	if (storagePath.size())
+	{
+		std::string databaseFilePath = std::string(storagePath) + "/" + std::string(PublicDb);
+		std::string privateKeysPath = std::string(storagePath) + "/" + std::string(PrivateDb);
+
+		boost::shared_ptr<IdentityStorage> identityStorage = boost::make_shared<BasicIdentityStorage>(databaseFilePath);
+		boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage, 
+			boost::make_shared<FilePrivateKeyStorage>(privateKeysPath));
+		boost::shared_ptr<PolicyManager> policyManager = boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
+
+		keyChain = boost::make_shared<KeyChain>(identityManager, policyManager);
+	}
+	else
+	{
+		keyChain = boost::make_shared<KeyChain>();
+	}
+
+	return keyChain;
+}
 
 KeyChainManager::KeyChainManager(boost::shared_ptr<ndn::Face> face,
                     boost::shared_ptr<ndn::KeyChain> keyChain,
@@ -61,6 +92,27 @@ runTime_(instanceCertLifetime)
 	setupInstanceKeyChain();
 }
 
+void KeyChainManager::publishCertificates()
+{
+	memoryContentCache_ = boost::make_shared<MemoryContentCache>(face_.get());
+
+	{ // registering prefix for serving signing identity: <signing-identity>/KEY
+		Name prefix(signingIdentity_);
+		prefix.append("KEY");
+		registerPrefix(prefix);
+	}
+
+	{ // registering prefix for serving instance identity: <instance-identity>/KEY
+		Name prefix(signingIdentity_);
+		prefix.append(instanceName_).append("KEY");
+		registerPrefix(prefix);
+	}
+
+	memoryContentCache_->add(*(this->signingIdentityCertificate()));
+	memoryContentCache_->add(*(this->instanceCertificate()));
+}
+
+//******************************************************************************
 void KeyChainManager::setupDefaultKeyChain()
 {
 	defaultKeyChain_ = boost::make_shared<ndn::KeyChain>();
@@ -86,7 +138,6 @@ void KeyChainManager::setupInstanceKeyChain()
 		createSigningIdentity();
 	}
 
-	// TODO update for V2
 	if (defaultKeyChain_->getIsSecurityV1()) {
 		Name certName = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(signingIdentity);
 		signingCert_ = defaultKeyChain_->getCertificate(certName);
@@ -98,6 +149,8 @@ void KeyChainManager::setupInstanceKeyChain()
 				->getKey(CertificateV2::extractKeyNameFromCertName(certName))
     			->getCertificate(certName);
 	}
+
+	face_->setCommandSigningInfo(*defaultKeyChain_, signingCert_->getName());
 
 	createMemoryKeychain();
 	if (defaultKeyChain_->getIsSecurityV1())
@@ -227,6 +280,28 @@ void KeyChainManager::createInstanceIdentityV2()
 	LogInfoC << "Instance certificate "
 		<< instanceKeyChain_->getPib().getIdentity(Name(instanceIdentity_))
           ->getDefaultKey()->getDefaultCertificate()->getName() << std::endl;
+}
+
+void KeyChainManager::registerPrefix(const Name& prefix)
+{
+	boost::shared_ptr<MemoryContentCache> memCache = memoryContentCache_;
+	boost::shared_ptr<ndnlog::new_api::Logger> logger = logger_;
+
+	memoryContentCache_->registerPrefix(prefix,
+		[logger](const boost::shared_ptr<const Name> &p){
+			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p->toUri() << std::endl;
+		},
+		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
+			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p->toUri() << std::endl;
+		},
+		[logger, memCache](const boost::shared_ptr<const Name>& p,
+			const boost::shared_ptr<const Interest> &i,
+			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
+			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
+			<< std::endl;
+
+			memCache->storePendingInterest(i, f);
+		});
 }
 
 void KeyChainManager::checkExists(const std::string& file)
