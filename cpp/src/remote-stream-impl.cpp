@@ -319,5 +319,5 @@ void
 RemoteStreamImpl::notifyObservers(RemoteStream::Event ev)
 {
 	for (auto o : observers_)
-		o->onNewEvent(RemoteStream::Event::NewMeta);
+		o->onNewEvent(ev);
 }
