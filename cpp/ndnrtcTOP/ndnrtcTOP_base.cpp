@@ -11,13 +11,20 @@
 #include <stdio.h>
 #include <map>
 #include <iostream>
+
+#include <ndnrtc/simple-log.hpp>
 #include <ndnrtc/c-wrapper.h>
 #include <ndnrtc/statistics.hpp>
+#include <ndnrtc/helpers/key-chain-manager.hpp>
+#include <ndnrtc/helpers/face-processor.hpp>
 
 #include "foundation-helpers.h"
 
 using namespace std;
 using namespace std::placeholders;
+using namespace ndnrtc;
+using namespace ndnrtc::helpers;
+using namespace ndnlog::new_api;
 
 #define TOUCHDESIGNER_IDENTITY  "/touchdesigner"
 
@@ -65,6 +72,10 @@ errorString_(""), warningString_(""),
 statStorage_(nullptr),
 stream_(nullptr)
 {
+    Logger::initAsyncLogging();
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+                                         boost::make_shared<CallbackSink>(&NdnrtcLibraryLoggingCallback));
+    logger_->log(ndnlog::NdnLoggerLevelInfo) << "Set up ndnrtc logging" << endl;
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()
@@ -223,7 +234,9 @@ ndnrtcTOPbase::pulsePressed(const char* name)
 {
     if (!strcmp(name, "Init"))
     {
-        executeQueue_.push(bind(&ndnrtcTOPbase::initNdnrtcLibrary, this, _1, _2, _3));
+//        executeQueue_.push(bind(&ndnrtcTOPbase::initNdnrtcLibrary, this, _1, _2, _3));
+        executeQueue_.push(bind(&ndnrtcTOPbase::initKeyChainManager, this, _1, _2, _3));
+        executeQueue_.push(bind(&ndnrtcTOPbase::initFace, this, _1, _2, _3));
     }
 }
 
@@ -238,6 +251,56 @@ ndnrtcTOPbase::checkInputs(const TOP_OutputFormatSpecs *, OP_Inputs *inputs, TOP
 {
     bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
     inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+}
+
+//******************************************************************************
+void
+ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
+                                   OP_Inputs* inputs,
+                                   TOP_Context *context)
+{
+    std::string hostname(inputs->getParString(PAR_NFD_HOST));
+    std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
+    std::string instanceName(inputs->getParString(PAR_INSTANCE_NAME));
+    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
+    
+    string policyFilePath = string(get_resources_path())+"/policy.conf";
+    string keyChainPath = string(get_resources_path())+"/keychain";
+    
+    try
+    {
+        errorString_ = "";
+        
+        faceProcessor_ = boost::make_shared<FaceProcessor>(hostname);
+        faceProcessor_->start();
+        
+        keyChainManager_ = boost::make_shared<KeyChainManager>(faceProcessor_->getFace(),
+                                                               (useMacOsKeyChain ? KeyChainManager::createKeyChain("") : KeyChainManager::createKeyChain(keyChainPath)),
+                                                               (useMacOsKeyChain ? signingIdentity : TOUCHDESIGNER_IDENTITY),
+                                                               instanceName,
+                                                               policyFilePath,
+                                                               24*3600,
+                                                               logger_);
+        
+        if (!useMacOsKeyChain)
+            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
+        
+    }
+    catch(std::exception &e)
+    {
+        errorString_ = string("Error initializing library: ") + e.what();
+    }
+    
+    if (!ndnrtcInitialized_)
+        errorString_ = "Failed to initialize library: check NFD is running";
+}
+
+void
+ndnrtcTOPbase::initFace(const TOP_OutputFormatSpecs* outputFormat,
+                        OP_Inputs* inputs,
+                        TOP_Context *context)
+{
+    
 }
 
 void

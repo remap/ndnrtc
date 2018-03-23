@@ -133,6 +133,48 @@ void FaceProcessor::performSynchronized(function<void (shared_ptr<Face>)> dispat
 }
 boost::asio::io_service& FaceProcessor::getIo() { return _pimpl->getIo(); }
 boost::shared_ptr<Face> FaceProcessor::getFace() { return _pimpl->getFace(); }
+void FaceProcessor::registerPrefix(const Name& prefix, 
+                                   const OnInterestCallback& onInterest,
+                                   const OnRegisterFailed& onRegisterFailed,
+                                   const OnRegisterSuccess& onRegisterSuccess)
+{
+    _pimpl->performSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+        face->registerPrefix(prefix, onInterest, 
+            [&completed, &isDone, onRegisterFailed](const boost::shared_ptr<const Name>& prefix){
+                onRegisterFailed(prefix);
+
+                completed = true;
+                isDone.notify_one();
+            }, 
+            [&completed, &registered, &isDone](const boost::shared_ptr<const Name>& p, uint64_t pid){
+                onRegisterSuccess(p, pid);
+
+                registered = true;
+                completed = true;
+                isDone.notify_one();
+            });
+    });
+    
+  isDone.wait(lock, [&completed](){ return completed.load(); });  
+}
+
+void FaceProcessor::registerPrefixBlocking(const ndn::Name& prefix, 
+                const OnInterestCallback& onInterest,
+                const OnRegisterFailed& onRegisterFailed,
+                const OnRegisterSuccess& onRegisterSuccess)
+{
+    boost::mutex m;
+    boost::unique_lock<boost::mutex> lock(m);
+    boost::condition_variable isDone;
+    boost::atomic<bool> completed(false);
+    bool registered = false;
+
+    _pimpl->dispatchSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+        face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
+    });
+
+    isDone.wait(lock, [&completed](){ return completed.load(); });
+}
 
 //******************************************************************************
 FaceProcessorImpl::FaceProcessorImpl(std::string host):host_(host), isRunningFace_(false)

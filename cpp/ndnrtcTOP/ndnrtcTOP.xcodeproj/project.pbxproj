@@ -25,9 +25,9 @@
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B42033AC380042FB3A /* mapping.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B42033AC380042FB3A /* mapping.txt in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
 		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
@@ -102,16 +102,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AF9431B32033AC040042FB3A /* CopyFiles */ = {
+		AF9431B32033AC040042FB3A /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = keychain/keys;
 			dstSubfolderSpec = 7;
 			files = (
-				AF9431B42033AC380042FB3A /* mapping.txt in CopyFiles */,
-				AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */,
-				AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */,
+				AF9431B42033AC380042FB3A /* mapping.txt in Copy Files */,
+				AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in Copy Files */,
+				AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in Copy Files */,
 			);
+			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
@@ -342,7 +343,7 @@
 				AFE43C80202DDCD200072172 /* Frameworks */,
 				AFE43C81202DDCD200072172 /* Resources */,
 				AF9431B12033ABDC0042FB3A /* CopyFiles */,
-				AF9431B32033AC040042FB3A /* CopyFiles */,
+				AF9431B32033AC040042FB3A /* Copy Files */,
 				AFE43CA7202E43BA00072172 /* CopyFiles */,
 			);
 			buildRules = (

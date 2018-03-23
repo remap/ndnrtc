@@ -14,6 +14,7 @@
 #include <string>
 #include <queue>
 #include <functional>
+#include <boost/shared_ptr.hpp>
 
 namespace ndnrtc {
     class IStream;
@@ -21,8 +22,18 @@ namespace ndnrtc {
     namespace statistics {
         class StatisticsStorage;
     }
+    
+    namespace helpers {
+        class KeyChainManager;
+        class FaceProcessor;
+    }
 }
 
+namespace ndnlog {
+    namespace new_api {
+        class Logger;
+    }
+}
 
 class ndnrtcTOPbase : public TOP_CPlusPlusBase
 {
@@ -55,15 +66,27 @@ protected:
     // FIFO Queue of callbbacks that will be called from within execute() method.
     // Queue will be executed until empty.
     // Callbacks should follow certain signature
-    typedef std::function<void(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *)>
-    ExecuteCallback;
+    typedef std::function<void(const TOP_OutputFormatSpecs*,
+                               OP_Inputs*,
+                               TOP_Context *)> ExecuteCallback;
     std::queue<ExecuteCallback> executeQueue_;
+    
+    boost::shared_ptr<ndnlog::new_api::Logger>            logger_;
+    boost::shared_ptr<ndnrtc::helpers::FaceProcessor>     faceProcessor_;
+    boost::shared_ptr<ndnrtc::helpers::KeyChainManager>   keyChainManager_;
     
     bool                    ndnrtcInitialized_;
     std::string             errorString_, warningString_;
     
     ndnrtc::IStream*        stream_;
     ndnrtc::statistics::StatisticsStorage*  statStorage_;
+    
+    void                    initKeyChainManager(const TOP_OutputFormatSpecs*,
+                                                OP_Inputs*,
+                                                TOP_Context *);
+    void                    initFace(const TOP_OutputFormatSpecs*,
+                                     OP_Inputs*,
+                                     TOP_Context *);
     
     void                    initNdnrtcLibrary(const TOP_OutputFormatSpecs*,
                                               OP_Inputs*,
