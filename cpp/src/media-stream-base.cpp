@@ -48,11 +48,11 @@ statStorage_(statistics::StatisticsStorage::createProducerStatistics())
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE;	// it's ok to rely on link-layer fragmenting
 													// because data is low-rate
-	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
+	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.metadataMs_;
     ps.statStorage_ = statStorage_.get();
 	
-	dataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
-	dataPublisher_->setDescription("data-publisher-"+settings_.params_.streamName_);
+	metadataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
+	metadataPublisher_->setDescription("metadata-publisher-"+settings_.params_.streamName_);
 }
 
 MediaStreamBase::~MediaStreamBase()
@@ -94,7 +94,7 @@ MediaStreamBase::publishMeta(unsigned int metaVersion)
 
 	boost::shared_ptr<MediaStreamBase> me = boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
 	async::dispatchAsync(settings_.faceIo_, [me, metaName, meta](){
-		me->dataPublisher_->publish(metaName, *meta);
+		me->metadataPublisher_->publish(metaName, *meta);
 	});
 	
 	LogDebugC << "published stream meta " << metaName << std::endl;

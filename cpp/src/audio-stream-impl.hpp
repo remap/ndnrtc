@@ -52,6 +52,7 @@ namespace ndnrtc {
 			double rate_;
 		};
 
+        boost::shared_ptr<CommonPacketPublisher> samplePublisher_;
 		std::map<std::string, boost::shared_ptr<AudioThread>> threads_;
 		std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
 		std::vector<boost::shared_ptr<AudioBundlePacket>> bundlePool_;

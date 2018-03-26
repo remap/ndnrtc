@@ -156,7 +156,7 @@ ClientParams sampleConsumerParams()
 		msp1.streamName_ = "mic";
 		msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
 		msp1.synchronizedStreamName_ = "camera";
-		msp1.producerParams_.freshnessMs_ = 2000;
+		msp1.producerParams_.freshness_ = { 15, 15, 900 };
 		msp1.producerParams_.segmentSize_ = 1000;
 
 		ConsumerStreamParams msp2;
@@ -167,7 +167,7 @@ ClientParams sampleConsumerParams()
 		msp2.streamName_ = "camera";
 		msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
 		msp2.synchronizedStreamName_ = "mic";
-		msp2.producerParams_.freshnessMs_ = 2000;
+		msp2.producerParams_.freshness_ = { 15, 15, 900 };
 		msp2.producerParams_.segmentSize_ = 1000;
 
 		GeneralConsumerParams gcpa;
@@ -228,7 +228,7 @@ ClientParams sampleProducerParams()
             msp.sessionPrefix_ = pcp.prefix_;
 			msp.streamName_ = "mic";
 			msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
-			msp.producerParams_.freshnessMs_ = 2000;
+			msp.producerParams_.freshness_ = { 15, 15, 900 };
 			msp.producerParams_.segmentSize_ = 1000;
 	
 			CaptureDeviceParams cdp;
@@ -249,7 +249,7 @@ ClientParams sampleProducerParams()
 			msp.source_ = "/tmp/camera.argb";
 			msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
 			msp.synchronizedStreamName_ = "mic";
-			msp.producerParams_.freshnessMs_ = 2000;
+			msp.producerParams_.freshness_ = { 15, 15, 900 };
 			msp.producerParams_.segmentSize_ = 1000;
 	
 			CaptureDeviceParams cdp;

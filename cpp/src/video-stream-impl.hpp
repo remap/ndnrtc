@@ -83,7 +83,7 @@ namespace ndnrtc {
 		std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
 		std::map<std::string, std::pair<uint64_t, uint64_t>> seqCounters_;
 		uint64_t playbackCounter_;
-		boost::shared_ptr<VideoPacketPublisher> publisher_;
+		boost::shared_ptr<VideoPacketPublisher> framePublisher_;
 
 		void add(const MediaThreadParams* params);
 		void remove(const std::string& threadName);

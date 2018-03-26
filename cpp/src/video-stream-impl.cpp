@@ -60,11 +60,11 @@ busyPublishing_(0)
 	ps.keyChain_  = settings_.keyChain_;
 	ps.memoryCache_ = cache_.get();
 	ps.segmentWireLength_ = settings_.params_.producerParams_.segmentSize_;
-	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshnessMs_;
+	ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.sampleMs_;
     ps.statStorage_ = statStorage_.get();
 
-	publisher_ = boost::make_shared<VideoPacketPublisher>(ps);
-	publisher_->setDescription("seg-publisher-"+settings_.params_.streamName_);
+	framePublisher_ = boost::make_shared<VideoPacketPublisher>(ps);
+	framePublisher_->setDescription("seg-publisher-"+settings_.params_.streamName_);
 }
 
 VideoStreamImpl::~VideoStreamImpl()
@@ -115,8 +115,8 @@ void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logge
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
 	for (auto t:threads_) t.second->setLogger(logger);
-	publisher_->setLogger(logger);
-	dataPublisher_->setLogger(logger);
+	framePublisher_->setLogger(logger);
+	metadataPublisher_->setLogger(logger);
 	ILoggingObject::setLogger(logger);
 }
 
@@ -288,7 +288,10 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
         segmentHdr.playbackNo_ = playbackNo;
 		segmentHdr.pairedSequenceNo_ = pairedSeq;
 
-		PublishedDataPtrVector segments = me->publisher_->publish(dataName, *fp, segmentHdr, isKey, true);
+		PublishedDataPtrVector segments = 
+            me->framePublisher_->publish(dataName, *fp, segmentHdr, 
+                                        (isKey ? settings_.params_.producerParams_.freshness_.sampleKeyMs_ : -1),
+                                        isKey, true);
 		assert(segments.size());
 		keeper->updateMeta(isKey, nDataSeg, nParitySeg);
         
@@ -303,7 +306,10 @@ void VideoStreamImpl::publish(const string& thread, FramePacketPtr& fp)
     		Name parityName(dataName);
 	        parityName.append(NameComponents::NameComponentParity);
 
-	        paritySegments = me->publisher_->publish(parityName, *parityData, segmentHdr, isKey);
+	        paritySegments = 
+                me->framePublisher_->publish(parityName, *parityData, segmentHdr,
+                                             (isKey ? settings_.params_.producerParams_.freshness_.sampleKeyMs_ : -1),
+                                             isKey);
 	        assert(paritySegments.size());
 	        std::copy(paritySegments.begin(), paritySegments.end(), std::back_inserter(segments));
 	        
@@ -332,7 +338,7 @@ VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector& seg
 {
 	Manifest m(segments);
 	dataName.append(NameComponents::NameComponentManifest).appendVersion(0);
-	PublishedDataPtrVector ss = dataPublisher_->publish(dataName, m);
+	PublishedDataPtrVector ss = metadataPublisher_->publish(dataName, m);
 
 	LogDebugC << (busyPublishing_ == 1 ? "⤷" : "↓") 
 		<< " published manifest ☆ (" << dataName.getSubName(-5,5) << ")x"
@@ -355,13 +361,14 @@ VideoStreamImpl::updateMeta()
 
 	for (auto it:metaKeepers_)
 	{
+		// TODO: do not use version numbering for meta packets
 		if (it.second->isNewMetaAvailable())
 			it.second->setVersion(it.second->getVersion()+1);
         
         Name metaName(streamPrefix_);
         metaName.append(it.first).append(NameComponents::NameComponentMeta)
             .appendVersion(it.second->getVersion());
-        dataPublisher_->publish(metaName, it.second->getMeta());
+        metadataPublisher_->publish(metaName, it.second->getMeta());
 	}
 
 	return false;

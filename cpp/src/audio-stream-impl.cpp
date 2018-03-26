@@ -26,6 +26,17 @@ streamRunning_(false)
 	if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
 		throw runtime_error("Wrong media stream parameters type supplied (video instead of audio)");
 
+    PublisherSettings ps;
+    ps.sign_ = true;
+    ps.keyChain_ = settings_.keyChain_;
+    ps.memoryCache_ = cache_.get();
+    ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE;
+    ps.freshnessPeriodMs_ = settings.params_.producerParams_.freshness_.sampleMs_;
+    ps.statStorage_ = statStorage_.get();
+
+    samplePublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
+    samplePublisher_->setDescription("sample-publisher-"+settings_.params_.streamName_);
+
 	description_ = "astream-"+settings_.params_.streamName_;
 	for (int i = 0; i < settings_.params_.getThreadNum(); ++i)
 		if (settings_.params_.getAudioThread(i))
@@ -82,7 +93,7 @@ AudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
 	for (auto it:threads_) it.second->setLogger(logger);
-	dataPublisher_->setLogger(logger);
+	samplePublisher_->setLogger(logger);
 	NdnRtcComponent::setLogger(logger);
 }
 
@@ -181,7 +192,7 @@ AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 			packetHdr.publishUnixTimestamp_ = clock::unixTimestamp();
 			bundle->setHeader(packetHdr);
 	
-			me->dataPublisher_->publish(n, *bundle);
+			me->samplePublisher_->publish(n, *bundle);
             (*statStorage_)[Indicator::PublishedNum]++;
 	
 			{
@@ -207,7 +218,7 @@ AudioStreamImpl::updateMeta()
             Name metaName(streamPrefix_);
             metaName.append(it.first).append(NameComponents::NameComponentMeta)
                 .appendVersion(it.second->getVersion());
-            dataPublisher_->publish(metaName, it.second->getMeta());
+            metadataPublisher_->publish(metaName, it.second->getMeta());
 		}
 	}
 	return streamRunning_;

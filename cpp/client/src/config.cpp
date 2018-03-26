@@ -14,6 +14,7 @@
 #define SECTION_GENERAL_KEY "general"
 #define CONSUMER_KEY "consume"
 #define PRODUCER_KEY "produce"
+#define PRODUCER_FRESHNESS_KEY "freshness"
 #define SECTION_BASIC_KEY "basic"
 #define SECTION_AUDIO_KEY "audio"
 #define SECTION_VIDEO_KEY "video"
@@ -46,6 +47,7 @@ int loadStreamParams(const Setting& s, ProducerStreamParams& params);
 int loadStreamParams(const Setting& s, ClientMediaStreamParams& params);
 int loadThreadParams(const Setting &s, AudioThreadParams& params);
 int loadThreadParams(const Setting &s, VideoThreadParams& params);
+int loadFreshnessSettings(const Setting &producer, FreshnessPeriodParams &freshnessParams);
 
 //******************************************************************************
 void ProducerStreamParams::getMaxResolution(unsigned int& width, 
@@ -377,9 +379,14 @@ int loadStreamParams(const Setting& s, ClientMediaStreamParams& params)
 
         s.lookupValue("base_prefix", params.sessionPrefix_); // consumer
         s.lookupValue("segment_size", params.producerParams_.segmentSize_); // producer
-        s.lookupValue("freshness", params.producerParams_.freshnessMs_); // producer
 
         try { // audio streams do not have thread configurations
+        if (loadFreshnessSettings(s, params.freshness_) == EXIT_FAILURE)
+        {
+            LogError("") << "couldn't load freshness parameters for producer" << std::endl;
+            return (EXIT_FAILURE);
+        }
+
             const Setting &threadSettings = s["threads"];
         
             for (int i = 0; i < threadSettings.getLength(); i++){
@@ -429,6 +436,14 @@ int loadThreadParams(const Setting &s, AudioThreadParams& params){
 
 int loadThreadParams(const Setting &s, VideoThreadParams& params){
     
+int loadFreshnessSettings(const Settings &s, FreshnessPeriodParams &params)
+{
+    const Setting &freshnessSettings = s[PRODUCER_FRESHNESS_KEY];
+    freshnessSettings.lookupValue("metadata", params.metadataMs_);
+    freshnessSettings.lookupValue("sample", params.sampleMs_);
+    freshnessSettings.lookupValue("sampleKey", params.sampleKeyMs_);
+}
+
     s.lookupValue("name", params.threadName_);
     lookupNumber(s, "average_segnum_delta", params.segInfo_.deltaAvgSegNum_);
     lookupNumber(s, "average_segnum_delta_parity", params.segInfo_.deltaAvgParitySegNum_);
