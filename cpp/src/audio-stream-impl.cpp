@@ -91,6 +91,7 @@ void
 AudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+    MediaStreamBase::setLogger(logger);
 
 	for (auto it:threads_) it.second->setLogger(logger);
 	samplePublisher_->setLogger(logger);
@@ -211,13 +212,11 @@ AudioStreamImpl::updateMeta()
 		for (auto it:metaKeepers_)
 		{
 			it.second->updateMeta(threads_[it.first]->getRate());
-			
-            if (it.second->isNewMetaAvailable())
-				it.second->setVersion(it.second->getVersion()+1);
             
             Name metaName(streamPrefix_);
-            metaName.append(it.first).append(NameComponents::NameComponentMeta)
-                .appendVersion(it.second->getVersion());
+            // TODO: appendVersion() should probably be gone once SegemntFetcher
+            // is updated to work without version number
+            metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(0);
             metadataPublisher_->publish(metaName, it.second->getMeta());
 		}
 	}
@@ -225,12 +224,10 @@ AudioStreamImpl::updateMeta()
 }
 
 //******************************************************************************
-bool 
+void 
 AudioStreamImpl::MetaKeeper::updateMeta(double rate)
 {
-	newMeta_ = (rate != rate_);
 	rate_ = rate;
-	return newMeta_;
 }
 
 AudioThreadMeta

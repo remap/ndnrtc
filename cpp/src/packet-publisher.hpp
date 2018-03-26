@@ -132,7 +132,9 @@ class PacketPublisher : public NdnRtcComponent
 
             LogTraceC << "cached " << segmentName << " ("
                       << ndnSegment->getContent().size() << "b payload, "
-                      << ndnSegment->getDefaultWireEncoding().size() << "b wire)" << std::endl;
+                      << ndnSegment->getDefaultWireEncoding().size() << "b wire, "
+                      << ndnSegment->getMetaInfo().getFreshnessPeriod() << "ms fp)"
+                      << std::endl;
         }
 
         if (!banPitClean)

@@ -110,6 +110,7 @@ int VideoStreamImpl::incomingFrame(const YUV_NV21FrameWrapper &w)
 void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
+    MediaStreamBase::setLogger(logger);
 
     for (auto t : threads_)
         t.second->setLogger(logger);
@@ -360,12 +361,10 @@ bool VideoStreamImpl::updateMeta()
 
     for (auto it : metaKeepers_)
     {
-        // TODO: do not use version numbering for meta packets
-        if (it.second->isNewMetaAvailable())
-            it.second->setVersion(it.second->getVersion() + 1);
-
         Name metaName(streamPrefix_);
-        metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(it.second->getVersion());
+        // TODO: appendVersion() should probably be gone once SegemntFetcher
+        // is updated to work without version number
+        metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(0);;
         metadataPublisher_->publish(metaName, it.second->getMeta());
     }
 
@@ -387,7 +386,7 @@ VideoStreamImpl::MetaKeeper::~MetaKeeper()
 {
 }
 
-bool VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg)
+void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg)
 {
     Average &dataAvg = (isKey ? keyData_ : deltaData_);
     Average &parityAvg = (isKey ? keyParity_ : deltaParity_);
@@ -401,14 +400,6 @@ bool VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t
     rateMeter_.newValue(0);
     dataAvg.newValue(nDataSeg);
     parityAvg.newValue(nParitySeg);
-
-    newMeta_ = (r != rateMeter_.value() ||
-                d != deltaData_.value() ||
-                dp != deltaParity_.value() ||
-                k != keyData_.value() ||
-                kp != keyParity_.value());
-
-    return newMeta_;
 }
 
 VideoThreadMeta

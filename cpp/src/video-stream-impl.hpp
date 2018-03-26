@@ -49,12 +49,12 @@ class VideoStreamImpl : public MediaStreamBase
                     const MediaStreamSettings &settings, bool useFec);
     ~VideoStreamImpl();
 
-    std::vector<std::string> getThreads() const;
+    std::vector<std::string> getThreads() const override;
 
     int incomingFrame(const ArgbRawFrameWrapper &);
     int incomingFrame(const I420RawFrameWrapper &);
     int incomingFrame(const YUV_NV21FrameWrapper &);
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
+    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>) override;
 
   private:
     friend LocalVideoStream::LocalVideoStream(const std::string &, const MediaStreamSettings &, bool);
@@ -72,7 +72,7 @@ class VideoStreamImpl : public MediaStreamBase
         double getRate() const;
 
         // TODO: update meta for publishing latest key and delta frame sequence numbers
-        bool updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg);
+        void updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg);
 
       private:
         MetaKeeper(const MetaKeeper &) = delete;
@@ -92,9 +92,9 @@ class VideoStreamImpl : public MediaStreamBase
     uint64_t playbackCounter_;
     boost::shared_ptr<VideoPacketPublisher> framePublisher_;
 
-    void add(const MediaThreadParams *params);
-    void remove(const std::string &threadName);
-    bool updateMeta();
+    void add(const MediaThreadParams *params) override;
+    void remove(const std::string &threadName) override;
+    bool updateMeta() override;
 
     bool feedFrame(const WebRtcVideoFrame &frame);
     void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>> &frames);

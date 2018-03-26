@@ -16,7 +16,7 @@
 #include "clock.hpp"
 #include "statistics.hpp"
 
-#define META_CHECK_INTERVAL_MS 1000
+#define META_CHECK_INTERVAL_MS 10
 
 using namespace ndnrtc;
 using namespace std;
@@ -28,7 +28,6 @@ const unsigned int MediaStreamBase::MetaCheckIntervalMs = META_CHECK_INTERVAL_MS
 MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
                                  const MediaStreamSettings &settings)
     : Periodic(settings.faceIo_),
-      metaVersion_(1),
       basePrefix_(basePrefix),
       settings_(settings),
       streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
@@ -63,13 +62,13 @@ MediaStreamBase::~MediaStreamBase()
 void MediaStreamBase::addThread(const MediaThreadParams *params)
 {
     add(params);
-    publishMeta(++metaVersion_);
+    publishMeta();
 }
 
 void MediaStreamBase::removeThread(const string &threadName)
 {
     remove(threadName);
-    publishMeta(++metaVersion_);
+    publishMeta();
 }
 
 statistics::StatisticsStorage
@@ -79,7 +78,13 @@ MediaStreamBase::getStatistics() const
     return *statStorage_;
 }
 
-void MediaStreamBase::publishMeta(unsigned int metaVersion)
+void 
+MediaStreamBase::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+{
+    metadataPublisher_->setLogger(logger);
+}
+
+void MediaStreamBase::publishMeta()
 {
     boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(getThreads()));
     // don't need to synchronize unless publishMeta will be called
@@ -87,7 +92,9 @@ void MediaStreamBase::publishMeta(unsigned int metaVersion)
     // constructor LocalVideoStream/LocalAudioStream
 
     Name metaName(streamPrefix_);
-    metaName.append(NameComponents::NameComponentMeta).appendVersion(metaVersion);
+    // TODO: appendVersion() should probably be gone once SegemntFetcher
+    // is updated to work without version number
+    metaName.append(NameComponents::NameComponentMeta).appendVersion(0);
 
     boost::shared_ptr<MediaStreamBase> me = 
         boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
@@ -95,13 +102,11 @@ void MediaStreamBase::publishMeta(unsigned int metaVersion)
     async::dispatchAsync(settings_.faceIo_, [me, metaName, meta]() {
         me->metadataPublisher_->publish(metaName, *meta);
     });
-
-    LogDebugC << "published stream meta " << metaName << std::endl;
 }
 
 unsigned int MediaStreamBase::periodicInvocation()
 {
-    publishMeta(metaVersion_); // republish stream metadata
+    publishMeta(); // republish stream metadata
 
     if (updateMeta()) // update thread meta
         return META_CHECK_INTERVAL_MS;

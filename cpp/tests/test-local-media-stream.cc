@@ -45,7 +45,7 @@ MediaStreamParams getSampleVideoParams()
 
 	msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
 	msp.synchronizedStreamName_ = "mic";
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900 };
 	msp.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -72,7 +72,7 @@ MediaStreamParams getSampleAudioParams()
 	MediaStreamParams msp("mic");
 
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900 };
 	msp.producerParams_.segmentSize_ = 1000;
 	
 	CaptureDeviceParams cdp;
@@ -83,7 +83,7 @@ MediaStreamParams getSampleAudioParams()
 
 	return msp;
 }
-#if 0
+#if 1
 TEST(TestVideoStream, TestCreate)
 {
 	boost::asio::io_service io;
@@ -253,7 +253,7 @@ TEST(TestVideoStream, TestPublish)
 	LocalVideoStream s(appPrefix, settings);
 
 #ifdef ENABLE_LOGGING
-	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	EXPECT_NO_THROW(s.incomingArgbFrame(width, height, frameBuffer, frameSize));
@@ -262,8 +262,7 @@ TEST(TestVideoStream, TestPublish)
 	t.join();
 	free(frameBuffer);
 }
-#endif
-#if 1
+
 TEST(TestVideoStream, TestPublishInvokeOnMainThread)
 {
 #ifdef ENABLE_LOGGING
@@ -315,7 +314,7 @@ TEST(TestVideoStream, TestPublishInvokeOnMainThread)
 	LocalVideoStream s(appPrefix, settings);
 
 #ifdef ENABLE_LOGGING
-	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 	lib_chrono::duration<int, std::nano> pubDuration;
 	high_resolution_clock::time_point pubStart;
@@ -344,8 +343,7 @@ TEST(TestVideoStream, TestPublishInvokeOnMainThread)
 	work.reset();
 	t.join();
 }
-#endif
-#if 1
+
 TEST(TestVideoStream, TestPublishInvokeOnFaceThread)
 {
 #ifdef ENABLE_LOGGING
@@ -400,7 +398,7 @@ TEST(TestVideoStream, TestPublishInvokeOnFaceThread)
 		boost::this_thread::sleep_for(boost::chrono::milliseconds(3000));
 
 #ifdef ENABLE_LOGGING
-	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		boost::mutex m;
 		boost::unique_lock<boost::mutex> lock(m);
@@ -442,7 +440,6 @@ TEST(TestVideoStream, TestPublishInvokeOnFaceThread)
 	t.join();
 }
 
-#if 1
 TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 {
 #ifdef ENABLE_LOGGING
@@ -495,7 +492,7 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 		LocalVideoStream s(appPrefix, settings);
 
 #ifdef ENABLE_LOGGING
-	s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 		lib_chrono::duration<int, std::nano> pubDuration;
 		high_resolution_clock::time_point pubStart;
@@ -520,7 +517,9 @@ TEST(TestVideoStream, TestRemoveThreadWhilePublishing)
 	}
 	t.join();
 }
+#endif
 
+#if 1
 TEST(TestAudioStream, TestCreate)
 {
 	std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
@@ -603,7 +602,7 @@ TEST(TestAudioStream, TestRun5Sec)
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 	{
 		MediaStreamSettings settings(io, getSampleAudioParams());
@@ -613,7 +612,7 @@ TEST(TestAudioStream, TestRun5Sec)
 		EXPECT_FALSE(s.isRunning());
 
 #ifdef ENABLE_LOGGING
-		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		runTimer.expires_from_now(boost::posix_time::milliseconds(5000));
@@ -643,7 +642,7 @@ TEST(TestAudioStream, TestRunAndStopOnDtor)
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 	{
 		MediaStreamSettings settings(io, getSampleAudioParams());
@@ -653,7 +652,7 @@ TEST(TestAudioStream, TestRunAndStopOnDtor)
 		EXPECT_FALSE(s.isRunning());
 
 #ifdef ENABLE_LOGGING
-		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		runTimer.expires_from_now(boost::posix_time::milliseconds(500));
@@ -681,12 +680,12 @@ TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
 
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+	ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 	{
 		MediaStreamParams msp("mic");
 		msp.producerParams_.segmentSize_ = 1000;
-		msp.producerParams_.freshnessMs_ = 1000;
+		msp.producerParams_.freshness_ = { 10, 15, 900 };
 		msp.captureDevice_.deviceId_ = 0;
 		msp.type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeAudio;
 		msp.addMediaThread(AudioThreadParams("sd"));
@@ -697,7 +696,7 @@ TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
 		EXPECT_FALSE(s.isRunning());
 
 #ifdef ENABLE_LOGGING
-		s.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		s.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		runTimer.expires_from_now(boost::posix_time::milliseconds(1000));
@@ -731,7 +730,7 @@ TEST(TestAudioStream, TestAddRemoveThreadsOnTheFly)
 	t.join();
 }
 #endif
-#endif
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
