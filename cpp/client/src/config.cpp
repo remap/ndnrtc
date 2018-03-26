@@ -39,7 +39,8 @@ int loadBasicStatSettings(const Setting &consumerBasicStatSettings,
                           std::vector<StatGatheringParams> &statistics);
 int loadGeneralSettings(const Setting &general, GeneralParams &generalParams);
 int loadConsumerSettings(const Setting &root, ConsumerClientParams &params);
-int loadFreshnessSettings(const Setting &producer, FreshnessPeriodParams &freshnessParams);
+int loadFreshnessSettings(const Setting &producer, 
+                          GeneralProducerParams::FreshnessPeriodParams &freshnessParams);
 int loadProducerSettings(const Setting &root, ProducerClientParams &params,
                          const std::string &identity);
 int loadStreamParams(const Setting &s, ConsumerStreamParams &params);
@@ -402,7 +403,7 @@ int loadStreamParams(const Setting &s, ClientMediaStreamParams &params)
         s.lookupValue("base_prefix", params.sessionPrefix_);                // consumer
         s.lookupValue("segment_size", params.producerParams_.segmentSize_); // producer
 
-        if (loadFreshnessSettings(s, params.freshness_) == EXIT_FAILURE)
+        if (loadFreshnessSettings(s, params.producerParams_.freshness_) == EXIT_FAILURE)
         {
             LogError("") << "couldn't load freshness parameters for producer" << std::endl;
             return (EXIT_FAILURE);
@@ -461,7 +462,8 @@ int loadThreadParams(const Setting &s, AudioThreadParams &params)
     return s.lookupValue("name", params.threadName_);
 }
 
-int loadFreshnessSettings(const Settings &s, FreshnessPeriodParams &params)
+int loadFreshnessSettings(const Setting &s, 
+                          GeneralProducerParams::FreshnessPeriodParams &params)
 {
     const Setting &freshnessSettings = s[PRODUCER_FRESHNESS_KEY];
     freshnessSettings.lookupValue("metadata", params.metadataMs_);

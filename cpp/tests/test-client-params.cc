@@ -50,7 +50,7 @@ TEST(TestClientMediaStreamParams, TestOutput)
 	msp.streamName_ = "mic";
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
 	msp.synchronizedStreamName_ = "camera";
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900};
 	msp.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -61,7 +61,7 @@ TEST(TestClientMediaStreamParams, TestOutput)
 
 	ss << msp;
 	EXPECT_EQ("session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; "
-		"name: mic (audio); synced to: camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		"name: mic (audio); synced to: camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
@@ -77,7 +77,7 @@ TEST(TestProducerStreamParams, TestOutputAndCopy)
 	msp.streamName_ = "mic";
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
 	msp.synchronizedStreamName_ = "camera";
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900};
 	msp.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -91,7 +91,7 @@ TEST(TestProducerStreamParams, TestOutputAndCopy)
 	ss << mspCopy;
 	EXPECT_EQ("stream source: mic.pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
-		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		" camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
@@ -108,7 +108,7 @@ TEST(TestConsumerStreamParams, TestOutput)
 	msp.streamName_ = "mic";
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
 	msp.synchronizedStreamName_ = "camera";
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900};
 	msp.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -118,9 +118,9 @@ TEST(TestConsumerStreamParams, TestOutput)
 	msp.addMediaThread(AudioThreadParams("g722"));
 
 	ss << msp;
-	EXPECT_EQ("stream sink: mic.pcmu; thread to fetch: pcmu; session prefix: "
+	EXPECT_EQ("stream sink: mic.pcmu (type: file); thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
-		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		" camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n",
 		ss.str());
@@ -196,7 +196,7 @@ TEST(TestConsumerClientParams, TestOutput)
 	msp1.streamName_ = "mic";
 	msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
 	msp1.synchronizedStreamName_ = "camera";
-	msp1.producerParams_.freshnessMs_ = 2000;
+	msp1.producerParams_.freshness_ = { 10, 15, 900};
 	msp1.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -213,7 +213,7 @@ TEST(TestConsumerClientParams, TestOutput)
 	msp2.streamName_ = "camera";
 	msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
 	msp2.synchronizedStreamName_ = "mic";
-	msp2.producerParams_.freshnessMs_ = 2000;
+	msp2.producerParams_.freshness_ = { 10, 15, 900};
 	msp2.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp2;
@@ -255,14 +255,14 @@ TEST(TestConsumerClientParams, TestOutput)
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
-		"[0: stream sink: mic.pcmu; thread to fetch: pcmu; session prefix: "
+		"[0: stream sink: mic.pcmu (type: file); thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
-		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		" camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
-		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
+		"[1: stream sink: camera.yuv (type: file); thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
-		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
+		"synced to: mic; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 11; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
@@ -281,7 +281,7 @@ TEST(TestConsumerClientParams, TestCopy)
 	msp1.streamName_ = "mic";
 	msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
 	msp1.synchronizedStreamName_ = "camera";
-	msp1.producerParams_.freshnessMs_ = 2000;
+	msp1.producerParams_.freshness_ = { 10, 15, 900};
 	msp1.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -298,7 +298,7 @@ TEST(TestConsumerClientParams, TestCopy)
 	msp2.streamName_ = "camera";
 	msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
 	msp2.synchronizedStreamName_ = "mic";
-	msp2.producerParams_.freshnessMs_ = 2000;
+	msp2.producerParams_.freshness_ = { 10, 15, 900};
 	msp2.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp2;
@@ -348,14 +348,14 @@ TEST(TestConsumerClientParams, TestCopy)
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
-		"[0: stream sink: mic.pcmu; thread to fetch: pcmu; session prefix: "
+		"[0: stream sink: mic.pcmu (type: file); thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
-		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		" camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
-		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
+		"[1: stream sink: camera.yuv (type: file); thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
-		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
+		"synced to: mic; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 11; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
@@ -410,7 +410,7 @@ TEST(TestClientParams, TestOutput){
 		msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
 		msp.streamName_ = "mic";
 		msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
-		msp.producerParams_.freshnessMs_ = 2000;
+		msp.producerParams_.freshness_ = { 10, 15, 900};
 		msp.producerParams_.segmentSize_ = 1000;
 
 		CaptureDeviceParams cdp;
@@ -430,7 +430,7 @@ TEST(TestClientParams, TestOutput){
 			msp.source_ = "camera.yuv";
 			msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
 			msp.synchronizedStreamName_ = "mic";
-			msp.producerParams_.freshnessMs_ = 2000;
+			msp.producerParams_.freshness_ = { 10, 15, 900};
 			msp.producerParams_.segmentSize_ = 1000;
 	
 			CaptureDeviceParams cdp;
@@ -458,7 +458,7 @@ TEST(TestClientParams, TestOutput){
 		msp1.streamName_ = "mic";
 		msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
 		msp1.synchronizedStreamName_ = "camera";
-		msp1.producerParams_.freshnessMs_ = 2000;
+		msp1.producerParams_.freshness_ = { 10, 15, 900};
 		msp1.producerParams_.segmentSize_ = 1000;
 
 		CaptureDeviceParams cdp;
@@ -475,7 +475,7 @@ TEST(TestClientParams, TestOutput){
 		msp2.streamName_ = "camera";
 		msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
 		msp2.synchronizedStreamName_ = "mic";
-		msp2.producerParams_.freshnessMs_ = 2000;
+		msp2.producerParams_.freshness_ = { 10, 15, 900};
 		msp2.producerParams_.segmentSize_ = 1000;
 
 		CaptureDeviceParams cdp2;
@@ -524,14 +524,14 @@ TEST(TestClientParams, TestOutput){
 		"\nstat gathering:\n"
 		"stat file: buffer.stat; stats: (jitterPlay, jitterTar, drdPrime)\n"
 		"fetching:\n"
-		"[0: stream sink: mic.pcmu; thread to fetch: pcmu; session prefix: "
+		"[0: stream sink: mic.pcmu (type: file); thread to fetch: pcmu; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); synced to:"
-		" camera; seg size: 1000 bytes; freshness: 2000 ms; "
+		" camera; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n]\n"
-		"[1: stream sink: camera.yuv; thread to fetch: low; session prefix: "
+		"[1: stream sink: camera.yuv (type: file); thread to fetch: low; session prefix: "
 		"/ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
-		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
+		"synced to: mic; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 11; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
@@ -540,12 +540,12 @@ TEST(TestClientParams, TestOutput){
 		"-producing:\nprefix: /ndn/edu/ucla/remap;\n"
 		"--0:\n"
 		"stream source: ; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; name: mic (audio); "
-		"synced to: ; seg size: 1000 bytes; freshness: 2000 ms; "
+		"synced to: ; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 10; 2 threads:\n"
 		"[0: name: pcmu; codec: pcmu]\n[1: name: g722; codec: g722]\n"
 		"--1:\n"
 		"stream source: camera.yuv; session prefix: /ndn/edu/ucla/remap/ndnrtc/user/client1; name: camera (video); "
-		"synced to: mic; seg size: 1000 bytes; freshness: 2000 ms; "
+		"synced to: mic; seg size: 1000 bytes; freshness (ms): metadata 10 sample 15 sample (key) 900; "
 		"capture device id: 11; 2 threads:\n"
 		"[0: name: low; 30FPS; GOP: 30; Start bitrate: 1000 Kbit/s; "
 		"Max bitrate: 3000 Kbit/s; 1920x1080; Drop: YES]\n"
