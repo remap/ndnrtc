@@ -166,7 +166,7 @@ void AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 {
     if (!bundlePool_.size())
     {
-        LogWarnC << "Audio bundle pool is drained. This may happen do to fast capturing "
+        LogWarnC << "Audio bundle pool is drained. This may happen due to fast capturing "
                     "and slow publishing or too small segment size"
                  << std::endl;
         return;
@@ -213,7 +213,8 @@ bool AudioStreamImpl::updateMeta()
         boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
         for (auto it : metaKeepers_)
         {
-            it.second->updateMeta(threads_[it.first]->getRate());
+            it.second->updateMeta(threads_[it.first]->getRate(),
+                                  threads_[it.first]->getBundleNo());
 
             Name metaName(streamPrefix_);
             // TODO: appendVersion() should probably be gone once SegemntFetcher
@@ -226,13 +227,14 @@ bool AudioStreamImpl::updateMeta()
 }
 
 //******************************************************************************
-void AudioStreamImpl::MetaKeeper::updateMeta(double rate)
+void AudioStreamImpl::MetaKeeper::updateMeta(double rate, uint64_t bundleNo)
 {
     rate_ = rate;
+    bundleNo_ = bundleNo;
 }
 
 AudioThreadMeta
 AudioStreamImpl::MetaKeeper::getMeta() const
 {
-    return boost::move(AudioThreadMeta(rate_, ((AudioThreadParams *)params_)->codec_));
+    return boost::move(AudioThreadMeta(rate_, bundleNo_, ((AudioThreadParams *)params_)->codec_));
 }

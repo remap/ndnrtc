@@ -261,6 +261,7 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
     PacketNumber seqNo = (isKey ? seqCounters_[thread].first : seqCounters_[thread].second);
     PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
     PacketNumber playbackNo = playbackCounter_;
+    unsigned char gopPos = (char)threads_[thread]->getCoder().getGopCounter();
     Name dataName(streamPrefix_);
     dataName.append(thread)
         .append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
@@ -281,7 +282,7 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 
     busyPublishing_++;
     async::dispatchAsync(settings_.faceIo_, [me, nParitySeg, nDataSeg, seqNo, pairedSeq, keeper, isKey,
-                                             thread, fp, parityData, dataName, playbackNo, this] {
+                                             thread, fp, parityData, dataName, playbackNo, gopPos, this] {
         VideoFrameSegmentHeader segmentHdr;
         segmentHdr.totalSegmentsNum_ = nDataSeg;
         segmentHdr.paritySegmentsNum_ = nParitySeg;
@@ -293,7 +294,7 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
                                          (isKey ? settings_.params_.producerParams_.freshness_.sampleKeyMs_ : -1),
                                          isKey, true);
         assert(segments.size());
-        keeper->updateMeta(isKey, nDataSeg, nParitySeg);
+        keeper->updateMeta(isKey, nDataSeg, nParitySeg, seqNo, pairedSeq, gopPos);
 
         LogDebugC << "↓ published "
                   << seqNo << (isKey ? "k " : "d ") << playbackNo << "p "
@@ -386,7 +387,8 @@ VideoStreamImpl::MetaKeeper::~MetaKeeper()
 {
 }
 
-void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg)
+void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg,
+                                             PacketNumber seqNo, PacketNumber pairedSeqNo, unsigned char gopPos)
 {
     Average &dataAvg = (isKey ? keyData_ : deltaData_);
     Average &parityAvg = (isKey ? keyParity_ : deltaParity_);
@@ -400,6 +402,9 @@ void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t
     rateMeter_.newValue(0);
     dataAvg.newValue(nDataSeg);
     parityAvg.newValue(nParitySeg);
+    seqNo_.first = (isKey ? pairedSeqNo : seqNo); // first is delta
+    seqNo_.second = (isKey ? seqNo : pairedSeqNo); // second is key
+    gopPos_ = gopPos;
 }
 
 VideoThreadMeta
@@ -411,7 +416,7 @@ VideoStreamImpl::MetaKeeper::getMeta() const
     segInfo.keyAvgSegNum_ = keyData_.value();
     segInfo.keyAvgParitySegNum_ = keyParity_.value();
 
-    return boost::move(VideoThreadMeta(rateMeter_.value(),
+    return boost::move(VideoThreadMeta(rateMeter_.value(), seqNo_.first, seqNo_.second, gopPos_,
                                        segInfo, ((VideoThreadParams *)params_)->coderParams_));
 }
 

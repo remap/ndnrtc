@@ -75,10 +75,11 @@ bool Manifest::hasData(const ndn::Data& data) const
 }
 
 //******************************************************************************
-AudioThreadMeta::AudioThreadMeta(double rate, const std::string& codec):
+AudioThreadMeta::AudioThreadMeta(double rate, uint64_t bundleNo, const std::string& codec):
 DataPacket(std::vector<uint8_t>())
 {
     addBlob(sizeof(rate), (uint8_t*)&rate);
+    addBlob(sizeof(bundleNo), (uint8_t*)&bundleNo);
     if (codec.size()) addBlob(codec.size(), (uint8_t*)codec.c_str());
     else isValid_ = false;
 }
@@ -86,7 +87,9 @@ DataPacket(std::vector<uint8_t>())
 AudioThreadMeta::AudioThreadMeta(NetworkData&& data):
 DataPacket(boost::move(data))
 {
-    isValid_ = (blobs_.size() == 2 && blobs_[0].size() == sizeof(double));
+    isValid_ = (blobs_.size() == 3 && 
+                blobs_[0].size() == sizeof(double) &&
+                blobs_[1].size() == sizeof(uint64_t));
 }
 
 double 
@@ -95,20 +98,27 @@ AudioThreadMeta::getRate() const
     return *(const double*)blobs_[0].data();
 }
 
+uint64_t
+AudioThreadMeta::getBundleNo() const
+{
+    return *(const uint64_t*)blobs_[1].data();
+}
+
 std::string
 AudioThreadMeta::getCodec() const
 {
-    return std::string((const char*)blobs_[1].data(), blobs_[1].size());
+    return std::string((const char*)blobs_[2].data(), blobs_[2].size());
 }
 
 //******************************************************************************
-VideoThreadMeta::VideoThreadMeta(double rate, const FrameSegmentsInfo& segInfo,
-    const VideoCoderParams& coder):
+VideoThreadMeta::VideoThreadMeta(double rate, PacketNumber deltaSeqNo, PacketNumber keySeqNo,
+                                 unsigned char gopPos, const FrameSegmentsInfo& segInfo, const VideoCoderParams& coder):
 DataPacket(std::vector<uint8_t>())
 {
-    Meta m({rate, coder.gop_, coder.startBitrate_, coder.encodeWidth_, coder.encodeHeight_, 
-        segInfo.deltaAvgSegNum_, segInfo.deltaAvgParitySegNum_,
-        segInfo.keyAvgSegNum_, segInfo.keyAvgParitySegNum_});
+    Meta m({rate, deltaSeqNo, keySeqNo, gopPos,
+            coder.gop_, coder.startBitrate_, coder.encodeWidth_, coder.encodeHeight_,
+            segInfo.deltaAvgSegNum_, segInfo.deltaAvgParitySegNum_,
+            segInfo.keyAvgSegNum_, segInfo.keyAvgParitySegNum_});
     addBlob(sizeof(m), (uint8_t*)&m);
 }
 
@@ -121,6 +131,19 @@ DataPacket(boost::move(data))
 double VideoThreadMeta::getRate() const
 {
     return ((Meta*)blobs_[0].data())->rate_;
+}
+
+pair<PacketNumber, PacketNumber> VideoThreadMeta::getSeqNo() const
+{
+    pair<PacketNumber, PacketNumber> seqNo;
+    seqNo.first = ((Meta*)blobs_[0].data())->deltaSeqNo_;
+    seqNo.second = ((Meta*)blobs_[0].data())->keySeqNo_;
+    return seqNo;
+}
+
+unsigned char VideoThreadMeta::getGopPos() const
+{
+    return ((Meta*)blobs_[0].data())->gopPos_;
 }
 
 FrameSegmentsInfo VideoThreadMeta::getSegInfo() const

@@ -1008,10 +1008,11 @@ TEST(TestVideoFramePacket, TestGetParity)
 
 TEST(TestAudioThreadMeta, TestCreate)
 {
-    AudioThreadMeta meta(50, "opus");
+    AudioThreadMeta meta(50, 146, "opus");
 
     EXPECT_TRUE(meta.isValid());
     EXPECT_EQ(50, meta.getRate());
+    EXPECT_EQ(146, meta.getBundleNo());
     EXPECT_EQ("opus", meta.getCodec());
 
     GT_PRINTF("Audio thread meta is %d bytes long\n", meta.getLength());
@@ -1022,13 +1023,14 @@ TEST(TestAudioThreadMeta, TestCreate)
     AudioThreadMeta meta2(boost::move(nd));
     EXPECT_TRUE(meta2.isValid());
     EXPECT_EQ(50, meta2.getRate());
+    EXPECT_EQ(146, meta2.getBundleNo());
     EXPECT_EQ("opus", meta2.getCodec());
 }
 
 TEST(TestAudioThreadMeta, TestCreateFail)
 {
     {
-        AudioThreadMeta meta(50, "");
+        AudioThreadMeta meta(50, 146, "");
     
         EXPECT_FALSE(meta.isValid());
     
@@ -1038,7 +1040,8 @@ TEST(TestAudioThreadMeta, TestCreateFail)
         EXPECT_FALSE(meta2.isValid());
     }
     {
-        uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+        uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 
+                                  0x39, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46 };
         std::size_t const data_len = sizeof( data ) / sizeof( data[0] );
         CommonSamplePacket sp(data_len, data);
         CommonHeader hdr = {25, 39936287, 1460399362};
@@ -1053,10 +1056,13 @@ TEST(TestVideoThreadMeta, TestCreate)
 {
     FrameSegmentsInfo segInfo({5.6, 2.3, 54.3, 12.3});
     VideoCoderParams coder = sampleVideoCoderParams();
-    VideoThreadMeta meta(27, segInfo, coder);
+    VideoThreadMeta meta(27, 465, 15, 14, segInfo, coder);
 
     EXPECT_TRUE(meta.isValid());
     EXPECT_EQ(27, meta.getRate());
+    EXPECT_EQ(465, meta.getSeqNo().first);
+    EXPECT_EQ(15, meta.getSeqNo().second);
+    EXPECT_EQ(14, meta.getGopPos());
     EXPECT_EQ(segInfo, meta.getSegInfo());
     {
         VideoCoderParams c = meta.getCoderParams();
@@ -1072,6 +1078,9 @@ TEST(TestVideoThreadMeta, TestCreate)
 
     EXPECT_TRUE(meta2.isValid());
     EXPECT_EQ(27, meta2.getRate());
+    EXPECT_EQ(465, meta2.getSeqNo().first);
+    EXPECT_EQ(15, meta2.getSeqNo().second);
+    EXPECT_EQ(14, meta2.getGopPos());
     EXPECT_EQ(segInfo, meta2.getSegInfo());
     {
         VideoCoderParams c = meta.getCoderParams();
@@ -1084,7 +1093,8 @@ TEST(TestVideoThreadMeta, TestCreate)
 
 TEST(TestVideoThreadMeta, TestCreateFail)
 {
-   uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+   uint8_t const  data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+                             0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48 };
    std::size_t const data_len = sizeof( data ) / sizeof( data[0] );
    CommonSamplePacket sp(data_len, data);
    CommonHeader hdr = {25, 39936287, 1460399362};

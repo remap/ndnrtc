@@ -60,6 +60,7 @@ class AudioThread : public NdnRtcComponent,
     bool isRunning() const { return isRunning_; }
     std::string getCodec() const { return codec_; }
     double getRate() const;
+    uint64_t getBundleNo() const { return bundleNo_; }
     void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:

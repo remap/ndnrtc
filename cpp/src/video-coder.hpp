@@ -87,7 +87,9 @@ namespace ndnrtc {
 
         VideoCoder(const VideoCoderParams& coderParams, IEncoderDelegate* delegate, 
             KeyEnforcement = KeyEnforcement::EncoderDefined);
+
         void onRawFrame(const WebRtcVideoFrame &frame);
+        int getGopCounter() const { return gopCounter_; }
 
         static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
 

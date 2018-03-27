@@ -42,6 +42,9 @@ namespace ndnrtc
         void
         setDescription(const std::string& desc);
 
+        const VideoCoder&
+        getCoder() const { return coder_; }
+
     private:
         VideoThread(const VideoThread&) = delete;
         VideoCoder coder_;

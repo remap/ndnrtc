@@ -224,7 +224,7 @@ TEST(TestCoder, TestEncode700K)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -300,7 +300,7 @@ TEST(TestCoder, TestEncode1000K)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -375,7 +375,7 @@ TEST(TestCoder, TestEncode2000K)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -450,7 +450,7 @@ TEST(TestCoder, TestEncode3000K)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -524,7 +524,7 @@ TEST(TestCoder, Test720pEnforceNoDrop)
         GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
                   coderDelegate.getEncodedNum(), encodingDuration.count(),
                   avgFrameEncTimeMs);
-        GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+        GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
                   "dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
                   nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
                   coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -598,7 +598,7 @@ TEST(TestCoder, TestEnforceNoDrop)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
@@ -612,7 +612,7 @@ TEST(TestCoder, TestEnforceNoDrop)
 TEST(TestCoder, TestEnforceKeyGop)
 {
 	bool dropEnabled = true;
-	int nFrames = 90;
+	int nFrames = 120;
 	int targetBitrate = 10000;
 	int width = 1280, height = 720;
 #ifdef ENABLE_LOGGING
@@ -630,6 +630,8 @@ TEST(TestCoder, TestEnforceKeyGop)
 		MockEncoderDelegate coderDelegate;
 		coderDelegate.setDefaults();
 		VideoCoder vc(vcp, &coderDelegate, VideoCoder::KeyEnforcement::Gop);
+        std::vector<int> gopLengths;
+        int gopCounter = 0;
 
 #ifdef ENABLE_LOGGING
 		vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
@@ -644,8 +646,18 @@ TEST(TestCoder, TestEnforceKeyGop)
 			coderDelegate.countEncodingStarted();
 			encStart = high_resolution_clock::now();
 		};
-		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
-			coderDelegate.countEncodedFrame(f);
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart,
+                                                                       &gopCounter, &gopLengths]
+        (const webrtc::EncodedImage& f)
+        {
+            if (f._frameType == webrtc::kVideoFrameKey && gopCounter > 0)
+            {
+                gopLengths.push_back(gopCounter);
+                gopCounter = 0;
+            }
+            gopCounter++;
+
+            coderDelegate.countEncodedFrame(f);
 			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
 		};
 
@@ -672,12 +684,20 @@ TEST(TestCoder, TestEnforceKeyGop)
 
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
 		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
+
+        std::stringstream ss;
+        for (auto v:gopLengths)
+        {
+             ss << v << " ";
+             EXPECT_EQ(30, v);
+        }
+        GT_PRINTF("Gop lengths: %s\n", ss.str().c_str());
 
 		EXPECT_GE(1000./30., avgFrameEncTimeMs);
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
@@ -689,9 +709,11 @@ TEST(TestCoder, TestEnforceKeyGop)
 TEST(TestCoder, TestEnforceKeyTimed)
 {
 	bool dropEnabled = true;
-	int nFrames = 90;
+	int nFrames = 120;
 	int targetBitrate = 3000;
 	int width = 1280, height = 720;
+    std::vector<int> gopLengths;
+    int gopCounter = 0;
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
@@ -721,7 +743,17 @@ TEST(TestCoder, TestEnforceKeyTimed)
 			coderDelegate.countEncodingStarted();
 			encStart = high_resolution_clock::now();
 		};
-		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart](const webrtc::EncodedImage& f){
+		boost::function<void(const webrtc::EncodedImage&)> onEncEnd = [&coderDelegate, &encodingDuration, &encStart,
+                                                                       &gopCounter, &gopLengths]
+        (const webrtc::EncodedImage& f)
+        {
+            if (f._frameType == webrtc::kVideoFrameKey && gopCounter > 0) 
+            {
+                gopLengths.push_back(gopCounter);
+                gopCounter = 0;
+            }
+            gopCounter++;
+
 			coderDelegate.countEncodedFrame(f);
 			encodingDuration += duration_cast<milliseconds>( high_resolution_clock::now() - encStart );
 		};
@@ -750,12 +782,16 @@ TEST(TestCoder, TestEnforceKeyTimed)
 		GT_PRINTF("%d frames encoding took %d ms (avg %.2f ms per frame)\n",
 			coderDelegate.getEncodedNum(), encodingDuration.count(), 
 			avgFrameEncTimeMs);
-		GT_PRINTF("Encoded %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
+		GT_PRINTF("Passed %d (%dx%d) frames with target rate %d Kbit/s: encoded %d frames, "
 			"dropped %d frames, actual rate %d Kbit/s, %d key, %d delta\n",
 			nFrames, width, height, vcp.startBitrate_, coderDelegate.getEncodedNum(), 
 			coderDelegate.getDroppedNum(), bitrate, coderDelegate.getKey(), coderDelegate.getDelta());
 		GT_PRINTF("Encoded frame sizes (bytes): key - %.2f, delta - %.2f\n",
 			coderDelegate.getAvgKeySize(), coderDelegate.getAvgDeltaSize());
+
+        std::stringstream ss;
+        for (auto v:gopLengths) ss << v << " ";
+        GT_PRINTF("Gop lengths: %s\n", ss.str().c_str());
 
 		EXPECT_EQ(nFrames/vcp.gop_, coderDelegate.getKey());
 		EXPECT_EQ(coderDelegate.getEncodedNum()-nFrames/vcp.gop_, coderDelegate.getDelta());

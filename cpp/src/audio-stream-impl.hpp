@@ -46,13 +46,14 @@ class AudioStreamImpl : public MediaStreamBase,
         ~MetaKeeper() {}
 
         double getRate() const { return rate_; }
-        void updateMeta(double rate);
+        void updateMeta(double rate, uint64_t bundleNo);
         AudioThreadMeta getMeta() const;
 
       private:
         MetaKeeper(const MetaKeeper &) = delete;
 
         double rate_;
+        uint64_t bundleNo_;
     };
 
     boost::shared_ptr<CommonPacketPublisher> samplePublisher_;

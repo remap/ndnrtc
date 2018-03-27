@@ -887,27 +887,33 @@ namespace ndnrtc {
     class AudioThreadMeta : public DataPacket
     {
     public:
-        AudioThreadMeta(double rate, const std::string& codec);
+        AudioThreadMeta(double rate, uint64_t bundleNo, const std::string& codec);
         AudioThreadMeta(NetworkData&& data);
 
         std::string getCodec() const;
         double getRate() const;
+        uint64_t getBundleNo() const;
     };
 
     class VideoThreadMeta : public DataPacket
     {
     public:
-        VideoThreadMeta(double rate, const FrameSegmentsInfo& segInfo,
-            const VideoCoderParams& coder);
+        VideoThreadMeta(double rate, PacketNumber deltaSeqNo, PacketNumber keySeqNo,
+                        unsigned char gopPos,
+                        const FrameSegmentsInfo& segInfo, const VideoCoderParams& coder);
         VideoThreadMeta(NetworkData&& data);
 
         double getRate() const;
+        std::pair<PacketNumber, PacketNumber> getSeqNo() const;
+        unsigned char getGopPos() const;    // GOP position of delta frame
         FrameSegmentsInfo getSegInfo() const;
         VideoCoderParams getCoderParams() const;
 
     private:
         typedef struct _Meta {
             double rate_; // FPS
+            PacketNumber deltaSeqNo_, keySeqNo_;
+            unsigned char gopPos_;
             unsigned int gop_;
             unsigned int bitrate_; // kbps
             unsigned int width_, height_; // pixels

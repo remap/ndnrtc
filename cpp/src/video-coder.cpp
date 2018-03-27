@@ -183,8 +183,6 @@ keyEnforcement_(keyEnforcement),
 #pragma mark - public
 void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
 {
-    LogTraceC << "⤹ encoding ○" << endl;
-
     if (frame.width() != coderParams_.encodeWidth_ || 
             frame.height() != coderParams_.encodeHeight_)
     {
@@ -202,19 +200,25 @@ void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
     int err;
     if (gopCounter_%coderParams_.gop_ == 0)
     {
+        // gopCounter_ = 0;
+
+        LogTraceC << "⤹ encoding ○ (K) " << gopCounter_ << endl;
         err = encoder_->Encode(frame, codecSpecificInfo_, &keyFrameType_);
         if (keyEnforcement_ == KeyEnforcement::EncoderDefined) gopCounter_ = 1;
     }
     else
+    {
+        LogTraceC << "⤹ encoding ○ ? " << gopCounter_ << endl;
         err = encoder_->Encode(frame, codecSpecificInfo_, NULL);
-    
-    if (keyEnforcement_ == KeyEnforcement::Timed) gopCounter_++;
+    }
 
     if (!encodeComplete_)
     {
-        LogTraceC << " dropped ✕" << endl;
+        LogTraceC << " dropped ✕ " << gopCounter_ << endl;
         delegate_->onDroppedFrame();
     }
+
+    if (keyEnforcement_ == KeyEnforcement::Timed) gopCounter_++;
     
     if (err != WEBRTC_VIDEO_CODEC_OK)
         LogErrorC <<"can't encode frame due to error " << err << std::endl;
@@ -228,10 +232,15 @@ VideoCoder::OnEncodedImage(const EncodedImage& encodedImage,
     const RTPFragmentationHeader* fragmentation)
 {
     encodeComplete_ = true;
+
+    if (encodedImage._frameType == webrtc::kVideoFrameKey) gopCounter_ = 0;
+    
+    LogTraceC << "⤷ encoded  ● " 
+              << (encodedImage._frameType == webrtc::kVideoFrameKey ? "K " : "D ")
+              << gopCounter_ << std::endl;
+    
     if (keyEnforcement_ == KeyEnforcement::Gop) gopCounter_++;
-    
-    LogTraceC << "⤷ encoded ●" << std::endl;
-    
+
     /*
     LogInfoC << "encoded"
     << " type " << ((encodedImage._frameType == webrtc::kKeyFrame) ? "KEY":((encodedImage._frameType == webrtc::kSkipFrame)?"SKIP":"DELTA"))
