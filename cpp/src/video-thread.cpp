@@ -20,9 +20,9 @@ using namespace ndnrtc;
 using namespace webrtc;
 
 //******************************************************************************
-VideoThread::VideoThread(const VideoCoderParams& coderParams):
-coder_(coderParams, this, VideoCoder::KeyEnforcement::Timed),
-nEncoded_(0), nDropped_(0)
+VideoThread::VideoThread(const VideoCoderParams &coderParams)
+    : coder_(coderParams, this, VideoCoder::KeyEnforcement::Timed),
+      nEncoded_(0), nDropped_(0)
 {
     description_ = "vthread";
 }
@@ -33,8 +33,8 @@ VideoThread::~VideoThread()
 
 //******************************************************************************
 #pragma mark - public
-boost::shared_ptr<VideoFramePacket> 
-VideoThread::encode(const WebRtcVideoFrame& frame)
+boost::shared_ptr<VideoFramePacket>
+VideoThread::encode(const WebRtcVideoFrame &frame)
 {
     coder_.onRawFrame(frame);
     // result should be delivered using onEncodedFrame or onDroppedFrame
@@ -43,18 +43,17 @@ VideoThread::encode(const WebRtcVideoFrame& frame)
     return boost::move(videoFramePacket_);
 }
 
-void
-VideoThread::setDescription(const std::string& desc)
+void VideoThread::setDescription(const std::string &desc)
 {
     description_ = desc;
-    coder_.setDescription(desc+"-coder");
+    coder_.setDescription(desc + "-coder");
 }
 
 //******************************************************************************
 #pragma mark - interfaces realization
-void
-VideoThread::onEncodingStarted()
-{}
+void VideoThread::onEncodingStarted()
+{
+}
 
 void VideoThread::onEncodedFrame(const webrtc::EncodedImage &encodedImage)
 {
@@ -67,8 +66,7 @@ void VideoThread::onDroppedFrame()
     nDropped_++;
 }
 
-void
-VideoThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void VideoThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     coder_.setLogger(logger);
     ILoggingObject::setLogger(logger);

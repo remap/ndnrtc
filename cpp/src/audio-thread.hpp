@@ -31,14 +31,14 @@ class IAudioThreadCallback
 {
   public:
     /**
-       * This is called when audio bundle consisting of RTP/RTCP packets
-       * is ready.
-       * @param threadName Name of the audio media thread
-       * @param bundleNo Sequential bundle number
-       * @param packet Shared pointer for bundle packet
-       * @note This is called on audio system thread
-       * @see AudioController
-       */
+     * This is called when audio bundle consisting of RTP/RTCP packets
+     * is ready.
+     * @param threadName Name of the audio media thread
+     * @param bundleNo Sequential bundle number
+     * @param packet Shared pointer for bundle packet
+     * @note This is called on audio system thread
+     * @see AudioController
+     */
     virtual void onSampleBundle(std::string threadName, uint64_t bundleNo,
                                 boost::shared_ptr<AudioBundlePacketT<Mutable>> packet) = 0;
 };
