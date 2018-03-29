@@ -1,4 +1,4 @@
-// 
+//
 // test-pipeline-control-state-machine.h
 //
 //  Created by Peter Gusev on 10 June 2016.
@@ -53,60 +53,60 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
      *     - state machine questions latency control whether pipeline needs to be changes
      *     - state machine stays in adjusting mode until PipelineIncrease event received from latency control
      *     - in that case, state machine enters Fetching mode
-     */ 
+     */
 #ifdef ENABLE_LOGGING
-	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.buffer_ = buffer;
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
     MockPipelineControlStateMachineObserver observer;
-	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
-	EXPECT_EQ(kStateIdle, sm.getState());
-	sm.attach(&observer);
+    PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.attach(&observer);
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
-	EXPECT_CALL(*pp, setNeedMetadata())
-		.Times(1);
-	EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-		.Times(1);
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
-		.Times(1)
-		.WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent>& s, std::string newState){
-			EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
-		}));
+    EXPECT_CALL(*pp, setNeedMetadata())
+        .Times(1);
+    EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+        .Times(1);
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
+        .Times(1)
+        .WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent> &s, std::string newState) {
+            EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
+        }));
 
-	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
-	EXPECT_EQ(kStateBootstrapping, sm.getState());
+    sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    EXPECT_EQ(kStateBootstrapping, sm.getState());
 
     int startSeqNoDelta = 234;
     int startSeqNoKey = 7;
@@ -125,7 +125,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
             .WillOnce(Invoke([&pipelineInitial, startGopPos](double rate, int pi) {
                 pipelineInitial = pi;
                 GT_PRINTF("Pipeline initial size %d\n", pi);
-                EXPECT_GT(pipelineInitial, 30-startGopPos);
+                EXPECT_GT(pipelineInitial, 30 - startGopPos);
             }));
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoDelta, SampleClass::Delta));
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoKey + 1, SampleClass::Key));
@@ -144,88 +144,88 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
     sm.dispatch(boost::make_shared<EventSegment>(seg));
     EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-		.Times(3);
-	EXPECT_CALL(*latencyControl, getCurrentCommand())
-		.Times(3)
-		.WillOnce(Return(PipelineAdjust::KeepPipeline))
-		.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-		.WillOnce(Return(PipelineAdjust::IncreasePipeline));
-	EXPECT_CALL(*interestControl, pipelineLimit())
-		.Times(1)
-		.WillOnce(Return(3));
-	EXPECT_CALL(*interestControl, markLowerLimit(3))
-		.Times(1);
+    EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+        .Times(3);
+    EXPECT_CALL(*latencyControl, getCurrentCommand())
+        .Times(3)
+        .WillOnce(Return(PipelineAdjust::KeepPipeline))
+        .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+        .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+    EXPECT_CALL(*interestControl, pipelineLimit())
+        .Times(1)
+        .WillOnce(Return(3));
+    EXPECT_CALL(*interestControl, markLowerLimit(3))
+        .Times(1);
 
     boost::shared_ptr<WireSegment> dataSeg = getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Data,
                                                             startSeqNoDelta, 7);
 
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
-	
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateFetching, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
+
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateFetching, sm.getState());
 }
 
 TEST(TestPipelineControlStateMachine, TestDefaultSequenceAudio)
 {
 #ifdef ENABLE_LOGGING
-	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/opus";
-	boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/opus";
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.buffer_ = buffer;
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
     MockPipelineControlStateMachineObserver observer;
-	PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
-	EXPECT_EQ(kStateIdle, sm.getState());
-	sm.attach(&observer);
+    PipelineControlStateMachine sm = PipelineControlStateMachine::defaultStateMachine(ctrl);
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.attach(&observer);
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
-	EXPECT_CALL(*pp, setNeedMetadata())
-		.Times(1);
-	EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-		.Times(1);
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
-		.Times(1)
-		.WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent>& s, std::string newState){
-			EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
-		}));
+    EXPECT_CALL(*pp, setNeedMetadata())
+        .Times(1);
+    EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+        .Times(1);
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
+        .Times(1)
+        .WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent> &s, std::string newState) {
+            EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
+        }));
 
-	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
-	EXPECT_EQ(kStateBootstrapping, sm.getState());
+    sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    EXPECT_EQ(kStateBootstrapping, sm.getState());
 
     int startSeqNo = 234;
     boost::shared_ptr<WireSegment> seg =
@@ -255,31 +255,31 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceAudio)
     sm.dispatch(boost::make_shared<EventSegment>(seg));
     EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-		.Times(3);
-	EXPECT_CALL(*latencyControl, getCurrentCommand())
-		.Times(3)
-		.WillOnce(Return(PipelineAdjust::KeepPipeline))
-		.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-		.WillOnce(Return(PipelineAdjust::IncreasePipeline));
-	EXPECT_CALL(*interestControl, pipelineLimit())
-		.Times(1)
-		.WillOnce(Return(3));
-	EXPECT_CALL(*interestControl, markLowerLimit(3))
-		.Times(1);
+    EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+        .Times(3);
+    EXPECT_CALL(*latencyControl, getCurrentCommand())
+        .Times(3)
+        .WillOnce(Return(PipelineAdjust::KeepPipeline))
+        .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+        .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+    EXPECT_CALL(*interestControl, pipelineLimit())
+        .Times(1)
+        .WillOnce(Return(3));
+    EXPECT_CALL(*interestControl, markLowerLimit(3))
+        .Times(1);
 
     boost::shared_ptr<WireSegment> dataSeg = getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Data,
                                                             startSeqNo, 1);
 
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
-	
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateFetching, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
+
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateFetching, sm.getState());
 }
 
 TEST(TestPipelineControlStateMachine, TestInitSequence)
@@ -303,52 +303,52 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
      *     - state machine questions latency control whether pipeline needs to be changes
      *     - state machine stays in adjusting mode until PipelineIncrease event received from latency control
      *     - in that case, state machine enters Fetching mode
-     */ 
+     */
 #ifdef ENABLE_LOGGING
-	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.buffer_ = buffer;
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
     MockPipelineControlStateMachineObserver observer;
-	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
-	EXPECT_EQ(kStateIdle, sm.getState());
-	sm.attach(&observer);
+    PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.attach(&observer);
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
     int startSeqNoDelta = 234;
     int startSeqNoKey = 7;
     int startGopPos = 23;
-    boost::shared_ptr<VideoThreadMeta> metadata = 
+    boost::shared_ptr<VideoThreadMeta> metadata =
         boost::make_shared<VideoThreadMeta>(30, startSeqNoDelta, startSeqNoKey, startGopPos,
                                             FrameSegmentsInfo(7, 3, 35, 5), sampleVideoCoderParams());
 
@@ -377,88 +377,88 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
     sm.dispatch(boost::make_shared<EventInit>(metadata));
     EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-		.Times(3);
-	EXPECT_CALL(*latencyControl, getCurrentCommand())
-		.Times(3)
-		.WillOnce(Return(PipelineAdjust::KeepPipeline))
-		.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-		.WillOnce(Return(PipelineAdjust::IncreasePipeline));
-	EXPECT_CALL(*interestControl, pipelineLimit())
-		.Times(1)
-		.WillOnce(Return(3));
-	EXPECT_CALL(*interestControl, markLowerLimit(3))
-		.Times(1);
+    EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+        .Times(3);
+    EXPECT_CALL(*latencyControl, getCurrentCommand())
+        .Times(3)
+        .WillOnce(Return(PipelineAdjust::KeepPipeline))
+        .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+        .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+    EXPECT_CALL(*interestControl, pipelineLimit())
+        .Times(1)
+        .WillOnce(Return(3));
+    EXPECT_CALL(*interestControl, markLowerLimit(3))
+        .Times(1);
 
     boost::shared_ptr<WireSegment> dataSeg = getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Data,
                                                             startSeqNoDelta, 7);
 
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
-	
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateAdjusting, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
 
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
-	sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
-	EXPECT_EQ(kStateFetching, sm.getState());
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateAdjusting, sm.getState());
+
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Fetching"));
+    sm.dispatch(boost::make_shared<EventSegment>(dataSeg));
+    EXPECT_EQ(kStateFetching, sm.getState());
 }
 
 TEST(TestPipelineControlStateMachine, TestBootstrapTimeout)
 {
 #ifdef ENABLE_LOGGING
-	ndnlog::new_api::Logger::initAsyncLogging();
-	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
-	
-	PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
-	ctrl.buffer_ = buffer;
-	ctrl.pipeliner_ = pp;
-	ctrl.interestControl_ = interestControl;
-	ctrl.latencyControl_ = latencyControl;
+
+    PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pp;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
     MockPipelineControlStateMachineObserver observer;
-	PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
-	EXPECT_EQ(kStateIdle, sm.getState());
-	sm.attach(&observer);
+    PipelineControlStateMachine sm = PipelineControlStateMachine::videoStateMachine(ctrl);
+    EXPECT_EQ(kStateIdle, sm.getState());
+    sm.attach(&observer);
 
 #ifdef ENABLE_LOGGING
-	sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    sm.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
-	EXPECT_CALL(*pp, setNeedMetadata())
-		.Times(1);
-	EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-		.Times(1);
-	EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
-		.Times(1)
-		.WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent>& s, std::string newState){
-			EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
-		}));
+    EXPECT_CALL(*pp, setNeedMetadata())
+        .Times(1);
+    EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+        .Times(1);
+    EXPECT_CALL(observer, onStateMachineChangedState(_, "Bootstrapping"))
+        .Times(1)
+        .WillOnce(Invoke([](const boost::shared_ptr<const ndnrtc::PipelineControlEvent> &s, std::string newState) {
+            EXPECT_EQ(s->getType(), PipelineControlEvent::Start);
+        }));
 
-	sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
-	EXPECT_EQ(kStateBootstrapping, sm.getState());
+    sm.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    EXPECT_EQ(kStateBootstrapping, sm.getState());
 
     // when timeout is received, we expect machine to re-enter bootstrapping phase,
     // thus causing new request for metadata
@@ -466,20 +466,20 @@ TEST(TestPipelineControlStateMachine, TestBootstrapTimeout)
         .Times(1);
     EXPECT_CALL(*pp, express(Name(threadPrefix), false))
         .Times(1);
-    EXPECT_CALL(observer, onStateMachineReceivedEvent(_,_))
+    EXPECT_CALL(observer, onStateMachineReceivedEvent(_, _))
         .Times(1);
 
-
     Name fName(threadPrefix);
-	fName.append(NameComponents::NameComponentDelta).appendSequenceNumber(7).appendSegment(0);
-	NamespaceInfo ninfo;
-	ASSERT_TRUE(NameComponents::extractInfo(fName, ninfo));
-    
+    fName.append(NameComponents::NameComponentDelta).appendSequenceNumber(7).appendSegment(0);
+    NamespaceInfo ninfo;
+    ASSERT_TRUE(NameComponents::extractInfo(fName, ninfo));
+
     sm.dispatch(boost::make_shared<EventTimeout>(ninfo));
     EXPECT_EQ(kStateBootstrapping, sm.getState());
 }
 
-int main(int argc, char **argv) {
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
