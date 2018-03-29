@@ -15,7 +15,8 @@
 class MockInterestControl : public ndnrtc::IInterestControl
 {
 public:
-	MOCK_METHOD0(reset, void(void));
+	MOCK_METHOD2(initialize, void(double, int));
+    MOCK_METHOD0(reset, void(void));
 	MOCK_METHOD0(decrement, bool(void));
 	MOCK_METHOD0(increment, bool(void));
 	MOCK_CONST_METHOD0(pipelineLimit, size_t(void));

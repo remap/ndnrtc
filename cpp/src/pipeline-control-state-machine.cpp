@@ -22,155 +22,199 @@ using namespace ndnrtc::statistics;
 
 namespace ndnrtc {
 	const std::string kStateIdle = "Idle";
-	const std::string kStateWaitForRightmost = "WaitForRightmost";
-	const std::string kStateWaitForInitial = "WaitForInitial";
-	const std::string kStateChasing = "Chasing";
+	const std::string kStateBootstrapping = "Bootstrapping";
 	const std::string kStateAdjusting = "Adjusting";
 	const std::string kStateFetching = "Fetching";
 }
 
 #define STATE_TRANSITION(s,t)(StateEventPair(s,PipelineControlEvent::Type::t))
 #define MAKE_TRANSITION(s,t)(StateEventPair(s,t))
+#define ENABLE_IF(T, M) template <typename U = T, typename boost::enable_if<typename boost::is_same<M, U>>::type... X>
 
-namespace ndnrtc {
-	/**
-	 * Idle state. System is in idle state when it first created.
-	 * On entry:
-	 * 	- resets control structures (pipeliner, interest control, latency control, etc.)
-	 * On exit:
-	 * 	- nothing
-	 * Processed events: 
-	 * 	- Start: switches to WaitForRightmost
-	 * 	- Reset: resets control structures
-	 */
-	class Idle : public PipelineControlState {
-	public:
-		Idle(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
+template <typename MetadataClass>
+class ReceivedMetadataProcessing
+{
+  protected:
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    bool processMetadata(boost::shared_ptr<VideoThreadMeta> metadata,
+                         boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    {
+        if (metadata)
+        {
+            unsigned char gopPos = metadata->getGopPos();
+            unsigned int gopSize = metadata->getCoderParams().gop_;
+            PacketNumber deltaToFetch, keyToFetch;
+            unsigned int pipelineInitial = InterestControl::MinPipelineSize;
 
-		std::string str() const { return kStateIdle; }
+            // add some smart logic about what to fetch next...
+            if (gopPos < ((float)gopSize / 2.))
+            {
+                // should probably fetch current key
+                deltaToFetch = metadata->getSeqNo().first;
+                keyToFetch = metadata->getSeqNo().second;
+                pipelineInitial += gopPos;
+            }
+            else
+            {
+                // should fetch next key
+                deltaToFetch = metadata->getSeqNo().first;
+                keyToFetch = metadata->getSeqNo().second + 1;
+                pipelineInitial += (gopSize-gopPos);
+            }
 
-		virtual void enter();
-        int toInt() { return (int)StateId::Idle; }
-	};
+            ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
+            ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);
+            ctrl->pipeliner_->setSequenceNumber(keyToFetch, SampleClass::Key);
+            ctrl->pipeliner_->setNeedSample(SampleClass::Key);
+            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
+            ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
+            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
 
-	/**
-	 * WaitForRightmost state. Sytem is in this state while waiting for the answer of 
-	 * the rightmost Interest.
-	 * On entry:
-	 * 	- sends out rightmost Interest (accesses pipeliner)
-	 * On exit:
-	 * 	- nothing
-	 * Processed events: 
-	 *	- Start: ignored
-	 *	- Reset: resets to idle
-	 *	- Starvation: ignored
-	 *	- Timeout: re-issue Interest (accesses pipeliner)
-	 *	- Segment: transition to WaitForInitial state
-	 */
-	class WaitForRightmost : public PipelineControlState {
-	public:
-		WaitForRightmost(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
+            return true;
+        }
 
-		std::string str() const { return kStateWaitForRightmost; }
-		virtual void enter();
-        int toInt() { return (int)StateId::WaitForRightmost; }
-        
-	protected:
-		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
-		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
-		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
-		virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation>& ev);
+        return false;
+    }
 
-		virtual void askRightmost();
-		virtual void receivedRightmost(const boost::shared_ptr<const EventSegment>& es);
-	};
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
+    bool processMetadata(boost::shared_ptr<AudioThreadMeta> metadata,
+                         boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    {
+        if (metadata)
+        {
+            PacketNumber bundleNo = metadata->getBundleNo();
+            unsigned int pipelineInitial = 2 * InterestControl::MinPipelineSize;
 
-	/**
-	 * WaitForRightmostKey state is a subclass of WaitForRightmost which requests for
-	 * rightmost data in Key namespace, instead of default (Delta).
-	 */
-	class WaitForRightmostKey : public WaitForRightmost {
-	public:
-		WaitForRightmostKey(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):WaitForRightmost(ctrl){}
+            ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
+            ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
+            ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
+            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
 
-	private:
-		void askRightmost();
-	};
+            return true;
+        }
 
-	/**
-	 * WaitForInitial state. System is in this state while waiting for initial data
-	 * to arrive. Initial data - first data requested with specific sequence number 
-	 * learned from previously received rightmost data.
-	 * On entry:
-	 * 	- sends out Interest batch for a specific sequence number learned from 
-	 *		previously received righmost data (accesses pipeliner)
-	 * On exit:
-	 * 	- nothing
-	 * Processed events: 
-	 *	- Start: ignored
-	 *	- Reset: resets to idle
-	 *	- Starvation: ignores
-	 *	- Timeout: re-issue Interest 3 times and then resets to idle (accesses pipeliner)
-	 *	- Segment: transition to Chasing state
-	 */
-	class WaitForInitial : public PipelineControlState {
-	public:
-		WaitForInitial(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
+        return false;
+    }
 
-		std::string str() const { return kStateWaitForInitial; }
-		void enter();
-        int toInt() { return (int)StateId::WaitForInitial; }
-        
-	protected:
-		unsigned int nTimeouts_;
+    boost::shared_ptr<MetadataClass> extractMetadata(boost::shared_ptr<NetworkData> data)
+    {
+        return boost::make_shared<MetadataClass>(boost::move(*data));
+    }
 
-		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
-		virtual std::string onNack(const boost::shared_ptr<const EventNack>& ev);
-		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
-	};
+    boost::shared_ptr<MetadataClass> extractMetadata(boost::shared_ptr<const WireSegment> segment)
+    {
+        ImmutableHeaderPacket<DataSegmentHeader> packet(segment->getData()->getContent());
+        NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
+        return boost::make_shared<MetadataClass>(boost::move(nd));
+    }
+};
 
-	/**
-	 * WaitForInitialKey state is a subclass of WaitForInitial which requests
-	 * key frames instead of default (delta) samples as initial data. It 
-	 * initializes pipeliner sequence number based on received segment metada.
-	 */
-	class WaitForInitialKey : public WaitForInitial
-	{
-	public:
-		WaitForInitialKey(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):WaitForInitial(ctrl){}
-	private:
-		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
-	};
+/**
+ * Idle state. System is in idle state when it first created.
+ * On entry:
+ * 	- resets control structures (pipeliner, interest control, latency control, etc.)
+ * On exit:
+ * 	- nothing
+ * Processed events: 
+ * 	- Start: switches to Bootstrapping
+ *  - Init: switches to Adjusting
+ * 	- Reset: resets control structures
+ */
+template <typename MetadataClass>
+class IdleT : public PipelineControlState,
+              public ReceivedMetadataProcessing<MetadataClass>
+{
+  public:
+    IdleT(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
-	/**
-	 * Chasing state. System is in this state while is tries to catch up with the 
-	 * latest data from the network.
-	 * On entry:
-	 * 	- does nothing
-	 * On exit:
-	 * 	- nothing
-	 * Processed events: 
-	 *	- Start: ignored
-	 *	- Reset: resets to idle
-	 *	- Starvation: resets to idle
-	 *	- Timeout: re-issue Interest (accesses pipeliner)
-	 *	- Segment: checks interest control (for pipeline increases), checks latency 
-	 * 		control whether latest  data arrival has been detected, if so, 
-	 *		transitions to Adjusting
-	 */
-	class Chasing : public PipelineControlState {
-	public:
-		Chasing(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
+    std::string str() const override { return kStateIdle; }
+    void enter() override
+    {
+        ctrl_->buffer_->reset();
+        ctrl_->pipeliner_->reset();
+        ctrl_->latencyControl_->reset();
+        ctrl_->interestControl_->reset();
+        ctrl_->playoutControl_->allowPlayout(false);
+    }
+    int toInt() override { return (int)StateId::Idle; }
 
-		std::string str() const { return kStateChasing; }
-        int toInt() { return (int)StateId::Chasing; }
-        
-	private:
-		virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout>& ev);
-		virtual std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
-	};
+  protected:
+    std::string onInit(const boost::shared_ptr<const EventInit> &ev) override
+    {
+        boost::shared_ptr<MetadataClass> metadata = 
+            ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getNetworkData());
 
-	/**
+        if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
+            return kStateAdjusting;
+
+        return kStateBootstrapping;
+    }
+};
+
+typedef IdleT<AudioThreadMeta> IdleAudio;
+typedef IdleT<VideoThreadMeta> IdleVideo;
+
+/**
+ * Bootstrapping state. Sytem is in this state while waiting for the answer of 
+ * the thread metadata Interest.
+ * On entry:
+ * 	- sends out metadata Interest (accesses pipeliner)
+ * On exit:
+ * 	- nothing
+ * Processed events: 
+ *	- Start: ignored
+ *	- Reset: resets to idle
+ *	- Starvation: ignored
+ *	- Timeout: re-issue Interest (accesses pipeliner)
+ *	- Segment: transition to Adjusting state
+ */
+template <typename MetadataClass>
+class BootstrappingT : public PipelineControlState,
+                      public ReceivedMetadataProcessing<MetadataClass>
+{
+  public:
+    BootstrappingT(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+
+    std::string str() const override { return kStateBootstrapping; }
+    void enter() override { askMetadata(); }
+    int toInt() override { return (int)StateId::Bootstrapping; }
+
+  protected:
+    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
+    {
+        askMetadata();
+        return str();
+    }
+    // std::string onNack(const boost::shared_ptr<const EventNack> &ev) override;
+    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
+    {
+        return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
+    }
+
+    // std::string onStarvation(const boost::shared_ptr<const EventStarvation> &ev) override;
+
+    void askMetadata()
+    {
+        ctrl_->pipeliner_->setNeedMetadata();
+        ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
+    }
+
+    std::string receivedMetadata(const boost::shared_ptr<const EventSegment> &ev)
+    {
+        boost::shared_ptr<MetadataClass> metadata = 
+            ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
+
+        if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
+            return kStateAdjusting;
+
+        return kStateBootstrapping;
+    }
+};
+
+typedef BootstrappingT<AudioThreadMeta> BootstrappingAudio;
+typedef BootstrappingT<VideoThreadMeta> BootstrappingVideo;
+
+/**
 	 * Adjusting state. System is in this state while it tries to minimize the size
 	 * of the pipeline.
 	 * On entry:
@@ -183,21 +227,22 @@ namespace ndnrtc {
 	 *	- Starvation: resets to idle
 	 *	- Timeout: re-issue Interest (accesses pipeliner)
 	 *	- Segment: checks interest control (for pipeline decreases), checks latency 
-	 *		control whether latest data arrival stopped, if so, backs up to previous
-	 *		pipeline size and transitions to Fetching
+	 *		control whether latest data arrival stopped, if so, restores previous
+	 *		pipeline size and transitions to Fetching state
 	 */
-	class Adjusting : public PipelineControlState {
-	public:
-		Adjusting(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
+class Adjusting : public PipelineControlState
+{
+  public:
+    Adjusting(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
-		std::string str() const { return kStateAdjusting; }
-		void enter();
-        int toInt() { return (int)StateId::Adjusting; }
-        
-	private:
-		unsigned int pipelineLowerLimit_;
+    std::string str() const override { return kStateAdjusting; }
+    void enter() override;
+    int toInt() override { return (int)StateId::Adjusting; }
 
-		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
+  private:
+    unsigned int pipelineLowerLimit_;
+
+    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override;
 	};
 
 	/**
@@ -219,13 +264,12 @@ namespace ndnrtc {
 	public:
 		Fetching(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):PipelineControlState(ctrl){}
 
-		std::string str() const { return kStateFetching; }
-        int toInt() { return (int)StateId::Fetching; }
+		std::string str() const override { return kStateFetching; }
+        int toInt() override { return (int)StateId::Fetching; }
         
 	private:
-		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev);
+		std::string onSegment(const boost::shared_ptr<const EventSegment>& ev) override;
 	};
-}
 
 //******************************************************************************
 std::string
@@ -233,6 +277,7 @@ PipelineControlEvent::toString() const
 {
 	switch (e_)
 	{
+        case PipelineControlEvent::Init: return "Init";
 		case PipelineControlEvent::Start: return "Start";
 		case PipelineControlEvent::Reset: return "Reset";
 		case PipelineControlEvent::Starvation: return "Starvation";
@@ -260,31 +305,27 @@ PipelineControlStateMachine::videoStateMachine(Struct ctrl)
 }
 
 PipelineControlStateMachine::StatesMap
-PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl)
+PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
-	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
-	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
-		(kStateIdle, idle)
-		(kStateWaitForRightmost, boost::make_shared<WaitForRightmost>(ctrl))
-		(kStateWaitForInitial, boost::make_shared<WaitForInitial>(ctrl))
-		(kStateChasing, boost::make_shared<Chasing>(ctrl))
-		(kStateAdjusting, boost::make_shared<Adjusting>(ctrl))
-		(kStateFetching, boost::make_shared<Fetching>(ctrl));
-	return map;
+    return 
+    {
+        {kStateIdle, boost::make_shared<IdleAudio>(ctrl)},
+        {kStateBootstrapping, boost::make_shared<BootstrappingAudio>(ctrl)},
+        {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
+        {kStateFetching, boost::make_shared<Fetching>(ctrl)}
+    };
 }
 
 PipelineControlStateMachine::StatesMap
 PipelineControlStateMachine::videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl)
 {
-	boost::shared_ptr<PipelineControlState> idle(boost::make_shared<Idle>(ctrl));
-	PipelineControlStateMachine::StatesMap map = boost::assign::map_list_of 
-		(kStateIdle, idle)
-		(kStateWaitForRightmost, boost::make_shared<WaitForRightmostKey>(ctrl))
-		(kStateWaitForInitial, boost::make_shared<WaitForInitialKey>(ctrl))
-		(kStateChasing, boost::make_shared<Chasing>(ctrl))
-		(kStateAdjusting, boost::make_shared<Adjusting>(ctrl))
-		(kStateFetching, boost::make_shared<Fetching>(ctrl));
-	return map;
+    return 
+    {
+        {kStateIdle, boost::make_shared<IdleVideo>(ctrl)},
+        {kStateBootstrapping, boost::make_shared<BootstrappingVideo>(ctrl)},
+        {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
+        {kStateFetching, boost::make_shared<Fetching>(ctrl)}
+    };
 }
 
 //******************************************************************************
@@ -306,11 +347,8 @@ lastEventTimestamp_(clock::millisecondTimestamp())
 
 	// add indirection to avoid confusion in C++11 (Ubuntu)
 	const TransitionMap m = boost::assign::map_list_of
-		(STATE_TRANSITION(kStateIdle, Start), 					kStateWaitForRightmost)
-		(STATE_TRANSITION(kStateWaitForRightmost, Reset), 		kStateIdle)
-		(STATE_TRANSITION(kStateWaitForInitial, Reset), 		kStateIdle)
-		(STATE_TRANSITION(kStateChasing, Reset), 				kStateIdle)
-		(STATE_TRANSITION(kStateChasing, Starvation), 			kStateIdle)
+		(STATE_TRANSITION(kStateIdle, Start), 					kStateBootstrapping)
+		(STATE_TRANSITION(kStateBootstrapping, Reset), 		    kStateIdle)
 		(STATE_TRANSITION(kStateAdjusting, Reset), 				kStateIdle)
 		(STATE_TRANSITION(kStateAdjusting, Starvation), 		kStateIdle)
 		(STATE_TRANSITION(kStateFetching, Reset), 				kStateIdle)
@@ -414,6 +452,8 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 {
 	switch (ev->getType())
 	{
+        case PipelineControlEvent::Init: 
+            return onInit(boost::dynamic_pointer_cast<const EventInit>(ev));
 		case PipelineControlEvent::Start: return onStart(ev);
 		case PipelineControlEvent::Reset: return onReset(ev);
 		case PipelineControlEvent::Starvation: 
@@ -428,146 +468,10 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 
 //******************************************************************************
 void 
-Idle::enter()
-{
-	ctrl_->buffer_->reset();
-	ctrl_->pipeliner_->reset();
-	ctrl_->latencyControl_->reset();
-	ctrl_->interestControl_->reset();
-    ctrl_->playoutControl_->allowPlayout(false);
-}
-
-//******************************************************************************
-void
-WaitForRightmost::enter()
-{
-	askRightmost();
-}
-
-std::string
-WaitForRightmost::onSegment(const boost::shared_ptr<const EventSegment>& ev)
-{
-	receivedRightmost(boost::dynamic_pointer_cast<const EventSegment>(ev));
-	return kStateWaitForInitial;
-}
-
-std::string
-WaitForRightmost::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
-{
-	askRightmost();
-	return str();
-}
-
-std::string 
-WaitForRightmost::onNack(const boost::shared_ptr<const EventNack>& ev)
-{
-	//askRightmost(); // really?
-	return str();
-}
-
-std::string
-WaitForRightmost::onStarvation(const boost::shared_ptr<const EventStarvation>& ev)
-{
-	// askRightmost(); // maybe?
-	return str();
-}
-
-void 
-WaitForRightmost::askRightmost()
-{
-	ctrl_->pipeliner_->setNeedRightmost();
-	ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
-}
-
-void
-WaitForRightmost::receivedRightmost(const boost::shared_ptr<const EventSegment>& ev)
-{
-	ctrl_->pipeliner_->setSequenceNumber(ev->getSegment()->getSampleNo()+1,
-		ev->getSegment()->getSampleClass());
-	ctrl_->pipeliner_->setNeedSample(ev->getSegment()->getSampleClass());
-	ctrl_->pipeliner_->express(ctrl_->threadPrefix_, true);
-    ctrl_->interestControl_->increment();
-}
-
-//******************************************************************************
-void 
-WaitForRightmostKey::askRightmost()
-{
-	ctrl_->pipeliner_->setNeedSample(SampleClass::Key);
-	return WaitForRightmost::askRightmost();
-}
-
-//******************************************************************************
-void
-WaitForInitial::enter()
-{
-	nTimeouts_ = 0;
-}
-
-std::string
-WaitForInitial::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
-{
-	if (++nTimeouts_ > 3)
-		return kStateIdle;
-
-	ctrl_->pipeliner_->setNeedSample(ev->getInfo().class_);
-	ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
-	return str();
-}
-
-std::string
-WaitForInitial::onNack(const boost::shared_ptr<const EventNack>& ev)
-{
-	return str();
-}
-
-std::string
-WaitForInitial::onSegment(const boost::shared_ptr<const EventSegment>& ev)
-{
-	nTimeouts_ = 0;
-	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
-	return kStateChasing;
-}
-
-//******************************************************************************
-std::string
-WaitForInitialKey::onSegment(const boost::shared_ptr<const EventSegment>& ev)
-{
-	boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> seg = 
-		boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
-
-	ctrl_->pipeliner_->setSequenceNumber(seg->segment().getHeader().pairedSequenceNo_,
-		SampleClass::Delta);
-    ctrl_->pipeliner_->setSequenceNumber(seg->getSampleNo()+1,
-                                         SampleClass::Key);
-
-	return WaitForInitial::onSegment(ev);
-}
-
-//******************************************************************************
-std::string 
-Chasing::onTimeout(const boost::shared_ptr<const EventTimeout>& ev)
-{
-	ctrl_->pipeliner_->express(ev->getInfo().getPrefix(prefix_filter::ThreadNT));
-	return str();
-}
-
-std::string 
-Chasing::onSegment(const boost::shared_ptr<const EventSegment>& ev)
-{
-	ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
-
-	if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::DecreasePipeline)
-		return kStateAdjusting;
-	return str();
-}
-
-//******************************************************************************
-void 
 Adjusting::enter()
 {
 	pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
-	ctrl_->playoutControl_->allowPlayout(true);
+    ctrl_->playoutControl_->allowPlayout(true);
 }
 
 std::string 

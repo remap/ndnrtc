@@ -1008,7 +1008,13 @@ class MediaStreamMeta : public DataPacket
     std::vector<std::string> getThreads() const;
 };
 
-//******************************************************************************
+/**
+ * WireSegment acts as a wrapper for shared_ptr<ndn:Data> object which is app- 
+ * and namespace-aware. I.e. it provides handy methods for retrieving variaous 
+ * infomration from the packet and/or it's name. For example, class of sample 
+ * can be retrieved from its' name by examining specific component to be either 
+ * "delta" or "key" or "meta", etc.
+ */
 class WireSegment
 {
   public:

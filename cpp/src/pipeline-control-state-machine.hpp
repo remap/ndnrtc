@@ -30,11 +30,12 @@ namespace ndnrtc {
     class IBuffer;
 	class PipelineControl;
 	class WireSegment;
+    struct Mutable;
+    template <typename T> class NetworkDataT;
+    typedef NetworkDataT<Mutable> NetworkDataAlias;
 
 	extern const std::string kStateIdle;
-	extern const std::string kStateWaitForRightmost;
-	extern const std::string kStateWaitForInitial;
-	extern const std::string kStateChasing;
+	extern const std::string kStateBootstrapping;
 	extern const std::string kStateAdjusting;
 	extern const std::string kStateFetching;
 
@@ -45,6 +46,7 @@ namespace ndnrtc {
 	public:
 		typedef enum _Type {
 			Start,
+            Init,
 			Reset,
 			Starvation,
 			Segment,
@@ -65,11 +67,20 @@ namespace ndnrtc {
 	class EventSegment : public PipelineControlEvent {
 	public:
 		EventSegment(const boost::shared_ptr<const WireSegment>& segment):
-			PipelineControlEvent(PipelineControlEvent::Segment),segment_(segment){}
+			PipelineControlEvent(PipelineControlEvent::Segment), segment_(segment){}
 		boost::shared_ptr<const WireSegment> getSegment() const { return segment_; }
 	private:
 		boost::shared_ptr<const WireSegment> segment_;
 	};
+
+    class EventInit : public PipelineControlEvent {
+    public:
+        EventInit(const boost::shared_ptr<NetworkDataAlias>& data):
+            PipelineControlEvent(PipelineControlEvent::Init), data_(data) {};
+        const boost::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
+    private:
+        boost::shared_ptr<NetworkDataAlias> data_;
+    };
 
 	class EventTimeout : public PipelineControlEvent {
 	public:
@@ -102,21 +113,23 @@ namespace ndnrtc {
 
 	class IPipelineControlStateMachineObserver;
 
-	/**
-	 * Implements simple state machine for pipeline control:
-	 *
-	 * 	IDLE --|start|--> WAITFORRIGHTMOST --|segment|--> WAITFORINITIAL -|segment|-+
-	 *																				|
-	 *					+-- ADJUSTING <--|latest data arrive|-- CHASING <-----------+
-	 *					|
-	 *					+--|minimized pipeline|--> FETCHING
-	 *
-	 * additional notes:
-	 * - from any state, segmentStarvation() brings machine into WAITFORRIGHTMOST state
-	 * - timeout in WAITFORRIGHTMOST causes re-entering this state with expression of 
-	 *		RM interest
-	 *
-	 */
+    /**
+     * Implements simple state machine for pipeline control:
+     *
+     * 	IDLE ---+---(start)-----> BOOTSTRAPPING -------(init)-------+
+     *          |                                                   |
+     *          +------->>>-------(init)----------->>>---------+    |
+     *                                                         |    |
+     *              +---<<<---(minimized pipeline)---<<<---+   |    |
+     *              |                                      |  \|/   |
+     *          FETCHING                                ADJUSTING <-+
+     *              |                                      |
+     *              +--->>>---(   out of sync    )--->>>---+
+     *
+     * additional notes:
+     * - from any state, segmentStarvation() brings machine into BOOTSTRAPPING state
+     * - timeout in BOOTSTRAPPING causes re-entering of this state
+     */
 	class PipelineControlStateMachine : public NdnRtcComponent {
 	public:
 		typedef std::map<std::string, boost::shared_ptr<PipelineControlState>>
@@ -186,11 +199,9 @@ namespace ndnrtc {
         typedef enum _StateId {
             Unknown = 0,
             Idle = 1,
-            WaitForRightmost = 2,
-            WaitForInitial = 3,
-            Chasing = 4,
-            Adjusting = 5,
-            Fetching = 6
+            Bootstrapping = 2,
+            Adjusting = 3,
+            Fetching = 4
         } StateId;
         
 		PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct>& ctrl):ctrl_(ctrl){}
@@ -222,6 +233,8 @@ namespace ndnrtc {
 	protected:
 		boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
 
+        virtual std::string onInit(const boost::shared_ptr<const EventInit>&)
+		{ return str(); }
 		virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent>&)
 		{ return str(); }
 		virtual std::string onReset(const boost::shared_ptr<const PipelineControlEvent>& ev)

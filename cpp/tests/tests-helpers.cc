@@ -548,6 +548,32 @@ getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
 	return segment;
 }
 
+boost::shared_ptr<ndnrtc::WireSegment>
+  getFakeThreadMetadataSegment(std::string threadPrefix, const ndnrtc::DataPacket& metadata)
+{
+    boost::shared_ptr<WireSegment> segment;
+
+    Name n(threadPrefix);
+	n.append(NameComponents::NameComponentMeta)
+      .appendVersion(0)
+	  .appendSegment(0);
+
+    boost::shared_ptr<const Interest> interest(boost::make_shared<Interest>(n, 1000));
+    boost::shared_ptr<Data> data(boost::make_shared<Data>(n));
+
+    data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(0));
+
+    std::vector<CommonSegment> segs = CommonSegment::slice(metadata, 10000);
+    DataSegmentHeader hdr;
+    
+    segs[0].setHeader(hdr);
+    data->setContent(segs[0].getNetworkData()->getData(), segs[0].size());
+    
+    segment = boost::make_shared<WireSegment>(data, interest);
+
+    return segment;
+}
+
 Name keyName(std::string s)
 {
   return Name(s+"/DSK-123");

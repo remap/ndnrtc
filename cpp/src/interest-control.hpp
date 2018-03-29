@@ -31,6 +31,7 @@ namespace ndnrtc {
 	{
 	public:
 		virtual void reset() = 0;
+        virtual void initialize(double rate, int initPipelineLimit) = 0;
 		virtual bool decrement() = 0;
 		virtual bool increment() = 0;
 		virtual size_t pipelineLimit() const = 0;
@@ -90,59 +91,65 @@ namespace ndnrtc {
 			boost::shared_ptr<IStrategy> strategy = boost::make_shared<StrategyDefault>());
 		~InterestControl();
 
-		void reset();
+        /**
+         * Initializes interest control class with given sample rate and initial
+         * pipeline size limit (i.e. maximum number of outstanding interests to 
+         * be sent out by pipelienr initially).
+         */
+        void initialize(double rate, int pipelineLimit) override;
+		void reset() override;
 		
 		/**
-		 * Should be called every time when pipeline needs to be decremented,
+		 * Should be called every time when counter needs to be decremented,
 		 * for instance, when previously requested data arrives.
-		 * @return true if pipeline was incremented, false if pipeline can't be 
-		 * 	incremented
+		 * @return true if counter was decremented, false if pipeline can't be 
+		 * 	decremented
 		 */
-		bool decrement();
+		bool decrement() override;
 		
 		/**
-		 * Should be called every time when pipeline needs to be incremented,
+		 * Should be called every time when counter needs to be incremented,
 		 * for instance, when Interests towards a new sample were issued.
-		 * @return true if pipeline was decremented, false if pipeline can't be
-		 * 	decremented (room is less than or equal zero)
+		 * @return true if counter was incremented, false if pipeline can't be
+		 * 	incremented (room is less than or equal zero)
 		 * @see room
 		 */
-		bool increment();
+		bool increment() override;
 
 		/**
 		 * Returns current pipeline maximum size. This size can be changed 
 		 * by client.
 		 * @see decrease(), increase()
 		 */
-		size_t pipelineLimit() const { return limit_; }
+		size_t pipelineLimit() const override { return limit_; }
 
 		/**
 		 * Returns current pipeline size, i.e. number of outstanding samples
 		 */
-		size_t pipelineSize() const { return pipeline_; }
+		size_t pipelineSize() const override { return pipeline_; }
 
 		/**
 		 * Returns size of the room for expressing more Interests. If room is 
 		 * zero or negative, no Interests for new samples should be expressed.
 		 */
-		int room() const { return limit_-pipeline_; }
+		int room() const override { return limit_-pipeline_; }
 
 		/**
 		 * Increases current pipeline limit, if possible.
 		 * @return true if limit was increased, false otherwise
 		 */
-		bool burst();
+		bool burst() override;
 
 		/**
 		 * Decreases current pipeline limit, if possible.
 		 * @return true if decrease was possible, false - otherwise
 		 */
-		bool withhold();
+		bool withhold() override;
 
 		/**
 		 * Sets lower limit for pipeline size
 		 */
-		void markLowerLimit(unsigned int lowerLimit);
+		void markLowerLimit(unsigned int lowerLimit) override;
 
         /**
          * Returns symbolic representation of pipeline state
@@ -157,16 +164,16 @@ namespace ndnrtc {
          *      - current pipeline limit
          *      - current pipeline room size (limit-pipeline)
          */
-        std::string snapshot() const;
+        std::string snapshot() const override;
         
         // IDrdEstimatorObserver
-		void onDrdUpdate();
-		void onCachedDrdUpdate();
-		void onOriginalDrdUpdate();
+		void onDrdUpdate() override;
+		void onCachedDrdUpdate() override;
+		void onOriginalDrdUpdate() override;
 
         // IBufferControlObserver
-		void targetRateUpdate(double rate);
-		void sampleArrived(const PacketNumber&) { decrement(); }
+		void targetRateUpdate(double rate) override;
+		void sampleArrived(const PacketNumber&) override { decrement(); }
 
 	private:
 		boost::shared_ptr<IStrategy> strategy_;

@@ -76,6 +76,9 @@ boost::shared_ptr<ndnrtc::WireSegment>
   getFakeSegment(std::string threadPrefix, ndnrtc::SampleClass cls, ndnrtc::SegmentClass segCls, 
     PacketNumber pNo, unsigned int segNo);
 
+boost::shared_ptr<ndnrtc::WireSegment>
+  getFakeThreadMetadataSegment(std::string threadPrefix, const ndnrtc::DataPacket& d);
+
 ndn::Name 
   keyName(std::string s);
 

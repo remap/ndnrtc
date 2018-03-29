@@ -19,7 +19,7 @@ public:
 	MOCK_METHOD1(segmentArrived, void(const ndn::Name&));
 	MOCK_METHOD0(reset, void());
 	MOCK_METHOD1(setNeedSample, void(ndnrtc::SampleClass));
-	MOCK_METHOD0(setNeedRightmost, void());
+	MOCK_METHOD0(setNeedMetadata, void());
 	MOCK_METHOD2(setSequenceNumber, void(PacketNumber seqNo, ndnrtc::SampleClass cls));
 	MOCK_METHOD1(getSequenceNumber, PacketNumber(ndnrtc::SampleClass));
 	MOCK_METHOD1(setInterestLifetime, void(unsigned int));
