@@ -1,4 +1,4 @@
-// 
+//
 // test-pipeline-control.cc
 //
 //  Created by Peter Gusev on 10 June 2016.
@@ -35,26 +35,26 @@ TEST(TestPipelineControl, TestDefault)
     Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
     prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
     std::string threadPrefix = prefix.toUri();
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
-	PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-		buffer, pp, interestControl, latencyControl, playoutControl, storage);
+    PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
+                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
@@ -81,8 +81,8 @@ TEST(TestPipelineControl, TestDefault)
             .Times(1);
         EXPECT_CALL(*playoutControl, allowPlayout(true))
             .Times(1);
-		EXPECT_CALL(*interestControl, pipelineLimit())
-			.Times(1);
+        EXPECT_CALL(*interestControl, pipelineLimit())
+            .Times(1);
 
         ppc.start(meta);
     }
@@ -90,25 +90,26 @@ TEST(TestPipelineControl, TestDefault)
     boost::shared_ptr<WireSegment> seg = getFakeSegment(threadPrefix, SampleClass::Delta,
                                                         SegmentClass::Data, 7, 0);
     { // adjusting -> fetching
-		EXPECT_CALL(*latencyControl, getCurrentCommand())
-			.Times(4)
-			.WillOnce(Return(PipelineAdjust::KeepPipeline))
+        EXPECT_CALL(*latencyControl, getCurrentCommand())
+            .Times(4)
+            .WillOnce(Return(PipelineAdjust::KeepPipeline))
             .WillOnce(Return(PipelineAdjust::DecreasePipeline))
-			.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-            .WillOnce(Return(PipelineAdjust::IncreasePipeline));;
-		EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-			.Times(4);
+            .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+            .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+        ;
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+            .Times(4);
         EXPECT_CALL(*interestControl, markLowerLimit(5))
-			.Times(1);
-		EXPECT_CALL(*interestControl, pipelineLimit())
-			.Times(2)
-			.WillRepeatedly(Return(5));
+            .Times(1);
+        EXPECT_CALL(*interestControl, pipelineLimit())
+            .Times(2)
+            .WillRepeatedly(Return(5));
 
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-	}
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+    }
 }
 
 TEST(TestPipelineControl, TestDefaultWithBootstrapping)
@@ -121,64 +122,64 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
     Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
     prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
     std::string threadPrefix = prefix.toUri();
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
-	PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-		buffer, pp, interestControl, latencyControl, playoutControl, storage);
+    PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
+                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
-	{
-		EXPECT_CALL(*pp, setNeedMetadata())
-			.Times(1);
-		EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-			.Times(1);
-	
-		ppc.start();
-		EXPECT_ANY_THROW(ppc.start());
-	
+    {
+        EXPECT_CALL(*pp, setNeedMetadata())
+            .Times(1);
+        EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+            .Times(1);
+
+        ppc.start();
+        EXPECT_ANY_THROW(ppc.start());
+
         EXPECT_CALL(*buffer, reset())
             .Times(1);
-		EXPECT_CALL(*pp, reset())
-			.Times(1);
-		EXPECT_CALL(*interestControl, reset())
-			.Times(1);
-		EXPECT_CALL(*latencyControl, reset())
-			.Times(1);
+        EXPECT_CALL(*pp, reset())
+            .Times(1);
+        EXPECT_CALL(*interestControl, reset())
+            .Times(1);
+        EXPECT_CALL(*latencyControl, reset())
+            .Times(1);
 
         EXPECT_CALL(*interestControl, pipelineLimit())
             .Times(1);
         EXPECT_CALL(*playoutControl, allowPlayout(false))
             .Times(1);
-	
-		ppc.stop();
-	}
 
-	{ // idle -> Bootstrapping
-		EXPECT_CALL(*pp, setNeedMetadata())
-			.Times(1);
-		EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-			.Times(1);
-		ppc.start();
-	}
+        ppc.stop();
+    }
+
+    { // idle -> Bootstrapping
+        EXPECT_CALL(*pp, setNeedMetadata())
+            .Times(1);
+        EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+            .Times(1);
+        ppc.start();
+    }
 
     int startSeqNoDelta = 234;
     int startSeqNoKey = 7;
@@ -209,25 +210,26 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
     boost::shared_ptr<WireSegment> seg = getFakeSegment(threadPrefix, SampleClass::Delta,
                                                         SegmentClass::Data, 7, 0);
     { // adjusting -> fetching
-		EXPECT_CALL(*latencyControl, getCurrentCommand())
-			.Times(4)
-			.WillOnce(Return(PipelineAdjust::KeepPipeline))
+        EXPECT_CALL(*latencyControl, getCurrentCommand())
+            .Times(4)
+            .WillOnce(Return(PipelineAdjust::KeepPipeline))
             .WillOnce(Return(PipelineAdjust::DecreasePipeline))
-			.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-            .WillOnce(Return(PipelineAdjust::IncreasePipeline));;
-		EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-			.Times(4);
+            .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+            .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+        ;
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+            .Times(4);
         EXPECT_CALL(*interestControl, markLowerLimit(5))
-			.Times(1);
-		EXPECT_CALL(*interestControl, pipelineLimit())
-			.Times(2)
-			.WillRepeatedly(Return(5));
+            .Times(1);
+        EXPECT_CALL(*interestControl, pipelineLimit())
+            .Times(2)
+            .WillRepeatedly(Return(5));
 
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-	}
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+    }
 }
 
 TEST(TestPipelineControl, TestStarvation)
@@ -240,64 +242,64 @@ TEST(TestPipelineControl, TestStarvation)
     Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
     prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
     std::string threadPrefix = prefix.toUri();
-	boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
-	boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
-	boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
+    boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
+    boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
+    boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 
-	EXPECT_CALL(*pp, reset())
-		.Times(1);
+    EXPECT_CALL(*pp, reset())
+        .Times(1);
     EXPECT_CALL(*buffer, reset())
         .Times(1);
-	EXPECT_CALL(*interestControl, reset())
-		.Times(1);
-	EXPECT_CALL(*latencyControl, reset())
-		.Times(1);
+    EXPECT_CALL(*interestControl, reset())
+        .Times(1);
+    EXPECT_CALL(*latencyControl, reset())
+        .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))
         .Times(1);
 
-	PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-		buffer, pp, interestControl, latencyControl, playoutControl, storage);
+    PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
+                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
-	{
-		EXPECT_CALL(*pp, setNeedMetadata())
-			.Times(1);
-		EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-			.Times(1);
-	
-		ppc.start();
-		EXPECT_ANY_THROW(ppc.start());
-	
+    {
+        EXPECT_CALL(*pp, setNeedMetadata())
+            .Times(1);
+        EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+            .Times(1);
+
+        ppc.start();
+        EXPECT_ANY_THROW(ppc.start());
+
         EXPECT_CALL(*buffer, reset())
             .Times(1);
-		EXPECT_CALL(*pp, reset())
-			.Times(1);
-		EXPECT_CALL(*interestControl, reset())
-			.Times(1);
-		EXPECT_CALL(*latencyControl, reset())
-			.Times(1);
+        EXPECT_CALL(*pp, reset())
+            .Times(1);
+        EXPECT_CALL(*interestControl, reset())
+            .Times(1);
+        EXPECT_CALL(*latencyControl, reset())
+            .Times(1);
 
         EXPECT_CALL(*interestControl, pipelineLimit())
             .Times(1);
         EXPECT_CALL(*playoutControl, allowPlayout(false))
             .Times(1);
-	
-		ppc.stop();
-	}
 
-	{ // idle -> Bootstrapping
-		EXPECT_CALL(*pp, setNeedMetadata())
-			.Times(1);
-		EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-			.Times(1);
-		ppc.start();
-	}
+        ppc.stop();
+    }
+
+    { // idle -> Bootstrapping
+        EXPECT_CALL(*pp, setNeedMetadata())
+            .Times(1);
+        EXPECT_CALL(*pp, express(Name(threadPrefix), false))
+            .Times(1);
+        ppc.start();
+    }
 
     int startSeqNoDelta = 234;
     int startSeqNoKey = 7;
@@ -328,47 +330,49 @@ TEST(TestPipelineControl, TestStarvation)
     boost::shared_ptr<WireSegment> seg = getFakeSegment(threadPrefix, SampleClass::Delta,
                                                         SegmentClass::Data, 7, 0);
     { // adjusting -> fetching
-		EXPECT_CALL(*latencyControl, getCurrentCommand())
-			.Times(4)
-			.WillOnce(Return(PipelineAdjust::KeepPipeline))
+        EXPECT_CALL(*latencyControl, getCurrentCommand())
+            .Times(4)
+            .WillOnce(Return(PipelineAdjust::KeepPipeline))
             .WillOnce(Return(PipelineAdjust::DecreasePipeline))
-			.WillOnce(Return(PipelineAdjust::DecreasePipeline))
-            .WillOnce(Return(PipelineAdjust::IncreasePipeline));;
-		EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
-			.Times(4);
+            .WillOnce(Return(PipelineAdjust::DecreasePipeline))
+            .WillOnce(Return(PipelineAdjust::IncreasePipeline));
+        ;
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)))
+            .Times(4);
         EXPECT_CALL(*interestControl, markLowerLimit(5))
-			.Times(1);
-		EXPECT_CALL(*interestControl, pipelineLimit())
-			.Times(2)
-			.WillRepeatedly(Return(5));
+            .Times(1);
+        EXPECT_CALL(*interestControl, pipelineLimit())
+            .Times(2)
+            .WillRepeatedly(Return(5));
 
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-		ppc.segmentArrived(seg);
-	}
-    
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+        ppc.segmentArrived(seg);
+    }
+
     { // fetchin -> bootstrap
         EXPECT_CALL(*pp, reset())
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*buffer, reset())
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*interestControl, reset())
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*latencyControl, reset())
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*playoutControl, allowPlayout(false))
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*pp, setNeedMetadata())
-        .Times(1);
+            .Times(1);
         EXPECT_CALL(*pp, express(Name(threadPrefix), false))
-        .Times(1);
-        
+            .Times(1);
+
         ppc.segmentStarvation();
     }
 }
 
-int main(int argc, char **argv) {
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
