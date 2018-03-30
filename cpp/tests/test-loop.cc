@@ -46,7 +46,7 @@ MediaStreamParams getSampleVideoParams()
 
 	msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
 	msp.synchronizedStreamName_ = "mic";
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900 };
 	msp.producerParams_.segmentSize_ = 1000;
 
 	CaptureDeviceParams cdp;
@@ -95,7 +95,7 @@ MediaStreamParams getSampleAudioParams()
 	MediaStreamParams msp("mic");
 
 	msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
-	msp.producerParams_.freshnessMs_ = 2000;
+	msp.producerParams_.freshness_ = { 10, 15, 900 };
 	msp.producerParams_.segmentSize_ = 1000;
 	
 	CaptureDeviceParams cdp;
@@ -183,7 +183,7 @@ TEST(TestLoop, TestVideo)
       EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
         .WillRepeatedly(Invoke(incomingRawFrame));
       
-      int runTime = 120000;
+      int runTime = 10000;
       
       keyChain->setFace(consumerFace.get());
       RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
@@ -236,7 +236,14 @@ TEST(TestLoop, TestVideo)
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke(renderFrame));
 
+      GT_PRINTF("Started publishing stream\n");
       source.start(30);
+
+      // wait random milliseconds before fetching
+      int waitRandom = rand()%5000 + 1000;
+      GT_PRINTF("Waiting %dms before initiating fetching\n", waitRandom);
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(waitRandom));
+
       rs.start(rs.getThreads()[0], &renderer);
       boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
       done = true;

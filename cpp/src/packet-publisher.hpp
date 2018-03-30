@@ -89,8 +89,7 @@ class PacketPublisher : public NdnRtcComponent
         boost::shared_ptr<uint8_t[]> dummyHeader(new uint8_t[SegmentType::headerSize()]);
         memset(dummyHeader.get(), SegmentType::headerSize(), 0);
         return publish(name, data, (_DataSegmentHeader &)*dummyHeader.get(), 
-                       (freshnessMs == -1 ? settings_.freshnessPeriodMs_ : freshnessMs), 
-                       forcePitClean, banPitClean);
+                       freshnessMs, forcePitClean, banPitClean);
     }
 
     PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data,
@@ -106,6 +105,8 @@ class PacketPublisher : public NdnRtcComponent
         commonHeader.interestArrivalMs_ = 0;
 
         unsigned int segIdx = 0;
+        freshnessMs = (freshnessMs == -1 ? settings_.freshnessPeriodMs_ : freshnessMs);
+
         for (auto segment : segments)
         {
             ndn::Name segmentName(name);
