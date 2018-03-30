@@ -59,7 +59,9 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
     ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
+    std::string threadPrefix = prefix.toUri();
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
@@ -130,9 +132,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoDelta, SampleClass::Delta));
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoKey + 1, SampleClass::Key));
         EXPECT_CALL(*pp, setNeedSample(SampleClass::Key));
-        EXPECT_CALL(*pp, express(Name(threadPrefix), true));
-        EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
-        EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)));
     }
 
     EXPECT_CALL(*interestControl, pipelineLimit())
@@ -178,7 +178,9 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceAudio)
     ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/opus";
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
+    std::string threadPrefix = prefix.toUri();
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
@@ -243,7 +245,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceAudio)
             }));
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNo, SampleClass::Delta));
         EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
-        EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)));
     }
 
     EXPECT_CALL(*interestControl, pipelineLimit())
@@ -309,7 +311,9 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
     ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
+    std::string threadPrefix = prefix.toUri();
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());
@@ -363,9 +367,7 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoDelta, SampleClass::Delta));
         EXPECT_CALL(*pp, setSequenceNumber(startSeqNoKey + 1, SampleClass::Key));
         EXPECT_CALL(*pp, setNeedSample(SampleClass::Key));
-        EXPECT_CALL(*pp, express(Name(threadPrefix), true));
-        EXPECT_CALL(*pp, setNeedSample(SampleClass::Delta));
-        EXPECT_CALL(*pp, express(Name(threadPrefix), true));
+        EXPECT_CALL(*pp, segmentArrived(Name(threadPrefix)));
     }
 
     EXPECT_CALL(*interestControl, pipelineLimit())
@@ -411,7 +413,9 @@ TEST(TestPipelineControlStateMachine, TestBootstrapTimeout)
     ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
 
-    std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
+    std::string threadPrefix = prefix.toUri();
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<MockPipeliner> pp(boost::make_shared<MockPipeliner>());
     boost::shared_ptr<MockInterestControl> interestControl(boost::make_shared<MockInterestControl>());

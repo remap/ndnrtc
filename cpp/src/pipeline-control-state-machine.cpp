@@ -67,9 +67,7 @@ class ReceivedMetadataProcessing
             ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);
             ctrl->pipeliner_->setSequenceNumber(keyToFetch, SampleClass::Key);
             ctrl->pipeliner_->setNeedSample(SampleClass::Key);
-            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
-            ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
-            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
+            ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
 
             return true;
         }
@@ -89,7 +87,7 @@ class ReceivedMetadataProcessing
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
             ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
-            ctrl->pipeliner_->express(ctrl->threadPrefix_, true);
+            ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
 
             return true;
         }
