@@ -33,6 +33,7 @@ class IPlayoutControl;
 class IBuffer;
 class PipelineControl;
 class WireSegment;
+class SampleEstimator;
 struct Mutable;
 template <typename T>
 class NetworkDataT;
@@ -166,6 +167,7 @@ class PipelineControlStateMachine : public NdnRtcComponent
         boost::shared_ptr<ILatencyControl> latencyControl_;
         boost::shared_ptr<IPlayoutControl> playoutControl_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        boost::shared_ptr<SampleEstimator> sampleEstimator_;
     } Struct;
 
     ~PipelineControlStateMachine();

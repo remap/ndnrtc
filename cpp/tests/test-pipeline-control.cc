@@ -11,6 +11,7 @@
 #include "pipeline-control.hpp"
 #include "tests-helpers.hpp"
 #include "statistics.hpp"
+#include "sample-estimator.hpp"
 
 #include "mock-objects/interest-control-mock.hpp"
 #include "mock-objects/pipeliner-mock.hpp"
@@ -41,6 +42,7 @@ TEST(TestPipelineControl, TestDefault)
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     EXPECT_CALL(*pp, reset())
         .Times(1);
@@ -54,7 +56,8 @@ TEST(TestPipelineControl, TestDefault)
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
+                                                                buffer, pp, interestControl, latencyControl, 
+                                                                playoutControl, sampleEstimator, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
@@ -128,6 +131,7 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     EXPECT_CALL(*pp, reset())
         .Times(1);
@@ -141,7 +145,8 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
+                                                                buffer, pp, interestControl, latencyControl, 
+                                                                playoutControl, sampleEstimator, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
@@ -248,6 +253,7 @@ TEST(TestPipelineControl, TestStarvation)
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<MockBuffer> buffer(boost::make_shared<MockBuffer>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     EXPECT_CALL(*pp, reset())
         .Times(1);
@@ -261,7 +267,8 @@ TEST(TestPipelineControl, TestStarvation)
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
-                                                                buffer, pp, interestControl, latencyControl, playoutControl, storage);
+                                                                buffer, pp, interestControl, latencyControl, 
+                                                                playoutControl, sampleEstimator, storage);
 
 #ifdef ENABLE_LOGGING
     ppc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));

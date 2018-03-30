@@ -12,6 +12,7 @@
 #include "latency-control.hpp"
 #include "interest-control.hpp"
 #include "pipeline-control-state-machine.hpp"
+#include "sample-estimator.hpp"
 
 #include "tests-helpers.hpp"
 
@@ -68,6 +69,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -76,6 +78,7 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
@@ -320,6 +323,7 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -328,6 +332,7 @@ TEST(TestPipelineControlStateMachine, TestInitSequence)
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);
@@ -422,6 +427,7 @@ TEST(TestPipelineControlStateMachine, TestBootstrapTimeout)
     boost::shared_ptr<MockLatencyControl> latencyControl(boost::make_shared<MockLatencyControl>());
     boost::shared_ptr<MockPlayoutControl> playoutControl(boost::make_shared<MockPlayoutControl>());
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
+    boost::shared_ptr<SampleEstimator> sampleEstimator(boost::make_shared<SampleEstimator>(storage));
 
     PipelineControlStateMachine::Struct ctrl((Name(threadPrefix)));
     ctrl.buffer_ = buffer;
@@ -430,6 +436,7 @@ TEST(TestPipelineControlStateMachine, TestBootstrapTimeout)
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
 
     EXPECT_CALL(*buffer, reset())
         .Times(1);

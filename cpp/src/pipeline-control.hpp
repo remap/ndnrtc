@@ -29,6 +29,7 @@ class IInterestControl;
 class IPlayoutControl;
 class IBuffer;
 class PipelineControlStateMachine;
+class SampleEstimator;
 template <typename T>
 class NetworkDataT;
 typedef NetworkDataT<Mutable> NetworkDataAlias;
@@ -65,6 +66,7 @@ class PipelineControl : public NdnRtcComponent,
                                                   const boost::shared_ptr<IInterestControl> interestControl,
                                                   const boost::shared_ptr<ILatencyControl> latencyControl,
                                                   const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                  const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                   const boost::shared_ptr<statistics::StatisticsStorage> &storage);
     static PipelineControl videoPipelineControl(const ndn::Name &threadPrefix,
                                                 const boost::shared_ptr<IBuffer> buffer,
@@ -72,6 +74,7 @@ class PipelineControl : public NdnRtcComponent,
                                                 const boost::shared_ptr<IInterestControl> interestControl,
                                                 const boost::shared_ptr<ILatencyControl> latencyControl,
                                                 const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                 const boost::shared_ptr<statistics::StatisticsStorage> &storage);
 
   private:

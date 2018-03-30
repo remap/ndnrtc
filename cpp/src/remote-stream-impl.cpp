@@ -269,19 +269,6 @@ void RemoteStreamImpl::initiateFetching()
 
     isRunning_ = true;
     segmentController_->setIsActive(true);
-
-    if (type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
-    {
-        VideoThreadMeta meta(threadsMeta_[threadName_]->data());
-        sampleEstimator_->bootstrapSegmentNumber(meta.getSegInfo().deltaAvgSegNum_,
-                                                 SampleClass::Delta, SegmentClass::Data);
-        sampleEstimator_->bootstrapSegmentNumber(meta.getSegInfo().deltaAvgParitySegNum_,
-                                                 SampleClass::Delta, SegmentClass::Parity);
-        sampleEstimator_->bootstrapSegmentNumber(meta.getSegInfo().keyAvgSegNum_,
-                                                 SampleClass::Key, SegmentClass::Data);
-        sampleEstimator_->bootstrapSegmentNumber(meta.getSegInfo().keyAvgParitySegNum_,
-                                                 SampleClass::Key, SegmentClass::Parity);
-    }
 }
 
 void RemoteStreamImpl::stopFetching()

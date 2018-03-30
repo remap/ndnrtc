@@ -16,6 +16,7 @@
 #include "frame-data.hpp"
 #include "playout-control.hpp"
 #include "statistics.hpp"
+#include "sample-estimator.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -62,6 +63,15 @@ class ReceivedMetadataProcessing
                 keyToFetch = metadata->getSeqNo().second + 1;
                 pipelineInitial += (gopSize - gopPos);
             }
+
+            ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgSegNum_,
+                                                           SampleClass::Delta, SegmentClass::Data);
+            ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgParitySegNum_,
+                                                           SampleClass::Delta, SegmentClass::Parity);
+            ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgSegNum_,
+                                                           SampleClass::Key, SegmentClass::Data);
+            ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgParitySegNum_,
+                                                           SampleClass::Key, SegmentClass::Parity);
 
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);

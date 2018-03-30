@@ -22,6 +22,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadP
                                                         const boost::shared_ptr<IInterestControl> interestControl,
                                                         const boost::shared_ptr<ILatencyControl> latencyControl,
                                                         const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                        const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                         const boost::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
@@ -31,6 +32,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadP
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
     return PipelineControl(storage, PipelineControlStateMachine::defaultStateMachine(ctrl),
                            interestControl, pipeliner);
 }
@@ -41,6 +43,7 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPre
                                                       const boost::shared_ptr<IInterestControl> interestControl,
                                                       const boost::shared_ptr<ILatencyControl> latencyControl,
                                                       const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                      const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                       const boost::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
@@ -50,6 +53,7 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPre
     ctrl.latencyControl_ = latencyControl;
     ctrl.playoutControl_ = playoutControl;
     ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
     return PipelineControl(storage, PipelineControlStateMachine::videoStateMachine(ctrl),
                            interestControl, pipeliner);
 }

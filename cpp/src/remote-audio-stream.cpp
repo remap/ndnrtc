@@ -102,6 +102,7 @@ void RemoteAudioStreamImpl::setupPipelineControl()
                                                 boost::dynamic_pointer_cast<IInterestControl>(interestControl_),
                                                 boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
                                                 boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
+                                                sampleEstimator_,
                                                 sstorage_));
     pipelineControl_->setLogger(logger_);
     rtxController_->attach(pipelineControl_.get());
