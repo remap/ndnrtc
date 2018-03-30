@@ -62,8 +62,7 @@ PipelineControl::PipelineControl(const boost::shared_ptr<StatisticsStorage>& sta
 StatObject(statStorage),
 machine_(machine),
 interestControl_(interestControl),
-pipeliner_(pipeliner),
-sampleLatch_({0,0})
+pipeliner_(pipeliner)
 {
 	description_ = "pipeline-control";
 }
@@ -73,14 +72,19 @@ PipelineControl::~PipelineControl()
 }
 
 void 
-PipelineControl::start()
+PipelineControl::start(boost::shared_ptr<NetworkData> metadata)
 {
 	if (machine_.getState() != kStateIdle)
 		throw std::runtime_error("Can't start Pipeline Control as it has been "
 			"started already. Use reset() and start() to restart.");
 	
 	machine_.attach(this);
-	machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+
+    if (metadata)
+         machine_.dispatch(boost::make_shared<EventInit>(metadata));
+    else
+        machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+
 
 	LogDebugC << "started." << std::endl;
 }
@@ -97,25 +101,23 @@ void
 PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment>& s)
 {
     if (s->getSampleClass() == SampleClass::Key ||
-        s->getSampleClass() == SampleClass::Delta)
+        s->getSampleClass() == SampleClass::Delta ||
+        s->getSegmentClass() == SegmentClass::Meta)
     {
-    	if (passesBarrier(s->getInfo()))
-        	machine_.dispatch(boost::make_shared<EventSegment>(s));
+        machine_.dispatch(boost::make_shared<EventSegment>(s));
     }
 }
 
 void 
 PipelineControl::segmentRequestTimeout(const NamespaceInfo& n)
 {
-	if (passesBarrier(n))
-		machine_.dispatch(boost::make_shared<EventTimeout>(n));
+    machine_.dispatch(boost::make_shared<EventTimeout>(n));
 }
 
 void 
 PipelineControl::segmentNack(const NamespaceInfo& n, int reason)
 {
-	if (passesBarrier(n))
-		machine_.dispatch(boost::make_shared<EventNack>(n, reason));
+    machine_.dispatch(boost::make_shared<EventNack>(n, reason));
 }
 
 void 
@@ -154,16 +156,6 @@ PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const Pipeli
 	if (newState == kStateIdle && 
 		trigger->getType() != PipelineControlEvent::Type::Reset)
 	{
-		sampleLatch_.delta_ = pipeliner_->getSequenceNumber(SampleClass::Delta);
-		// for key frames, pipeliner stores sequence number of a frame to be requested
-		// in order to reduce rebuffer time, we set latching key frame number to the 
-		// current frame; that way, upon restart, pipeliner will start from already requested
-		// frame, thus will receive data faster
-		sampleLatch_.key_ = pipeliner_->getSequenceNumber(SampleClass::Key)-1;
-
-		LogDebugC << "samples latched at " 
-			<< sampleLatch_.delta_ << "d & " 
-			<< sampleLatch_.key_ << "k" << std::endl;
 		LogInfoC << "state machine reverted to Idle. starting over..." << std::endl;
 
 		(*statStorage_)[statistics::Indicator::RebufferingsNum]++;
@@ -177,38 +169,12 @@ void
 PipelineControl::onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>& trigger,
 			std::string currentState)
 {
-	if ((currentState == kStateWaitForRightmost || currentState == kStateWaitForInitial) &&
-		trigger->getType() == PipelineControlEvent::Type::Timeout)
-	{
-		// reset latch
-		sampleLatch_.delta_ = 0;
-		sampleLatch_.key_ = 0;
-	}
-}
-
-bool 
-PipelineControl::passesBarrier(const NamespaceInfo& n)
-{
-	if (n.hasSeqNo_)
-	{
-		PacketNumber b = (n.class_ == SampleClass::Key ? sampleLatch_.key_ : sampleLatch_.delta_);
-    	if (n.sampleNo_ >= b)
-    		return true;
-    	else
-    		LogWarnC << "received sample number " << n.sampleNo_ 
-        	<< " (" << n.getSuffix(suffix_filter::Stream) << ")"
-        	<< " but samples latched at " << b << std::endl;
-
-        return false;
-    }
-	
-	return true;
 }
 
 void 
 PipelineControl::onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
 {
-	if (machine_.currentState()->toInt() >= PipelineControlState::Chasing)
+	if (machine_.currentState()->toInt() >= PipelineControlState::Bootstrapping)
 	{
     	LogDebugC << "retransmission for " << interests[0]->getName().getPrefix(-1) << std::endl;
     	pipeliner_->express(interests, true);

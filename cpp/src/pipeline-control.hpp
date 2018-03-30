@@ -27,6 +27,9 @@ namespace ndnrtc {
 	class IPlayoutControl;
     class IBuffer;
 	class PipelineControlStateMachine;
+    template <typename T>
+    class NetworkDataT;
+    typedef NetworkDataT<Mutable> NetworkDataAlias;
 
 	/**
 	 * PipelineControl class implements functionality of a consumer by 
@@ -43,7 +46,7 @@ namespace ndnrtc {
 	public:
 		~PipelineControl();
 		
-		void start();
+		void start(boost::shared_ptr<NetworkDataAlias> metadata = boost::shared_ptr<NetworkDataAlias>());
 		void stop();
 
 		void segmentArrived(const boost::shared_ptr<WireSegment>&);
@@ -73,7 +76,6 @@ namespace ndnrtc {
 		PipelineControlStateMachine machine_;
 		boost::shared_ptr<IInterestControl> interestControl_;
 		boost::shared_ptr<IPipeliner> pipeliner_;
-		Pipeliner::SequenceCounter sampleLatch_;
 
 		PipelineControl(const boost::shared_ptr<statistics::StatisticsStorage>& statStorage,
 			const PipelineControlStateMachine& machine,
@@ -85,7 +87,6 @@ namespace ndnrtc {
 		void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent>&,
 			std::string);
 		void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
-		bool passesBarrier(const NamespaceInfo& n);
 	};
 }
 

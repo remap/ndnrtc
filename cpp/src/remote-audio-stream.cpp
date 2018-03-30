@@ -54,7 +54,7 @@ RemoteAudioStreamImpl::initiateFetching()
     
     setupPlayout();
     setupPipelineControl();
-    pipelineControl_->start();
+    pipelineControl_->start(threadsMeta_[threadName_]);
 }
 
 void
