@@ -225,7 +225,9 @@ WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
     {
         std::stringstream ss;
         ss << "Attempt to create wired data object with "
-           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ << std::endl;
+           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ 
+           << " (current version is " << NameComponents::nameApiVersion() << ")"
+           << std::endl;
         throw std::runtime_error(ss.str());
     }
 }

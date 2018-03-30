@@ -28,7 +28,7 @@ using namespace ndn;
 
 // #define ENABLE_LOGGING
 
-TEST(TestPipeliner, TestExpressRightmost)
+TEST(TestPipeliner, TestRequestMetadata)
 {
 #ifdef ENABLE_LOGGING
 	ndnlog::new_api::Logger::initAsyncLogging();
@@ -45,40 +45,43 @@ TEST(TestPipeliner, TestExpressRightmost)
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
 	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
 		interestQueue, playbackQueue, segmentController, sstorage});
-	
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	Name prefix(threadPrefix);
 
-	{
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
+
+    {
 		Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::AudioNameScheme>());
 
 #ifdef ENABLE_LOGGING
-		pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		pp.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
 			const boost::shared_ptr<ndn::Data>&){};
 		OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 
-		EXPECT_CALL(*segmentController, getOnDataCallback())
-		.Times(2)
-		.WillRepeatedly(Return(onData));
-		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
-		.Times(2)
-		.WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnDataCallback())
+            .Times(2)
+            .WillRepeatedly(Return(onData));
+        EXPECT_CALL(*segmentController, getOnTimeoutCallback())
+            .Times(2)
+            .WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnNetworkNackCallback())
+            .Times(2);
 
 		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
 			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 			Name n(prefix);
+            n.append(NameComponents::NameComponentMeta) .appendVersion(0).appendSegment(0);
 			EXPECT_EQ(n, i->getName());
-			EXPECT_EQ(i->getChildSelector(), 1);
+			EXPECT_TRUE(i->getMustBeFresh());
 		}));
 
-		pp.setNeedRightmost();
+		pp.setNeedMetadata();
 		pp.express(prefix);
-		pp.setNeedRightmost();
+		pp.setNeedMetadata();
 		pp.express(prefix);
 	}
 
@@ -86,32 +89,35 @@ TEST(TestPipeliner, TestExpressRightmost)
 		Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
-		pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+		pp.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 		OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
 			const boost::shared_ptr<ndn::Data>&){};
 		OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 
-		EXPECT_CALL(*segmentController, getOnDataCallback())
-		.Times(2)
-		.WillRepeatedly(Return(onData));
-		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
-		.Times(2)
-		.WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnDataCallback())
+            .Times(2)
+            .WillRepeatedly(Return(onData));
+        EXPECT_CALL(*segmentController, getOnTimeoutCallback())
+            .Times(2)
+            .WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnNetworkNackCallback())
+            .Times(2);
 
 		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 		.Times(2)
 		.WillRepeatedly(Invoke([prefix](const boost::shared_ptr<const ndn::Interest>& i,
 			boost::shared_ptr<ndnrtc::DeadlinePriority>, OnData, OnTimeout, OnNetworkNack){
 			Name n(prefix);
-			EXPECT_EQ(n.append(NameComponents::NameComponentKey), i->getName());
-			EXPECT_EQ(i->getChildSelector(), 1);
+            n.append(NameComponents::NameComponentMeta) .appendVersion(0).appendSegment(0);
+			EXPECT_EQ(n, i->getName());
+			EXPECT_TRUE(i->getMustBeFresh());
 		}));
 
-		pp.setNeedRightmost();
+		pp.setNeedMetadata();
 		pp.express(prefix);
-		pp.setNeedRightmost();
+		pp.setNeedMetadata();
 		pp.express(prefix);
 	}
 }
@@ -133,14 +139,14 @@ TEST(TestPipeliner, TestRequestSample)
 	boost::shared_ptr<MockSegmentController> segmentController(boost::make_shared<MockSegmentController>());
 	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
 		interestQueue, playbackQueue, segmentController, sstorage});
-	
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	Name prefix(threadPrefix);
+
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
 
 	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
-	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pp.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
@@ -148,14 +154,14 @@ TEST(TestPipeliner, TestRequestSample)
 	OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 
 	boost::shared_ptr<WireSegment>
-		dataSegment = getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Data, 7, 0),
-		paritySegment = getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Parity, 7, 0);
+		dataSegment = getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Data, 7, 0),
+		paritySegment = getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Parity, 7, 0);
 	
 	sampleEstimator->segmentArrived(dataSegment);
 	sampleEstimator->segmentArrived(paritySegment);
 
-	ASSERT_EQ(10, sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data));
-	ASSERT_EQ(2, sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity));
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data), 10);
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity), 2);
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -165,6 +171,8 @@ TEST(TestPipeliner, TestRequestSample)
 		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
 			.Times(12)
 			.WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnNetworkNackCallback())
+            .Times(12);
 	
 		int segNo = 0;
 		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
@@ -202,13 +210,13 @@ TEST(TestPipeliner, TestRequestKeySample)
 	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
 		interestQueue, playbackQueue, segmentController, sstorage});
 	
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	Name prefix(threadPrefix);
+	Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
 
 	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
-	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pp.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
@@ -216,14 +224,14 @@ TEST(TestPipeliner, TestRequestKeySample)
 	OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 
 	boost::shared_ptr<WireSegment>
-		dataSegment = getFakeSegment(threadPrefix, SampleClass::Key, SegmentClass::Data, 7, 0),
-		paritySegment = getFakeSegment(threadPrefix, SampleClass::Key, SegmentClass::Parity, 7, 0);
+		dataSegment = getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Data, 7, 0),
+		paritySegment = getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Parity, 7, 0);
 	
 	sampleEstimator->segmentArrived(dataSegment);
 	sampleEstimator->segmentArrived(paritySegment);
 
-	ASSERT_EQ(30, sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data));
-	ASSERT_EQ(6, sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity));
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data), 30);
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity), 6);
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -233,6 +241,8 @@ TEST(TestPipeliner, TestRequestKeySample)
 		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
 			.Times(36)
 			.WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnNetworkNackCallback())
+            .Times(36);
 	
 		int segNo = 0;
 		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
@@ -271,28 +281,28 @@ TEST(TestPipeliner, TestSegmentsArrive)
 	PipelinerSettings ppSettings({1000, sampleEstimator, buffer, interestControl,
 		interestQueue, playbackQueue, segmentController, sstorage});
 	
-	std::string threadPrefix = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi";
-	Name prefix(threadPrefix);
+    Name prefix("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/");
+    prefix.appendVersion(NameComponents::nameApiVersion()).append(Name("video/camera/hi"));
 
 	Pipeliner pp(ppSettings, boost::make_shared<Pipeliner::VideoNameScheme>());
 
 #ifdef ENABLE_LOGGING
-	pp.setLogger(&ndnlog::new_api::Logger::getLogger(""));
+	pp.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
 	OnData onData = [](const boost::shared_ptr<const ndn::Interest>&,
                        const boost::shared_ptr<ndn::Data>&){};
 	OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest>& i){};
 	
-	sampleEstimator->segmentArrived(getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Data, 7, 0));
-	sampleEstimator->segmentArrived(getFakeSegment(threadPrefix, SampleClass::Delta, SegmentClass::Parity, 7, 0));
-	sampleEstimator->segmentArrived(getFakeSegment(threadPrefix, SampleClass::Key, SegmentClass::Data, 7, 0));
-	sampleEstimator->segmentArrived(getFakeSegment(threadPrefix, SampleClass::Key, SegmentClass::Parity, 7, 0));
+	sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Data, 7, 0));
+	sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Parity, 7, 0));
+	sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Data, 7, 0));
+	sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Parity, 7, 0));
 
-	ASSERT_EQ(30, sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data));
-	ASSERT_EQ(6, sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity));
-	ASSERT_EQ(10, sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data));
-	ASSERT_EQ(2, sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity));
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data), 30);
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity), 6);
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data), 10);
+	ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity), 2);
 
 	pp.setSequenceNumber(7, SampleClass::Delta);
 	pp.setSequenceNumber(1, SampleClass::Key);
@@ -330,6 +340,8 @@ TEST(TestPipeliner, TestSegmentsArrive)
 		EXPECT_CALL(*segmentController, getOnTimeoutCallback())
 			.Times((nExpectedDataInterests+nExpectedParityInterests)*roomSize)
 			.WillRepeatedly(Return(onTimeout));
+        EXPECT_CALL(*segmentController, getOnNetworkNackCallback())
+            .Times((nExpectedDataInterests+nExpectedParityInterests)*roomSize);
 		EXPECT_CALL(*interestQueue, enqueueInterest(_, _, _, _, _))
 			.Times((nExpectedDataInterests+nExpectedParityInterests)*roomSize);
 
