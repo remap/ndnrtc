@@ -137,8 +137,8 @@ void VideoStreamImpl::add(const MediaThreadParams *mp)
         threads_[params->threadName_] = boost::make_shared<VideoThread>(params->coderParams_);
         scalers_[params->threadName_] = boost::make_shared<FrameScaler>(params->coderParams_.encodeWidth_,
                                                                         params->coderParams_.encodeHeight_);
-        seqCounters_[params->threadName_].first = 0;
-        seqCounters_[params->threadName_].second = 0;
+        seqCounters_[params->threadName_].first = -1;
+        seqCounters_[params->threadName_].second = -1;
         metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
 
         threads_[params->threadName_]->setDescription("thread-" + params->threadName_);
@@ -231,6 +231,12 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
     {
         // prepare packet header
         bool isKey = (it.second->getFrame()._frameType == webrtc::kVideoFrameKey);
+
+        if (isKey)
+            seqCounters_[it.first].first++;
+        else
+            seqCounters_[it.first].second++;
+
         CommonHeader packetHdr;
         packetHdr.sampleRate_ = metaKeepers_[it.first]->getRate();
         packetHdr.publishTimestampMs_ = clock::millisecondTimestamp();
@@ -243,11 +249,6 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
                   << "fps " << packetHdr.publishTimestampMs_ << "ms " << std::endl;
 
         publish(it.first, it.second);
-
-        if (isKey)
-            seqCounters_[it.first].first++;
-        else
-            seqCounters_[it.first].second++;
     }
 }
 
@@ -259,7 +260,7 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 
     bool isKey = (fp->getFrame()._frameType == webrtc::kVideoFrameKey);
     PacketNumber seqNo = (isKey ? seqCounters_[thread].first : seqCounters_[thread].second);
-    PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second : seqCounters_[thread].first);
+    PacketNumber pairedSeq = (isKey ? seqCounters_[thread].second + 1 : seqCounters_[thread].first);
     PacketNumber playbackNo = playbackCounter_;
     unsigned char gopPos = (char)threads_[thread]->getCoder().getGopCounter();
     Name dataName(streamPrefix_);
@@ -362,6 +363,12 @@ bool VideoStreamImpl::updateMeta()
 
     for (auto it : metaKeepers_)
     {
+        LogDebugC << "publishing meta " 
+                  << it.second->getMeta().getSegInfo().deltaAvgSegNum_ << " "
+                  << it.second->getMeta().getSegInfo().deltaAvgParitySegNum_ << " "
+                  << it.second->getMeta().getSegInfo().keyAvgSegNum_ << " "
+                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_ << std::endl;
+
         Name metaName(streamPrefix_);
         // TODO: appendVersion() should probably be gone once SegemntFetcher
         // is updated to work without version number
