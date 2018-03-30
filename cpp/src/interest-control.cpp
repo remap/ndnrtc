@@ -67,12 +67,14 @@ InterestControl::~InterestControl()
 
 void InterestControl::initialize(double rate, int pipelineLimit)
 {
+    targetRateUpdate(rate);
+
     lowerLimit_ = pipelineLimit;
-    upperLimit_ = 10 * lowerLimit_;
+    upperLimit_ = 8 * lowerLimit_;
+    changeLimitTo(lowerLimit_);
 
     LogDebugC << "initialized with lower limit " << lowerLimit_ << std::endl;
 
-    targetRateUpdate(rate);
 }
 
 void InterestControl::reset()
