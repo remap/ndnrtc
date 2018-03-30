@@ -179,7 +179,10 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
     {
         Name iname(n);
         iname.appendSegment(segNo);
-        interests.push_back(boost::make_shared<const Interest>(iname, interestLifetime_));
+        
+        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+        i->setMustBeFresh(false);
+        interests.push_back(i);
     }
 
     if (!noParity)
@@ -190,7 +193,10 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
         {
             Name iname(n);
             iname.appendSegment(segNo);
-            interests.push_back(boost::make_shared<const Interest>(iname, interestLifetime_));
+            
+            boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+            i->setMustBeFresh(false);
+            interests.push_back(i);
         }
     }
 
