@@ -15,7 +15,7 @@
 #include "mock-objects/encoder-delegate-mock.hpp"
 #include "tests-helpers.hpp"
 
-// #define ENABLE_LOGGING
+#define ENABLE_LOGGING
 
 using namespace ::testing;
 using namespace ndnrtc;
@@ -41,7 +41,7 @@ TEST(TestCoder, TestEncode)
     int width = 1280, height = 720;
     WebRtcVideoFrame convertedFrame(std::move(getFrame(width, height)));
 
-    { // try 1 frame
+    { // try 2 frames, default encoder
         VideoCoderParams vcp(sampleVideoCoderParams());
         vcp.startBitrate_ = 1000;
         vcp.maxBitrate_ = 1000;
@@ -54,14 +54,90 @@ TEST(TestCoder, TestEncode)
         vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 #endif
 
+        const webrtc::EncodedImage *encodedImage;
+        boost::function<void(const webrtc::EncodedImage &)> onEncoded =
+            [&encodedImage](const webrtc::EncodedImage &img) {
+                encodedImage = &img;
+            };
+
         EXPECT_CALL(coderDelegate, onEncodingStarted())
-            .Times(1);
+            .Times(2);
         EXPECT_CALL(coderDelegate, onEncodedFrame(_))
-            .Times(1);
+            .Times(2)
+            .WillRepeatedly(Invoke(onEncoded));
         EXPECT_CALL(coderDelegate, onDroppedFrame())
             .Times(0);
 
         vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
+        vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
+    }
+
+    { // try 2 frames, Timed key enforcement
+        VideoCoderParams vcp(sampleVideoCoderParams());
+        vcp.startBitrate_ = 1000;
+        vcp.maxBitrate_ = 1000;
+        vcp.encodeWidth_ = width;
+        vcp.encodeHeight_ = height;
+        MockEncoderDelegate coderDelegate;
+        VideoCoder vc(vcp, &coderDelegate, VideoCoder::KeyEnforcement::Timed);
+
+#ifdef ENABLE_LOGGING
+        vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
+
+        const webrtc::EncodedImage *encodedImage;
+        boost::function<void(const webrtc::EncodedImage &)> onEncoded =
+            [&encodedImage](const webrtc::EncodedImage &img) {
+                encodedImage = &img;
+            };
+
+        EXPECT_CALL(coderDelegate, onEncodingStarted())
+            .Times(2);
+        EXPECT_CALL(coderDelegate, onEncodedFrame(_))
+            .Times(2)
+            .WillRepeatedly(Invoke(onEncoded));
+        EXPECT_CALL(coderDelegate, onDroppedFrame())
+            .Times(0);
+
+        vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
+        vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
+    }
+
+    { // try 1 frame, GOP key enforcement 
+        VideoCoderParams vcp(sampleVideoCoderParams());
+        vcp.startBitrate_ = 1000;
+        vcp.maxBitrate_ = 1000;
+        vcp.encodeWidth_ = width;
+        vcp.encodeHeight_ = height;
+        MockEncoderDelegate coderDelegate;
+        VideoCoder vc(vcp, &coderDelegate, VideoCoder::KeyEnforcement::Gop);
+
+#ifdef ENABLE_LOGGING
+        vc.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
+
+        const webrtc::EncodedImage *encodedImage;
+        boost::function<void(const webrtc::EncodedImage &)> onEncoded =
+            [&encodedImage](const webrtc::EncodedImage &img) {
+                encodedImage = &img;
+            };
+
+        EXPECT_CALL(coderDelegate, onEncodingStarted())
+            .Times(2);
+        EXPECT_CALL(coderDelegate, onEncodedFrame(_))
+            .Times(2)
+            .WillRepeatedly(Invoke(onEncoded));
+        EXPECT_CALL(coderDelegate, onDroppedFrame())
+            .Times(0);
+
+        vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
+        vc.onRawFrame(convertedFrame);
+        EXPECT_EQ(vc.getGopCounter(), encodedImage->_frameType == webrtc::kVideoFrameKey ? 0 : 1);
     }
 
     { // try 1 frame downscaled
@@ -158,7 +234,7 @@ TEST(TestCoder, TestEncode)
         EXPECT_ANY_THROW(vc.onRawFrame(convertedFrame));
     }
 }
-#if 1
+#if 0
 TEST(TestCoder, TestEncode700K)
 {
     bool dropEnabled = true;
@@ -234,7 +310,7 @@ TEST(TestCoder, TestEncode700K)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEncode1000K)
 {
     bool dropEnabled = true;
@@ -310,7 +386,7 @@ TEST(TestCoder, TestEncode1000K)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEncode2000K)
 {
     bool dropEnabled = true;
@@ -385,7 +461,7 @@ TEST(TestCoder, TestEncode2000K)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEncode3000K)
 {
     bool dropEnabled = true;
@@ -460,7 +536,7 @@ TEST(TestCoder, TestEncode3000K)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, Test720pEnforceNoDrop)
 {
     bool dropEnabled = false;
@@ -534,7 +610,7 @@ TEST(TestCoder, Test720pEnforceNoDrop)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEnforceNoDrop)
 {
     bool dropEnabled = false;
@@ -608,7 +684,7 @@ TEST(TestCoder, TestEnforceNoDrop)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEnforceKeyGop)
 {
     bool dropEnabled = true;
@@ -703,7 +779,7 @@ TEST(TestCoder, TestEnforceKeyGop)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestCoder, TestEnforceKeyTimed)
 {
     bool dropEnabled = true;

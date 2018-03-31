@@ -91,7 +91,7 @@ class VideoCoder : public NdnRtcComponent,
                KeyEnforcement = KeyEnforcement::EncoderDefined);
 
     void onRawFrame(const WebRtcVideoFrame &frame);
-    int getGopCounter() const { return gopCounter_; }
+    int getGopCounter() const { return gopPos_; }
 
     static webrtc::VideoCodec codecFromSettings(const VideoCoderParams &settings);
 
@@ -107,7 +107,7 @@ class VideoCoder : public NdnRtcComponent,
     std::vector<WebRtcVideoFrameType> keyFrameType_;
     boost::shared_ptr<webrtc::VideoEncoder> encoder_;
 
-    int gopCounter_;
+    int keyFrameTrigger_, gopPos_;
     KeyEnforcement keyEnforcement_;
 
     // interface webrtc::EncodedImageCallback

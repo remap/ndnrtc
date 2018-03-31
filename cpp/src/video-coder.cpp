@@ -152,7 +152,8 @@ VideoCoder::VideoCoder(const VideoCoderParams &coderParams, IEncoderDelegate *de
     : NdnRtcComponent(),
       coderParams_(coderParams),
       delegate_(delegate),
-      gopCounter_(0),
+      keyFrameTrigger_(0),
+      gopPos_(0),
       codec_(VideoCoder::codecFromSettings(coderParams_)),
       codecSpecificInfo_(nullptr),
       keyEnforcement_(keyEnforcement),
@@ -199,29 +200,33 @@ void VideoCoder::onRawFrame(const WebRtcVideoFrame &frame)
     delegate_->onEncodingStarted();
 
     int err;
-    if (gopCounter_ % coderParams_.gop_ == 0)
+    if (keyFrameTrigger_ % coderParams_.gop_ == 0)
     {
-        // gopCounter_ = 0;
+        gopPos_ = 0;
 
-        LogTraceC << "⤹ encoding ○ (K) " << gopCounter_ << endl;
+        LogTraceC << "⤹ encoding ○ (K) " << gopPos_ << endl;
         err = encoder_->Encode(frame, codecSpecificInfo_, &keyFrameType_);
         if (keyEnforcement_ == KeyEnforcement::EncoderDefined)
-            gopCounter_ = 1;
+            keyFrameTrigger_ = 1;
     }
     else
     {
-        LogTraceC << "⤹ encoding ○ ? " << gopCounter_ << endl;
+        gopPos_++;
+
+        LogTraceC << "⤹ encoding ○ ? " << gopPos_ << endl;
         err = encoder_->Encode(frame, codecSpecificInfo_, NULL);
     }
 
     if (!encodeComplete_)
     {
-        LogTraceC << " dropped ✕ " << gopCounter_ << endl;
+        LogTraceC << " dropped ✕ " << gopPos_ << endl;
+
+        gopPos_--; // if frame was dropped - we decrement gopPos_ back to previous value
         delegate_->onDroppedFrame();
     }
 
     if (keyEnforcement_ == KeyEnforcement::Timed)
-        gopCounter_++;
+        keyFrameTrigger_++;
 
     if (err != WEBRTC_VIDEO_CODEC_OK)
         LogErrorC << "can't encode frame due to error " << err << std::endl;
@@ -237,14 +242,14 @@ VideoCoder::OnEncodedImage(const EncodedImage &encodedImage,
     encodeComplete_ = true;
 
     if (encodedImage._frameType == webrtc::kVideoFrameKey)
-        gopCounter_ = 0;
+        gopPos_ = 0;
 
     LogTraceC << "⤷ encoded  ● "
               << (encodedImage._frameType == webrtc::kVideoFrameKey ? "K " : "D ")
-              << gopCounter_ << std::endl;
+              << gopPos_ << std::endl;
 
     if (keyEnforcement_ == KeyEnforcement::Gop)
-        gopCounter_++;
+        keyFrameTrigger_++;
 
     /*
     LogInfoC << "encoded"
