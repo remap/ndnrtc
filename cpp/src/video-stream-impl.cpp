@@ -363,17 +363,21 @@ bool VideoStreamImpl::updateMeta()
 
     for (auto it : metaKeepers_)
     {
-        LogDebugC << "publishing meta " 
-                  << it.second->getMeta().getSegInfo().deltaAvgSegNum_ << " "
-                  << it.second->getMeta().getSegInfo().deltaAvgParitySegNum_ << " "
-                  << it.second->getMeta().getSegInfo().keyAvgSegNum_ << " "
-                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_ << std::endl;
-
         Name metaName(streamPrefix_);
         // TODO: appendVersion() should probably be gone once SegemntFetcher
         // is updated to work without version number
         metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(0);;
         metadataPublisher_->publish(metaName, it.second->getMeta());
+
+        LogDebugC << "published meta: seginfo " 
+                  << it.second->getMeta().getSegInfo().deltaAvgSegNum_ << " "
+                  << it.second->getMeta().getSegInfo().deltaAvgParitySegNum_ << " "
+                  << it.second->getMeta().getSegInfo().keyAvgSegNum_ << " "
+                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_ 
+                  << " seq " << it.second->getMeta().getSeqNo().first << " "
+                  << it.second->getMeta().getSeqNo().second << " "
+                  << " gop pos " << (int)it.second->getMeta().getGopPos()
+                  << std::endl;
     }
 
     return false;

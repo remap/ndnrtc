@@ -72,5 +72,5 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
             << std::endl;
 	}
 	else
-		LogWarnC << "received data is not in the buffer: " << segment->getData()->getName() << std::endl;
+		LogDebugC << "received data is not in the buffer: " << segment->getData()->getName() << std::endl;
 }

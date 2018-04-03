@@ -134,7 +134,8 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             }
 
             LogDebugC << "processed " << slot->getNameInfo().sampleNo_
-                << " (" << hdr.playbackNo_ << ")" << std::endl;
+                << (slot->getNameInfo().isDelta_ ? "d (" : "k (")
+                << hdr.playbackNo_ << "p)" << std::endl;
             
             (*statStorage_)[Indicator::PlayedNum]++;
             (*statStorage_)[Indicator::LastPlayedNo] = currentPlayNo_;

@@ -96,7 +96,7 @@ namespace ndnrtc {
             bool placeInBuffer = false);
 
         /**
-         * Called each time new segment arrives. 
+         * Called by state machine each time new segment arrives. 
          * This will query InterestControl for the room size and if it's not zero
          * or negative, will continuously issue Interest batches towards new 
          * samples according to he current sample class priority unless 

@@ -140,6 +140,9 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
 {
     if (cls == SampleClass::Delta) seqCounter_.delta_ = seqNo;
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
+
+    LogDebugC << "set seq no " << seqNo 
+              << " for sample class " << (cls == SampleClass::Delta ? "Delta" : "Key") << std::endl;
 }
 
 PacketNumber 
