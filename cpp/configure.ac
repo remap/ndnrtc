@@ -258,7 +258,7 @@ AX_BOOST_CHRONO
 AX_BOOST_THREAD
 AX_BOOST_REGEX
 AX_BOOST_TIMER
-
+AX_BOOST_FILESYSTEM
 
 ###############################
 # Check for NDN-CPP
