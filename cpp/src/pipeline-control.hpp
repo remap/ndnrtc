@@ -49,7 +49,7 @@ class PipelineControl : public NdnRtcComponent,
   public:
     ~PipelineControl();
 
-    void start(boost::shared_ptr<NetworkDataAlias> metadata = boost::shared_ptr<NetworkDataAlias>());
+    void start();
     void stop();
 
     void segmentArrived(const boost::shared_ptr<WireSegment> &);

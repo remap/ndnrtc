@@ -53,7 +53,7 @@ void RemoteAudioStreamImpl::initiateFetching()
 
     setupPlayout();
     setupPipelineControl();
-    pipelineControl_->start(threadsMeta_[threadName_]);
+    pipelineControl_->start();
 }
 
 void RemoteAudioStreamImpl::stopFetching()

@@ -33,9 +33,14 @@ const std::string kStateFetching = "Fetching";
 #define MAKE_TRANSITION(s, t) (StateEventPair(s, t))
 #define ENABLE_IF(T, M) template <typename U = T, typename boost::enable_if<typename boost::is_same<M, U>>::type... X>
 
+#define LOG_USING(ptr, lvl) boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get())
+
 template <typename MetadataClass>
 class ReceivedMetadataProcessing
 {
+  public:
+    ReceivedMetadataProcessing() : metadataRequestedMs_(0), metadataReceivedMs_(0) {}
+
   protected:
     ENABLE_IF(MetadataClass, VideoThreadMeta)
     bool processMetadata(boost::shared_ptr<VideoThreadMeta> metadata,
@@ -46,18 +51,38 @@ class ReceivedMetadataProcessing
             unsigned char gopPos = metadata->getGopPos();
             unsigned int gopSize = metadata->getCoderParams().gop_;
             PacketNumber deltaToFetch, keyToFetch;
-            unsigned int pipelineInitial = InterestControl::MinPipelineSize;
+            double metadataDrd = (double)getMetadataDrd();
+            unsigned int pipelineInitial =
+                ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
+                                                                              metadataDrd, metadataDrd * 0.05);
+
+            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
+                << "received metadata. delta seq " << metadata->getSeqNo().first 
+                << " key seq " << metadata->getSeqNo().second
+                << " gop pos " << (int)gopPos
+                << " gop size " << gopSize
+                << " rate " << metadata->getRate()
+                << " drd " << metadataDrd
+                << std::endl;
 
             // add some smart logic about what to fetch next...
             if (gopPos < ((float)gopSize / 2.))
             {
-                // should probably fetch current key
-                deltaToFetch = metadata->getSeqNo().first;
+                // initial pipeline size helps us determine from which delta frame we need to start playback
+                startOffSeqNums_.first = metadata->getSeqNo().first + pipelineInitial;
+                startOffSeqNums_.second = metadata->getSeqNo().second;
+
+                // now we need to determine sequence number of delta from which we need to start fetching
+                // for this case, it will be the beginning of the GOP
+                PacketNumber firstDeltaInGop = (gopPos ? metadata->getSeqNo().first - (gopPos - 1) : metadata->getSeqNo().first);
+                deltaToFetch = firstDeltaInGop;
                 keyToFetch = metadata->getSeqNo().second;
                 pipelineInitial += gopPos;
             }
             else
             {
+                startOffSeqNums_.first = -1;
+                startOffSeqNums_.second = metadata->getSeqNo().second + 1;
                 // should fetch next key
                 deltaToFetch = metadata->getSeqNo().first;
                 keyToFetch = metadata->getSeqNo().second + 1;
@@ -79,12 +104,22 @@ class ReceivedMetadataProcessing
             ctrl->pipeliner_->setNeedSample(SampleClass::Key);
             ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
 
+            bootstrapSeqNums_.first = deltaToFetch;
+            bootstrapSeqNums_.second = keyToFetch;
+
+            LOG_USING(ctrl->playoutControl_, ndnlog::NdnLoggerLevelInfo)
+                << "playback start off sequence numbers: "
+                << startOffSeqNums_.first << " (delta) "
+                << startOffSeqNums_.second << " (key)"
+                << std::endl;
+
             return true;
         }
 
         return false;
     }
 
+    // TODO: update code for audio too
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     bool processMetadata(boost::shared_ptr<AudioThreadMeta> metadata,
                          boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
@@ -92,6 +127,7 @@ class ReceivedMetadataProcessing
         if (metadata)
         {
             PacketNumber bundleNo = metadata->getBundleNo();
+            // TODO: this needs to be calculated based on current sample rate and DRD
             unsigned int pipelineInitial = 2 * InterestControl::MinPipelineSize;
 
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
@@ -99,15 +135,13 @@ class ReceivedMetadataProcessing
             ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
             ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
 
+            bootstrapSeqNums_.first = bundleNo;
+            bootstrapSeqNums_.second = -1;
+
             return true;
         }
 
         return false;
-    }
-
-    boost::shared_ptr<MetadataClass> extractMetadata(boost::shared_ptr<NetworkData> data)
-    {
-        return boost::make_shared<MetadataClass>(boost::move(*data));
     }
 
     boost::shared_ptr<MetadataClass> extractMetadata(boost::shared_ptr<const WireSegment> segment)
@@ -116,6 +150,26 @@ class ReceivedMetadataProcessing
         NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
         return boost::make_shared<MetadataClass>(boost::move(nd));
     }
+
+  protected:
+    void markMetadataRequested() { metadataRequestedMs_ = clock::millisecondTimestamp(); }
+    void markMetadataReceived() { metadataReceivedMs_ = clock::millisecondTimestamp(); }
+    int64_t getMetadataDrd() { return (metadataReceivedMs_ - metadataRequestedMs_); }
+
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
+    PacketNumber getStartOffSequenceNumber() { return startOffSeqNums_.first; }
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
+    PacketNumber getBootstrapSequenceNumber() { return bootstrapSeqNums_.first; }
+
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    std::pair<PacketNumber, PacketNumber> getStartOffSequenceNumber() { return startOffSeqNums_; }
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    std::pair<PacketNumber, PacketNumber> getBootstrapSequenceNumber() { return bootstrapSeqNums_; }
+
+  private:
+    int64_t metadataRequestedMs_, metadataReceivedMs_;
+    std::pair<PacketNumber, PacketNumber> bootstrapSeqNums_;
+    std::pair<PacketNumber, PacketNumber> startOffSeqNums_;
 };
 
 /**
@@ -129,12 +183,10 @@ class ReceivedMetadataProcessing
  *  - Init: switches to Adjusting
  * 	- Reset: resets control structures
  */
-template <typename MetadataClass>
-class IdleT : public PipelineControlState,
-              public ReceivedMetadataProcessing<MetadataClass>
+class Idle : public PipelineControlState
 {
   public:
-    IdleT(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+    Idle(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateIdle; }
     void enter() override
@@ -146,22 +198,8 @@ class IdleT : public PipelineControlState,
         ctrl_->playoutControl_->allowPlayout(false);
     }
     int toInt() override { return (int)StateId::Idle; }
-
-  protected:
-    std::string onInit(const boost::shared_ptr<const EventInit> &ev) override
-    {
-        boost::shared_ptr<MetadataClass> metadata =
-            ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getNetworkData());
-
-        if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
-            return kStateAdjusting;
-
-        return kStateBootstrapping;
-    }
 };
 
-typedef IdleT<AudioThreadMeta> IdleAudio;
-typedef IdleT<VideoThreadMeta> IdleVideo;
 
 /**
  * Bootstrapping state. Sytem is in this state while waiting for the answer of 
@@ -197,24 +235,89 @@ class BootstrappingT : public PipelineControlState,
 
     std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
     {
-        return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
+        if (ev->getSegment()->isMeta())
+            return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
+        else
+        { // process frame segments
+            ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+
+            // check whether it's time to switch
+            if (receivedStartOffSegment(ev->getSegment()))
+            {
+                // since we are fetching older frames, we'll need to fast forward playback
+                // to minimize playback latency
+                int playbackFastForwardMs = calculatePlaybackFfwdInterval(ev->getSegment());
+                ctrl_->playoutControl_->allowPlayout(true, playbackFastForwardMs);
+
+                return kStateAdjusting;
+            }
+
+            return str();
+        }
     }
 
     void askMetadata()
     {
+        ReceivedMetadataProcessing<MetadataClass>::markMetadataRequested();
         ctrl_->pipeliner_->setNeedMetadata();
         ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
     }
 
     std::string receivedMetadata(const boost::shared_ptr<const EventSegment> &ev)
     {
-        boost::shared_ptr<MetadataClass> metadata =
-            ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
+        ReceivedMetadataProcessing<MetadataClass>::markMetadataReceived();
 
-        if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
-            return kStateAdjusting;
+        metadata_ = ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
+        ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_);
+        // if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
+        //     return kStateAdjusting;
 
         return kStateBootstrapping;
+    }
+
+  private:
+    boost::shared_ptr<MetadataClass> metadata_;
+
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
+    bool receivedStartOffSegment(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        // TODO: finish it for audio
+        return true;
+    }
+
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
+    int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        return 0;
+    }
+
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    bool receivedStartOffSegment(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        // compare sequence number of received sample with saved start off sequence numbers
+        PacketNumber startOffDeltaSeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().first;
+        PacketNumber startOffKeySeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().second;
+
+        boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+            boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
+        ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
+
+        PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_ ;
+        PacketNumber currentKeySeqNo = seg->isDelta() ? segmentPacket.getHeader().pairedSequenceNo_ : seg->getSampleNo() ;
+
+        return (currentDeltaSeqNo >= startOffDeltaSeqNo) && (currentKeySeqNo >= startOffKeySeqNo);
+    }
+
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+            boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
+        ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
+
+        PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_;
+
+        return (int)((double)(currentDeltaSeqNo - ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first) * metadata_->getRate());
     }
 };
 
@@ -285,8 +388,6 @@ PipelineControlEvent::toString() const
 {
     switch (e_)
     {
-    case PipelineControlEvent::Init:
-        return "Init";
     case PipelineControlEvent::Start:
         return "Start";
     case PipelineControlEvent::Reset:
@@ -323,7 +424,7 @@ PipelineControlStateMachine::StatesMap
 PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
     return {
-        {kStateIdle, boost::make_shared<IdleAudio>(ctrl)},
+        {kStateIdle, boost::make_shared<Idle>(ctrl)},
         {kStateBootstrapping, boost::make_shared<BootstrappingAudio>(ctrl)},
         {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
         {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
@@ -333,7 +434,7 @@ PipelineControlStateMachine::StatesMap
 PipelineControlStateMachine::videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
     return {
-        {kStateIdle, boost::make_shared<IdleVideo>(ctrl)},
+        {kStateIdle, boost::make_shared<Idle>(ctrl)},
         {kStateBootstrapping, boost::make_shared<BootstrappingVideo>(ctrl)},
         {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
         {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
@@ -460,8 +561,6 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 {
     switch (ev->getType())
     {
-    case PipelineControlEvent::Init:
-        return onInit(boost::dynamic_pointer_cast<const EventInit>(ev));
     case PipelineControlEvent::Start:
         return onStart(ev);
     case PipelineControlEvent::Reset:
@@ -481,7 +580,6 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 void Adjusting::enter()
 {
     pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
-    ctrl_->playoutControl_->allowPlayout(true);
 }
 
 std::string

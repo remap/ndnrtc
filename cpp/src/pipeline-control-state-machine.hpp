@@ -52,7 +52,6 @@ class PipelineControlEvent
   public:
     typedef enum _Type {
         Start,
-        Init,
         Reset,
         Starvation,
         Segment,
@@ -82,17 +81,17 @@ class EventSegment : public PipelineControlEvent
     boost::shared_ptr<const WireSegment> segment_;
 };
 
-class EventInit : public PipelineControlEvent
-{
-  public:
-    EventInit(const boost::shared_ptr<NetworkDataAlias> &data) 
-        : PipelineControlEvent(PipelineControlEvent::Init), data_(data){};
+// class EventInit : public PipelineControlEvent
+// {
+//   public:
+//     EventInit(const boost::shared_ptr<NetworkDataAlias> &data) 
+//         : PipelineControlEvent(PipelineControlEvent::Init), data_(data){};
 
-    const boost::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
+//     const boost::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
 
-  private:
-    boost::shared_ptr<NetworkDataAlias> data_;
-};
+//   private:
+//     boost::shared_ptr<NetworkDataAlias> data_;
+// };
 
 class EventTimeout : public PipelineControlEvent
 {
@@ -137,12 +136,11 @@ class IPipelineControlStateMachineObserver;
 /**
  * Implements simple state machine for pipeline control:
  *
- * 	IDLE ---+---(start)-----> BOOTSTRAPPING -------(init)-------+
- *          |                                                   |
- *          +------->>>-------(init)----------->>>---------+    |
- *                                                         |    |
- *              +---<<<---(minimized pipeline)---<<<---+   |    |
- *              |                                      |  \|/   |
+ * 	IDLE -------(start)-----> BOOTSTRAPPING -------(init)-------+
+ *                                                              |
+ *                                                              |
+ *              +---<<<---(minimized pipeline)---<<<---+        |
+ *              |                                      |        |
  *          FETCHING                                ADJUSTING <-+
  *              |                                      |
  *              +--->>>---(   out of sync    )--->>>---+
@@ -261,10 +259,6 @@ class PipelineControlState
   protected:
     boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
 
-    virtual std::string onInit(const boost::shared_ptr<const EventInit> &)
-    {
-        return str();
-    }
     virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent> &)
     {
         return str();

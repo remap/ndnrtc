@@ -75,18 +75,14 @@ PipelineControl::~PipelineControl()
 {
 }
 
-void PipelineControl::start(boost::shared_ptr<NetworkData> metadata)
+void PipelineControl::start()
 {
     if (machine_.getState() != kStateIdle)
         throw std::runtime_error("Can't start Pipeline Control as it has been "
                                  "started already. Use reset() and start() to restart.");
 
     machine_.attach(this);
-
-    if (metadata)
-        machine_.dispatch(boost::make_shared<EventInit>(metadata));
-    else
-        machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 
     LogDebugC << "started." << std::endl;
 }
