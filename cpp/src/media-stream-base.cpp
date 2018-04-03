@@ -31,13 +31,21 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
       basePrefix_(basePrefix),
       settings_(settings),
       streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
-      cache_(boost::make_shared<ndn::MemoryContentCache>(settings_.face_)),
       statStorage_(statistics::StatisticsStorage::createProducerStatistics())
 {
     assert(settings_.face_);
     assert(settings_.keyChain_);
 
     streamPrefix_.append(Name(settings_.params_.streamName_));
+
+    unsigned int minimumFreshness = min(settings_.params_.producerParams_.freshness_.metadataMs_, 
+                                        settings_.params_.producerParams_.freshness_.sampleMs_);
+    minimumFreshness = min(minimumFreshness, settings_.params_.producerParams_.freshness_.sampleKeyMs_);
+    // set cleanup interval for memory cache to 0
+    // this will make cache to cleanup every time there's an incoming interest 
+    // or data added (and prevent it from hanging for few ms when data rate is high)
+    cache_ = boost::make_shared<MemoryContentCache>(settings_.face_, 0);
+    cache_->setMinimumCacheLifetime(1000);
     cache_->setInterestFilter(streamPrefix_, cache_->getStorePendingInterest());
 
     PublisherSettings ps;
@@ -109,6 +117,6 @@ unsigned int MediaStreamBase::periodicInvocation()
     publishMeta(); // republish stream metadata
 
     if (updateMeta()) // update thread meta
-        return META_CHECK_INTERVAL_MS;
+        return MetaCheckIntervalMs;
     return 0;
 }
