@@ -26,6 +26,7 @@ public:
 	MOCK_METHOD0(withhold, bool());
 	MOCK_METHOD1(markLowerLimit, void(unsigned int));
     MOCK_CONST_METHOD0(snapshot, std::string());
+    MOCK_CONST_METHOD0(getCurrentStrategy, const boost::shared_ptr<const ndnrtc::IInterestControlStrategy>(void));
 };
 
 #endif

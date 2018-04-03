@@ -86,6 +86,8 @@ TEST(TestPipelineControlStateMachine, TestDefaultSequenceVideo)
         .Times(1);
     EXPECT_CALL(*interestControl, reset())
         .Times(1);
+    EXPECT_CALL(*interestControl, getCurrentStrategy())
+        .WillRepeatedly(Return(boost::shared_ptr<IInterestControlStrategy>(new InterestControl::StrategyDefault())));
     EXPECT_CALL(*latencyControl, reset())
         .Times(1);
     EXPECT_CALL(*playoutControl, allowPlayout(false))

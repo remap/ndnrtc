@@ -29,6 +29,22 @@ class StatisticsStorage;
 }
 
 class WireSegment;
+class InterestControlStrategy;
+
+/**
+ * Interface for Interest pipeline adjustment strategy
+ */
+class IInterestControlStrategy
+{
+  public:
+    virtual void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
+                           unsigned int &lowerLimit, unsigned int &upperLimit) = 0;
+    virtual int calculateDemand(double rate, double drdAvgValue, double drdDeviation) const = 0;
+    virtual int burst(unsigned int currentLimit,
+                      unsigned int lowerLimit, unsigned int upperLimit) = 0;
+    virtual int withhold(unsigned int currentLimit,
+                         unsigned int lowerLimit, unsigned int upperLimit) = 0;
+};
 
 class IInterestControl
 {
@@ -44,6 +60,7 @@ class IInterestControl
     virtual bool withhold() = 0;
     virtual void markLowerLimit(unsigned int lowerLimit) = 0;
     virtual std::string snapshot() const = 0;
+    virtual const boost::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const = 0;
 };
 
 /**
@@ -59,19 +76,6 @@ class InterestControl : public NdnRtcComponent,
 {
   public:
     static const unsigned int MinPipelineSize;
-    /**
-     * Interface for Interest pipeline adjustment strategy
-     */
-    class IStrategy
-    {
-      public:
-        virtual void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
-                               unsigned int &lowerLimit, unsigned int &upperLimit) = 0;
-        virtual int burst(unsigned int currentLimit,
-                          unsigned int lowerLimit, unsigned int upperLimit) = 0;
-        virtual int withhold(unsigned int currentLimit,
-                             unsigned int lowerLimit, unsigned int upperLimit) = 0;
-    };
 
     /**
      * Default Interest pipeline adjustment strategy:
@@ -80,20 +84,21 @@ class InterestControl : public NdnRtcComponent,
      *  - withholding - decrease to the limit found by binary search
      *		between lower limit and current limit
      */
-    class StrategyDefault : public IStrategy
+    class StrategyDefault : public IInterestControlStrategy
     {
       public:
         void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
-                       unsigned int &lowerLimit, unsigned int &upperLimit);
+                       unsigned int &lowerLimit, unsigned int &upperLimit) override;
+        int calculateDemand(double rate, double drdAvgValue, double drdDeviation) const override;
         int burst(unsigned int currentLimit,
-                  unsigned int lowerLimit, unsigned int upperLimit);
+                  unsigned int lowerLimit, unsigned int upperLimit) override;
         int withhold(unsigned int currentLimit,
-                     unsigned int lowerLimit, unsigned int upperLimit);
+                     unsigned int lowerLimit, unsigned int upperLimit) override;
     };
 
     InterestControl(const boost::shared_ptr<DrdEstimator> &,
                     const boost::shared_ptr<statistics::StatisticsStorage> &storage,
-                    boost::shared_ptr<IStrategy> strategy = boost::make_shared<StrategyDefault>());
+                    boost::shared_ptr<IInterestControlStrategy> strategy = boost::make_shared<StrategyDefault>());
     ~InterestControl();
 
     /**
@@ -122,6 +127,7 @@ class InterestControl : public NdnRtcComponent,
     bool increment() override;
 
     /**
+     * TODO: rename pipeline limit to pipeline capacity
      * Returns current pipeline maximum size. This size can be changed 
      * by client.
      * @see decrease(), increase()
@@ -171,6 +177,8 @@ class InterestControl : public NdnRtcComponent,
      */
     std::string snapshot() const override;
 
+    const boost::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const override { return strategy_; }
+
     // IDrdEstimatorObserver
     void onDrdUpdate() override;
     void onCachedDrdUpdate() override;
@@ -181,7 +189,7 @@ class InterestControl : public NdnRtcComponent,
     void sampleArrived(const PacketNumber &) override { decrement(); }
 
   private:
-    boost::shared_ptr<IStrategy> strategy_;
+    boost::shared_ptr<IInterestControlStrategy> strategy_;
     boost::atomic<bool> initialized_, limitSet_;
     unsigned int lowerLimit_, limit_, upperLimit_;
     boost::atomic<int> pipeline_;

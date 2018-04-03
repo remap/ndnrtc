@@ -23,16 +23,29 @@ void InterestControl::StrategyDefault::getLimits(double rate,
                                                  boost::shared_ptr<DrdEstimator> drdEstimator,
                                                  unsigned int &lowerLimit, unsigned int &upperLimit)
 {
-    const estimators::Average drd = drdEstimator->getOriginalAverage(); // getLatestUpdatedAverage();//getDrdAverage();
-    double d = drd.value() + DEVIATION_ALPHA * drd.deviation();
-    double targetSamplePeriod = 1000. / rate;
-    int interestDemand = (int)(ceil(d / targetSamplePeriod));
+    int interestDemand = calculateDemand(rate, 
+                                         drdEstimator->getOriginalAverage().value(), 
+                                         drdEstimator->getOriginalAverage().deviation());
 
     if (interestDemand < InterestControl::MinPipelineSize)
         interestDemand = InterestControl::MinPipelineSize;
 
     lowerLimit = interestDemand;
     upperLimit = interestDemand * 8;
+}
+
+int InterestControl::StrategyDefault::calculateDemand(double rate, double drdAvgValue, double drdDeviation) const
+{
+    int interestDemand = InterestControl::MinPipelineSize;
+
+    if (drdAvgValue > 0 )
+    {
+        double d = drdAvgValue + DEVIATION_ALPHA * drdDeviation;
+        double targetSamplePeriod = (rate > 0 ? 1000. / rate : 30);
+        interestDemand = (int)(ceil(d / targetSamplePeriod));
+    }
+
+    return interestDemand;
 }
 
 int InterestControl::StrategyDefault::burst(unsigned int currentLimit,
@@ -50,7 +63,7 @@ int InterestControl::StrategyDefault::withhold(unsigned int currentLimit,
 //******************************************************************************
 InterestControl::InterestControl(const boost::shared_ptr<DrdEstimator> &drdEstimator,
                                  const boost::shared_ptr<statistics::StatisticsStorage> &storage,
-                                 boost::shared_ptr<IStrategy> strategy)
+                                 boost::shared_ptr<IInterestControlStrategy> strategy)
     : initialized_(false),
       lowerLimit_(InterestControl::MinPipelineSize),
       limit_(InterestControl::MinPipelineSize),
@@ -67,13 +80,11 @@ InterestControl::~InterestControl()
 
 void InterestControl::initialize(double rate, int pipelineLimit)
 {
-    targetRateUpdate(rate);
+    lowerLimit_ = InterestControl::MinPipelineSize;
+    upperLimit_ = std::max((int)upperLimit_, pipelineLimit);
+    changeLimitTo(pipelineLimit);
 
-    lowerLimit_ = pipelineLimit;
-    upperLimit_ = 8 * lowerLimit_;
-    changeLimitTo(lowerLimit_);
-
-    LogDebugC << "initialized with lower limit " << lowerLimit_ << std::endl;
+    LogDebugC << "initialized pipeline capacity: " << limit_ << std::endl;
 
 }
 
