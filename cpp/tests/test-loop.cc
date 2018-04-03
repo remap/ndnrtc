@@ -18,6 +18,7 @@
 #include <boost/thread.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/filesystem.hpp>
 
 #include "gtest/gtest.h"
 #include "remote-stream.hpp"
@@ -39,6 +40,9 @@ using namespace ndnrtc::statistics;
 using namespace ndn;
 
 std::string test_path = "";
+std::string resources_path = "";
+std::string logs_folder = "logs";
+std::string logs_path = ".";
 
 MediaStreamParams getSampleVideoParams()
 {
@@ -58,12 +62,12 @@ MediaStreamParams getSampleVideoParams()
 	atp.coderParams_.encodeHeight_ = 240;
 	msp.addMediaThread(atp);
 
-  {
-    VideoThreadParams atp("mid", sampleVideoCoderParams());
-    atp.coderParams_.encodeWidth_ = 320;
-    atp.coderParams_.encodeHeight_ = 240;
-    msp.addMediaThread(atp);
-  }
+//   {
+//     VideoThreadParams atp("mid", sampleVideoCoderParams());
+//     atp.coderParams_.encodeWidth_ = 320;
+//     atp.coderParams_.encodeHeight_ = 240;
+//     msp.addMediaThread(atp);
+//   }
 
 	return msp;
 }
@@ -107,13 +111,43 @@ MediaStreamParams getSampleAudioParams()
 	return msp;
 }
 
+std::string createUnitTestFolder(const std::vector<std::string> &comps)
+{
+#ifdef HAVE_BOOST_FILESYSTEM
+    boost::filesystem::path path;
+
+    int idx = 0;
+    for (auto c:comps)
+    {
+        path /= c;
+        if (!boost::filesystem::exists(path))
+            if (!boost::filesystem::create_directory(path))
+                GT_PRINTF("Failed to create log directory at %s\n", path.string().c_str());
+    }
+
+    return path.string();
+#else
+    return ".";
+#endif
+}
+
 TEST(TestLoop, TestVideo)
 {
     if (!checkNfd()) return;
-    
+
 #ifdef ENABLE_LOGGING
+    std::string testCaseLogsFolder = createUnitTestFolder({ logs_path, 
+                                                            ::testing::UnitTest::GetInstance()->current_test_info()->name(), 
+                                                            ::testing::UnitTest::GetInstance()->current_test_info()->test_case_name() });
+    std::string remoteStreamLoggerPath = testCaseLogsFolder + "/" + "consumer-loop.log";
+    std::string localStreamLoggerPath = testCaseLogsFolder + "/" + "producer-loop.log";
+    std::string statLoggerPath = testCaseLogsFolder + "/" + "stats.log";
+
+    GT_PRINTF("For this test, see logs at %s\n", testCaseLogsFolder.c_str());
+
     ndnlog::new_api::Logger::initAsyncLogging();
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::getLogger(remoteStreamLoggerPath).setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    ndnlog::new_api::Logger::getLogger(localStreamLoggerPath).setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 #endif
     
     boost::asio::io_service io_source;
@@ -130,7 +164,7 @@ TEST(TestLoop, TestVideo)
     
     // video source
     boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(320,240));
-    std::string testVideoSource = test_path+"/../../res/test-source-320x240.argb";
+    std::string testVideoSource = resources_path+"/test-source-320x240.argb";
     VideoSource source(io_source, testVideoSource, frame);
     MockExternalCapturer capturer;
     MockExternalRenderer renderer;
@@ -170,8 +204,7 @@ TEST(TestLoop, TestVideo)
       LocalVideoStream localStream(appPrefix, settings);
       
 #ifdef ENABLE_LOGGING
-      ndnlog::new_api::Logger::getLogger("/tmp/loop-producer.log").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
-      localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr("/tmp/loop-producer.log"));
+      localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(localStreamLoggerPath));
 #endif
       
       boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
@@ -188,7 +221,9 @@ TEST(TestLoop, TestVideo)
       keyChain->setFace(consumerFace.get());
       RemoteVideoStream rs(io, consumerFace, keyChain, appPrefix, getSampleVideoParams().streamName_);
 
-      queryStat = [&statTimer, &rs, &setupTimer, &rebufferingsNum, &bufferLevel, &state](const boost::system::error_code& err){
+      queryStat = [&statTimer, &rs, &setupTimer, &rebufferingsNum, &bufferLevel, &state, statLoggerPath]
+      (const boost::system::error_code& err)
+      {
         if (err == boost::asio::error::operation_aborted)
           return;
 
@@ -198,20 +233,24 @@ TEST(TestLoop, TestVideo)
         if (storage[Indicator::State] > state)
           state = storage[Indicator::State];
 
-        EXPECT_EQ(0, storage[Indicator::IncompleteNum]);
+        // EXPECT_EQ(0, storage[Indicator::IncompleteNum]);
         bufferLevel.newValue(storage[Indicator::BufferPlayableSize]);
+
+        LogInfo(statLoggerPath)
+            << storage[Indicator::LatencyEstimated]
+            << "\t" << storage[Indicator::DrdOriginalEstimation]
+            << "\t" << storage[Indicator::DrdCachedEstimation]
+            << "\t" << storage[Indicator::BufferTargetSize]
+            << "\t" << storage[Indicator::BufferPlayableSize]
+            << std::endl;
+
         setupTimer();
       };
       setupTimer();
       
 #ifdef ENABLE_LOGGING
-      rs.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+      rs.setLogger(ndnlog::new_api::Logger::getLoggerPtr(remoteStreamLoggerPath));
 #endif
-      
-      int waitThreads = 0;
-      while (rs.getThreads().size() == 0 && waitThreads++ < 5)
-          boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
-      ASSERT_LT(0, rs.getThreads().size());
       
       EXPECT_CALL(renderer, getFrameBuffer(320,240))
         .Times(AtLeast(1))
@@ -238,6 +277,11 @@ TEST(TestLoop, TestVideo)
 
       GT_PRINTF("Started publishing stream\n");
       source.start(30);
+
+      int waitThreads = 0;
+      while (rs.getThreads().size() == 0 && waitThreads++ < 5)
+          boost::this_thread::sleep_for(boost::chrono::milliseconds(1500));
+      ASSERT_LT(0, rs.getThreads().size());
 
       // wait random milliseconds before fetching
       int waitRandom = rand()%5000 + 1000;
@@ -394,7 +438,18 @@ int main(int argc, char **argv) {
     signal(SIGSEGV, handler);
 
     ::testing::InitGoogleTest(&argc, argv);
-    
+
+#ifdef HAVE_BOOST_FILESYSTEM
+    boost::filesystem::path testPath(boost::filesystem::system_complete(argv[0]).remove_filename());
+    test_path = testPath.string();
+
+    boost::filesystem::path resPath(testPath);
+    resPath /= boost::filesystem::path("..") /= 
+               boost::filesystem::path("..") /=
+               boost::filesystem::path("res");
+
+    resources_path = resPath.string();
+#else
     test_path = std::string(argv[0]);
     std::vector<std::string> comps;
     boost::split(comps, test_path, boost::is_any_of("/"));
@@ -405,6 +460,25 @@ int main(int argc, char **argv) {
         test_path += comps[i];
         if (i != comps.size()-1) test_path += "/";
     }
-    
+    resources_path = test_path + "../..";
+#endif
+
+#ifdef ENABLE_LOGGING
+#ifdef HAVE_BOOST_FILESYSTEM
+    boost::filesystem::path logsPath(boost::filesystem::path(testPath) /= logs_folder) ;
+    if (!boost::filesystem::exists(logsPath) && !boost::filesystem::create_directory(logsPath))
+        GT_PRINTF("Failed to create log directory at %s\n", logsPath.string().c_str());
+    else
+        logs_path = logsPath.string();
+#else
+    GT_PRINTF("boost::filesystem libarary was not found. Skipped creating folder structure for test logs. "
+              "Logs may overwrite each other.\n")
+#endif
+#endif
+
+    GT_PRINTF("Test path: %s\n", test_path.c_str());
+    GT_PRINTF("Resource path: %s\n", resources_path.c_str());
+    GT_PRINTF("Test logs path: %s\n", logs_path.c_str());
+
     return RUN_ALL_TESTS();
 }
