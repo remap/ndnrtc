@@ -21,7 +21,7 @@ class IPlayoutControl : public IPlaybackQueueObserver,
                         public IPlayoutObserver
 {
   public:
-    virtual void allowPlayout(bool allow, int ffwdMs = 0) = 0;
+    virtual void allowPlayout(bool allow, int ffwdMs) = 0;
     virtual void onNewSampleReady() = 0;
     virtual void onQueueEmpty() = 0;
     virtual void setThreshold(unsigned int t) = 0;
