@@ -37,7 +37,7 @@ As an example application, one can use headless client provided with the codebas
 
 ## Headless client Docker image
 
-Please, see the [docker/README.md](docker/README.md) for more information on `ndnrtc-client` Docker image.
+Please, see the [docker/README.md](docker) for more information on `ndnrtc-client` Docker image.
 
 ## License
 
