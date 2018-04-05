@@ -47,9 +47,8 @@ RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git \
     && echo WEBRTCDIR=/webrtc-checkout/src >> build/share/config.site \
     && ./configure --prefix=$(pwd)/build \
     && make && make install && make ndnrtc-client \
-    && cd /webrtc-checkout/src \
-    && rm -Rf tools-webrtc/ tools/ testing/ resources/ infra/ data/ buildtools/ build_overrides/ \
-              build/ base/ .git webrtc/ third_party/
+    && rm -Rf /webrtc-checkout \
+    && rm -Rf /depot_tools
 
 # cleanup
 RUN apt-get autoremove \
