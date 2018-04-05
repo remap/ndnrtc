@@ -23,14 +23,14 @@ docker run --rm -ti --name ndnrtc-producer \
 				ndnrtc-client
 ```
 
-Image’s entry point is `run.sh` script. This script starts NFD in the background and then starts `ndnrtc-client` with sample producer configuration (sample-producer.cfg) in the foreground.
+Image’s entry point is `run.sh` script. This script starts NFD in the background and then starts `ndnrtc-client` with sample producer configuration ([sample-producer.cfg](../cpp/tests/sample-producer.cfg)) in the foreground.
 
-Image configured to store all generated files into container’s `tmp` folder. If you want to inspect any of those files, mount container’s `tmp` folder into a folder in your host machine. The command below mounts container’s `tmp` into `container-tmp` folder on the host machine:
+Image configured to store all generated files into container’s `tmp` folder. If you want to inspect any of those files, mount container’s `tmp` folder into a folder in your host machine. The command above mounts container’s `tmp` into `container-tmp` folder on the host machine.
 
-You can provide environment variables, most of them are passed as arguments for `ndnrtc-client`. For a list of available variables, inspect Dockerfile’s `ENV` entries.
+You can provide environment variables, most of them are passed as arguments for `ndnrtc-client` (more information on command-line arguments can be found [here](../cpp/client#command-line-arguments). For a list of available variables, inspect [Dockerfile’s `ENV` entries](Dockerfile#L63).
 
 ### Start consumer
-For consumer container to successfully fetch data from producer container, first it needs to register NFD routes. Thus, it’s a two step process.
+For consumer container to successfully fetch data from the producer container, first it needs to register NFD routes. Thus, it’s a two step process.
 
 1. Start NFD and register route(s) towards producer container:
 ```
