@@ -180,7 +180,6 @@ int loadConsumerSettings(const Setting &root, ConsumerClientParams &params)
     }
     catch (const SettingNotFoundException &e)
     {
-        std::cout << "check " << e.getPath() << std::endl;
         LogError("") << "Setting not found at path: " << e.getPath() << std::endl;
     }
     return EXIT_SUCCESS;
@@ -403,10 +402,14 @@ int loadStreamParams(const Setting &s, ClientMediaStreamParams &params)
         s.lookupValue("base_prefix", params.sessionPrefix_);                // consumer
         s.lookupValue("segment_size", params.producerParams_.segmentSize_); // producer
 
-        if (loadFreshnessSettings(s, params.producerParams_.freshness_) == EXIT_FAILURE)
+        try 
         {
-            LogError("") << "couldn't load freshness parameters for producer" << std::endl;
-            return (EXIT_FAILURE);
+            if (loadFreshnessSettings(s, params.producerParams_.freshness_) == EXIT_FAILURE)
+                LogError("") << "couldn't load freshness parameters for producer" << std::endl;
+        }
+        catch (const SettingNotFoundException &nfex)
+        {
+            // might've been consumer settings. continue
         }
 
         try
