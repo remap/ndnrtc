@@ -81,7 +81,7 @@ class ReceivedMetadataProcessing
             }
             else
             {
-                startOffSeqNums_.first = -1;
+                startOffSeqNums_.first = (pipelineInitial < (gopSize-gopPos) ? -1 : metadata->getSeqNo().first + pipelineInitial;
                 startOffSeqNums_.second = metadata->getSeqNo().second + 1;
                 // should fetch next key
                 deltaToFetch = metadata->getSeqNo().first;

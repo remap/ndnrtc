@@ -56,7 +56,7 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
     playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                 dynamic_pointer_cast<Buffer>(buffer_));
     rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_);
-    buffer_->attach(rtxController_.get());
+    // buffer_->attach(rtxController_.get());
     // playout and playout-control created in subclasses
 
     interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);

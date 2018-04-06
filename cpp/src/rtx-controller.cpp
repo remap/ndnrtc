@@ -46,7 +46,7 @@ void RetransmissionController::onNewRequest(const boost::shared_ptr<BufferSlot>&
 	// for key frames playback delay will be GOP milliseconds from now
 	// NOTE: gop is assumed as 30 below. probably need to be changed to adequate number
 	int64_t playbackDeadline = (slot->getNameInfo().class_ == SampleClass::Key ? 
-			playbackQueue_->samplePeriod()*30 : now+queueSize);
+			now + playbackQueue_->samplePeriod()*30 : now+queueSize);
 
 	activeSlots_[slot->getPrefix()] = { slot, playbackDeadline };
 

@@ -51,7 +51,7 @@ RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git \
     && rm -Rf /depot_tools
 
 # cleanup
-RUN apt-get autoremove \
+RUN apt autoremove \
     && apt-get remove -y wget autoconf automake libtool cmake git build-essential \
                          lsb-release protobuf-compiler
 
