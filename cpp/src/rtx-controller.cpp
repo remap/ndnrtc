@@ -11,13 +11,22 @@
 #include "rtx-controller.hpp"
 
 #include "clock.hpp"
+#include "drd-estimator.hpp"
+#include "estimators.hpp"
 
 using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
+#define RTX_DEADLINE_MS 100
+
 RetransmissionController::RetransmissionController(boost::shared_ptr<statistics::StatisticsStorage> storage,
-	boost::shared_ptr<IPlaybackQueue> playbackQueue):StatObject(storage), playbackQueue_(playbackQueue)
+	boost::shared_ptr<IPlaybackQueue> playbackQueue,
+    const boost::shared_ptr<DrdEstimator> &drdEstimator)
+  :StatObject(storage), 
+  playbackQueue_(playbackQueue),
+  drdEstimator_(drdEstimator),
+  enabled_(false)
 {
 	description_ = "rtx-controller";
 }
@@ -38,6 +47,8 @@ void RetransmissionController::detach(IRtxObserver* observer)
 
 void RetransmissionController::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 {
+    if (!enabled_) return;
+
 	if (activeSlots_.find(slot->getPrefix()) != activeSlots_.end())
 		throw std::runtime_error("slot is being tracked already");
 
@@ -55,7 +66,8 @@ void RetransmissionController::onNewRequest(const boost::shared_ptr<BufferSlot>&
 
 void RetransmissionController::onNewData(const BufferReceipt& receipt)
 {
-	checkRetransmissions();
+    if (enabled_)
+	    checkRetransmissions();
 }
 
 void RetransmissionController::onReset()
@@ -71,7 +83,7 @@ void RetransmissionController::checkRetransmissions()
 	{
 		boost::shared_ptr<BufferSlot> slot = it->second.slot_;
 		int64_t playbackDeadline = it->second.deadlineTimestamp_;
-		bool needRtx = (playbackDeadline-now < 100);
+		bool needRtx = (playbackDeadline-now < drdEstimator_->getOriginalAverage().latestValue());
 		bool assembledOrCleared = (slot->getState() >= BufferSlot::State::Ready || slot->getState() == BufferSlot::State::Free);
 
 		if (needRtx || assembledOrCleared)

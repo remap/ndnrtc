@@ -75,7 +75,8 @@ void RemoteAudioStreamImpl::setupPlayout()
     AudioThreadMeta meta(threadsMeta_[threadName_]->data());
     playout_ = boost::make_shared<AudioPlayout>(io_, playbackQueue_, sstorage_,
                                                 WebrtcAudioChannel::fromString(meta.getCodec()));
-    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 150);
+    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 
+                                                         rtxController_, 150);
     playbackQueue_->attach(playoutControl_.get());
     latencyControl_->setPlayoutControl(playoutControl_);
 

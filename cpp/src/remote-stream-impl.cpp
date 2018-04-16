@@ -51,16 +51,17 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
 
     description_ = "remote-stream";
 
+    shared_ptr<DrdEstimator> drdEstimator(make_shared<DrdEstimator>());
+
     segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
     buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
     playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                 dynamic_pointer_cast<Buffer>(buffer_));
-    rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_);
-    // buffer_->attach(rtxController_.get());
+    rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator);
+    buffer_->attach(rtxController_.get());
     // playout and playout-control created in subclasses
 
     interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
-    shared_ptr<DrdEstimator> drdEstimator(make_shared<DrdEstimator>());
     sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
     bufferControl_ = make_shared<BufferControl>(drdEstimator, buffer_, sstorage_);
     latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator, sstorage_);

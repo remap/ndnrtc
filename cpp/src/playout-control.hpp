@@ -16,6 +16,7 @@ namespace ndnrtc
 {
 class IPlayout;
 class IPlaybackQueue;
+class RetransmissionController;
 
 class IPlayoutControl : public IPlaybackQueueObserver,
                         public IPlayoutObserver
@@ -40,7 +41,8 @@ class PlayoutControl : public NdnRtcComponent,
 {
   public:
     PlayoutControl(const boost::shared_ptr<IPlayout> &playout,
-                   const boost::shared_ptr<IPlaybackQueue> queue,
+                   const boost::shared_ptr<IPlaybackQueue> &queue,
+                   const boost::shared_ptr<RetransmissionController> &rtxController,
                    unsigned int minimalPlayableLevel);
 
     void allowPlayout(bool allow, int ffwdMs = 0);
@@ -49,11 +51,15 @@ class PlayoutControl : public NdnRtcComponent,
     void setThreshold(unsigned int t) { thresholdMs_ = t; }
     unsigned int getThreshold() const { return thresholdMs_; }
 
+    const boost::shared_ptr<const IPlayout> getPlayoutMechanism() const { return playout_; }
+    const boost::shared_ptr<const IPlaybackQueue> getPlaybackQueue() const { return queue_; }
+
   private:
     bool playoutAllowed_;
     int ffwdMs_;
     boost::shared_ptr<IPlayout> playout_;
     boost::shared_ptr<IPlaybackQueue> queue_;
+    boost::shared_ptr<RetransmissionController> rtxController_;
     unsigned int thresholdMs_;
 
     void checkPlayout();

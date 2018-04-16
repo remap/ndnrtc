@@ -18,6 +18,7 @@
 namespace ndnrtc {
 	class IPlaybackQueue;
 	class IRtxObserver;
+    class DrdEstimator;
 
 	class RetransmissionController : public NdnRtcComponent, 
 									 public IBufferObserver,
@@ -25,11 +26,15 @@ namespace ndnrtc {
 	{
 	public:
 		RetransmissionController(boost::shared_ptr<statistics::StatisticsStorage> storage,
-			boost::shared_ptr<IPlaybackQueue> playbackQueue);
+			boost::shared_ptr<IPlaybackQueue> playbackQueue,
+            const boost::shared_ptr<DrdEstimator> &drdEstimator);
 
 
 		void attach(IRtxObserver* observer);
 		void detach(IRtxObserver* observer);
+
+        void setEnabled(bool enable) { enabled_ = enable; }
+        bool isEnabled() { return enabled_; }
 
 	private:
 		typedef struct _ActiveSlotListEntry {
@@ -40,6 +45,8 @@ namespace ndnrtc {
 		std::vector<IRtxObserver*> observers_;
 		std::map<ndn::Name,  ActiveSlotListEntry> activeSlots_;
 		boost::shared_ptr<IPlaybackQueue> playbackQueue_;
+        boost::shared_ptr<DrdEstimator> drdEstimator_;
+        bool enabled_;
 
 		void checkRetransmissions();
 
