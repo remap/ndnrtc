@@ -33,7 +33,7 @@ class RetransmissionController : public NdnRtcComponent,
     void attach(IRtxObserver *observer);
     void detach(IRtxObserver *observer);
 
-    void setEnabled(bool enable) { enabled_ = enable; }
+    void setEnabled(bool enable);
     bool isEnabled() { return enabled_; }
 
   private:

@@ -36,7 +36,7 @@ const std::string kStateFetching = "Fetching";
 #define LOG_USING(ptr, lvl) if (boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr) && \
  boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger())\
  boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, \
- boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get())
+ boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get(), __FUNCTION__)
 
 template <typename MetadataClass>
 class ReceivedMetadataProcessing
@@ -92,6 +92,12 @@ class ReceivedMetadataProcessing
                 pipelineInitial += (gopSize - gopPos);
             }
 
+            LOG_USING(ctrl->playoutControl_, ndnlog::NdnLoggerLevelInfo)
+                << "playback start off sequence numbers: "
+                << startOffSeqNums_.first << " (delta) "
+                << startOffSeqNums_.second << " (key)"
+                << std::endl;
+
             ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgSegNum_,
                                                            SampleClass::Delta, SegmentClass::Data);
             ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgParitySegNum_,
@@ -105,16 +111,10 @@ class ReceivedMetadataProcessing
             ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);
             ctrl->pipeliner_->setSequenceNumber(keyToFetch, SampleClass::Key);
             ctrl->pipeliner_->setNeedSample(SampleClass::Key);
-            ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
+            ctrl->pipeliner_->onIncomingData(ctrl->threadPrefix_);
 
             bootstrapSeqNums_.first = deltaToFetch;
             bootstrapSeqNums_.second = keyToFetch;
-
-            LOG_USING(ctrl->playoutControl_, ndnlog::NdnLoggerLevelInfo)
-                << "playback start off sequence numbers: "
-                << startOffSeqNums_.first << " (delta) "
-                << startOffSeqNums_.second << " (key)"
-                << std::endl;
 
             return true;
         }
@@ -138,7 +138,7 @@ class ReceivedMetadataProcessing
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
             ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
-            ctrl->pipeliner_->segmentArrived(ctrl->threadPrefix_);
+            ctrl->pipeliner_->onIncomingData(ctrl->threadPrefix_);
 
             bootstrapSeqNums_.first = bundleNo;
             bootstrapSeqNums_.second = -1;
@@ -245,7 +245,7 @@ class BootstrappingT : public PipelineControlState,
             return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
         else
         { // process frame segments
-            ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+            ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
 
             // check whether it's time to switch
             if (receivedStartOffSegment(ev->getSegment()))
@@ -594,7 +594,7 @@ void Adjusting::enter()
 std::string
 Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 {
-    ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+    ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
 
     PipelineAdjust cmd = ctrl_->latencyControl_->getCurrentCommand();
 
@@ -614,7 +614,7 @@ Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 std::string
 Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 {
-    ctrl_->pipeliner_->segmentArrived(ctrl_->threadPrefix_);
+    ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
 
     if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::IncreasePipeline)
     {

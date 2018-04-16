@@ -84,7 +84,7 @@ void InterestControl::initialize(double rate, int pipelineLimit)
     upperLimit_ = std::max((int)upperLimit_, pipelineLimit);
     changeLimitTo(pipelineLimit);
 
-    LogDebugC << "initialized pipeline capacity: " << limit_ << std::endl;
+    LogDebugC << "pipeline capacity: " << limit_ << std::endl;
 
 }
 
@@ -213,7 +213,7 @@ void InterestControl::setLimits()
         if (limit_ < lowerLimit_)
             changeLimitTo(lowerLimit_);
 
-        LogDebugC
+        LogTraceC
             << "DRD orig: " << drdEstimator_->getOriginalEstimation()
             << " cach: " << drdEstimator_->getCachedEstimation()
             << " dGen: " << drdEstimator_->getGenerationDelayAverage().value()

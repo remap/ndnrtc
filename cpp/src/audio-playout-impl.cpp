@@ -47,7 +47,7 @@ void AudioPlayoutImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logg
     renderer_->setLogger(logger);
 }
 
-void AudioPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+bool AudioPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
 {
     boost::shared_ptr<ImmutableAudioBundlePacket> bundlePacket = 
         bundleSlot_.readBundle(*slot);
@@ -62,8 +62,11 @@ void AudioPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                 renderer_->onDeliverRtcpFrame(sampleBlob.payloadLength(), (unsigned char*)sampleBlob.data());
             else
                 renderer_->onDeliverRtpFrame(sampleBlob.payloadLength(), (unsigned char*)sampleBlob.data());
-        }            
+        }
+        return true;
     }
     else
         LogWarnC << "Error reading audio bundle " << slot->dump() << std::endl;
+
+    return false;
 }

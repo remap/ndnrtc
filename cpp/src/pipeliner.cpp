@@ -56,7 +56,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
         request(interest, DeadlinePriority::fromNow(0));
 
-        LogDebugC << "request metadata " << interest->getName() << std::endl;
+        LogDebugC << interest->getName() << std::endl;
     }
     else
     {
@@ -65,7 +65,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         
-        LogDebugC << "request sample "
+        LogDebugC << "sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
             << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
 
@@ -81,20 +81,16 @@ void
 Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
     bool placeInBuffer)
 {
-    LogTraceC << "request batch of size " << interests.size() << std::endl;
-
     request(interests, DeadlinePriority::fromNow(0));
     if (placeInBuffer) buffer_->requested(interests);
 }
 
 void
-Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
+Pipeliner::onIncomingData(const ndn::Name& threadPrefix)
 {
     if (interestControl_->room() > 0)
         LogDebugC << interestControl_->room()
-            << " sample(s) will be requested: "
-            << interestControl_->snapshot() 
-            << " priority " << (int)nextSamplePriority_ 
+            << " sample(s) will be requested"
             << std::endl;
     
     while (interestControl_->room() > 0)
@@ -141,8 +137,8 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
     if (cls == SampleClass::Delta) seqCounter_.delta_ = seqNo;
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
 
-    LogDebugC << "set seq no " << seqNo 
-              << " for sample class " << (cls == SampleClass::Delta ? "Delta" : "Key") << std::endl;
+    LogDebugC << seqNo << " for sample class " 
+              << (cls == SampleClass::Delta ? "Delta" : "Key") << std::endl;
 }
 
 PacketNumber 

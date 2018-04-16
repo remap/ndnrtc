@@ -46,7 +46,7 @@ namespace ndnrtc {
         virtual void express(const ndn::Name& threadPrefix, bool placeInBuffer = false) = 0;
         virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&, 
             bool placeInBuffer = false) = 0;
-        virtual void segmentArrived(const ndn::Name&) = 0;
+        virtual void onIncomingData(const ndn::Name&) = 0;
         virtual void reset() = 0;
         virtual void setNeedSample(SampleClass cls) = 0;
         virtual void setNeedMetadata() = 0;
@@ -106,7 +106,7 @@ namespace ndnrtc {
          * @see InterestControl
          * @see Buffer::requested()
          */
-        void segmentArrived(const ndn::Name& threadPrefix);
+        void onIncomingData(const ndn::Name& threadPrefix);
         void reset();
 
         /**

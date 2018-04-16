@@ -47,7 +47,7 @@ namespace ndnrtc {
         std::vector<IPlayoutObserver*> observers_;
         
         void extractSample();
-        virtual void processSample(const boost::shared_ptr<const BufferSlot>&) {}
+        virtual bool processSample(const boost::shared_ptr<const BufferSlot>&) { return false; }
         
         void correctAdjustment(int64_t newSampleTimestamp);
         int64_t adjustDelay(int64_t delay);

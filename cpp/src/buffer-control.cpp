@@ -58,19 +58,19 @@ BufferControl::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
             (*sstorage_)[Indicator::CurrentProducerFramerate] = rate;
         }
 
+		LogDebugC << receipt.segment_->getInfo().getSuffix(suffix_filter::Thread)
+			<< (receipt.segment_->isOriginal() ? " ORIG" : " CACH")
+			<< " dgen " << receipt.segment_->getDgen()
+			<< " rtt " << (receipt.segment_->getRoundTripDelayUsec())/1000
+            << std::endl;
+
 		// since we're receiving new segment, check previous slot state
 		// if it was New (no segments previously received), then it means
 		// that new sample is arriving and we need to notify observers
 		// if (receipt.slot_->getFetchedNum() == 1)
 		if (receipt.oldState_ == BufferSlot::New)
 			for (auto& o:observers_) o->sampleArrived(segment->getPlaybackNo());
-
-		LogDebugC << "added segment " << receipt.segment_->getInfo().getSuffix(suffix_filter::Thread)
-			<< (receipt.segment_->isOriginal() ? " ORIG" : " CACH")
-			<< " dgen " << receipt.segment_->getDgen()
-			<< " rtt " << (receipt.segment_->getRoundTripDelayUsec())/1000
-            << std::endl;
 	}
 	else
-		LogDebugC << "received data is not in the buffer: " << segment->getData()->getName() << std::endl;
+		LogTraceC << "data is not in the buffer: " << segment->getData()->getName() << std::endl;
 }

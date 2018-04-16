@@ -134,7 +134,7 @@ Logger::log(const NdnLogType& logType,
         
         if (loggingInstance)
             currentLogRecord_
-            << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
+            << "[" << std::setw(20) << loggingInstance->getDescription() << "]-"
             << std::setw(20) << locationFunc;
         
         currentLogRecord_ << ": ";

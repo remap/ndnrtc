@@ -16,7 +16,7 @@ class MockPipeliner : public ndnrtc::IPipeliner {
 public:
     MOCK_METHOD2(express, void(const ndn::Name&, bool));
     MOCK_METHOD2(express, void(const std::vector<boost::shared_ptr<const ndn::Interest>>&, bool));
-    MOCK_METHOD1(segmentArrived, void(const ndn::Name&));
+    MOCK_METHOD1(onIncomingData, void(const ndn::Name&));
     MOCK_METHOD0(reset, void());
     MOCK_METHOD1(setNeedSample, void(ndnrtc::SampleClass));
     MOCK_METHOD0(setNeedMetadata, void());

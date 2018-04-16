@@ -49,7 +49,7 @@ namespace ndnrtc {
         PacketNumber currentPlayNo_;
         int gopCount_;
 
-        void
+        bool
         processSample(const boost::shared_ptr<const BufferSlot>&);
 	};
 

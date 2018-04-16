@@ -536,7 +536,7 @@ Buffer::reset()
         pool_->push(s.second);
     activeSlots_.clear();
  
-     LogDebugC << "reset. slot pool capacity " << pool_->capacity()
+     LogDebugC << "slot pool capacity " << pool_->capacity()
         << " pool size " << pool_->size() << " "
         << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
 
@@ -586,7 +586,7 @@ Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& int
 
         LogTraceC << "▷▷▷" << activeSlots_[it.first]->dump()
         << " x" << it.second.size() << std::endl;
-        LogDebugC << shortdump() << std::endl;
+        //LogDebugC << shortdump() << std::endl;
         LogTraceC << dump() << std::endl;
     }
 
@@ -850,7 +850,7 @@ PlaybackQueue::pop(ExtractSlot extract)
 
         double playTime = (queue_.size() ? queue_.begin()->timestamp() - slot->getHeader().publishTimestampMs_ : samplePeriod());
         
-        LogDebugC << "-■-" << slot->dump()  << "~" << (int)playTime << "ms " 
+        LogTraceC << "-■-" << slot->dump()  << "~" << (int)playTime << "ms " 
             << dump() << std::endl;
 
         extract(slot, playTime);
@@ -946,7 +946,7 @@ PlaybackQueue::onNewData(const BufferReceipt& receipt)
 
         for (auto o:observers_) o->onNewSampleReady();
         
-        LogDebugC << "--■" << receipt.slot_->dump() << std::endl;
+        LogDebugC << "--■ add assembled frame " << receipt.slot_->dump() << std::endl;
         LogDebugC << "dump " << dump() << buffer_->shortdump() << std::endl;
         
         (*sstorage_)[Indicator::BufferPlayableSize] = size();
