@@ -15,7 +15,7 @@
 
 class MockPlayoutControl : public ndnrtc::IPlayoutControl {
 public:
-	MOCK_METHOD1(allowPlayout, void(bool));
+	MOCK_METHOD2(allowPlayout, void(bool, int ffwd));
 	MOCK_METHOD0(onNewSampleReady, void());
 	MOCK_METHOD0(onQueueEmpty, void());
     MOCK_METHOD1(setThreshold, void(unsigned int));

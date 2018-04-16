@@ -33,7 +33,10 @@ const std::string kStateFetching = "Fetching";
 #define MAKE_TRANSITION(s, t) (StateEventPair(s, t))
 #define ENABLE_IF(T, M) template <typename U = T, typename boost::enable_if<typename boost::is_same<M, U>>::type... X>
 
-#define LOG_USING(ptr, lvl) boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get())
+#define LOG_USING(ptr, lvl) if (boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr) && \
+ boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger())\
+ boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, \
+ boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get())
 
 template <typename MetadataClass>
 class ReceivedMetadataProcessing
@@ -127,8 +130,10 @@ class ReceivedMetadataProcessing
         if (metadata)
         {
             PacketNumber bundleNo = metadata->getBundleNo();
-            // TODO: this needs to be calculated based on current sample rate and DRD
-            unsigned int pipelineInitial = 2 * InterestControl::MinPipelineSize;
+            double metadataDrd = (double)getMetadataDrd();
+            unsigned int pipelineInitial =
+                ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
+                                                                              metadataDrd, metadataDrd * 0.05);
 
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
@@ -137,6 +142,8 @@ class ReceivedMetadataProcessing
 
             bootstrapSeqNums_.first = bundleNo;
             bootstrapSeqNums_.second = -1;
+            startOffSeqNums_.first = bundleNo + pipelineInitial;
+            startOffSeqNums_.second = -1;
 
             return true;
         }
@@ -199,7 +206,6 @@ class Idle : public PipelineControlState
     }
     int toInt() override { return (int)StateId::Idle; }
 };
-
 
 /**
  * Bootstrapping state. Sytem is in this state while waiting for the answer of 
@@ -269,8 +275,6 @@ class BootstrappingT : public PipelineControlState,
 
         metadata_ = ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
         ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_);
-        // if (metadata && ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata, ctrl_))
-        //     return kStateAdjusting;
 
         return kStateBootstrapping;
     }
@@ -281,14 +285,19 @@ class BootstrappingT : public PipelineControlState,
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     bool receivedStartOffSegment(const boost::shared_ptr<const WireSegment> &seg)
     {
-        // TODO: finish it for audio
-        return true;
+        PacketNumber startOffDeltaSeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber();
+        PacketNumber currentDeltaSeqNo = seg->getSampleNo();
+
+        return (currentDeltaSeqNo >= startOffDeltaSeqNo);
     }
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
     {
-        return 0;
+        PacketNumber currentDeltaSeqNo = seg->getSampleNo();
+
+        return (int)((double)(currentDeltaSeqNo -
+            ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber()) * metadata_->getRate());
     }
 
     ENABLE_IF(MetadataClass, VideoThreadMeta)
@@ -301,7 +310,6 @@ class BootstrappingT : public PipelineControlState,
         boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
             boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
         ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
-
         PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_ ;
         PacketNumber currentKeySeqNo = seg->isDelta() ? segmentPacket.getHeader().pairedSequenceNo_ : seg->getSampleNo() ;
 
@@ -317,7 +325,8 @@ class BootstrappingT : public PipelineControlState,
 
         PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_;
 
-        return (int)((double)(currentDeltaSeqNo - ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first) * metadata_->getRate());
+        return (int)((double)(currentDeltaSeqNo -
+            ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first) * metadata_->getRate());
     }
 };
 
