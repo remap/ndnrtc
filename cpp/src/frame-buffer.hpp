@@ -380,6 +380,8 @@ namespace ndnrtc
         virtual int64_t pendingSize() const = 0;
         virtual double sampleRate() const = 0;
         virtual double samplePeriod() const = 0;
+        virtual void attach(IPlaybackQueueObserver*) = 0;
+        virtual void detach(IPlaybackQueueObserver*) = 0;
     };
 
     /**

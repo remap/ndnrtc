@@ -14,6 +14,7 @@
 #include <iterator>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "name-components.hpp"
 
@@ -129,12 +130,18 @@ NamespaceInfo::getSuffix(int filter) const
 //******************************************************************************
 vector<string> ndnrtcVersionComponents()
 {
-    string version(PACKAGE_VERSION);
+    string version = NameComponents::fullVersion();
     std::vector<string> components;
-    
+
+    boost::erase_all(version, "v");
     boost::split(components, version, boost::is_any_of("."), boost::token_compress_on);
-    
     return components;
+}
+
+std::string
+NameComponents::fullVersion()
+{
+    return std::string(PACKAGE_VERSION);
 }
 
 unsigned int

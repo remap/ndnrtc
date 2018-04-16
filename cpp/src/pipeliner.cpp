@@ -51,12 +51,12 @@ Pipeliner::~Pipeliner()
 void
 Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
-    if (lastRequestedSample_ == SampleClass::Unknown) // request rightmost
+    if (lastRequestedSample_ == SampleClass::Unknown) // request metadata
     {
-        boost::shared_ptr<Interest> interest = nameScheme_->rightmostInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
+        boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
         request(interest, DeadlinePriority::fromNow(0));
 
-        LogDebugC << "request rightmost " << interest->getName() << std::endl;
+        LogDebugC << interest->getName() << std::endl;
     }
     else
     {
@@ -65,7 +65,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         
         const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         
-        LogDebugC << "request sample "
+        LogDebugC << "sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
             << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
 
@@ -81,20 +81,16 @@ void
 Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
     bool placeInBuffer)
 {
-    LogTraceC << "request batch of size " << interests.size() << std::endl;
-
     request(interests, DeadlinePriority::fromNow(0));
     if (placeInBuffer) buffer_->requested(interests);
 }
 
 void
-Pipeliner::segmentArrived(const ndn::Name& threadPrefix)
+Pipeliner::onIncomingData(const ndn::Name& threadPrefix)
 {
     if (interestControl_->room() > 0)
         LogDebugC << interestControl_->room()
-            << " sample(s) will be requested: "
-            << interestControl_->snapshot() 
-            << " priority " << (int)nextSamplePriority_ 
+            << " sample(s) will be requested"
             << std::endl;
     
     while (interestControl_->room() > 0)
@@ -140,6 +136,9 @@ Pipeliner::setSequenceNumber(PacketNumber seqNo, SampleClass cls)
 {
     if (cls == SampleClass::Delta) seqCounter_.delta_ = seqNo;
     if (cls == SampleClass::Key) seqCounter_.key_ = seqNo;
+
+    LogDebugC << seqNo << " for sample class " 
+              << (cls == SampleClass::Delta ? "Delta" : "Key") << std::endl;
 }
 
 PacketNumber 
@@ -179,7 +178,10 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
     {
         Name iname(n);
         iname.appendSegment(segNo);
-        interests.push_back(boost::make_shared<const Interest>(iname, interestLifetime_));
+        
+        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+        i->setMustBeFresh(false);
+        interests.push_back(i);
     }
 
     if (!noParity)
@@ -190,7 +192,10 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
         {
             Name iname(n);
             iname.appendSegment(segNo);
-            interests.push_back(boost::make_shared<const Interest>(iname, interestLifetime_));
+            
+            boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+            i->setMustBeFresh(false);
+            interests.push_back(i);
         }
     }
 
@@ -234,23 +239,20 @@ Pipeliner::VideoNameScheme::samplePrefix(const Name& threadPrefix, SampleClass c
 }
 
 Name
-Pipeliner::VideoNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
+Pipeliner::VideoNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
 {
     Name prefix(threadPrefix);
-    return prefix.append(NameComponents::NameComponentKey);
+    return prefix.append(NameComponents::NameComponentMeta).appendVersion(0).appendSegment(0);
 }
 
 boost::shared_ptr<ndn::Interest>
-Pipeliner::VideoNameScheme::rightmostInterest(const ndn::Name threadPrefix,
-                                                   unsigned int lifetime,
-                                                   SequenceCounter seqCounter)
+Pipeliner::VideoNameScheme::metadataInterest(const ndn::Name threadPrefix,
+                                             unsigned int lifetime,
+                                             SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
-    interest->setChildSelector(1);
-    interest->getExclude().appendAny();
-    interest->getExclude().appendComponent(Name::Component::fromSequenceNumber(seqCounter.key_));
     return interest;
 }
 
@@ -258,29 +260,23 @@ Name
 Pipeliner::AudioNameScheme::samplePrefix(const Name& threadPrefix, SampleClass cls)
 {
     return threadPrefix;
-    
 }
 
 Name
-Pipeliner::AudioNameScheme::rightmostPrefix(const ndn::Name& threadPrefix)
+Pipeliner::AudioNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
 {
-    return threadPrefix;
+    Name prefix(threadPrefix);
+    return prefix.append(NameComponents::NameComponentMeta).appendVersion(0).appendSegment(0);
 }
 
 boost::shared_ptr<ndn::Interest>
-Pipeliner::AudioNameScheme::rightmostInterest(const ndn::Name threadPrefix,
-                                              unsigned int lifetime,
-                                              SequenceCounter seqCounter)
+Pipeliner::AudioNameScheme::metadataInterest(const ndn::Name threadPrefix,
+                                             unsigned int lifetime,
+                                             SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rightmostPrefix(threadPrefix),
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
                                                                       lifetime));
-    Exclude ex;
-    ex.appendComponent(Name::Component(NameComponents::NameComponentMeta));
-    interest->setExclude(ex);
     interest->setMustBeFresh(true);
-    interest->setChildSelector(1);
-    interest->getExclude().appendAny();
-    interest->getExclude().appendComponent(Name::Component::fromSequenceNumber(seqCounter.delta_));
     
     return interest;
 }

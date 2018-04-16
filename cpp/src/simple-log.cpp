@@ -100,7 +100,7 @@ Logger::~Logger()
 Logger&
 Logger::log(const NdnLogType& logType,
                      const ILoggingObject* loggingInstance,
-                     const std::string& locationFile,
+                     const std::string& locationFunc,
                      const int& locationLine)
 {
     
@@ -134,8 +134,8 @@ Logger::log(const NdnLogType& logType,
         
         if (loggingInstance)
             currentLogRecord_
-            << "[" << std::setw(25) << loggingInstance->getDescription() << "]-"
-            << std::hex << std::setw(15) << loggingInstance << std::dec;
+            << "[" << std::setw(20) << loggingInstance->getDescription() << "]-"
+            << std::setw(20) << locationFunc;
         
         currentLogRecord_ << ": ";
     }

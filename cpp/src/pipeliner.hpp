@@ -46,10 +46,10 @@ namespace ndnrtc {
         virtual void express(const ndn::Name& threadPrefix, bool placeInBuffer = false) = 0;
         virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&, 
             bool placeInBuffer = false) = 0;
-        virtual void segmentArrived(const ndn::Name&) = 0;
+        virtual void onIncomingData(const ndn::Name&) = 0;
         virtual void reset() = 0;
         virtual void setNeedSample(SampleClass cls) = 0;
-        virtual void setNeedRightmost() = 0;
+        virtual void setNeedMetadata() = 0;
         virtual void setSequenceNumber(PacketNumber seqNo, SampleClass cls) = 0;
         virtual PacketNumber getSequenceNumber(SampleClass cls) = 0;
         virtual void setInterestLifetime(unsigned int lifetimeMs) = 0;
@@ -79,7 +79,7 @@ namespace ndnrtc {
          * For instance, if pipeliner previously expressed Interests for sample 100,
          * this expresses Interests for sample 100 again.
          * NOTE: if pipeliner did not express any interests before, this expresses
-         * Interest with RightmostChild selector.
+         * Interest for metadata.
          * @param threadPrefix Thread prefix used for Interests
          * @param placeInBuffer Indicates whther interests need to be placed in 
          *          the buffer (does not affect rightmost Interest).
@@ -96,7 +96,7 @@ namespace ndnrtc {
             bool placeInBuffer = false);
 
         /**
-         * Called each time new segment arrives. 
+         * Called by state machine each time new segment arrives. 
          * This will query InterestControl for the room size and if it's not zero
          * or negative, will continuously issue Interest batches towards new 
          * samples according to he current sample class priority unless 
@@ -106,7 +106,7 @@ namespace ndnrtc {
          * @see InterestControl
          * @see Buffer::requested()
          */
-        void segmentArrived(const ndn::Name& threadPrefix);
+        void onIncomingData(const ndn::Name& threadPrefix);
         void reset();
 
         /**
@@ -121,7 +121,7 @@ namespace ndnrtc {
          * invocation
          * @see express(const ndn::Name&)
          */
-        void setNeedRightmost() { lastRequestedSample_ = SampleClass::Unknown; }
+        void setNeedMetadata() { lastRequestedSample_ = SampleClass::Unknown; }
 
         /**
          * Sets pipeliner's frame sequence number counters
@@ -145,28 +145,28 @@ namespace ndnrtc {
         class INameScheme {
         public:
             virtual ndn::Name samplePrefix(const ndn::Name&, SampleClass) = 0;
-            virtual ndn::Name rightmostPrefix(const ndn::Name&) = 0;
-            virtual boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                                       unsigned int,
-                                                                       SequenceCounter) = 0;
+            virtual ndn::Name metadataPrefix(const ndn::Name&) = 0;
+            virtual boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+                                                                      unsigned int,
+                                                                      SequenceCounter) = 0;
         };
         
         class VideoNameScheme : public INameScheme {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
-            ndn::Name rightmostPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                               unsigned int,
-                                                               SequenceCounter);
+            ndn::Name metadataPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+                                                              unsigned int,
+                                                              SequenceCounter);
         };
         
         class AudioNameScheme : public INameScheme {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
-            ndn::Name rightmostPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> rightmostInterest(const ndn::Name,
-                                                               unsigned int,
-                                                               SequenceCounter);
+            ndn::Name metadataPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+                                                              unsigned int,
+                                                              SequenceCounter);
         };
 
     private:
@@ -186,9 +186,9 @@ namespace ndnrtc {
             const boost::shared_ptr<DeadlinePriority>& prioirty);
         void request(const boost::shared_ptr<const ndn::Interest>& interest,
             const boost::shared_ptr<DeadlinePriority>& prioirty);
+        
         std::vector<boost::shared_ptr<const ndn::Interest>>
-        getBatch(ndn::Name n, SampleClass cls,
-            bool noParity = false) const;
+        getBatch(ndn::Name n, SampleClass cls, bool noParity = false) const;
         
         // IBufferObserver
         void onNewRequest(const boost::shared_ptr<BufferSlot>&);

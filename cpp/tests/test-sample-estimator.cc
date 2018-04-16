@@ -65,15 +65,15 @@ TEST(TestSampleEstimator, TestTrivialEstimations)
 			estimator.segmentArrived(wireSegment);
 	}
 
-	EXPECT_LE(std::abs((float)(5500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(std::abs((5500./(float)DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data))), 1.);
-	EXPECT_LE(std::abs((float)(0.2*5500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(std::abs((0.2*5500./(float)DataSegment<DataSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity))), 1.);
-
-	EXPECT_LE(std::abs((float)(27500./DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
+	EXPECT_LE(std::abs((27500./(float)DataSegment<VideoFrameSegmentHeader>::payloadLength(1000)-
 		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data))), 3);
-	EXPECT_LE(std::abs((float)(0.2*27500./DataSegment<DataSegmentHeader>::payloadLength(1000)-
-		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity))), 0.5);
+
+	EXPECT_LE(std::abs((0.2*27500./(float)DataSegment<DataSegmentHeader>::payloadLength(1000)-
+		estimator.getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity))), 1);
 
 	GT_PRINTF("average delta segnum: data - %.2f; parity - %.2f.\n", 
 		estimator.getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data),

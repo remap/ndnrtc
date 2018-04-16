@@ -164,14 +164,13 @@ InterestQueue::drainQueue()
 void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
-    LogTraceC
-    << "express\t" << entry.interest_->getName()
-    << "\texclude: " << entry.interest_->getExclude().toUri()
-    << "\tpri: "
-    << entry.getValue() << "\tlifetime: "
-    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
-    << queue_.size()
-    << std::endl;
+    LogTraceC << "express\t" << entry.interest_->getName()
+              << "\texclude: " << entry.interest_->getExclude().toUri()
+              << "\tpri: " << entry.getValue() 
+              << "\tlifetime: " << entry.interest_->getInterestLifetimeMilliseconds()
+              << "\tqsize: " << queue_.size()
+              << "\tmustBeFresh: " << entry.interest_->getMustBeFresh()
+              << std::endl;
 
     face_->expressInterest(*(entry.interest_), entry.onDataCallback_, 
         entry.onTimeoutCallback_, entry.onNetworkNack_);

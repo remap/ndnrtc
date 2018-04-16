@@ -93,6 +93,9 @@ namespace ndnrtc {
         static const std::string NameComponentParity;
         static const std::string NameComponentManifest;
 
+        static std::string 
+        fullVersion();
+
         static unsigned int 
         nameApiVersion();
 

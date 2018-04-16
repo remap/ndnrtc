@@ -35,6 +35,10 @@ Please, see the [cpp/INSTALL.md](cpp/INSTALL.md) for build and install instructi
 
 As an example application, one can use headless client provided with the codebase. It is a console C++ application, which employs NDN-RTC library and can demonstrate publishing audio and video streams (video streams can be captured from files or file pipes only) as well as fetching those streams from NDN network. Please, refer to the [cpp/INSTALL.md](cpp/INSTALL.md#NDN-RTC) file for details on how to build it and [client/README.md](cpp/client/README.md) on how to use it.
 
+## Headless client Docker image
+
+Please, see the [docker/README.md](docker) for more information on `ndnrtc-client` Docker image.
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version, with the additional exemption that compiling, linking, and/or using OpenSSL is allowed.

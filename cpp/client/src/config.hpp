@@ -97,7 +97,7 @@ public:
         os 
         << "stream sink: " << streamSink_ << " (type: " 
         <<  sinkType_
-        << "; thread to fetch: " << threadToFetch_ << "; ";
+        << "); thread to fetch: " << threadToFetch_ << "; ";
         ClientMediaStreamParams::write(os);
     }
 };

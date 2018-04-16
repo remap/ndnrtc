@@ -307,7 +307,8 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 
 	MediaStreamParams p(params.streamName);
 	p.producerParams_.segmentSize_ = params.ndnSegmentSize;
-	p.producerParams_.freshnessMs_ = params.ndnDataFreshnessPeriodMs;
+    // TODO: make all freshnesses configurable by user
+	p.producerParams_.freshness_= {10, (unsigned int)params.ndnDataFreshnessPeriodMs, 900};
 
 	if (params.typeIsVideo == 1)
 	{

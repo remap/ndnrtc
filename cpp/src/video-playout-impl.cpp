@@ -58,7 +58,7 @@ void VideoPlayoutImpl::stop()
 }
 
 //******************************************************************************
-void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
 {
     LogTraceC << "processing sample " << slot->dump() << std::endl;
 
@@ -133,8 +133,9 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                         !slot->getNameInfo().isDelta_);
             }
 
-            LogDebugC << "processed " << slot->getNameInfo().sampleNo_
-                << " (" << hdr.playbackNo_ << ")" << std::endl;
+            LogTraceC << "processed " << slot->getNameInfo().sampleNo_
+                << (slot->getNameInfo().isDelta_ ? "d (" : "k (")
+                << hdr.playbackNo_ << "p)" << std::endl;
             
             (*statStorage_)[Indicator::PlayedNum]++;
             (*statStorage_)[Indicator::LastPlayedNo] = currentPlayNo_;
@@ -145,7 +146,9 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             }
             else
                 (*statStorage_)[Indicator::LastPlayedDeltaNo] = slot->getNameInfo().sampleNo_;
-        }
+        } // gop is valid
+
+        return gopIsValid_;
     }
     else
     {
@@ -156,4 +159,6 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             ((IVideoPlayoutObserver*)o)->recoveryFailure(slot->getNameInfo().sampleNo_,
                     !slot->getNameInfo().isDelta_);
     }
+
+    return false;
 }

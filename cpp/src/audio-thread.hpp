@@ -22,65 +22,67 @@
 
 namespace ndnrtc
 {
-   struct Mutable;
-   template<typename T>
-   class AudioBundlePacketT;
-   class AudioThread;
-   
-   class IAudioThreadCallback {
-    public:
-      /**
-       * This is called when audio bundle consisting of RTP/RTCP packets
-       * is ready.
-       * @param threadName Name of the audio media thread
-       * @param bundleNo Sequential bundle number
-       * @param packet Shared pointer for bundle packet
-       * @note This is called on audio system thread
-       * @see AudioController
-       */
-      virtual void onSampleBundle(std::string threadName, uint64_t bundleNo,
-        boost::shared_ptr<AudioBundlePacketT<Mutable>> packet) = 0;
-   };
+struct Mutable;
+template <typename T>
+class AudioBundlePacketT;
+class AudioThread;
 
-   class AudioThread :  public NdnRtcComponent,
-                        public IAudioSampleConsumer
-   {
-   public:
-       AudioThread(const AudioThreadParams& params,
-           const AudioCaptureParams& captureParams,
-           IAudioThreadCallback* callback,
-           size_t bundleWireLength = 1000);
-       ~AudioThread();
+class IAudioThreadCallback
+{
+  public:
+    /**
+     * This is called when audio bundle consisting of RTP/RTCP packets
+     * is ready.
+     * @param threadName Name of the audio media thread
+     * @param bundleNo Sequential bundle number
+     * @param packet Shared pointer for bundle packet
+     * @note This is called on audio system thread
+     * @see AudioController
+     */
+    virtual void onSampleBundle(std::string threadName, uint64_t bundleNo,
+                                boost::shared_ptr<AudioBundlePacketT<Mutable>> packet) = 0;
+};
 
-       void start();
-       void stop();
+class AudioThread : public NdnRtcComponent,
+                    public IAudioSampleConsumer
+{
+  public:
+    AudioThread(const AudioThreadParams &params,
+                const AudioCaptureParams &captureParams,
+                IAudioThreadCallback *callback,
+                size_t bundleWireLength = 1000);
+    ~AudioThread();
 
-       std::string getName() const { return threadName_; }
-       bool isRunning() const { return isRunning_; }
-       std::string getCodec() const { return codec_; }
-       double getRate() const;
-       void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void start();
+    void stop();
 
-   private:
-       AudioThread(const AudioThread&) = delete;
+    std::string getName() const { return threadName_; }
+    bool isRunning() const { return isRunning_; }
+    std::string getCodec() const { return codec_; }
+    double getRate() const;
+    uint64_t getBundleNo() const { return bundleNo_; }
+    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
-       uint64_t bundleNo_;
-       estimators::FreqMeter rateMeter_;
-       std::string threadName_, codec_;
-       IAudioThreadCallback* callback_;
-       boost::shared_ptr<AudioBundlePacketT<Mutable>> bundle_;
-       AudioCapturer capturer_;
-       boost::atomic<bool> isRunning_;
+  private:
+    AudioThread(const AudioThread &) = delete;
 
-       void
-       onDeliverRtpFrame(unsigned int len, uint8_t* data);
+    uint64_t bundleNo_;
+    estimators::FreqMeter rateMeter_;
+    std::string threadName_, codec_;
+    IAudioThreadCallback *callback_;
+    boost::shared_ptr<AudioBundlePacketT<Mutable>> bundle_;
+    AudioCapturer capturer_;
+    boost::atomic<bool> isRunning_;
 
-       void
-       onDeliverRtcpFrame(unsigned int len, uint8_t* data);
+    void
+    onDeliverRtpFrame(unsigned int len, uint8_t *data);
 
-       void 
-       deliver(const AudioBundlePacketT<Mutable>::AudioSampleBlob& blob);
-   };
+    void
+    onDeliverRtcpFrame(unsigned int len, uint8_t *data);
+
+    void
+    deliver(const AudioBundlePacketT<Mutable>::AudioSampleBlob &blob);
+};
 }
 
 #endif /* defined(__ndnrtc__audio_thread__) */

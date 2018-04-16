@@ -140,7 +140,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 
 		BufferSlot slot;
 		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
-		EXPECT_EQ(BufferSlot::Free, slot.getState());
+		EXPECT_EQ(slot.getState(), BufferSlot::Free);
 	}
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
