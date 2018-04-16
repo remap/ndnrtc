@@ -119,7 +119,7 @@ BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Int
     {
         boost::shared_ptr<SlotSegment> segment(boost::make_shared<SlotSegment>(i));
         
-        if (!segment->getInfo().hasSeqNo_)
+        if (!segment->getInfo().hasSeqNo_ || !segment->getInfo().hasSegNo_)
             throw std::runtime_error("No rightmost interests allowed: Interest should have segment-level info");
         
         if (name_.size() == 0) 
