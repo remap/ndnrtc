@@ -2348,7 +2348,7 @@ GMOCK_ROOT = $(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
-	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} \
+	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
 	$(am__append_19) $(am__append_23)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
 	$(am__append_20)
