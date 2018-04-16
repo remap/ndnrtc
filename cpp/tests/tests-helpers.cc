@@ -511,8 +511,6 @@ boost::shared_ptr<WireSegment>
 getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
                PacketNumber pNo, unsigned int segNo)
 {
-    boost::shared_ptr<WireSegment> segment;
-
     Name n(threadPrefix);
     n.append((cls == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey))
         .appendSequenceNumber(pNo);
@@ -543,9 +541,16 @@ getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
     }
 
     data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(nSegments - 1));
-    segment = boost::make_shared<WireSegment>(data, interest);
 
-    return segment;
+    // add phony data
+    VideoFramePacket vfp = getVideoFramePacket();
+    std::vector<VideoFrameSegment> segments = sliceFrame(vfp);
+    if (segNo == 0)
+        data->setContent(segments[0].getNetworkData()->getData(), segments[0].size());
+    else
+        data->setContent(segments[1].getNetworkData()->getData(), segments[1].size());
+
+    return boost::make_shared<WireData<VideoFrameSegmentHeader>>(data, interest);;
 }
 
 boost::shared_ptr<ndnrtc::WireSegment>

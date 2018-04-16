@@ -52,7 +52,7 @@ TEST(TestPipelineControl, TestDefault)
         .Times(1);
     EXPECT_CALL(*latencyControl, reset())
         .Times(1);
-    EXPECT_CALL(*playoutControl, allowPlayout(false))
+    EXPECT_CALL(*playoutControl, allowPlayout(false, _))
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
@@ -82,12 +82,12 @@ TEST(TestPipelineControl, TestDefault)
             .Times(1);
         EXPECT_CALL(*pp, segmentArrived(_))
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(true))
+        EXPECT_CALL(*playoutControl, allowPlayout(true, _))
             .Times(1);
         EXPECT_CALL(*interestControl, pipelineLimit())
             .Times(1);
 
-        ppc.start(meta);
+        ppc.start();
     }
 
     boost::shared_ptr<WireSegment> seg = getFakeSegment(threadPrefix, SampleClass::Delta,
@@ -141,7 +141,7 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
         .Times(1);
     EXPECT_CALL(*latencyControl, reset())
         .Times(1);
-    EXPECT_CALL(*playoutControl, allowPlayout(false))
+    EXPECT_CALL(*playoutControl, allowPlayout(false, _))
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
@@ -172,7 +172,7 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
 
         EXPECT_CALL(*interestControl, pipelineLimit())
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(false))
+        EXPECT_CALL(*playoutControl, allowPlayout(false, _))
             .Times(1);
 
         ppc.stop();
@@ -206,7 +206,7 @@ TEST(TestPipelineControl, TestDefaultWithBootstrapping)
             .Times(1);
         EXPECT_CALL(*pp, segmentArrived(_))
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(true))
+        EXPECT_CALL(*playoutControl, allowPlayout(true, _))
             .Times(1);
 
         ppc.segmentArrived(metaSeg);
@@ -263,7 +263,7 @@ TEST(TestPipelineControl, TestStarvation)
         .Times(1);
     EXPECT_CALL(*latencyControl, reset())
         .Times(1);
-    EXPECT_CALL(*playoutControl, allowPlayout(false))
+    EXPECT_CALL(*playoutControl, allowPlayout(false, _))
         .Times(1);
 
     PipelineControl ppc = PipelineControl::videoPipelineControl(Name(threadPrefix),
@@ -294,7 +294,7 @@ TEST(TestPipelineControl, TestStarvation)
 
         EXPECT_CALL(*interestControl, pipelineLimit())
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(false))
+        EXPECT_CALL(*playoutControl, allowPlayout(false, _))
             .Times(1);
 
         ppc.stop();
@@ -328,7 +328,7 @@ TEST(TestPipelineControl, TestStarvation)
             .Times(1);
         EXPECT_CALL(*pp, segmentArrived(_))
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(true))
+        EXPECT_CALL(*playoutControl, allowPlayout(true, _))
             .Times(1);
 
         ppc.segmentArrived(metaSeg);
@@ -367,7 +367,7 @@ TEST(TestPipelineControl, TestStarvation)
             .Times(1);
         EXPECT_CALL(*latencyControl, reset())
             .Times(1);
-        EXPECT_CALL(*playoutControl, allowPlayout(false))
+        EXPECT_CALL(*playoutControl, allowPlayout(false, _))
             .Times(1);
         EXPECT_CALL(*pp, setNeedMetadata())
             .Times(1);
