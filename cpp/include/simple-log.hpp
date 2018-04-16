@@ -34,20 +34,13 @@
 #undef NDN_DEBUG
 #endif
 
-#ifndef BASE_FILE_NAME
-#define BASE_FILE_NAME (__FILE__)
-#endif
-
-// if defined detailed logging - print whole signature of the function.
-#define __NDN_FNAME__ __PRETTY_FUNCTION__
-
 // following macros are used for NdnRtcObject logging
 // each macro checks, whether a logger, associated with object has been
 // initialized and use it instead of global logger
 #if defined (NDN_TRACE)
 
-#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-#define LogTraceC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogTrace(fname, ...) ndnlog::new_api::Logger::log(fname, (ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define LogTraceC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelTrace, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -59,7 +52,7 @@
 #if defined (NDN_DEBUG)
 
 #define LogDebug(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelDebug, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogDebugC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelDebug, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogDebugC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelDebug, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 #else
 
 #define LogDebug(fmt, ...) ndnlog::new_api::NilLogger::get()
@@ -70,7 +63,7 @@
 #if defined (NDN_INFO)
 
 #define LogInfo(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelInfo, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogInfoC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelInfo, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogInfoC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelInfo, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -82,7 +75,7 @@
 #if defined (NDN_WARN)
 
 #define LogWarn(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelWarning   , __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogWarnC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelWarning, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogWarnC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelWarning, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -94,7 +87,7 @@
 #if defined (NDN_ERROR)
 
 #define LogError(fname, ...) ndnlog::new_api::Logger::log(fname, ndnlog::NdnLoggerLevelError, __FILE__, __LINE__, ##__VA_ARGS__)
-#define LogErrorC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelError, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogErrorC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelError, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #else
 
@@ -103,8 +96,8 @@
 
 #endif
 
-#define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, BASE_FILE_NAME, __LINE__, ##__VA_ARGS__)
-#define LogStatC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelStat, this, BASE_FILE_NAME, __LINE__) : ndnlog::new_api::NilLogger::get())
+#define LogStat(fname, ...) ndnlog::new_api::Logger::log(fname, (NdnLogType)NdnLoggerLevelStat, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define LogStatC ((this->logger_) ? this->logger_->log((ndnlog::NdnLogType)ndnlog::NdnLoggerLevelStat, this, __FUNCTION__, __LINE__) : ndnlog::new_api::NilLogger::get())
 
 #define STAT_DIV "\t"
 
@@ -226,7 +219,7 @@ namespace ndnlog {
             virtual Logger&
             log(const NdnLogType& logType,
                 const ILoggingObject* loggingInstance = 0,
-                const std::string& locationFile = "",
+                const std::string& locationFunc = "",
                 const int& locationLine = -1);
             
             /**
@@ -296,12 +289,12 @@ namespace ndnlog {
             
             static Logger& log(const std::string &logFile,
                                const NdnLogType& logType,
-                               const std::string& locationFile = "",
+                               const std::string& locationFunc = "",
                                const int& locationLine = -1,
                                const ILoggingObject* loggingInstance = 0)
             {
                 return getLogger(logFile).log(logType, loggingInstance,
-                                       locationFile, locationLine);
+                                       locationFunc, locationLine);
             }
             
             

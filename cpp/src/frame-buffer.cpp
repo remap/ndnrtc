@@ -947,7 +947,7 @@ PlaybackQueue::onNewData(const BufferReceipt& receipt)
         for (auto o:observers_) o->onNewSampleReady();
         
         LogDebugC << "--■" << receipt.slot_->dump() << std::endl;
-        LogTraceC << "dump " << dump() << buffer_->shortdump() << std::endl;
+        LogDebugC << "dump " << dump() << buffer_->shortdump() << std::endl;
         
         (*sstorage_)[Indicator::BufferPlayableSize] = size();
     }

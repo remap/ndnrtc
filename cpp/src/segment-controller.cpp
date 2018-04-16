@@ -223,7 +223,7 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& inte
     
     if  (data->getMetaInfo().getType() == ndn_ContentType_NACK)
     {
-        LogTraceC << "received app nack for " << data->getName() << std::endl;
+        LogTraceC << "app nack " << data->getName() << std::endl;
         (*sstorage_)[Indicator::AppNackNum]++;
         return;
     }
@@ -238,7 +238,7 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& inte
 
 		if (segment->isValid())
 		{
-			LogTraceC << "received data " << data->getName() << " " 
+			LogTraceC << data->getName() << " " 
 				<< data->getContent().size() << " bytes" << std::endl;
 			{
 				boost::lock_guard<boost::mutex> scopedLock(mutex_);
@@ -250,10 +250,10 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest>& inte
 			(*sstorage_)[Indicator::RawBytesReceived] += data->getDefaultWireEncoding().size();
 		}
 		else
-			LogWarnC << "received invalid data " << data->getName() << std::endl;
+			LogWarnC << "invalid data " << data->getName() << std::endl;
 	}
 	else
-		LogWarnC << "received data with bad name: " << data->getName() << std::endl;
+		LogWarnC << "bad name: " << data->getName() << std::endl;
 }
 
 void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& interest)
@@ -268,7 +268,7 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& i
 
 	if (NameComponents::extractInfo(interest->getName(), info))
 	{
-		LogTraceC << "received timeout for " << interest->getName() << std::endl;
+		LogTraceC << interest->getName() << std::endl;
 
 		{
 			boost::lock_guard<boost::mutex> scopedLock(mutex_);
@@ -278,7 +278,7 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest>& i
 		(*sstorage_)[Indicator::TimeoutsNum]++;
 	}
 	else
-		LogWarnC << "received timeout for badly named Interest " << interest->getName() << std::endl;
+		LogWarnC << "badly named Interest " << interest->getName() << std::endl;
 }
 
 void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest>& interest,
@@ -286,9 +286,9 @@ void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest
 {
     if (!active_)
     {
-        LogWarnC << "network nack (reason: " << networkNack->getReason() 
+        LogWarnC << "reason: " << networkNack->getReason() 
             << ", other: " << networkNack->getOtherReasonCode() 
-            << ") in inactive state " << interest->getName() << std::endl;
+            << ". in inactive state " << interest->getName() << std::endl;
         return;
     }
 
@@ -296,7 +296,7 @@ void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest
 
     if (NameComponents::extractInfo(interest->getName(), info))
     {
-        LogTraceC << "received nack for " << interest->getName() << std::endl;
+        LogTraceC << interest->getName() << std::endl;
         
         {
             boost::lock_guard<boost::mutex> scopedLock(mutex_);
@@ -308,5 +308,5 @@ void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest
         (*sstorage_)[Indicator::NacksNum]++;
     }
     else
-        LogWarnC << "received nack for badly named Interest " << interest->getName() << std::endl;
+        LogWarnC << "badly named Interest " << interest->getName() << std::endl;
 }
