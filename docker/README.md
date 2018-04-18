@@ -18,9 +18,9 @@ docker build -t ndnrtc-client --build-arg BRANCH=dev .
 mkdir container-tmp
 docker network create -d bridge ndnrtc-subnet
 docker run --rm -ti --name ndnrtc-producer \
-				--network ndnrtc-subnet \
-				-v $(pwd)/container-tmp:/tmp \
-				ndnrtc-client
+                    --network ndnrtc-subnet \
+                    -v $(pwd)/container-tmp:/tmp \
+                    ndnrtc-client
 ```
 
 Image’s entry point is `run.sh` script. This script starts NFD in the background and then starts `ndnrtc-client` with sample producer configuration ([sample-producer.cfg](../cpp/tests/sample-producer.cfg)) in the foreground.
@@ -35,12 +35,12 @@ For consumer container to successfully fetch data from the producer container, f
 1. Start NFD and register route(s) towards producer container:
 ```
 docker run --rm -d --name ndnrtc-consumer \
-				--network ndnrtc-subnet \
-				-v $(pwd)/container-tmp:/tmp \
-				-e START_CLIENT=no \
-				-e NFD_LOG=/tmp/nfd-consumer.log \
-				-e CONFIG_FILE=tests/sample-consumer.cfg \
-				ndnrtc-client
+                   --network ndnrtc-subnet \
+                   -v $(pwd)/container-tmp:/tmp \
+                   -e START_CLIENT=no \
+                   -e NFD_LOG=/tmp/nfd-consumer.log \
+                   -e CONFIG_FILE=tests/sample-consumer.cfg \
+                   ndnrtc-client
 docker exec ndnrtc-consumer nfdc face create udp://ndnrtc-producer
 docker exec ndnrtc-consumer nfdc route add /ndnrtc-test <face-id>
 ```
