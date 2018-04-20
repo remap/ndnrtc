@@ -18,7 +18,7 @@
 #define SECTION_AUDIO_KEY "audio"
 #define SECTION_VIDEO_KEY "video"
 #define SECTION_STREAMS_KEY "streams"
-#define CONSUMER_BASIC_STAT_KEY "stat_gathering"
+#define BASIC_STAT_KEY "stat_gathering"
 #define SECTION_STREAM_TYPE_AUDIO "audio"
 #define SECTION_STREAM_TYPE_VIDEO "video"
 
@@ -140,9 +140,9 @@ int loadConsumerSettings(const Setting &root, ConsumerClientParams &params)
             hasBasicVideo = (loadBasicConsumerSettings(consumerBasicVideoSettings, params.generalVideoParams_) == EXIT_SUCCESS);
         }
 
-        if (consumerBasicSettings.exists(CONSUMER_BASIC_STAT_KEY))
+        if (consumerBasicSettings.exists(BASIC_STAT_KEY))
         {
-            loadBasicStatSettings(consumerBasicSettings[CONSUMER_BASIC_STAT_KEY], params.statGatheringParams_);
+            loadBasicStatSettings(consumerBasicSettings[BASIC_STAT_KEY], params.statGatheringParams_);
         }
 
         try
@@ -195,6 +195,11 @@ int loadProducerSettings(const Setting &root, ProducerClientParams &params, cons
 
     const Setting &producerRootSettings = root[PRODUCER_KEY];
     params.prefix_ = identity;
+
+    if (producerRootSettings.exists(BASIC_STAT_KEY))
+    {
+        loadBasicStatSettings(producerRootSettings[BASIC_STAT_KEY], params.statGatheringParams_);
+    }
 
     try
     { // setup stream settings

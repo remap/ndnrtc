@@ -140,11 +140,13 @@ class ProducerClientParams : public ndnrtc::Params {
 public:
     std::string prefix_;
     std::vector<ProducerStreamParams> publishedStreams_;
+    std::vector<StatGatheringParams> statGatheringParams_;
 
     ProducerClientParams(){}
     ProducerClientParams(const ProducerClientParams& params):
         prefix_(params.prefix_), 
-        publishedStreams_(params.publishedStreams_){}
+        publishedStreams_(params.publishedStreams_),
+        statGatheringParams_(params.statGatheringParams_){}
 
     void write(std::ostream& os) const {
         os 
@@ -154,6 +156,14 @@ public:
         {
             os << "--" << i << ":" << std::endl
             << publishedStreams_[i];
+        }
+        
+        os << std::endl;
+        if (statGatheringParams_.size())
+        {
+            os << "stat gathering:" << std::endl;
+            for (auto statParams:statGatheringParams_)
+                os << statParams << std::endl;
         }
     }
 };  
@@ -168,7 +178,8 @@ public:
     bool isConsuming() const 
         { return consumedStreamsParams_.fetchedStreams_.size() > 0; }
     bool isGatheringStats() const
-        { return consumedStreamsParams_.statGatheringParams_.size() > 0;}
+        { return consumedStreamsParams_.statGatheringParams_.size() > 0 || 
+                 publishedStreamsParams_.statGatheringParams_.size() > 0; }
     size_t getProducedStreamsNum() const 
         { return publishedStreamsParams_.publishedStreams_.size(); }
     size_t getConsumedStreamsNum() const

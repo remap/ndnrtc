@@ -95,20 +95,22 @@ bool Client::setupProducer()
 
 void Client::setupStatGathering()
 {
-	if (!params_.isGatheringStats())
-		return;
-    
-	statCollector_.reset(new StatCollector(io_));
-	
-	for (auto& rs:remoteStreams_)
-		statCollector_->addStream(rs.getStream());
+    if (!params_.isGatheringStats())
+        return;
 
-	statCollector_->startCollecting(statSampleIntervalMs_, 
-		params_.getGeneralParameters().logPath_, 
-		params_.getConsumerParams().statGatheringParams_);
+    statCollector_.reset(new StatCollector(io_));
 
-	LogInfo("") << "Gathering statistics into " 
-		<< statCollector_->getWritersNumber() << " files" << std::endl;
+    for (auto &rs : remoteStreams_)
+        statCollector_->addStream(rs.getStream(), params_.getGeneralParameters().logPath_,
+                                  params_.getConsumerParams().statGatheringParams_);
+    for (auto &ls : localStreams_)
+        statCollector_->addStream(ls.getStream(), params_.getGeneralParameters().logPath_,
+                                  params_.getProducerParams().statGatheringParams_);
+
+    statCollector_->startCollecting(statSampleIntervalMs_);
+
+    LogInfo("") << "Gathering statistics into "
+                << statCollector_->getWritersNumber() << " files" << std::endl;
 }
 
 void Client::runProcessLoop()
