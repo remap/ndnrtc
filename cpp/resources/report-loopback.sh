@@ -196,7 +196,13 @@ echo "Consumer Stats:"
 echo "  frames requested:   ${framesRequested}"
 echo "  frames assembled:   ${framesAssembled}"
 echo "  frames played:      ${framesPlayed}"
-echo "  frames recovered:    ${framesRecovered}"
+echo "  frames recovered:   ${framesRecovered}"
 echo "  frames rescued:     ${framesRescued}"
 echo "  frames incomplete:  ${framesIncomplete}"
 echo "  frames skipped:     ${framesSkipped}"
+
+p1=${framesPlayed%.*}
+p2=${framesRequested%.*}
+score=$(($p1*100/$p2))
+echo " --- "
+echo "  fetching efficiency: ${score}%"
