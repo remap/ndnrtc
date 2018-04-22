@@ -69,11 +69,15 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
     if (framePacket.get())
     {
         VideoFrameSegmentHeader hdr = frameSlot_.readSegmentHeader(*slot);
+        stringstream ss;
+        ss << slot->getNameInfo().sampleNo_
+           << (slot->getNameInfo().isDelta_ ? "d/" : "k/")
+           << hdr.playbackNo_ << "p";
+        string frameStr = ss.str();
 
         if (recovered)
         {
-            LogDebugC << "recovered " << slot->getNameInfo().sampleNo_
-                << " (" << hdr.playbackNo_ << ")" << std::endl;
+            LogDebugC << "recovered " << frameStr << std::endl;
             
             (*statStorage_)[Indicator::RecoveredNum]++;
             if (slot->getNameInfo().class_ == SampleClass::Key)
@@ -92,12 +96,11 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
         {
             if (!gopIsValid_)
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
-                    << " invalid GOP" << std::endl;
+                LogWarnC << "skip " << frameStr << ". invalid GOP" << std::endl;
             else
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
-                    << " (expected " << currentPlayNo_+1 
-                    << " received " << hdr.playbackNo_ << ")" << std::endl;
+                LogWarnC << "skip " << frameStr
+                    << " (expected " << currentPlayNo_+1 << ")"
+                    << std::endl;
 
             gopIsValid_ = false;
 
@@ -133,9 +136,7 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                         !slot->getNameInfo().isDelta_);
             }
 
-            LogTraceC << "processed " << slot->getNameInfo().sampleNo_
-                << (slot->getNameInfo().isDelta_ ? "d (" : "k (")
-                << hdr.playbackNo_ << "p)" << std::endl;
+            LogTraceC << "processed " << frameStr << std::endl;
             
             (*statStorage_)[Indicator::PlayedNum]++;
             (*statStorage_)[Indicator::LastPlayedNo] = currentPlayNo_;

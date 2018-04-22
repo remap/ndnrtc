@@ -172,6 +172,12 @@ gnuplot -p -e 'set terminal png size 2500,1500 enhanced font ",30";
                        "" using 3 t "DRD (ms)" with lines, 
                        "" using 4 t "Latency Est. (ms)" with lines' > playback.png
 
+function frac(){
+    p1=${1%.*}
+    p2=${2%.*}
+    f=$(($p1*100/$p2))
+    echo $f
+}
 
 framesCaptured=`tail -1 stats-original/frames-publish-ndnrtc-loopback-producer-camera.stat | awk '{ print $2 }'`
 framesPublished=`tail -1 stats-original/frames-publish-ndnrtc-loopback-producer-camera.stat | awk '{ print $4 }'`
@@ -191,15 +197,29 @@ framesPlayed=`tail -1 stats-original/frames-ndnrtc-loopback-producer-camera.stat
 framesIncomplete=`tail -1 stats-original/frames-ndnrtc-loopback-producer-camera.stat | awk '{ print $7 }'`
 framesSkipped=`tail -1 stats-original/frames-ndnrtc-loopback-producer-camera.stat | awk '{ print $8 }'`
 
+interestSent=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $2 }'`
+segRcvd=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $3 }'`
+appNacks=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $4 }'`
+nacks=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $5 }'`
+timeouts=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $6 }'`
+rtx=`tail -1 stats-original/network-ndnrtc-loopback-producer-camera.stat | awk '{ print $7 }'`
+
 echo ""
-echo "Consumer Stats:"
+echo "Consumer Stats ($consumer):"
 echo "  frames requested:   ${framesRequested}"
-echo "  frames assembled:   ${framesAssembled}"
-echo "  frames played:      ${framesPlayed}"
-echo "  frames recovered:   ${framesRecovered}"
-echo "  frames rescued:     ${framesRescued}"
-echo "  frames incomplete:  ${framesIncomplete}"
-echo "  frames skipped:     ${framesSkipped}"
+echo "  frames assembled:   ${framesAssembled} (`frac $framesAssembled $framesRequested`% of requested)"
+echo "  frames incomplete:  ${framesIncomplete} (`frac $framesIncomplete $framesRequested`% of requested)"
+echo "  frames played:      ${framesPlayed} (`frac $framesPlayed $framesAssembled`% of assembled)"
+echo "       recovered:   ${framesRecovered} (`frac $framesRecovered $framesPlayed`% of played)"
+echo "       rescued:     ${framesRescued} (`frac $framesRescued $framesPlayed`% of played)"
+echo "  frames skipped:     ${framesSkipped} (`frac $framesSkipped $framesAssembled`% of assembled)"
+echo ""
+echo "  interests sent:     ${interestSent}"
+echo "  retransmissions:    ${rtx} (`frac $rtx $interestSent`%)"
+echo "  segments recevied:  ${segRcvd} (`frac $segRcvd $interestSent`%)"
+echo "  timeouts:           ${timeouts} (`frac $timeouts $interestSent`%)"
+echo "  app nacks:          ${appNacks} (`frac $appNacks $interestSent`%)"
+echo "  network nacks:      ${nacks} (`frac $nacks $interestSent`)"
 
 p1=${framesPlayed%.*}
 p2=${framesRequested%.*}

@@ -245,7 +245,6 @@ BufferSlot::dump(bool showLastSegment) const
     // << ((double)nSegmentsParityReady_/(double)nSegmentsParity_)*100 << "%), "
     // << std::setw(5) << getPairedFrameNumber() << ", "
     // << std::setw(3) << getPlaybackDeadline() << ", "
-    << (hasOriginalSegments_?"ORIG":"CACH") << ", "
     << std::setw(3) << nRtx_ << ", "
     // << (isRecovered_ ? "R" : "I") << ", "
     // << std::setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
@@ -254,6 +253,9 @@ BufferSlot::dump(bool showLastSegment) const
     // << getLifetime() << " "
     << std::setw(5) << assembledSize_ << " "
     << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
+    << " " << (lastFetched_ && lastFetched_->isOriginal() ? "ORIG" : "CACH")
+    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
+    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
     << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
     << "]";
 
@@ -627,8 +629,14 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
         }
     }
     else
+    {
+        if (receipt.oldState_ == BufferSlot::New)
+            LogDebugC << "new sample " 
+                      << receipt.segment_->getInfo().getSuffix(suffix_filter::Thread) 
+                      << std::endl;
         LogTraceC << " ► " << receipt.slot_->dump(true)
-        << receipt.segment_->getInfo().segNo_ << std::endl;
+                  << receipt.segment_->getInfo().segNo_ << std::endl;
+    }
     
     for (auto o:observers_) o->onNewData(receipt);
     
@@ -770,10 +778,10 @@ Buffer::dump() const
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
     int i = 0;
     stringstream ss;
-    ss << "buffer dump:" << std::endl;
+    ss << "buffer dump:";
 
     for (auto& s:activeSlots_)
-        ss << ++i << " " << s.second->dump() << std::endl;
+        ss << std::endl << ++i << " " << s.second->dump();
 
     return ss.str();
 }
@@ -911,9 +919,10 @@ PlaybackQueue::dump()
     ss.precision(2);
     
     ss << "[ ";
+    int idx = 0;
     for (auto s:queue_)
     {
-        if (s.slot()->getNameInfo().sampleNo_%10 == 0 ||
+        if ((idx++ % 10 == 0) || //s.slot()->getNameInfo().sampleNo_%10 == 0 ||
             !s.slot()->getNameInfo().isDelta_)
             ss  << s.slot()->getNameInfo().sampleNo_;
         if (s.slot()->getVerificationStatus() == BufferSlot::Verification::Verified)

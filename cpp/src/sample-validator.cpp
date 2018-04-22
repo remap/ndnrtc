@@ -91,7 +91,7 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
 				}
 				else
 				{
-					LogDebugC << "received manifest for "
+					LogTraceC << "received manifest for "
 						<< slot->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
 
 					if (slot->getState() >= BufferSlot::State::New)
@@ -115,7 +115,7 @@ ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot>& slot)
                 (*me->statStorage_)[Indicator::VerifyFailure]++;
 			});
 
-		LogTraceC << "fetching manifest for " << manifestName << std::endl;
+		LogTraceC << "fetch " << manifestName << std::endl;
 	}
 }
 
