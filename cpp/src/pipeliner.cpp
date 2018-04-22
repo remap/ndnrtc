@@ -213,7 +213,12 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
     // check for missing segments
     std::vector<boost::shared_ptr<const Interest>> interests;
     for (auto& n:receipt.slot_->getMissingSegments())
-        interests.push_back(boost::make_shared<const Interest>(n, interestLifetime_));
+    {
+        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(n, interestLifetime_);
+        i->setMustBeFresh(false);
+        interests.push_back(i);
+    }
+
     if (interests.size())
     {
         LogTraceC << interests.size() << " missing segments for "
