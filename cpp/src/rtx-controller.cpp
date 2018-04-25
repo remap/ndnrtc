@@ -48,7 +48,7 @@ void RetransmissionController::detach(IRtxObserver *observer)
 void RetransmissionController::setEnabled(bool enable)
 {
     enabled_ = enable;
-    LogDebugC << (enabled_ ? "enabled" : "disabled") << std::endl;
+    LogTraceC << (enabled_ ? "enabled" : "disabled") << std::endl;
 }
 
 void RetransmissionController::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)

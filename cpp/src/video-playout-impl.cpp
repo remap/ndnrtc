@@ -99,7 +99,7 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                 LogWarnC << "skip " << frameStr << ". invalid GOP" << std::endl;
             else
                 LogWarnC << "skip " << frameStr
-                    << " (expected " << currentPlayNo_+1 << ")"
+                    << " (expected " << currentPlayNo_+1 << "p)"
                     << std::endl;
 
             gopIsValid_ = false;
