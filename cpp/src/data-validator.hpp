@@ -24,13 +24,17 @@ namespace ndnrtc {
 
     class ValidationErrorInfo {
     public:
-        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data):
-            failedData_(data){}
+        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data, 
+                            const std::string reason = ""):
+            failedData_(data), reason_(reason){}
     
         boost::shared_ptr<const ndn::Data> getData() const 
         { return failedData_; }
+        const std::string& getReason() const 
+        { return reason_; }
     
     private:
+        std::string reason_;
         boost::shared_ptr<const ndn::Data> failedData_;
     };
 

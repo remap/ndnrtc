@@ -7,7 +7,6 @@
 
 #include "meta-fetcher.hpp"
 #include <boost/thread.hpp>
-#include <ndn-cpp/util/segment-fetcher.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
@@ -25,6 +24,7 @@ void MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::K
 
     isPending_ = true;
     boost::shared_ptr<MetaFetcher> me = boost::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
+    // uses ndnrtc implementation of SegmentFetcher, NOT the one from NDN-CPP
     SegmentFetcher::fetch(*f, i, kc.get(),
                           [onMeta, me, f, kc, this](const Blob &content, const std::vector<ValidationErrorInfo> &info) {
                               isPending_ = false;

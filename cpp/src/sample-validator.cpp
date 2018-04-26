@@ -81,7 +81,8 @@ void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
                                 for (auto &i : info)
                                     LogWarnC << "manifest verification failure " << i.getData()->getName()
                                              << " (KeyLocator " << (KeyLocator::getFromSignature(i.getData()->getSignature())).getKeyName()
-                                             << ")" << std::endl;
+                                             << "), reason: "
+                                             << i.getReason() << std::endl;
                                 slot->verified_ = BufferSlot::Verification::Failed;
                                 (*me->statStorage_)[Indicator::VerifyFailure]++;
                             }

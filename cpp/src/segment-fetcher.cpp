@@ -213,7 +213,7 @@ SegmentFetcher::onVerifyFailed(const boost::shared_ptr<Data>& data,
 	try {
 		LogWarnC << "Verification failed for " << data->getName() << ": " << reason << std::endl;
 
-		validationInfo_.push_back(ValidationErrorInfo(data));
+		validationInfo_.push_back(ValidationErrorInfo(data, reason));
 		processSegment(originalData, originalInterest);
 	} catch (const std::exception& ex) {
 		LogErrorC << "SegmentFetcher::onSegmentReceived: Error in onError: " << ex.what() << std::endl;
