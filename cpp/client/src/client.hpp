@@ -1,4 +1,4 @@
-// 
+//
 // client.h
 //
 //  Created by Peter Gusev on 07 March 2016.
@@ -16,56 +16,58 @@
 #include "stream.hpp"
 #include "stat-collector.hpp"
 
-namespace ndn {
-	class KeyChain;
+namespace ndn
+{
+class KeyChain;
 }
 
-class Client {
-public: 
-	Client(boost::asio::io_service& io,
-		const boost::shared_ptr<ndn::Face>& face,
-		const boost::shared_ptr<ndn::KeyChain>& keyChain):io_(io),
-		face_(face), keyChain_(keyChain){}
-	~Client(){}
+class Client
+{
+  public:
+    Client(boost::asio::io_service &io,
+           const boost::shared_ptr<ndn::Face> &face,
+           const boost::shared_ptr<ndn::KeyChain> &keyChain) : io_(io),
+                                                               face_(face), keyChain_(keyChain) {}
+    ~Client() {}
 
-	// blocking call. will return after runTimeSec seconds
-	void run(unsigned int runTimeSec, unsigned int statSamplePeriodMs, 
-             const ClientParams& params, const std::string& instanceName);
+    // blocking call. will return after runTimeSec seconds
+    void run(unsigned int runTimeSec, unsigned int statSamplePeriodMs,
+             const ClientParams &params, const std::string &instanceName);
 
-private:
-	boost::asio::io_service& io_;
-	unsigned int runTimeSec_, statSampleIntervalMs_;
-	ClientParams params_;
+  private:
+    boost::asio::io_service &io_;
+    unsigned int runTimeSec_, statSampleIntervalMs_;
+    ClientParams params_;
 
-	boost::shared_ptr<StatCollector> statCollector_;
-	boost::shared_ptr<ndn::Face> face_;
-	boost::shared_ptr<ndn::KeyChain> keyChain_;
+    boost::shared_ptr<StatCollector> statCollector_;
+    boost::shared_ptr<ndn::Face> face_;
+    boost::shared_ptr<ndn::KeyChain> keyChain_;
 
-	std::vector<RemoteStream> remoteStreams_;
-	std::vector<LocalStream> localStreams_;
+    std::vector<RemoteStream> remoteStreams_;
+    std::vector<LocalStream> localStreams_;
     std::string instanceName_;
 
-	Client(Client const&) = delete;
-	void operator=(Client const&) = delete;
+    Client(Client const &) = delete;
+    void operator=(Client const &) = delete;
 
-	bool setupConsumer();
-	bool setupProducer();
-	void setupStatGathering();
-	void runProcessLoop();
-	void tearDownStatGathering();
-	void tearDownProducer();
-	void tearDownConsumer();
+    bool setupConsumer();
+    bool setupProducer();
+    void setupStatGathering();
+    void runProcessLoop();
+    void tearDownStatGathering();
+    void tearDownProducer();
+    void tearDownConsumer();
 
-	RendererInternal *setupRenderer(const ConsumerStreamParams& p);
+    RendererInternal *setupRenderer(const ConsumerStreamParams &p);
 
-	RemoteStream initRemoteStream(const ConsumerStreamParams& p, 
-		const ndnrtc::GeneralConsumerParams& generalParams);
-	LocalStream initLocalStream(const ProducerStreamParams& p);
-	boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams& p);
+    RemoteStream initRemoteStream(const ConsumerStreamParams &p,
+                                  const ndnrtc::GeneralConsumerParams &generalParams);
+    LocalStream initLocalStream(const ProducerStreamParams &p);
+    boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams &p);
 
-	boost::shared_ptr<ndnlog::new_api::Logger> producerLogger(std::string streamName);
-	boost::shared_ptr<ndnlog::new_api::Logger> consumerLogger(std::string prefix, 
-		std::string streamName);
+    boost::shared_ptr<ndnlog::new_api::Logger> producerLogger(std::string streamName);
+    boost::shared_ptr<ndnlog::new_api::Logger> consumerLogger(std::string prefix,
+                                                              std::string streamName);
 };
 
 #endif

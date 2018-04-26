@@ -1,4 +1,4 @@
-// 
+//
 // precise-generator.cpp
 //
 //  Created by Peter Gusev on 19 March 2016.
@@ -56,67 +56,67 @@ using namespace std::placeholders;
 
 class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGeneratorImpl>
 {
-public:
-    PreciseGeneratorImpl(boost::asio::io_service& io, const double& ratePerSec,
-                         const PreciseGenerator::Task& task);
-    
+  public:
+    PreciseGeneratorImpl(boost::asio::io_service &io, const double &ratePerSec,
+                         const PreciseGenerator::Task &task);
+
     void start();
     void stop();
-    bool isRunning(){ return isRunning_; }
+    bool isRunning() { return isRunning_; }
     long long getFireCount() { return fireCount_; }
-    double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); }// - meanTaskTimeNs_); }
+    double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); } // - meanTaskTimeNs_); }
     double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
-    
+
     boost::recursive_mutex setupMutex_;
     boost::atomic<bool> isRunning_;
     long long fireCount_;
     double meanProcOverheadNs_, meanTaskTimeNs_;
     double rate_;
     PreciseGenerator::Task task_;
-    boost::asio::io_service& io_;
+    boost::asio::io_service &io_;
     timer_type timer_;
-    
+
     time_point_type iterStart_;
     duration_type lagNs_, lastTaskDurationNs_;
     ms lastIterIntervalMs_;
-    
+
     void setupTimer();
-    void onFire(const boost::system::error_code& code);
-    ms getAdjustedInterval(const time_point_type& lastIterStart,
-                           const time_point_type& thisIterStart,
+    void onFire(const boost::system::error_code &code);
+    ms getAdjustedInterval(const time_point_type &lastIterStart,
+                           const time_point_type &thisIterStart,
                            const ms lastIterIntervalMs,
                            const ns lastTaskDurationNs,
-                           const double& rate);
+                           const double &rate);
 };
 
 //******************************************************************************
-PreciseGenerator::PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec,
-                                   const Task& task):
-pimpl_(boost::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)){}
-PreciseGenerator::~PreciseGenerator(){ pimpl_->stop(); }
+PreciseGenerator::PreciseGenerator(boost::asio::io_service &io, const double &ratePerSec,
+                                   const Task &task) : pimpl_(boost::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)) {}
+PreciseGenerator::~PreciseGenerator() { pimpl_->stop(); }
 
-void PreciseGenerator::start(){ pimpl_->start(); }
-void PreciseGenerator::stop(){ pimpl_->stop(); }
-bool PreciseGenerator::isRunning(){ return pimpl_->isRunning(); }
-long long PreciseGenerator::getFireCount(){ return pimpl_->getFireCount(); }
-double PreciseGenerator::getMeanProcessingOverheadNs(){ return pimpl_->getMeanProcessingOverheadNs(); }
-double PreciseGenerator::getMeanTaskTimeNs(){ return pimpl_->getMeanTaskTimeNs(); }
+void PreciseGenerator::start() { pimpl_->start(); }
+void PreciseGenerator::stop() { pimpl_->stop(); }
+bool PreciseGenerator::isRunning() { return pimpl_->isRunning(); }
+long long PreciseGenerator::getFireCount() { return pimpl_->getFireCount(); }
+double PreciseGenerator::getMeanProcessingOverheadNs() { return pimpl_->getMeanProcessingOverheadNs(); }
+double PreciseGenerator::getMeanTaskTimeNs() { return pimpl_->getMeanTaskTimeNs(); }
 
 //******************************************************************************
-PreciseGeneratorImpl::PreciseGeneratorImpl(boost::asio::io_service& io, const double& ratePerSec,
-                                           const PreciseGenerator::Task& task):
-io_(io), timer_(io), rate_(ratePerSec), task_(task),
-lastIterIntervalMs_(0), meanProcOverheadNs_(0), meanTaskTimeNs_(0)
+PreciseGeneratorImpl::PreciseGeneratorImpl(boost::asio::io_service &io, const double &ratePerSec,
+                                           const PreciseGenerator::Task &task) : io_(io), timer_(io), rate_(ratePerSec), task_(task),
+                                                                                 lastIterIntervalMs_(0), meanProcOverheadNs_(0), meanTaskTimeNs_(0)
 #ifdef STEADY_TIMER
-, lagNs_(0), lastTaskDurationNs_(0)
+                                                                                 ,
+                                                                                 lagNs_(0), lastTaskDurationNs_(0)
 #endif
-{}
+{
+}
 
 void PreciseGeneratorImpl::start()
 {
-	fireCount_ = 0;
-	isRunning_ = true;
-	setupTimer();
+    fireCount_ = 0;
+    isRunning_ = true;
+    setupTimer();
 }
 
 void PreciseGeneratorImpl::stop()
@@ -131,90 +131,90 @@ void PreciseGeneratorImpl::stop()
 
 void PreciseGeneratorImpl::setupTimer()
 {
-	time_point_type lastIterStart = iterStart_;
-	iterStart_ = now_time();
-	ms interval = getAdjustedInterval(lastIterStart, iterStart_, 
-		lastIterIntervalMs_, lastTaskDurationNs_, rate_);
-	timer_.expires_from_now(interval);
-// #ifdef OS_DARWIN
-	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), _1));
-// #else
-// 	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), boost::arg<1>()));
-// #endif
-	lastIterIntervalMs_ = interval;
+    time_point_type lastIterStart = iterStart_;
+    iterStart_ = now_time();
+    ms interval = getAdjustedInterval(lastIterStart, iterStart_,
+                                      lastIterIntervalMs_, lastTaskDurationNs_, rate_);
+    timer_.expires_from_now(interval);
+    // #ifdef OS_DARWIN
+    timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), _1));
+    // #else
+    // 	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), boost::arg<1>()));
+    // #endif
+    lastIterIntervalMs_ = interval;
 }
 
-void PreciseGeneratorImpl::onFire(const boost::system::error_code& code)
+void PreciseGeneratorImpl::onFire(const boost::system::error_code &code)
 {
     if (!code)
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(setupMutex_);
-        
+
         if (isRunning_)
         {
             time_point_type tstart = now_time();
             task_();
             time_point_type tend = now_time();
             fireCount_++;
-            
-            lastTaskDurationNs_ = duration_cast_ns((tend-tstart));
-            meanTaskTimeNs_ += (double)(duration_cast_double_ns(lastTaskDurationNs_) - meanTaskTimeNs_)/(double)fireCount_;
-            
+
+            lastTaskDurationNs_ = duration_cast_ns((tend - tstart));
+            meanTaskTimeNs_ += (double)(duration_cast_double_ns(lastTaskDurationNs_) - meanTaskTimeNs_) / (double)fireCount_;
+
             setupTimer();
         }
     }
 }
 
-ms PreciseGeneratorImpl::getAdjustedInterval(const time_point_type& lastIterStart,
-	const time_point_type& thisIterStart,
-	const ms lastIterIntervalMs,
-	const ns lastTaskDurationNs,
-	const double& rate)
+ms PreciseGeneratorImpl::getAdjustedInterval(const time_point_type &lastIterStart,
+                                             const time_point_type &thisIterStart,
+                                             const ms lastIterIntervalMs,
+                                             const ns lastTaskDurationNs,
+                                             const double &rate)
 {
-	ns originalInterval = ns((int)(1000000000./rate));
-	ms adjustedIntervalMs = duration_cast_ms(originalInterval);
-	ms originalIntervalMs = duration_cast_ms(originalInterval);
-	ns diff = duration_cast_ns(originalInterval - duration_cast_ns(duration_cast_ms((originalInterval))));
+    ns originalInterval = ns((int)(1000000000. / rate));
+    ms adjustedIntervalMs = duration_cast_ms(originalInterval);
+    ms originalIntervalMs = duration_cast_ms(originalInterval);
+    ns diff = duration_cast_ns(originalInterval - duration_cast_ns(duration_cast_ms((originalInterval))));
 
-	lagNs_ -= diff;
-	
-	#ifdef DEBUG_PG
-	cout << "remainder " << print_duration_ns(diff) << endl;
-	#endif
+    lagNs_ -= diff;
 
-	if (!is_time_point_zero(lastIterStart))
-	{
-		ns lastIterDurationNs = duration_cast_ns((thisIterStart-lastIterStart));
-		ns iterLag = duration_cast_ns(lastIterDurationNs-lastIterIntervalMs);
+#ifdef DEBUG_PG
+    cout << "remainder " << print_duration_ns(diff) << endl;
+#endif
 
-		lagNs_ += iterLag;
-		meanProcOverheadNs_ += (double)(duration_cast_double_ns(iterLag-lastTaskDurationNs) - meanProcOverheadNs_)/(double)fireCount_;
+    if (!is_time_point_zero(lastIterStart))
+    {
+        ns lastIterDurationNs = duration_cast_ns((thisIterStart - lastIterStart));
+        ns iterLag = duration_cast_ns(lastIterDurationNs - lastIterIntervalMs);
 
-		#ifdef DEBUG_PG
-		cout << "last iter time " << print_duration_ns(lastIterDurationNs) 
-			<< " (should " << print_duration_ns(lastIterIntervalMs) << ", "
-			<< print_duration_ns(iterLag) << " lag, " 
-			<< print_duration_ns(lastTaskDurationNs) << " task)" << endl;
-		cout << "accum lag " << print_duration_ns(lagNs_) << endl;
-		#endif
+        lagNs_ += iterLag;
+        meanProcOverheadNs_ += (double)(duration_cast_double_ns(iterLag - lastTaskDurationNs) - meanProcOverheadNs_) / (double)fireCount_;
 
-		if (lagNs_ > originalIntervalMs)
-		{
-			lagNs_ -= originalIntervalMs;
-			adjustedIntervalMs = ms(0);
-		
-		}
-		else if (abs(duration_count(duration_cast_ms(lagNs_))) > 0)
-		{
-			adjustedIntervalMs = duration_cast_ms(originalIntervalMs - duration_cast_ms(lagNs_));
-			lagNs_ -= duration_cast_ms(lagNs_);
-		}
-	}
+#ifdef DEBUG_PG
+        cout << "last iter time " << print_duration_ns(lastIterDurationNs)
+             << " (should " << print_duration_ns(lastIterIntervalMs) << ", "
+             << print_duration_ns(iterLag) << " lag, "
+             << print_duration_ns(lastTaskDurationNs) << " task)" << endl;
+        cout << "accum lag " << print_duration_ns(lagNs_) << endl;
+#endif
 
-	#ifdef DEBUG_PG
-	cout << "interval " << print_duration_ns(adjustedIntervalMs) << endl;
-	cout << "adjusted lag " << print_duration_ns(lagNs_) << endl << "-" << endl;
-	#endif
+        if (lagNs_ > originalIntervalMs)
+        {
+            lagNs_ -= originalIntervalMs;
+            adjustedIntervalMs = ms(0);
+        }
+        else if (abs(duration_count(duration_cast_ms(lagNs_))) > 0)
+        {
+            adjustedIntervalMs = duration_cast_ms(originalIntervalMs - duration_cast_ms(lagNs_));
+            lagNs_ -= duration_cast_ms(lagNs_);
+        }
+    }
 
-	return adjustedIntervalMs;
+#ifdef DEBUG_PG
+    cout << "interval " << print_duration_ns(adjustedIntervalMs) << endl;
+    cout << "adjusted lag " << print_duration_ns(lagNs_) << endl
+         << "-" << endl;
+#endif
+
+    return adjustedIntervalMs;
 }
