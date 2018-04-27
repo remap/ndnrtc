@@ -287,7 +287,8 @@ void RemoteStreamImpl::stopFetching()
 void RemoteStreamImpl::addValidationInfo(const std::vector<ValidationErrorInfo> &validationInfo)
 {
     for (auto &vi : validationInfo)
-        LogWarnC << "failed to verify data packet " << vi.getData()->getName() << std::endl;
+        LogWarnC << "failed to verify data packet " << vi.getData()->getName()
+                 << ", reason: " << vi.getReason() << std::endl;
     std::copy(validationInfo.begin(), validationInfo.end(), std::back_inserter(validationInfo_));
 }
 

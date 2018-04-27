@@ -37,7 +37,7 @@ struct Args
 
 int run(const struct Args &);
 void registerPrefix(boost::shared_ptr<Face> &, const KeyChainManager &);
-void publishCertificate(boost::shared_ptr<Face> &, const KeyChainManager &);
+void publishCertificate(boost::shared_ptr<Face> &, KeyChainManager &);
 
 void handler(int sig)
 {
@@ -241,10 +241,18 @@ void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyCha
         throw std::runtime_error("Prefix registration failed");
 }
 
-void publishCertificate(boost::shared_ptr<Face> &face, const KeyChainManager &keyManager)
+void publishCertificate(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
 {
     static MemoryContentCache cache(face.get());
+    Name filter;
 
-    cache.setInterestFilter(keyManager.instanceCertificate()->getName().getPrefix(keyManager.instanceCertificate()->getName().size() - 1));
+    if (keyManager.defaultKeyChain()->getIsSecurityV1())
+        filter = keyManager.instanceCertificate()->getName().getPrefix(keyManager.instanceCertificate()->getName().size() - 1);
+    else
+        filter = keyManager.instanceCertificate()->getName().getPrefix(keyManager.instanceCertificate()->getName().size() - 2);
+
+    LogTrace("") << "Setting interest filter for instance certificate: " << filter << std::endl;
+
+    cache.setInterestFilter(filter);
     cache.add(*(keyManager.instanceCertificate().get()));
 }
