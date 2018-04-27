@@ -48,6 +48,8 @@ namespace ndnrtc {
                 VerifyFailure,                  // SampleValidator
                 LatencyControlStable,           // LatencyControl
                 LatencyControlCommand,          // LatencyControl
+                FrameFetchAvgDelta,             // Buffer
+                FrameFetchAvgKey,               // Buffer
                 
                 // playout
                 LastPlayedNo,                   // VideoPlayout
