@@ -42,7 +42,7 @@ RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git \
     && git clone --recursive https://github.com/remap/ndnrtc.git \
     && cd /ndnrtc/cpp && mkdir -p build/share \
     && git checkout $BRANCH \
-    && echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' > build/share/config.site \
+    && echo 'CPPFLAGS="-g -O2 -DWEBRTC_POSIX" CXXFLAGS="-g -O2 -DWEBRTC_POSIX"' > build/share/config.site \
     && echo OPENFECDIR=/openfec_v1.4.2 >> build/share/config.site \
     && echo WEBRTCDIR=/webrtc-checkout/src >> build/share/config.site \
     && ./configure --prefix=$(pwd)/build \
