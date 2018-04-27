@@ -42,6 +42,8 @@ map_list_of
 ( Indicator::VerifyFailure, "Verify failure samples" )
 ( Indicator::LatencyControlStable, "Latency control stable state" )
 ( Indicator::LatencyControlCommand, "Latency control command" )
+( Indicator::FrameFetchAvgDelta, "Average time for fetching delta frames" )
+( Indicator::FrameFetchAvgKey, "Average time for fetching key frames" )
 // playout
 ( Indicator::LastPlayedNo, "Playback #" )
 ( Indicator::LastPlayedDeltaNo, "Last delta #" ) 
@@ -118,6 +120,8 @@ map_list_of
 ( Indicator::VerifyFailure, 0. )
 ( Indicator::LatencyControlStable, 0. )
 ( Indicator::LatencyControlCommand, 0. )
+( Indicator::FrameFetchAvgDelta, 0. )
+( Indicator::FrameFetchAvgKey, 0. )
 // playout
 ( Indicator::LastPlayedNo, 0. )
 ( Indicator::LastPlayedDeltaNo, 0. )
@@ -197,6 +201,8 @@ boost::assign::map_list_of
 (Indicator::VerifyFailure, "verifyFailure")
 (Indicator::LatencyControlStable, "latCtrlStable" )
 (Indicator::LatencyControlCommand, "latCtrlCmd" )
+( Indicator::FrameFetchAvgDelta, "fetchDeltaAvg" )
+( Indicator::FrameFetchAvgKey, "fetchKeyAvg" )
 // playout
 (Indicator::LastPlayedNo, "playNo")
 (Indicator::LastPlayedDeltaNo, "deltaNo")
