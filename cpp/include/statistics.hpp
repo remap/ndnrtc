@@ -79,6 +79,8 @@ namespace ndnrtc {
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController
                 State,                          // PipelineControlStateMachine
+                DoubleRtFrames,                 // Pipeliner
+                DoubleRtFramesKey,              // Pipeliner
                 
                 // DRD estimator
                 DrdOriginalEstimation,          // BufferControl
