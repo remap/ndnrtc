@@ -147,13 +147,13 @@ cd ndn-cpp && mkdir -p build/share
 <details>
   <summary>&emsp;<i>// additional step for macOS >= 10.11 (expand for more info)</i></summary>
   
-   > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `CFLAGS`, `CXXFLAGS` and `LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
+   > Depending on your system configuration, you may need to add header and library search paths to your NDN-CPP configuration using `ADD_CFLAGS`, `ADD_CXXFLAGS` and `ADD_LDFLAGS` (create [`config.site`](https://www.gnu.org/software/automake/manual/html_node/config_002esite.html) for that). 
    > For macOS 10.11 (El Capitan), `openssl` library is no longer a default, thus one needs to provide paths, such as:
    >
    ```Shell
-   echo CFLAGS="-I/usr/local/opt/openssl/include" > build/share/config.site
-   echo CXXFLAGS="-I/usr/local/opt/openssl/include" >> build/share/config.site
-   echo LDFLAGS="-L/usr/local/opt/openssl/lib" >> build/share/config.site
+   echo ADD_CFLAGS="-I/usr/local/opt/openssl/include" > build/share/config.site
+   echo ADD_CXXFLAGS="-I/usr/local/opt/openssl/include" >> build/share/config.site
+   echo ADD_LDFLAGS="-L/usr/local/opt/openssl/lib" >> build/share/config.site
    ```
 </details>
 
@@ -195,7 +195,7 @@ make
 cd $NDNRTC_ENV
 git clone --recursive https://github.com/remap/ndnrtc
 cd ndnrtc/cpp && mkdir -p build/share
-echo 'CPPFLAGS="-DWEBRTC_POSIX" CXXFLAGS="-DWEBRTC_POSIX"' >  build/share/config.site
+echo 'CPPFLAGS="-g -O2 -DWEBRTC_POSIX" CXXFLAGS="-g -O2 -DWEBRTC_POSIX"' >  build/share/config.site
 echo NDNCPPDIR=`pwd`/../../ndn-cpp/build/include >> build/share/config.site
 echo NDNCPPLIB=`pwd`/../../ndn-cpp/build/lib >> build/share/config.site
 echo OPENFECDIR=`pwd`/../../openfec_v1.4.2 >> build/share/config.site
