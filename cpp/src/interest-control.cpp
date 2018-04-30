@@ -17,7 +17,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-const unsigned int InterestControl::MinPipelineSize = 8;
+const unsigned int InterestControl::MinPipelineSize = 3;
 
 void InterestControl::StrategyDefault::getLimits(double rate,
                                                  boost::shared_ptr<DrdEstimator> drdEstimator,
@@ -42,7 +42,7 @@ int InterestControl::StrategyDefault::calculateDemand(double rate, double drdAvg
     {
         double d = drdAvgValue + DEVIATION_ALPHA * drdDeviation;
         double targetSamplePeriod = (rate > 0 ? 1000. / rate : 30);
-        interestDemand = (int)(ceil(d / targetSamplePeriod));
+        interestDemand = (int)(ceil(d / targetSamplePeriod + 0.5));
     }
 
     return interestDemand;

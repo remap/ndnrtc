@@ -20,6 +20,20 @@ using namespace estimators;
 
 #define DEFAULT_TARGET_QUEUE_SIZE 150
 
+#define STABILITY_ESTIMATOR_LOW_SENSITIVITY 0.3
+#define STABILITY_ESTIMATOR_MID_SENSITIVITY 0.18
+#define STABILITY_ESTIMATOR_HI_SENSITIVITY  0.1
+
+#define STABILITY_ESTIMATOR_LOW (boost::make_shared<StabilityEstimator>(10, 4, \
+                                 STABILITY_ESTIMATOR_LOW_SENSITIVITY, \
+                                 (1-STABILITY_ESTIMATOR_LOW_SENSITIVITY)))
+#define STABILITY_ESTIMATOR_MID (boost::make_shared<StabilityEstimator>(10, 4, \
+                                 STABILITY_ESTIMATOR_MID_SENSITIVITY, \
+                                 (1-STABILITY_ESTIMATOR_MID_SENSITIVITY)))
+#define STABILITY_ESTIMATOR_HI (boost::make_shared<StabilityEstimator>(10, 4, \
+                                 STABILITY_ESTIMATOR_HI_SENSITIVITY, \
+                                 (1-STABILITY_ESTIMATOR_HI_SENSITIVITY)))
+
 //******************************************************************************
 namespace ndnrtc {
 	class StabilityEstimator : public ndnlog::new_api::ILoggingObject
@@ -240,24 +254,23 @@ LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average&
 }
 
 //******************************************************************************
-LatencyControl::LatencyControl(unsigned int timeoutWindowMs, 
-    const boost::shared_ptr<const DrdEstimator>& drd,
-    const boost::shared_ptr<statistics::StatisticsStorage>& storage):
-stabilityEstimator_(boost::make_shared<StabilityEstimator>(10, 4, 0.3, 0.7)),
-//stabilityEstimator_(30, 4, 0.1, 0.95), // high
-//stabilityEstimator_(3, 4, 0.6, 0.5), // low
-queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
-// queueSizeStrategy_(boos::make_shared<DefaultStrategy>(10)), // conservative
-drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),
-timestamp_(0),
-waitForChange_(false), waitForStability_(false),
-timeoutWindowMs_(timeoutWindowMs),
-drd_(drd),
-sstorage_(storage),
-interArrival_(Average(boost::make_shared<estimators::SampleWindow>(10))),
-targetRate_(30.),
-observer_(nullptr),
-currentCommand_(KeepPipeline)
+LatencyControl::LatencyControl(unsigned int timeoutWindowMs,
+                               const boost::shared_ptr<const DrdEstimator> &drd,
+                               const boost::shared_ptr<statistics::StatisticsStorage> &storage) 
+    :
+    stabilityEstimator_(STABILITY_ESTIMATOR_MID),
+    queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
+    // queueSizeStrategy_(boos::make_shared<DefaultStrategy>(10)), // conservative
+    drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),
+    timestamp_(0),
+    waitForChange_(false), waitForStability_(false),
+    timeoutWindowMs_(timeoutWindowMs),
+    drd_(drd),
+    sstorage_(storage),
+    interArrival_(Average(boost::make_shared<estimators::SampleWindow>(10))),
+    targetRate_(30.),
+    observer_(nullptr),
+    currentCommand_(KeepPipeline)
 {
     description_ = "latency-control";
     (*sstorage_)[Indicator::BufferTargetSize] = DEFAULT_TARGET_QUEUE_SIZE;
