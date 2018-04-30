@@ -17,7 +17,7 @@
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-const unsigned int InterestControl::MinPipelineSize = 6;
+const unsigned int InterestControl::MinPipelineSize = 8;
 
 void InterestControl::StrategyDefault::getLimits(double rate,
                                                  boost::shared_ptr<DrdEstimator> drdEstimator,
