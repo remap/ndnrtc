@@ -336,7 +336,8 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
 
             timestamp_ = now;
             waitForStability_ = false;
-            waitForChange_ = true;
+            // this needs to be set only if pipeline was actually changed. @see pipelineChanged()
+            // waitForChange_ = true; 
             command = DecreasePipeline;
         }
     }
@@ -351,13 +352,13 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
         command = IncreasePipeline;
     }
 
+    currentCommand_ = command;
+
     {
         boost::lock_guard<boost::mutex> scopedLock(mutex_);
         if (observer_ && observer_->needPipelineAdjustment(command))
             pipelineChanged();
     }
-
-    currentCommand_ = command;
 
     (*sstorage_)[Indicator::Darr] = stabilityEstimator_->getDarrAverage().latestValue();
     (*sstorage_)[Indicator::LatencyControlStable] = stabilityEstimator_->isStable();
@@ -398,5 +399,6 @@ void LatencyControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger
 #pragma mark - private
 void LatencyControl::pipelineChanged()
 {
+    waitForChange_ = (currentCommand_ == DecreasePipeline);
     drdChangeEstimator_->flush();
 }
