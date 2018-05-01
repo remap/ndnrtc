@@ -91,27 +91,28 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
 
             LogTraceC << "gop " << gopCount_ << std::endl;
         }
-
-        if (currentPlayNo_ >= 0 &&
-            (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
+        else
         {
-            if (!gopIsValid_)
-                LogWarnC << "skip " << frameStr << ". invalid GOP" << std::endl;
-            else
-                LogWarnC << "skip " << frameStr
-                    << " (expected " << currentPlayNo_+1 << "p)"
-                    << std::endl;
-
-            gopIsValid_ = false;
-
+            if (currentPlayNo_ >= 0 &&
+                (hdr.playbackNo_ != currentPlayNo_ + 1 || !gopIsValid_))
             {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-                for (auto o:observers_) 
-                    ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
-                        !slot->getNameInfo().isDelta_);
+                if (!gopIsValid_)
+                    LogWarnC << "skip " << frameStr << ". invalid GOP" << std::endl;
+                else
+                    LogWarnC << "skip " << frameStr
+                             << " (expected " << currentPlayNo_ + 1 << "p)"
+                             << std::endl;
+
+                gopIsValid_ = false;
+
+                {
+                    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                    for (auto o : observers_)
+                        ((IVideoPlayoutObserver *)o)->frameSkipped(hdr.playbackNo_, !slot->getNameInfo().isDelta_);
+                }
+
+                (*statStorage_)[Indicator::SkippedNum]++;
             }
-            
-            (*statStorage_)[Indicator::SkippedNum]++;
         }
 
         currentPlayNo_ = hdr.playbackNo_;
