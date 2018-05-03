@@ -314,7 +314,7 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
         {
             if (drdChangeEstimator_->hasChange())
             {
-                LogDebugC << "latest data. DRD changed ("
+                LogTraceC << "latest data. DRD changed ("
                           << drd_->getLatestUpdatedAverage().value() << "ms)"
                           << " wait for stabilization" << std::endl;
 
@@ -324,17 +324,15 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
             }
             else if (timeoutFired)
             {
-                LogDebugC << "latest data. DRD change timed out. cmd: decrease" << std::endl;
+                LogTraceC << "latest data. DRD change timed out. cmd: decrease" << std::endl;
 
-                timestamp_ = now;
                 command = DecreasePipeline;
             }
         }
         else
         {
-            LogDebugC << "latest data. cmd: decrease" << std::endl;
+            LogTraceC << "latest data. cmd: decrease" << std::endl;
 
-            timestamp_ = now;
             waitForStability_ = false;
             // this needs to be set only if pipeline was actually changed. @see pipelineChanged()
             // waitForChange_ = true; 
@@ -343,21 +341,21 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
     }
     else // if unstable and we're not waiting for anything - increase
         if (timeoutFired)
-    {
-        LogDebugC << "stale data. cmd: increase" << std::endl;
+        {
+            LogTraceC << "stale data. cmd: increase" << std::endl;
 
-        timestamp_ = now;
-        waitForStability_ = true;
-        waitForChange_ = false;
-        command = IncreasePipeline;
-    }
+            timestamp_ = now;
+            waitForStability_ = true;
+            waitForChange_ = false;
+            command = IncreasePipeline;
+        }
 
     currentCommand_ = command;
 
     {
         boost::lock_guard<boost::mutex> scopedLock(mutex_);
         if (observer_ && observer_->needPipelineAdjustment(command))
-            pipelineChanged();
+            pipelineChanged(now);
     }
 
     (*sstorage_)[Indicator::Darr] = stabilityEstimator_->getDarrAverage().latestValue();
@@ -397,8 +395,19 @@ void LatencyControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger
 }
 
 #pragma mark - private
-void LatencyControl::pipelineChanged()
+void LatencyControl::pipelineChanged(int64_t now)
 {
-    waitForChange_ = (currentCommand_ == DecreasePipeline);
+    if (currentCommand_ == DecreasePipeline)
+    {
+        timestamp_ = now;
+        waitForChange_ = (currentCommand_ == DecreasePipeline);
+    }
     drdChangeEstimator_->flush();
+
+    LogDebugC << "pipeline changed. cmd: "
+              << (currentCommand_ == DecreasePipeline ? "decrease" : 
+                                    (currentCommand_ == IncreasePipeline ? "increase" : "keep"))
+              << " wait for DRD change: " << (waitForChange_ ? "YES" : "NO")
+              << " wait for stabilization: " << (waitForStability_ ? "YES" : "NO") 
+              << std::endl;
 }

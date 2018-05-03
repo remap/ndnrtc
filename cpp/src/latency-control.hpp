@@ -127,7 +127,7 @@ class LatencyControl : public NdnRtcComponent,
     PipelineAdjust currentCommand_;
     boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
-    void pipelineChanged();
+    void pipelineChanged(int64_t now);
 };
 
 class ILatencyControlObserver
