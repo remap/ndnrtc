@@ -48,6 +48,19 @@ TEST(TestDrdEstimator, TestDefault)
 	EXPECT_EQ(150, drd.getCachedEstimation());
 }
 
+TEST(TestDrdEstimator, TestSetInitialValue)
+{
+    DrdEstimator drd;
+
+    EXPECT_EQ(150, drd.getOriginalEstimation());
+    EXPECT_EQ(150, drd.getCachedEstimation());
+
+    drd.setInitialEstimation(180);
+
+    EXPECT_EQ(180, drd.getOriginalEstimation());
+    EXPECT_EQ(180, drd.getCachedEstimation());
+}
+
 TEST(TestDrdEstimator, TestDrdDeviation)
 {
 	boost::asio::io_service io;

@@ -61,6 +61,7 @@ class PipelineControl : public NdnRtcComponent,
     void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
     static PipelineControl defaultPipelineControl(const ndn::Name &threadPrefix,
+                                                  const boost::shared_ptr<DrdEstimator> drdEstimator,
                                                   const boost::shared_ptr<IBuffer> buffer,
                                                   const boost::shared_ptr<IPipeliner> pipeliner,
                                                   const boost::shared_ptr<IInterestControl> interestControl,
@@ -69,6 +70,7 @@ class PipelineControl : public NdnRtcComponent,
                                                   const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                   const boost::shared_ptr<statistics::StatisticsStorage> &storage);
     static PipelineControl videoPipelineControl(const ndn::Name &threadPrefix,
+                                                const boost::shared_ptr<DrdEstimator> drdEstimator,
                                                 const boost::shared_ptr<IBuffer> buffer,
                                                 const boost::shared_ptr<IPipeliner> pipeliner,
                                                 const boost::shared_ptr<IInterestControl> interestControl,

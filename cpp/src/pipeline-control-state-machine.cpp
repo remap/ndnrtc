@@ -42,7 +42,7 @@ template <typename MetadataClass>
 class ReceivedMetadataProcessing
 {
   public:
-    ReceivedMetadataProcessing() : metadataRequestedMs_(0), metadataReceivedMs_(0) {}
+    ReceivedMetadataProcessing() {}
 
   protected:
     ENABLE_IF(MetadataClass, VideoThreadMeta)
@@ -54,10 +54,10 @@ class ReceivedMetadataProcessing
             unsigned char gopPos = metadata->getGopPos();
             unsigned int gopSize = metadata->getCoderParams().gop_;
             PacketNumber deltaToFetch, keyToFetch;
-            double metadataDrd = (double)getMetadataDrd();
+            double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
             unsigned int pipelineInitial =
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
-                                                                              metadataDrd, metadataDrd * 0.05);
+                                                                              initialDrd, initialDrd * 0.05);
 
             LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
                 << "received metadata. delta seq " << metadata->getSeqNo().first 
@@ -65,7 +65,7 @@ class ReceivedMetadataProcessing
                 << " gop pos " << (int)gopPos
                 << " gop size " << gopSize
                 << " rate " << metadata->getRate()
-                << " drd " << metadataDrd
+                << " drd " << initialDrd
                 << std::endl;
 
             // add some smart logic about what to fetch next...
@@ -130,10 +130,10 @@ class ReceivedMetadataProcessing
         if (metadata)
         {
             PacketNumber bundleNo = metadata->getBundleNo();
-            double metadataDrd = (double)getMetadataDrd();
+            double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
             unsigned int pipelineInitial =
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
-                                                                              metadataDrd, metadataDrd * 0.05);
+                                                                              initialDrd, initialDrd * 0.05);
 
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
@@ -159,10 +159,6 @@ class ReceivedMetadataProcessing
     }
 
   protected:
-    void markMetadataRequested() { metadataRequestedMs_ = clock::millisecondTimestamp(); }
-    void markMetadataReceived() { metadataReceivedMs_ = clock::millisecondTimestamp(); }
-    int64_t getMetadataDrd() { return (metadataReceivedMs_ - metadataRequestedMs_); }
-
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     PacketNumber getStartOffSequenceNumber() { return startOffSeqNums_.first; }
     ENABLE_IF(MetadataClass, AudioThreadMeta)
@@ -174,7 +170,6 @@ class ReceivedMetadataProcessing
     std::pair<PacketNumber, PacketNumber> getBootstrapSequenceNumber() { return bootstrapSeqNums_; }
 
   private:
-    int64_t metadataRequestedMs_, metadataReceivedMs_;
     std::pair<PacketNumber, PacketNumber> bootstrapSeqNums_;
     std::pair<PacketNumber, PacketNumber> startOffSeqNums_;
 };
@@ -264,15 +259,12 @@ class BootstrappingT : public PipelineControlState,
 
     void askMetadata()
     {
-        ReceivedMetadataProcessing<MetadataClass>::markMetadataRequested();
         ctrl_->pipeliner_->setNeedMetadata();
         ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
     }
 
     std::string receivedMetadata(const boost::shared_ptr<const EventSegment> &ev)
     {
-        ReceivedMetadataProcessing<MetadataClass>::markMetadataReceived();
-
         metadata_ = ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
         ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_);
 

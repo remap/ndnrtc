@@ -74,6 +74,7 @@ class RemoteStreamImpl : public NdnRtcComponent
     MediaStreamParams::MediaStreamType type_;
     boost::asio::io_service &io_;
     bool needMeta_, isRunning_, cuedToRun_;
+    int64_t metadataRequestedMs_;
     boost::shared_ptr<ndn::Face> face_;
     boost::shared_ptr<ndn::KeyChain> keyChain_;
     std::string streamPrefix_, threadName_;
@@ -85,6 +86,7 @@ class RemoteStreamImpl : public NdnRtcComponent
     std::map<std::string, boost::shared_ptr<NetworkData>> threadsMeta_;
 
     boost::shared_ptr<IBuffer> buffer_;
+    boost::shared_ptr<DrdEstimator> drdEstimator_;
     boost::shared_ptr<SegmentController> segmentController_;
     boost::shared_ptr<PipelineControl> pipelineControl_;
     boost::shared_ptr<BufferControl> bufferControl_;
@@ -100,7 +102,7 @@ class RemoteStreamImpl : public NdnRtcComponent
 
     std::vector<ValidationErrorInfo> validationInfo_;
 
-    void fetchThreadMeta(const std::string &threadName);
+    void fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs);
     void streamMetaFetched(NetworkData &);
     void threadMetaFetched(const std::string &thread, NetworkData &);
     virtual void initiateFetching();

@@ -43,37 +43,37 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
       keyChain_(keyChain),
       streamPrefix_(streamPrefix),
       needMeta_(true), isRunning_(false), cuedToRun_(false),
+      metadataRequestedMs_(0),
       metaFetcher_(make_shared<MetaFetcher>()),
-      sstorage_(StatisticsStorage::createConsumerStatistics())
+      sstorage_(StatisticsStorage::createConsumerStatistics()),
+      drdEstimator_(make_shared<DrdEstimator>())
 {
     assert(face.get());
     assert(keyChain.get());
 
     description_ = "remote-stream";
 
-    shared_ptr<DrdEstimator> drdEstimator(make_shared<DrdEstimator>());
-
     segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
     buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
     playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
                                                 dynamic_pointer_cast<Buffer>(buffer_));
-    rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator);
+    rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator_);
     buffer_->attach(rtxController_.get());
     // playout and playout-control created in subclasses
 
     interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
     sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
-    bufferControl_ = make_shared<BufferControl>(drdEstimator, buffer_, sstorage_);
-    latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator, sstorage_);
-    interestControl_ = make_shared<InterestControl>(drdEstimator, sstorage_);
+    bufferControl_ = make_shared<BufferControl>(drdEstimator_, buffer_, sstorage_);
+    latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator_, sstorage_);
+    interestControl_ = make_shared<InterestControl>(drdEstimator_, sstorage_);
 
     // pipeliner and pipeline control created in subclasses
 
     segmentController_->attach(sampleEstimator_.get());
     segmentController_->attach(bufferControl_.get());
 
-    drdEstimator->attach((InterestControl *)interestControl_.get());
-    drdEstimator->attach((LatencyControl *)latencyControl_.get());
+    drdEstimator_->attach((InterestControl *)interestControl_.get());
+    drdEstimator_->attach((LatencyControl *)latencyControl_.get());
 
     bufferControl_->attach((InterestControl *)interestControl_.get());
     bufferControl_->attach((LatencyControl *)latencyControl_.get());
@@ -207,28 +207,34 @@ void RemoteStreamImpl::streamMetaFetched(NetworkData &meta)
 
     shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
     std::stringstream ss;
+    int64_t metadataRequestedMs = clock::millisecondTimestamp();
+
     for (auto &t : streamMeta_->getThreads())
     {
-        fetchThreadMeta(t);
+        fetchThreadMeta(t, metadataRequestedMs);
         ss << t << " ";
     }
     LogInfoC << "received stream meta info. "
              << streamMeta_->getThreads().size() << " thread(s): " << ss.str() << std::endl;
 }
 
-void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName)
+void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs)
 {
     shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
     metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(threadName).append(NameComponents::NameComponentMeta),
-                        [threadName, me, this](NetworkData &meta,
+                        [threadName, me, metadataRequestedMs, this](NetworkData &meta,
                                                const std::vector<ValidationErrorInfo> &validationInfo) {
+                            int64_t metadataRtt = clock::millisecondTimestamp() - metadataRequestedMs;
+                            // if (metadataRtt > drdEstimator_->getOriginalEstimation()) // this is to be conservative
+                                drdEstimator_->setInitialEstimation(metadataRtt);
+
                             me->addValidationInfo(validationInfo);
                             me->threadMetaFetched(threadName, meta);
                         },
                         [me, threadName, this](const std::string &msg) {
                             LogWarnC << "error fetching thread meta: " << msg << std::endl;
                             if (needMeta_ && !metaFetcher_->hasPendingRequest())
-                                me->fetchThreadMeta(threadName);
+                                me->fetchThreadMeta(threadName, clock::millisecondTimestamp());
                         });
 }
 

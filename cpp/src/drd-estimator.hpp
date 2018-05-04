@@ -29,6 +29,7 @@ class DrdEstimator
   public:
     DrdEstimator(unsigned int initialEstimationMs = 150, unsigned int windowMs = 200);
 
+    void setInitialEstimation(double initial) { initialEstimation_ = initial; }
     void newValue(double drd, bool isOriginal, double dGen);
     double getCachedEstimation() const;
     double getOriginalEstimation() const;
