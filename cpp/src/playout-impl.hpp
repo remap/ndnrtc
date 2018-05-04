@@ -35,7 +35,8 @@ namespace ndnrtc {
         
         void attach(IPlayoutObserver* observer);
         void detach(IPlayoutObserver* observer);
-        
+
+        void addAdjustment(int64_t adjMs) { delayAdjustment_ += adjMs; }
     protected:
         PlayoutImpl(const PlayoutImpl&) = delete;
         

@@ -44,9 +44,10 @@ RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service &io,
 
     pipeliner_ = make_shared<Pipeliner>(pps, boost::make_shared<Pipeliner::VideoNameScheme>());
     playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
-    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, rtxController_, 150);
+    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, rtxController_);
     playbackQueue_->attach(playoutControl_.get());
     latencyControl_->setPlayoutControl(playoutControl_);
+    drdEstimator_->attach(playoutControl_.get());
 
     validator_ = boost::make_shared<ManifestValidator>(face, keyChain, sstorage_);
     buffer_->attach(validator_.get());

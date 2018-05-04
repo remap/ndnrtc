@@ -76,8 +76,8 @@ class LatencyControl : public NdnRtcComponent,
     ~LatencyControl();
 
     void onDrdUpdate();
-    void onCachedDrdUpdate() { /*ignored*/}
-    void onOriginalDrdUpdate() { /*ignored*/}
+    void onCachedDrdUpdate(double, double) { /*ignored*/}
+    void onOriginalDrdUpdate(double, double) { /*ignored*/}
 
     void targetRateUpdate(double rate) { targetRate_ = rate; }
     void sampleArrived(const PacketNumber &playbackNo);

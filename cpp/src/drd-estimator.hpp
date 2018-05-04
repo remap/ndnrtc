@@ -56,8 +56,8 @@ class IDrdEstimatorObserver
 {
   public:
     virtual void onDrdUpdate() = 0;
-    virtual void onCachedDrdUpdate() = 0;
-    virtual void onOriginalDrdUpdate() = 0;
+    virtual void onCachedDrdUpdate(double, double) = 0;
+    virtual void onOriginalDrdUpdate(double, double) = 0;
 };
 }
 

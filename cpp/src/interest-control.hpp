@@ -181,8 +181,8 @@ class InterestControl : public NdnRtcComponent,
 
     // IDrdEstimatorObserver
     void onDrdUpdate() override;
-    void onCachedDrdUpdate() override;
-    void onOriginalDrdUpdate() override;
+    void onCachedDrdUpdate(double, double) override;
+    void onOriginalDrdUpdate(double, double) override;
 
     // IBufferControlObserver
     void targetRateUpdate(double rate) override;

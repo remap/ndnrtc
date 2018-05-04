@@ -26,6 +26,7 @@ pimpl_(boost::make_shared<PlayoutImpl>(io, queue, statStorage)){}
 
 void Playout::start(unsigned int fastForwardMs) { pimpl_->start(fastForwardMs); }
 void Playout::stop() { pimpl_->stop(); }
+void Playout::addAdjustment(int64_t adjMs) { pimpl_->addAdjustment(adjMs); } 
 void Playout::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
 void Playout::setDescription(const std::string& desc) { pimpl_->setDescription(desc); }
 bool Playout::isRunning() const { return pimpl_->isRunning(); }

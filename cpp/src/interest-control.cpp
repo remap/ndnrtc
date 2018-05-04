@@ -164,12 +164,12 @@ void InterestControl::markLowerLimit(unsigned int lowerLimit)
     setLimits();
 }
 
-void InterestControl::onCachedDrdUpdate()
+void InterestControl::onCachedDrdUpdate(double, double)
 {
     /*ignored*/
 }
 
-void InterestControl::onOriginalDrdUpdate()
+void InterestControl::onOriginalDrdUpdate(double, double)
 {
     if (initialized_)
         setLimits();

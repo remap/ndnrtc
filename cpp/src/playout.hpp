@@ -34,6 +34,7 @@ namespace ndnrtc {
         virtual void start(unsigned int fastForwardMs = 0) = 0;
         virtual void stop() = 0;
         virtual bool isRunning() const = 0;
+        virtual void addAdjustment(int64_t) = 0;
     };
 
     /**
@@ -51,8 +52,9 @@ namespace ndnrtc {
             const boost::shared_ptr<StatStorage> statStorage = 
                 boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
 
-        virtual void start(unsigned int fastForwardMs = 0);
-        virtual void stop();
+        void start(unsigned int fastForwardMs = 0) override;
+        void stop() override;
+        void addAdjustment(int64_t adjMs) override;
 
         void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);

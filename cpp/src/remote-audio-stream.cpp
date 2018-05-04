@@ -76,9 +76,10 @@ void RemoteAudioStreamImpl::setupPlayout()
     playout_ = boost::make_shared<AudioPlayout>(io_, playbackQueue_, sstorage_,
                                                 WebrtcAudioChannel::fromString(meta.getCodec()));
     playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 
-                                                         rtxController_, 150);
+                                                         rtxController_);
     playbackQueue_->attach(playoutControl_.get());
     latencyControl_->setPlayoutControl(playoutControl_);
+    drdEstimator_->attach(playoutControl_.get());
 
     boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger_);
     boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger_);
@@ -87,6 +88,7 @@ void RemoteAudioStreamImpl::setupPlayout()
 void RemoteAudioStreamImpl::releasePlayout()
 {
     playbackQueue_->detach(playoutControl_.get());
+    drdEstimator_->detach(playoutControl_.get());
     playout_.reset();
     playoutControl_.reset();
 }
