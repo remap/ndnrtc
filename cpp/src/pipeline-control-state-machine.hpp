@@ -26,6 +26,7 @@ class StatisticsStorage;
 }
 
 class PipelineControlState;
+class DrdEstimator;
 class IPipeliner;
 class IInterestControl;
 class ILatencyControl;
@@ -159,6 +160,7 @@ class PipelineControlStateMachine : public NdnRtcComponent
         _Struct(const ndn::Name threadPrefix) : threadPrefix_(threadPrefix) {}
 
         const ndn::Name threadPrefix_;
+        boost::shared_ptr<DrdEstimator> drdEstimator_;
         boost::shared_ptr<IBuffer> buffer_;
         boost::shared_ptr<IPipeliner> pipeliner_;
         boost::shared_ptr<IInterestControl> interestControl_;

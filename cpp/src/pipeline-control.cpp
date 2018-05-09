@@ -17,6 +17,7 @@ using namespace ndnrtc::statistics;
 
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadPrefix,
+                                                        const boost::shared_ptr<DrdEstimator> drdEstimator,
                                                         const boost::shared_ptr<IBuffer> buffer,
                                                         const boost::shared_ptr<IPipeliner> pipeliner,
                                                         const boost::shared_ptr<IInterestControl> interestControl,
@@ -26,6 +27,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadP
                                                         const boost::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
+    ctrl.drdEstimator_ = drdEstimator;
     ctrl.buffer_ = buffer;
     ctrl.pipeliner_ = pipeliner;
     ctrl.interestControl_ = interestControl;
@@ -38,6 +40,7 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadP
 }
 
 PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPrefix,
+                                                      const boost::shared_ptr<DrdEstimator> drdEstimator,
                                                       const boost::shared_ptr<IBuffer> buffer,
                                                       const boost::shared_ptr<IPipeliner> pipeliner,
                                                       const boost::shared_ptr<IInterestControl> interestControl,
@@ -47,6 +50,7 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPre
                                                       const boost::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
+    ctrl.drdEstimator_ = drdEstimator;
     ctrl.buffer_ = buffer;
     ctrl.pipeliner_ = pipeliner;
     ctrl.interestControl_ = interestControl;

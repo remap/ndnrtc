@@ -625,7 +625,15 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
             
             (*sstorage_)[Indicator::AssembledNum]++;
             if (receipt.slot_->getNameInfo().class_ == SampleClass::Key)
+            {
                 (*sstorage_)[Indicator::AssembledKeyNum]++;
+                (*sstorage_)[Indicator::FrameFetchAvgKey] = (double)receipt.slot_->getLongestDrd()/1000.;
+            }
+            else
+            {
+                (*sstorage_)[Indicator::FrameFetchAvgDelta] = (double)receipt.slot_->getLongestDrd()/1000.;
+            }
+            
         }
     }
     else

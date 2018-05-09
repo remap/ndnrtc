@@ -42,6 +42,9 @@ map_list_of
 ( Indicator::VerifyFailure, "Verify failure samples" )
 ( Indicator::LatencyControlStable, "Latency control stable state" )
 ( Indicator::LatencyControlCommand, "Latency control command" )
+( Indicator::FrameFetchAvgDelta, "Average time for fetching delta frames" )
+( Indicator::FrameFetchAvgKey, "Average time for fetching key frames" )
+
 // playout
 ( Indicator::LastPlayedNo, "Playback #" )
 ( Indicator::LastPlayedDeltaNo, "Last delta #" ) 
@@ -69,6 +72,8 @@ map_list_of
 ( Indicator::BytesReceived, "Payload bytes received" )
 ( Indicator::RawBytesReceived, "Wire bytes received" )
 ( Indicator::State, "Consumer state" )
+( Indicator::DoubleRtFrames, "Number of frames with additional round trips for assembling" )
+( Indicator::DoubleRtFramesKey, "Number of key frames with additional round trips for assemnbling" )
 // DRD estimator
 ( Indicator::DrdOriginalEstimation, "DRD estimation (orig)" )
 ( Indicator::DrdCachedEstimation, "DRD estimation (cach)" )
@@ -118,6 +123,8 @@ map_list_of
 ( Indicator::VerifyFailure, 0. )
 ( Indicator::LatencyControlStable, 0. )
 ( Indicator::LatencyControlCommand, 0. )
+( Indicator::FrameFetchAvgDelta, 0. )
+( Indicator::FrameFetchAvgKey, 0. )
 // playout
 ( Indicator::LastPlayedNo, 0. )
 ( Indicator::LastPlayedDeltaNo, 0. )
@@ -145,6 +152,8 @@ map_list_of
 ( Indicator::BytesReceived, 0. )
 ( Indicator::RawBytesReceived, 0. )
 ( Indicator::State, 0. )
+( Indicator::DoubleRtFrames, 0. )
+( Indicator::DoubleRtFramesKey, 0. )
 // DRD estimator
 ( Indicator::DrdCachedEstimation, 0. )
 ( Indicator::DrdOriginalEstimation, 0. )
@@ -197,6 +206,8 @@ boost::assign::map_list_of
 (Indicator::VerifyFailure, "verifyFailure")
 (Indicator::LatencyControlStable, "latCtrlStable" )
 (Indicator::LatencyControlCommand, "latCtrlCmd" )
+( Indicator::FrameFetchAvgDelta, "fetchDeltaAvg" )
+( Indicator::FrameFetchAvgKey, "fetchKeyAvg" )
 // playout
 (Indicator::LastPlayedNo, "playNo")
 (Indicator::LastPlayedDeltaNo, "deltaNo")
@@ -224,6 +235,8 @@ boost::assign::map_list_of
 (Indicator::BytesReceived, "bytesRcvd")
 (Indicator::RawBytesReceived, "rawBytesRcvd")
 (Indicator::State, "state" )
+( Indicator::DoubleRtFrames, "doubleRt" )
+( Indicator::DoubleRtFramesKey, "doubleRtKey" )
 // DRD estimator
 (Indicator::DrdOriginalEstimation, "drdEst")
 (Indicator::DrdCachedEstimation, "drdPrime")

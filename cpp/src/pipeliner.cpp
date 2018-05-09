@@ -224,6 +224,9 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
         LogTraceC << interests.size() << " missing segments for "
             << receipt.slot_->getNameInfo().getSuffix(suffix_filter::Thread) << std::endl;
         express(interests, true);
+        (*sstorage_)[Indicator::DoubleRtFrames]++;
+        if (!receipt.slot_->getNameInfo().isDelta_)
+            (*sstorage_)[Indicator::DoubleRtFramesKey]++;
     }
     
     // set priority for requesting next key frame when key segment is received

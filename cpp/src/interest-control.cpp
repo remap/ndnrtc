@@ -42,7 +42,7 @@ int InterestControl::StrategyDefault::calculateDemand(double rate, double drdAvg
     {
         double d = drdAvgValue + DEVIATION_ALPHA * drdDeviation;
         double targetSamplePeriod = (rate > 0 ? 1000. / rate : 30);
-        interestDemand = (int)(ceil(d / targetSamplePeriod));
+        interestDemand = (int)(ceil(d / targetSamplePeriod + 0.5));
     }
 
     return interestDemand;
@@ -164,12 +164,12 @@ void InterestControl::markLowerLimit(unsigned int lowerLimit)
     setLimits();
 }
 
-void InterestControl::onCachedDrdUpdate()
+void InterestControl::onCachedDrdUpdate(double, double)
 {
     /*ignored*/
 }
 
-void InterestControl::onOriginalDrdUpdate()
+void InterestControl::onOriginalDrdUpdate(double, double)
 {
     if (initialized_)
         setLimits();
