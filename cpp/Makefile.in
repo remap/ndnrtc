@@ -152,7 +152,7 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES
+@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
 @HAVE_NANOMSG_TRUE@am__append_6 = client/src/ipc-shim.c client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__append_7 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
@@ -219,8 +219,8 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
 @OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
 @OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
 @OS_ANDROID_TRUE@am__append_15 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_16 = -pthread -fPIE -pie
-@OS_ANDROID_TRUE@am__append_17 = -llog -lOpenSLES
+@OS_ANDROID_TRUE@am__append_16 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_17 = -llog -lOpenSLES -lboost_timer -lboost_thread
 @HAVE_NANOMSG_TRUE@am__append_18 = client/src/ipc-shim.c client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__append_19 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
 @HAVE_NANOMSG_TRUE@am__append_20 = -L@NANOMSGLIB@

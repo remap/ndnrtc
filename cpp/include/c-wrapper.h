@@ -16,6 +16,8 @@ extern "C" {
 
 	typedef void (*LibLog) (const char* message);
 
+    const char* ndnrtc_getVersion();
+
 	// creates Face
 	//		hostname
 	//		portnum
@@ -35,7 +37,7 @@ extern "C" {
 		int signingOn;
 		int fecOn;
 		int typeIsVideo;
-		int ndnSegmentSize, ndnDataFreshnessPeriodMs;
+		int ndnSegmentSize;
 		int frameWidth, frameHeight;
 		int startBitrate, maxBitrate, gop, dropFrames;
 		const char *streamName, *threadName;

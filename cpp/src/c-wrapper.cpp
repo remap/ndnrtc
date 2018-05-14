@@ -33,6 +33,7 @@
 #include "face-processor.hpp"
 #include "local-stream.hpp"
 #include "simple-log.hpp"
+#include "name-components.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;
@@ -100,6 +101,12 @@ private:
 };
 
 //******************************************************************************
+const char* ndnrtc_getVersion()
+{
+    static std::string version = NameComponents::fullVersion();
+    return version.c_str();
+}
+
 bool ndnrtc_init(const char* hostname, const char* storagePath, 
 	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {
@@ -307,8 +314,7 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 
 	MediaStreamParams p(params.streamName);
 	p.producerParams_.segmentSize_ = params.ndnSegmentSize;
-    // TODO: make all freshnesses configurable by user
-	p.producerParams_.freshness_= {10, (unsigned int)params.ndnDataFreshnessPeriodMs, 900};
+	p.producerParams_.freshness_= {10, 30, 900};
 
 	if (params.typeIsVideo == 1)
 	{

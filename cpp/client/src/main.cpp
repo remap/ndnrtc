@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/thread/mutex.hpp>
@@ -19,6 +18,10 @@
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
+
+#ifndef __ANDROID__
+#include <execinfo.h>
+#endif
 
 #include "config.hpp"
 #include "client.hpp"
@@ -44,12 +47,14 @@ void handler(int sig)
     void *array[10];
     size_t size;
 
+    fprintf(stderr, "Error: signal %d:\n", sig);
+#ifndef __ANDROID__
     // get void*'s for all entries on the stack
     size = backtrace(array, 10);
 
     // print out all the frames to stderr
-    fprintf(stderr, "Error: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
     exit(1);
 }
 

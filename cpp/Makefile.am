@@ -100,7 +100,7 @@ endif
 if OS_ANDROID
 
 libndnrtc_la_CPPFLAGS += -fexceptions -frtti
-libndnrtc_la_LIBADD += -llog -lOpenSLES
+libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 
 endif
 
@@ -142,8 +142,8 @@ endif
 if OS_ANDROID
 
 ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
-ndnrtc_client_LDFLAGS += -pthread -fPIE -pie
-ndnrtc_client_LDADD += -llog -lOpenSLES
+ndnrtc_client_LDFLAGS += -fPIE -pie
+ndnrtc_client_LDADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 
 endif
 
