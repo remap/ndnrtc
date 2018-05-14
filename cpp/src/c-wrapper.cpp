@@ -160,7 +160,7 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 
 		// registering prefix for the stream
 		Name prefix(stream->getPrefix());
-		registerPrefix(prefix, callbackLogger);
+		registerPrefix(prefix.getPrefix(-1), callbackLogger);
 
 		return stream;
 	}
