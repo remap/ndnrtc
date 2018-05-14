@@ -10,6 +10,7 @@
 
 #include "playout-impl.hpp"
 #include "frame-buffer.hpp"
+#include "interfaces.hpp"
 
 namespace webrtc {
     class EncodedImage;
@@ -56,7 +57,7 @@ namespace ndnrtc {
 	class IEncodedFrameConsumer 
     {
     public:
-        virtual void processFrame(PacketNumber, const webrtc::EncodedImage&) = 0;
+        virtual void processFrame(const FrameInfo&, const webrtc::EncodedImage&) = 0;
     };
 
     class IVideoPlayoutObserver : public IPlayoutObserver 

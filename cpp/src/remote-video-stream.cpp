@@ -92,18 +92,17 @@ void RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger>
 }
 
 #pragma mark private
-void RemoteVideoStreamImpl::feedFrame(PacketNumber frameNo, const WebRtcVideoFrame &frame)
+void RemoteVideoStreamImpl::feedFrame(const FrameInfo &frameInfo, const WebRtcVideoFrame &frame)
 {
     uint8_t *rgbFrameBuffer = renderer_->getFrameBuffer(frame.width(),
                                                         frame.height());
 
     if (rgbFrameBuffer)
     {
-        LogTraceC << "passing frame " << frameNo << "p to renderer" << std::endl;
+        LogTraceC << "passing frame " << frameInfo.playbackNo_ << "p to renderer" << std::endl;
 #warning this needs to be tested with frames captured from real video devices
         ConvertFromI420(frame, webrtc::kBGRA, 0, rgbFrameBuffer);
-        renderer_->renderBGRAFrame(clock::millisecondTimestamp(), frameNo,
-                                   frame.width(), frame.height(),
+        renderer_->renderBGRAFrame(frameInfo, frame.width(), frame.height(),
                                    rgbFrameBuffer);
     }
     else
@@ -116,9 +115,9 @@ void RemoteVideoStreamImpl::setupDecoder()
     VideoThreadMeta meta(threadsMeta_[threadName_]->data());
     boost::shared_ptr<VideoDecoder> decoder =
         boost::make_shared<VideoDecoder>(meta.getCoderParams(),
-                                         [this, me](PacketNumber frameNo, const WebRtcVideoFrame &frame) 
+                                         [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame) 
                                          {
-                                            feedFrame(frameNo, frame);
+                                            feedFrame(finfo, frame);
                                          });
     boost::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
     decoder_ = decoder;

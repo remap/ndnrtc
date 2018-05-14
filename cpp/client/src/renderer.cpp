@@ -49,7 +49,7 @@ uint8_t *RendererInternal::getFrameBuffer(int width, int height)
     return frame_->getBuffer().get();
 }
 
-void RendererInternal::renderBGRAFrame(int64_t timestamp, uint frameNo, int width, int height,
+void RendererInternal::renderBGRAFrame(const ndnrtc::FrameInfo& frameInfo, int width, int height,
                                        const uint8_t *buffer)
 {
     if (!frame_.get())
@@ -59,10 +59,12 @@ void RendererInternal::renderBGRAFrame(int64_t timestamp, uint frameNo, int widt
         throw runtime_error("wrong frame size supplied");
 
     // do whatever we need, i.e. drop frame, render it, write to file, etc.
-    LogDebug("") << "received frame " << frameNo 
+    LogDebug("") << "received frame " << frameInfo.playbackNo_ 
                  << " (" << width << "x" << height << ") at "
-                 << timestamp << " ms"
-                 << ", frame count: " << frameCount_ << std::endl;
+                 << frameInfo.timestamp_ << " ms"
+                 << ", frame count: " << frameCount_ 
+                 << ", NDN name: " << frameInfo.ndnName_
+                 << std::endl;
 
     dumpFrame();
     frameCount_++;

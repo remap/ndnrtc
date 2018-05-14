@@ -49,7 +49,7 @@ public:
     ~RendererInternal();
     
     virtual uint8_t* getFrameBuffer(int width, int height);
-    virtual void renderBGRAFrame(int64_t timestamp, uint frameNo, int width, int height,
+    virtual void renderBGRAFrame(const ndnrtc::FrameInfo&, int width, int height,
                          const uint8_t* buffer);
     
 private:

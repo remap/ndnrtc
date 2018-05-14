@@ -11,6 +11,7 @@
 #include "remote-stream-impl.hpp"
 #include "sample-validator.hpp"
 #include "webrtc.hpp"
+#include "interfaces.hpp"
 
 namespace ndnrtc
 {
@@ -40,7 +41,7 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
     IExternalRenderer *renderer_;
     boost::shared_ptr<VideoDecoder> decoder_;
 
-    void feedFrame(PacketNumber frameNo, const WebRtcVideoFrame &);
+    void feedFrame(const FrameInfo&, const WebRtcVideoFrame &);
     void setupDecoder();
     void releaseDecoder();
     void setupPipelineControl();
