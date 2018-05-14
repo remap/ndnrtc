@@ -378,6 +378,8 @@ bool VideoStreamImpl::updateMeta()
                   << it.second->getMeta().getSeqNo().second << " "
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
                   << std::endl;
+
+        (*statStorage_)[Indicator::CurrentProducerFramerate] = it.second->getRate();
     }
 
     return false;

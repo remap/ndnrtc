@@ -93,6 +93,9 @@ extern "C" {
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);
+
+    // see statistics.cpp for possible values
+    double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName);
 }
 
 #endif

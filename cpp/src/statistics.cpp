@@ -173,6 +173,7 @@ map_list_of ( Indicator::Timestamp, 0. )
 ( Indicator::PublishedKeyNum, 0. )
 ( Indicator::InterestsReceivedNum, 0. )
 ( Indicator::SignNum, 0. )
+( Indicator::CurrentProducerFramerate, 0. )
 // encoder
 ( Indicator::DroppedNum, 0. )
 ( Indicator::EncodedNum, 0. )

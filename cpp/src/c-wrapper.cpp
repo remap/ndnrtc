@@ -195,6 +195,33 @@ const char* ndnrtc_LocalStream_getStreamName(IStream *stream)
 	return "n/a";
 }
 
+double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
+{
+    if (stream)
+    {
+        bool f = false;
+        statistics::Indicator ind;
+        std::string sname(statName);
+        for (auto p:statistics::StatisticsStorage::IndicatorKeywords)
+            if (p.second == sname)
+            {
+                ind = p.first;
+                f = true;
+                break;
+            }
+
+        if (f)
+        {
+            statistics::StatisticsStorage::StatRepo repo = stream->getStatistics().getIndicators();
+            if (repo.find(ind) != repo.end())
+                return repo[ind];
+        }
+        return 0;
+    }
+
+    return 0;
+}
+
 int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned int width,
 			const unsigned int height,
@@ -207,6 +234,7 @@ int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
+    return -1;
 }
 
 int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
@@ -219,6 +247,7 @@ int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingNV21Frame(width, height, strideY, strideUV, yBuffer, uvBuffer);
+    return -1;
 }
 
 int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
@@ -229,6 +258,7 @@ int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingArgbFrame(width, height, argbFrameData, frameSize);
+    return -1;
 }
 //******************************************************************************
 // private
