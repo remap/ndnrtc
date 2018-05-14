@@ -117,8 +117,8 @@ RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo,
 			const int jitterSizeMs):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	streamPrefix_ = NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri();
-	pimpl_ = boost::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, streamPrefix_);
+	pimpl_ = boost::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, 
+                                                       NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri());
 	pimpl_->setInterestLifetime(interestLifetime);
 	pimpl_->setTargetBufferSize(jitterSizeMs);
 	pimpl_->fetchMeta();
@@ -140,8 +140,8 @@ RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo,
 			const int jitterSizeMs):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	streamPrefix_ = NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri();
-	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, streamPrefix_);
+	pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain,
+                                                      NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri());
 	pimpl_->setInterestLifetime(interestLifetime);
 	pimpl_->setTargetBufferSize(jitterSizeMs);
 	pimpl_->fetchMeta();

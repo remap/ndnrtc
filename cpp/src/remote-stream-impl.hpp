@@ -8,6 +8,8 @@
 #ifndef __remote_stream_impl_h__
 #define __remote_stream_impl_h__
 
+#include <ndn-cpp/name.hpp>
+
 #include "remote-stream.hpp"
 #include "ndnrtc-object.hpp"
 #include "meta-fetcher.hpp"
@@ -69,6 +71,7 @@ class RemoteStreamImpl : public NdnRtcComponent
 
     void setNeedsMeta(bool needMeta) { needMeta_ = needMeta; }
     statistics::StatisticsStorage getStatistics() const;
+    ndn::Name getStreamPrefix() const;
 
   protected:
     MediaStreamParams::MediaStreamType type_;
@@ -77,7 +80,8 @@ class RemoteStreamImpl : public NdnRtcComponent
     int64_t metadataRequestedMs_;
     boost::shared_ptr<ndn::Face> face_;
     boost::shared_ptr<ndn::KeyChain> keyChain_;
-    std::string streamPrefix_, threadName_;
+    ndn::Name streamPrefix_;
+    std::string threadName_;
     boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
     std::vector<IRemoteStreamObserver *> observers_;

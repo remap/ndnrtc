@@ -132,7 +132,7 @@ void RemoteVideoStreamImpl::releaseDecoder()
 
 void RemoteVideoStreamImpl::setupPipelineControl()
 {
-    Name threadPrefix(streamPrefix_);
+    Name threadPrefix(getStreamPrefix());
     threadPrefix.append(threadName_);
 
     pipelineControl_ = boost::make_shared<PipelineControl>(

@@ -35,8 +35,10 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
 {
     assert(settings_.face_);
     assert(settings_.keyChain_);
-
+    
+    streamTimestamp_ = (uint64_t)clock::millisecSinceEpoch();
     streamPrefix_.append(Name(settings_.params_.streamName_));
+    streamPrefix_.appendTimestamp(streamTimestamp_);
 
     unsigned int minimumFreshness = min(settings_.params_.producerParams_.freshness_.metadataMs_, 
                                         settings_.params_.producerParams_.freshness_.sampleMs_);
@@ -46,7 +48,8 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
     // or data added (and prevent it from hanging for few ms when data rate is high)
     cache_ = boost::make_shared<MemoryContentCache>(settings_.face_, 0);
     cache_->setMinimumCacheLifetime(1000);
-    cache_->setInterestFilter(streamPrefix_, cache_->getStorePendingInterest());
+    // set filter for prefix without the timestamp, because stream _meta is served there
+    cache_->setInterestFilter(streamPrefix_.getPrefix(-1), cache_->getStorePendingInterest());
 
     PublisherSettings ps;
     ps.sign_ = true; // it's ok to sign every packet as data publisher
@@ -94,12 +97,14 @@ MediaStreamBase::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 
 void MediaStreamBase::publishMeta()
 {
-    boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(getThreads()));
+    boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(streamTimestamp_, getThreads()));
     // don't need to synchronize unless publishMeta will be called
     // from places others than addThread/removeThread or outer class'
     // constructor LocalVideoStream/LocalAudioStream
 
-    Name metaName(streamPrefix_);
+    // use name without timestamp here
+    Name metaName(streamPrefix_.getPrefix(-1));
+
     // TODO: appendVersion() should probably be gone once SegemntFetcher
     // is updated to work without version number
     metaName.append(NameComponents::NameComponentMeta).appendVersion(0);
