@@ -53,8 +53,10 @@ class PipelineControl : public NdnRtcComponent,
     void stop();
 
     void segmentArrived(const boost::shared_ptr<WireSegment> &);
-    void segmentRequestTimeout(const NamespaceInfo &);
-    void segmentNack(const NamespaceInfo &, int);
+    void segmentRequestTimeout(const NamespaceInfo &, 
+                               const boost::shared_ptr<const ndn::Interest> &);
+    void segmentNack(const NamespaceInfo &, int,
+                     const boost::shared_ptr<const ndn::Interest> &);
     void segmentStarvation();
 
     bool needPipelineAdjustment(const PipelineAdjust &);

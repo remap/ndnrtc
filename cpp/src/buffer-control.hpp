@@ -8,10 +8,16 @@
 #ifndef __buffer_control_h__
 #define __buffer_control_h__
 
+#include <boost/shared_ptr.hpp>
+
 #include "ndnrtc-common.hpp"
 #include "segment-controller.hpp"
 #include "ndnrtc-object.hpp"
 #include "frame-buffer.hpp"
+
+namespace ndn {
+    class Interest;
+}
 
 namespace ndnrtc
 {
@@ -42,8 +48,10 @@ class BufferControl : public ISegmentControllerObserver, public NdnRtcComponent
     void detach(IBufferControlObserver *);
 
     void segmentArrived(const boost::shared_ptr<WireSegment> &);
-    void segmentRequestTimeout(const NamespaceInfo &) { /*ignored*/}
-    void segmentNack(const NamespaceInfo &, int) { /*ignored*/}
+    void segmentRequestTimeout(const NamespaceInfo &, 
+                               const boost::shared_ptr<const ndn::Interest> &) { /*ignored*/}
+    void segmentNack(const NamespaceInfo &, int, 
+                     const boost::shared_ptr<const ndn::Interest> &) { /*ignored*/}
     void segmentStarvation() { /*ignored*/}
 
   private:

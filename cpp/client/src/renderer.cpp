@@ -59,7 +59,8 @@ void RendererInternal::renderBGRAFrame(int64_t timestamp, uint frameNo, int widt
         throw runtime_error("wrong frame size supplied");
 
     // do whatever we need, i.e. drop frame, render it, write to file, etc.
-    LogDebug("") << "received frame (" << width << "x" << height << ") at "
+    LogDebug("") << "received frame " << frameNo 
+                 << " (" << width << "x" << height << ") at "
                  << timestamp << " ms"
                  << ", frame count: " << frameCount_ << std::endl;
 
