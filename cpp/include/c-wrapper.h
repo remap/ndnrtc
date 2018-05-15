@@ -42,6 +42,12 @@ extern "C" {
 		int startBitrate, maxBitrate, gop, dropFrames;
 		const char *streamName, *threadName;
 	} LocalStreamParams;
+
+    typedef struct _FrameInfo {
+        uint64_t timestamp_;
+        int playbackNo_;
+        char* ndnName_;
+    } cFrameInfo;
 	// params
 	//	base prefix
 	//	settings
@@ -89,6 +95,10 @@ extern "C" {
 			const unsigned int height,
 			unsigned char* argbFrameData,
 			unsigned int frameSize);
+
+    // NOTE: returns info only for 1 thread
+    void ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream,
+                                                      cFrameInfo *finfo);
 
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);

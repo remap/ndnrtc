@@ -40,7 +40,10 @@ using namespace ndnrtc;
 using namespace boost::chrono;
 using namespace ndnlog::new_api;
 
+namespace cwrapper_tools {
 class KeyChainManager;
+}
+using namespace cwrapper_tools;
 
 static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "private-keys";
@@ -57,6 +60,7 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
 
 //******************************************************************************
+namespace cwrapper_tools {
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
 public:
     KeyChainManager(boost::shared_ptr<ndn::Face> face,
@@ -99,6 +103,7 @@ private:
 	void createInstanceIdentity();
     void checkExists(const std::string&);
 };
+}
 
 //******************************************************************************
 const char* ndnrtc_getVersion()
@@ -166,6 +171,29 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 	}
 
 	return nullptr;
+}
+
+
+void ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream,
+                                                  cFrameInfo* frameInfo)
+{
+    static char *frameName = nullptr;
+    if (!frameName) frameName = (char*)malloc(1024*sizeof(char));
+
+    memset((void*)frameName, 0, 1024);
+    frameInfo->ndnName_ = frameName;
+
+    if (stream)
+    {
+        std::map<std::string, FrameInfo> lastPublishedInfo = stream->getLastPublishedInfo();
+        if (lastPublishedInfo.size())
+        {
+            FrameInfo fi = lastPublishedInfo.begin()->second;
+            frameInfo->timestamp_ = fi.timestamp_;
+            frameInfo->playbackNo_ = fi.playbackNo_;
+            memcpy(frameInfo->ndnName_, fi.ndnName_.c_str(), fi.ndnName_.size());
+        }
+    }
 }
 
 void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)

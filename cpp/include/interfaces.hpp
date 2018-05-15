@@ -98,6 +98,13 @@ namespace ndnrtc
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
                                       const unsigned char* vBuffer) = 0;
+
+        virtual int incomingNV21Frame(const unsigned int width,
+                                      const unsigned int height,
+                                      const unsigned int strideY,
+                                      const unsigned int strideUV,
+                                      const unsigned char* yBuffer,
+                                      const unsigned char* uvBuffer) = 0;
     };
 }
 

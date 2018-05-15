@@ -249,10 +249,10 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
                   << "fps " << packetHdr.publishTimestampMs_ << "ms " << std::endl;
 
         publish(it.first, it.second);
+        lastPublished_[it.first].playbackNo_ = playbackCounter_;
     }
 }
 
-void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 {
     boost::shared_ptr<NetworkData> parityData = fp->getParityData(
         VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
