@@ -105,10 +105,11 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 endif
 
 #################
-# client app	  #
+# client app	#
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
+
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
@@ -144,6 +145,18 @@ if OS_ANDROID
 ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
 ndnrtc_client_LDFLAGS += -fPIE -pie
 ndnrtc_client_LDADD += -llog -lOpenSLES -lboost_timer -lboost_thread
+
+endif
+
+if HAVE_NANOMSG
+
+EXTRA_PROGRAMS += nanopipe-adaptor
+ # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
+nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
+nanopipe_adaptor_CXXFLAGS = -std=c++11
+nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
+nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
+nanopipe_adaptor_LDADD = -lnanomsg
 
 endif
 
