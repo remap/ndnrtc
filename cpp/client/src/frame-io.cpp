@@ -197,12 +197,12 @@ IFrameSink &NanoMsgSink::operator<<(const RawFrame &frame)
     if (writeFrameInfo_)
     {
         size_t frameInfoPacked = 0;
-        unsigned char* buf = mallocPackFrameInfo(frame.getFrameInfo(), &frameInfoPacked);
+        unsigned char* header = mallocPackFrameInfo(frame.getFrameInfo(), &frameInfoPacked);
 
         isLastWriteSuccessful_ = (ipc_sendFrame(nnSocket_, 
-                                                frameInfoPacked, (const void*)(buf),
+                                                frameInfoPacked, (const void*)(header),
                                                 buf, frame.getFrameSizeInBytes()) > 0);
-        free(buf);
+        free(header);
     }
     else
         isLastWriteSuccessful_ = (ipc_sendData(nnSocket_, buf, frame.getFrameSizeInBytes()) > 0);
