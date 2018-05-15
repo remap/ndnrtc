@@ -23,7 +23,20 @@
 
 using namespace std;
 
-RawFrame::RawFrame(unsigned int width, unsigned int height) : bufferSize_(0), width_(width), height_(height) {}
+RawFrame::RawFrame(unsigned int width, unsigned int height) : 
+    bufferSize_(0), 
+    width_(width), 
+    height_(height), 
+    frameInfo_({0, 0, ""}) 
+{}
+
+RawFrame::~RawFrame() {}
+
+void
+RawFrame::setFrameInfo(const ndnrtc::FrameInfo& frameInfo)
+{   
+    frameInfo_ = frameInfo;
+}
 
 //******************************************************************************
 ArgbFrame::ArgbFrame(unsigned int width, unsigned int height) : RawFrame(width, height)
@@ -71,7 +84,8 @@ void FileFrameStorage::closeFile()
 //******************************************************************************
 IFrameSink &FileSink::operator<<(const RawFrame &frame)
 {
-    fwrite(frame.getBuffer().get(), sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
+    int res = fwrite(frame.getBuffer().get(), sizeof(uint8_t), frame.getFrameSizeInBytes(), file_);
+    isLastWriteSuccessful_ = (res > 0);
     return *this;
 }
 
@@ -81,8 +95,10 @@ FILE *FileSink::openFile_impl(string path)
 }
 
 //******************************************************************************
-PipeSink::PipeSink(const std::string &path) : pipePath_(path), pipe_(-1),
-                                              isLastWriteSuccessful_(false), isWriting_(false)
+PipeSink::PipeSink(const std::string &path) 
+    : pipePath_(path), pipe_(-1),
+    isLastWriteSuccessful_(false), isWriting_(false),
+    writeFrameInfo_(false)
 {
     createPipe(pipePath_);
     openPipe(pipePath_);
@@ -147,7 +163,7 @@ void PipeSink::openPipe(const std::string &path)
 #ifdef HAVE_LIBNANOMSG
 #include <iostream>
 
-NanoMsgSink::NanoMsgSink(const std::string &handle)
+NanoMsgSink::NanoMsgSink(const std::string &handle) : writeFrameInfo_(false)
 {
     nnSocket_ = ipc_setupPubSourceSocket(handle.c_str());
     if (nnSocket_ < 0)
@@ -159,10 +175,37 @@ NanoMsgSink::~NanoMsgSink()
     ipc_shutdownSocket(nnSocket_);
 }
 
+unsigned char* mallocPackFrameInfo(const ndnrtc::FrameInfo& finfo, size_t *packedSize)
+{
+    *packedSize = sizeof(finfo)-sizeof(std::string) + finfo.ndnName_.size() + 1;
+    unsigned char *buf = (unsigned char*)malloc(*packedSize);
+    memset(buf, 0, *packedSize);
+
+    ((ndnrtc::FrameInfo*)buf)->timestamp_ = finfo.timestamp_;
+    ((ndnrtc::FrameInfo*)buf)->playbackNo_ = finfo.playbackNo_;
+    
+    size_t stringCopyOffset = sizeof(finfo)-sizeof(std::string);
+    memcpy(buf+stringCopyOffset, finfo.ndnName_.c_str(), finfo.ndnName_.size());
+
+    return buf;
+}
+
 IFrameSink &NanoMsgSink::operator<<(const RawFrame &frame)
 {
     uint8_t *buf = frame.getBuffer().get();
-    isLastWriteSuccessful_ = (ipc_sendData(nnSocket_, buf, frame.getFrameSizeInBytes()) > 0);
+
+    if (writeFrameInfo_)
+    {
+        size_t frameInfoPacked = 0;
+        unsigned char* buf = mallocPackFrameInfo(frame.getFrameInfo(), &frameInfoPacked);
+
+        isLastWriteSuccessful_ = (ipc_sendFrame(nnSocket_, 
+                                                frameInfoPacked, (const void*)(buf),
+                                                buf, frame.getFrameSizeInBytes()) > 0);
+        free(buf);
+    }
+    else
+        isLastWriteSuccessful_ = (ipc_sendData(nnSocket_, buf, frame.getFrameSizeInBytes()) > 0);
     return *this;
 }
 

@@ -363,7 +363,7 @@ int loadStreamParams(const Setting &s, ConsumerStreamParams &params)
         sinkSettings.lookupValue("write_frame_info", params.sink_.writeFrameInfo_);
 
         params.sink_.type_ = "file";
-        s.lookupValue("sink_type", params.sink_.type_);
+        sinkSettings.lookupValue("type", params.sink_.type_);
 
         return EXIT_SUCCESS;
     }

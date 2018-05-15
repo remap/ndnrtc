@@ -280,25 +280,38 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
     {
         if (p.sink_.type_ == "pipe")
             return new RendererInternal(p.sink_.name_,
-                                        [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
-                                            return boost::make_shared<PipeSink>(s);
-                                        });
+                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
+                                            boost::shared_ptr<IFrameSink> sink = boost::make_shared<PipeSink>(s);
+                                            if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
+                                            return sink;
+                                        }, rendererIo_);
         else if (p.sink_.type_ == "nano")
         {
 #ifdef HAVE_LIBNANOMSG
             return new RendererInternal(p.sink_.name_,
-                                        [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
-                                            return boost::make_shared<NanoMsgSink>(s);
-                                        });
+                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
+                                            try {
+                                                boost::shared_ptr<IFrameSink> sink = boost::make_shared<NanoMsgSink>(s);
+                                                if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
+                                                return sink;
+                                            }
+                                            catch (std::exception& e)
+                                            {
+                                                LogError("") << "Error when creating nanomsg sink: " << e.what() << std::endl;
+                                                throw;
+                                            }
+                                        }, rendererIo_);
 #else
             throw std::runtime_error("Requested nano type sink, but code was not built with nanomsg library support");
 #endif
         }
         else
             return new RendererInternal(p.sink_.name_,
-                                        [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
-                                            return boost::make_shared<FileSink>(s);
-                                        });
+                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
+                                            boost::shared_ptr<IFrameSink> sink = boost::make_shared<FileSink>(s);
+                                            if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
+                                            return sink;
+                                        }, rendererIo_);
     }
     else
         return nullptr;

@@ -163,6 +163,17 @@ int run(const struct Args &args)
         }
     });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    boost::asio::io_service rendererIo;
+    boost::shared_ptr<boost::asio::io_service::work> rendererWork(boost::make_shared<boost::asio::io_service::work>(rendererIo));
+    boost::thread rendererThread([&rendererIo](){ 
+      try {
+        rendererIo.run(); 
+      }
+      catch (std::exception &e)
+      {
+        LogError("") << "caught exception on rednering thread: " << e.what() << std::endl;
+      }
+    });
 
     KeyChainManager keyChainManager(face, args.identity_, args.instance_,
                                     args.policy_, args.runTimeSec_);
@@ -183,7 +194,7 @@ int run(const struct Args &args)
     LogInfo("") << "Parameters loaded" << std::endl;
     LogDebug("") << params << std::endl;
 
-    Client client(io, face, keyChainManager.instanceKeyChain());
+    Client client(io, rendererIo, face, keyChainManager.instanceKeyChain());
 
     try
     {
@@ -208,6 +219,10 @@ int run(const struct Args &args)
     }
 
     LogInfo("") << "Client run completed" << std::endl;
+
+    rendererWork.reset();
+    rendererThread.join();
+    rendererIo.stop();
 
     // NOTE: this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);
