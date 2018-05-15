@@ -97,8 +97,7 @@ extern "C" {
 			unsigned int frameSize);
 
     // NOTE: returns info only for 1 thread
-    void ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream,
-                                                      cFrameInfo *finfo);
+    cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream);
 
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);

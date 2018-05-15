@@ -174,14 +174,13 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 }
 
 
-void ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream,
-                                                  cFrameInfo* frameInfo)
+cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream)
 {
     static char *frameName = nullptr;
     if (!frameName) frameName = (char*)malloc(1024*sizeof(char));
 
     memset((void*)frameName, 0, 1024);
-    frameInfo->ndnName_ = frameName;
+    cFrameInfo frameInfo({0, 0, frameName});
 
     if (stream)
     {
@@ -189,11 +188,13 @@ void ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stre
         if (lastPublishedInfo.size())
         {
             FrameInfo fi = lastPublishedInfo.begin()->second;
-            frameInfo->timestamp_ = fi.timestamp_;
-            frameInfo->playbackNo_ = fi.playbackNo_;
-            memcpy(frameInfo->ndnName_, fi.ndnName_.c_str(), fi.ndnName_.size());
+            frameInfo.timestamp_ = fi.timestamp_;
+            frameInfo.playbackNo_ = fi.playbackNo_;
+            strcpy(frameInfo.ndnName_, fi.ndnName_.c_str());
         }
     }
+
+    return frameInfo;
 }
 
 void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
