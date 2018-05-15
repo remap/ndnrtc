@@ -278,15 +278,15 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
 {
     if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
     {
-        if (p.sinkType_ == "pipe")
-            return new RendererInternal(p.streamSink_,
+        if (p.sink_.type_ == "pipe")
+            return new RendererInternal(p.sink_.name_,
                                         [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
                                             return boost::make_shared<PipeSink>(s);
                                         });
-        else if (p.sinkType_ == "nano")
+        else if (p.sink_.type_ == "nano")
         {
 #ifdef HAVE_LIBNANOMSG
-            return new RendererInternal(p.streamSink_,
+            return new RendererInternal(p.sink_.name_,
                                         [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
                                             return boost::make_shared<NanoMsgSink>(s);
                                         });
@@ -295,7 +295,7 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
 #endif
         }
         else
-            return new RendererInternal(p.streamSink_,
+            return new RendererInternal(p.sink_.name_,
                                         [](const std::string &s) -> boost::shared_ptr<IFrameSink> {
                                             return boost::make_shared<FileSink>(s);
                                         });
