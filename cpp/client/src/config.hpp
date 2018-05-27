@@ -92,17 +92,23 @@ class ProducerStreamParams : public ClientMediaStreamParams
 class ConsumerStreamParams : public ClientMediaStreamParams
 {
   public:
-    std::string streamSink_, threadToFetch_, sinkType_;
+    typedef struct _Sink {
+        std::string name_, type_;
+        bool writeFrameInfo_;
+    } Sink;
 
-    ConsumerStreamParams() : sinkType_("file") {}
-    ConsumerStreamParams(const ConsumerStreamParams &params) : ClientMediaStreamParams(params), streamSink_(params.streamSink_),
-                                                               threadToFetch_(params.threadToFetch_), sinkType_(params.sinkType_) {}
+    std::string threadToFetch_;
+    Sink sink_;
+
+    ConsumerStreamParams() : sink_({"", "file", false}) {}
+    ConsumerStreamParams(const ConsumerStreamParams &params) : ClientMediaStreamParams(params), sink_(params.sink_),
+                                                               threadToFetch_(params.threadToFetch_) {}
 
     void write(std::ostream &os) const
     {
         os
-            << "stream sink: " << streamSink_ << " (type: "
-            << sinkType_
+            << "stream sink: " << sink_.name_ << " (type: "
+            << sink_.type_ << ", write frame info: " << sink_.writeFrameInfo_
             << "); thread to fetch: " << threadToFetch_ << "; ";
         ClientMediaStreamParams::write(os);
     }

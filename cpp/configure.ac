@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([NDN-RTC],[v3.0.0],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC],[v3.1.0],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -255,10 +255,16 @@ AX_BOOST_BASE([1.54])
 AX_BOOST_SYSTEM
 AX_BOOST_ASIO
 AX_BOOST_CHRONO
-AX_BOOST_THREAD
 AX_BOOST_REGEX
-AX_BOOST_TIMER
-AX_BOOST_FILESYSTEM
+
+# this is because AX_BOOST_TIMER and AX_BOOST_FILESYSTEM fail when cross-compiling
+# I've added libboost_timer to ndnrtc_client_LDADD in Makefile.am manually (for android)
+if test "$cross_compiling" != "yes"
+then
+    AX_BOOST_THREAD
+    AX_BOOST_TIMER
+    AX_BOOST_FILESYSTEM
+fi
 
 ###############################
 # Check for NDN-CPP

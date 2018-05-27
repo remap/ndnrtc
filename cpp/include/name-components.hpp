@@ -26,10 +26,11 @@ namespace ndnrtc {
             Base = 1<<0,
             Library = 1<<1|Base,
             Stream = 1<<2|Library,
-            ThreadNT = 1<<3|Stream,
-            Thread = 1<<4|ThreadNT,
-            Sample = 1<<5|Thread,
-            Segment = 1<<6|Sample
+            StreamTS = 1<<3|Stream,     // stream with timestamp component
+            ThreadNT = 1<<4|StreamTS,   // thread - no frame type component
+            Thread = 1<<5|ThreadNT,
+            Sample = 1<<6|Thread,
+            Segment = 1<<7|Sample
         } PrefixFilter;
     }
 
@@ -77,6 +78,7 @@ namespace ndnrtc {
         PacketNumber sampleNo_;
         unsigned int segNo_;
         unsigned int metaVersion_;
+        uint64_t streamTimestamp_;
 
         ndn::Name getPrefix(int filter = (prefix_filter::Segment)) const;
         ndn::Name getSuffix(int filter = (suffix_filter::Segment)) const;

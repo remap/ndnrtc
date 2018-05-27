@@ -95,7 +95,7 @@ void RemoteAudioStreamImpl::releasePlayout()
 
 void RemoteAudioStreamImpl::setupPipelineControl()
 {
-    Name threadPrefix(streamPrefix_);
+    Name threadPrefix(getStreamPrefix());
     threadPrefix.append(threadName_);
 
     pipelineControl_ = boost::make_shared<PipelineControl>(

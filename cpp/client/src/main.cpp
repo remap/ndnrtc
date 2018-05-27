@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/thread/mutex.hpp>
@@ -19,6 +18,10 @@
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
+
+#ifndef __ANDROID__
+#include <execinfo.h>
+#endif
 
 #include "config.hpp"
 #include "client.hpp"
@@ -44,12 +47,14 @@ void handler(int sig)
     void *array[10];
     size_t size;
 
+    fprintf(stderr, "Error: signal %d:\n", sig);
+#ifndef __ANDROID__
     // get void*'s for all entries on the stack
     size = backtrace(array, 10);
 
     // print out all the frames to stderr
-    fprintf(stderr, "Error: signal %d:\n", sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
     exit(1);
 }
 
@@ -158,6 +163,17 @@ int run(const struct Args &args)
         }
     });
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    boost::asio::io_service rendererIo;
+    boost::shared_ptr<boost::asio::io_service::work> rendererWork(boost::make_shared<boost::asio::io_service::work>(rendererIo));
+    boost::thread rendererThread([&rendererIo](){ 
+      try {
+        rendererIo.run(); 
+      }
+      catch (std::exception &e)
+      {
+        LogError("") << "caught exception on rednering thread: " << e.what() << std::endl;
+      }
+    });
 
     KeyChainManager keyChainManager(face, args.identity_, args.instance_,
                                     args.policy_, args.runTimeSec_);
@@ -178,7 +194,7 @@ int run(const struct Args &args)
     LogInfo("") << "Parameters loaded" << std::endl;
     LogDebug("") << params << std::endl;
 
-    Client client(io, face, keyChainManager.instanceKeyChain());
+    Client client(io, rendererIo, face, keyChainManager.instanceKeyChain());
 
     try
     {
@@ -203,6 +219,10 @@ int run(const struct Args &args)
     }
 
     LogInfo("") << "Client run completed" << std::endl;
+
+    rendererWork.reset();
+    rendererThread.join();
+    rendererIo.stop();
 
     // NOTE: this is temporary sleep. should fix simple-log for flushing all log records before release
     sleep(1);

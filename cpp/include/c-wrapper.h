@@ -16,6 +16,8 @@ extern "C" {
 
 	typedef void (*LibLog) (const char* message);
 
+    const char* ndnrtc_getVersion();
+
 	// creates Face
 	//		hostname
 	//		portnum
@@ -35,11 +37,17 @@ extern "C" {
 		int signingOn;
 		int fecOn;
 		int typeIsVideo;
-		int ndnSegmentSize, ndnDataFreshnessPeriodMs;
+		int ndnSegmentSize;
 		int frameWidth, frameHeight;
 		int startBitrate, maxBitrate, gop, dropFrames;
 		const char *streamName, *threadName;
 	} LocalStreamParams;
+
+    typedef struct _FrameInfo {
+        uint64_t timestamp_;
+        int playbackNo_;
+        char* ndnName_;
+    } cFrameInfo;
 	// params
 	//	base prefix
 	//	settings
@@ -88,9 +96,15 @@ extern "C" {
 			unsigned char* argbFrameData,
 			unsigned int frameSize);
 
+    // NOTE: returns info only for 1 thread
+    cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream);
+
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream);
+
+    // see statistics.cpp for possible values
+    double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName);
 }
 
 #endif

@@ -354,10 +354,16 @@ int loadStreamParams(const Setting &s, ConsumerStreamParams &params)
     if (EXIT_SUCCESS == loadStreamParams(s, (ClientMediaStreamParams &)params))
     {
         s.lookupValue("thread_to_fetch", params.threadToFetch_);
-        s.lookupValue("sink", params.streamSink_);
 
-        params.sinkType_ = "file";
-        s.lookupValue("sink_type", params.sinkType_);
+        const Setting &sinkSettings = s["sink"];
+
+        sinkSettings.lookupValue("name", params.sink_.name_);
+        
+        params.sink_.writeFrameInfo_ = false;
+        sinkSettings.lookupValue("write_frame_info", params.sink_.writeFrameInfo_);
+
+        params.sink_.type_ = "file";
+        sinkSettings.lookupValue("type", params.sink_.type_);
 
         return EXIT_SUCCESS;
     }

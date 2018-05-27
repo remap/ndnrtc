@@ -95,12 +95,14 @@ class ISegmentControllerObserver
     /**
      * Called whenever interest has timed out
      */
-    virtual void segmentRequestTimeout(const NamespaceInfo &) = 0;
+    virtual void segmentRequestTimeout(const NamespaceInfo &, 
+                                       const boost::shared_ptr<const ndn::Interest> &) = 0;
 
     /**
      * Called whenever interest gets network nack
      */
-    virtual void segmentNack(const NamespaceInfo &, int reason) = 0;
+    virtual void segmentNack(const NamespaceInfo &, int,
+                             const boost::shared_ptr<const ndn::Interest> &) = 0;
 
     /**
      * Called when no segments were received during specified time interval.

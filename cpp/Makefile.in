@@ -152,8 +152,8 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES
-EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
+@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
+EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_NANOMSG_TRUE@am__append_6 = client/src/ipc-shim.c client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__append_7 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
 @HAVE_NANOMSG_TRUE@am__append_8 = -L@NANOMSGLIB@
@@ -219,14 +219,15 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT)
 @OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
 @OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
 @OS_ANDROID_TRUE@am__append_15 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_16 = -pthread -fPIE -pie
-@OS_ANDROID_TRUE@am__append_17 = -llog -lOpenSLES
-@HAVE_NANOMSG_TRUE@am__append_18 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_19 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_20 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_21 = -lnanomsg
-@OS_LINUX_TRUE@am__append_22 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_23 = -DOS_DARWIN
+@OS_ANDROID_TRUE@am__append_16 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_17 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_NANOMSG_TRUE@am__append_18 = nanopipe-adaptor
+@HAVE_NANOMSG_TRUE@am__append_19 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_20 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_21 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_22 = -lnanomsg
+@OS_LINUX_TRUE@am__append_23 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_24 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -387,6 +388,7 @@ am__v_lt_1 =
 libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libndnrtc_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
 am__bin_tests_test_async_SOURCES_DIST = tests/test-async.cc \
 	src/async.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
@@ -1726,6 +1728,17 @@ bin_tests_test_webrtc_audio_channel_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_webrtc_audio_channel_LDFLAGS) $(LDFLAGS) -o \
 	$@
+am__nanopipe_adaptor_SOURCES_DIST =  \
+	client/nanopipe-adaptor/nanopipe.cpp \
+	client/nanopipe-adaptor/ipc-shim.c
+@HAVE_NANOMSG_TRUE@am_nanopipe_adaptor_OBJECTS = client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@	client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.$(OBJEXT)
+nanopipe_adaptor_OBJECTS = $(am_nanopipe_adaptor_OBJECTS)
+nanopipe_adaptor_DEPENDENCIES =
+nanopipe_adaptor_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) \
+	$(nanopipe_adaptor_LDFLAGS) $(LDFLAGS) -o $@
 am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/renderer.hpp client/src/renderer.cpp \
 	client/src/config.cpp client/src/config.hpp \
@@ -1852,7 +1865,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
 	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
-	$(ndnrtc_client_SOURCES)
+	$(nanopipe_adaptor_SOURCES) $(ndnrtc_client_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -1895,6 +1908,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_playout_SOURCES_DIST) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
 	$(am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST) \
+	$(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -2284,7 +2298,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
-pkginclude_HEADERS = include/ndnrtc-common.hpp include/params.hpp include/statistics.hpp include/interfaces.hpp include/name-components.hpp include/error-codes.hpp include/ndnrtc-defines.hpp include/simple-log.hpp include/stream.hpp include/local-stream.hpp include/remote-stream.hpp
+pkginclude_HEADERS = include/ndnrtc-common.hpp include/params.hpp include/statistics.hpp include/interfaces.hpp include/name-components.hpp include/error-codes.hpp include/ndnrtc-defines.hpp include/simple-log.hpp include/stream.hpp include/local-stream.hpp include/remote-stream.hpp include/c-wrapper.h
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/audio-capturer.cpp src/audio-capturer.hpp \
@@ -2382,6 +2396,11 @@ ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	$(top_builddir)/libndnrtc.la $(am__append_9) $(am__append_11) \
 	$(am__append_14) $(am__append_17)
 noinst_SCRIPTS = client/params.cfg
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDADD = -lnanomsg
 
 #################
 # unit tests    #
@@ -2392,14 +2411,14 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_19) $(am__append_23)
+	$(am__append_20) $(am__append_24)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
-	$(am__append_20)
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_21) \
-	$(am__append_22)
+	$(am__append_21)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_22) \
+	$(am__append_23)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_18)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_19)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -4276,6 +4295,22 @@ client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.$(OBJEXT):  \
 bin/tests/test-webrtc-audio-channel$(EXEEXT): $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_DEPENDENCIES) $(EXTRA_bin_tests_test_webrtc_audio_channel_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-webrtc-audio-channel$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_webrtc_audio_channel_LINK) $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_LDADD) $(LIBS)
+client/nanopipe-adaptor/$(am__dirstamp):
+	@$(MKDIR_P) client/nanopipe-adaptor
+	@: > client/nanopipe-adaptor/$(am__dirstamp)
+client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) client/nanopipe-adaptor/$(DEPDIR)
+	@: > client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
+client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.$(OBJEXT):  \
+	client/nanopipe-adaptor/$(am__dirstamp) \
+	client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
+client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.$(OBJEXT):  \
+	client/nanopipe-adaptor/$(am__dirstamp) \
+	client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
+
+nanopipe-adaptor$(EXEEXT): $(nanopipe_adaptor_OBJECTS) $(nanopipe_adaptor_DEPENDENCIES) $(EXTRA_nanopipe_adaptor_DEPENDENCIES) 
+	@rm -f nanopipe-adaptor$(EXEEXT)
+	$(AM_V_CXXLD)$(nanopipe_adaptor_LINK) $(nanopipe_adaptor_OBJECTS) $(nanopipe_adaptor_LDADD) $(LIBS)
 client/src/ndnrtc_client-main.$(OBJEXT): client/src/$(am__dirstamp) \
 	client/src/$(DEPDIR)/$(am__dirstamp)
 client/src/ndnrtc_client-renderer.$(OBJEXT):  \
@@ -4310,6 +4345,7 @@ ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) $
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f client/nanopipe-adaptor/*.$(OBJEXT)
 	-rm -f client/src/*.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/*.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/*.$(OBJEXT)
@@ -4320,6 +4356,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_audio_capturer-ipc-shim.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_audio_playout-ipc-shim.Po@am__quote@
@@ -5550,6 +5588,20 @@ client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj: client/src/ipc-shim
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
+
+client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o: client/nanopipe-adaptor/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/nanopipe-adaptor/ipc-shim.c' object='client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
+
+client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj: client/nanopipe-adaptor/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj `if test -f 'client/nanopipe-adaptor/ipc-shim.c'; then $(CYGPATH_W) 'client/nanopipe-adaptor/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/ipc-shim.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/nanopipe-adaptor/ipc-shim.c' object='client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj `if test -f 'client/nanopipe-adaptor/ipc-shim.c'; then $(CYGPATH_W) 'client/nanopipe-adaptor/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/ipc-shim.c'; fi`
 
 client/src/ndnrtc_client-ipc-shim.o: client/src/ipc-shim.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/ndnrtc_client-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Tpo -c -o client/src/ndnrtc_client-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
@@ -13324,6 +13376,20 @@ contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj: 
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
+client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o: client/nanopipe-adaptor/nanopipe.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o `test -f 'client/nanopipe-adaptor/nanopipe.cpp' || echo '$(srcdir)/'`client/nanopipe-adaptor/nanopipe.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/nanopipe-adaptor/nanopipe.cpp' object='client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o `test -f 'client/nanopipe-adaptor/nanopipe.cpp' || echo '$(srcdir)/'`client/nanopipe-adaptor/nanopipe.cpp
+
+client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj: client/nanopipe-adaptor/nanopipe.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj `if test -f 'client/nanopipe-adaptor/nanopipe.cpp'; then $(CYGPATH_W) 'client/nanopipe-adaptor/nanopipe.cpp'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/nanopipe.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/nanopipe-adaptor/nanopipe.cpp' object='client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj `if test -f 'client/nanopipe-adaptor/nanopipe.cpp'; then $(CYGPATH_W) 'client/nanopipe-adaptor/nanopipe.cpp'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/nanopipe.cpp'; fi`
+
 client/src/ndnrtc_client-main.o: client/src/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-main.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-main.Tpo -c -o client/src/ndnrtc_client-main.o `test -f 'client/src/main.cpp' || echo '$(srcdir)/'`client/src/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-main.Tpo client/src/$(DEPDIR)/ndnrtc_client-main.Po
@@ -14210,6 +14276,8 @@ distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f bin/tests/$(am__dirstamp)
+	-rm -f client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
+	-rm -f client/nanopipe-adaptor/$(am__dirstamp)
 	-rm -f client/src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f client/src/$(am__dirstamp)
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -14231,7 +14299,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf client/nanopipe-adaptor/$(DEPDIR) client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -14279,7 +14347,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
+	-rm -rf client/nanopipe-adaptor/$(DEPDIR) client/src/$(DEPDIR) contrib/gtest/googlemock/src/$(DEPDIR) contrib/gtest/googletest/src/$(DEPDIR) src/$(DEPDIR) tests/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -14334,6 +14402,7 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 
 @OS_DARWIN_FALSE@libwebrtc-all.a: libwebrtc-all.mri
 @OS_DARWIN_FALSE@  $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
+@HAVE_NANOMSG_TRUE@ # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
 
 res/test-source-1280x720.argb:
 	mkdir -p $(top_builddir)/res/

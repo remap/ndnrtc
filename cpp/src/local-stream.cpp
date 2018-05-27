@@ -164,6 +164,12 @@ int LocalVideoStream::incomingNV21Frame(const unsigned int width,
 		strideUV, yBuffer, uvBuffer}));
 }
 
+const std::map<std::string, FrameInfo>& 
+LocalVideoStream::getLastPublishedInfo() const
+{
+    return pimpl_->getLastPublished();
+}
+
 string
 LocalVideoStream::getPrefix() const
 {

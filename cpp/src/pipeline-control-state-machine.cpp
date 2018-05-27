@@ -230,7 +230,15 @@ class BootstrappingT : public PipelineControlState,
   protected:
     std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
     {
-        askMetadata();
+        if (ev->getInfo().isMeta_)
+            askMetadata();
+        return str();
+    }
+
+    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
+    {
+        if (ev->getInfo().isMeta_)
+            askMetadata();
         return str();
     }
 
@@ -240,19 +248,22 @@ class BootstrappingT : public PipelineControlState,
             return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
         else
         { // process frame segments
-            ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
-
-            // check whether it's time to switch
-            if (receivedStartOffSegment(ev->getSegment()))
+            // check if we are receiving expected frames
+            if (checkSampleIsExpected(ev->getSegment()))
             {
-                // since we are fetching older frames, we'll need to fast forward playback
-                // to minimize playback latency
-                int playbackFastForwardMs = calculatePlaybackFfwdInterval(ev->getSegment());
-                ctrl_->playoutControl_->allowPlayout(true, playbackFastForwardMs);
+                ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
 
-                return kStateAdjusting;
+                // check whether it's time to switch
+                if (receivedStartOffSegment(ev->getSegment()))
+                {
+                    // since we are fetching older frames, we'll need to fast forward playback
+                    // to minimize playback latency
+                    int playbackFastForwardMs = calculatePlaybackFfwdInterval(ev->getSegment());
+                    ctrl_->playoutControl_->allowPlayout(true, playbackFastForwardMs);
+
+                    return kStateAdjusting;
+                }
             }
-
             return str();
         }
     }
@@ -284,6 +295,12 @@ class BootstrappingT : public PipelineControlState,
     }
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
+    bool checkSampleIsExpected(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        return (seg->getSampleNo() >= ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber());
+    }
+
+    ENABLE_IF(MetadataClass, AudioThreadMeta)
     int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
     {
         PacketNumber currentDeltaSeqNo = seg->getSampleNo();
@@ -306,6 +323,18 @@ class BootstrappingT : public PipelineControlState,
         PacketNumber currentKeySeqNo = seg->isDelta() ? segmentPacket.getHeader().pairedSequenceNo_ : seg->getSampleNo() ;
 
         return (currentDeltaSeqNo >= startOffDeltaSeqNo) && (currentKeySeqNo >= startOffKeySeqNo);
+    }
+
+    ENABLE_IF(MetadataClass, VideoThreadMeta)
+    bool checkSampleIsExpected(const boost::shared_ptr<const WireSegment> &seg)
+    {
+        PacketNumber minSequenceNoDelta = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first;
+        PacketNumber minSequenceNoKey = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().second;
+
+        if (seg->isDelta()) 
+            return (seg->getSampleNo() >= minSequenceNoDelta);
+
+        return (seg->getSampleNo() >= minSequenceNoKey);
     }
 
     ENABLE_IF(MetadataClass, VideoThreadMeta)
@@ -337,6 +366,7 @@ typedef BootstrappingT<VideoThreadMeta> BootstrappingVideo;
  *	- Reset: resets to idle
  *	- Starvation: resets to idle
  *	- Timeout: re-issue Interest (accesses pipeliner)
+ *  - Nack: re-issue Interest (accesses pipeliner)
  *	- Segment: checks interest control (for pipeline decreases), checks latency 
  *		control whether latest data arrival stopped, if so, restores previous
  *		pipeline size and transitions to Fetching state
@@ -354,6 +384,8 @@ class Adjusting : public PipelineControlState
     unsigned int pipelineLowerLimit_;
 
     std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override;
+    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override;
+    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override;
 };
 
 /**
@@ -368,6 +400,7 @@ class Adjusting : public PipelineControlState
  *	- Reset: resets to idle
  *	- Starvation: resets to idle
  *	- Timeout: re-issue Interest (accesses pipeliner)
+ *  - Nack: re-issue Interest (accesses pipeliner)
  *	- Segment: checks interest control, checks latency control, transitions to
  * 		Adjust state if latest data arrival stops
  */
@@ -381,6 +414,8 @@ class Fetching : public PipelineControlState
 
   private:
     std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override;
+    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override;
+    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override;
 };
 
 //******************************************************************************
@@ -602,6 +637,20 @@ Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
     return str();
 }
 
+std::string
+Adjusting::onTimeout(const boost::shared_ptr<const EventTimeout> &ev)
+{
+    ctrl_->pipeliner_->express({ ev->getInterest() });
+    return str();
+}
+
+std::string
+Adjusting::onNack(const boost::shared_ptr<const EventNack> &ev)
+{
+    ctrl_->pipeliner_->express({ ev->getInterest() });
+    return str();
+}
+
 //******************************************************************************
 std::string
 Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
@@ -614,5 +663,19 @@ Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
         return kStateAdjusting;
     }
 
+    return str();
+}
+
+std::string
+Fetching::onTimeout(const boost::shared_ptr<const EventTimeout> &ev)
+{
+    ctrl_->pipeliner_->express({ ev->getInterest() });
+    return str();
+}
+
+std::string
+Fetching::onNack(const boost::shared_ptr<const EventNack> &ev)
+{
+    ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();
 }

@@ -248,11 +248,13 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
         LogTraceC << "thread " << it.first << " " << packetHdr.sampleRate_
                   << "fps " << packetHdr.publishTimestampMs_ << "ms " << std::endl;
 
-        publish(it.first, it.second);
+        lastPublished_[it.first].timestamp_ = (uint64_t)(packetHdr.publishUnixTimestamp_*1000);
+        lastPublished_[it.first].playbackNo_ = playbackCounter_;
+        lastPublished_[it.first].ndnName_ = publish(it.first, it.second);
     }
 }
 
-void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
+std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 {
     boost::shared_ptr<NetworkData> parityData = fp->getParityData(
         VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
@@ -335,6 +337,8 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
         if (busyPublishing_ == 0)
             (*statStorage_)[Indicator::ProcessedNum]++;
     });
+
+    return dataName.toUri();
 }
 
 void VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector &segments)
@@ -378,6 +382,8 @@ bool VideoStreamImpl::updateMeta()
                   << it.second->getMeta().getSeqNo().second << " "
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
                   << std::endl;
+
+        (*statStorage_)[Indicator::CurrentProducerFramerate] = it.second->getRate();
     }
 
     return false;

@@ -184,6 +184,12 @@ RemoteStreamImpl::getStatistics() const
     return *sstorage_;
 }
 
+ndn::Name
+RemoteStreamImpl::getStreamPrefix() const
+{
+    return (streamMeta_ ? Name(streamPrefix_).appendTimestamp(streamMeta_->getStreamTimestamp()) : streamPrefix_);
+}
+
 #pragma mark - private
 void RemoteStreamImpl::fetchMeta()
 {
@@ -220,8 +226,11 @@ void RemoteStreamImpl::streamMetaFetched(NetworkData &meta)
 
 void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs)
 {
+    Name metaPrefix(streamPrefix_);
+    metaPrefix.appendTimestamp(streamMeta_->getStreamTimestamp()).append(threadName).append(NameComponents::NameComponentMeta);
+
     shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
-    metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(threadName).append(NameComponents::NameComponentMeta),
+    metaFetcher_->fetch(face_, keyChain_, metaPrefix,
                         [threadName, me, metadataRequestedMs, this](NetworkData &meta,
                                                const std::vector<ValidationErrorInfo> &validationInfo) {
                             int64_t metadataRtt = clock::millisecondTimestamp() - metadataRequestedMs;
@@ -271,7 +280,7 @@ void RemoteStreamImpl::initiateFetching()
         }
     }
 
-    LogInfoC << "initiating fetching from " << streamPrefix_
+    LogInfoC << "initiating fetching from " << getStreamPrefix()
              << " (thread " << threadName_ << ")" << std::endl;
 
     isRunning_ = true;

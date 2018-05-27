@@ -117,12 +117,13 @@ void SegmentController::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> log
 #pragma mark - pimpl
 SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service &faceIo,
                                              unsigned int maxIdleTimeMs,
-                                             const boost::shared_ptr<StatisticsStorage> &storage) : Periodic(faceIo),
-                                                                                                    maxIdleTimeMs_(maxIdleTimeMs),
-                                                                                                    lastDataTimestampMs_(0),
-                                                                                                    starvationFired_(false),
-                                                                                                    active_(false),
-                                                                                                    sstorage_(storage)
+                                             const boost::shared_ptr<StatisticsStorage> &storage) 
+    : Periodic(faceIo),
+    maxIdleTimeMs_(maxIdleTimeMs),
+    lastDataTimestampMs_(0),
+    starvationFired_(false),
+    active_(false),
+    sstorage_(storage)
 {
     assert(sstorage_.get());
     description_ = "segment-controller";
@@ -274,7 +275,7 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest> &i
         {
             boost::lock_guard<boost::mutex> scopedLock(mutex_);
             for (auto &o : observers_)
-                o->segmentRequestTimeout(info);
+                o->segmentRequestTimeout(info, interest);
         }
 
         (*sstorage_)[Indicator::TimeoutsNum]++;
@@ -305,7 +306,7 @@ void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest
             int reason = (networkNack->getReason() == ndn_NetworkNackReason_OTHER_CODE ? networkNack->getOtherReasonCode() : networkNack->getReason());
 
             for (auto &o : observers_)
-                o->segmentNack(info, reason);
+                o->segmentNack(info, reason, interest);
         }
 
         (*sstorage_)[Indicator::NacksNum]++;

@@ -998,14 +998,16 @@ class VideoThreadMeta : public DataPacket
 class MediaStreamMeta : public DataPacket
 {
   public:
-    MediaStreamMeta();
-    MediaStreamMeta(std::vector<std::string> threads);
+    MediaStreamMeta(uint64_t timestamp);
+    MediaStreamMeta(uint64_t timestamp, std::vector<std::string> threads);
     MediaStreamMeta(NetworkData &&nd) : DataPacket(boost::move(nd)) {}
 
     void addThread(const std::string &threadName);
     void addSyncStream(const std::string &syncStream);
+
     std::vector<std::string> getSyncStreams() const;
     std::vector<std::string> getThreads() const;
+    uint64_t getStreamTimestamp() const;
 };
 
 /**

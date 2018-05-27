@@ -124,7 +124,12 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                 if (frameConsumer_)
                 {
                     if (framePacket->isValid())
-                        frameConsumer_->processFrame(currentPlayNo_, framePacket->getFrame());
+                    {
+                        FrameInfo finfo({ (uint64_t)(slot->getHeader().publishUnixTimestamp_*1000), 
+                                          currentPlayNo_, 
+                                          slot->getPrefix().toUri() });
+                        frameConsumer_->processFrame(finfo, framePacket->getFrame());
+                    }
                     else
                     {
                         LogErrorC << "frame packet is not valid " << std::endl;

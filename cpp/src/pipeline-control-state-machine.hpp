@@ -97,27 +97,31 @@ class EventSegment : public PipelineControlEvent
 class EventTimeout : public PipelineControlEvent
 {
   public:
-    EventTimeout(const NamespaceInfo &info) 
-        : PipelineControlEvent(PipelineControlEvent::Timeout), info_(info) {}
+    EventTimeout(const NamespaceInfo &info, const boost::shared_ptr<const ndn::Interest> &i) 
+        : PipelineControlEvent(PipelineControlEvent::Timeout), info_(info), interest_(i) {}
 
     const NamespaceInfo &getInfo() const { return info_; }
+    const boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
   private:
     NamespaceInfo info_;
+    const boost::shared_ptr<const ndn::Interest> interest_;
 };
 
 class EventNack : public PipelineControlEvent
 {
   public:
-    EventNack(const NamespaceInfo &info, int reason) 
-        : PipelineControlEvent(PipelineControlEvent::Nack), info_(info), reason_(reason) {}
+    EventNack(const NamespaceInfo &info, int reason, const boost::shared_ptr<const ndn::Interest> &i) 
+        : PipelineControlEvent(PipelineControlEvent::Nack), info_(info), reason_(reason), interest_(i) {}
 
     const NamespaceInfo &getInfo() const { return info_; }
     int getReason() const { return reason_; }
+    const boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
   private:
     NamespaceInfo info_;
     int reason_;
+    const boost::shared_ptr<const ndn::Interest> interest_;
 };
 
 class EventStarvation : public PipelineControlEvent

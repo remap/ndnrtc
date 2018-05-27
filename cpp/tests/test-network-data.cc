@@ -1114,7 +1114,7 @@ TEST(TestVideoThreadMeta, TestCreateFail)
 
 TEST(TestMediaStreamMeta, TestCreate)
 {
-    MediaStreamMeta meta;
+    MediaStreamMeta meta(1526305815742);
     meta.addThread("low");
     meta.addThread("mid");
     meta.addThread("high");
@@ -1128,6 +1128,7 @@ TEST(TestMediaStreamMeta, TestCreate)
     EXPECT_EQ("mid", meta.getThreads()[1]);
     EXPECT_EQ("high", meta.getThreads()[2]);
     EXPECT_EQ("ultra", meta.getThreads()[3]);
+    EXPECT_EQ(1526305815742, meta.getStreamTimestamp());
 
     ASSERT_EQ(2, meta.getSyncStreams().size());
     EXPECT_EQ("desktop", meta.getSyncStreams()[0]);
@@ -1148,17 +1149,19 @@ TEST(TestMediaStreamMeta, TestCreate)
     ASSERT_EQ(2, meta2.getSyncStreams().size());
     EXPECT_EQ("desktop", meta2.getSyncStreams()[0]);
     EXPECT_EQ("mic", meta2.getSyncStreams()[1]);
+    EXPECT_EQ(1526305815742, meta.getStreamTimestamp());
 }
 
 TEST(TestMediaStreamMeta, TestPackAndUnpack)
 {
-    MediaStreamMeta meta;
+    MediaStreamMeta meta(1526305815742);
     meta.addThread("low");
     meta.addSyncStream("mic");
 
     EXPECT_TRUE(meta.isValid());
     ASSERT_EQ(1, meta.getThreads().size());
     EXPECT_EQ("low", meta.getThreads()[0]);
+    EXPECT_EQ(1526305815742, meta.getStreamTimestamp());
 
     ASSERT_EQ(1, meta.getSyncStreams().size());
     EXPECT_EQ("mic", meta.getSyncStreams()[0]);
@@ -1189,6 +1192,7 @@ TEST(TestMediaStreamMeta, TestPackAndUnpack)
     EXPECT_TRUE(meta2.isValid());
     ASSERT_EQ(1, meta2.getThreads().size());
     EXPECT_EQ("low", meta2.getThreads()[0]);
+    EXPECT_EQ(1526305815742, meta2.getStreamTimestamp());
 
     ASSERT_EQ(1, meta2.getSyncStreams().size());
     EXPECT_EQ("mic", meta2.getSyncStreams()[0]);
@@ -1231,7 +1235,7 @@ TEST(TestWireData, TestVideoFrameSegment)
     }
 
     {
-        std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+        std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/video/camera/hi/d/%FE%00";
         std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
         int segIdx = 0;
         for (auto &s : segments)
@@ -1255,7 +1259,7 @@ TEST(TestWireData, TestVideoFrameSegment)
             EXPECT_TRUE(wd.isValid());
             EXPECT_EQ(segments.size(), wd.getSlicesNum());
             EXPECT_EQ(ndn::Name("/ndn/edu/ucla/remap/ndncon/instance1"), wd.getBasePrefix());
-            EXPECT_EQ(2, wd.getApiVersion());
+            EXPECT_EQ(NameComponents::nameApiVersion(), wd.getApiVersion());
             EXPECT_EQ(MediaStreamParams::MediaStreamType::MediaStreamTypeVideo, wd.getStreamType());
             EXPECT_EQ("camera", wd.getStreamName());
             EXPECT_EQ("hi", wd.getThreadName());
@@ -1309,7 +1313,7 @@ TEST(TestWireData, TestWrongData)
 {
     int data_len = 1000;
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/video/camera/hi/d/%FE%00";
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
@@ -1338,7 +1342,7 @@ TEST(TestWireData, TestWrongHeader)
     int wireLength = 1000;
     std::vector<CommonSegment> segments = CommonSegment::slice(nd, wireLength);
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/video/camera/hi/d/%FE%00";
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
@@ -1428,7 +1432,7 @@ TEST(TestWireData, TestMergeVideoFramePacket)
         s.setHeader(hdr);
     }
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%00";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/video/camera/hi/d/%FE%00";
     std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
     std::vector<boost::shared_ptr<ndn::Interest>> interests;
     int segIdx = 0;
@@ -1526,7 +1530,7 @@ TEST(TestWireData, TestMergeAudioBundle)
     shdr.generationDelayMs_ = 200;
     segments[0].setHeader(shdr);
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/audio/mic/hd/%FE%07";
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
@@ -1568,7 +1572,7 @@ TEST(TestWireData, TestMergeAudioBundle)
 
 TEST(TestManifest, TestWithDummySignature)
 {
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/audio/mic/hd/%FE%07";
     size_t frameSize = 60000;
     VideoFramePacket vp = getVideoFramePacket(frameSize);
     std::vector<VideoFrameSegment> segments = sliceFrame(vp);

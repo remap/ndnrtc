@@ -33,13 +33,17 @@
 #include "face-processor.hpp"
 #include "local-stream.hpp"
 #include "simple-log.hpp"
+#include "name-components.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;
 using namespace boost::chrono;
 using namespace ndnlog::new_api;
 
+namespace cwrapper_tools {
 class KeyChainManager;
+}
+using namespace cwrapper_tools;
 
 static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "private-keys";
@@ -56,6 +60,7 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
 
 //******************************************************************************
+namespace cwrapper_tools {
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
 public:
     KeyChainManager(boost::shared_ptr<ndn::Face> face,
@@ -98,8 +103,15 @@ private:
 	void createInstanceIdentity();
     void checkExists(const std::string&);
 };
+}
 
 //******************************************************************************
+const char* ndnrtc_getVersion()
+{
+    static std::string version = NameComponents::fullVersion();
+    return version.c_str();
+}
+
 bool ndnrtc_init(const char* hostname, const char* storagePath, 
 	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {
@@ -153,12 +165,36 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 
 		// registering prefix for the stream
 		Name prefix(stream->getPrefix());
-		registerPrefix(prefix, callbackLogger);
+		registerPrefix(prefix.getPrefix(-1), callbackLogger);
 
 		return stream;
 	}
 
 	return nullptr;
+}
+
+
+cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream)
+{
+    static char *frameName = nullptr;
+    if (!frameName) frameName = (char*)malloc(1024*sizeof(char));
+
+    memset((void*)frameName, 0, 1024);
+    cFrameInfo frameInfo({0, 0, frameName});
+
+    if (stream)
+    {
+        std::map<std::string, FrameInfo> lastPublishedInfo = stream->getLastPublishedInfo();
+        if (lastPublishedInfo.size())
+        {
+            FrameInfo fi = lastPublishedInfo.begin()->second;
+            frameInfo.timestamp_ = fi.timestamp_;
+            frameInfo.playbackNo_ = fi.playbackNo_;
+            strcpy(frameInfo.ndnName_, fi.ndnName_.c_str());
+        }
+    }
+
+    return frameInfo;
 }
 
 void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
@@ -188,6 +224,33 @@ const char* ndnrtc_LocalStream_getStreamName(IStream *stream)
 	return "n/a";
 }
 
+double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
+{
+    if (stream)
+    {
+        bool f = false;
+        statistics::Indicator ind;
+        std::string sname(statName);
+        for (auto p:statistics::StatisticsStorage::IndicatorKeywords)
+            if (p.second == sname)
+            {
+                ind = p.first;
+                f = true;
+                break;
+            }
+
+        if (f)
+        {
+            statistics::StatisticsStorage::StatRepo repo = stream->getStatistics().getIndicators();
+            if (repo.find(ind) != repo.end())
+                return repo[ind];
+        }
+        return 0;
+    }
+
+    return 0;
+}
+
 int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned int width,
 			const unsigned int height,
@@ -200,6 +263,7 @@ int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingI420Frame(width, height, strideY, strideU, strideV, yBuffer, uBuffer, vBuffer);
+    return -1;
 }
 
 int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
@@ -212,6 +276,7 @@ int ndnrtc_LocalVideoStream_incomingNV21Frame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingNV21Frame(width, height, strideY, strideUV, yBuffer, uvBuffer);
+    return -1;
 }
 
 int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
@@ -222,6 +287,7 @@ int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
 {
 	if (stream)
 		return stream->incomingArgbFrame(width, height, argbFrameData, frameSize);
+    return -1;
 }
 //******************************************************************************
 // private
@@ -307,8 +373,7 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 
 	MediaStreamParams p(params.streamName);
 	p.producerParams_.segmentSize_ = params.ndnSegmentSize;
-    // TODO: make all freshnesses configurable by user
-	p.producerParams_.freshness_= {10, (unsigned int)params.ndnDataFreshnessPeriodMs, 900};
+	p.producerParams_.freshness_= {10, 30, 900};
 
 	if (params.typeIsVideo == 1)
 	{
