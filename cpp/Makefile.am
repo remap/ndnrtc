@@ -66,7 +66,11 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/video-stream-impl.cpp src/video-stream-impl.hpp \
   src/video-thread.cpp src/video-thread.hpp \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
-  src/webrtc.hpp
+  src/webrtc.hpp \
+  src/persistent-storage/frame-fetcher.cpp src/persistent-storage/frame-fetcher.hpp \
+  src/persistent-storage/fetching-task.cpp src/persistent-storage/fetching-task.hpp \
+  src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
+  src/persistent-storage/storage-engine.cpp src/persistent-storage/storage-engine.hpp
 
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
@@ -105,11 +109,10 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 endif
 
 #################
-# client app	#
+# client app	  #
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
@@ -267,7 +270,7 @@ bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb-ndk/include
 bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb-ndk/libs/armeabi-v7a
 # bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb/include -I/Users/peetonn/Documents/Work/rocksdb/include -I/Users/peetonn/Documents/Work/HyperLevelDB/build/include

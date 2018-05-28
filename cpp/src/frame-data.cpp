@@ -297,7 +297,7 @@ WireSegment::packetHeader() const
 bool WireSegment::isOriginal() const
 {
     if (!interest_->getNonce().size())
-        throw std::runtime_error("Interest nonce is not set");
+        return false; //throw std::runtime_error("Interest nonce is not set");
 
     return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
 }
