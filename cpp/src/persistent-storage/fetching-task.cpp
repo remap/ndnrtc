@@ -26,6 +26,7 @@ FrameFetchingTask::FrameFetchingTask(const ndn::Name& frameName,
                           const FetchingTask::Settings& settings,
                           OnSegment onFirstSegment, 
                           OnSegment onZeroSegment):
+    state_(Created),
     fetchMethod_(fetchMethod),
     onFetchingComplete_(onFetchingComplete), onFetchingFailed_(onFetchingFailed),
     settings_(settings),
@@ -61,17 +62,21 @@ void FrameFetchingTask::start()
     taskCompletion_ = interests.size() * (1+settings_.nRtx_);
     nNacks_ = 0;
     nTimeouts_ = 0;
+    state_ = Fetching;
 
     LogDebugC << "start fetching task. completion " << taskCompletion_ << std::endl;
 
     slot_->segmentsRequested(interests);
     for (auto i:interests)
-        requestSegment(i);
+    {
+        if (state_ == Fetching)
+            requestSegment(i);
+    }
 }
 
 void FrameFetchingTask::cancel()
 {
-
+    state_ = Canceled;
 }
 
 void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interest)
@@ -97,9 +102,9 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
                           << ". progress " << taskProgress_ << "/" << taskCompletion_ << std::endl;
 
                 if (s == BufferSlot::New && slot_->getState() >= BufferSlot::New)
-                    onFirstSegment_(seg);
+                    onFirstSegment_(self, seg);
                 if (seg->getInfo().segNo_ == 0)
-                    onZeroSegment_(seg);
+                    onZeroSegment_(self, seg);
 
                 checkMissingSegments();
                 checkCompletion();
@@ -167,12 +172,22 @@ void
 FrameFetchingTask::checkCompletion()
 {
     if (slot_->getState() == BufferSlot::Ready)
-        onFetchingComplete_(slot_);
+    {
+        if (state_ == Fetching)
+        {
+            state_ = Completed;
+            onFetchingComplete_(shared_from_this(), slot_);
+        }
+    }
     else if (taskProgress_ >= taskCompletion_)
     {
-        std::stringstream ss;
-        ss << "Couldn't fetch frame: " << nTimeouts_ << " timeouts, " << nNacks_ << " NACKs.";
-        onFetchingFailed_(ss.str());
+        if (state_ == Fetching)
+        {
+            state_ = Failed;
+            std::stringstream ss;
+            ss << "Couldn't fetch frame: " << nTimeouts_ << " timeouts, " << nNacks_ << " NACKs.";
+            onFetchingFailed_(shared_from_this(), ss.str());
+        }
     }
 }
 

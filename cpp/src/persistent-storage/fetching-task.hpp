@@ -28,10 +28,14 @@ namespace ndnrtc {
     class BufferSlot;
     class IFetchMethod;
     class StorageEngine;
+    class FetchingTask;
 
-    typedef boost::function<void(std::string)> OnFetchingFailed;
-    typedef boost::function<void(const boost::shared_ptr<const BufferSlot>&)> OnFetchingComplete;
-    typedef boost::function<void(const boost::shared_ptr<const SlotSegment>&)> OnSegment;
+    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
+                                 std::string)> OnFetchingFailed;
+    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
+                                 const boost::shared_ptr<const BufferSlot>&)> OnFetchingComplete;
+    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
+                                 const boost::shared_ptr<const SlotSegment>&)> OnSegment;
 
     class FetchingTask {
         public: 
@@ -39,13 +43,21 @@ namespace ndnrtc {
                 int nRtx_;
                 int interestLifeTimeMs_;
             } Settings;
+
+            virtual ~FetchingTask(){}
     };
 
     class FrameFetchingTask : public FetchingTask,
                               public ndnlog::new_api::ILoggingObject,
                               public boost::enable_shared_from_this<FrameFetchingTask> {
     public:
-
+        enum State {
+            Created,
+            Fetching,
+            Canceled,
+            Completed,
+            Failed
+        };
         /**
          * Creates new task for fetching frame.
          * @param name Full frame NDN name
@@ -64,18 +76,18 @@ namespace ndnrtc {
                           OnSegment = OnSegment());
         ~FrameFetchingTask();
 
-
         void start();
         void cancel();
-        bool isFetching() const { return isFetching_; }
+        bool isFetching() const { return (state_ == Fetching); }
+        State getState() const { return state_; }
         int getNacksNum() const { return nNacks_; }
         int getTimeoutsNum() const { return nTimeouts_; }
 
     private:
         FetchingTask::Settings settings_;
-        bool isFetching_;
         int taskProgress_, taskCompletion_;
         int nNacks_, nTimeouts_;
+        State state_;
 
         boost::shared_ptr<BufferSlot> slot_;
         NamespaceInfo frameNameInfo_;
