@@ -268,9 +268,6 @@ bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb/include -I/Users/peetonn/Documents/Work/rocksdb/include -I/Users/peetonn/Documents/Work/HyperLevelDB/build/include
-bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb/build -L/Users/peetonn/Documents/Work/rocksdb -L/Users/peetonn/Documents/Work/HyperLevelDB/build/lib/ -lleveldb -lrocksdb -lhyperleveldb
-bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} ${BOOST_FILESYSTEM_LIB}
 
 bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpers.cc src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

@@ -6,7 +6,10 @@
 //
 
 #include <stdlib.h>
+
+#ifndef __ANDROID__
 #include <execinfo.h>
+#endif
 
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <boost/assign.hpp>
@@ -44,8 +47,8 @@
 // include .cpp in order to instantiate class with mock objects
 #include "src/packet-publisher.cpp"
 
-// #define LEVELDB
-#define HYPERDB
+#define LEVELDB
+// #define HYPERDB
 // #define ROCKSDB
 
 #include <cassert>
@@ -73,16 +76,25 @@ typedef _PublisherSettings<MockNdnKeyChain, MockNdnMemoryCache> MockSettings;
 typedef std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> PendingInterests;
 
 #if 0
-TEST(TestPacketPublisher, TestBenchmarkSegment8000)
+TEST(TestPeristentStorage, TestBenchmarkSegment8000)
 {
+
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+#ifndef __ANDROID__
     std::string dbPath("/tmp/testdb");
+#else
+    std::string dbPath("/data/local/tmp/testdb");
+#endif
 
     db_namespace::DB* db;
     db_namespace::Options options;
     options.create_if_missing = true;
     db_namespace::Status status = db_namespace::DB::Open(options, dbPath, &db);
     assert(status.ok());
-
 
     Face face("aleph.ndn.ucla.edu");
     boost::shared_ptr<Interest> interest = boost::make_shared<Interest>("/test/1", 2000);
@@ -97,6 +109,7 @@ TEST(TestPacketPublisher, TestBenchmarkSegment8000)
     uint64_t dbInsertUsec = 0;
     int wireLength = 8000;
     int freshness = 1000;
+    settings.sign_ = false;
     settings.keyChain_ = keyChain.get();
     settings.memoryCache_ = memCache.get();
     settings.segmentWireLength_ = wireLength;
@@ -117,11 +130,16 @@ TEST(TestPacketPublisher, TestBenchmarkSegment8000)
 
     int nFrames = 1000;
     int frameNo = 0;
-    Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d");
+    Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/tiny/d");
+
+    VideoPacketPublisher publisher(settings);
+
+#ifdef ENABLE_LOGGING
+    publisher.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
 
     for (int frameLen = 10000; frameLen < 35000; frameLen += 10000)
     {
-        VideoPacketPublisher publisher(settings);
         unsigned int publishDuration = 0;
         unsigned int totalSlices = 0;
 
@@ -219,10 +237,14 @@ TEST(TestPacketPublisher, TestBenchmarkSegment8000)
 }
 #endif
 
-#if 1
-TEST(TestPacketPublisher, TestWriteMillion)
+#if 0
+TEST(TestPersistentStorage, TestWriteMillion)
 {
+#ifndef __ANDROID__
     std::string dbPath("/tmp/testdb");
+#else
+    std::string dbPath("/data/local/tmp/testdb");
+#endif
 
     db_namespace::DB* db;
     db_namespace::Options options;
@@ -247,7 +269,7 @@ TEST(TestPacketPublisher, TestWriteMillion)
     int nPackets = 1000000;
     int frameNo = 0, segNo = 0;
     int batch = 0, batchSize = 1000;
-    Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/tiny/d");
+    Name filter("/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/tiny/d");
     boost::chrono::high_resolution_clock::time_point t1, t2;
 
     for (int i = 0; i < nPackets; ++i)
@@ -343,10 +365,14 @@ TEST(TestPacketPublisher, TestWriteMillion)
 
 std::string resources_path = "";
 std::string test_path = "";
-#if 0
+#if 1
 TEST(TestPersistentStorage, TestBenchmarkVideoPublishing)
 {
+#ifndef __ANDROID__
     std::string dbPath("/tmp/testdb");
+#else
+    std::string dbPath("/data/local/tmp/testdb");
+#endif
 
     db_namespace::DB* db;
     db_namespace::Options options;
@@ -419,7 +445,7 @@ TEST(TestPersistentStorage, TestBenchmarkVideoPublishing)
     vcp.encodeHeight_ = height;
     VideoThread vt(vcp);
 
-    std::string streamPrefix = "/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%03/video/camera";
+    std::string streamPrefix = "/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6";
     std::string thread = "tiny";
     PacketNumber keyNo = 0, deltaNo = 0, playNo = 0;
     int maxKeySegNum  = 0, maxDeltaSegNum = 0;
@@ -579,12 +605,16 @@ void handler(int sig) {
   void *array[10];
   size_t size;
 
-  // get void*'s for all entries on the stack
-  size = backtrace(array, 10);
-
   // print out all the frames to stderr
   fprintf(stderr, "Error: signal %d:\n", sig);
-  backtrace_symbols_fd(array, size, STDERR_FILENO);
+#ifndef __ANDROID__
+    // get void*'s for all entries on the stack
+    size = backtrace(array, 10);
+
+    // print out all the frames to stderr
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
+
   exit(1);
 }
 
@@ -600,9 +630,13 @@ int main(int argc, char **argv)
     test_path = testPath.string();
 
     boost::filesystem::path resPath(testPath);
+    #ifndef __ANDROID__
     resPath /= boost::filesystem::path("..") /= 
                boost::filesystem::path("..") /=
                boost::filesystem::path("res");
+    #else
+    resPath = test_path;
+    #endif
 
     resources_path = resPath.string();
 #else
@@ -616,7 +650,12 @@ int main(int argc, char **argv)
         test_path += comps[i];
         if (i != comps.size()-1) test_path += "/";
     }
+
+    #ifndef __ANDROID__
     resources_path = test_path + "../..";
+    #else
+    resources_path = test_path;
+    #endif
 #endif
 
     return RUN_ALL_TESTS();
