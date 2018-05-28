@@ -21,7 +21,7 @@ using namespace webrtc;
 
 //******************************************************************************
 VideoThread::VideoThread(const VideoCoderParams &coderParams)
-    : coder_(coderParams, this, VideoCoder::KeyEnforcement::Timed),
+    : coder_(coderParams, this, VideoCoder::KeyEnforcement::Gop),
       nEncoded_(0), nDropped_(0)
 {
     description_ = "vthread";
