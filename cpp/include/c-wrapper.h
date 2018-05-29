@@ -15,6 +15,10 @@
 extern "C" {
 
 	typedef void (*LibLog) (const char* message);
+    typedef unsigned char* (*BufferAlloc) (const char* frameName, 
+                                           int width, int height);
+    typedef void (*FrameFetched) (const char* frameName, int width, int height, 
+                                  const unsigned char* buffer);
 
     const char* ndnrtc_getVersion();
 
@@ -41,6 +45,7 @@ extern "C" {
 		int frameWidth, frameHeight;
 		int startBitrate, maxBitrate, gop, dropFrames;
 		const char *streamName, *threadName;
+        const char *storagePath; 
 	} LocalStreamParams;
 
     typedef struct _FrameInfo {
@@ -105,6 +110,12 @@ extern "C" {
 
     // see statistics.cpp for possible values
     double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName);
+
+    // fetch frame from local storage of the local stream
+    void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
+                                   const char* frameName, 
+                                   BufferAlloc bufferAllocFunc,
+                                   FrameFetched frameFetchedFunc);
 }
 
 #endif

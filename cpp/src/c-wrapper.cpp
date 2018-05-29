@@ -34,6 +34,7 @@
 #include "local-stream.hpp"
 #include "simple-log.hpp"
 #include "name-components.hpp"
+#include "frame-fetcher.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;
@@ -153,8 +154,9 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.sign_ = (params.signingOn == 1);
 		settings.face_ = LibFaceProcessor->getFace().get();
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
+        settings.storagePath_ = (params.storagePath ? std::string(params.storagePath) : "");
 
-		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
 			boost::make_shared<CallbackSink>(loggerSink));
 		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
 			<< "signing " << (settings.sign_ ? "ON" : "OFF")
@@ -249,6 +251,39 @@ double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
     }
 
     return 0;
+}
+
+static std::map<std::string, boost::shared_ptr<FrameFetcher>> FrameFetchers;
+void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
+                               const char* frameName, 
+                               BufferAlloc bufferAllocFunc,
+                               FrameFetched frameFetchedFunc)
+{
+    boost::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
+    boost::shared_ptr<FrameFetcher> ff = boost::make_shared<FrameFetcher>(storage);
+
+    std::string fkey(frameName);
+    FrameFetchers[fkey] = ff;
+
+((LocalVideoStream*)stream)->getLogger()->log(ndnlog::NdnLoggerLevelInfo) << "Setting up frame-fetcher for " << fkey << std::endl;
+
+    ff->setLogger(((LocalVideoStream*)stream)->getLogger());
+    ff->fetch(Name(frameName),
+              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+                                      int width, int height)->uint8_t*
+              {
+                  return bufferAllocFunc(fkey.c_str(), width, height);
+              },
+              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+                 const FrameInfo fi, int nFetchedFrames,
+                 int width, int height, const uint8_t* buffer){
+                  frameFetchedFunc(fkey.c_str(), width, height, buffer);
+                  FrameFetchers.erase(fkey);
+              },
+              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason){
+                   frameFetchedFunc(fkey.c_str(), 0, 0, nullptr);
+                   FrameFetchers.erase(fkey);
+              });
 }
 
 int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,

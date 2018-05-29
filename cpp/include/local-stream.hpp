@@ -82,6 +82,7 @@ namespace ndnrtc {
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream
@@ -233,6 +234,7 @@ namespace ndnrtc {
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) override;
+        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream

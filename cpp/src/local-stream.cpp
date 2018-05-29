@@ -101,6 +101,13 @@ LocalAudioStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	pimpl_->setLogger(logger);
 }
 
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalAudioStream::getLogger() const
+{
+    return pimpl_->getLogger();
+}
+
+
 statistics::StatisticsStorage 
 LocalAudioStream::getStatistics() const
 {
@@ -204,6 +211,12 @@ void
 LocalVideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	pimpl_->setLogger(logger);
+}
+
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalVideoStream::getLogger() const
+{
+    return pimpl_->getLogger();
 }
 
 statistics::StatisticsStorage 

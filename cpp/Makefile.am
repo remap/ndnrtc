@@ -67,7 +67,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/video-thread.cpp src/video-thread.hpp \
   src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
   src/webrtc.hpp \
-  src/persistent-storage/frame-fetcher.cpp src/persistent-storage/frame-fetcher.hpp \
+  src/persistent-storage/frame-fetcher.cpp include/frame-fetcher.hpp \
   src/persistent-storage/fetching-task.cpp src/persistent-storage/fetching-task.hpp \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
