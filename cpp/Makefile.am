@@ -70,7 +70,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/persistent-storage/frame-fetcher.cpp src/persistent-storage/frame-fetcher.hpp \
   src/persistent-storage/fetching-task.cpp src/persistent-storage/fetching-task.hpp \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
-  src/persistent-storage/storage-engine.cpp src/persistent-storage/storage-engine.hpp
+  src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
@@ -270,7 +270,7 @@ bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp src/local-stream.cpp src/video-stream-impl.cpp src/media-stream-base.cpp src/audio-capturer.cpp src/periodic.cpp src/audio-stream-impl.cpp src/estimators.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/async.cpp src/audio-thread.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb-ndk/include
 bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb-ndk/libs/armeabi-v7a
 # bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb/include -I/Users/peetonn/Documents/Work/rocksdb/include -I/Users/peetonn/Documents/Work/HyperLevelDB/build/include

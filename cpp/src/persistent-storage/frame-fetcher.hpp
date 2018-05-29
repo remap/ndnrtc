@@ -15,7 +15,6 @@
 #include "params.hpp"
 #include "simple-log.hpp"
 #include "name-components.hpp"
-#include "persistent-storage/fetching-task.hpp"
 #include "frame-data.hpp"
 
 namespace ndnrtc {
@@ -26,16 +25,29 @@ namespace ndnrtc {
     class FrameFetchingTask;
     class IFetchMethod;
 
-    typedef boost::function<uint8_t*(const boost::shared_ptr<FrameFetcher>&, 
+    class FrameFetcherImpl;
+    class IFrameFetcher;
+
+    typedef boost::function<uint8_t*(const boost::shared_ptr<IFrameFetcher>&, 
                                      int width, int height)> OnBufferAllocate;
-    typedef boost::function<void(const boost::shared_ptr<FrameFetcher>&,
+    typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
                                  const FrameInfo&, int nFramesFetched,
                                  int width, int height, const uint8_t* buffer)> OnFrameFetched;
-    typedef boost::function<void(const boost::shared_ptr<FrameFetcher>&,
+    typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
                                  std::string reason)> OnFetchFailure;
 
-    class FrameFetcher : public  ndnlog::new_api::ILoggingObject,
-                         public boost::enable_shared_from_this<FrameFetcher> {
+    class IFrameFetcher {
+    public:
+        virtual void fetch(const ndn::Name& frameName, 
+                           OnBufferAllocate onBufferAllocate,
+                           OnFrameFetched onFrameFetched,
+                           OnFetchFailure onFetchFailure) = 0;
+        virtual const ndn::Name& getName() const = 0;
+        virtual ~IFrameFetcher(){}
+    };
+
+    class FrameFetcher : public IFrameFetcher,
+                         public ndnlog::new_api::ILoggingObject {
     public:
         enum State {
             Idle,
@@ -48,37 +60,18 @@ namespace ndnrtc {
         FrameFetcher(const boost::shared_ptr<StorageEngine>& storage);
         // FrameFetcher(const boost::shared_ptr<LocalVideoStream>& localStream);
         // FrameFetcher(std::string streamPrefix);
-        ~FrameFetcher();
+        ~FrameFetcher(){}
 
         void fetch(const ndn::Name& frameName, 
                    OnBufferAllocate onBufferAllocate,
                    OnFrameFetched onFrameFetched,
                    OnFetchFailure onFetchFailure);
-
-        State getState() const { return state_; }
+        const ndn::Name& getName() const;
+        State getState() const;
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
     private:
-        State state_;
-        FetchingTask::Settings fetchSettings_;
-
-        boost::shared_ptr<StorageEngine> storage_;
-        NamespaceInfo frameNameInfo_;
-        OnBufferAllocate onBufferAllocate_;
-        OnFrameFetched onFrameFetched_;
-        OnFetchFailure onFetchFailure_;
-
-        boost::shared_ptr<IFetchMethod> fetchMethod_;
-        std::map<ndn::Name, boost::shared_ptr<FrameFetchingTask>> fetchingTasks_;
-        boost::shared_ptr<FrameFetchingTask> keyFrameTask_, targetFrameTask_;
-        std::map<ndn::Name, boost::shared_ptr<FrameFetchingTask>> deltasTasks_;
-
-        void fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegment);
-        void fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment);
-        void checkReadyDecode();
-        void decode();
-        void reset();
-        void halt(std::string reason);
-        VideoCoderParams setupDecoderParams(const boost::shared_ptr<ImmutableVideoFramePacket>&) const;
+       boost::shared_ptr<FrameFetcherImpl> pimpl_;
     };
 }
 

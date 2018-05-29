@@ -6,7 +6,7 @@
 //
 
 #include "frame-fetcher.hpp"
-#include "persistent-storage/storage-engine.hpp"
+#include "storage-engine.hpp"
 #include "persistent-storage/fetching-task.hpp"
 #include "frame-data.hpp"
 #include "frame-buffer.hpp"
@@ -18,21 +18,93 @@ using namespace ndnrtc;
 using namespace boost;
 using namespace ndn;
 
-FrameFetcher::FrameFetcher(const boost::shared_ptr<StorageEngine>& storage)
+namespace ndnrtc {
+    class FrameFetcherImpl : public IFrameFetcher,
+                             public ndnlog::new_api::ILoggingObject,
+                             public boost::enable_shared_from_this<FrameFetcherImpl> {
+    public:
+        FrameFetcherImpl(const boost::shared_ptr<StorageEngine>& storage);
+        ~FrameFetcherImpl(){ reset(); }
+
+        void fetch(const ndn::Name& frameName, 
+                   OnBufferAllocate onBufferAllocate,
+                   OnFrameFetched onFrameFetched,
+                   OnFetchFailure onFetchFailure);
+        const ndn::Name& getName() const
+        {
+            return frameNameInfo_.getPrefix(prefix_filter::Sample);
+        }
+
+        FrameFetcher::State getState() const { return state_; }
+
+    private:
+        FrameFetcher::State state_;
+        FetchingTask::Settings fetchSettings_;
+
+        boost::shared_ptr<StorageEngine> storage_;
+        NamespaceInfo frameNameInfo_;
+        OnBufferAllocate onBufferAllocate_;
+        OnFrameFetched onFrameFetched_;
+        OnFetchFailure onFetchFailure_;
+
+        boost::shared_ptr<IFetchMethod> fetchMethod_;
+        std::map<ndn::Name, boost::shared_ptr<FrameFetchingTask>> fetchingTasks_;
+        boost::shared_ptr<FrameFetchingTask> keyFrameTask_, targetFrameTask_;
+        std::map<ndn::Name, boost::shared_ptr<FrameFetchingTask>> deltasTasks_;
+
+        void fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegment);
+        void fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment);
+        void checkReadyDecode();
+        void decode();
+        void reset();
+        void halt(std::string reason);
+        VideoCoderParams setupDecoderParams(const boost::shared_ptr<ImmutableVideoFramePacket>&) const;
+    };
+}
+
+//******************************************************************************
+FrameFetcher::FrameFetcher(const boost::shared_ptr<StorageEngine>& storage):
+    pimpl_(make_shared<FrameFetcherImpl>(storage)){}
+
+void
+FrameFetcher::fetch(const ndn::Name& frameName, 
+                   OnBufferAllocate onBufferAllocate,
+                   OnFrameFetched onFrameFetched,
+                   OnFetchFailure onFetchFailure)
+{
+    pimpl_->fetch(frameName, onBufferAllocate, onFrameFetched, onFetchFailure);
+}
+
+const ndn::Name&
+FrameFetcher::getName() const
+{
+    return pimpl_->getName();
+}
+
+FrameFetcher::State
+FrameFetcher::getState() const 
+{ 
+    return pimpl_->getState(); 
+}
+
+void
+FrameFetcher::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+{ 
+    pimpl_->setLogger(logger); 
+}
+
+//******************************************************************************
+FrameFetcherImpl::FrameFetcherImpl(const boost::shared_ptr<StorageEngine>& storage)
     : storage_(storage), 
-      state_(Idle), 
+      state_(FrameFetcher::Idle), 
       fetchSettings_({3,1000})
 {
     fetchMethod_ = make_shared<FetchMethodLocal>(storage_);
     description_ = "frame-fetcher";
 }
 
-FrameFetcher::~FrameFetcher()
-{
-}
-
 void
-FrameFetcher::fetch(const ndn::Name& frameName, 
+FrameFetcherImpl::fetch(const ndn::Name& frameName, 
                    OnBufferAllocate onBufferAllocate,
                    OnFrameFetched onFrameFetched,
                    OnFetchFailure onFetchFailure)
@@ -42,12 +114,11 @@ FrameFetcher::fetch(const ndn::Name& frameName,
         onBufferAllocate_ = onBufferAllocate;
         onFrameFetched_ = onFrameFetched;
         onFetchFailure_ = onFetchFailure;
-        state_ = Fetching;
+        state_ = FrameFetcher::Fetching;
 
         if (!frameNameInfo_.isDelta_) // if it's a key frame - all is easy, just fetch it and decode
         {
-            shared_ptr<FrameFetcher> self = shared_from_this();
-
+            shared_ptr<FrameFetcherImpl> self = shared_from_this();
             shared_ptr<FrameFetchingTask> task 
                 = make_shared<FrameFetchingTask>(
                     frameName,
@@ -78,7 +149,7 @@ FrameFetcher::fetch(const ndn::Name& frameName,
         else
         {
             // spawn fetching target frame
-            shared_ptr<FrameFetcher> self = shared_from_this();
+            shared_ptr<FrameFetcherImpl> self = shared_from_this();
             shared_ptr<FrameFetchingTask> task 
                 = make_shared<FrameFetchingTask>(
                     frameName,
@@ -118,7 +189,7 @@ FrameFetcher::fetch(const ndn::Name& frameName,
 }
 
 void 
-FrameFetcher::fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegment)
+FrameFetcherImpl::fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegment)
 {
     const shared_ptr<WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
         dynamic_pointer_cast<WireData<VideoFrameSegmentHeader>>(deltaSegment->getData());
@@ -131,7 +202,7 @@ FrameFetcher::fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegme
     LogInfoC << "will fetch Key frame " << keyFrameNumber
              << " (" << keyFrameName << ")" << std::endl;
     
-    shared_ptr<FrameFetcher> self = shared_from_this();
+    shared_ptr<FrameFetcherImpl> self = shared_from_this();
     shared_ptr<FrameFetchingTask> task = 
         make_shared<FrameFetchingTask>(
             keyFrameName,
@@ -169,7 +240,7 @@ FrameFetcher::fetchGopKey(const boost::shared_ptr<const SlotSegment>& deltaSegme
 }
 
 void
-FrameFetcher::fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment)
+FrameFetcherImpl::fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment)
 {
     const shared_ptr<WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
         dynamic_pointer_cast<WireData<VideoFrameSegmentHeader>>(segment->getData());
@@ -195,7 +266,7 @@ FrameFetcher::fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment)
 
             LogDebugC << "will fetch " << deltaFrameName << std::endl;
 
-            shared_ptr<FrameFetcher> self = shared_from_this();
+            shared_ptr<FrameFetcherImpl> self = shared_from_this();
             shared_ptr<FrameFetchingTask> task = 
                 make_shared<FrameFetchingTask>(
                     deltaFrameName,
@@ -224,9 +295,9 @@ FrameFetcher::fetchGopDelta(const boost::shared_ptr<const SlotSegment>& segment)
 }
 
 void
-FrameFetcher::checkReadyDecode()
+FrameFetcherImpl::checkReadyDecode()
 {
-    if (state_ == Fetching)
+    if (state_ == FrameFetcher::Fetching)
     {
         // LogInfoC << "checking " << fetchingTasks_.size() << " tasks..." << std::endl;
 
@@ -237,14 +308,14 @@ FrameFetcher::checkReadyDecode()
 
         if (allFetched)
         {
-            state_ = Decoding;
+            state_ = FrameFetcher::Decoding;
             decode();
         }
     }
 }
 
 void
-FrameFetcher::decode()
+FrameFetcherImpl::decode()
 {
     // initialize decoder here and start decoding...
     VideoFrameSlot frameSlot;
@@ -260,7 +331,7 @@ FrameFetcher::decode()
                                      header.playbackNo_,
                                      slot->getPrefix().toUri() });
         VideoCoderParams params = setupDecoderParams(framePacket);
-        shared_ptr<FrameFetcher> self = shared_from_this();
+        shared_ptr<FrameFetcherImpl> self = shared_from_this();
         int needToDecode = fetchingTasks_.size();
         OnDecodedImage onDecoded = 
             [&needToDecode, self, this](const FrameInfo& fi, const WebRtcVideoFrame& f){
@@ -271,7 +342,7 @@ FrameFetcher::decode()
                     uint8_t* buffer = onBufferAllocate_(self, f.width(), f.height());
                     if (buffer)
                     {
-                        state_ = Completed;
+                        state_ = FrameFetcher::Completed;
 
                         ConvertFromI420(f, webrtc::kBGRA, 0, buffer);
                         onFrameFetched_(self, fi, fetchingTasks_.size(), 
@@ -329,7 +400,7 @@ FrameFetcher::decode()
 }
 
 void
-FrameFetcher::reset()
+FrameFetcherImpl::reset()
 {
     for (auto t:fetchingTasks_)
     {
@@ -344,18 +415,18 @@ FrameFetcher::reset()
 }
 
 void
-FrameFetcher::halt(std::string reason)
+FrameFetcherImpl::halt(std::string reason)
 {
-    if (state_ != Failed)
+    if (state_ != FrameFetcher::Failed)
     {
-        state_ = Failed;
+        state_ = FrameFetcher::Failed;
         onFetchFailure_(shared_from_this(), reason);
         reset();
     }
 }
 
 VideoCoderParams
-FrameFetcher::setupDecoderParams(const boost::shared_ptr<ImmutableVideoFramePacket>& fp) const
+FrameFetcherImpl::setupDecoderParams(const boost::shared_ptr<ImmutableVideoFramePacket>& fp) const
 {
     VideoCoderParams p;
     p.codecFrameRate_ = 30;

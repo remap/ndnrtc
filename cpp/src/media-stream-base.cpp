@@ -15,6 +15,7 @@
 #include "async.hpp"
 #include "clock.hpp"
 #include "statistics.hpp"
+#include "storage-engine.hpp"
 
 #define META_CHECK_INTERVAL_MS 10
 
@@ -60,6 +61,12 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
                                                  // because data is low-rate
     ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.metadataMs_;
     ps.statStorage_ = statStorage_.get();
+
+    if (settings_.storagePath_ != "")
+    {
+        storage_ = boost::make_shared<StorageEngine>(settings_.storagePath_);
+        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+    }
 
     metadataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
     metadataPublisher_->setDescription("metadata-publisher-" + settings_.params_.streamName_);
@@ -124,4 +131,11 @@ unsigned int MediaStreamBase::periodicInvocation()
     if (updateMeta()) // update thread meta
         return MetaCheckIntervalMs;
     return 0;
+}
+
+void MediaStreamBase::onSegmentsCached(std::vector<boost::shared_ptr<const ndn::Data>> segments)
+{
+    if (storage_)
+        for (auto& d:segments)
+            storage_->put(d);
 }

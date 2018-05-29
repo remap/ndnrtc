@@ -11,7 +11,7 @@
 #include <execinfo.h>
 #endif
 
-// #define ENABLE_LOGGING
+#define ENABLE_LOGGING
 
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <boost/assign.hpp>
@@ -47,9 +47,10 @@
 #include "interfaces.hpp"
 
 #include "persistent-storage/fetching-task.hpp"
-#include "persistent-storage/storage-engine.hpp"
+#include "storage-engine.hpp"
 #include "persistent-storage/frame-fetcher.hpp"
 #include "frame-buffer.hpp"
+#include "local-stream.hpp"
 
 #include "mock-objects/external-capturer-mock.hpp"
 
@@ -1018,7 +1019,7 @@ TEST(TestPersistentStorage, TestFrameFetchingTask)
 }
 #endif
 
-#if 1
+#if 0
 TEST(TestPersistentStorage, TestFrameFetcher)
 {
 #ifndef __ANDROID__
@@ -1176,13 +1177,13 @@ TEST(TestPersistentStorage, TestFrameFetcher)
     Name fetchedFrameName;
     boost::chrono::high_resolution_clock::time_point fetchingSpawned;
     OnBufferAllocate onBufferAllocate = 
-        [&frameBuffer](const boost::shared_ptr<FrameFetcher>& fetcher, int width, int height)->uint8_t*
+        [&frameBuffer](const boost::shared_ptr<IFrameFetcher>& fetcher, int width, int height)->uint8_t*
         {
             frameBuffer = (uint8_t*)malloc(width*height*4);
             return frameBuffer;
         };
     OnFrameFetched onFrameFetched = 
-        [&frameBuffer, &nFetched, &fetchedFrameName, &fetchingSpawned](const boost::shared_ptr<FrameFetcher>& fetcher, 
+        [&frameBuffer, &nFetched, &fetchedFrameName, &fetchingSpawned](const boost::shared_ptr<IFrameFetcher>& fetcher, 
                                       const FrameInfo fi, int nFetchedFrames,
                                       int width, int height, const uint8_t* buffer)
         {
@@ -1198,7 +1199,7 @@ TEST(TestPersistentStorage, TestFrameFetcher)
             free(frameBuffer);
         };
     OnFetchFailure onFetchFailure = 
-        [](const boost::shared_ptr<FrameFetcher>&, std::string reason)
+        [](const boost::shared_ptr<IFrameFetcher>&, std::string reason)
         {
             FAIL() << "Frame fetching failed: " << reason;
         };
@@ -1244,6 +1245,170 @@ TEST(TestPersistentStorage, TestFrameFetcher)
     EXPECT_EQ(2, nFetched);
 
     storage.reset();
+
+    db_namespace::Options options;
+    db_namespace::DestroyDB(dbPath, options);
+}
+#endif
+
+#if 1
+MediaStreamParams getSampleVideoParams()
+{
+    MediaStreamParams msp("camera");
+
+    msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
+    msp.synchronizedStreamName_ = "mic";
+    msp.producerParams_.freshness_ = { 10, 15, 900 };
+    msp.producerParams_.segmentSize_ = 1000;
+
+    CaptureDeviceParams cdp;
+    cdp.deviceId_ = 10;
+    msp.captureDevice_ = cdp;
+
+    VideoThreadParams atp("low", sampleVideoCoderParams());
+    atp.coderParams_.encodeWidth_ = 320;
+    atp.coderParams_.encodeHeight_ = 240;
+    msp.addMediaThread(atp);
+
+    return msp;
+}
+
+TEST(TestPersistentStorage, TestFrameFetcherWithLocalStream)
+{
+#ifndef __ANDROID__
+    std::string dbPath("/tmp/testdb");
+#else
+    std::string dbPath("/data/local/tmp/testdb");
+#endif
+
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+#endif
+
+    boost::asio::io_service io_source;
+    boost::shared_ptr<boost::asio::io_service::work> work_source(boost::make_shared<boost::asio::io_service::work>(io_source));
+    boost::thread t_source([&io_source](){
+        io_source.run();
+    });
+
+    int runTime = 1*5*1000;
+    int width = 320, height = 240, bitrate = 1000;
+    boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(width,height));
+    std::string testVideoSource = resources_path+"/test-source-320x240.argb";
+    VideoSource source(io_source, testVideoSource, frame);
+    MockExternalCapturer capturer;
+    source.addCapturer(&capturer);
+
+    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+    std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+    boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io_source));
+    boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+    
+    publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
+    boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(publisherFace.get());
+
+    // setting up local stream
+    MediaStreamSettings settings(io_source, getSampleVideoParams());
+    settings.face_ = publisherFace.get();
+    settings.keyChain_ = keyChain.get();
+    settings.storagePath_ = dbPath;
+    
+    LocalVideoStream localStream(appPrefix, settings);
+
+#ifdef ENABLE_LOGGING
+    localStream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+#endif
+
+    boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
+      incomingRawFrame =[&localStream](const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size){
+          EXPECT_NO_THROW(localStream.incomingArgbFrame(w, h, data, size));
+          return 0;
+      };
+    EXPECT_CALL(capturer, incomingArgbFrame(320, 240, _, _))
+        .WillRepeatedly(Invoke(incomingRawFrame));
+
+    source.start(30);
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
+    work_source.reset();
+    io_source.stop();
+    t_source.join();
+
+    // extract from db
+    boost::shared_ptr<FrameFetcher> fetcher = boost::make_shared<FrameFetcher>(localStream.getStorage());
+    
+    uint8_t* frameBuffer = nullptr;
+    int nFetched = 0;
+    Name fetchedFrameName;
+    boost::chrono::high_resolution_clock::time_point fetchingSpawned;
+
+    OnBufferAllocate onBufferAllocate = 
+        [&frameBuffer](const boost::shared_ptr<IFrameFetcher>& fetcher, int width, int height)->uint8_t*
+        {
+            frameBuffer = (uint8_t*)malloc(width*height*4);
+            return frameBuffer;
+        };
+
+    OnFrameFetched onFrameFetched = 
+        [&frameBuffer, &nFetched, &fetchedFrameName, &fetchingSpawned](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+                                      const FrameInfo fi, int nFetchedFrames,
+                                      int width, int height, const uint8_t* buffer)
+        {
+            boost::chrono::high_resolution_clock::time_point t = boost::chrono::high_resolution_clock::now();
+            int d = boost::chrono::duration_cast<boost::chrono::milliseconds>(t - fetchingSpawned).count();
+
+            EXPECT_EQ(frameBuffer, buffer);
+            EXPECT_EQ(fetchedFrameName.toUri(), fi.ndnName_);
+
+            GT_PRINTF("Fetching took %d ms, %d frames were fetched\n", 
+                      d, nFetchedFrames);
+            nFetched++;
+            free(frameBuffer);
+        };
+    OnFetchFailure onFetchFailure = 
+        [](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason)
+        {
+            FAIL() << "Frame fetching failed (" << ff->getName() <<"): " << reason;
+        };
+
+    {
+        // fetch random Delta frame
+        Name dataName(localStream.getPrefix());
+        PacketNumber seqNo = rand()%60;
+        dataName.append(localStream.getThreads()[0])
+                .append(NameComponents::NameComponentDelta)
+                .appendSequenceNumber(seqNo);
+        fetchedFrameName = dataName;
+        
+    #ifdef ENABLE_LOGGING
+        LogInfo("") << "Will fetch " << dataName << std::endl;
+        fetcher->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    #endif
+
+        fetchingSpawned = boost::chrono::high_resolution_clock::now();
+        fetcher->fetch(dataName, onBufferAllocate, onFrameFetched, onFetchFailure);
+    }
+
+    {
+        // fetch random Key frame
+        Name dataName(localStream.getPrefix());
+        PacketNumber seqNo = rand()%5;
+        dataName.append(localStream.getThreads()[0])
+                .append(NameComponents::NameComponentKey)
+                .appendSequenceNumber(seqNo);
+        fetchedFrameName = dataName;
+        
+    #ifdef ENABLE_LOGGING
+        ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+        LogInfo("") << "Will fetch " << dataName << std::endl;
+        fetcher->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    #endif
+
+        fetchingSpawned = boost::chrono::high_resolution_clock::now();
+        fetcher->fetch(dataName, onBufferAllocate, onFrameFetched, onFetchFailure);
+    }
+
+    EXPECT_EQ(2, nFetched);
 
     db_namespace::Options options;
     db_namespace::DestroyDB(dbPath, options);

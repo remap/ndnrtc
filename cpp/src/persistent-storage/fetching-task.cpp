@@ -6,7 +6,7 @@
 //
 
 #include "fetching-task.hpp"
-#include "persistent-storage/storage-engine.hpp"
+#include "storage-engine.hpp"
 #include "frame-buffer.hpp"
 #include "frame-data.hpp"
 
@@ -82,7 +82,6 @@ void FrameFetchingTask::cancel()
 void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interest)
 {
     shared_ptr<FrameFetchingTask> self = shared_from_this();
-
     LogTraceC << "requesting segment " << interest->getName() << std::endl;
 
     taskProgress_ += 1;
@@ -164,7 +163,14 @@ FrameFetchingTask::checkMissingSegments()
     for (auto& n:slot_->getMissingSegments())
     {
         taskCompletion_ += (1+settings_.nRtx_);
-        requestSegment(makeInterest(n));
+        interests.push_back(makeInterest(n));
+    }
+
+    if (interests.size())
+    {
+        slot_->segmentsRequested(interests);
+        for (auto i:interests)
+            requestSegment(i);
     }
 }
 

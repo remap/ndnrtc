@@ -107,6 +107,12 @@ LocalAudioStream::getStatistics() const
 	return pimpl_->getStatistics();
 }
 
+boost::shared_ptr<StorageEngine> 
+LocalAudioStream::getStorage() const
+{
+    return pimpl_->getStorage();
+}
+
 //******************************************************************************
 LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
@@ -204,4 +210,10 @@ statistics::StatisticsStorage
 LocalVideoStream::getStatistics() const
 {
 	return pimpl_->getStatistics();
+}
+
+boost::shared_ptr<StorageEngine> 
+LocalVideoStream::getStorage() const
+{
+    return pimpl_->getStorage();
 }
