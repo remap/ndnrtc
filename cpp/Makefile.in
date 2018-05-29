@@ -1204,7 +1204,9 @@ am__bin_tests_test_persistent_storage_SOURCES_DIST =  \
 	client/src/frame-io.cpp src/video-thread.cpp \
 	src/frame-converter.cpp src/video-coder.cpp \
 	src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp \
-	src/persistent-storage/storage-engine.cpp src/clock.cpp \
+	src/persistent-storage/storage-engine.cpp \
+	src/persistent-storage/frame-fetcher.cpp src/clock.cpp \
+	src/video-decoder.cpp \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
@@ -1230,7 +1232,9 @@ am_bin_tests_test_persistent_storage_OBJECTS = tests/bin_tests_test_persistent_s
 	src/bin_tests_test_persistent_storage-frame-buffer.$(OBJEXT) \
 	src/persistent-storage/bin_tests_test_persistent_storage-fetching-task.$(OBJEXT) \
 	src/persistent-storage/bin_tests_test_persistent_storage-storage-engine.$(OBJEXT) \
+	src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.$(OBJEXT) \
 	src/bin_tests_test_persistent_storage-clock.$(OBJEXT) \
+	src/bin_tests_test_persistent_storage-video-decoder.$(OBJEXT) \
 	$(am__objects_52)
 bin_tests_test_persistent_storage_OBJECTS =  \
 	$(am_bin_tests_test_persistent_storage_OBJECTS)
@@ -2483,7 +2487,7 @@ bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc tests/t
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb-ndk/include
 bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb-ndk/libs/armeabi-v7a
 # bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb/include -I/Users/peetonn/Documents/Work/rocksdb/include -I/Users/peetonn/Documents/Work/HyperLevelDB/build/include
@@ -3775,7 +3779,12 @@ src/persistent-storage/bin_tests_test_persistent_storage-fetching-task.$(OBJEXT)
 src/persistent-storage/bin_tests_test_persistent_storage-storage-engine.$(OBJEXT):  \
 	src/persistent-storage/$(am__dirstamp) \
 	src/persistent-storage/$(DEPDIR)/$(am__dirstamp)
+src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.$(OBJEXT):  \
+	src/persistent-storage/$(am__dirstamp) \
+	src/persistent-storage/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_persistent_storage-clock.$(OBJEXT):  \
+	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/bin_tests_test_persistent_storage-video-decoder.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
@@ -4778,6 +4787,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_persistent_storage-simple-log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_persistent_storage-statistics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_persistent_storage-video-coder.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_persistent_storage-video-thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-async.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_pipeline_control-clock.Po@am__quote@
@@ -4970,6 +4980,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-fetching-task.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-storage-engine.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/libndnrtc_la-fetching-task.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Plo@am__quote@
@@ -10671,6 +10682,20 @@ src/persistent-storage/bin_tests_test_persistent_storage-storage-engine.obj: src
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/persistent-storage/bin_tests_test_persistent_storage-storage-engine.obj `if test -f 'src/persistent-storage/storage-engine.cpp'; then $(CYGPATH_W) 'src/persistent-storage/storage-engine.cpp'; else $(CYGPATH_W) '$(srcdir)/src/persistent-storage/storage-engine.cpp'; fi`
 
+src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.o: src/persistent-storage/frame-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.o -MD -MP -MF src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Tpo -c -o src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.o `test -f 'src/persistent-storage/frame-fetcher.cpp' || echo '$(srcdir)/'`src/persistent-storage/frame-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Tpo src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/persistent-storage/frame-fetcher.cpp' object='src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.o `test -f 'src/persistent-storage/frame-fetcher.cpp' || echo '$(srcdir)/'`src/persistent-storage/frame-fetcher.cpp
+
+src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.obj: src/persistent-storage/frame-fetcher.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.obj -MD -MP -MF src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Tpo -c -o src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.obj `if test -f 'src/persistent-storage/frame-fetcher.cpp'; then $(CYGPATH_W) 'src/persistent-storage/frame-fetcher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/persistent-storage/frame-fetcher.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Tpo src/persistent-storage/$(DEPDIR)/bin_tests_test_persistent_storage-frame-fetcher.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/persistent-storage/frame-fetcher.cpp' object='src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/persistent-storage/bin_tests_test_persistent_storage-frame-fetcher.obj `if test -f 'src/persistent-storage/frame-fetcher.cpp'; then $(CYGPATH_W) 'src/persistent-storage/frame-fetcher.cpp'; else $(CYGPATH_W) '$(srcdir)/src/persistent-storage/frame-fetcher.cpp'; fi`
+
 src/bin_tests_test_persistent_storage-clock.o: src/clock.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_persistent_storage-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_persistent_storage-clock.Tpo -c -o src/bin_tests_test_persistent_storage-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_persistent_storage-clock.Tpo src/$(DEPDIR)/bin_tests_test_persistent_storage-clock.Po
@@ -10684,6 +10709,20 @@ src/bin_tests_test_persistent_storage-clock.obj: src/clock.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_tests_test_persistent_storage-clock.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_persistent_storage-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
+
+src/bin_tests_test_persistent_storage-video-decoder.o: src/video-decoder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_persistent_storage-video-decoder.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Tpo -c -o src/bin_tests_test_persistent_storage-video-decoder.o `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Tpo src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-decoder.cpp' object='src/bin_tests_test_persistent_storage-video-decoder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_persistent_storage-video-decoder.o `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
+
+src/bin_tests_test_persistent_storage-video-decoder.obj: src/video-decoder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_persistent_storage-video-decoder.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Tpo -c -o src/bin_tests_test_persistent_storage-video-decoder.obj `if test -f 'src/video-decoder.cpp'; then $(CYGPATH_W) 'src/video-decoder.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-decoder.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Tpo src/$(DEPDIR)/bin_tests_test_persistent_storage-video-decoder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-decoder.cpp' object='src/bin_tests_test_persistent_storage-video-decoder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_persistent_storage-video-decoder.obj `if test -f 'src/video-decoder.cpp'; then $(CYGPATH_W) 'src/video-decoder.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-decoder.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_persistent_storage_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_persistent_storage-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc

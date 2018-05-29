@@ -11,6 +11,8 @@
 #include <execinfo.h>
 #endif
 
+// #define ENABLE_LOGGING
+
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <boost/assign.hpp>
 #include <boost/asio.hpp>
@@ -42,9 +44,11 @@
 #include "mock-objects/ndn-cpp-mock.hpp"
 #include "frame-data.hpp"
 #include "video-thread.hpp"
+#include "interfaces.hpp"
 
 #include "persistent-storage/fetching-task.hpp"
 #include "persistent-storage/storage-engine.hpp"
+#include "persistent-storage/frame-fetcher.hpp"
 #include "frame-buffer.hpp"
 
 #include "mock-objects/external-capturer-mock.hpp"
@@ -69,8 +73,6 @@
     #include <rocksdb/db.h>
     namespace db_namespace = rocksdb;
 #endif
-
-// #define ENABLE_LOGGING
 
 using namespace ::testing;
 using namespace ndnrtc;
@@ -773,7 +775,7 @@ TEST(TestPeristentStorage, TestStorageEngine)
 }
 #endif
 
-#if 1
+#if 0
 TEST(TestPersistentStorage, TestFrameFetchingTask)
 {
 #ifndef __ANDROID__
@@ -1008,6 +1010,238 @@ TEST(TestPersistentStorage, TestFrameFetchingTask)
     // EXPECT_EQ(nFetchedFrames, keyNo+deltaNo);
     for (auto task:fetchingTasks)
         EXPECT_EQ(FrameFetchingTask::Completed, task->getState());
+
+    storage.reset();
+
+    db_namespace::Options options;
+    db_namespace::DestroyDB(dbPath, options);
+}
+#endif
+
+#if 1
+TEST(TestPersistentStorage, TestFrameFetcher)
+{
+#ifndef __ANDROID__
+    std::string dbPath("/tmp/testdb");
+#else
+    std::string dbPath("/data/local/tmp/testdb");
+#endif
+
+#ifdef ENABLE_LOGGING
+    ndnlog::new_api::Logger::initAsyncLogging();
+    ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+#endif
+
+    boost::shared_ptr<StorageEngine> storage = boost::make_shared<StorageEngine>(dbPath);
+
+    boost::asio::io_service io_source;
+    boost::shared_ptr<boost::asio::io_service::work> work_source(boost::make_shared<boost::asio::io_service::work>(io_source));
+    boost::thread t_source([&io_source](){
+        io_source.run();
+    });
+
+    int runTime = 1*5*1000;
+    // int width = 1280, height = 720, bitrate = 3000;
+    int width = 320, height = 240, bitrate = 1000;
+    boost::shared_ptr<RawFrame> frame(boost::make_shared<ArgbFrame>(width,height));
+    // std::string testVideoSource = resources_path+"/test-source-1280x720.argb";
+    std::string testVideoSource = resources_path+"/test-source-320x240.argb";
+    VideoSource source(io_source, testVideoSource, frame);
+    MockExternalCapturer capturer;
+    source.addCapturer(&capturer);
+
+    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(boost::make_shared<MemoryPrivateKeyStorage>());
+    std::string appPrefix = "/ndn/edu/ucla/remap/peter/app";
+    boost::shared_ptr<Face> publisherFace(boost::make_shared<ThreadsafeFace>(io_source));
+    boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
+    
+    publisherFace->setCommandSigningInfo(*keyChain, certName(keyName(appPrefix)));
+    boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(publisherFace.get());
+
+    PublisherSettings settings;
+
+    int wireLength = 8000;
+    int freshness = 1000;
+    settings.keyChain_ = keyChain.get();
+    settings.memoryCache_ = memCache.get();
+    settings.segmentWireLength_ = wireLength;
+    settings.freshnessPeriodMs_ = freshness;
+    settings.statStorage_ = StatisticsStorage::createProducerStatistics();
+    settings.onSegmentsCached_ = [storage](std::vector<boost::shared_ptr<const ndn::Data>> segments){
+        for (auto d:segments)
+            storage->put(d);
+    };
+
+    VideoPacketPublisher publisher(settings);
+    RawFrameConverter conv;
+
+    VideoCoderParams vcp(sampleVideoCoderParams());
+    vcp.startBitrate_ = bitrate;
+    vcp.maxBitrate_ = bitrate;
+    vcp.encodeWidth_ = width;
+    vcp.encodeHeight_ = height;
+    VideoThread vt(vcp);
+
+    std::string streamPrefix = "/ndn/edu/wustl/jdd/clientA/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6";
+    std::string thread = "tiny";
+    PacketNumber keyNo = 0, deltaNo = 0, playNo = 0;
+    int maxKeySegNum  = 0, maxDeltaSegNum = 0;
+
+    boost::function<int(const unsigned int,const unsigned int, unsigned char*, unsigned int)>
+      incomingRawFrame =[&publisher, &vt, &conv, wireLength, &keyNo, &deltaNo, &playNo, streamPrefix, thread,
+                         &maxKeySegNum, &maxDeltaSegNum]
+                        (const unsigned int w,const unsigned int h, unsigned char* data, unsigned int size)
+    {
+        // encode a frame and pass it to the publisher
+
+        boost::shared_ptr<VideoFramePacket> vf(boost::move(vt.encode((conv << ArgbRawFrameWrapper({w, h, data, size})))));
+
+        if (!vf.get())
+            return 0;
+
+        bool isKey = (vf->getFrame()._frameType == webrtc::kVideoFrameKey);
+        CommonHeader packetHdr;
+        packetHdr.sampleRate_ = 30;
+        packetHdr.publishTimestampMs_ = 1234566789;
+        packetHdr.publishUnixTimestamp_ = 1234566789;
+        vf->setHeader(packetHdr);
+
+        boost::shared_ptr<NetworkData> parityData = vf->getParityData(VideoFrameSegment::payloadLength(wireLength), 0.2);
+        PacketNumber seqNo = (isKey ? keyNo : deltaNo);
+        PacketNumber pairedSeq = (isKey ? deltaNo : keyNo-1);
+        PacketNumber playbackNo = playNo;
+
+        Name dataName(streamPrefix);
+        dataName.append(thread)
+        .append((isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta))
+        .appendSequenceNumber(seqNo);
+        size_t nDataSeg = VideoFrameSegment::numSlices(*vf, wireLength);
+        size_t nParitySeg = VideoFrameSegment::numSlices(*parityData, wireLength);
+
+        VideoFrameSegmentHeader segmentHdr;
+        segmentHdr.totalSegmentsNum_ = nDataSeg;
+        segmentHdr.paritySegmentsNum_ = nParitySeg;
+        segmentHdr.playbackNo_ = playbackNo;
+        segmentHdr.pairedSequenceNo_ = pairedSeq;
+
+        PublishedDataPtrVector segments =
+            publisher.publish(dataName, *vf, segmentHdr, (isKey ? 900 : -1), isKey, true);
+        assert(segments.size());
+
+        if (isKey)
+        {
+            if (segments.size() > maxKeySegNum)
+                maxKeySegNum = segments.size();
+        }
+        else
+        {
+            if (segments.size() > maxDeltaSegNum)
+                maxDeltaSegNum = segments.size();
+        }
+
+        PublishedDataPtrVector paritySegments;
+        if (nParitySeg)
+        {
+            Name parityName(dataName);
+            parityName.append(NameComponents::NameComponentParity);
+
+            paritySegments = publisher.publish(parityName, *parityData, segmentHdr, (isKey ? 900: -1), isKey);
+        }
+
+        if (isKey)
+            keyNo ++;
+        else
+            deltaNo ++;
+
+        return 0;
+    };
+
+    EXPECT_CALL(capturer, incomingArgbFrame(width, height, _, _))
+        .WillRepeatedly(Invoke(incomingRawFrame));
+
+    source.start(30);
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(runTime));
+    work_source.reset();
+    io_source.stop();
+    t_source.join();
+
+    GT_PRINTF("video %dx%d, %d sec, bitrate %dkbit/sec, published frames: %d key, %d delta, (max segnum %d %d)\n", 
+            width, height, runTime/1000, bitrate, keyNo, deltaNo, maxKeySegNum, maxDeltaSegNum);
+
+
+    // extract from db
+    boost::shared_ptr<FrameFetcher> fetcher = boost::make_shared<FrameFetcher>(storage);
+    uint8_t* frameBuffer = nullptr;
+    int nFetched = 0;
+    Name fetchedFrameName;
+    boost::chrono::high_resolution_clock::time_point fetchingSpawned;
+    OnBufferAllocate onBufferAllocate = 
+        [&frameBuffer](const boost::shared_ptr<FrameFetcher>& fetcher, int width, int height)->uint8_t*
+        {
+            frameBuffer = (uint8_t*)malloc(width*height*4);
+            return frameBuffer;
+        };
+    OnFrameFetched onFrameFetched = 
+        [&frameBuffer, &nFetched, &fetchedFrameName, &fetchingSpawned](const boost::shared_ptr<FrameFetcher>& fetcher, 
+                                      const FrameInfo fi, int nFetchedFrames,
+                                      int width, int height, const uint8_t* buffer)
+        {
+            boost::chrono::high_resolution_clock::time_point t = boost::chrono::high_resolution_clock::now();
+            int d = boost::chrono::duration_cast<boost::chrono::milliseconds>(t - fetchingSpawned).count();
+
+            EXPECT_EQ(frameBuffer, buffer);
+            EXPECT_EQ(fetchedFrameName.toUri(), fi.ndnName_);
+
+            GT_PRINTF("Fetching took %d ms, %d frames were fetched\n", 
+                      d, nFetchedFrames);
+            nFetched++;
+            free(frameBuffer);
+        };
+    OnFetchFailure onFetchFailure = 
+        [](const boost::shared_ptr<FrameFetcher>&, std::string reason)
+        {
+            FAIL() << "Frame fetching failed: " << reason;
+        };
+
+    {
+        // fetch random Delta frame
+        Name dataName(streamPrefix);
+        PacketNumber seqNo = rand()%deltaNo;
+        dataName.append(thread)
+                .append(NameComponents::NameComponentDelta)
+                .appendSequenceNumber(seqNo);
+        fetchedFrameName = dataName;
+        
+    #ifdef ENABLE_LOGGING
+        ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDefault);
+        LogInfo("") << "Will fetch " << dataName << std::endl;
+        fetcher->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    #endif
+
+        fetchingSpawned = boost::chrono::high_resolution_clock::now();
+        fetcher->fetch(dataName, onBufferAllocate, onFrameFetched, onFetchFailure);
+    }
+
+    {
+        // fetch random Key frame
+        Name dataName(streamPrefix);
+        PacketNumber seqNo = rand()%keyNo;
+        dataName.append(thread)
+                .append(NameComponents::NameComponentKey)
+                .appendSequenceNumber(seqNo);
+        fetchedFrameName = dataName;
+        
+    #ifdef ENABLE_LOGGING
+        ndnlog::new_api::Logger::getLoggerPtr("")->setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+        LogInfo("") << "Will fetch " << dataName << std::endl;
+        fetcher->setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
+    #endif
+
+        fetchingSpawned = boost::chrono::high_resolution_clock::now();
+        fetcher->fetch(dataName, onBufferAllocate, onFrameFetched, onFetchFailure);
+    }
+
+    EXPECT_EQ(2, nFetched);
 
     storage.reset();
 

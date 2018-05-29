@@ -52,7 +52,7 @@ namespace ndnrtc {
                               public boost::enable_shared_from_this<FrameFetchingTask> {
     public:
         enum State {
-            Created,
+            Created = 0,
             Fetching,
             Canceled,
             Completed,
@@ -82,6 +82,8 @@ namespace ndnrtc {
         State getState() const { return state_; }
         int getNacksNum() const { return nNacks_; }
         int getTimeoutsNum() const { return nTimeouts_; }
+        ndn::Name getFrameName() const { return frameNameInfo_.getPrefix(prefix_filter::Sample); }
+        const boost::shared_ptr<const BufferSlot> getSlot() const { return slot_; }
 
     private:
         FetchingTask::Settings settings_;

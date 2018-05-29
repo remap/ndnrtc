@@ -102,9 +102,9 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
                           << ". progress " << taskProgress_ << "/" << taskCompletion_ << std::endl;
 
                 if (s == BufferSlot::New && slot_->getState() >= BufferSlot::New)
-                    onFirstSegment_(self, seg);
+                    if (onFirstSegment_) onFirstSegment_(self, seg);
                 if (seg->getInfo().segNo_ == 0)
-                    onZeroSegment_(self, seg);
+                    if (onZeroSegment_) onZeroSegment_(self, seg);
 
                 checkMissingSegments();
                 checkCompletion();
