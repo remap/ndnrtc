@@ -14,12 +14,7 @@
 
 extern "C" {
 
-	typedef void (*LibLog) (const char* message);
-    typedef unsigned char* (*BufferAlloc) (const char* frameName, 
-                                           int width, int height);
-    typedef void (*FrameFetched) (const char* frameName, int width, int height, 
-                                  const unsigned char* buffer);
-
+    typedef void (*LibLog) (const char* message);
     const char* ndnrtc_getVersion();
 
 	// creates Face
@@ -36,23 +31,29 @@ extern "C" {
 	void ndnrtc_deinit();
 
 
-	typedef struct _LocalStreamParams {
-		const char *basePrefix;
-		int signingOn;
-		int fecOn;
-		int typeIsVideo;
-		int ndnSegmentSize;
-		int frameWidth, frameHeight;
-		int startBitrate, maxBitrate, gop, dropFrames;
-		const char *streamName, *threadName;
+    typedef struct _LocalStreamParams {
+        const char *basePrefix;
+        int signingOn;
+        int fecOn;
+        int typeIsVideo;
+        int ndnSegmentSize;
+        int frameWidth, frameHeight;
+        int startBitrate, maxBitrate, gop, dropFrames;
+        const char *streamName, *threadName;
         const char *storagePath; 
-	} LocalStreamParams;
+    } LocalStreamParams;
 
     typedef struct _FrameInfo {
         uint64_t timestamp_;
         int playbackNo_;
         char* ndnName_;
     } cFrameInfo;
+
+    typedef unsigned char* (*BufferAlloc) (const char* frameName, 
+                                           int width, int height);
+    typedef void (*FrameFetched) (const cFrameInfo finfo, int width, int height, 
+                                  const unsigned char* buffer);
+
 	// params
 	//	base prefix
 	//	settings

@@ -156,7 +156,7 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
         settings.storagePath_ = (params.storagePath ? std::string(params.storagePath) : "");
 
-		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
 			boost::make_shared<CallbackSink>(loggerSink));
 		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
 			<< "signing " << (settings.sign_ ? "ON" : "OFF")
@@ -265,7 +265,7 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
     std::string fkey(frameName);
     FrameFetchers[fkey] = ff;
 
-((LocalVideoStream*)stream)->getLogger()->log(ndnlog::NdnLoggerLevelInfo) << "Setting up frame-fetcher for " << fkey << std::endl;
+    ((LocalVideoStream*)stream)->getLogger()->log(ndnlog::NdnLoggerLevelInfo) << "Setting up frame-fetcher for " << fkey << std::endl;
 
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
@@ -277,12 +277,14 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
               [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
-                  frameFetchedFunc(fkey.c_str(), width, height, buffer);
-                  FrameFetchers.erase(fkey);
+                    cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
+                    frameFetchedFunc(frameInfo, width, height, buffer);
+                    FrameFetchers.erase(fkey);
               },
               [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason){
-                   frameFetchedFunc(fkey.c_str(), 0, 0, nullptr);
-                   FrameFetchers.erase(fkey);
+                    cFrameInfo frameInfo({0,0,(char*)fkey.c_str()});
+                    frameFetchedFunc(frameInfo, 0, 0, nullptr);
+                    FrameFetchers.erase(fkey);
               });
 }
 
