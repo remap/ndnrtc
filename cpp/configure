@@ -638,6 +638,9 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 WEBRTCLIBS
+PSTORAGE_LIB
+HAVE_PERSISTENT_STORAGE_FALSE
+HAVE_PERSISTENT_STORAGE_TRUE
 HAVE_NANOMSG_FALSE
 HAVE_NANOMSG_TRUE
 BOOST_FILESYSTEM_LIB
@@ -728,6 +731,8 @@ build_os
 build_vendor
 build_cpu
 build
+PSTORAGELIB
+PSTORAGEDIR
 NANOMSGLIB
 NANOMSGGDIR
 LCONFIGLIB
@@ -852,6 +857,8 @@ LCONFIGDIR
 LCONFIGLIB
 NANOMSGGDIR
 NANOMSGLIB
+PSTORAGEDIR
+PSTORAGELIB
 CC
 CFLAGS
 LDFLAGS
@@ -1578,6 +1585,12 @@ Some influential environment variables:
               contains nanomsg library headers (default is /usr/local/include)
   NANOMSGLIB  Optional (for client demo app): path to the directory which
               contains nanomsg library binaries (default is /usr/local/lib)
+  PSTORAGEDIR Optional: path to the directory which contains persistent
+              storage library headers (LevelDB for Android or RocksDB
+              otherwise, default is /usr/local/include)
+  PSTORAGELIB Optional: path to the directory which contains persistent
+              storage library binaries (LevelDB for Android or RocksDB
+              otherwise, default is /usr/local/lib)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -3536,6 +3549,8 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
+
 
 
 
@@ -17454,6 +17469,18 @@ else
 	NANOMSGLIB="/usr/local/lib"
 fi
 
+if test ${PSTORAGEDIR}; then
+	PSTORAGEDIR=$(cd $PSTORAGEDIR; pwd)
+else
+	PSTORAGEDIR="/usr/local/include"
+fi
+
+if test ${PSTORAGELIB}; then
+	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
+else
+	PSTORAGELIB="/usr/local/lib"
+fi
+
 # create links for client config file
 ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
 
@@ -20295,6 +20322,136 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
+###############################
+# Check for persistent storage libs
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$PSTORAGEDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$PSTORAGELIB"
+SAVED_LIBS=$LIBS
+
+if test "$os_module" != "android"
+then
+    LIBS="$LIBS -lrocksdb"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rocksdb_restore_options_create in -lrocksdb" >&5
+$as_echo_n "checking for rocksdb_restore_options_create in -lrocksdb... " >&6; }
+if ${ac_cv_lib_rocksdb_rocksdb_restore_options_create+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrocksdb  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rocksdb_restore_options_create ();
+int
+main ()
+{
+return rocksdb_restore_options_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_rocksdb_rocksdb_restore_options_create=yes
+else
+  ac_cv_lib_rocksdb_rocksdb_restore_options_create=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rocksdb_rocksdb_restore_options_create" >&5
+$as_echo "$ac_cv_lib_rocksdb_rocksdb_restore_options_create" >&6; }
+if test "x$ac_cv_lib_rocksdb_rocksdb_restore_options_create" = xyes; then :
+  $as_echo "#define HAVE_PERSISTENT_STORAGE 1" >>confdefs.h
+
+fi
+
+     if test "$ac_cv_lib_rocksdb_rocksdb_restore_options_create" = yes; then
+  HAVE_PERSISTENT_STORAGE_TRUE=
+  HAVE_PERSISTENT_STORAGE_FALSE='#'
+else
+  HAVE_PERSISTENT_STORAGE_TRUE='#'
+  HAVE_PERSISTENT_STORAGE_FALSE=
+fi
+
+    PSTORAGE_LIB="-lrocksdb"
+
+else
+    # check headers for leveldb
+    for ac_header in leveldb/db.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "leveldb/db.h" "ac_cv_header_leveldb_db_h" "$ac_includes_default"
+if test "x$ac_cv_header_leveldb_db_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LEVELDB_DB_H 1
+_ACEOF
+  if test "true" = true; then
+  HAVE_PERSISTENT_STORAGE_TRUE=
+  HAVE_PERSISTENT_STORAGE_FALSE='#'
+else
+  HAVE_PERSISTENT_STORAGE_TRUE='#'
+  HAVE_PERSISTENT_STORAGE_FALSE=
+fi
+
+fi
+
+done
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for leveldb library..." >&5
+$as_echo_n "checking for leveldb library...... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <leveldb/db.h>
+int
+main ()
+{
+leveldb::DB* db
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; } ; if test "true" = true; then
+  HAVE_PERSISTENT_STORAGE_TRUE=
+  HAVE_PERSISTENT_STORAGE_FALSE='#'
+else
+  HAVE_PERSISTENT_STORAGE_TRUE='#'
+  HAVE_PERSISTENT_STORAGE_FALSE=
+fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't link with leveldb lib. no persistent storage support" >&5
+$as_echo "can't link with leveldb lib. no persistent storage support" >&6; } ; if test "false" = true; then
+  HAVE_PERSISTENT_STORAGE_TRUE=
+  HAVE_PERSISTENT_STORAGE_FALSE='#'
+else
+  HAVE_PERSISTENT_STORAGE_TRUE='#'
+  HAVE_PERSISTENT_STORAGE_FALSE=
+fi
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    PSTORAGE_LIB="-lleveldb"
+
+fi
+
+CPPFLAGS=$SAVED_CPPFLAGS
+LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
+
+###############################
 WEBRTCLIBS="-lwebrtc"
 
 
@@ -20501,6 +20658,22 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_NANOMSG_TRUE}" && test -z "${HAVE_NANOMSG_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_NANOMSG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PERSISTENT_STORAGE_TRUE}" && test -z "${HAVE_PERSISTENT_STORAGE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PERSISTENT_STORAGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PERSISTENT_STORAGE_TRUE}" && test -z "${HAVE_PERSISTENT_STORAGE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PERSISTENT_STORAGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PERSISTENT_STORAGE_TRUE}" && test -z "${HAVE_PERSISTENT_STORAGE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PERSISTENT_STORAGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PERSISTENT_STORAGE_TRUE}" && test -z "${HAVE_PERSISTENT_STORAGE_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_PERSISTENT_STORAGE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

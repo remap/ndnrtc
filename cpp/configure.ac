@@ -26,6 +26,8 @@ AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory 
 AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
 AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory which contains nanomsg library headers (default is /usr/local/include)])
 AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
+AC_ARG_VAR([PSTORAGEDIR], [Optional: path to the directory which contains persistent storage library headers (LevelDB for Android or RocksDB otherwise, default is /usr/local/include)])
+AC_ARG_VAR([PSTORAGELIB], [Optional: path to the directory which contains persistent storage library binaries (LevelDB for Android or RocksDB otherwise, default is /usr/local/lib)])
 
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
 	[],
@@ -187,6 +189,18 @@ else
 	NANOMSGLIB="/usr/local/lib"
 fi
 
+if test ${PSTORAGEDIR}; then
+	PSTORAGEDIR=$(cd $PSTORAGEDIR; pwd)
+else
+	PSTORAGEDIR="/usr/local/include"
+fi
+
+if test ${PSTORAGELIB}; then
+	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
+else
+	PSTORAGELIB="/usr/local/lib"
+fi
+
 # create links for client config file
 AC_CONFIG_LINKS([client/params.cfg:tests/default.cfg])
 AC_CONFIG_LINKS([client/sample-consumer.cfg:tests/sample-consumer.cfg])
@@ -340,6 +354,39 @@ CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
+###############################
+# Check for persistent storage libs
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$PSTORAGEDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$PSTORAGELIB"
+SAVED_LIBS=$LIBS
+
+if test "$os_module" != "android"
+then
+    LIBS="$LIBS -lrocksdb"
+    AC_CHECK_LIB([rocksdb], [rocksdb_restore_options_create], [AC_DEFINE(HAVE_PERSISTENT_STORAGE)])
+    AM_CONDITIONAL([HAVE_PERSISTENT_STORAGE], [test "$ac_cv_lib_rocksdb_rocksdb_restore_options_create" = yes])
+    AC_SUBST([PSTORAGE_LIB], ["-lrocksdb"])
+else
+    # check headers for leveldb
+    AC_CHECK_HEADERS([leveldb/db.h],[AM_CONDITIONAL([HAVE_PERSISTENT_STORAGE], [test "true" = true])])
+    
+    AC_MSG_CHECKING([for leveldb library...])
+    AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([#include <leveldb/db.h>],
+        [leveldb::DB* db])],
+        [AC_MSG_RESULT([yes]) ; AM_CONDITIONAL([HAVE_PERSISTENT_STORAGE], [test "true" = true])],
+        [AC_MSG_RESULT([can't link with leveldb lib. no persistent storage support]) ; AM_CONDITIONAL([HAVE_PERSISTENT_STORAGE], [test "false" = true])]
+    )
+    AC_SUBST([PSTORAGE_LIB], ["-lleveldb"])
+fi
+
+CPPFLAGS=$SAVED_CPPFLAGS
+LDFLAGS=$SAVED_LDFLAGS
+LIBS=$SAVED_LIBS
+
+###############################
 AC_SUBST([WEBRTCLIBS], ["-lwebrtc"])
 
 AC_OUTPUT

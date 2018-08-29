@@ -63,6 +63,11 @@ VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
     ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.sampleMs_;
     ps.statStorage_ = statStorage_.get();
 
+    if (settings_.storagePath_ != "")
+    {
+        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+    }
+
     framePublisher_ = boost::make_shared<VideoPacketPublisher>(ps);
     framePublisher_->setDescription("seg-publisher-" + settings_.params_.streamName_);
 }

@@ -254,7 +254,7 @@ LatencyControl::LatencyControl(unsigned int timeoutWindowMs,
                                const boost::shared_ptr<const DrdEstimator> &drd,
                                const boost::shared_ptr<statistics::StatisticsStorage> &storage) 
     :
-    stabilityEstimator_(STABILITY_ESTIMATOR_MID),
+    stabilityEstimator_(STABILITY_ESTIMATOR_LOW),
     queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
     // queueSizeStrategy_(boos::make_shared<DefaultStrategy>(10)), // conservative
     drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),

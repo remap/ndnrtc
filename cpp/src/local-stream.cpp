@@ -101,10 +101,23 @@ LocalAudioStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	pimpl_->setLogger(logger);
 }
 
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalAudioStream::getLogger() const
+{
+    return pimpl_->getLogger();
+}
+
+
 statistics::StatisticsStorage 
 LocalAudioStream::getStatistics() const
 {
 	return pimpl_->getStatistics();
+}
+
+boost::shared_ptr<StorageEngine> 
+LocalAudioStream::getStorage() const
+{
+    return pimpl_->getStorage();
 }
 
 //******************************************************************************
@@ -200,8 +213,20 @@ LocalVideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	pimpl_->setLogger(logger);
 }
 
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalVideoStream::getLogger() const
+{
+    return pimpl_->getLogger();
+}
+
 statistics::StatisticsStorage 
 LocalVideoStream::getStatistics() const
 {
 	return pimpl_->getStatistics();
+}
+
+boost::shared_ptr<StorageEngine> 
+LocalVideoStream::getStorage() const
+{
+    return pimpl_->getStorage();
 }

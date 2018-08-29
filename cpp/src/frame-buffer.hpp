@@ -53,6 +53,9 @@ namespace ndnrtc
         
         int64_t getArrivalTimeUsec() const { return arrivalTimeUsec_; }
         
+        void incrementRequestNum() { requestNo_++; }
+        size_t getRequestNum() const { return requestNo_; }
+
         /**
          * Returns round-trip time delay in microseconds if data has arrived.
          * Otherwise, returns -1.
@@ -181,6 +184,7 @@ namespace ndnrtc
         const NamespaceInfo& getNameInfo() const { return nameInfo_; }
         int getConsistencyState() const { return consistency_; }
         unsigned int getRtxNum() const { return nRtx_; }
+        int getRtxNum(const ndn::Name& segmentName);
         bool hasOriginalSegments() const { return hasOriginalSegments_; }
         size_t getFetchedNum() const { return fetched_.size(); }
         void toggleLock();

@@ -136,11 +136,11 @@ void PreciseGeneratorImpl::setupTimer()
     ms interval = getAdjustedInterval(lastIterStart, iterStart_,
                                       lastIterIntervalMs_, lastTaskDurationNs_, rate_);
     timer_.expires_from_now(interval);
-    // #ifdef OS_DARWIN
-    timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), _1));
-    // #else
-    // 	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), boost::arg<1>()));
-    // #endif
+    #ifdef OS_DARWIN
+        timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), _1));
+    #else
+    	timer_.async_wait(lib_bind::bind(&PreciseGeneratorImpl::onFire, shared_from_this(), boost::arg<1>()));
+    #endif
     lastIterIntervalMs_ = interval;
 }
 

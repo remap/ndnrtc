@@ -133,7 +133,11 @@ BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Int
 
         Name segmentKey = segment->getInfo().getSuffix(suffix_filter::Segment);
         
-        if (requested_.find(segmentKey) != requested_.end()) nRtx_++;
+        if (requested_.find(segmentKey) != requested_.end())
+        {
+            nRtx_++;
+            requested_[segmentKey]->incrementRequestNum();
+        }
         else requested_[segmentKey] = segment;
 
         if (state_ == Free) state_ = New;
@@ -226,6 +230,20 @@ BufferSlot::getPendingInterests() const
             pendingInterests.push_back(it.second->getInterest());
 
     return pendingInterests;
+}
+
+int 
+BufferSlot::getRtxNum(const ndn::Name& segmentName)
+{
+    NamespaceInfo info;
+    if (NameComponents::extractInfo(segmentName, info))
+    {
+        Name segmentKey = info.getSuffix(suffix_filter::Segment);
+        if (requested_.find(segmentKey) != requested_.end())
+           return requested_[segmentKey]->getRequestNum()-1;
+    }
+
+    return -1;
 }
 
 std::string

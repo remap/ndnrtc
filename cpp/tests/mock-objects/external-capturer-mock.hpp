@@ -27,6 +27,12 @@ public:
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
                                       const unsigned char* vBuffer));
+    MOCK_METHOD6(incomingNV21Frame, int(const unsigned int width,
+                                      const unsigned int height,
+                                      const unsigned int strideY,
+                                      const unsigned int strideUV,
+                                      const unsigned char* yBuffer,
+                                      const unsigned char* uvBuffer));
 };
 
 #endif
