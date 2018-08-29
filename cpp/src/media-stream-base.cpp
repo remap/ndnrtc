@@ -53,8 +53,8 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
     cache_->setInterestFilter(streamPrefix_.getPrefix(-1), cache_->getStorePendingInterest());
 
     PublisherSettings ps;
-    ps.sign_ = true; // it's ok to sign every packet as data publisher
-                     // is used for low-rate data (max 10fps) and manifests
+    ps.sign_ = settings_.sign_; // it's ok to sign every packet as data publisher
+                                // is used for low-rate data (max 10fps) and manifests
     ps.keyChain_ = settings_.keyChain_;
     ps.memoryCache_ = cache_.get();
     ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE; // it's ok to rely on link-layer fragmenting
