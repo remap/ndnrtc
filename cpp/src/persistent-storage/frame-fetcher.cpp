@@ -111,6 +111,10 @@ FrameFetcherImpl::fetch(const ndn::Name& frameName,
 {
     if (NameComponents::extractInfo(frameName, frameNameInfo_))
     {
+        // TODO: if fetching is asynchronous and multiple fetch calls invoked in
+        // rapid succession, these callbacks will be overwritten with the callbacks
+        // from the latest invocation.
+        // Needs to be fixed by storing callbacks per invocation.
         onBufferAllocate_ = onBufferAllocate;
         onFrameFetched_ = onFrameFetched;
         onFetchFailure_ = onFetchFailure;
