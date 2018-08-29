@@ -149,22 +149,26 @@ host_triplet = @host@
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 @OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_2)
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_NANOMSG_TRUE@am__append_6 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_7 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_8 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_9 = -lnanomsg
-@OS_LINUX_TRUE@am__append_10 = -pthread 
-@OS_LINUX_TRUE@am__append_11 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
+@HAVE_NANOMSG_TRUE@am__append_9 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_10 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_11 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_12 = -lnanomsg
+@OS_LINUX_TRUE@am__append_13 = -pthread 
+@OS_LINUX_TRUE@am__append_14 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_12 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_13 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
-@OS_DARWIN_TRUE@am__append_14 = -lana_config_proto \
+@OS_DARWIN_TRUE@am__append_15 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_16 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
+@OS_DARWIN_TRUE@am__append_17 = -lana_config_proto \
 @OS_DARWIN_TRUE@	-lana_debug_dump_proto -lapprtc_common \
 @OS_DARWIN_TRUE@	-lapprtc_signaling -laudio -laudio_coder \
 @OS_DARWIN_TRUE@	-laudio_coding -laudio_conference_mixer \
@@ -218,16 +222,16 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @OS_DARWIN_TRUE@	-lwebrtc_h264 -lwebrtc_h264_video_toolbox \
 @OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
 @OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_ANDROID_TRUE@am__append_15 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_16 = -fPIE -pie
-@OS_ANDROID_TRUE@am__append_17 = -llog -lOpenSLES -lboost_timer -lboost_thread
-@HAVE_NANOMSG_TRUE@am__append_18 = nanopipe-adaptor
-@HAVE_NANOMSG_TRUE@am__append_19 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_20 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_21 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_22 = -lnanomsg
-@OS_LINUX_TRUE@am__append_23 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_24 = -DOS_DARWIN
+@OS_ANDROID_TRUE@am__append_18 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_19 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_20 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_NANOMSG_TRUE@am__append_21 = nanopipe-adaptor
+@HAVE_NANOMSG_TRUE@am__append_22 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_23 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_24 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_25 = -lnanomsg
+@OS_LINUX_TRUE@am__append_26 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_27 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -268,8 +272,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
-	bin/tests/test-client$(EXEEXT) \
-	bin/tests/test-persistent-storage$(EXEEXT)
+	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_2)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_28 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -327,6 +331,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+@HAVE_PERSISTENT_STORAGE_TRUE@am__DEPENDENCIES_2 =  \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-audio-capturer.lo \
@@ -393,6 +399,7 @@ libndnrtc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libndnrtc_la_LDFLAGS) $(LDFLAGS) -o $@
 @HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = bin/tests/test-persistent-storage$(EXEEXT)
 am__bin_tests_test_async_SOURCES_DIST = tests/test-async.cc \
 	src/async.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
@@ -405,15 +412,15 @@ am_bin_tests_test_async_OBJECTS =  \
 	tests/bin_tests_test_async-test-async.$(OBJEXT) \
 	src/bin_tests_test_async-async.$(OBJEXT) $(am__objects_2)
 bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am__DEPENDENCIES_4 = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_async_LDFLAGS) \
@@ -445,8 +452,8 @@ am_bin_tests_test_audio_capturer_OBJECTS = tests/bin_tests_test_audio_capturer-t
 	$(am__objects_4)
 bin_tests_test_audio_capturer_OBJECTS =  \
 	$(am_bin_tests_test_audio_capturer_OBJECTS)
-bin_tests_test_audio_capturer_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_audio_capturer_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_audio_capturer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -495,8 +502,8 @@ am_bin_tests_test_audio_playout_OBJECTS = tests/bin_tests_test_audio_playout-tes
 	$(am__objects_6)
 bin_tests_test_audio_playout_OBJECTS =  \
 	$(am_bin_tests_test_audio_playout_OBJECTS)
-bin_tests_test_audio_playout_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_audio_playout_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_audio_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -530,8 +537,8 @@ am_bin_tests_test_buffer_control_OBJECTS = tests/bin_tests_test_buffer_control-t
 	$(am__objects_8)
 bin_tests_test_buffer_control_OBJECTS =  \
 	$(am_bin_tests_test_buffer_control_OBJECTS)
-bin_tests_test_buffer_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_buffer_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_buffer_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -561,7 +568,7 @@ am_bin_tests_test_client_OBJECTS =  \
 	$(am__objects_10)
 bin_tests_test_client_OBJECTS = $(am_bin_tests_test_client_OBJECTS)
 bin_tests_test_client_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_4)
 bin_tests_test_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_client_LDFLAGS) \
@@ -583,7 +590,7 @@ am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-tes
 bin_tests_test_client_params_OBJECTS =  \
 	$(am_bin_tests_test_client_params_OBJECTS)
 bin_tests_test_client_params_DEPENDENCIES =  \
-	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_3)
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_4)
 bin_tests_test_client_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -604,7 +611,7 @@ am_bin_tests_test_config_load_OBJECTS =  \
 	$(am__objects_14)
 bin_tests_test_config_load_OBJECTS =  \
 	$(am_bin_tests_test_config_load_OBJECTS)
-bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_4) \
 	$(top_builddir)/libndnrtc.la
 bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -625,8 +632,8 @@ am_bin_tests_test_data_validator_OBJECTS = tests/bin_tests_test_data_validator-t
 	$(am__objects_16)
 bin_tests_test_data_validator_OBJECTS =  \
 	$(am_bin_tests_test_data_validator_OBJECTS)
-bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -653,8 +660,8 @@ am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-tes
 	$(am__objects_18)
 bin_tests_test_drd_estimator_OBJECTS =  \
 	$(am_bin_tests_test_drd_estimator_OBJECTS)
-bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_drd_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -677,8 +684,8 @@ am_bin_tests_test_estimators_OBJECTS =  \
 	$(am__objects_20)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
-bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_estimators_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -709,8 +716,8 @@ am_bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am__objects_22)
 bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am_bin_tests_test_frame_buffer_OBJECTS)
-bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_frame_buffer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -734,8 +741,8 @@ am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter
 	$(am__objects_24)
 bin_tests_test_frame_converter_OBJECTS =  \
 	$(am_bin_tests_test_frame_converter_OBJECTS)
-bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_frame_converter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -756,7 +763,7 @@ am_bin_tests_test_frame_io_OBJECTS =  \
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
 bin_tests_test_frame_io_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_4)
 bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
@@ -777,7 +784,7 @@ am_bin_tests_test_generator_OBJECTS =  \
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
 bin_tests_test_generator_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_4)
 bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
@@ -809,8 +816,8 @@ am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_contr
 	$(am__objects_30)
 bin_tests_test_interest_control_OBJECTS =  \
 	$(am_bin_tests_test_interest_control_OBJECTS)
-bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_interest_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -841,8 +848,8 @@ am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-t
 	$(am__objects_32)
 bin_tests_test_interest_queue_OBJECTS =  \
 	$(am_bin_tests_test_interest_queue_OBJECTS)
-bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_interest_queue_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -876,8 +883,8 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	$(am__objects_34)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
-bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_latency_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -928,7 +935,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
 bin_tests_test_local_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1030,8 +1037,8 @@ am_bin_tests_test_loop_OBJECTS =  \
 	src/bin_tests_test_loop-rtx-controller.$(OBJEXT) \
 	$(am__objects_38)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
-bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_loop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_loop_LDFLAGS) \
@@ -1071,8 +1078,8 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	$(am__objects_40)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
-bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1091,8 +1098,8 @@ am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components
 	$(am__objects_42)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
-bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1116,8 +1123,8 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	$(am__objects_44)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
-bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1146,8 +1153,8 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	$(am__objects_46)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
-bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1169,8 +1176,8 @@ am_bin_tests_test_params_OBJECTS =  \
 	src/bin_tests_test_params-frame-data.$(OBJEXT) \
 	$(am__objects_48)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
-bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
@@ -1189,8 +1196,8 @@ am_bin_tests_test_periodic_OBJECTS =  \
 	$(am__objects_50)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
-bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_periodic_LDFLAGS) \
@@ -1257,7 +1264,8 @@ am_bin_tests_test_persistent_storage_OBJECTS = tests/bin_tests_test_persistent_s
 bin_tests_test_persistent_storage_OBJECTS =  \
 	$(am_bin_tests_test_persistent_storage_OBJECTS)
 bin_tests_test_persistent_storage_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_1)
 bin_tests_test_persistent_storage_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1302,8 +1310,8 @@ am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_contr
 	$(am__objects_54)
 bin_tests_test_pipeline_control_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_OBJECTS)
-bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_pipeline_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1342,7 +1350,7 @@ am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_
 bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
 bin_tests_test_pipeline_control_state_machine_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
 bin_tests_test_pipeline_control_state_machine_LINK = $(LIBTOOL) \
 	$(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1386,8 +1394,8 @@ am_bin_tests_test_pipeliner_OBJECTS =  \
 	$(am__objects_58)
 bin_tests_test_pipeliner_OBJECTS =  \
 	$(am_bin_tests_test_pipeliner_OBJECTS)
-bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_pipeliner_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_pipeliner_LDFLAGS) \
@@ -1454,8 +1462,8 @@ am_bin_tests_test_playout_control_OBJECTS = tests/bin_tests_test_playout_control
 	$(am__objects_62)
 bin_tests_test_playout_control_OBJECTS =  \
 	$(am_bin_tests_test_playout_control_OBJECTS)
-bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_playout_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1477,7 +1485,7 @@ am_bin_tests_test_renderer_OBJECTS =  \
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_4)
 bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
@@ -1508,8 +1516,8 @@ am_bin_tests_test_rtx_controller_OBJECTS = tests/bin_tests_test_rtx_controller-t
 	$(am__objects_66)
 bin_tests_test_rtx_controller_OBJECTS =  \
 	$(am_bin_tests_test_rtx_controller_OBJECTS)
-bin_tests_test_rtx_controller_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_rtx_controller_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_rtx_controller_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1537,8 +1545,8 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	$(am__objects_68)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
-bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_sample_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1569,7 +1577,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
 bin_tests_test_segment_controller_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1591,7 +1599,7 @@ am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-t
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES =  \
-	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_3)
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_4)
 bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1621,8 +1629,8 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	$(am__objects_74)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
-bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_video_coder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1654,8 +1662,8 @@ am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-tes
 	$(am__objects_76)
 bin_tests_test_video_decoder_OBJECTS =  \
 	$(am_bin_tests_test_video_decoder_OBJECTS)
-bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_4)
 bin_tests_test_video_decoder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1753,7 +1761,7 @@ am_bin_tests_test_webrtc_audio_channel_OBJECTS = tests/bin_tests_test_webrtc_aud
 bin_tests_test_webrtc_audio_channel_OBJECTS =  \
 	$(am_bin_tests_test_webrtc_audio_channel_OBJECTS)
 bin_tests_test_webrtc_audio_channel_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
 bin_tests_test_webrtc_audio_channel_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -2261,6 +2269,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PSTORAGEDIR = @PSTORAGEDIR@
+PSTORAGELIB = @PSTORAGELIB@
+PSTORAGE_LIB = @PSTORAGE_LIB@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -2403,13 +2414,13 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
 	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ \
 	-I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D \
-	BASE_FILE_NAME=\"$*\" $(am__append_4)
+	BASE_FILE_NAME=\"$*\" $(am__append_4) $(am__append_6)
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
-	-L@BOOSTLIB@ ${BOOST_LDFLAGS} $(am__append_1)
+	-L@BOOSTLIB@ ${BOOST_LDFLAGS} $(am__append_1) $(am__append_7)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
 	${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} \
 	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
-	$(am__append_3) $(am__append_5)
+	$(am__append_3) $(am__append_5) $(am__append_8)
 @OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/renderer.cpp client/src/config.cpp \
@@ -2419,17 +2430,17 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/frame-io.cpp client/src/video-source.cpp \
 	client/src/video-source.hpp client/src/precise-generator.hpp \
 	client/src/precise-generator.cpp \
-	client/src/key-chain-manager.cpp $(am__append_6)
+	client/src/key-chain-manager.cpp $(am__append_9)
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
-	$(am__append_7) $(am__append_12) $(am__append_15)
+	$(am__append_10) $(am__append_15) $(am__append_18)
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
-	${BOOST_LDFLAGS} -L$(libdir) $(am__append_8) $(am__append_10) \
-	$(am__append_13) $(am__append_16)
+	${BOOST_LDFLAGS} -L$(libdir) $(am__append_11) $(am__append_13) \
+	$(am__append_16) $(am__append_19)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
-	$(top_builddir)/libndnrtc.la $(am__append_9) $(am__append_11) \
-	$(am__append_14) $(am__append_17)
+	$(top_builddir)/libndnrtc.la $(am__append_12) $(am__append_14) \
+	$(am__append_17) $(am__append_20)
 noinst_SCRIPTS = client/params.cfg
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
@@ -2446,14 +2457,14 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_20) $(am__append_24)
+	$(am__append_23) $(am__append_27)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
-	$(am__append_21)
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_22) \
-	$(am__append_23)
+	$(am__append_24)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_25) \
+	$(am__append_26)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_19)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_22)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -2505,12 +2516,6 @@ bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc tests/t
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packet_publisher_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp src/local-stream.cpp src/video-stream-impl.cpp src/media-stream-base.cpp src/audio-capturer.cpp src/periodic.cpp src/audio-stream-impl.cpp src/estimators.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/async.cpp src/audio-thread.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb-ndk/include
-bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb-ndk/libs/armeabi-v7a
-# bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I/Users/peetonn/Documents/Work/leveldb/include -I/Users/peetonn/Documents/Work/rocksdb/include -I/Users/peetonn/Documents/Work/HyperLevelDB/build/include
-# bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L/Users/peetonn/Documents/Work/leveldb/build -L/Users/peetonn/Documents/Work/rocksdb -L/Users/peetonn/Documents/Work/HyperLevelDB/build/lib/ -lleveldb -lrocksdb -lhyperleveldb
-bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem -lleveldb
 bin_tests_test_video_coder_SOURCES = tests/test-video-coder.cc tests/tests-helpers.cc src/video-coder.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_coder_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_coder_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -2652,6 +2657,10 @@ bin_tests_test_loop_SOURCES = tests/test-loop.cc \
 bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} ${BOOST_FILESYSTEM_LIB}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp src/local-stream.cpp src/video-stream-impl.cpp src/media-stream-base.cpp src/audio-capturer.cpp src/periodic.cpp src/audio-stream-impl.cpp src/estimators.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/async.cpp src/audio-thread.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I@PSTORAGEDIR@
+bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L@PSTORAGELIB@
+bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem ${PSTORAGE_LIB}
 all: all-am
 
 .SUFFIXES:

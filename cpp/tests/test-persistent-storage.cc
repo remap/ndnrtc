@@ -48,7 +48,7 @@
 
 #include "persistent-storage/fetching-task.hpp"
 #include "storage-engine.hpp"
-#include "persistent-storage/frame-fetcher.hpp"
+#include "frame-fetcher.hpp"
 #include "frame-buffer.hpp"
 #include "local-stream.hpp"
 
@@ -57,9 +57,12 @@
 // include .cpp in order to instantiate class with mock objects
 #include "src/packet-publisher.cpp"
 
+#ifdef __ANDROID__
 #define LEVELDB
+#else
 // #define HYPERDB
-// #define ROCKSDB
+#define ROCKSDB
+#endif
 
 #include <cassert>
 #ifdef LEVELDB

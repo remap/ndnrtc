@@ -11,6 +11,8 @@
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/util/blob.hpp>
 
+#if HAVE_PERSISTENT_STORAGE
+
 #ifndef __ANDROID__ // use RocksDB on linux and macOS
     
     #include <rocksdb/db.h>
@@ -23,6 +25,8 @@
 
 #endif
 
+#endif
+
 using namespace ndnrtc;
 using namespace ndn;
 using namespace boost;
@@ -32,9 +36,15 @@ namespace ndnrtc {
 
 class StorageEngineImpl {
     public:
+    #if HAVE_PERSISTENT_STORAGE
         StorageEngineImpl(std::string dbPath): dbPath_(dbPath), db_(nullptr)
         {
         }
+    #else
+        StorageEngineImpl(std::string dbPath) {
+            throw std::runtime_error("The library is not copmiled with persistent storage support.");
+        }
+    #endif
 
         ~StorageEngineImpl()
         {
@@ -42,21 +52,28 @@ class StorageEngineImpl {
 
         bool open()
         {
+#if HAVE_PERSISTENT_STORAGE
             db_namespace::Options options;
             options.create_if_missing = true;
 
             db_namespace::Status status = db_namespace::DB::Open(options, dbPath_, &db_);
             return status.ok();
+#else
+            return false;
+#endif
         }
 
         void close()
         {
+#if HAVE_PERSISTENT_STORAGE
             if (db_)
                 delete db_;
+#endif
         }
 
         bool put(const shared_ptr<const Data>& data)
         {
+#if HAVE_PERSISTENT_STORAGE
             if (!db_)
                 throw std::runtime_error("DB is not open");
 
@@ -66,10 +83,14 @@ class StorageEngineImpl {
                          db_namespace::Slice((const char*)data->wireEncode().buf(),
                                              data->wireEncode().size()));
             return s.ok();
+#else
+            return false;
+#endif
         }
 
         shared_ptr<Data> get(const Name& dataName)
         {
+#if HAVE_PERSISTENT_STORAGE
             if (!db_)
                 throw std::runtime_error("DB is not open");
 
@@ -84,13 +105,15 @@ class StorageEngineImpl {
                 
                 return data;
             }
-
+#endif
             return shared_ptr<Data>(nullptr);
         }
 
     private:
         std::string dbPath_;
+#if HAVE_PERSISTENT_STORAGE
         db_namespace::DB* db_;
+#endif
 };
 
 }
