@@ -74,9 +74,10 @@ class VideoStreamImpl : public MediaStreamBase
         VideoThreadMeta getMeta() const;
         double getRate() const;
 
-        // TODO: update meta for publishing latest key and delta frame sequence numbers
         void updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg, 
                         PacketNumber seqNo, PacketNumber pairedSeqNo, unsigned char gopPos);
+
+        uint32_t getVersionNumber() const { return versionNumber_; }
 
       private:
         MetaKeeper(const MetaKeeper &) = delete;
@@ -86,6 +87,7 @@ class VideoStreamImpl : public MediaStreamBase
         estimators::Average keyData_, keyParity_;
         std::pair<PacketNumber, PacketNumber> seqNo_;
         unsigned char gopPos_;
+        uint32_t versionNumber_;
     };
 
     bool fecEnabled_;

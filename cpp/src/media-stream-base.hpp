@@ -84,6 +84,7 @@ class MediaStreamBase : public NdnRtcComponent,
     boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
     boost::shared_ptr<StorageEngine> storage_;
     uint64_t streamTimestamp_;
+    uint32_t metaVersion_;
 
     virtual void add(const MediaThreadParams *params) = 0;
     virtual void remove(const std::string &threadName) = 0;

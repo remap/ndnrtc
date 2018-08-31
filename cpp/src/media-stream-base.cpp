@@ -32,7 +32,8 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
       basePrefix_(basePrefix),
       settings_(settings),
       streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
-      statStorage_(statistics::StatisticsStorage::createProducerStatistics())
+      statStorage_(statistics::StatisticsStorage::createProducerStatistics()),
+      metaVersion_(0)
 {
     assert(settings_.face_);
     assert(settings_.keyChain_);
@@ -111,10 +112,7 @@ void MediaStreamBase::publishMeta()
 
     // use name without timestamp here
     Name metaName(streamPrefix_.getPrefix(-1));
-
-    // TODO: appendVersion() should probably be gone once SegemntFetcher
-    // is updated to work without version number
-    metaName.append(NameComponents::NameComponentMeta).appendVersion(0);
+    metaName.append(NameComponents::NameComponentMeta).appendVersion(metaVersion_++);
 
     boost::shared_ptr<MediaStreamBase> me = 
         boost::static_pointer_cast<MediaStreamBase>(shared_from_this());

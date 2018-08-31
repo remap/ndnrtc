@@ -373,9 +373,8 @@ bool VideoStreamImpl::updateMeta()
     for (auto it : metaKeepers_)
     {
         Name metaName(streamPrefix_);
-        // TODO: appendVersion() should probably be gone once SegemntFetcher
-        // is updated to work without version number
-        metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(0);;
+        metaName.append(it.first).append(NameComponents::NameComponentMeta)
+                .appendVersion(it.second->getVersionNumber());
         metadataPublisher_->publish(metaName, it.second->getMeta());
 
         LogDebugC << "published meta: seginfo " 
@@ -401,7 +400,8 @@ VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams *params)
       deltaData_(Average(boost::make_shared<TimeWindow>(100))),
       deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
       keyData_(Average(boost::make_shared<SampleWindow>(2))),
-      keyParity_(Average(boost::make_shared<SampleWindow>(2)))
+      keyParity_(Average(boost::make_shared<SampleWindow>(2))),
+      versionNumber_(0)
 {
 }
 
@@ -427,6 +427,7 @@ void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t
     seqNo_.first = (isKey ? pairedSeqNo : seqNo); // first is delta
     seqNo_.second = (isKey ? seqNo : pairedSeqNo); // second is key
     gopPos_ = gopPos;
+    versionNumber_++;
 }
 
 VideoThreadMeta
