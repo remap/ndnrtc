@@ -36,7 +36,7 @@ TEST(TestClient, TestRunClientPhony)
 	boost::shared_ptr<KeyChain> keyChain = memoryKeyChain(appPrefix);
 
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelNone);
-	Client c(io, face, keyChain);
+	Client c(io, io, face, keyChain);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	c.run(3, 10, ClientParams(), "test-client");
@@ -67,7 +67,7 @@ TEST(TestClient, TestConsumer)
 	ndnlog::new_api::Logger::initAsyncLogging();
 	ndnlog::new_api::Logger::getLogger("").setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 	{
-		Client c(io, face, keyChain);
+		Client c(io, io, face, keyChain);
 
 		boost::shared_ptr<StatisticsStorage> sampleStats = 
 			boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics());
@@ -120,7 +120,7 @@ TEST(TestClient, TestProducer)
 	}
 
 	{
-		Client c(io, face, keyChain);
+		Client c(io, io, face, keyChain);
 		c.run(3, 0, cp, "test-client");
 	}
 

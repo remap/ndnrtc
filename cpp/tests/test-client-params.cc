@@ -103,7 +103,7 @@ TEST(TestConsumerStreamParams, TestOutput)
     stringstream ss;
 
     msp.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-    msp.streamSink_ = "mic.pcmu";
+    msp.sink_.name_ = "mic.pcmu";
     msp.threadToFetch_ = "pcmu";
     msp.streamName_ = "mic";
     msp.type_ = MediaStreamParams::MediaStreamTypeAudio;
@@ -191,7 +191,7 @@ TEST(TestConsumerClientParams, TestOutput)
     ConsumerStreamParams msp1;
 
     msp1.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-    msp1.streamSink_ = "mic.pcmu";
+    msp1.sink_.name_ = "mic.pcmu";
     msp1.threadToFetch_ = "pcmu";
     msp1.streamName_ = "mic";
     msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
@@ -208,7 +208,7 @@ TEST(TestConsumerClientParams, TestOutput)
     ConsumerStreamParams msp2;
 
     msp2.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-    msp2.streamSink_ = "camera.yuv";
+    msp2.sink_.name_ = "camera.yuv";
     msp2.threadToFetch_ = "low";
     msp2.streamName_ = "camera";
     msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
@@ -275,7 +275,7 @@ TEST(TestConsumerClientParams, TestCopy)
     ConsumerStreamParams msp1;
 
     msp1.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-    msp1.streamSink_ = "mic.pcmu";
+    msp1.sink_.name_ = "mic.pcmu";
     msp1.threadToFetch_ = "pcmu";
     msp1.streamName_ = "mic";
     msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
@@ -292,7 +292,7 @@ TEST(TestConsumerClientParams, TestCopy)
     ConsumerStreamParams msp2;
 
     msp2.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-    msp2.streamSink_ = "camera.yuv";
+    msp2.sink_.name_ = "camera.yuv";
     msp2.threadToFetch_ = "low";
     msp2.streamName_ = "camera";
     msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;
@@ -331,7 +331,7 @@ TEST(TestConsumerClientParams, TestCopy)
 
     ConsumerClientParams ccpCopy(ccp);
 
-    ccp.fetchedStreams_[0].streamSink_ = "another.sink";
+    ccp.fetchedStreams_[0].sink_.name_ = "another.sink";
     ccp.fetchedStreams_[0].threadToFetch_ = "another-thread";
     ccp.statGatheringParams_.clear();
     ccp.generalAudioParams_ = GeneralConsumerParams();
@@ -452,7 +452,7 @@ TEST(TestClientParams, TestOutput)
         ConsumerStreamParams msp1;
 
         msp1.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-        msp1.streamSink_ = "mic.pcmu";
+        msp1.sink_.name_ = "mic.pcmu";
         msp1.threadToFetch_ = "pcmu";
         msp1.streamName_ = "mic";
         msp1.type_ = MediaStreamParams::MediaStreamTypeAudio;
@@ -469,7 +469,7 @@ TEST(TestClientParams, TestOutput)
         ConsumerStreamParams msp2;
 
         msp2.sessionPrefix_ = "/ndn/edu/ucla/remap/ndnrtc/user/client1";
-        msp2.streamSink_ = "camera.yuv";
+        msp2.sink_.name_ = "camera.yuv";
         msp2.threadToFetch_ = "low";
         msp2.streamName_ = "camera";
         msp2.type_ = MediaStreamParams::MediaStreamTypeVideo;

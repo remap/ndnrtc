@@ -15,7 +15,7 @@
 
 using namespace ::testing;
 using namespace ndnrtc;
-
+#if 0
 TEST(TestPlayoutControl, TestDefault)
 {
     boost::shared_ptr<MockPlayout> playout(boost::make_shared<MockPlayout>());
@@ -77,7 +77,7 @@ TEST(TestPlayoutControl, TestDefault)
             pc.onNewSampleReady();
     }
 }
-
+#endif
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

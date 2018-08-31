@@ -107,6 +107,12 @@ RemoteStream::unregisterObserver(IRemoteStreamObserver* o)
     pimpl_->detach(o);
 }
 
+boost::shared_ptr<StorageEngine> 
+RemoteStream::getStorage() const 
+{
+    throw std::runtime_error("Not implemented");
+}
+
 //******************************************************************************
 RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo, 
 			const boost::shared_ptr<ndn::Face>& face,

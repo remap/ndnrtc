@@ -162,13 +162,13 @@ TEST(TestSegmentController, TestOnTimeout)
 	MockSegmentControllerObserver o;
 	controller.attach(&o);
 
-	boost::function<void(const NamespaceInfo&)> checkTimeout = [i]
-		(const NamespaceInfo& info)
+	boost::function<void(const NamespaceInfo&, const boost::shared_ptr<const ndn::Interest> &)> checkTimeout = [i]
+		(const NamespaceInfo& info, const boost::shared_ptr<const ndn::Interest> &)
 		{
 			EXPECT_EQ(info.getPrefix(), i->getName());
 		};
 
-	EXPECT_CALL(o, segmentRequestTimeout(_))
+	EXPECT_CALL(o, segmentRequestTimeout(_, _))
 		.Times(1)
 		.WillOnce(Invoke(checkTimeout));
 
@@ -202,13 +202,13 @@ TEST(TestSegmentController, TestOnNack)
 	MockSegmentControllerObserver o;
 	controller.attach(&o);
 
-	boost::function<void(const NamespaceInfo&, int reason)> checkNack = [i]
-		(const NamespaceInfo& info, int reason)
+	boost::function<void(const NamespaceInfo&, int reason, const boost::shared_ptr<const ndn::Interest> &)> checkNack = [i]
+		(const NamespaceInfo& info, int reason, const boost::shared_ptr<const ndn::Interest> &)
 		{
 			EXPECT_EQ(info.getPrefix(), i->getName());
 		};
 
-	EXPECT_CALL(o, segmentNack(_,ndn_NetworkNackReason_NONE))
+	EXPECT_CALL(o, segmentNack(_,ndn_NetworkNackReason_NONE, _))
 		.Times(1)
 		.WillOnce(Invoke(checkNack));
 

@@ -157,8 +157,8 @@ TEST(TestPipeliner, TestRequestSample)
         dataSegment = getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Data, 7, 0),
         paritySegment = getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Parity, 7, 0);
 
-    sampleEstimator->onIncomingData(dataSegment);
-    sampleEstimator->onIncomingData(paritySegment);
+    sampleEstimator->segmentArrived(dataSegment);
+    sampleEstimator->segmentArrived(paritySegment);
 
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Data), 10);
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Delta, SegmentClass::Parity), 2);
@@ -227,8 +227,8 @@ TEST(TestPipeliner, TestRequestKeySample)
         dataSegment = getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Data, 7, 0),
         paritySegment = getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Parity, 7, 0);
 
-    sampleEstimator->onIncomingData(dataSegment);
-    sampleEstimator->onIncomingData(paritySegment);
+    sampleEstimator->segmentArrived(dataSegment);
+    sampleEstimator->segmentArrived(paritySegment);
 
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data), 30);
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity), 6);
@@ -294,10 +294,10 @@ TEST(TestPipeliner, TestSegmentsArrive)
                        const boost::shared_ptr<ndn::Data> &) {};
     OnTimeout onTimeout = [](const boost::shared_ptr<const ndn::Interest> &i) {};
 
-    sampleEstimator->onIncomingData(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Data, 7, 0));
-    sampleEstimator->onIncomingData(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Parity, 7, 0));
-    sampleEstimator->onIncomingData(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Data, 7, 0));
-    sampleEstimator->onIncomingData(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Parity, 7, 0));
+    sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Data, 7, 0));
+    sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Delta, SegmentClass::Parity, 7, 0));
+    sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Data, 7, 0));
+    sampleEstimator->segmentArrived(getFakeSegment(prefix.toUri(), SampleClass::Key, SegmentClass::Parity, 7, 0));
 
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Data), 30);
     ASSERT_EQ(sampleEstimator->getSegmentNumberEstimation(SampleClass::Key, SegmentClass::Parity), 6);

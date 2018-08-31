@@ -21,20 +21,23 @@ boost::shared_ptr<IFrameSink> createNewSink(const std::string& path)
 
 TEST(TestRenderer, TestCreate)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 }
 
 TEST(TestRenderer, Test1Frame)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/tmp/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
 	
 	memset(buffer, 0, width*height*4);
-	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
+    ndnrtc::FrameInfo phony;
+	r.renderBGRAFrame(phony, width, height, buffer);
 
 	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 	remove("/tmp/client1-camera.640x480");
@@ -42,16 +45,18 @@ TEST(TestRenderer, Test1Frame)
 
 TEST(TestRenderer, Test2Frames)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/tmp/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	
 	uint8_t *buffer = r.getFrameBuffer(640, 480);
 	memset(buffer, 0, 640*480*4);
-	r.renderBGRAFrame(1457733705984, 1, 640, 480, buffer);
+    ndnrtc::FrameInfo phony;
+	r.renderBGRAFrame(phony, 640, 480, buffer);
 
 	buffer = r.getFrameBuffer(1280, 720);
 	memset(buffer, 0, 1280*720*4);
-	r.renderBGRAFrame(1457733705994, 2, 1280, 720, buffer);
+	r.renderBGRAFrame(phony, 1280, 720, buffer);
 
 	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.1280x720").c_str()).good());
@@ -61,71 +66,81 @@ TEST(TestRenderer, Test2Frames)
 
 TEST(TestRenderer, TestThrowOnSinkCreation)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	
 	EXPECT_ANY_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestThrowOnSinkCreation2)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	
 	EXPECT_ANY_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestSinkSuppression)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/client1-camera";
-	RendererInternal r(sinkName, createNewSink, true);
+	RendererInternal r(sinkName, createNewSink, io, true);
 	
 	EXPECT_NO_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestSinkSuppression2)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "";
-	RendererInternal r(sinkName, createNewSink, true);
+	RendererInternal r(sinkName, createNewSink, io, true);
 	
 	EXPECT_NO_THROW(r.getFrameBuffer(640, 480));
 }
 
 TEST(TestRenderer, TestRenderFrameNoSink)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "";
-	RendererInternal r(sinkName, createNewSink, true);
+	RendererInternal r(sinkName, createNewSink, io, true);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
 	
 	memset(buffer, 0, width*height*4);
-	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
+    ndnrtc::FrameInfo phony;
+	r.renderBGRAFrame(phony, width, height, buffer);
 
 	ASSERT_FALSE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 }
 
 TEST(TestRenderer, TestWrongArgs)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/tmp/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	
 	uint8_t *buf = r.getFrameBuffer(640, 480);
-	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1, 1280, 720, buf));
+    ndnrtc::FrameInfo phony;
+	EXPECT_ANY_THROW(r.renderBGRAFrame(phony, 1280, 720, buf));
 }
 
 TEST(TestRenderer, TestWrongCallSequence)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/tmp/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
-	
-	EXPECT_ANY_THROW(r.renderBGRAFrame(1457733705984, 1, 1280, 720, nullptr));
+	RendererInternal r(sinkName, createNewSink, io);
+	ndnrtc::FrameInfo phony;
+	EXPECT_ANY_THROW(r.renderBGRAFrame(phony, 1280, 720, nullptr));
 }
 
 TEST(TestRenderer, TestFrameCorrectness)
 {
+    boost::asio::io_service io;
 	std::string sinkName = "/tmp/client1-camera";
-	RendererInternal r(sinkName, createNewSink);
+	RendererInternal r(sinkName, createNewSink, io);
 	unsigned int width = 640, height = 480;
 
 	uint8_t *buffer = r.getFrameBuffer(width, height);
@@ -134,7 +149,8 @@ TEST(TestRenderer, TestFrameCorrectness)
 	for (int i = 0; i < width*height*4; ++i)
 		buffer[i] = (i%256);
 
-	r.renderBGRAFrame(1457733705984, 1, width, height, buffer);
+    ndnrtc::FrameInfo phony;
+	r.renderBGRAFrame(phony, width, height, buffer);
 
 	ASSERT_TRUE(std::ifstream(string("/tmp/client1-camera.640x480").c_str()).good());
 

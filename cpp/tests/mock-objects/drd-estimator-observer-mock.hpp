@@ -17,8 +17,8 @@ class MockDrdEstimatorObserver : public ndnrtc::IDrdEstimatorObserver
 {
 public:
 	MOCK_METHOD0(onDrdUpdate, void());
-	MOCK_METHOD0(onCachedDrdUpdate, void());
-	MOCK_METHOD0(onOriginalDrdUpdate, void());
+	MOCK_METHOD2(onCachedDrdUpdate, void(double, double));
+	MOCK_METHOD2(onOriginalDrdUpdate, void(double, double));
 };
 
 #endif

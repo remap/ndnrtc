@@ -20,6 +20,9 @@ public:
 	MOCK_METHOD0(onQueueEmpty, void());
     MOCK_METHOD1(setThreshold, void(unsigned int));
     MOCK_CONST_METHOD0(getThreshold, unsigned int());
+    MOCK_METHOD0(onDrdUpdate, void());
+	MOCK_METHOD2(onCachedDrdUpdate, void(double, double));
+	MOCK_METHOD2(onOriginalDrdUpdate, void(double, double));
 };
 
 #endif

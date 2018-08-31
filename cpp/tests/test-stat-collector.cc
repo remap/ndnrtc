@@ -33,7 +33,7 @@ using namespace boost::asio;
 using namespace ndnrtc;
 using namespace std;
 using namespace ndnrtc::statistics;
-
+#if 0
 TEST(TestCsvFormatter, TestCsvDefault)
 {
 	map<string, double> metrics = boost::assign::map_list_of<string, double> 
@@ -368,6 +368,7 @@ TEST(TestStatCollector, TestRemoveStreams)
 	sc.removeStream(s3);
 	EXPECT_EQ(2, sc.getStreamsNumber());
 }
+#endif
 #if 0
 TEST(TestStatCollector, TestGathering)
 {

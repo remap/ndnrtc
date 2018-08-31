@@ -20421,7 +20421,7 @@ leveldb::DB* db
 _ACEOF
 if ac_fn_cxx_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; } ; if test "true" = true; then
+$as_echo "yes" >&6; } ;  if test "true" = true; then
   HAVE_PERSISTENT_STORAGE_TRUE=
   HAVE_PERSISTENT_STORAGE_FALSE='#'
 else
@@ -20431,7 +20431,7 @@ fi
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't link with leveldb lib. no persistent storage support" >&5
-$as_echo "can't link with leveldb lib. no persistent storage support" >&6; } ; if test "false" = true; then
+$as_echo "can't link with leveldb lib. no persistent storage support" >&6; } ;  if test "false" = true; then
   HAVE_PERSISTENT_STORAGE_TRUE=
   HAVE_PERSISTENT_STORAGE_FALSE='#'
 else
