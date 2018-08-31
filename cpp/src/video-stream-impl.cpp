@@ -63,6 +63,11 @@ VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
     ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.sampleMs_;
     ps.statStorage_ = statStorage_.get();
 
+    if (settings_.storagePath_ != "")
+    {
+        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+    }
+
     framePublisher_ = boost::make_shared<VideoPacketPublisher>(ps);
     framePublisher_->setDescription("seg-publisher-" + settings_.params_.streamName_);
 }
@@ -248,11 +253,13 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
         LogTraceC << "thread " << it.first << " " << packetHdr.sampleRate_
                   << "fps " << packetHdr.publishTimestampMs_ << "ms " << std::endl;
 
-        publish(it.first, it.second);
+        lastPublished_[it.first].timestamp_ = (uint64_t)(packetHdr.publishUnixTimestamp_*1000);
+        lastPublished_[it.first].playbackNo_ = playbackCounter_;
+        lastPublished_[it.first].ndnName_ = publish(it.first, it.second);
     }
 }
 
-void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
+std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 {
     boost::shared_ptr<NetworkData> parityData = fp->getParityData(
         VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
@@ -335,6 +342,8 @@ void VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
         if (busyPublishing_ == 0)
             (*statStorage_)[Indicator::ProcessedNum]++;
     });
+
+    return dataName.toUri();
 }
 
 void VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector &segments)
@@ -364,9 +373,8 @@ bool VideoStreamImpl::updateMeta()
     for (auto it : metaKeepers_)
     {
         Name metaName(streamPrefix_);
-        // TODO: appendVersion() should probably be gone once SegemntFetcher
-        // is updated to work without version number
-        metaName.append(it.first).append(NameComponents::NameComponentMeta).appendVersion(0);;
+        metaName.append(it.first).append(NameComponents::NameComponentMeta)
+                .appendVersion(it.second->getVersionNumber());
         metadataPublisher_->publish(metaName, it.second->getMeta());
 
         LogDebugC << "published meta: seginfo " 
@@ -378,6 +386,8 @@ bool VideoStreamImpl::updateMeta()
                   << it.second->getMeta().getSeqNo().second << " "
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
                   << std::endl;
+
+        (*statStorage_)[Indicator::CurrentProducerFramerate] = it.second->getRate();
     }
 
     return false;
@@ -390,7 +400,8 @@ VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams *params)
       deltaData_(Average(boost::make_shared<TimeWindow>(100))),
       deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
       keyData_(Average(boost::make_shared<SampleWindow>(2))),
-      keyParity_(Average(boost::make_shared<SampleWindow>(2)))
+      keyParity_(Average(boost::make_shared<SampleWindow>(2))),
+      versionNumber_(0)
 {
 }
 
@@ -416,6 +427,7 @@ void VideoStreamImpl::MetaKeeper::updateMeta(bool isKey, size_t nDataSeg, size_t
     seqNo_.first = (isKey ? pairedSeqNo : seqNo); // first is delta
     seqNo_.second = (isKey ? seqNo : pairedSeqNo); // second is key
     gopPos_ = gopPos;
+    versionNumber_++;
 }
 
 VideoThreadMeta

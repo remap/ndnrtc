@@ -31,7 +31,7 @@ using namespace ndn;
 using namespace testing;
 
 #define ENABLE_LOGGING
-
+#if 0
 TEST(TestRtxController, TestRtx){
 #ifdef ENABLE_LOGGING
     ndnlog::new_api::Logger::initAsyncLogging();
@@ -125,7 +125,7 @@ TEST(TestRtxController, TestRtx){
 		usleep(33000);
 	}
 }
-
+#endif
 //******************************************************************************
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);

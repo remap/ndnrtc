@@ -20,7 +20,7 @@ using namespace ndnrtc;
 TEST(TestDecoder, TestCreate)
 {
 	EXPECT_NO_THROW(
-		VideoDecoder decoder(sampleVideoCoderParams(), [](PacketNumber fNo, const WebRtcVideoFrame &){})
+		VideoDecoder decoder(sampleVideoCoderParams(), [](const FrameInfo& fi, const WebRtcVideoFrame &){})
 	);
 }
 
@@ -45,17 +45,18 @@ TEST(TestDecoder, TestEncodeDecode2K)
 
 	int nEncoded = 0;
 	int nDecoded = 0;
-	VideoDecoder vdc(vcp, [&nDecoded, width, height](PacketNumber fNo, const WebRtcVideoFrame &f){
+	VideoDecoder vdc(vcp, [&nDecoded, width, height](const FrameInfo& fi, const WebRtcVideoFrame &f){
 		nDecoded++;
 		EXPECT_EQ(f.width(), width);
 		EXPECT_EQ(f.height(), height);
 	});
 
+    FrameInfo phony = { 0, 0, "/phony/name" };
 	EXPECT_CALL(coderDelegate, onEncodedFrame(_))
 		.Times(AtLeast(1))
-		.WillRepeatedly(Invoke([&vdc, &nEncoded](const webrtc::EncodedImage& img){
+		.WillRepeatedly(Invoke([&vdc, &nEncoded, &phony](const webrtc::EncodedImage& img){
 			nEncoded++;
-			vdc.processFrame(nEncoded, img);
+			vdc.processFrame(phony, img);
 		}));
 	EXPECT_CALL(coderDelegate, onEncodingStarted())
 		.Times(nFrames);

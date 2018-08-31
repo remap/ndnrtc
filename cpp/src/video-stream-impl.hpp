@@ -13,6 +13,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/atomic.hpp>
 
+#include "interfaces.hpp"
 #include "media-stream-base.hpp"
 #include "ndnrtc-object.hpp"
 #include "packet-publisher.hpp"
@@ -54,6 +55,8 @@ class VideoStreamImpl : public MediaStreamBase
     int incomingFrame(const ArgbRawFrameWrapper &);
     int incomingFrame(const I420RawFrameWrapper &);
     int incomingFrame(const YUV_NV21FrameWrapper &);
+    
+    const std::map<std::string, FrameInfo>& getLastPublished() { return lastPublished_; }
     void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>) override;
 
   private:
@@ -71,9 +74,10 @@ class VideoStreamImpl : public MediaStreamBase
         VideoThreadMeta getMeta() const;
         double getRate() const;
 
-        // TODO: update meta for publishing latest key and delta frame sequence numbers
         void updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg, 
                         PacketNumber seqNo, PacketNumber pairedSeqNo, unsigned char gopPos);
+
+        uint32_t getVersionNumber() const { return versionNumber_; }
 
       private:
         MetaKeeper(const MetaKeeper &) = delete;
@@ -83,6 +87,7 @@ class VideoStreamImpl : public MediaStreamBase
         estimators::Average keyData_, keyParity_;
         std::pair<PacketNumber, PacketNumber> seqNo_;
         unsigned char gopPos_;
+        uint32_t versionNumber_;
     };
 
     bool fecEnabled_;
@@ -94,6 +99,7 @@ class VideoStreamImpl : public MediaStreamBase
     std::map<std::string, std::pair<uint64_t, uint64_t>> seqCounters_;
     uint64_t playbackCounter_;
     boost::shared_ptr<VideoPacketPublisher> framePublisher_;
+    std::map<std::string, FrameInfo> lastPublished_;
 
     void add(const MediaThreadParams *params) override;
     void remove(const std::string &threadName) override;
@@ -101,7 +107,7 @@ class VideoStreamImpl : public MediaStreamBase
 
     bool feedFrame(const WebRtcVideoFrame &frame);
     void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>> &frames);
-    void publish(const std::string &thread, boost::shared_ptr<VideoFramePacketAlias> &fp);
+    std::string publish(const std::string &thread, boost::shared_ptr<VideoFramePacketAlias> &fp);
     void publishManifest(ndn::Name dataName, PublishedDataPtrVector &segments);
     std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
 };

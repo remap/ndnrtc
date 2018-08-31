@@ -108,14 +108,16 @@ void PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment> &s)
     }
 }
 
-void PipelineControl::segmentRequestTimeout(const NamespaceInfo &n)
+void PipelineControl::segmentRequestTimeout(const NamespaceInfo &n, 
+                                            const boost::shared_ptr<const ndn::Interest> &interest)
 {
-    machine_.dispatch(boost::make_shared<EventTimeout>(n));
+    machine_.dispatch(boost::make_shared<EventTimeout>(n, interest));
 }
 
-void PipelineControl::segmentNack(const NamespaceInfo &n, int reason)
+void PipelineControl::segmentNack(const NamespaceInfo &n, int reason,
+                                   const boost::shared_ptr<const ndn::Interest> &interest)
 {
-    machine_.dispatch(boost::make_shared<EventNack>(n, reason));
+    machine_.dispatch(boost::make_shared<EventNack>(n, reason, interest));
 }
 
 void PipelineControl::segmentStarvation()

@@ -167,12 +167,15 @@ VideoCoderParams VideoThreadMeta::getCoderParams() const
 
 //******************************************************************************
 #define SYNC_MARKER "sync:"
-MediaStreamMeta::MediaStreamMeta() : DataPacket(std::vector<uint8_t>())
+MediaStreamMeta::MediaStreamMeta(uint64_t timestamp) : DataPacket(std::vector<uint8_t>())
 {
+    addBlob(sizeof(uint64_t), (uint8_t*)&timestamp); // blob 0 is the timestamp
 }
 
-MediaStreamMeta::MediaStreamMeta(std::vector<std::string> threads) : DataPacket(std::vector<uint8_t>())
+MediaStreamMeta::MediaStreamMeta(uint64_t timestamp, std::vector<std::string> threads) : DataPacket(std::vector<uint8_t>())
 {
+    addBlob(sizeof(uint64_t), (uint8_t*)&timestamp); // blob 0 is the timestamp
+
     for (auto t : threads)
         addThread(t);
 }
@@ -184,7 +187,7 @@ void MediaStreamMeta::addThread(const std::string &thread)
 
 void MediaStreamMeta::addSyncStream(const std::string &stream)
 {
-    addThread("sync:" + stream);
+    addThread(SYNC_MARKER + stream);
 }
 
 std::vector<std::string>
@@ -205,14 +208,27 @@ MediaStreamMeta::getSyncStreams() const
 std::vector<std::string>
 MediaStreamMeta::getThreads() const
 {
+    bool skipFirst = true; // first is a timestamp
     std::vector<std::string> threads;
     for (auto b : blobs_)
     {
+        if (skipFirst)
+        {
+            skipFirst = false;
+            continue;
+        }
+
         std::string thread = std::string((const char *)b.data(), b.size());
         if (thread.find("sync:") == std::string::npos)
             threads.push_back(thread);
     }
     return threads;
+}
+
+uint64_t
+MediaStreamMeta::getStreamTimestamp() const
+{
+    return *(uint64_t*)getBlob(0).data();
 }
 
 //******************************************************************************
@@ -281,7 +297,7 @@ WireSegment::packetHeader() const
 bool WireSegment::isOriginal() const
 {
     if (!interest_->getNonce().size())
-        throw std::runtime_error("Interest nonce is not set");
+        return false; //throw std::runtime_error("Interest nonce is not set");
 
     return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
 }

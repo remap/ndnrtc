@@ -250,7 +250,7 @@ Name
 Pipeliner::VideoNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
 {
     Name prefix(threadPrefix);
-    return prefix.append(NameComponents::NameComponentMeta).appendVersion(0).appendSegment(0);
+    return prefix.append(NameComponents::NameComponentMeta);
 }
 
 boost::shared_ptr<ndn::Interest>
@@ -261,6 +261,7 @@ Pipeliner::VideoNameScheme::metadataInterest(const ndn::Name threadPrefix,
     boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
+    // set "can be prefix"?
     return interest;
 }
 

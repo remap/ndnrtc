@@ -15,6 +15,7 @@
 #include "async.hpp"
 #include "clock.hpp"
 #include "statistics.hpp"
+#include "storage-engine.hpp"
 
 #define META_CHECK_INTERVAL_MS 10
 
@@ -31,12 +32,15 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
       basePrefix_(basePrefix),
       settings_(settings),
       streamPrefix_(NameComponents::streamPrefix(settings.params_.type_, basePrefix)),
-      statStorage_(statistics::StatisticsStorage::createProducerStatistics())
+      statStorage_(statistics::StatisticsStorage::createProducerStatistics()),
+      metaVersion_(0)
 {
     assert(settings_.face_);
     assert(settings_.keyChain_);
-
+    
+    streamTimestamp_ = (uint64_t)clock::millisecSinceEpoch();
     streamPrefix_.append(Name(settings_.params_.streamName_));
+    streamPrefix_.appendTimestamp(streamTimestamp_);
 
     unsigned int minimumFreshness = min(settings_.params_.producerParams_.freshness_.metadataMs_, 
                                         settings_.params_.producerParams_.freshness_.sampleMs_);
@@ -46,17 +50,24 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
     // or data added (and prevent it from hanging for few ms when data rate is high)
     cache_ = boost::make_shared<MemoryContentCache>(settings_.face_, 0);
     cache_->setMinimumCacheLifetime(1000);
-    cache_->setInterestFilter(streamPrefix_, cache_->getStorePendingInterest());
+    // set filter for prefix without the timestamp, because stream _meta is served there
+    cache_->setInterestFilter(streamPrefix_.getPrefix(-1), cache_->getStorePendingInterest());
 
     PublisherSettings ps;
-    ps.sign_ = true; // it's ok to sign every packet as data publisher
-                     // is used for low-rate data (max 10fps) and manifests
+    ps.sign_ = settings_.sign_; // it's ok to sign every packet as data publisher
+                                // is used for low-rate data (max 10fps) and manifests
     ps.keyChain_ = settings_.keyChain_;
     ps.memoryCache_ = cache_.get();
     ps.segmentWireLength_ = MAX_NDN_PACKET_SIZE; // it's ok to rely on link-layer fragmenting
                                                  // because data is low-rate
     ps.freshnessPeriodMs_ = settings_.params_.producerParams_.freshness_.metadataMs_;
     ps.statStorage_ = statStorage_.get();
+
+    if (settings_.storagePath_ != "")
+    {
+        storage_ = boost::make_shared<StorageEngine>(settings_.storagePath_);
+        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+    }
 
     metadataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
     metadataPublisher_->setDescription("metadata-publisher-" + settings_.params_.streamName_);
@@ -94,15 +105,14 @@ MediaStreamBase::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 
 void MediaStreamBase::publishMeta()
 {
-    boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(getThreads()));
+    boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(streamTimestamp_, getThreads()));
     // don't need to synchronize unless publishMeta will be called
     // from places others than addThread/removeThread or outer class'
     // constructor LocalVideoStream/LocalAudioStream
 
-    Name metaName(streamPrefix_);
-    // TODO: appendVersion() should probably be gone once SegemntFetcher
-    // is updated to work without version number
-    metaName.append(NameComponents::NameComponentMeta).appendVersion(0);
+    // use name without timestamp here
+    Name metaName(streamPrefix_.getPrefix(-1));
+    metaName.append(NameComponents::NameComponentMeta).appendVersion(metaVersion_++);
 
     boost::shared_ptr<MediaStreamBase> me = 
         boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
@@ -119,4 +129,11 @@ unsigned int MediaStreamBase::periodicInvocation()
     if (updateMeta()) // update thread meta
         return MetaCheckIntervalMs;
     return 0;
+}
+
+void MediaStreamBase::onSegmentsCached(std::vector<boost::shared_ptr<const ndn::Data>> segments)
+{
+    if (storage_)
+        for (auto& d:segments)
+            storage_->put(d);
 }

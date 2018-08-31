@@ -12,6 +12,8 @@
 
 #include "ipc-shim.h"
 
+#define FRAME_HEADER_SIZE 512
+
 int ipc_setupSocket(const char *handle, int isPub, int isBind)
 {
     int socket = nn_socket(AF_SP, (isPub == 1 ? NN_PUB : NN_SUB));
@@ -79,13 +81,21 @@ int ipc_sendData(int socket, void *buffer, size_t bufferLen)
     return ret;
 }
 
-int ipc_sendFrame(int socket, unsigned int frameNo, void *buffer, size_t bufferLen)
+int ipc_sendFrame(int socket,
+                  size_t headerSize, const void *headerBuf,
+                  void *buffer, size_t bufferLen)
 {
+    static unsigned char HeaderBuf[FRAME_HEADER_SIZE];
+    memset(HeaderBuf, 0, FRAME_HEADER_SIZE);
+
+    size_t copyLen = (headerSize < FRAME_HEADER_SIZE ? headerSize : FRAME_HEADER_SIZE);
+    memcpy((void*)HeaderBuf, headerBuf, copyLen);
+
     struct nn_msghdr msgHdr;
     struct nn_iovec iov[2];
 
-    iov[0].iov_base = &frameNo;
-    iov[0].iov_len = sizeof(frameNo);
+    iov[0].iov_base = HeaderBuf;
+    iov[0].iov_len = FRAME_HEADER_SIZE;
     iov[1].iov_base = buffer;
     iov[1].iov_len = bufferLen;
     memset(&msgHdr, 0, sizeof(msgHdr));
@@ -120,13 +130,13 @@ int ipc_readData(int socket, void **buffer)
     return ret;
 }
 
-int ipc_readFrame(int socket, unsigned int *frameNo, void *buffer, size_t bufferLen)
+int ipc_readFrame(int socket, void *headerBuf, void *buffer, size_t bufferLen)
 {
     struct nn_msghdr msgHdr;
     struct nn_iovec iov[2];
 
-    iov[0].iov_base = frameNo;
-    iov[0].iov_len = sizeof(unsigned int);
+    iov[0].iov_base = headerBuf;
+    iov[0].iov_len = FRAME_HEADER_SIZE;
     iov[1].iov_base = buffer;
     iov[1].iov_len = bufferLen;
     memset(&msgHdr, 0, sizeof(msgHdr));

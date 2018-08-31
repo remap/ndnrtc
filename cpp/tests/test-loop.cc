@@ -259,11 +259,11 @@ TEST(TestLoop, TestVideo)
 #ifdef SAVE_VIDEO
       FileSink frameSink("/tmp/frame-sink.argb");
 #endif
-      boost::function<void(int64_t,uint,int,int,const uint8_t*)> 
+      boost::function<void(const FrameInfo&,int,int,const uint8_t*)> 
 #ifdef SAVE_VIDEO
         renderFrame = [&nRendered, &frameSink, frame](int64_t,uint,int,int,const uint8_t* buf){
 #else
-        renderFrame = [&nRendered, frame](int64_t,uint,int,int,const uint8_t* buf){
+        renderFrame = [&nRendered, frame](const FrameInfo&,int,int,const uint8_t* buf){
 #endif
           nRendered++;
           EXPECT_EQ(frame->getBuffer().get(), buf);
@@ -271,7 +271,7 @@ TEST(TestLoop, TestVideo)
           frameSink << *frame;
 #endif
         };
-      EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_,_))
+      EXPECT_CALL(renderer, renderBGRAFrame(_,_,_,_))
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke(renderFrame));
 

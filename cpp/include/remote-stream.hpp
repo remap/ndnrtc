@@ -133,6 +133,7 @@ namespace ndnrtc {
 		std::string getPrefix() const { return streamPrefix_; }
 		std::string getBasePrefix() const { return basePrefix_; }
 		std::string getStreamName() const { return streamName_; }
+		boost::shared_ptr<StorageEngine> getStorage() const;
 
 	protected:
         /**

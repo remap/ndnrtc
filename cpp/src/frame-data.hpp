@@ -514,7 +514,7 @@ using ImmutableHeaderPacket = HeaderPacketT<Header, Immutable>;
  * Common sample header used as a header for audio sample packets and parity
  * data packets.
  */
-typedef struct _CommonHeader
+typedef struct _CommonHeader // goes only into segment #0
 {
     double sampleRate_;           // current packet production rate
     int64_t publishTimestampMs_;  // packet timestamp set by producer
@@ -528,7 +528,7 @@ typedef struct _AudioSampleHeader
 
 typedef HeaderPacket<CommonHeader> CommonSamplePacket;
 
-typedef struct _DataSegmentHeader
+typedef struct _DataSegmentHeader // goes into every segment
 {
     int32_t interestNonce_;
     double interestArrivalMs_;
@@ -538,7 +538,7 @@ typedef struct _DataSegmentHeader
                            interestArrivalMs_(0), generationDelayMs_(0) {}
 } __attribute__((packed)) DataSegmentHeader;
 
-typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader
+typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader // goes into every segment
 {
     int totalSegmentsNum_;
     PacketNumber playbackNo_;
@@ -998,14 +998,16 @@ class VideoThreadMeta : public DataPacket
 class MediaStreamMeta : public DataPacket
 {
   public:
-    MediaStreamMeta();
-    MediaStreamMeta(std::vector<std::string> threads);
+    MediaStreamMeta(uint64_t timestamp);
+    MediaStreamMeta(uint64_t timestamp, std::vector<std::string> threads);
     MediaStreamMeta(NetworkData &&nd) : DataPacket(boost::move(nd)) {}
 
     void addThread(const std::string &threadName);
     void addSyncStream(const std::string &syncStream);
+
     std::vector<std::string> getSyncStreams() const;
     std::vector<std::string> getThreads() const;
+    uint64_t getStreamTimestamp() const;
 };
 
 /**

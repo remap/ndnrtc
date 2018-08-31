@@ -44,6 +44,13 @@ void BufferControl::segmentArrived(const boost::shared_ptr<WireSegment> &segment
         drdEstimator_->newValue(receipt.segment_->getDrdUsec() / 1000,
                                 receipt.segment_->isOriginal(),
                                 receipt.segment_->getDgen());
+        LogTraceC << "segment RTT "
+                  << receipt.segment_->getRoundTripDelayUsec() / 1000
+                  << " orig " << receipt.segment_->isOriginal()
+                  << " dgen " << receipt.segment_->getDgen()
+                  << " drd " << receipt.segment_->getDrdUsec() / 1000
+                  << " " << receipt.segment_-> getInfo().getSuffix(suffix_filter::Thread)
+                  << std::endl;
 
         (*sstorage_)[Indicator::DrdOriginalEstimation] = drdEstimator_->getOriginalEstimation();
         (*sstorage_)[Indicator::DrdCachedEstimation] = drdEstimator_->getCachedEstimation();

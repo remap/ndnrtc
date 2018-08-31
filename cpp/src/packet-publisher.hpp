@@ -50,6 +50,8 @@ template <typename T>
 class NetworkDataT;
 struct _DataSegmentHeader;
 typedef NetworkDataT<Mutable> MutableNetworkData;
+typedef std::vector<boost::shared_ptr<const ndn::Data>> PublishedDataPtrVector;
+typedef boost::function<void(PublishedDataPtrVector)> OnSegmentsCached;
 
 template <typename KeyChain, typename MemoryCache>
 struct _PublisherSettings
@@ -60,13 +62,13 @@ struct _PublisherSettings
     KeyChain *keyChain_;
     MemoryCache *memoryCache_;
     statistics::StatisticsStorage *statStorage_;
+    OnSegmentsCached onSegmentsCached_;
     size_t segmentWireLength_;
     unsigned int freshnessPeriodMs_;
     bool sign_ = true;
 };
 
 typedef _PublisherSettings<ndn::KeyChain, ndn::MemoryContentCache> PublisherSettings;
-typedef std::vector<boost::shared_ptr<const ndn::Data>> PublishedDataPtrVector;
 
 template <typename SegmentType, typename Settings>
 class PacketPublisher : public NdnRtcComponent
@@ -142,6 +144,10 @@ class PacketPublisher : public NdnRtcComponent
             cleanPit(name, forcePitClean);
 
         (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
+        
+        if (settings_.onSegmentsCached_) 
+            settings_.onSegmentsCached_(ndnSegments);
+
         return ndnSegments;
     }
 

@@ -40,7 +40,7 @@ onDecodedImage_(onDecodedImage)
 
 //********************************************************************************
 #pragma mark - public
-void VideoDecoder::processFrame(PacketNumber frameNo, const webrtc::EncodedImage& encodedImage)
+void VideoDecoder::processFrame(const FrameInfo& frameInfo, const webrtc::EncodedImage& encodedImage)
 {
     LogTraceC
         << " type " << (encodedImage._frameType == webrtc::kVideoFrameKey ? "KEY" : "DELTA")
@@ -53,7 +53,7 @@ void VideoDecoder::processFrame(PacketNumber frameNo, const webrtc::EncodedImage
             << std::endl;
     
     frameCount_++;
-    frameNo_ = frameNo;
+    frameInfo_ = frameInfo;
     
     if (decoder_->Decode(encodedImage, true, NULL) != WEBRTC_VIDEO_CODEC_OK)
         LogErrorC << "error decoding " << endl;
@@ -87,6 +87,6 @@ void VideoDecoder::resetDecoder()
 int32_t VideoDecoder::Decoded(WebRtcVideoFrame &decodedImage)
 {
     decodedImage.set_timestamp_us(clock::microsecondTimestamp());
-    onDecodedImage_(frameNo_, decodedImage);
+    onDecodedImage_(frameInfo_, decodedImage);
     return 0;
 }

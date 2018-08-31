@@ -13,6 +13,10 @@
 #include "estimators.hpp"
 #include "name-components.hpp"
 
+namespace ndn {
+    class Interest;
+}
+
 namespace ndnrtc {
     namespace statistics {
         class StatisticsStorage;
@@ -77,8 +81,10 @@ namespace ndnrtc {
 		EstimatorMap estimators_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
-		void segmentRequestTimeout(const NamespaceInfo&){}
-        void segmentNack(const NamespaceInfo&, int){}
+		void segmentRequestTimeout(const NamespaceInfo&, 
+                                   const boost::shared_ptr<const ndn::Interest> &){}
+        void segmentNack(const NamespaceInfo&, int, 
+                         const boost::shared_ptr<const ndn::Interest> &){}
 		void segmentStarvation(){}
 	};
 }

@@ -24,9 +24,9 @@ class KeyChain;
 class Client
 {
   public:
-    Client(boost::asio::io_service &io,
+    Client(boost::asio::io_service &io, boost::asio::io_service& rendererIo,
            const boost::shared_ptr<ndn::Face> &face,
-           const boost::shared_ptr<ndn::KeyChain> &keyChain) : io_(io),
+           const boost::shared_ptr<ndn::KeyChain> &keyChain) : io_(io), rendererIo_(rendererIo),
                                                                face_(face), keyChain_(keyChain) {}
     ~Client() {}
 
@@ -35,7 +35,7 @@ class Client
              const ClientParams &params, const std::string &instanceName);
 
   private:
-    boost::asio::io_service &io_;
+    boost::asio::io_service &io_, &rendererIo_;
     unsigned int runTimeSec_, statSampleIntervalMs_;
     ClientParams params_;
 

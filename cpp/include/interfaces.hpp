@@ -20,6 +20,12 @@ namespace ndnrtc
        class StatisticsStorage;
     }
     
+    typedef struct _FrameInfo {
+        uint64_t timestamp_;
+        int playbackNo_;
+        std::string ndnName_;
+    } FrameInfo;
+
     /**
      * This interface defines external renderers.
      * Each time, the frame is ready to be rendered, library calls
@@ -51,7 +57,7 @@ namespace ndnrtc
          * returned from getFrameBuffer call)
          * @see getFrameBuffer
          */
-        virtual void renderBGRAFrame(int64_t timestamp, uint frameNo, int width, int height,
+        virtual void renderBGRAFrame(const FrameInfo& frameInfo, int width, int height,
                                      const uint8_t* buffer) = 0;
     };
 
@@ -92,6 +98,13 @@ namespace ndnrtc
                                       const unsigned char* yBuffer,
                                       const unsigned char* uBuffer,
                                       const unsigned char* vBuffer) = 0;
+
+        virtual int incomingNV21Frame(const unsigned int width,
+                                      const unsigned int height,
+                                      const unsigned int strideY,
+                                      const unsigned int strideUV,
+                                      const unsigned char* yBuffer,
+                                      const unsigned char* uvBuffer) = 0;
     };
 }
 
