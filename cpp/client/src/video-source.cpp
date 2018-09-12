@@ -13,21 +13,12 @@ using namespace boost::chrono;
 using namespace boost::asio;
 
 VideoSource::VideoSource(io_service &io_service,
-                         const std::string &sourcePath,
-                         const boost::shared_ptr<RawFrame> &frame) : io_(io_service), frame_(frame), isRunning_(false), framesSourced_(0),
+                         const boost::shared_ptr<IFrameSource>& source,
+                         const boost::shared_ptr<RawFrame> &frame) : io_(io_service), frame_(frame), source_(source), 
+                                                                     isRunning_(false), framesSourced_(0),
                                                                      nRewinds_(0)
 {
     assert(frame.get());
-
-    if (!FileFrameSource::checkSourceForFrame(sourcePath, *frame_))
-    {
-        stringstream msg;
-        msg << "bad source (" << sourcePath << ") for "
-            << frame_->getWidth() << "x" << frame_->getHeight() << " video";
-        throw runtime_error(msg.str());
-    }
-
-    source_.reset(new FileFrameSource(sourcePath));
 }
 
 VideoSource::~VideoSource()
@@ -56,7 +47,7 @@ void VideoSource::start(const double &rate)
 
         isRunning_ = generator_->isRunning();
 
-        LogInfo("") << "sourcing video from " << source_->getPath()
+        LogInfo("") << "sourcing video from " << source_->getName()
                     << " started (capturing rate " << rate << ")" << endl;
     }
     else
@@ -70,7 +61,7 @@ void VideoSource::stop()
         generator_->stop();
         isRunning_ = false;
 
-        LogInfo("") << "sourcing video from " << source_->getPath()
+        LogInfo("") << "sourcing video from " << source_->getName()
                     << " stopped" << endl;
     }
 }
@@ -86,13 +77,13 @@ double VideoSource::getMeanSourcingTimeMs()
 void VideoSource::sourceFrame()
 {
     // LogTrace("") << "reading " << frame_->getWidth() << "x" << frame_->getHeight()
-    // << "frame from " << source_->getPath() << endl;
+    // << "frame from " << source_->getName() << endl;
 
     do
     {
         if (source_->isEof())
         {
-            LogDebug("") << "rewound source " << source_->getPath() << endl;
+            LogDebug("") << "rewound source " << source_->getName() << endl;
             source_->rewind();
             nRewinds_++;
         }

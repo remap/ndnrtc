@@ -24,7 +24,8 @@ class VideoSource
      * @param rate Framerate (per second) for delivering frames (reading 
      * frames from a source file)
      */
-    VideoSource(boost::asio::io_service &io_service, const std::string &sourcePath,
+    VideoSource(boost::asio::io_service &io_service, 
+                const boost::shared_ptr<IFrameSource>& source,
                 const boost::shared_ptr<RawFrame> &frame);
     ~VideoSource();
 
@@ -46,7 +47,7 @@ class VideoSource
   private:
     bool isRunning_;
     unsigned int framesSourced_, nRewinds_;
-    boost::shared_ptr<FileFrameSource> source_;
+    boost::shared_ptr<IFrameSource> source_;
     boost::shared_ptr<RawFrame> frame_;
     std::vector<ndnrtc::IExternalCapturer *> capturers_;
     boost::asio::io_service &io_;

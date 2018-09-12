@@ -376,7 +376,15 @@ int loadStreamParams(const Setting &s, ProducerStreamParams &params)
     // ClientMediaStreamParams msp;
     if (EXIT_SUCCESS == loadStreamParams(s, (ClientMediaStreamParams &)params))
     {
-        s.lookupValue("source", params.source_);
+        // user may specify file source by simply providing "source = <filename>;"
+        // otherwise, treat source as a structure { <filename>, <type> }
+        if (!s.lookupValue("source", params.source_.name_))
+        {
+            const Setting &sourceSettings = s["source"];
+
+            sourceSettings.lookupValue("name", params.source_.name_);
+            sourceSettings.lookupValue("type", params.source_.type_);
+        }
 
         if (params.type_ == MediaStreamParams::MediaStreamTypeAudio)
         {
