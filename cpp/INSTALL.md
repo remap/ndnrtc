@@ -64,13 +64,13 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool openssl libconfig
+brew install boost cmake wget openssl libconfig
 ```
 
 -- or (for Ubuntu) --
 
 ```Shell
-sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler libconfig++-dev libconfig++9v5
+sudo apt-get install libboost-all-dev cmake wget git protobuf-compiler libconfig++-dev libconfig++9v5
 ```
 
 ## Compiled prerequisites
