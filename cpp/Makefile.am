@@ -15,6 +15,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
   src/c-wrapper.cpp include/c-wrapper.h \
+  src/consumer-storage.hpp src/consumer-storage.cpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
