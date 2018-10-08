@@ -34,13 +34,20 @@ namespace ndnrtc {
 		typedef boost::function<void(const std::string&)>
 			OnError;
 
-		MetaFetcher(){ description_ = "meta-fetcher"; }
+		MetaFetcher(const boost::shared_ptr<ndn::Face>& face, const boost::shared_ptr<ndn::KeyChain>& keyChain):
+            face_(face), keyChain_(keyChain){ description_ = "meta-fetcher"; }
+        MetaFetcher(){ description_ = "meta-fetcher"; }
+
 		void fetch(boost::shared_ptr<ndn::Face>, boost::shared_ptr<ndn::KeyChain>, 
 			const ndn::Name&, const OnMeta&, const OnError&);
+        void fetch(const ndn::Name&, const OnMeta&, const OnError&);
+
 		bool hasPendingRequest() const { return isPending_; }
 
 	private:
 		bool isPending_;
+        boost::shared_ptr<ndn::Face> face_;
+        boost::shared_ptr<ndn::KeyChain> keyChain_;
 	};
 }
 

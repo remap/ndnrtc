@@ -37,3 +37,11 @@ void MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::K
                               onError(msg);
                           });
 }
+
+void MetaFetcher::fetch(const ndn::Name &prefix, const OnMeta &onMeta, const OnError &onError)
+{
+    if (!face_ || !keyChain_)
+        throw std::runtime_error("MetaFetcher: Face and KeyChain must be provided at initialization time");
+
+    fetch(face_, keyChain_, prefix, onMeta, onError);
+}
