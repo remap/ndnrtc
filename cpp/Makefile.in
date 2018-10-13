@@ -16,6 +16,7 @@
 
 
 
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -157,6 +158,7 @@ host_triplet = @host@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
+@HAVE_PERSISTENT_STORAGE_TRUE@bin_PROGRAMS = stream-recorder$(EXEEXT)
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_NANOMSG_TRUE@am__append_9 = client/src/ipc-shim.c client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__append_10 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
@@ -302,7 +304,10 @@ CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-consumer.cfg \
 	tests/sample-producer.cfg tests/sample-bad1.cfg \
 	tests/consumer-audio.cfg tests/consumer-video.cfg
 @HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
+	"$(DESTDIR)$(pkgincludedir)"
 @HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = bin/tests/test-persistent-storage$(EXEEXT)
+PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -330,7 +335,6 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 @HAVE_PERSISTENT_STORAGE_TRUE@am__DEPENDENCIES_2 =  \
@@ -362,6 +366,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-media-stream-base.lo \
 	src/libndnrtc_la-meta-fetcher.lo \
 	src/libndnrtc_la-name-components.lo \
+	src/libndnrtc_la-network-data.lo \
 	src/libndnrtc_la-ndnrtc-object.lo \
 	src/libndnrtc_la-packet-publisher.lo \
 	src/libndnrtc_la-periodic.lo \
@@ -1824,6 +1829,25 @@ ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
 	-o $@
+am__stream_recorder_SOURCES_DIST = tools/stream-recorder/main.cpp \
+	tools/stream-recorder/stream-recorder.hpp \
+	tools/stream-recorder/stream-recorder.cpp \
+	contrib/docopt/docopt.cpp
+@HAVE_PERSISTENT_STORAGE_TRUE@am_stream_recorder_OBJECTS = tools/stream-recorder/stream_recorder-main.$(OBJEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	tools/stream-recorder/stream_recorder-stream-recorder.$(OBJEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	contrib/docopt/stream_recorder-docopt.$(OBJEXT)
+stream_recorder_OBJECTS = $(am_stream_recorder_OBJECTS)
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_DEPENDENCIES =  \
+@HAVE_PERSISTENT_STORAGE_TRUE@	libndnrtc.la \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1)
+stream_recorder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(stream_recorder_CXXFLAGS) $(CXXFLAGS) \
+	$(stream_recorder_LDFLAGS) $(LDFLAGS) -o $@
 SCRIPTS = $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -1925,6 +1949,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/ndnrtc_client-renderer.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-video-source.Po \
+	contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po \
@@ -2401,6 +2426,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo \
 	src/$(DEPDIR)/libndnrtc_la-name-components.Plo \
 	src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo \
+	src/$(DEPDIR)/libndnrtc_la-network-data.Plo \
 	src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo \
 	src/$(DEPDIR)/libndnrtc_la-periodic.Plo \
 	src/$(DEPDIR)/libndnrtc_la-pipeline-control-state-machine.Plo \
@@ -2505,7 +2531,9 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po \
-	tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po \
+	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
+	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -2584,7 +2612,8 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
 	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
-	$(nanopipe_adaptor_SOURCES) $(ndnrtc_client_SOURCES)
+	$(nanopipe_adaptor_SOURCES) $(ndnrtc_client_SOURCES) \
+	$(stream_recorder_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -2628,7 +2657,8 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
 	$(am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST) \
 	$(am__nanopipe_adaptor_SOURCES_DIST) \
-	$(am__ndnrtc_client_SOURCES_DIST)
+	$(am__ndnrtc_client_SOURCES_DIST) \
+	$(am__stream_recorder_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -3051,6 +3081,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
   src/meta-fetcher.cpp src/meta-fetcher.hpp \
   src/name-components.cpp include/name-components.hpp \
+  src/network-data.cpp src/network-data.hpp \
   src/ndnrtc-debug.hpp \
   src/ndnrtc-endian.hpp \
   src/ndnrtc-object.cpp src/ndnrtc-object.hpp \
@@ -3103,6 +3134,13 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
 	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
 	$(am__append_3) $(am__append_5) $(am__append_8)
 @OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
+@HAVE_PERSISTENT_STORAGE_TRUE@    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+@HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
+
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/renderer.cpp client/src/config.cpp \
 	client/src/config.hpp client/src/stat-collector.cpp \
@@ -3381,6 +3419,55 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p \
+	 || test -f $$p1 \
+	  ; then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' \
+	    -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' \
+	`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
 
 clean-checkPROGRAMS:
 	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -3488,6 +3575,8 @@ src/libndnrtc_la-media-stream-base.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-meta-fetcher.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-name-components.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-network-data.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-ndnrtc-object.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -5150,11 +5239,37 @@ client/src/ndnrtc_client-ipc-shim.$(OBJEXT):  \
 ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) $(EXTRA_ndnrtc_client_DEPENDENCIES) 
 	@rm -f ndnrtc-client$(EXEEXT)
 	$(AM_V_CXXLD)$(ndnrtc_client_LINK) $(ndnrtc_client_OBJECTS) $(ndnrtc_client_LDADD) $(LIBS)
+tools/stream-recorder/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream-recorder
+	@: > tools/stream-recorder/$(am__dirstamp)
+tools/stream-recorder/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream-recorder/$(DEPDIR)
+	@: > tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
+tools/stream-recorder/stream_recorder-main.$(OBJEXT):  \
+	tools/stream-recorder/$(am__dirstamp) \
+	tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
+tools/stream-recorder/stream_recorder-stream-recorder.$(OBJEXT):  \
+	tools/stream-recorder/$(am__dirstamp) \
+	tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt
+	@: > contrib/docopt/$(am__dirstamp)
+contrib/docopt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
+	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/stream_recorder-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+
+stream-recorder$(EXEEXT): $(stream_recorder_OBJECTS) $(stream_recorder_DEPENDENCIES) $(EXTRA_stream_recorder_DEPENDENCIES) 
+	@rm -f stream-recorder$(EXEEXT)
+	$(AM_V_CXXLD)$(stream_recorder_LINK) $(stream_recorder_OBJECTS) $(stream_recorder_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f client/nanopipe-adaptor/*.$(OBJEXT)
 	-rm -f client/src/*.$(OBJEXT)
+	-rm -f contrib/docopt/*.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/*.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/*.$(OBJEXT)
 	-rm -f src/*.$(OBJEXT)
@@ -5162,6 +5277,7 @@ mostlyclean-compile:
 	-rm -f src/persistent-storage/*.$(OBJEXT)
 	-rm -f src/persistent-storage/*.lo
 	-rm -f tests/*.$(OBJEXT)
+	-rm -f tools/stream-recorder/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -5251,6 +5367,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po@am__quote@ # am--include-marker
@@ -5727,6 +5844,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-network-data.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-periodic.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-pipeline-control-state-machine.Plo@am__quote@ # am--include-marker
@@ -5832,6 +5950,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -6691,6 +6811,13 @@ src/libndnrtc_la-name-components.lo: src/name-components.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/libndnrtc_la-name-components.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-name-components.lo `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
+
+src/libndnrtc_la-network-data.lo: src/network-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-network-data.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-network-data.Tpo -c -o src/libndnrtc_la-network-data.lo `test -f 'src/network-data.cpp' || echo '$(srcdir)/'`src/network-data.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-network-data.Tpo src/$(DEPDIR)/libndnrtc_la-network-data.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/network-data.cpp' object='src/libndnrtc_la-network-data.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-network-data.lo `test -f 'src/network-data.cpp' || echo '$(srcdir)/'`src/network-data.cpp
 
 src/libndnrtc_la-ndnrtc-object.lo: src/ndnrtc-object.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-ndnrtc-object.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Tpo -c -o src/libndnrtc_la-ndnrtc-object.lo `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
@@ -14777,6 +14904,48 @@ client/src/ndnrtc_client-key-chain-manager.obj: client/src/key-chain-manager.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-key-chain-manager.obj `if test -f 'client/src/key-chain-manager.cpp'; then $(CYGPATH_W) 'client/src/key-chain-manager.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/key-chain-manager.cpp'; fi`
 
+tools/stream-recorder/stream_recorder-main.o: tools/stream-recorder/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-main.o -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo -c -o tools/stream-recorder/stream_recorder-main.o `test -f 'tools/stream-recorder/main.cpp' || echo '$(srcdir)/'`tools/stream-recorder/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/main.cpp' object='tools/stream-recorder/stream_recorder-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-main.o `test -f 'tools/stream-recorder/main.cpp' || echo '$(srcdir)/'`tools/stream-recorder/main.cpp
+
+tools/stream-recorder/stream_recorder-main.obj: tools/stream-recorder/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-main.obj -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo -c -o tools/stream-recorder/stream_recorder-main.obj `if test -f 'tools/stream-recorder/main.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/main.cpp' object='tools/stream-recorder/stream_recorder-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-main.obj `if test -f 'tools/stream-recorder/main.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/main.cpp'; fi`
+
+tools/stream-recorder/stream_recorder-stream-recorder.o: tools/stream-recorder/stream-recorder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-stream-recorder.o -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo -c -o tools/stream-recorder/stream_recorder-stream-recorder.o `test -f 'tools/stream-recorder/stream-recorder.cpp' || echo '$(srcdir)/'`tools/stream-recorder/stream-recorder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/stream-recorder.cpp' object='tools/stream-recorder/stream_recorder-stream-recorder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-stream-recorder.o `test -f 'tools/stream-recorder/stream-recorder.cpp' || echo '$(srcdir)/'`tools/stream-recorder/stream-recorder.cpp
+
+tools/stream-recorder/stream_recorder-stream-recorder.obj: tools/stream-recorder/stream-recorder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-stream-recorder.obj -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo -c -o tools/stream-recorder/stream_recorder-stream-recorder.obj `if test -f 'tools/stream-recorder/stream-recorder.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/stream-recorder.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/stream-recorder.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/stream-recorder.cpp' object='tools/stream-recorder/stream_recorder-stream-recorder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-stream-recorder.obj `if test -f 'tools/stream-recorder/stream-recorder.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/stream-recorder.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/stream-recorder.cpp'; fi`
+
+contrib/docopt/stream_recorder-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream_recorder-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo -c -o contrib/docopt/stream_recorder-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream_recorder-docopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream_recorder-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+
+contrib/docopt/stream_recorder-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream_recorder-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo -c -o contrib/docopt/stream_recorder-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream_recorder-docopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream_recorder-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
@@ -15506,9 +15675,11 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
+all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
+install-binPROGRAMS: install-libLTLIBRARIES
+
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -15545,6 +15716,8 @@ distclean-generic:
 	-rm -f client/nanopipe-adaptor/$(am__dirstamp)
 	-rm -f client/src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f client/src/$(am__dirstamp)
+	-rm -f contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+	-rm -f contrib/docopt/$(am__dirstamp)
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f contrib/gtest/googlemock/src/$(am__dirstamp)
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
@@ -15555,14 +15728,16 @@ distclean-generic:
 	-rm -f src/persistent-storage/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
+	-rm -f tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/stream-recorder/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-libLTLIBRARIES clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -15651,6 +15826,7 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po
@@ -16127,6 +16303,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-name-components.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-network-data.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-periodic.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-pipeline-control-state-machine.Plo
@@ -16232,6 +16409,8 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
+	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -16254,7 +16433,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -16364,6 +16543,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po
@@ -16840,6 +17020,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-name-components.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-ndnrtc-object.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-network-data.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-packet-publisher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-periodic.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-pipeline-control-state-machine.Plo
@@ -16945,6 +17126,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
+	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -16961,19 +17144,21 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
+uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
+	uninstall-pkgincludeHEADERS
 
 .MAKE: check-am install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
-	check-TESTS check-am clean clean-checkPROGRAMS clean-cscope \
-	clean-generic clean-libLTLIBRARIES clean-libtool cscope \
-	cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
-	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
+	check-TESTS check-am clean clean-binPROGRAMS \
+	clean-checkPROGRAMS clean-cscope clean-generic \
+	clean-libLTLIBRARIES clean-libtool cscope cscopelist-am ctags \
+	ctags-am dist dist-all dist-bzip2 dist-gzip dist-lzip \
+	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am \
 	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
@@ -16982,7 +17167,7 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am recheck tags tags-am uninstall \
-	uninstall-am uninstall-libLTLIBRARIES \
+	uninstall-am uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
 	uninstall-pkgincludeHEADERS
 
 .PRECIOUS: Makefile

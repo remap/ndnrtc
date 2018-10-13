@@ -10,6 +10,7 @@
 #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
 #include "interfaces.hpp"
+#include "frame-data.hpp"
 #include "video-playout.hpp"
 #include "pipeline-control.hpp"
 #include "pipeliner.hpp"

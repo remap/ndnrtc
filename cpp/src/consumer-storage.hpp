@@ -10,13 +10,27 @@
 
 #include <frame-buffer.hpp>
 
+namespace ndn {
+    class Face;
+    class KeyChain;
+}
+
 namespace ndnrtc {
+
+class StorageEngine;
+class RemoteStream;
+class 
 
 /** 
  * This class provides storage support for consumers.
  * It stores every received packet into a persistent storage.
  */
 class ConsumerStorage : public NdnRtcComponent, public IBufferObserver {
+    public: 
+    ConsumerStorage(const boost::shared_ptr<StorageEngine>&, const std::string& streamPrefix,
+        const boost::shared_ptr<ndn::Face>& face, 
+        const boost::shared_ptr<ndn::KeyChain> keyChain = boost::make_shared<ndn::KeyChain>(nullptr)){}
+    
     private:
     // IBufferObserver interface
     virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&) {}

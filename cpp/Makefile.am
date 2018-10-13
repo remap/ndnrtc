@@ -32,6 +32,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
   src/meta-fetcher.cpp src/meta-fetcher.hpp \
   src/name-components.cpp include/name-components.hpp \
+  src/network-data.cpp src/network-data.hpp \
   src/ndnrtc-debug.hpp \
   src/ndnrtc-endian.hpp \
   src/ndnrtc-object.cpp src/ndnrtc-object.hpp \
@@ -114,6 +115,15 @@ if HAVE_PERSISTENT_STORAGE
 libndnrtc_la_CPPFLAGS += -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 libndnrtc_la_LDFLAGS += -L@PSTORAGELIB@
 libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
+
+bin_PROGRAMS = stream-recorder
+
+stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
+    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+    contrib/docopt/docopt.cpp
+stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 endif
 

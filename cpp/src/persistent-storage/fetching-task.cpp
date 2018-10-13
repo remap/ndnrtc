@@ -219,3 +219,12 @@ FetchMethodLocal::express(const boost::shared_ptr<const ndn::Interest>& interest
     else
         onNack(interest, make_shared<NetworkNack>());
 }
+
+void 
+FetchMethodRemote::express(const boost::shared_ptr<const ndn::Interest>& interest,
+                     ndn::OnData onData,
+                     ndn::OnTimeout onTimeout,
+                     ndn::OnNetworkNack onNack)
+{
+    face_->expressInterest(*interest, onData, onTimeout, onNack);
+}

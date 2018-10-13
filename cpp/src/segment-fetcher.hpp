@@ -93,7 +93,8 @@ namespace ndnrtc {
 	  	VerifySegment;
 	
 	  typedef boost::function<void(const ndn::Blob& content, 
-	  	const std::vector<ValidationErrorInfo>& info)> OnComplete;
+	  	const std::vector<ValidationErrorInfo>& info,
+        const std::vector<boost::shared_ptr<ndn::Data>>& dataObjects)> OnComplete;
 	
 	  typedef boost::function<void
 	    (ErrorCode errorCode, const std::string& message)> OnError;
@@ -219,6 +220,7 @@ namespace ndnrtc {
 	  endsWithSegmentNumber(const ndn::Name& name);
 
 	  std::vector<ndn::Blob> contentParts_;
+      std::vector<boost::shared_ptr<ndn::Data>> contentData_;
 	  ndn::Face& face_;
 	  ndn::KeyChain* validatorKeyChain_;
 	  VerifySegment verifySegment_;

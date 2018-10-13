@@ -49,7 +49,7 @@ namespace ndnrtc {
     /**
      * Fetches frames from provided persistent storage by names. Once frame is 
      * fetched, returns ARGB buffer for this frame through provided callbacks.
-     * Frame fetching involved expressing interests for all segments of a frame 
+     * Frame fetching involves expressing interests for all segments of a frame 
      * and segments of all preceding frames in the frame's GOP.
      * Frame fetcher will figure out number of segments for requested frame once 
      * it has fetched first segment.
@@ -72,7 +72,11 @@ namespace ndnrtc {
             Completed
         };
 
+        /**
+         * Fetches frames from local persistent storage.
+         */
         FrameFetcher(const boost::shared_ptr<StorageEngine>& storage);
+
         // FrameFetcher(const boost::shared_ptr<LocalVideoStream>& localStream);
         // FrameFetcher(std::string streamPrefix);
         ~FrameFetcher(){}

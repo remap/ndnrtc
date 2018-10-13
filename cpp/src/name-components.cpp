@@ -64,12 +64,12 @@ NamespaceInfo::getPrefix(int filter) const
             {
                 prefix.appendVersion(metaVersion_).appendSegment(segNo_);
             }
-        }   
+        }
         else
         {
             if (filter&(Thread^ThreadNT) && threadName_ != "" &&
                 streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
-                    prefix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+                    prefix.append((class_ == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
             if (filter&(Sample^Thread))
                 prefix.appendSequenceNumber(sampleNo_);
 
@@ -115,7 +115,7 @@ NamespaceInfo::getSuffix(int filter) const
         if (filter&(Thread^Sample) && threadName_ != "" &&
             streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo &&
             !isMeta_)
-            suffix.append((isDelta_ ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
+            suffix.append((class_ == SampleClass::Delta ? NameComponents::NameComponentDelta : NameComponents::NameComponentKey));
         if (filter&(Sample^Segment))
         {
             if (isMeta_)
@@ -205,6 +205,12 @@ bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
 
 bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 {
+    if (name.size() == 1)
+    {
+        info.streamName_ = name[0].toEscapedString();
+        return true;
+    }
+
     if (name.size() < 3)
         return false;
 
@@ -227,7 +233,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         info.threadName_ = name[idx++].toEscapedString();
         
         if (name.size() <= idx)
-            return false;
+            return true;
 
         info.isMeta_ = (name[idx++] == Name::Component(NameComponents::NameComponentMeta));
 
@@ -302,6 +308,12 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
 bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 {
+    if (name.size() == 1)
+    {
+        info.streamName_ = name[0].toEscapedString();
+        return true;
+    }
+
     if (name.size() < 2)
         return false;
 

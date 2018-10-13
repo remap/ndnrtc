@@ -7,6 +7,7 @@
 
 #include "remote-audio-stream.hpp"
 #include "audio-playout.hpp"
+#include "frame-data.hpp"
 #include "pipeline-control.hpp"
 #include "pipeliner.hpp"
 #include "latency-control.hpp"
