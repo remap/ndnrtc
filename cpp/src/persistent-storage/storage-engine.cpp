@@ -48,6 +48,7 @@ class StorageEngineImpl {
 
         ~StorageEngineImpl()
         {
+            close();
         }
 
         bool open()

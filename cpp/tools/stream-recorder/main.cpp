@@ -145,14 +145,17 @@ int main(int argc, char **argv)
             {
                 stats = recorder.getCurrentStats();
                 cout << "\r"
-                     << "[ frames stored: " << stats.deltaStored_+stats.keyStored_
+                     << "[ frames: " << stats.deltaStored_+stats.keyStored_
                      << " (key " << stats.keyStored_ << " / delta " << stats.deltaStored_ << ")"
                      << " failed " << stats.keyFailed_+stats.deltaFailed_ 
                      << " (key " << stats.keyFailed_ << " / delta " << stats.deltaFailed_ << ")"
                      << " manifests: " << stats.manifestsStored_
                      << " stream meta: " << stats.streamMetaStored_
                      << " thread meta: " << stats.threadMetaStored_
-                     << " total segments stored: " << stats.totalSegmentsStored_
+                     << " total seg: " << stats.totalSegmentsStored_
+                     << " latest key #: " << stats.latestKeyFetched_
+                     << " delta #: " << stats.latestDeltaFetched_
+                     << " pending: " << stats.pendingFrames_
                      << " ]" << flush;
             }
             usleep(30000);

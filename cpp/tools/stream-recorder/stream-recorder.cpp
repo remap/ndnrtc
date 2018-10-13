@@ -113,7 +113,7 @@ StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
     settings_ = settings;
     pipelineReserve_ = settings_.pipelineSize_;
     fetchTaskSettings_ = {3, settings_.lifetime_};
-    stats_ = {0, 0, 0, 0, 0, 0, 0};
+    memset((void*)&stats_, 0, sizeof(StreamRecorder::Stats));
 
     LogInfoC << "recording direction: " 
         << ((settings_.direction_ & StreamRecorder::FetchDirection::Forward) && (settings_.direction_ & StreamRecorder::FetchDirection::Backward) ? "both" : 
@@ -207,7 +207,6 @@ StreamRecorderImpl::initiateStreamFetching(const Blob &metaBlob)
     isFetchingStream_ = true;
     fetchIndex_.first = settings_.seedFrame_;
     fetchIndex_.second = 0;
-    // pool_ = boost::make_shared<SlotPool>(settings_.pipelineSize_);
 
     if (fetchIndex_.first == 0)
     {
@@ -261,7 +260,7 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
             [this, me, frameInfo](const boost::shared_ptr<const FetchingTask>& t, 
              const boost::shared_ptr<const BufferSlot>& slot)
             { // onComplete
-                fetchingTasks_.erase(t->getFrameName());
+                fetchingTasks_.erase(frameInfo.getSuffix(suffix_filter::Thread));
                 pipelineReserve_++;
 
                 for (auto s:slot->getFetchedSegments())
@@ -290,7 +289,7 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
                 LogErrorC << "couldn't fetch frame " << t->getFrameName() 
                             << ": " << msg << endl;
 
-                fetchingTasks_.erase(t->getFrameName());
+                fetchingTasks_.erase(frameInfo.getSuffix(suffix_filter::Thread));
                 pipelineReserve_++;
 
                 if (frameInfo.class_ == SampleClass::Delta)
@@ -312,6 +311,7 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
     task->setLogger(logger_);
     task->start();
     pipelineReserve_--;
+    stats_.pendingFrames_ = fetchingTasks_.size();
 
     // fetch manifest, too
     Interest i(fName.append(NameComponents::NameComponentManifest), settings_.lifetime_);

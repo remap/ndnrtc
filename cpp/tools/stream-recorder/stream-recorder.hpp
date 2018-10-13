@@ -66,6 +66,7 @@ namespace ndnrtc {
             uint32_t latestKeyRequested_, latestDeltaRequested_;
             uint64_t totalSegmentsStored_;
             size_t deltaFailed_, keyFailed_;
+            size_t pendingFrames_;
         } Stats;
 
         static const FetchSettings Default;
