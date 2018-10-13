@@ -33,7 +33,7 @@ static const char USAGE[] =
 R"(Stream Recorder.
 
     Usage:
-      stream-recorder <thread_prefix> [--db-path=<db_path> --direction=<dir> | --seed=<seed_frame> | --noverify | --limit=<n_frames> | --verbose]
+      stream-recorder <thread_prefix> [--db-path=<db_path> --direction=<dir> | --seed=<seed_frame> | --noverify | --limit=<n_frames> | --pipeline=<p_size> | --lifetime=<ms> | --verbose]
 
     Arguments:
       <thread_prefix>      ndnrtc (API v3) stream prefix WITH thread name. For example:
@@ -46,6 +46,8 @@ R"(Stream Recorder.
       --seed=<seed_frame>  Seed frame to start fetching from. If omitted or zero - starts from the most recent [default: 0]
       --noverify           Specifies, whether verification is not needed
       --limit=<n_frames>   Fetches only n_frames and quits. If omitted or zero - fetches all until stopped [default: 0]
+      --lifetime=<ms>      Interests lifetime in milliseconds [default: 3000]
+      --pipeline=<p_size>  Specify pipeline size *in frames* [default: 5]
       -v --verbose         Verbose output
 )";
 
@@ -135,7 +137,19 @@ int main(int argc, char **argv)
         LogInfo("") << "Will fetch stream " << prefixInfo.getPrefix(prefix_filter::Stream) 
             << " (thread " << prefixInfo.threadName_ << ")" << endl;
 
-        recorder.start();
+        StreamRecorder::FetchSettings settings = StreamRecorder::Default;
+        settings.pipelineSize_ = args["--pipeline"].asLong();
+        settings.lifetime_ = args["--lifetime"].asLong();
+        settings.recordLength_ = args["--limit"].asLong();
+        settings.seedFrame_ = args["--seed"].asLong();
+        if (args["--direction"].asString() == "forward")
+            settings.direction_ = StreamRecorder::FetchDirection::Forward;
+        if (args["--direction"].asString() == "backward")
+            settings.direction_ = StreamRecorder::FetchDirection::Backward;
+        if (args["--direction"].asString() == "both")
+            settings.direction_ = StreamRecorder::FetchDirection::Forward | StreamRecorder::FetchDirection::Backward;
+        
+        recorder.start(settings);
 
         StreamRecorder::Stats stats;
 
@@ -145,17 +159,17 @@ int main(int argc, char **argv)
             {
                 stats = recorder.getCurrentStats();
                 cout << "\r"
-                     << "[ frames: " << stats.deltaStored_+stats.keyStored_
+                     << "[ " << stats.deltaStored_+stats.keyStored_
                      << " (key " << stats.keyStored_ << " / delta " << stats.deltaStored_ << ")"
-                     << " failed " << stats.keyFailed_+stats.deltaFailed_ 
+                     << " err " << stats.keyFailed_+stats.deltaFailed_ 
                      << " (key " << stats.keyFailed_ << " / delta " << stats.deltaFailed_ << ")"
-                     << " manifests: " << stats.manifestsStored_
-                     << " stream meta: " << stats.streamMetaStored_
-                     << " thread meta: " << stats.threadMetaStored_
-                     << " total seg: " << stats.totalSegmentsStored_
-                     << " latest key #: " << stats.latestKeyFetched_
+                     << " mnfst: " << stats.manifestsStored_
+                     << " smeta: " << stats.streamMetaStored_
+                     << " tmeta: " << stats.threadMetaStored_
+                     << " seg: " << stats.totalSegmentsStored_
+                     << " key #: " << stats.latestKeyFetched_
                      << " delta #: " << stats.latestDeltaFetched_
-                     << " pending: " << stats.pendingFrames_
+                     << " pp: " << stats.pendingFrames_
                      << " ]" << flush;
             }
             usleep(30000);
