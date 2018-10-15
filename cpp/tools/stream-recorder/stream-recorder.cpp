@@ -265,7 +265,7 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
 
                 for (auto s:slot->getFetchedSegments())
                     store(s->getData()->getData());
-                
+
                 if (frameInfo.class_ == SampleClass::Delta)
                 {
                     stats_.latestDeltaFetched_ = frameInfo.sampleNo_;
