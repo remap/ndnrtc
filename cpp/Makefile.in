@@ -158,7 +158,8 @@ host_triplet = @host@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
-@HAVE_PERSISTENT_STORAGE_TRUE@bin_PROGRAMS = stream-recorder$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@bin_PROGRAMS = stream-recorder$(EXEEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_NANOMSG_TRUE@am__append_9 = client/src/ipc-shim.c client/src/ipc-shim.h
 @HAVE_NANOMSG_TRUE@am__append_10 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
@@ -1829,6 +1830,22 @@ ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
 	-o $@
+am__networked_storage_SOURCES_DIST = tools/networked-storage/main.cpp \
+	contrib/docopt/docopt.cpp
+@HAVE_PERSISTENT_STORAGE_TRUE@am_networked_storage_OBJECTS = tools/networked-storage/networked_storage-main.$(OBJEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	contrib/docopt/networked_storage-docopt.$(OBJEXT)
+networked_storage_OBJECTS = $(am_networked_storage_OBJECTS)
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_DEPENDENCIES =  \
+@HAVE_PERSISTENT_STORAGE_TRUE@	libndnrtc.la \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1)
+networked_storage_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(networked_storage_CXXFLAGS) $(CXXFLAGS) \
+	$(networked_storage_LDFLAGS) $(LDFLAGS) -o $@
 am__stream_recorder_SOURCES_DIST = tools/stream-recorder/main.cpp \
 	tools/stream-recorder/stream-recorder.hpp \
 	tools/stream-recorder/stream-recorder.cpp \
@@ -1949,6 +1966,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/ndnrtc_client-renderer.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-video-source.Po \
+	contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po \
 	contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po \
@@ -2532,6 +2550,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po \
 	tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po \
+	tools/networked-storage/$(DEPDIR)/networked_storage-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 am__mv = mv -f
@@ -2613,7 +2632,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
 	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
 	$(nanopipe_adaptor_SOURCES) $(ndnrtc_client_SOURCES) \
-	$(stream_recorder_SOURCES)
+	$(networked_storage_SOURCES) $(stream_recorder_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -2658,6 +2677,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST) \
 	$(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST) \
+	$(am__networked_storage_SOURCES_DIST) \
 	$(am__stream_recorder_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -3141,6 +3161,12 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_SOURCES = tools/networked-storage/main.cpp \
+@HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
+
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/renderer.cpp client/src/config.cpp \
 	client/src/config.hpp client/src/stat-collector.cpp \
@@ -5239,6 +5265,28 @@ client/src/ndnrtc_client-ipc-shim.$(OBJEXT):  \
 ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) $(EXTRA_ndnrtc_client_DEPENDENCIES) 
 	@rm -f ndnrtc-client$(EXEEXT)
 	$(AM_V_CXXLD)$(ndnrtc_client_LINK) $(ndnrtc_client_OBJECTS) $(ndnrtc_client_LDADD) $(LIBS)
+tools/networked-storage/$(am__dirstamp):
+	@$(MKDIR_P) tools/networked-storage
+	@: > tools/networked-storage/$(am__dirstamp)
+tools/networked-storage/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/networked-storage/$(DEPDIR)
+	@: > tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
+tools/networked-storage/networked_storage-main.$(OBJEXT):  \
+	tools/networked-storage/$(am__dirstamp) \
+	tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt
+	@: > contrib/docopt/$(am__dirstamp)
+contrib/docopt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
+	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/networked_storage-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+
+networked-storage$(EXEEXT): $(networked_storage_OBJECTS) $(networked_storage_DEPENDENCIES) $(EXTRA_networked_storage_DEPENDENCIES) 
+	@rm -f networked-storage$(EXEEXT)
+	$(AM_V_CXXLD)$(networked_storage_LINK) $(networked_storage_OBJECTS) $(networked_storage_LDADD) $(LIBS)
 tools/stream-recorder/$(am__dirstamp):
 	@$(MKDIR_P) tools/stream-recorder
 	@: > tools/stream-recorder/$(am__dirstamp)
@@ -5251,12 +5299,6 @@ tools/stream-recorder/stream_recorder-main.$(OBJEXT):  \
 tools/stream-recorder/stream_recorder-stream-recorder.$(OBJEXT):  \
 	tools/stream-recorder/$(am__dirstamp) \
 	tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
-contrib/docopt/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt
-	@: > contrib/docopt/$(am__dirstamp)
-contrib/docopt/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
-	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
 contrib/docopt/stream_recorder-docopt.$(OBJEXT):  \
 	contrib/docopt/$(am__dirstamp) \
 	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
@@ -5277,6 +5319,7 @@ mostlyclean-compile:
 	-rm -f src/persistent-storage/*.$(OBJEXT)
 	-rm -f src/persistent-storage/*.lo
 	-rm -f tests/*.$(OBJEXT)
+	-rm -f tools/networked-storage/*.$(OBJEXT)
 	-rm -f tools/stream-recorder/*.$(OBJEXT)
 
 distclean-compile:
@@ -5367,6 +5410,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po@am__quote@ # am--include-marker
@@ -5950,6 +5994,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/networked-storage/$(DEPDIR)/networked_storage-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po@am__quote@ # am--include-marker
 
@@ -14904,6 +14949,34 @@ client/src/ndnrtc_client-key-chain-manager.obj: client/src/key-chain-manager.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-key-chain-manager.obj `if test -f 'client/src/key-chain-manager.cpp'; then $(CYGPATH_W) 'client/src/key-chain-manager.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/key-chain-manager.cpp'; fi`
 
+tools/networked-storage/networked_storage-main.o: tools/networked-storage/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -MT tools/networked-storage/networked_storage-main.o -MD -MP -MF tools/networked-storage/$(DEPDIR)/networked_storage-main.Tpo -c -o tools/networked-storage/networked_storage-main.o `test -f 'tools/networked-storage/main.cpp' || echo '$(srcdir)/'`tools/networked-storage/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/networked-storage/$(DEPDIR)/networked_storage-main.Tpo tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/networked-storage/main.cpp' object='tools/networked-storage/networked_storage-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -c -o tools/networked-storage/networked_storage-main.o `test -f 'tools/networked-storage/main.cpp' || echo '$(srcdir)/'`tools/networked-storage/main.cpp
+
+tools/networked-storage/networked_storage-main.obj: tools/networked-storage/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -MT tools/networked-storage/networked_storage-main.obj -MD -MP -MF tools/networked-storage/$(DEPDIR)/networked_storage-main.Tpo -c -o tools/networked-storage/networked_storage-main.obj `if test -f 'tools/networked-storage/main.cpp'; then $(CYGPATH_W) 'tools/networked-storage/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/networked-storage/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/networked-storage/$(DEPDIR)/networked_storage-main.Tpo tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/networked-storage/main.cpp' object='tools/networked-storage/networked_storage-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -c -o tools/networked-storage/networked_storage-main.obj `if test -f 'tools/networked-storage/main.cpp'; then $(CYGPATH_W) 'tools/networked-storage/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/networked-storage/main.cpp'; fi`
+
+contrib/docopt/networked_storage-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/networked_storage-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/networked_storage-docopt.Tpo -c -o contrib/docopt/networked_storage-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/networked_storage-docopt.Tpo contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/networked_storage-docopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/networked_storage-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+
+contrib/docopt/networked_storage-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/networked_storage-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/networked_storage-docopt.Tpo -c -o contrib/docopt/networked_storage-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/networked_storage-docopt.Tpo contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/networked_storage-docopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/networked_storage-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+
 tools/stream-recorder/stream_recorder-main.o: tools/stream-recorder/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-main.o -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo -c -o tools/stream-recorder/stream_recorder-main.o `test -f 'tools/stream-recorder/main.cpp' || echo '$(srcdir)/'`tools/stream-recorder/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
@@ -15728,6 +15801,8 @@ distclean-generic:
 	-rm -f src/persistent-storage/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
+	-rm -f tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/networked-storage/$(am__dirstamp)
 	-rm -f tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tools/stream-recorder/$(am__dirstamp)
 
@@ -15826,6 +15901,7 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
@@ -16409,6 +16485,7 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f Makefile
@@ -16543,6 +16620,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
@@ -17126,6 +17204,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f Makefile

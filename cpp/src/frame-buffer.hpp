@@ -169,12 +169,12 @@ namespace ndnrtc
         /**
          * Returns an array of pending Interests for this slot
          */
-        const std::vector<boost::shared_ptr<const ndn::Interest>>& getPendingInterests() const;
+        const std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
 
         /**
          * 
          */
-        const std::vector<boost::shared_ptr<const SlotSegment>>& getFetchedSegments() const;
+        const std::vector<boost::shared_ptr<const SlotSegment>> getFetchedSegments() const;
 
         /**
          * Returns boolean value on whether slot is verified

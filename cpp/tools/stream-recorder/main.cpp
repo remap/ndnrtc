@@ -120,7 +120,8 @@ int main(int argc, char **argv)
     });
 
     // setup storage
-    boost::shared_ptr<StorageEngine> storage(boost::make_shared<StorageEngine>(args["--db-path"].asString()));
+    boost::shared_ptr<StorageEngine> storage = 
+        boost::make_shared<StorageEngine>(args["--db-path"].asString());
 
     // setup face and keychain
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));

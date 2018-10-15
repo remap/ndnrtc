@@ -9,6 +9,9 @@
 #define __storage_engine_hpp__
 
 #include <boost/shared_ptr.hpp>
+#include <boost/asio.hpp>
+#include <boost/function.hpp>
+#include <ndn-cpp/name.hpp>
 
 namespace ndn {
     class Data;
@@ -23,7 +26,7 @@ namespace ndnrtc {
      */
     class StorageEngine {
     public:
-        StorageEngine(std::string dpPath);
+        StorageEngine(std::string dpPath, bool readOnly = false);
         ~StorageEngine();
 
         /**
@@ -40,6 +43,25 @@ namespace ndnrtc {
          * is invalid.
          */
         boost::shared_ptr<ndn::Data> get(const ndn::Name& dataName);
+
+        /**
+         * Scans DB for longest common prefixes. May take a while, depending on 
+         * DB size.
+         * @param io io_service to use for asynchronous scanning
+         * @param onCompleted Callback called upon completion. Passes list of 
+         *                    longest common prefixes discovered in the database.
+         */ 
+        void scanForLongestPrefixes(boost::asio::io_service& io, 
+            boost::function<void(const std::vector<ndn::Name>&)> onCompleted);
+
+        /**
+         * Returns approximate storage payload (all the values) size in bytes.
+         */
+        const size_t getPayloadSize() const;
+        /**
+         * Returns total number of keys in this KV-storage.
+         */
+        const size_t getKeysNum() const;
 
     private:
         boost::shared_ptr<StorageEngineImpl> pimpl_;

@@ -47,6 +47,8 @@ using namespace ndnrtc;
 
 static bool mustExit = false;
 
+void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix);
+
 void handler(int sig)
 {
     void *array[10];
@@ -74,14 +76,14 @@ int main(int argc, char **argv)
 
     ndnlog::new_api::Logger::initAsyncLogging();
 
-    std::map<std::string, docopt::value> args
+    map<string, docopt::value> args
         = docopt::docopt(USAGE,
                          { argv + 1, argv + argc },
                          true,               // show help if requested
                          (string("Netowkred Storage ")+string(PACKAGE_VERSION)).c_str());  // version string
 
     for(auto const& arg : args) {
-        std::cout << arg.first << " " <<  arg.second << std::endl;
+        cout << arg.first << " " <<  arg.second << endl;
     }
 
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args["--verbose"].asBool() ? ndnlog::NdnLoggerDetailLevelAll : ndnlog::NdnLoggerDetailLevelDefault);
@@ -94,21 +96,39 @@ int main(int argc, char **argv)
         {
             io.run();
         }
-        catch (std::exception &e)
+        catch (exception &e)
         {
-            LogError("") << "Caught exception while running: " << e.what() << std::endl;
+            LogError("") << "Caught exception while running: " << e.what() << endl;
             err = 1;
         }
     });
 
     // setup storage
-    boost::shared_ptr<StorageEngine> storage(boost::make_shared<StorageEngine>(args["<db-path>"].asString()));
+    boost::shared_ptr<StorageEngine> storage = 
+        boost::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
 
     // setup face and keychain
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
-    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), 
-                                         boost::make_shared<TpmBackEndMemory>(),
-                                         boost::make_shared<NoVerifyPolicyManager>()));
+    boost::shared_ptr<KeyChain> keyChain = boost::make_shared<KeyChain>();
+
+    face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
+
+    LogInfo("") << "Scanning available prefixes..." << std::endl;
+    vector<Name> prefixes;
+    storage->scanForLongestPrefixes(io, [&face, storage, &prefixes](const vector<Name>& pp){
+        LogInfo("") << "Scan completed. total keys: " << storage->getKeysNum() 
+            << ", payload size ~ " << storage->getPayloadSize()/1024/1024
+            << "MB, number of longest prefixes: " << pp.size() << endl;
+
+        for (auto n:pp)
+        {
+            LogInfo("") << "\t" << n << endl;
+        }
+
+        // prefixes = pp;
+        for (auto n:pp)
+            registerPrefix(face, n);
+    });
 
     {
         while (!(err || mustExit))
@@ -120,11 +140,28 @@ int main(int argc, char **argv)
     LogInfo("") << "Shutting down gracefully..." << endl;
 
     keyChain.reset();
-    // face->shutdown();
+    face->shutdown();
     face.reset();
     work.reset();
-    // t.join();
+    t.join();
     io.stop();
 
     LogInfo("") << "done" << endl;
+}
+
+void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix)
+{
+    LogInfo("") << "Registering prefix " << prefix << std::endl;
+    face->registerPrefix(prefix,
+                         [](const boost::shared_ptr<const Name> &prefix,
+                            const boost::shared_ptr<const Interest> &interest,
+                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) {
+                             LogTrace("") << "Unexpected incoming interest " << interest->getName() << std::endl;
+                         },
+                         [](const boost::shared_ptr<const Name> &prefix) {
+                             LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
+                         },
+                         [](const boost::shared_ptr<const Name> &p, uint64_t) {
+                             LogInfo("") << "Successfully registered prefix " << *p << std::endl;
+                         });
 }
