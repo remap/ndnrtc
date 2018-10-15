@@ -47,7 +47,8 @@ using namespace ndnrtc;
 
 static bool mustExit = false;
 
-void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix);
+void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix,
+                    boost::shared_ptr<StorageEngine> storage);
 
 void handler(int sig)
 {
@@ -114,20 +115,16 @@ int main(int argc, char **argv)
     face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
 
     LogInfo("") << "Scanning available prefixes..." << std::endl;
-    vector<Name> prefixes;
-    storage->scanForLongestPrefixes(io, [&face, storage, &prefixes](const vector<Name>& pp){
+    storage->scanForLongestPrefixes(io, [&face, storage](const vector<Name>& pp){
         LogInfo("") << "Scan completed. total keys: " << storage->getKeysNum() 
             << ", payload size ~ " << storage->getPayloadSize()/1024/1024
             << "MB, number of longest prefixes: " << pp.size() << endl;
 
         for (auto n:pp)
-        {
             LogInfo("") << "\t" << n << endl;
-        }
 
-        // prefixes = pp;
         for (auto n:pp)
-            registerPrefix(face, n);
+            registerPrefix(face, n, storage);
     });
 
     {
@@ -149,19 +146,29 @@ int main(int argc, char **argv)
     LogInfo("") << "done" << endl;
 }
 
-void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix)
+void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix, 
+    boost::shared_ptr<StorageEngine> storage)
 {
     LogInfo("") << "Registering prefix " << prefix << std::endl;
     face->registerPrefix(prefix,
-                         [](const boost::shared_ptr<const Name> &prefix,
+                         [storage](const boost::shared_ptr<const Name> &prefix,
                             const boost::shared_ptr<const Interest> &interest,
-                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) {
-                             LogTrace("") << "Unexpected incoming interest " << interest->getName() << std::endl;
+                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) 
+                            {
+                             LogTrace("") << "Incoming interest " << interest->getName() << std::endl;
+                             boost::shared_ptr<Data> d = storage->get(interest->getName());
+
+                             if (d)
+                                face.putData(*d);
+                             else
+                                LogTrace("") << "no data for " << interest->getName() << std::endl;
                          },
-                         [](const boost::shared_ptr<const Name> &prefix) {
+                         [](const boost::shared_ptr<const Name> &prefix) 
+                         {
                              LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
                          },
-                         [](const boost::shared_ptr<const Name> &p, uint64_t) {
+                         [](const boost::shared_ptr<const Name> &p, uint64_t) 
+                         {
                              LogInfo("") << "Successfully registered prefix " << *p << std::endl;
                          });
 }
