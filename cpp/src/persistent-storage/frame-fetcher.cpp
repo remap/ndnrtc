@@ -24,6 +24,7 @@ namespace ndnrtc {
                              public boost::enable_shared_from_this<FrameFetcherImpl> {
     public:
         FrameFetcherImpl(const boost::shared_ptr<StorageEngine>& storage);
+        FrameFetcherImpl(const boost::shared_ptr<Face>& face, const boost::shared_ptr<KeyChain>& keyChain);
         ~FrameFetcherImpl(){ reset(); }
 
         void fetch(const ndn::Name& frameName, 
@@ -65,6 +66,8 @@ namespace ndnrtc {
 //******************************************************************************
 FrameFetcher::FrameFetcher(const boost::shared_ptr<StorageEngine>& storage):
     pimpl_(make_shared<FrameFetcherImpl>(storage)){}
+FrameFetcher::FrameFetcher(const boost::shared_ptr<Face>& face, const boost::shared_ptr<KeyChain>& keyChain):
+    pimpl_(make_shared<FrameFetcherImpl>(face, keyChain)){}
 
 void
 FrameFetcher::fetch(const ndn::Name& frameName, 
@@ -100,6 +103,14 @@ FrameFetcherImpl::FrameFetcherImpl(const boost::shared_ptr<StorageEngine>& stora
       fetchSettings_({3,1000})
 {
     fetchMethod_ = make_shared<FetchMethodLocal>(storage_);
+    description_ = "frame-fetcher";
+}
+
+FrameFetcherImpl::FrameFetcherImpl(const boost::shared_ptr<Face>& face, const boost::shared_ptr<KeyChain>& keyChain)
+    : state_(FrameFetcher::Idle), 
+      fetchSettings_({3,1000})
+{
+    fetchMethod_ = make_shared<FetchMethodRemote>(face);
     description_ = "frame-fetcher";
 }
 

@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         boost::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
 
     // setup face and keychain
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    boost::shared_ptr<Face> face = boost::make_shared<Face>();//boost::make_shared<ThreadsafeFace>(io);
     boost::shared_ptr<KeyChain> keyChain = boost::make_shared<KeyChain>();
 
     face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
@@ -130,7 +130,8 @@ int main(int argc, char **argv)
     {
         while (!(err || mustExit))
         {
-            usleep(30000);
+            usleep(10);
+            face->processEvents();
         }
     }
 
@@ -159,7 +160,10 @@ void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix,
                              boost::shared_ptr<Data> d = storage->get(interest->getName());
 
                              if (d)
+                             {
+                                LogTrace("") << "Retrieved data of size " << d->getContent().size() << std::endl;
                                 face.putData(*d);
+                             }
                              else
                                 LogTrace("") << "no data for " << interest->getName() << std::endl;
                          },

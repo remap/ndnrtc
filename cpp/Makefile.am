@@ -110,13 +110,22 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 
 endif
 
+# bin programs
+bin_PROGRAMS = frame-fetcher
+
+frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
+    contrib/docopt/docopt.cpp
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
 if HAVE_PERSISTENT_STORAGE
 
 libndnrtc_la_CPPFLAGS += -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 libndnrtc_la_LDFLAGS += -L@PSTORAGELIB@
 libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
 
-bin_PROGRAMS = stream-recorder networked-storage
+bin_PROGRAMS += stream-recorder networked-storage
 
 stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
     tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \

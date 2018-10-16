@@ -155,7 +155,7 @@ class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl> {
             void insert(const std::string& n) {
                 if (!head_)
                     head_ = make_shared<TrieNode>();
-                
+
                 shared_ptr<TrieNode> curr = head_;
                 std::vector<std::string> components;
                 split(components, n, boost::is_any_of("/"));

@@ -9,13 +9,18 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <ndn-cpp/name.hpp>
 
 #include "interfaces.hpp"
 #include "params.hpp"
 #include "simple-log.hpp"
 #include "name-components.hpp"
 #include "frame-data.hpp"
+
+namespace ndn {
+    class Name;
+    class Face;
+    class KeyChain;
+}
 
 namespace ndnrtc {
     class StorageEngine;
@@ -77,8 +82,11 @@ namespace ndnrtc {
          */
         FrameFetcher(const boost::shared_ptr<StorageEngine>& storage);
 
-        // FrameFetcher(const boost::shared_ptr<LocalVideoStream>& localStream);
-        // FrameFetcher(std::string streamPrefix);
+        /**
+         * Fetches frames by expressing interests on the provided face object.
+         */ 
+        FrameFetcher(const boost::shared_ptr<ndn::Face>&, 
+                     const boost::shared_ptr<ndn::KeyChain>&);
         ~FrameFetcher(){}
 
         /**

@@ -155,23 +155,23 @@ host_triplet = @host@
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
+bin_PROGRAMS = frame-fetcher$(EXEEXT) $(am__EXEEXT_2)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
-@HAVE_PERSISTENT_STORAGE_TRUE@bin_PROGRAMS = stream-recorder$(EXEEXT) \
-@HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_9 = stream-recorder networked-storage
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_NANOMSG_TRUE@am__append_9 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_10 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_11 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_12 = -lnanomsg
-@OS_LINUX_TRUE@am__append_13 = -pthread 
-@OS_LINUX_TRUE@am__append_14 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
+@HAVE_NANOMSG_TRUE@am__append_10 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_11 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_12 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_13 = -lnanomsg
+@OS_LINUX_TRUE@am__append_14 = -pthread 
+@OS_LINUX_TRUE@am__append_15 = -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_15 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_16 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
-@OS_DARWIN_TRUE@am__append_17 = -lana_config_proto \
+@OS_DARWIN_TRUE@am__append_16 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_17 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
+@OS_DARWIN_TRUE@am__append_18 = -lana_config_proto \
 @OS_DARWIN_TRUE@	-lana_debug_dump_proto -lapprtc_common \
 @OS_DARWIN_TRUE@	-lapprtc_signaling -laudio -laudio_coder \
 @OS_DARWIN_TRUE@	-laudio_coding -laudio_conference_mixer \
@@ -225,16 +225,16 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @OS_DARWIN_TRUE@	-lwebrtc_h264 -lwebrtc_h264_video_toolbox \
 @OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
 @OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_ANDROID_TRUE@am__append_18 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_19 = -fPIE -pie
-@OS_ANDROID_TRUE@am__append_20 = -llog -lOpenSLES -lboost_timer -lboost_thread
-@HAVE_NANOMSG_TRUE@am__append_21 = nanopipe-adaptor
-@HAVE_NANOMSG_TRUE@am__append_22 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_23 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_24 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_25 = -lnanomsg
-@OS_LINUX_TRUE@am__append_26 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_27 = -DOS_DARWIN
+@OS_ANDROID_TRUE@am__append_19 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_20 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_21 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_NANOMSG_TRUE@am__append_22 = nanopipe-adaptor
+@HAVE_NANOMSG_TRUE@am__append_23 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_24 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_25 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_26 = -lnanomsg
+@OS_LINUX_TRUE@am__append_27 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_28 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -275,8 +275,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
-	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_2)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_28 = bin/tests/test-persistent-storage
+	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_3)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_29 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -305,9 +305,11 @@ CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-consumer.cfg \
 	tests/sample-producer.cfg tests/sample-bad1.cfg \
 	tests/consumer-audio.cfg tests/consumer-video.cfg
 @HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = stream-recorder$(EXEEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(pkgincludedir)"
-@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = bin/tests/test-persistent-storage$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_3 = bin/tests/test-persistent-storage$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -1787,6 +1789,17 @@ bin_tests_test_webrtc_audio_channel_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_webrtc_audio_channel_LDFLAGS) $(LDFLAGS) -o \
 	$@
+am_frame_fetcher_OBJECTS =  \
+	tools/frame-fetcher/frame_fetcher-main.$(OBJEXT) \
+	contrib/docopt/frame_fetcher-docopt.$(OBJEXT)
+frame_fetcher_OBJECTS = $(am_frame_fetcher_OBJECTS)
+frame_fetcher_DEPENDENCIES = libndnrtc.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+frame_fetcher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(frame_fetcher_CXXFLAGS) $(CXXFLAGS) $(frame_fetcher_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__nanopipe_adaptor_SOURCES_DIST =  \
 	client/nanopipe-adaptor/nanopipe.cpp \
 	client/nanopipe-adaptor/ipc-shim.c
@@ -1966,6 +1979,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/ndnrtc_client-renderer.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-video-source.Po \
+	contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po \
 	contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po \
 	contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po \
@@ -2550,6 +2564,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po \
 	tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po \
+	tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po \
 	tools/networked-storage/$(DEPDIR)/networked_storage-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
@@ -2631,8 +2646,9 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
 	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
-	$(nanopipe_adaptor_SOURCES) $(ndnrtc_client_SOURCES) \
-	$(networked_storage_SOURCES) $(stream_recorder_SOURCES)
+	$(frame_fetcher_SOURCES) $(nanopipe_adaptor_SOURCES) \
+	$(ndnrtc_client_SOURCES) $(networked_storage_SOURCES) \
+	$(stream_recorder_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -2675,7 +2691,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_playout_SOURCES_DIST) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
 	$(am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST) \
-	$(am__nanopipe_adaptor_SOURCES_DIST) \
+	$(frame_fetcher_SOURCES) $(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST) \
 	$(am__networked_storage_SOURCES_DIST) \
 	$(am__stream_recorder_SOURCES_DIST)
@@ -3154,6 +3170,12 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
 	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
 	$(am__append_3) $(am__append_5) $(am__append_8)
 @OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
+    contrib/docopt/docopt.cpp
+
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+frame_fetcher_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
@@ -3175,17 +3197,17 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/frame-io.cpp client/src/video-source.cpp \
 	client/src/video-source.hpp client/src/precise-generator.hpp \
 	client/src/precise-generator.cpp \
-	client/src/key-chain-manager.cpp $(am__append_9)
+	client/src/key-chain-manager.cpp $(am__append_10)
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
-	$(am__append_10) $(am__append_15) $(am__append_18)
+	$(am__append_11) $(am__append_16) $(am__append_19)
 ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
-	${BOOST_LDFLAGS} -L$(libdir) $(am__append_11) $(am__append_13) \
-	$(am__append_16) $(am__append_19)
+	${BOOST_LDFLAGS} -L$(libdir) $(am__append_12) $(am__append_14) \
+	$(am__append_17) $(am__append_20)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
-	$(top_builddir)/libndnrtc.la $(am__append_12) $(am__append_14) \
-	$(am__append_17) $(am__append_20)
+	$(top_builddir)/libndnrtc.la $(am__append_13) $(am__append_15) \
+	$(am__append_18) $(am__append_21)
 noinst_SCRIPTS = client/params.cfg
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
@@ -3202,14 +3224,14 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_23) $(am__append_27)
+	$(am__append_24) $(am__append_28)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
-	$(am__append_24)
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_25) \
-	$(am__append_26)
+	$(am__append_25)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_26) \
+	$(am__append_27)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_22)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_23)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -5218,6 +5240,28 @@ client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.$(OBJEXT):  \
 bin/tests/test-webrtc-audio-channel$(EXEEXT): $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_DEPENDENCIES) $(EXTRA_bin_tests_test_webrtc_audio_channel_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-webrtc-audio-channel$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_webrtc_audio_channel_LINK) $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_LDADD) $(LIBS)
+tools/frame-fetcher/$(am__dirstamp):
+	@$(MKDIR_P) tools/frame-fetcher
+	@: > tools/frame-fetcher/$(am__dirstamp)
+tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/frame-fetcher/$(DEPDIR)
+	@: > tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
+tools/frame-fetcher/frame_fetcher-main.$(OBJEXT):  \
+	tools/frame-fetcher/$(am__dirstamp) \
+	tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt
+	@: > contrib/docopt/$(am__dirstamp)
+contrib/docopt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
+	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/frame_fetcher-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+
+frame-fetcher$(EXEEXT): $(frame_fetcher_OBJECTS) $(frame_fetcher_DEPENDENCIES) $(EXTRA_frame_fetcher_DEPENDENCIES) 
+	@rm -f frame-fetcher$(EXEEXT)
+	$(AM_V_CXXLD)$(frame_fetcher_LINK) $(frame_fetcher_OBJECTS) $(frame_fetcher_LDADD) $(LIBS)
 client/nanopipe-adaptor/$(am__dirstamp):
 	@$(MKDIR_P) client/nanopipe-adaptor
 	@: > client/nanopipe-adaptor/$(am__dirstamp)
@@ -5274,12 +5318,6 @@ tools/networked-storage/$(DEPDIR)/$(am__dirstamp):
 tools/networked-storage/networked_storage-main.$(OBJEXT):  \
 	tools/networked-storage/$(am__dirstamp) \
 	tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
-contrib/docopt/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt
-	@: > contrib/docopt/$(am__dirstamp)
-contrib/docopt/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
-	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
 contrib/docopt/networked_storage-docopt.$(OBJEXT):  \
 	contrib/docopt/$(am__dirstamp) \
 	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
@@ -5319,6 +5357,7 @@ mostlyclean-compile:
 	-rm -f src/persistent-storage/*.$(OBJEXT)
 	-rm -f src/persistent-storage/*.lo
 	-rm -f tests/*.$(OBJEXT)
+	-rm -f tools/frame-fetcher/*.$(OBJEXT)
 	-rm -f tools/networked-storage/*.$(OBJEXT)
 	-rm -f tools/stream-recorder/*.$(OBJEXT)
 
@@ -5410,6 +5449,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po@am__quote@ # am--include-marker
@@ -5994,6 +6034,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/networked-storage/$(DEPDIR)/networked_storage-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po@am__quote@ # am--include-marker
@@ -14809,6 +14850,34 @@ contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj: 
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
+tools/frame-fetcher/frame_fetcher-main.o: tools/frame-fetcher/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT tools/frame-fetcher/frame_fetcher-main.o -MD -MP -MF tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo -c -o tools/frame-fetcher/frame_fetcher-main.o `test -f 'tools/frame-fetcher/main.cpp' || echo '$(srcdir)/'`tools/frame-fetcher/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/frame-fetcher/main.cpp' object='tools/frame-fetcher/frame_fetcher-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -c -o tools/frame-fetcher/frame_fetcher-main.o `test -f 'tools/frame-fetcher/main.cpp' || echo '$(srcdir)/'`tools/frame-fetcher/main.cpp
+
+tools/frame-fetcher/frame_fetcher-main.obj: tools/frame-fetcher/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT tools/frame-fetcher/frame_fetcher-main.obj -MD -MP -MF tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo -c -o tools/frame-fetcher/frame_fetcher-main.obj `if test -f 'tools/frame-fetcher/main.cpp'; then $(CYGPATH_W) 'tools/frame-fetcher/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/frame-fetcher/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/frame-fetcher/main.cpp' object='tools/frame-fetcher/frame_fetcher-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -c -o tools/frame-fetcher/frame_fetcher-main.obj `if test -f 'tools/frame-fetcher/main.cpp'; then $(CYGPATH_W) 'tools/frame-fetcher/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/frame-fetcher/main.cpp'; fi`
+
+contrib/docopt/frame_fetcher-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/frame_fetcher-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Tpo -c -o contrib/docopt/frame_fetcher-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Tpo contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/frame_fetcher-docopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/frame_fetcher-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+
+contrib/docopt/frame_fetcher-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/frame_fetcher-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Tpo -c -o contrib/docopt/frame_fetcher-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Tpo contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/frame_fetcher-docopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/frame_fetcher-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+
 client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o: client/nanopipe-adaptor/nanopipe.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o `test -f 'client/nanopipe-adaptor/nanopipe.cpp' || echo '$(srcdir)/'`client/nanopipe-adaptor/nanopipe.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
@@ -15801,6 +15870,8 @@ distclean-generic:
 	-rm -f src/persistent-storage/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
+	-rm -f tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/frame-fetcher/$(am__dirstamp)
 	-rm -f tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tools/networked-storage/$(am__dirstamp)
 	-rm -f tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
@@ -15901,6 +15972,7 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
@@ -16485,6 +16557,7 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
@@ -16620,6 +16693,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
@@ -17204,6 +17278,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
