@@ -17,9 +17,11 @@
 #include "data-validator.hpp"
 #include "drd-estimator.hpp"
 #include "frame-buffer.hpp"
+#include "frame-data.hpp"
 #include "interest-control.hpp"
 #include "interest-queue.hpp"
 #include "latency-control.hpp"
+#include "meta-fetcher.hpp"
 #include "pipeline-control-state-machine.hpp"
 #include "pipeline-control.hpp"
 #include "pipeliner.hpp"
@@ -44,7 +46,7 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
       streamPrefix_(streamPrefix),
       needMeta_(true), isRunning_(false), cuedToRun_(false),
       metadataRequestedMs_(0),
-      metaFetcher_(make_shared<MetaFetcher>()),
+      metaFetcher_(make_shared<MetaFetcher>(face_, keyChain_)),
       sstorage_(StatisticsStorage::createConsumerStatistics()),
       drdEstimator_(make_shared<DrdEstimator>())
 {
@@ -194,9 +196,10 @@ RemoteStreamImpl::getStreamPrefix() const
 void RemoteStreamImpl::fetchMeta()
 {
     shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
-    metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(NameComponents::NameComponentMeta),
+    metaFetcher_->fetch(Name(streamPrefix_).append(NameComponents::NameComponentMeta),
                         [me, this](NetworkData &meta,
-                                   const std::vector<ValidationErrorInfo> &validationInfo) {
+                                   const std::vector<ValidationErrorInfo> &validationInfo,
+                                   const std::vector<boost::shared_ptr<Data>>&) {
                             me->addValidationInfo(validationInfo);
                             me->streamMetaFetched(meta);
                         },
@@ -230,9 +233,10 @@ void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int6
     metaPrefix.appendTimestamp(streamMeta_->getStreamTimestamp()).append(threadName).append(NameComponents::NameComponentMeta);
 
     shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
-    metaFetcher_->fetch(face_, keyChain_, metaPrefix,
+    metaFetcher_->fetch(metaPrefix,
                         [threadName, me, metadataRequestedMs, this](NetworkData &meta,
-                                               const std::vector<ValidationErrorInfo> &validationInfo) {
+                                               const std::vector<ValidationErrorInfo> &validationInfo,
+                                               const std::vector<boost::shared_ptr<Data>>&) {
                             int64_t metadataRtt = clock::millisecondTimestamp() - metadataRequestedMs;
                             // if (metadataRtt > drdEstimator_->getOriginalEstimation()) // this is to be conservative
                                 drdEstimator_->setInitialEstimation(metadataRtt);

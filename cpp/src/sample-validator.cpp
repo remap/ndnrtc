@@ -10,6 +10,7 @@
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 
+#include "frame-data.hpp"
 #include "name-components.hpp"
 #include "meta-fetcher.hpp"
 
@@ -74,7 +75,9 @@ void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
         Name manifestName = slot->getNameInfo().getPrefix(prefix_filter::Sample).append(NameComponents::NameComponentManifest);
         mfetcher->fetch(face_, keyChain_,
                         manifestName,
-                        [mfetcher, slot, me, this](NetworkData &nd, const std::vector<ValidationErrorInfo> info) {
+                        [mfetcher, slot, me, this](NetworkData &nd, 
+                                                   const std::vector<ValidationErrorInfo> info, 
+                                                   const std::vector<boost::shared_ptr<Data>>&) {
                             if (info.size())
                             {
                                 // had problems verifying manifest

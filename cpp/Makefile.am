@@ -15,6 +15,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
   src/c-wrapper.cpp include/c-wrapper.h \
+  src/consumer-storage.hpp src/consumer-storage.cpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
@@ -31,6 +32,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
   src/meta-fetcher.cpp src/meta-fetcher.hpp \
   src/name-components.cpp include/name-components.hpp \
+  src/network-data.cpp src/network-data.hpp \
   src/ndnrtc-debug.hpp \
   src/ndnrtc-endian.hpp \
   src/ndnrtc-object.cpp src/ndnrtc-object.hpp \
@@ -108,11 +110,35 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 
 endif
 
+# bin programs
+bin_PROGRAMS = frame-fetcher
+
+frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
+    contrib/docopt/docopt.cpp
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
 if HAVE_PERSISTENT_STORAGE
 
 libndnrtc_la_CPPFLAGS += -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 libndnrtc_la_LDFLAGS += -L@PSTORAGELIB@
 libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
+
+bin_PROGRAMS += stream-recorder networked-storage
+
+stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
+    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+    contrib/docopt/docopt.cpp
+stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
+networked_storage_SOURCES = tools/networked-storage/main.cpp \
+    contrib/docopt/docopt.cpp
+networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+networked_storage_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 endif
 

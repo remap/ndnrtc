@@ -7,9 +7,13 @@
 
 #include "storage-engine.hpp"
 
+#include <unordered_map>
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/util/blob.hpp>
+#include <boost/algorithm/string.hpp>
+
+#include "clock.hpp"
 
 #if HAVE_PERSISTENT_STORAGE
 
@@ -34,10 +38,15 @@ using namespace boost;
 //******************************************************************************
 namespace ndnrtc {
 
-class StorageEngineImpl {
+class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl> {
     public:
+        typedef struct _Stats {
+            size_t nKeys_;
+            size_t valueSizeBytes_;
+        } Stats;
+
     #if HAVE_PERSISTENT_STORAGE
-        StorageEngineImpl(std::string dbPath): dbPath_(dbPath), db_(nullptr)
+        StorageEngineImpl(std::string dbPath): dbPath_(dbPath), db_(nullptr), keysTrieBuilt_(false)
         {
         }
     #else
@@ -48,15 +57,19 @@ class StorageEngineImpl {
 
         ~StorageEngineImpl()
         {
+            close();
         }
 
-        bool open()
+        bool open(bool readOnly)
         {
 #if HAVE_PERSISTENT_STORAGE
             db_namespace::Options options;
             options.create_if_missing = true;
-
-            db_namespace::Status status = db_namespace::DB::Open(options, dbPath_, &db_);
+            db_namespace::Status status;
+            if (readOnly)
+                status = db_namespace::DB::OpenForReadOnly(options, dbPath_, &db_);
+            else
+                status = db_namespace::DB::Open(options, dbPath_, &db_);
             return status.ok();
 #else
             return false;
@@ -109,20 +122,115 @@ class StorageEngineImpl {
             return shared_ptr<Data>(nullptr);
         }
 
+        void getLongestPrefixes(asio::io_service& io, 
+            function<void(const std::vector<Name>&)> onCompletion)
+        {
+            // if (!keysTrieBuilt_)
+            //     onCompletion(keysTrie_.getLongestPrefixes());
+            // else
+            // {
+                shared_ptr<StorageEngineImpl> me = shared_from_this();
+                io.dispatch([me,this,onCompletion](){
+                    buildKeyTrie();
+                    keysTrieBuilt_ = true;
+                    onCompletion(keysTrie_.getLongestPrefixes());
+                });
+            // }
+        }
+
+        const Stats& getStats() const { return stats_; }
+
     private:
+        class NameTrie {
+        public: 
+            struct TrieNode {
+                bool isLeaf;
+                std::unordered_map<std::string, shared_ptr<TrieNode>> components;
+
+                TrieNode():isLeaf(false){}
+            };
+
+            NameTrie():head_(nullptr){}
+
+            void insert(const std::string& n) {
+                if (!head_)
+                    head_ = make_shared<TrieNode>();
+
+                shared_ptr<TrieNode> curr = head_;
+                std::vector<std::string> components;
+                split(components, n, boost::is_any_of("/"));
+
+                for (auto c:components)
+                {
+                    if (c.size() == 0)
+                        continue;
+                    if (curr->components.find(c) == curr->components.end())
+                        curr->components[c] = make_shared<TrieNode>();
+                    curr = curr->components[c];
+                }
+            }
+
+            // gets all longest prefixes
+            const std::vector<Name> getLongestPrefixes() const {
+                std::vector<Name> longestPrefixes;
+
+                for (auto cIt:head_->components)
+                {
+                    Name n(cIt.first);
+                    shared_ptr<TrieNode> curr = cIt.second;
+
+                    while (curr && !curr->isLeaf && curr->components.size() == 1){
+                        auto it = curr->components.begin();
+                        n.append(Name::fromEscapedString(it->first));
+                        curr = it->second;
+                    }
+                    longestPrefixes.push_back(n);
+                }
+
+                return longestPrefixes;
+            }
+        private:
+            shared_ptr<TrieNode> head_;
+        };
+
         std::string dbPath_;
+        bool keysTrieBuilt_;
+        NameTrie keysTrie_;
+        Stats stats_;
 #if HAVE_PERSISTENT_STORAGE
         db_namespace::DB* db_;
 #endif
+
+        void buildKeyTrie()
+        {
+            stats_.nKeys_ = 0;
+            stats_.valueSizeBytes_ = 0;
+#if HAVE_PERSISTENT_STORAGE
+            int64_t t1 = clock::millisecondTimestamp();
+            db_namespace::Iterator* it = db_->NewIterator(rocksdb::ReadOptions());
+
+            for (it->SeekToFirst(); it->Valid(); it->Next()) {
+                keysTrie_.insert(it->key().ToString());
+                stats_.nKeys_++;
+                stats_.valueSizeBytes_ += it->value().size();
+            }
+            assert(it->status().ok()); // Check for any errors found during the scan
+
+            int64_t d = clock::millisecondTimestamp() - t1;
+
+            delete it;
+#endif
+        }
 };
 
 }
 
 //******************************************************************************
-StorageEngine::StorageEngine(std::string dbPath):
+StorageEngine::StorageEngine(std::string dbPath, bool readOnly):
     pimpl_(boost::make_shared<StorageEngineImpl>(dbPath))
 {
-    pimpl_->open();
+    if (!pimpl_->open(readOnly))
+        throw std::runtime_error("Failed to open storage at "+dbPath);
 }
 
 StorageEngine::~StorageEngine()
@@ -135,9 +243,27 @@ void StorageEngine::put(const shared_ptr<const Data>& data)
     pimpl_->put(data);
 }
 
-boost::shared_ptr<Data> 
+shared_ptr<Data> 
 StorageEngine::get(const Name& dataName)
 {
     return pimpl_->get(dataName);
 }
 
+void 
+StorageEngine::scanForLongestPrefixes(asio::io_service& io, 
+            function<void(const std::vector<ndn::Name>&)> onCompleted)
+{
+    pimpl_->getLongestPrefixes(io, onCompleted);
+}
+
+const size_t
+StorageEngine::getPayloadSize() const
+{
+    return pimpl_->getStats().valueSizeBytes_;
+}
+
+const size_t
+StorageEngine::getKeysNum() const
+{
+    return pimpl_->getStats().nKeys_;
+}

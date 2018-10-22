@@ -12,7 +12,6 @@
 
 #include "remote-stream.hpp"
 #include "ndnrtc-object.hpp"
-#include "meta-fetcher.hpp"
 #include "data-validator.hpp"
 
 namespace ndnrtc
@@ -38,7 +37,14 @@ class IPlaybackQueue;
 class IPlayout;
 class IPlayoutControl;
 class MediaStreamMeta;
+class MetaFetcher;
 class RetransmissionController;
+
+// forward delcaration of typedef'ed template class
+struct Mutable;
+template <typename T>
+class NetworkDataT;
+typedef NetworkDataT<Mutable> NetworkDataAlias;
 
 /**
  * RemoteStreamImpl is a base class for implementing remote stream functionality
@@ -87,7 +93,7 @@ class RemoteStreamImpl : public NdnRtcComponent
     std::vector<IRemoteStreamObserver *> observers_;
     boost::shared_ptr<MetaFetcher> metaFetcher_;
     boost::shared_ptr<MediaStreamMeta> streamMeta_;
-    std::map<std::string, boost::shared_ptr<NetworkData>> threadsMeta_;
+    std::map<std::string, boost::shared_ptr<NetworkDataAlias>> threadsMeta_;
 
     boost::shared_ptr<IBuffer> buffer_;
     boost::shared_ptr<DrdEstimator> drdEstimator_;
@@ -107,8 +113,8 @@ class RemoteStreamImpl : public NdnRtcComponent
     std::vector<ValidationErrorInfo> validationInfo_;
 
     void fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs);
-    void streamMetaFetched(NetworkData &);
-    void threadMetaFetched(const std::string &thread, NetworkData &);
+    void streamMetaFetched(NetworkDataAlias &);
+    void threadMetaFetched(const std::string &thread, NetworkDataAlias &);
     virtual void initiateFetching();
     virtual void stopFetching();
     void addValidationInfo(const std::vector<ValidationErrorInfo> &);

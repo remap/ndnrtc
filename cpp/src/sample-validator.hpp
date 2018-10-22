@@ -27,11 +27,15 @@ class StatisticsStorage;
 
 class MetaFetcher;
 
+/**
+ * Used for validating signed samples.
+ */
 class SampleValidator : public NdnRtcComponent, public IBufferObserver, statistics::StatObject
 {
   public:
     SampleValidator(boost::shared_ptr<ndn::KeyChain> keyChain,
-                    const boost::shared_ptr<statistics::StatisticsStorage> &statStorage) : StatObject(statStorage), keyChain_(keyChain) {}
+                    const boost::shared_ptr<statistics::StatisticsStorage> &statStorage) : 
+                    StatObject(statStorage), keyChain_(keyChain) {}
 
   private:
     boost::shared_ptr<ndn::KeyChain> keyChain_;
@@ -41,6 +45,9 @@ class SampleValidator : public NdnRtcComponent, public IBufferObserver, statisti
     void onReset() {}
 };
 
+/**
+ * Used for validating multi-segment unsigned data, where signed manifest is published. 
+ */
 class ManifestValidator : public NdnRtcComponent, public IBufferObserver, statistics::StatObject
 {
   public:

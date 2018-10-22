@@ -169,7 +169,12 @@ namespace ndnrtc
         /**
          * Returns an array of pending Interests for this slot
          */
-        std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
+        const std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
+
+        /**
+         * 
+         */
+        const std::vector<boost::shared_ptr<const SlotSegment>> getFetchedSegments() const;
 
         /**
          * Returns boolean value on whether slot is verified
@@ -188,7 +193,7 @@ namespace ndnrtc
         bool hasOriginalSegments() const { return hasOriginalSegments_; }
         size_t getFetchedNum() const { return fetched_.size(); }
         void toggleLock();
-        
+        bool hasAllSegmentsFetched() const { return nDataSegments_+nParitySegments_ == fetched_.size(); }
         int64_t getAssemblingTime() const
         { return ( state_ >= Ready ? assembledTimeUsec_-firstSegmentTimeUsec_ : 0); }
         int64_t getShortestDrd() const

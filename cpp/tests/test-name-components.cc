@@ -15,6 +15,7 @@ using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
 
+#if 1
 TEST(TestNameComponents, TestNameFiltering)
 {
 	{
@@ -105,8 +106,8 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter", info));
 		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02", info));
 		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video", info));
-		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera", info));
-		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/hi", info));
+		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera", info));
+		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/hi", info));
 		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d", info));
 		EXPECT_FALSE(info.hasSeqNo_);
 		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/%FC%00%00%01c_%27%DE%D6/hi/k", info));
@@ -158,7 +159,7 @@ TEST(TestNameComponents, TestNameFiltering)
 	{
 		NamespaceInfo info;
 		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio", info));
-		EXPECT_FALSE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic", info));
+		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic", info));
 		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/%FC%00%00%01c_%27%DE%D6/hd", info));
 		EXPECT_FALSE(info.hasSeqNo_);
 		EXPECT_TRUE(NameComponents::extractInfo("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07", info));
@@ -236,8 +237,13 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_EQ("720p", info.threadName_);
 		EXPECT_TRUE(info.isMeta_);
 	}
+    {
+        NamespaceInfo info;
+        EXPECT_TRUE(NameComponents::extractInfo("/ndn/user/rtc/ndnrtc/%FD%03/video/camera/%FC%00%00%01fU%98%BBA/1080p", info));
+    }
 }
-
+#endif
+#if 1
 TEST(TestNameComponents, TestPrefixFiltering)
 {
 	using namespace prefix_filter;
@@ -349,7 +355,8 @@ TEST(TestNameComponents, TestPrefixFiltering)
 		EXPECT_EQ(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02") , info.getPrefix(Library));
 	}
 }
-#if 1
+#endif
+#if 0
 TEST(TestNameComponents, TestSuffixFiltering)
 {
 	using namespace suffix_filter;

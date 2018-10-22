@@ -220,7 +220,7 @@ BufferSlot::getMissingSegments() const
     return missing;
 }
 
-std::vector<boost::shared_ptr<const ndn::Interest>>
+const std::vector<boost::shared_ptr<const ndn::Interest>>
 BufferSlot::getPendingInterests() const
 {
     std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests;
@@ -230,6 +230,17 @@ BufferSlot::getPendingInterests() const
             pendingInterests.push_back(it.second->getInterest());
 
     return pendingInterests;
+}
+
+const std::vector<boost::shared_ptr<const SlotSegment>>
+BufferSlot::getFetchedSegments() const
+{
+    std::vector<boost::shared_ptr<const SlotSegment>> segments;
+    
+    for (auto it:fetched_)
+        segments.push_back(it.second);
+
+    return segments;
 }
 
 int 

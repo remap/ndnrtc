@@ -114,8 +114,9 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
             LogTraceC << "timeout for " << interest->getName() << std::endl;
 
             nTimeouts_++;
-            if (slot_->getRtxNum(interest->getName()) < settings_.nRtx_)
-                requestSegment(interest);
+            if (state_ == Fetching)
+                if (slot_->getRtxNum(interest->getName()) < settings_.nRtx_)
+                    requestSegment(interest);
             checkCompletion();
         }, 
         [self, this](const shared_ptr<const Interest>& interest, const shared_ptr<NetworkNack>& networkNack)
@@ -218,4 +219,13 @@ FetchMethodLocal::express(const boost::shared_ptr<const ndn::Interest>& interest
         onData(interest, data);
     else
         onNack(interest, make_shared<NetworkNack>());
+}
+
+void 
+FetchMethodRemote::express(const boost::shared_ptr<const ndn::Interest>& interest,
+                     ndn::OnData onData,
+                     ndn::OnTimeout onTimeout,
+                     ndn::OnNetworkNack onNack)
+{
+    face_->expressInterest(*interest, onData, onTimeout, onNack);
 }

@@ -45,6 +45,7 @@ namespace ndnrtc {
             } Settings;
 
             virtual ~FetchingTask(){}
+            virtual ndn::Name getFrameName() const = 0;
     };
 
     class FrameFetchingTask : public FetchingTask,
@@ -61,11 +62,12 @@ namespace ndnrtc {
         /**
          * Creates new task for fetching frame.
          * @param name Full frame NDN name
-         * @param nRtx Number of retries for interests that received timeouts
+         * @param fetchMethod Method of frame fetching
          * @param inFetchingComplete Callback which is called when frame was fully fetched
          * @param onFetchingFailed Called if frame couldn't be fetched
+         * @param settings Fetching task settings (number of retries for time out interests and intereset lifetime)
          * @param onFirstSegment Callback which is called when first segment (regardless of its' number) arrives
-         * @param onZeroSegment Called when segmen #0 is fetched
+         * @param onZeroSegment Called when segment #0 is fetched
          */
         FrameFetchingTask(const ndn::Name&, 
                           const boost::shared_ptr<IFetchMethod>& fetchMethod,
@@ -82,7 +84,7 @@ namespace ndnrtc {
         State getState() const { return state_; }
         int getNacksNum() const { return nNacks_; }
         int getTimeoutsNum() const { return nTimeouts_; }
-        ndn::Name getFrameName() const { return frameNameInfo_.getPrefix(prefix_filter::Sample); }
+        ndn::Name getFrameName() const override { return frameNameInfo_.getPrefix(prefix_filter::Sample); }
         const boost::shared_ptr<const BufferSlot> getSlot() const { return slot_; }
 
     private:
@@ -132,11 +134,15 @@ namespace ndnrtc {
 
     class FetchMethodRemote : public IFetchMethod {
     public:
+        FetchMethodRemote(const boost::shared_ptr<ndn::Face>& face):face_(face){}
 
         void express(const boost::shared_ptr<const ndn::Interest>&,
                              ndn::OnData,
                              ndn::OnTimeout,
-                             ndn::OnNetworkNack) override {}
+                             ndn::OnNetworkNack) override;
+
+    private:
+        boost::shared_ptr<ndn::Face> face_;
     };
 }
 
