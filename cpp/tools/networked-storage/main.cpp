@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         boost::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
 
     // setup face and keychain
-    boost::shared_ptr<Face> face = boost::make_shared<Face>();//boost::make_shared<ThreadsafeFace>(io);
+    boost::shared_ptr<Face> face = boost::make_shared<ThreadsafeFace>(io);
     boost::shared_ptr<KeyChain> keyChain = boost::make_shared<KeyChain>();
 
     face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
@@ -131,7 +131,6 @@ int main(int argc, char **argv)
         while (!(err || mustExit))
         {
             usleep(10);
-            face->processEvents();
         }
     }
 
