@@ -10,11 +10,14 @@
 #define ndnrtcTOP_base_hpp
 
 #include "TOP_CPlusPlusBase.h"
+
 #include <stdlib.h>
 #include <string>
 #include <queue>
 #include <functional>
 #include <boost/shared_ptr.hpp>
+
+#include <ndnrtc/simple-log.hpp>
 
 namespace ndnrtc {
     class IStream;
@@ -35,7 +38,8 @@ namespace ndnlog {
     }
 }
 
-class ndnrtcTOPbase : public TOP_CPlusPlusBase
+class ndnrtcTOPbase : public TOP_CPlusPlusBase,
+                      public ndnlog::new_api::ILoggingObject
 {
 public:
     ndnrtcTOPbase(const OP_NodeInfo *info);
@@ -71,33 +75,38 @@ protected:
                                TOP_Context *)> ExecuteCallback;
     std::queue<ExecuteCallback> executeQueue_;
     
-    boost::shared_ptr<ndnlog::new_api::Logger>            logger_;
     boost::shared_ptr<ndnrtc::helpers::FaceProcessor>     faceProcessor_;
     boost::shared_ptr<ndnrtc::helpers::KeyChainManager>   keyChainManager_;
     
-    bool                    ndnrtcInitialized_;
+    std::string             name_;
     std::string             errorString_, warningString_;
     
-    ndnrtc::IStream*        stream_;
+    boost::shared_ptr<ndnrtc::IStream>      stream_;
     ndnrtc::statistics::StatisticsStorage*  statStorage_;
     
+    void                    init();
     void                    initKeyChainManager(const TOP_OutputFormatSpecs*,
                                                 OP_Inputs*,
                                                 TOP_Context *);
     void                    initFace(const TOP_OutputFormatSpecs*,
                                      OP_Inputs*,
                                      TOP_Context *);
-    
-    void                    initNdnrtcLibrary(const TOP_OutputFormatSpecs*,
-                                              OP_Inputs*,
-                                              TOP_Context *);
-    void                    deinitNdnrtcLibrary();
+    void                    registerPrefix(const TOP_OutputFormatSpecs*,
+                                           OP_Inputs*,
+                                           TOP_Context *);
     
     virtual void            checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
-    void                    libraryLog(const char* msg);
+
     std::string             generateName(std::string) const;
     void                    readStreamStats();
     std::string             readBasePrefix(OP_Inputs* inputs) const;
+    void                    logSink(const char *msg);
+    
+    /**
+     * Flip and convert RGBA frame
+     */
+    void                    flipFrame(int width, int height, uint8_t* buffer,
+                                      bool flipH, bool flipV, bool convertToArgb);
 };
 
 #endif /* ndnrtcTOP_base_hpp */

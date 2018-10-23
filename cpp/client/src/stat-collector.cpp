@@ -238,10 +238,14 @@ StatCollector::~StatCollector()
     removeAllStreams();
 }
 
-void StatCollector::addStream(const boost::shared_ptr<const IStream>& stream)
+void StatCollector::addStream(const boost::shared_ptr<const IStream>& stream,
+                              string path, vector<StatGatheringParams> stats)
 {
     if (streamStatCollectors_.find(stream->getPrefix()) == streamStatCollectors_.end())
+    {
         streamStatCollectors_[stream->getPrefix()] = new StreamStatCollector(stream);
+        streamStatCollectors_[stream->getPrefix()]->addStatsToCollect(path, stats);
+    }
     else
         throw runtime_error("stream has been already added for stat gathering");
 }
@@ -276,13 +280,9 @@ size_t StatCollector::getWritersNumber()
     return n;
 }
 
-void StatCollector::startCollecting(unsigned int queryInterval, string path, 
-      vector<StatGatheringParams> stats)
+void StatCollector::startCollecting(unsigned int queryInterval)
 {
     double rate = 1000./(double)queryInterval;
-
-    for (auto entry:streamStatCollectors_)
-        entry.second->addStatsToCollect(path, stats);
 
     generator_ = boost::make_shared<PreciseGenerator>(io_, rate, 
         boost::bind(&StatCollector::queryStats, this));

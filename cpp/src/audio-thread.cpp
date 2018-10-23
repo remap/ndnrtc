@@ -20,31 +20,33 @@ using namespace webrtc;
 
 //******************************************************************************
 #pragma mark - public
-AudioThread::AudioThread(const AudioThreadParams& params,
-    const AudioCaptureParams& captureParams,
-    IAudioThreadCallback* callback,
-    size_t bundleWireLength):
-bundleNo_(0),
-rateMeter_(boost::make_shared<estimators::TimeWindow>(250)),
-threadName_(params.threadName_),
-codec_(params.codec_),
-callback_(callback),
-bundle_(boost::make_shared<AudioBundlePacket>(bundleWireLength)),
-capturer_(captureParams.deviceId_, this, 
-    (params.codec_ == "opus" ? WebrtcAudioChannel::Codec::Opus : WebrtcAudioChannel::Codec::G722)),
-isRunning_(false)
+AudioThread::AudioThread(const AudioThreadParams &params,
+                         const AudioCaptureParams &captureParams,
+                         IAudioThreadCallback *callback,
+                         size_t bundleWireLength)
+    : bundleNo_(0),
+      rateMeter_(boost::make_shared<estimators::TimeWindow>(250)),
+      threadName_(params.threadName_),
+      codec_(params.codec_),
+      callback_(callback),
+      bundle_(boost::make_shared<AudioBundlePacket>(bundleWireLength)),
+      capturer_(captureParams.deviceId_, this,
+                (params.codec_ == "opus" ? WebrtcAudioChannel::Codec::Opus : WebrtcAudioChannel::Codec::G722)),
+      isRunning_(false)
 {
     description_ = "athread";
 }
 
 AudioThread::~AudioThread()
 {
-    if (isRunning_) stop();
+    if (isRunning_)
+        stop();
 }
 
 void AudioThread::start()
 {
-    if (isRunning_) throw std::runtime_error("Audio thread already started");
+    if (isRunning_)
+        throw std::runtime_error("Audio thread already started");
     isRunning_ = true;
     bundleNo_ = 0;
     capturer_.startCapture();
@@ -54,7 +56,7 @@ void AudioThread::start()
 
 void AudioThread::stop()
 {
-    if (isRunning_) 
+    if (isRunning_)
     {
         isRunning_ = false;
         capturer_.stopCapture();
@@ -74,29 +76,29 @@ void AudioThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 }
 
 //******************************************************************************
-void AudioThread::onDeliverRtpFrame(unsigned int len, uint8_t* data)
-{   
+void AudioThread::onDeliverRtpFrame(unsigned int len, uint8_t *data)
+{
     if (isRunning_)
     {
         LogTraceC << "delivering rtp frame" << std::endl;
-        std::vector<uint8_t> adata(data, data+len);
+        std::vector<uint8_t> adata(data, data + len);
         AudioBundlePacket::AudioSampleBlob blob({false}, adata.begin(), adata.end());
         deliver(blob);
     }
 }
 
-void AudioThread::onDeliverRtcpFrame(unsigned int len, uint8_t* data)
+void AudioThread::onDeliverRtcpFrame(unsigned int len, uint8_t *data)
 {
     if (isRunning_)
     {
         LogTraceC << "delivering rtcp frame" << std::endl;
-        std::vector<uint8_t> adata(data, data+len);
+        std::vector<uint8_t> adata(data, data + len);
         AudioBundlePacket::AudioSampleBlob blob({true}, adata.begin(), adata.end());
         deliver(blob);
     }
 }
 
-void AudioThread::deliver(const AudioBundlePacket::AudioSampleBlob& blob)
+void AudioThread::deliver(const AudioBundlePacket::AudioSampleBlob &blob)
 {
     if (!bundle_->hasSpace(blob))
     {

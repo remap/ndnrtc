@@ -26,9 +26,9 @@ TEST(TestDrdEstimator, TestDefault)
 	EXPECT_EQ(150, drd.getOriginalEstimation());
 	EXPECT_EQ(150, drd.getCachedEstimation());
 
-	EXPECT_CALL(o, onOriginalDrdUpdate())
+	EXPECT_CALL(o, onOriginalDrdUpdate(_,_))
 		.Times(100);
-	EXPECT_CALL(o, onCachedDrdUpdate())
+	EXPECT_CALL(o, onCachedDrdUpdate(_,_))
 		.Times(100);
 	EXPECT_CALL(o, onDrdUpdate())
 		.Times(200);
@@ -46,6 +46,19 @@ TEST(TestDrdEstimator, TestDefault)
 	drd.reset();
 	EXPECT_EQ(150, drd.getOriginalEstimation());
 	EXPECT_EQ(150, drd.getCachedEstimation());
+}
+
+TEST(TestDrdEstimator, TestSetInitialValue)
+{
+    DrdEstimator drd;
+
+    EXPECT_EQ(150, drd.getOriginalEstimation());
+    EXPECT_EQ(150, drd.getCachedEstimation());
+
+    drd.setInitialEstimation(180);
+
+    EXPECT_EQ(180, drd.getOriginalEstimation());
+    EXPECT_EQ(180, drd.getCachedEstimation());
 }
 
 TEST(TestDrdEstimator, TestDrdDeviation)

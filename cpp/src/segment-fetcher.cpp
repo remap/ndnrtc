@@ -147,6 +147,7 @@ SegmentFetcher::processSegment
 		else {
       // Save the content and check if we are finished.
 			contentParts_.push_back(data->getContent());
+            contentData_.push_back(data);
 
 			if (data->getMetaInfo().getFinalBlockId().getValue().size() > 0) {
 				uint64_t finalSegmentNumber;
@@ -185,7 +186,7 @@ SegmentFetcher::processSegment
 					}
 
 					try {
-						onComplete_(Blob(content, false), validationInfo_);
+						onComplete_(Blob(content, false), validationInfo_, contentData_);
 					} catch (const std::exception& ex) {
 						LogErrorC << "SegmentFetcher::onSegmentReceived: Error in onComplete: " << ex.what() << std::endl;
                         throw ;
@@ -213,7 +214,7 @@ SegmentFetcher::onVerifyFailed(const boost::shared_ptr<Data>& data,
 	try {
 		LogWarnC << "Verification failed for " << data->getName() << ": " << reason << std::endl;
 
-		validationInfo_.push_back(ValidationErrorInfo(data));
+		validationInfo_.push_back(ValidationErrorInfo(data, reason));
 		processSegment(originalData, originalInterest);
 	} catch (const std::exception& ex) {
 		LogErrorC << "SegmentFetcher::onSegmentReceived: Error in onError: " << ex.what() << std::endl;

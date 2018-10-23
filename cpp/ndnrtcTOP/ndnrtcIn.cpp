@@ -116,7 +116,7 @@ bufferWrite_(false), bufferRead_(false),
 frameBufferSize_(0), frameWidth_(0), frameHeight_(0),
 frameBuffer_(nullptr)
 {
-    generateName("ndnrtcIn");
+    name_ = generateName("ndnrtcIn");
     statStorage_ = StatisticsStorage::createConsumerStatistics();
 }
 

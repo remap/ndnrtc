@@ -43,6 +43,7 @@ namespace ndnrtc {
 		ndn::KeyChain* keyChain_;
 		ndn::Face* face_;
 		MediaStreamParams params_;
+        std::string storagePath_; // do not use storage if this string is empty
 	};
 
 	class VideoStreamImpl;
@@ -81,11 +82,17 @@ namespace ndnrtc {
 		 * @param logger Pointer to Logger instance
 		 */
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream
 		 */
 		statistics::StatisticsStorage getStatistics() const;
+
+        /**
+         *  Returns local persistent storage, if it was set up
+         */
+        boost::shared_ptr<StorageEngine> getStorage() const;
 
 		static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
 		static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
@@ -171,7 +178,7 @@ namespace ndnrtc {
 		int incomingArgbFrame(const unsigned int width,
 			const unsigned int height,
 			unsigned char* argbFrameData,
-			unsigned int frameSize);
+			unsigned int frameSize) override;
 
 		/**
 		 * Encode and publish I420 frame data.
@@ -187,7 +194,7 @@ namespace ndnrtc {
 			const unsigned int strideV,
 			const unsigned char* yBuffer,
 			const unsigned char* uBuffer,
-			const unsigned char* vBuffer);
+			const unsigned char* vBuffer) override;
 
 		/**
 		 * Encode and publish NV21 frame data.
@@ -201,15 +208,20 @@ namespace ndnrtc {
 			const unsigned int strideY,
 			const unsigned int strideUV,
 			const unsigned char* yBuffer,
-			const unsigned char* uvBuffer);
+			const unsigned char* uvBuffer) override;
+
+        /**
+         * Returns information about last published frames, per thread. 
+         */
+        const std::map<std::string, FrameInfo>& getLastPublishedInfo() const;
 
 		/**
 		 * Returns full stream prefix used for publishing data
 		 * @return Full stream prefix
 		 */
-		std::string getPrefix() const;
-		std::string getBasePrefix() const;
-		std::string getStreamName() const;
+		std::string getPrefix() const override;
+		std::string getBasePrefix() const override;
+		std::string getStreamName() const override;
 		
 		/**
 		 * Returns array of current video thread names
@@ -221,12 +233,18 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) override;
+        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream
 		 */
-		statistics::StatisticsStorage getStatistics() const;
+		statistics::StatisticsStorage getStatistics() const override;
+
+        /**
+         *  Returns local persistent storage, if it was set up
+         */
+        boost::shared_ptr<StorageEngine> getStorage() const;
 
 	private:
 		LocalVideoStream(const LocalVideoStream&) = delete;

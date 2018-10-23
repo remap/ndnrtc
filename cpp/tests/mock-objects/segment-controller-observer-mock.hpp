@@ -16,8 +16,8 @@ class MockSegmentControllerObserver : public ndnrtc::ISegmentControllerObserver
 {
 public:
 	MOCK_METHOD1(segmentArrived, void(const boost::shared_ptr<ndnrtc::WireSegment>&));
-	MOCK_METHOD1(segmentRequestTimeout, void(const ndnrtc::NamespaceInfo&));
-	MOCK_METHOD2(segmentNack, void(const ndnrtc::NamespaceInfo&, int));
+	MOCK_METHOD2(segmentRequestTimeout, void(const ndnrtc::NamespaceInfo&, const boost::shared_ptr<const ndn::Interest> &));
+	MOCK_METHOD3(segmentNack, void(const ndnrtc::NamespaceInfo&, int, const boost::shared_ptr<const ndn::Interest> &));
 	MOCK_METHOD0(segmentStarvation, void());
 };
 

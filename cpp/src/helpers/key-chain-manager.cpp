@@ -1,4 +1,4 @@
-// 
+//
 // key-chain-manager.cpp
 //
 //  Created by Peter Gusev on 02 September 2016.
@@ -115,13 +115,28 @@ void KeyChainManager::publishCertificates()
 //******************************************************************************
 void KeyChainManager::setupDefaultKeyChain()
 {
-	defaultKeyChain_ = boost::make_shared<ndn::KeyChain>();
+    defaultKeyChain_ = boost::make_shared<ndn::KeyChain>();
 }
 
 void KeyChainManager::setupInstanceKeyChain()
 {
-	Name signingIdentity(signingIdentity_);
-	std::vector<Name> identities;
+    Name signingIdentity(signingIdentity_);
+    std::vector<Name> identities;
+
+    if (defaultKeyChain_->getIsSecurityV1())
+    {
+        defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, false);
+        defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, true);
+    }
+    else
+        defaultKeyChain_->getPib().getAllIdentityNames(identities);
+
+    if (std::find(identities.begin(), identities.end(), signingIdentity) == identities.end())
+    {
+        // create signing identity in default keychain
+        LogInfo("") << "Signing identity not found. Creating..." << std::endl;
+        createSigningIdentity();
+    }
 
 	if (defaultKeyChain_->getIsSecurityV1()) {
 		defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, false);
@@ -161,19 +176,18 @@ void KeyChainManager::setupInstanceKeyChain()
 
 void KeyChainManager::setupConfigPolicyManager()
 {
-	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
+    identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
     privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
-	if (defaultKeyChain_->getIsSecurityV1())
-		configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
-	else
-		configPolicyManager_ = boost::make_shared<ConfigPolicyManager>
-          (configPolicy_, boost::make_shared<CertificateCacheV2>());
+    if (defaultKeyChain_->getIsSecurityV1())
+        configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+    else
+        configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_, boost::make_shared<CertificateCacheV2>());
 }
 
 void KeyChainManager::createSigningIdentity()
 {
     // create self-signed certificate
-	Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
+    Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
 
 	LogInfoC << "Generated identity " << signingIdentity_ << " (certificate name " 
 		<< cert << ")" << std::endl;
@@ -184,48 +198,46 @@ void KeyChainManager::createSigningIdentity()
 void KeyChainManager::createMemoryKeychain()
 {
     if (defaultKeyChain_->getIsSecurityV1())
-        instanceKeyChain_ = boost::make_shared<KeyChain>
-          (boost::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
-           configPolicyManager_);
+        instanceKeyChain_ = boost::make_shared<KeyChain>(boost::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
+                                                         configPolicyManager_);
     else
-        instanceKeyChain_ = boost::make_shared<KeyChain>
-          (boost::make_shared<PibMemory>(), boost::make_shared<TpmBackEndMemory>(),
-           configPolicyManager_);
+        instanceKeyChain_ = boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), boost::make_shared<TpmBackEndMemory>(),
+                                                         configPolicyManager_);
 
     instanceKeyChain_->setFace(face_.get());
 }
 
 void KeyChainManager::createInstanceIdentity()
 {
-	auto now = system_clock::now().time_since_epoch();
-	duration<double> sec = now;
+    auto now = system_clock::now().time_since_epoch();
+    duration<double> sec = now;
 
-	Name instanceIdentity(signingIdentity_);
+    Name instanceIdentity(signingIdentity_);
 
     instanceIdentity.append(instanceName_);
     instanceIdentity_ = instanceIdentity.toUri();
     
     LogInfoC << "Instance identity " << instanceIdentity << std::endl;
 
-	Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity, true);
-	Name signingCert = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(Name(signingIdentity_));
+    Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity, true);
+    Name signingCert = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(Name(signingIdentity_));
 
 	LogDebugC << "Instance key " << instanceKeyName << std::endl;
 	LogDebugC << "Signing certificate " << signingCert << std::endl;
 
-	std::vector<CertificateSubjectDescription> subjectDescriptions;
-	instanceCert_ =
-		instanceKeyChain_->getIdentityManager()->prepareUnsignedIdentityCertificate(instanceKeyName,
-			Name(signingIdentity_),
-			sec.count()*1000,
-			(sec+duration<double>(runTime_)).count()*1000,
-            subjectDescriptions,
-            &instanceIdentity);
+    std::vector<CertificateSubjectDescription> subjectDescriptions;
+    instanceCert_ =
+        instanceKeyChain_->getIdentityManager()->prepareUnsignedIdentityCertificate(instanceKeyName,
+                                                                                    Name(signingIdentity_),
+                                                                                    sec.count() * 1000,
+                                                                                    (sec + duration<double>(runTime_)).count() * 1000,
+                                                                                    subjectDescriptions,
+                                                                                    &instanceIdentity);
     assert(instanceCert_.get());
-    
-	defaultKeyChain_->sign(*instanceCert_, signingCert);
-	instanceKeyChain_->installIdentityCertificate(*instanceCert_);
-	instanceKeyChain_->setDefaultCertificateForKey(*instanceCert_);
+
+    defaultKeyChain_->sign(*instanceCert_, signingCert);
+    instanceKeyChain_->installIdentityCertificate(*instanceCert_);
+    instanceKeyChain_->setDefaultCertificateForKey(*instanceCert_);
     instanceKeyChain_->getIdentityManager()->setDefaultIdentity(instanceIdentity);
 
 	LogInfoC << "Instance certificate "
@@ -234,10 +246,10 @@ void KeyChainManager::createInstanceIdentity()
 
 void KeyChainManager::createInstanceIdentityV2()
 {
-	auto now = system_clock::now().time_since_epoch();
-	duration<double> sec = now;
+    auto now = system_clock::now().time_since_epoch();
+    duration<double> sec = now;
 
-	Name instanceIdentity(signingIdentity_);
+    Name instanceIdentity(signingIdentity_);
 
     instanceIdentity.append(instanceName_);
     instanceIdentity_ = instanceIdentity.toUri();
@@ -256,24 +268,23 @@ void KeyChainManager::createInstanceIdentityV2()
 	LogDebugC << "Signing certificate " << signingCert << std::endl;
 
     // Prepare the instance certificate.
-	boost::shared_ptr<CertificateV2> instanceCertificate(new CertificateV2());
-	Name certificateName = instancePibKey->getName();
+    boost::shared_ptr<CertificateV2> instanceCertificate(new CertificateV2());
+    Name certificateName = instancePibKey->getName();
     // Use the issuer's public key digest.
-	certificateName.append(PublicKey(signingPibKey->getPublicKey()).getDigest());
-    certificateName.appendVersion((uint64_t)(sec.count()*1000));
-	instanceCertificate->setName(certificateName);
-	instanceCertificate->getMetaInfo().setType(ndn_ContentType_KEY);
-	instanceCertificate->getMetaInfo().setFreshnessPeriod(3600 * 1000.0);
-	instanceCertificate->setContent(instancePibKey->getPublicKey());
+    certificateName.append(PublicKey(signingPibKey->getPublicKey()).getDigest());
+    certificateName.appendVersion((uint64_t)(sec.count() * 1000));
+    instanceCertificate->setName(certificateName);
+    instanceCertificate->getMetaInfo().setType(ndn_ContentType_KEY);
+    instanceCertificate->getMetaInfo().setFreshnessPeriod(3600 * 1000.0);
+    instanceCertificate->setContent(instancePibKey->getPublicKey());
 
     SigningInfo signingParams(signingPibKey);
-	signingParams.setValidityPeriod
-      (ValidityPeriod(sec.count() * 1000, 
-                      (sec + duration<double>(runTime_)).count() * 1000));
-	defaultKeyChain_->sign(*instanceCertificate, signingParams);
+    signingParams.setValidityPeriod(ValidityPeriod(sec.count() * 1000,
+                                                   (sec + duration<double>(runTime_)).count() * 1000));
+    defaultKeyChain_->sign(*instanceCertificate, signingParams);
 
-	instanceKeyChain_->addCertificate(*instancePibKey, *instanceCertificate);
-	instanceKeyChain_->setDefaultCertificate(*instancePibKey, *instanceCertificate);
+    instanceKeyChain_->addCertificate(*instancePibKey, *instanceCertificate);
+    instanceKeyChain_->setDefaultCertificate(*instancePibKey, *instanceCertificate);
     instanceKeyChain_->setDefaultIdentity(*instancePibIdentity);
     instanceCert_ = instanceCertificate;
 
@@ -309,7 +320,7 @@ void KeyChainManager::checkExists(const std::string& file)
     std::ifstream stream(file.c_str());
     bool result = (bool)stream;
     stream.close();
-    
+
     if (!result)
     {
         std::stringstream ss;

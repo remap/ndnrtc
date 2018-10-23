@@ -20,6 +20,8 @@ public:
 	MOCK_CONST_METHOD0(pendingSize, int64_t());
 	MOCK_CONST_METHOD0(sampleRate, double());
 	MOCK_CONST_METHOD0(samplePeriod, double());
+    MOCK_METHOD1(attach, void(ndnrtc::IPlaybackQueueObserver*));
+    MOCK_METHOD1(detach, void(ndnrtc::IPlaybackQueueObserver*));
 };
 
 #endif

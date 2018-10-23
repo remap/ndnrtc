@@ -111,13 +111,13 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
                             // io_service other than draining them forcibly
     }
 
-    LogTraceC
-    << "enqueue\t" << entry.interest_->getName()
-    << "\texclude: " << entry.interest_->getExclude().toUri()
-    << "\tpri: "
-    << entry.getValue() << "\tlifetime: "
-    << entry.interest_->getInterestLifetimeMilliseconds()
-    << "\tqsize: " << queue_.size() << std::endl;
+    // LogTraceC
+    // << "enqueue\t" << entry.interest_->getName()
+    // << "\texclude: " << entry.interest_->getExclude().toUri()
+    // << "\tpri: "
+    // << entry.getValue() << "\tlifetime: "
+    // << entry.interest_->getInterestLifetimeMilliseconds()
+    // << "\tqsize: " << queue_.size() << std::endl;
 }
 
 void
@@ -148,9 +148,9 @@ InterestQueue::drainQueue()
 
     if (isDrainingQueue_)
     {
-        LogTraceC 
-        << "draining queue, size "  << queue_.size() 
-        << ", top priority: " << queue_.top().getValue() << std::endl;
+        // LogTraceC 
+        // << "draining queue, size "  << queue_.size() 
+        // << ", top priority: " << queue_.top().getValue() << std::endl;
 
         while (isDrainingQueue_)
         {
@@ -164,14 +164,13 @@ InterestQueue::drainQueue()
 void
 InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 {    
-    LogTraceC
-    << "express\t" << entry.interest_->getName()
-    << "\texclude: " << entry.interest_->getExclude().toUri()
-    << "\tpri: "
-    << entry.getValue() << "\tlifetime: "
-    << entry.interest_->getInterestLifetimeMilliseconds() << "\tqsize: "
-    << queue_.size()
-    << std::endl;
+    LogTraceC << "express\t" << entry.interest_->getName()
+              << "\texclude: " << entry.interest_->getExclude().toUri()
+              << "\tpri: " << entry.getValue() 
+              << "\tlifetime: " << entry.interest_->getInterestLifetimeMilliseconds()
+              << "\tqsize: " << queue_.size()
+              << "\tmustBeFresh: " << entry.interest_->getMustBeFresh()
+              << std::endl;
 
     face_->expressInterest(*(entry.interest_), entry.onDataCallback_, 
         entry.onTimeoutCallback_, entry.onNetworkNack_);

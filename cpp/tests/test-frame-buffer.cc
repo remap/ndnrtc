@@ -28,7 +28,7 @@ using namespace testing;
 TEST(TestSlotSegment, TestCreate)
 {
 	{
-		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/%00%00";
+		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07/%00%00";
 		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(name), 1000));
 		EXPECT_NO_THROW(SlotSegment s(interest));
 	
@@ -37,7 +37,7 @@ TEST(TestSlotSegment, TestCreate)
 		EXPECT_FALSE(seg.isRightmostRequested());
 	}
 	{
-		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
+		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d";
 		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(name), 1000));
 		EXPECT_NO_THROW(SlotSegment s(interest));
 
@@ -45,7 +45,7 @@ TEST(TestSlotSegment, TestCreate)
 		EXPECT_TRUE(seg.isRightmostRequested());
 	}
 	{
-		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07/%00%00";
+		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07/%00%00";
 		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(name), 1000));
 		EXPECT_NO_THROW(SlotSegment s(interest));
 
@@ -53,7 +53,7 @@ TEST(TestSlotSegment, TestCreate)
 		EXPECT_FALSE(seg.isRightmostRequested());
 	}
 	{
-		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd";
+		std::string name = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd";
 		boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(Name(name), 1000));
 		EXPECT_NO_THROW(SlotSegment s(interest));
 
@@ -62,9 +62,40 @@ TEST(TestSlotSegment, TestCreate)
 	}
 }
 
+TEST(TestBufferSlot, TestRtx)
+{
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
+	std::vector<boost::shared_ptr<const Interest>> interests;
+	int n = 10;
+
+	for (int i = 0; i < n; ++i)
+	{
+		Name iname(frameName);
+		iname.appendSegment(i);
+		interests.push_back(boost::make_shared<Interest>(iname, 1000));
+	}
+
+	BufferSlot slot;
+
+	EXPECT_EQ(BufferSlot::Free, slot.getState());
+	EXPECT_NO_THROW(slot.segmentsRequested(interests));
+	EXPECT_EQ(7, slot.getNameInfo().sampleNo_);
+	EXPECT_EQ(Name(frameName), slot.getPrefix());
+
+    EXPECT_EQ(0, slot.getRtxNum());
+    EXPECT_NO_THROW(slot.segmentsRequested(interests));
+    EXPECT_EQ(n, slot.getRtxNum());
+
+    for (auto i:interests)
+        EXPECT_EQ(1, slot.getRtxNum(i->getName()));
+
+	EXPECT_EQ(0, slot.getAssembledLevel());
+	EXPECT_EQ(BufferSlot::New, slot.getState());
+}
+
 TEST(TestBufferSlot, TestAddInterests)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
 	std::vector<boost::shared_ptr<const Interest>> interests;
 	int n = 10;
 
@@ -88,7 +119,7 @@ TEST(TestBufferSlot, TestAddInterests)
 
 TEST(TestBufferSlot, TestAddInterestsTwoTimes)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
 	std::vector<boost::shared_ptr<const Interest>> interests;
 	int n = 10;
 
@@ -129,7 +160,7 @@ TEST(TestBufferSlot, TestAddInterestsTwoTimes)
 
 TEST(TestBufferSlot, TestBadInterestRange)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
 
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
@@ -140,7 +171,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 
 		BufferSlot slot;
 		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
-		EXPECT_EQ(BufferSlot::Free, slot.getState());
+		EXPECT_EQ(slot.getState(), BufferSlot::Free);
 	}
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
@@ -157,8 +188,8 @@ TEST(TestBufferSlot, TestBadInterestRange)
 	}
 	{
 		std::vector<boost::shared_ptr<const Interest>> interests;
-		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07").appendSegment(0), 1000));
-		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%08").appendSegment(0), 1000));
+		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07").appendSegment(0), 1000));
+		interests.push_back(boost::make_shared<Interest>(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%08").appendSegment(0), 1000));
 
 		BufferSlot slot;
 		EXPECT_ANY_THROW(slot.segmentsRequested(interests));
@@ -170,7 +201,7 @@ TEST(TestBufferSlot, TestBadInterestRange)
 
 TEST(TestBufferSlot, TestAddData)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket();
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
 
@@ -322,14 +353,14 @@ TEST(TestBufferSlot, TestAddData)
 		slot.segmentsRequested(makeInterestsConst(interests));
 		ASSERT_EQ(BufferSlot::New, slot.getState());
 		boost::shared_ptr<Data> dobj = dataObjects.back();
-		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/desktop/hi/d/%FE%07/%00%00"));
+		dobj->setName(Name("/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/desktop/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07/%00%00"));
 		boost::shared_ptr<ndn::Interest> i;
 		EXPECT_ANY_THROW(slot.segmentReceived(boost::make_shared<WireSegment>(dobj, i)));
 	}
 
 	{ // add parity data
-		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
-		std::string parityName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07/_parity/%00%00";
+		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
+		std::string parityName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07/_parity/%00%00";
 		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
 		std::vector<boost::shared_ptr<Interest>> interests = getInterests(frameName, 0, dataObjects.size(), 0, 1);
 		BufferSlot slot;
@@ -346,7 +377,7 @@ TEST(TestBufferSlot, TestAddData)
 
 TEST(TestBufferSlot, TestMissingSegments)
 {
-    std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
+    std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
     VideoFramePacket vp = getVideoFramePacket(30000);
     std::vector<VideoFrameSegment> segments = sliceFrame(vp);
     boost::shared_ptr<ndnrtc::NetworkData> parityData;
@@ -426,7 +457,7 @@ TEST(TestBufferSlot, TestReuseSlot)
 		EXPECT_EQ(0, slot.getLongestDrd());
 		EXPECT_FALSE(slot.hasOriginalSegments());
 
-		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%07";
+		std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%07";
 		VideoFramePacket vp = getVideoFramePacket();
 		std::vector<VideoFrameSegment> segments = sliceFrame(vp);
 		std::vector<boost::shared_ptr<ndn::Data>> dataObjects = dataFromSegments(frameName, segments);
@@ -482,7 +513,7 @@ TEST(TestBufferSlot, TestReuseSlot)
 
 TEST(TestVideoFrameSlot, TestAsembleVideoFrame)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket();
 
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp, 734, 1249);
@@ -520,7 +551,7 @@ TEST(TestVideoFrameSlot, TestAsembleVideoFrame)
 
 TEST(TestVideoFrameSlot, TestFailedAssembleNotEnoughData)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket();
 
 	std::vector<VideoFrameSegment> segments = sliceFrame(vp);
@@ -553,7 +584,7 @@ TEST(TestVideoFrameSlot, TestFailedAssembleNotEnoughData)
 
 TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/cmaera/hi/d/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket(10000);
 
 	boost::shared_ptr<NetworkData> parity;
@@ -607,7 +638,7 @@ TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover)
 
 TEST(TestVideoFrameSlot, TestAssembleVideoFrameRecover2)
 {
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d/%FE%07";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07";
 	VideoFramePacket vp = getVideoFramePacket(20000);
 
 	boost::shared_ptr<NetworkData> parity;
@@ -688,7 +719,7 @@ TEST(TestAudioBundleSlot, TestAssembleAudioBundle)
     std::vector<CommonSegment> segments = CommonSegment::slice(bundlePacket, wire_len);
     ASSERT_EQ(1, segments.size());
 
-    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%02/audio/mic/hd/%FE%00";
+    std::string frameName = "/ndn/edu/ucla/remap/ndncon/instance1/ndnrtc/%FD%03/audio/mic/%FC%00%00%01c_%27%DE%D6/hd/%FE%00";
     ndn::Name n(frameName);
     n.appendSegment(0);
     boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
@@ -742,7 +773,7 @@ TEST(TestBuffer, TestRequestAndReceive)
 	std::srand(std::time(0));
 	size_t poolSize = 50;
 	int n = poolSize+10;
-	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%02/video/camera/hi/d";
+	std::string frameName = "/ndn/edu/ucla/remap/peter/ndncon/instance1/ndnrtc/%FD%03/video/camera/%FC%00%00%01c_%27%DE%D6/hi/d";
     boost::shared_ptr<StatisticsStorage> storage(StatisticsStorage::createConsumerStatistics());
 	boost::shared_ptr<SlotPool> pool(boost::make_shared<SlotPool>(poolSize));
 	MockBufferObserver observer1, observer2;

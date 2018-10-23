@@ -169,7 +169,8 @@ public:
     * Add stream to gather metrics from
     * @param stream Pointer to a stream (local or remote)
     */
-   void addStream(const boost::shared_ptr<const ndnrtc::IStream>& stream);
+   void addStream(const boost::shared_ptr<const ndnrtc::IStream>& stream,
+                  std::string path, std::vector<StatGatheringParams> stats);
    
    /**
     * Remove stream previously added
@@ -202,8 +203,7 @@ public:
     * @param stats An array of StatGatheringParams which identifies which metrics
     *          to store in .stat files.
     */
-   void startCollecting(unsigned int queryIntervalMs, std::string path, 
-      std::vector<StatGatheringParams> stats);
+   void startCollecting(unsigned int queryIntervalMs);
 
    /**
     * Stops statistics gathering

@@ -36,7 +36,7 @@ pimpl_(boost::make_shared<AudioStreamImpl>(basePrefix, settings))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
-	pimpl_->publishMeta(1);
+	pimpl_->publishMeta();
 }
 
 LocalAudioStream::~LocalAudioStream()
@@ -101,10 +101,23 @@ LocalAudioStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	pimpl_->setLogger(logger);
 }
 
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalAudioStream::getLogger() const
+{
+    return pimpl_->getLogger();
+}
+
+
 statistics::StatisticsStorage 
 LocalAudioStream::getStatistics() const
 {
 	return pimpl_->getStatistics();
+}
+
+boost::shared_ptr<StorageEngine> 
+LocalAudioStream::getStorage() const
+{
+    return pimpl_->getStorage();
 }
 
 //******************************************************************************
@@ -114,7 +127,7 @@ pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
-	pimpl_->publishMeta(1);
+	pimpl_->publishMeta();
 }
 
 LocalVideoStream::~LocalVideoStream()
@@ -164,6 +177,12 @@ int LocalVideoStream::incomingNV21Frame(const unsigned int width,
 		strideUV, yBuffer, uvBuffer}));
 }
 
+const std::map<std::string, FrameInfo>& 
+LocalVideoStream::getLastPublishedInfo() const
+{
+    return pimpl_->getLastPublished();
+}
+
 string
 LocalVideoStream::getPrefix() const
 {
@@ -194,8 +213,20 @@ LocalVideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
 	pimpl_->setLogger(logger);
 }
 
+boost::shared_ptr<ndnlog::new_api::Logger> 
+LocalVideoStream::getLogger() const
+{
+    return pimpl_->getLogger();
+}
+
 statistics::StatisticsStorage 
 LocalVideoStream::getStatistics() const
 {
 	return pimpl_->getStatistics();
+}
+
+boost::shared_ptr<StorageEngine> 
+LocalVideoStream::getStorage() const
+{
+    return pimpl_->getStorage();
 }

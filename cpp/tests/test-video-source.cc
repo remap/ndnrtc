@@ -104,7 +104,7 @@ TEST(TestVideoSource, TestVideoSourcing)
 
 TEST(TestVideoSource, TestHdVideoSourcing)
 {
-    std::string fname = test_path+"../../../res/test-source-1280x720.argb";
+    std::string fname = test_path+"../../res/test-source-1280x720.argb";
     Sequence s;
     MockExternalCapturer capturer;
     

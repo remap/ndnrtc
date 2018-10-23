@@ -39,7 +39,7 @@ namespace ndnrtc {
     PacketNumber packetCount_;
     boost::shared_ptr<AudioRenderer> renderer_;
 
-    void
+    bool
     processSample(const boost::shared_ptr<const BufferSlot>&);
   };
 }

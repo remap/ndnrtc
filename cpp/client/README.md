@@ -219,7 +219,7 @@ Check out `.png` files of the generated plots inside the folder:
  - `network.png` - shows calculated rates for various network-level packets: Interests, Data, Nacks, Application Nacks, etc.;
  - `playback.png` - shows *DRD* estimation (Data Retrieval Delay) for packets, end-to-end playback latency estimation and Frame demand (Lambda) estimation - minimum number of pending frames;
  - `segments.png` - producer-side printout of number of segments for each frame per data type (data/parity), per frame type (key/delta);
- - `states.png` - consumer states changes over time (1 - Idle, 2 - WaitForInitial, 3 - WaitForRightmost, 4 - Chasing, 5 - Adjusting, 6 - Fetching). 
+ - `states.png` - consumer states changes over time (1 - Idle, 2 - Bootstrapping, 3 - Adjusting, 4 - Fetching). 
 
 If you want to watch received video, use `ffmpeg` to transcode it to `.mp4`:
 

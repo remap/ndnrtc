@@ -16,7 +16,7 @@ class MockExternalRenderer : public ndnrtc::IExternalRenderer
 {
 public:
 	MOCK_METHOD2(getFrameBuffer, uint8_t*(int,int));
-	MOCK_METHOD5(renderBGRAFrame, void(int64_t,uint,int,int,const uint8_t*));
+	MOCK_METHOD4(renderBGRAFrame, void(const ndnrtc::FrameInfo& frameInfo,int,int,const uint8_t*));
 };
 
 #endif

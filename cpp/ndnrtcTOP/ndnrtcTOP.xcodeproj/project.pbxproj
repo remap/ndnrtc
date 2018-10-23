@@ -22,6 +22,8 @@
 		AF889B5E2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF889B642037733900F36342 /* ndnrtcIn.plugin */; };
 		AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B67203773FF00F36342 /* ndnrtcIn.cpp */; };
+		AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
+		AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -85,7 +87,7 @@
 		AF889B5F2037733900F36342 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "${PROJECT_DIR}/${LIBNDNRTC_INSTALL_DIR}";
+			dstPath = "${LIBNDNRTC_INSTALL_DIR}";
 			dstSubfolderSpec = 0;
 			files = (
 				AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */,
@@ -118,7 +120,7 @@
 		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "${PROJECT_DIR}/${LIBNDNRTC_INSTALL_DIR}";
+			dstPath = "${LIBNDNRTC_INSTALL_DIR}";
 			dstSubfolderSpec = 0;
 			files = (
 				AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */,
@@ -135,6 +137,7 @@
 		AF889B652037733900F36342 /* ndnrtcIn-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "ndnrtcIn-Info.plist"; path = "/Users/peetonn/Documents/Work/ndnrtc-build/ndnrtc/cpp/ndnrtcTOP/ndnrtcIn-Info.plist"; sourceTree = "<absolute>"; };
 		AF889B67203773FF00F36342 /* ndnrtcIn.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcIn.cpp; sourceTree = "<group>"; };
 		AF889B68203773FF00F36342 /* ndnrtcIn.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcIn.hpp; sourceTree = "<group>"; };
+		AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libndn-cpp.a"; path = "../../../ndnrtc-thirdparty/ndn-cpp/build/lib/libndn-cpp.a"; sourceTree = "<group>"; };
 		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
 		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
 		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
@@ -149,7 +152,7 @@
 		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
 		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
 		AFE43C8F202E239900072172 /* ndnrtcOut.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcOut.hpp; sourceTree = "<group>"; };
-		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../.libs/libndnrtc.a; sourceTree = "<group>"; };
+		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../build/lib/libndnrtc.a; sourceTree = "<group>"; };
 		AFE43CA5202E330100072172 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = /usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -160,6 +163,7 @@
 			files = (
 				AF889B542037733900F36342 /* OpenGL.framework in Frameworks */,
 				AF889B552037733900F36342 /* libboost_system.a in Frameworks */,
+				AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
 				AF889B562037733900F36342 /* libndnrtc.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -170,6 +174,7 @@
 			files = (
 				AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */,
 				AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */,
+				AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
 				AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -275,6 +280,7 @@
 				AF9431BB20357CF20042FB3A /* OpenGL.framework */,
 				AFE43CA5202E330100072172 /* libboost_system.a */,
 				AFE43C99202E2D9700072172 /* libndnrtc.a */,
+				AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -470,16 +476,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
-				HEADER_SEARCH_PATHS = (
-					/usr/local/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
-				);
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
-					$LIBNDNRTC_INSTALL_DIR/lib,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -493,16 +491,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
-				HEADER_SEARCH_PATHS = (
-					/usr/local/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
-				);
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
-					$LIBNDNRTC_INSTALL_DIR/lib,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -551,6 +541,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PRODUCT_NAME=${TARGET_NAME}",
 					"DEBUG=1",
+					NDN_INFO,
+					NDN_LOGGING,
+					NDN_TRACE,
+					NDN_WARN,
+					NDN_DEBUG,
+					NDN_ERROR,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -558,7 +554,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LIBNDNRTC_INSTALL_DIR = ../build;
+				HEADER_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+					/usr/local/include,
+				);
+				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
+				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
+				LIBRARY_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+					/usr/local/lib,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -609,7 +616,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LIBNDNRTC_INSTALL_DIR = ../build;
+				HEADER_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+					/usr/local/include,
+				);
+				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
+				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
+				LIBRARY_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+					/usr/local/lib,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -622,16 +640,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
-				HEADER_SEARCH_PATHS = (
-					/usr/local/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
-				);
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
-					$LIBNDNRTC_INSTALL_DIR/lib,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -645,16 +655,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = SC33BJMPXV;
-				HEADER_SEARCH_PATHS = (
-					/usr/local/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
-				);
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/lib,
-					$LIBNDNRTC_INSTALL_DIR/lib,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

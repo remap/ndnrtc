@@ -39,6 +39,8 @@
 #include "simple-log.hpp"
 #include "helpers/face-processor.hpp"
 #include "helpers/key-chain-manager.hpp"
+#include "name-components.hpp"
+#include "frame-fetcher.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;
@@ -61,9 +63,10 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
 
 //******************************************************************************
-const char* ndnrtc_lib_version()
+const char* ndnrtc_getVersion()
 {
-	return PACKAGE_VERSION;
+    static std::string version = NameComponents::fullVersion();
+    return version.c_str();
 }
 
 void ndnrtc_get_identities_list(char*** identities, int* nIdentities)
@@ -133,6 +136,7 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.sign_ = (params.signingOn == 1);
 		settings.face_ = LibFaceProcessor->getFace().get();
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
+        settings.storagePath_ = (params.storagePath ? std::string(params.storagePath) : "");
 
 		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
 			boost::make_shared<CallbackSink>(loggerSink));
@@ -145,12 +149,36 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 
 		// registering prefix for the stream
 		Name prefix(stream->getPrefix());
-		registerPrefix(prefix, callbackLogger);
+		registerPrefix(prefix.getPrefix(-1), callbackLogger);
 
 		return stream;
 	}
 
 	return nullptr;
+}
+
+
+cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream)
+{
+    static char *frameName = nullptr;
+    if (!frameName) frameName = (char*)malloc(1024*sizeof(char));
+
+    memset((void*)frameName, 0, 1024);
+    cFrameInfo frameInfo({0, 0, frameName});
+
+    if (stream)
+    {
+        std::map<std::string, FrameInfo> lastPublishedInfo = stream->getLastPublishedInfo();
+        if (lastPublishedInfo.size())
+        {
+            FrameInfo fi = lastPublishedInfo.begin()->second;
+            frameInfo.timestamp_ = fi.timestamp_;
+            frameInfo.playbackNo_ = fi.playbackNo_;
+            strcpy(frameInfo.ndnName_, fi.ndnName_.c_str());
+        }
+    }
+
+    return frameInfo;
 }
 
 void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
@@ -177,6 +205,68 @@ void ndnrtc_LocalStream_getStreamName(ndnrtc::IStream *stream, char* streamName)
 {
 	if (stream)
 		strcpy(streamName, stream->getStreamName().c_str());
+}
+
+double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
+{
+    if (stream)
+    {
+        bool f = false;
+        statistics::Indicator ind;
+        std::string sname(statName);
+        for (auto p:statistics::StatisticsStorage::IndicatorKeywords)
+            if (p.second == sname)
+            {
+                ind = p.first;
+                f = true;
+                break;
+            }
+
+        if (f)
+        {
+            statistics::StatisticsStorage::StatRepo repo = stream->getStatistics().getIndicators();
+            if (repo.find(ind) != repo.end())
+                return repo[ind];
+        }
+        return 0;
+    }
+
+    return 0;
+}
+
+static std::map<std::string, boost::shared_ptr<FrameFetcher>> FrameFetchers;
+void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
+                               const char* frameName, 
+                               BufferAlloc bufferAllocFunc,
+                               FrameFetched frameFetchedFunc)
+{
+    boost::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
+    boost::shared_ptr<FrameFetcher> ff = boost::make_shared<FrameFetcher>(storage);
+
+    std::string fkey(frameName);
+    FrameFetchers[fkey] = ff;
+
+    ((LocalVideoStream*)stream)->getLogger()->log(ndnlog::NdnLoggerLevelInfo) << "Setting up frame-fetcher for " << fkey << std::endl;
+
+    ff->setLogger(((LocalVideoStream*)stream)->getLogger());
+    ff->fetch(Name(frameName),
+              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+                                      int width, int height)->uint8_t*
+              {
+                  return bufferAllocFunc(fkey.c_str(), width, height);
+              },
+              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+                 const FrameInfo fi, int nFetchedFrames,
+                 int width, int height, const uint8_t* buffer){
+                    cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
+                    frameFetchedFunc(frameInfo, width, height, buffer);
+                    FrameFetchers.erase(fkey);
+              },
+              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason){
+                    cFrameInfo frameInfo({0,0,(char*)fkey.c_str()});
+                    frameFetchedFunc(frameInfo, 0, 0, nullptr);
+                    FrameFetchers.erase(fkey);
+              });
 }
 
 int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
@@ -334,7 +424,7 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 
 	MediaStreamParams p(params.streamName);
 	p.producerParams_.segmentSize_ = params.ndnSegmentSize;
-	p.producerParams_.freshnessMs_ = params.ndnDataFreshnessPeriodMs;
+	p.producerParams_.freshness_= {10, 30, 900};
 
 	if (params.typeIsVideo == 1)
 	{

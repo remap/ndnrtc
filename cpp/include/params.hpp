@@ -215,12 +215,21 @@ namespace ndnrtc
     // general producer parameters
     class GeneralProducerParams : public Params {
     public:
-        unsigned int segmentSize_ = 0, freshnessMs_ = 0;
+        typedef struct _FreshnessPeriodParams {
+            unsigned int metadataMs_;
+            unsigned int sampleMs_;
+            unsigned int sampleKeyMs_;
+        } FreshnessPeriodParams;
+
+        unsigned int segmentSize_ = 0;
+        FreshnessPeriodParams freshness_ = {0, 0, 0};
         
         void write(std::ostream& os) const
         {
             os << "seg size: " << segmentSize_
-            << " bytes; freshness: " << freshnessMs_ << " ms";
+               << " bytes; freshness (ms): metadata " << freshness_.metadataMs_ 
+               << " sample " << freshness_.sampleMs_
+               << " sample (key) " << freshness_.sampleKeyMs_;
         }
     };
     

@@ -58,7 +58,7 @@ void VideoPlayoutImpl::stop()
 }
 
 //******************************************************************************
-void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
 {
     LogTraceC << "processing sample " << slot->dump() << std::endl;
 
@@ -69,11 +69,15 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
     if (framePacket.get())
     {
         VideoFrameSegmentHeader hdr = frameSlot_.readSegmentHeader(*slot);
+        stringstream ss;
+        ss << slot->getNameInfo().sampleNo_
+           << (slot->getNameInfo().isDelta_ ? "d/" : "k/")
+           << hdr.playbackNo_ << "p";
+        string frameStr = ss.str();
 
         if (recovered)
         {
-            LogDebugC << "recovered " << slot->getNameInfo().sampleNo_
-                << " (" << hdr.playbackNo_ << ")" << std::endl;
+            LogDebugC << "recovered " << frameStr << std::endl;
             
             (*statStorage_)[Indicator::RecoveredNum]++;
             if (slot->getNameInfo().class_ == SampleClass::Key)
@@ -87,28 +91,28 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
 
             LogTraceC << "gop " << gopCount_ << std::endl;
         }
-
-        if (currentPlayNo_ >= 0 &&
-            (hdr.playbackNo_ != currentPlayNo_+1 || !gopIsValid_))
+        else
         {
-            if (!gopIsValid_)
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
-                    << " invalid GOP" << std::endl;
-            else
-                LogWarnC << "skip " << slot->getNameInfo().sampleNo_
-                    << " (expected " << currentPlayNo_+1 
-                    << " received " << hdr.playbackNo_ << ")" << std::endl;
-
-            gopIsValid_ = false;
-
+            if (currentPlayNo_ >= 0 &&
+                (hdr.playbackNo_ != currentPlayNo_ + 1 || !gopIsValid_))
             {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-                for (auto o:observers_) 
-                    ((IVideoPlayoutObserver*)o)->frameSkipped(hdr.playbackNo_, 
-                        !slot->getNameInfo().isDelta_);
+                if (!gopIsValid_)
+                    LogWarnC << "skip " << frameStr << ". invalid GOP" << std::endl;
+                else
+                    LogWarnC << "skip " << frameStr
+                             << " (expected " << currentPlayNo_ + 1 << "p)"
+                             << std::endl;
+
+                gopIsValid_ = false;
+
+                {
+                    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                    for (auto o : observers_)
+                        ((IVideoPlayoutObserver *)o)->frameSkipped(hdr.playbackNo_, !slot->getNameInfo().isDelta_);
+                }
+
+                (*statStorage_)[Indicator::SkippedNum]++;
             }
-            
-            (*statStorage_)[Indicator::SkippedNum]++;
         }
 
         currentPlayNo_ = hdr.playbackNo_;
@@ -120,7 +124,12 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                 if (frameConsumer_)
                 {
                     if (framePacket->isValid())
-                        frameConsumer_->processFrame(currentPlayNo_, framePacket->getFrame());
+                    {
+                        FrameInfo finfo({ (uint64_t)(slot->getHeader().publishUnixTimestamp_*1000), 
+                                          currentPlayNo_, 
+                                          slot->getPrefix().toUri() });
+                        frameConsumer_->processFrame(finfo, framePacket->getFrame());
+                    }
                     else
                     {
                         LogErrorC << "frame packet is not valid " << std::endl;
@@ -133,8 +142,7 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                         !slot->getNameInfo().isDelta_);
             }
 
-            LogDebugC << "processed " << slot->getNameInfo().sampleNo_
-                << " (" << hdr.playbackNo_ << ")" << std::endl;
+            LogTraceC << "processed " << frameStr << std::endl;
             
             (*statStorage_)[Indicator::PlayedNum]++;
             (*statStorage_)[Indicator::LastPlayedNo] = currentPlayNo_;
@@ -145,7 +153,9 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             }
             else
                 (*statStorage_)[Indicator::LastPlayedDeltaNo] = slot->getNameInfo().sampleNo_;
-        }
+        } // gop is valid
+
+        return gopIsValid_;
     }
     else
     {
@@ -156,4 +166,6 @@ void VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
             ((IVideoPlayoutObserver*)o)->recoveryFailure(slot->getNameInfo().sampleNo_,
                     !slot->getNameInfo().isDelta_);
     }
+
+    return false;
 }

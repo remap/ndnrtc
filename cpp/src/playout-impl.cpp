@@ -50,7 +50,7 @@ PlayoutImpl::start(unsigned int fastForwardMs)
     delayAdjustment_ = -(int)fastForwardMs;
     isRunning_ = true;
     
-    LogInfoC << "started (‣‣" << fastForwardMs << "ms)" << std::endl;
+    LogInfoC << "started (ffwd ‣‣" << fastForwardMs << "ms)" << std::endl;
     extractSample();
 }
 
@@ -103,12 +103,13 @@ void PlayoutImpl::extractSample()
     
     stringstream debugStr;
     int64_t sampleDelay = (int64_t)round(pqueue_->samplePeriod());
+    bool validForPlayback = false;
     jitterTiming_.startFramePlayout();
 
     if (pqueue_->size())
     {
-        pqueue_->pop([this, &sampleDelay, &debugStr](const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs){
-            processSample(slot);
+        pqueue_->pop([this, &sampleDelay, &debugStr, &validForPlayback](const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs){
+            validForPlayback = processSample(slot);
             correctAdjustment(slot->getHeader().publishTimestampMs_);
             lastTimestamp_ = slot->getHeader().publishTimestampMs_;
             sampleDelay = playTimeMs;
@@ -131,7 +132,8 @@ void PlayoutImpl::extractSample()
     lastDelay_ = sampleDelay;
     int64_t actualDelay = adjustDelay(sampleDelay);
 
-    LogDebugC << "●--" << debugStr.str() << actualDelay << "ms" << std::endl;
+    if (validForPlayback)
+        LogDebugC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
 
     boost::shared_ptr<PlayoutImpl> me = boost::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);

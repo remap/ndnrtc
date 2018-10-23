@@ -15,6 +15,7 @@ namespace ndnrtc {
 	namespace statistics {
 		class StatisticsStorage;
 	}
+    class StorageEngine;
 
     /**
      * Stream interface class used as a base class for remote and local streams.
@@ -50,6 +51,11 @@ namespace ndnrtc {
          * performed.
          */
 		virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
+
+        /**
+         * Returns stream's storage, if it was set up.
+         */
+        virtual boost::shared_ptr<StorageEngine> getStorage() const = 0;
 
         virtual ~IStream() {}
 	};

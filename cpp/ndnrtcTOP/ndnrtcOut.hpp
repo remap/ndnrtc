@@ -6,7 +6,8 @@
 //
 
 #include "ndnrtcTOP_base.hpp"
-#include <ndnrtc/c-wrapper.h>
+
+#include <ndnrtc/params.hpp>
 
 namespace ndnrtc {
     namespace statistics {
@@ -48,6 +49,6 @@ private:
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
 
     void                    createLocalStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
-    LocalStreamParams       readStreamParams(OP_Inputs*) const;
-    void                    allocateIncomingFramebuffer(int w, int h);
+    ndnrtc::MediaStreamParams   readStreamParams(OP_Inputs*) const;
+    void                        allocateIncomingFramebuffer(int w, int h);
 };

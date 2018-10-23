@@ -37,15 +37,16 @@ DrdEstimator::newValue(double drd, bool isOriginal, double dGen)
 	latest_ = (isOriginal ? &originalDrd_ : &cachedDrd_);
 	
 	double newValue = (isOriginal ? originalDrd_.value() : cachedDrd_.value());
+    double deviation = (isOriginal ? originalDrd_.deviation() : cachedDrd_.deviation());
 	
 	if (oldValue != newValue)
 	{
 		boost::lock_guard<boost::mutex> scopedLock(mutex_);
 		for (auto& o:observers_) {
 			if (isOriginal)
-				o->onOriginalDrdUpdate();
+				o->onOriginalDrdUpdate(newValue, deviation);
 			else
-				o->onCachedDrdUpdate();
+				o->onCachedDrdUpdate(newValue, deviation);
 			o->onDrdUpdate();
 		}
 	}

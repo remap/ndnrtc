@@ -48,6 +48,8 @@ namespace ndnrtc {
                 VerifyFailure,                  // SampleValidator
                 LatencyControlStable,           // LatencyControl
                 LatencyControlCommand,          // LatencyControl
+                FrameFetchAvgDelta,             // Buffer
+                FrameFetchAvgKey,               // Buffer
                 
                 // playout
                 LastPlayedNo,                   // VideoPlayout
@@ -77,6 +79,8 @@ namespace ndnrtc {
                 BytesReceived,                  // SegmentController
                 RawBytesReceived,               // SegmentController
                 State,                          // PipelineControlStateMachine
+                DoubleRtFrames,                 // Pipeliner
+                DoubleRtFramesKey,              // Pipeliner
                 
                 // DRD estimator
                 DrdOriginalEstimation,          // BufferControl

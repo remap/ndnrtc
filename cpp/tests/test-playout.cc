@@ -55,8 +55,9 @@ public:
 	boost::function<void(const boost::shared_ptr<const BufferSlot>& slot)> onSampleReadyForPlayback;
 
 private:
-	void processSample(const boost::shared_ptr<const BufferSlot>& slot){
+	bool processSample(const boost::shared_ptr<const BufferSlot>& slot){
 		onSampleReadyForPlayback(slot);
+        return true;
 	}
 };
 

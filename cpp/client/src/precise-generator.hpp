@@ -1,4 +1,4 @@
-// 
+//
 // precise-generator.h
 //
 //  Created by Peter Gusev on 19 March 2016.
@@ -16,9 +16,9 @@
 #include <functional>
 #include <chrono>
 
-namespace lib_bind=std;
-namespace lib_fun=std;
-namespace lib_chrono=std::chrono;
+namespace lib_bind = std;
+namespace lib_fun = std;
+namespace lib_chrono = std::chrono;
 
 #else
 
@@ -27,9 +27,9 @@ namespace lib_chrono=std::chrono;
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
-namespace lib_bind=boost;
-namespace lib_fun=boost;
-namespace lib_chrono=boost::chrono;
+namespace lib_bind = boost;
+namespace lib_fun = boost;
+namespace lib_chrono = boost::chrono;
 
 #endif
 
@@ -37,21 +37,22 @@ namespace lib_chrono=boost::chrono;
 
 class PreciseGeneratorImpl;
 
-class PreciseGenerator {
-public:
+class PreciseGenerator
+{
+  public:
     typedef lib_fun::function<void()> Task;
-    PreciseGenerator(boost::asio::io_service& io, const double& ratePerSec,
-                     const Task& task);
+    PreciseGenerator(boost::asio::io_service &io, const double &ratePerSec,
+                     const Task &task);
     ~PreciseGenerator();
-    
+
     void start();
     void stop();
     bool isRunning();
     long long getFireCount();
     double getMeanProcessingOverheadNs();
     double getMeanTaskTimeNs();
-    
-private:
+
+  private:
     boost::shared_ptr<PreciseGeneratorImpl> pimpl_;
 };
 

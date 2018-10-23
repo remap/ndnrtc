@@ -14,6 +14,9 @@
 #include <cstring>
 #include <OpenGL/gl3.h>
 
+#include <ndnrtc/helpers/face-processor.hpp>
+#include <ndnrtc/helpers/key-chain-manager.hpp>
+#include <ndnrtc/local-stream.hpp>
 #include <ndnrtc/statistics.hpp>
 
 using namespace std;
@@ -121,8 +124,10 @@ ndnrtcTOPbase(info),
 incomingFrameBuffer_(nullptr),
 incomingFrameWidth_(0), incomingFrameHeight_(0)
 {
-    generateName("ndnrtcOut");
+    name_ = generateName("ndnrtcOut");
     statStorage_ = StatisticsStorage::createProducerStatistics();
+    
+    executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
 }
 
 ndnrtcOut::~ndnrtcOut()
@@ -169,36 +174,11 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, incomingFrameBuffer_);
             GetError();
             
-            // convert RGBA -> ARGB
-            for (int i = 0; i < incomingFrameBufferSize_/4; ++i)
-            {
-                // little endian on mac
-                // incomingFrameBuffer_[0] [1] [2] [3]
-                //                      r   g   b   a
-                // if read as int32 -> 0xabgr
-                //
-                // need to be stored as
-                // incomingFrameBuffer_[0] [1] [2] [3]
-                //                      a   r   g   b
-                // which is as int32 -> 0xbgra
-                //
-                // in other words, need to convert one int32 (0xabgr)
-                // into another int32 (0xbgra)
-                
-                int idx = i*4;
-#if 1
-                unsigned char a = incomingFrameBuffer_[idx+3];
-                for (int j = 3; j > 0; j--)
-                    incomingFrameBuffer_[idx+j] = incomingFrameBuffer_[idx+j-1];
-                incomingFrameBuffer_[idx] = a;
-#else
-                // this code does not work, i can't figure out why
-                int32_t rgba = *(int32_t*)&(incomingFrameBuffer_[idx]);
-                int32_t argb = (rgba >> 24 | rgba << 8);
-                *((int32_t*)&incomingFrameBuffer_[idx]) = argb;
-#endif
-            }
-            publbishedFrame_ = ((ndnrtc::LocalVideoStream*)stream_)->incomingArgbFrame(topInput->width, topInput->height,
+            // flip vertically and convert RGBA -> ARGB
+            flipFrame(incomingFrameWidth_, incomingFrameHeight_, incomingFrameBuffer_,
+                      false, true, true);
+            
+            boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingArgbFrame(topInput->width, topInput->height,
                                                                     incomingFrameBuffer_, incomingFrameBufferSize_);
         }
     }
@@ -279,19 +259,19 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
         
         targetBitrate.label = "Target Bitrate";
         targetBitrate.page = "Stream Config";
-        targetBitrate.defaultValues[0] = 1000;
+        targetBitrate.defaultValues[0] = 3000;
         targetBitrate.minSliders[0] = 500;
         targetBitrate.maxSliders[0] = 15000;
         
         encodeWidth.label = "Encode Width";
         encodeWidth.page = "Stream Config";
-        encodeWidth.defaultValues[0] = 320;
+        encodeWidth.defaultValues[0] = 1280;
         encodeWidth.minSliders[0] = 320;
         encodeWidth.maxSliders[0] = 4096;
         
         encodeHeight.label = "Encode Height";
         encodeHeight.page = "Stream Config";
-        encodeHeight.defaultValues[0] = 180;
+        encodeHeight.defaultValues[0] = 720;
         encodeHeight.minSliders[0] = 180;
         encodeHeight.maxSliders[0] = 2160;
         
@@ -328,8 +308,8 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
         
         segmentSize.label = "Segment Size";
         segmentSize.page = "Advanced";
-        segmentSize.defaultValues[0] = 1200;
-        segmentSize.defaultValues[1] = 7700;
+        segmentSize.defaultValues[0] = 8000;
+        segmentSize.defaultValues[1] = 8000;
         segmentSize.minSliders[0] = 1000;
         segmentSize.maxSliders[0] = 8000;
         
@@ -396,44 +376,54 @@ ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
                              OP_Inputs *inputs,
                              TOP_Context *context)
 {
-    if (ndnrtcInitialized_)
-    {
-        if (stream_)
-            ndnrtc_destroyLocalStream(stream_);
-        
-        LocalStreamParams params = readStreamParams(inputs);
-        stream_ = (ndnrtc::LocalVideoStream*)ndnrtc_createLocalStream(params, &NdnrtcStreamLoggingCallback);
-        
-        free((void*)(params.basePrefix));
-        free((void*)(params.streamName));
-        free((void*)(params.threadName));
-    }
+    if (!(faceProcessor_ && faceProcessor_->getFace()))
+        return;
+
+    if (stream_)
+        stream_.reset();
+   
+    MediaStreamSettings streamSettings(faceProcessor_->getIo(), readStreamParams(inputs));
+   
+    streamSettings.face_ = faceProcessor_->getFace().get();
+    streamSettings.keyChain_ = keyChainManager_->instanceKeyChain().get();
+    streamSettings.storagePath_ = ""; // TODO: try with storage
+    streamSettings.sign_ = inputs->getParInt(PAR_SIGNING);
+   
+    stream_ = boost::make_shared<LocalVideoStream>(readBasePrefix(inputs),
+                                                   streamSettings,
+                                                   inputs->getParInt(PAR_FEC));
 }
 
-LocalStreamParams
+MediaStreamParams
 ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
 {
-    LocalStreamParams p;
-
-    string basePrefix = readBasePrefix(inputs);
-    p.basePrefix = (const char*)malloc(basePrefix.size()+1);
-    strcpy((char*)p.basePrefix, basePrefix.c_str());
-    p.streamName = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_NAME))+1);
-    strcpy((char*)p.streamName, inputs->getParString(PAR_STREAM_NAME));
-    p.threadName = (const char*)malloc(strlen(inputs->getParString(PAR_THREAD_NAME))+1);
-    strcpy((char*)p.threadName, inputs->getParString(PAR_THREAD_NAME));
+    MediaStreamParams p;
+    p.type_ = MediaStreamParams::MediaStreamTypeVideo;
+    p.producerParams_.segmentSize_ = inputs->getParInt(PAR_SEGSIZE);
+    p.producerParams_.freshness_ = {15, 30, 900};
     
-    p.signingOn = inputs->getParInt(PAR_SIGNING);
-    p.fecOn = inputs->getParInt(PAR_FEC);
-    p.typeIsVideo = 1;
-    p.ndnSegmentSize = inputs->getParInt(PAR_SEGSIZE);
-    p.ndnDataFreshnessPeriodMs = inputs->getParInt(PAR_FRESHNESS);
-    p.frameWidth = inputs->getParInt(PAR_ENCODE_WIDTH);
-    p.frameHeight = inputs->getParInt(PAR_ENCODE_HEIGHT);
-    p.startBitrate = inputs->getParInt(PAR_TARGET_BITRATE);
-    p.maxBitrate = p.startBitrate;
-    p.gop = inputs->getParInt(PAR_GOPSIZE);
-    p.dropFrames = inputs->getParInt(PAR_FRAMEDROP);
+    const char* streamName = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_NAME))+1);
+    strcpy((char*)streamName, inputs->getParString(PAR_STREAM_NAME));
+    p.streamName_ = std::string(streamName);
+    free((void*)streamName);
+    
+    VideoCoderParams vcp;
+    vcp.codecFrameRate_ = 30; // TODO: try 60fps;
+    vcp.gop_ = inputs->getParInt(PAR_GOPSIZE);
+    vcp.startBitrate_ = inputs->getParInt(PAR_TARGET_BITRATE);
+    vcp.maxBitrate_ = inputs->getParInt(PAR_TARGET_BITRATE);
+    vcp.encodeWidth_ = inputs->getParInt(PAR_ENCODE_WIDTH);
+    vcp.encodeHeight_ = inputs->getParInt(PAR_ENCODE_HEIGHT);
+    vcp.dropFramesOn_ =  inputs->getParInt(PAR_FRAMEDROP);
+    
+    const char *threadName = (const char*)malloc(strlen(inputs->getParString(PAR_THREAD_NAME))+1);
+    strcpy((char*)threadName, inputs->getParString(PAR_THREAD_NAME));
+    
+    p.addMediaThread(VideoThreadParams(threadName, vcp));
+
+    free((void*)threadName);
+    
+    LogInfoC << "creating stream with parameters: " << p << endl;
     
     return p;
 }

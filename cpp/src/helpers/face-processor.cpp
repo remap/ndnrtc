@@ -20,7 +20,7 @@
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 
-// #define USE_THREADSAFE_FACE
+#define USE_THREADSAFE_FACE
 
 using namespace ndn;
 using namespace boost;
@@ -139,23 +139,8 @@ void FaceProcessor::registerPrefix(const Name& prefix,
                                    const OnRegisterSuccess& onRegisterSuccess)
 {
     _pimpl->performSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
-        face->registerPrefix(prefix, onInterest, 
-            [&completed, &isDone, onRegisterFailed](const boost::shared_ptr<const Name>& prefix){
-                onRegisterFailed(prefix);
-
-                completed = true;
-                isDone.notify_one();
-            }, 
-            [&completed, &registered, &isDone](const boost::shared_ptr<const Name>& p, uint64_t pid){
-                onRegisterSuccess(p, pid);
-
-                registered = true;
-                completed = true;
-                isDone.notify_one();
-            });
+        face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
     });
-    
-  isDone.wait(lock, [&completed](){ return completed.load(); });  
 }
 
 void FaceProcessor::registerPrefixBlocking(const ndn::Name& prefix, 
