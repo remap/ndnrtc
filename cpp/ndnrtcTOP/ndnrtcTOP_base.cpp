@@ -75,14 +75,13 @@ errorString_(""), warningString_(""),
 statStorage_(nullptr),
 stream_(nullptr)
 {
-//    ndn::KeyChain tmp("pib-sqlite3:", "tpm-file:");
-//    tmp.createIdentityV2("/touchdesigner");
-    
+#if 0
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
-    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
+#endif
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()

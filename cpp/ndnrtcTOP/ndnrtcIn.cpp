@@ -8,6 +8,8 @@
 
 #include "ndnrtcIn.hpp"
 
+#include <mutex>
+
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl.h>
 
@@ -111,44 +113,63 @@ void renderTexture(GLuint texId, unsigned width, unsigned height, void* data);
 class RemoteStreamRenderer : public IExternalRenderer
 {
 public:
-    RemoteStreamRenderer():receivedFrame_(0),
-        receivedFrameTimestamp_(0), receivedFrameName_(""),
-        frameBufferSize_(0), frameWidth_(0), frameHeight_(0),
-        frameBuffer_(nullptr), frameUpdated_(false) {}
+    class FrameBuffer {
+    public:
+        FrameBuffer(int w = 1280, int h = 720): frameBufferSize_(0),
+            frameWidth_(0), frameHeight_(0), frameBuffer_(nullptr) { resize(w, h); }
+        ~FrameBuffer() { if (frameBuffer_) free(frameBuffer_); }
+        
+        const int getWidth() const { return frameWidth_; }
+        const int getHeight() const { return frameHeight_; }
+        const int getSize() const { return frameBufferSize_; }
+        const uint8_t* getPixel(int x, int y) const { return &frameBuffer_[4*(y*frameWidth_+x)]; }
+        const FrameInfo& getInfo() const { return info_; }
+        
+        uint8_t* getFrameBuffer() { return frameBuffer_; }
+        uint8_t* getFrameBuffer(int w, int h)
+        {
+            if (w != frameWidth_ || h != frameHeight_) resize(w, h);
+            return frameBuffer_;
+        }
+        
+        void resize(int w, int h)
+        {
+            frameWidth_ = w; frameHeight_ = h;
+            int newSize = w*h*4*sizeof(unsigned char);
+            if (newSize > frameBufferSize_) // only resize if the new size is larger
+                frameBuffer_ = (unsigned char*)realloc(frameBuffer_, newSize);
+
+            frameBufferSize_ = newSize;
+            memset(frameBuffer_, 0, frameBufferSize_);
+        }
+        
+        void setInfo(const FrameInfo& info) { info_ = info; }
+        
+    private:
+        int frameBufferSize_, frameWidth_, frameHeight_;
+        unsigned char* frameBuffer_;
+        FrameInfo info_;
+    };
     
-    ~RemoteStreamRenderer() { if (frameBuffer_) free(frameBuffer_); }
+    RemoteStreamRenderer(): buffers_({FrameBuffer(), FrameBuffer()}),
+        frontBuffer_(&buffers_[0]), backBuffer_(&buffers_[1]) {}
     
-    const int getWidth() const { return frameWidth_; }
-    const int getHeight() const { return frameHeight_; }
-    const int getFrameNo() const { return receivedFrame_; }
-    const int64_t getTimestamp() const { return receivedFrameTimestamp_; }
-    const string& getFrameName() const { return receivedFrameName_; }
-    const bool isFrameUpdated() const { return frameUpdated_; }
-    const uint8_t* getPixel(int x, int y) const { return &frameBuffer_[4*(y*frameWidth_+x)]; }
+    const int getWidth() const { return frontBuffer_.load()->getWidth(); }
+    const int getHeight() const { return frontBuffer_.load()->getHeight(); }
+    const int getFrameNo() const { return frontBuffer_.load()->getInfo().playbackNo_; }
+    const int64_t getTimestamp() const { return frontBuffer_.load()->getInfo().timestamp_; }
+    const string& getFrameName() const { return frontBuffer_.load()->getInfo().ndnName_; }
+    const uint8_t* getPixel(int x, int y) const { return frontBuffer_.load()->getPixel(x, y); }
     
-    // will render current texture if it was updated
-    // it is expected that this method is called on the main thread (from execute())
-    void renderIfUpdated();
-    
-    boost::atomic<bool>     bufferRead_;
+    const void readBuffer(function<void(const uint8_t* buffer)> onBufferAccess);
     
 private:
-    int                     receivedFrame_;
-    int64_t                 receivedFrameTimestamp_;
-    string                  receivedFrameName_;
-    bool                    frameUpdated_, textureUpToDate_;
+    std::mutex                bufferReadMutex_;
+    vector<FrameBuffer>       buffers_;
+    std::atomic<FrameBuffer*> frontBuffer_, backBuffer_; // don't move these before "buffers_", please
     
-    boost::atomic<bool>     bufferWrite_;
-    int                     frameBufferSize_, frameWidth_, frameHeight_;
-    unsigned                texture_;
-    GLuint                  depthBuffer_;
-    unsigned char*          frameBuffer_;
-    
-    uint8_t*                getFrameBuffer(int width, int height) override;
-    void                    renderBGRAFrame(const FrameInfo& frameInfo, int width, int height,
-                                            const uint8_t* buffer) override;
-    void                    allocateFramebuffer(int w, int h);
-    void                    initTexture();
+    uint8_t* getFrameBuffer(int width, int height);
+    void renderBGRAFrame(const FrameInfo& frameInfo, int width, int height, const uint8_t* buffer);
 };
 
 //******************************************************************************
@@ -170,7 +191,7 @@ void
 ndnrtcIn::getGeneralInfo(TOP_GeneralInfo *ginfo)
 {
     ginfo->cookEveryFrame = true;
-    ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
+    ginfo->memPixelType = OP_CPUMemPixelType::RGBA32Float;
 }
 
 bool
@@ -178,6 +199,7 @@ ndnrtcIn::getOutputFormat(TOP_OutputFormat* format)
 {
     format->width = streamRenderer_->getWidth();
     format->height = streamRenderer_->getHeight();
+
     return true;
 }
 
@@ -188,38 +210,28 @@ ndnrtcIn::execute(const TOP_OutputFormatSpecs* outputFormat,
 {
     ndnrtcTOPbase::execute(outputFormat, inputs, context);
     
-    if (streamRenderer_->isFrameUpdated())
-    {
-//        context->beginGLCommands();
+    int textureMemoryLocation = 0;
+    float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
 
-//        glBindFramebuffer(GL_FRAMEBUFFER, context->getFBOIndex());
-        int textureMemoryLocation = 0;
-        float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
-        streamRenderer_->bufferRead_ = true;
-        for (int y = 0; y < outputFormat->height; ++y)
-        {
-            for (int x = 0; x < outputFormat->width; ++x)
-            {
-                // ARGB
-                const uint8_t framePixel[4] = {255, 0, 0, 255}; // streamRenderer_->getPixel(x, y);
-                // RGBA
-                float* pixel = &mem[4*(y*outputFormat->width + x)];
-                
-//                pixel[0] = 0; //(float)(framePixel[1])/255.;
-//                pixel[1] = 1; //(float)(framePixel[2])/255.;
-//                pixel[2] = 0; //(float)(framePixel[3])/255.;
-//                pixel[3] = 1; // (float)(framePixel[0])/255.;
-            }
-        }
-        streamRenderer_->bufferRead_ = false;
-        
-        outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
-        textureMemoryLocation = !textureMemoryLocation;
-        
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-//        context->endGLCommands();
-    }
+    streamRenderer_->readBuffer([this, outputFormat, mem](const uint8_t* activeBuffer)
+                                {
+                                    for (int y = 0; y < outputFormat->height; ++y)
+                                        for (int x = 0; x < outputFormat->width; ++x)
+                                        {
+                                            // ARGB
+                                            const uint8_t* framePixel = streamRenderer_->getPixel(x, y);
+                                            // RGBA
+                                            float* pixel = &mem[4*(y*outputFormat->width + x)];
+                                            
+                                            pixel[0] = (float)(framePixel[1])/255.;
+                                            pixel[1] = (float)(framePixel[2])/255.;
+                                            pixel[2] = (float)(framePixel[3])/255.;
+                                            pixel[3] = (float)(framePixel[0])/255.;
+                                        } // for x
+                                });
+
+    outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
+    textureMemoryLocation = !textureMemoryLocation;
 }
 
 int32_t
@@ -388,7 +400,8 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
     
     if (stream_)
     {
-        dynamic_pointer_cast<RemoteStream>(stream_)->unregisterObserver(this);
+        // TODO: have EXC_BAD_ACCESS here
+//        dynamic_pointer_cast<RemoteStream>(stream_)->unregisterObserver(this);
         stream_.reset();
     }
     
@@ -412,143 +425,28 @@ ndnrtcIn::onNewEvent(const ndnrtc::RemoteStream::Event &event)
 }
 
 //******************************************************************************
-void
-RemoteStreamRenderer::allocateFramebuffer(int w, int h)
+const void
+RemoteStreamRenderer::readBuffer(function<void(const uint8_t* buffer)> onBufferAccess)
 {
-    frameWidth_ = w; frameHeight_ = h;
-    frameBufferSize_ = w*h*4*sizeof(unsigned char);
-    frameBuffer_ = (unsigned char*)realloc(frameBuffer_, frameBufferSize_);
-    memset(frameBuffer_, 0, frameBufferSize_);
-    textureUpToDate_ = false;
+    std::lock_guard<std::mutex> bufferLock(bufferReadMutex_);
+    onBufferAccess(frontBuffer_.load()->getFrameBuffer());
 }
 
 uint8_t*
 RemoteStreamRenderer::getFrameBuffer(int width, int height)
 {
-    if (bufferRead_)
-    {
-        cout << "oopsie" << endl;
-        return nullptr;
-    }
-
-    bufferWrite_ = true;
-    
-    if (frameWidth_ != width || frameHeight_ != height)
-        allocateFramebuffer(width, height);
-    return frameBuffer_;
+    return backBuffer_.load()->getFrameBuffer(width, height);
 }
 
 void
 RemoteStreamRenderer::renderBGRAFrame(const FrameInfo& frameInfo, int width, int height,
                                       const uint8_t* buffer)
 {
-    frameUpdated_ = true;
-    receivedFrameTimestamp_ = frameInfo.timestamp_;
-    receivedFrame_ = frameInfo.playbackNo_;
-    receivedFrameName_ = frameInfo.ndnName_;
-    
-    // let know that we have new frame ready for render
-    bufferWrite_ = false;
-}
-
-void
-RemoteStreamRenderer::renderIfUpdated()
-{
-    if (!bufferWrite_) // && frameUpdated_)
+    // swap buffers
+    backBuffer_.load()->setInfo(frameInfo);
     {
-//        if (!textureUpToDate_)
-            initTexture();
-
-        bufferRead_ = true;
-        renderTexture(texture_, frameWidth_, frameHeight_, frameBuffer_);
-        frameUpdated_ = false;
-        bufferRead_ = false;
+        // TODO: if we're using mutex in the end, why the heck to bother with atomic variables?
+        std::lock_guard<std::mutex> bufferLock(bufferReadMutex_);
+        backBuffer_ = frontBuffer_.exchange(backBuffer_);
     }
-}
-
-void
-RemoteStreamRenderer::initTexture()
-{
-    if (glIsTexture(texture_))
-    {
-        glDeleteTextures(1, (const GLuint*)&texture_);
-        GetError();
-        texture_ = 0;
-    }
-    
-    texture_ = createVideoTexture(frameWidth_, frameHeight_, frameBuffer_);
-    textureUpToDate_ = true;
-    
-    glFramebufferTexture2D(GL_FRAMEBUFFER,
-                           GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D,
-                           texture_,
-                           0);
-    
-//    glGenRenderbuffers(1, &depthBuffer_);
-//    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer_);
-//    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
-//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer_);
-    
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers);
-}
-
-//******************************************************************************
-int
-createVideoTexture(unsigned width, unsigned height, void *frameBuffer)
-{
-    int texture = 0;
-    
-    glGenTextures(1, (GLuint*)&texture);
-    GetError();
-    
-    glBindTexture(GL_TEXTURE_2D, texture);
-    GetError();
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GetError();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GetError();
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    GetError();
-    
-    return texture;
-}
-
-void
-renderTexture(GLuint texId, unsigned width, unsigned height, void* data)
-{
-#if 1
-    glViewport(0, 0, width, height);
-    glClearColor(0.0, 1.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-//    cout << "viewport" << endl;
-    GetError()
-
-//    glEnable(GL_TEXTURE_2D);
-//    cout << "gl enable" << endl;
-//    GetError()
-    
-    glBindTexture(GL_TEXTURE_2D, texId);
-    cout << "bind texture" << endl;
-    GetError()
-    
-//    glLoadIdentity();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    cout << "sub image" << endl;
-    GetError()
-    
-//    glBegin(GL_QUADS);
-//    GetError()
-//    // the reason why texture coordinates are weird - the texture is flipped horizontally
-//    glTexCoord2f(0., 1.); glVertex2i(0, 0);
-//    glTexCoord2f(1., 1.); glVertex2i(width, 0);
-//    glTexCoord2f(1., 0.); glVertex2i(width, height);
-//    glTexCoord2f(0., 0.); glVertex2i(0, height);
-//    GetError()
-//    glEnd();
-//    GetError()
-#endif
 }

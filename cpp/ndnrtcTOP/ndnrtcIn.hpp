@@ -22,8 +22,7 @@ namespace ndnrtc {
 
 class RemoteStreamRenderer;
 
-class ndnrtcIn : public ndnrtcTOPbase,
-ndnrtc::IRemoteStreamObserver
+class ndnrtcIn : public ndnrtcTOPbase, ndnrtc::IRemoteStreamObserver
 {
 public:
     ndnrtcIn(const OP_NodeInfo *info);
@@ -35,7 +34,7 @@ public:
     virtual void        execute(const TOP_OutputFormatSpecs*,
                                 OP_Inputs*,
                                 TOP_Context* context) override;
-    
+
     virtual int32_t     getNumInfoCHOPChans() override;
     virtual void        getInfoCHOPChan(int32_t index,
                                         OP_InfoCHOPChan *chan) override;
@@ -47,25 +46,20 @@ public:
     
     virtual void        setupParameters(OP_ParameterManager *manager) override;
     virtual void        pulsePressed(const char *name) override;
-    
+
 private:
     boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
     
+
     void                    init() override;
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
     
     void                    createRemoteStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
-//    ndnrtc::RemoteStreamParams  readStreamParams(OP_Inputs*) const;
+
     void                        allocateFramebuffer(int w, int h);
     
     // IRemoteStreamObserver
     void                    onNewEvent(const ndnrtc::RemoteStream::Event&) override;
-    
-    // IExternalRenderer
-//    uint8_t* getFrameBuffer(int width, int height) override;
-//    void renderBGRAFrame(int64_t timestamp, uint frameNo,
-//                         int width, int height,
-//                         const uint8_t* buffer) override;
 };
 
 

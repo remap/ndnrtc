@@ -46,6 +46,7 @@
       allowLocationSimulation = "YES">
       <PathRunnable
          runnableDebuggingMode = "0"
+         BundleIdentifier = "ca.derivative.TouchDesigner099"
          FilePath = "/Applications/TouchDesigner099.app">
       </PathRunnable>
       <MacroExpansion>
@@ -61,6 +62,10 @@
          <CommandLineArgument
             argument = "${PROJECT_DIR}/ndnrtc.toe"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "${PROJECT_DIR}/ndnrtcIn.toe"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
