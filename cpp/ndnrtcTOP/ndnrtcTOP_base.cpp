@@ -75,14 +75,14 @@ errorString_(""), warningString_(""),
 statStorage_(nullptr),
 stream_(nullptr)
 {
+//    ndn::KeyChain tmp("pib-sqlite3:", "tpm-file:");
+//    tmp.createIdentityV2("/touchdesigner");
+    
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
-    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
-    
-    // queue face and keychain setup
-    init();
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()
@@ -257,7 +257,6 @@ ndnrtcTOPbase::init()
 {
     executeQueue_.push(bind(&ndnrtcTOPbase::initFace, this, _1, _2, _3));
     executeQueue_.push(bind(&ndnrtcTOPbase::initKeyChainManager, this, _1, _2, _3));
-    executeQueue_.push(bind(&ndnrtcTOPbase::registerPrefix, this, _1, _2, _3));
 }
 
 void
@@ -292,7 +291,7 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
                                    OP_Inputs* inputs,
                                    TOP_Context *context)
 {
-    if (!(faceProcessor_ && faceProcessor_->getFace()))
+    if (!faceProcessor_)
         return;
 
     std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
@@ -305,6 +304,7 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
     try
     {
         errorString_ = "";
+        boost::shared_ptr<ndn::KeyChain> kc = KeyChainManager::createKeyChain(keyChainPath);
         keyChainManager_ = boost::make_shared<KeyChainManager>(faceProcessor_->getFace(),
                                                                (useMacOsKeyChain ? KeyChainManager::createKeyChain("") : KeyChainManager::createKeyChain(keyChainPath)),
                                                                (useMacOsKeyChain ? signingIdentity : TOUCHDESIGNER_IDENTITY),
@@ -318,7 +318,6 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
         
         faceProcessor_->getFace()->setCommandSigningInfo(*keyChainManager_->instanceKeyChain(),
                                                          keyChainManager_->instanceKeyChain()->getDefaultCertificateName());
-        
     }
     catch(std::exception &e)
     {
@@ -331,7 +330,7 @@ ndnrtcTOPbase::registerPrefix(const TOP_OutputFormatSpecs* outputFormat,
                               OP_Inputs* inputs,
                               TOP_Context *context)
 {
-    if (!(faceProcessor_ && faceProcessor_->getFace()))
+    if (!(faceProcessor_ && keyChainManager_))
         return;
 
     ndn::Name prefix(readBasePrefix(inputs));

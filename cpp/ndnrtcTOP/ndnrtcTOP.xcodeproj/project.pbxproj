@@ -16,20 +16,16 @@
 		AF889B552037733900F36342 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
 		AF889B562037733900F36342 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AF889B582037733900F36342 /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
-		AF889B5A2037733900F36342 /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF889B5C2037733900F36342 /* mapping.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF889B5D2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF889B5E2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF889B642037733900F36342 /* ndnrtcIn.plugin */; };
 		AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B67203773FF00F36342 /* ndnrtcIn.cpp */; };
 		AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
 		AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
+		AF8EC15D217FE37D0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in Copy Files */ = {isa = PBXBuildFile; fileRef = AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */; };
+		AF8EC15E217FE3850082A16D /* pib.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC158217FE35E0082A16D /* pib.db */; };
+		AF8EC15F217FE3A70082A16D /* pib.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC158217FE35E0082A16D /* pib.db */; };
+		AF8EC160217FE3AA0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */; };
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
-		AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF9431AC2033A91E0042FB3A /* public-info.db */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B42033AC380042FB3A /* mapping.txt in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431A92033A91E0042FB3A /* mapping.txt */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in Copy Files */ = {isa = PBXBuildFile; fileRef = AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
 		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
 		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
@@ -68,19 +64,17 @@
 			dstPath = keychain;
 			dstSubfolderSpec = 7;
 			files = (
-				AF889B5A2037733900F36342 /* public-info.db in CopyFiles */,
+				AF8EC15F217FE3A70082A16D /* pib.db in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF889B5B2037733900F36342 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = keychain/keys;
+			dstPath = "keychain/ndnsec-key-file";
 			dstSubfolderSpec = 7;
 			files = (
-				AF889B5C2037733900F36342 /* mapping.txt in CopyFiles */,
-				AF889B5D2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in CopyFiles */,
-				AF889B5E2037733900F36342 /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in CopyFiles */,
+				AF8EC160217FE3AA0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,19 +94,17 @@
 			dstPath = keychain;
 			dstSubfolderSpec = 7;
 			files = (
-				AF9431B22033ABFA0042FB3A /* public-info.db in CopyFiles */,
+				AF8EC15E217FE3850082A16D /* pib.db in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF9431B32033AC040042FB3A /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = keychain/keys;
+			dstPath = "keychain/ndnsec-key-file";
 			dstSubfolderSpec = 7;
 			files = (
-				AF9431B42033AC380042FB3A /* mapping.txt in Copy Files */,
-				AF9431B72033AC5B0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub in Copy Files */,
-				AF9431B82033AC5E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri in Copy Files */,
+				AF8EC15D217FE37D0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in Copy Files */,
 			);
 			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -138,13 +130,11 @@
 		AF889B67203773FF00F36342 /* ndnrtcIn.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcIn.cpp; sourceTree = "<group>"; };
 		AF889B68203773FF00F36342 /* ndnrtcIn.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcIn.hpp; sourceTree = "<group>"; };
 		AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libndn-cpp.a"; path = "../../../ndnrtc-thirdparty/ndn-cpp/build/lib/libndn-cpp.a"; sourceTree = "<group>"; };
+		AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey; sourceTree = "<group>"; };
+		AF8EC158217FE35E0082A16D /* pib.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = pib.db; path = keychain/pib.db; sourceTree = "<group>"; };
 		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
 		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
 		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
-		AF9431A92033A91E0042FB3A /* mapping.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mapping.txt; sourceTree = "<group>"; };
-		AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri"; sourceTree = "<group>"; };
-		AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub"; sourceTree = "<group>"; };
-		AF9431AC2033A91E0042FB3A /* public-info.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = "public-info.db"; path = "keychain/public-info.db"; sourceTree = "<group>"; };
 		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcOut.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ndnrtcOut-Info.plist"; sourceTree = "<group>"; };
@@ -205,6 +195,15 @@
 			name = common;
 			sourceTree = "<group>";
 		};
+		AF8EC156217FE35E0082A16D /* ndnsec-key-file */ = {
+			isa = PBXGroup;
+			children = (
+				AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */,
+			);
+			name = "ndnsec-key-file";
+			path = "keychain/ndnsec-key-file";
+			sourceTree = "<group>";
+		};
 		AF9431A32033A70A0042FB3A /* res */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,21 +217,10 @@
 		AF9431A72033A9110042FB3A /* keychain */ = {
 			isa = PBXGroup;
 			children = (
-				AF9431A82033A91E0042FB3A /* keys */,
-				AF9431AC2033A91E0042FB3A /* public-info.db */,
+				AF8EC156217FE35E0082A16D /* ndnsec-key-file */,
+				AF8EC158217FE35E0082A16D /* pib.db */,
 			);
 			name = keychain;
-			sourceTree = "<group>";
-		};
-		AF9431A82033A91E0042FB3A /* keys */ = {
-			isa = PBXGroup;
-			children = (
-				AF9431A92033A91E0042FB3A /* mapping.txt */,
-				AF9431AA2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pri */,
-				AF9431AB2033A91E0042FB3A /* NkZPPmIII342wZ4+C4VNKkayOcMHXcv%bhILg0BwWrs=.pub */,
-			);
-			name = keys;
-			path = keychain/keys;
 			sourceTree = "<group>";
 		};
 		AFE43C7A202DDCD200072172 = {

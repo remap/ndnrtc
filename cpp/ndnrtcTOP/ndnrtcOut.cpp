@@ -127,6 +127,7 @@ incomingFrameWidth_(0), incomingFrameHeight_(0)
     name_ = generateName("ndnrtcOut");
     statStorage_ = StatisticsStorage::createProducerStatistics();
     
+    init();
     executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
 }
 
@@ -356,6 +357,18 @@ ndnrtcOut::pulsePressed(const char* name)
 //******************************************************************************
 #pragma mark private
 void
+ndnrtcOut::init()
+{
+    ndnrtcTOPbase::init();
+    executeQueue_.push(bind(&ndnrtcOut::registerPrefix, this, _1, _2, _3));
+    executeQueue_.push([this](const TOP_OutputFormatSpecs* outputFormat, OP_Inputs* inputs, TOP_Context *context)
+    {
+        if (keyChainManager_)
+            keyChainManager_->publishCertificates();
+    });
+}
+
+void
 ndnrtcOut::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                        OP_Inputs* inputs,
                        TOP_Context *context)
@@ -376,7 +389,7 @@ ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
                              OP_Inputs *inputs,
                              TOP_Context *context)
 {
-    if (!(faceProcessor_ && faceProcessor_->getFace()))
+    if (!(faceProcessor_ && keyChainManager_))
         return;
 
     if (stream_)

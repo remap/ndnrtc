@@ -84,16 +84,16 @@ protected:
     boost::shared_ptr<ndnrtc::IStream>      stream_;
     ndnrtc::statistics::StatisticsStorage*  statStorage_;
     
-    void                    init();
+    virtual void            init();
     void                    initKeyChainManager(const TOP_OutputFormatSpecs*,
                                                 OP_Inputs*,
                                                 TOP_Context *);
     void                    initFace(const TOP_OutputFormatSpecs*,
                                      OP_Inputs*,
                                      TOP_Context *);
-    void                    registerPrefix(const TOP_OutputFormatSpecs*,
-                                           OP_Inputs*,
-                                           TOP_Context *);
+    void                registerPrefix(const TOP_OutputFormatSpecs*,
+                                       OP_Inputs*,
+                                       TOP_Context *);
     
     virtual void            checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
 

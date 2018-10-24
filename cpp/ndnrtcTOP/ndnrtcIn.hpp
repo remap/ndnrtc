@@ -7,8 +7,11 @@
 //
 
 #include "ndnrtcTOP_base.hpp"
-#include <ndnrtc/c-wrapper.h>
+
+#include <ndnrtc/params.hpp>
 #include <ndnrtc/interfaces.hpp>
+#include <ndnrtc/remote-stream.hpp>
+
 #include <boost/atomic.hpp>
 
 namespace ndnrtc {
@@ -17,8 +20,10 @@ namespace ndnrtc {
     }
 }
 
+class RemoteStreamRenderer;
+
 class ndnrtcIn : public ndnrtcTOPbase,
-ndnrtc::IRemoteStreamObserver, ndnrtc::IExternalRenderer
+ndnrtc::IRemoteStreamObserver
 {
 public:
     ndnrtcIn(const OP_NodeInfo *info);
@@ -44,27 +49,23 @@ public:
     virtual void        pulsePressed(const char *name) override;
     
 private:
-    int                     receivedFrame_;
-    int64_t                 receivedFrameTimestamp_;
+    boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
     
-    boost::atomic<bool>     bufferWrite_, bufferRead_;
-    int                     frameBufferSize_, frameWidth_, frameHeight_;
-    unsigned char*          frameBuffer_;
-    
+    void                    init() override;
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
     
     void                    createRemoteStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
-    RemoteStreamParams      readStreamParams(OP_Inputs*) const;
-    void                    allocateFramebuffer(int w, int h);
+//    ndnrtc::RemoteStreamParams  readStreamParams(OP_Inputs*) const;
+    void                        allocateFramebuffer(int w, int h);
     
     // IRemoteStreamObserver
     void                    onNewEvent(const ndnrtc::RemoteStream::Event&) override;
     
     // IExternalRenderer
-    uint8_t* getFrameBuffer(int width, int height) override;
-    void renderBGRAFrame(int64_t timestamp, uint frameNo,
-                         int width, int height,
-                         const uint8_t* bubffer) override;
+//    uint8_t* getFrameBuffer(int width, int height) override;
+//    void renderBGRAFrame(int64_t timestamp, uint frameNo,
+//                         int width, int height,
+//                         const uint8_t* buffer) override;
 };
 
 

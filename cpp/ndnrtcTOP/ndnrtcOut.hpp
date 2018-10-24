@@ -46,6 +46,7 @@ private:
     int                     incomingFrameBufferSize_, incomingFrameWidth_, incomingFrameHeight_;
     unsigned char*          incomingFrameBuffer_;
     
+    void                    init() override;
     void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
 
     void                    createLocalStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
