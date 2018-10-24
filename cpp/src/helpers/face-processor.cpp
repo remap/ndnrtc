@@ -186,11 +186,7 @@ void FaceProcessorImpl::stop()
         
 #ifdef USE_THREADSAFE_FACE
         face_->shutdown();
-        
-        std::cout << "work reset" << std::endl;
         ioWork_.reset();
-        
-        std::cout << "t join" << std::endl;
         t_.join();
 #else
 //        std::cout << "t join" << std::endl;

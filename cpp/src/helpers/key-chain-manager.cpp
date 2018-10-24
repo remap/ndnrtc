@@ -18,7 +18,9 @@
 #include <ndn-cpp/security/policy/self-verify-policy-manager.hpp>
 #include <ndn-cpp/security/v2/certificate-cache-v2.hpp>
 #include <ndn-cpp/security/pib/pib-memory.hpp>
+#include <ndn-cpp/security/pib/pib-sqlite3.hpp>
 #include <ndn-cpp/security/tpm/tpm-back-end-memory.hpp>
+#include <ndn-cpp/security/tpm/tpm-back-end-file.hpp>
 #include <ndn-cpp/security/signing-info.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
 #include <ndn-cpp/face.hpp>
@@ -28,8 +30,8 @@ using namespace boost::chrono;
 using namespace ndn;
 using namespace ndnrtc::helpers;
 
-static const char *PublicDb = "public-info.db";
-static const char *PrivateDb = "keys";
+static const char *PublicDb = "pib.db";
+static const char *PrivateDb = "ndnsec-key-file";
 
 boost::shared_ptr<ndn::KeyChain> 
 KeyChainManager::createKeyChain(std::string storagePath)
@@ -38,15 +40,24 @@ KeyChainManager::createKeyChain(std::string storagePath)
 
 	if (storagePath.size())
 	{
-		std::string databaseFilePath = std::string(storagePath) + "/" + std::string(PublicDb);
 		std::string privateKeysPath = std::string(storagePath) + "/" + std::string(PrivateDb);
 
+#if SECURITY_V1
+        std::string databaseFilePath = std::string(storagePath) + "/" + std::string(PublicDb);
 		boost::shared_ptr<IdentityStorage> identityStorage = boost::make_shared<BasicIdentityStorage>(databaseFilePath);
 		boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage, 
 			boost::make_shared<FilePrivateKeyStorage>(privateKeysPath));
 		boost::shared_ptr<PolicyManager> policyManager = boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
 
 		keyChain = boost::make_shared<KeyChain>(identityManager, policyManager);
+#else
+        std::string databaseFilePath = std::string(storagePath);
+        boost::shared_ptr<PibSqlite3> pib = boost::make_shared<PibSqlite3>(databaseFilePath);
+        // pib->setTpmLocator();
+        boost::shared_ptr<TpmBackEndFile> tpm = boost::make_shared<TpmBackEndFile>(privateKeysPath);
+
+        keyChain = boost::make_shared<KeyChain>(pib, tpm);
+#endif
 	}
 	else
 	{
@@ -76,7 +87,7 @@ runTime_(instanceCertLifetime)
 	if (configPolicy != "")
 	{
 		LogInfoC << "Setting up file-based policy manager from " << configPolicy << std::endl;
-		
+
 		checkExists(configPolicy);
 		setupConfigPolicyManager();
 	}
@@ -139,21 +150,6 @@ void KeyChainManager::setupInstanceKeyChain()
     }
 
 	if (defaultKeyChain_->getIsSecurityV1()) {
-		defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, false);
-		defaultKeyChain_->getIdentityManager()->getAllIdentities(identities, true);
-		
-	}
-    else
-		defaultKeyChain_->getPib().getAllIdentityNames(identities);
-
-	if (std::find(identities.begin(), identities.end(), signingIdentity) == identities.end())
-	{
-		// create signing identity in default keychain
-		LogInfoC << "Signing identity not found. Creating..." << std::endl;
-		createSigningIdentity();
-	}
-
-	if (defaultKeyChain_->getIsSecurityV1()) {
 		Name certName = defaultKeyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(signingIdentity);
 		signingCert_ = defaultKeyChain_->getCertificate(certName);
 	}
@@ -179,9 +175,13 @@ void KeyChainManager::setupConfigPolicyManager()
     identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
     privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
     if (defaultKeyChain_->getIsSecurityV1())
+    {
         configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+    }
     else
+    {
         configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_, boost::make_shared<CertificateCacheV2>());
+    }
 }
 
 void KeyChainManager::createSigningIdentity()
