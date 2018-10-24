@@ -300,15 +300,15 @@ void KeyChainManager::registerPrefix(const Name& prefix)
 
 	memoryContentCache_->registerPrefix(prefix,
 		[logger](const boost::shared_ptr<const Name> &p){
-			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p->toUri() << std::endl;
+			if (logger) logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p->toUri() << std::endl;
 		},
 		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
-			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p->toUri() << std::endl;
+			if (logger)  logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p->toUri() << std::endl;
 		},
 		[logger, memCache](const boost::shared_ptr<const Name>& p,
 			const boost::shared_ptr<const Interest> &i,
 			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
-			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
+			if (logger) logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
 			<< std::endl;
 
 			memCache->storePendingInterest(i, f);
