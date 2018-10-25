@@ -35,6 +35,7 @@ namespace ndnrtc {
                 const std::string& configPolicy,
                 unsigned int instanceCertLifetime,
                 boost::shared_ptr<ndnlog::new_api::Logger> logger);
+            ~KeyChainManager() {}
 
             boost::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
             boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }

@@ -25,6 +25,11 @@ class RemoteStreamRenderer;
 class ndnrtcIn : public ndnrtcTOPbase, ndnrtc::IRemoteStreamObserver
 {
 public:
+    typedef struct _Params : ndnrtcTOPbase::Params {
+        std::string streamPrefix_;
+        int jitterSize_, lifetime_;
+    } Params;
+
     ndnrtcIn(const OP_NodeInfo *info);
     virtual ~ndnrtcIn();
     
@@ -49,10 +54,9 @@ public:
 
 private:
     boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
-    
 
-    void                    init() override;
-    void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
+    void                    initStream() override;
+    std::set<std::string>   checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
     
     void                    createRemoteStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
 

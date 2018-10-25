@@ -35,15 +35,9 @@ namespace ndn {
     class Interest;
 }
 
-#define TOUCHDESIGNER_IDENTITY  "/touchdesigner"
-
 #define PAR_NFD_HOST            "Nfdhost"
-#define PAR_SIGNING_IDENTITY    "Signingidentity"
-#define PAR_INSTANCE_NAME       "Instancename"
 #define PAR_USE_MACOS_KEYCHAIN  "Usemacoskeychain"
 #define PAR_INIT                "Init"
-
-static map<const ndnrtcTOPbase*, std::string> TopNames;
 
 //******************************************************************************
 /**
@@ -54,9 +48,8 @@ static map<const ndnrtcTOPbase*, std::string> TopNames;
  */
 enum class InfoDatIndex {
     LibVersion,
-    StreamPrefix,
-    StreamName,
-    StreamBasePrefix
+    Prefix,
+    NdnRtcPrefix,
 };
 
 /**
@@ -65,28 +58,36 @@ enum class InfoDatIndex {
  */
 static std::map<InfoDatIndex, std::string> RowNames = {
     { InfoDatIndex::LibVersion, "Library Version" },
-    { InfoDatIndex::StreamPrefix, "Stream Prefix" },
-    { InfoDatIndex::StreamName, "Stream Name" },
-    { InfoDatIndex::StreamBasePrefix, "Base Prefix" }
+    { InfoDatIndex::Prefix, "Prefix" },
+    { InfoDatIndex::NdnRtcPrefix, "NDNRTC Prefix" }
 };
 
-ndnrtcTOPbase::ndnrtcTOPbase(const OP_NodeInfo* info) : myNodeInfo(info),
+const std::string ndnrtcTOPbase::SigningIdentityName = "/touchdesigner";
+const std::string ndnrtcTOPbase::NdnRtcStreamName = "s";
+const std::string ndnrtcTOPbase::NdnRtcTrheadName = "t";
+
+static set<string> ReinitParams({PAR_USE_MACOS_KEYCHAIN, PAR_NFD_HOST});
+
+ndnrtcTOPbase::ndnrtcTOPbase(const OP_NodeInfo* info) : nodeInfo_(info),
 errorString_(""), warningString_(""),
 statStorage_(nullptr),
-stream_(nullptr)
+stream_(nullptr),
+opName_(extractOpName(info->opPath)),
+reinitParams_(ReinitParams)
 {
-#if 0
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
     logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
-#endif
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()
 {
-    TopNames.erase(this);
+    // making sure processing stopped
+    if (faceProcessor_)
+        faceProcessor_->stop();
+
     if (statStorage_)
         delete statStorage_;
 }
@@ -112,18 +113,37 @@ ndnrtcTOPbase::execute(const TOP_OutputFormatSpecs *outputFormat,
                        OP_Inputs *inputs,
                        TOP_Context *context)
 {
-    checkInputs(outputFormat, inputs, context);
+    bool reinit = false;
+    std::string opName = extractOpName(nodeInfo_->opPath);
     
-    try {
-        while (executeQueue_.size())
-        {
-            executeQueue_.front()(outputFormat, inputs, context);
-            executeQueue_.pop();
+    if (opName_ != opName)
+    {
+        opName_ = opName;
+        reinit = true;
+    }
+    
+    set<string> updatedParams = checkInputs(outputFormat, inputs, context);
+    
+    // check if any of NDN's params were update so that we need to reinit NDN...
+    if (ndnrtcTOPbase::intersect(updatedParams, ReinitParams).size() > 0)
+        init();
+
+    // check whether stream needs to be re-initialized
+    if (ndnrtcTOPbase::intersect(updatedParams, reinitParams_).size() > 0)
+        initStream();
+    
+    {
+        try {
+            while (executeQueue_.size())
+            {
+                executeQueue_.front()(outputFormat, inputs, context);
+                executeQueue_.pop();
+            }
+        } catch (exception& e) {
+            executeQueue_.pop(); // just throw this naughty block away
+            logSink((string(string("Exception caught: ")+e.what())).c_str());
+            errorString_ = e.what();
         }
-    } catch (exception& e) {
-        executeQueue_.pop(); // just throw this naughty block away
-        logSink((string(string("Exception caught: ")+e.what())).c_str());
-        errorString_ = e.what();
     }
 }
 
@@ -162,19 +182,13 @@ ndnrtcTOPbase::getInfoDATEntries(int32_t index,
                 snprintf(tempBuffer2, strlen(ndnrtcLibVersion), "%s", ndnrtcLibVersion);
             }
                 break;
-            case InfoDatIndex::StreamPrefix:
+            case InfoDatIndex::NdnRtcPrefix:
             {
                 if (stream_)
                     strcpy(tempBuffer2, stream_->getPrefix().c_str());
             }
                 break;
-            case InfoDatIndex::StreamName:
-            {
-                if (stream_)
-                    strcpy(tempBuffer2, stream_->getStreamName().c_str());
-            }
-                break;
-            case InfoDatIndex::StreamBasePrefix:
+            case InfoDatIndex::Prefix:
             {
                 if (stream_)
                     strcpy(tempBuffer2, stream_->getBasePrefix().c_str());
@@ -193,31 +207,20 @@ void
 ndnrtcTOPbase::setupParameters(OP_ParameterManager* manager)
 {
     {
-        OP_StringParameter nfdHost(PAR_NFD_HOST), signingIdentity(PAR_SIGNING_IDENTITY),
-        instanceName(PAR_INSTANCE_NAME);
+        OP_StringParameter nfdHost(PAR_NFD_HOST);
         OP_NumericParameter useMacOsKeyChain(PAR_USE_MACOS_KEYCHAIN);
         
         nfdHost.label = "NFD Host";
         nfdHost.defaultValue = "localhost";
         nfdHost.page = "Lib Config";
         
-        signingIdentity.label = "Signing Identity";
-        signingIdentity.defaultValue = TOUCHDESIGNER_IDENTITY;
-        signingIdentity.page = "Lib Config";
-        
-        instanceName.label = "Instance name";
-        instanceName.defaultValue = TopNames[this].c_str();
-        instanceName.page = "Lib Config";
-        
         useMacOsKeyChain.label = "Use System KeyChain";
         useMacOsKeyChain.defaultValues[0] = 0;
         useMacOsKeyChain.page = "Lib Config";
         
+        // TODO: setup list of system's identities
+        
         OP_ParAppendResult res = manager->appendString(nfdHost);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendString(signingIdentity);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendString(instanceName);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendToggle(useMacOsKeyChain);
         assert(res == OP_ParAppendResult::Success);
@@ -243,17 +246,50 @@ ndnrtcTOPbase::pulsePressed(const char* name)
     }
 }
 
-void
+set<string>
 ndnrtcTOPbase::checkInputs(const TOP_OutputFormatSpecs *, OP_Inputs *inputs, TOP_Context *)
 {
-    bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
-    inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+    assert(params_);
+    set<string> updatedParams;
+    
+    // enable menu
+//    inputs->enablePar(PAR_SIGNING_IDENTITY, !useMacOsKeyChain);
+    
+    if (params_->useMacOsKeyChain_ != inputs->getParInt(PAR_USE_MACOS_KEYCHAIN))
+    {
+        updatedParams.insert(PAR_USE_MACOS_KEYCHAIN);
+        params_->useMacOsKeyChain_ = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
+    }
+    
+    if (params_->nfdHost_ != string(inputs->getParString(PAR_NFD_HOST)))
+    {
+        updatedParams.insert(PAR_NFD_HOST);
+        params_->nfdHost_ = string(inputs->getParString(PAR_NFD_HOST));
+    }
+    
+    return updatedParams;
+}
+
+set<string>
+ndnrtcTOPbase::intersect(const std::set<std::string> &a, const std::set<std::string> &b)
+{
+    vector<string> x;
+    set_intersection(a.begin(), a.end(), b.begin(), b.end(), back_inserter(x));
+    return set<string>(make_move_iterator(x.begin()), make_move_iterator(x.end()));
 }
 
 //******************************************************************************
 void
 ndnrtcTOPbase::init()
 {
+    if (faceProcessor_)
+        faceProcessor_->stop();
+
+    stream_.reset();
+    keyChainManager_.reset();
+    faceProcessor_.reset();
+    queue<ExecuteCallback>().swap(executeQueue_); // is it cool to clear the queue?
+
     executeQueue_.push(bind(&ndnrtcTOPbase::initFace, this, _1, _2, _3));
     executeQueue_.push(bind(&ndnrtcTOPbase::initKeyChainManager, this, _1, _2, _3));
 }
@@ -293,8 +329,8 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
     if (!faceProcessor_)
         return;
 
-    std::string signingIdentity(inputs->getParString(PAR_SIGNING_IDENTITY));
-    std::string instanceName(inputs->getParString(PAR_INSTANCE_NAME));
+    std::string signingIdentity(ndnrtcTOPbase::SigningIdentityName);
+    std::string instanceName(opName_);
     bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
     
     string policyFilePath = string(get_resources_path())+"/policy.conf";
@@ -306,14 +342,17 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
         boost::shared_ptr<ndn::KeyChain> kc = KeyChainManager::createKeyChain(keyChainPath);
         keyChainManager_ = boost::make_shared<KeyChainManager>(faceProcessor_->getFace(),
                                                                (useMacOsKeyChain ? KeyChainManager::createKeyChain("") : KeyChainManager::createKeyChain(keyChainPath)),
-                                                               (useMacOsKeyChain ? signingIdentity : TOUCHDESIGNER_IDENTITY),
+                                                               (useMacOsKeyChain ? signingIdentity : ndnrtcTOPbase::SigningIdentityName),
                                                                instanceName,
                                                                policyFilePath,
                                                                24*3600,
                                                                logger_);
         
         if (!useMacOsKeyChain)
-            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
+        {
+            // TODO: enable identities menu
+//            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
+        }
         
         faceProcessor_->getFace()->setCommandSigningInfo(*keyChainManager_->instanceKeyChain(),
                                                          keyChainManager_->instanceKeyChain()->getDefaultCertificateName());
@@ -352,17 +391,15 @@ ndnrtcTOPbase::registerPrefix(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 std::string
-ndnrtcTOPbase::generateName(string topBaseName) const
+ndnrtcTOPbase::extractOpName(std::string opPath) const
 {
-    // TODO make this function smarter, if needed
-    int nTOPs = (int)TopNames.size();
-    
-    stringstream ss;
-    ss << topBaseName << nTOPs;
+    size_t last = 0;
+    size_t next = 0;
 
-    TopNames[this] = ss.str();
+    while ((next = opPath.find("/", last)) != string::npos)
+        last = next + 1;
     
-    return ss.str();
+    return opPath.substr(last);
 }
 
 void
@@ -375,16 +412,14 @@ ndnrtcTOPbase::readStreamStats()
 string ndnrtcTOPbase::readBasePrefix(OP_Inputs* inputs) const
 {
     stringstream basePrefix;
-    basePrefix << inputs->getParString(PAR_SIGNING_IDENTITY) << "/"
-        << inputs->getParString(PAR_INSTANCE_NAME);
+    basePrefix << ndnrtcTOPbase::SigningIdentityName << "/" << opName_;
     return basePrefix.str();
 }
-
 
 void
 ndnrtcTOPbase::logSink(const char *msg)
 {
-    cout << "[" << name_ << "] " << msg;
+    cout << "[" << opName_ << "] " << msg;
 }
 
 void

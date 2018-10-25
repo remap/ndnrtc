@@ -120,6 +120,7 @@ FaceProcessor::~FaceProcessor() {
     _pimpl->stop();
     _pimpl.reset();
 }
+
 void FaceProcessor::start() { _pimpl->start(); }
 void FaceProcessor::stop() { _pimpl->stop(); }
 bool FaceProcessor::isProcessing() { return _pimpl->isProcessing(); }
@@ -187,6 +188,7 @@ void FaceProcessorImpl::stop()
 #ifdef USE_THREADSAFE_FACE
         face_->shutdown();
         ioWork_.reset();
+        io_.stop();
         t_.join();
 #else
 //        std::cout << "t join" << std::endl;

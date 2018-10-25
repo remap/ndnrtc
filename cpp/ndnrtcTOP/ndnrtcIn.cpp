@@ -115,8 +115,19 @@ class RemoteStreamRenderer : public IExternalRenderer
 public:
     class FrameBuffer {
     public:
-        FrameBuffer(int w = 1280, int h = 720): frameBufferSize_(0),
+        FrameBuffer(int w = 1, int h = 1): frameBufferSize_(0),
             frameWidth_(0), frameHeight_(0), frameBuffer_(nullptr) { resize(w, h); }
+
+        FrameBuffer(FrameBuffer&& fb): frameBufferSize_(fb.frameBufferSize_),
+            frameWidth_(fb.frameWidth_), frameHeight_(fb.frameHeight_), frameBuffer_(fb.frameBuffer_)
+        {
+            fb.frameBuffer_ = nullptr;
+            fb.frameWidth_ = 0;
+            fb.frameHeight_ = 0;
+            fb.frameBufferSize_ = 0;
+            fb.info_ = FrameInfo();
+        }
+        
         ~FrameBuffer() { if (frameBuffer_) free(frameBuffer_); }
         
         const int getWidth() const { return frameWidth_; }
@@ -146,12 +157,14 @@ public:
         void setInfo(const FrameInfo& info) { info_ = info; }
         
     private:
+        FrameBuffer(const FrameBuffer&) = delete;
+
         int frameBufferSize_, frameWidth_, frameHeight_;
         unsigned char* frameBuffer_;
         FrameInfo info_;
     };
     
-    RemoteStreamRenderer(): buffers_({FrameBuffer(), FrameBuffer()}),
+    RemoteStreamRenderer(): buffers_(2),
         frontBuffer_(&buffers_[0]), backBuffer_(&buffers_[1]) {}
     
     const int getWidth() const { return frontBuffer_.load()->getWidth(); }
@@ -172,19 +185,26 @@ private:
     void renderBGRAFrame(const FrameInfo& frameInfo, int width, int height, const uint8_t* buffer);
 };
 
+/**
+ * These are the parameters that will affect whether TOP must be re-initialized or not
+ */
+static set<string> ReinitParams({PAR_STREAM_PREFIX, PAR_LIFETIME, PAR_JITTER});
+
+
 //******************************************************************************
 ndnrtcIn::ndnrtcIn(const OP_NodeInfo *info) :
 ndnrtcTOPbase(info),
 streamRenderer_(boost::make_shared<RemoteStreamRenderer>())
 {
-    name_ = generateName("ndnrtcIn");
+    params_ = new ndnrtcIn::Params();
+    memset((void*)params_, 0, sizeof(Params));
+    reinitParams_.insert(ReinitParams.begin(), ReinitParams.end());
+
     statStorage_ = StatisticsStorage::createConsumerStatistics();
-    init();
 }
 
 ndnrtcIn::~ndnrtcIn()
 {
-    
 }
 
 void
@@ -209,29 +229,32 @@ ndnrtcIn::execute(const TOP_OutputFormatSpecs* outputFormat,
                   TOP_Context* context)
 {
     ndnrtcTOPbase::execute(outputFormat, inputs, context);
-    
-    int textureMemoryLocation = 0;
-    float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
 
-    streamRenderer_->readBuffer([this, outputFormat, mem](const uint8_t* activeBuffer)
-                                {
-                                    for (int y = 0; y < outputFormat->height; ++y)
-                                        for (int x = 0; x < outputFormat->width; ++x)
-                                        {
-                                            // ARGB
-                                            const uint8_t* framePixel = streamRenderer_->getPixel(x, y);
-                                            // RGBA
-                                            float* pixel = &mem[4*(y*outputFormat->width + x)];
-                                            
-                                            pixel[0] = (float)(framePixel[1])/255.;
-                                            pixel[1] = (float)(framePixel[2])/255.;
-                                            pixel[2] = (float)(framePixel[3])/255.;
-                                            pixel[3] = (float)(framePixel[0])/255.;
-                                        } // for x
-                                });
-
-    outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
-    textureMemoryLocation = !textureMemoryLocation;
+    if (stream_) // also, maybe, if state is Fetching?
+    {
+        int textureMemoryLocation = 0;
+        float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
+        
+        streamRenderer_->readBuffer([this, outputFormat, mem](const uint8_t* activeBuffer)
+                                    {
+                                        for (int y = 0; y < outputFormat->height; ++y)
+                                            for (int x = 0; x < outputFormat->width; ++x)
+                                            {
+                                                // ARGB
+                                                const uint8_t* framePixel = streamRenderer_->getPixel(x, y);
+                                                // RGBA
+                                                float* pixel = &mem[4*(y*outputFormat->width + x)];
+                                                
+                                                pixel[0] = (float)(framePixel[1])/255.;
+                                                pixel[1] = (float)(framePixel[2])/255.;
+                                                pixel[2] = (float)(framePixel[3])/255.;
+                                                pixel[3] = (float)(framePixel[0])/255.;
+                                            } // for x
+                                    });
+        
+        outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
+        textureMemoryLocation = !textureMemoryLocation;
+    }
 }
 
 int32_t
@@ -359,18 +382,37 @@ ndnrtcIn::pulsePressed(const char *name)
 }
 
 void
-ndnrtcIn::init()
+ndnrtcIn::initStream()
 {
-    ndnrtcTOPbase::init();
     executeQueue_.push(bind(&ndnrtcIn::createRemoteStream, this, _1, _2, _3));
 }
 
-void
+set<string>
 ndnrtcIn::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                       OP_Inputs* inputs,
                       TOP_Context *context)
 {
-    ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
+    set<string> updatedParams = ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
+    
+    if (((ndnrtcIn::Params*)params_)->streamPrefix_ != string(inputs->getParString(PAR_STREAM_PREFIX)))
+    {
+        updatedParams.insert(PAR_STREAM_PREFIX);
+        ((ndnrtcIn::Params*)params_)->streamPrefix_ = string(inputs->getParString(PAR_STREAM_PREFIX));
+    }
+    
+    if (((ndnrtcIn::Params*)params_)->lifetime_ != inputs->getParInt(PAR_LIFETIME))
+    {
+        updatedParams.insert(PAR_LIFETIME);
+        ((ndnrtcIn::Params*)params_)->lifetime_ = inputs->getParInt(PAR_LIFETIME);
+    }
+    
+    if (((ndnrtcIn::Params*)params_)->jitterSize_ != inputs->getParInt(PAR_JITTER))
+    {
+        updatedParams.insert(PAR_JITTER);
+        ((ndnrtcIn::Params*)params_)->jitterSize_ = inputs->getParInt(PAR_JITTER);
+    }
+    
+    return updatedParams;
 }
 
 void
@@ -383,11 +425,7 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
  
     errorString_ = "";
     
-    const char* streamPrefix = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_PREFIX))+1);
-    strcpy((char*)streamPrefix, inputs->getParString(PAR_STREAM_PREFIX));
-    ndn::Name prefix(streamPrefix);
-    free((void*)streamPrefix);
-
+    ndn::Name prefix(string(inputs->getParString(PAR_STREAM_PREFIX)));
     NamespaceInfo prefixInfo;
     
     if (!NameComponents::extractInfo(prefix, prefixInfo) ||
@@ -405,6 +443,7 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
         stream_.reset();
     }
     
+    LogInfoC << "creating remote stream for prefix: " << prefixInfo.getPrefix(prefix_filter::Base).toUri() << endl;
     stream_ = boost::make_shared<RemoteVideoStream>(faceProcessor_->getIo(),
                                                     faceProcessor_->getFace(),
                                                     keyChainManager_->instanceKeyChain(),
@@ -414,7 +453,7 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
                                                     inputs->getParInt(PAR_JITTER));
     stream_->setLogger(logger_);
     dynamic_pointer_cast<RemoteStream>(stream_)->registerObserver(this);
-    dynamic_pointer_cast<RemoteVideoStream>(stream_)->start("t1", streamRenderer_.get());
+    dynamic_pointer_cast<RemoteVideoStream>(stream_)->start(ndnrtcTOPbase::NdnRtcTrheadName, streamRenderer_.get());
 }
 
 void

@@ -24,16 +24,18 @@ using namespace std::placeholders;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-#define PAR_STREAM_NAME         "Streamname"
+#define PAR_FRAME_RESOLUTION    "Frameresolution"
 #define PAR_TARGET_BITRATE      "Targetbitrate"
+
+#if USE_ENCODE_RESOLUTION
 #define PAR_ENCODE_WIDTH        "Encodewidth"
 #define PAR_ENCODE_HEIGHT       "Encodeheight"
-#define PAR_THREAD_NAME         "Threadname"
+#endif
+
 #define PAR_FEC                 "Fec"
 #define PAR_SIGNING             "Signing"
 #define PAR_FRAMEDROP           "Framedrop"
 #define PAR_SEGSIZE             "Segmentsize"
-#define PAR_FRESHNESS           "Freshness"
 #define PAR_GOPSIZE             "Gopsize"
 
 #define GetError( )\
@@ -94,12 +96,6 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
 };
 
 //******************************************************************************
-static void NdnrtcStreamLoggingCallback(const char* message)
-{
-    std::cout << "[ndnrtc-stream] " << message << endl;
-}
-
-//******************************************************************************
 /**
  * This enum identifies output DAT's different fields
  * The output DAT is a table that contains two
@@ -118,21 +114,30 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
     { InfoChopIndex::PublishedFrame, "publishedFrame" }
 };
 
+/**
+ * These are the parameters that will affect whether TOP must be re-initialized or not
+ */
+#if USE_ENCODE_RESOLUTION
+static set<string> ReinitParams({PAR_FRAME_RESOLUTION, PAR_FEC, PAR_GOPSIZE, PAR_SEGSIZE, PAR_SIGNING, PAR_FRAMEDROP, PAR_TARGET_BITRATE, PAR_ENCODE_WIDTH, PAR_ENCODE_HEIGHT});
+#else
+static set<string> ReinitParams({PAR_FRAME_RESOLUTION, PAR_FEC, PAR_GOPSIZE, PAR_SEGSIZE, PAR_SIGNING, PAR_FRAMEDROP, PAR_TARGET_BITRATE});
+#endif
+
 //******************************************************************************
 ndnrtcOut::ndnrtcOut(const OP_NodeInfo* info) :
 ndnrtcTOPbase(info),
 incomingFrameBuffer_(nullptr),
 incomingFrameWidth_(0), incomingFrameHeight_(0)
 {
-    name_ = generateName("ndnrtcOut");
+    params_ = new ndnrtcOut::Params();
+    memset((void*)params_, 0, sizeof(Params));
+    reinitParams_.insert(ReinitParams.begin(), ReinitParams.end());
     statStorage_ = StatisticsStorage::createProducerStatistics();
-    
-    init();
-    executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
 }
 
 ndnrtcOut::~ndnrtcOut()
 {
+    free(params_);
 }
 
 void
@@ -174,6 +179,10 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
             GetError()
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, incomingFrameBuffer_);
             GetError();
+            
+            // TODO: to update preview, need to get frame sizes from the input and then set them for outputFormat
+            // on the next run (need to save input sizes, like "prevInputWidth = topInput->width;")
+//            memcpy(outputFormat->cpuPixelData[0], incomingFrameBuffer_, incomingFrameBufferSize_);
             
             // flip vertically and convert RGBA -> ARGB
             flipFrame(incomingFrameWidth_, incomingFrameHeight_, incomingFrameBuffer_,
@@ -250,20 +259,18 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
     ndnrtcTOPbase::setupParameters(manager);
     
     {
-        OP_StringParameter streamName(PAR_STREAM_NAME);
-        OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE), encodeWidth(PAR_ENCODE_WIDTH),
+        OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE);
+#if USE_ENCODE_RESOLUTION
+        OP_NumericParameter encodeWidth(PAR_ENCODE_WIDTH),
                             encodeHeight(PAR_ENCODE_HEIGHT);
-        
-        streamName.label = "Stream Name";
-        streamName.defaultValue = "video1";
-        streamName.page = "Stream Config";
-        
+#endif
         targetBitrate.label = "Target Bitrate";
         targetBitrate.page = "Stream Config";
         targetBitrate.defaultValues[0] = 3000;
         targetBitrate.minSliders[0] = 500;
         targetBitrate.maxSliders[0] = 15000;
         
+#if USE_ENCODE_RESOLUTION
         encodeWidth.label = "Encode Width";
         encodeWidth.page = "Stream Config";
         encodeWidth.defaultValues[0] = 1280;
@@ -275,25 +282,21 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
         encodeHeight.defaultValues[0] = 720;
         encodeHeight.minSliders[0] = 180;
         encodeHeight.maxSliders[0] = 2160;
+#endif
         
-        OP_ParAppendResult res = manager->appendString(streamName);
+        OP_ParAppendResult res = manager->appendInt(targetBitrate);
         assert(res == OP_ParAppendResult::Success);
-        res = manager->appendInt(targetBitrate);
-        assert(res == OP_ParAppendResult::Success);
+#if USE_ENCODE_RESOLUTION
         res = manager->appendInt(encodeWidth);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendInt(encodeHeight);
         assert(res == OP_ParAppendResult::Success);
+#endif
     }
     {
-        OP_StringParameter threadName(PAR_THREAD_NAME);
         OP_NumericParameter fec(PAR_FEC), signing(PAR_SIGNING), frameDrop(PAR_FRAMEDROP),
-                            segmentSize(PAR_SEGSIZE), freshness(PAR_FRESHNESS),
+                            segmentSize(PAR_SEGSIZE),
                             gopSize(PAR_GOPSIZE);
-        
-        threadName.label = "Thread Name";
-        threadName.defaultValue = "t1";
-        threadName.page = "Advanced";
         
         fec.label = "FEC";
         fec.page = "Advanced";
@@ -319,24 +322,14 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
         gopSize.defaultValues[0] = 30;
         gopSize.minSliders[0] = 15;
         gopSize.maxSliders[0] = 60;
-        
-        freshness.label = "Freshness";
-        freshness.page = "Advanced";
-        freshness.defaultValues[0] = 2000;
-        freshness.minSliders[0] = 1000;
-        freshness.maxSliders[0] = 10000;
-        
-        OP_ParAppendResult res = manager->appendString(threadName);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendToggle(fec);
+
+        OP_ParAppendResult res = manager->appendToggle(fec);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendToggle(signing);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendToggle(frameDrop);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendInt(segmentSize);
-        assert(res == OP_ParAppendResult::Success);
-        res = manager->appendInt(freshness);
         assert(res == OP_ParAppendResult::Success);
         res = manager->appendInt(gopSize);
         assert(res == OP_ParAppendResult::Success);
@@ -360,6 +353,7 @@ void
 ndnrtcOut::init()
 {
     ndnrtcTOPbase::init();
+    
     executeQueue_.push(bind(&ndnrtcOut::registerPrefix, this, _1, _2, _3));
     executeQueue_.push([this](const TOP_OutputFormatSpecs* outputFormat, OP_Inputs* inputs, TOP_Context *context)
     {
@@ -369,19 +363,80 @@ ndnrtcOut::init()
 }
 
 void
+ndnrtcOut::initStream()
+{
+    executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
+}
+
+std::set<std::string>
 ndnrtcOut::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
                        OP_Inputs* inputs,
                        TOP_Context *context)
 {
-    ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
+    set<string> updatedParams = ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
     
     if (inputs->getNumInputs())
     {
         const OP_TOPInput *topInput = inputs->getInputTOP(0);
         if (topInput)
             if (topInput->width != incomingFrameWidth_ || topInput->height != incomingFrameHeight_)
+            {
                 allocateIncomingFramebuffer(topInput->width, topInput->height);
+                updatedParams.insert(PAR_FRAME_RESOLUTION);
+            }
     }
+    
+    if (((ndnrtcOut::Params*)params_)->targetBitrate_ != inputs->getParInt(PAR_TARGET_BITRATE))
+    {
+        updatedParams.insert(PAR_TARGET_BITRATE);
+        ((ndnrtcOut::Params*)params_)->targetBitrate_ = inputs->getParInt(PAR_TARGET_BITRATE);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->fecEnabled_!= inputs->getParInt(PAR_FEC))
+    {
+        updatedParams.insert(PAR_FEC);
+        ((ndnrtcOut::Params*)params_)->fecEnabled_ = inputs->getParInt(PAR_FEC);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->signingEnabled_ != inputs->getParInt(PAR_SIGNING))
+    {
+        updatedParams.insert(PAR_SIGNING);
+        ((ndnrtcOut::Params*)params_)->signingEnabled_ = inputs->getParInt(PAR_SIGNING);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->frameDropAllowed_ != inputs->getParInt(PAR_FRAMEDROP))
+    {
+        updatedParams.insert(PAR_FRAMEDROP);
+        ((ndnrtcOut::Params*)params_)->frameDropAllowed_ = inputs->getParInt(PAR_FRAMEDROP);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->segmentSize_ != inputs->getParInt(PAR_SEGSIZE))
+    {
+        updatedParams.insert(PAR_SEGSIZE);
+        ((ndnrtcOut::Params*)params_)->segmentSize_ = inputs->getParInt(PAR_SEGSIZE);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->gopSize_ != inputs->getParInt(PAR_GOPSIZE))
+    {
+        updatedParams.insert(PAR_GOPSIZE);
+        ((ndnrtcOut::Params*)params_)->gopSize_ = inputs->getParInt(PAR_GOPSIZE);
+    }
+    
+#if USE_ENCODE_RESOLUTION
+    if (((ndnrtcOut::Params*)params_)->encodeWidth_ != inputs->getParInt(PAR_ENCODE_WIDTH))
+    {
+        updatedParams.insert(PAR_ENCODE_WIDTH);
+        ((ndnrtcOut::Params*)params_)->encodeWidth_ = inputs->getParInt(PAR_ENCODE_WIDTH);
+    }
+    
+    if (((ndnrtcOut::Params*)params_)->encodeHeight_ != inputs->getParInt(PAR_ENCODE_HEIGHT))
+    {
+        updatedParams.insert(PAR_ENCODE_HEIGHT);
+        ((ndnrtcOut::Params*)params_)->encodeHeight_ = inputs->getParInt(PAR_ENCODE_HEIGHT);
+    }
+#endif
+    
+    return updatedParams;
 }
 
 void
@@ -401,7 +456,8 @@ ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
     streamSettings.keyChain_ = keyChainManager_->instanceKeyChain().get();
     streamSettings.storagePath_ = ""; // TODO: try with storage
     streamSettings.sign_ = inputs->getParInt(PAR_SIGNING);
-   
+    
+    LogInfoC << "creating local stream with parameters: " << streamSettings.params_ << endl;
     stream_ = boost::make_shared<LocalVideoStream>(readBasePrefix(inputs),
                                                    streamSettings,
                                                    inputs->getParInt(PAR_FEC));
@@ -414,29 +470,23 @@ ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
     p.type_ = MediaStreamParams::MediaStreamTypeVideo;
     p.producerParams_.segmentSize_ = inputs->getParInt(PAR_SEGSIZE);
     p.producerParams_.freshness_ = {15, 30, 900};
-    
-    const char* streamName = (const char*)malloc(strlen(inputs->getParString(PAR_STREAM_NAME))+1);
-    strcpy((char*)streamName, inputs->getParString(PAR_STREAM_NAME));
-    p.streamName_ = std::string(streamName);
-    free((void*)streamName);
+    p.streamName_ = ndnrtcTOPbase::NdnRtcStreamName;
     
     VideoCoderParams vcp;
     vcp.codecFrameRate_ = 30; // TODO: try 60fps;
     vcp.gop_ = inputs->getParInt(PAR_GOPSIZE);
     vcp.startBitrate_ = inputs->getParInt(PAR_TARGET_BITRATE);
     vcp.maxBitrate_ = inputs->getParInt(PAR_TARGET_BITRATE);
+#if USE_ENCODE_RESOLUTION
     vcp.encodeWidth_ = inputs->getParInt(PAR_ENCODE_WIDTH);
     vcp.encodeHeight_ = inputs->getParInt(PAR_ENCODE_HEIGHT);
+#else
+    vcp.encodeWidth_ = incomingFrameWidth_; // inputs->getParInt(PAR_ENCODE_WIDTH);
+    vcp.encodeHeight_ = incomingFrameHeight_; // inputs->getParInt(PAR_ENCODE_HEIGHT);
+#endif
     vcp.dropFramesOn_ =  inputs->getParInt(PAR_FRAMEDROP);
     
-    const char *threadName = (const char*)malloc(strlen(inputs->getParString(PAR_THREAD_NAME))+1);
-    strcpy((char*)threadName, inputs->getParString(PAR_THREAD_NAME));
-    
-    p.addMediaThread(VideoThreadParams(threadName, vcp));
-
-    free((void*)threadName);
-    
-    LogInfoC << "creating stream with parameters: " << p << endl;
+    p.addMediaThread(VideoThreadParams(ndnrtcTOPbase::NdnRtcTrheadName, vcp));
     
     return p;
 }

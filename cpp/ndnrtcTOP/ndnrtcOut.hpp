@@ -15,9 +15,21 @@ namespace ndnrtc {
     }
 }
 
+#define USE_ENCODE_RESOLUTION 0 // use encoding resolution as a parameter
+
 class ndnrtcOut : public ndnrtcTOPbase
 {
 public:
+    typedef struct _Params : public ndnrtcTOPbase::Params {
+        enum { TargetBitrate, Fec, Signing, FrameDrop, SegmentSize, GopSize };
+        
+        int targetBitrate_, segmentSize_, gopSize_;
+        bool fecEnabled_, signingEnabled_, frameDropAllowed_;
+#if USE_ENCODE_RESOLUTION
+        int encodeWidth_, encodeHeight_;
+#endif
+    } Params;
+    
     ndnrtcOut(const OP_NodeInfo *info);
     virtual ~ndnrtcOut();
     
@@ -41,13 +53,14 @@ public:
     virtual void        pulsePressed(const char *name) override;
     
 private:
-    int                     publbishedFrame_;
+    int                 publbishedFrame_;
     
     int                     incomingFrameBufferSize_, incomingFrameWidth_, incomingFrameHeight_;
     unsigned char*          incomingFrameBuffer_;
     
     void                    init() override;
-    void                    checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
+    void                    initStream() override;
+    std::set<std::string>   checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
 
     void                    createLocalStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
     ndnrtc::MediaStreamParams   readStreamParams(OP_Inputs*) const;
