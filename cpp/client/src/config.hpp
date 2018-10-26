@@ -74,9 +74,12 @@ class ClientMediaStreamParams : public ndnrtc::MediaStreamParams
 class ProducerStreamParams : public ClientMediaStreamParams
 {
   public:
-    std::string source_;
+    typedef struct _Source {
+        std::string name_, type_;
+    } Source;
+    Source source_;
 
-    ProducerStreamParams() {}
+    ProducerStreamParams() : source_({"", "file"}) {}
     ProducerStreamParams(const ProducerStreamParams &params) : ClientMediaStreamParams(params), source_(params.source_) {}
 
     void getMaxResolution(unsigned int &width, unsigned int &height) const;
@@ -84,7 +87,8 @@ class ProducerStreamParams : public ClientMediaStreamParams
     void write(std::ostream &os) const
     {
         os
-            << "stream source: " << source_ << "; ";
+            << "stream source: " << source_.name_ << " (type: "
+            << source_.type_ << "); ";
         ClientMediaStreamParams::write(os);
     }
 };

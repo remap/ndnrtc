@@ -201,13 +201,34 @@ LocalStream Client::initLocalStream(const ProducerStreamParams &p)
 
     if (p.type_ == ndnrtc::MediaStreamParams::MediaStreamTypeVideo)
     {
-        LogDebug("") << "initializing video source at " << p.source_ << endl;
+        LogDebug("") << "initializing video source at " << p.source_.name_ << endl;
 
         boost::shared_ptr<RawFrame> sampleFrame = sampleFrameForStream(p);
 
         LogDebug("") << "source should support frames of size "
                      << sampleFrame->getWidth() << "x" << sampleFrame->getHeight() << endl;
-        videoSource.reset(new VideoSource(io_, p.source_, sampleFrame));
+
+        boost::shared_ptr<IFrameSource> source;
+
+        if (p.source_.type_ == "file")
+        {
+            if (!FileFrameSource::checkSourceForFrame(p.source_.name_, *sampleFrame))
+            {
+                stringstream msg;
+                msg << "bad source (" << p.source_.name_ << ") for "
+                    << sampleFrame->getWidth() << "x" << sampleFrame->getHeight() << " video";
+                throw runtime_error(msg.str());
+            }
+            source.reset(new FileFrameSource(p.source_.name_));
+        }
+        else if (p.source_.type_ == "pipe")
+        {
+            source.reset(new PipeFrameSource(p.source_.name_));
+        }
+        else
+            throw runtime_error("Uknown source type "+p.source_.type_);
+
+        videoSource.reset(new VideoSource(io_, source, sampleFrame));
         LogDebug("") << "video source initialized" << endl;
 
         boost::shared_ptr<ndnrtc::LocalVideoStream> s =

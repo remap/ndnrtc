@@ -95,13 +95,13 @@ namespace ndnrtc
     // media thread parameters
     class MediaThreadParams : public Params {
     public:
-        MediaThreadParams(){}
+        MediaThreadParams():threadName_(""){}
         MediaThreadParams(std::string threadName):threadName_(threadName){}
         MediaThreadParams(std::string threadName, FrameSegmentsInfo segInfo):
         threadName_(threadName), segInfo_(segInfo){}
         virtual ~MediaThreadParams(){}
         
-        std::string threadName_ = "";
+        std::string threadName_;
         FrameSegmentsInfo segInfo_;
         
         virtual void write(std::ostream& os) const
@@ -152,8 +152,8 @@ namespace ndnrtc
         unsigned int encodeWidth_, encodeHeight_;
         bool dropFramesOn_;
         
-        VideoCoderParams():codecFrameRate_(0),gop_(0),startBitrate_(0),
-        maxBitrate_(0),encodeWidth_(0),encodeHeight_(0),dropFramesOn_(false){}
+        VideoCoderParams():codecFrameRate_(30),gop_(30),startBitrate_(1000),
+        maxBitrate_(5000),encodeWidth_(1280),encodeHeight_(720),dropFramesOn_(false){}
         
         void write(std::ostream& os) const
         {
@@ -221,8 +221,10 @@ namespace ndnrtc
             unsigned int sampleKeyMs_;
         } FreshnessPeriodParams;
 
-        unsigned int segmentSize_ = 0;
-        FreshnessPeriodParams freshness_ = {0, 0, 0};
+        GeneralProducerParams():segmentSize_(8000), freshness_({10, 15, 900}){}
+
+        unsigned int segmentSize_;
+        FreshnessPeriodParams freshness_;
         
         void write(std::ostream& os) const
         {
@@ -243,8 +245,9 @@ namespace ndnrtc
             MediaStreamTypeData = 2
         } MediaStreamType;
         
-        MediaStreamParams(){}
-        MediaStreamParams(const std::string& name):streamName_(name){}
+        MediaStreamParams():streamName_(""), synchronizedStreamName_(""), type_(MediaStreamTypeAudio){}
+        MediaStreamParams(const std::string& name):streamName_(name), 
+            synchronizedStreamName_(""), type_(MediaStreamTypeAudio){}
         MediaStreamParams(const MediaStreamParams& other)
         {
             copyFrom(other);
@@ -264,10 +267,10 @@ namespace ndnrtc
         }
         
         GeneralProducerParams producerParams_;
-        std::string streamName_ = "";
-        std::string synchronizedStreamName_ = "";
+        std::string streamName_;
+        std::string synchronizedStreamName_;
         CaptureDeviceParams captureDevice_;
-        MediaStreamType type_ = MediaStreamTypeAudio;
+        MediaStreamType type_;
         
         size_t getThreadNum() const { return mediaThreads_.size(); }
         void addMediaThread(const AudioThreadParams& tp)
@@ -334,8 +337,10 @@ namespace ndnrtc
     // general consumer parameters
     class GeneralConsumerParams : public Params {
     public:
-        unsigned int interestLifetime_ = 0;
-        unsigned int jitterSizeMs_ = 0;
+        unsigned int interestLifetime_;
+        unsigned int jitterSizeMs_;
+
+        GeneralConsumerParams():interestLifetime_(2000), jitterSizeMs_(150){}
         
         void write(std::ostream& os) const
         {
@@ -359,7 +364,9 @@ namespace ndnrtc
         unsigned int portNum_;
         
         GeneralParams():loggingLevel_(ndnlog::NdnLoggerDetailLevelNone),
-        useFec_(false), useAvSync_(false), portNum_(6363){}
+        logFile_("ndnrtc.log"), logPath_("/tmp"),
+        useFec_(false), useAvSync_(true), 
+        host_("localhost"), portNum_(6363) {}
         
         void write(std::ostream& os) const
         {

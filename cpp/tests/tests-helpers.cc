@@ -244,7 +244,7 @@ ClientParams sampleProducerParams()
 
             msp.sessionPrefix_ = pcp.prefix_;
             msp.streamName_ = "camera";
-            msp.source_ = "/tmp/camera.argb";
+            msp.source_ = {"/tmp/camera.argb", "file"};
             msp.type_ = MediaStreamParams::MediaStreamTypeVideo;
             msp.synchronizedStreamName_ = "mic";
             msp.producerParams_.freshness_ = {15, 15, 900};

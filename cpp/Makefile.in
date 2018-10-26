@@ -3217,9 +3217,9 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
 	$(am__append_11) $(am__append_16) $(am__append_19)
-ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ \
-	${BOOST_LDFLAGS} -L$(libdir) $(am__append_12) $(am__append_14) \
-	$(am__append_17) $(am__append_20)
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} \
+	-L$(libdir) $(am__append_12) $(am__append_14) $(am__append_17) \
+	$(am__append_20)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
 	$(top_builddir)/libndnrtc.la $(am__append_13) $(am__append_15) \
