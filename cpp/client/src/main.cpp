@@ -164,7 +164,7 @@ int run(const struct Args &args)
             err = 1;
         }
     });
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+
     boost::asio::io_service rendererIo;
     boost::shared_ptr<boost::asio::io_service::work> rendererWork(boost::make_shared<boost::asio::io_service::work>(rendererIo));
     boost::thread rendererThread([&rendererIo](){ 

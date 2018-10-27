@@ -95,15 +95,21 @@ void RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger>
 #pragma mark private
 void RemoteVideoStreamImpl::feedFrame(const FrameInfo &frameInfo, const WebRtcVideoFrame &frame)
 {
+    IExternalRenderer::BufferType bufferType = IExternalRenderer::kARGB;
     uint8_t *rgbFrameBuffer = renderer_->getFrameBuffer(frame.width(),
-                                                        frame.height());
+                                                        frame.height(),
+                                                        &bufferType);
 
     if (rgbFrameBuffer)
     {
         LogTraceC << "passing frame " << frameInfo.playbackNo_ << "p to renderer" << std::endl;
-#warning this needs to be tested with frames captured from real video devices
-        ConvertFromI420(frame, webrtc::kBGRA, 0, rgbFrameBuffer);
-        renderer_->renderBGRAFrame(frameInfo, frame.width(), frame.height(),
+
+        // @see frame-converter.cpp for explanation, why we flipping ARGB <-> BGRA data representations
+        // webrtc::VideoType videoType = (bufferType == IExternalRenderer::kARGB ? webrtc::kARGB : webrtc::kBGRA);
+        webrtc::VideoType videoType = (bufferType == IExternalRenderer::kARGB ? webrtc::kBGRA : webrtc::kARGB);
+
+        ConvertFromI420(frame, videoType, 0, rgbFrameBuffer);
+        renderer_->renderFrame(frameInfo, frame.width(), frame.height(),
                                    rgbFrameBuffer);
     }
     else

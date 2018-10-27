@@ -150,7 +150,15 @@ int LocalVideoStream::incomingArgbFrame(const unsigned int width,
 	unsigned char* argbFrameData,
 	unsigned int frameSize)
 {
-	return pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize}));
+	return pimpl_->incomingFrame(ArgbRawFrameWrapper({width, height, argbFrameData, frameSize, true}));
+}
+
+int LocalVideoStream::incomingBgraFrame(const unsigned int width,
+	const unsigned int height,
+	unsigned char* bgraFrameData,
+	unsigned int frameSize)
+{
+	return pimpl_->incomingFrame(BgraRawFrameWrapper({width, height, bgraFrameData, frameSize, false}));
 }
 
 int LocalVideoStream::incomingI420Frame(const unsigned int width,
