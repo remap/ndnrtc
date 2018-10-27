@@ -145,7 +145,7 @@ ndnrtcOut::getGeneralInfo(TOP_GeneralInfo* ginfo)
 {
 	// Uncomment this line if you want the TOP to cook every frame even
 	// if none of it's inputs/parameters are changing.
-	ginfo->cookEveryFrame = false;
+	ginfo->cookEveryFrame = true;
     ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
 }
 
@@ -177,19 +177,14 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
         {
             glBindTexture(GL_TEXTURE_2D, topInput->textureIndex);
             GetError()
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, incomingFrameBuffer_);
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, incomingFrameBuffer_);
             GetError();
             
             // TODO: to update preview, need to get frame sizes from the input and then set them for outputFormat
             // on the next run (need to save input sizes, like "prevInputWidth = topInput->width;")
 //            memcpy(outputFormat->cpuPixelData[0], incomingFrameBuffer_, incomingFrameBufferSize_);
-            
-            // flip vertically and convert RGBA -> ARGB
-            flipFrame(incomingFrameWidth_, incomingFrameHeight_, incomingFrameBuffer_,
-                      false, true, true);
-            
-            boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingArgbFrame(topInput->width, topInput->height,
-                                                                    incomingFrameBuffer_, incomingFrameBufferSize_);
+            boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingBgraFrame(topInput->width, topInput->height,
+                                                                                      incomingFrameBuffer_, incomingFrameBufferSize_);
         }
     }
 }
@@ -242,8 +237,6 @@ ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize)
 {
     return ndnrtcTOPbase::getInfoDATSize(infoSize);
 }
-
-
 
 void
 ndnrtcOut::getInfoDATEntries(int32_t index,
@@ -481,8 +474,8 @@ ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
     vcp.encodeWidth_ = inputs->getParInt(PAR_ENCODE_WIDTH);
     vcp.encodeHeight_ = inputs->getParInt(PAR_ENCODE_HEIGHT);
 #else
-    vcp.encodeWidth_ = incomingFrameWidth_; // inputs->getParInt(PAR_ENCODE_WIDTH);
-    vcp.encodeHeight_ = incomingFrameHeight_; // inputs->getParInt(PAR_ENCODE_HEIGHT);
+    vcp.encodeWidth_ = incomingFrameWidth_;
+    vcp.encodeHeight_ = incomingFrameHeight_;
 #endif
     vcp.dropFramesOn_ =  inputs->getParInt(PAR_FRAMEDROP);
     

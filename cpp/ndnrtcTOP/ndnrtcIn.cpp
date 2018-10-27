@@ -181,8 +181,8 @@ private:
     vector<FrameBuffer>       buffers_;
     std::atomic<FrameBuffer*> frontBuffer_, backBuffer_; // don't move these before "buffers_", please
     
-    uint8_t* getFrameBuffer(int width, int height);
-    void renderBGRAFrame(const FrameInfo& frameInfo, int width, int height, const uint8_t* buffer);
+    uint8_t* getFrameBuffer(int width, int height, IExternalRenderer::BufferType*);
+    void renderFrame(const FrameInfo& frameInfo, int width, int height, const uint8_t* buffer);
 };
 
 /**
@@ -211,7 +211,7 @@ void
 ndnrtcIn::getGeneralInfo(TOP_GeneralInfo *ginfo)
 {
     ginfo->cookEveryFrame = true;
-    ginfo->memPixelType = OP_CPUMemPixelType::RGBA32Float;
+    ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
 }
 
 bool
@@ -233,23 +233,11 @@ ndnrtcIn::execute(const TOP_OutputFormatSpecs* outputFormat,
     if (stream_) // also, maybe, if state is Fetching?
     {
         int textureMemoryLocation = 0;
-        float* mem = (float*)outputFormat->cpuPixelData[textureMemoryLocation];
+        uint8_t* mem = (uint8_t*)outputFormat->cpuPixelData[textureMemoryLocation];
         
         streamRenderer_->readBuffer([this, outputFormat, mem](const uint8_t* activeBuffer)
                                     {
-                                        for (int y = 0; y < outputFormat->height; ++y)
-                                            for (int x = 0; x < outputFormat->width; ++x)
-                                            {
-                                                // ARGB
-                                                const uint8_t* framePixel = streamRenderer_->getPixel(x, y);
-                                                // RGBA
-                                                float* pixel = &mem[4*(y*outputFormat->width + x)];
-                                                
-                                                pixel[0] = (float)(framePixel[1])/255.;
-                                                pixel[1] = (float)(framePixel[2])/255.;
-                                                pixel[2] = (float)(framePixel[3])/255.;
-                                                pixel[3] = (float)(framePixel[0])/255.;
-                                            } // for x
+                                        memcpy(mem, activeBuffer, 4*outputFormat->width*outputFormat->height);
                                     });
         
         outputFormat->newCPUPixelDataLocation = textureMemoryLocation;
@@ -472,13 +460,14 @@ RemoteStreamRenderer::readBuffer(function<void(const uint8_t* buffer)> onBufferA
 }
 
 uint8_t*
-RemoteStreamRenderer::getFrameBuffer(int width, int height)
+RemoteStreamRenderer::getFrameBuffer(int width, int height, IExternalRenderer::BufferType* bufferType)
 {
+    *bufferType = IExternalRenderer::kBGRA;
     return backBuffer_.load()->getFrameBuffer(width, height);
 }
 
 void
-RemoteStreamRenderer::renderBGRAFrame(const FrameInfo& frameInfo, int width, int height,
+RemoteStreamRenderer::renderFrame(const FrameInfo& frameInfo, int width, int height,
                                       const uint8_t* buffer)
 {
     // swap buffers

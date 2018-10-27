@@ -78,7 +78,7 @@ reinitParams_(ReinitParams)
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
-    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
 }
 
@@ -243,6 +243,7 @@ ndnrtcTOPbase::pulsePressed(const char* name)
     if (!strcmp(name, "Init"))
     {
         init();
+        initStream();
     }
 }
 
@@ -372,7 +373,7 @@ ndnrtcTOPbase::registerPrefix(const TOP_OutputFormatSpecs* outputFormat,
         return;
 
     ndn::Name prefix(readBasePrefix(inputs));
-    faceProcessor_->getFace()->registerPrefix(prefix, //readBasePrefix(inputs),
+    faceProcessor_->getFace()->registerPrefix(prefix,
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix,
                                                      const boost::shared_ptr<const ndn::Interest>& interest,
                                                      ndn::Face& face, uint64_t interestFilterId,

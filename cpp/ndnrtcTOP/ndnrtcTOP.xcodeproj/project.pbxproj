@@ -41,6 +41,13 @@
 			remoteGlobalIDString = AFE43C92202E2BAC00072172;
 			remoteInfo = libndnrtc;
 		};
+		AF8EC1612183C81E0082A16D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C82202DDCD200072172;
+			remoteInfo = ndnrtcOut;
+		};
 		AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
@@ -322,6 +329,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				AF8EC1622183C81E0082A16D /* PBXTargetDependency */,
 				AF889B4D2037733900F36342 /* PBXTargetDependency */,
 			);
 			name = ndnrtcIn;
@@ -444,6 +452,11 @@
 			isa = PBXTargetDependency;
 			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
 			targetProxy = AF889B4E2037733900F36342 /* PBXContainerItemProxy */;
+		};
+		AF8EC1622183C81E0082A16D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C82202DDCD200072172 /* ndnrtcOut */;
+			targetProxy = AF8EC1612183C81E0082A16D /* PBXContainerItemProxy */;
 		};
 		AFE43C97202E2C5B00072172 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
