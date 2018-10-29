@@ -18,7 +18,8 @@
 
 using namespace std;
 using namespace webrtc;
-using namespace ndnrtc;
+
+namespace ndnrtc {
 
 template <>
 boost::shared_ptr<VideoFramePacket>
@@ -60,4 +61,6 @@ WireSegment::createSegment(const NamespaceInfo &namespaceInfo,
 
     return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);
     ;
+}
+
 }
