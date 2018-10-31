@@ -284,11 +284,10 @@ shared_ptr<Data> StorageEngineImpl::read(const Interest &interest)
 
     if (canBePrefix)
     {
-        // TODO: implement prefix match data retrieval
         // extract by prefix match
         Name prefix = interest.getName(), keyName;
         auto it = db_->NewIterator(db_namespace::ReadOptions());
-        db_namespace::Iterator *lastIt = nullptr;
+        std::string key = "";
         bool checkMaxSuffixComponents = interest.getMaxSuffixComponents() != -1;
         bool checkMinSuffixComponents = interest.getMinSuffixComponents() != -1;
 
@@ -310,14 +309,14 @@ shared_ptr<Data> StorageEngineImpl::read(const Interest &interest)
                     passCheck = true;
                 
                 if (passCheck)
-                    lastIt = it;
+                    key = it->key().ToString();
             }
             else
-                lastIt = it;
+                key = it->key().ToString();
         }
 
-        if (lastIt)
-            data = get(Name(it->key().ToString()));
+        if (key != "")
+            data = get(Name(key));
 
         delete it;
     }
