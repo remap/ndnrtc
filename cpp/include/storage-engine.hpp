@@ -35,6 +35,7 @@ namespace ndnrtc {
          * The call is thread-safe.
          */
         void put(const boost::shared_ptr<const ndn::Data>& data);
+        void put(const ndn::Data& data);
 
         /**
          * Tries to retrieve data from persistent storage. 
@@ -43,6 +44,15 @@ namespace ndnrtc {
          * is invalid.
          */
         boost::shared_ptr<ndn::Data> get(const ndn::Name& dataName);
+
+        /**
+         * Tries to retrieve data from persistent storage according to the 
+         * interest received. 
+         * The call is synchronous. 
+         * If data is not present in the persistent storage, returned pointer
+         * is invalid.
+         */
+        boost::shared_ptr<ndn::Data> read(const ndn::Interest& interest);
 
         /**
          * Scans DB for longest common prefixes. May take a while, depending on 
