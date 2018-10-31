@@ -48,7 +48,7 @@ class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl>
         size_t valueSizeBytes_;
     } Stats;
 
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     StorageEngineImpl(std::string dbPath) : dbPath_(dbPath), db_(nullptr), keysTrieBuilt_(false)
     {
     }
@@ -136,7 +136,7 @@ class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl>
     bool keysTrieBuilt_;
     NameTrie keysTrie_;
     Stats stats_;
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     db_namespace::DB *db_;
 #endif
 
@@ -207,7 +207,7 @@ StorageEngine::getKeysNum() const
 //******************************************************************************
 bool StorageEngineImpl::open(bool readOnly)
 {
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     db_namespace::Options options;
     options.create_if_missing = true;
     db_namespace::Status status;
@@ -227,7 +227,7 @@ bool StorageEngineImpl::open(bool readOnly)
 
 void StorageEngineImpl::close()
 {
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     if (db_)
     {
         // db_->SyncWAL();
@@ -240,7 +240,7 @@ void StorageEngineImpl::close()
 
 bool StorageEngineImpl::put(const Data &data)
 {
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     if (!db_)
         throw std::runtime_error("DB is not open");
 
@@ -257,7 +257,7 @@ bool StorageEngineImpl::put(const Data &data)
 
 shared_ptr<Data> StorageEngineImpl::get(const Name &dataName)
 {
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     if (!db_)
         throw std::runtime_error("DB is not open");
 
@@ -279,7 +279,7 @@ shared_ptr<Data> StorageEngineImpl::get(const Name &dataName)
 shared_ptr<Data> StorageEngineImpl::read(const Interest &interest)
 {
     shared_ptr<Data> data;
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
     bool canBePrefix = interest.getCanBePrefix();
 
     if (canBePrefix)
@@ -347,7 +347,7 @@ void StorageEngineImpl::buildKeyTrie()
 {
     stats_.nKeys_ = 0;
     stats_.valueSizeBytes_ = 0;
-#if HAVE_LIBROCKSDB
+#if HAVE_PERSISTENT_STORAGE
 
     db_namespace::Iterator *it = db_->NewIterator(rocksdb::ReadOptions());
 
