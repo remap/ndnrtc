@@ -127,7 +127,8 @@ bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& 
                     {
                         FrameInfo finfo({ (uint64_t)(slot->getHeader().publishUnixTimestamp_*1000), 
                                           currentPlayNo_, 
-                                          slot->getPrefix().toUri() });
+                                          slot->getPrefix().toUri(),
+                                          !slot->getNameInfo().isDelta_});
                         frameConsumer_->processFrame(finfo, framePacket->getFrame());
                     }
                     else

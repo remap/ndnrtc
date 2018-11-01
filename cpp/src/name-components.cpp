@@ -211,6 +211,13 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         return true;
     }
 
+    if (name.size() == 2 && name[1].isTimestamp())
+    {
+        info.streamName_ = name[0].toEscapedString();
+        info.streamTimestamp_ = name[1].toTimestamp();
+        return true;
+    }
+
     if (name.size() < 3)
         return false;
 
@@ -311,6 +318,13 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     if (name.size() == 1)
     {
         info.streamName_ = name[0].toEscapedString();
+        return true;
+    }
+
+    if (name.size() == 2 && name[1].isTimestamp())
+    {
+        info.streamName_ = name[0].toEscapedString();
+        info.streamTimestamp_ = name[1].toTimestamp();
         return true;
     }
 

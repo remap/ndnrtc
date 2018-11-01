@@ -39,31 +39,36 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
                                    const shared_ptr<ndn::Face> &face,
                                    const shared_ptr<ndn::KeyChain> &keyChain,
                                    const std::string &streamPrefix)
-    : type_(MediaStreamParams::MediaStreamType::MediaStreamTypeUnknown),
-      io_(io),
-      face_(face),
-      keyChain_(keyChain),
-      streamPrefix_(streamPrefix),
-      needMeta_(true), isRunning_(false), cuedToRun_(false),
-      metadataRequestedMs_(0),
-      metaFetcher_(make_shared<MetaFetcher>(face_, keyChain_)),
-      sstorage_(StatisticsStorage::createConsumerStatistics()),
-      drdEstimator_(make_shared<DrdEstimator>())
+    : type_(MediaStreamParams::MediaStreamType::MediaStreamTypeUnknown)
+    , io_(io)
+    , face_(face)
+    , keyChain_(keyChain)
+    , streamPrefix_(streamPrefix)
+    , needMeta_(true), isRunning_(false), cuedToRun_(false)
+    , metadataRequestedMs_(0)
+    , metaFetcher_(make_shared<MetaFetcher>(face_, keyChain_))
+    , sstorage_(StatisticsStorage::createConsumerStatistics())
+    , drdEstimator_(make_shared<DrdEstimator>())
 {
     assert(face.get());
     assert(keyChain.get());
 
+    construct();
+}
+
+void RemoteStreamImpl::construct()
+{
     description_ = "remote-stream";
 
-    segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
+    segmentController_ = make_shared<SegmentController>(io_, 500, sstorage_);
     buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
-    playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
+    playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix_),
                                                 dynamic_pointer_cast<Buffer>(buffer_));
     rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator_);
     buffer_->attach(rtxController_.get());
     // playout and playout-control created in subclasses
 
-    interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
+    interestQueue_ = make_shared<InterestQueue>(io_, face_, sstorage_);
     sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
     bufferControl_ = make_shared<BufferControl>(drdEstimator_, buffer_, sstorage_);
     latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator_, sstorage_);
@@ -77,7 +82,6 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
     drdEstimator_->attach((InterestControl *)interestControl_.get());
     drdEstimator_->attach((LatencyControl *)latencyControl_.get());
 
-    bufferControl_->attach((InterestControl *)interestControl_.get());
     bufferControl_->attach((LatencyControl *)latencyControl_.get());
 }
 
@@ -139,6 +143,17 @@ void RemoteStreamImpl::setTargetBufferSize(unsigned int bufferSizeMs)
     else
 #warning figure this out for audio streams
         LogWarnC << "attempting to setTargetBufferSize() but playoutControl_ is null" << std::endl;
+}
+
+void RemoteStreamImpl::setPipelineSize(unsigned int pipelineSizeSamples)
+{
+    if (pipeliner_.get())
+    {
+        // TODO: implement fixed pipeline size
+        // pipeline_->setPipelineSize();
+    }
+    else
+        LogWarnC << "attempting to setPipelineSize() but pipeliner_ is null" << std::endl;
 }
 
 void RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
@@ -224,7 +239,10 @@ void RemoteStreamImpl::streamMetaFetched(NetworkData &meta)
         ss << t << " ";
     }
     LogInfoC << "received stream meta info. "
-             << streamMeta_->getThreads().size() << " thread(s): " << ss.str() << std::endl;
+             << streamMeta_->getThreads().size() << " thread(s): " << ss.str()
+             << " timestamp " << streamMeta_->getStreamTimestamp() 
+             << " (" << Name().append(Name::Component::fromTimestamp(streamMeta_->getStreamTimestamp())) << ")" 
+             << std::endl;
 }
 
 void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs)

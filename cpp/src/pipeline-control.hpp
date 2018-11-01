@@ -16,6 +16,7 @@
 #include "pipeline-control-state-machine.hpp"
 #include "pipeliner.hpp"
 #include "rtx-controller.hpp"
+#include "../include/remote-stream.hpp"
 
 namespace ndnrtc
 {
@@ -72,6 +73,17 @@ class PipelineControl : public NdnRtcComponent,
                                                   const boost::shared_ptr<SampleEstimator> sampleEstimator,
                                                   const boost::shared_ptr<statistics::StatisticsStorage> &storage);
     static PipelineControl videoPipelineControl(const ndn::Name &threadPrefix,
+                                                const boost::shared_ptr<DrdEstimator> drdEstimator,
+                                                const boost::shared_ptr<IBuffer> buffer,
+                                                const boost::shared_ptr<IPipeliner> pipeliner,
+                                                const boost::shared_ptr<IInterestControl> interestControl,
+                                                const boost::shared_ptr<ILatencyControl> latencyControl,
+                                                const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                const boost::shared_ptr<SampleEstimator> sampleEstimator,
+                                                const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+
+    static PipelineControl seedPipelineControl(const RemoteVideoStream::FetchingRuleSet& ruleset,
+                                                const ndn::Name &threadPrefix,
                                                 const boost::shared_ptr<DrdEstimator> drdEstimator,
                                                 const boost::shared_ptr<IBuffer> buffer,
                                                 const boost::shared_ptr<IPipeliner> pipeliner,

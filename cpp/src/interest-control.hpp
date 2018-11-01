@@ -15,6 +15,7 @@
 #include "ndnrtc-object.hpp"
 #include "drd-estimator.hpp"
 #include "buffer-control.hpp"
+#include "playout-impl.hpp"
 
 namespace ndn
 {
@@ -104,7 +105,7 @@ class InterestControl : public NdnRtcComponent,
     /**
      * Initializes interest control class with given sample rate and initial
      * pipeline size limit (i.e. maximum number of outstanding interests to 
-     * be sent out by pipelienr initially).
+     * be sent out by pipeliner initially).
      */
     void initialize(double rate, int pipelineLimit) override;
     void reset() override;
@@ -186,7 +187,7 @@ class InterestControl : public NdnRtcComponent,
 
     // IBufferControlObserver
     void targetRateUpdate(double rate) override;
-    void sampleArrived(const PacketNumber &) override { decrement(); }
+    void sampleArrived(const PacketNumber &) override { }
 
   private:
     boost::shared_ptr<IInterestControlStrategy> strategy_;

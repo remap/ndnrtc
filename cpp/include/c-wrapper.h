@@ -11,11 +11,16 @@
 #define __c_wrapper_h__
 
 #include "local-stream.hpp"
+#include "remote-stream.hpp"
 
 extern "C" {
 
     typedef void (*LibLog) (const char* message);
     const char* ndnrtc_getVersion();
+
+	void ndnrtc_get_identities_list(char*** identities, int* nIdentities);
+
+	// bool ndnrtc_check_nfd_connection(const char* hostname, int port);
 
 	// creates Face
 	//		hostname
@@ -24,7 +29,8 @@ extern "C" {
 	//		optional: local key storage
 	// - runs everything on internal thread
 	bool ndnrtc_init(const char* hostname, const char* storagePath, 
-		const char* signingIdentity, const char * instanceId, LibLog libLog);
+		const char* policyFilePath, const char* signingIdentity, 
+		const char * instanceId, LibLog libLog);
 
 	// deinitializes library (removes connection and frees objects)
 	// init can be called again after this
@@ -101,6 +107,16 @@ extern "C" {
 			const unsigned int height,
 			unsigned char* argbFrameData,
 			unsigned int frameSize);
+
+	typedef struct _RemoteStreamParams {
+		const char *basePrefix;
+		int jitterSizeMs, lifetimeMs;
+		const char *streamName;
+	} RemoteStreamParams;
+
+	// creates remote video stream
+	ndnrtc::IStream* ndnrtc_createRemoteStream(RemoteStreamParams params, LibLog loggerSink);
+	void ndnrtc_destroyRemoteStream(ndnrtc::IStream* remoteStreamObject);
 
     // NOTE: returns info only for 1 thread
     cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream *stream);

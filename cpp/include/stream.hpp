@@ -56,6 +56,8 @@ namespace ndnrtc {
          * Returns stream's storage, if it was set up.
          */
         virtual boost::shared_ptr<StorageEngine> getStorage() const = 0;
+
+        virtual ~IStream() {}
 	};
 }
 

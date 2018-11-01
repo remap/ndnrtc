@@ -39,9 +39,6 @@ namespace ndnrtc {
 
             /**
              * Start stream fetching.
-             * @param directionMask Defines direction for retrieving data. If ommitted, will fetch newly generated frames.
-             * @param seedFrame Initial frame to start fetching from. If ommitted, start from the most recent frame.
-             * @param nFrames Number of frames to fetch. If ommitted, will keep fetching until stopped.
              */
             void start(const StreamRecorder::FetchSettings& setting);
             void stop();

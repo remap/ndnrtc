@@ -169,6 +169,11 @@ class IFrameSource
 {
   public:
     virtual IFrameSource &operator>>(RawFrame &frame) noexcept = 0;
+    virtual std::string getName() const = 0;
+    virtual bool isEof() const = 0;
+    virtual void rewind() = 0;
+    virtual bool isError() const = 0;
+    virtual std::string getErrorMsg() const = 0;
 };
 
 class FileFrameSource : public IFrameSource, public FileFrameStorage
@@ -177,6 +182,8 @@ class FileFrameSource : public IFrameSource, public FileFrameStorage
     FileFrameSource(const std::string &path);
 
     IFrameSource &operator>>(RawFrame &frame) noexcept;
+    std::string getName() const { return path_; }
+
     /**
      * NOTE: will always return 'true' before any read call.
      * proper use to read frames in a loop:
@@ -185,8 +192,9 @@ class FileFrameSource : public IFrameSource, public FileFrameStorage
      *		source >> frame;
      * } while(source.isEof() && !source.isError());
      */
-    bool isEof() { return (feof(file_) != 0); }
-    bool isError() { return readError_; }
+    bool isEof() const { return (feof(file_) != 0); }
+    bool isError() const { return readError_; }
+    std::string getErrorMsg() const { return errorMsg_; }
     void rewind()
     {
         ::rewind(file_);
@@ -199,6 +207,30 @@ class FileFrameSource : public IFrameSource, public FileFrameStorage
     FILE *openFile_impl(std::string path);
     unsigned long current_;
     bool readError_;
+    std::string errorMsg_;
+};
+
+class PipeFrameSource : public IFrameSource {
+  public:
+    PipeFrameSource(const std::string &path);
+    ~PipeFrameSource();
+
+    IFrameSource &operator>>(RawFrame &frame) noexcept;
+    std::string getName() const { return pipePath_; }
+    bool isError() const { return readError_; }
+    std::string getErrorMsg() const { return errorMsg_; }
+    bool isEof() const { return false; }
+    void rewind() { /*do nothing*/ }
+
+  private:
+    std::string pipePath_;
+    int pipe_;
+    bool readError_;
+    std::string errorMsg_;
+
+    int createReadPipe();
+    void reopenReadPipe();
+    void closePipe();
 };
 
 #endif

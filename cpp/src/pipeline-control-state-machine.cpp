@@ -17,6 +17,7 @@
 #include "playout-control.hpp"
 #include "statistics.hpp"
 #include "sample-estimator.hpp"
+#include "../include/remote-stream.hpp"
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -111,7 +112,7 @@ class ReceivedMetadataProcessing
             ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);
             ctrl->pipeliner_->setSequenceNumber(keyToFetch, SampleClass::Key);
             ctrl->pipeliner_->setNeedSample(SampleClass::Key);
-            ctrl->pipeliner_->onIncomingData(ctrl->threadPrefix_);
+            ctrl->pipeliner_->fillUpPipeline(ctrl->threadPrefix_);
 
             bootstrapSeqNums_.first = deltaToFetch;
             bootstrapSeqNums_.second = keyToFetch;
@@ -138,7 +139,7 @@ class ReceivedMetadataProcessing
             ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
             ctrl->pipeliner_->setSequenceNumber(bundleNo, SampleClass::Delta);
             ctrl->pipeliner_->setNeedSample(SampleClass::Delta);
-            ctrl->pipeliner_->onIncomingData(ctrl->threadPrefix_);
+            ctrl->pipeliner_->fillUpPipeline(ctrl->threadPrefix_);
 
             bootstrapSeqNums_.first = bundleNo;
             bootstrapSeqNums_.second = -1;
@@ -251,7 +252,7 @@ class BootstrappingT : public PipelineControlState,
             // check if we are receiving expected frames
             if (checkSampleIsExpected(ev->getSegment()))
             {
-                ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
+                ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
 
                 // check whether it's time to switch
                 if (receivedStartOffSegment(ev->getSegment()))
@@ -270,8 +271,8 @@ class BootstrappingT : public PipelineControlState,
 
     void askMetadata()
     {
-        ctrl_->pipeliner_->setNeedMetadata();
-        ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
+        // ctrl_->pipeliner_->setNeedMetadata();
+        ctrl_->pipeliner_->expressBootstrap(ctrl_->threadPrefix_);
     }
 
     std::string receivedMetadata(const boost::shared_ptr<const EventSegment> &ev)
@@ -353,6 +354,72 @@ class BootstrappingT : public PipelineControlState,
 
 typedef BootstrappingT<AudioThreadMeta> BootstrappingAudio;
 typedef BootstrappingT<VideoThreadMeta> BootstrappingVideo;
+
+/**
+ * Seed bootstrapping state for bootstrapping using exact frame numbers.
+ */
+class SeedBootstrapping : public PipelineControlState {
+  public:
+    SeedBootstrapping(RemoteVideoStream::FetchingRuleSet ruleset,
+                      const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+    : PipelineControlState(ctrl) 
+    , ruleset_(ruleset)
+    {}
+
+    std::string str() const override { return kStateBootstrapping; }
+    void enter() override { askSeedFrame(); }
+    int toInt() override { return (int)StateId::Bootstrapping; }
+
+  protected:
+    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
+    {
+        askSeedFrame();
+        return str();
+    }
+
+    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
+    {
+        askSeedFrame();
+        return str();
+    }
+
+    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
+    {
+        // TODO: intialize interestControl
+        // get rate and pipeline size
+        // ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
+        // ctrl->interestControl_->initialize(30, pipelineSize_);
+        // ctrl->interestControl_->markLowerLimit(pipelineSize_);
+
+        if (ev->getSegment()->getSampleClass() == SampleClass::Key)
+        {
+            boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment =
+                boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
+
+            ctrl_->pipeliner_->setSequenceNumber(videoFrameSegment->getSampleNo()+1, SampleClass::Key);
+            ctrl_->pipeliner_->setSequenceNumber(videoFrameSegment->segment().getHeader().pairedSequenceNo_, SampleClass::Delta);
+            //ctrl_->pipeliner_->setNeedSample(SampleClass::Delta);
+            ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
+            ctrl_->playoutControl_->allowPlayout(true, 0);
+
+            return kStateFetching;
+        }
+
+        return str();
+    }
+
+    private:
+    RemoteVideoStream::FetchingRuleSet ruleset_;
+
+    void askSeedFrame() {
+        ctrl_->interestControl_->initialize(30, ruleset_.pipelineSize_);
+        ctrl_->interestControl_->markLowerLimit(ruleset_.pipelineSize_);
+        ctrl_->pipeliner_->setSequenceNumber(ruleset_.seedKeyNo_, SampleClass::Key);
+        ctrl_->pipeliner_->setNeedSample(SampleClass::Key);
+        ctrl_->pipeliner_->express(ctrl_->threadPrefix_, true);
+        // ctrl_->pipeliner_->setSequenceNumber(ruleset_.seedKeyNo_+1, SampleClass::Key);
+    }
+};
 
 /**
  * Adjusting state. System is in this state while it tries to minimize the size
@@ -456,6 +523,15 @@ PipelineControlStateMachine::videoStateMachine(Struct ctrl)
     return PipelineControlStateMachine(pctrl, videoConsumerStatesMap(pctrl));
 }
 
+PipelineControlStateMachine
+PipelineControlStateMachine::playbackDrivenStateMachine(const RemoteVideoStream::FetchingRuleSet& ruleset, 
+                                                        Struct ctrl)
+{
+    boost::shared_ptr<PipelineControlStateMachine::Struct>
+        pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+    return PipelineControlStateMachine(pctrl, playbackDrivenConsumerStatesMap(ruleset, pctrl));
+}
+
 PipelineControlStateMachine::StatesMap
 PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
@@ -473,6 +549,16 @@ PipelineControlStateMachine::videoConsumerStatesMap(const boost::shared_ptr<Pipe
         {kStateIdle, boost::make_shared<Idle>(ctrl)},
         {kStateBootstrapping, boost::make_shared<BootstrappingVideo>(ctrl)},
         {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
+        {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
+}
+
+PipelineControlStateMachine::StatesMap
+PipelineControlStateMachine::playbackDrivenConsumerStatesMap(const RemoteVideoStream::FetchingRuleSet& ruleset,
+                                                             const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+{
+    return {
+        {kStateIdle, boost::make_shared<Idle>(ctrl)},
+        {kStateBootstrapping, boost::make_shared<SeedBootstrapping>(ruleset, ctrl)},
         {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
 }
 
@@ -621,7 +707,7 @@ void Adjusting::enter()
 std::string
 Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 {
-    ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
+    ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
 
     PipelineAdjust cmd = ctrl_->latencyControl_->getCurrentCommand();
 
@@ -655,7 +741,7 @@ Adjusting::onNack(const boost::shared_ptr<const EventNack> &ev)
 std::string
 Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 {
-    ctrl_->pipeliner_->onIncomingData(ctrl_->threadPrefix_);
+    ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
 
     if (ctrl_->latencyControl_->getCurrentCommand() == PipelineAdjust::IncreasePipeline)
     {

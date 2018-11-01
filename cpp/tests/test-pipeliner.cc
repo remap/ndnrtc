@@ -347,7 +347,7 @@ TEST(TestPipeliner, TestSegmentsArrive)
 
         if (i == 30)
             pp.setNeedSample(SampleClass::Key);
-        pp.onIncomingData(prefix);
+        pp.fillUpPipeline(prefix);
         roomSize++;
     }
 }

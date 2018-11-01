@@ -24,6 +24,7 @@ namespace ndnrtc
         uint64_t timestamp_;
         int playbackNo_;
         std::string ndnName_;
+        bool isKey_;
     } FrameInfo;
 
     /**
@@ -37,14 +38,17 @@ namespace ndnrtc
     class IExternalRenderer
     {
     public:
+        enum BufferType { kARGB, kBGRA };
+
         /**
          * Should return allocated buffer big enough to store RGB frame data
          * (width*height*3) bytes.
          * @param width Width of the frame (NOTE: width can change during run)
          * @param height Height of the frame (NOTE: height can change during run)
          * @return Allocated buffer where library can copy RGB frame data
+         * @param bufferType desired data format of the decoded frame
          */
-        virtual uint8_t* getFrameBuffer(int width, int height) = 0;
+        virtual uint8_t* getFrameBuffer(int width, int height, BufferType *bufferType) = 0;
         
         /**
          * This method is called every time new frame is available for rendering.
@@ -53,12 +57,12 @@ namespace ndnrtc
          * @param frameNo Frame's playback number as it was set by a publisher
          * @param width Frame's width (NOTE: width can change during run)
          * @param height Frame's height (NOTE: height can change during run)
-         * @param buffer Buffer with the RGB frame data (the same that was
+         * @param buffer Buffer with the frame data (the same that was
          * returned from getFrameBuffer call)
          * @see getFrameBuffer
          */
-        virtual void renderBGRAFrame(const FrameInfo& frameInfo, int width, int height,
-                                     const uint8_t* buffer) = 0;
+        virtual void renderFrame(const FrameInfo& frameInfo, int width, int height,
+                                 const uint8_t* buffer) = 0;
     };
 
     /**
@@ -77,12 +81,26 @@ namespace ndnrtc
          * of encoded frame in NDN.
          * However, not every frame will be published - some frames are dropped
          * by the encoder.
-         * @param bgraFramData Frame data in ARGB format
+         * @param argbFramData Frame data in ARGB format
          * @param frameSize Size of the frame data
          */
         virtual int incomingArgbFrame(const unsigned int width,
                                       const unsigned int height,
                                       unsigned char* argbFrameData,
+                                      unsigned int frameSize) = 0;
+
+        /**
+         * Calling this methond results in sending new raw frame into library's
+         * video processing pipe which eventually should result in publishing
+         * of encoded frame in NDN.
+         * However, not every frame will be published - some frames are dropped
+         * by the encoder.
+         * @param bgraFramData Frame data in BGRA format
+         * @param frameSize Size of the frame data
+         */
+        virtual int incomingBgraFrame(const unsigned int width,
+                                      const unsigned int height,
+                                      unsigned char* bgraFrameData,
                                       unsigned int frameSize) = 0;
         
         /**

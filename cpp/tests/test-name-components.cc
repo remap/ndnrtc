@@ -241,6 +241,11 @@ TEST(TestNameComponents, TestNameFiltering)
         NamespaceInfo info;
         EXPECT_TRUE(NameComponents::extractInfo("/ndn/user/rtc/ndnrtc/%FD%03/video/camera/%FC%00%00%01fU%98%BBA/1080p", info));
     }
+    {
+        NamespaceInfo info;
+        EXPECT_TRUE(NameComponents::extractInfo("/touchdesigner/ndnrtcOut0/ndnrtc/%FD%03/video/video1/%FC%00%00%01f%9FK%08%B6", info));
+        EXPECT_EQ(info.streamName_, "video1");
+    }
 }
 #endif
 #if 1

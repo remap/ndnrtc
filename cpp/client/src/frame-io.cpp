@@ -7,13 +7,12 @@
 
 #include <stdexcept>
 #include <sstream>
-#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include "frame-io.hpp"
 
@@ -213,7 +212,8 @@ IFrameSink &NanoMsgSink::operator<<(const RawFrame &frame)
 
 //******************************************************************************
 FileFrameSource::FileFrameSource(const string &path) : FileFrameStorage(path),
-                                                       current_(0), readError_(false)
+                                                       current_(0), readError_(false), 
+                                                       errorMsg_("")
 {
     openFile();
 }
@@ -257,4 +257,83 @@ bool FileFrameSource::checkSourceForFrame(const std::string &path,
 FILE *FileFrameSource::openFile_impl(string path)
 {
     return fopen(path.c_str(), "rb");
+}
+
+PipeFrameSource::PipeFrameSource(const std::string &path):pipe_(-1), pipePath_(path)
+{
+    createReadPipe();
+    reopenReadPipe();
+
+    if (pipe_ < 0)
+        throw std::runtime_error("Couldn't open pipe "+pipePath_);
+}
+
+PipeFrameSource::~PipeFrameSource()
+{
+    closePipe();
+}
+
+IFrameSource &PipeFrameSource::operator>>(RawFrame& frame) noexcept
+{
+    uint8_t *buf = frame.getBuffer().get();
+    int bufferSize = frame.getFrameSizeInBytes();
+
+    int c = 0;
+
+    readError_ = false;
+    errorMsg_ = "";
+
+    do { // read frame data until all frame data read
+     int r = read(pipe_, buf+c, bufferSize-c);
+
+     if (r > 0)
+         c += r;
+     else if (r < 0)
+     {
+        std::stringstream ss;
+        ss << "Error reading from pipe " << pipePath_ << ": " << errno << " (" << strerror(errno) << ")";
+        readError_ = true;
+        errorMsg_ = ss.str();
+     }
+     else 
+        reopenReadPipe();
+    } while (c < bufferSize);
+
+    return *this;
+}
+
+int
+PipeFrameSource::createReadPipe()
+{
+    int res = 0;
+
+    res = mkfifo(pipePath_.c_str(), 0644);
+
+    if (res < 0 && errno != EEXIST)
+    {
+        std::stringstream ss;
+        ss << "Error creating pipe " << pipePath_ << " error " << errno << "(" << strerror(errno) << ")";
+        throw std::runtime_error(ss.str());
+    }
+    else res = 0;
+
+    return res;
+}
+
+void
+PipeFrameSource::reopenReadPipe()
+{
+    // do {
+        if (pipe_ > 0) 
+            close(pipe_);
+
+        pipe_ = open(pipePath_.c_str(), O_RDONLY);
+        sleep(0.5);
+    // } while (pipe_ < 0);
+}
+
+void
+PipeFrameSource::closePipe()
+{
+    close(pipe_);
 }

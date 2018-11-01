@@ -6,7 +6,8 @@
 //  Copyright © 2017 UCLA. All rights reserved.
 //
 
-#include "face-processor.hpp"
+#include "helpers/face-processor.hpp"
+
 #include <boost/function.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
@@ -19,42 +20,47 @@
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 
-// #define USE_THREADSAFE_FACE
+#define USE_THREADSAFE_FACE
 
 using namespace ndn;
 using namespace boost;
 using namespace boost::asio;
+using namespace ndnrtc::helpers;
 
-class FaceProcessorImpl : public enable_shared_from_this<FaceProcessorImpl>{
-public:
-    FaceProcessorImpl(std::string host);
-    ~FaceProcessorImpl();
-    
-    void start();
-    void stop();
-    bool isProcessing();
-    
-    // non blocking
-    void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    // blocking
-    void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
-    
-    bool initFace();
-    void runFace();
-    
-    io_service& getIo() { return io_; }
-    shared_ptr<Face> getFace() { return face_; }
-    
-private:
-    std::string host_;
-    shared_ptr<Face> face_;
-    thread t_;
-    bool isRunningFace_;
-    io_service io_;
+namespace ndnrtc {
+    namespace helpers {
+        class FaceProcessorImpl : public enable_shared_from_this<FaceProcessorImpl>{
+        public:
+            FaceProcessorImpl(std::string host);
+            ~FaceProcessorImpl();
+
+            void start();
+            void stop();
+            bool isProcessing();
+
+            // non blocking
+            void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            // blocking
+            void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+
+            bool initFace();
+            void runFace();
+
+            io_service& getIo() { return io_; }
+            shared_ptr<Face> getFace() { return face_; }
+
+        private:
+            std::string host_;
+            shared_ptr<Face> face_;
+            thread t_;
+            bool isRunningFace_;
+            io_service io_;
 #ifdef USE_THREADSAFE_FACE
-    shared_ptr<io_service::work> ioWork_;
+            shared_ptr<io_service::work> ioWork_;
 #endif
-};
+        };
+    }
+}
 
 shared_ptr<FaceProcessor>
 FaceProcessor::forLocalhost()
@@ -114,6 +120,7 @@ FaceProcessor::~FaceProcessor() {
     _pimpl->stop();
     _pimpl.reset();
 }
+
 void FaceProcessor::start() { _pimpl->start(); }
 void FaceProcessor::stop() { _pimpl->stop(); }
 bool FaceProcessor::isProcessing() { return _pimpl->isProcessing(); }
@@ -127,6 +134,33 @@ void FaceProcessor::performSynchronized(function<void (shared_ptr<Face>)> dispat
 }
 boost::asio::io_service& FaceProcessor::getIo() { return _pimpl->getIo(); }
 boost::shared_ptr<Face> FaceProcessor::getFace() { return _pimpl->getFace(); }
+void FaceProcessor::registerPrefix(const Name& prefix, 
+                                   const OnInterestCallback& onInterest,
+                                   const OnRegisterFailed& onRegisterFailed,
+                                   const OnRegisterSuccess& onRegisterSuccess)
+{
+    _pimpl->performSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+        face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
+    });
+}
+
+void FaceProcessor::registerPrefixBlocking(const ndn::Name& prefix, 
+                const OnInterestCallback& onInterest,
+                const OnRegisterFailed& onRegisterFailed,
+                const OnRegisterSuccess& onRegisterSuccess)
+{
+    boost::mutex m;
+    boost::unique_lock<boost::mutex> lock(m);
+    boost::condition_variable isDone;
+    boost::atomic<bool> completed(false);
+    bool registered = false;
+
+    _pimpl->dispatchSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+        face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
+    });
+
+    isDone.wait(lock, [&completed](){ return completed.load(); });
+}
 
 //******************************************************************************
 FaceProcessorImpl::FaceProcessorImpl(std::string host):host_(host), isRunningFace_(false)
@@ -153,11 +187,8 @@ void FaceProcessorImpl::stop()
         
 #ifdef USE_THREADSAFE_FACE
         face_->shutdown();
-        
-        std::cout << "work reset" << std::endl;
         ioWork_.reset();
-        
-        std::cout << "t join" << std::endl;
+        io_.stop();
         t_.join();
 #else
 //        std::cout << "t join" << std::endl;

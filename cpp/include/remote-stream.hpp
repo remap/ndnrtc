@@ -182,12 +182,30 @@ namespace ndnrtc {
      */
 	class RemoteVideoStream: public RemoteStream {
 	public:
-		RemoteVideoStream(boost::asio::io_service& faceIo, 
+        /**
+         * Creates RemoteVideoStream to fetch live content 
+         */
+		RemoteVideoStream(boost::asio::io_service& faceIo,
 			const boost::shared_ptr<ndn::Face>& face,
 			const boost::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName,
             const int interestLifeTime = 2000,
+            const int jitterSizeMs = 150);
+
+        /**
+         * Creates RemoteVideoStream to fetch content from specified frames number
+         * @param faceIo Face's io_service object
+         * @param face Face object for NDN communication
+         * @param keyChain For packet verification
+         * @param threadPrefix NDN-RTC thread prefix
+         * @param pipelineSize Size of the pipeline to maintain when fetching stream
+         * @param jitterSizeMs Size of the playback buffer in milliseconds
+         */ 
+        RemoteVideoStream(boost::asio::io_service& faceIo,
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& threadPrefix,
             const int jitterSizeMs = 150);
 
         /**
@@ -198,6 +216,23 @@ namespace ndnrtc {
          */
 		void start(const std::string& threadName, 
 			IExternalRenderer* renderer);
+
+        typedef struct _FetchingRuleSet {
+            uint32_t seedKeyNo_;    // seed keyframe number
+            bool skipDelta_;        // whether all delta frames must be skipped
+            uint32_t loop_;         // number of frames to loop in, starting from seedKeyNo_
+            float speed_;           // playback speed multiplier
+            uint32_t pipelineSize_; // pipeline size (in samples)
+        } FetchingRuleSet;
+
+        /**
+         * Starts fetching video frames according to the given fetching ruleset
+         * @param ruleset Rule set for fetching frames
+         * @param renderer Pointer to IExternalRenderer object which will receive callbacks with
+         *                 decoded video frame pixel buffers.
+         */
+        void start(const FetchingRuleSet& ruleset,
+            IExternalRenderer* renderer);
 	};
     
     /**

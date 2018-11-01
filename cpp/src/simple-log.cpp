@@ -303,14 +303,30 @@ DefaultSink::close()
 }
 
 //******************************************************************************
-CallbackSink::CallbackSink(LoggerSinkCallback callback):
-callback_(callback){}
+CallbackSink::CallbackSink(LoggerSinkCallback callback)
+    : callback_(callback)
+{
+    triggerCallbackImpl_ = [this](const std::string& msg){
+        callback_(msg.c_str());
+    };
+}
+
+CallbackSink::CallbackSink(LoggerSinkCallbackFun callbackFun)
+    : callbackFun_(callbackFun)
+{
+    triggerCallbackImpl_ = [this](const std::string& msg){
+        callbackFun_(msg.c_str());
+    };
+}
 
 CallbackSink::~CallbackSink(){}
 
 void
 CallbackSink::finalizeRecord(const std::string& record)
-{ callback_(record.c_str()); }
+{
+    // callback_(record.c_str()); 
+    triggerCallbackImpl_(record);
+}
 
 void CallbackSink::flush(){}
 void CallbackSink::close(){}

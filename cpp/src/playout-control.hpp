@@ -50,7 +50,8 @@ class PlayoutControl : public NdnRtcComponent,
 
     void allowPlayout(bool allow, int ffwdMs = 0);
     void onNewSampleReady();
-    void onQueueEmpty() { /*ignored*/}
+    void onQueueEmpty() { /*ignored*/ }
+    // void onSamplePlayed() { /*ignored*/ }
     void setThreshold(unsigned int t);
     unsigned int getThreshold() const { return thresholdMs_; }
 

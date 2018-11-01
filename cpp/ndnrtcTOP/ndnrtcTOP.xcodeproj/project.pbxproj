@@ -1,0 +1,769 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AF2B18FC203AEEE800FE272A /* policy.conf in Resources */ = {isa = PBXBuildFile; fileRef = AF2B18FB203AEEE800FE272A /* policy.conf */; };
+		AF2B18FD203AEEE800FE272A /* policy.conf in Resources */ = {isa = PBXBuildFile; fileRef = AF2B18FB203AEEE800FE272A /* policy.conf */; };
+		AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
+		AF889B502037733900F36342 /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
+		AF889B522037733900F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
+		AF889B542037733900F36342 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
+		AF889B552037733900F36342 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
+		AF889B562037733900F36342 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
+		AF889B582037733900F36342 /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
+		AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF889B642037733900F36342 /* ndnrtcIn.plugin */; };
+		AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B67203773FF00F36342 /* ndnrtcIn.cpp */; };
+		AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
+		AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */; };
+		AF8EC15D217FE37D0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in Copy Files */ = {isa = PBXBuildFile; fileRef = AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */; };
+		AF8EC15E217FE3850082A16D /* pib.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC158217FE35E0082A16D /* pib.db */; };
+		AF8EC15F217FE3A70082A16D /* pib.db in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC158217FE35E0082A16D /* pib.db */; };
+		AF8EC160217FE3AA0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */; };
+		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
+		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
+		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
+		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
+		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
+		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
+		AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AF889B4E2037733900F36342 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C92202E2BAC00072172;
+			remoteInfo = libndnrtc;
+		};
+		AF8EC1612183C81E0082A16D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C82202DDCD200072172;
+			remoteInfo = ndnrtcOut;
+		};
+		AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C92202E2BAC00072172;
+			remoteInfo = libndnrtc;
+		};
+		AFE43C9F202E2EEE00072172 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFE43C9B202E2EE300072172;
+			remoteInfo = "libndnrtc-build";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AF889B592037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain;
+			dstSubfolderSpec = 7;
+			files = (
+				AF8EC15F217FE3A70082A16D /* pib.db in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF889B5B2037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "keychain/ndnsec-key-file";
+			dstSubfolderSpec = 7;
+			files = (
+				AF8EC160217FE3AA0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF889B5F2037733900F36342 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${LIBNDNRTC_INSTALL_DIR}";
+			dstSubfolderSpec = 0;
+			files = (
+				AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9431B12033ABDC0042FB3A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = keychain;
+			dstSubfolderSpec = 7;
+			files = (
+				AF8EC15E217FE3850082A16D /* pib.db in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9431B32033AC040042FB3A /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "keychain/ndnsec-key-file";
+			dstSubfolderSpec = 7;
+			files = (
+				AF8EC15D217FE37D0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey in Copy Files */,
+			);
+			name = "Copy Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${LIBNDNRTC_INSTALL_DIR}";
+			dstSubfolderSpec = 0;
+			files = (
+				AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AF2B18FB203AEEE800FE272A /* policy.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = policy.conf; sourceTree = "<group>"; };
+		AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcTOP_base.cpp; sourceTree = "<group>"; };
+		AF889B4A20374DA700F36342 /* ndnrtcTOP_base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcTOP_base.hpp; sourceTree = "<group>"; };
+		AF889B642037733900F36342 /* ndnrtcIn.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcIn.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF889B652037733900F36342 /* ndnrtcIn-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "ndnrtcIn-Info.plist"; path = "/Users/peetonn/Documents/Work/ndnrtc-build/ndnrtc/cpp/ndnrtcTOP/ndnrtcIn-Info.plist"; sourceTree = "<absolute>"; };
+		AF889B67203773FF00F36342 /* ndnrtcIn.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcIn.cpp; sourceTree = "<group>"; };
+		AF889B68203773FF00F36342 /* ndnrtcIn.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcIn.hpp; sourceTree = "<group>"; };
+		AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libndn-cpp.a"; path = "../../../ndnrtc-thirdparty/ndn-cpp/build/lib/libndn-cpp.a"; sourceTree = "<group>"; };
+		AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey; sourceTree = "<group>"; };
+		AF8EC158217FE35E0082A16D /* pib.db */ = {isa = PBXFileReference; lastKnownFileType = file; name = pib.db; path = keychain/pib.db; sourceTree = "<group>"; };
+		AF9431A02033A5200042FB3A /* foundation-helpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "foundation-helpers.h"; sourceTree = "<group>"; };
+		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
+		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
+		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcOut.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ndnrtcOut-Info.plist"; sourceTree = "<group>"; };
+		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
+		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
+		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
+		AFE43C8F202E239900072172 /* ndnrtcOut.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcOut.hpp; sourceTree = "<group>"; };
+		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../build/lib/libndnrtc.a; sourceTree = "<group>"; };
+		AFE43CA5202E330100072172 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = /usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AF889B532037733900F36342 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B542037733900F36342 /* OpenGL.framework in Frameworks */,
+				AF889B552037733900F36342 /* libboost_system.a in Frameworks */,
+				AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
+				AF889B562037733900F36342 /* libndnrtc.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFE43C80202DDCD200072172 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */,
+				AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */,
+				AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
+				AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AF889B4720374C9100F36342 /* in */ = {
+			isa = PBXGroup;
+			children = (
+				AF889B652037733900F36342 /* ndnrtcIn-Info.plist */,
+				AF889B67203773FF00F36342 /* ndnrtcIn.cpp */,
+				AF889B68203773FF00F36342 /* ndnrtcIn.hpp */,
+			);
+			name = in;
+			sourceTree = "<group>";
+		};
+		AF889B4820374CA200F36342 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				AFE43C8C202E239900072172 /* CPlusPlus_Common.h */,
+				AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */,
+				AF9431A02033A5200042FB3A /* foundation-helpers.h */,
+				AF9431A12033A5380042FB3A /* foundation-helpers.mm */,
+				AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */,
+				AF889B4A20374DA700F36342 /* ndnrtcTOP_base.hpp */,
+			);
+			name = common;
+			sourceTree = "<group>";
+		};
+		AF8EC156217FE35E0082A16D /* ndnsec-key-file */ = {
+			isa = PBXGroup;
+			children = (
+				AF8EC157217FE35E0082A16D /* e2a951c5895524ea2875f41841309408a0a592502dd07091e207dc85ab7cdaa5.privkey */,
+			);
+			name = "ndnsec-key-file";
+			path = "keychain/ndnsec-key-file";
+			sourceTree = "<group>";
+		};
+		AF9431A32033A70A0042FB3A /* res */ = {
+			isa = PBXGroup;
+			children = (
+				AF2B18FB203AEEE800FE272A /* policy.conf */,
+				AF9431A72033A9110042FB3A /* keychain */,
+				AF9431A42033A71C0042FB3A /* touchdesigner.cert */,
+			);
+			name = res;
+			sourceTree = "<group>";
+		};
+		AF9431A72033A9110042FB3A /* keychain */ = {
+			isa = PBXGroup;
+			children = (
+				AF8EC156217FE35E0082A16D /* ndnsec-key-file */,
+				AF8EC158217FE35E0082A16D /* pib.db */,
+			);
+			name = keychain;
+			sourceTree = "<group>";
+		};
+		AFE43C7A202DDCD200072172 = {
+			isa = PBXGroup;
+			children = (
+				AFE43C85202DDCD200072172 /* ndnrtcTOP */,
+				AFE43C84202DDCD200072172 /* Products */,
+				AFE43C98202E2D9700072172 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		AFE43C84202DDCD200072172 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */,
+				AF889B642037733900F36342 /* ndnrtcIn.plugin */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AFE43C85202DDCD200072172 /* ndnrtcTOP */ = {
+			isa = PBXGroup;
+			children = (
+				AF889B4820374CA200F36342 /* common */,
+				AFE43C91202E23A300072172 /* out */,
+				AF889B4720374C9100F36342 /* in */,
+				AF9431A32033A70A0042FB3A /* res */,
+			);
+			name = ndnrtcTOP;
+			sourceTree = "<group>";
+		};
+		AFE43C91202E23A300072172 /* out */ = {
+			isa = PBXGroup;
+			children = (
+				AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */,
+				AFE43C8D202E239900072172 /* ndnrtcOut.cpp */,
+				AFE43C8F202E239900072172 /* ndnrtcOut.hpp */,
+			);
+			name = out;
+			sourceTree = "<group>";
+		};
+		AFE43C98202E2D9700072172 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AF9431BB20357CF20042FB3A /* OpenGL.framework */,
+				AFE43CA5202E330100072172 /* libboost_system.a */,
+				AFE43C99202E2D9700072172 /* libndnrtc.a */,
+				AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		AFE43C92202E2BAC00072172 /* libndnrtc */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = install;
+			buildConfigurationList = AFE43C93202E2BAC00072172 /* Build configuration list for PBXLegacyTarget "libndnrtc" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../;
+			dependencies = (
+				AFE43CA0202E2EEE00072172 /* PBXTargetDependency */,
+			);
+			name = libndnrtc;
+			passBuildSettingsInEnvironment = 1;
+			productName = libndnrtc;
+		};
+		AFE43C9B202E2EE300072172 /* libndnrtc-build */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) $PREFIX=$LIBNDNRTC_INSTALL_DIR";
+			buildConfigurationList = AFE43C9C202E2EE300072172 /* Build configuration list for PBXLegacyTarget "libndnrtc-build" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../;
+			dependencies = (
+			);
+			name = "libndnrtc-build";
+			passBuildSettingsInEnvironment = 1;
+			productName = libndnrtc;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXNativeTarget section */
+		AF889B4C2037733900F36342 /* ndnrtcIn */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF889B612037733900F36342 /* Build configuration list for PBXNativeTarget "ndnrtcIn" */;
+			buildPhases = (
+				AF889B4F2037733900F36342 /* Sources */,
+				AF889B532037733900F36342 /* Frameworks */,
+				AF889B572037733900F36342 /* Resources */,
+				AF889B592037733900F36342 /* CopyFiles */,
+				AF889B5B2037733900F36342 /* CopyFiles */,
+				AF889B5F2037733900F36342 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF8EC1622183C81E0082A16D /* PBXTargetDependency */,
+				AF889B4D2037733900F36342 /* PBXTargetDependency */,
+			);
+			name = ndnrtcIn;
+			productName = ndnrtcTOP;
+			productReference = AF889B642037733900F36342 /* ndnrtcIn.plugin */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AFE43C82202DDCD200072172 /* ndnrtcOut */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcOut" */;
+			buildPhases = (
+				AFE43C7F202DDCD200072172 /* Sources */,
+				AFE43C80202DDCD200072172 /* Frameworks */,
+				AFE43C81202DDCD200072172 /* Resources */,
+				AF9431B12033ABDC0042FB3A /* CopyFiles */,
+				AF9431B32033AC040042FB3A /* Copy Files */,
+				AFE43CA7202E43BA00072172 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFE43C97202E2C5B00072172 /* PBXTargetDependency */,
+			);
+			name = ndnrtcOut;
+			productName = ndnrtcTOP;
+			productReference = AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AFE43C7B202DDCD200072172 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+				ORGANIZATIONNAME = "UCLA REMAP";
+				TargetAttributes = {
+					AF889B4C2037733900F36342 = {
+						ProvisioningStyle = Automatic;
+					};
+					AFE43C82202DDCD200072172 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					AFE43C92202E2BAC00072172 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					AFE43C9B202E2EE300072172 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = AFE43C7E202DDCD200072172 /* Build configuration list for PBXProject "ndnrtcTOP" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = AFE43C7A202DDCD200072172;
+			productRefGroup = AFE43C84202DDCD200072172 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AFE43C82202DDCD200072172 /* ndnrtcOut */,
+				AFE43C92202E2BAC00072172 /* libndnrtc */,
+				AFE43C9B202E2EE300072172 /* libndnrtc-build */,
+				AF889B4C2037733900F36342 /* ndnrtcIn */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AF889B572037733900F36342 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B582037733900F36342 /* touchdesigner.cert in Resources */,
+				AF2B18FD203AEEE800FE272A /* policy.conf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFE43C81202DDCD200072172 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */,
+				AF2B18FC203AEEE800FE272A /* policy.conf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AF889B4F2037733900F36342 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF889B502037733900F36342 /* foundation-helpers.mm in Sources */,
+				AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */,
+				AF889B522037733900F36342 /* ndnrtcTOP_base.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFE43C7F202DDCD200072172 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */,
+				AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */,
+				AF889B4B20374DA700F36342 /* ndnrtcTOP_base.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AF889B4D2037733900F36342 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
+			targetProxy = AF889B4E2037733900F36342 /* PBXContainerItemProxy */;
+		};
+		AF8EC1622183C81E0082A16D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C82202DDCD200072172 /* ndnrtcOut */;
+			targetProxy = AF8EC1612183C81E0082A16D /* PBXContainerItemProxy */;
+		};
+		AFE43C97202E2C5B00072172 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
+			targetProxy = AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */;
+		};
+		AFE43CA0202E2EEE00072172 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFE43C9B202E2EE300072172 /* libndnrtc-build */;
+			targetProxy = AFE43C9F202E2EEE00072172 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AF889B622037733900F36342 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Debug;
+		};
+		AF889B632037733900F36342 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcIn-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcIn;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Release;
+		};
+		AFE43C87202DDCD200072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PRODUCT_NAME=${TARGET_NAME}",
+					"DEBUG=1",
+					NDN_INFO,
+					NDN_LOGGING,
+					NDN_TRACE,
+					NDN_WARN,
+					NDN_DEBUG,
+					NDN_ERROR,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+					/usr/local/include,
+				);
+				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
+				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
+				LIBRARY_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+					/usr/local/lib,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		AFE43C88202DDCD200072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "PRODUCT_NAME=${TARGET_NAME}";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
+					/usr/local/include,
+				);
+				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
+				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
+				LIBRARY_SEARCH_PATHS = (
+					$LIBNDNCPP_INSTALL_DIR/lib,
+					$LIBNDNRTC_INSTALL_DIR/lib,
+					/usr/local/lib,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		AFE43C8A202DDCD200072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Debug;
+		};
+		AFE43C8B202DDCD200072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = SC33BJMPXV;
+				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = plugin;
+			};
+			name = Release;
+		};
+		AFE43C94202E2BAC00072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFE43C95202E2BAC00072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		AFE43C9D202E2EE300072172 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AFE43C9E202E2EE300072172 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AF889B612037733900F36342 /* Build configuration list for PBXNativeTarget "ndnrtcIn" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF889B622037733900F36342 /* Debug */,
+				AF889B632037733900F36342 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C7E202DDCD200072172 /* Build configuration list for PBXProject "ndnrtcTOP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C87202DDCD200072172 /* Debug */,
+				AFE43C88202DDCD200072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C89202DDCD200072172 /* Build configuration list for PBXNativeTarget "ndnrtcOut" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C8A202DDCD200072172 /* Debug */,
+				AFE43C8B202DDCD200072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C93202E2BAC00072172 /* Build configuration list for PBXLegacyTarget "libndnrtc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C94202E2BAC00072172 /* Debug */,
+				AFE43C95202E2BAC00072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFE43C9C202E2EE300072172 /* Build configuration list for PBXLegacyTarget "libndnrtc-build" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFE43C9D202E2EE300072172 /* Debug */,
+				AFE43C9E202E2EE300072172 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AFE43C7B202DDCD200072172 /* Project object */;
+}

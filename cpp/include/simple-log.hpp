@@ -419,10 +419,12 @@ namespace ndnlog {
         };
 
         typedef void (*LoggerSinkCallback) (const char* logMessage);
+        typedef std::function<void(const char*)> LoggerSinkCallbackFun;
 
         class CallbackSink : public ILogRecordSink {
         public:
             CallbackSink(LoggerSinkCallback callback);
+            CallbackSink(LoggerSinkCallbackFun callback);
             ~CallbackSink();
 
             void finalizeRecord(const std::string& record);
@@ -435,6 +437,9 @@ namespace ndnlog {
         private:
             boost::recursive_mutex mutex_;
             LoggerSinkCallback callback_;
+            LoggerSinkCallbackFun callbackFun_;
+
+            std::function<void(const std::string&)> triggerCallbackImpl_;
         };
     }
 }

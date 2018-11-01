@@ -11,13 +11,23 @@
 
 using namespace ndnrtc;
 using namespace webrtc;
+#include <iostream>
+WebRtcVideoFrame RawFrameConverter::operator<<(const struct _8bitFixedSizeRawFrameWrapper& wr)
+{
+    // NOTE: after many hours debugging and reading bytes, it is still uknown 
+    // to me, why, vpx encoder is given ARGB buffer and videoType == kARGB, the resulting
+    // encoding is messed up, as if it reads data incorrectly (endianness?)
+    // anyhow, I figured, that if for ARGB input set videoType kBGRA and vice versa,
+    // encoding is correct and different ndnrtc clients decode image correctly
+    // thus, i comment intuitively correct line below and instead, use flip data 
+    // representations for the opposite of the input data type
+    // return convert(wr, RawVideoTypeToCommonVideoVideoType(wr.isArgb_ ? kVideoARGB : kVideoBGRA));
+    return convert(wr, RawVideoTypeToCommonVideoVideoType(wr.isArgb_ ? kVideoBGRA : kVideoARGB));
+}
 
-WebRtcVideoFrame RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
+WebRtcVideoFrame RawFrameConverter::convert(const ArgbRawFrameWrapper& wr, const VideoType& commonVideoType)
 {             
 	// make conversion to I420
-#warning this needs to be tested with capturing from video devices
-	// const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoARGB);
-	const VideoType commonVideoType = RawVideoTypeToCommonVideoVideoType(kVideoBGRA);
 
 	int stride_y = wr.width_;
 	int stride_uv = (wr.width_ + 1) / 2;
@@ -30,7 +40,7 @@ WebRtcVideoFrame RawFrameConverter::operator<<(const ArgbRawFrameWrapper& wr)
 		throw std::runtime_error("Failed to allocate I420 frame");
 
 	const int conversionResult = ConvertToI420(commonVideoType,
-											   wr.argbFrameData_,
+											   wr.frameData_,
                                                0, 0,  // No cropping
                                                wr.width_, wr.height_,
                                                wr.frameSize_,

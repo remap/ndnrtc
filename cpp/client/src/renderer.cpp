@@ -27,7 +27,7 @@ RendererInternal::~RendererInternal()
     frame_.reset();
 }
 
-uint8_t *RendererInternal::getFrameBuffer(int width, int height)
+uint8_t *RendererInternal::getFrameBuffer(int width, int height, IExternalRenderer::BufferType*)
 {
     if (sink_ && sink_->isBusy())
     {
@@ -50,7 +50,7 @@ uint8_t *RendererInternal::getFrameBuffer(int width, int height)
     return frame_->getBuffer().get();
 }
 
-void RendererInternal::renderBGRAFrame(const ndnrtc::FrameInfo& frameInfo, int width, int height,
+void RendererInternal::renderFrame(const ndnrtc::FrameInfo& frameInfo, int width, int height,
                                        const uint8_t *buffer)
 {
     if (!frame_.get())

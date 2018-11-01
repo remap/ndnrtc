@@ -83,9 +83,9 @@ int main(int argc, char **argv)
                          true,               // show help if requested
                          (string("Netowkred Storage ")+string(PACKAGE_VERSION)).c_str());  // version string
 
-    for(auto const& arg : args) {
-        cout << arg.first << " " <<  arg.second << endl;
-    }
+    // for(auto const& arg : args) {
+    //     cout << arg.first << " " <<  arg.second << endl;
+    // }
 
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args["--verbose"].asBool() ? ndnlog::NdnLoggerDetailLevelAll : ndnlog::NdnLoggerDetailLevelDefault);
 
@@ -156,11 +156,12 @@ void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix,
                             Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) 
                             {
                              LogTrace("") << "Incoming interest " << interest->getName() << std::endl;
-                             boost::shared_ptr<Data> d = storage->get(interest->getName());
+                             boost::shared_ptr<Data> d = storage->read(*interest);
 
                              if (d)
                              {
-                                LogTrace("") << "Retrieved data of size " << d->getContent().size() << std::endl;
+                                LogTrace("") << "Retrieved data of size " << d->getContent().size() 
+                                             << ": " << d->getName() << std::endl;
                                 face.putData(*d);
                              }
                              else

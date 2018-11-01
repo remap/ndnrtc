@@ -1,6 +1,21 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
-pkginclude_HEADERS = include/ndnrtc-common.hpp include/params.hpp include/statistics.hpp include/interfaces.hpp include/name-components.hpp include/error-codes.hpp include/ndnrtc-defines.hpp include/simple-log.hpp include/stream.hpp include/local-stream.hpp include/remote-stream.hpp include/c-wrapper.h
+pkginclude_HEADERS = include/ndnrtc-common.hpp \
+  include/params.hpp \
+  include/statistics.hpp \
+  include/interfaces.hpp \
+  include/name-components.hpp \
+  include/error-codes.hpp \
+  include/ndnrtc-defines.hpp \
+  include/simple-log.hpp \
+  include/stream.hpp \
+  include/local-stream.hpp \
+  include/remote-stream.hpp \
+  include/c-wrapper.h
+
+helpersincludedir = $(pkgincludedir)/helpers
+helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
+  include/helpers/face-processor.hpp
 
 lib_LTLIBRARIES = libndnrtc.la
 libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
@@ -19,7 +34,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/data-validator.cpp src/data-validator.hpp \
   src/drd-estimator.cpp src/drd-estimator.hpp \
   src/estimators.cpp src/estimators.hpp \
-  src/face-processor.hpp src/face-processor.cpp \
+  src/helpers/face-processor.cpp \
   src/fec.cpp src/fec.hpp \
   src/frame-buffer.cpp src/frame-buffer.hpp \
   src/frame-converter.cpp src/frame-converter.hpp \
@@ -27,6 +42,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/interest-control.cpp src/interest-control.hpp \
   src/interest-queue.cpp src/interest-queue.hpp \
   src/jitter-timing.cpp src/jitter-timing.hpp \
+  src/helpers/key-chain-manager.cpp \
   src/latency-control.cpp src/latency-control.hpp \
   src/local-stream.cpp include/local-stream.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
@@ -111,13 +127,20 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 endif
 
 # bin programs
-bin_PROGRAMS = frame-fetcher
+bin_PROGRAMS = frame-fetcher stream-scrubber
 
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
 frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
 frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
+stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
+    contrib/docopt/docopt.cpp \
+    tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
+stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 if HAVE_PERSISTENT_STORAGE
 
@@ -147,9 +170,9 @@ endif
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp client/src/key-chain-manager.cpp
+ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
-ndnrtc_client_LDFLAGS = -static -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la 
 noinst_SCRIPTS = client/params.cfg
 

@@ -58,6 +58,7 @@ namespace ndnrtc {
     {
     public:
         virtual void onQueueEmpty() = 0;
+        // virtual void onSamplePlayed() = 0;
     };
 }
 

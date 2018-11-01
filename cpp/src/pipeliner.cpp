@@ -34,8 +34,7 @@ segmentController_(settings.segmentController_),
 interestLifetime_(settings.interestLifetimeMs_),
 sstorage_(settings.sstorage_),
 seqCounter_({0,0}),
-nextSamplePriority_(SampleClass::Delta),
-lastRequestedSample_(SampleClass::Delta)
+nextSamplePriority_(SampleClass::Delta)
 {
     assert(sstorage_.get());
     
@@ -49,31 +48,28 @@ Pipeliner::~Pipeliner()
 }
 
 void
+Pipeliner::expressBootstrap(const ndn::Name& threadPrefix)
+{
+    boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
+    request(interest, DeadlinePriority::fromNow(0));
+
+    LogDebugC << interest->getName() << std::endl;
+}
+
+void
 Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
-    if (lastRequestedSample_ == SampleClass::Unknown) // request metadata
-    {
-        boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
-        request(interest, DeadlinePriority::fromNow(0));
+    Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
+    n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
+    
+    const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
+    
+    LogDebugC << "sample "
+        << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
+        << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
+    request(batch, DeadlinePriority::fromNow(0));
+    if (placeInBuffer) buffer_->requested(batch);
 
-        LogDebugC << interest->getName() << std::endl;
-    }
-    else
-    {
-        Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
-        n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
-        
-        const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
-        
-        LogDebugC << "sample "
-            << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
-            << " " << SAMPLE_SUFFIX(n) << " batch size " << batch.size() << std::endl;
-
-        request(batch, DeadlinePriority::fromNow(0));
-        if (placeInBuffer) buffer_->requested(batch);
-    }
-
-    lastRequestedSample_ = nextSamplePriority_;
     nextSamplePriority_ = SampleClass::Delta;
 }
 
@@ -86,7 +82,7 @@ Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& in
 }
 
 void
-Pipeliner::onIncomingData(const ndn::Name& threadPrefix)
+Pipeliner::fillUpPipeline(const ndn::Name& threadPrefix)
 {
     if (interestControl_->room() > 0)
         LogDebugC << interestControl_->room()
@@ -113,12 +109,11 @@ Pipeliner::onIncomingData(const ndn::Name& threadPrefix)
         if (nextSamplePriority_ == SampleClass::Delta) seqCounter_.delta_++;
         else seqCounter_.key_++;
 
-        lastRequestedSample_ = nextSamplePriority_;
-        nextSamplePriority_ = SampleClass::Delta;
-        
         (*sstorage_)[Indicator::RequestedNum]++;
-        if (lastRequestedSample_ == SampleClass::Key)
+        if (nextSamplePriority_ == SampleClass::Key)
             (*sstorage_)[Indicator::RequestedKeyNum]++;
+
+        nextSamplePriority_ = SampleClass::Delta;
     }
 }
 
@@ -128,7 +123,6 @@ Pipeliner::reset()
     LogInfoC << "reset" << std::endl;
 
     nextSamplePriority_ = SampleClass::Delta;
-    lastRequestedSample_ = SampleClass::Unknown;
 }
 
 void 
@@ -228,11 +222,6 @@ void Pipeliner::onNewData(const BufferReceipt& receipt)
         if (!receipt.slot_->getNameInfo().isDelta_)
             (*sstorage_)[Indicator::DoubleRtFramesKey]++;
     }
-    
-    // set priority for requesting next key frame when key segment is received
-    if (receipt.slot_->getNameInfo().class_ == SampleClass::Key &&
-        receipt.oldState_ == BufferSlot::State::New)
-        setNeedSample(SampleClass::Key);
 }
 
 Name

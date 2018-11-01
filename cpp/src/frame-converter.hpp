@@ -8,12 +8,16 @@
 #include "webrtc.hpp"
 
 namespace ndnrtc {
-	typedef struct _ArgbRawFrameWrapper {
+	struct _8bitFixedSizeRawFrameWrapper {
 		const unsigned int width_;
         const unsigned int height_;
-        unsigned char* argbFrameData_;
+        unsigned char* frameData_;
         unsigned int frameSize_;
-	} ArgbRawFrameWrapper;
+        bool isArgb_;
+	};
+
+    typedef _8bitFixedSizeRawFrameWrapper ArgbRawFrameWrapper;
+    typedef _8bitFixedSizeRawFrameWrapper BgraRawFrameWrapper;
 
 	typedef struct _I420RawFrameWrapper {
 		const unsigned int width_;
@@ -46,11 +50,14 @@ namespace ndnrtc {
 		RawFrameConverter(){}
 		~RawFrameConverter(){}
 
-		WebRtcVideoFrame operator<<(const ArgbRawFrameWrapper&);
+		WebRtcVideoFrame operator<<(const struct _8bitFixedSizeRawFrameWrapper&);
 		WebRtcVideoFrame operator<<(const I420RawFrameWrapper&);
 		WebRtcVideoFrame operator<<(const YUV_NV21FrameWrapper&);
 
 	private:
 		WebRtcSmartPtr<WebRtcVideoFrameBuffer> frameBuffer_;
+
+        WebRtcVideoFrame convert(const struct _8bitFixedSizeRawFrameWrapper&, 
+                                 const webrtc::VideoType&);
 	};
 }

@@ -64,7 +64,7 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool openssl libconfig
+brew install boost cmake wget autoconf automake libtool openssl libconfig nanomsg rocksdb
 ```
 
 -- or (for Ubuntu) --
