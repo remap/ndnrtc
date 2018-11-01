@@ -155,7 +155,8 @@ host_triplet = @host@
 @OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all
 @OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
-bin_PROGRAMS = frame-fetcher$(EXEEXT) $(am__EXEEXT_2)
+bin_PROGRAMS = frame-fetcher$(EXEEXT) stream-scrubber$(EXEEXT) \
+	$(am__EXEEXT_2)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
@@ -1878,6 +1879,18 @@ stream_recorder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(stream_recorder_CXXFLAGS) $(CXXFLAGS) \
 	$(stream_recorder_LDFLAGS) $(LDFLAGS) -o $@
+am_stream_scrubber_OBJECTS =  \
+	tools/stream-scrubber/stream_scrubber-main.$(OBJEXT) \
+	contrib/docopt/stream_scrubber-docopt.$(OBJEXT) \
+	tools/stream-scrubber/stream_scrubber-renderer.$(OBJEXT)
+stream_scrubber_OBJECTS = $(am_stream_scrubber_OBJECTS)
+stream_scrubber_DEPENDENCIES = libndnrtc.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+stream_scrubber_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(stream_scrubber_CXXFLAGS) $(CXXFLAGS) \
+	$(stream_scrubber_LDFLAGS) $(LDFLAGS) -o $@
 SCRIPTS = $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -1981,6 +1994,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po \
 	contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po \
 	contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po \
+	contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po \
@@ -2567,7 +2581,9 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po \
 	tools/networked-storage/$(DEPDIR)/networked_storage-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
-	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
+	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po \
+	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po \
+	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -2648,7 +2664,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
 	$(frame_fetcher_SOURCES) $(nanopipe_adaptor_SOURCES) \
 	$(ndnrtc_client_SOURCES) $(networked_storage_SOURCES) \
-	$(stream_recorder_SOURCES)
+	$(stream_recorder_SOURCES) $(stream_scrubber_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -2694,7 +2710,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(frame_fetcher_SOURCES) $(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST) \
 	$(am__networked_storage_SOURCES_DIST) \
-	$(am__stream_recorder_SOURCES_DIST)
+	$(am__stream_recorder_SOURCES_DIST) $(stream_scrubber_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -3193,6 +3209,13 @@ frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
 frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
 frame_fetcher_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
+    contrib/docopt/docopt.cpp \
+    tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
+
+stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
@@ -5367,6 +5390,25 @@ contrib/docopt/stream_recorder-docopt.$(OBJEXT):  \
 stream-recorder$(EXEEXT): $(stream_recorder_OBJECTS) $(stream_recorder_DEPENDENCIES) $(EXTRA_stream_recorder_DEPENDENCIES) 
 	@rm -f stream-recorder$(EXEEXT)
 	$(AM_V_CXXLD)$(stream_recorder_LINK) $(stream_recorder_OBJECTS) $(stream_recorder_LDADD) $(LIBS)
+tools/stream-scrubber/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream-scrubber
+	@: > tools/stream-scrubber/$(am__dirstamp)
+tools/stream-scrubber/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream-scrubber/$(DEPDIR)
+	@: > tools/stream-scrubber/$(DEPDIR)/$(am__dirstamp)
+tools/stream-scrubber/stream_scrubber-main.$(OBJEXT):  \
+	tools/stream-scrubber/$(am__dirstamp) \
+	tools/stream-scrubber/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/stream_scrubber-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+tools/stream-scrubber/stream_scrubber-renderer.$(OBJEXT):  \
+	tools/stream-scrubber/$(am__dirstamp) \
+	tools/stream-scrubber/$(DEPDIR)/$(am__dirstamp)
+
+stream-scrubber$(EXEEXT): $(stream_scrubber_OBJECTS) $(stream_scrubber_DEPENDENCIES) $(EXTRA_stream_scrubber_DEPENDENCIES) 
+	@rm -f stream-scrubber$(EXEEXT)
+	$(AM_V_CXXLD)$(stream_scrubber_LINK) $(stream_scrubber_OBJECTS) $(stream_scrubber_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -5385,6 +5427,7 @@ mostlyclean-compile:
 	-rm -f tools/frame-fetcher/*.$(OBJEXT)
 	-rm -f tools/networked-storage/*.$(OBJEXT)
 	-rm -f tools/stream-recorder/*.$(OBJEXT)
+	-rm -f tools/stream-scrubber/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -5476,6 +5519,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po@am__quote@ # am--include-marker
@@ -6063,6 +6107,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tools/networked-storage/$(DEPDIR)/networked_storage-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -15106,6 +15152,48 @@ contrib/docopt/stream_recorder-docopt.obj: contrib/docopt/docopt.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream_recorder-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
 
+tools/stream-scrubber/stream_scrubber-main.o: tools/stream-scrubber/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-scrubber/stream_scrubber-main.o -MD -MP -MF tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Tpo -c -o tools/stream-scrubber/stream_scrubber-main.o `test -f 'tools/stream-scrubber/main.cpp' || echo '$(srcdir)/'`tools/stream-scrubber/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Tpo tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-scrubber/main.cpp' object='tools/stream-scrubber/stream_scrubber-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-scrubber/stream_scrubber-main.o `test -f 'tools/stream-scrubber/main.cpp' || echo '$(srcdir)/'`tools/stream-scrubber/main.cpp
+
+tools/stream-scrubber/stream_scrubber-main.obj: tools/stream-scrubber/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-scrubber/stream_scrubber-main.obj -MD -MP -MF tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Tpo -c -o tools/stream-scrubber/stream_scrubber-main.obj `if test -f 'tools/stream-scrubber/main.cpp'; then $(CYGPATH_W) 'tools/stream-scrubber/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-scrubber/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Tpo tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-scrubber/main.cpp' object='tools/stream-scrubber/stream_scrubber-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-scrubber/stream_scrubber-main.obj `if test -f 'tools/stream-scrubber/main.cpp'; then $(CYGPATH_W) 'tools/stream-scrubber/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-scrubber/main.cpp'; fi`
+
+contrib/docopt/stream_scrubber-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream_scrubber-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Tpo -c -o contrib/docopt/stream_scrubber-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Tpo contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream_scrubber-docopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream_scrubber-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+
+contrib/docopt/stream_scrubber-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream_scrubber-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Tpo -c -o contrib/docopt/stream_scrubber-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Tpo contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream_scrubber-docopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream_scrubber-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+
+tools/stream-scrubber/stream_scrubber-renderer.o: tools/stream-scrubber/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-scrubber/stream_scrubber-renderer.o -MD -MP -MF tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Tpo -c -o tools/stream-scrubber/stream_scrubber-renderer.o `test -f 'tools/stream-scrubber/renderer.cpp' || echo '$(srcdir)/'`tools/stream-scrubber/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Tpo tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-scrubber/renderer.cpp' object='tools/stream-scrubber/stream_scrubber-renderer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-scrubber/stream_scrubber-renderer.o `test -f 'tools/stream-scrubber/renderer.cpp' || echo '$(srcdir)/'`tools/stream-scrubber/renderer.cpp
+
+tools/stream-scrubber/stream_scrubber-renderer.obj: tools/stream-scrubber/renderer.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-scrubber/stream_scrubber-renderer.obj -MD -MP -MF tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Tpo -c -o tools/stream-scrubber/stream_scrubber-renderer.obj `if test -f 'tools/stream-scrubber/renderer.cpp'; then $(CYGPATH_W) 'tools/stream-scrubber/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-scrubber/renderer.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Tpo tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-scrubber/renderer.cpp' object='tools/stream-scrubber/stream_scrubber-renderer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_scrubber_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-scrubber/stream_scrubber-renderer.obj `if test -f 'tools/stream-scrubber/renderer.cpp'; then $(CYGPATH_W) 'tools/stream-scrubber/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-scrubber/renderer.cpp'; fi`
+
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
@@ -15918,6 +16006,8 @@ distclean-generic:
 	-rm -f tools/networked-storage/$(am__dirstamp)
 	-rm -f tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tools/stream-recorder/$(am__dirstamp)
+	-rm -f tools/stream-scrubber/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/stream-scrubber/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -16016,6 +16106,7 @@ distclean: distclean-am
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po
@@ -16603,6 +16694,8 @@ distclean: distclean-am
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
+	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
+	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-libtool distclean-tags
@@ -16738,6 +16831,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_capturer-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_audio_playout-gmock-all.Po
@@ -17325,6 +17419,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
+	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
+	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

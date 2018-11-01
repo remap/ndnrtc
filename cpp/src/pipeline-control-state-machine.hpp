@@ -12,6 +12,7 @@
 
 #include "ndnrtc-object.hpp"
 #include "name-components.hpp"
+#include "../include/remote-stream.hpp"
 
 namespace ndn
 {
@@ -188,6 +189,14 @@ class PipelineControlStateMachine : public NdnRtcComponent
     static PipelineControlStateMachine defaultStateMachine(Struct ctrl);
     static PipelineControlStateMachine videoStateMachine(Struct ctrl);
 
+    /**
+     * This state machine is for video streams (currently) and similar to the 
+     * videoStateMachine, but has no Adjusting state and different Bootstrapping
+     * state which does not use metadata for bootstrapping but actual frame numbers.
+     */
+    static PipelineControlStateMachine playbackDrivenStateMachine(const RemoteVideoStream::FetchingRuleSet& ruleset, 
+                                                                  Struct ctrl);
+
   private:
     typedef std::pair<std::string, PipelineControlEvent::Type> StateEventPair;
     typedef std::map<StateEventPair, std::string> TransitionMap;
@@ -208,6 +217,8 @@ class PipelineControlStateMachine : public NdnRtcComponent
 
     static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &);
     static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &);
+    static StatesMap playbackDrivenConsumerStatesMap(const RemoteVideoStream::FetchingRuleSet& ruleset,
+                                                     const boost::shared_ptr<PipelineControlStateMachine::Struct> &);
 };
 
 class IPipelineControlStateMachineObserver

@@ -31,6 +31,7 @@ class RemoteAudioStreamImpl : public RemoteStreamImpl
     boost::asio::io_service &io_;
     boost::shared_ptr<SampleValidator> validator_;
 
+    void construct();
     void setupPlayout();
     void releasePlayout();
     void setupPipelineControl();

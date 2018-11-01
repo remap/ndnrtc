@@ -127,13 +127,20 @@ libndnrtc_la_LIBADD += -llog -lOpenSLES -lboost_timer -lboost_thread
 endif
 
 # bin programs
-bin_PROGRAMS = frame-fetcher
+bin_PROGRAMS = frame-fetcher stream-scrubber
 
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
 frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
 frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
+stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
+    contrib/docopt/docopt.cpp \
+    tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
+stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 if HAVE_PERSISTENT_STORAGE
 

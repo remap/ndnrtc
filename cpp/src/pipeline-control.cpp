@@ -62,6 +62,30 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPre
                            interestControl, pipeliner);
 }
 
+PipelineControl PipelineControl::seedPipelineControl(const RemoteVideoStream::FetchingRuleSet& ruleset,
+                                                const ndn::Name &threadPrefix,
+                                                const boost::shared_ptr<DrdEstimator> drdEstimator,
+                                                const boost::shared_ptr<IBuffer> buffer,
+                                                const boost::shared_ptr<IPipeliner> pipeliner,
+                                                const boost::shared_ptr<IInterestControl> interestControl,
+                                                const boost::shared_ptr<ILatencyControl> latencyControl,
+                                                const boost::shared_ptr<IPlayoutControl> playoutControl,
+                                                const boost::shared_ptr<SampleEstimator> sampleEstimator,
+                                                const boost::shared_ptr<statistics::StatisticsStorage> &storage)
+{
+    PipelineControlStateMachine::Struct ctrl(threadPrefix);
+    ctrl.drdEstimator_ = drdEstimator;
+    ctrl.buffer_ = buffer;
+    ctrl.pipeliner_ = pipeliner;
+    ctrl.interestControl_ = interestControl;
+    ctrl.latencyControl_ = latencyControl;
+    ctrl.playoutControl_ = playoutControl;
+    ctrl.sstorage_ = storage;
+    ctrl.sampleEstimator_ = sampleEstimator;
+    return PipelineControl(storage, PipelineControlStateMachine::playbackDrivenStateMachine(ruleset, ctrl),
+                           interestControl, pipeliner);
+}
+
 //******************************************************************************
 PipelineControl::PipelineControl(const boost::shared_ptr<StatisticsStorage> &statStorage,
                                  const PipelineControlStateMachine &machine,

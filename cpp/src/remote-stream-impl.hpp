@@ -68,6 +68,7 @@ class RemoteStreamImpl : public NdnRtcComponent
 
     void setInterestLifetime(unsigned int lifetimeMs);
     void setTargetBufferSize(unsigned int bufferSizeMs);
+    void setPipelineSize(unsigned int pipelineSizeSamples);
     void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 
     bool isVerified() const;
@@ -111,6 +112,8 @@ class RemoteStreamImpl : public NdnRtcComponent
     boost::shared_ptr<RetransmissionController> rtxController_;
 
     std::vector<ValidationErrorInfo> validationInfo_;
+
+    void construct();
 
     void fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs);
     void streamMetaFetched(NetworkDataAlias &);

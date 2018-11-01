@@ -24,6 +24,7 @@ namespace ndnrtc
         uint64_t timestamp_;
         int playbackNo_;
         std::string ndnName_;
+        bool isKey_;
     } FrameInfo;
 
     /**

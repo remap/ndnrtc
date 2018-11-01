@@ -43,10 +43,11 @@ namespace ndnrtc {
 
     class IPipeliner {
     public:
+        virtual void expressBootstrap(const ndn::Name& threadPrefix) = 0;
         virtual void express(const ndn::Name& threadPrefix, bool placeInBuffer = false) = 0;
         virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&, 
             bool placeInBuffer = false) = 0;
-        virtual void onIncomingData(const ndn::Name&) = 0;
+        virtual void fillUpPipeline(const ndn::Name&) = 0;
         virtual void reset() = 0;
         virtual void setNeedSample(SampleClass cls) = 0;
         virtual void setNeedMetadata() = 0;
@@ -75,14 +76,20 @@ namespace ndnrtc {
         ~Pipeliner();
 
         /**
+         * Express bootstrap interest. In current protocol implementation -- it's
+         * metadata interest.
+         */ 
+        void expressBootstrap(const ndn::Name& threadPrefix);
+
+        /**
          * Express interests for the last requested sample.
          * For instance, if pipeliner previously expressed Interests for sample 100,
          * this expresses Interests for sample 100 again.
          * NOTE: if pipeliner did not express any interests before, this expresses
          * Interest for metadata.
          * @param threadPrefix Thread prefix used for Interests
-         * @param placeInBuffer Indicates whther interests need to be placed in 
-         *          the buffer (does not affect rightmost Interest).
+         * @param placeInBuffer Indicates whether interests need to be placed in 
+         *          the buffer (does not affect metadata Interest).
          */
         void express(const ndn::Name& threadPrefix, bool placeInBuffer = false);
 
@@ -106,7 +113,7 @@ namespace ndnrtc {
          * @see InterestControl
          * @see Buffer::requested()
          */
-        void onIncomingData(const ndn::Name& threadPrefix);
+        void fillUpPipeline(const ndn::Name& threadPrefix);
         void reset();
 
         /**
@@ -121,7 +128,7 @@ namespace ndnrtc {
          * invocation
          * @see express(const ndn::Name&)
          */
-        void setNeedMetadata() { lastRequestedSample_ = SampleClass::Unknown; }
+        void setNeedMetadata() { /*lastRequestedSample_ = SampleClass::Unknown;*/ }
 
         /**
          * Sets pipeliner's frame sequence number counters
@@ -180,7 +187,7 @@ namespace ndnrtc {
         boost::shared_ptr<ISegmentController> segmentController_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
         SequenceCounter seqCounter_;
-        SampleClass nextSamplePriority_, lastRequestedSample_;
+        SampleClass nextSamplePriority_;
 
         void request(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
             const boost::shared_ptr<DeadlinePriority>& prioirty);

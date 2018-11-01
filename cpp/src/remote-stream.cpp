@@ -158,3 +158,32 @@ RemoteVideoStream::start(const std::string& threadName, IExternalRenderer* rende
 {
 	boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(pimpl_)->start(threadName, renderer);
 }
+
+RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo,
+			const boost::shared_ptr<ndn::Face>& face,
+			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::string& threadPrefix,
+            const int jitterSizeMs):
+RemoteStream(faceIo, face, keyChain, "", "")
+{
+    NamespaceInfo prefixInfo;
+    if (!NameComponents::extractInfo(threadPrefix, prefixInfo) ||
+        prefixInfo.threadName_ == "" ||
+        prefixInfo.streamType_ != MediaStreamParams::MediaStreamType::MediaStreamTypeVideo)
+        throw std::runtime_error("Invalid thread prefix provided");
+    
+    basePrefix_ = prefixInfo.getPrefix(prefix_filter::Base).toUri();
+    streamName_ = prefixInfo.streamName_;
+
+    pimpl_ = boost::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, 
+                                                       prefixInfo.getPrefix(prefix_filter::Stream).toUri(), 
+                                                       prefixInfo.threadName_);
+    pimpl_->setTargetBufferSize(jitterSizeMs);
+    pimpl_->fetchMeta();
+}
+
+void
+RemoteVideoStream::start(const FetchingRuleSet& ruleset, IExternalRenderer* renderer)
+{
+    boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(pimpl_)->start(ruleset, renderer);
+}

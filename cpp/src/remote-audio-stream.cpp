@@ -22,8 +22,15 @@ RemoteAudioStreamImpl::RemoteAudioStreamImpl(boost::asio::io_service &io,
                                              const boost::shared_ptr<ndn::Face> &face,
                                              const boost::shared_ptr<ndn::KeyChain> &keyChain,
                                              const std::string &streamPrefix)
-    : RemoteStreamImpl(io, face, keyChain, streamPrefix),
-      io_(io)
+    : RemoteStreamImpl(io, face, keyChain, streamPrefix)
+    , io_(io)
+{   
+    construct();
+    // live stream has data-driven interest-control (pipeline)
+    bufferControl_->attach((InterestControl *)interestControl_.get());
+}
+
+void RemoteAudioStreamImpl::construct()
 {
     type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeAudio;
 
@@ -39,7 +46,7 @@ RemoteAudioStreamImpl::RemoteAudioStreamImpl(boost::asio::io_service &io,
 
     pipeliner_ = boost::make_shared<Pipeliner>(pps,
                                                boost::make_shared<Pipeliner::AudioNameScheme>());
-    validator_ = boost::make_shared<SampleValidator>(keyChain, sstorage_);
+    validator_ = boost::make_shared<SampleValidator>(keyChain_, sstorage_);
     buffer_->attach(validator_.get());
 }
 

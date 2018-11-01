@@ -133,7 +133,12 @@ void PlayoutImpl::extractSample()
     int64_t actualDelay = adjustDelay(sampleDelay);
 
     if (validForPlayback)
+    {
         LogDebugC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
+        
+        // boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        // for (auto o:observers_) o->onSamplePlayed();
+    }
 
     boost::shared_ptr<PlayoutImpl> me = boost::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);
