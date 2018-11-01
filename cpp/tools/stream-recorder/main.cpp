@@ -124,10 +124,12 @@ int main(int argc, char **argv)
         boost::make_shared<StorageEngine>(args["--db-path"].asString());
 
     // setup face and keychain
+    // TODO: keychain setup for verification
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
     boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), boost::make_shared<TpmBackEndMemory>(),
                                         boost::make_shared<NoVerifyPolicyManager>()));
 
+    // TODO: support other than forward direction for fetching
     // setup settings for stream recorder
     // uint8_t directionMask;
     // StreamRecorder::FetchDirection::Forward
