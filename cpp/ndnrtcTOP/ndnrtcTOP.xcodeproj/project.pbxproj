@@ -118,7 +118,7 @@
 		};
 		AFE43CA7202E43BA00072172 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = "${LIBNDNRTC_INSTALL_DIR}";
 			dstSubfolderSpec = 0;
 			files = (
@@ -325,6 +325,7 @@
 				AF889B592037733900F36342 /* CopyFiles */,
 				AF889B5B2037733900F36342 /* CopyFiles */,
 				AF889B5F2037733900F36342 /* CopyFiles */,
+				AF7EB62121ACD35A00959863 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -347,6 +348,7 @@
 				AF9431B12033ABDC0042FB3A /* CopyFiles */,
 				AF9431B32033AC040042FB3A /* Copy Files */,
 				AFE43CA7202E43BA00072172 /* CopyFiles */,
+				AF7EB61F21AC94BF00959863 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -423,6 +425,37 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AF7EB61F21AC94BF00959863 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ `command -v dylibbundler` ]; then\n    pluginPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/MacOS/${PRODUCT_NAME}\"\n    depsPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/libs\"\n    loaderPath=\"@loader_path/../libs\"\n    printf '/usr/local/lib\\n' | dylibbundler -od -b -x $pluginPath -d $depsPath -p $loaderPath\nelse\n    echo \"Can't create deployable plugins - dylibbundler needed!\"\n    echo \"dylibbundler was not found. Install it from https://github.com/auriamg/macdylibbundler\"\nfi";
+		};
+		AF7EB62121ACD35A00959863 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ `command -v dylibbundler` ]; then\n    pluginPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/MacOS/${PRODUCT_NAME}\"\n    depsPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/libs\"\n    loaderPath=\"@loader_path/../libs\"\n    printf '/usr/local/lib\\n' | dylibbundler -od -b -x $pluginPath -d $depsPath -p $loaderPath\nelse\n    echo \"Can't create deployable plugins - dylibbundler needed!\"\n    echo \"dylibbundler was not found. Install it from https://github.com/auriamg/macdylibbundler\"\nfi";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AF889B4F2037733900F36342 /* Sources */ = {
