@@ -414,14 +414,14 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
     errorString_ = "";
     
     ndn::Name prefix(string(inputs->getParString(PAR_STREAM_PREFIX)));
+    string basePrefix = string(inputs->getParString(PAR_STREAM_PREFIX));
+    string streamName = ndnrtcTOPbase::NdnRtcStreamName;
     NamespaceInfo prefixInfo;
-    
-    if (!NameComponents::extractInfo(prefix, prefixInfo) ||
-        prefixInfo.streamName_ == "" ||
-        prefixInfo.streamType_ == MediaStreamParams::MediaStreamTypeAudio)
+
+    if (NameComponents::extractInfo(prefix, prefixInfo))
     {
-        errorString_ = "Invalid stream prefix provided";
-        return ;
+        basePrefix = prefixInfo.getPrefix(prefix_filter::Base).toUri();
+        streamName = prefixInfo.streamName_;
     }
     
     if (stream_)
@@ -435,8 +435,8 @@ ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
     stream_ = boost::make_shared<RemoteVideoStream>(faceProcessor_->getIo(),
                                                     faceProcessor_->getFace(),
                                                     keyChainManager_->instanceKeyChain(),
-                                                    prefixInfo.getPrefix(prefix_filter::Base).toUri(),
-                                                    prefixInfo.streamName_,
+                                                    basePrefix,
+                                                    streamName,
                                                     inputs->getParInt(PAR_LIFETIME),
                                                     inputs->getParInt(PAR_JITTER));
     stream_->setLogger(logger_);
