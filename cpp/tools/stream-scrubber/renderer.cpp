@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <errno.h>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
