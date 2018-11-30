@@ -50,9 +50,8 @@ RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git \
     && gn gen out/Default --args='is_debug=false' \
     && ninja -C out/Default \
     && cd / \
-    && git clone --recursive https://github.com/remap/ndnrtc.git \
+    && git clone --recursive --single-branch -b $BRANCH https://github.com/remap/ndnrtc.git \
     && cd /ndnrtc/cpp && mkdir -p build/share \
-    && git checkout $BRANCH \
     && echo 'CPPFLAGS="-g -O2 -DWEBRTC_POSIX" CXXFLAGS="-g -O2 -DWEBRTC_POSIX"' > build/share/config.site \
     && echo OPENFECDIR=/openfec_v1.4.2 >> build/share/config.site \
     && echo WEBRTCDIR=/webrtc-checkout/src >> build/share/config.site \
