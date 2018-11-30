@@ -115,7 +115,7 @@ libwebrtc-all.a: libwebrtc-all.mri
   $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
 
 libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-libndnrtc_la_LIBADD += -lwebrtc-all
+libndnrtc_la_LIBADD += -lwebrtc-all -lX11
 
 endif
 
@@ -186,7 +186,8 @@ endif
 if OS_LINUX
 
 ndnrtc_client_LDFLAGS += -pthread 
-ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXrender -lXext -lnss3 -lssl3 -lXfixes -lXcomposite
+ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes 
+#-lXrender -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
 
