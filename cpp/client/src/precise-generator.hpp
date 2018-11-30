@@ -19,6 +19,7 @@
 namespace lib_bind = std;
 namespace lib_fun = std;
 namespace lib_chrono = std::chrono;
+#define arg_placeholder_1 std::placeholders::_1
 
 #else
 
@@ -30,6 +31,7 @@ namespace lib_chrono = std::chrono;
 namespace lib_bind = boost;
 namespace lib_fun = boost;
 namespace lib_chrono = boost::chrono;
+#define arg_placeholder_1 boost::arg<1>()
 
 #endif
 
