@@ -24,6 +24,17 @@ RUN wget http://openfec.org/files/openfec_v1_4_2.tgz \
     && cd build && cmake .. -DDEBUG:STRING=OFF \
     && make
 
+# nanomsg
+RUN git clone https://github.com/nanomsg/nanomsg.git \
+    && cd /nanomsg \
+    && ./configure \
+    && make && make install
+
+# rocksdb
+RUN git clone https://github.com/facebook/rocksdb.git \
+    && cd /rocksdb \
+    && make static_lib && make install
+
 # This line accepts the Microsoft End User License Agreement allowing use of
 #   the MS True Type core fonts 
 RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
