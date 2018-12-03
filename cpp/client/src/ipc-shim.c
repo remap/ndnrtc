@@ -19,7 +19,14 @@ int ipc_setupSocket(const char *handle, int isPub, int isBind)
     int socket = nn_socket(AF_SP, (isPub == 1 ? NN_PUB : NN_SUB));
 
     if (isPub != 1) // set receive all messages is SUB
+    {
         nn_setsockopt(socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
+
+        // for subscriber -- remove limit on the receiving size of the frame
+        int opt = 8294912; // good for 1080p frames +512 bytes
+        int rc = nn_setsockopt (socket, NN_SOL_SOCKET, NN_RCVMAXSIZE, &opt, sizeof(opt));
+        if (rc != 0) return -1;
+    }
 
     if (socket >= 0)
     {

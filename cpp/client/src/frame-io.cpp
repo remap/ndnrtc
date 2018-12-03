@@ -162,7 +162,7 @@ void PipeSink::openPipe(const std::string &path)
 #ifdef HAVE_LIBNANOMSG
 #include <iostream>
 
-NanoMsgSink::NanoMsgSink(const std::string &handle) : writeFrameInfo_(false)
+NanoMsgSink::NanoMsgSink(const std::string &handle) : handle_(handle), writeFrameInfo_(false)
 {
     nnSocket_ = ipc_setupPubSourceSocket(handle.c_str());
     if (nnSocket_ < 0)
@@ -197,7 +197,6 @@ IFrameSink &NanoMsgSink::operator<<(const RawFrame &frame)
     {
         size_t frameInfoPacked = 0;
         unsigned char* header = mallocPackFrameInfo(frame.getFrameInfo(), &frameInfoPacked);
-
         isLastWriteSuccessful_ = (ipc_sendFrame(nnSocket_, 
                                                 frameInfoPacked, (const void*)(header),
                                                 buf, frame.getFrameSizeInBytes()) > 0);
