@@ -105,7 +105,7 @@ ndnrtc::FrameInfo unpackFrameInfo(unsigned char* buf, size_t maxLen)
 
     finfo.timestamp_ = ((ndnrtc::FrameInfo*)buf)->timestamp_;
     finfo.playbackNo_ = ((ndnrtc::FrameInfo*)buf)->playbackNo_;
-    size_t stringOffset = sizeof(finfo) - sizeof(std::string);
+    size_t stringOffset = sizeof(finfo.timestamp_)+sizeof(finfo.playbackNo_);
     finfo.ndnName_ = std::string((const char*)(buf+stringOffset));
 
     return finfo;

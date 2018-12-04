@@ -183,7 +183,7 @@ unsigned char* mallocPackFrameInfo(const ndnrtc::FrameInfo& finfo, size_t *packe
     ((ndnrtc::FrameInfo*)buf)->timestamp_ = finfo.timestamp_;
     ((ndnrtc::FrameInfo*)buf)->playbackNo_ = finfo.playbackNo_;
     
-    size_t stringCopyOffset = sizeof(finfo)-sizeof(std::string);
+    size_t stringCopyOffset = sizeof(finfo.timestamp_)+sizeof(finfo.playbackNo_);
     memcpy(buf+stringCopyOffset, finfo.ndnName_.c_str(), finfo.ndnName_.size());
 
     return buf;
