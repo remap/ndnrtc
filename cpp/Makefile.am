@@ -9,6 +9,7 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/ndnrtc-defines.hpp \
   include/simple-log.hpp \
   include/stream.hpp \
+  include/stream-recorder.hpp \
   include/local-stream.hpp \
   include/remote-stream.hpp \
   include/c-wrapper.h
@@ -151,7 +152,7 @@ libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
 bin_PROGRAMS += stream-recorder networked-storage
 
 stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
-    tools/stream-recorder/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+    include/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
     contrib/docopt/docopt.cpp
 stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
 stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
