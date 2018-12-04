@@ -13,6 +13,7 @@
 namespace ndn {
     class Face;
     class KeyChain;
+    class Data;
 }
 
 namespace ndnlog {
@@ -69,6 +70,8 @@ namespace ndnrtc {
             size_t pendingFrames_;
         } Stats;
 
+        typedef std::function<void(const boost::shared_ptr<const ndn::Data> &)> StoreData;
+
         static const FetchSettings Default;
 
         /**
@@ -80,7 +83,7 @@ namespace ndnrtc {
          * @param keyChain KeyChain object used to verify incoming data. If ommitted, 
          *                  a default keychain with NoVerify policy will be used.
          */
-        StreamRecorder(const boost::shared_ptr<StorageEngine>& storageEngine, 
+        StreamRecorder(StoreData storeDataFun, 
                         const NamespaceInfo& ninfo,
                         const boost::shared_ptr<ndn::Face>& face, 
                         const boost::shared_ptr<ndn::KeyChain> keyChain);

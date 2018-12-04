@@ -134,7 +134,8 @@ int main(int argc, char **argv)
     // uint8_t directionMask;
     // StreamRecorder::FetchDirection::Forward
     {
-        StreamRecorder recorder(storage, prefixInfo, face, keyChain);
+        StreamRecorder recorder([storage](const boost::shared_ptr<const ndn::Data> &d){ storage->put(d); }, 
+                                prefixInfo, face, keyChain);
         recorder.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 
         LogInfo("") << "Will fetch stream " << prefixInfo.getPrefix(prefix_filter::Stream) 

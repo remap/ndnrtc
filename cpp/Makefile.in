@@ -393,6 +393,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-segment-fetcher.lo \
 	src/libndnrtc_la-simple-log.lo src/libndnrtc_la-slot-buffer.lo \
 	src/libndnrtc_la-statistics.lo \
+	src/libndnrtc_la-stream-recorder.lo \
 	src/libndnrtc_la-threading-capability.lo \
 	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-decoder.lo \
@@ -1862,11 +1863,8 @@ networked_storage_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(networked_storage_CXXFLAGS) $(CXXFLAGS) \
 	$(networked_storage_LDFLAGS) $(LDFLAGS) -o $@
 am__stream_recorder_SOURCES_DIST = tools/stream-recorder/main.cpp \
-	include/stream-recorder.hpp \
-	tools/stream-recorder/stream-recorder.cpp \
-	contrib/docopt/docopt.cpp
+	include/stream-recorder.hpp contrib/docopt/docopt.cpp
 @HAVE_PERSISTENT_STORAGE_TRUE@am_stream_recorder_OBJECTS = tools/stream-recorder/stream_recorder-main.$(OBJEXT) \
-@HAVE_PERSISTENT_STORAGE_TRUE@	tools/stream-recorder/stream_recorder-stream-recorder.$(OBJEXT) \
 @HAVE_PERSISTENT_STORAGE_TRUE@	contrib/docopt/stream_recorder-docopt.$(OBJEXT)
 stream_recorder_OBJECTS = $(am_stream_recorder_OBJECTS)
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_DEPENDENCIES =  \
@@ -2492,6 +2490,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-simple-log.Plo \
 	src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo \
 	src/$(DEPDIR)/libndnrtc_la-statistics.Plo \
+	src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-coder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo \
@@ -2582,7 +2581,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po \
 	tools/networked-storage/$(DEPDIR)/networked_storage-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
-	tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po \
 	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po \
 	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 am__mv = mv -f
@@ -3180,6 +3178,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/slot-buffer.cpp src/slot-buffer.hpp \
   src/statistics.cpp include/statistics.hpp \
   src/stream.hpp include/stream.hpp \
+  src/stream-recorder.cpp src/stream-recorder.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
   src/video-coder.cpp src/video-coder.hpp \
   src/video-decoder.cpp src/video-decoder.hpp \
@@ -3219,7 +3218,7 @@ stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_C
 stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
-@HAVE_PERSISTENT_STORAGE_TRUE@    include/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+@HAVE_PERSISTENT_STORAGE_TRUE@    include/stream-recorder.hpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
 
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
@@ -3718,6 +3717,8 @@ src/libndnrtc_la-simple-log.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-slot-buffer.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-statistics.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-stream-recorder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-threading-capability.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -5382,9 +5383,6 @@ tools/stream-recorder/$(DEPDIR)/$(am__dirstamp):
 tools/stream-recorder/stream_recorder-main.$(OBJEXT):  \
 	tools/stream-recorder/$(am__dirstamp) \
 	tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
-tools/stream-recorder/stream_recorder-stream-recorder.$(OBJEXT):  \
-	tools/stream-recorder/$(am__dirstamp) \
-	tools/stream-recorder/$(DEPDIR)/$(am__dirstamp)
 contrib/docopt/stream_recorder-docopt.$(OBJEXT):  \
 	contrib/docopt/$(am__dirstamp) \
 	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
@@ -6018,6 +6016,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-simple-log.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-statistics.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo@am__quote@ # am--include-marker
@@ -6108,7 +6107,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/networked-storage/$(DEPDIR)/networked_storage-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po@am__quote@ # am--include-marker
 
@@ -7131,6 +7129,13 @@ src/libndnrtc_la-statistics.lo: src/statistics.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/statistics.cpp' object='src/libndnrtc_la-statistics.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-statistics.lo `test -f 'src/statistics.cpp' || echo '$(srcdir)/'`src/statistics.cpp
+
+src/libndnrtc_la-stream-recorder.lo: src/stream-recorder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-stream-recorder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-stream-recorder.Tpo -c -o src/libndnrtc_la-stream-recorder.lo `test -f 'src/stream-recorder.cpp' || echo '$(srcdir)/'`src/stream-recorder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-stream-recorder.Tpo src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/stream-recorder.cpp' object='src/libndnrtc_la-stream-recorder.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-stream-recorder.lo `test -f 'src/stream-recorder.cpp' || echo '$(srcdir)/'`src/stream-recorder.cpp
 
 src/libndnrtc_la-threading-capability.lo: src/threading-capability.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-threading-capability.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-threading-capability.Tpo -c -o src/libndnrtc_la-threading-capability.lo `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
@@ -15126,20 +15131,6 @@ tools/stream-recorder/stream_recorder-main.obj: tools/stream-recorder/main.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-main.obj `if test -f 'tools/stream-recorder/main.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/main.cpp'; fi`
 
-tools/stream-recorder/stream_recorder-stream-recorder.o: tools/stream-recorder/stream-recorder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-stream-recorder.o -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo -c -o tools/stream-recorder/stream_recorder-stream-recorder.o `test -f 'tools/stream-recorder/stream-recorder.cpp' || echo '$(srcdir)/'`tools/stream-recorder/stream-recorder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/stream-recorder.cpp' object='tools/stream-recorder/stream_recorder-stream-recorder.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-stream-recorder.o `test -f 'tools/stream-recorder/stream-recorder.cpp' || echo '$(srcdir)/'`tools/stream-recorder/stream-recorder.cpp
-
-tools/stream-recorder/stream_recorder-stream-recorder.obj: tools/stream-recorder/stream-recorder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-stream-recorder.obj -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo -c -o tools/stream-recorder/stream_recorder-stream-recorder.obj `if test -f 'tools/stream-recorder/stream-recorder.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/stream-recorder.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/stream-recorder.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Tpo tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream-recorder/stream-recorder.cpp' object='tools/stream-recorder/stream_recorder-stream-recorder.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream-recorder/stream_recorder-stream-recorder.obj `if test -f 'tools/stream-recorder/stream-recorder.cpp'; then $(CYGPATH_W) 'tools/stream-recorder/stream-recorder.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream-recorder/stream-recorder.cpp'; fi`
-
 contrib/docopt/stream_recorder-docopt.o: contrib/docopt/docopt.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream_recorder-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo -c -o contrib/docopt/stream_recorder-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Tpo contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
@@ -16605,6 +16596,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-simple-log.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-statistics.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
@@ -16695,7 +16687,6 @@ distclean: distclean-am
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
-	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 	-rm -f Makefile
@@ -17330,6 +17321,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-simple-log.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-slot-buffer.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-statistics.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
@@ -17420,7 +17412,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
-	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-stream-recorder.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
 	-rm -f Makefile

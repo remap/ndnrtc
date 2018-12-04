@@ -77,6 +77,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/slot-buffer.cpp src/slot-buffer.hpp \
   src/statistics.cpp include/statistics.hpp \
   src/stream.hpp include/stream.hpp \
+  src/stream-recorder.cpp src/stream-recorder.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
   src/video-coder.cpp src/video-coder.hpp \
   src/video-decoder.cpp src/video-decoder.hpp \
@@ -152,7 +153,7 @@ libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
 bin_PROGRAMS += stream-recorder networked-storage
 
 stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
-    include/stream-recorder.hpp tools/stream-recorder/stream-recorder.cpp \
+    include/stream-recorder.hpp \
     contrib/docopt/docopt.cpp
 stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
 stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}

@@ -10,14 +10,14 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/face.hpp>
 
-#include "../../include/name-components.hpp"
-#include "../../include/storage-engine.hpp"
+#include "../include/name-components.hpp"
+#include "../include/storage-engine.hpp"
 
-#include "../../src/frame-buffer.hpp"
-#include "../../src/network-data.hpp"
-#include "../../src/ndnrtc-object.hpp"
-#include "../../src/segment-fetcher.hpp"
-#include "../../src/persistent-storage/fetching-task.hpp"
+#include "frame-buffer.hpp"
+#include "network-data.hpp"
+#include "ndnrtc-object.hpp"
+#include "segment-fetcher.hpp"
+#include "persistent-storage/fetching-task.hpp"
 
 using namespace std;
 using namespace ndnrtc;
@@ -31,7 +31,7 @@ namespace ndnrtc {
     {
         friend class StreamRecorder;
         public:
-            StreamRecorderImpl(const boost::shared_ptr<StorageEngine>& storageEngine, 
+            StreamRecorderImpl(StreamRecorder::StoreData storeDataFun, 
                             const NamespaceInfo& ninfo,
                             const boost::shared_ptr<Face>& face, 
                             const boost::shared_ptr<KeyChain> keyChain);
@@ -49,7 +49,7 @@ namespace ndnrtc {
 
         private:
             const NamespaceInfo ninfo_;
-            boost::shared_ptr<StorageEngine> storage_;
+            StreamRecorder::StoreData storeDataFun_;
             boost::shared_ptr<Face> face_;
             boost::shared_ptr<KeyChain> keyChain_;
             bool isFetching_, isFetchingStream_;
@@ -73,11 +73,11 @@ namespace ndnrtc {
 }
 
 // ***
-StreamRecorder::StreamRecorder(const boost::shared_ptr<StorageEngine>& storageEngine, 
+StreamRecorder::StreamRecorder(StreamRecorder::StoreData storeDataFun, 
                         const NamespaceInfo& ninfo,
                         const boost::shared_ptr<Face>& face, 
                         const boost::shared_ptr<KeyChain> keyChain):
-pimpl_(boost::make_shared<StreamRecorderImpl>(storageEngine, ninfo, face, keyChain)){}
+pimpl_(boost::make_shared<StreamRecorderImpl>(storeDataFun, ninfo, face, keyChain)){}
 void StreamRecorder::start(const StreamRecorder::FetchSettings& settings) { pimpl_->start(settings); }
 void StreamRecorder::stop() { pimpl_->stop(); }
 bool StreamRecorder::isFetching() { return pimpl_->isFetching_; }
@@ -87,11 +87,11 @@ void StreamRecorder::setLogger(const boost::shared_ptr<ndnlog::new_api::Logger>&
 const StreamRecorder::Stats& StreamRecorder::getCurrentStats() const { return pimpl_->stats_; }
 // ***
 
-StreamRecorderImpl::StreamRecorderImpl(const boost::shared_ptr<StorageEngine>& storageEngine, 
+StreamRecorderImpl::StreamRecorderImpl(StreamRecorder::StoreData storeDataFun, 
                         const NamespaceInfo& ninfo,
                         const boost::shared_ptr<Face>& face, 
                         const boost::shared_ptr<KeyChain> keyChain):
-    storage_(storageEngine), face_(face), keyChain_(keyChain),
+    storeDataFun_(storeDataFun), face_(face), keyChain_(keyChain),
     ninfo_(ninfo), isFetching_(false), isFetchingStream_(false)
 {
     if (ninfo_.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
@@ -344,6 +344,6 @@ StreamRecorderImpl::requestNextFrame(const NamespaceInfo& fetchedFrame)
 void
 StreamRecorderImpl::store(const boost::shared_ptr<const Data>&d)
 {
-    storage_->put(d);
+    storeDataFun_(d);
     stats_.totalSegmentsStored_++;
 }
