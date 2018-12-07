@@ -103,7 +103,9 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
  * (either float or string)
  */
 enum class InfoChopIndex {
-    PublishedFrame
+    PublishedFrame,
+    PublishedFrameTimestamp,
+    PublishedFrameIsKey
 };
 
 
@@ -111,7 +113,20 @@ enum class InfoChopIndex {
  * This maps output CHOP's channel names
  */
 static std::map<InfoChopIndex, std::string> ChanNames = {
-    { InfoChopIndex::PublishedFrame, "publishedFrame" }
+    { InfoChopIndex::PublishedFrame, "publishedFrame" },
+    { InfoChopIndex::PublishedFrameTimestamp, "publishedFrameTs" },
+    { InfoChopIndex::PublishedFrameIsKey, "publishedFrameIsKey" }
+};
+
+/**
+ * This maps output DAT's fields onto their textual representation
+ */
+enum class InfoDatIndex {
+    PublishedFrameName
+};
+
+static std::map<InfoDatIndex, std::string> RowNames = {
+    { InfoDatIndex::PublishedFrameName, "Published Frame Name" }
 };
 
 /**
@@ -185,6 +200,8 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
 //            memcpy(outputFormat->cpuPixelData[0], incomingFrameBuffer_, incomingFrameBufferSize_);
             boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingBgraFrame(topInput->width, topInput->height,
                                                                                       incomingFrameBuffer_, incomingFrameBufferSize_);
+            map<string, FrameInfo> lastInfo = boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->getLastPublishedInfo();
+            publishedFrameInfo_ = lastInfo[ndnrtcTOPbase::NdnRtcTrheadName];
         }
     }
 }
@@ -206,7 +223,19 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
             case InfoChopIndex::PublishedFrame:
             {
                 chan->name = ChanNames[idx].c_str();
-                chan->value = (float)publbishedFrame_;
+                chan->value = (float)publishedFrameInfo_.playbackNo_;
+            }
+                break;
+            case InfoChopIndex::PublishedFrameTimestamp:
+            {
+                chan->name = ChanNames[idx].c_str();
+                chan->value = publishedFrameInfo_.timestamp_;
+            }
+                break;
+            case InfoChopIndex::PublishedFrameIsKey:
+            {
+                chan->name = ChanNames[idx].c_str();
+                chan->value = publishedFrameInfo_.isKey_;
             }
                 break;
             default:
@@ -235,7 +264,9 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
 bool
 ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize)
 {
-    return ndnrtcTOPbase::getInfoDATSize(infoSize);
+    ndnrtcTOPbase::getInfoDATSize(infoSize);
+    infoSize->rows += RowNames.size();
+    return true;
 }
 
 void
@@ -243,7 +274,36 @@ ndnrtcOut::getInfoDATEntries(int32_t index,
                                  int32_t nEntries,
                                  OP_InfoDATEntries* entries)
 {
-    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries);
+    if (index >= RowNames.size())
+        ndnrtcTOPbase::getInfoDATEntries(index-(int32_t)RowNames.size(), nEntries, entries);
+    else
+    {
+        static char tempBuffer1[4096];
+        static char tempBuffer2[4096];
+        memset(tempBuffer1, 0, 4096);
+        memset(tempBuffer2, 0, 4096);
+        
+        InfoDatIndex idx = (InfoDatIndex)index;
+        
+        if (RowNames.find(idx) != RowNames.end())
+        {
+            strcpy(tempBuffer1, RowNames[idx].c_str());
+            
+            switch (idx) {
+                case InfoDatIndex::PublishedFrameName:
+                    {
+                        if (stream_)
+                            strcpy(tempBuffer2, publishedFrameInfo_.ndnName_.c_str());
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+            entries->values[0] = tempBuffer1;
+            entries->values[1] = tempBuffer2;
+        }
+    }
 }
 
 void

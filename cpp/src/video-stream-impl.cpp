@@ -256,6 +256,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
         lastPublished_[it.first].timestamp_ = (uint64_t)(packetHdr.publishUnixTimestamp_*1000);
         lastPublished_[it.first].playbackNo_ = playbackCounter_;
         lastPublished_[it.first].ndnName_ = publish(it.first, it.second);
+        lastPublished_[it.first].isKey_ = isKey;
     }
 }
 
