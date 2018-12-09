@@ -606,7 +606,7 @@ ndnrtcIn::createRemoteStreamHistorical(const NamespaceInfo& prefixStart, const N
                                                     ((ndnrtcIn::Params*)params_)->jitterSize_);
     stream_->setLogger(logger_);
     dynamic_pointer_cast<RemoteStream>(stream_)->registerObserver(this);
-    dynamic_pointer_cast<RemoteVideoStream>(stream_)->start(ndnrtcTOPbase::NdnRtcTrheadName, streamRenderer_.get());
+    dynamic_pointer_cast<RemoteVideoStream>(stream_)->start(ruleset, streamRenderer_.get());
 }
 
 void
