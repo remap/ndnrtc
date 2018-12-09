@@ -14,7 +14,6 @@
 #include "params.hpp"
 #include "simple-log.hpp"
 #include "name-components.hpp"
-#include "frame-data.hpp"
 
 namespace ndn {
     class Name;
@@ -34,7 +33,8 @@ namespace ndnrtc {
     class IFrameFetcher;
 
     typedef boost::function<uint8_t*(const boost::shared_ptr<IFrameFetcher>&, 
-                                     int width, int height)> OnBufferAllocate;
+                                     int width, int height, 
+                                     IExternalRenderer::BufferType *bufferType)> OnBufferAllocate;
     typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
                                  const FrameInfo&, int nFramesFetched,
                                  int width, int height, const uint8_t* buffer)> OnFrameFetched;

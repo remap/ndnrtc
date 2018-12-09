@@ -104,7 +104,6 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
  */
 enum class InfoChopIndex {
     PublishedFrame,
-    PublishedFrameTimestamp,
     PublishedFrameIsKey
 };
 
@@ -114,7 +113,6 @@ enum class InfoChopIndex {
  */
 static std::map<InfoChopIndex, std::string> ChanNames = {
     { InfoChopIndex::PublishedFrame, "publishedFrame" },
-    { InfoChopIndex::PublishedFrameTimestamp, "publishedFrameTs" },
     { InfoChopIndex::PublishedFrameIsKey, "publishedFrameIsKey" }
 };
 
@@ -122,11 +120,13 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
  * This maps output DAT's fields onto their textual representation
  */
 enum class InfoDatIndex {
-    PublishedFrameName
+    PublishedFrameName,
+    PublishedFrameTimestamp,
 };
 
 static std::map<InfoDatIndex, std::string> RowNames = {
-    { InfoDatIndex::PublishedFrameName, "Published Frame Name" }
+    { InfoDatIndex::PublishedFrameName, "Published Frame Name" },
+    { InfoDatIndex::PublishedFrameTimestamp, "Published Frame Timestamp" },
 };
 
 /**
@@ -226,16 +226,10 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
                 chan->value = (float)publishedFrameInfo_.playbackNo_;
             }
                 break;
-            case InfoChopIndex::PublishedFrameTimestamp:
-            {
-                chan->name = ChanNames[idx].c_str();
-                chan->value = publishedFrameInfo_.timestamp_;
-            }
-                break;
             case InfoChopIndex::PublishedFrameIsKey:
             {
                 chan->name = ChanNames[idx].c_str();
-                chan->value = publishedFrameInfo_.isKey_;
+                chan->value = (float)publishedFrameInfo_.isKey_;
             }
                 break;
             default:
@@ -295,6 +289,11 @@ ndnrtcOut::getInfoDATEntries(int32_t index,
                         if (stream_)
                             strcpy(tempBuffer2, publishedFrameInfo_.ndnName_.c_str());
                     }
+                    break;
+                case InfoDatIndex::PublishedFrameTimestamp:
+                {
+                    sprintf(tempBuffer2, "%f", ((double)publishedFrameInfo_.timestamp_/1000.));
+                }
                     break;
                 default:
                     break;

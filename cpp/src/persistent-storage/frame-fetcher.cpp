@@ -354,12 +354,14 @@ FrameFetcherImpl::decode()
 
                 if (needToDecode == 0)
                 {
-                    uint8_t* buffer = onBufferAllocate_(self, f.width(), f.height());
+                    IExternalRenderer::BufferType bufferType = IExternalRenderer::kARGB;
+                    uint8_t* buffer = onBufferAllocate_(self, f.width(), f.height(), &bufferType);
                     if (buffer)
                     {
                         state_ = FrameFetcher::Completed;
 
-                        ConvertFromI420(f, webrtc::kBGRA, 0, buffer);
+                        webrtc::VideoType videoType = (bufferType == IExternalRenderer::kARGB ? webrtc::kBGRA : webrtc::kARGB);
+                        ConvertFromI420(f, videoType, 0, buffer);
                         onFrameFetched_(self, fi, fetchingTasks_.size(), 
                                         f.width(), f.height(), buffer);
                     }

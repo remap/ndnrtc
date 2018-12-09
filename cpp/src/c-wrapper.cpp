@@ -251,7 +251,8 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
               [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
-                                      int width, int height)->uint8_t*
+                                      int width, int height,
+                                      IExternalRenderer::BufferType *bufferType)->uint8_t*
               {
                   return bufferAllocFunc(fkey.c_str(), width, height);
               },

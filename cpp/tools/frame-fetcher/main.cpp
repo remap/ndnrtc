@@ -124,7 +124,7 @@ int main(int argc, char **argv)
             ffetcher.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 
         ffetcher.fetch(prefixInfo.getPrefix(prefix_filter::Sample),
-                [](const boost::shared_ptr<IFrameFetcher>&, int width, int height)
+                [](const boost::shared_ptr<IFrameFetcher>&, int width, int height, IExternalRenderer::BufferType *bufferType)
                 {
                     LogTrace("") << "allocating buffer for " 
                                  << width << "x" << height << " frame" << std::endl;

@@ -4,6 +4,7 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/params.hpp \
   include/statistics.hpp \
   include/interfaces.hpp \
+  include/frame-fetcher.hpp \
   include/name-components.hpp \
   include/error-codes.hpp \
   include/ndnrtc-defines.hpp \

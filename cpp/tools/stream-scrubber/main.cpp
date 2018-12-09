@@ -38,7 +38,7 @@ R"(Stream Scrubber.
     Arguments:
       <thread_prefix>      ndnrtc (API v3) thread prefix with or without frame number. For example:
                             /ndn/user/rtc/ndnrtc/%FD%03/video/camera/%FC%00%00%01fU%98%BBA/1080p/k/%FE%2A
-                           If frame number is omitted, it must be specified usin --frame-no argument. It is assumed, that
+                           If frame number is omitted, it must be specified usin --seed_frame argument. It is assumed, that
                            the key frame number is provided.
                            See [ndnrtc namespace](https://github.com/remap/ndnrtc/blob/master/docs/namespace.pdf) for more info.
       <out_pipe>           Output pipe where received decoded ARGB frames will be dumped

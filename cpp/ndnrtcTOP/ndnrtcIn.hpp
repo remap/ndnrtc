@@ -11,6 +11,7 @@
 #include <ndnrtc/params.hpp>
 #include <ndnrtc/interfaces.hpp>
 #include <ndnrtc/remote-stream.hpp>
+#include <ndnrtc/name-components.hpp>
 
 #include <boost/atomic.hpp>
 
@@ -18,6 +19,8 @@ namespace ndnrtc {
     namespace statistics {
         class StatisticsStorage;
     }
+    
+    class FrameFetcher;
 }
 
 class RemoteStreamRenderer;
@@ -26,7 +29,7 @@ class ndnrtcIn : public ndnrtcTOPbase, ndnrtc::IRemoteStreamObserver
 {
 public:
     typedef struct _Params : ndnrtcTOPbase::Params {
-        std::string streamPrefix_;
+        std::string startPrefix_, endPrefix_;
         int jitterSize_, lifetime_;
     } Params;
 
@@ -54,13 +57,19 @@ public:
 
 private:
     boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
+    ndnrtc::FrameInfo       receivedFrameInfo_;
+    boost::shared_ptr<ndnrtc::FrameFetcher> frameFetcher_;
 
     void                    initStream() override;
     std::set<std::string>   checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;
     
-    void                    createRemoteStream(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
+    void                    startFetch(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
+    void                    createRemoteStream(const std::string&, const std::string&);
+    void                    createRemoteStreamHistorical(const ndnrtc::NamespaceInfo& prefixStart,
+                                                         const ndnrtc::NamespaceInfo& ni = ndnrtc::NamespaceInfo());
+    void                    fetchFrame(const ndnrtc::NamespaceInfo&);
 
-    void                        allocateFramebuffer(int w, int h);
+    void                    allocateFramebuffer(int w, int h);
     
     // IRemoteStreamObserver
     void                    onNewEvent(const ndnrtc::RemoteStream::Event&) override;

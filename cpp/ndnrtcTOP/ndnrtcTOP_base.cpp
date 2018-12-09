@@ -24,6 +24,8 @@
 
 #include "foundation-helpers.h"
 
+#define LOG_ON
+
 using namespace std;
 //using namespace std::placeholders;
 using namespace ndnrtc;
@@ -78,8 +80,13 @@ reinitParams_(ReinitParams)
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
+#ifdef LOG_ON
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+                                         boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
+#else
     logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
+#endif
 }
 
 ndnrtcTOPbase::~ndnrtcTOPbase()
