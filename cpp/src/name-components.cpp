@@ -63,7 +63,7 @@ NamespaceInfo::getPrefix(int filter) const
 
             if (filter&(Segment^Sample))
             {
-                prefix.appendVersion(metaVersion_).appendSegment(segNo_);
+                prefix.appendVersion(segmentVersion_).appendSegment(segNo_);
             }
         }
         else
@@ -120,7 +120,7 @@ NamespaceInfo::getSuffix(int filter) const
         if (filter&(Sample^Segment))
         {
             if (isMeta_)
-                suffix.appendVersion(metaVersion_);
+                suffix.appendVersion(segmentVersion_);
             else
                 suffix.appendSequenceNumber(sampleNo_);
         }
@@ -190,7 +190,7 @@ bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
     // example: name == %FD%05/%00%00
     if (name.size() >= 1 && name[0].isVersion())
     {
-        info.metaVersion_ = name[0].toVersion();
+        info.segmentVersion_ = name[0].toVersion();
         if (name.size() >= 2)
         {
             info.segNo_ = name[1].toSegment();
@@ -261,7 +261,17 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
 
             try{
                 if (name.size() > idx)
-                    info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
+                {
+                    if (name[idx] == Name::Component(NameComponents::NameComponentRdrLatest))
+                    {
+                        info.segmentClass_ = SegmentClass::Pointer;
+                        if (idx+1 < name.size())
+                            info.segmentVersion_ = name[idx+1].toVersion();
+                        return true;
+                    }
+                    else
+                        info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
+                }
                 else
                 {
                     info.hasSeqNo_ = false;
@@ -374,7 +384,17 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         try
         {
             if (name.size() > 3)
-                info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
+            {
+                if (name[idx] == Name::Component(NameComponents::NameComponentRdrLatest))
+                {
+                    info.segmentClass_ = SegmentClass::Pointer;
+                    if (idx+1 < name.size())
+                        info.segmentVersion_ = name[idx+1].toVersion();
+                    return true;
+                }
+                else
+                    info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
+            }
             
             info.hasSeqNo_ = true;
             if (name.size() > idx)

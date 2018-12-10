@@ -83,7 +83,7 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_EQ("camera", info.streamName_);
 		EXPECT_EQ("hi", info.threadName_);
 		EXPECT_EQ(0, info.segNo_);
-		EXPECT_EQ(5, info.metaVersion_);
+		EXPECT_EQ(5, info.segmentVersion_);
 		EXPECT_EQ(SegmentClass::Meta, info.segmentClass_);
 		EXPECT_TRUE(info.isMeta_);
 	}
@@ -96,7 +96,7 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_EQ("camera", info.streamName_);
 		EXPECT_EQ("", info.threadName_);
 		EXPECT_EQ(0, info.segNo_);
-		EXPECT_EQ(5, info.metaVersion_);
+		EXPECT_EQ(5, info.segmentVersion_);
 		EXPECT_EQ(SegmentClass::Meta, info.segmentClass_);
 		EXPECT_TRUE(info.isMeta_);
 	}
@@ -126,7 +126,7 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_EQ("mic", info.streamName_);
 		EXPECT_TRUE(info.isMeta_);
 		EXPECT_EQ("", info.threadName_);
-		EXPECT_EQ(7, info.metaVersion_);
+		EXPECT_EQ(7, info.segmentVersion_);
 		EXPECT_EQ(SegmentClass::Meta, info.segmentClass_);
 		EXPECT_EQ(0, info.segNo_);
 	}
@@ -152,7 +152,7 @@ TEST(TestNameComponents, TestNameFiltering)
 		EXPECT_EQ("mic", info.streamName_);
 		EXPECT_EQ("hd", info.threadName_);
 		EXPECT_TRUE(info.isMeta_);
-		EXPECT_EQ(3, info.metaVersion_);
+		EXPECT_EQ(3, info.segmentVersion_);
 		EXPECT_EQ(SegmentClass::Meta, info.segmentClass_);
 		EXPECT_EQ(0, info.segNo_);
 	}
@@ -245,6 +245,24 @@ TEST(TestNameComponents, TestNameFiltering)
         NamespaceInfo info;
         EXPECT_TRUE(NameComponents::extractInfo("/touchdesigner/ndnrtcOut0/ndnrtc/%FD%03/video/video1/%FC%00%00%01f%9FK%08%B6", info));
         EXPECT_EQ(info.streamName_, "video1");
+    }
+    {
+        NamespaceInfo info;
+        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/video/camera/%FC%00%00%01g%97%018l/320p/k/_latest/%FD%06%E1", info));
+        EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
+        EXPECT_NE(info.segmentVersion_, 0);
+    }
+    {
+        NamespaceInfo info;
+        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/video/camera/%FC%00%00%01g%97%018l/320p/d/_latest/%FD%06%E1", info));
+        EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
+        EXPECT_NE(info.segmentVersion_, 0);
+    }
+    {
+        NamespaceInfo info;
+        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/audio/mic/%FC%00%00%01g%97%018l/pcmu/_latest/%FD%06%E1", info));
+        EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
+        EXPECT_NE(info.segmentVersion_, 0);
     }
 }
 #endif
@@ -361,7 +379,7 @@ TEST(TestNameComponents, TestPrefixFiltering)
 	}
 }
 #endif
-#if 0
+#if 1
 TEST(TestNameComponents, TestSuffixFiltering)
 {
 	using namespace suffix_filter;

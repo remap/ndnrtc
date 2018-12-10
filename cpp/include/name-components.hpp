@@ -55,7 +55,8 @@ namespace ndnrtc {
         Data,
         Parity,
         Manifest,
-        Meta
+        Meta,
+        Pointer
     };
 
     /**
@@ -66,7 +67,7 @@ namespace ndnrtc {
     public:
         NamespaceInfo():apiVersion_(0), isMeta_(false), isParity_(false), 
             isDelta_(false), hasSeqNo_(false), class_(SampleClass::Unknown),
-            segmentClass_(SegmentClass::Unknown), sampleNo_(0), segNo_(0), metaVersion_(0){}
+            segmentClass_(SegmentClass::Unknown), sampleNo_(0), segNo_(0), segmentVersion_(0){}
 
         ndn::Name basePrefix_;
         unsigned int apiVersion_;
@@ -77,7 +78,7 @@ namespace ndnrtc {
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
-        unsigned int metaVersion_;
+        unsigned int segmentVersion_;
         uint64_t streamTimestamp_;
 
         ndn::Name getPrefix(int filter = (prefix_filter::Segment)) const;
