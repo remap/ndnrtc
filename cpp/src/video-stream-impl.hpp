@@ -110,7 +110,7 @@ class VideoStreamImpl : public MediaStreamBase
     std::string publish(const std::string &thread, boost::shared_ptr<VideoFramePacketAlias> &fp);
     void publishManifest(ndn::Name dataName, PublishedDataPtrVector &segments);
     std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
-    void publishRdrPointer(const std::string&, boost::shared_ptr<MetaKeeper>, bool);
+    void publishRdrPointer(const std::string&, boost::shared_ptr<MetaKeeper>);
 };
 }
 

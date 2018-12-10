@@ -13,6 +13,7 @@
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
+#include <ndn-cpp/delegation-set.hpp>
 #include <boost/thread/lock_guard.hpp>
 
 #include "video-stream-impl.hpp"
@@ -390,8 +391,7 @@ bool VideoStreamImpl::updateMeta()
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
                   << std::endl;
 
-        publishRdrPointer(it.first, it.second, false);
-        publishRdrPointer(it.first, it.second, true);
+        publishRdrPointer(it.first, it.second);
 
         (*statStorage_)[Indicator::CurrentProducerFramerate] = it.second->getRate();
     }
@@ -400,21 +400,27 @@ bool VideoStreamImpl::updateMeta()
 }
 
 void VideoStreamImpl::publishRdrPointer(const std::string& thread,
-                                        boost::shared_ptr<MetaKeeper> metaKeeper,
-                                        bool isKey)
+                                        boost::shared_ptr<MetaKeeper> metaKeeper)
 {
-    Name framePrefix(Name(streamPrefix_)
-                        .append(thread)
-                        .append(isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta));
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(framePrefix)
-                                                .append(NameComponents::NameComponentRdrLatest)
-                                                .appendVersion(metaKeeper->getVersionNumber()));
-    PacketNumber seqNo = (isKey ? metaKeeper->getMeta().getSeqNo().second : metaKeeper->getMeta().getSeqNo().first);
-    Name pointer(Name(framePrefix).appendSequenceNumber(seqNo));
-    d->setContent(pointer.wireEncode());
+    Name threadPrefix(Name(streamPrefix_).append(thread));
+    DelegationSet pointers;
+    pointers.add(1, Name(threadPrefix)
+                        .append(NameComponents::NameComponentDelta)
+                        .appendSequenceNumber(metaKeeper->getMeta().getSeqNo().first));
+    pointers.add(2, Name(threadPrefix)
+                        .append(NameComponents::NameComponentKey)
+                        .appendSequenceNumber(metaKeeper->getMeta().getSeqNo().second));
+
+
+    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(threadPrefix)
+                                                        .append(NameComponents::NameComponentRdrLatest)
+                                                        .appendVersion(metaKeeper->getVersionNumber()));
+    d->setContent(pointers.wireEncode());
     metadataPublisher_->publish(d);
 
-    LogTraceC << d->getName() << " -> " << pointer << std::endl;  
+    LogTraceC << d->getName() 
+        << " -> " << pointers.get(0).getName() 
+        << " && " << pointers.get(1).getName() << std::endl;
 }
 
 //******************************************************************************
